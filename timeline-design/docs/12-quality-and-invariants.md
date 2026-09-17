@@ -1,12 +1,18 @@
 # Quality Goals and Architectural Invariants
 
 **Status:** Proposed  
-**Core Specification:** v0.1
+**Scope:** Core Specification v0.1 and cross-layer architecture
+**Depends on:** `00`–`11`
 
 ## 1. Purpose
 
 This document defines reviewable system qualities and invariants that cut across the
-Core Specification.
+Core, Presentation, Application, Command, and Extension specifications. It does not
+replace the owner of any semantic rule; it provides the testable properties used to
+detect when a design or implementation violates those rules.
+
+An implementation change that fails an invariant is a specification-review event. It
+must not silently redefine the model to fit an implementation shortcut.
 
 ## 2. Git quality
 
@@ -28,6 +34,13 @@ user explicitly chooses to rename the identifier.
 Deterministically derived scene and renderer state MUST NOT be required in the
 semantic project source.
 
+### Q-GIT-4 Explicit revision inputs
+
+Project, Snapshot, Actual, View, Style, Theme, and extension-package references that
+influence an evaluation MUST be explicit and identifiable. A consumer MUST NOT silently
+select “latest”, a working-tree tip, current branch, or a local default as an
+authoritative input.
+
 ## 3. Determinism
 
 ### Q-DET-1 Scheduling
@@ -37,11 +50,24 @@ the same resolved schedule.
 
 ### Q-DET-2 Rendering boundary
 
-The same resolved semantic project plus View, Style, Theme, and explicit RenderContext
-SHOULD produce equivalent scene output.
+The same resolved semantic project plus View, Style, Theme, Scene profile, viewport,
+layout metrics, and explicit RenderContext MUST produce equivalent Scene output and
+diagnostics.
 
 Dynamic values such as `today` must be explicit context when reproducibility is
 required.
+
+### Q-DET-3 Cache equivalence
+
+A derived-state cache hit MUST be observationally equivalent to recomputing the
+declared inputs. It must not conceal diagnostics or mix artifacts from different input
+revisions.
+
+### Q-DET-4 Stable scene provenance
+
+Every renderable Scene node MUST retain stable Scene identity, source reference, source
+kind, and visual-role metadata. Paint order, renderer element IDs, or array position
+are not substitutes for this provenance.
 
 ## 4. Semantic isolation
 
@@ -58,6 +84,25 @@ Domain data MUST remain usable without tldraw or any other renderer.
 
 YAML shorthand MUST normalize into the semantic model; shorthand syntax MUST NOT
 introduce semantics that do not exist in the model.
+
+### Q-SEM-4 Relation and annotation distinction
+
+A semantic dependency and a presentation-only explanatory arrow MUST remain distinct
+through View, Style, Scene, and renderer adaptation. An explanatory arrow MUST NOT
+create a scheduling constraint.
+
+### Q-SEM-5 Plan, baseline, and actual distinction
+
+Planned placement, Snapshot comparison, and Actual observation remain independently
+identified. Recording an Actual MUST NOT implicitly reschedule planned work. A missing
+or unmatched Actual MUST be diagnosed or represented as unknown, never fabricated as a
+completion or forecast.
+
+### Q-SEM-6 Annotation anchoring
+
+Presentation annotations retain a stable semantic or View-local anchor and logical
+placement intent. Collision resolution may change derived geometry only within declared
+constraints; it must not silently detach the annotation.
 
 ## 5. Temporal correctness
 
@@ -92,7 +137,9 @@ Dependencies MUST be reducible to endpoint bounds.
 
 ### Q-SCHED-2 Deadline distinction
 
-A deadline MUST NOT silently become a scheduling constraint.
+A deadline MUST NOT silently become a scheduling constraint. Fixed placements and
+explicit scheduled anchors MUST NOT be silently moved to satisfy a conflicting
+dependency or bound.
 
 ### Q-SCHED-3 Conflict diagnostics
 
@@ -103,40 +150,93 @@ produce diagnostics rather than arbitrary schedule output.
 
 ### Q-EXT-1 Known base semantics
 
-A declarative custom profile MUST inherit from a known semantic primitive.
+A declarative custom profile MUST inherit through a declared, acyclic chain from
+exactly one known semantic primitive.
 
 ### Q-EXT-2 Fallback
 
 A consumer that does not understand a custom profile SHOULD be able to fall back
 through its inheritance chain where safe.
 
+It MUST NOT claim scheduling or mutation conformance for an unknown specialization.
+
 ### Q-EXT-3 Typed fields
 
-Extension fields SHOULD be schema-declared and type-checkable.
+Extension fields MUST be schema-declared and type-checkable. A package affecting
+interpretation MUST have an explicit version and resolved content identity; breaking
+interpretation requires an explicit migration or validation failure.
 
 ### Q-EXT-4 Safe expressions
 
 User-defined predicates and derived expressions MUST NOT permit arbitrary host-language
-code execution.
+code execution, I/O, clock/random access, unconstrained graph traversal, or new
+scheduling semantics.
 
-## 8. Agent operability
+### Q-EXT-5 Plugin separation
+
+Semantic extensions are declarative data/schema. Renderer and editor plugins are
+host-installed code and MUST NOT gain canonical mutation authority except through
+ordinary Commands. Installing a plugin does not change Project meaning.
+
+## 8. Command and mutation integrity
+
+### Q-CMD-1 Shared semantic boundary
+
+GUI, CLI, automation, and AI agents MUST submit canonical changes through the Command
+Model. Dragging a rendered bar is a Command proposal, not a direct coordinate write.
+
+### Q-CMD-2 Validation and atomicity
+
+A rejected command or transaction MUST leave canonical state unchanged. An accepted
+transaction MUST create one identifiable revision after owner-specification validation
+and must invalidate affected derived outputs.
+
+### Q-CMD-3 Concurrency and history
+
+Canonical mutations MUST bind a base revision or equivalent compare-and-set
+precondition. Stale writes MUST be rejected or explicitly merged; hidden
+last-writer-wins behavior is prohibited. Undo and redo create new validated revisions
+rather than rewriting shared history.
+
+### Q-CMD-4 No derived-state bypass
+
+No command, plugin, importer, or AI client may treat a resolved schedule, Scene
+coordinate, SVG element, or canvas shape as an authoritative semantic mutation without
+translating it to validated canonical intent.
+
+## 9. Accessibility and agent operability
+
+### Q-ACC-1 Non-colour distinction
+
+Required visual distinctions—including planned versus Actual, semantic dependency versus
+explanatory arrow, and exceptional comparison state—MUST NOT rely on colour alone.
+
+### Q-ACC-2 Fidelity reporting
+
+A renderer or plugin that cannot preserve a required semantic distinction, source
+reference, or accessible alternative MUST report the capability loss. It must not
+silently erase meaning.
 
 ### Q-AI-1 Semantic mutation
 
 A schedule edit SHOULD be expressible as a semantic command rather than a sequence of
 pixel manipulations.
 
+An AI agent MUST NOT turn an uncertain title or visual match into a stable object
+reference without confirmation or an ambiguity diagnostic.
+
 ### Q-AI-2 Explainability
 
-Validation, scheduling, and style resolution SHOULD expose enough structured
-diagnostics to explain why a value or appearance was produced.
+Validation, scheduling, View evaluation, style resolution, Scene construction, and
+rendering SHOULD expose enough structured diagnostics to explain why a value or
+appearance was produced.
 
 ### Q-AI-3 Discoverability
 
 Schemas, profiles, and examples SHOULD provide sufficient structure for an agent to
 discover valid operations without relying solely on prose documentation.
 
-## 9. Scope discipline
+## 10. Scope discipline
 
 Core design SHOULD reject features that require turning the system into:
 
@@ -144,18 +244,50 @@ Core design SHOULD reject features that require turning the system into:
 - a timesheet system;
 - a generic workflow engine;
 - a generic graph database;
-- an arbitrary programmable scheduler.
+- an arbitrary programmable scheduler;
+- a renderer-authoritative slideware clone.
 
-Such features MAY be reconsidered as extensions when they can preserve Core invariants.
+Such features MAY be reconsidered only when they preserve these invariants, have an
+identified owning specification, and do not obscure Chrona's time-axis-centered
+semantic model.
 
-## 10. Core v0.1 review checklist
+## 11. Verification expectations
+
+Each invariant should be backed by the most suitable evidence. The implementation plan
+may add finer-grained cases, but it must not omit the following categories.
+
+| Quality area | Minimum evidence |
+|---|---|
+| Core temporal/scheduling rules | Canonical YAML fixtures, validator/scheduler conformance tests, stable diagnostic assertions |
+| Git quality and normalization | Canonicalization tests and focused before/after diff fixtures |
+| View/Style/Theme/Scene | Deterministic projection fixtures with input manifests and provenance assertions |
+| Plan/Snapshot/Actual | Alignment, missing/unmatched, and no-implicit-rescheduling scenarios |
+| Commands | Accept/reject, transaction atomicity, stale-base conflict, undo/redo, and no-derived-write tests |
+| Extensions | Inheritance/fallback, typed-field, version/migration, expression-safety, and plugin-boundary tests |
+| Renderer adapters | Capability/fidelity and accessibility fixtures; generated output is checked as derived state |
+
+## 12. Cross-layer review checklist
+
+A design or implementation change is ready for focused review when it can answer all of
+the following:
+
+1. Which specification owns the changed meaning?
+2. Is the changed state canonical, declarative presentation data, or derived output?
+3. Are every input revision and evaluation context explicit?
+4. Can the result be reproduced without renderer-local state?
+5. Does it preserve plan/baseline/Actual and dependency/explanatory-arrow distinctions?
+6. Does it preserve stable identity, meaningful Git diffs, and deterministic diagnostics?
+7. Does it require an extension, schema, example, conformance fixture, or ADR update before implementation?
+8. Does it accidentally expand Chrona into a generic PM system or arbitrary execution environment?
+
+## 13. Core v0.1 review checklist
 
 Core v0.1 is internally coherent when all of the following hold:
 
 - every core primitive has one semantic definition;
 - temporal arithmetic is type-distinct and deterministic;
 - interval boundaries are unambiguous;
-- dependency endpoint semantics are unambiguous;
+- dependency endpoint semantics and authority rules are unambiguous;
 - zero-lag behavior is demonstrated by examples;
 - calendar-day and working-day behavior are distinguishable;
 - Project Format can represent all normative Core concepts;
