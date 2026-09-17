@@ -1,6 +1,6 @@
 # View Model
 
-**Status:** Draft  
+**Status:** Proposed
 **Depends on:** `01-concepts.md`, `02-domain-model.md`, `03-temporal-model.md`, `04-scheduling-model.md`, `05-project-format.md`  
 **Owns:** selection, comparison context, grouping, ordering, temporal-window selection, visibility, layout intent, and presentation annotations.
 
