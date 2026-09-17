@@ -37,6 +37,39 @@ This boundary is normative. Moving a concern upward is allowed only when it does
 
 ## 4. Style model
 
+### 4.1 v0.1 persistent Style body
+
+A Style is an ordered list of declarative rules. A rule matches only facts already
+exposed by the View Projection and adds named visual roles; it cannot set a colour,
+font, coordinate, or token value.
+
+```yaml
+version: chrona/presentation/v0.1
+kind: style
+id: plan-actual
+body:
+  rules:
+    - id: planned-span
+      when: { facet: planned, sourceType: span }
+      addRoles: [planned]
+    - id: actual-span
+      when: { facet: actual, sourceType: span }
+      addRoles: [actual]
+    - id: finish-behind
+      when: { facet: finishDelta, category: behind }
+      addRoles: [variance-behind]
+    - id: actual-missing
+      when: { facet: missingActual }
+      addRoles: [actual-missing]
+```
+
+Rule order is the only v0.1 precedence mechanism: matching rules append roles in source
+order, while duplicate roles are removed. `when` is an intersection of its fields;
+unknown fields and undeclared facets are diagnostics. This enables a changed Actual to
+re-evaluate rules only for its affected View items and emit local `SceneDelta` upserts or
+token updates. A rule set has no catch-all code expression and cannot depend on title
+text, geometry, renderer state, or local time.
+
 ### 4.1 Inputs
 
 A Style receives the semantic View Projection. Its selectors may inspect only stable, declarative facts exposed by that projection, including:

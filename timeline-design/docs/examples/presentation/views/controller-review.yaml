@@ -1,5 +1,13 @@
 version: chrona/presentation/v0.1
 kind: view
 id: controller-review
-body: {}
-
+body:
+  selection: {include: {types: [span, milestone]}}
+  grouping: {by: entity, missing: ungrouped}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  window: {mode: selected-planned, marginDays: 7}
+  comparison:
+    actual: required
+    facets: [planned, actual, startDelta, finishDelta, progress, missingActual, unmatchedActual]
+  visibility: {labels: true, relations: semantic, annotations: all}
+  layoutIntent: {compactness: balanced}

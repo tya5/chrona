@@ -1,0 +1,74 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/view-v0.1"
+title: "Chrona View v0.1"
+allOf:
+  - $ref: "presentation-resource-v0.1.schema.yaml"
+  - type: object
+    properties:
+      kind: {const: view}
+      body:
+        type: object
+        required: [selection, grouping, ordering, window, comparison, visibility, layoutIntent]
+        additionalProperties: false
+        properties:
+          selection:
+            type: object
+            required: [include]
+            additionalProperties: false
+            properties:
+              include:
+                type: object
+                additionalProperties: false
+                properties:
+                  ids: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+                  types: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+                  entityIds: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+                  profiles: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+          grouping:
+            type: object
+            required: [by, missing]
+            additionalProperties: false
+            properties:
+              by: {enum: [entity, type, none]}
+              missing: {enum: [ungrouped, hidden]}
+          ordering:
+            type: object
+            required: [by, direction, tieBreak]
+            additionalProperties: false
+            properties:
+              by: {enum: [id, title, plannedStart, plannedEnd]}
+              direction: {enum: [ascending, descending]}
+              tieBreak: {const: id}
+          window:
+            type: object
+            required: [mode]
+            additionalProperties: false
+            properties:
+              mode: {enum: [explicit, selected-planned, selected-comparison]}
+              start: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+              end: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+              marginDays: {type: integer, minimum: 0}
+          comparison:
+            type: object
+            required: [actual, facets]
+            additionalProperties: false
+            properties:
+              actual: {enum: [forbidden, optional, required]}
+              facets:
+                type: array
+                uniqueItems: true
+                items: {enum: [planned, actual, startDelta, finishDelta, progress, missingActual, unmatchedActual]}
+          visibility:
+            type: object
+            required: [labels, relations, annotations]
+            additionalProperties: false
+            properties:
+              labels: {type: boolean}
+              relations: {enum: [none, semantic, all]}
+              annotations: {enum: [none, semantic, presentation, all]}
+          layoutIntent:
+            type: object
+            required: [compactness]
+            additionalProperties: false
+            properties:
+              compactness: {enum: [compact, balanced, expanded]}

@@ -67,6 +67,40 @@ A View definition is declarative. Its eventual YAML syntax belongs to the Projec
 
 Selection expressions MUST be declarative predicates over semantic data and MUST NOT execute arbitrary host-language code.
 
+### 4.1 v0.1 persistent body
+
+The v0.1 View resource uses a deliberately small, closed selector language. It enables
+reviewable plan-versus-actual views without embedding code or renderer geometry:
+
+```yaml
+version: chrona/presentation/v0.1
+kind: view
+id: controller-review
+body:
+  selection:
+    include: { types: [span, milestone] }
+  grouping: { by: entity, missing: ungrouped }
+  ordering: { by: plannedStart, direction: ascending, tieBreak: id }
+  window: { mode: selected-planned, marginDays: 7 }
+  comparison:
+    actual: required
+    facets: [planned, actual, startDelta, finishDelta, progress, missingActual, unmatchedActual]
+  visibility: { labels: true, relations: semantic, annotations: all }
+  layoutIntent: { compactness: balanced }
+```
+
+`selection.include` is an intersection of its declared filters. v0.1 permits only
+stable IDs, object types, entity IDs, profiles, and declared typed-field equality; an
+omitted filter does not constrain selection. There is no arbitrary boolean expression,
+regular expression, title match, script, or implicit hierarchy traversal. The exact
+typed-field reference form is introduced only with the Extension schema.
+
+`comparison.actual` is `forbidden`, `optional`, or `required`; a Render Context must
+provide an Actual set exactly when the selected mode requires it. The `facets` list is
+sorted and duplicate-free. `planned` and `actual` remain separate facets, so a Style or
+Scene can update only the affected primitive when an observation changes. A View never
+changes a planned placement because a delta facet exists.
+
 ## 5. Projection Pipeline
 
 The View pipeline is separate from styling and scene construction.
