@@ -13,7 +13,11 @@ cases:
     expect: {replaceScope: null}
   - id: global-viewport-delta
     resource: scene-delta-global-viewport.yaml
+    schema: ../../schemas/scene-delta-v0.1.schema.yaml
     expect: {replaceScope: scene}
+  - id: local-actual-delta-schema
+    resource: scene-delta-local-actual.yaml
+    schema: ../../schemas/scene-delta-v0.1.schema.yaml
   - id: snapshot-capture-shape
     resource: commands/capture-snapshot.yaml
     schema: ../../schemas/command-request-v0.1.schema.yaml

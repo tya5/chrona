@@ -1,0 +1,9 @@
+version: chrona/profile/v0.1
+id: semiconductor-development
+types:
+  EVT: {base: milestone}
+  DVT: {base: milestone}
+  PVT: {base: milestone}
+fields:
+  revision: {type: string}
+  customerReview: {type: boolean}

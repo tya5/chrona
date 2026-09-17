@@ -1,0 +1,14 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:scene-delta-v0.1"
+type: object
+required: [baseEvaluationId, targetEvaluationId, reason, upsert, remove, reorder, tokenUpdate, replaceScope]
+additionalProperties: false
+properties:
+  baseEvaluationId: {type: string, minLength: 1}
+  targetEvaluationId: {type: string, minLength: 1}
+  reason: {enum: [actual-observation-change, project-change, theme-token-change, viewport-reflow, scale-change]}
+  upsert: {type: array, items: {type: string}}
+  remove: {type: array, items: {type: string}}
+  reorder: {type: array, items: {type: string}}
+  tokenUpdate: {type: array, items: {type: string}}
+  replaceScope: {type: [string, 'null'], enum: [scene, null]}

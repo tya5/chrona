@@ -19,3 +19,8 @@ does not mutate Project schedule or accept renderer defaults.
 `examples/presentation/validate_conformance.py` is the first runner entry point. It
 performs structural schema validation and the declared local/global SceneDelta checks.
 Owner-semantic checks are added case-by-case without weakening structural validation.
+
+The SceneDelta reference contract accepts local operations for Project/Actual changes
+and token-only Theme changes. `replaceScope: scene` is valid only for `viewport-reflow`
+or `scale-change`; all other reasons are conformance failures. The conformance runner
+checks this before an interactive adapter exists.
