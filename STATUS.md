@@ -24,11 +24,15 @@ preserved unchanged.
 - Source files compile successfully.
 - `pytest` passes with the declared development dependencies.
 - The controller example validates, schedules, and renders as SVG.
+- Dependency-bound, multiple-bound, and working-day placement cases from the
+  Core v0.1 conformance fixture execute through the reference scheduler.
+- Every checked-in canonical project example validates structurally and
+  semantically, then schedules without an error diagnostic.
 
 ## Still required for Stable promotion
 
-1. Extend the conformance runner to cover every scheduling fixture case and
-   project-format fixture, including schema diagnostics.
+1. Extend the conformance runner to cover the remaining cyclic-system and
+   diagnostic fixture cases, including expected diagnostic identifiers.
 2. Review any implementation-discovered ambiguity as an ADR or diagnostic before
    changing the Core specification.
 
