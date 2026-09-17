@@ -38,6 +38,12 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-05 | Edit a plan interactively without global UI replacement | Must | Command/SceneDelta contract and fixtures; editor deferred |
 | UC-06 | Request a safe AI-assisted edit | Should | Command model and request fixtures; agent adapter deferred |
 | UC-07 | Model semiconductor gates and domain vocabulary | Should | Profile/extension design; package fixtures deferred |
+| UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Presentation-annotation design; editor evidence deferred |
+| UC-09 | Maintain multiple purpose-specific views from one Project | Must | View/Style/Theme/Render Context design and fixtures |
+| UC-10 | Import and reconcile externally observed Actual data | Should | Actual-set design and unmatched fixture; ingestion adapter deferred |
+| UC-11 | Validate, render, and propose changes through CLI/automation | Should | Command/conformance design; adapter and CI deferred |
+| UC-12 | Capture and compare a named baseline | Should | Snapshot-reference design; capture command deferred |
+| UC-13 | Export one evaluation to declared targets | Should | Scene/target capability design; SVG/PPTX adapters deferred |
 
 ## 4. Detailed use cases
 
@@ -153,6 +159,105 @@ leveling, cost, ticket workflow, or a new scheduling primitive without Core revi
 
 **Owners:** `02`, `04`, `05`, `11`, `12`.
 
+### UC-08 — Add expressive explanatory annotations without changing schedule semantics
+
+**Trigger:** A reviewer adds a callout, highlight, note, or explanatory arrow to make a
+timeline understandable in an engineering, executive, or customer review.
+
+**Outcome:** The annotation has a stable View-local anchor and logical placement intent.
+An explanatory arrow remains distinct from a semantic dependency and does not constrain
+or alter scheduling.
+
+**Acceptance evidence:** Presentation-annotation command, View-local stable anchor,
+and Scene primitives carrying distinct source kinds and roles.
+
+**Exceptional behavior:** Editing pixel offsets, an SVG path, or a canvas shape alone
+does not mutate the annotation or Project. Missing anchors are diagnosed.
+
+**Owners:** `06`, `08`, `10`, `12`.
+
+### UC-09 — Maintain multiple purpose-specific views from one Project
+
+**Trigger:** A team needs engineering, executive, and customer review projections of
+the same semantic Project revision.
+
+**Outcome:** Each named Render Context selects its View, Style, Theme, Scene profile,
+and comparison inputs explicitly. Project facts are not copied into presentation files.
+
+**Acceptance evidence:** Multiple Render Context fixtures bound to one immutable Project
+revision, with distinct View/Theme identities and reproducible input manifests.
+
+**Exceptional behavior:** A View cannot select a hidden current branch, default theme,
+or local renderer configuration.
+
+**Owners:** `05`–`09`, `13`.
+
+### UC-10 — Import and reconcile externally observed Actual data
+
+**Trigger:** An external source supplies an observation that may not yet have a Project
+object identity.
+
+**Outcome:** Chrona records it with an external identity and `alignment: unmatched`, or
+records a resolved stable `projectObjectId`. A reviewer can later issue an explicit
+alignment edit.
+
+**Acceptance evidence:** Actual-set resolved/unmatched fixtures, alignment diagnostics,
+and a revision-bound Command result.
+
+**Exceptional behavior:** Title similarity never creates an alignment. An unmatched
+observation remains visible and never reschedules the plan.
+
+**Owners:** `06`, `10`, `12`, `13`.
+
+### UC-11 — Validate, render, and propose changes through CLI/automation
+
+**Trigger:** A Git hook, CI job, or automation workflow validates a revision, requests
+a declared artifact, or submits a typed change proposal.
+
+**Outcome:** It uses the same schemas, explicit Render Context, Command Engine, and
+diagnostic contract as an interactive client.
+
+**Acceptance evidence:** Conformance manifest/runner, revision-bound command document,
+and deterministic output manifest.
+
+**Exceptional behavior:** Automation cannot mutate a working-tree default, bypass base
+revision checks, or execute arbitrary project-file code.
+
+**Owners:** `05`, `09`, `10`, `12`, `13`.
+
+### UC-12 — Capture and compare a named baseline
+
+**Trigger:** A planner approves a revision as a baseline and later compares it to the
+current Project and/or Actual observations.
+
+**Outcome:** The comparison names an immutable Snapshot reference; missing or changed
+objects are comparison facts, not implicit mutations.
+
+**Acceptance evidence:** Snapshot reference fixture, immutable revision diagnostic, and
+View comparison facets.
+
+**Exceptional behavior:** A moving branch cannot be used as a reproducible baseline;
+capture workflow remains unavailable until its explicit Command is specified.
+
+**Owners:** `05`, `06`, `10`, `12`, `13`.
+
+### UC-13 — Export one evaluation to declared targets
+
+**Trigger:** A reviewer requests SVG now, or a future interactive/canvas/PPTX target,
+from a named Render Context.
+
+**Outcome:** The Scene is derived from the same explicit evaluation inputs. Required
+target capabilities are checked before adaptation, so meaningful distinctions are not
+silently lost.
+
+**Acceptance evidence:** target-capability diagnostic, Scene input manifest, and
+adapter-specific golden artifact when an adapter exists.
+
+**Exceptional behavior:** A renderer cannot replace missing token, font metric, marker,
+or accessibility capability with an unstated local default.
+
+**Owners:** `07`–`09`, `12`, `13`.
+
 ## 5. Cross-cutting quality scenarios
 
 | ID | Scenario | Acceptance criterion |
@@ -163,7 +268,25 @@ leveling, cost, ticket workflow, or a new scheduling primitive without Core revi
 | Q-UC-04 | Compare named revisions | Inputs include immutable Project/Snapshot identities; no current branch or local clock |
 | Q-UC-05 | Render inaccessible target | Missing required capability is diagnosed, not silently approximated |
 
-## 6. Current gaps and release gate
+## 6. Specification and evidence mapping
+
+| Use case | Primary specifications | Current evidence | Remaining gap |
+|---|---|---|---|
+| UC-01 | `02`–`05`, `12` | Core schemas and scheduling fixtures | integrated CI validation |
+| UC-02 | `05`, `09`, `10`, `13` | normalized format and Command contract | semantic Git-diff presentation |
+| UC-03 | `06`, `07`, `10`, `12`, `13` | Actual/View/Style fixtures | semantic runner and rendered comparison |
+| UC-04 | `06`–`09`, `12`, `13` | Render Context and Theme fixtures | exporter adapter |
+| UC-05 | `08`–`10`, `12`, `13` | Command and SceneDelta fixtures | interactive editor adapter/delta computation |
+| UC-06 | `09`–`12` | request schema and reject fixture | AI adapter and authorization policy |
+| UC-07 | `02`, `04`, `05`, `11`, `12` | extension model prose | package schema and fixtures |
+| UC-08 | `06`, `08`, `10`, `12` | annotation ownership rules | annotation command/fixture and editor adapter |
+| UC-09 | `05`–`09`, `13` | named resource format | multi-context fixture set |
+| UC-10 | `06`, `10`, `12`, `13` | resolved/unmatched Actual fixture | ingestion and explicit alignment command |
+| UC-11 | `05`, `09`, `10`, `12`, `13` | conformance manifest | runner, CLI, CI integration |
+| UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference fixture | capture command and comparison fixture |
+| UC-13 | `07`–`09`, `12`, `13` | target capability contract | SVG/PPTX/canvas adapters |
+
+## 7. Current gaps and release gate
 
 The specifications cover the intended meaning and structural fixtures for UC-01 through
 UC-06. The following evidence is still required before claiming executable support:
