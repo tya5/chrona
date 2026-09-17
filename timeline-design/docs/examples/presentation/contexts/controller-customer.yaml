@@ -7,6 +7,8 @@ body:
   style: {id: plan-actual, path: ../styles/plan-actual.yaml}
   theme: {id: engineering-light, path: ../themes/engineering-light.yaml}
   sceneProfile: {id: date-lanes, path: ../scenes/date-lanes.yaml}
+  inputs:
+    actual: {id: controller-observed, path: ../actuals/controller-observed.yaml}
   evaluation: {locale: ja-JP}
   viewport: {width: 1200, height: 700, margins: {top: 24, right: 32, bottom: 32, left: 120}, clipping: clip}
   target: {kind: svg, capabilities: [marker, metadata, text-alternative]}

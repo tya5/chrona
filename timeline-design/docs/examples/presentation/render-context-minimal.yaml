@@ -17,6 +17,10 @@ body:
   sceneProfile:
     id: date-lanes
     path: scenes/date-lanes.yaml
+  inputs:
+    actual:
+      id: controller-observed
+      path: actuals/controller-observed.yaml
   evaluation:
     locale: ja-JP
   viewport:
@@ -30,4 +34,3 @@ body:
   layoutMetrics:
     id: logical-metrics-v0.1
     revision: sha256:example
-

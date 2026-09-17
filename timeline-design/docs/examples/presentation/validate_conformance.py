@@ -66,6 +66,37 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
         target = body.get("target", {})
         if not target.get("kind") or not isinstance(target.get("capabilities"), list):
             errors.append("PRES-TARGET-CAPABILITY")
+            return errors
+        def load_ref(name: str):
+            ref = body.get(name)
+            if not ref:
+                return None
+            return json_value(load_yaml((path.parent / ref["path"]).resolve()))
+        view = load_ref("view")
+        actual_ref = body.get("inputs", {}).get("actual")
+        if view:
+            comparison = view.get("body", {}).get("comparison", {})
+            if comparison.get("actual") == "required" and not actual_ref:
+                errors.append("PRES-VIEW-ACTUAL-REQUIRED")
+            for annotation in view.get("body", {}).get("annotations", []):
+                if annotation.get("purpose") == "explanatory-arrow" and "marker" not in target["capabilities"]:
+                    errors.append("PRES-TARGET-CAPABILITY")
+            if view.get("body", {}).get("visibility", {}).get("labels") and "text-alternative" not in target["capabilities"]:
+                errors.append("PRES-TARGET-CAPABILITY")
+        if actual_ref:
+            actual = json_value(load_yaml((path.parent / actual_ref["path"]).resolve()))
+            project = json_value(load_yaml((path.parent / body["project"]["path"]).resolve()))
+            project_ids = set(project.get("objects", {}))
+            for observation in actual.get("body", {}).get("observations", []):
+                resolved = observation.get("projectObjectId")
+                if resolved and resolved not in project_ids:
+                    errors.append("PRES-ACTUAL-ALIGNMENT")
+        snapshot_ref = body.get("inputs", {}).get("snapshot")
+        if snapshot_ref:
+            snapshot = json_value(load_yaml((path.parent / snapshot_ref["path"]).resolve()))
+            revision = snapshot.get("body", {}).get("project", {}).get("revision")
+            if not str(revision).startswith(("git:", "store:")):
+                errors.append("PRES-SNAPSHOT-REVISION")
     return errors
 
 
