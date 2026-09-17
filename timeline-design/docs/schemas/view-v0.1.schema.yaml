@@ -2,7 +2,7 @@ $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/view-v0.1"
 title: "Chrona View v0.1"
 allOf:
-  - $ref: "presentation-resource-v0.1.schema.yaml"
+  - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
       kind: {const: view}

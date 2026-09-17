@@ -1,5 +1,5 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/presentation-resource-v0.1"
+$id: "urn:chrona:presentation-resource-v0.1"
 title: "Chrona Presentation Resource v0.1"
 type: object
 required: [version, kind, id, body]
