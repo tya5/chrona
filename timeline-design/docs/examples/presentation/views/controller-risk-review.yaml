@@ -1,0 +1,17 @@
+version: chrona/presentation/v0.1
+kind: view
+id: controller-risk-review
+body:
+  selection: {include: {types: [span, milestone]}}
+  grouping: {by: entity, missing: ungrouped}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  window: {mode: selected-planned, marginDays: 7}
+  comparison: {actual: optional, facets: [planned, actual, missingActual]}
+  visibility: {labels: true, relations: semantic, annotations: all}
+  layoutIntent: {compactness: balanced}
+  annotations:
+    - id: supplier-risk
+      purpose: callout
+      anchor: {kind: object, id: firmware}
+      placement: {side: above, alignment: end}
+      text: Supplier confirmation pending

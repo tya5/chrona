@@ -14,3 +14,15 @@ cases:
   - id: global-viewport-delta
     resource: scene-delta-global-viewport.yaml
     expect: {replaceScope: scene}
+  - id: snapshot-capture-shape
+    resource: commands/capture-snapshot.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: actual-resolution-shape
+    resource: commands/resolve-actual.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: annotation-view
+    resource: views/controller-risk-review.yaml
+    schema: ../../schemas/view-v0.1.schema.yaml
+  - id: independent-customer-context
+    resource: contexts/controller-customer.yaml
+    schema: ../../schemas/render-context-v0.1.schema.yaml

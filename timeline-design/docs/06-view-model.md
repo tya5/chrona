@@ -161,6 +161,26 @@ Comparison alignment MUST use stable IDs. A renamed title, regrouped object, or 
 
 Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Scene and Rendering own any concrete relative offset or coordinate. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.
 
+### 9.1 v0.1 presentation annotation intent
+
+A presentation annotation has a stable View-local ID, one typed anchor, a purpose, and
+a logical placement preference. It is not a free coordinate blob:
+
+```yaml
+annotations:
+  - id: supplier-risk
+    purpose: callout
+    anchor: {kind: object, id: firmware}
+    placement: {side: above, alignment: end}
+    text: "Supplier confirmation pending"
+```
+
+Initial `purpose` values are `callout`, `highlight`, `note`, and `explanatory-arrow`.
+An explanatory arrow additionally has `source` and `target` typed anchors. It is
+projected with source kind `explanatory-arrow` and can never satisfy, replace, or alter
+a semantic dependency. A missing anchor produces a View diagnostic; no title or
+geometry-based recovery is allowed.
+
 Layout intent includes lane assignment, collapsed groups, hierarchy expansion, preferred compactness, and annotation anchoring. It is not renderer geometry.
 
 ## 10. Diagnostics

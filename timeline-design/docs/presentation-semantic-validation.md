@@ -15,3 +15,7 @@ Structural schemas are followed by owner-semantic checks. Required diagnostics a
 The semantic runner consumes the canonical fixtures, emits stable diagnostics, and
 asserts that an Actual-only change is represented by local SceneDelta operations. It
 does not mutate Project schedule or accept renderer defaults.
+
+`examples/presentation/validate_conformance.py` is the first runner entry point. It
+performs structural schema validation and the declared local/global SceneDelta checks.
+Owner-semantic checks are added case-by-case without weakening structural validation.

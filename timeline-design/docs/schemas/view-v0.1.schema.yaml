@@ -72,3 +72,23 @@ allOf:
             additionalProperties: false
             properties:
               compactness: {enum: [compact, balanced, expanded]}
+          annotations:
+            type: array
+            items:
+              type: object
+              required: [id, purpose, anchor, placement, text]
+              additionalProperties: false
+              properties:
+                id: {type: string, minLength: 1}
+                purpose: {enum: [callout, highlight, note, explanatory-arrow]}
+                anchor:
+                  type: object
+                  required: [kind, id]
+                  additionalProperties: false
+                  properties: {kind: {enum: [object, relation, group, temporal]}, id: {type: string, minLength: 1}}
+                placement:
+                  type: object
+                  required: [side, alignment]
+                  additionalProperties: false
+                  properties: {side: {enum: [above, below, start, end]}, alignment: {enum: [start, center, end]}}
+                text: {type: string}

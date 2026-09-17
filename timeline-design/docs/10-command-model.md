@@ -108,6 +108,11 @@ The Command Engine delegates feasibility and authority checks to the Scheduling 
 
 `addPresentationAnnotation`, `editPresentationAnnotation`, and `deletePresentationAnnotation` mutate a View-local annotation definition. An explanatory arrow is created through this family, not through dependency creation. Its stable anchors and logical placement preferences may be changed, but its concrete Scene offsets and routed path are derived state.
 
+`resolveActualObservation` and `unresolveActualObservation` mutate only the explicit
+alignment of a named Actual observation. Resolution requires a supplied stable
+`projectObjectId`; unresolution restores an external identity with `alignment:
+unmatched`. Neither command may infer an ID from title similarity or alter planned data.
+
 Semantic annotation commands mutate Project annotations; presentation annotation commands mutate the named View definition. Neither family may be used to create an undeclared scheduling constraint.
 
 ### 4.4 Actual and Snapshot inputs
@@ -122,6 +127,11 @@ recorded facts to be reviewed before alignment. These commands do not change pla
 dependencies, planned duration, forecast, or schedule.
 
 Snapshot capture, selection, and persistence syntax remain deferred. A command may reference a named immutable Snapshot only where its future store specification permits it; no command may reinterpret a mutable Project revision as a Snapshot without an explicit capture operation.
+
+`captureSnapshot` creates a `snapshot-ref` whose Project reference is the exact target
+revision inspected by the command. It rejects a moving branch name or an unstated tip.
+The result names the new immutable Snapshot resource; capture never copies derived
+schedule or Scene data into it.
 
 ## 5. Validation and execution
 

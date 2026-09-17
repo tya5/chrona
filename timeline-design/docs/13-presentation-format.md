@@ -90,6 +90,11 @@ and an explicit repository-relative path. A loader verifies that the file at tha
 has the declared kind and ID; it does not search a directory to find a matching ID.
 Duplicate IDs of the same kind in an evaluation are invalid.
 
+Multiple Render Contexts MAY refer to the same immutable Project revision. They remain
+independent evaluations: one Context's View selection, Theme, Actual input, viewport,
+or cache identity MUST NOT become an unstated default for another Context. A
+multi-context conformance fixture must demonstrate this isolation using named contexts.
+
 Recursive includes, glob imports, implicit directory scans, and merge-by-file-order are
 outside v0.1 of this format. They must not be inferred by an implementation.
 

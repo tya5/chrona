@@ -279,11 +279,11 @@ or accessibility capability with an unstated local default.
 | UC-05 | `08`–`10`, `12`, `13` | Command and SceneDelta fixtures | interactive editor adapter/delta computation |
 | UC-06 | `09`–`12` | request schema and reject fixture | AI adapter and authorization policy |
 | UC-07 | `02`, `04`, `05`, `11`, `12` | extension model prose | package schema and fixtures |
-| UC-08 | `06`, `08`, `10`, `12` | annotation ownership rules | annotation command/fixture and editor adapter |
-| UC-09 | `05`–`09`, `13` | named resource format | multi-context fixture set |
-| UC-10 | `06`, `10`, `12`, `13` | resolved/unmatched Actual fixture | ingestion and explicit alignment command |
+| UC-08 | `06`, `08`, `10`, `12` | annotation intent fixture | annotation command and editor adapter |
+| UC-09 | `05`–`09`, `13` | named multi-context fixture | isolation runner and adapters |
+| UC-10 | `06`, `10`, `12`, `13` | resolved/unmatched and resolution-command fixtures | ingestion adapter |
 | UC-11 | `05`, `09`, `10`, `12`, `13` | conformance manifest | runner, CLI, CI integration |
-| UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference fixture | capture command and comparison fixture |
+| UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference and capture-command fixtures | comparison runner |
 | UC-13 | `07`–`09`, `12`, `13` | target capability contract | SVG/PPTX/canvas adapters |
 
 ## 7. Current gaps and release gate

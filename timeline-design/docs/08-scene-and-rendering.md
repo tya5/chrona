@@ -46,6 +46,12 @@ Scene is a derived artifact. It is not the source of truth for dates, dependenci
 
 No input may mean “use the local date”, “use the current branch”, “use the installed font”, or “pick a renderer default”. A consumer that needs such a value must bind and record it before Scene construction.
 
+Target capabilities are requirements, not renderer hints. Before building a target
+artifact, the coordinator compares required distinctions from the View/Style/Theme with
+the Render Context capability declaration. If a required distinction—such as source
+metadata, explanatory-arrow treatment, accessible text, or marker semantics—is absent,
+it emits a stable capability diagnostic rather than silently degrading the output.
+
 ### 3.2 Output
 
 A Scene contains:
