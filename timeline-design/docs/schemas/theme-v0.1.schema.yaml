@@ -1,0 +1,21 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/theme-v0.1"
+title: "Chrona Theme v0.1"
+allOf:
+  - $ref: "presentation-resource-v0.1.schema.yaml"
+  - type: object
+    properties:
+      kind: {const: theme}
+      body:
+        type: object
+        required: [tokens]
+        additionalProperties: false
+        properties:
+          tokens:
+            type: object
+            minProperties: 1
+            additionalProperties:
+              type: object
+              minProperties: 1
+              additionalProperties:
+                type: string

@@ -61,6 +61,29 @@ A Scene MAY be serialized as a cache or inspection artifact, but that serializat
 
 ## 4. Coordinate system and temporal scale
 
+### 4.0 v0.1 Scene profile
+
+A Scene profile declares layout policy, not geometry. The first Date-only profile is
+intentionally closed so renderer adapters cannot silently choose a scale or routing
+algorithm:
+
+```yaml
+version: chrona/presentation/v0.1
+kind: scene-profile
+id: date-lanes
+body:
+  temporalScale: {domain: date, mode: linear}
+  lanes: {mode: view-groups, itemStacking: stable}
+  routing: {dependencies: orthogonal, annotations: avoid-lanes}
+  collision: {labels: diagnose}
+  layoutMetrics: required
+```
+
+`temporalScale`, lane ordering, routing, collision policy, and metrics identity are
+inputs to the Scene cache key. A change to any of them may legitimately issue a global
+`replaceScope`; a local Project or Actual change may not cite this profile as a reason
+to replace unrelated Scene nodes.
+
 ### 4.1 Logical scene coordinates
 
 Scene uses a renderer-neutral two-dimensional logical coordinate system: origin at the viewport's top-left, `x` grows rightward, and `y` grows downward. Coordinates, bounds, stroke widths, and spacing use declared scene units. A renderer is responsible only for converting those units to its target units.

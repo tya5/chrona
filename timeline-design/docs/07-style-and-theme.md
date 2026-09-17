@@ -112,6 +112,29 @@ This preserves the scheduling model's separation between planned constraints and
 
 ## 5. Theme model
 
+### 5.1 v0.1 persistent Theme body
+
+A Theme maps the roles resolved by Style to named, concrete tokens. It has no semantic
+selector and therefore a token-only edit may emit `tokenUpdate` without recomputing a
+View's selection, schedule, or Scene geometry unless the changed token is declared as a
+layout metric.
+
+```yaml
+version: chrona/presentation/v0.1
+kind: theme
+id: engineering-light
+body:
+  tokens:
+    planned: { fill: blue-500, stroke: blue-700 }
+    actual: { fill: green-500, stroke: green-700 }
+    variance-behind: { marker: warning, stroke: amber-700 }
+    actual-missing: { pattern: hatch, marker: unknown }
+```
+
+Each token key is a visual role and each value is a closed map of token references. The
+concrete token vocabulary and inheritance remain a Theme schema concern; a Theme cannot
+introduce a semantic role, and an unbound role is a diagnostic.
+
 ### 5.1 Tokens
 
 A Theme binds visual roles to concrete tokens. Tokens may describe colour, typography, stroke, fill, marker, opacity, dash pattern, corner treatment, spacing, or accessible text alternatives. A role can resolve to several tokens, and a token can be shared by several roles.

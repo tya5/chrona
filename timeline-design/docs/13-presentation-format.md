@@ -209,6 +209,42 @@ Owner-specification semantics
 Evaluation manifest and derived Scene
 ```
 
+### 6.1 Snapshot and Actual v0.1 design
+
+A `snapshot-ref` names an immutable Project input and adds no copied schedule data:
+
+```yaml
+kind: snapshot-ref
+id: baseline-q2
+body:
+  project: {path: ../project.yaml, revision: git:4f2c9ab}
+```
+
+An `actual-set` is an independently revisioned observation collection. Each observation
+has a stable observation ID and either a resolved `projectObjectId` or an external
+identity marked `alignment: unmatched`. Date values use the existing Date-only domain;
+progress, when present, is a decimal fraction in `[0, 1]`.
+
+```yaml
+kind: actual-set
+id: controller-observed
+body:
+  observations:
+    - id: observed-firmware
+      projectObjectId: firmware
+      actual: {start: 2026-04-03, finish: 2026-04-18, progress: 0.75}
+    - id: imported-42
+      externalIdentity: {system: supplier, key: 42}
+      alignment: unmatched
+      actual: {finish: 2026-04-20}
+```
+
+An observation MAY be partial. Missing planned/actual endpoints produce a declared
+comparison facet or diagnostic, never an invented value. Actual-set edits invalidate
+only comparison facets and their downstream Scene primitives unless a View selection or
+layout rule explicitly depends on that facet. They never mutate the Project, Snapshot,
+or derived planned schedule.
+
 The loader reports unknown kind, duplicate resource ID, unresolved reference,
 incompatible version, invalid external path, and owner-semantic diagnostics without
 inventing defaults. Presentation-resource references must form an acyclic graph.
@@ -259,6 +295,25 @@ then asserts the diagnostic or projection behavior supplied by its owning specif
 For example, the first Render Context fixture must name exact paths and revisions but
 does not itself define how a View selector ranks objects; that remains a View Model
 fixture once the selector language is specified.
+
+## 8.1 Deferred semantic-format decisions
+
+Before schemas are promoted from structural validation to conformance, these owning
+documents must settle their remaining body languages in dependency order:
+
+1. Scene profile: Date lane extent, label collision diagnostics, routing constraints,
+   and metric-profile identity;
+2. Snapshot reference: immutable capture identity and Project compatibility checks;
+3. Actual set: observation fields, progress representation, and alignment diagnostics;
+4. Command request serialization: command-type registry and transaction document form.
+
+None may be inferred from a renderer, current Git branch, file order, or GUI state.
+This is deliberately a design gate: adding a permissive schema or fixture before these
+meanings are settled would make an accidental implementation choice appear normative.
+
+The Command Model has now settled its request-document boundary. It is deliberately
+excluded from the presentation resource envelope and Render Context composition; only
+its typed target references may share scalar syntax with this format.
 
 ## 9. Out of scope
 

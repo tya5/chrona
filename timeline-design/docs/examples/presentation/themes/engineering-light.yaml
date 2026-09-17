@@ -1,5 +1,9 @@
 version: chrona/presentation/v0.1
 kind: theme
 id: engineering-light
-body: {}
-
+body:
+  tokens:
+    planned: {fill: blue-500, stroke: blue-700}
+    actual: {fill: green-500, stroke: green-700}
+    variance-behind: {marker: warning, stroke: amber-700}
+    actual-missing: {pattern: hatch, marker: unknown}

@@ -49,6 +49,33 @@ Every command request has the following conceptual fields. Concrete JSON, YAML, 
 
 `baseRevision` is mandatory for canonical mutation unless the target store explicitly provides an equivalent compare-and-set condition. A command must not silently apply to an arbitrary working-tree tip.
 
+### 3.1 v0.1 serialized request document
+
+Command documents are transport or review inputs, never members of the Presentation
+resource graph. Their YAML/JSON form is deliberately separate from the resource
+envelope:
+
+```yaml
+version: chrona/command/v0.1
+commandId: 0195b5d1-actual-edit
+type: editActualObservation
+target:
+  kind: actual-set
+  id: controller-observed
+  path: actuals/controller-observed.yaml
+baseRevision: git:4f2c9ab
+payload:
+  observationId: observed-firmware
+  actual: {finish: 2026-04-18, progress: 0.75}
+reason: supplier confirmation
+```
+
+`type`, `target.kind`, and `payload` are a closed registry owned by this specification.
+The document has no resource `kind` or resource `id`; `commandId` supports idempotent
+retry but does not make the request canonical state. A batch is a separate document
+with one target/base-revision scope and an explicit ordered `commands` list. It is not
+an implicit sequence of files or a GUI undo stack.
+
 ## 4. Command families
 
 ### 4.1 Project structure and fields
