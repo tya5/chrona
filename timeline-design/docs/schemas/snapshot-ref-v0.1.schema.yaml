@@ -1,0 +1,13 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/snapshot-ref-v0.1"
+allOf:
+  - $ref: "presentation-resource-v0.1.schema.yaml"
+  - type: object
+    properties:
+      kind: {const: snapshot-ref}
+      body:
+        type: object
+        required: [project]
+        additionalProperties: false
+        properties:
+          project: {$ref: "presentation-resource-v0.1.schema.yaml#/$defs/projectRef"}

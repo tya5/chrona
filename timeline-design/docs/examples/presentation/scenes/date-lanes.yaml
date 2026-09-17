@@ -1,4 +1,9 @@
 version: chrona/presentation/v0.1
 kind: scene-profile
 id: date-lanes
-body: {}
+body:
+  temporalScale: {domain: date, mode: linear}
+  lanes: {mode: view-groups, itemStacking: stable}
+  routing: {dependencies: orthogonal, annotations: avoid-lanes}
+  collision: {labels: diagnose}
+  layoutMetrics: required

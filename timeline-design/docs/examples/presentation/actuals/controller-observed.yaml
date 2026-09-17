@@ -1,0 +1,12 @@
+version: chrona/presentation/v0.1
+kind: actual-set
+id: controller-observed
+body:
+  observations:
+    - id: observed-firmware
+      projectObjectId: firmware
+      actual: {start: 2026-04-03, finish: 2026-04-18, progress: 0.75}
+    - id: imported-42
+      externalIdentity: {system: supplier, key: 42}
+      alignment: unmatched
+      actual: {finish: 2026-04-20}
