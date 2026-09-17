@@ -22,11 +22,25 @@ python -m pip install -e '.[dev]'
 pytest
 chrona validate path/to/project.yaml
 chrona schedule path/to/project.yaml
+chrona render path/to/project.yaml --output timeline.svg
 ```
 
 `chrona schedule` is a reference implementation for the acyclic Date-only
 subset. It reports diagnostics for unsupported cycles rather than treating all
 cycles as semantic errors.
+
+`chrona render` is the first derived presentation slice: it projects the
+resolved placements into a deterministic SVG timeline. SVG coordinates are not
+project data and are never used to schedule or validate a project.
+
+Try the included controller example:
+
+```bash
+chrona render timeline-design/docs/examples/controller-x.yaml --output controller-x.svg
+```
+
+The checked-in [controller timeline SVG](timeline-design/docs/examples/controller-x.svg)
+is generated from [`controller-x.yaml`](timeline-design/docs/examples/controller-x.yaml).
 
 ## Specification
 

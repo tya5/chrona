@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from chrona.temporal import Calendar, advance, retreat, is_scheduled_amount
+from chrona.validation import validate_project
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,3 +39,17 @@ def test_scheduled_amount_fixture():
     checks = fixture["validation"]
     assert all(is_scheduled_amount(value) for value in checks["valid_scheduled_amounts"])
     assert not any(is_scheduled_amount(value) for value in checks["invalid_scheduled_amounts"])
+
+
+def test_yaml_date_scalars_validate_against_json_compatible_schema():
+    project = {
+        "version": "timeline/v0.1",
+        "project": {"id": "dates"},
+        "objects": {
+            "task": {
+                "type": "task",
+                "schedule": {"mode": "fixed", "start": date(2026, 10, 1), "end": date(2026, 10, 2)},
+            }
+        },
+    }
+    assert validate_project(project) == []

@@ -1,0 +1,61 @@
+version: timeline/v0.1
+
+project:
+  id: controller-x
+  title: Controller X Bring-up
+  calendar: standard
+
+calendars:
+  standard:
+    working_days: [mon, tue, wed, thu, fri]
+
+objects:
+  firmware:
+    type: task
+    title: Firmware Development
+    schedule:
+      mode: fixed
+      start: 2026-10-01
+      end: 2026-11-10
+  evt:
+    type: gate
+    title: EVT
+    schedule:
+      mode: fixed
+      at: 2026-11-20
+  dvt:
+    type: task
+    title: DVT Qualification
+    schedule:
+      mode: scheduled
+      amount: 15wd
+  pvt:
+    type: task
+    title: PVT Qualification
+    schedule:
+      mode: scheduled
+      amount: 10wd
+  ga:
+    type: gate
+    title: General Availability
+    schedule:
+      mode: fixed
+      at: 2027-01-01
+
+relations:
+  - type: dependency
+    from: {object: firmware, endpoint: end}
+    to: {object: evt, endpoint: at}
+    lag: 0d
+  - type: dependency
+    from: {object: evt, endpoint: at}
+    to: {object: dvt, endpoint: start}
+    lag: 3wd
+  - type: dependency
+    from: {object: dvt, endpoint: end}
+    to: {object: pvt, endpoint: start}
+    lag: 2d
+  - type: dependency
+    from: {object: pvt, endpoint: end}
+    to: {object: ga, endpoint: at}
+    lag: 0d

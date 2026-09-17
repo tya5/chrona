@@ -24,7 +24,10 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH) -
     """Run structural validation first, then Core rules which Schema cannot express."""
     diagnostics: list[Diagnostic] = []
     schema = yaml.safe_load(schema_path.read_text(encoding="utf-8"))
-    for error in jsonschema.Draft202012Validator(schema).iter_errors(project):
+    # PyYAML resolves unquoted ISO dates to ``date`` objects, while JSON Schema
+    # describes the canonical JSON-compatible representation as strings. Keep
+    # the semantic value intact for scheduling, but validate its serialization.
+    for error in jsonschema.Draft202012Validator(schema).iter_errors(_schema_value(project)):
         path = "/" + "/".join(str(part) for part in error.absolute_path)
         diagnostics.append(Diagnostic("E_SCHEMA", error.message, path or "/"))
     if diagnostics:
@@ -86,3 +89,13 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH) -
 
 def _resolve_calendar_id(item: dict[str, Any], project: dict[str, Any]) -> str | None:
     return item.get("calendar") or project.get("project", {}).get("calendar")
+
+
+def _schema_value(value: Any) -> Any:
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {key: _schema_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_schema_value(item) for item in value]
+    return value

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1548" height="436" viewBox="0 0 1548 436" role="img" aria-labelledby="title desc">
+<title id="title">Controller X Bring-up</title>
+<desc id="desc">Timeline rendered from Chrona semantic project data.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#6b7280" /></marker></defs>
+<rect width="1548" height="436" fill="#faf8f6" />
+<text x="24" y="34" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#1a1a1a">Controller X Bring-up</text>
+<line x1="180" y1="52" x2="180" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="183" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-10-01</text>
+<line x1="278" y1="52" x2="278" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="281" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-10-08</text>
+<line x1="376" y1="52" x2="376" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="379" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-10-15</text>
+<line x1="474" y1="52" x2="474" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="477" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-10-22</text>
+<line x1="572" y1="52" x2="572" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="575" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-10-29</text>
+<line x1="670" y1="52" x2="670" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="673" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-11-05</text>
+<line x1="768" y1="52" x2="768" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="771" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-11-12</text>
+<line x1="866" y1="52" x2="866" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="869" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-11-19</text>
+<line x1="964" y1="52" x2="964" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="967" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-11-26</text>
+<line x1="1062" y1="52" x2="1062" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="1065" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-12-03</text>
+<line x1="1160" y1="52" x2="1160" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="1163" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-12-10</text>
+<line x1="1258" y1="52" x2="1258" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="1261" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-12-17</text>
+<line x1="1356" y1="52" x2="1356" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="1359" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-12-24</text>
+<line x1="1454" y1="52" x2="1454" y2="400" stroke="#e0dbd7" stroke-width="1" />
+<text x="1457" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-12-31</text>
+<path d="M 740 76 H 810 V 134 H 880" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)" />
+<path d="M 880 134 H 915 V 250 H 950" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)" />
+<path d="M 1244 250 H 1262 V 308 H 1272" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)" />
+<path d="M 1468 308 H 1486 V 192 H 1468" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)" />
+<text x="24" y="81" font-family="system-ui, sans-serif" font-size="13" fill="#1a1a1a">Firmware Development</text>
+<rect x="180" y="65" width="560" height="22" rx="4" fill="#c8553d" />
+<text x="24" y="139" font-family="system-ui, sans-serif" font-size="13" fill="#1a1a1a">EVT</text>
+<circle cx="880" cy="134" r="7" fill="#c8553d" />
+<text x="24" y="197" font-family="system-ui, sans-serif" font-size="13" fill="#1a1a1a">General Availability</text>
+<circle cx="1468" cy="192" r="7" fill="#c8553d" />
+<text x="24" y="255" font-family="system-ui, sans-serif" font-size="13" fill="#1a1a1a">DVT Qualification</text>
+<rect x="950" y="239" width="294" height="22" rx="4" fill="#c8553d" />
+<text x="24" y="313" font-family="system-ui, sans-serif" font-size="13" fill="#1a1a1a">PVT Qualification</text>
+<rect x="1272" y="297" width="196" height="22" rx="4" fill="#c8553d" />
+</svg>
