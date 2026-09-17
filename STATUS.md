@@ -28,12 +28,14 @@ preserved unchanged.
   Core v0.1 conformance fixture execute through the reference scheduler.
 - Every checked-in canonical project example validates structurally and
   semantically, then schedules without an error diagnostic.
+- Zero-lag cycles, positive contradictory cycles, fixed-target authority, and
+  explicit-anchor conflicts execute with their normative diagnostic IDs.
 
 ## Still required for Stable promotion
 
-1. Extend the conformance runner to cover the remaining cyclic-system and
-   diagnostic fixture cases, including expected diagnostic identifiers.
-2. Review any implementation-discovered ambiguity as an ADR or diagnostic before
+1. Review the complete conformance evidence and decide whether it is sufficient
+   to promote the Date-only Core v0.1 profile from Proposed to Stable.
+2. Record any implementation-discovered ambiguity as an ADR or diagnostic before
    changing the Core specification.
 
 The SVG renderer is an intentionally small vertical slice, not the full View,

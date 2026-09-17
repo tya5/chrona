@@ -126,3 +126,67 @@ def test_calendar_placement_cases_execute_through_scheduler():
     result = schedule(project)
     assert result.ok
     assert result.placements["target"] == {"start": date(2026, 10, 13), "end": date(2026, 10, 14)}
+
+
+def test_cycle_fixture_cases_report_the_required_distinction():
+    def cycle(lag):
+        return {
+            "version": "timeline/v0.1",
+            "project": {"id": f"cycle-{lag}"},
+            "objects": {
+                "A": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
+                "B": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
+            },
+            "relations": [
+                {"type": "dependency", "from": {"object": "A", "endpoint": "start"}, "to": {"object": "B", "endpoint": "start"}, "lag": lag},
+                {"type": "dependency", "from": {"object": "B", "endpoint": "start"}, "to": {"object": "A", "endpoint": "start"}, "lag": "0d"},
+            ],
+        }
+
+    assert {item.id for item in schedule(cycle("0d")).diagnostics} == {"E_UNSUPPORTED_CYCLE"}
+    assert {item.id for item in schedule(cycle("1d")).diagnostics} == {"E_UNSATISFIABLE_DEPENDENCIES"}
+
+
+def test_diagnostic_fixture_cases_have_stable_ids():
+    missing_calendar = {
+        "version": "timeline/v0.1",
+        "project": {"id": "missing-calendar"},
+        "objects": {"task": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd", "anchor": {"start": "2026-10-01"}}}},
+    }
+    unknown_reference = {
+        "version": "timeline/v0.1",
+        "project": {"id": "unknown-reference"},
+        "objects": {"task": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-02"}}},
+        "relations": [{"type": "dependency", "from": {"object": "missing", "endpoint": "end"}, "to": {"object": "task", "endpoint": "start"}}],
+    }
+    empty_span = {
+        "version": "timeline/v0.1",
+        "project": {"id": "empty-span"},
+        "objects": {"task": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-01"}}},
+    }
+    assert {item.id for item in validate_project(missing_calendar)} == {"E_CALENDAR_REQUIRED"}
+    assert {item.id for item in validate_project(unknown_reference)} == {"E_REFERENCE"}
+    assert {item.id for item in validate_project(empty_span)} == {"E_INVALID_SPAN"}
+
+
+def test_authority_fixture_cases_execute_through_scheduler():
+    fixed_target = {
+        "version": "timeline/v0.1",
+        "project": {"id": "fixed-target"},
+        "objects": {
+            "source": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-10"}},
+            "target": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-10", "end": "2026-10-11"}},
+        },
+        "relations": [{"type": "dependency", "from": {"object": "source", "endpoint": "end"}, "to": {"object": "target", "endpoint": "start"}, "lag": "2d"}],
+    }
+    anchored_target = {
+        "version": "timeline/v0.1",
+        "project": {"id": "anchored-target"},
+        "objects": {
+            "source": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-12"}},
+            "target": {"type": "task", "schedule": {"mode": "scheduled", "amount": "5d", "anchor": {"start": "2026-10-10"}}},
+        },
+        "relations": [{"type": "dependency", "from": {"object": "source", "endpoint": "end"}, "to": {"object": "target", "endpoint": "start"}, "lag": "0d"}],
+    }
+    assert {item.id for item in schedule(fixed_target).diagnostics} == {"E_FIXED_TARGET_VIOLATION"}
+    assert {item.id for item in schedule(anchored_target).diagnostics} == {"E_CONTRADICTORY_BOUNDS"}

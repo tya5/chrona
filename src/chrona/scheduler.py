@@ -5,7 +5,7 @@ from datetime import date
 from typing import Any
 
 from .diagnostics import Diagnostic
-from .temporal import Calendar, TemporalError, advance, as_date, retreat
+from .temporal import Calendar, TemporalError, advance, as_date, parse_amount, retreat
 from .validation import validate_project
 
 
@@ -63,8 +63,11 @@ def schedule(project: dict[str, Any]) -> ScheduleResult:
             pending.remove(object_id)
             progressed = True
         if not progressed:
+            positive_cycle = _has_positive_dependency_cycle(project)
+            diagnostic_id = "E_UNSATISFIABLE_DEPENDENCIES" if positive_cycle else "E_UNSUPPORTED_CYCLE"
+            message = "Dependency system has no feasible solution" if positive_cycle else "Unresolved dependency system; reference scheduler supports an acyclic subset"
             for object_id in sorted(pending):
-                diagnostics.append(Diagnostic("E_UNSUPPORTED_CYCLE", "Unresolved dependency system; reference scheduler supports an acyclic subset", f"/objects/{object_id}"))
+                diagnostics.append(Diagnostic(diagnostic_id, message, f"/objects/{object_id}"))
             break
 
     _validate_fixed_targets(project, placements, calendars, diagnostics)
@@ -152,3 +155,39 @@ def _validate_fixed_targets(project: dict, placements: dict, calendars: dict[str
         actual = placements[target_id][relation["to"]["endpoint"]]
         if actual < required:
             diagnostics.append(Diagnostic("E_FIXED_TARGET_VIOLATION", "Fixed target violates dependency lower bound", f"/relations/{relation.get('id', target_id)}"))
+
+
+def _has_positive_dependency_cycle(project: dict) -> bool:
+    """Prove an unsatisfiable cycle for calendar-day constraints only.
+
+    WorkPeriod edges depend on a calendar and are intentionally left to the
+    acyclic reference subset. A positive calendar-day cycle, however, is
+    contradictory regardless of an anchor and has a normative diagnostic.
+    """
+    edges: list[tuple[tuple[str, str], tuple[str, str], int]] = []
+    nodes: set[tuple[str, str]] = set()
+    for relation in project.get("relations", []):
+        lag = relation.get("lag", "0d")
+        amount = lag if isinstance(lag, str) else lag["value"]
+        try:
+            parts = parse_amount(amount)
+        except TemporalError:
+            continue
+        if any(unit == "wd" for _, unit in parts):
+            continue
+        weight = sum(number * (7 if unit == "w" else 1) for number, unit in parts)
+        source = (relation["from"]["object"], relation["from"]["endpoint"])
+        target = (relation["to"]["object"], relation["to"]["endpoint"])
+        nodes.update((source, target))
+        edges.append((source, target, weight))
+
+    distance = {node: 0 for node in nodes}
+    for _ in range(len(nodes)):
+        changed = False
+        for source, target, weight in edges:
+            if distance[target] < distance[source] + weight:
+                distance[target] = distance[source] + weight
+                changed = True
+        if not changed:
+            return False
+    return bool(edges)
