@@ -1,0 +1,22 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/style-v0.1"
+allOf:
+  - $ref: "presentation-resource-v0.1.schema.yaml"
+  - type: object
+    properties:
+      kind: {const: style}
+      body:
+        type: object
+        required: [rules]
+        additionalProperties: false
+        properties:
+          rules:
+            type: array
+            items:
+              type: object
+              required: [id, when, addRoles]
+              additionalProperties: false
+              properties:
+                id: {type: string, minLength: 1}
+                when: {type: object, minProperties: 1, additionalProperties: {type: [string, boolean]}}
+                addRoles: {type: array, minItems: 1, uniqueItems: true, items: {type: string, minLength: 1}}

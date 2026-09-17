@@ -1,0 +1,17 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/command-request-v0.1"
+type: object
+required: [version, commandId, type, target, baseRevision, payload]
+additionalProperties: false
+properties:
+  version: {const: chrona/command/v0.1}
+  commandId: {type: string, minLength: 1}
+  type: {type: string, minLength: 1}
+  target:
+    type: object
+    required: [kind, id, path]
+    additionalProperties: false
+    properties: {kind: {type: string}, id: {type: string}, path: {type: string}}
+  baseRevision: {type: string, pattern: "^(?:git:[0-9A-Fa-f]{7,64}|store:\\S+)$"}
+  payload: {type: object}
+  reason: {type: string}

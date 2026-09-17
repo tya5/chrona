@@ -1,0 +1,16 @@
+cases:
+  - id: style-plan-actual
+    resource: styles/plan-actual.yaml
+    schema: ../../schemas/style-v0.1.schema.yaml
+  - id: command-accepted-shape
+    resource: commands/edit-actual-accepted.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: command-stale-shape
+    resource: commands/edit-actual-rejected.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: local-actual-delta
+    resource: scene-delta-local-actual.yaml
+    expect: {replaceScope: null}
+  - id: global-viewport-delta
+    resource: scene-delta-global-viewport.yaml
+    expect: {replaceScope: scene}

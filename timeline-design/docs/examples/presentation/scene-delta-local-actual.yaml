@@ -1,0 +1,8 @@
+baseEvaluationId: eval-before
+targetEvaluationId: eval-after
+reason: actual-observation-change
+upsert: [object:firmware:actual, object:firmware:variance]
+remove: []
+reorder: []
+tokenUpdate: []
+replaceScope: null

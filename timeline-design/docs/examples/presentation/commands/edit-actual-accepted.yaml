@@ -1,0 +1,6 @@
+version: chrona/command/v0.1
+commandId: edit-actual-001
+type: editActualObservation
+target: {kind: actual-set, id: controller-observed, path: ../actuals/controller-observed.yaml}
+baseRevision: git:4f2c9ab
+payload: {observationId: observed-firmware, actual: {finish: 2026-04-18, progress: 0.75}}

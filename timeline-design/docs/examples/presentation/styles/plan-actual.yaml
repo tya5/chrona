@@ -1,5 +1,17 @@
 version: chrona/presentation/v0.1
 kind: style
 id: plan-actual
-body: {}
-
+body:
+  rules:
+    - id: planned-span
+      when: {facet: planned, sourceType: span}
+      addRoles: [planned]
+    - id: actual-span
+      when: {facet: actual, sourceType: span}
+      addRoles: [actual]
+    - id: finish-behind
+      when: {facet: finishDelta, category: behind}
+      addRoles: [variance-behind]
+    - id: actual-missing
+      when: {facet: missingActual}
+      addRoles: [actual-missing]
