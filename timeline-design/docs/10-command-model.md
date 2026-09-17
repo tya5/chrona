@@ -1,6 +1,6 @@
 # Command Model
 
-**Status:** Draft
+**Status:** Proposed
 **Depends on:** [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [06 View Model](06-view-model.md), [09 Application Architecture](09-application-architecture.md)
 **Owns:** canonical mutation interface, command preconditions and results, validation and transaction boundaries, undo/redo semantics, and the relationship between semantic changes and Git revisions.
 

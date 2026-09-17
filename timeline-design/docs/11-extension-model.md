@@ -1,6 +1,6 @@
 # Extension Model
 
-**Status:** Draft
+**Status:** Proposed
 **Depends on:** [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [05 Project Format](05-project-format.md), [07 Style and Theme](07-style-and-theme.md), [10 Command Model](10-command-model.md)
 **Owns:** declarative domain packages, custom profiles and typed fields, profile inheritance and fallback, derived-field boundaries, extension validation and compatibility, and the separation of semantic extensions from code plugins.
 

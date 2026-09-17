@@ -1,6 +1,6 @@
 # Application Architecture
 
-**Status:** Draft
+**Status:** Proposed
 **Depends on:** Core Specification (`01`–`05`), Presentation Specification (`06`–`08`)
 **Constrained by:** [12 Quality and Invariants](12-quality-and-invariants.md)
 **Owns:** runtime component responsibilities, dependency direction, evaluation and mutation flows, persistence boundaries, derived-state lifecycle, and adapter boundaries.

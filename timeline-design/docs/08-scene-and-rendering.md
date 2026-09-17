@@ -1,6 +1,6 @@
 # Scene and Rendering
 
-**Status:** Draft
+**Status:** Proposed
 **Depends on:** [06 View Model](06-view-model.md), [07 Style and Theme](07-style-and-theme.md)
 **Owns:** renderer-neutral scene representation, semantic-to-primitive projection, coordinate mapping, renderer interface, and export boundaries.
 

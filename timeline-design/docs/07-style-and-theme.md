@@ -1,6 +1,6 @@
 # Style and Theme
 
-**Status:** Draft
+**Status:** Proposed
 **Depends on:** [06 View Model](06-view-model.md), [01 Concepts](01-concepts.md), [02 Domain Model](02-domain-model.md)
 **Leads to:** `08 Scene and Rendering`
 
