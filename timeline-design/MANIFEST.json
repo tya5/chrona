@@ -1,0 +1,37 @@
+{
+  "artifact_set": "timeline-design",
+  "core_specification": "v0.1",
+  "status": "Proposed",
+  "authoritative_core_documents": [
+    "docs/00-vision.md",
+    "docs/01-concepts.md",
+    "docs/02-domain-model.md",
+    "docs/03-temporal-model.md",
+    "docs/04-scheduling-model.md",
+    "docs/05-project-format.md",
+    "docs/12-quality-and-invariants.md"
+  ],
+  "known_provisional_areas": [
+    "independent scheduler implementation validation (Stable blocker)",
+    "full JSON Schema + semantic validation of canonical examples (Stable blocker)",
+    "DateTime scheduling profile (deferred)",
+    "precision/uncertainty (deferred)",
+    "multi-file composition (deferred)",
+    "extension package acquisition (deferred)"
+  ],
+  "review": {
+    "status": "completed",
+    "artifact": "docs/core-v0.1-design-review.md",
+    "readiness": "Proposed"
+  },
+  "conformance_fixture": "docs/examples/conformance-v0.1.yaml",
+  "semantic_rules": "docs/core-v0.1-semantic-rules.md",
+  "validation": "VALIDATION.json",
+  "stable_readiness_review": "docs/core-v0.1-stable-readiness-review.md",
+  "diagnostics": "docs/core-v0.1-diagnostics.md",
+  "reference_conformance_result": {
+    "returncode": 0,
+    "stdout": "PASS temporal reference fixtures",
+    "stderr": "Spreadsheet runtime warmup failed during python startup\nTraceback (most recent call last):\n  File \"/tmp/tmp.L2TH2Y5coc/artifact_tool_v2-2.8.22/artifact_tool/patches/warm_spreadsheet_runtime_on_startup.py\", line 26, in warm_spreadsheet_runtime_on_startup\n  File \"/tmp/tmp.L2TH2Y5coc/artifact_tool_v2-2.8.22/artifact_tool/spreadsheet_warmup.py\", line 785, in warm_spreadsheet_runtime\n  File \"/tmp/tmp.L2TH2Y5coc/artifact_tool_v2-2.8.22/artifact_tool/spreadsheet_warmup.py\", line 720, in _warm_feature_flows\n  File \"/tmp/tmp.L2TH2Y5coc/artifact_tool_v2-2.8.22/artifact_tool/spreadsheet_warmup.py\", line 704, in _warm_collaboration_flows\n  File \"/tmp/tmp.L2TH2Y5coc/artifact_tool_v2-2.8.22/artifact_tool/generated/interface/models.py\", line 32317, in hydrate_crdt_from_proto\n  File \"/tmp/tmp.L2TH2Y5coc/artifact_tool_v2-2.8.22/artifact_tool/rpc/remote.py\", line 749, in __call__\n  File \"/tmp/tmp.L2TH2Y5coc/artifact_tool_v2-2.8.22/artifact_tool/rpc/client.py\", line 150, in call\nartifact_tool.rpc.client.RemoteError: hydrateCrdtFromProto requires an empty collaborative document."
+  }
+}

@@ -1,0 +1,36 @@
+version: timeline/v0.1
+
+project:
+  id: calendar-example
+  calendar: standard
+
+calendars:
+  standard:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - date: 2026-10-12
+        working: false
+
+objects:
+  predecessor:
+    type: task
+    schedule:
+      mode: fixed
+      start: 2026-10-05
+      end: 2026-10-09
+
+  successor:
+    type: task
+    schedule:
+      mode: scheduled
+      amount: 3wd
+
+relations:
+  - type: dependency
+    from:
+      object: predecessor
+      endpoint: end
+    to:
+      object: successor
+      endpoint: start
+    lag: 1wd

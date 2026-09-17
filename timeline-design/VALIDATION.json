@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-09-17T00:43:48.129002+00:00",
+  "yaml_parse": {
+    "docs/examples/calendar.yaml": "ok",
+    "docs/examples/conformance-v0.1.yaml": "ok",
+    "docs/examples/minimal.yaml": "ok",
+    "docs/examples/semiconductor.yaml": "ok",
+    "docs/examples/dependencies.yaml": "ok",
+    "docs/schemas/semiconductor.example.yaml": "ok",
+    "docs/schemas/project-v0.1.schema.yaml": "ok"
+  },
+  "basic_semantic_issues": [],
+  "result": "pass"
+}

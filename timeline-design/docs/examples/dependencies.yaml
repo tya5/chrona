@@ -1,0 +1,45 @@
+version: timeline/v0.1
+
+project:
+  id: dependencies
+  title: Dependency Semantics
+  calendar: standard
+
+calendars:
+  standard:
+    working_days: [mon, tue, wed, thu, fri]
+
+objects:
+  design:
+    type: task
+    title: Design
+    schedule:
+      mode: fixed
+      start: 2026-10-01
+      end: 2026-10-09
+
+  validation:
+    type: task
+    title: Validation
+    schedule:
+      mode: scheduled
+      amount: 5wd
+
+  evt:
+    type: milestone
+    title: EVT
+    schedule:
+      mode: fixed
+      at: 2026-10-23
+
+relations:
+  - id: design-validation
+    type: dependency
+    from:
+      object: design
+      endpoint: end
+    to:
+      object: validation
+      endpoint: start
+    lag: 1wd
+

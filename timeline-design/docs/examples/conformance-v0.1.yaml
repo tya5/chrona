@@ -1,0 +1,258 @@
+version: timeline-conformance/v0.1
+temporal:
+  calendar_period:
+  - name: ordinary-day
+    input:
+      date: 2026-01-15
+      op: advance
+      amount: 1mo
+    expected: 2026-02-15
+  - name: month-end-clamp
+    input:
+      date: 2026-01-31
+      op: advance
+      amount: 1mo
+    expected: 2026-02-28
+  - name: leap-month-end-clamp
+    input:
+      date: 2028-01-31
+      op: advance
+      amount: 1mo
+    expected: 2028-02-29
+  - name: leap-year-year-clamp
+    input:
+      date: 2028-02-29
+      op: advance
+      amount: 1y
+    expected: 2029-02-28
+  - name: retreat-month-clamp
+    input:
+      date: 2026-03-31
+      op: retreat
+      amount: 1mo
+    expected: 2026-02-28
+  - name: non-invertibility-is-explicit
+    steps:
+    - date: 2026-01-31
+      op: advance
+      amount: 1mo
+      expected: 2026-02-28
+    - date: 2026-02-28
+      op: retreat
+      amount: 1mo
+      expected: 2026-01-28
+    invariant_expected: false
+  - name: compound-largest-first
+    input:
+      date: 2026-01-31
+      op: advance
+      amount: 1mo 3d
+    expected: 2026-03-03
+  - name: week-is-seven-calendar-days
+    input:
+      date: 2026-10-09
+      op: advance
+      amount: 1w
+    expected: 2026-10-16
+  work_period:
+    calendar:
+      working_days:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+      exceptions:
+      - date: 2026-10-12
+        working: false
+      - date: 2026-10-17
+        working: true
+    cases:
+    - name: zero-is-identity-working-date
+      input:
+        date: 2026-10-09
+        op: advance
+        amount: 0wd
+      expected: 2026-10-09
+    - name: zero-is-identity-nonworking-date
+      input:
+        date: 2026-10-10
+        op: advance
+        amount: 0wd
+      expected: 2026-10-10
+    - name: skip-weekend-and-holiday
+      input:
+        date: 2026-10-09
+        op: advance
+        amount: 1wd
+      expected: 2026-10-13
+    - name: working-exception-on-saturday
+      input:
+        date: 2026-10-16
+        op: advance
+        amount: 1wd
+      expected: 2026-10-17
+    - name: retreat-over-holiday
+      input:
+        date: 2026-10-13
+        op: retreat
+        amount: 1wd
+      expected: 2026-10-09
+    - name: inverse-on-valid-working-positions
+      steps:
+      - date: 2026-10-09
+        op: advance
+        amount: 2wd
+        expected: 2026-10-14
+      - date: 2026-10-14
+        op: retreat
+        amount: 2wd
+        expected: 2026-10-09
+      invariant_expected: true
+scheduling:
+  dependency_bounds:
+  - name: fs-zero-lag-half-open
+    source:
+      endpoint: end
+      value: 2026-10-10
+    target:
+      endpoint: start
+    lag: 0d
+    expected_lower_bound: 2026-10-10
+  - name: fs-one-calendar-day
+    source:
+      endpoint: end
+      value: 2026-10-10
+    target:
+      endpoint: start
+    lag: 1d
+    expected_lower_bound: 2026-10-11
+  - name: ss-negative-lag
+    source:
+      endpoint: start
+      value: 2026-10-10
+    target:
+      endpoint: start
+    lag: -2d
+    expected_lower_bound: 2026-10-08
+  - name: ff-zero-lag
+    source:
+      endpoint: end
+      value: 2026-10-20
+    target:
+      endpoint: end
+    lag: 0d
+    expected_lower_bound: 2026-10-20
+  - name: point-to-span
+    source:
+      endpoint: at
+      value: 2026-10-20
+    target:
+      endpoint: start
+    lag: 3d
+    expected_lower_bound: 2026-10-23
+  multiple_bounds:
+  - name: strongest-lower-bound-wins
+    bounds:
+    - endpoint: start
+      min: 2026-10-10
+    - endpoint: start
+      min: 2026-10-15
+    expected_min: 2026-10-15
+  - name: contradictory-bounds
+    bounds:
+    - endpoint: start
+      min: 2026-10-20
+    - endpoint: start
+      max: 2026-10-15
+    expected: schedule_error
+  calendar_placement:
+  - name: relation-bound-does-not-round
+    relation_bound: 2026-10-10
+    target_calendar: standard
+    expected_relation_bound: 2026-10-10
+    expected_earliest_valid_placement: 2026-10-13
+  - name: workperiod-one-day-span
+    start: '2026-10-13'
+    amount: 1wd
+    expected_end: '2026-10-14'
+  - name: candidate-normalizes-forward
+    candidate_start: '2026-10-10'
+    target_calendar: standard
+    expected_start: '2026-10-13'
+  cycles:
+  - name: zero-lag-cycle-not-inherently-unsatisfiable
+    constraints:
+    - A.start >= B.start
+    - B.start >= A.start
+    semantic_result: satisfiable
+    implementation_may_report: unsupported_cyclic_system
+  - name: positive-cycle-is-unsatisfiable
+    constraints:
+    - A.start >= B.start + 1d
+    - B.start >= A.start + 1d
+    semantic_result: unsatisfiable
+  authority:
+  - name: fixed-span-authority
+    input:
+      mode: fixed
+      start: 2026-10-01
+      end: 2026-10-10
+    derived:
+      duration_calendar_days: 9
+    forbidden_authoritative_fields:
+    - amount
+  - name: scheduled-start-anchor
+    input:
+      mode: scheduled
+      anchor:
+        start: 2026-10-01
+      amount: 5d
+    expected:
+      start: 2026-10-01
+      end: 2026-10-06
+  - name: fixed-target-violation
+    fixed_target:
+      start: '2026-10-10'
+    dependency_lower_bound: '2026-10-12'
+    expected: E_FIXED_TARGET_VIOLATION
+  - name: anchored-start-conflict
+    scheduled:
+      anchor:
+        start: '2026-10-10'
+      amount: 5d
+    dependency_start_lower_bound: '2026-10-12'
+    expected: E_CONTRADICTORY_BOUNDS
+validation:
+  valid_scheduled_amounts:
+  - 5wd
+  - 20d
+  - 2w
+  invalid_scheduled_amounts:
+  - 1mo
+  - 1y
+  - 0wd
+  - -3wd
+  - 1.5d
+  invalid_spans:
+  - start: 2026-10-10
+    end: 2026-10-10
+  - start: 2026-10-11
+    end: 2026-10-10
+  invalid_cross_domain_dependency:
+    source:
+      type: Date
+      value: 2026-10-10
+    target:
+      type: DateTime
+      value: '2026-10-10T10:00:00+09:00'
+    expected: temporal_type_error
+  diagnostics:
+  - case: missing-work-calendar
+    expected: E_CALENDAR_REQUIRED
+  - case: unknown-object-reference
+    expected: E_REFERENCE
+  - case: date-to-datetime-dependency
+    expected: E_TEMPORAL_TYPE
+  - case: empty-fixed-span
+    expected: E_INVALID_SPAN

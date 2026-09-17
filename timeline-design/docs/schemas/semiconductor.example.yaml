@@ -1,0 +1,19 @@
+version: timeline-extension/v0.1
+id: semiconductor-example
+
+profiles:
+  gate:
+    extends: milestone
+    fields:
+      approval:
+        type: enum
+        values: [pending, approved, rejected]
+
+fields:
+  component:
+    type: enum
+    values: [controller, nand, system]
+
+entities:
+  team:
+    extends: entity

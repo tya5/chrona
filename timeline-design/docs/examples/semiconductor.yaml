@@ -1,0 +1,45 @@
+version: timeline/v0.1
+
+project:
+  id: controller-x
+  title: Controller X
+  calendar: standard
+
+extensions:
+  - ../schemas/semiconductor.example.yaml
+
+calendars:
+  standard:
+    working_days: [mon, tue, wed, thu, fri]
+
+entities:
+  fw-team:
+    type: team
+    title: Firmware Team
+
+objects:
+  fw:
+    type: task
+    title: Firmware Development
+    fields:
+      team: fw-team
+      component: controller
+    schedule:
+      mode: fixed
+      start: 2026-10-01
+      end: 2026-11-10
+
+  evt:
+    type: gate
+    title: EVT
+    fields:
+      approval: pending
+    schedule:
+      mode: fixed
+      at: 2026-11-20
+annotations:
+  evt-approval:
+    kind: callout
+    text: Customer approval required
+    anchor:
+      object: evt

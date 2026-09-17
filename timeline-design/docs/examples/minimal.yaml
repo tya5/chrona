@@ -1,0 +1,21 @@
+version: timeline/v0.1
+
+project:
+  id: minimal
+  title: Minimal Example
+
+objects:
+  design:
+    type: task
+    title: Design
+    schedule:
+      mode: fixed
+      start: 2026-10-01
+      end: 2026-10-10
+
+  review:
+    type: milestone
+    title: Review
+    schedule:
+      mode: fixed
+      at: 2026-10-10
