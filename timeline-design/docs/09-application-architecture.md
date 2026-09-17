@@ -1,7 +1,8 @@
 # Application Architecture
 
 **Status:** Draft
-**Depends on:** Core Specification (`01`–`05`), Presentation Specification (`06`–`08`), [12 Quality and Invariants](12-quality-and-invariants.md)
+**Depends on:** Core Specification (`01`–`05`), Presentation Specification (`06`–`08`)
+**Constrained by:** [12 Quality and Invariants](12-quality-and-invariants.md)
 **Owns:** runtime component responsibilities, dependency direction, evaluation and mutation flows, persistence boundaries, derived-state lifecycle, and adapter boundaries.
 
 ## 1. Purpose
@@ -113,20 +114,9 @@ A cache hit is an optimization only. It must be observationally equivalent to re
 
 The Runtime Coordinator MUST translate each accepted Command change set into an explicit **impact set** before updating an interactive consumer. The impact set contains the semantic and presentation inputs whose derived results may differ. It is calculated from stable IDs, changed fields, declared dependency edges, View selection/grouping/order rules, Style selectors, Theme token references, and Scene layout constraints.
 
-The coordinator MAY rebuild a larger internal cache when that is cheaper or simpler, but it MUST NOT require the GUI to discard and recreate every rendered node merely because one canonical value changed. It compares the previous and next completed Scenes by `sceneId` and emits a `SceneDelta` containing only the required operations:
+The coordinator MAY rebuild a larger internal cache when that is cheaper or simpler, but it MUST NOT require the GUI to discard and recreate every rendered node merely because one canonical value changed. It compares the previous and next completed Scenes by `sceneId` and emits the `SceneDelta` defined by [08 Scene and Rendering](08-scene-and-rendering.md).
 
-| Delta operation | Meaning |
-|---|---|
-| `upsert` | Create or update one node while preserving its `sceneId` identity |
-| `remove` | Remove a no-longer-present node |
-| `reorder` | Change deterministic sibling order without recreating unaffected siblings |
-| `tokenUpdate` | Change shared resolved token values without replacing unrelated geometry |
-| `viewportUpdate` | Change explicit viewport/clipping state |
-| `replaceScope` | Replace a declared affected group or whole Scene, with an invalidation reason |
-
-Every `SceneDelta` names its base and target evaluation identities, source revision identities, and invalidation reason. An adapter applies it atomically or retains the prior completed Scene; it MUST NOT combine nodes from incompatible evaluations.
-
-A whole-Scene `replaceScope` is permitted only when the impact domain is intrinsically global—for example a View/window/scale change, viewport reflow that changes all layout, a Theme or Style rule affecting all nodes, or a scheduling change whose declared dependency closure reaches all displayed objects. It is not an acceptable default for a local field edit. The coordinator records the reason so performance tests and diagnostics can distinguish a necessary global invalidation from an accidental full refresh.
+A whole-Scene `replaceScope` is permitted only when the impact domain is intrinsically global—for example a View/window/scale change, viewport reflow that changes all layout, a Theme or Style rule affecting all nodes, or a scheduling change whose declared dependency closure reaches all displayed objects. It is not an acceptable default for a local field edit. The coordinator supplies the invalidation reason required by the SceneDelta contract so performance tests and diagnostics can distinguish a necessary global invalidation from an accidental full refresh.
 
 ### 5.5 Interactive transient state
 

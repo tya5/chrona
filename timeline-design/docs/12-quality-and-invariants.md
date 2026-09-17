@@ -1,8 +1,9 @@
 # Quality Goals and Architectural Invariants
 
-**Status:** Proposed  
+**Status:** Draft (cross-layer expansion)
+**Core v0.1 invariant subset:** Proposed
 **Scope:** Core Specification v0.1 and cross-layer architecture
-**Depends on:** `00`–`11`
+**Cross-cuts:** `00`–`11`
 
 ## 1. Purpose
 

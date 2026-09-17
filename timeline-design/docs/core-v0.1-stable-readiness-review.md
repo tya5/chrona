@@ -67,6 +67,6 @@ expose a contradiction.
 - snapshot/baseline persistence;
 - multi-file merge semantics;
 - extension package acquisition;
-- presentation architecture.
+- presentation implementation, persistence formats, and adapter conformance.
 
 These are explicitly outside the Stable Core v0.1 scheduling contract.

@@ -91,8 +91,13 @@ Theme composition is deterministic:
 
 1. a required base theme defines fallback tokens for the standard roles;
 2. a named theme may override those tokens;
-3. a view may declare a bounded, explicit token override set for that render context;
+3. the explicit Render Context selects the active named theme or declared theme variant;
 4. unresolved required tokens are diagnostics, not renderer defaults.
+
+A View MUST NOT override concrete token values. A View may expose semantic emphasis for
+Style to resolve, but active-theme selection belongs to the explicit Render Context and
+concrete token values belong to Theme declarations. This keeps colours, fonts, strokes,
+and spacing out of View semantics.
 
 Style composition is likewise deterministic. The intended precedence is base role assignment, profile or typed-field rule, then view-local rule; at the same level, later declared rules override earlier rules. The concrete selector syntax is deferred, but its specificity and source-order behavior must be serializable and testable.
 

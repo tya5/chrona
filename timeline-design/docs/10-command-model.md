@@ -85,7 +85,14 @@ Semantic annotation commands mutate Project annotations; presentation annotation
 
 ### 4.4 Actual and Snapshot inputs
 
-When a named Actual input store is available, `recordActualObservation`, `editActualObservation`, and `removeActualObservation` mutate that independently identified store. They require stable object alignment and report unmatched references as diagnostics. They do not change planned dependencies, planned duration, forecast, or schedule.
+When a named Actual input store is available, `recordActualObservation`,
+`editActualObservation`, and `removeActualObservation` mutate that independently
+identified store. An observation MAY carry either a resolved stable Project object ID or
+an external observation identity with an explicit `unmatched` alignment state. A
+resolved Project object ID must validate; an unmatched observation is accepted with a
+diagnostic and is never matched by title similarity. This permits imported or newly
+recorded facts to be reviewed before alignment. These commands do not change planned
+dependencies, planned duration, forecast, or schedule.
 
 Snapshot capture, selection, and persistence syntax remain deferred. A command may reference a named immutable Snapshot only where its future store specification permits it; no command may reinterpret a mutable Project revision as a Snapshot without an explicit capture operation.
 

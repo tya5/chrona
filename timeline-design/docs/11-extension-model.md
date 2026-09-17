@@ -134,7 +134,9 @@ Extensions cannot add resource capacity, cost optimization, timesheets, ticket w
 
 Semantic packages may declare namespaced visual-role vocabulary and token requirements that Style and Theme can resolve. They must not embed literal renderer geometry, SVG markup, tldraw records, or executable drawing behavior in Project data.
 
-Renderer integrations, custom Scene primitives, importers, and editor behaviors are code plugins installed and trusted by the host, not semantic package data. A code plugin:
+Renderer integrations, renderer-private composite drawing behavior, importers, and
+editor behaviors are code plugins installed and trusted by the host, not semantic
+package data. A code plugin:
 
 - declares its compatible package/API versions and required host capabilities;
 - receives only the completed, typed inputs appropriate to its adapter boundary;
@@ -142,6 +144,12 @@ Renderer integrations, custom Scene primitives, importers, and editor behaviors 
 - must report capability or fidelity loss rather than silently changing semantics.
 
 Plugin acquisition, sandboxing, trust, and approval policy are deferred to Application Architecture. Installation of a plugin does not itself grant mutation authority or change the meaning of a Project.
+
+A plugin MUST NOT introduce a new standard Scene primitive by private convention. New
+standard primitives require the versioned Scene specification change defined in
+[08 Scene and Rendering](08-scene-and-rendering.md). A renderer-private composite may
+only implement already-defined Scene semantics and must not be required in canonical
+Project data.
 
 ## 9. Compatibility, migration, and diagnostics
 

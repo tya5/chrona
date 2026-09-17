@@ -175,6 +175,26 @@ SVG is a deterministic export target. An SVG renderer maps primitives to SVG ele
 
 An interactive canvas adapter projects the Scene into the canvas store and preserves a mapping back to `sceneId` and source references. The canvas store is not the Project source of truth. A user interaction becomes a later Application Architecture command that proposes a Project or View change, which must be validated against the relevant specification before a new Scene is built.
 
+An interactive adapter initializes from a completed Scene and supports incremental
+reconciliation through a **SceneDelta**. A SceneDelta is a renderer-interface value,
+not a new canonical or derived semantic state. It has a base evaluation identity, a
+target evaluation identity, source revision identities, an invalidation reason, and an
+ordered list of operations:
+
+| Operation | Meaning |
+|---|---|
+| `upsert` | Create or update one node while preserving its `sceneId` |
+| `remove` | Remove a node no longer present in the target Scene |
+| `reorder` | Change deterministic sibling order without replacing unaffected siblings |
+| `tokenUpdate` | Change shared resolved token values without replacing unrelated geometry |
+| `viewportUpdate` | Change explicit viewport or clipping state |
+| `replaceScope` | Replace a declared affected group or whole Scene |
+
+An adapter MUST apply a SceneDelta atomically only when its base evaluation identity
+matches its completed Scene. On mismatch it retains the completed Scene and requests a
+compatible delta or completed Scene. A whole-Scene `replaceScope` is valid only with a
+declared global invalidation reason; it is not the default for a local semantic change.
+
 ### 8.3 Future renderers
 
 Canvas, PDF, image, and presentation-file exports are possible targets if they can declare their capability limits. A target that cannot preserve a required distinction must report that loss; it may not erase it without notice.
@@ -192,4 +212,4 @@ This document does not define:
 
 ## 10. Boundary to Application Architecture
 
-Application Architecture may choose concrete layout engines, text-shaping libraries, SVG libraries, cache keys, and renderer adapters. It must implement this document's explicit-input, identity-preservation, and reproducibility constraints. Any new Scene primitive, scale behavior, or editable-canvas round-trip rule requires a versioned specification change rather than an implementation-only convention.
+Application Architecture may choose concrete layout engines, text-shaping libraries, SVG libraries, cache keys, and renderer adapters. It must implement this document's explicit-input, identity-preservation, reproducibility, and SceneDelta reconciliation constraints. Any new standard Scene primitive, scale behavior, or editable-canvas round-trip rule requires a versioned specification change rather than an implementation-only convention.
