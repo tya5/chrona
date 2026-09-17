@@ -166,6 +166,7 @@ docs/
 ├── 12-quality-and-invariants.md
 ├── 13-presentation-format.md
 ├── 14-use-case-catalog.md
+├── final-design-remediation-plan.md
 ├── runtime-reactivity-design.md
 ├── adapter-output-design.md
 │
@@ -668,6 +669,29 @@ used to assess whether Chrona's specifications meet the intended use cases.
 Domain, scheduling, presentation, command, or renderer semantics. It references their
 owning specifications rather than redefining them.
 
+---
+
+### 5.17 `final-design-remediation-plan.md`
+
+**Purpose**
+
+Records the ordered response when the final cross-document design review identifies
+blocking gaps. It is the authoritative work plan for closing those gaps without
+starting implementation prematurely.
+
+**Owns**
+
+- the review finding inventory and its severity;
+- dependency-aware remediation order;
+- required specification, schema, fixture, and conformance evidence for each finding;
+- completion criteria for a renewed final review; and
+- correction of stale maturity or readiness claims.
+
+**Does not own**
+
+The semantics being corrected. Each remediation item names the document that owns its
+resulting normative definition.
+
 ## 6. Supporting Artifact Types
 
 ### 6.1 Architecture Decision Records
@@ -1036,6 +1060,11 @@ following are true:
 Meeting this gate does not mean that GUI, renderer, CLI, AI, or exporter implementations
 exist. It means their implementations can proceed without inventing semantic or
 architectural behavior.
+
+When a final review finds a gate-blocking inconsistency, its completion claim is
+invalidated until `final-design-remediation-plan.md` is complete and a new final review
+has recorded the evidence. The remediation plan MUST update the affected owners before
+any implementation work relies on the disputed contract.
 
 ## 16. Guiding Boundary
 

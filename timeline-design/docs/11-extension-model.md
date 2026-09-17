@@ -32,6 +32,21 @@ Only the first category contributes to canonical Project semantics.
 
 A **domain package** is a versioned, declarative collection of profiles, field schemas, relation constraints, derived-field declarations, and optional examples. Its concrete file layout and acquisition mechanism are deferred, but a resolved package has the following conceptual manifest.
 
+For v0.1, its persisted manifest uses the common package identity below. Retrieval may
+remain implementation-defined, but a loaded manifest is canonical and schema-valid:
+
+```yaml
+version: chrona/profile/v0.1
+packageId: semiconductor-development
+requires: {projectFormat: timeline/v0.1}
+profiles:
+  EVT: {extends: milestone}
+```
+
+Each profile has an `extends` parent, declared fields, and optional declarative
+constraints. A standalone type list is not a package and cannot establish extension
+compatibility.
+
 | Field | Meaning |
 |---|---|
 | `packageId` | Stable package namespace, for example `semiconductor` |

@@ -197,7 +197,7 @@ Authorization, approvals, and policy enforcement are application concerns, but a
 This document does not define:
 
 - wire formats, CLI syntax, HTTP/RPC endpoints, GUI widgets, or AI prompt formats;
-- the complete Actual/Snapshot persistence schema or capture workflow;
+- alternate transport, CLI, RPC, or GUI wire encodings beyond the v0.1 serialized request document;
 - profile-extension semantics, custom command registration, or code-plugin APIs;
 - service authorization policy, identity provider, or approval UX;
 - Git branching/merge policy or repository hosting workflow; or

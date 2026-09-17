@@ -92,3 +92,8 @@ allOf:
                   additionalProperties: false
                   properties: {side: {enum: [above, below, start, end]}, alignment: {enum: [start, center, end]}}
                 text: {type: string}
+                source: {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {enum: [object, relation, group, temporal]}, id: {type: string, minLength: 1}}}
+                target: {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {enum: [object, relation, group, temporal]}, id: {type: string, minLength: 1}}}
+              allOf:
+                - if: {properties: {purpose: {const: explanatory-arrow}}}
+                  then: {required: [source, target]}

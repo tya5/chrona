@@ -1,6 +1,6 @@
 # Use Case Catalog
 
-**Status:** Draft  
+**Status:** Proposed
 **Depends on:** [00 Vision](00-vision.md), [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [06 View Model](06-view-model.md), [09 Application Architecture](09-application-architecture.md), [10 Command Model](10-command-model.md), [12 Quality and Invariants](12-quality-and-invariants.md)  
 **Owns:** representative user goals, acceptance criteria, design-coverage analysis, and explicit use-case gaps.
 

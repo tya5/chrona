@@ -1,20 +1,25 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:profile-v0.1"
 type: object
-required: [version, id, types]
+required: [version, packageId, requires, profiles]
 additionalProperties: false
 properties:
   version: {const: chrona/profile/v0.1}
-  id: {type: string, minLength: 1}
-  types:
+  packageId: {type: string, minLength: 1}
+  requires:
+    type: object
+    required: [projectFormat]
+    additionalProperties: false
+    properties: {projectFormat: {const: timeline/v0.1}}
+  profiles:
     type: object
     minProperties: 1
     additionalProperties:
       type: object
-      required: [base]
+      required: [extends]
       additionalProperties: false
       properties:
-        base: {enum: [milestone, span, annotation, entity, relation]}
+        extends: {type: string, minLength: 1}
   fields:
     type: object
     additionalProperties:

@@ -53,7 +53,9 @@ Serialization for Views, Snapshots, and Actual observations is outside this docu
 
 ## 4. View Definition
 
-A View definition is declarative. Its eventual YAML syntax belongs to the Project Format or a future View schema.
+A View definition is declarative. Its common resource envelope, reference syntax, and
+normalization belong to [Presentation Format](13-presentation-format.md); this document
+owns the View-body meaning and v0.1 field language below.
 
 | Concern | View responsibility |
 |---|---|
@@ -189,7 +191,10 @@ View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, 
 
 ## 11. Out of Scope
 
-This document does not define YAML persistence; colors, typography, or line styles; scene primitives or coordinates; SVG/tldraw adaptation; editing commands; snapshot capture; actual-driven rescheduling; resource leveling; or DateTime scheduling.
+This document does not own the YAML resource envelope, reference normalization, colors,
+typography, line styles, scene primitives or coordinates, SVG/tldraw adaptation, or
+resource leveling. Snapshot capture and annotation mutation are Command Model concerns;
+Actual-driven rescheduling and DateTime scheduling remain out of scope.
 
 ## 12. Boundary to Subsequent Documents
 
