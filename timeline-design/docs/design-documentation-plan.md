@@ -165,6 +165,7 @@ docs/
 ├── 11-extension-model.md
 ├── 12-quality-and-invariants.md
 ├── 13-presentation-format.md
+├── 14-use-case-catalog.md
 │
 ├── decisions/
 │   └── ADR-NNNN-<decision>.md
@@ -644,6 +645,27 @@ Presentation and Application definitions without changing the Core Project Forma
 Core Project semantics or syntax, View/Style/Theme/Scene meaning, Command semantics,
 renderer output, or GUI state persistence.
 
+---
+
+### 5.16 `14-use-case-catalog.md`
+
+**Purpose**
+
+Defines representative user goals, acceptance evidence, and design-coverage analysis
+used to assess whether Chrona's specifications meet the intended use cases.
+
+**Owns**
+
+- actors, triggers, preconditions, normal and exceptional flows;
+- outcome and quality acceptance criteria;
+- mapping from each use case to owning specifications and verification evidence; and
+- explicit design gaps and release-stage priority.
+
+**Does not own**
+
+Domain, scheduling, presentation, command, or renderer semantics. It references their
+owning specifications rather than redefining them.
+
 ## 6. Supporting Artifact Types
 
 ### 6.1 Architecture Decision Records
@@ -681,6 +703,7 @@ Schemas MAY include:
 - style schema;
 - theme schema;
 - extension-field schema.
+- render-context, scene-profile, Snapshot-reference, Actual-set, and Command-request schemas.
 
 Schema structure SHOULD follow the semantic specification rather than becoming an independent domain model.
 
@@ -704,6 +727,19 @@ examples/
 Examples SHOULD cover both common behavior and important edge cases.
 
 Where practical, examples SHOULD be executable fixtures.
+
+### 6.4 Conformance manifests and runners
+
+A **conformance manifest** binds canonical fixtures to their structural schemas and
+declares expected diagnostics or derived-output properties. A **conformance runner**
+executes those assertions in stages: structural schema validation, owner-semantic
+validation, then derived-output invariants.
+
+For Presentation v0.1, the runner MUST be able to distinguish a local `SceneDelta`
+from a declared global invalidation. An Actual-only change MUST NOT pass conformance if
+it emits a whole-Scene replacement without an owner-defined reason. This is the
+machine-checkable counterpart of the reactive UI invariant; it does not require a GUI
+implementation.
 
 ## 7. Source-of-Truth Rules
 
@@ -939,6 +975,13 @@ Presentation persistence and fixture gate
   Snapshot / Actual format
   Command envelope format
   schemas and canonical fixtures
+
+Presentation conformance gate
+  structural schema validation for all initial resource kinds
+  semantic diagnostics for Snapshot / Actual / View / target capability boundaries
+  SceneDelta local-versus-global invalidation fixtures
+  conformance manifest and runner
+  cross-document readiness review
 
 Phase 4 — Extensibility
   Profiles
