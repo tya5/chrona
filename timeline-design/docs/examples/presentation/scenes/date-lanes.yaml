@@ -1,0 +1,4 @@
+version: chrona/presentation/v0.1
+kind: scene-profile
+id: date-lanes
+body: {}

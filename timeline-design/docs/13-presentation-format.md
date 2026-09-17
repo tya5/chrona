@@ -1,0 +1,268 @@
+# Presentation Format
+
+**Status:** Draft
+**Depends on:** [05 Project Format](05-project-format.md), [06 View Model](06-view-model.md), [07 Style and Theme](07-style-and-theme.md), [08 Scene and Rendering](08-scene-and-rendering.md), [10 Command Model](10-command-model.md)
+**Owns:** persistent syntax and normalization for View, Style, Theme, Render Context, Scene profile, Snapshot reference, and Actual observation set definitions outside the Core Project file; plus the file-serialization boundary for Command requests.
+
+## 1. Purpose
+
+This document defines the persistent representation boundary for Chrona's Presentation
+and Application inputs. It is a companion to the Core-only [05 Project Format](05-project-format.md):
+`05` continues to own Project, temporal, scheduling, and Core normalization syntax;
+this document owns the separately versioned files that select, compare, and display
+that Core data. A serialized Command request is supported as a reviewable or transport
+document, but it is not a presentation resource and does not become a member of a
+Render Context's resource graph.
+
+The separation prevents a GUI, renderer, or current workspace state from becoming an
+implicit extension of `project.yaml` while keeping all authoritative inputs
+Git-reviewable.
+
+## 2. Format invariants
+
+- Every persisted presentation definition MUST declare a format version, resource kind, and stable
+  resource ID.
+- A definition MUST reference every Project, Snapshot, Actual, Style, Theme, Scene
+  profile, and Render Context input it needs by explicit ID or immutable reference.
+- A consumer MUST NOT select a local file, Git branch, current date, installed theme, or
+  renderer default as an unstated input.
+- Core Project data and these definitions MAY reside in one repository, but they retain
+  separate schemas, revision identities, and ownership boundaries.
+- Scene, SVG, canvas state, layout caches, and generated deltas MUST NOT be persisted as
+  authoritative inputs to this format.
+- Canonicalization MUST preserve stable IDs, normalize unordered maps deterministically,
+  and avoid rewriting unrelated resources.
+
+## 3. Resource envelope
+
+Every resource uses a common YAML envelope. The resource-specific body is validated by
+the schema for its `kind`.
+
+```yaml
+version: chrona/presentation/v0.1
+kind: view
+id: controller-review
+body: {}
+```
+
+The initial kinds are:
+
+| Kind | Owner specification | Purpose |
+|---|---|---|
+| `view` | View Model | Selection, grouping, comparison inputs, visibility, and layout intent |
+| `style` | Style and Theme | Declarative semantic selectors and visual-role assignment |
+| `theme` | Style and Theme | Concrete named token values and declared variants |
+| `render-context` | Application Architecture | Explicit active resources and environment values for one evaluation |
+| `scene-profile` | Scene and Rendering | Temporal scale, lane layout, routing, collision, and layout-metric policy |
+| `snapshot-ref` | View Model | Immutable named Project comparison reference |
+| `actual-set` | View/Command Model | Independently observed Actual observations and explicit alignment state |
+
+`kind` is not an extension point by itself. New resource kinds require an owning
+specification and a versioned schema; unknown kinds may be preserved losslessly but
+MUST NOT be interpreted.
+
+A Command request has the conceptual envelope and `commandId` owned by the
+[Command Model](10-command-model.md). It may be serialized as YAML or JSON for CLI,
+AI, review, or fixture use, but it is evaluated as an input request—not loaded by a
+Render Context, assigned a resource `id`, or treated as canonical state. Its transport
+schema may reuse common scalar and reference definitions from this format without
+changing Command Model semantics.
+
+## 4. Repository composition
+
+The initial multi-file layout is explicit rather than include-driven:
+
+```text
+project.yaml
+views/<view-id>.yaml
+styles/<style-id>.yaml
+themes/<theme-id>.yaml
+contexts/<context-id>.yaml
+scenes/<scene-profile-id>.yaml
+snapshots/<snapshot-id>.yaml
+actuals/<actual-set-id>.yaml
+```
+
+A Render Context is the entry point for a presentation evaluation. It names the
+resources used for a single evaluation, including the primary Project revision and any
+Snapshot or Actual input. Each resource reference includes both its expected stable ID
+and an explicit repository-relative path. A loader verifies that the file at that path
+has the declared kind and ID; it does not search a directory to find a matching ID.
+Duplicate IDs of the same kind in an evaluation are invalid.
+
+Recursive includes, glob imports, implicit directory scans, and merge-by-file-order are
+outside v0.1 of this format. They must not be inferred by an implementation.
+
+## 5. Reference semantics
+
+References are typed and explicit. A Project/Snapshot reference identifies both a
+logical source and its immutable revision:
+
+```yaml
+body:
+  project:
+    path: ../project.yaml
+    revision: git:4f2c9ab
+```
+
+For an editable working evaluation, `revision` MAY be a project-store revision ID rather
+than a Git commit, but it MUST be recorded in the evaluation manifest. A reference to a
+moving branch name, such as `main`, is invalid as a reproducible comparison input.
+
+A presentation-resource reference uses an expected kind, ID, and path. For example:
+
+```yaml
+body:
+  view:
+    id: controller-review
+    path: ../views/controller-review.yaml
+```
+
+The path is resolved relative to the referring document and MUST remain inside the
+declared repository root. The expected kind is supplied by the owning field (the
+example field expects `view`), so a file with the right ID but a different kind is
+invalid. This explicit pairing keeps an ID rename or a path move reviewable and avoids
+an unstated registry or filesystem scan.
+
+An Actual observation may have a resolved `projectObjectId` or an external identity with
+`alignment: unmatched`. Text similarity is never a normalization or alignment rule.
+
+### 5.1 Render Context v0.1 body
+
+A `render-context` selects exactly one immutable primary Project revision and exactly
+one View, Style, Theme, and Scene profile. It supplies the concrete comparison inputs
+declared by that View, plus the environment values that can affect a completed Scene.
+The View owns whether a Snapshot or Actual input is meaningful or required; the Render
+Context owns which explicitly named instance is used for this evaluation.
+
+```yaml
+version: chrona/presentation/v0.1
+kind: render-context
+id: controller-plan-vs-actual
+body:
+  project:
+    path: ../project.yaml
+    revision: git:4f2c9ab
+  view:
+    id: controller-review
+    path: ../views/controller-review.yaml
+  style:
+    id: plan-actual
+    path: ../styles/plan-actual.yaml
+  theme:
+    id: engineering-light
+    path: ../themes/engineering-light.yaml
+  sceneProfile:
+    id: date-lanes
+    path: ../scenes/date-lanes.yaml
+  inputs:
+    snapshot:
+      id: baseline-q2
+      path: ../snapshots/baseline-q2.yaml
+    actual:
+      id: controller-observed
+      path: ../actuals/controller-observed.yaml
+  evaluation:
+    locale: ja-JP
+    asOfDate: 2026-09-17
+  viewport:
+    width: 1600
+    height: 900
+    margins: { top: 32, right: 48, bottom: 40, left: 160 }
+    clipping: clip
+  target:
+    kind: svg
+    capabilities: [metadata, marker, text-alternative]
+  layoutMetrics:
+    id: inter-14-logical
+    revision: sha256:example
+```
+
+`inputs.snapshot`, `inputs.actual`, and `evaluation.asOfDate` are optional only when
+the selected View and Scene profile do not require them. Omission must remain visible in
+the input manifest; it never means “use the latest Snapshot”, “read the local clock”,
+or “infer a default Actual set”. `locale`, `viewport`, `target`, and `layoutMetrics`
+are required for a renderable Scene in v0.1. The `layoutMetrics` revision identifies a
+declared metrics dataset or algorithm profile; its acquisition and payload format remain
+outside this document, but a renderer must not substitute installed-font metrics.
+
+The `target.capabilities` list is a sorted, duplicate-free declaration. A Scene Builder
+uses it to diagnose distinctions the requested output cannot preserve; it does not use
+the target `kind` to infer unrecorded defaults. No target-specific options belong in a
+Render Context until a target-capability specification defines their portable meaning.
+
+## 6. Normalization and validation sequence
+
+The loader evaluates resources in this order:
+
+```text
+YAML syntax
+  ↓
+Common presentation envelope
+  ↓
+Kind-specific schema
+  ↓
+Typed resource references
+  ↓
+Owner-specification semantics
+  ↓
+Evaluation manifest and derived Scene
+```
+
+The loader reports unknown kind, duplicate resource ID, unresolved reference,
+incompatible version, invalid external path, and owner-semantic diagnostics without
+inventing defaults. Presentation-resource references must form an acyclic graph.
+Command undo references are evaluated under the Command Model and are not edges in this
+resource graph.
+
+## 7. Boundary to schemas and fixtures
+
+This document establishes the common envelope and resource graph. Before an
+implementation is conforming, the repository must add:
+
+- one schema per initial resource kind;
+- a minimal render-context fixture using one Project, View, Style, Theme, and Scene
+  profile;
+- Snapshot/Actual alignment and unmatched-observation fixtures;
+- Command accept/reject and base-revision fixtures; and
+- `SceneDelta` fixtures that demonstrate a local change without unrelated node
+  recreation and a declared global invalidation case.
+
+Exact body fields for each kind belong to the owning specification and are introduced
+with its schema and canonical fixture. They must not be invented by a renderer or GUI.
+
+The schema sequence is deliberately dependency-ordered: common presentation envelope
+and typed-reference definitions; Render Context; View; Style and Theme; Scene profile;
+then Snapshot and Actual set. Command request fixtures use the Command Model envelope
+and validate any shared reference scalar separately. This prevents a command transport
+choice from becoming a hidden dependency of rendering or persistence.
+
+## 8. Schema handoff inventory
+
+The first schema and fixture tranche is intentionally structural. It proves that every
+evaluation input is explicit without prematurely freezing the selector, token, or layout
+languages still owned by the presentation specifications.
+
+| Schema / fixture | Defined here | Owner-semantic handoff required before conformance |
+|---|---|---|
+| Common presentation envelope | `version`, `kind`, `id`, `body`, and closed top-level fields | Resource-specific `body` meaning |
+| Typed presentation reference | expected kind, stable `id`, repository-relative `path` | Whether the referenced resource is optional, repeatable, or precedence-bearing |
+| Render Context | primary Project immutable reference; explicit View, Style, Theme, Scene-profile, Snapshot, Actual, viewport, and capability references | Required-versus-optional inputs and evaluation semantics from Application Architecture |
+| View | envelope and declared comparison-input references | Selection, grouping, ordering, window, and annotation language from View Model |
+| Style / Theme | envelope and declared parent/variant/reference form | Selector precedence, visual roles, token inheritance, and token value vocabulary from Style and Theme |
+| Scene profile | envelope and layout-metric/capability references | Scale, lane, routing, collision, and layout policy from Scene and Rendering |
+| Snapshot reference / Actual set | immutable Project reference; resolved or explicitly unmatched Actual alignment identity | Capture semantics and Actual observation fields from View and Command Model |
+| Command request document | command envelope, target, and base-revision scalar shapes | Command type/payload vocabulary, transaction, and undo semantics from Command Model |
+
+Canonical fixtures follow the same order. A fixture validates structural syntax first,
+then asserts the diagnostic or projection behavior supplied by its owning specification.
+For example, the first Render Context fixture must name exact paths and revisions but
+does not itself define how a View selector ranks objects; that remains a View Model
+fixture once the selector language is specified.
+
+## 9. Out of scope
+
+This document does not define package acquisition, remote fetching, authentication,
+Git merge strategy, GUI/editor state persistence, command authorization, or arbitrary
+code execution. It also does not alter the Core v0.1 Project Format or make generated
+Scene state canonical.

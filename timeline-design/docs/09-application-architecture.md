@@ -77,11 +77,9 @@ The Project Store assigns or resolves a revision identity for every load and wri
 
 Every read evaluation begins with an explicit request containing at least:
 
-- primary Project revision;
-- named Snapshot and Actual references when used;
-- View, Style, Theme, and Scene-profile references;
-- explicit render context and viewport;
-- target renderer capabilities; and
+- a Render Context that names the primary Project revision, View, Style, Theme, Scene
+  profile, and named Snapshot and Actual inputs when used;
+- its explicit locale, viewport, target capabilities, and layout metrics; and
 - optional requested output artifact.
 
 The Runtime Coordinator resolves these references before evaluation. Absence of a required reference is a diagnostic; it is not permission to read a working tree default, current time, local locale, or renderer configuration.

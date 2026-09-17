@@ -61,7 +61,7 @@ A View definition is declarative. Its eventual YAML syntax belongs to the Projec
 | Grouping | Partition selected objects into lanes from semantic fields |
 | Ordering | Deterministically order groups and objects |
 | Temporal window | Select the presented time interval |
-| Comparison | Select the Primary Project, named Snapshot, and/or Actual input |
+| Comparison | Declare which named comparison inputs and facets the View accepts or requires; the concrete Project, Snapshot, and Actual references come from the Render Context |
 | Visibility | Select labels, relations, annotations, and comparison facets |
 | Layout intent | Choose lanes, hierarchy expansion, compactness, and annotation anchoring |
 

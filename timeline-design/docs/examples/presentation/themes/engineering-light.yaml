@@ -1,0 +1,5 @@
+version: chrona/presentation/v0.1
+kind: theme
+id: engineering-light
+body: {}
+

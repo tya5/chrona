@@ -14,3 +14,16 @@ Rules requiring semantic validation include:
 - calendar exceptions must not contain contradictory duplicate dates.
 
 Schema validation is therefore stage 1, not full Core conformance.
+
+## Presentation schemas
+
+`presentation-resource-v0.1.schema.yaml` defines the common Presentation resource
+envelope and shared reference shapes. `render-context-v0.1.schema.yaml` is the first
+kind-specific structural schema. It validates that a renderable evaluation explicitly
+binds its Project revision, presentation resources, locale, viewport, target
+capabilities, and layout metrics.
+
+The fixture under `examples/presentation/` is structural only. The companion View,
+Style, Theme, and Scene profile resources deliberately use empty bodies until their
+respective semantic languages are specified. Passing this schema must not be described
+as a rendered-Scene or presentation conformance result.

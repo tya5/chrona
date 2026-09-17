@@ -164,6 +164,7 @@ docs/
 ├── 10-command-model.md
 ├── 11-extension-model.md
 ├── 12-quality-and-invariants.md
+├── 13-presentation-format.md
 │
 ├── decisions/
 │   └── ADR-NNNN-<decision>.md
@@ -620,6 +621,29 @@ Initial invariants include:
 
 This document SHOULD increasingly use testable scenarios rather than vague quality adjectives.
 
+---
+
+### 5.15 `13-presentation-format.md`
+
+**Purpose**
+
+Defines persistent syntax, normalization, and resource composition for downstream
+Presentation and Application definitions without changing the Core Project Format.
+
+**Owns**
+
+- common resource envelope and versioning;
+- View, Style, Theme, Render Context, and Scene-profile resource references;
+- Snapshot-reference and Actual-observation-set persistence boundaries;
+- Command envelope persistence boundary;
+- resource-ID, reference, and composition normalization; and
+- handoff to schemas and canonical fixtures.
+
+**Does not own**
+
+Core Project semantics or syntax, View/Style/Theme/Scene meaning, Command semantics,
+renderer output, or GUI state persistence.
+
 ## 6. Supporting Artifact Types
 
 ### 6.1 Architecture Decision Records
@@ -693,6 +717,7 @@ The authoritative ownership hierarchy is:
 | Meaning of time and temporal arithmetic | Temporal Model |
 | Scheduling semantics | Scheduling Model |
 | Persistent syntax and normalization | Project Format |
+| Presentation/application definition syntax and normalization | Presentation Format |
 | Selection and layout | View Model |
 | Semantic visual mapping | Style |
 | Concrete visual values | Theme |
@@ -908,6 +933,12 @@ Phase 3 — Application Architecture
   Runtime flows
   persistence integration
   editor integration
+
+Presentation persistence and fixture gate
+  View / Style / Theme / Render Context format
+  Snapshot / Actual format
+  Command envelope format
+  schemas and canonical fixtures
 
 Phase 4 — Extensibility
   Profiles
