@@ -166,6 +166,8 @@ docs/
 ├── 12-quality-and-invariants.md
 ├── 13-presentation-format.md
 ├── 14-use-case-catalog.md
+├── runtime-reactivity-design.md
+├── adapter-output-design.md
 │
 ├── decisions/
 │   └── ADR-NNNN-<decision>.md
@@ -970,6 +972,13 @@ Phase 3 — Application Architecture
   persistence integration
   editor integration
 
+Application/reactivity design gate
+  Runtime Coordinator evaluation request, manifest, cache-key, and stale-result contract
+  impact-set computation and SceneDelta derivation contract
+  Project / Snapshot / Actual / View / Theme revision consistency rules
+  interactive preview, reconciliation, conflict, undo/redo, and accessibility boundaries
+  CLI / automation / AI adapter contract and authorization-policy boundary
+
 Presentation persistence and fixture gate
   View / Style / Theme / Render Context format
   Snapshot / Actual format
@@ -995,9 +1004,38 @@ Phase 5 — Implementation specifications
   CLI
   AI command interface
   optional PPTX exporter
+
+Adapter/output design gate
+  Scene-to-target fidelity and capability-negotiation rules
+  SVG artifact and accessibility acceptance criteria
+  interactive adapter projection and gesture-to-Command translation
+  target-specific degradation diagnostics
+  no renderer-owned canonical persistence
 ```
 
 These phases MAY overlap experimentally, but normative dependencies SHOULD continue to point toward the Core rather than allowing implementation prototypes to silently redefine it.
+
+### 15.1 Design-completion gate
+
+The design is complete enough to begin a minimal implementation only when all of the
+following are true:
+
+- Core, Presentation, Application, Command, Extension, and Quality owners have no
+  unresolved authority overlap for a Must-priority use case;
+- every Must-priority use case in `14-use-case-catalog.md` maps to an owning
+  specification, canonical fixture, and stated acceptance evidence;
+- the conformance runner validates structural and owner-semantic invariants for all
+  initial Presentation resource kinds, including local-versus-global `SceneDelta`;
+- Runtime Coordinator and adapter specifications declare their inputs, outputs, cache
+  and invalidation behavior, failure diagnostics, and concurrency boundaries;
+- each supported target has an output-fidelity and capability-degradation contract;
+- extension packages have deterministic schema, normalization, and Core-boundary rules;
+- a cross-document readiness review records any remaining deferred items explicitly;
+- deferred items do not silently become requirements of the first minimal implementation.
+
+Meeting this gate does not mean that GUI, renderer, CLI, AI, or exporter implementations
+exist. It means their implementations can proceed without inventing semantic or
+architectural behavior.
 
 ## 16. Guiding Boundary
 
