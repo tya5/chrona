@@ -109,6 +109,31 @@ Derived values MAY be cached. A cache key MUST include the identities or content
 
 A cache hit is an optimization only. It must be observationally equivalent to reevaluating the declared inputs and must not hide diagnostics associated with those inputs.
 
+### 5.4 Reactive projection updates
+
+The Runtime Coordinator MUST translate each accepted Command change set into an explicit **impact set** before updating an interactive consumer. The impact set contains the semantic and presentation inputs whose derived results may differ. It is calculated from stable IDs, changed fields, declared dependency edges, View selection/grouping/order rules, Style selectors, Theme token references, and Scene layout constraints.
+
+The coordinator MAY rebuild a larger internal cache when that is cheaper or simpler, but it MUST NOT require the GUI to discard and recreate every rendered node merely because one canonical value changed. It compares the previous and next completed Scenes by `sceneId` and emits a `SceneDelta` containing only the required operations:
+
+| Delta operation | Meaning |
+|---|---|
+| `upsert` | Create or update one node while preserving its `sceneId` identity |
+| `remove` | Remove a no-longer-present node |
+| `reorder` | Change deterministic sibling order without recreating unaffected siblings |
+| `tokenUpdate` | Change shared resolved token values without replacing unrelated geometry |
+| `viewportUpdate` | Change explicit viewport/clipping state |
+| `replaceScope` | Replace a declared affected group or whole Scene, with an invalidation reason |
+
+Every `SceneDelta` names its base and target evaluation identities, source revision identities, and invalidation reason. An adapter applies it atomically or retains the prior completed Scene; it MUST NOT combine nodes from incompatible evaluations.
+
+A whole-Scene `replaceScope` is permitted only when the impact domain is intrinsically global—for example a View/window/scale change, viewport reflow that changes all layout, a Theme or Style rule affecting all nodes, or a scheduling change whose declared dependency closure reaches all displayed objects. It is not an acceptable default for a local field edit. The coordinator records the reason so performance tests and diagnostics can distinguish a necessary global invalidation from an accidental full refresh.
+
+### 5.5 Interactive transient state
+
+An interactive client may retain transient local state such as hover, selection, viewport motion, a drag preview, and a pending Command. This state is not canonical and does not require a Project revision.
+
+On an accepted Command, the client reconciles its preview with the matching target `SceneDelta`. On rejection, it removes or corrects only the affected preview and presents diagnostics. When newer evaluation results arrive while an older evaluation is pending, the coordinator or adapter MUST cancel, coalesce, or discard stale work by evaluation identity; stale output must not overwrite a newer completed Scene.
+
 ## 6. Mutation flow
 
 ```text

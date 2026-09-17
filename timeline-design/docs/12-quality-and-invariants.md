@@ -69,6 +69,17 @@ Every renderable Scene node MUST retain stable Scene identity, source reference,
 kind, and visual-role metadata. Paint order, renderer element IDs, or array position
 are not substitutes for this provenance.
 
+### Q-DET-5 Incremental interactive updates
+
+After a canonical change, an interactive adapter MUST reconcile the completed Scene by
+stable `sceneId` and apply only the affected `SceneDelta` operations. A local change
+MUST NOT default to destroying and recreating every UI node.
+
+A full-Scene replacement is allowed only for a declared global invalidation domain, such
+as an all-node View/Style/Theme/viewport/scale change or a dependency closure that
+actually reaches every displayed object. The Runtime Coordinator MUST report that
+invalidation reason and preserve atomic evaluation identity during reconciliation.
+
 ## 4. Semantic isolation
 
 ### Q-SEM-1 Presentation independence
@@ -261,6 +272,7 @@ may add finer-grained cases, but it must not omit the following categories.
 | Core temporal/scheduling rules | Canonical YAML fixtures, validator/scheduler conformance tests, stable diagnostic assertions |
 | Git quality and normalization | Canonicalization tests and focused before/after diff fixtures |
 | View/Style/Theme/Scene | Deterministic projection fixtures with input manifests and provenance assertions |
+| Interactive projection | Local-change SceneDelta fixture, no-unrelated-node-recreation assertion, global-invalidation reason assertion, and stale-result suppression test |
 | Plan/Snapshot/Actual | Alignment, missing/unmatched, and no-implicit-rescheduling scenarios |
 | Commands | Accept/reject, transaction atomicity, stale-base conflict, undo/redo, and no-derived-write tests |
 | Extensions | Inheritance/fallback, typed-field, version/migration, expression-safety, and plugin-boundary tests |
