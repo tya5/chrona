@@ -26,3 +26,9 @@ cases:
   - id: independent-customer-context
     resource: contexts/controller-customer.yaml
     schema: ../../schemas/render-context-v0.1.schema.yaml
+  - id: snapshot-immutable-revision
+    resource: snapshots/baseline-q2.yaml
+    schema: ../../schemas/snapshot-ref-v0.1.schema.yaml
+  - id: actual-alignment
+    resource: actuals/controller-observed.yaml
+    schema: ../../schemas/actual-set-v0.1.schema.yaml
