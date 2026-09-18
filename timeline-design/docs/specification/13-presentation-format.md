@@ -16,7 +16,7 @@ Render Context's resource graph.
 
 The separation prevents a GUI, renderer, or current workspace state from becoming an
 implicit extension of `project.yaml` while keeping all authoritative inputs
-Git-reviewable.
+line-oriented and Git-reviewable when Git is the selected Revision Store adapter.
 
 ## 2. Format invariants
 
@@ -86,8 +86,8 @@ actuals/<actual-set-id>.yaml
 A Render Context is the entry point for a presentation evaluation. It names the
 resources used for a single evaluation, including the primary Project revision and any
 Snapshot or Actual input. Each resource reference includes its expected stable ID, kind,
-canonical repository-relative path, immutable revision, and content identity. A loader
-verifies all five values; it does not search a directory to find a matching ID.
+Store identity, normalized address, immutable revision, and content identity. A loader
+verifies all of these values; it does not search a directory to find a matching ID.
 Duplicate `(kind, id)` pairs in an evaluation are invalid.
 
 Multiple Render Contexts MAY refer to the same immutable Project revision. They remain
@@ -100,13 +100,15 @@ outside v0.1 of this format. They must not be inferred by an implementation.
 
 ## 5. Reference semantics
 
-References are typed and explicit. A reference is normalized before use to the following
-shape. `path` is normalized from the declared repository root using `/`, MUST NOT contain
-`.` or `..` segments, and MUST resolve inside that root. `revision` identifies the
-immutable source tree; v0.1 accepts only a full Git object ID (`git:` followed by 40 or
-64 hexadecimal characters). `contentIdentity` is the SHA-256 of the exact UTF-8 bytes
-loaded at that path. It protects evaluation reproducibility even when a Git backend is
-unavailable after materializing a verified closure.
+References are typed and explicit. The following v0.1 shape is Git-adapter-specific:
+`path` is normalized from the declared repository root using `/`, MUST NOT contain `.`
+or `..` segments, and MUST resolve inside that root. `revision` identifies the immutable
+source tree and accepts only a full Git object ID (`git:` followed by 40 or 64 hexadecimal
+characters). `contentIdentity` is the SHA-256 of the exact UTF-8 bytes loaded at that
+path. Successor formats use the provider-neutral `store`, `address`, `revision.token`,
+and `contentIdentity` shape defined by
+[15 Revision Store Adapters](15-revision-store-adapters.md) and
+`revision-store-resource-ref-v0.1.schema.yaml`.
 
 ```yaml
 id: controller-x
@@ -134,9 +136,9 @@ package-registry versions used to resolve it.
 
 Resolution MUST:
 
-1. normalize every path against the repository root and reject escape;
-2. read the named content from the named immutable revision, never from a moving branch
-   or the current working tree;
+1. normalize the resource Address according to its named Store and reject escape;
+2. read the named content from the named immutable Store Snapshot, never from a moving
+   branch, current working tree, or unsnapshotted Draft;
 3. verify SHA-256, envelope kind/ID, Project ID, and supported version;
 4. recursively resolve declared resource/package edges in deterministic field order;
 5. reject a cycle, duplicate `(kind, id)` with different identities, missing object,
@@ -151,10 +153,10 @@ raw child Project input, or duplicate namespace. Federation v0.1 exports cannot 
 federation edges, so a cycle is structurally unrepresentable. Child exports
 are read-only projection inputs, not extra primary Projects or hidden mutable context.
 
-An editor may use a separately persisted immutable Project-Store object while offline,
+An editor may use a separately persisted immutable Revision Store Snapshot while offline,
 but it MUST assign a content identity and materialize the same closure manifest before
-the result is comparable or cacheable. `git:main`, abbreviated Git IDs, filesystem
-mtime, and "latest" are invalid in a reproducible closure.
+the result is comparable or cacheable. `git:main`, abbreviated Git IDs, filesystem mtime,
+and "latest" are invalid in a reproducible closure.
 
 The layout-metrics artifact follows the same rule. Its `id`, revision, content identity,
 metric algorithm version, and declared font/metric payload are part of the closure; an

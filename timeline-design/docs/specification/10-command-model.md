@@ -1,8 +1,8 @@
 # Command Model
 
 **Status:** Draft
-**Depends on:** [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [06 View Model](06-view-model.md), [09 Application Architecture](09-application-architecture.md)
-**Owns:** canonical mutation interface, command preconditions and results, validation and transaction boundaries, undo/redo semantics, and the relationship between semantic changes and Git revisions.
+**Depends on:** [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [06 View Model](06-view-model.md), [09 Application Architecture](09-application-architecture.md), [15 Revision Store Adapters](15-revision-store-adapters.md)
+**Owns:** canonical mutation interface, command preconditions and results, validation and transaction boundaries, undo/redo semantics, and the relationship between semantic changes and Revision Store snapshots.
 
 ## 1. Purpose
 
@@ -47,7 +47,11 @@ Every command request has the following conceptual fields. Concrete JSON, YAML, 
 | `actor` | Optional caller identity and provenance metadata |
 | `reason` | Optional human-readable intent for review and AI traceability |
 
-`baseRevision` is mandatory for canonical mutation unless the target store explicitly provides an equivalent compare-and-set condition. A command must not silently apply to an arbitrary working-tree tip.
+`baseRevision` is the opaque revision token issued by the target Revision Store. It is
+mandatory for canonical mutation unless the target store explicitly provides an
+equivalent compare-and-set condition. A Command Engine passes it unchanged to the Store;
+it must not parse, fabricate, or assume Git syntax. A command must not silently apply to
+an arbitrary working-tree tip.
 
 ### 3.1 v0.1 serialized request document
 
@@ -105,6 +109,10 @@ before persisting the new plan revision and rejects untrusted repositories, bran
 kind/project-ID mismatch, namespace collision, duplicate federation ID, or cycle. No
 Federation Command has a child Project target or a payload capable of editing child
 source, source schedule, or export contents.
+
+The v0.1 YAML examples retain `git:<sha>` as a legacy Git-adapter token. Successor
+command documents use `revision-store-resource-ref-v0.1.schema.yaml` for their target
+and preserve the Store-owned revision token without changing Command semantics.
 
 ## 4. Command families
 

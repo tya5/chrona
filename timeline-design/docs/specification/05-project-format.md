@@ -19,7 +19,7 @@ The format SHOULD be:
 
 - readable without specialized tooling;
 - stable under ordinary edits;
-- friendly to line-oriented Git diffs;
+- friendly to line-oriented diffs, including Git diffs when Git is used;
 - explicit where ambiguity would affect semantics;
 - concise for common cases;
 - extensible through versioned profiles and schemas;
@@ -279,7 +279,9 @@ accepts.
 ## 11. Profiles and extensions
 
 A project MAY declare immutable extension package references. Each reference is resolved
-before profile validation and is part of the Project revision closure:
+before profile validation and is part of the Project revision closure. The v0.1 shape
+below is Git-adapter-specific; successor formats use the provider-neutral resource
+reference defined by [15 Revision Store Adapters](15-revision-store-adapters.md).
 
 ```yaml
 extensions:
@@ -448,7 +450,7 @@ A consumer MUST diagnose unsupported reserved features rather than reinterpret t
 
 A program may need to present timelines owned by independently reviewed subprojects.
 This is not multi-file composition of one canonical Project. The child Project remains
-authoritative in its own repository and is never included, merged, or mutated by the
+authoritative in its own Revision Store and is never included, merged, or mutated by the
 parent Project.
 
 The parent-side syntax is a separately versioned Federation Plan containing typed,
@@ -478,7 +480,8 @@ schedules, edits, or otherwise reaches into the child Project. Aggregated child
 progress is display information with an explicit aggregation rule and is not a
 scheduling input.
 
-The federation resources are versioned outside Core v0.1. A future Render Context minor
-version will reference the Federation Plan explicitly. Implementations must not claim
-federation support until the resolver contract and fixtures in
+The federation resources are versioned outside Core v0.1. The Git-shaped syntax above
+is a v0.1 compatibility form; RA-4 defines the successor provider-neutral form. A future
+Render Context minor version will reference the Federation Plan explicitly.
+Implementations must not claim federation support until the resolver contract and fixtures in
 [Federated Projects Design](../federation/federated-projects-design.md) are complete.

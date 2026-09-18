@@ -1,7 +1,7 @@
 # Application Architecture
 
 **Status:** Proposed
-**Depends on:** Core Specification (`01`–`05`), Presentation Specification (`06`–`08`)
+**Depends on:** Core Specification (`01`–`05`), Presentation Specification (`06`–`08`), [15 Revision Store Adapters](15-revision-store-adapters.md)
 **Constrained by:** [12 Quality and Invariants](12-quality-and-invariants.md)
 **Owns:** runtime component responsibilities, dependency direction, evaluation and mutation flows, persistence boundaries, derived-state lifecycle, and adapter boundaries.
 
@@ -26,7 +26,7 @@ Application Architecture decides which component evaluates or transports each sp
 
 | Component | Responsibility | Must not own |
 |---|---|---|
-| Project Store | Load, normalize, identify, and persist canonical Project revisions | Temporal interpretation, scheduling, or rendering |
+| Revision Store adapter | Resolve immutable snapshots, read resources, and optionally persist canonical changes | Temporal interpretation, scheduling, or rendering |
 | Evaluation Closure Resolver | Resolve and verify the immutable resource/package closure named by a Render Context | Fallback to current files, branches, or host defaults |
 | Federation Resolver | Resolve pinned child timeline exports and compose read-only summary inputs | Loading a child branch tip, editing child data, or treating a raw child Project as a parent resource |
 | Profile Registry | Resolve supported core and extension profiles, typed fields, and schemas | Arbitrary executable extension behavior |
@@ -46,9 +46,9 @@ The Command Engine's command vocabulary, transactions, undo/redo, and mutation r
 ### 3.2 Dependency direction
 
 ```text
-Canonical files / revision references
+Revision Store resource references
                 ↓
- Project Store ──→ Profile Registry
+Revision Store adapter ──→ Profile Registry
         │                 │
         └──────→ Temporal Engine
                          ↓
@@ -56,23 +56,26 @@ Canonical files / revision references
                          ↓
  Transform / Predicate → View → Style → Theme → Scene → Renderer adapters
 
-CLI / GUI / AI / automation → Command Engine → Project Store
+CLI / GUI / AI / automation → Command Engine → Revision Store adapter
 ```
 
-Dependencies point toward lower-level semantics and then outward toward presentation. A renderer adapter must never depend on the Project Store to infer missing data, and the Scheduling Engine must never depend on a View, Theme, Scene, or renderer.
+Dependencies point toward lower-level semantics and then outward toward presentation. A renderer adapter must never depend on a Revision Store adapter to infer missing data, and the Scheduling Engine must never depend on a View, Theme, Scene, or renderer.
 
 ## 4. State ownership and persistence boundaries
 
 | State category | Authoritative owner | Persistence rule |
 |---|---|---|
-| Project, profiles, calendars, semantic annotations, and relations | Project Store | Canonical, reviewable structured source data |
+| Project, profiles, calendars, semantic annotations, and relations | Revision Store | Canonical, reviewable structured source data in one immutable snapshot |
 | Named Snapshot and Actual input references | Their specified persistence model | Explicitly named, immutable or independently observed input; never inferred as “latest” |
-| Federation Plan and child export | Parent plan / child Project repository | Immutable, read-only export consumed through a parent-owned pinned plan reference; never merged into parent canonical data |
+| Federation Plan and child export | Parent plan / child Revision Store | Immutable, read-only export consumed through a parent-owned pinned plan reference; never merged into parent canonical data |
 | View, Style, Theme, and Scene-profile definitions | Their respective specifications | Declarative versioned data; serialization syntax may evolve independently |
 | Schedule result, View Projection, resolved Style/Theme, Scene, SVG, canvas store | Runtime Coordinator / adapters | Derived cache or output only; invalidated when any declared input changes |
 | Diagnostics, manifests, and trace data | Runtime Coordinator | Inspectable output; not a substitute for canonical source |
 
-The Project Store assigns or resolves a revision identity for every load and write. Evaluation and rendering requests bind that identity, so a schedule, View Projection, and Scene from different Project revisions cannot be combined accidentally.
+The Revision Store resolves a Snapshot identity for every reproducible load and returns a
+new Snapshot for an accepted write. Evaluation and rendering requests bind that identity,
+so a schedule, View Projection, and Scene from different Project revisions cannot be
+combined accidentally. A raw editable file is a Draft until the Store snapshots it.
 
 ## 5. Read evaluation flow
 

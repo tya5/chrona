@@ -15,7 +15,11 @@ detect when a design or implementation violates those rules.
 An implementation change that fails an invariant is a specification-review event. It
 must not silently redefine the model to fit an implementation shortcut.
 
-## 2. Git quality
+## 2. Reviewable serialization and Revision Store quality
+
+These identifiers retain their historical `Q-GIT` names because Git remains an
+important review adapter. They are requirements for canonical serialization and
+immutable evaluation, not a requirement that the runtime has Git installed.
 
 ### Q-GIT-1 Meaningful diff
 
@@ -47,7 +51,7 @@ authoritative input.
 A parent Federation Plan MUST consume a subproject only through a declared immutable
 timeline export reference. It MUST NOT silently follow a child branch, copy child canonical
 objects into its own source, or mutate a child Project. A closure manifest MUST record
-the child export's repository locator, project ID, revision, content identity, and
+the child export's Store/provider identity, address, project ID, revision, content identity, and
 federation namespace.
 
 ## 3. Determinism
