@@ -1,0 +1,39 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:federation-command-v0.1"
+title: "Chrona Federation Command v0.1"
+type: object
+required: [version, commandId, type, target, baseRevision, payload]
+additionalProperties: false
+properties:
+  version: {const: chrona/federation-command/v0.1}
+  commandId: {type: string, minLength: 1}
+  type: {enum: [pinFederatedExport, unpinFederatedExport]}
+  target:
+    type: object
+    required: [kind, id, path]
+    additionalProperties: false
+    properties: {kind: {const: federation-plan}, id: {type: string, minLength: 1}, path: {type: string, minLength: 1}}
+  baseRevision: {type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
+  payload: {type: object}
+allOf:
+  - if: {properties: {type: {const: pinFederatedExport}}}
+    then:
+      properties:
+        payload:
+          required: [federationId, export, presentation]
+          additionalProperties: false
+          properties:
+            federationId: {type: string, minLength: 1}
+            export: {$ref: "urn:chrona:federation-plan-v0.1#/$defs/exportRef"}
+            presentation:
+              type: object
+              required: [mode, namespace]
+              additionalProperties: false
+              properties: {mode: {const: summary}, namespace: {type: string, minLength: 1}}
+  - if: {properties: {type: {const: unpinFederatedExport}}}
+    then:
+      properties:
+        payload:
+          required: [federationId]
+          additionalProperties: false
+          properties: {federationId: {type: string, minLength: 1}}

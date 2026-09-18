@@ -89,6 +89,23 @@ Unknown types, wrong target kinds, unknown payload fields, and stale base revisi
 rejected. A transaction has one target and base revision plus an ordered, non-empty
 command list; it is all-or-nothing and produces one result revision.
 
+### 3.3 Federation registry (post-v0.1)
+
+Federation is not back-ported into the closed v0.1 command registry. Its separately
+versioned request document is `chrona/federation-command/v0.1` and has exactly two
+types:
+
+| Type | Target kind | Required payload | Result boundary |
+|---|---|---|---|
+| `pinFederatedExport` | `federation-plan` | `federationId`, complete immutable `export` reference, `presentation` | Replaces one parent-side pinned reference only |
+| `unpinFederatedExport` | `federation-plan` | `federationId` | Removes one parent-side reference only |
+
+Both require a Federation Plan base revision. Validation resolves the candidate export
+before persisting the new plan revision and rejects untrusted repositories, branch tips,
+kind/project-ID mismatch, namespace collision, duplicate federation ID, or cycle. No
+Federation Command has a child Project target or a payload capable of editing child
+source, source schedule, or export contents.
+
 ## 4. Command families
 
 ### 4.1 Project structure and fields

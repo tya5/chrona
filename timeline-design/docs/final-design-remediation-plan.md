@@ -53,22 +53,27 @@ suite; and a local GUI edit must not require unrelated scene/UI replacement.
 
 ### Post-review scope addition — Federated projects (UC-14)
 
-**Status:** Draft — added 2026-09-18
+**Status:** In progress — added 2026-09-18
 **Authority:** `federated-projects-design.md` and ADR-0012
 
 This is not a reopened R1–R10 finding. It is an expanded Must-priority use case that
 must close its own design gate before the overall design can again be called complete.
 
-1. Specify the versioned child `timeline-export` envelope, public-object/interface
-   vocabulary, and parent reference normalization.
-2. Define the Federation Resolver's trust, revision/content-identity, cycle, stale,
-   incompatible-version, and unavailable-export diagnostics.
-3. Specify parent reference mutation in the Command Model without granting a parent
-   write authority over child source.
-4. Add schemas plus positive and negative independent-repository fixtures, including
-   namespace collision and a change to a child that is invisible until repinned.
-5. Run a focused cross-document review and update the design-completion review with
-   the resulting evidence.
+1. **Completed** — Specify the versioned child `timeline-export` envelope,
+   public-object/interface vocabulary, and parent Federation Plan normalization.
+2. **Completed** — Define resolver trust, revision/content-identity, moving-branch,
+   namespace-collision, and untrusted-repository diagnostics. Federation v0.1 is
+   one-way, so cycles are structurally unrepresentable rather than recovered at runtime.
+3. **Completed** — Specify parent Plan mutation in the separately versioned Command
+   registry without granting a parent write authority over child source.
+4. **Completed (contract evidence)** — Add schemas plus positive and negative fixtures
+   for pinned exports, moving branches, namespace collision, and trust. The fixture
+   runner is structural/local; it does not fetch a remote repository.
+5. **Remaining** — Define the Presentation-format minor version that adds an explicit
+   Federation Plan reference to Render Context, then add resolver integration fixtures
+   proving a child revision is invisible until the parent Plan is repinned.
+6. **Remaining** — Run a focused cross-document review and update the
+   design-completion review with the resulting evidence.
 
 **Done when:** UC-14 maps to normative syntax, resolver behavior, command authority,
 quality invariants, schemas, and executable positive/negative fixture evidence.

@@ -47,12 +47,12 @@ A View is evaluated against an explicit View Context.
 | Primary Project | Semantic project data and its derived planned schedule | Yes |
 | Snapshot | Named immutable comparison state, potentially identified by a Git ref | No |
 | Actual observations | Observed start, finish, point occurrence, and progress | No |
-| Federated exports | Pinned, read-only subproject summary inputs declared by the primary Project | No |
+| Federation Plan | Pinned, read-only subproject summary inputs declared in a separately versioned parent-side plan | No |
 | Render context | Explicit evaluation date, locale, and other environment data | As required by the consumer |
 
 The primary Project is required. Snapshot and Actual inputs MUST be named when present. A View or renderer MUST NOT silently select “latest”, “main”, or a local-clock date as a comparison source.
 
-A federated item is a read-only projection input after the primary Project's pinned
+A federated item is a read-only projection input after the Federation Plan's pinned
 reference has been resolved. It may be selected, grouped by federation ID, and styled
 by declared origin. It cannot be edited through the parent's View and it must not cause
 the parent scheduler to inspect non-published child internals.

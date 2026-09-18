@@ -1,0 +1,10 @@
+version: chrona/federation-plan/v0.1
+id: program-federation
+primaryProject: {id: controller-x, kind: project, path: timeline-design/docs/examples/controller-x.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+exports:
+  - id: firmware
+    export: {id: firmware-program, kind: timeline-export, projectId: firmware, repository: git+https://example.invalid/firmware.git, path: exports/program.yaml, revision: git:1111111111111111111111111111111111111111, contentIdentity: sha256:1111111111111111111111111111111111111111111111111111111111111111}
+    presentation: {mode: summary, namespace: shared}
+  - id: hardware
+    export: {id: hardware-program, kind: timeline-export, projectId: hardware, repository: git+https://example.invalid/firmware.git, path: exports/hardware.yaml, revision: git:3333333333333333333333333333333333333333, contentIdentity: sha256:3333333333333333333333333333333333333333333333333333333333333333}
+    presentation: {mode: summary, namespace: shared}

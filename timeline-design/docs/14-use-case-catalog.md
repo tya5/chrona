@@ -265,7 +265,7 @@ or accessibility capability with an unstated local default.
 **Trigger:** A program needs an integrated milestone/risk timeline while each team keeps
 its own Project, repository, and review cadence.
 **Preconditions:** Each subproject publishes an immutable Chrona timeline export; the
-program Project declares only pinned references to those exports.
+program repository declares only pinned references in a Federation Plan.
 **Normal flow:** A subproject leader changes and reviews only their own Project. The
 program lead updates one federation reference to an approved child revision, resolves
 the closure, and renders child summary items alongside program-owned milestones.

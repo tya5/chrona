@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent
 COMMANDS = [
     [sys.executable, str(ROOT / "validate_conformance.py")],
     [sys.executable, str(ROOT / "presentation" / "validate_conformance.py")],
+    [sys.executable, str(ROOT / "federation" / "validate_conformance.py")],
 ]
 for command in COMMANDS:
     result = subprocess.run(command, check=False)

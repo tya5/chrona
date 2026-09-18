@@ -1,0 +1,49 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:federation-plan-v0.1"
+title: "Chrona Federation Plan v0.1"
+type: object
+required: [version, id, primaryProject, exports]
+additionalProperties: false
+properties:
+  version: {const: chrona/federation-plan/v0.1}
+  id: {type: string, minLength: 1}
+  primaryProject: {$ref: "#/$defs/projectRef"}
+  exports:
+    type: array
+    items:
+      type: object
+      required: [id, export, presentation]
+      additionalProperties: false
+      properties:
+        id: {type: string, minLength: 1}
+        export: {$ref: "#/$defs/exportRef"}
+        presentation:
+          type: object
+          required: [mode, namespace]
+          additionalProperties: false
+          properties:
+            mode: {const: summary}
+            namespace: {type: string, minLength: 1}
+$defs:
+  projectRef:
+    type: object
+    required: [id, kind, path, revision, contentIdentity]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      kind: {const: project}
+      path: {type: string, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      revision: {type: string, pattern: "^git:.+$"}
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  exportRef:
+    type: object
+    required: [id, kind, projectId, repository, path, revision, contentIdentity]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      kind: {const: timeline-export}
+      projectId: {type: string, minLength: 1}
+      repository: {type: string, pattern: "^git\\+https://"}
+      path: {type: string, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      revision: {type: string, pattern: "^git:.+$"}
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}

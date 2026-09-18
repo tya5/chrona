@@ -44,8 +44,8 @@ authoritative input.
 
 ### Q-GIT-5 Federated ownership and pinning
 
-A parent Project MUST consume a subproject only through a declared immutable timeline
-export reference. It MUST NOT silently follow a child branch, copy child canonical
+A parent Federation Plan MUST consume a subproject only through a declared immutable
+timeline export reference. It MUST NOT silently follow a child branch, copy child canonical
 objects into its own source, or mutate a child Project. A closure manifest MUST record
 the child export's repository locator, project ID, revision, content identity, and
 federation namespace.

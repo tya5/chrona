@@ -451,23 +451,21 @@ This is not multi-file composition of one canonical Project. The child Project r
 authoritative in its own repository and is never included, merged, or mutated by the
 parent Project.
 
-The proposed parent-side syntax is a `federatedProjects` section containing typed,
-immutable references to a child **timeline export**, rather than a raw child Project:
+The parent-side syntax is a separately versioned Federation Plan containing typed,
+immutable references to child **timeline exports**, rather than raw child Projects. It
+is not a `timeline/v0.1` top-level field:
 
 ```yaml
-federatedProjects:
+version: chrona/federation-plan/v0.1
+id: program-federation
+primaryProject: {id: program, kind: project, path: project.yaml, revision: git:<40-or-64-hex>, contentIdentity: sha256:<64-hex>}
+exports:
   - id: firmware
-    export:
-      projectId: firmware
-      kind: timeline-export
-      repository: git+https://host.example/org/firmware.git
-      path: exports/program.yaml
-      revision: git:<40-or-64-hex>
-      contentIdentity: sha256:<64-hex>
+    export: {id: firmware-program, kind: timeline-export, projectId: firmware, repository: git+https://host.example/org/firmware.git, path: exports/program.yaml, revision: git:<40-or-64-hex>, contentIdentity: sha256:<64-hex>}
     presentation: {mode: summary, namespace: firmware}
 ```
 
-The federation ID is parent-local and stable. A child object that appears in the parent
+The Federation Plan ID and each federation ID are parent-local and stable. A child object that appears in the parent
 projection has the derived identity `federation-id:child-object-id`; it does not become
 a member of the parent `objects` map. `revision` must be immutable and
 `contentIdentity` must match the exact export bytes. `repository` is a canonical
@@ -480,7 +478,7 @@ schedules, edits, or otherwise reaches into the child Project. Aggregated child
 progress is display information with an explicit aggregation rule and is not a
 scheduling input.
 
-The export envelope/schema, cross-repository trust policy, and parent mutation command
-are intentionally deferred. This section establishes the ownership boundary only;
-implementations must not claim federation support until the contract and fixtures in
+The federation resources are versioned outside Core v0.1. A future Render Context minor
+version will reference the Federation Plan explicitly. Implementations must not claim
+federation support until the resolver contract and fixtures in
 [Federated Projects Design](federated-projects-design.md) are complete.

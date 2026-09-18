@@ -12,7 +12,7 @@ milestones and progress without requiring every leader to edit a shared Project 
 ## Decision
 
 Chrona will model this as federation: a child Project publishes a deliberately small,
-versioned timeline export, and the parent stores a typed reference pinned to one
+versioned timeline export, and the parent Federation Plan stores a typed reference pinned to one
 immutable child export revision and content identity. The parent renders a namespaced,
 read-only summary projection. It never includes or mutates the child Project source.
 

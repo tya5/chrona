@@ -1,0 +1,22 @@
+cases:
+  - id: valid-export
+    resource: firmware-program.yaml
+    schema: ../../schemas/timeline-export-v0.1.schema.yaml
+  - id: valid-plan
+    resource: program-federation.yaml
+    schema: ../../schemas/federation-plan-v0.1.schema.yaml
+  - id: valid-pin-command
+    resource: pin-firmware.yaml
+    schema: ../../schemas/federation-command-v0.1.schema.yaml
+  - id: moving-branch-is-invalid
+    resource: invalid-moving-branch.yaml
+    schema: ../../schemas/federation-plan-v0.1.schema.yaml
+    expectDiagnostics: [FED-REF-REVISION]
+  - id: namespace-collision-is-invalid
+    resource: invalid-namespace-collision.yaml
+    schema: ../../schemas/federation-plan-v0.1.schema.yaml
+    expectDiagnostics: [FED-NAMESPACE-COLLISION]
+  - id: untrusted-repository-is-invalid
+    resource: invalid-untrusted-repository.yaml
+    schema: ../../schemas/federation-plan-v0.1.schema.yaml
+    expectDiagnostics: [FED-REPOSITORY-UNTRUSTED]

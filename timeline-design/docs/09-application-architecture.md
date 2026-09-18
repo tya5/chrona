@@ -67,7 +67,7 @@ Dependencies point toward lower-level semantics and then outward toward presenta
 |---|---|---|
 | Project, profiles, calendars, semantic annotations, and relations | Project Store | Canonical, reviewable structured source data |
 | Named Snapshot and Actual input references | Their specified persistence model | Explicitly named, immutable or independently observed input; never inferred as “latest” |
-| Federated child export | Child Project/repository | Immutable, read-only export consumed through a parent-owned pinned reference; never merged into parent canonical data |
+| Federation Plan and child export | Parent plan / child Project repository | Immutable, read-only export consumed through a parent-owned pinned plan reference; never merged into parent canonical data |
 | View, Style, Theme, and Scene-profile definitions | Their respective specifications | Declarative versioned data; serialization syntax may evolve independently |
 | Schedule result, View Projection, resolved Style/Theme, Scene, SVG, canvas store | Runtime Coordinator / adapters | Derived cache or output only; invalidated when any declared input changes |
 | Diagnostics, manifests, and trace data | Runtime Coordinator | Inspectable output; not a substitute for canonical source |
@@ -87,8 +87,8 @@ Every read evaluation begins with an explicit request containing at least:
 
 The Runtime Coordinator delegates resolution to the Evaluation Closure Resolver before
 evaluation. The resolver verifies root containment, immutable revision, exact content
-identity, expected kind/ID, Project compatibility, and acyclicity. It delegates a
-declared federation edge to the Federation Resolver, which verifies export kind,
+identity, expected kind/ID, Project compatibility, and acyclicity. It delegates an
+explicit Federation Plan edge to the Federation Resolver, which verifies export kind,
 project identity, namespace, and child-reference acyclicity; it returns a
 normalized closure manifest or stable diagnostics. Absence or mismatch is a diagnostic;
 it is not permission to read a working tree default, current time, local locale, or
