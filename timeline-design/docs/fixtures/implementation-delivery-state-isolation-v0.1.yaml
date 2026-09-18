@@ -1,0 +1,26 @@
+project:
+  version: timeline/v0.1
+  project: {id: implementation-delivery-state-isolation}
+  objects:
+    design:
+      type: task
+      schedule: {mode: fixed, start: 2026-10-01, end: 2026-10-08}
+    build:
+      type: task
+      schedule: {mode: scheduled, amount: 5d}
+  relations:
+    - type: dependency
+      from: {object: design, endpoint: end}
+      to: {object: build, endpoint: start}
+      lag: 0d
+states:
+  - planned
+  - active
+  - blocked
+  - completed
+  - cancelled
+actualObservation:
+  object: build
+  observedCompletion: 2026-10-21
+expectedPlacement:
+  build: {start: 2026-10-08, end: 2026-10-13}

@@ -10,10 +10,10 @@ profiles:
         type: objectReference
         cardinality: many
         targetProfiles: [implementation-delivery.person, implementation-delivery.team]
-      workflowState: {type: enum, cardinality: one, required: true}
+      workflowState: {type: enum, cardinality: one, required: true, enumValues: [planned, active, blocked, completed, cancelled]}
       artifacts: {type: resourceReference, cardinality: many}
       acceptanceEvidence: {type: resourceReference, cardinality: many}
-      reuseClassification: {type: enum, cardinality: one, required: true}
+      reuseClassification: {type: enum, cardinality: one, required: true, enumValues: [core, shared-service, adapter, experimental]}
   implementation-delivery.delivery-gate:
     extends: milestone
     fields:
@@ -21,9 +21,9 @@ profiles:
         type: objectReference
         cardinality: many
         targetProfiles: [implementation-delivery.person, implementation-delivery.team]
-      workflowState: {type: enum, cardinality: one, required: true}
+      workflowState: {type: enum, cardinality: one, required: true, enumValues: [planned, active, blocked, completed, cancelled]}
       artifacts: {type: resourceReference, cardinality: many}
       acceptanceEvidence: {type: resourceReference, cardinality: many}
-      reuseClassification: {type: enum, cardinality: one, required: true}
+      reuseClassification: {type: enum, cardinality: one, required: true, enumValues: [core, shared-service, adapter, experimental]}
   implementation-delivery.person: {extends: entity}
   implementation-delivery.team: {extends: entity}

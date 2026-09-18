@@ -12,11 +12,10 @@ work in an ordinary Chrona Project. It supplies delivery-management metadata wit
 adding a Core primitive, scheduling rule, Actual input, authority model, or workflow
 engine.
 
-This document fixes the package vocabulary only. Workflow-state meaning is owned by the
-IDP-2 work package; immutable artifact/evidence reference semantics are owned by IDP-3.
-Until those work packages complete, an implementation MUST validate the vocabulary and
-field shapes here but MUST NOT infer transition, scheduling, Actual, or resource
-resolution behavior from their values.
+This document fixes package vocabulary and its bounded state declarations. Immutable
+artifact/evidence reference semantics are owned by the IDP-3 work package. An
+implementation MUST validate the vocabulary and field shapes here but MUST NOT infer
+scheduling, Actual, or resource-resolution behavior from their values.
 
 ## 2. Package and profile identifiers
 
@@ -43,10 +42,10 @@ serialization is used.
 | Field | Type | Required | Cardinality | Declared target / constraint | Meaning at this stage |
 |---|---|---:|---|---|---|
 | `assignees` | `objectReference` | No | many | `implementation-delivery.person` or `implementation-delivery.team` | Intended delivery ownership metadata. |
-| `workflowState` | `enum` | Yes | one | State vocabulary is deferred to IDP-2. | Declared delivery status metadata only. |
+| `workflowState` | `enum` | Yes | one | Section 6 state vocabulary. | Declared delivery status metadata only. |
 | `artifacts` | `resourceReference` | No | many | Immutable resource contract is deferred to IDP-3. | Inputs or produced delivery artifacts. |
 | `acceptanceEvidence` | `resourceReference` | No | many | Immutable resource contract is deferred to IDP-3. | Evidence used to accept a work item or gate. |
-| `reuseClassification` | `enum` | Yes | one | Classification vocabulary is deferred to the delivery-review rule. | Declares the intended reuse-review classification. |
+| `reuseClassification` | `enum` | Yes | one | Section 6 classification vocabulary. | Declares the intended reuse-review classification. |
 
 An implementation MUST NOT accept these five fields on another profile merely because
 their names match. It MUST resolve the package/profile identity first.
@@ -79,12 +78,40 @@ its typed fields violate this specification:
 | `IDP-PROFILE-005` | An artifact/evidence field does not declare `resourceReference` with `many` cardinality. |
 | `IDP-PROFILE-006` | A standard profile has the wrong parent or an undeclared standard field. |
 
-Value-level diagnostics for state vocabulary, reference identity/content checks, and
-typed-field Commands are introduced only by IDP-2, IDP-3, and IDP-5 respectively.
+Value-level diagnostics for immutable reference identity/content checks and typed-field
+Command execution are introduced by IDP-3 and IDP-5 respectively.
 
-## 6. Explicit boundary
+## 6. State and reuse declarations
 
-The only currently valid inference from a delivery profile is that it uses the existing
-Core primitive named in section 2. All other delivery metadata is descriptive until its
-own profile rule is complete. In particular, `workflowState: completed` MUST NOT be
-treated as Actual completion or as a scheduling constraint.
+`workflowState` has exactly one of these values:
+
+| Value | Meaning |
+|---|---|
+| `planned` | The delivery item is intended but not claimed to be active. |
+| `active` | The delivery item is currently being worked. |
+| `blocked` | The delivery item cannot currently proceed. |
+| `completed` | The delivery item is claimed complete for delivery tracking. |
+| `cancelled` | The delivery item is no longer intended to proceed. |
+
+`reuseClassification` has exactly one of `core`, `shared-service`, `adapter`, or
+`experimental`. It records the classification required by the delivery reuse review;
+it does not itself approve promotion or change the semantic owner of code.
+
+The permitted state values are declarations, not executable transitions. A state change
+is an ordinary validated `setTypedField` Command using the standard base-revision and
+atomicity rules. There is no package-supplied transition graph, guard, actor permission,
+notification, automatic update, or derived write. Hosts MAY present a state transition
+in an adapter, but the adapter MUST submit the same ordinary Command and cannot claim a
+different semantic result.
+
+Validators MUST diagnose an enum value outside these vocabularies as `IDP-STATE-001`.
+An attempt to use a state declaration as a temporal/dependency input or as an Actual
+observation is `IDP-STATE-002`.
+
+## 7. Explicit boundary
+
+The only scheduling inference from a delivery profile is that it uses the existing Core
+primitive named in section 2. In particular, `workflowState: completed` MUST NOT be
+treated as Actual completion or as a scheduling constraint. A Project whose delivery
+metadata differs only in `workflowState` or `reuseClassification` therefore has the
+same scheduling inputs, schedule, and Core diagnostics.

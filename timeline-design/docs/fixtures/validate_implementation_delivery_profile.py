@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Validate IDP-1 vocabulary fixtures without assigning workflow semantics."""
+from copy import deepcopy
 from pathlib import Path
 import sys
 import yaml
 from jsonschema import Draft202012Validator
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+from chrona.scheduler import schedule
 
 ROOT = Path(__file__).resolve().parent
 DOCS = ROOT.parent
@@ -15,6 +20,8 @@ EXPECTED = {
     "implementation-delivery.team": "entity",
 }
 DELIVERY_FIELDS = {"assignees", "workflowState", "artifacts", "acceptanceEvidence", "reuseClassification"}
+WORKFLOW_STATES = {"planned", "active", "blocked", "completed", "cancelled"}
+REUSE_CLASSES = {"core", "shared-service", "adapter", "experimental"}
 
 
 def diagnose(data):
@@ -43,6 +50,10 @@ def diagnose(data):
                 field = fields.get(name, {})
                 if field.get("type") != "resourceReference" or field.get("cardinality") != "many":
                     diagnostics.append("IDP-PROFILE-005")
+            if set(fields.get("workflowState", {}).get("enumValues", [])) != WORKFLOW_STATES or len(fields.get("workflowState", {}).get("enumValues", [])) != len(WORKFLOW_STATES):
+                diagnostics.append("IDP-STATE-001")
+            if set(fields.get("reuseClassification", {}).get("enumValues", [])) != REUSE_CLASSES or len(fields.get("reuseClassification", {}).get("enumValues", [])) != len(REUSE_CLASSES):
+                diagnostics.append("IDP-STATE-001")
     return sorted(set(diagnostics))
 
 
@@ -54,6 +65,21 @@ def fixture_diagnostics(name):
     return diagnose(data)
 
 
+def check_state_isolation():
+    data = yaml.safe_load((ROOT / "implementation-delivery-state-isolation-v0.1.yaml").read_text())
+    expected = data["expectedPlacement"]
+    placements = []
+    for state in data["states"]:
+        project = deepcopy(data["project"])
+        project["objects"]["build"]["fields"] = {"workflowState": state}
+        result = schedule(project)
+        if not result.ok or result.placements["build"] != expected["build"]:
+            raise AssertionError(f"state isolation failed for {state}: {result.placements}, {result.diagnostics}")
+        placements.append(result.placements)
+    if any(placement != placements[0] for placement in placements[1:]):
+        raise AssertionError("workflow state changed the schedule")
+
+
 def main():
     positive = fixture_diagnostics("implementation-delivery-profile-v0.1.yaml")
     if positive:
@@ -62,6 +88,10 @@ def main():
     expected = {"IDP-PROFILE-003", "IDP-PROFILE-004", "IDP-PROFILE-005"}
     if set(negative) != expected:
         raise AssertionError(f"negative fixture diagnostics: {negative}")
+    invalid_state = fixture_diagnostics("implementation-delivery-profile-invalid-state-v0.1.yaml")
+    if invalid_state != ["IDP-STATE-001"]:
+        raise AssertionError(f"invalid state fixture diagnostics: {invalid_state}")
+    check_state_isolation()
     print("Implementation-delivery profile vocabulary: PASS")
 
 

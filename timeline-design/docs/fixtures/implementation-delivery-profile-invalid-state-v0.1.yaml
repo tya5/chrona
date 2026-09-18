@@ -1,6 +1,6 @@
 version: chrona/profile/v0.1
 packageId: implementation-delivery
-contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222
+contentIdentity: sha256:3333333333333333333333333333333333333333333333333333333333333333
 requires: {projectFormat: timeline/v0.1}
 profiles:
   implementation-delivery.work-item:
@@ -8,10 +8,10 @@ profiles:
     fields:
       assignees:
         type: objectReference
-        cardinality: one
-        targetProfiles: [implementation-delivery.person]
-      workflowState: {type: enum, cardinality: many, required: true, enumValues: [planned, active, blocked, completed, cancelled]}
-      artifacts: {type: resourceReference, cardinality: one}
+        cardinality: many
+        targetProfiles: [implementation-delivery.person, implementation-delivery.team]
+      workflowState: {type: enum, cardinality: one, required: true, enumValues: [planned, active, done]}
+      artifacts: {type: resourceReference, cardinality: many}
       acceptanceEvidence: {type: resourceReference, cardinality: many}
       reuseClassification: {type: enum, cardinality: one, required: true, enumValues: [core, shared-service, adapter, experimental]}
   implementation-delivery.delivery-gate:
