@@ -21,7 +21,7 @@ separate, but Chrona needs a semantic export contract rather than a source-tree 
 ```yaml
 federatedProjects:
   - id: firmware
-    export: {projectId: firmware, path: exports/program.yaml, revision: git:<40-or-64-hex>, contentIdentity: sha256:<64-hex>}
+    export: {projectId: firmware, repository: git+https://host.example/org/firmware.git, path: exports/program.yaml, revision: git:<40-or-64-hex>, contentIdentity: sha256:<64-hex>}
     presentation: {mode: summary, namespace: firmware}
 ```
 
@@ -29,8 +29,9 @@ The normalized reference additionally declares a canonical `repository` locator 
 example, `git+https://host/org/firmware.git`); the repository locator, `projectId`,
 path, revision, and content identity are verified before evaluation. A locator is not
 itself trust: an implementation accepts it only through a separately configured trust
-policy. Child
-object IDs are namespaced as `federation-id:child-object-id`; parent and child data are
+policy.
+
+Child object IDs are namespaced as `federation-id:child-object-id`; parent and child data are
 never merged into one canonical Project document. Parent-owned dependencies may target a
 declared child **published interface milestone** only. They do not rewrite or schedule
 inside the child; a failed/missing interface emits a federation diagnostic.
