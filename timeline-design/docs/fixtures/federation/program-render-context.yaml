@@ -9,6 +9,6 @@ body:
   sceneProfile: {id: date-lanes, kind: scene-profile, path: scenes/date-lanes.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
   federationPlan: {id: program-federation, kind: federation-plan, path: federations/program-federation.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
   evaluation: {locale: ja-JP}
-  viewport: {width: 1200, height: 700}
+  viewport: {width: 1200, height: 700, margins: {top: 24, right: 32, bottom: 32, left: 120}, clipping: clip}
   target: {kind: svg, capabilities: [metadata, text-alternative]}
   layoutMetrics: {id: logical, revision: metric:logical-v1, contentIdentity: sha256:0000000000000000000000000000000000000000000000000000000000000000, algorithmVersion: chrona-layout-metrics/v0.1}

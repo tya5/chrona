@@ -37,6 +37,10 @@ references recorded in that Plan revision. A newer child export, child branch ti
 working-tree file is not an evaluation input. A child change is therefore invisible
 until `pinFederatedExport` creates a new Plan revision and v0.2 names that revision.
 
+The conformance fixtures `closure-before-repin.yaml` and `closure-after-repin.yaml`
+make this rule executable: they expose both child revisions, assert that the old Plan
+selects only the old export, then assert that a repinned Plan selects the new export.
+
 ```yaml
 version: chrona/federation-plan/v0.1
 id: program-federation

@@ -23,3 +23,7 @@ cases:
     resource: invalid-untrusted-repository.yaml
     schema: ../../schemas/federation-plan-v0.1.schema.yaml
     expectDiagnostics: [FED-REPOSITORY-UNTRUSTED]
+  - id: child-change-is-invisible-until-repinned
+    closure: closure-before-repin.yaml
+  - id: repinned-child-change-is-visible
+    closure: closure-after-repin.yaml

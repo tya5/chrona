@@ -49,12 +49,32 @@ def diagnostics(value: dict) -> set[str]:
     return errors
 
 
+def closure_diagnostics(here: Path, fixture: dict) -> set[str]:
+    plan = load(here / fixture["plan"])
+    available = [load(here / path) for path in fixture["availableExports"]]
+    by_revision = {value["project"]["revision"]: value for value in available}
+    actual = {item["id"]: item["export"]["revision"] for item in plan["exports"]}
+    errors = set()
+    if actual != fixture["expect"]["selected"]:
+        errors.add("FED-CLOSURE-SELECTION")
+    if any(revision not in by_revision for revision in actual.values()):
+        errors.add("FED-EXPORT-UNAVAILABLE")
+    if set(actual.values()) & set(fixture["expect"].get("ignored", {}).values()):
+        errors.add("FED-UNPINNED-EXPORT-SELECTED")
+    return errors
+
+
 def main() -> int:
     here = Path(__file__).resolve().parent
     manifest = load(here / "conformance-v0.1.yaml")
     store = {schema["$id"]: schema for schema in map(load, SCHEMAS.glob("*.schema.yaml"))}
     failures = []
     for case in manifest["cases"]:
+        if "closure" in case:
+            actual = closure_diagnostics(here, load(here / case["closure"]))
+            if actual:
+                failures.append(f"{case['id']}: closure diagnostics {sorted(actual)}")
+            continue
         value = json_value(load(here / case["resource"]))
         schema = load((here / case["schema"]).resolve())
         resolver = RefResolver.from_schema(schema, store=store)

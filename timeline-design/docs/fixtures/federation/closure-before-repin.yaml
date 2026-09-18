@@ -1,0 +1,6 @@
+id: child-change-is-not-visible-before-repin
+plan: program-federation.yaml
+availableExports: [firmware-program.yaml, firmware-program-next.yaml]
+expect:
+  selected: {firmware: git:1111111111111111111111111111111111111111}
+  ignored: {firmware: git:3333333333333333333333333333333333333333}

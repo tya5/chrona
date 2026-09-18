@@ -69,12 +69,12 @@ must close its own design gate before the overall design can again be called com
 4. **Completed (contract evidence)** — Add schemas plus positive and negative fixtures
    for pinned exports, moving branches, namespace collision, and trust. The fixture
    runner is structural/local; it does not fetch a remote repository.
-5. **Completed (format contract)** — Define Presentation-format v0.2 with an explicit
-   Federation Plan reference to Render Context. **Remaining integration evidence:**
-   resolver fixtures proving a child revision is invisible until the parent Plan is
-   repinned.
-6. **Remaining** — Run a focused cross-document review and update the
-   design-completion review with the resulting evidence.
+5. **Completed** — Define Presentation-format v0.2 with an explicit Federation Plan
+   reference to Render Context and resolver fixtures proving a child revision is
+   invisible until the parent Plan is repinned.
+6. **Completed conditionally** — Run a focused cross-document review and record its
+   evidence in `../reviews/federation-design-readiness-review.md`. CI must still run
+   full conformance in an environment that installs the declared dependencies.
 
 **Done when:** UC-14 maps to normative syntax, resolver behavior, command authority,
 quality invariants, schemas, and executable positive/negative fixture evidence.

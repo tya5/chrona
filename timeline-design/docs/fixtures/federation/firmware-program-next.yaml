@@ -1,0 +1,15 @@
+version: chrona/timeline-export/v0.1
+kind: timeline-export
+id: firmware-program
+project:
+  id: firmware
+  revision: git:3333333333333333333333333333333333333333
+  contentIdentity: sha256:3333333333333333333333333333333333333333333333333333333333333333
+objects:
+  - id: evt
+    kind: milestone
+    title: EVT complete (revised)
+    schedule: {at: 2026-11-29}
+    progress: 0.7
+interfaceMilestones: [evt]
+progressAggregation: {method: weighted-object-progress}
