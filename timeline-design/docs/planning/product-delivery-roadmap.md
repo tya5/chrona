@@ -2,7 +2,7 @@
 
 **Status:** Planned
 **Authority:** This document owns delivery order and reuse gates only. Current
-specifications `02`–`16` remain the sole authority for semantics and contracts.
+specifications `02`–`17` remain the sole authority for semantics and contracts.
 
 ## 1. Outcome
 

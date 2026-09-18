@@ -1,7 +1,7 @@
 # Minimal Implementation Authorization Plan
 
 **Status:** Authorized design plan
-**Authority:** Current specifications `02`–`16`; the final design-readiness review
+**Authority:** Current specifications `02`–`17`; the final design-readiness review
 authorizes this plan but does not replace any owning specification.
 
 ## 1. Purpose and boundary

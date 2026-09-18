@@ -43,7 +43,7 @@ must also be usable by other Chrona projects.
 
 | Work package | Required result | Exit evidence |
 |---|---|---|
-| IDP-1 — Profile vocabulary | Specify profile IDs, allowed base kinds, field schemas, required/optional cardinality, and diagnostic IDs for assignee, workflow state, artifacts, acceptance evidence, and reuse classification. | Normative profile/schema draft and positive/negative validation fixtures. |
+| IDP-1 — Profile vocabulary | **Complete.** Specify profile IDs, allowed base kinds, field schemas, required/optional cardinality, and diagnostic IDs for assignee, workflow state, artifacts, acceptance evidence, and reuse classification. | `17-implementation-delivery-profile.md`, profile schema, and positive/negative vocabulary fixtures. |
 | IDP-2 — State and Actual boundary | Specify the finite state vocabulary, its permitted representation, and the rule that it has no scheduling or Actual authority. Specify which state changes are ordinary typed-field Commands. | Boundary examples prove that an equal Project schedule has equal results regardless of workflow state and that Actual remains separately resolved. |
 | IDP-3 — Immutable evidence boundary | Specify the permitted Revision Store resource-reference kinds and identity/content checks for artifacts and acceptance evidence. Distinguish these from Federation child-export references. | Fixture set rejects mutable/unpinned, kind-mismatched, or content-mismatched evidence references. |
 | IDP-4 — Self-hosted roadmap fixture | Encode a representative Chrona delivery plan as a Chrona Project using the profile, including work items, gates, dependencies, evidence, and reuse classifications. | The fixture validates, schedules deterministically, and yields reviewable normalized output. |

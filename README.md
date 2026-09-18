@@ -51,6 +51,7 @@ The pre-repository Core v0.1 Stable Candidate is preserved verbatim in
 2. [`timeline-design/docs/03-temporal-model.md`](timeline-design/docs/03-temporal-model.md)
 3. [`timeline-design/docs/04-scheduling-model.md`](timeline-design/docs/04-scheduling-model.md)
 4. [`timeline-design/docs/05-project-format.md`](timeline-design/docs/05-project-format.md)
+5. [`timeline-design/docs/specification/17-implementation-delivery-profile.md`](timeline-design/docs/specification/17-implementation-delivery-profile.md)
 
 The candidate is **Proposed / Stable Candidate**, not yet Stable.  This code is
 an independent conformance aid: implementation discoveries must be recorded as

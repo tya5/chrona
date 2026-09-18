@@ -16,20 +16,41 @@ properties:
     type: object
     minProperties: 1
     additionalProperties:
-      type: object
-      required: [extends]
-      additionalProperties: false
-      properties:
-        extends: {type: string, minLength: 1}
-        fields: {type: object}
-        constraints: {type: array}
-        relations: {type: array}
-        derivedFields: {type: object}
+      $ref: "#/$defs/profile"
   fields:
     type: object
     additionalProperties:
-      type: object
-      required: [type]
-      additionalProperties: false
-      properties:
-        type: {enum: [string, boolean, integer, number, date]}
+      $ref: "#/$defs/fieldDefinition"
+
+$defs:
+  profile:
+    type: object
+    required: [extends]
+    additionalProperties: false
+    properties:
+      extends: {type: string, minLength: 1}
+      fields:
+        type: object
+        additionalProperties:
+          $ref: "#/$defs/fieldDefinition"
+      constraints: {type: array}
+      relations: {type: array}
+      derivedFields: {type: object}
+  fieldDefinition:
+    type: object
+    required: [type]
+    additionalProperties: false
+    properties:
+      type:
+        enum: [string, boolean, integer, number, date, enum, objectReference, resourceReference]
+      cardinality: {enum: [one, many]}
+      required: {type: boolean}
+      enumValues:
+        type: array
+        uniqueItems: true
+        items: {type: string, minLength: 1}
+      targetProfiles:
+        type: array
+        uniqueItems: true
+        minItems: 1
+        items: {type: string, minLength: 1}

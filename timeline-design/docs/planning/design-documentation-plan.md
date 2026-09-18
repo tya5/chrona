@@ -152,7 +152,7 @@ The initial target structure is:
 docs/
 ├── README.md
 ├── specification/
-│   ├── 00-vision.md … 16-federation.md
+│   ├── 00-vision.md … 17-implementation-delivery-profile.md
 │   └── supplemental/
 ├── decisions/
 │   └── ADR-NNNN-<decision>.md
@@ -701,6 +701,26 @@ timeline exports.
 
 The Core Project data of a child, a centralized portfolio/work-management model, or
 raw Git checkout/submodule behavior.
+
+---
+
+### 5.19 `17-implementation-delivery-profile.md`
+
+**Purpose**
+
+Defines the standard declarative package used to represent Chrona delivery work in a
+Chrona Project.
+
+**Owns**
+
+- standard delivery profile identifiers and their Core inheritance targets;
+- typed delivery-field ownership, presence, and cardinality; and
+- profile-vocabulary diagnostics and conformance fixtures.
+
+**Does not own**
+
+Workflow transition semantics, Actual observations, scheduling authority, resource
+reference identity rules, assignment authorization, or a generic workflow engine.
 
 ## 6. Supporting Artifact Types
 
