@@ -17,11 +17,16 @@ cases:
     schema: ../../schemas/command-request-v0.1.schema.yaml
   - id: local-actual-delta
     resource: scene-delta-local-actual.yaml
-    expect: {replaceScope: null}
+    expect: {replaceScope: null, allowedSceneIds: [object:firmware:actual, object:firmware:variance]}
   - id: global-viewport-delta
     resource: scene-delta-global-viewport.yaml
     schema: ../../schemas/scene-delta-v0.1.schema.yaml
     expect: {replaceScope: scene}
+  - id: local-delta-unrelated-node
+    resource: scene-delta-local-unrelated.yaml
+    schema: ../../schemas/scene-delta-v0.1.schema.yaml
+    expect: {replaceScope: null, allowedSceneIds: [object:firmware:actual, object:firmware:variance]}
+    expectDeltaDiagnostics: [PRES-SCENE-DELTA-IMPACT]
   - id: local-actual-delta-schema
     resource: scene-delta-local-actual.yaml
     schema: ../../schemas/scene-delta-v0.1.schema.yaml

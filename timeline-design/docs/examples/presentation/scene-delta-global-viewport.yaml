@@ -1,8 +1,8 @@
-baseEvaluationId: eval-before
-targetEvaluationId: eval-after
+baseEvaluationFingerprint: eval-before
+targetEvaluationFingerprint: eval-after
+baseGeneration: 1
+targetGeneration: 2
 reason: viewport-reflow
-upsert: []
-remove: []
-reorder: []
-tokenUpdate: []
+operations:
+  - {op: viewportUpdate, viewport: {width: 1200, height: 700}}
 replaceScope: scene

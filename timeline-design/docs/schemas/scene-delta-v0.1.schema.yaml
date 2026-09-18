@@ -1,14 +1,26 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:scene-delta-v0.1"
 type: object
-required: [baseEvaluationId, targetEvaluationId, reason, upsert, remove, reorder, tokenUpdate, replaceScope]
+required: [baseEvaluationFingerprint, targetEvaluationFingerprint, baseGeneration, targetGeneration, reason, operations, replaceScope]
 additionalProperties: false
 properties:
-  baseEvaluationId: {type: string, minLength: 1}
-  targetEvaluationId: {type: string, minLength: 1}
+  baseEvaluationFingerprint: {type: string, minLength: 1}
+  targetEvaluationFingerprint: {type: string, minLength: 1}
+  baseGeneration: {type: integer, minimum: 0}
+  targetGeneration: {type: integer, minimum: 1}
   reason: {enum: [actual-observation-change, project-change, theme-token-change, viewport-reflow, scale-change]}
-  upsert: {type: array, items: {type: string}}
-  remove: {type: array, items: {type: string}}
-  reorder: {type: array, items: {type: string}}
-  tokenUpdate: {type: array, items: {type: string}}
+  operations:
+    type: array
+    items:
+      type: object
+      required: [op]
+      additionalProperties: false
+      properties:
+        op: {enum: [upsert, remove, reorder, tokenUpdate, viewportUpdate]}
+        sceneId: {type: string, minLength: 1}
+        node: {type: object}
+        order: {type: integer, minimum: 0}
+        token: {type: string, minLength: 1}
+        value: {}
+        viewport: {type: object}
   replaceScope: {type: [string, 'null'], enum: [scene, null]}

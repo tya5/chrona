@@ -138,6 +138,8 @@ appearance values without renderer-specific inference.
 
 ### Phase 4 — Specify reactive projection and runtime ordering
 
+**Status:** Completed — 2026-09-18
+
 **Addresses:** R2 and R4; depends on Phases 1–3
 
 `runtime-reactivity-design.md` separates immutable `evaluationFingerprint` (closure,

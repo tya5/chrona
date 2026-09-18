@@ -79,14 +79,22 @@ def resolve_revision_ref(ref: dict) -> tuple[dict | None, list[str]]:
     return value, errors
 
 
-def assert_delta(case_id: str, resource: dict, expected: dict) -> list[str]:
+def delta_diagnostics(resource: dict, expected: dict) -> list[str]:
     errors = []
     if resource.get("replaceScope") != expected.get("replaceScope"):
-        errors.append(f"{case_id}: replaceScope mismatch")
+        errors.append("PRES-SCENE-DELTA-SCOPE")
     if resource.get("replaceScope") is None and resource.get("reason") != "actual-observation-change":
-        errors.append(f"{case_id}: local delta needs actual-observation-change reason")
+        errors.append("PRES-SCENE-DELTA-SCOPE")
     if resource.get("replaceScope") == "scene" and resource.get("reason") not in {"viewport-reflow", "scale-change"}:
-        errors.append(f"{case_id}: global delta needs declared global reason")
+        errors.append("PRES-SCENE-DELTA-SCOPE")
+    if resource.get("targetGeneration", 0) <= resource.get("baseGeneration", 0):
+        errors.append("RUNTIME-GENERATION-ORDER")
+    allowed = set(expected.get("allowedSceneIds", []))
+    if allowed and resource.get("replaceScope") is None:
+        for operation in resource.get("operations", []):
+            scene_id = operation.get("sceneId")
+            if scene_id and scene_id not in allowed:
+                errors.append("PRES-SCENE-DELTA-IMPACT")
     return errors
 
 
@@ -202,7 +210,10 @@ def main() -> int:
             errors = Draft202012Validator(schema, resolver=resolver).iter_errors(resource)
             failures.extend(f"{case['id']}: {error.message}" for error in errors)
         if "expect" in case:
-            failures.extend(assert_delta(case["id"], resource, case["expect"]))
+            expected_delta = set(case.get("expectDeltaDiagnostics", []))
+            actual_delta = set(delta_diagnostics(resource, case["expect"]))
+            if actual_delta != expected_delta:
+                failures.append(f"{case['id']}: delta diagnostics {sorted(actual_delta)} != {sorted(expected_delta)}")
         expected_diagnostics = set(case.get("expectDiagnostics", []))
         actual_diagnostics = set(semantic_errors(manifest_path.parent / case["resource"], resource))
         if actual_diagnostics != expected_diagnostics:

@@ -5,5 +5,5 @@ targetGeneration: 2
 reason: actual-observation-change
 operations:
   - {op: upsert, sceneId: object:firmware:actual, node: {sceneId: object:firmware:actual}}
-  - {op: upsert, sceneId: object:firmware:variance, node: {sceneId: object:firmware:variance}}
+  - {op: upsert, sceneId: object:dvt:planned, node: {sceneId: object:dvt:planned}}
 replaceScope: null
