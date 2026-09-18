@@ -1,6 +1,6 @@
 # Extension Model
 
-**Status:** Proposed
+**Status:** Draft
 **Depends on:** [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [05 Project Format](05-project-format.md), [07 Style and Theme](07-style-and-theme.md), [10 Command Model](10-command-model.md)
 **Owns:** declarative domain packages, custom profiles and typed fields, profile inheritance and fallback, derived-field boundaries, extension validation and compatibility, and the separation of semantic extensions from code plugins.
 
@@ -32,12 +32,14 @@ Only the first category contributes to canonical Project semantics.
 
 A **domain package** is a versioned, declarative collection of profiles, field schemas, relation constraints, derived-field declarations, and optional examples. Its concrete file layout and acquisition mechanism are deferred, but a resolved package has the following conceptual manifest.
 
-For v0.1, its persisted manifest uses the common package identity below. Retrieval may
-remain implementation-defined, but a loaded manifest is canonical and schema-valid:
+For v0.1, its persisted manifest uses the common package identity below. `contentIdentity`
+is the SHA-256 identity of the resolved manifest payload; retrieval may remain
+implementation-defined, but a loaded manifest is canonical and schema-valid:
 
 ```yaml
 version: chrona/profile/v0.1
 packageId: semiconductor-development
+contentIdentity: sha256:<64-hex>
 requires: {projectFormat: timeline/v0.1}
 profiles:
   EVT: {extends: milestone}
@@ -57,7 +59,9 @@ compatibility.
 | `derivedFields` | Typed, declarative derived-field declarations |
 | `migrations` | Explicit supported migrations between package versions, if supplied |
 
-A Project references resolved package identities, not an unpinned “latest” schema. How a package is retrieved is an Application Architecture concern; a load that cannot resolve the declared identity is an extension diagnostic.
+A Project references `{packageId, path, revision, contentIdentity}`, not an unpinned
+“latest” schema. Package and profile inheritance graphs are resolved before Project
+validation; cycles, missing parents, and incompatible Project format are diagnostics.
 
 ## 4. Profiles and inheritance
 

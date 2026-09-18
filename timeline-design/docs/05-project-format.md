@@ -278,13 +278,15 @@ accepts.
 
 ## 11. Profiles and extensions
 
-A project MAY declare extension/profile schemas.
-
-Provisional form:
+A project MAY declare immutable extension package references. Each reference is resolved
+before profile validation and is part of the Project revision closure:
 
 ```yaml
 extensions:
-  - ./schemas/semiconductor.yaml
+  - packageId: semiconductor-development
+    path: packages/semiconductor.yaml
+    revision: git:<40-or-64-hex>
+    contentIdentity: sha256:<64-hex>
 ```
 
 A custom profile may then be used:
@@ -297,7 +299,7 @@ objects:
       approval: pending
 ```
 
-The exact external-schema composition mechanism remains provisional for Core v0.1.
+Moving branch names, directory scans, and an unpinned "latest" package are invalid.
 
 ## 12. Annotations
 
@@ -441,4 +443,3 @@ The following remain reserved/provisional and do not block Core scheduler confor
 - external extension package acquisition.
 
 A consumer MUST diagnose unsupported reserved features rather than reinterpret them.
-

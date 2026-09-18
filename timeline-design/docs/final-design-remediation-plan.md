@@ -184,6 +184,8 @@ inventing mutation, error, or rollback behavior.
 
 ### Phase 6 — Close declarative extension-package resolution
 
+**Status:** Completed — 2026-09-18
+
 **Addresses:** R8; depends on Phase 1
 
 `11-extension-model.md` defines a versioned package manifest with package/content

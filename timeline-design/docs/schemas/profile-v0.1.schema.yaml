@@ -1,11 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:profile-v0.1"
 type: object
-required: [version, packageId, requires, profiles]
+required: [version, packageId, contentIdentity, requires, profiles]
 additionalProperties: false
 properties:
   version: {const: chrona/profile/v0.1}
   packageId: {type: string, minLength: 1}
+  contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   requires:
     type: object
     required: [projectFormat]
@@ -20,6 +21,10 @@ properties:
       additionalProperties: false
       properties:
         extends: {type: string, minLength: 1}
+        fields: {type: object}
+        constraints: {type: array}
+        relations: {type: array}
+        derivedFields: {type: object}
   fields:
     type: object
     additionalProperties:
