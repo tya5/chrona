@@ -152,12 +152,11 @@ The initial target structure is:
 docs/
 ├── README.md
 ├── specification/
-│   ├── 00-vision.md … 14-use-case-catalog.md
+│   ├── 00-vision.md … 16-federation.md
 │   └── supplemental/
 ├── decisions/
 │   └── ADR-NNNN-<decision>.md
 ├── federation/
-│   ├── federated-projects-design.md
 │   └── federated-projects-research.md
 ├── planning/
 │   ├── design-documentation-plan.md
@@ -684,7 +683,7 @@ resulting normative definition.
 
 ---
 
-### 5.18 `federated-projects-design.md`
+### 5.18 `16-federation.md`
 
 **Purpose**
 

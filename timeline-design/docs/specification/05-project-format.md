@@ -484,4 +484,4 @@ The federation resources are versioned outside Core v0.1. The Git-shaped syntax 
 is a v0.1 compatibility form; RA-4 defines the successor provider-neutral form. A future
 Render Context minor version will reference the Federation Plan explicitly.
 Implementations must not claim federation support until the resolver contract and fixtures in
-[Federated Projects Design](../federation/federated-projects-design.md) are complete.
+[16 Federation](16-federation.md) are complete.

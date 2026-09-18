@@ -37,5 +37,5 @@ read-only summary projection. It never includes or mutates the child Project sou
 
 ## References
 
-- [Federated Projects Design](../federation/federated-projects-design.md)
+- [16 Federation](../specification/16-federation.md)
 - [Git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)

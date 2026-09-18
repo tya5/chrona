@@ -54,7 +54,7 @@ suite; and a local GUI edit must not require unrelated scene/UI replacement.
 ### Post-review scope addition — Federated projects (UC-14)
 
 **Status:** In progress — added 2026-09-18
-**Authority:** `../federation/federated-projects-design.md` and ADR-0012
+**Authority:** `../specification/16-federation.md` and ADR-0012
 
 This is not a reopened R1–R10 finding. It is an expanded Must-priority use case that
 must close its own design gate before the overall design can again be called complete.

@@ -2,9 +2,9 @@
 
 | Directory | Contents |
 |---|---|
-| `specification/` | Numbered normative specifications (`00`–`14`) and supplemental design specifications |
+| `specification/` | Numbered normative specifications (`00`–`16`) and supplemental design specifications |
 | `decisions/` | Architecture Decision Records (ADRs) |
-| `federation/` | Cross-repository federation research and design |
+| `federation/` | Cross-repository federation research |
 | `planning/` | Documentation, remediation, and coverage plans |
 | `reviews/` | Point-in-time readiness and final review records |
 | `schemas/` | Machine-readable structural schemas |

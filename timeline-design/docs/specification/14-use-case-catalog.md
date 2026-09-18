@@ -278,7 +278,7 @@ branch tip.
 the parent diff contains only a pinned reference update; the resolved federation manifest
 records every child revision/content identity.
 
-**Owners:** `05`, `06`, `09`, `12`, `13`, `federated-projects-design.md`.
+**Owners:** `05`, `06`, `09`, `12`, `13`, `16`.
 
 ## 5. Cross-cutting quality scenarios
 

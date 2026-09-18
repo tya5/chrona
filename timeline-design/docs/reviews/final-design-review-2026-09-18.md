@@ -43,5 +43,5 @@ claim that GUI, renderer, CLI, AI adapter, or exporter implementations already e
 
 UC-14 (federated independently owned subproject timelines) was added after this review.
 Its ownership, pinned-export, resolver, schema, and fixture work is tracked in
-`../federation/federated-projects-design.md`. The overall gate must not be claimed for the expanded
+`../specification/16-federation.md`. The overall gate must not be claimed for the expanded
 scope until that document's completion evidence is reviewed.
