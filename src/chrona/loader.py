@@ -1,0 +1,30 @@
+"""Reproducible Project loading from immutable Revision Store resources."""
+from __future__ import annotations
+
+from typing import Any
+
+import yaml
+
+from .revision_store import LocalSnapshotReader, SnapshotReadError
+from .scheduler import ScheduleResult, schedule
+from .validation import validate_project
+
+
+def load_project(reference: dict[str, Any], reader: LocalSnapshotReader) -> dict[str, Any]:
+    """Load one pinned Project; callers cannot supply a filesystem path fallback."""
+    if reference.get("kind") != "project":
+        raise SnapshotReadError("E_STORE_REFERENCE")
+    loaded = yaml.safe_load(reader.read(reference))
+    if not isinstance(loaded, dict):
+        raise SnapshotReadError("E_STORE_REFERENCE")
+    return loaded
+
+
+def validate_snapshot(reference: dict[str, Any], reader: LocalSnapshotReader):
+    project = load_project(reference, reader)
+    return validate_project(project, package_reader=reader)
+
+
+def schedule_snapshot(reference: dict[str, Any], reader: LocalSnapshotReader) -> ScheduleResult:
+    project = load_project(reference, reader)
+    return schedule(project, package_reader=reader)

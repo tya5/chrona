@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from chrona.commands import execute_set_typed_field, set_typed_field
+from chrona.loader import schedule_snapshot, validate_snapshot
 from chrona.revision_store import LocalSnapshotReader, MemoryRevisionStore
 from chrona.scheduler import schedule
 from chrona.validation import validate_project
@@ -76,3 +77,36 @@ def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
     assert schedule(project, package_reader=reader).ok
     project["extensions"][0]["resource"]["contentIdentity"] = "sha256:" + "0" * 64
     assert {item.id for item in validate_project(project, package_reader=reader)} == {"E_CONTENT_IDENTITY", "IDP-PROFILE-006"}
+
+
+def test_snapshot_loader_evaluates_only_pinned_project_and_package_bytes(tmp_path):
+    manifest_bytes = (FIXTURES / "implementation-delivery-profile-v0.1.yaml").read_bytes()
+    project = _roadmap()
+    project["extensions"] = [{"packageId": "implementation-delivery", "resource": {
+        "id": "implementation-delivery", "kind": "profile-package",
+        "store": {"provider": "local", "identity": "chrona-test"},
+        "address": "packages/implementation-delivery.yaml", "revision": {"token": "snapshot-2"},
+        "contentIdentity": f"sha256:{sha256(manifest_bytes).hexdigest()}",
+    }}]
+    project_bytes = yaml.safe_dump(project, sort_keys=True).encode()
+    snapshot = tmp_path / "snapshot-2"
+    (snapshot / "packages").mkdir(parents=True)
+    (snapshot / "packages" / "implementation-delivery.yaml").write_bytes(manifest_bytes)
+    (snapshot / "project.yaml").write_bytes(project_bytes)
+    reference = {
+        "id": "chrona-delivery-roadmap", "kind": "project",
+        "store": {"provider": "local", "identity": "chrona-test"}, "address": "project.yaml",
+        "revision": {"token": "snapshot-2"}, "contentIdentity": f"sha256:{sha256(project_bytes).hexdigest()}",
+    }
+    reader = LocalSnapshotReader(tmp_path, "chrona-test")
+    assert validate_snapshot(reference, reader) == []
+    first = schedule_snapshot(reference, reader)
+    second = schedule_snapshot(reference, reader)
+    assert first.ok and second.ok and first.placements == second.placements
+    draft = reference | {"revision": {"token": "Draft"}}
+    try:
+        schedule_snapshot(draft, reader)
+    except Exception as error:
+        assert getattr(error, "diagnostic_id") == "E_IMMUTABLE_SNAPSHOT_REQUIRED"
+    else:
+        raise AssertionError("Draft reference was evaluated")
