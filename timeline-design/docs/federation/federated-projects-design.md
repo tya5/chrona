@@ -1,6 +1,6 @@
 # Federated Projects Design
 
-**Status:** Draft  
+**Status:** Proposed
 **Purpose:** Allow a program Project to render approved timelines from independently
 owned subprojects without making their source files shared mutable state.
 
@@ -52,10 +52,40 @@ exports:
     presentation: {mode: summary, namespace: firmware}
 ```
 
-The v0.1 example is Git-adapter-only. Its successor reference declares an adapter/source
-identity, Address, store-owned revision token, `projectId`, and content identity. All
-are verified before evaluation. A locator is not itself trust: an implementation accepts
-it only through separately configured trust policy for that adapter/source identity.
+The v0.1 example is Git-adapter-only. `chrona/federation-plan/v0.2` is its
+provider-neutral successor. It reuses the resource-reference contract from
+[15 Revision Store Adapters](../specification/15-revision-store-adapters.md): every
+primary-Project and child-export reference declares a Store/provider identity, normalized
+Address, store-owned revision token, and content identity. The child export additionally
+declares its `projectId`.
+
+```yaml
+version: chrona/federation-plan/v0.2
+id: program-federation
+primaryProject:
+  id: program
+  kind: project
+  store: {provider: local, identity: workstation-programs, locator: chrona://programs}
+  address: projects/program.yaml
+  revision: {token: snapshot:2026-09-18T15:00:00Z:81ab}
+  contentIdentity: sha256:<64-hex>
+exports:
+  - id: firmware
+    export:
+      id: firmware-program
+      kind: timeline-export
+      projectId: firmware
+      store: {provider: content, identity: firmware-release-key-1, locator: pkg://firmware/v4}
+      address: exports/program.yaml
+      revision: {token: sha256:<64-hex>}
+      contentIdentity: sha256:<64-hex>
+    presentation: {mode: summary, namespace: firmware}
+```
+
+A locator is not itself trust: an implementation accepts a resource only through
+separately configured trust policy for the adapter/provider and source identity. It then
+verifies the pinned token and content identity. The core never compares tokens from two
+Stores, nor does it infer trust from an URL, local filesystem path, or package name.
 
 Child object IDs are namespaced as `federation-id:child-object-id`; parent and child data are
 never merged into one canonical Project document. Parent-owned dependencies may target a
@@ -82,24 +112,27 @@ aggregation rule, and source revision/content identity. A child may publish no i
 dependencies or private objects. The parent must diagnose a requested non-published
 object instead of attempting to discover it in child source.
 
-Trust is allow-list based: a resolver accepts a source only when it matches a configured
-identity for its adapter (Git repository, local-store namespace, or package signer, for
-example) and the resolved revision/content identity match. A missing, untrusted,
-incompatible, unavailable, cyclic, or stale reference produces a stable diagnostic. It
-never falls back to a locally checked-out repository, local Draft, branch tip, or
-database "latest" value.
+Trust is allow-list based: a resolver accepts a source only when its declared Store
+provider and identity match configured policy (for example a Git repository identity,
+local-store namespace, or package signer) and the resolved token/content identity match.
+A missing, untrusted, incompatible, unavailable, cyclic, or stale reference produces a
+stable diagnostic. It never falls back to a locally checked-out repository, local Draft,
+branch tip, or database "latest" value.
 
 ## Parent mutation
 
-Federation Plan mutation uses the closed `chrona/federation-command/v0.1` registry:
+Federation Plan mutation uses the closed `chrona/federation-command/v0.1` registry for
+legacy Git-shaped documents and a successor command envelope for v0.2 references:
 `pinFederatedExport` replaces one named export reference after validating the exact
 export; `unpinFederatedExport` removes one named reference after checking that no
 parent-owned interface declaration still targets it. Both target only the Federation
-Plan and require its base revision. They cannot send a Command to a child Project,
-modify an export, or mutate child schedules.
+Plan and require its target Store's opaque base-revision token. They cannot send a
+Command to a child Project, modify an export, or mutate child schedules. Pinning never
+follows a new child version; it writes one new immutable parent Plan Snapshot that names
+the selected child Snapshot explicitly.
 
 ## Required follow-up evidence
 
-The Presentation closure resolver, successor provider-neutral Render Context, schemas,
-and fixtures must add federation-plan structural and semantic validation before UC-14
-is promoted from design to implementation-ready.
+RA-5 supplies the v0.2 schema and Git/local/content fixtures. The Presentation closure
+resolver must validate this provider-neutral Plan before UC-14 is promoted from design
+to implementation-ready.
