@@ -1,0 +1,66 @@
+# Implementation-Delivery Profile Plan
+
+**Status:** Planned prerequisite
+**Authority:** This plan owns the completion order for the standard
+`implementation-delivery` extension profile. It does not change Core scheduling,
+Actual, Command, or Revision Store semantics; those remain owned by specifications
+`02`, `04`, `05`, `10`, `11`, `12`, and `15`.
+
+## 1. Purpose
+
+Chrona must be able to express a delivery plan for Chrona itself without inventing a
+second project-management model. The missing capability is a bounded standard
+extension profile, not a new Core primitive or a generic workflow engine.
+
+The profile will let a Project declare delivery work items and gates with typed:
+
+- assignee references;
+- a declared workflow state;
+- immutable artifact references;
+- immutable acceptance-evidence references; and
+- a reuse classification.
+
+It is a prerequisite to the first implementation slice because it is the acceptance
+path for self-hosting the delivery roadmap. It remains an extension: the same profile
+must also be usable by other Chrona projects.
+
+## 2. Non-negotiable boundaries
+
+1. A workflow state is declarative delivery metadata. It MUST NOT alter temporal
+   placement, dependency construction, calendar selection, or Core diagnostics.
+2. Workflow state is not `Actual`. Observed execution facts remain in an Actual Set
+   and remain subject to the Actual-model resolution rules.
+3. Artifact and acceptance-evidence references identify immutable resources through
+   the Revision Store contract. They do not grant a Project write authority and do not
+   make a mutable branch, working tree, or external URL canonical evidence.
+4. The profile may use standard Command families for validated field changes. It MUST
+   NOT introduce transition handlers, hidden writes, automation rules, or an opaque
+   workflow engine.
+5. Reuse classification is delivery-review evidence only. It does not change semantic
+   ownership, package compatibility, or the Core/adapter boundary.
+
+## 3. Required design work
+
+| Work package | Required result | Exit evidence |
+|---|---|---|
+| IDP-1 — Profile vocabulary | Specify profile IDs, allowed base kinds, field schemas, required/optional cardinality, and diagnostic IDs for assignee, workflow state, artifacts, acceptance evidence, and reuse classification. | Normative profile/schema draft and positive/negative validation fixtures. |
+| IDP-2 — State and Actual boundary | Specify the finite state vocabulary, its permitted representation, and the rule that it has no scheduling or Actual authority. Specify which state changes are ordinary typed-field Commands. | Boundary examples prove that an equal Project schedule has equal results regardless of workflow state and that Actual remains separately resolved. |
+| IDP-3 — Immutable evidence boundary | Specify the permitted Revision Store resource-reference kinds and identity/content checks for artifacts and acceptance evidence. Distinguish these from Federation child-export references. | Fixture set rejects mutable/unpinned, kind-mismatched, or content-mismatched evidence references. |
+| IDP-4 — Self-hosted roadmap fixture | Encode a representative Chrona delivery plan as a Chrona Project using the profile, including work items, gates, dependencies, evidence, and reuse classifications. | The fixture validates, schedules deterministically, and yields reviewable normalized output. |
+| IDP-5 — Runtime and command integration | Add package resolution, typed-field validation, and standard Command support only to the degree required by IDP-1–4. | Conformance runner validates the fixture; accepted field change creates a new immutable revision and rejected changes leave it unchanged. |
+| IDP-6 — Review and authorization | Reconcile the profile with Extension Model, Project Format, Command, Revision Store, Quality, and the delivery roadmap. | Cross-document review records owners, diagnostics, deferred functionality, and a published authorization for subsequent slices. |
+
+## 4. Delivery order
+
+IDP-1 through IDP-4 are design and conformance prerequisites. IDP-5 is the first
+implementation slice (Slice 0) and may start only after those prerequisites pass.
+IDP-6 closes the self-hosting gate before the Revision Store minimum-product work
+begins. Each work package is independently validated, committed, immediately
+non-force published, and verified on GitHub before the next begins.
+
+## 5. Explicitly not added
+
+This profile does not add assignments as access control, role administration, effort
+estimation, resource capacity, cost, tickets, notifications, automatic transitions,
+arbitrary external links, DateTime/DST scheduling, or cross-project mutation. Such a
+capability needs its own owning-specification change and roadmap decision.

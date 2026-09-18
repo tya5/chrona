@@ -44,7 +44,8 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-11 | Validate, render, and propose changes through CLI/automation | Should | Command/conformance design; adapter and CI deferred |
 | UC-12 | Capture and compare a named baseline | Should | Snapshot-reference design; capture command deferred |
 | UC-13 | Export one evaluation to declared targets | Should | Scene/target capability design; SVG/PPTX adapters deferred |
-| UC-14 | Federate independently owned subproject timelines | Must | Proposed federation contract; resolver/aggregate fixture required |
+| UC-14 | Federate independently owned subproject timelines | Must | Pinned federation contract and conformance evidence; resolver/aggregate adapter required |
+| UC-15 | Manage a delivery roadmap using Chrona | Must | Delivery-profile plan; profile/fixture implementation required |
 
 ## 4. Detailed use cases
 
@@ -280,6 +281,28 @@ records every child revision/content identity.
 
 **Owners:** `05`, `06`, `09`, `12`, `13`, `16`.
 
+### UC-15 — Manage a delivery roadmap using Chrona
+
+**Actor:** Engineering or product lead.
+**Trigger:** The team plans, reviews, or accepts Chrona delivery work and needs the
+plan itself to be a reproducible Chrona Project.
+**Preconditions:** The Project resolves the standard `implementation-delivery` profile
+at an immutable package identity.
+**Normal flow:** The lead records delivery work items and gates, their ordinary temporal
+relations, typed assignee references, workflow state, immutable artifacts, acceptance
+evidence, and reuse classification. Chrona validates and schedules the Project through
+the ordinary Core path; a validated field change is submitted as an ordinary Command.
+**Outcome:** The delivery plan is reviewable as canonical Project data and can use the
+same validation, scheduling, revision, and presentation path as any other plan.
+**Exceptional flow:** Unknown profile fields, unpinned or mismatched evidence, an
+unsupported state, or a state that attempts to affect schedule/Actual is diagnosed;
+the plan is not silently reinterpreted as a workflow engine.
+**Acceptance:** Canonical fixtures show deterministic schedule equivalence across
+workflow-state changes, separate Actual resolution, immutable evidence validation, and
+a self-hosted Chrona delivery-plan Project.
+
+**Owners:** `02`, `04`, `05`, `10`, `11`, `12`, `15`.
+
 ## 5. Cross-cutting quality scenarios
 
 | ID | Scenario | Acceptance criterion |
@@ -309,13 +332,17 @@ records every child revision/content identity.
 | UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference and capture-command fixtures | comparison runner |
 | UC-13 | `07`–`09`, `12`, `13` | target capability contract | SVG/PPTX/canvas adapters |
 | UC-14 | `05`, `06`, `09`, `12`, `13`, `16` | pinned Git/local/content closure, trust/repin diagnostics, and aggregate-projection fixture | resolver and aggregate Scene adapter |
+| UC-15 | `02`, `04`, `05`, `10`, `11`, `12`, `15` | implementation-delivery profile plan | profile schema, self-hosted fixture, package resolution, and typed-field Command support |
 
 ## 7. Current gaps and release gate
 
-All Must-priority use cases have one current normative owner, canonical positive and
-negative evidence, and an implementation-independent acceptance contract. UC-14 is
-design-ready through the pinned Git/local/content reference contract; its resolver and
-aggregate Scene adapter remain implementation work.
+All Must-priority use cases other than UC-15 have one current normative owner,
+canonical positive and negative evidence, and an implementation-independent acceptance
+contract. UC-14 is design-ready through the pinned Git/local/content reference
+contract; its resolver and aggregate Scene adapter remain implementation work. UC-15
+is an explicit pre-implementation design prerequisite, owned by
+`implementation-delivery-profile-plan.md`; it prevents delivery work from inventing a
+parallel project-management model.
 
 The remaining gaps in this table are adapters or product features, not unresolved design
 semantics. A release claim must name the satisfied use cases and their acceptance

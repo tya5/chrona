@@ -147,7 +147,7 @@ Packages may define custom Entity and Relation profiles with typed fields and pe
 
 Only a Relation profile declared compatible with the Core dependency semantics may participate in Scheduling Engine constraint construction. Such a profile uses the same endpoint, lag, calendar, authority, cycle, and diagnostic rules as the Core; it cannot supply arbitrary solver code, change a fixed target, or make Actual observations scheduling inputs.
 
-Extensions cannot add resource capacity, cost optimization, timesheets, ticket workflows, portfolios, or a generic graph-operation language merely by adding fields. A feature that needs a new Core primitive, temporal domain, or scheduling rule requires Core specification review and normally an ADR.
+Extensions cannot add resource capacity, cost optimization, timesheets, ticket workflows, portfolios, or a generic graph-operation language merely by adding fields. A bounded, declarative state vocabulary MAY be a standard profile only when it introduces no executable transition engine, scheduling authority, or Actual authority. A feature that needs a new Core primitive, temporal domain, or scheduling rule requires Core specification review and normally an ADR.
 
 ## 8. Presentation and code-plugin boundary
 
@@ -198,7 +198,7 @@ This document does not define:
 
 - extension package file syntax, registry protocol, dependency solver, or installation UX;
 - arbitrary code plugins, their sandbox implementation, or their permission UI;
-- new Core primitives, DateTime/DST scheduling, or resource/cost/workflow systems;
+- new Core primitives, DateTime/DST scheduling, or resource/cost/generic-workflow systems;
 - a user-defined general-purpose programming language; or
 - View/Style/Theme/Scene serialization or a renderer-specific extension API.
 

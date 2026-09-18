@@ -25,6 +25,7 @@ code relies on a new interpretation.
 
 | Slice | Deliverable | Acceptance evidence |
 |---|---|---|
+| 0 | Standard `implementation-delivery` profile resolver, typed-field validation, and self-hosted roadmap fixture | profile and roadmap fixture validate/schedule deterministically; workflow state cannot affect schedule or Actual; evidence references are immutable and kind/content checked |
 | I | Revision Store adapter interface and immutable local snapshot reader | same resource reference resolves identically twice; Draft access is rejected for reproducible evaluation |
 | II | Core loader/validator/scheduler integrated through that reader | all Core fixtures and normative diagnostics pass without direct filesystem fallback |
 | III | Presentation closure resolver and Render Context evaluation manifest | kind/ID/content mismatch, path escape, mixed revision, and cycle fixtures fail with declared diagnostics |
@@ -32,7 +33,9 @@ code relies on a new interpretation.
 | V | Deterministic SVG adapter from Scene output | target-capability and accessibility acceptance fixtures pass; SVG never becomes canonical data |
 | VI | Read-only Federation resolver | trust, pin, repin, unavailable export, and namespace diagnostics pass; child mutation remains impossible |
 
-Each slice may be implemented only after the preceding slice's acceptance evidence
+Slice 0 may be implemented only after the profile design prerequisites in
+`implementation-delivery-profile-plan.md` are complete. Each remaining slice may be
+implemented only after the preceding slice's acceptance evidence
 passes. Each completed slice is one reviewed commit and is immediately published before
 the next begins.
 
@@ -45,7 +48,7 @@ this authorization.
 
 ## 5. Completion rule
 
-The minimal implementation is complete only when slices I–VI have their stated
+The minimal implementation is complete only when slices 0 and I–VI have their stated
 acceptance evidence, the full conformance runner and pytest suite pass, and a separate
 implementation-readiness review confirms that no adapter has become a semantic source
 of truth.

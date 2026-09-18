@@ -1112,6 +1112,17 @@ focused commit, publish it immediately by non-force fast-forward update, and rec
 published commit identifier and verification result before beginning the next step. No
 unpublished completed phase may be used as the basis for a later phase.
 
+### 15.3 Self-hosting feedback rule
+
+Before a delivery plan is used as implementation authority, the plan's work items,
+gates, dependencies, acceptance evidence, and required delivery metadata MUST be
+representable by the current Project model and declared standard extension profiles.
+A gap found by this check is design work, not a license for an implementation adapter to
+invent its own planning model. The bounded `implementation-delivery` profile and its
+self-hosted roadmap fixture are therefore a prerequisite to the first authorized
+implementation slice; `implementation-delivery-profile-plan.md` records its completion
+program.
+
 ## 16. Guiding Boundary
 
 The central documentation boundary is:
