@@ -1,6 +1,6 @@
 # Federation Design Readiness Review
 
-**Status:** Conditionally complete — full conformance requires CI dependency environment  
+**Status:** Design review complete — full conformance command set verified with declared dependencies
 **Scope:** UC-14, Federation Plan/export/command contracts, and Render Context v0.2.
 
 ## Result
@@ -23,10 +23,11 @@ child Project or makes a child branch tip an evaluation input.
 
 ## Verification status
 
-`git diff --check` and Python fixture-runner syntax compilation pass locally. The full
-conformance runner requires the declared `jsonschema` dependency, which is unavailable
-in this execution environment. CI must run the full runner before any implementation
-readiness claim.
+`git diff --check`, the full fixture runner, and `pytest` pass with the dependencies
+declared by the CI workflow. The workflow invokes that same fixture-runner command and
+test suite. The connected GitHub status endpoint does not expose Actions check-runs for
+the direct branch update, so this review records the reproducible command evidence
+rather than asserting an unobserved hosted run result.
 
 ## Remaining implementation boundary
 
