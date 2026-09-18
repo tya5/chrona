@@ -1,7 +1,7 @@
 # Use Case Coverage Remediation Plan
 
-**Status:** Draft  
-**Depends on:** [14 Use Case Catalog](14-use-case-catalog.md)  
+**Status:** Draft
+**Depends on:** [14 Use Case Catalog](../specification/14-use-case-catalog.md)
 **Purpose:** Turn identified use-case gaps into owned design work before implementation.
 
 ## 1. Triage rule

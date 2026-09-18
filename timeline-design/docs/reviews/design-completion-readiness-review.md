@@ -2,7 +2,7 @@
 
 **Status:** Superseded — 2026-09-18
 
-**Superseded by:** [Final Design Remediation Plan](final-design-remediation-plan.md)
+**Superseded by:** [Final Design Remediation Plan](../planning/final-design-remediation-plan.md)
 
 ## Result
 

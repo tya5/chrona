@@ -54,7 +54,7 @@ suite; and a local GUI edit must not require unrelated scene/UI replacement.
 ### Post-review scope addition — Federated projects (UC-14)
 
 **Status:** In progress — added 2026-09-18
-**Authority:** `federated-projects-design.md` and ADR-0012
+**Authority:** `../federation/federated-projects-design.md` and ADR-0012
 
 This is not a reopened R1–R10 finding. It is an expanded Must-priority use case that
 must close its own design gate before the overall design can again be called complete.
@@ -87,7 +87,7 @@ quality invariants, schemas, and executable positive/negative fixture evidence.
 Update `design-completion-readiness-review.md`,
 `use-case-design-readiness-review.md`, and affected status labels so they explicitly
 refer to this open remediation program. Reconcile `13-presentation-format.md` and
-`14-use-case-catalog.md` status with their unresolved blocking contracts; they MUST NOT
+`../specification/14-use-case-catalog.md` status with their unresolved blocking contracts; they MUST NOT
 be described as implementation-ready.
 
 **Done when:** every readiness claim names its evidence and none says the final gate is

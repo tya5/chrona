@@ -36,11 +36,11 @@ project data and are never used to schedule or validate a project.
 Try the included controller example:
 
 ```bash
-chrona render timeline-design/docs/examples/controller-x.yaml --output controller-x.svg
+chrona render timeline-design/docs/fixtures/controller-x.yaml --output controller-x.svg
 ```
 
-The checked-in [controller timeline SVG](timeline-design/docs/examples/controller-x.svg)
-is generated from [`controller-x.yaml`](timeline-design/docs/examples/controller-x.yaml).
+The checked-in [controller timeline SVG](timeline-design/docs/fixtures/controller-x.svg)
+is generated from [`controller-x.yaml`](timeline-design/docs/fixtures/controller-x.yaml).
 
 ## Specification
 

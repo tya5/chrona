@@ -25,7 +25,7 @@ reactivity, command, or extension behavior.
 
 ## Verification
 
-`python timeline-design/docs/examples/run_conformance.py` passes.  
+`python timeline-design/docs/fixtures/run_conformance.py` passes.
 `python -m pytest` passes: 17 tests.
 
 ## Deferred items
@@ -43,5 +43,5 @@ claim that GUI, renderer, CLI, AI adapter, or exporter implementations already e
 
 UC-14 (federated independently owned subproject timelines) was added after this review.
 Its ownership, pinned-export, resolver, schema, and fixture work is tracked in
-`federated-projects-design.md`. The overall gate must not be claimed for the expanded
+`../federation/federated-projects-design.md`. The overall gate must not be claimed for the expanded
 scope until that document's completion evidence is reviewed.

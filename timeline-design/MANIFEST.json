@@ -24,7 +24,7 @@
     "artifact": "docs/core-v0.1-design-review.md",
     "readiness": "Proposed"
   },
-  "conformance_fixture": "docs/examples/conformance-v0.1.yaml",
+  "conformance_fixture": "docs/fixtures/conformance-v0.1.yaml",
   "semantic_rules": "docs/core-v0.1-semantic-rules.md",
   "validation": "VALIDATION.json",
   "stable_readiness_review": "docs/core-v0.1-stable-readiness-review.md",

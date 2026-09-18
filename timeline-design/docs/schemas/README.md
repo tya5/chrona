@@ -23,7 +23,7 @@ kind-specific structural schema. It validates that a renderable evaluation expli
 binds its Project revision, presentation resources, locale, viewport, target
 capabilities, and layout metrics.
 
-The fixture under `examples/presentation/` is structural only. The companion View,
+The fixture under `../fixtures/presentation/` is structural only. The companion View,
 Style, Theme, and Scene profile resources deliberately use empty bodies until their
 respective semantic languages are specified. Passing this schema must not be described
 as a rendered-Scene or presentation conformance result.

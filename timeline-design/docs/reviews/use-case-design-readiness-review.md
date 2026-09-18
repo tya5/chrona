@@ -1,9 +1,9 @@
 # Use Case Design Readiness Review
 
 **Status:** Superseded — 2026-09-18
-**Scope:** UC-01 through UC-13 in [14 Use Case Catalog](14-use-case-catalog.md).
+**Scope:** UC-01 through UC-13 in [14 Use Case Catalog](../specification/14-use-case-catalog.md).
 
-**Superseded by:** [Final Design Remediation Plan](final-design-remediation-plan.md)
+**Superseded by:** [Final Design Remediation Plan](../planning/final-design-remediation-plan.md)
 
 ## Conclusion
 

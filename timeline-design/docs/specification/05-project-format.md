@@ -481,4 +481,4 @@ scheduling input.
 The federation resources are versioned outside Core v0.1. A future Render Context minor
 version will reference the Federation Plan explicitly. Implementations must not claim
 federation support until the resolver contract and fixtures in
-[Federated Projects Design](federated-projects-design.md) are complete.
+[Federated Projects Design](../federation/federated-projects-design.md) are complete.

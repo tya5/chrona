@@ -150,35 +150,23 @@ The initial target structure is:
 
 ```text
 docs/
-├── design-documentation-plan.md
-├── 00-vision.md
-├── 01-concepts.md
-├── 02-domain-model.md
-├── 03-temporal-model.md
-├── 04-scheduling-model.md
-├── 05-project-format.md
-├── 06-view-model.md
-├── 07-style-and-theme.md
-├── 08-scene-and-rendering.md
-├── 09-application-architecture.md
-├── 10-command-model.md
-├── 11-extension-model.md
-├── 12-quality-and-invariants.md
-├── 13-presentation-format.md
-├── 14-use-case-catalog.md
-├── federated-projects-research.md
-├── federated-projects-design.md
-├── final-design-remediation-plan.md
-├── runtime-reactivity-design.md
-├── adapter-output-design.md
-│
+├── README.md
+├── specification/
+│   ├── 00-vision.md … 14-use-case-catalog.md
+│   └── supplemental/
 ├── decisions/
 │   └── ADR-NNNN-<decision>.md
-│
+├── federation/
+│   ├── federated-projects-design.md
+│   └── federated-projects-research.md
+├── planning/
+│   ├── design-documentation-plan.md
+│   └── *-remediation-plan.md
+├── reviews/
+│   └── *-review.md
 ├── schemas/
 │   └── ...
-│
-└── examples/
+└── fixtures/
     └── ...
 ```
 
@@ -756,14 +744,15 @@ Schemas MAY include:
 
 Schema structure SHOULD follow the semantic specification rather than becoming an independent domain model.
 
-### 6.3 Examples
+### 6.3 Fixtures
 
-Examples SHOULD progress from minimal to representative.
+Fixtures SHOULD progress from minimal to representative and include executable
+positive/negative conformance cases where a contract is machine-checkable.
 
 Initial target set:
 
 ```text
-examples/
+fixtures/
 ├── minimal.yaml
 ├── dependencies.yaml
 ├── calendar.yaml

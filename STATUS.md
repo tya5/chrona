@@ -14,7 +14,7 @@ preserved unchanged.
   scheduler.
 - `src/chrona/render.py`: deterministic SVG projection of resolved placements.
 - `tests/`: executable checks for temporal conformance and scheduling authority.
-- `timeline-design/docs/examples/controller-x.yaml`: a rendered semiconductor
+- `timeline-design/docs/fixtures/controller-x.yaml`: a rendered semiconductor
   development example, with its derived `controller-x.svg`.
 
 ## Verified in this checkpoint
