@@ -91,7 +91,7 @@ input substituted from a different revision is detectable.
 
 ### Phase 2 — Close comparison and presentation selection semantics
 
-**Status:** In progress — 2026-09-18
+**Status:** Completed — 2026-09-18
 
 **Addresses:** R1 and R6; depends on Phase 1
 

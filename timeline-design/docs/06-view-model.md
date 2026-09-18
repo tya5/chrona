@@ -187,6 +187,19 @@ The View Projection MAY expose planned and actual endpoints, start/finish delta,
 
 Comparison alignment MUST use stable IDs. A renamed title, regrouped object, or changed visual placement remains the same comparison subject. An unknown reference MUST produce a comparison diagnostic and MUST NOT be matched by text similarity.
 
+### 8.4 Comparison truth table
+
+| Baseline placement | Selected Actual | Requested facet | Result |
+|---|---|---|---|
+| span `[S, F)` | interval | `startDelta`, `finishDelta` | Signed calendar-day difference for each present endpoint |
+| point `A` | point `at` | `atDelta` | Signed calendar-day difference |
+| span | point | start/finish delta | Absent facet and `VIEW-COMPARISON-ENDPOINT-KIND` |
+| point | interval | `atDelta` | Absent facet and `VIEW-COMPARISON-ENDPOINT-KIND` |
+| any | no resolved observation | `missingActual` | `true`; Actual/delta facets absent |
+| any | multiple observations | any | Greatest `sequence`; duplicate sequence is invalid |
+
+`finishDelta` uses the canonical exclusive endpoint; display inclusivity never changes it.
+
 ## 9. Annotations and Layout Intent
 
 Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Scene and Rendering own any concrete relative offset or coordinate. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.
@@ -211,7 +224,7 @@ projected with source kind `explanatory-arrow` and can never satisfy, replace, o
 a semantic dependency. A missing anchor produces a View diagnostic; no title or
 geometry-based recovery is allowed.
 
-Layout intent includes lane assignment, collapsed groups, hierarchy expansion, preferred compactness, and annotation anchoring. It is not renderer geometry.
+Layout intent includes lane assignment, collapsed groups, hierarchy expansion, preferred compactness, and annotation anchoring. It is not renderer geometry. For v0.1, `layoutIntent.itemStacking` is always `stable`: items receive the lowest non-overlapping lane-local stack index in deterministic View order; equal positions use stable object ID. Annotation placement tries requested side, then `above`, `below`, `end`, `start`; failure emits a diagnostic. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
 ## 10. Diagnostics
 
