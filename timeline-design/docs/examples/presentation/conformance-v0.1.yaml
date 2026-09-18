@@ -40,3 +40,10 @@ cases:
   - id: actual-alignment
     resource: actuals/controller-observed.yaml
     schema: ../../schemas/actual-set-v0.1.schema.yaml
+  - id: point-actual
+    resource: actuals/controller-observed-point.yaml
+    schema: ../../schemas/actual-set-v0.1.schema.yaml
+  - id: duplicate-actual-sequence
+    resource: actuals/controller-observed-duplicate-sequence.yaml
+    schema: ../../schemas/actual-set-v0.1.schema.yaml
+    expectDiagnostics: [VIEW-OBSERVATION-SEQUENCE]

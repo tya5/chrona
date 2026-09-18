@@ -1,0 +1,9 @@
+version: chrona/presentation/v0.1
+kind: actual-set
+id: controller-observed-point
+body:
+  observations:
+    - id: observed-evt
+      sequence: 1
+      projectObjectId: evt
+      actual: {at: 2026-11-21}

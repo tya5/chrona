@@ -1,0 +1,13 @@
+version: chrona/presentation/v0.1
+kind: actual-set
+id: controller-observed-duplicate-sequence
+body:
+  observations:
+    - id: observed-firmware-start
+      sequence: 1
+      projectObjectId: firmware
+      actual: {start: 2026-04-03}
+    - id: observed-firmware-finish
+      sequence: 1
+      projectObjectId: firmware
+      actual: {finish: 2026-04-18}

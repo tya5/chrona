@@ -102,6 +102,7 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
         if project and project.get("project", {}).get("id") != body["project"].get("id"):
             errors.append("PRES-PROJECT-COMPATIBILITY")
     if kind == "actual-set":
+        sequences_by_subject = {}
         for observation in body.get("observations", []):
             external = observation.get("externalIdentity")
             resolved = observation.get("projectObjectId")
@@ -109,6 +110,14 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
                 errors.append("PRES-ACTUAL-ALIGNMENT")
             if external and observation.get("alignment") != "unmatched":
                 errors.append("PRES-ACTUAL-ALIGNMENT")
+            subject = resolved
+            if not subject and external:
+                subject = f"external:{external.get('system')}:{external.get('key')}"
+            sequence = observation.get("sequence")
+            if subject and sequence in sequences_by_subject.setdefault(subject, set()):
+                errors.append("VIEW-OBSERVATION-SEQUENCE")
+            if subject:
+                sequences_by_subject[subject].add(sequence)
     if kind == "render-context":
         target = body.get("target", {})
         if not target.get("kind") or not isinstance(target.get("capabilities"), list):
