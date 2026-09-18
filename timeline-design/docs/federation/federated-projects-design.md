@@ -7,15 +7,16 @@ owned subprojects without making their source files shared mutable state.
 ## Decision
 
 Chrona uses **federated immutable exports**, not parent-owned child editing, recursive
-file inclusion, or a moving Git branch reference. A child Project remains authoritative
-in its repository. It publishes a small timeline export containing its Project identity,
+file inclusion, or a moving source selector. A child Project remains authoritative
+in its own Revision Store. It publishes a small timeline export containing its Project identity,
 export identity, selected public summary objects/relations, and immutable revision and
 content identity. The parent repository stores a typed, pinned reference to that export
 in a separately versioned Federation Plan.
 
-This follows Git's useful separation of commits for subprojects while avoiding a
-submodule checkout as an implicit evaluation input. Git submodules keep nested commits
-separate, but Chrona needs a semantic export contract rather than a source-tree mount.
+Git's separation of commits is one useful implementation of this rule, but it is not
+required. Chrona needs a semantic export contract rather than a shared source-tree
+mount. The provider-neutral persistence boundary is owned by
+[Revision Store Adapters](../specification/15-revision-store-adapters.md).
 
 ## Resources and federation reference
 
@@ -51,11 +52,10 @@ exports:
     presentation: {mode: summary, namespace: firmware}
 ```
 
-The normalized export reference additionally declares a canonical `repository` locator (for
-example, `git+https://host/org/firmware.git`); the repository locator, `projectId`,
-path, revision, and content identity are verified before evaluation. A locator is not
-itself trust: an implementation accepts it only through a separately configured trust
-policy.
+The v0.1 example is Git-adapter-only. Its successor reference declares an adapter/source
+identity, Address, store-owned revision token, `projectId`, and content identity. All
+are verified before evaluation. A locator is not itself trust: an implementation accepts
+it only through separately configured trust policy for that adapter/source identity.
 
 Child object IDs are namespaced as `federation-id:child-object-id`; parent and child data are
 never merged into one canonical Project document. Parent-owned dependencies may target a
@@ -82,11 +82,12 @@ aggregation rule, and source revision/content identity. A child may publish no i
 dependencies or private objects. The parent must diagnose a requested non-published
 object instead of attempting to discover it in child source.
 
-Trust is allow-list based: a resolver accepts a `repository` only when it matches a
-configured repository identity and the resolved revision/content identity match. A
-missing, untrusted, incompatible, unavailable, cyclic, or stale reference produces a
-stable diagnostic. It never falls back to a locally checked-out repository or a branch
-tip.
+Trust is allow-list based: a resolver accepts a source only when it matches a configured
+identity for its adapter (Git repository, local-store namespace, or package signer, for
+example) and the resolved revision/content identity match. A missing, untrusted,
+incompatible, unavailable, cyclic, or stale reference produces a stable diagnostic. It
+never falls back to a locally checked-out repository, local Draft, branch tip, or
+database "latest" value.
 
 ## Parent mutation
 
@@ -99,6 +100,6 @@ modify an export, or mutate child schedules.
 
 ## Required follow-up evidence
 
-The Presentation closure resolver, future Render Context minor version, schemas, and
-fixtures must add federation-plan structural and semantic validation before UC-14 is
-promoted from design to implementation-ready.
+The Presentation closure resolver, successor provider-neutral Render Context, schemas,
+and fixtures must add federation-plan structural and semantic validation before UC-14
+is promoted from design to implementation-ready.
