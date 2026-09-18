@@ -1,6 +1,6 @@
 # Final Design Remediation Plan
 
-**Status:** Draft  
+**Status:** Completed — 2026-09-18
 **Version:** 0.1  
 **Purpose:** Close every finding from the 2026-09-17 cross-document final design review before declaring Chrona ready for minimal implementation.  
 **Authority:** The owning specifications remain normative. This document owns only the remediation order, evidence, and completion gate.
@@ -53,7 +53,7 @@ suite; and a local GUI edit must not require unrelated scene/UI replacement.
 
 ### Post-review scope addition — Federated projects (UC-14)
 
-**Status:** In progress — added 2026-09-18
+**Status:** Completed — 2026-09-18
 **Authority:** `../specification/16-federation.md` and ADR-0012
 
 This is not a reopened R1–R10 finding. It is an expanded Must-priority use case that
@@ -72,9 +72,9 @@ must close its own design gate before the overall design can again be called com
 5. **Completed** — Define Presentation-format v0.2 with an explicit Federation Plan
    reference to Render Context and resolver fixtures proving a child revision is
    invisible until the parent Plan is repinned.
-6. **Completed conditionally** — Run a focused cross-document review and record its
-   evidence in `../reviews/federation-design-readiness-review.md`. CI must still run
-   full conformance in an environment that installs the declared dependencies.
+6. **Completed** — Run a focused cross-document review and record its evidence in
+   `../reviews/federation-design-readiness-review.md`; the full workflow command set
+   passes with its declared dependencies.
 
 **Done when:** UC-14 maps to normative syntax, resolver behavior, command authority,
 quality invariants, schemas, and executable positive/negative fixture evidence.
