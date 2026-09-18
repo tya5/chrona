@@ -1077,6 +1077,41 @@ invalidated until `final-design-remediation-plan.md` is complete and a new final
 has recorded the evidence. The remediation plan MUST update the affected owners before
 any implementation work relies on the disputed contract.
 
+### 15.2 Current pre-implementation completion program
+
+The design-completion gate is governed by the following ordered program. It applies to
+the *current* canonical specifications, irrespective of the version of an individual
+serialization format. A versioned schema or compatibility profile MUST NOT create a
+second, lower-authority design document.
+
+1. **Revision Store conformance** — complete the successor reference, command, and
+   presentation schemas; add Git, transactional-local, and read-only
+   content-addressed positive and negative fixtures; run the complete conformance
+   suite in CI. `15-revision-store-adapters.md` owns the adapter contract and
+   `revision-store-adapter-remediation-plan.md` records its work packages.
+2. **Revision Store cross-document review** — verify that Core, Project Format,
+   Application, Command, Presentation, Quality, and Federation use the provider-neutral
+   contract consistently, while retaining explicit legacy Git compatibility.
+3. **Federation completion** — validate the canonical Federation specification through
+   the completed Revision Store paths, then update UC-14 from conditional design
+   completion only when its pinned-export, trust, and repin evidence passes in CI.
+4. **Whole-design gate reconciliation** — reconcile the Must-priority use-case map,
+   conformance manifest, implementation-scope deferrals, and maturity labels against
+   the current specifications. Each Must-priority use case MUST have one normative
+   owner, canonical fixtures, and stated acceptance evidence.
+5. **Renewed final review** — perform a new cross-document review that traces the
+   completed remediation findings and current evidence. Earlier reviews are historical
+   evidence only and MUST NOT be used to claim this gate without reconciliation.
+6. **Minimal-implementation authorization plan** — record the supported Core profile,
+   the first vertical slice, its acceptance tests, and explicit non-goals. This plan
+   authorizes implementation only after steps 1–5 have passed; it does not itself
+   implement an adapter, renderer, GUI, CLI, or resolver.
+
+Every program step is a release unit: validate its stated exit evidence, create one
+focused commit, publish it immediately by non-force fast-forward update, and record the
+published commit identifier and verification result before beginning the next step. No
+unpublished completed phase may be used as the basis for a later phase.
+
 ## 16. Guiding Boundary
 
 The central documentation boundary is:
