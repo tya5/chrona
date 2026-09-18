@@ -28,6 +28,7 @@ Application Architecture decides which component evaluates or transports each sp
 |---|---|---|
 | Project Store | Load, normalize, identify, and persist canonical Project revisions | Temporal interpretation, scheduling, or rendering |
 | Evaluation Closure Resolver | Resolve and verify the immutable resource/package closure named by a Render Context | Fallback to current files, branches, or host defaults |
+| Federation Resolver | Resolve pinned child timeline exports and compose read-only summary inputs | Loading a child branch tip, editing child data, or treating a raw child Project as a parent resource |
 | Profile Registry | Resolve supported core and extension profiles, typed fields, and schemas | Arbitrary executable extension behavior |
 | Temporal Engine | Parse and operate on temporal values and calendars | Project mutation policy or visual layout |
 | Scheduling Engine | Validate and derive planned placements under the Scheduling Model | Actual-driven rescheduling or presentation decisions |
@@ -66,6 +67,7 @@ Dependencies point toward lower-level semantics and then outward toward presenta
 |---|---|---|
 | Project, profiles, calendars, semantic annotations, and relations | Project Store | Canonical, reviewable structured source data |
 | Named Snapshot and Actual input references | Their specified persistence model | Explicitly named, immutable or independently observed input; never inferred as “latest” |
+| Federated child export | Child Project/repository | Immutable, read-only export consumed through a parent-owned pinned reference; never merged into parent canonical data |
 | View, Style, Theme, and Scene-profile definitions | Their respective specifications | Declarative versioned data; serialization syntax may evolve independently |
 | Schedule result, View Projection, resolved Style/Theme, Scene, SVG, canvas store | Runtime Coordinator / adapters | Derived cache or output only; invalidated when any declared input changes |
 | Diagnostics, manifests, and trace data | Runtime Coordinator | Inspectable output; not a substitute for canonical source |
@@ -85,7 +87,9 @@ Every read evaluation begins with an explicit request containing at least:
 
 The Runtime Coordinator delegates resolution to the Evaluation Closure Resolver before
 evaluation. The resolver verifies root containment, immutable revision, exact content
-identity, expected kind/ID, Project compatibility, and acyclicity; it returns a
+identity, expected kind/ID, Project compatibility, and acyclicity. It delegates a
+declared federation edge to the Federation Resolver, which verifies export kind,
+project identity, namespace, and child-reference acyclicity; it returns a
 normalized closure manifest or stable diagnostics. Absence or mismatch is a diagnostic;
 it is not permission to read a working tree default, current time, local locale, or
 renderer configuration.
@@ -94,6 +98,8 @@ renderer configuration.
 
 ```text
 Load / normalize Project
+          ↓
+Resolve pinned federated exports (when declared)
           ↓
 Validate profiles and semantic structure
           ↓
@@ -107,6 +113,11 @@ Build Scene and render target artifact
 ```
 
 Each stage receives immutable input values and returns a value plus diagnostics. A stage may halt its dependent stages when a required invariant cannot be satisfied, but it must preserve the diagnostics that explain why. It must not repair source data, replace unknown references, or fabricate Actual values.
+
+Federated summary items enter the View Engine as read-only, namespaced projection
+inputs. The Scheduling Engine schedules only the parent Project; a published child
+interface milestone can satisfy a declared parent dependency boundary but cannot expose
+or mutate the child's internal schedule.
 
 ### 5.3 Derived-state cache
 

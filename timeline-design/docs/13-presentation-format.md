@@ -126,7 +126,9 @@ evaluation.
 An **evaluation closure** is the ordered, immutable set of resources consumed by one
 Render Context: Render Context; primary Project; View; Style; Theme; Scene Profile;
 the selected Snapshot and Actual set, if any; declared extension packages; and the
-layout-metrics artifact. The normalized closure manifest records each resource's
+layout-metrics artifact. When the primary Project declares federation references, the
+closure also contains each resolved child `timeline-export` in deterministic parent
+reference order. The normalized closure manifest records each resource's
 `kind`, `id`, canonical `path`, `revision`, and `contentIdentity`, plus the engine and
 package-registry versions used to resolve it.
 
@@ -141,6 +143,12 @@ Resolution MUST:
    unavailable revision, or a Snapshot/Actual whose Project ID differs from the primary
    Project; and
 6. emit the normalized closure as evaluation evidence before scheduling or rendering.
+
+A federation edge is resolved only from the primary Project's typed, pinned export
+reference. The resolver verifies the export's repository locator, kind, declared child
+Project ID, immutable revision, content identity, and federation namespace; it rejects a child branch tip,
+raw child Project input, duplicate namespace, or cross-federation cycle. Child exports
+are read-only projection inputs, not extra primary Projects or hidden mutable context.
 
 An editor may use a separately persisted immutable Project-Store object while offline,
 but it MUST assign a content identity and materialize the same closure manifest before

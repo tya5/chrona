@@ -44,6 +44,7 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-11 | Validate, render, and propose changes through CLI/automation | Should | Command/conformance design; adapter and CI deferred |
 | UC-12 | Capture and compare a named baseline | Should | Snapshot-reference design; capture command deferred |
 | UC-13 | Export one evaluation to declared targets | Should | Scene/target capability design; SVG/PPTX adapters deferred |
+| UC-14 | Federate independently owned subproject timelines | Must | Proposed federation contract; resolver/aggregate fixture required |
 
 ## 4. Detailed use cases
 
@@ -258,6 +259,27 @@ or accessibility capability with an unstated local default.
 
 **Owners:** `07`–`09`, `12`, `13`.
 
+### UC-14 — Federate independently owned subproject timelines
+
+**Actor:** Program lead; subproject leaders.
+**Trigger:** A program needs an integrated milestone/risk timeline while each team keeps
+its own Project, repository, and review cadence.
+**Preconditions:** Each subproject publishes an immutable Chrona timeline export; the
+program Project declares only pinned references to those exports.
+**Normal flow:** A subproject leader changes and reviews only their own Project. The
+program lead updates one federation reference to an approved child revision, resolves
+the closure, and renders child summary items alongside program-owned milestones.
+**Outcome:** The parent can compare the exact child revisions it consumed without
+editing, copying, or implicitly scheduling child source data.
+**Exceptional flow:** Missing, untrusted, incompatible, or stale child export produces a
+diagnostic and an explicit unavailable/stale summary; it never silently reads a child
+branch tip.
+**Acceptance:** Separate repositories/files have separate command targets and history;
+the parent diff contains only a pinned reference update; the resolved federation manifest
+records every child revision/content identity.
+
+**Owners:** `05`, `06`, `09`, `12`, `13`, `federated-projects-design.md`.
+
 ## 5. Cross-cutting quality scenarios
 
 | ID | Scenario | Acceptance criterion |
@@ -267,6 +289,7 @@ or accessibility capability with an unstated local default.
 | Q-UC-03 | Change viewport or scale | Global `replaceScope` is allowed and carries its declared reason |
 | Q-UC-04 | Compare named revisions | Inputs include immutable Project/Snapshot identities; no current branch or local clock |
 | Q-UC-05 | Render inaccessible target | Missing required capability is diagnosed, not silently approximated |
+| Q-UC-06 | Update a child Project outside the parent | Parent revision and rendered child summary remain unchanged until its pinned export reference is explicitly updated |
 
 ## 6. Specification and evidence mapping
 
@@ -285,11 +308,13 @@ or accessibility capability with an unstated local default.
 | UC-11 | `05`, `09`, `10`, `12`, `13` | conformance manifest | runner, CLI, CI integration |
 | UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference and capture-command fixtures | comparison runner |
 | UC-13 | `07`–`09`, `12`, `13` | target capability contract | SVG/PPTX/canvas adapters |
+| UC-14 | `05`, `06`, `09`, `12`, `13`, federation contract | pinned federation closure and aggregate projection fixture | resolver and aggregate Scene fixture |
 
 ## 7. Current gaps and release gate
 
 The specifications cover the intended meaning and structural fixtures for UC-01 through
-UC-06. The following evidence is still required before claiming executable support:
+UC-06. UC-14 is specified as a draft federation contract and is not implementation-ready.
+The following evidence is still required before claiming executable support:
 
 1. schema validator and semantic conformance runner;
 2. SceneDelta computation and invariants for Q-UC-02/Q-UC-03;
@@ -297,6 +322,8 @@ UC-06. The following evidence is still required before claiming executable suppo
 4. interactive editor adapter for UC-05;
 5. AI adapter and authorization policy for UC-06; and
 6. extension package schema and fixtures for UC-07.
+7. federation export schema, pinned-reference resolver, cycle/mismatch diagnostics, and
+   aggregate-projection fixtures for UC-14.
 
 A release claim must name the satisfied use cases and their acceptance evidence rather
 than describing the entire catalog as implemented.

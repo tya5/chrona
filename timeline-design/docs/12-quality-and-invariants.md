@@ -42,6 +42,14 @@ influence an evaluation MUST be explicit and identifiable. A consumer MUST NOT s
 select “latest”, a working-tree tip, current branch, or a local default as an
 authoritative input.
 
+### Q-GIT-5 Federated ownership and pinning
+
+A parent Project MUST consume a subproject only through a declared immutable timeline
+export reference. It MUST NOT silently follow a child branch, copy child canonical
+objects into its own source, or mutate a child Project. A closure manifest MUST record
+the child export's repository locator, project ID, revision, content identity, and
+federation namespace.
+
 ## 3. Determinism
 
 ### Q-DET-1 Scheduling
@@ -115,6 +123,14 @@ completion or forecast.
 Presentation annotations retain a stable semantic or View-local anchor and logical
 placement intent. Collision resolution may change derived geometry only within declared
 constraints; it must not silently detach the annotation.
+
+### Q-SEM-7 Federated scheduling isolation
+
+Federated child summaries are read-only presentation inputs. A parent-owned dependency
+may use a published child interface milestone only as an external condition on
+parent-owned work; it MUST NOT reschedule or modify the child. Aggregated child
+progress is display-only unless a future scheduling specification explicitly defines
+otherwise.
 
 ## 5. Temporal correctness
 
@@ -275,6 +291,7 @@ may add finer-grained cases, but it must not omit the following categories.
 | View/Style/Theme/Scene | Deterministic projection fixtures with input manifests and provenance assertions |
 | Interactive projection | Local-change SceneDelta fixture, no-unrelated-node-recreation assertion, global-invalidation reason assertion, and stale-result suppression test |
 | Plan/Snapshot/Actual | Alignment, missing/unmatched, and no-implicit-rescheduling scenarios |
+| Federated projects | Pinned-export resolution, independent-parent/child mutation, namespace collision, incompatible export, cycle, and stale-reference diagnostics |
 | Commands | Accept/reject, transaction atomicity, stale-base conflict, undo/redo, and no-derived-write tests |
 | Extensions | Inheritance/fallback, typed-field, version/migration, expression-safety, and plugin-boundary tests |
 | Renderer adapters | Capability/fidelity and accessibility fixtures; generated output is checked as derived state |

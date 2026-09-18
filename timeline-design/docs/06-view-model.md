@@ -32,6 +32,8 @@ The View Model therefore preserves semantic, Git-reviewable Project data while a
 - A View MUST NOT mutate Project data, scheduling results, Snapshot data, or Actual observations.
 - A View MUST NOT make Actual observations scheduling inputs or infer a rescheduling policy from them.
 - A View MUST identify Project objects by stable project-local IDs, never by title, visual position, or renderer identity.
+- A View MAY select a resolved federated summary object only by its stable derived
+  `federation-id:child-object-id`, never by a child title or a live repository lookup.
 - A View MUST be reproducible from explicit input references and View parameters.
 - A View MUST NOT own colors, fonts, stroke widths, renderer-specific state, or absolute scene coordinates.
 - Omitting an item from a View MUST NOT delete or alter the underlying semantic item.
@@ -45,9 +47,15 @@ A View is evaluated against an explicit View Context.
 | Primary Project | Semantic project data and its derived planned schedule | Yes |
 | Snapshot | Named immutable comparison state, potentially identified by a Git ref | No |
 | Actual observations | Observed start, finish, point occurrence, and progress | No |
+| Federated exports | Pinned, read-only subproject summary inputs declared by the primary Project | No |
 | Render context | Explicit evaluation date, locale, and other environment data | As required by the consumer |
 
 The primary Project is required. Snapshot and Actual inputs MUST be named when present. A View or renderer MUST NOT silently select “latest”, “main”, or a local-clock date as a comparison source.
+
+A federated item is a read-only projection input after the primary Project's pinned
+reference has been resolved. It may be selected, grouped by federation ID, and styled
+by declared origin. It cannot be edited through the parent's View and it must not cause
+the parent scheduler to inspect non-published child internals.
 
 Serialization for Views, Snapshots, and Actual observations is outside this document. The View Model defines their presentation semantics only.
 

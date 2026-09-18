@@ -443,3 +443,44 @@ The following remain reserved/provisional and do not block Core scheduler confor
 - external extension package acquisition.
 
 A consumer MUST diagnose unsupported reserved features rather than reinterpret them.
+
+## 21. Federated subproject references (post-v0.1 draft)
+
+A program may need to present timelines owned by independently reviewed subprojects.
+This is not multi-file composition of one canonical Project. The child Project remains
+authoritative in its own repository and is never included, merged, or mutated by the
+parent Project.
+
+The proposed parent-side syntax is a `federatedProjects` section containing typed,
+immutable references to a child **timeline export**, rather than a raw child Project:
+
+```yaml
+federatedProjects:
+  - id: firmware
+    export:
+      projectId: firmware
+      kind: timeline-export
+      repository: git+https://host.example/org/firmware.git
+      path: exports/program.yaml
+      revision: git:<40-or-64-hex>
+      contentIdentity: sha256:<64-hex>
+    presentation: {mode: summary, namespace: firmware}
+```
+
+The federation ID is parent-local and stable. A child object that appears in the parent
+projection has the derived identity `federation-id:child-object-id`; it does not become
+a member of the parent `objects` map. `revision` must be immutable and
+`contentIdentity` must match the exact export bytes. `repository` is a canonical
+locator subject to configured trust policy. Moving branch names, abbreviated Git IDs,
+source-tree mounts, and recursive Project inclusion are invalid.
+
+Only an explicitly published child interface milestone may be the target of a
+parent-owned dependency. That dependency constrains parent-owned work only; it never
+schedules, edits, or otherwise reaches into the child Project. Aggregated child
+progress is display information with an explicit aggregation rule and is not a
+scheduling input.
+
+The export envelope/schema, cross-repository trust policy, and parent mutation command
+are intentionally deferred. This section establishes the ownership boundary only;
+implementations must not claim federation support until the contract and fixtures in
+[Federated Projects Design](federated-projects-design.md) are complete.

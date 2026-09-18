@@ -66,6 +66,13 @@ Core v0.1 is not intended to provide:
 
 ## 5. Product principles
 
+### 5.0 Independent ownership, integrated review
+
+Chrona SHOULD allow a program timeline to reference approved summaries from separately
+owned subprojects without making their source files shared mutable state. This is a
+reproducible presentation and interface boundary, not a centralized portfolio or work
+management system.
+
 ### 5.1 Semantics before rendering
 
 Project meaning SHALL remain valid without a particular UI or renderer.

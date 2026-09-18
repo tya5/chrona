@@ -1,11 +1,12 @@
 # Final Design Review — 2026-09-18
 
-**Status:** Review complete  
-**Scope:** Remediation findings R1–R10 and the design-completion gate.
+**Status:** Superseded for expanded scope
+**Scope:** Remediation findings R1–R10 and the design-completion gate before UC-14.
 
 ## Result
 
-The remediation program is complete for the v0.1 minimal-implementation design scope.
+The remediation program is complete for the v0.1 minimal-implementation design scope
+that existed at review time.
 No remaining finding requires an implementation to invent semantic, persistence,
 reactivity, command, or extension behavior.
 
@@ -35,5 +36,12 @@ separate minimal-implementation plan.
 
 ## Gate outcome
 
-The design-completion gate is satisfied for the declared v0.1 scope. This is not a
+The design-completion gate was satisfied for the declared v0.1 scope. This is not a
 claim that GUI, renderer, CLI, AI adapter, or exporter implementations already exist.
+
+## Scope change after review
+
+UC-14 (federated independently owned subproject timelines) was added after this review.
+Its ownership, pinned-export, resolver, schema, and fixture work is tracked in
+`federated-projects-design.md`. The overall gate must not be claimed for the expanded
+scope until that document's completion evidence is reviewed.

@@ -51,6 +51,28 @@ suite; and a local GUI edit must not require unrelated scene/UI replacement.
 
 ## 4. Ordered work program
 
+### Post-review scope addition — Federated projects (UC-14)
+
+**Status:** Draft — added 2026-09-18
+**Authority:** `federated-projects-design.md` and ADR-0012
+
+This is not a reopened R1–R10 finding. It is an expanded Must-priority use case that
+must close its own design gate before the overall design can again be called complete.
+
+1. Specify the versioned child `timeline-export` envelope, public-object/interface
+   vocabulary, and parent reference normalization.
+2. Define the Federation Resolver's trust, revision/content-identity, cycle, stale,
+   incompatible-version, and unavailable-export diagnostics.
+3. Specify parent reference mutation in the Command Model without granting a parent
+   write authority over child source.
+4. Add schemas plus positive and negative independent-repository fixtures, including
+   namespace collision and a change to a child that is invisible until repinned.
+5. Run a focused cross-document review and update the design-completion review with
+   the resulting evidence.
+
+**Done when:** UC-14 maps to normative syntax, resolver behavior, command authority,
+quality invariants, schemas, and executable positive/negative fixture evidence.
+
 ### Phase 0 — Establish a truthful review baseline
 
 **Status:** Completed — 2026-09-18

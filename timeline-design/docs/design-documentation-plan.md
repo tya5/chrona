@@ -166,6 +166,8 @@ docs/
 ├── 12-quality-and-invariants.md
 ├── 13-presentation-format.md
 ├── 14-use-case-catalog.md
+├── federated-projects-research.md
+├── federated-projects-design.md
 ├── final-design-remediation-plan.md
 ├── runtime-reactivity-design.md
 ├── adapter-output-design.md
@@ -691,6 +693,27 @@ starting implementation prematurely.
 
 The semantics being corrected. Each remediation item names the document that owns its
 resulting normative definition.
+
+---
+
+### 5.18 `federated-projects-design.md`
+
+**Purpose**
+
+Defines the cross-repository federation boundary for independently owned subproject
+timeline exports.
+
+**Owns**
+
+- child export versus parent source ownership;
+- pinned federation-reference and namespace semantics;
+- parent/child scheduling and mutation isolation; and
+- required resolver, schema, and fixture evidence before implementation.
+
+**Does not own**
+
+The Core Project data of a child, a centralized portfolio/work-management model, or
+raw Git checkout/submodule behavior.
 
 ## 6. Supporting Artifact Types
 
