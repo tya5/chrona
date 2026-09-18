@@ -1,0 +1,9 @@
+version: chrona/federation-command/v0.2
+commandId: pin-firmware-v2
+type: pinFederatedExport
+target: {id: program-federation, kind: federation-plan, store: {provider: local, identity: program-workspace}, address: federations/program-federation.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+baseRevision: {token: snapshot:program-2222}
+payload:
+  federationId: firmware
+  export: {id: firmware-program, kind: timeline-export, projectId: firmware, store: {provider: content, identity: firmware-release-key-1, locator: pkg://firmware/v4}, address: exports/program.yaml, revision: {token: sha256:1111111111111111111111111111111111111111111111111111111111111111}, contentIdentity: sha256:1111111111111111111111111111111111111111111111111111111111111111}
+  presentation: {mode: summary, namespace: firmware}

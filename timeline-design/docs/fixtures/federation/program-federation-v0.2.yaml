@@ -1,0 +1,7 @@
+version: chrona/federation-plan/v0.2
+id: program-federation
+primaryProject: {id: controller-x, kind: project, store: {provider: local, identity: program-workspace}, address: project.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+exports:
+  - id: firmware
+    export: {id: firmware-program, kind: timeline-export, projectId: firmware, store: {provider: content, identity: firmware-release-key-1, locator: pkg://firmware/v4}, address: exports/program.yaml, revision: {token: sha256:1111111111111111111111111111111111111111111111111111111111111111}, contentIdentity: sha256:1111111111111111111111111111111111111111111111111111111111111111}
+    presentation: {mode: summary, namespace: firmware}

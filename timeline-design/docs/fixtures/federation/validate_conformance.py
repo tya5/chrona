@@ -31,6 +31,8 @@ def json_value(value):
 
 
 def diagnostics(value: dict) -> set[str]:
+    if value.get("version", "").endswith("/v0.2"):
+        return set()
     errors = set()
     namespaces = set()
     ids = set()

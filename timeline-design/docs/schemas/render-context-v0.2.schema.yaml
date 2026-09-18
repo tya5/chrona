@@ -66,15 +66,7 @@ properties:
           algorithmVersion: {type: string}
 $defs:
   resourceRef:
-    type: object
-    required: [id, kind, path, revision, contentIdentity]
-    additionalProperties: false
-    properties:
-      id: {type: string, minLength: 1}
-      kind: {type: string, minLength: 1}
-      path: {type: string, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
-      revision: {type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
-      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+    $ref: "urn:chrona:revision-store-resource-ref-v0.1"
   projectRef:
     allOf: [{$ref: "#/$defs/resourceRef"}, {properties: {kind: {const: project}}}]
   viewRef:

@@ -5,9 +5,15 @@ cases:
   - id: valid-plan
     resource: program-federation.yaml
     schema: ../../schemas/federation-plan-v0.1.schema.yaml
+  - id: valid-provider-neutral-plan
+    resource: program-federation-v0.2.yaml
+    schema: ../../schemas/federation-plan-v0.2.schema.yaml
   - id: valid-pin-command
     resource: pin-firmware.yaml
     schema: ../../schemas/federation-command-v0.1.schema.yaml
+  - id: valid-provider-neutral-pin-command
+    resource: pin-firmware-v0.2.yaml
+    schema: ../../schemas/federation-command-v0.2.schema.yaml
   - id: render-context-v0.2-selects-pinned-plan
     resource: program-render-context.yaml
     schema: ../../schemas/render-context-v0.2.schema.yaml

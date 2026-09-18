@@ -14,6 +14,9 @@ properties:
   kind:
     type: string
     minLength: 1
+  projectId:
+    type: string
+    minLength: 1
   store:
     type: object
     required: [provider, identity]

@@ -2,12 +2,12 @@ version: chrona/presentation/v0.2
 kind: render-context
 id: program-federated-review
 body:
-  project: {id: controller-x, kind: project, path: project.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
-  view: {id: controller-review, kind: view, path: views/controller-review.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
-  style: {id: plan-actual, kind: style, path: styles/plan-actual.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
-  theme: {id: engineering-light, kind: theme, path: themes/engineering-light.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
-  sceneProfile: {id: date-lanes, kind: scene-profile, path: scenes/date-lanes.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
-  federationPlan: {id: program-federation, kind: federation-plan, path: federations/program-federation.yaml, revision: git:2222222222222222222222222222222222222222, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+  project: {id: controller-x, kind: project, store: {provider: local, identity: program-workspace}, address: project.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+  view: {id: controller-review, kind: view, store: {provider: local, identity: program-workspace}, address: views/controller-review.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+  style: {id: plan-actual, kind: style, store: {provider: local, identity: program-workspace}, address: styles/plan-actual.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+  theme: {id: engineering-light, kind: theme, store: {provider: local, identity: program-workspace}, address: themes/engineering-light.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+  sceneProfile: {id: date-lanes, kind: scene-profile, store: {provider: local, identity: program-workspace}, address: scenes/date-lanes.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
+  federationPlan: {id: program-federation, kind: federation-plan, store: {provider: local, identity: program-workspace}, address: federations/program-federation.yaml, revision: {token: snapshot:program-2222}, contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222}
   evaluation: {locale: ja-JP}
   viewport: {width: 1200, height: 700, margins: {top: 24, right: 32, bottom: 32, left: 120}, clipping: clip}
   target: {kind: svg, capabilities: [metadata, text-alternative]}
