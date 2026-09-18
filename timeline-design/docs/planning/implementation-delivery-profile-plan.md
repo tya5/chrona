@@ -47,16 +47,18 @@ must also be usable by other Chrona projects.
 | IDP-2 — State and Actual boundary | **Complete.** Specify the finite state vocabulary, its permitted representation, and the rule that it has no scheduling or Actual authority. Specify which state changes are ordinary typed-field Commands. | `17-implementation-delivery-profile.md` state contract plus valid/invalid state and schedule-isolation fixtures. |
 | IDP-3 — Immutable evidence boundary | **Complete.** Specify the permitted Revision Store resource-reference kinds and identity/content checks for artifacts and acceptance evidence. Distinguish these from Federation child-export references. | `17-implementation-delivery-profile.md` and evidence-verification fixture reject mutable, kind-mismatched, or content-mismatched references. |
 | IDP-4 — Self-hosted roadmap fixture | **Complete.** Encode a representative Chrona delivery plan as a Chrona Project using the profile, including work items, gates, dependencies, evidence, and reuse classifications. | `implementation-delivery-roadmap-v0.1.yaml` validates its profile/evidence vocabulary and schedules deterministically. |
-| IDP-5 — Runtime and command integration | **Complete.** Add package resolution, typed-field validation, and standard Command support only to the degree required by IDP-1–4. | Runtime tests validate the self-hosted fixture through Core; CAS field Command creates a content-identified immutable snapshot and rejects invalid/stale changes unchanged. |
+| IDP-5a — Resolved-manifest runtime | **Complete.** Add typed-field validation and standard Command support for an explicitly resolved package manifest. | Runtime tests validate the self-hosted fixture through Core; CAS field Command creates a content-identified immutable snapshot and rejects invalid/stale changes unchanged. |
+| IDP-5b — Store-bound package resolution | **Pending; depends on Slice I.** Resolve the Project's immutable package reference through the Revision Store reader rather than injecting a manifest from the host. | Same Project reference resolves the same package bytes/content identity twice; unavailable, moving, and mismatched package references reject before typed-field validation. |
 | IDP-6 — Review and authorization | Reconcile the profile with Extension Model, Project Format, Command, Revision Store, Quality, and the delivery roadmap. | Cross-document review records owners, diagnostics, deferred functionality, and a published authorization for subsequent slices. |
 
 ## 4. Delivery order
 
-IDP-1 through IDP-4 are design and conformance prerequisites. IDP-5 is the first
+IDP-1 through IDP-4 are design and conformance prerequisites. IDP-5a is the first
 implementation slice (Slice 0) and may start only after those prerequisites pass.
-IDP-6 closes the self-hosting gate before the Revision Store minimum-product work
-begins. Each work package is independently validated, committed, immediately
-non-force published, and verified on GitHub before the next begins.
+IDP-5b follows Slice I because provider-neutral package resolution requires the same
+immutable reader as a Project. IDP-6 closes the self-hosting gate after IDP-5b, before
+later adapter work begins. Each work package is independently validated, committed,
+immediately non-force published, and verified on GitHub before the next begins.
 
 ## 5. Explicitly not added
 

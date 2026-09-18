@@ -25,8 +25,8 @@ code relies on a new interpretation.
 
 | Slice | Deliverable | Acceptance evidence |
 |---|---|---|
-| 0 | Standard `implementation-delivery` profile resolver, typed-field validation, and self-hosted roadmap fixture | profile and roadmap fixture validate/schedule deterministically; workflow state cannot affect schedule or Actual; evidence references are immutable and kind/content checked |
-| I | Revision Store adapter interface and immutable local snapshot reader | same resource reference resolves identically twice; Draft access is rejected for reproducible evaluation |
+| 0 | Standard `implementation-delivery` resolved-manifest validation, typed-field Command, and self-hosted roadmap fixture | profile and roadmap fixture validate/schedule deterministically; workflow state cannot affect schedule or Actual; evidence references are immutable and kind/content checked |
+| I | Revision Store adapter interface and immutable local snapshot reader, including package-reference resolution | same Project/package resource reference resolves identically twice; Draft access is rejected for reproducible evaluation |
 | II | Core loader/validator/scheduler integrated through that reader | all Core fixtures and normative diagnostics pass without direct filesystem fallback |
 | III | Presentation closure resolver and Render Context evaluation manifest | kind/ID/content mismatch, path escape, mixed revision, and cycle fixtures fail with declared diagnostics |
 | IV | Command execution through compare-and-set Store write | stale base revision and partial batch fail atomically; accepted command returns a new snapshot |
