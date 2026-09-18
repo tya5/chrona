@@ -16,16 +16,16 @@ class ScheduleResult:
 
     @property
     def ok(self) -> bool:
-        return not any(item.id.startswith("E_") for item in self.diagnostics)
+        return not self.diagnostics
 
 
-def schedule(project: dict[str, Any]) -> ScheduleResult:
+def schedule(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None = None) -> ScheduleResult:
     """Reference scheduler for the acyclic Core v0.1 Date-only subset.
 
     It intentionally reports unresolved cyclic systems as capability diagnostics;
     a cycle is not thereby declared semantically invalid.
     """
-    diagnostics = validate_project(project)
+    diagnostics = validate_project(project, package_manifests=package_manifests)
     if diagnostics:
         return ScheduleResult({}, diagnostics)
     calendars = {key: Calendar.from_mapping(value) for key, value in project.get("calendars", {}).items()}

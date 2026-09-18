@@ -8,6 +8,7 @@ import jsonschema
 import yaml
 
 from .diagnostics import Diagnostic
+from .profiles import validate_profiles
 from .temporal import Calendar, TemporalError, as_date, is_scheduled_amount, parse_amount
 
 
@@ -20,7 +21,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         return yaml.safe_load(stream)
 
 
-def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH) -> list[Diagnostic]:
+def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, package_manifests: dict[str, dict[str, Any]] | None = None) -> list[Diagnostic]:
     """Run structural validation first, then Core rules which Schema cannot express."""
     diagnostics: list[Diagnostic] = []
     schema = yaml.safe_load(schema_path.read_text(encoding="utf-8"))
@@ -84,6 +85,7 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH) -
                         diagnostics.append(Diagnostic("E_CALENDAR_REQUIRED", "WorkPeriod lag has no calendar", path + "/lag"))
             except TemporalError as exc:
                 diagnostics.append(Diagnostic("E_INVALID_AMOUNT", str(exc), path + "/lag"))
+    diagnostics.extend(validate_profiles(project, package_manifests))
     return diagnostics
 
 
