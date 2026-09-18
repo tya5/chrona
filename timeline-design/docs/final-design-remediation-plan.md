@@ -225,6 +225,8 @@ upsert, incomplete window) fail with the expected diagnostic; CI runs both test 
 
 ### Phase 8 — Reconcile documentation and repeat final review
 
+**Status:** Completed — 2026-09-18
+
 **Addresses:** R9 and closure of R1–R10; depends on Phases 0–7
 
 Update the use-case mapping, application/adapter cross-references, quality invariants,

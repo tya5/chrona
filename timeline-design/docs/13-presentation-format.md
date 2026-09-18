@@ -1,6 +1,6 @@
 # Presentation Format
 
-**Status:** Draft
+**Status:** Proposed
 **Depends on:** [05 Project Format](05-project-format.md), [06 View Model](06-view-model.md), [07 Style and Theme](07-style-and-theme.md), [08 Scene and Rendering](08-scene-and-rendering.md), [10 Command Model](10-command-model.md)
 **Owns:** persistent syntax and normalization for View, Style, Theme, Render Context, Scene profile, Snapshot reference, and Actual observation set definitions outside the Core Project file; plus the file-serialization boundary for Command requests.
 
