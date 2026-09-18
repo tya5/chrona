@@ -8,6 +8,7 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parent
 COMMANDS = [
     [sys.executable, str(ROOT / "validate_conformance.py")],
+    [sys.executable, str(ROOT / "revision-store" / "validate_conformance.py")],
     [sys.executable, str(ROOT / "presentation" / "validate_conformance.py")],
     [sys.executable, str(ROOT / "federation" / "validate_conformance.py")],
 ]

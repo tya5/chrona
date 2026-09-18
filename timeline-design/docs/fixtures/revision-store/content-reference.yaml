@@ -1,0 +1,6 @@
+id: firmware-program
+kind: timeline-export
+store: {provider: content, identity: firmware-release-key-1, locator: pkg://firmware/v4}
+address: exports/program.yaml
+revision: {token: sha256:1111111111111111111111111111111111111111111111111111111111111111}
+contentIdentity: sha256:1111111111111111111111111111111111111111111111111111111111111111

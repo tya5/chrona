@@ -1,0 +1,35 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:federation-plan-v0.2"
+title: "Chrona Federation Plan v0.2"
+type: object
+required: [version, id, primaryProject, exports]
+additionalProperties: false
+properties:
+  version: {const: chrona/federation-plan/v0.2}
+  id: {type: string, minLength: 1}
+  primaryProject:
+    allOf:
+      - $ref: "urn:chrona:revision-store-resource-ref-v0.1"
+      - properties: {kind: {const: project}}
+  exports:
+    type: array
+    items:
+      type: object
+      required: [id, export, presentation]
+      additionalProperties: false
+      properties:
+        id: {type: string, minLength: 1}
+        export:
+          allOf:
+            - $ref: "urn:chrona:revision-store-resource-ref-v0.1"
+            - required: [projectId]
+              properties:
+                kind: {const: timeline-export}
+                projectId: {type: string, minLength: 1}
+        presentation:
+          type: object
+          required: [mode, namespace]
+          additionalProperties: false
+          properties:
+            mode: {const: summary}
+            namespace: {type: string, minLength: 1}

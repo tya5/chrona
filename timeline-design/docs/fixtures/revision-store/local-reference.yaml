@@ -1,0 +1,6 @@
+id: controller-x
+kind: project
+store: {provider: local, identity: workstation-projects, locator: chrona://workstation-projects}
+address: projects/controller-x.yaml
+revision: {token: snapshot:2026-09-18T16:00:00Z:81ab}
+contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db

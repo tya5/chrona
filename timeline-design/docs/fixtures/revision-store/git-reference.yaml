@@ -1,0 +1,6 @@
+id: controller-x
+kind: project
+store: {provider: git, identity: tya5/chrona, locator: "https://github.com/tya5/chrona.git"}
+address: timeline-design/docs/fixtures/controller-x.yaml
+revision: {token: git:5466f166a7ccc9a2afb898b410dee391e3355376}
+contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db

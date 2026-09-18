@@ -1,0 +1,48 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:federation-command-v0.2"
+title: "Chrona Federation Command v0.2"
+type: object
+required: [version, commandId, type, target, baseRevision, payload]
+additionalProperties: false
+properties:
+  version: {const: chrona/federation-command/v0.2}
+  commandId: {type: string, minLength: 1}
+  type: {enum: [pinFederatedExport, unpinFederatedExport]}
+  target:
+    allOf:
+      - $ref: "urn:chrona:revision-store-resource-ref-v0.1"
+      - properties: {kind: {const: federation-plan}}
+  baseRevision:
+    type: object
+    required: [token]
+    additionalProperties: false
+    properties: {token: {type: string, minLength: 1, pattern: "^\\S+$"}}
+  payload: {type: object}
+allOf:
+  - if: {properties: {type: {const: pinFederatedExport}}}
+    then:
+      properties:
+        payload:
+          required: [federationId, export, presentation]
+          additionalProperties: false
+          properties:
+            federationId: {type: string, minLength: 1}
+            export:
+              allOf:
+                - $ref: "urn:chrona:revision-store-resource-ref-v0.1"
+                - required: [projectId]
+                  properties:
+                    kind: {const: timeline-export}
+                    projectId: {type: string, minLength: 1}
+            presentation:
+              type: object
+              required: [mode, namespace]
+              additionalProperties: false
+              properties: {mode: {const: summary}, namespace: {type: string, minLength: 1}}
+  - if: {properties: {type: {const: unpinFederatedExport}}}
+    then:
+      properties:
+        payload:
+          required: [federationId]
+          additionalProperties: false
+          properties: {federationId: {type: string, minLength: 1}}

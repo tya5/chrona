@@ -1,0 +1,17 @@
+cases:
+  - id: git-reference
+    resource: git-reference.yaml
+    schema: ../../schemas/revision-store-resource-ref-v0.1.schema.yaml
+    valid: true
+  - id: local-reference
+    resource: local-reference.yaml
+    schema: ../../schemas/revision-store-resource-ref-v0.1.schema.yaml
+    valid: true
+  - id: content-reference
+    resource: content-reference.yaml
+    schema: ../../schemas/revision-store-resource-ref-v0.1.schema.yaml
+    valid: true
+  - id: invalid-address
+    resource: invalid-address.yaml
+    schema: ../../schemas/revision-store-resource-ref-v0.1.schema.yaml
+    valid: false
