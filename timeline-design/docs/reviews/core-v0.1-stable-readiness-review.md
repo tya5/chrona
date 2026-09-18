@@ -1,7 +1,7 @@
 # Core Specification v0.1 Stable Readiness Review
 
 **Status:** Review complete  
-**Current maturity:** Proposed
+**Current maturity:** Stable — Date-only scheduling profile
 
 ## Executive result
 
@@ -45,19 +45,17 @@ duration with half-open span semantics.
 A normative diagnostic-ID table now distinguishes structural, reference, temporal,
 calendar, feasibility, fixed-authority, and warning conditions.
 
-## Stable blockers remaining
+## Stable-promotion evidence
 
-Only two classes remain before declaring the specification Stable:
+The two required classes are now complete:
 
-1. **Independent implementation validation** — implement the Date scheduler from the
-   documents/conformance fixtures and verify that it reaches the expected results
-   without relying on hidden assumptions.
-2. **Schema/example full validation** — validate canonical project examples using an
-   actual JSON Schema validator plus semantic checks, not only YAML parsing/basic
-   checks.
+1. **Independent implementation validation** — the Date-only scheduler implements the
+   conformance fixtures and reports the normative authority/conflict diagnostics.
+2. **Schema/example full validation** — the full fixture runner uses `jsonschema` plus
+   semantic validation; all canonical fixtures and the pytest suite pass.
 
-Neither requires changing the current conceptual architecture unless those tests
-expose a contradiction.
+No contradiction was exposed, so the Date-only Core v0.1 profile is Stable. Any future
+DateTime/DST scheduling profile is a separate compatibility and review decision.
 
 ## Non-blocking deferred work
 

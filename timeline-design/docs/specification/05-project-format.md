@@ -1,6 +1,6 @@
 # Project Format
 
-**Status:** Proposed  
+**Status:** Stable
 **Core Specification:** v0.1
 
 ## 1. Scope

@@ -1,6 +1,6 @@
 # Temporal Model
 
-**Status:** Proposed  
+**Status:** Stable
 **Core Specification:** v0.1
 
 ## 1. Scope
@@ -367,4 +367,3 @@ For Date scheduling:
 - `mo` and `y` are valid offset operations but not scheduled span amounts.
 
 This boundary is defined by ADR-0011.
-

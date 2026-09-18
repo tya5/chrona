@@ -5,7 +5,7 @@ extensible, time-axis-centered project visualization system.
 
 ## Status
 
-Core Specification: **v0.1 / Draft**
+Core Specification: **v0.1 / Stable (Date-only scheduling profile)**
 
 The Core Specification consists of:
 

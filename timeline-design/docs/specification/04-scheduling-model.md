@@ -1,6 +1,6 @@
 # Scheduling Model
 
-**Status:** Proposed  
+**Status:** Stable
 **Core Specification:** v0.1
 
 ## 1. Scope
@@ -450,4 +450,3 @@ Normative diagnostic identifiers are defined in `core-v0.1-diagnostics.md`.
 
 Implementations may provide richer messages and structured details while preserving
 the identifier meaning.
-

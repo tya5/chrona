@@ -1,6 +1,6 @@
 # Quality Goals and Architectural Invariants
 
-**Status:** Proposed
+**Status:** Stable
 **Core v0.1 invariant subset:** Proposed
 **Scope:** Core Specification v0.1 and cross-layer architecture
 **Cross-cuts:** `00`–`11`

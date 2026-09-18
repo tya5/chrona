@@ -31,12 +31,12 @@ preserved unchanged.
 - Zero-lag cycles, positive contradictory cycles, fixed-target authority, and
   explicit-anchor conflicts execute with their normative diagnostic IDs.
 
-## Still required for Stable promotion
+## Stable promotion
 
-1. Review the complete conformance evidence and decide whether it is sufficient
-   to promote the Date-only Core v0.1 profile from Proposed to Stable.
-2. Record any implementation-discovered ambiguity as an ADR or diagnostic before
-   changing the Core specification.
+The Date-only Core v0.1 profile is Stable. Full fixture conformance and `pytest` pass
+with the declared dependencies; the stable-readiness review records the resulting
+scope. Any implementation-discovered ambiguity must still be recorded as an ADR or
+diagnostic before changing the Core specification.
 
 The SVG renderer is an intentionally small vertical slice, not the full View,
 Style, Theme, or Scene specification. It consumes scheduler output and never
