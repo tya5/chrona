@@ -1,10 +1,11 @@
 from copy import deepcopy
+from hashlib import sha256
 from pathlib import Path
 
 import yaml
 
 from chrona.commands import execute_set_typed_field, set_typed_field
-from chrona.revision_store import MemoryRevisionStore
+from chrona.revision_store import LocalSnapshotReader, MemoryRevisionStore
 from chrona.scheduler import schedule
 from chrona.validation import validate_project
 
@@ -56,3 +57,22 @@ def test_typed_field_command_uses_cas_and_creates_immutable_snapshot():
     conflict = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "blocked")
     assert conflict.status == "rejected"
     assert conflict.diagnostics == ("E_CONFLICT",)
+
+
+def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
+    manifest_bytes = (FIXTURES / "implementation-delivery-profile-v0.1.yaml").read_bytes()
+    snapshot = tmp_path / "snapshot-1" / "packages"
+    snapshot.mkdir(parents=True)
+    (snapshot / "implementation-delivery.yaml").write_bytes(manifest_bytes)
+    project = _roadmap()
+    project["extensions"] = [{"packageId": "implementation-delivery", "resource": {
+        "id": "implementation-delivery", "kind": "profile-package",
+        "store": {"provider": "local", "identity": "chrona-test"},
+        "address": "packages/implementation-delivery.yaml", "revision": {"token": "snapshot-1"},
+        "contentIdentity": f"sha256:{sha256(manifest_bytes).hexdigest()}",
+    }}]
+    reader = LocalSnapshotReader(tmp_path, "chrona-test")
+    assert validate_project(project, package_reader=reader) == []
+    assert schedule(project, package_reader=reader).ok
+    project["extensions"][0]["resource"]["contentIdentity"] = "sha256:" + "0" * 64
+    assert {item.id for item in validate_project(project, package_reader=reader)} == {"E_CONTENT_IDENTITY", "IDP-PROFILE-006"}

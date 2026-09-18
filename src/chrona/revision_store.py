@@ -7,6 +7,7 @@ from datetime import date
 from hashlib import sha256
 import json
 from typing import Any
+from pathlib import Path
 
 
 def _canonical(value: Any) -> bytes:
@@ -39,3 +40,33 @@ class MemoryRevisionStore:
     def _make_snapshot(project: dict[str, Any]) -> ProjectSnapshot:
         digest = sha256(_canonical(project)).hexdigest()
         return ProjectSnapshot(f"memory:{digest}", f"sha256:{digest}", deepcopy(project))
+
+
+class SnapshotReadError(ValueError):
+    def __init__(self, diagnostic_id: str):
+        super().__init__(diagnostic_id)
+        self.diagnostic_id = diagnostic_id
+
+
+class LocalSnapshotReader:
+    """Read-only reader for pre-materialized immutable local snapshot directories."""
+
+    def __init__(self, root: Path, identity: str):
+        self.root = root
+        self.identity = identity
+
+    def read(self, reference: dict[str, Any]) -> bytes:
+        store = reference.get("store", {})
+        if store.get("provider") != "local" or store.get("identity") != self.identity:
+            raise SnapshotReadError("E_STORE_REFERENCE")
+        token = reference.get("revision", {}).get("token", "")
+        address = reference.get("address", "")
+        if not token or not address or token in {"Draft", "draft"} or "/" in token or ".." in address.split("/"):
+            raise SnapshotReadError("E_IMMUTABLE_SNAPSHOT_REQUIRED")
+        path = self.root / token / address
+        if not path.is_file():
+            raise SnapshotReadError("E_STORE_REFERENCE")
+        payload = path.read_bytes()
+        if reference.get("contentIdentity") != f"sha256:{sha256(payload).hexdigest()}":
+            raise SnapshotReadError("E_CONTENT_IDENTITY")
+        return payload

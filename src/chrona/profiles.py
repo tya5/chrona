@@ -8,6 +8,7 @@ import jsonschema
 import yaml
 
 from .diagnostics import Diagnostic
+from .revision_store import LocalSnapshotReader, SnapshotReadError
 
 ROOT = Path(__file__).resolve().parents[2]
 PROFILE_SCHEMA = ROOT / "timeline-design" / "docs" / "schemas" / "profile-v0.1.schema.yaml"
@@ -17,8 +18,22 @@ DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delive
 ACTOR_PROFILES = {"implementation-delivery.person", "implementation-delivery.team"}
 
 
+def resolve_package_manifests(project: dict[str, Any], reader: LocalSnapshotReader) -> tuple[dict[str, dict[str, Any]], list[Diagnostic]]:
+    manifests: dict[str, dict[str, Any]] = {}
+    diagnostics: list[Diagnostic] = []
+    for index, extension in enumerate(project.get("extensions", [])):
+        reference = extension.get("resource")
+        if not reference:
+            continue
+        try:
+            manifests[extension["packageId"]] = yaml.safe_load(reader.read(reference))
+        except SnapshotReadError as error:
+            diagnostics.append(Diagnostic(error.diagnostic_id, "Package reference did not resolve to an immutable snapshot", f"/extensions/{index}/resource"))
+    return manifests, diagnostics
+
+
 def validate_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None) -> list[Diagnostic]:
-    if not package_manifests:
+    if package_manifests is None:
         return []
     if PACKAGE_ID not in {item.get("packageId") for item in project.get("extensions", [])}:
         return []
