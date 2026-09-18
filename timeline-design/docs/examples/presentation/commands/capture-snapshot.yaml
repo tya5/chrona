@@ -2,5 +2,5 @@ version: chrona/command/v0.1
 commandId: capture-baseline-q2
 type: captureSnapshot
 target: {kind: project, id: controller-x, path: ../../controller-x.yaml}
-baseRevision: git:4f2c9ab
+baseRevision: git:f53a677c86b05f7e48bb1a96ac5023a618f776b9
 payload: {snapshotId: baseline-q2}

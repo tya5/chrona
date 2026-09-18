@@ -163,6 +163,8 @@ change has a bounded SceneDelta unless the documented impact set justifies other
 
 ### Phase 5 — Close command and transaction contracts
 
+**Status:** Completed — 2026-09-18
+
 **Addresses:** R7; depends on Phases 1–2
 
 `10-command-model.md` defines the closed v0.1 command registry, payload grammar,

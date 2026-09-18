@@ -6,12 +6,28 @@ additionalProperties: false
 properties:
   version: {const: chrona/command/v0.1}
   commandId: {type: string, minLength: 1}
-  type: {type: string, minLength: 1}
+  type: {enum: [editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot]}
   target:
     type: object
     required: [kind, id, path]
     additionalProperties: false
-    properties: {kind: {type: string}, id: {type: string}, path: {type: string}}
-  baseRevision: {type: string, pattern: "^(?:git:[0-9A-Fa-f]{7,64}|store:\\S+)$"}
-  payload: {type: object}
+    properties: {kind: {enum: [project, actual-set]}, id: {type: string, minLength: 1}, path: {type: string, minLength: 1}}
+  baseRevision: {type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
+  payload: {type: object, minProperties: 1}
   reason: {type: string}
+allOf:
+  - if: {properties: {type: {const: editActualObservation}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: actual-set}}}
+        payload: {required: [observationId, actual], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, actual: {type: object, minProperties: 1}}}
+  - if: {properties: {type: {const: resolveActualObservation}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: actual-set}}}
+        payload: {required: [observationId, projectObjectId], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, projectObjectId: {type: string, minLength: 1}}}
+  - if: {properties: {type: {const: captureSnapshot}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: project}}}
+        payload: {required: [snapshotId], additionalProperties: false, properties: {snapshotId: {type: string, minLength: 1}}}

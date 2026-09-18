@@ -1,6 +1,6 @@
 # Command Model
 
-**Status:** Proposed
+**Status:** Draft
 **Depends on:** [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [06 View Model](06-view-model.md), [09 Application Architecture](09-application-architecture.md)
 **Owns:** canonical mutation interface, command preconditions and results, validation and transaction boundaries, undo/redo semantics, and the relationship between semantic changes and Git revisions.
 
@@ -75,6 +75,19 @@ The document has no resource `kind` or resource `id`; `commandId` supports idemp
 retry but does not make the request canonical state. A batch is a separate document
 with one target/base-revision scope and an explicit ordered `commands` list. It is not
 an implicit sequence of files or a GUI undo stack.
+
+### 3.2 Closed v0.1 registry
+
+| Type | Target kind | Required payload | Result boundary |
+|---|---|---|---|
+| `editActualObservation` | `actual-set` | `observationId`, non-empty `actual` | Replaces only that observation's Actual fields |
+| `resolveActualObservation` | `actual-set` | `observationId`, `projectObjectId` | Preserves external identity in execution record |
+| `unresolveActualObservation` | `actual-set` | `observationId`, `externalIdentity` | Restores explicit unmatched external identity |
+| `captureSnapshot` | `project` | `snapshotId` | Atomically creates immutable Snapshot bound to target base revision |
+
+Unknown types, wrong target kinds, unknown payload fields, and stale base revisions are
+rejected. A transaction has one target and base revision plus an ordered, non-empty
+command list; it is all-or-nothing and produces one result revision.
 
 ## 4. Command families
 
