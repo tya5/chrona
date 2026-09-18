@@ -43,8 +43,8 @@ serialization is used.
 |---|---|---:|---|---|---|
 | `assignees` | `objectReference` | No | many | `implementation-delivery.person` or `implementation-delivery.team` | Intended delivery ownership metadata. |
 | `workflowState` | `enum` | Yes | one | Section 6 state vocabulary. | Declared delivery status metadata only. |
-| `artifacts` | `resourceReference` | No | many | Immutable resource contract is deferred to IDP-3. | Inputs or produced delivery artifacts. |
-| `acceptanceEvidence` | `resourceReference` | No | many | Immutable resource contract is deferred to IDP-3. | Evidence used to accept a work item or gate. |
+| `artifacts` | `resourceReference` | No | many | `delivery-artifact`; section 8. | Inputs or produced delivery artifacts. |
+| `acceptanceEvidence` | `resourceReference` | No | many | `delivery-acceptance-evidence`; section 8. | Evidence used to accept a work item or gate. |
 | `reuseClassification` | `enum` | Yes | one | Section 6 classification vocabulary. | Declares the intended reuse-review classification. |
 
 An implementation MUST NOT accept these five fields on another profile merely because
@@ -115,3 +115,19 @@ primitive named in section 2. In particular, `workflowState: completed` MUST NOT
 treated as Actual completion or as a scheduling constraint. A Project whose delivery
 metadata differs only in `workflowState` or `reuseClassification` therefore has the
 same scheduling inputs, schedule, and Core diagnostics.
+
+## 8. Immutable artifact and acceptance evidence
+
+Each `artifacts` entry MUST be a verified Revision Store resource reference with kind
+`delivery-artifact`; each `acceptanceEvidence` entry MUST be one with kind
+`delivery-acceptance-evidence`. The reference carries its Store identity, address,
+opaque revision token, and SHA-256 content identity. The owning Store verifies that the
+token resolves to an immutable Snapshot and that the stored bytes, stable ID, and kind
+match the reference. A mutable Draft, moving selector, identity/content mismatch, or
+unverified reference is rejected by that Store; profile logic MUST NOT parse a provider
+token to guess mutability.
+
+`timeline-export` is a Federation-only kind and MUST NOT appear in either field. A
+delivery artifact/evidence reference grants no read-through child Project semantics and
+no mutation authority. `IDP-EVIDENCE-001` diagnoses failed immutable verification;
+`IDP-EVIDENCE-002` diagnoses a field/kind mismatch.

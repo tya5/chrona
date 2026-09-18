@@ -13,6 +13,7 @@ from chrona.scheduler import schedule
 ROOT = Path(__file__).resolve().parent
 DOCS = ROOT.parent
 SCHEMA = yaml.safe_load((DOCS / "schemas" / "profile-v0.1.schema.yaml").read_text())
+RESOURCE_SCHEMA = yaml.safe_load((DOCS / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml").read_text())
 EXPECTED = {
     "implementation-delivery.work-item": "task",
     "implementation-delivery.delivery-gate": "milestone",
@@ -50,6 +51,8 @@ def diagnose(data):
                 field = fields.get(name, {})
                 if field.get("type") != "resourceReference" or field.get("cardinality") != "many":
                     diagnostics.append("IDP-PROFILE-005")
+            if fields.get("artifacts", {}).get("resourceKinds") != ["delivery-artifact"] or fields.get("acceptanceEvidence", {}).get("resourceKinds") != ["delivery-acceptance-evidence"]:
+                diagnostics.append("IDP-PROFILE-005")
             if set(fields.get("workflowState", {}).get("enumValues", [])) != WORKFLOW_STATES or len(fields.get("workflowState", {}).get("enumValues", [])) != len(WORKFLOW_STATES):
                 diagnostics.append("IDP-STATE-001")
             if set(fields.get("reuseClassification", {}).get("enumValues", [])) != REUSE_CLASSES or len(fields.get("reuseClassification", {}).get("enumValues", [])) != len(REUSE_CLASSES):
@@ -80,6 +83,23 @@ def check_state_isolation():
         raise AssertionError("workflow state changed the schedule")
 
 
+def check_evidence_references():
+    cases = yaml.safe_load((ROOT / "implementation-delivery-evidence-v0.1.yaml").read_text())["cases"]
+    allowed_kinds = {"artifacts": "delivery-artifact", "acceptanceEvidence": "delivery-acceptance-evidence"}
+    for case in cases:
+        diagnostics = []
+        ref = case["reference"]
+        if list(Draft202012Validator(RESOURCE_SCHEMA).iter_errors(ref)):
+            diagnostics.append("IDP-EVIDENCE-001")
+        verification = case["verification"]
+        if not all(verification.values()):
+            diagnostics.append("IDP-EVIDENCE-001")
+        if ref["kind"] != allowed_kinds[case["field"]]:
+            diagnostics.append("IDP-EVIDENCE-002")
+        if diagnostics != case["diagnostics"]:
+            raise AssertionError(f"evidence {case['id']}: {diagnostics}")
+
+
 def main():
     positive = fixture_diagnostics("implementation-delivery-profile-v0.1.yaml")
     if positive:
@@ -92,6 +112,7 @@ def main():
     if invalid_state != ["IDP-STATE-001"]:
         raise AssertionError(f"invalid state fixture diagnostics: {invalid_state}")
     check_state_isolation()
+    check_evidence_references()
     print("Implementation-delivery profile vocabulary: PASS")
 
 

@@ -54,3 +54,8 @@ $defs:
         uniqueItems: true
         minItems: 1
         items: {type: string, minLength: 1}
+      resourceKinds:
+        type: array
+        uniqueItems: true
+        minItems: 1
+        items: {type: string, minLength: 1}

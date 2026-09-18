@@ -1,0 +1,56 @@
+cases:
+  - id: valid-artifact
+    field: artifacts
+    reference:
+      id: design-spec
+      kind: delivery-artifact
+      store: {provider: content, identity: chrona-docs}
+      address: evidence/design-spec.md
+      revision: {token: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+      contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    verification: {immutable: true, idMatches: true, kindMatches: true, contentMatches: true}
+    diagnostics: []
+  - id: valid-acceptance
+    field: acceptanceEvidence
+    reference:
+      id: conformance-result
+      kind: delivery-acceptance-evidence
+      store: {provider: local, identity: chrona-ci}
+      address: results/idp-3.json
+      revision: {token: revision-42}
+      contentIdentity: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    verification: {immutable: true, idMatches: true, kindMatches: true, contentMatches: true}
+    diagnostics: []
+  - id: reject-moving-snapshot
+    field: artifacts
+    reference:
+      id: design-spec
+      kind: delivery-artifact
+      store: {provider: git, identity: tya5/chrona}
+      address: docs/design.md
+      revision: {token: opaque-selector}
+      contentIdentity: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    verification: {immutable: false, idMatches: true, kindMatches: true, contentMatches: true}
+    diagnostics: [IDP-EVIDENCE-001]
+  - id: reject-federation-export-as-artifact
+    field: artifacts
+    reference:
+      id: child-export
+      kind: timeline-export
+      store: {provider: content, identity: child-package}
+      address: exports/child.yaml
+      revision: {token: immutable-child-export}
+      contentIdentity: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+    verification: {immutable: true, idMatches: true, kindMatches: true, contentMatches: true}
+    diagnostics: [IDP-EVIDENCE-002]
+  - id: reject-content-mismatch
+    field: acceptanceEvidence
+    reference:
+      id: conformance-result
+      kind: delivery-acceptance-evidence
+      store: {provider: content, identity: chrona-ci}
+      address: results/idp-3.json
+      revision: {token: immutable-result}
+      contentIdentity: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    verification: {immutable: true, idMatches: true, kindMatches: true, contentMatches: false}
+    diagnostics: [IDP-EVIDENCE-001]
