@@ -29,8 +29,12 @@ allOf:
             required: [by, missing]
             additionalProperties: false
             properties:
-              by: {enum: [entity, type, none]}
-              missing: {enum: [ungrouped, hidden]}
+              by: {enum: [objectType, field, none]}
+              field: {type: string, minLength: 1}
+              missing: {type: string, minLength: 1}
+            allOf:
+              - if: {properties: {by: {const: field}}}
+                then: {required: [field]}
           ordering:
             type: object
             required: [by, direction, tieBreak]
@@ -38,7 +42,7 @@ allOf:
             properties:
               by: {enum: [id, title, plannedStart, plannedEnd]}
               direction: {enum: [ascending, descending]}
-              tieBreak: {const: id}
+              tieBreak: {enum: [id, title, plannedStart, plannedFinish]}
           window:
             type: object
             required: [mode]
@@ -48,16 +52,24 @@ allOf:
               start: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
               end: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
               marginDays: {type: integer, minimum: 0}
+            allOf:
+              - if: {properties: {mode: {const: explicit}}}
+                then: {required: [start, end]}
+              - if: {properties: {mode: {enum: [selected-planned, selected-comparison]}}}
+                then: {required: [marginDays]}
           comparison:
             type: object
-            required: [actual, facets]
+            required: [baseline, actual, observationSelection, deltaUnit, facets]
             additionalProperties: false
             properties:
+              baseline: {enum: [primary, snapshot]}
               actual: {enum: [forbidden, optional, required]}
+              observationSelection: {const: latest}
+              deltaUnit: {const: calendar-days}
               facets:
                 type: array
                 uniqueItems: true
-                items: {enum: [planned, actual, startDelta, finishDelta, progress, missingActual, unmatchedActual]}
+                items: {enum: [planned, actual, startDelta, finishDelta, atDelta, progress, missingActual, unmatchedActual]}
           visibility:
             type: object
             required: [labels, relations, annotations]
@@ -76,7 +88,7 @@ allOf:
             type: array
             items:
               type: object
-              required: [id, purpose, anchor, placement, text]
+              required: [id, purpose, placement, text]
               additionalProperties: false
               properties:
                 id: {type: string, minLength: 1}
@@ -96,4 +108,5 @@ allOf:
                 target: {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {enum: [object, relation, group, temporal]}, id: {type: string, minLength: 1}}}
               allOf:
                 - if: {properties: {purpose: {const: explanatory-arrow}}}
-                  then: {required: [source, target]}
+                  then: {required: [source, target], not: {required: [anchor]}}
+                  else: {required: [anchor]}

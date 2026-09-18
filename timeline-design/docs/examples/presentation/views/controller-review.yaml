@@ -2,12 +2,15 @@ version: chrona/presentation/v0.1
 kind: view
 id: controller-review
 body:
-  selection: {include: {types: [span, milestone]}}
-  grouping: {by: entity, missing: ungrouped}
+  selection: {include: {types: [span, point]}}
+  grouping: {by: objectType, missing: ungrouped}
   ordering: {by: plannedStart, direction: ascending, tieBreak: id}
   window: {mode: selected-planned, marginDays: 7}
   comparison:
+    baseline: primary
     actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
     facets: [planned, actual, startDelta, finishDelta, progress, missingActual, unmatchedActual]
   visibility: {labels: true, relations: semantic, annotations: all}
   layoutIntent: {compactness: balanced}
