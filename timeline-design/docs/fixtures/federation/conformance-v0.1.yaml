@@ -8,6 +8,9 @@ cases:
   - id: valid-pin-command
     resource: pin-firmware.yaml
     schema: ../../schemas/federation-command-v0.1.schema.yaml
+  - id: render-context-v0.2-selects-pinned-plan
+    resource: program-render-context.yaml
+    schema: ../../schemas/render-context-v0.2.schema.yaml
   - id: moving-branch-is-invalid
     resource: invalid-moving-branch.yaml
     schema: ../../schemas/federation-plan-v0.1.schema.yaml

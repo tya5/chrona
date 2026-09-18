@@ -1,0 +1,59 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:render-context-v0.2"
+title: "Chrona Render Context v0.2"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: chrona/presentation/v0.2}
+  kind: {const: render-context}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [project, view, style, theme, sceneProfile, federationPlan, evaluation, viewport, target, layoutMetrics]
+    additionalProperties: false
+    properties:
+      project: {$ref: "#/$defs/resourceRef"}
+      view: {$ref: "#/$defs/resourceRef"}
+      style: {$ref: "#/$defs/resourceRef"}
+      theme: {$ref: "#/$defs/resourceRef"}
+      sceneProfile: {$ref: "#/$defs/resourceRef"}
+      federationPlan:
+        allOf:
+          - $ref: "#/$defs/resourceRef"
+          - properties: {kind: {const: federation-plan}}
+      evaluation:
+        type: object
+        required: [locale]
+        additionalProperties: false
+        properties: {locale: {type: string, minLength: 2}}
+      viewport:
+        type: object
+        required: [width, height]
+        additionalProperties: true
+        properties: {width: {type: number, exclusiveMinimum: 0}, height: {type: number, exclusiveMinimum: 0}}
+      target:
+        type: object
+        required: [kind, capabilities]
+        additionalProperties: false
+        properties: {kind: {type: string}, capabilities: {type: array, uniqueItems: true, items: {type: string}}}
+      layoutMetrics:
+        type: object
+        required: [id, revision, contentIdentity, algorithmVersion]
+        additionalProperties: false
+        properties:
+          id: {type: string}
+          revision: {type: string, pattern: "^metric:"}
+          contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+          algorithmVersion: {type: string}
+$defs:
+  resourceRef:
+    type: object
+    required: [id, kind, path, revision, contentIdentity]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      kind: {type: string, minLength: 1}
+      path: {type: string, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      revision: {type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}

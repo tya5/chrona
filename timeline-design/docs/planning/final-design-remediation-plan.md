@@ -69,9 +69,10 @@ must close its own design gate before the overall design can again be called com
 4. **Completed (contract evidence)** — Add schemas plus positive and negative fixtures
    for pinned exports, moving branches, namespace collision, and trust. The fixture
    runner is structural/local; it does not fetch a remote repository.
-5. **Remaining** — Define the Presentation-format minor version that adds an explicit
-   Federation Plan reference to Render Context, then add resolver integration fixtures
-   proving a child revision is invisible until the parent Plan is repinned.
+5. **Completed (format contract)** — Define Presentation-format v0.2 with an explicit
+   Federation Plan reference to Render Context. **Remaining integration evidence:**
+   resolver fixtures proving a child revision is invisible until the parent Plan is
+   repinned.
 6. **Remaining** — Run a focused cross-document review and update the
    design-completion review with the resulting evidence.
 

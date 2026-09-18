@@ -248,6 +248,14 @@ uses it to diagnose distinctions the requested output cannot preserve; it does n
 the target `kind` to infer unrecorded defaults. No target-specific options belong in a
 Render Context until a target-capability specification defines their portable meaning.
 
+### 5.4 Render Context v0.2 federation extension
+
+`chrona/presentation/v0.2` preserves the v0.1 fields and adds required
+`body.federationPlan`, a full immutable reference whose `kind` is `federation-plan`.
+The resolver verifies that Plan before resolving its child exports. The v0.2 closure
+manifest records the Plan followed by exports in Plan order. It must never discover a
+newer child revision outside the Plan.
+
 ## 6. Normalization and validation sequence
 
 The loader evaluates resources in this order:
