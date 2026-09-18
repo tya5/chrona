@@ -1,0 +1,8 @@
+version: chrona/presentation/v0.1
+kind: theme
+id: engineering-light-undefined-token
+body:
+  values:
+    blue-500: {type: color, value: '#2563EB'}
+  roles:
+    planned: {fill: blue-500, stroke: blue-700}

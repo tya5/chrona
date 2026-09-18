@@ -10,7 +10,7 @@ body:
       when: {facet: actual, sourceType: span}
       addRoles: [actual]
     - id: finish-behind
-      when: {facet: finishDelta, category: behind}
+      when: {facet: finishDelta, comparisonCategory: behind}
       addRoles: [variance-behind]
     - id: actual-missing
       when: {facet: missingActual}

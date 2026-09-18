@@ -8,14 +8,34 @@ allOf:
       kind: {const: theme}
       body:
         type: object
-        required: [tokens]
+        required: [values, roles]
         additionalProperties: false
         properties:
-          tokens:
+          extends:
+            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/themeRef"
+          values:
+            type: object
+            minProperties: 1
+            additionalProperties:
+              type: object
+              required: [type, value]
+              additionalProperties: false
+              properties:
+                type: {enum: [color, number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative]}
+                value: {type: [string, number]}
+          roles:
             type: object
             minProperties: 1
             additionalProperties:
               type: object
               minProperties: 1
-              additionalProperties:
-                type: string
+              additionalProperties: false
+              properties:
+                fill: {type: string, minLength: 1}
+                stroke: {type: string, minLength: 1}
+                marker: {type: string, minLength: 1}
+                pattern: {type: string, minLength: 1}
+                fontFamily: {type: string, minLength: 1}
+                fontWeight: {type: string, minLength: 1}
+                opacity: {type: string, minLength: 1}
+                textAlternative: {type: string, minLength: 1}

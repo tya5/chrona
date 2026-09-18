@@ -118,6 +118,12 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
                 errors.append("VIEW-OBSERVATION-SEQUENCE")
             if subject:
                 sequences_by_subject[subject].add(sequence)
+    if kind == "theme":
+        values = body.get("values", {})
+        for bindings in body.get("roles", {}).values():
+            for token_name in bindings.values():
+                if token_name not in values:
+                    errors.append("THEME-UNDEFINED-TOKEN")
     if kind == "render-context":
         target = body.get("target", {})
         if not target.get("kind") or not isinstance(target.get("capabilities"), list):

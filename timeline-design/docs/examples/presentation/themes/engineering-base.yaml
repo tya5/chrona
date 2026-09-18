@@ -1,18 +1,12 @@
 version: chrona/presentation/v0.1
 kind: theme
-id: engineering-light
+id: engineering-base
 body:
   values:
     blue-500: {type: color, value: '#2563EB'}
     blue-700: {type: color, value: '#1D4ED8'}
     green-500: {type: color, value: '#16A34A'}
     green-700: {type: color, value: '#15803D'}
-    amber-700: {type: color, value: '#B45309'}
-    warning: {type: marker, value: triangle}
-    unknown: {type: marker, value: question}
-    hatch: {type: pattern, value: diagonal-hatch}
   roles:
     planned: {fill: blue-500, stroke: blue-700}
     actual: {fill: green-500, stroke: green-700}
-    variance-behind: {marker: warning, stroke: amber-700}
-    actual-missing: {pattern: hatch, marker: unknown}

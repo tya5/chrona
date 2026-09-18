@@ -2,6 +2,13 @@ cases:
   - id: style-plan-actual
     resource: styles/plan-actual.yaml
     schema: ../../schemas/style-v0.1.schema.yaml
+  - id: theme-engineering-light
+    resource: themes/engineering-light.yaml
+    schema: ../../schemas/theme-v0.1.schema.yaml
+  - id: theme-undefined-token
+    resource: themes/engineering-light-undefined-token.yaml
+    schema: ../../schemas/theme-v0.1.schema.yaml
+    expectDiagnostics: [THEME-UNDEFINED-TOKEN]
   - id: command-accepted-shape
     resource: commands/edit-actual-accepted.yaml
     schema: ../../schemas/command-request-v0.1.schema.yaml

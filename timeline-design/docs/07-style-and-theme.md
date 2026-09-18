@@ -1,6 +1,6 @@
 # Style and Theme
 
-**Status:** Proposed
+**Status:** Draft
 **Depends on:** [06 View Model](06-view-model.md), [01 Concepts](01-concepts.md), [02 Domain Model](02-domain-model.md)
 **Leads to:** `08 Scene and Rendering`
 
@@ -70,7 +70,7 @@ re-evaluate rules only for its affected View items and emit local `SceneDelta` u
 token updates. A rule set has no catch-all code expression and cannot depend on title
 text, geometry, renderer state, or local time.
 
-### 4.1 Inputs
+### 4.2 Inputs
 
 A Style receives the semantic View Projection. Its selectors may inspect only stable, declarative facts exposed by that projection, including:
 
@@ -82,7 +82,7 @@ A Style receives the semantic View Projection. Its selectors may inspect only st
 
 Selectors must not execute arbitrary host code, mutate the Project, inspect renderer-specific coordinates, or silently obtain data outside the View Context.
 
-### 4.2 Output: visual roles
+### 4.3 Output: visual roles
 
 Style resolves each selected object or relationship to one or more named **visual roles**. Roles describe intent rather than appearance. Representative roles include:
 
@@ -97,9 +97,15 @@ Style resolves each selected object or relationship to one or more named **visua
 | Annotation | `semantic-annotation`, `presentation-annotation` |
 | View emphasis | `selected`, `muted`, `focus` |
 
-The exact initial role vocabulary and YAML grammar are deferred until the View and Scene designs have been reviewed together. Implementations may add roles only through a declared, versioned vocabulary or a typed extension namespace.
+The closed v0.1 role vocabulary is `planned`, `actual`, `actual-missing`,
+`variance-ahead`, `variance-on-track`, `variance-behind`, `variance-unknown`,
+`dependency`, `explanatory-arrow`, `semantic-annotation`, `presentation-annotation`,
+`selected`, and `muted`. A selector may match only `facet`, `sourceType`, `relationKind`,
+and `comparisonCategory`; unknown keys or values are errors. Rules append roles in source
+order and deduplicate them; roles never overwrite semantic facts. Conflicting categories
+within `variance-*` are an error rather than an implicit last-rule-wins choice.
 
-### 4.3 Plan and actual comparison
+### 4.4 Plan and actual comparison
 
 Style may make plan-versus-actual differences legible, but it does not calculate schedule truth. The View supplies the aligned Project/Actual references and any comparison facets it has derived under its declared rules. In particular:
 
@@ -135,13 +141,13 @@ Each token key is a visual role and each value is a closed map of token referenc
 concrete token vocabulary and inheritance remain a Theme schema concern; a Theme cannot
 introduce a semantic role, and an unbound role is a diagnostic.
 
-### 5.1 Tokens
+### 5.2 Tokens
 
 A Theme binds visual roles to concrete tokens. Tokens may describe colour, typography, stroke, fill, marker, opacity, dash pattern, corner treatment, spacing, or accessible text alternatives. A role can resolve to several tokens, and a token can be shared by several roles.
 
 Themes contain no selectors over Project fields. For example, `behind` is chosen by Style; its colour, line treatment, and label treatment are selected by Theme.
 
-### 5.2 Inheritance and resolution
+### 5.3 Inheritance and resolution
 
 Theme composition is deterministic:
 
@@ -155,7 +161,17 @@ Style to resolve, but active-theme selection belongs to the explicit Render Cont
 concrete token values belong to Theme declarations. This keeps colours, fonts, strokes,
 and spacing out of View semantics.
 
-Style composition is likewise deterministic. The intended precedence is base role assignment, profile or typed-field rule, then view-local rule; at the same level, later declared rules override earlier rules. The concrete selector syntax is deferred, but its specificity and source-order behavior must be serializable and testable.
+v0.1 Theme has a closed scalar vocabulary: `color` (`#RRGGBB` or `#RRGGBBAA`),
+`number`, `fontFamily`, `fontWeight`, `dashPattern`, `marker`, `pattern`, and
+`textAlternative`. The Theme declares every token in a named `values` map and each role
+binds only declared token names through fixed properties `fill`, `stroke`, `marker`,
+`pattern`, `fontFamily`, `fontWeight`, `opacity`, and `textAlternative`. A role binding
+may inherit from one named base Theme, but inheritance is resolved base-first, then local
+binding per property; cyclic or missing bases and undefined token names are errors.
+
+The resolved output is a concrete scalar map for every selected role. No renderer may
+substitute a palette, default font, marker, or pattern when resolution is incomplete.
+Style resolution is source-order only; Theme resolution is base-first/property-local.
 
 ## 6. Accessibility and reviewability
 
