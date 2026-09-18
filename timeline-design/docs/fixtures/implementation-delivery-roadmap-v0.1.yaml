@@ -1,0 +1,54 @@
+version: timeline/v0.1
+project: {id: chrona-delivery-roadmap, title: Chrona delivery roadmap}
+extensions:
+  - packageId: implementation-delivery
+    path: packages/implementation-delivery.yaml
+    revision: git:1111111111111111111111111111111111111111
+    contentIdentity: sha256:1111111111111111111111111111111111111111111111111111111111111111
+objects:
+  idp-1:
+    type: implementation-delivery.work-item
+    fields: {assignees: [chrona-team], workflowState: completed, artifacts: [], acceptanceEvidence: [], reuseClassification: core}
+    schedule: {mode: fixed, start: 2026-10-01, end: 2026-10-03}
+  idp-2:
+    type: implementation-delivery.work-item
+    fields: {assignees: [chrona-team], workflowState: completed, artifacts: [], acceptanceEvidence: [], reuseClassification: core}
+    schedule: {mode: scheduled, amount: 2d}
+  idp-3:
+    type: implementation-delivery.work-item
+    fields: {assignees: [chrona-team], workflowState: completed, artifacts: [], acceptanceEvidence: [], reuseClassification: core}
+    schedule: {mode: scheduled, amount: 2d}
+  idp-4:
+    type: implementation-delivery.delivery-gate
+    fields:
+      assignees: [chrona-team]
+      workflowState: planned
+      artifacts: []
+      acceptanceEvidence:
+        - id: idp-3-conformance
+          kind: delivery-acceptance-evidence
+          store: {provider: content, identity: chrona-ci}
+          address: results/idp-3.json
+          revision: {token: immutable-idp-3-result}
+          contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      reuseClassification: shared-service
+    schedule: {mode: fixed, at: 2026-10-10}
+entities:
+  chrona-team: {type: implementation-delivery.team, title: Chrona Team}
+relations:
+  - type: dependency
+    from: {object: idp-1, endpoint: end}
+    to: {object: idp-2, endpoint: start}
+    lag: 0d
+  - type: dependency
+    from: {object: idp-2, endpoint: end}
+    to: {object: idp-3, endpoint: start}
+    lag: 0d
+  - type: dependency
+    from: {object: idp-3, endpoint: end}
+    to: {object: idp-4, endpoint: at}
+    lag: 0d
+expectedPlacements:
+  idp-2: {start: 2026-10-03, end: 2026-10-05}
+  idp-3: {start: 2026-10-05, end: 2026-10-07}
+  idp-4: {at: 2026-10-10}

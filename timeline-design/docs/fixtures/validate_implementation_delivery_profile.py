@@ -100,6 +100,24 @@ def check_evidence_references():
             raise AssertionError(f"evidence {case['id']}: {diagnostics}")
 
 
+def check_self_hosted_roadmap():
+    project = yaml.safe_load((ROOT / "implementation-delivery-roadmap-v0.1.yaml").read_text())
+    expected = project.pop("expectedPlacements")
+    if project["extensions"][0]["packageId"] != "implementation-delivery":
+        raise AssertionError("roadmap does not resolve the standard package")
+    for object_id, item in project["objects"].items():
+        if item["type"] not in {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}:
+            raise AssertionError(f"roadmap object {object_id} uses an unknown profile")
+        if set(item["fields"]) != DELIVERY_FIELDS:
+            raise AssertionError(f"roadmap object {object_id} has wrong delivery fields")
+    evidence = project["objects"]["idp-4"]["fields"]["acceptanceEvidence"][0]
+    if list(Draft202012Validator(RESOURCE_SCHEMA).iter_errors(evidence)) or evidence["kind"] != "delivery-acceptance-evidence":
+        raise AssertionError("roadmap acceptance evidence is not immutable delivery evidence")
+    result = schedule(project)
+    if not result.ok or any(result.placements[key] != value for key, value in expected.items()):
+        raise AssertionError(f"roadmap scheduling failed: {result.placements}, {result.diagnostics}")
+
+
 def main():
     positive = fixture_diagnostics("implementation-delivery-profile-v0.1.yaml")
     if positive:
@@ -113,6 +131,7 @@ def main():
         raise AssertionError(f"invalid state fixture diagnostics: {invalid_state}")
     check_state_isolation()
     check_evidence_references()
+    check_self_hosted_roadmap()
     print("Implementation-delivery profile vocabulary: PASS")
 
 
