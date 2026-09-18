@@ -14,10 +14,11 @@ allOf:
             type: array
             items:
               type: object
-              required: [id, actual]
+              required: [id, sequence, actual]
               additionalProperties: false
               properties:
                 id: {type: string, minLength: 1}
+                sequence: {type: integer, minimum: 1}
                 projectObjectId: {type: string, minLength: 1}
                 externalIdentity: {type: object, required: [system, key], additionalProperties: false, properties: {system: {type: string}, key: {type: [string, integer]}}}
                 alignment: {const: unmatched}
@@ -28,4 +29,8 @@ allOf:
                   properties:
                     start: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
                     finish: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                    at: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
                     progress: {type: number, minimum: 0, maximum: 1}
+              allOf:
+                - if: {properties: {actual: {required: [at]}}}
+                  then: {properties: {actual: {not: {anyOf: [{required: [start]}, {required: [finish]}, {required: [progress]}]}}}}

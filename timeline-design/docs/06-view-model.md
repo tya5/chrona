@@ -1,6 +1,6 @@
 # View Model
 
-**Status:** Proposed
+**Status:** Draft
 **Depends on:** `01-concepts.md`, `02-domain-model.md`, `03-temporal-model.md`, `04-scheduling-model.md`, `05-project-format.md`  
 **Owns:** selection, comparison context, grouping, ordering, temporal-window selection, visibility, layout intent, and presentation annotations.
 
@@ -103,6 +103,24 @@ sorted and duplicate-free. `planned` and `actual` remain separate facets, so a S
 Scene can update only the affected primitive when an observation changes. A View never
 changes a planned placement because a delta facet exists.
 
+### 4.2 Closed comparison language
+
+v0.1 comparison bodies use `baseline: primary|snapshot`,
+`observationSelection: latest`, and `deltaUnit: calendar-days`. `baseline: primary`
+uses the primary Project's derived planned schedule; `baseline: snapshot` requires a
+Snapshot whose resolved `project.id` equals the primary Project ID. `latest` chooses the
+observation with greatest positive `sequence` for each resolved Project object; equal
+sequences for one object are invalid. Unmatched observations are never planned-comparison
+candidates, but may appear through `unmatchedActual`.
+
+`startDelta = actual.start − planned.start`, `finishDelta = actual.finish − planned.finish`,
+and `atDelta = actual.at − planned.at`, each as a signed integer in calendar days.
+Positive means later/behind; negative means earlier; zero means equal. A delta is absent,
+not zero, if either endpoint is absent or the point/span kinds differ. Point Actuals
+compare only with planned points and intervals only with planned spans. Actual intervals
+use Core's half-open `[start, finish)` form; a human-facing inclusive finish label never
+changes it. Progress is observed only and has no implied forecast or rescheduling effect.
+
 ## 5. Projection Pipeline
 
 The View pipeline is separate from styling and scene construction.
@@ -133,11 +151,21 @@ Relations MAY be shown only when both endpoints are selected. A View MAY retain 
 
 Semantic dependencies and explanatory arrows are distinct. A semantic dependency is owned by the Project and constrains or validates scheduling. An explanatory arrow is a View-local presentation annotation; it MAY explain a risk, decision, or causal narrative but MUST NOT create a scheduling constraint.
 
-Grouping creates presentation lanes; it is not semantic containment. A View MAY group by team, component, owner, status, object type, or another semantic field. Within a group, ordering MUST be deterministic. Valid keys include stable ID, title, planned start/end, selected extension field, or explicit View-local order. A missing key MUST use a documented fallback rather than host iteration order.
+Grouping creates presentation lanes; it is not semantic containment. v0.1 uses
+`{by: objectType}` or `{by: field, field: <declared semantic field path>, missing:
+<lane-id>}`. `by: entity` without a field is invalid. `objectType` means normalized
+Core shape (`point` or `span`), not an implementation profile name. Ordering is the
+tuple `(ordering key, tieBreak, stable object ID)`; missing values sort after present
+values in ascending order and before in descending order.
 
 ## 7. Temporal Window
 
-A View selects a temporal window independently from scheduling semantics. A window MAY be explicit, derived from selected planned placements, derived from a named comparison input, or expanded by an explicit presentation margin.
+A View selects a temporal window independently from scheduling semantics. v0.1 allows
+`{mode: explicit, start: Date, end: Date}`, `{mode: selected-planned, marginDays: N}`,
+or `{mode: selected-comparison, marginDays: N}`. Explicit windows are `[start, end)`
+with both bounds and `start < end`; derived windows use selected minimum start and
+maximum exclusive end plus non-negative margin. An empty eligible set is a diagnostic,
+never a current-date default.
 
 Date-based Views use the Date temporal domain. DateTime View behavior is deferred until a corresponding Core scheduling profile exists. Human-facing inclusive end-date display is a View or renderer concern and MUST NOT alter Core half-open span semantics.
 
@@ -151,7 +179,7 @@ Current-versus-Snapshot compares the Primary Project with an immutable named Sna
 
 ### 8.2 Plan versus Actual
 
-Plan-versus-Actual compares planned placements from the Primary Project or named Snapshot with independent Actual observations. Actual observations MAY contain actual start, finish, point occurrence, and progress. They MUST NOT automatically change planned dependencies, duration, forecast, or schedule.
+Plan-versus-Actual compares planned placements from the Primary Project or named Snapshot with independent Actual observations. An observation has exactly one occurrence shape: a point `at`, or an interval with one or both of `start`/`finish`, optionally progress. It has a positive `sequence`; v0.1 selects the latest sequence. Actuals MUST NOT automatically change planned dependencies, duration, forecast, or schedule.
 
 The View Projection MAY expose planned and actual endpoints, start/finish delta, progress, absent observation, and unmatched observation. Whether an actual delay triggers rescheduling belongs to a future scheduling or application policy.
 

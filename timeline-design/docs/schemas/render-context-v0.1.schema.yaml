@@ -15,21 +15,21 @@ allOf:
           project:
             $ref: "urn:chrona:presentation-resource-v0.1#/$defs/projectRef"
           view:
-            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/resourceRef"
+            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/viewRef"
           style:
-            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/resourceRef"
+            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/styleRef"
           theme:
-            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/resourceRef"
+            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/themeRef"
           sceneProfile:
-            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/resourceRef"
+            $ref: "urn:chrona:presentation-resource-v0.1#/$defs/sceneProfileRef"
           inputs:
             type: object
             additionalProperties: false
             properties:
               snapshot:
-                $ref: "urn:chrona:presentation-resource-v0.1#/$defs/resourceRef"
+                $ref: "urn:chrona:presentation-resource-v0.1#/$defs/snapshotRef"
               actual:
-                $ref: "urn:chrona:presentation-resource-v0.1#/$defs/resourceRef"
+                $ref: "urn:chrona:presentation-resource-v0.1#/$defs/actualSetRef"
           evaluation:
             type: object
             required: [locale]
@@ -71,8 +71,10 @@ allOf:
                 items: {type: string, minLength: 1}
           layoutMetrics:
             type: object
-            required: [id, revision]
+            required: [id, revision, contentIdentity, algorithmVersion]
             additionalProperties: false
             properties:
               id: {type: string, minLength: 1}
-              revision: {type: string, minLength: 1}
+              revision: {type: string, pattern: "^metric:[A-Za-z0-9._-]+$"}
+              contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+              algorithmVersion: {type: string, minLength: 1}

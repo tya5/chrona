@@ -1,6 +1,6 @@
 # Presentation Format
 
-**Status:** Proposed
+**Status:** Draft
 **Depends on:** [05 Project Format](05-project-format.md), [06 View Model](06-view-model.md), [07 Style and Theme](07-style-and-theme.md), [08 Scene and Rendering](08-scene-and-rendering.md), [10 Command Model](10-command-model.md)
 **Owns:** persistent syntax and normalization for View, Style, Theme, Render Context, Scene profile, Snapshot reference, and Actual observation set definitions outside the Core Project file; plus the file-serialization boundary for Command requests.
 
@@ -26,8 +26,8 @@ Git-reviewable.
   profile, and Render Context input it needs by explicit ID or immutable reference.
 - A consumer MUST NOT select a local file, Git branch, current date, installed theme, or
   renderer default as an unstated input.
-- Core Project data and these definitions MAY reside in one repository, but they retain
-  separate schemas, revision identities, and ownership boundaries.
+- Every input to an evaluation MUST be bound to an immutable revision and exact content
+  identity; a path is a locator, never an identity.
 - Scene, SVG, canvas state, layout caches, and generated deltas MUST NOT be persisted as
   authoritative inputs to this format.
 - Canonicalization MUST preserve stable IDs, normalize unordered maps deterministically,
@@ -85,10 +85,10 @@ actuals/<actual-set-id>.yaml
 
 A Render Context is the entry point for a presentation evaluation. It names the
 resources used for a single evaluation, including the primary Project revision and any
-Snapshot or Actual input. Each resource reference includes both its expected stable ID
-and an explicit repository-relative path. A loader verifies that the file at that path
-has the declared kind and ID; it does not search a directory to find a matching ID.
-Duplicate IDs of the same kind in an evaluation are invalid.
+Snapshot or Actual input. Each resource reference includes its expected stable ID, kind,
+canonical repository-relative path, immutable revision, and content identity. A loader
+verifies all five values; it does not search a directory to find a matching ID.
+Duplicate `(kind, id)` pairs in an evaluation are invalid.
 
 Multiple Render Contexts MAY refer to the same immutable Project revision. They remain
 independent evaluations: one Context's View selection, Theme, Actual input, viewport,
@@ -100,39 +100,88 @@ outside v0.1 of this format. They must not be inferred by an implementation.
 
 ## 5. Reference semantics
 
-References are typed and explicit. A Project/Snapshot reference identifies both a
-logical source and its immutable revision:
+References are typed and explicit. A reference is normalized before use to the following
+shape. `path` is normalized from the declared repository root using `/`, MUST NOT contain
+`.` or `..` segments, and MUST resolve inside that root. `revision` identifies the
+immutable source tree; v0.1 accepts only a full Git object ID (`git:` followed by 40 or
+64 hexadecimal characters). `contentIdentity` is the SHA-256 of the exact UTF-8 bytes
+loaded at that path. It protects evaluation reproducibility even when a Git backend is
+unavailable after materializing a verified closure.
+
+```yaml
+id: controller-x
+kind: project
+path: timeline-design/docs/examples/controller-x.yaml
+revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df
+contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db
+```
+
+The expected `kind` and `id` are mandatory even for a Project reference. A Project
+reference's ID MUST equal the resolved `project.id`; a presentation reference's ID and
+kind MUST equal the resolved envelope. The identity check precedes owner-semantic
+evaluation.
+
+### 5.1 Evaluation closure and resolution
+
+An **evaluation closure** is the ordered, immutable set of resources consumed by one
+Render Context: Render Context; primary Project; View; Style; Theme; Scene Profile;
+the selected Snapshot and Actual set, if any; declared extension packages; and the
+layout-metrics artifact. The normalized closure manifest records each resource's
+`kind`, `id`, canonical `path`, `revision`, and `contentIdentity`, plus the engine and
+package-registry versions used to resolve it.
+
+Resolution MUST:
+
+1. normalize every path against the repository root and reject escape;
+2. read the named content from the named immutable revision, never from a moving branch
+   or the current working tree;
+3. verify SHA-256, envelope kind/ID, Project ID, and supported version;
+4. recursively resolve declared resource/package edges in deterministic field order;
+5. reject a cycle, duplicate `(kind, id)` with different identities, missing object,
+   unavailable revision, or a Snapshot/Actual whose Project ID differs from the primary
+   Project; and
+6. emit the normalized closure as evaluation evidence before scheduling or rendering.
+
+An editor may use a separately persisted immutable Project-Store object while offline,
+but it MUST assign a content identity and materialize the same closure manifest before
+the result is comparable or cacheable. `git:main`, abbreviated Git IDs, filesystem
+mtime, and "latest" are invalid in a reproducible closure.
+
+The layout-metrics artifact follows the same rule. Its `id`, revision, content identity,
+metric algorithm version, and declared font/metric payload are part of the closure; an
+installed font or host default is never a substitute.
+
+### 5.2 Reference examples
+
+A Project/Snapshot reference identifies both a logical source and its immutable
+revision:
 
 ```yaml
 body:
-  project:
-    path: ../project.yaml
-    revision: git:4f2c9ab
+  project: {id: controller-x, kind: project, path: project.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db}
 ```
 
 For an editable working evaluation, `revision` MAY be a project-store revision ID rather
 than a Git commit, but it MUST be recorded in the evaluation manifest. A reference to a
 moving branch name, such as `main`, is invalid as a reproducible comparison input.
 
-A presentation-resource reference uses an expected kind, ID, and path. For example:
+A presentation-resource reference uses an expected kind, ID, path, revision, and
+content identity. For example:
 
 ```yaml
 body:
-  view:
-    id: controller-review
-    path: ../views/controller-review.yaml
+  view: {id: controller-review, kind: view, path: views/controller-review.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:fa9890a9b332ec65bca410a9251ba609eceff5ac494c3110dc20d5200d4c4e9c}
 ```
 
-The path is resolved relative to the referring document and MUST remain inside the
-declared repository root. The expected kind is supplied by the owning field (the
-example field expects `view`), so a file with the right ID but a different kind is
-invalid. This explicit pairing keeps an ID rename or a path move reviewable and avoids
-an unstated registry or filesystem scan.
+The canonical path is resolved from the declared repository root. A file with the right
+path but a different revision, content identity, kind, or ID is invalid. This explicit
+pairing keeps an ID rename or a path move reviewable and avoids an unstated registry or
+filesystem scan.
 
 An Actual observation may have a resolved `projectObjectId` or an external identity with
 `alignment: unmatched`. Text similarity is never a normalization or alignment rule.
 
-### 5.1 Render Context v0.1 body
+### 5.3 Render Context v0.1 body
 
 A `render-context` selects exactly one immutable primary Project revision and exactly
 one View, Style, Theme, and Scene profile. It supplies the concrete comparison inputs
@@ -145,12 +194,8 @@ version: chrona/presentation/v0.1
 kind: render-context
 id: controller-plan-vs-actual
 body:
-  project:
-    path: ../project.yaml
-    revision: git:4f2c9ab
-  view:
-    id: controller-review
-    path: ../views/controller-review.yaml
+  project: {id: controller-x, kind: project, path: project.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db}
+  view: {id: controller-review, kind: view, path: views/controller-review.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:fa9890a9b332ec65bca410a9251ba609eceff5ac494c3110dc20d5200d4c4e9c}
   style:
     id: plan-actual
     path: ../styles/plan-actual.yaml
@@ -178,9 +223,7 @@ body:
   target:
     kind: svg
     capabilities: [metadata, marker, text-alternative]
-  layoutMetrics:
-    id: inter-14-logical
-    revision: sha256:example
+  layoutMetrics: {id: inter-14-logical, revision: metric:inter-14-v1, contentIdentity: sha256:0000000000000000000000000000000000000000000000000000000000000000, algorithmVersion: chrona-layout-metrics/v0.1}
 ```
 
 `inputs.snapshot`, `inputs.actual`, and `evaluation.asOfDate` are optional only when
@@ -201,6 +244,8 @@ Render Context until a target-capability specification defines their portable me
 The loader evaluates resources in this order:
 
 ```text
+Evaluation closure resolution
+  ↓
 YAML syntax
   ↓
 Common presentation envelope
@@ -222,7 +267,7 @@ A `snapshot-ref` names an immutable Project input and adds no copied schedule da
 kind: snapshot-ref
 id: baseline-q2
 body:
-  project: {path: ../project.yaml, revision: git:4f2c9ab}
+  project: {id: controller-x, kind: project, path: project.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db}
 ```
 
 An `actual-set` is an independently revisioned observation collection. Each observation

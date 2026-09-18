@@ -2,4 +2,4 @@ version: chrona/presentation/v0.1
 kind: snapshot-ref
 id: baseline-q2
 body:
-  project: {path: ../../controller-x.yaml, revision: git:4f2c9ab}
+  project: {id: controller-x, kind: project, path: timeline-design/docs/examples/controller-x.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db}

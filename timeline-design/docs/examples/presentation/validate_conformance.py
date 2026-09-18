@@ -5,6 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 from datetime import date
+from hashlib import sha256
+from pathlib import PurePosixPath
+import subprocess
 
 import yaml
 from jsonschema import Draft202012Validator, RefResolver
@@ -12,6 +15,7 @@ from jsonschema import Draft202012Validator, RefResolver
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMAS = ROOT / "schemas"
+REPOSITORY_ROOT = ROOT.parents[1]
 
 
 def load_yaml(path: Path):
@@ -37,6 +41,44 @@ def schema_store():
     return store
 
 
+def resolve_revision_ref(ref: dict) -> tuple[dict | None, list[str]]:
+    """Load one canonical reference from its declared Git revision."""
+    errors = []
+    path_text = ref.get("path", "")
+    path = PurePosixPath(path_text)
+    if not path_text or path.is_absolute() or any(part in {".", ".."} for part in path.parts):
+        return None, ["PRES-REF-PATH"]
+    revision = ref.get("revision", "")
+    if not revision.startswith("git:"):
+        return None, ["PRES-REF-REVISION"]
+    git_revision = revision.removeprefix("git:")
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(REPOSITORY_ROOT), "show", f"{git_revision}:{path_text}"],
+            check=True, capture_output=True,
+        )
+    except subprocess.CalledProcessError:
+        return None, ["PRES-REF-REVISION"]
+    expected = ref.get("contentIdentity", "").removeprefix("sha256:")
+    if sha256(result.stdout).hexdigest() != expected:
+        errors.append("PRES-REF-CONTENT")
+    try:
+        value = json_value(yaml.safe_load(result.stdout))
+    except yaml.YAMLError:
+        return None, errors + ["PRES-REF-REVISION"]
+    expected_kind = ref.get("kind")
+    expected_id = ref.get("id")
+    if expected_kind == "project":
+        actual_id = value.get("project", {}).get("id")
+        actual_kind = "project"
+    else:
+        actual_id = value.get("id")
+        actual_kind = value.get("kind")
+    if actual_kind != expected_kind or actual_id != expected_id:
+        errors.append("PRES-REF-IDENTITY")
+    return value, errors
+
+
 def assert_delta(case_id: str, resource: dict, expected: dict) -> list[str]:
     errors = []
     if resource.get("replaceScope") != expected.get("replaceScope"):
@@ -54,6 +96,11 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
     body = resource.get("body", {})
     if kind == "snapshot-ref" and not str(body.get("project", {}).get("revision", "")).startswith(("git:", "store:")):
         errors.append("PRES-SNAPSHOT-REVISION")
+    if kind == "snapshot-ref":
+        project, ref_errors = resolve_revision_ref(body.get("project", {}))
+        errors.extend(ref_errors)
+        if project and project.get("project", {}).get("id") != body["project"].get("id"):
+            errors.append("PRES-PROJECT-COMPATIBILITY")
     if kind == "actual-set":
         for observation in body.get("observations", []):
             external = observation.get("externalIdentity")
@@ -71,7 +118,9 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
             ref = body.get(name)
             if not ref:
                 return None
-            return json_value(load_yaml((path.parent / ref["path"]).resolve()))
+            value, ref_errors = resolve_revision_ref(ref)
+            errors.extend(ref_errors)
+            return value
         view = load_ref("view")
         actual_ref = body.get("inputs", {}).get("actual")
         if view:
@@ -84,8 +133,12 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
             if view.get("body", {}).get("visibility", {}).get("labels") and "text-alternative" not in target["capabilities"]:
                 errors.append("PRES-TARGET-CAPABILITY")
         if actual_ref:
-            actual = json_value(load_yaml((path.parent / actual_ref["path"]).resolve()))
-            project = json_value(load_yaml((path.parent / body["project"]["path"]).resolve()))
+            actual, actual_errors = resolve_revision_ref(actual_ref)
+            project, project_errors = resolve_revision_ref(body["project"])
+            errors.extend(actual_errors)
+            errors.extend(project_errors)
+            if not actual or not project:
+                return errors
             project_ids = set(project.get("objects", {}))
             for observation in actual.get("body", {}).get("observations", []):
                 resolved = observation.get("projectObjectId")
@@ -93,10 +146,15 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
                     errors.append("PRES-ACTUAL-ALIGNMENT")
         snapshot_ref = body.get("inputs", {}).get("snapshot")
         if snapshot_ref:
-            snapshot = json_value(load_yaml((path.parent / snapshot_ref["path"]).resolve()))
+            snapshot, snapshot_errors = resolve_revision_ref(snapshot_ref)
+            errors.extend(snapshot_errors)
+            if not snapshot:
+                return errors
             revision = snapshot.get("body", {}).get("project", {}).get("revision")
             if not str(revision).startswith(("git:", "store:")):
                 errors.append("PRES-SNAPSHOT-REVISION")
+            if snapshot.get("body", {}).get("project", {}).get("id") != body["project"].get("id"):
+                errors.append("PRES-PROJECT-COMPATIBILITY")
     return errors
 
 

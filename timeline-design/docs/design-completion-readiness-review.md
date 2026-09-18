@@ -1,24 +1,26 @@
 # Design Completion Readiness Review
 
-**Status:** Review complete
+**Status:** Superseded — 2026-09-18
+
+**Superseded by:** [Final Design Remediation Plan](final-design-remediation-plan.md)
 
 ## Result
 
-The Core, Presentation, Command, Runtime, and Adapter design boundaries now provide
-explicit authority, deterministic inputs/outputs, diagnostics, and conformance evidence
-for all Must-priority use cases. The remaining work is implementation and execution of
-the declared conformance/CI artifacts, not unresolved semantic or architectural choice.
+This review's completion conclusion is withdrawn. The subsequent cross-document final
+review found unresolved contracts for revision-bound evaluation, Plan-versus-Actual,
+View/layout, Style/Theme resolution, SceneDelta/runtime ordering, Command transactions,
+extension packages, and negative conformance. Those are design blockers, not merely
+implementation work.
 
-## Deferred without blocking minimal implementation
+## Historical deferred items
 
 DateTime/DST, non-linear scale, extension package breadth beyond the semiconductor
 fixture, detailed authorization provider integration, tldraw/canvas/PPTX adapters, and
 collaboration are explicitly deferred. They must not be inferred by the initial SVG or
 interactive adapter.
 
-## Gate outcome
+## Historical gate outcome
 
-The design-completion gate in the documentation plan is satisfied for the v0.1 minimal
-implementation scope: deterministic Date-only Core, explicit presentation resources,
-semantic and structural conformance runner, Runtime impact/SceneDelta contract, and
-adapter fidelity boundary. This is not a claim that the adapter implementations exist.
+The prior statement that the design-completion gate was satisfied is no longer valid.
+The current authoritative closure criteria and ordering are in the remediation plan.
+No minimal implementation may rely on this review's former conclusion.

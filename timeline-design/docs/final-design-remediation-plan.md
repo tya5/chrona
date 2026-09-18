@@ -53,6 +53,8 @@ suite; and a local GUI edit must not require unrelated scene/UI replacement.
 
 ### Phase 0 — Establish a truthful review baseline
 
+**Status:** Completed — 2026-09-18
+
 **Addresses:** R9
 
 Update `design-completion-readiness-review.md`,
@@ -65,6 +67,8 @@ be described as implementation-ready.
 satisfied while R1–R8 remains open.
 
 ### Phase 1 — Define revision-bound evaluation closure
+
+**Status:** Completed — 2026-09-18
 
 **Addresses:** R3; prerequisite for R1, R2, R4, R7, and R8
 
@@ -86,6 +90,8 @@ wrong ID/kind, path escape, missing revision/content, mixed logical Project, and
 input substituted from a different revision is detectable.
 
 ### Phase 2 — Close comparison and presentation selection semantics
+
+**Status:** In progress — 2026-09-18
 
 **Addresses:** R1 and R6; depends on Phase 1
 

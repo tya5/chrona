@@ -30,6 +30,10 @@ cases:
   - id: independent-customer-context
     resource: contexts/controller-customer.yaml
     schema: ../../schemas/render-context-v0.1.schema.yaml
+  - id: revision-bound-wrong-view-id
+    resource: contexts/controller-customer-wrong-view-id.yaml
+    schema: ../../schemas/render-context-v0.1.schema.yaml
+    expectDiagnostics: [PRES-REF-IDENTITY]
   - id: snapshot-immutable-revision
     resource: snapshots/baseline-q2.yaml
     schema: ../../schemas/snapshot-ref-v0.1.schema.yaml

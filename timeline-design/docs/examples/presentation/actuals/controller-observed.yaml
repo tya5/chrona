@@ -4,9 +4,11 @@ id: controller-observed
 body:
   observations:
     - id: observed-firmware
+      sequence: 1
       projectObjectId: firmware
       actual: {start: 2026-04-03, finish: 2026-04-18, progress: 0.75}
     - id: imported-42
+      sequence: 2
       externalIdentity: {system: supplier, key: 42}
       alignment: unmatched
       actual: {finish: 2026-04-20}

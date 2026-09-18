@@ -1,9 +1,9 @@
 version: chrona/presentation/v0.1
 kind: render-context
-id: controller-customer
+id: controller-customer-wrong-view-id
 body:
   project: {id: controller-x, kind: project, path: timeline-design/docs/examples/controller-x.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:8e3a8360736368ca36d09eca8ca7fc473bfdcd902d3a214d85d560521a7425db}
-  view: {id: controller-review, kind: view, path: timeline-design/docs/examples/presentation/views/controller-review.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:fa9890a9b332ec65bca410a9251ba609eceff5ac494c3110dc20d5200d4c4e9c}
+  view: {id: not-controller-review, kind: view, path: timeline-design/docs/examples/presentation/views/controller-review.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:fa9890a9b332ec65bca410a9251ba609eceff5ac494c3110dc20d5200d4c4e9c}
   style: {id: plan-actual, kind: style, path: timeline-design/docs/examples/presentation/styles/plan-actual.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:51c999d45b76c2f43d7fabdfc3b56e094401500657221639d32aed3e43e6db7d}
   theme: {id: engineering-light, kind: theme, path: timeline-design/docs/examples/presentation/themes/engineering-light.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:a2642cac9b25c52eb7fb2de4acbe5fea9a1f981ec779d367b6591209e8cda052}
   sceneProfile: {id: date-lanes, kind: scene-profile, path: timeline-design/docs/examples/presentation/scenes/date-lanes.yaml, revision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df, contentIdentity: sha256:354b9141e05258a4a2eadee8f9711422b6d35f3160938e254e1202104a3f0175}

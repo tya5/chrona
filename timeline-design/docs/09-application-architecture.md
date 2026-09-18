@@ -27,6 +27,7 @@ Application Architecture decides which component evaluates or transports each sp
 | Component | Responsibility | Must not own |
 |---|---|---|
 | Project Store | Load, normalize, identify, and persist canonical Project revisions | Temporal interpretation, scheduling, or rendering |
+| Evaluation Closure Resolver | Resolve and verify the immutable resource/package closure named by a Render Context | Fallback to current files, branches, or host defaults |
 | Profile Registry | Resolve supported core and extension profiles, typed fields, and schemas | Arbitrary executable extension behavior |
 | Temporal Engine | Parse and operate on temporal values and calendars | Project mutation policy or visual layout |
 | Scheduling Engine | Validate and derive planned placements under the Scheduling Model | Actual-driven rescheduling or presentation decisions |
@@ -82,7 +83,12 @@ Every read evaluation begins with an explicit request containing at least:
 - its explicit locale, viewport, target capabilities, and layout metrics; and
 - optional requested output artifact.
 
-The Runtime Coordinator resolves these references before evaluation. Absence of a required reference is a diagnostic; it is not permission to read a working tree default, current time, local locale, or renderer configuration.
+The Runtime Coordinator delegates resolution to the Evaluation Closure Resolver before
+evaluation. The resolver verifies root containment, immutable revision, exact content
+identity, expected kind/ID, Project compatibility, and acyclicity; it returns a
+normalized closure manifest or stable diagnostics. Absence or mismatch is a diagnostic;
+it is not permission to read a working tree default, current time, local locale, or
+renderer configuration.
 
 ### 5.2 Evaluation pipeline
 
@@ -104,7 +110,10 @@ Each stage receives immutable input values and returns a value plus diagnostics.
 
 ### 5.3 Derived-state cache
 
-Derived values MAY be cached. A cache key MUST include the identities or content hashes of every semantic and presentation input that can affect the result, together with the explicit render context, viewport, layout metrics, and target capability profile where relevant.
+Derived values MAY be cached. A cache key MUST include the normalized evaluation closure
+identity (all revision and content identities, package/engine versions), together with
+the explicit render context, viewport, layout metrics, and target capability profile
+where relevant.
 
 A cache hit is an optimization only. It must be observationally equivalent to reevaluating the declared inputs and must not hide diagnostics associated with those inputs.
 

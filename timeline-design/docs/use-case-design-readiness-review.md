@@ -1,23 +1,24 @@
 # Use Case Design Readiness Review
 
-**Status:** Review complete  
+**Status:** Superseded — 2026-09-18
 **Scope:** UC-01 through UC-13 in [14 Use Case Catalog](14-use-case-catalog.md).
+
+**Superseded by:** [Final Design Remediation Plan](final-design-remediation-plan.md)
 
 ## Conclusion
 
-Core planning, Git review, plan-versus-Actual, expressive annotations, independent
-Views, Actual reconciliation, baseline capture, and declared target capability now have
-an owning specification and at least one structural fixture. No reviewed use case
-requires a change to Core semantics, resource/cost management, or renderer-authoritative
-state.
+The earlier readiness conclusion relied too heavily on structural positive fixtures.
+The final review found that key Must-priority use cases still lack closed semantics and
+negative conformance: in particular UC-03/UC-10 comparison rules, UC-05 reactive
+SceneDelta proof, UC-07 package resolution, and Command transaction semantics.
 
-## Design-ready versus implementation-ready
+## Historical readiness matrix
 
 | State | Use cases | Next gate |
 |---|---|---|
-| Design-ready | UC-01, UC-02, UC-03, UC-05, UC-08, UC-09, UC-10, UC-12, UC-13 | semantic conformance runner |
-| Design-ready with adapter deferred | UC-04, UC-06, UC-11 | exporter, AI, CLI/CI adapters |
-| Design needs extension fixture | UC-07 | package schema and semiconductor profile fixture |
+| Design-ready | UC-01, UC-02, UC-03, UC-05, UC-08, UC-09, UC-10, UC-12, UC-13 | Superseded; see R1–R10 |
+| Design-ready with adapter deferred | UC-04, UC-06, UC-11 | Superseded; see R1–R10 |
+| Design needs extension fixture | UC-07 | Superseded; see R8 |
 
 ## Remaining design constraints
 
@@ -28,5 +29,5 @@ state.
 - Actual resolution and Snapshot capture require semantic runner checks for immutable
   revision and stable-ID validity before any adapter claims support.
 
-The next planned work is conformance-runner design and implementation. It must consume
-the existing manifest and fixtures before interactive or exporter implementation begins.
+The current work is specification remediation, not implementation. The governing order
+is Phase 1 through Phase 8 of the remediation plan.
