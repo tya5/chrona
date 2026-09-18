@@ -37,7 +37,7 @@ long-term cross-layer contract.
 | RA-3 | Generalize architecture, command, quality, project-format, and presentation ownership | `05`, `09`, `10`, `12`, `13` | cross-links and no mandatory Git path | Complete |
 | RA-4 | Generalize federation source, pinning, and trust contracts | Federation design | provider-neutral export reference | Complete |
 | RA-5 | Add v0.2 reference/command/presentation schemas and Git/local/content fixtures | `schemas/`, `fixtures/` | validation runner passes in CI | Complete — provider-neutral Federation/Presentation successors and Git/local/content positive/negative fixtures pass the workflow command set with declared dependencies |
-| RA-6 | Perform cross-document review against the completion conditions | review | traced findings and disposition | Pending |
+| RA-6 | Perform cross-document review against the completion conditions | review | traced findings and disposition | Complete — `revision-store-adapter-readiness-review.md` |
 
 ## 4. Compatibility and migration
 
