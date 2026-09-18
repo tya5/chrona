@@ -6,7 +6,7 @@ from chrona.scheduler import schedule
 from chrona.validation import load_yaml, validate_project
 
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "timeline-design" / "docs" / "examples"
+EXAMPLES = Path(__file__).resolve().parents[1] / "timeline-design" / "docs" / "fixtures"
 PROJECT_EXAMPLES = ("calendar.yaml", "controller-x.yaml", "dependencies.yaml", "minimal.yaml", "semiconductor.yaml")
 
 
