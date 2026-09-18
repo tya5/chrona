@@ -204,6 +204,8 @@ unknown profiles degrade only by the documented inheritance rule.
 
 ### Phase 7 — Build negative conformance and CI evidence
 
+**Status:** Completed — 2026-09-18
+
 **Addresses:** R10; follows each preceding phase and closes after Phase 6
 
 Expand the presentation manifest to include every positive and negative fixture from
