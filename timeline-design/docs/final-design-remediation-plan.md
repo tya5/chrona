@@ -115,6 +115,8 @@ every View construct has a normalized, deterministic interpretation.
 
 ### Phase 3 — Make Style and Theme concrete and deterministic
 
+**Status:** Completed — 2026-09-18
+
 **Addresses:** R5; depends on Phase 2
 
 `07-style-and-theme.md` defines the closed v0.1 visual vocabulary: legal role

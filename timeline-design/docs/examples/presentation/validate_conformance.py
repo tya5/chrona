@@ -119,8 +119,23 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
             if subject:
                 sequences_by_subject[subject].add(sequence)
     if kind == "theme":
-        values = body.get("values", {})
-        for bindings in body.get("roles", {}).values():
+        values = dict(body.get("values", {}))
+        roles = dict(body.get("roles", {}))
+        parent = body.get("extends")
+        if parent:
+            inherited, ref_errors = resolve_revision_ref(parent)
+            errors.extend(ref_errors)
+            if inherited and inherited.get("kind") == "theme":
+                parent_body = inherited.get("body", {})
+                inherited_values = dict(parent_body.get("values", {}))
+                inherited_values.update(values)
+                values = inherited_values
+                inherited_roles = dict(parent_body.get("roles", {}))
+                inherited_roles.update(roles)
+                roles = inherited_roles
+            else:
+                errors.append("THEME-INHERITANCE-INVALID")
+        for bindings in roles.values():
             for token_name in bindings.values():
                 if token_name not in values:
                     errors.append("THEME-UNDEFINED-TOKEN")
