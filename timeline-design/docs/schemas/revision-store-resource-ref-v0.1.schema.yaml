@@ -1,0 +1,45 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:revision-store-resource-ref-v0.1"
+title: "Chrona Revision Store Resource Reference v0.1"
+description: >-
+  Provider-neutral reference shape for successor formats. The revision token is opaque
+  outside the named Store; semantic adapter validation verifies the source and snapshot.
+type: object
+required: [id, kind, store, address, revision, contentIdentity]
+additionalProperties: false
+properties:
+  id:
+    type: string
+    minLength: 1
+  kind:
+    type: string
+    minLength: 1
+  store:
+    type: object
+    required: [provider, identity]
+    additionalProperties: false
+    properties:
+      provider:
+        enum: [git, local, content]
+      identity:
+        type: string
+        minLength: 1
+      locator:
+        type: string
+        minLength: 1
+  address:
+    type: string
+    minLength: 1
+    pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"
+  revision:
+    type: object
+    required: [token]
+    additionalProperties: false
+    properties:
+      token:
+        type: string
+        minLength: 1
+        pattern: "^\\S+$"
+  contentIdentity:
+    type: string
+    pattern: "^sha256:[0-9a-f]{64}$"
