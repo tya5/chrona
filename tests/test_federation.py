@@ -5,6 +5,7 @@ import yaml
 
 from chrona.federation import FederationTrustPolicy, execute_federation_command, resolve_federation, resolve_federation_v2
 from chrona.revision_store import MemoryRevisionStore
+from chrona.scene import federated_scene_input
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,3 +66,13 @@ def test_v2_pin_and_unpin_mutate_only_parent_plan_through_cas():
     unpin = {"version": "chrona/federation-command/v0.2", "type": "unpinFederatedExport", "target": {"kind": "federation-plan"}, "baseRevision": {"token": accepted.exports["resultRevision"]}, "payload": {"federationId": "firmware"}}
     removed = execute_federation_command(store, unpin, [], policy)
     assert removed.status == "accepted" and store.read().project["exports"] == []
+
+
+def test_federated_scene_input_namespaces_display_only_export_objects():
+    plan = _load("program-federation-v0.2.yaml")
+    child = _load("firmware-program.yaml")
+    scene_input = federated_scene_input(plan, {"firmware": child})
+    assert set(scene_input.nodes) == {"firmware:evt", "firmware:validation"}
+    assert scene_input.nodes["firmware:evt"]["sceneId"] == "federation:firmware:evt"
+    assert "objects" not in plan
+    assert scene_input.nodes["firmware:evt"]["aggregation"] == {"method": "weighted-object-progress"}

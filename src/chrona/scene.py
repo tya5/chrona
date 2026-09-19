@@ -20,6 +20,13 @@ class Scene:
     description: str
 
 
+@dataclass(frozen=True)
+class FederatedSceneInput:
+    """Display-only child summary data, kept outside the canonical Project."""
+
+    nodes: dict[str, dict[str, Any]]
+
+
 def scene_from_schedule(project: dict[str, Any], result: ScheduleResult) -> Scene:
     """Build a Scene without retaining authority to change Project semantics."""
     if not result.ok or not result.placements:
@@ -32,3 +39,24 @@ def scene_from_schedule(project: dict[str, Any], result: ScheduleResult) -> Scen
         relations=tuple(deepcopy(project.get("relations", []))),
         description="Timeline rendered from Chrona semantic project data.",
     )
+
+
+def federated_scene_input(plan: dict[str, Any], resolved_exports: dict[str, dict[str, Any]]) -> FederatedSceneInput:
+    """Namespace published child objects for Scene consumption only."""
+    nodes: dict[str, dict[str, Any]] = {}
+    for entry in plan.get("exports", []):
+        federation_id = entry["id"]
+        namespace = entry["presentation"]["namespace"]
+        export = resolved_exports.get(federation_id)
+        if export is None:
+            continue
+        for item in export.get("objects", []):
+            node_id = f"{namespace}:{item['id']}"
+            nodes[node_id] = {
+                "sceneId": f"federation:{federation_id}:{item['id']}",
+                "title": item.get("title", item["id"]),
+                "schedule": deepcopy(item.get("schedule", {})),
+                "progress": item.get("progress"),
+                "aggregation": deepcopy(export.get("progressAggregation", {})),
+            }
+    return FederatedSceneInput(nodes)
