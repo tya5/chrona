@@ -132,16 +132,18 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     return "\n".join(parts+["</svg>"])+"\n"
 
 
-def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any]) -> str:
+def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], slots: dict[str, Any] | None = None) -> str:
     """Generic M15/M16 adapter. All composition comes from supplied resources."""
     required={"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"}
     if not required.issubset(capabilities): raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
     start,end=projection.window; columns=view["body"].get("tableColumns", [{"id":"title","source":"title","missing":"em-dash"}])
-    groups=profile["groups"]; left=32+150*len(columns); top=128; day=10; row=36; width=max(1080,left+(end-start).days*day+48); colors=_theme_colors(theme)
+    groups=profile.get("groups",{"mode":"header-and-separator","gapRows":1}); table=slots.get("table") if slots else None; timeline=slots.get("timeline") if slots else None; header=slots.get("title") if slots else None
+    col_width=(table.width//max(1,len(columns))) if table else 150; left=timeline.x if timeline else 32+col_width*len(columns); top=(timeline.y+40) if timeline else 128; day=max(4,((timeline.width if timeline else 1200)-24)//max(1,(end-start).days)) ; row=36; width=(header.x+header.width if header else max(1080,left+(end-start).days*day+48)); colors=_theme_colors(theme)
     group_breaks=sum(1+groups["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id)
-    height=top+(len(projection.items)+group_breaks+4)*row+40
-    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="32" y="34" font-family="system-ui" font-size="20" font-weight="700">{escape(title)}</text>']
-    for n,col in enumerate(columns): p.append(f'<text data-purpose="table-header" x="{32+n*150}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">{escape(str(col["id"]))}</text>')
+    height=900 if slots else top+(len(projection.items)+group_breaks+4)*row+40
+    title_x,title_y=(header.x,header.y+32) if header else (32,34); table_x=table.x if table else 32
+    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{title_x}" y="{title_y}" font-family="system-ui" font-size="20" font-weight="700">{escape(title)}</text>']
+    for n,col in enumerate(columns): p.append(f'<text data-purpose="table-header" x="{table_x+n*col_width}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">{escape(str(col["id"]))}</text>')
     cursor=date(start.year,start.month,1)
     while cursor<=end:
         x=left+(cursor-start).days*day; p += [f'<line data-purpose="axis-major" x1="{x}" y1="70" x2="{x}" y2="{height-24}" stroke="#9ca3af"/>',f'<text data-purpose="axis-band" x="{x+3}" y="70" font-family="system-ui" font-size="11">{cursor:%b %Y}</text>']
@@ -160,7 +162,7 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
         y+=row
         for n,col in enumerate(columns):
             value=_table_value(item,project,col["source"]); text=_display_value(value,col["missing"])
-            p.append(f'<text data-scene-id="item:{item.object_id}:cell:{escape(str(col["id"]))}" data-source-ref="{item.object_id}" data-purpose="table-cell" x="{32+n*150}" y="{y}" font-family="system-ui" font-size="12">{escape(text)}</text>')
+            p.append(f'<text data-scene-id="item:{item.object_id}:cell:{escape(str(col["id"]))}" data-source-ref="{item.object_id}" data-purpose="table-cell" x="{table_x+n*col_width}" y="{y}" font-family="system-ui" font-size="12">{escape(text)}</text>')
         if item.source_type=="span":
             x=left+(item.planned["start"]-start).days*day; w=max(3,(item.planned["end"]-item.planned["start"]).days*day); p.append(f'<rect data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned" x="{x}" y="{y-12}" width="{w}" height="12" rx="3" fill="{colors["planned"]}"/>')
         else:

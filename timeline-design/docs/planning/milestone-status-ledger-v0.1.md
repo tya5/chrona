@@ -30,7 +30,7 @@ evidence is present, not that a later product release is complete.
 | M17 | Complete | Generic Theme role resolution, light/dark user-editable presets, M17 final review, conformance, and 88 tests. | None. |
 | M18 | Complete | M15–M17 cross-profile/reuse release review; full conformance and 88-test evidence. | None. |
 | M19 | Complete | Layout Profile runtime validation, deterministic Layout Manifest, old-profile rejection, M19 final review, conformance, and 89 tests. | None. |
-| M20 | Design complete; implementation not started | Deterministic solver/manifest invariants in `27` and closure review. | M20 implementation, conformance, and reuse review. |
+| M20 | Complete | Constraint solver and slot-based review rendering, M20 final review, conformance, and 90 tests. | None. |
 | M21 | Design complete; implementation not started | Expressive primitive/role integration in `27` and closure review. | M21 implementation, conformance, and reuse review. |
 | M22 | Design complete; implementation not started | AI/human proposal and release conditions in `27` and closure review. | M19–M21 evidence and M22 release review. |
 
