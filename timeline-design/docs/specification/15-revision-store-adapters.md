@@ -145,3 +145,11 @@ resolution Command.
 
 Replication and presence are transport state. A replica reports the exact revision it
 knows and does not treat a remote moving tip as a reproducible evaluation input.
+
+## 13. Extension acquisition successor boundary
+
+An extension registry/source is a Store-like immutable content provider only for
+declarative package resources. The Evaluation Closure Resolver verifies its provider,
+address, pinned revision, and content identity before activating a package. It must not
+replace a missing package with a local installation or moving registry version. Host
+code-plugin installation is outside this resource protocol.

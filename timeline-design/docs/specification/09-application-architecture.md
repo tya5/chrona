@@ -206,7 +206,15 @@ It must not edit Project bytes, select a merge winner, or derive schedule/Scene 
 An approval is checked against the exact command fingerprint and current policy before
 Command persistence; a changed payload or base revision requires a new approval.
 
-## 11. Out of scope
+## 11. Extension lifecycle successor integration
+
+The Profile Registry resolves only the explicit declarative package closure verified by
+the Evaluation Closure Resolver. It reports lifecycle/compatibility diagnostics and
+passes typed profiles to Core validation. A host Plugin Manager installs code plugins
+under separate host policy and API compatibility checks; it cannot inject a package,
+override profile semantics, or mutate canonical state except through Command.
+
+## 12. Out of scope
 
 This document does not define:
 
@@ -217,6 +225,6 @@ This document does not define:
 - resource allocation, cost, timesheets, ticket workflows, portfolios, or arbitrary code extensions; or
 - DateTime/DST scheduling or automatic rescheduling from Actual observations.
 
-## 12. Boundary to subsequent specifications
+## 13. Boundary to subsequent specifications
 
 [10 Command Model](10-command-model.md) defines the canonical mutation interface used by the Command Engine. [11 Extension Model](11-extension-model.md) defines what the Profile Registry may load and how extensions remain safe and declarative. Application code may add internal modules, but must preserve this document's direction of authority: canonical semantics first, derived presentation second, target adapters last.

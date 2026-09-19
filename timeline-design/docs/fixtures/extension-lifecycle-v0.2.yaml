@@ -1,0 +1,18 @@
+version: chrona/extension-lifecycle-fixture/v0.2
+cases:
+  - id: verified-package-is-pinned
+    reference: {packageId: semiconductor, version: 2.1.0, source: {provider: registry, identity: org-approved}, contentIdentity: sha256:abc}
+    expect: {state: verified, closureRecordsIdentity: true}
+  - id: incompatible-version-rejects
+    reference: {packageId: semiconductor, version: 3.0.0}
+    projectFormat: timeline/v0.1
+    expect: {diagnostic: E_PACKAGE_INCOMPATIBLE}
+  - id: missing-package-rejects-not-latest
+    reference: {packageId: unavailable, version: 1.0.0}
+    expect: {diagnostic: E_PACKAGE_MISSING, fallbackLatest: false}
+  - id: dependency-cycle-rejects
+    dependencies: {alpha: [beta], beta: [alpha]}
+    expect: {diagnostic: E_PACKAGE_DEPENDENCY_CYCLE, active: false}
+  - id: semantic-package-cannot-carry-code-plugin
+    manifest: {packageId: semiconductor, executableEntry: plugin.js}
+    expect: {diagnostic: E_PACKAGE_EXECUTABLE_CONTENT, mutationAuthority: false}

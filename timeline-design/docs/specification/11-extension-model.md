@@ -172,6 +172,21 @@ Project data.
 
 ## 9. Compatibility, migration, and diagnostics
 
+## 10. Lifecycle and acquisition successor
+
+The package model is resolved through the successor registry lifecycle in
+`21-extension-lifecycle-successor.md`. A Project's evaluation closure pins the
+package version, trusted source identity, and content identity. A resolver validates
+format/API compatibility and the full dependency closure before activation; missing,
+incompatible, untrusted, duplicate-identity, or cyclic packages are rejected instead
+of falling back to a latest/local package.
+
+Package lifecycle is distinct from profile inheritance. Resolution neither repairs an
+inheritance cycle nor evaluates a package's code. An upgrade, deprecation response, or
+migration is an explicit Command-governed change to the pinned reference. Host code
+plugins use a separate installation/trust mechanism and cannot be acquired from a
+semantic package declaration.
+
 Package versions are independent of the Project-format version but declare compatibility with it. A breaking change to field interpretation, inheritance, constraint meaning, or derived expression behavior requires a new package version and an explicit migration or a validation failure.
 
 Migration is an explicit Command-governed transformation from one resolved package identity to another. It MUST report the normalized canonical changes, preserve stable semantic IDs where possible, and never execute untrusted migration code from project data.
