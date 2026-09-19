@@ -7,7 +7,7 @@ properties:
   version: {const: "timeline/v0.2"}
   temporalProfile: {const: datetime-v0.2}
   project: {type: object, required: [id], properties: {id: {type: string, minLength: 1}}, additionalProperties: true}
-  migration: {type: object, additionalProperties: false, required: [sourceRevision, sourceFormat, zonePolicy], properties: {sourceRevision: {type: string, minLength: 1}, sourceFormat: {const: "timeline/v0.1"}, zonePolicy: {type: string, minLength: 1}}}
+  migration: {type: object, additionalProperties: false, required: [sourceRevision, sourceFormat, zonePolicy], properties: {sourceRevision: {type: string, minLength: 1}, sourceFormat: {const: "timeline/v0.1"}, zonePolicy: {type: object, additionalProperties: false, required: [zone, localTime, disambiguation], properties: {zone: {type: string, minLength: 1}, localTime: {type: string, pattern: "^(?!00:00(?::00)?$)\\d{2}:\\d{2}(?::\\d{2})?$"}, disambiguation: {enum: [earlier, later, reject]}}}}}
   objects: {type: object, additionalProperties: {$ref: "#/$defs/object"}}
   relations: {type: array, items: {$ref: "#/$defs/relation"}}
 $defs:

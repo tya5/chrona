@@ -1,7 +1,7 @@
 version: timeline/v0.2
 temporalProfile: datetime-v0.2
 project: {id: datetime-controller}
-migration: {sourceRevision: store:controller:41, sourceFormat: timeline/v0.1, zonePolicy: Europe/London-explicit-local-time}
+migration: {sourceRevision: store:controller:41, sourceFormat: timeline/v0.1, zonePolicy: {zone: Europe/London, localTime: '09:00', disambiguation: reject}}
 objects:
   start: {type: milestone, schedule: {mode: fixed, at: {instant: 2027-03-27T10:00:00Z, zone: Europe/London}}}
   verify: {type: task, schedule: {mode: scheduled, amount: {kind: exactDuration, value: PT24H}, anchor: {start: {instant: 2027-03-27T10:00:00Z, zone: Europe/London}}}}

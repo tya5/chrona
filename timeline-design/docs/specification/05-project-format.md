@@ -508,10 +508,15 @@ syntax. `datetime-v0.2` endpoints use the `temporal-datetime-v0.2` schema and MU
 carry either an instant plus IANA zone or an explicitly disambiguated local input.
 
 Migration from v0.1 is opt-in: the original document remains valid unchanged. A
-migration tool MAY create a v0.2 copy only when it supplies a zone policy for each
-Date-to-DateTime conversion; it MUST NOT assume midnight. The result records the source
-revision and chosen policy in migration provenance. Downgrade to v0.1 is rejected when
-a Project contains any DateTime, recurrence, or intraday calendar value.
+migration tool MAY create a v0.2 copy only when it supplies one explicit zone policy
+with IANA zone, non-midnight local time, and DST disambiguation; it MUST NOT invent any
+of those values. The result records source revision/format and the complete policy in
+migration provenance. The migratable subset is v0.1 fixed points/spans, scheduled
+`d`/`w` CalendarPeriod amounts, their date anchors, and `d`/`w` dependency lags.
+WorkPeriod, calendars, extensions, constraints, derived schedules, unrecognized
+top-level fields, and unsupported amount units reject with a migration diagnostic rather
+than being dropped. Downgrade to v0.1 is always rejected for a v0.2 Project, since it
+contains DateTime semantics even when its values happen to align to dates.
 
 ## 23. DateTime Project successor (`timeline/v0.2`)
 
@@ -538,3 +543,14 @@ interval, exactly one terminal bound (`count` or DateTime `until`), and DST
 disambiguation. `until` is an inclusive instant boundary. Its occurrences are derived;
 neither it nor an occurrence may be a dependency endpoint. A v0.1→v0.2 copy records
 source revision/format and a non-implicit zone policy in migration provenance.
+
+### 23.1 v0.1→v0.2 migration form
+
+`migration.zonePolicy` is an object `{zone, localTime, disambiguation}`. `zone` is an
+IANA identifier, `localTime` is `HH:MM[:SS]` and MUST NOT be `00:00` or `00:00:00`,
+and `disambiguation` is `earlier`, `later`, or `reject`. Each source Date is converted
+to the local DateTime formed from the Date plus this policy, then resolved under the
+declared disambiguation. The migration is all-or-nothing: a rejected input produces no
+v0.2 document. It preserves project/object IDs, titles and types; it does not mutate the
+source document. A successful copy stores `sourceRevision` supplied by the caller and
+`sourceFormat: timeline/v0.1`.
