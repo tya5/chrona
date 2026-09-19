@@ -66,3 +66,14 @@ def solve_layout(profile: dict[str, Any], manifest: LayoutManifest) -> dict[str,
         base=slot["region"]; index=split_indices.get(base,0); candidate=f"{base}.{index}"
         slots[sid]=rects.get(candidate,rects[base]); split_indices[base]=index+1
     return slots
+
+
+def validate_designer_preset(resources: dict[str, dict[str, Any]], available_sources: set[str]) -> dict[str, Any]:
+    """Common human/AI declarative preset gateway; executable payloads are rejected."""
+    required={"view","style","theme","layout"}
+    if set(resources) != required: raise ValueError("E_PRESET_CLOSURE")
+    if any("code" in value or "svg" in value for value in resources.values()): raise ValueError("E_PRESET_EXECUTABLE_CONTENT")
+    manifest=resolve_layout_profile(resources["layout"],available_sources)
+    if manifest.diagnostics: raise ValueError(",".join(manifest.diagnostics))
+    hashes={name:sha256(repr(value).encode()).hexdigest() for name,value in sorted(resources.items())}
+    return {"layoutManifest":manifest,"resourceHashes":hashes}
