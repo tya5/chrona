@@ -18,7 +18,8 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 | No implicit alignment | Pass | Source identity is preserved as result provenance; titles are never inputs. |
 | No plan or Scene mutation | Pass | The Actual store is independent; no Project, scheduler, or Scene argument is accepted. |
 | Actual undo/redo interaction | Pass | Reconciliation is reversible only through a current-revision Command; undo and redo each create a new Actual revision. |
-| Annotation editor | Not started | Requires the View-definition command executor. |
+| View-local annotation commands | Pass | Add/edit/delete accept only complete annotation intent through a CAS-bound View store; undo/redo each make a new View revision. |
+| Interactive annotation editor surface | Not started | Requires a client controller that renders the Command result without creating Scene geometry authority. |
 | Client conflict/rollback presentation | Not started | Requires an interactive controller over the Command result surface. |
 
 ## Changed-code classification
@@ -27,10 +28,11 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 |---|---|---|
 | `src/chrona/actual_commands.py` | shared service | Revision-bound Actual alignment command and explicit CAS boundary. |
 | `src/chrona/gestures.py` | adapter | Creates an inspectable request only; no direct mutation. |
+| `src/chrona/view_commands.py` | shared service | Executes View-local annotation intent through the closed M7 Command contract. |
 | `tests/test_actual_commands.py`, `tests/test_gestures.py` | acceptance evidence | Covers resolution, stale conflict, invalid targets, and non-repeatable alignment. |
 
 ## Next implementation slice
 
-Complete the Actual-store undo/redo command history, then implement the View-local
-annotation command path. M7 is not eligible for its final reuse review until all rows
-above marked `Not started` pass with full conformance inheritance.
+Implement the interactive controller result surface and revision-bound baseline capture.
+M7 is not eligible for its final reuse review until all rows above marked `Not started`
+pass with full conformance inheritance.
