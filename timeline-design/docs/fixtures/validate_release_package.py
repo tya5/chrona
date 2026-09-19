@@ -19,4 +19,6 @@ if package["output"]["target"] != acceptance["output"]["target"] or package["out
 excluded = [entry["id"] for entry in acceptance["useCases"] if entry["disposition"] == "excluded"]
 if excluded and (package["status"] != "blocked" or package["artifact"]["contentIdentity"] is not None):
     raise SystemExit("Release package: FAIL: exclusions require blocked, artifact-free package")
-print("Release package: PASS (blocked current profile; exclusions are not publishable)")
+if package["status"] == "blocked" and package["artifact"]["contentIdentity"] is not None:
+    raise SystemExit("Release package: FAIL: blocked package must not carry an artifact")
+print("Release package: PASS (current package is not published)")

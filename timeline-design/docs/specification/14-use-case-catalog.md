@@ -36,7 +36,7 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-03 | Review plan versus Actual | Must | Delivered by M2 and M5.5; independently identified Actual and comparison evidence. |
 | UC-04 | Produce a customer-facing projection | Should | Delivered for the declared SVG profile by M2; no undeclared target is implied. |
 | UC-05 | Edit a plan interactively without global UI replacement | Must | Delivered by M3/M7 through revision-bound Commands and SceneDelta. |
-| UC-06 | Request a safe AI-assisted edit | Should | **Blocked:** M5 AI proposal and authorization contract is not yet closed (WD-2). |
+| UC-06 | Request a safe AI-assisted edit | Should | Delivered by M5 typed proposal, fingerprint-bound authorization decision, and Command/CAS acceptance evidence. |
 | UC-07 | Model semiconductor gates and domain vocabulary | Should | Delivered by M8 package-registry and lifecycle evidence. |
 | UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Delivered by M7 View-local annotation Commands. |
 | UC-09 | Maintain multiple purpose-specific views from one Project | Must | Delivered by M6 Render Context and interactive review evidence. |

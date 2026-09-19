@@ -9,4 +9,4 @@ output:
 acceptance:
   manifestIdentity: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 artifact: {contentIdentity: null}
-diagnostics: [E_RELEASE_ACCEPTANCE_INCOMPLETE]
+diagnostics: [E_RELEASE_PACKAGE_NOT_BUILT]

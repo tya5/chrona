@@ -15,10 +15,7 @@ useCases:
   - {id: UC-03, disposition: accepted, evidence: [tests/test_actual_intake.py, tests/test_presentation_closure.py]}
   - {id: UC-04, disposition: accepted, evidence: [tests/test_presentation_closure.py, tests/test_render.py]}
   - {id: UC-05, disposition: accepted, evidence: [tests/test_editor.py, tests/test_gestures.py]}
-  - id: UC-06
-    disposition: excluded
-    reason: No AI Command-proposal adapter or authorization-policy integration is implemented.
-    unblockingMilestone: M5
+  - {id: UC-06, disposition: accepted, evidence: [tests/test_ai_proposals.py]}
   - {id: UC-07, disposition: accepted, evidence: [tests/test_extension_registry.py, tests/test_package_lifecycle.py]}
   - {id: UC-08, disposition: accepted, evidence: [tests/test_view_commands.py, tests/test_editor.py]}
   - {id: UC-09, disposition: accepted, evidence: [tests/test_presentation_closure.py, tests/test_interactive.py]}
