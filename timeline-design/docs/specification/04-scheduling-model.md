@@ -10,6 +10,17 @@ dependencies, bounds, calendars, and duration interact.
 
 It defines observable scheduling semantics, not a required solver implementation.
 
+### v0.2 DateTime successor boundary
+
+When a Project declares `temporalProfile: datetime-v0.2`, every endpoint and bound in
+one dependency-connected scheduling component MUST use DateTime. The component compares
+instants; CalendarPeriod application is performed in the endpoint's declared zone as
+defined by `18-datetime-dst-successor.md`. Date-only components retain all v0.1 rules.
+Mixed-domain relations reject with `E_TEMPORAL_DOMAIN_MISMATCH`; the scheduler MUST NOT
+invent a Date-to-midnight conversion. Recurrence occurrences are derived scheduling
+inputs selected by an explicit occurrence policy and are not independently scheduled
+objects.
+
 ## 2. Placement modes
 
 ### 2.1 Fixed

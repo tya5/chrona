@@ -1,0 +1,15 @@
+cases:
+  - id: date-only-remains-calendar-coordinate
+    input: {date: 2027-03-28}
+    expect: {noImplicitZone: true}
+  - id: dst-fold-earlier
+    input: {local: 2027-10-31T01:30, zone: Europe/London, disambiguation: earlier}
+    expect: {diagnostic: null}
+  - id: dst-fold-reject
+    input: {local: 2027-10-31T01:30, zone: Europe/London, disambiguation: reject}
+    expect: {diagnostic: E_TEMPORAL_AMBIGUOUS_LOCAL_TIME}
+  - id: dst-gap-reject
+    input: {local: 2027-03-28T01:30, zone: Europe/London, disambiguation: reject}
+    expect: {diagnostic: E_TEMPORAL_NONEXISTENT_LOCAL_TIME}
+  - id: cross-domain-relation-rejects
+    expect: {diagnostic: E_TEMPORAL_DOMAIN_MISMATCH}

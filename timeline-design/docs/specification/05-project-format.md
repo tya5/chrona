@@ -485,3 +485,9 @@ is a v0.1 compatibility form; RA-4 defines the successor provider-neutral form. 
 Render Context minor version will reference the Federation Plan explicitly.
 Implementations must not claim federation support until the resolver contract and fixtures in
 [16 Federation](16-federation.md) are complete.
+# v0.2 temporal profile note
+
+The v0.2 DateTime successor adds an optional top-level `temporalProfile` only to a
+versioned successor Project format. `timeline/v0.1` rejects it and retains Date-only
+syntax. `datetime-v0.2` endpoints use the `temporal-datetime-v0.2` schema and MUST
+carry either an instant plus IANA zone or an explicitly disambiguated local input.
