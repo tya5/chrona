@@ -57,3 +57,12 @@ identity. A `blocked` package is review metadata, not an artifact release: it na
 same attempted closure and explicit blocking diagnostics but cannot be presented as a
 published target. This prevents a successful renderer invocation from being packaged
 with evidence for another evaluation or from concealing an excluded use case.
+
+### 3.3 M13 cross-successor acceptance
+
+M13 adds a versioned successor manifest that binds immutable DateTime, capacity,
+collaboration, extension, and output closures. It enumerates UC-16 through UC-21 once;
+each must be accepted with reproducible evidence. Missing, duplicate, or excluded rows
+block publication and never broaden a Date-only/current-profile release claim.
+`successor-release-acceptance-v0.3.schema.yaml` fixes the five closure versions at
+`v0.2`, and the fixture validator verifies that every referenced evidence path exists.

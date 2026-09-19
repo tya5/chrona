@@ -1,0 +1,40 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:successor-release-acceptance-v0.3"
+type: object
+additionalProperties: false
+required: [version, releaseId, closure, useCases]
+properties:
+  version: {const: "chrona/successor-release-acceptance/v0.3"}
+  releaseId: {type: string, minLength: 1}
+  closure:
+    type: object
+    additionalProperties: false
+    required: [datetime, capacity, collaboration, extensions, output]
+    properties:
+      datetime: {const: v0.2}
+      capacity: {const: v0.2}
+      collaboration: {const: v0.2}
+      extensions: {const: v0.2}
+      output: {const: v0.2}
+  useCases:
+    type: array
+    minItems: 6
+    maxItems: 6
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, disposition, evidence]
+      properties:
+        id: {enum: [UC-16, UC-17, UC-18, UC-19, UC-20, UC-21]}
+        disposition: {const: accepted}
+        evidence:
+          type: array
+          minItems: 1
+          items: {type: string, minLength: 1}
+    allOf:
+      - contains: {properties: {id: {const: UC-16}}, required: [id]}
+      - contains: {properties: {id: {const: UC-17}}, required: [id]}
+      - contains: {properties: {id: {const: UC-18}}, required: [id]}
+      - contains: {properties: {id: {const: UC-19}}, required: [id]}
+      - contains: {properties: {id: {const: UC-20}}, required: [id]}
+      - contains: {properties: {id: {const: UC-21}}, required: [id]}
