@@ -318,31 +318,30 @@ a self-hosted Chrona delivery-plan Project.
 
 | Use case | Primary specifications | Current evidence | Remaining gap |
 |---|---|---|---|
-| UC-01 | `02`–`05`, `12` | Core schemas and scheduling fixtures | integrated CI validation |
-| UC-02 | `05`, `09`, `10`, `13` | normalized format and Command contract | semantic Git-diff presentation |
-| UC-03 | `06`, `07`, `10`, `12`, `13` | Actual/View/Style fixtures | semantic runner and rendered comparison |
-| UC-04 | `06`–`09`, `12`, `13` | Render Context and Theme fixtures | exporter adapter |
-| UC-05 | `08`–`10`, `12`, `13` | Command and SceneDelta fixtures | interactive editor adapter/delta computation |
-| UC-06 | `09`–`12` | request schema and reject fixture | AI adapter and authorization policy |
-| UC-07 | `02`, `04`, `05`, `11`, `12` | extension model prose | package schema and fixtures |
-| UC-08 | `06`, `08`, `10`, `12` | annotation intent fixture | annotation command and editor adapter |
-| UC-09 | `05`–`09`, `13` | named multi-context fixture | isolation runner and adapters |
-| UC-10 | `06`, `10`, `12`, `13` | resolved/unmatched and resolution-command fixtures | ingestion adapter |
-| UC-11 | `05`, `09`, `10`, `12`, `13` | conformance manifest | runner, CLI, CI integration |
-| UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference and capture-command fixtures | comparison runner |
-| UC-13 | `07`–`09`, `12`, `13` | target capability contract | SVG/PPTX/canvas adapters |
-| UC-14 | `05`, `06`, `09`, `12`, `13`, `16` | pinned Git/local/content closure, trust/repin diagnostics, and aggregate-projection fixture | resolver and aggregate Scene adapter |
-| UC-15 | `02`, `04`, `05`, `10`, `11`, `12`, `15` | implementation-delivery profile plan | profile schema, self-hosted fixture, package resolution, and typed-field Command support |
+| UC-01 | `02`–`05`, `12` | Core schemas, Calendar/WorkPeriod, dependency, and scheduling fixtures | product adapters only |
+| UC-02 | `05`, `09`, `10`, `13` | normalized format, Command envelope, and revision-store fixtures | semantic Git-diff presentation adapter |
+| UC-03 | `06`, `07`, `10`, `12`, `13` | Actual/View/Style, SceneDelta, and comparison fixtures | interactive/renderer adapters |
+| UC-04 | `06`–`09`, `12`, `13` | Render Context, Theme, closure, and output-manifest contracts | additional exporter adapters |
+| UC-05 | `08`–`10`, `12`, `13` | Command, SceneDelta, and gesture-boundary fixtures | interactive editor adapter |
+| UC-06 | `09`–`12` | request schema, reject fixture, and Command authorization boundary | AI adapter/policy integration |
+| UC-07 | `02`, `04`, `05`, `11`, `12` | extension package reference schema, lifecycle fixture, and diagnostics | package registry UX |
+| UC-08 | `06`, `08`, `10`, `12` | annotation intent, command, anchor, and Scene-role contracts | annotation editor adapter |
+| UC-09 | `05`–`09`, `13` | named multi-context fixture, isolation rule, and reproducible closure | view/client adapters |
+| UC-10 | `06`, `10`, `12`, `13` | resolved/unmatched Actual and resolution-command fixtures | ingestion adapter |
+| UC-11 | `05`, `09`, `10`, `12`, `13` | conformance manifest, runner contract, and revision-bound Command document | CLI/CI integration |
+| UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference and capture-command fixtures | comparison adapter |
+| UC-13 | `07`–`09`, `12`, `13`, `22` | output-capability schema, fidelity diagnostics, and target fixture | non-SVG target adapters |
+| UC-14 | `05`, `06`, `09`, `12`, `13`, `15`, `16` | pinned Git/local/content closure, trust/repin diagnostics, and aggregate-projection fixture | resolver and aggregate Scene adapter |
+| UC-15 | `02`, `04`, `05`, `10`, `11`, `12`, `15`, `17` | delivery profile schema, vocabulary/evidence/state fixtures, roadmap fixture, and IDP-6 review | profile UX only |
 
 ## 7. Current gaps and release gate
 
-All Must-priority use cases other than UC-15 have one current normative owner,
-canonical positive and negative evidence, and an implementation-independent acceptance
-contract. UC-14 is design-ready through the pinned Git/local/content reference
-contract; its resolver and aggregate Scene adapter remain implementation work. UC-15
-is an explicit pre-implementation design prerequisite, owned by
-`implementation-delivery-profile-plan.md`; it prevents delivery work from inventing a
-parallel project-management model.
+Every UC-01–UC-15 row has one current normative owner, canonical positive/negative
+evidence where the rule is machine-checkable, and an implementation-independent
+acceptance contract. UC-14 is design-ready through the pinned Git/local/content
+reference contract; its resolver and aggregate Scene adapter remain implementation
+work. UC-15 is complete as a self-hosting design prerequisite and prevents delivery
+work from inventing a parallel project-management model.
 
 The remaining gaps in this table are adapters or product features, not unresolved design
 semantics. A release claim must name the satisfied use cases and their acceptance
