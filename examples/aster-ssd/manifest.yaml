@@ -1,0 +1,35 @@
+{
+  "project": "project.yaml",
+  "gallery": "slides.html",
+  "actual": "actual.yaml",
+  "style": "style.yaml",
+  "theme": "theme.yaml",
+  "profile": "profile.yaml",
+  "slides": [
+    {
+      "view": "01-overview-view.yaml",
+      "settings": "01-overview-settings.yaml",
+      "output": "01-overview.svg"
+    },
+    {
+      "view": "02-platform-firmware-view.yaml",
+      "settings": "02-platform-firmware-settings.yaml",
+      "output": "02-platform-firmware.svg"
+    },
+    {
+      "view": "03-performance-security-view.yaml",
+      "settings": "03-performance-security-settings.yaml",
+      "output": "03-performance-security.svg"
+    },
+    {
+      "view": "04-qualification-production-view.yaml",
+      "settings": "04-qualification-production-settings.yaml",
+      "output": "04-qualification-production.svg"
+    },
+    {
+      "view": "05-master-view.yaml",
+      "settings": "05-master-settings.yaml",
+      "output": "05-master.svg"
+    }
+  ]
+}

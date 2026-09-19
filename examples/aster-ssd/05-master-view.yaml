@@ -1,0 +1,93 @@
+{
+  "version": "chrona/presentation/v0.1",
+  "kind": "view",
+  "id": "aster-05-master",
+  "body": {
+    "selection": {
+      "include": {
+        "ids": [
+          "requirements",
+          "board",
+          "nand",
+          "power",
+          "boot",
+          "ftl",
+          "recovery",
+          "fw-freeze",
+          "benchmark",
+          "qos",
+          "endurance",
+          "perf-exit",
+          "threat",
+          "secure-boot",
+          "crypto",
+          "security-exit",
+          "integration",
+          "thermal",
+          "compliance",
+          "qual-exit",
+          "tooling",
+          "pilot",
+          "yield",
+          "release"
+        ],
+        "types": [
+          "span",
+          "point"
+        ]
+      }
+    },
+    "grouping": {
+      "by": "field",
+      "field": "owner",
+      "missing": "ungrouped",
+      "order": [
+        "platform",
+        "firmware",
+        "performance",
+        "security",
+        "qualification",
+        "production"
+      ]
+    },
+    "ordering": {
+      "by": "plannedStart",
+      "direction": "ascending",
+      "tieBreak": "id"
+    },
+    "window": {
+      "mode": "explicit",
+      "start": "2027-01-01",
+      "end": "2027-09-01"
+    },
+    "comparison": {
+      "baseline": "primary",
+      "actual": "required",
+      "observationSelection": "latest",
+      "deltaUnit": "calendar-days",
+      "facets": [
+        "planned",
+        "actual",
+        "finishDelta",
+        "missingActual",
+        "unmatchedActual"
+      ]
+    },
+    "visibility": {
+      "labels": true,
+      "relations": "semantic",
+      "annotations": "none"
+    },
+    "layoutIntent": {
+      "compactness": "balanced",
+      "itemStacking": "stable"
+    },
+    "tableColumns": [
+      {
+        "id": "Work package / gate",
+        "source": "title",
+        "missing": "em-dash"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+version: chrona/presentation/v0.1
+kind: actual-set
+id: aster-observed-2027-06-30
+body:
+  observations:
+    - {id: requirements-final, sequence: 1, projectObjectId: requirements, actual: {start: '2027-01-04', finish: '2027-01-15', progress: 1}}
+    - {id: nand-initial, sequence: 1, projectObjectId: nand, actual: {start: '2027-02-02', finish: '2027-03-05', progress: 1}}
+    - {id: nand-corrected, sequence: 2, projectObjectId: nand, actual: {start: '2027-02-02', finish: '2027-03-08', progress: 1}}
+    - {id: power-final, sequence: 1, projectObjectId: power, actual: {start: '2027-03-09', finish: '2027-03-30', progress: 1}}
+    - {id: boot-final, sequence: 1, projectObjectId: boot, actual: {start: '2027-02-02', finish: '2027-02-19', progress: 1}}
+    - {id: ftl-final, sequence: 1, projectObjectId: ftl, actual: {start: '2027-02-05', finish: '2027-03-29', progress: 1}}
+    - {id: recovery-final, sequence: 1, projectObjectId: recovery, actual: {start: '2027-03-30', finish: '2027-04-20', progress: 1}}
+    - {id: benchmark-final, sequence: 1, projectObjectId: benchmark, actual: {start: '2027-03-30', finish: '2027-04-15', progress: 1}}
+    - {id: qos-final, sequence: 1, projectObjectId: qos, actual: {start: '2027-04-15', finish: '2027-05-13', progress: 1}}
+    - {id: endurance-final, sequence: 1, projectObjectId: endurance, actual: {start: '2027-03-08', finish: '2027-04-19', progress: 1}}
+    - {id: threat-final, sequence: 1, projectObjectId: threat, actual: {start: '2027-01-18', finish: '2027-02-01', progress: 1}}
+    - {id: secure-final, sequence: 1, projectObjectId: secure-boot, actual: {start: '2027-02-19', finish: '2027-03-19', progress: 1}}
+    - {id: crypto-final, sequence: 1, projectObjectId: crypto, actual: {start: '2027-03-23', finish: '2027-04-13', progress: 1}}
+    - {id: integration-final, sequence: 1, projectObjectId: integration, actual: {start: '2027-05-31', finish: '2027-06-17', progress: 1}}
+    - {id: thermal-final, sequence: 1, projectObjectId: thermal, actual: {start: '2027-06-03', finish: '2027-06-28', progress: 1}}
+    - {id: tooling-final, sequence: 1, projectObjectId: tooling, actual: {start: '2027-05-17', finish: '2027-06-14', progress: 1}}
+    - {id: supplier-lab-unmapped, sequence: 1, externalIdentity: {system: supplier-lab, key: NAND-R2}, alignment: unmatched, actual: {finish: '2027-03-09'}}
+    - {id: external-audit-unmapped, sequence: 1, externalIdentity: {system: audit-lab, key: KEY-17}, alignment: unmatched, actual: {finish: '2027-04-14'}}

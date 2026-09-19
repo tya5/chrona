@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">ASTER Enterprise SSD Development</title>
+<desc id="desc">Plan and Actual comparison. 8 rows; 2 unmatched observations. Actual is not a forecast.</desc>
+<defs><marker id="dependency-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.0" orient="auto"><path d="M0 0L6 3.0L0 6Z" fill="#92A6BE"/></marker></defs>
+<rect width="1600" height="900" fill="#101D2D"/>
+<text data-purpose="heading" data-source-ref="project" x="40" y="78" font-family="Nimbus Sans, Arial, sans-serif" font-size="46" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="start">ASTER / Release checkpoints</text>
+<text data-purpose="subtitle" data-source-ref="view:window" x="40" y="110" font-family="Nimbus Sans, Arial, sans-serif" font-size="20" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Fictional SSD program / Jan 2027 to Aug 2027 / Observations through 30 Jun 2027</text>
+<rect data-purpose="table-header" data-source-ref="" x="40" y="148" width="1519" height="48" fill="#203147" />
+<text data-purpose="table-header" data-source-ref="" x="52" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Work package / gate</text>
+<path data-purpose="table-row" d="M40 268H1559" stroke="#22364D"/>
+<rect data-purpose="row-shade" data-source-ref="ftl" x="40" y="268" width="1519" height="72" fill="#22364D" opacity="0.45"/>
+<path data-purpose="table-row" d="M40 340H1559" stroke="#22364D"/>
+<path data-purpose="table-row" d="M40 412H1559" stroke="#22364D"/>
+<rect data-purpose="row-shade" data-source-ref="security-exit" x="40" y="412" width="1519" height="72" fill="#22364D" opacity="0.45"/>
+<path data-purpose="table-row" d="M40 484H1559" stroke="#22364D"/>
+<path data-purpose="table-row" d="M40 556H1559" stroke="#22364D"/>
+<rect data-purpose="row-shade" data-source-ref="qual-exit" x="40" y="556" width="1519" height="72" fill="#22364D" opacity="0.45"/>
+<path data-purpose="table-row" d="M40 628H1559" stroke="#22364D"/>
+<path data-purpose="table-row" d="M40 700H1559" stroke="#22364D"/>
+<rect data-purpose="row-shade" data-source-ref="release" x="40" y="700" width="1519" height="72" fill="#22364D" opacity="0.45"/>
+<path data-purpose="table-row" d="M40 772H1559" stroke="#22364D"/>
+<text data-purpose="axis-band" data-source-ref="" x="609.34" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jan 2027</text>
+<path data-purpose="axis-major" d="M546 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="729.89" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Feb 2027</text>
+<path data-purpose="axis-major" d="M672.68 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="850.44" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Mar 2027</text>
+<path data-purpose="axis-major" d="M787.1 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="975.07" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Apr 2027</text>
+<path data-purpose="axis-major" d="M913.78 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="1099.71" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">May 2027</text>
+<path data-purpose="axis-major" d="M1036.37 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="1224.35" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jun 2027</text>
+<path data-purpose="axis-major" d="M1163.05 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="1348.98" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jul 2027</text>
+<path data-purpose="axis-major" d="M1285.64 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="1475.66" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Aug 2027</text>
+<path data-purpose="axis-major" d="M1412.32 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<rect data-purpose="table-frame" x="40" y="148" width="1519" height="624" fill="none" stroke="#34465C"/>
+<path data-purpose="routed-connector" data-source-ref="qual-pilot" data-from-endpoint="at" data-to-endpoint="start" d="M1327.33 592L1335.33 592L1335.33 639L1322.59 639L1322.59 653.5L1330.59 653.5" fill="none" stroke="#92A6BE" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="board" x="52" y="239.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Prototype boards ready</text>
+<path data-purpose="planned" data-source-ref="board" d="M672.68 223l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="ftl" x="52" y="311.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">FTL and media management</text>
+<rect data-purpose="planned" data-source-ref="ftl" x="689.02" y="285" width="183.89" height="17" fill="#E9B35E" rx="2"/>
+<rect data-purpose="actual" data-source-ref="ftl" x="689.02" y="306" width="212.49" height="17" fill="#45CCCB" rx="2"/>
+<rect data-purpose="variance-marker" data-source-ref="ftl" x="913.52" y="285" width="3" height="38" fill="#FF947F" />
+<text data-purpose="variance" data-source-ref="ftl" x="923.52" y="309" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#FF947F" text-anchor="start">+7d</text>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="fw-freeze" x="52" y="383.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Firmware feature freeze</text>
+<path data-purpose="planned" data-source-ref="fw-freeze" d="M1089.49 367l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="security-exit" x="52" y="455.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Security sign-off</text>
+<path data-purpose="planned" data-source-ref="security-exit" d="M1118.1 439l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="perf-exit" x="52" y="527.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Performance acceptance</text>
+<path data-purpose="planned" data-source-ref="perf-exit" d="M1146.7 511l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="qual-exit" x="52" y="599.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Qualification exit</text>
+<path data-purpose="planned" data-source-ref="qual-exit" d="M1318.33 583l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="pilot" x="52" y="671.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Pilot build</text>
+<rect data-purpose="planned" data-source-ref="pilot" x="1330.59" y="645" width="44.95" height="17" fill="#E9B35E" rx="2"/>
+<text data-purpose="missing-actual" data-source-ref="pilot" x="1330.59" y="683" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Actual not reported</text>
+<text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="release" x="52" y="743.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Production release</text>
+<path data-purpose="planned" data-source-ref="release" d="M1489.96 727l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
+<rect data-purpose="legend-swatch" data-source-ref="" x="40" y="801.33" width="38" height="12" fill="#E9B35E" />
+<text data-purpose="legend-label" data-source-ref="" x="88" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Baseline plan</text>
+<rect data-purpose="legend-swatch" data-source-ref="" x="218.05" y="801.33" width="38" height="12" fill="#45CCCB" />
+<text data-purpose="legend-label" data-source-ref="" x="266.05" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Observed actual</text>
+<rect data-purpose="legend-swatch" data-source-ref="" x="436.83" y="801.33" width="3" height="12" fill="#FF947F" />
+<text data-purpose="legend-label" data-source-ref="" x="465.83" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Finish variance</text>
+<path d="M627.14 798.33l9.0 9.0l-9.0 9.0l-9.0 -9.0Z" fill="#F3F2EC"/>
+<text data-purpose="legend-label" data-source-ref="" x="656.14" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Planned gate</text>
+<path d="M784.32 807.33h38" stroke="#92A6BE" marker-end="url(#dependency-arrow)"/>
+<text data-purpose="legend-label" data-source-ref="" x="832.32" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Dependency</text>
+<text data-purpose="data-coverage" data-source-ref="" x="40" y="845" font-family="Nimbus Sans, Arial, sans-serif" font-size="14" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">No actual: 7/8 items / Unmapped observations: 2 / Delta: calendar days</text>
+</svg>
