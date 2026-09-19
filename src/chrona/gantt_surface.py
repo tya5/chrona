@@ -68,18 +68,37 @@ def route_orthogonal(start, end, obstacles):
     return simplified
 
 
-def render_gantt(title, projection, project, view, theme, profile, slots):
+def render_gantt(title, projection, project, view, theme, profile, slots, settings=None):
     from .review_svg import _theme_color, _theme_font, _table_value, _display_value
 
     surface = profile.get('surface', {})
-    font = escape(_theme_font(theme), quote=True)
+    metrics = None
+    if settings is not None:
+        from .font_metrics import resolve_font_metrics
+        from .presentation_layout import solve_presentation_layout
+        metrics = resolve_font_metrics(settings['theme']['fontFamily'], settings['context']['fontMetrics'])
+        font = escape(settings['theme']['fontFamily'], quote=True)
+        viewport = settings['context']['viewport']; width, height = viewport['width'], viewport['height']
+        derived = solve_presentation_layout(settings)
+        slots = {key: Rect(int(value.x), int(value.y), int(value.width), int(value.height)) for key, value in derived.items()}
+        surface = {
+            'groupMode': settings['layout']['group']['mode'], 'groupLabel': settings['detail']['groupLabel'],
+            'groupFraction': settings['layout']['group']['fraction'], 'groupGap': settings['layout']['group']['gap'],
+            'axisLevels': settings['layout']['axis']['levels'], 'fontSize': settings['theme']['typography']['body']['size'],
+            'titleSize': settings['theme']['typography']['heading']['size'], 'groupFontSize': settings['theme']['typography']['group']['size'],
+            'barHeight': settings['theme']['bar']['plannedHeight'], 'barGap': settings['layout']['bars']['gap'],
+            'showVariance': settings['layout']['variance']['visible'],
+        }
+    else:
+        font = escape(_theme_font(theme), quote=True)
     color = lambda role, default: escape(_theme_color(theme, role, default), quote=True)
     ink, muted = color('text', '#102644'), color('text-muted', '#637187')
     grid, background = color('axis-major', '#DDE4EC'), color('background', '#FFFFFF')
     planned, actual = color('planned', '#3885E5'), color('actual', '#249B78')
     variance, connector = color('variance-behind', '#CA8517'), color('routed-connector', '#8795AA')
     point_color = color('milestone', '#102B50')
-    width, height = {'16:9': (1600, 900), '4:3': (1200, 900), 'free': (1400, 900)}[profile.get('canvas', {}).get('aspectRatio', '16:9')]
+    if settings is None:
+        width, height = {'16:9': (1600, 900), '4:3': (1200, 900), 'free': (1400, 900)}[profile.get('canvas', {}).get('aspectRatio', '16:9')]
     if slots is None:
         slots = {'title': Rect(24, 24, width-48, 96), 'table': Rect(24, 120, 460, 650), 'timeline': Rect(484, 120, width-508, 650)}
     table, timeline = slots['table'], slots['timeline']
@@ -121,7 +140,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots):
 
     def wrapped(x, cy, value, available, size=fs, weight=400, purpose='table-cell', ref=''):
         # Deliberately conservative: preserve full text instead of silent truncation.
-        limit = max(1, int(available/(size*.58)))
+        limit = max(1, int(available / (metrics.width('M', size) if metrics else size*.58)))
         lines, line = [], ''
         for word in str(value).split():
             if len(word) > limit:
@@ -134,7 +153,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots):
             raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:text')
         return ''.join(text(x, cy-(len(lines)-1)*size*.6+i*size*1.2+size*.34, line, size, weight, purpose=purpose, ref=ref).replace('<text ', f'<text data-box-x="{f(x)}" data-box-width="{f(available)}" ') for i, line in enumerate(lines))
 
-    if len(title)*ts*.58 > header.width:
+    if (metrics.width(title, ts) if metrics else len(title)*ts*.58) > header.width:
         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:title')
     parts.append(text(header.x, header.y+ts, title, ts, 700, purpose='heading', ref='project'))
     last_visible = end-timedelta(days=1) if end.day == 1 and end>start else end
