@@ -524,7 +524,14 @@ The v0.2 structural contract is `project-v0.2.schema.yaml`. Fixed spans use
 `start`/`end`, fixed points use `at`, and scheduled spans use one explicit anchor with
 either an `exactDuration` (ISO-8601 elapsed duration) or `calendarPeriod`. A dependency
 remains `target.endpoint >= advance(source.endpoint, lag)` with an explicit matching
-lag type. WorkPeriod and intraday calendars reject until separately specified.
+lag type. For a scheduled span, a lower bound on `start` is its candidate start; a lower
+bound on `end` is converted to a candidate start by the inverse of its declared amount.
+The inverse of `exactDuration` is instant arithmetic; the inverse of `calendarPeriod`
+is local-date arithmetic that retains local clock time and applies the schedule's DST
+disambiguation. An explicit anchor is exactly one of `start` or `end`; an anchor that
+violates a derived lower bound is rejected. Recurrences and their occurrences are not
+dependency endpoints. WorkPeriod and intraday calendars reject until separately
+specified.
 
 A recurrence has `mode: recurrence` and declares local start, zone, frequency,
 interval, exactly one terminal bound (`count` or DateTime `until`), and DST

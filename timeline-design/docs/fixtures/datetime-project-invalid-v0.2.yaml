@@ -4,4 +4,5 @@ project: {id: invalid}
 objects:
   bad: {type: milestone, schedule: {mode: fixed, at: 2027-03-28}}
   unbounded-repeat: {type: milestone, schedule: {mode: recurrence, recurrence: {localStart: 2027-10-31T01:30, zone: Europe/London, frequency: weekly, interval: 1, disambiguation: later}}}
+  invalid-anchor: {type: task, schedule: {mode: scheduled, amount: {kind: exactDuration, value: PT1H}, anchor: {invalid: {instant: 2027-03-27T10:00:00Z, zone: Europe/London}}}}
 relations: []
