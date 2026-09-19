@@ -131,6 +131,13 @@ Command to a child Project, modify an export, or mutate child schedules. Pinning
 follows a new child version; it writes one new immutable parent Plan Snapshot that names
 the selected child Snapshot explicitly.
 
+## Collaboration boundary
+
+Collaboration policy may authorize a parent-side Federation Plan Command, but it does
+not expand its target: a merge or approved hosted write still cannot edit a child,
+replace an immutable export with a moving selector, or resolve a child conflict in the
+parent. Audit provenance records the parent Plan target and selected pinned export only.
+
 ## Required follow-up evidence
 
 RA-5 supplies the v0.2 schema and Git/local/content fixtures. The Presentation closure

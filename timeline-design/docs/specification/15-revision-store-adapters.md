@@ -132,3 +132,16 @@ the fields in section 2 rather than a free-form revision string.
 This specification does not define replication, user permissions, a universal merge
 algorithm, database schema, credential storage, or a hosted synchronization service.
 It only makes their persistence contract substitutable.
+
+## 12. Collaboration successor boundary
+
+A hosted collaboration adapter replicates immutable snapshots and may retain an
+append-only Command/audit log, but it still exposes the section 3 Store protocol.
+Every proposed write carries its observed base revision. On divergence the adapter
+returns a stable conflict or a separately identified merge proposal; it MUST NOT
+advance a Project with last-writer-wins. A merge result identifies all parents and its
+normalization policy, then becomes a new immutable Snapshot only after an explicit
+resolution Command.
+
+Replication and presence are transport state. A replica reports the exact revision it
+knows and does not treat a remote moving tip as a reproducible evaluation input.

@@ -1,0 +1,19 @@
+version: chrona/collaboration-fixture/v0.2
+cases:
+  - id: stale-write-is-not-last-writer-wins
+    command: {baseRevision: store:41, target: {kind: project, id: platform}}
+    storeTip: store:42
+    expect: {diagnostic: E_COMMAND_STALE_BASE_REVISION, mutation: false}
+  - id: semantic-conflict-needs-command-resolution
+    merge: {parents: [store:41, store:42], conflict: {path: objects.implementation.schedule, kind: semantic}}
+    expect: {conflictObject: true, resultRevision: null, diagnostic: E_MERGE_CONFLICT}
+  - id: approval-binds-exact-command
+    approval: {commandFingerprint: sha256:request-41, expiresAt: 2026-09-20T00:00:00Z}
+    submittedFingerprint: sha256:request-42
+    expect: {diagnostic: E_APPROVAL_FINGERPRINT_MISMATCH, mutation: false}
+  - id: denied-policy-never-persists
+    policy: {principal: contractor-a, decision: deny, version: access-4}
+    expect: {diagnostic: E_AUTHORIZATION_DENIED, mutation: false, audit: append-only}
+  - id: behind-replica-labels-known-revision
+    replica: {knownRevision: store:41, remoteRevision: store:42}
+    expect: {canClaimRemoteCurrent: false, diagnostic: I_REPLICA_BEHIND}

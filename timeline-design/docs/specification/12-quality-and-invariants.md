@@ -289,6 +289,20 @@ versioned conversion rule. Actual effort, timesheets, rates, and costs remain
 independently revisioned observations and MUST NOT automatically modify demand,
 capacity, or planned schedule.
 
+### Q-COLLAB-1 Explicit conflict and provenance
+
+A stale write, semantic divergence, policy denial, or approval mismatch MUST leave the
+canonical target unchanged and return an identifiable diagnostic/conflict. An accepted
+collaboration write records its actor, policy version, Command fingerprint, base and
+result revisions, and required approval provenance.
+
+### Q-COLLAB-2 No hosted hidden authority
+
+Hosted synchronization, presence, and replica progress MUST NOT become a scheduling
+input, a canonical Project field, or a source of implicit latest revisions. A merge
+result is reproducible only when every parent revision and normalization rule is
+explicitly recorded.
+
 Core design SHOULD reject features that require turning the system into:
 
 - a resource optimizer;

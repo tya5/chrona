@@ -197,7 +197,16 @@ The initial Python implementation provides a Core v0.1 reference validator, Date
 
 In particular, the existing SVG path does not establish a canonical View, Style, Theme, Scene, cache, editor, or command implementation. New implementation work must be checked against the boundaries in this document and the subsequent Command and Extension specifications.
 
-## 10. Out of scope
+## 10. Collaboration successor integration
+
+The Collaboration Coordinator is an application adapter between authenticated clients
+and the Command/Revision Store boundaries. It may synchronize snapshots, request an
+authorization/approval decision, present conflict objects, and append audit evidence.
+It must not edit Project bytes, select a merge winner, or derive schedule/Scene state.
+An approval is checked against the exact command fingerprint and current policy before
+Command persistence; a changed payload or base revision requires a new approval.
+
+## 11. Out of scope
 
 This document does not define:
 
@@ -208,6 +217,6 @@ This document does not define:
 - resource allocation, cost, timesheets, ticket workflows, portfolios, or arbitrary code extensions; or
 - DateTime/DST scheduling or automatic rescheduling from Actual observations.
 
-## 11. Boundary to subsequent specifications
+## 12. Boundary to subsequent specifications
 
 [10 Command Model](10-command-model.md) defines the canonical mutation interface used by the Command Engine. [11 Extension Model](11-extension-model.md) defines what the Profile Registry may load and how extensions remain safe and declarative. Application code may add internal modules, but must preserve this document's direction of authority: canonical semantics first, derived presentation second, target adapters last.
