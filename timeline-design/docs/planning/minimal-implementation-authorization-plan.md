@@ -32,7 +32,7 @@ code relies on a new interpretation.
 | IIIb | **Complete:** Presentation recursive closure edges and cycle diagnostics | declared profile-package edges resolve in deterministic order; path escape rejects before read. The bounded initial profile graph has no recursive edge, so a cycle is structurally unrepresentable and remains rejected by absence of an edge syntax. |
 | IV | **Complete:** Command execution through compare-and-set Store write | stale base revision and partial batch fail atomically; accepted command returns a new snapshot |
 | V | **Complete:** Deterministic SVG adapter from Scene output | target-capability and accessibility acceptance fixtures pass; SVG never becomes canonical data |
-| VI | Read-only Federation resolver | trust, pin, repin, unavailable export, and namespace diagnostics pass; child mutation remains impossible |
+| VI | **Complete:** Read-only Federation resolver | trust, pin, repin, unavailable export, and namespace diagnostics pass; child mutation remains impossible |
 
 Slice 0 may be implemented only after the profile design prerequisites in
 `implementation-delivery-profile-plan.md` are complete. Each remaining slice may be
