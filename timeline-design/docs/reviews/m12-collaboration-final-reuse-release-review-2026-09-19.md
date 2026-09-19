@@ -1,9 +1,11 @@
 # M12 Collaboration Final Reuse and Release Review — 2026-09-19
 
-**Disposition:** Superseded — implementation correction required.
+**Disposition:** Pass — M12 correction complete.
 
-The prior result-only boundary reuses Revision Store revisions and never writes on a
-stale base, but it does not append audit observations or materialize an explicit
-conflict-resolution revision with both parents.  It therefore cannot claim UC-19–21
-completion. No merge path may accept derived schedule, Scene, output, or Federation
-child state when the correction is implemented.
+The correction records all collaboration decisions in an append-only audit log that is
+separate from Project state. Explicit resolution performs a Store CAS and records both
+conflict parents on the resulting immutable revision. Stale writes remain conflicts;
+no merge path accepts derived schedule, Scene, output, or Federation child state.
+
+**Evidence:** `tests/test_collaboration.py`, full suite (82 passed), and fixture
+conformance all pass.
