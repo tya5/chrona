@@ -34,3 +34,13 @@ def test_cli_render_consumes_scene_adapter(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(path), "--output", str(output)])
     main()
     assert "<svg " in output.read_text(encoding="utf-8")
+
+
+def test_cli_review_reports_stable_semantic_ids(tmp_path, monkeypatch, capsys):
+    before = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
+    after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}}
+    paths = [tmp_path / "before.yaml", tmp_path / "after.yaml"]
+    for path, project in zip(paths, (before, after)): path.write_text(yaml.safe_dump(project), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["chrona", "review", str(paths[0]), str(paths[1])])
+    main()
+    assert json.loads(capsys.readouterr().out)["changes"] == [{"kind": "object", "id": "gate", "change": "added"}]
