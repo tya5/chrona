@@ -35,7 +35,7 @@ def main() -> None:
         if name == "render":
             command.add_argument("--output", "-o", required=True)
         if name == "render-review":
-            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--summary-profile"); command.add_argument("--output", "-o", required=True)
+            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--output", "-o", required=True)
     args = parser.parse_args()
     project = load_yaml(args.project)
     if args.command == "review":
@@ -65,7 +65,7 @@ def main() -> None:
             raise SystemExit(1)
         view,theme,profile=load_yaml(args.view),load_yaml(args.theme),load_yaml(args.profile)
         projection=build_review_projection(project,result.placements,view,load_yaml(args.actual),load_yaml(args.style),theme)
-        if profile.get("version")=="chrona/table-timeline-profile/v0.1": svg=render_table_timeline_svg(project["project"].get("title","Chrona"),projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile,load_yaml(args.summary_profile) if args.summary_profile else None)
+        if profile.get("version")=="chrona/table-timeline-profile/v0.1": svg=render_table_timeline_svg(project["project"].get("title","Chrona"),projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile)
         else: svg=render_review_svg(project["project"].get("title","Chrona"),projection,theme,{"sourceMetadata","accessibleText","semanticRoles","marker"},profile)
         Path(args.output).write_text(svg,encoding="utf-8")
         return
