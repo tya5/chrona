@@ -15,6 +15,8 @@ class ReviewItem:
     actual: dict[str, date | float] | None
     finish_delta: int | None
     roles: tuple[str, ...]
+    group_id: str = ""
+    group_label: str = ""
 
 
 @dataclass(frozen=True)
@@ -57,13 +59,19 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if actual and "finish" in actual and "end" in planned:
             finish_delta = (actual["finish"] - planned["end"]).days  # type: ignore[operator]
         roles = _roles(style, source_type, actual, finish_delta)
-        rows.append(ReviewItem(object_id, str(project["objects"][object_id].get("title", object_id)), source_type, planned, actual, finish_delta, roles))
+        grouping=body.get("grouping",{"by":"none","missing":"ungrouped"}); group_id=_group_id(project,object_id,source_type,grouping); group_label=str(project.get("entities",{}).get(group_id,{}).get("title",group_id))
+        rows.append(ReviewItem(object_id, str(project["objects"][object_id].get("title", object_id)), source_type, planned, actual, finish_delta, roles, group_id, group_label))
     key = body["ordering"]["by"]
-    rows.sort(key=lambda item: (item.planned.get("start", item.planned.get("at")), item.object_id) if key == "plannedStart" else (item.object_id,))
+    rows.sort(key=lambda item: (item.group_id, item.planned.get("start", item.planned.get("at")), item.object_id) if key == "plannedStart" else (item.group_id,item.object_id))
     dates = [value for item in rows for value in item.planned.values()]
     margin = body["window"].get("marginDays", 0)
     start, end = min(dates), max(dates)
     return ReviewProjection(tuple(rows), (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)), tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched))
+
+def _group_id(project:dict[str,Any], object_id:str, source_type:str, grouping:dict[str,Any])->str:
+    if grouping["by"]=="none": return ""
+    if grouping["by"]=="objectType": return source_type
+    return str(project["objects"][object_id].get("fields",{}).get(grouping["field"],grouping["missing"]))
 
 
 def _date_or_number(value: Any) -> date | float:
@@ -86,14 +94,14 @@ def _roles(style: dict[str, Any], source_type: str, actual: dict[str, Any] | Non
     return tuple(dict.fromkeys(roles))
 
 
-def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str, Any], capabilities: set[str]) -> str:
+def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str, Any], capabilities: set[str], profile:dict[str,Any]|None=None) -> str:
     """Render the completed review projection with source metadata and text alternatives."""
     required = {"sourceMetadata", "accessibleText", "semanticRoles", "marker"}
     if not required.issubset(capabilities):
         raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
     start, end = projection.window
     left, top, day, row = 220, 96, 12, 56
-    width, height = max(960, left + (end - start).days * day + 80), top + len(projection.items) * row + 100
+    group_profile=(profile or {}).get("groupPresentation",{"mode":"none","gapRows":0}); extra=sum(1+group_profile["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id); width, height = max(960, left + (end - start).days * day + 80), top + (len(projection.items)+extra) * row + 100
     colors = _theme_colors(theme)
     parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} review</title>',f'<desc id="desc">Planned and Actual engineering timeline review; {len(projection.unmatched_actual_ids)} unmatched Actual observations.</desc>', '<defs><pattern id="missing" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#6b7280" stroke-width="2"/></pattern></defs>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="24" y="34" font-family="system-ui" font-size="20" font-weight="700">{escape(title)} — Plan / Actual Review</text>']
     cursor = start
@@ -101,8 +109,14 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
         x=left+(cursor-start).days*day
         if cursor.day <= 7: parts += [f'<line x1="{x}" y1="60" x2="{x}" y2="{height-30}" stroke="#ddd"/>',f'<text x="{x+3}" y="55" font-family="system-ui" font-size="11">{cursor:%Y-%m}</text>']
         cursor=date.fromordinal(cursor.toordinal()+7)
-    for index,item in enumerate(projection.items):
-        y=top+index*row; parts.append(f'<text x="24" y="{y+5}" font-family="system-ui" font-size="13">{escape(item.title)}</text>')
+    y=top-row
+    previous=None
+    for item in projection.items:
+        if item.group_id!=previous:
+            if previous is not None: y+=row*(1+group_profile["gapRows"]); parts.append(f'<line data-purpose="group-separator" x1="24" y1="{y-row//2}" x2="{width-24}" y2="{y-row//2}" stroke="#9ca3af"/>')
+            if group_profile["mode"] in {"header-and-separator","band"}: parts.append(f'<text data-purpose="group-header" x="24" y="{y+row//2}" font-family="system-ui" font-size="14" font-weight="700">{escape(item.group_label)}</text>')
+            y+=row; previous=item.group_id
+        y+=row; parts.append(f'<text x="24" y="{y+5}" font-family="system-ui" font-size="13">{escape(item.title)}</text>')
         attrs=f'data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned"'
         if item.source_type=="point":
             x=left+(item.planned["at"]-start).days*day; parts.append(f'<path {attrs} d="M{x} {y-8} L{x+8} {y} L{x} {y+8} L{x-8} {y}Z" fill="{colors["planned"]}"/>')

@@ -35,7 +35,7 @@ def main() -> None:
         if name == "render":
             command.add_argument("--output", "-o", required=True)
         if name == "render-review":
-            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--output", "-o", required=True)
+            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--output", "-o", required=True)
     args = parser.parse_args()
     project = load_yaml(args.project)
     if args.command == "review":
@@ -64,7 +64,7 @@ def main() -> None:
         if not result.ok:
             raise SystemExit(1)
         projection=build_review_projection(project,result.placements,load_yaml(args.view),load_yaml(args.actual),load_yaml(args.style),load_yaml(args.theme))
-        Path(args.output).write_text(render_review_svg(project["project"].get("title","Chrona"),projection,load_yaml(args.theme),{"sourceMetadata","accessibleText","semanticRoles","marker"}),encoding="utf-8")
+        Path(args.output).write_text(render_review_svg(project["project"].get("title","Chrona"),projection,load_yaml(args.theme),{"sourceMetadata","accessibleText","semanticRoles","marker"},load_yaml(args.profile)),encoding="utf-8")
         return
     print(json.dumps({"placements": result.placements, "diagnostics": [item.as_dict() for item in result.diagnostics]}, indent=2, default=_json_default))
     raise SystemExit(not result.ok)
