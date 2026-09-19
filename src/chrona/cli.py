@@ -67,16 +67,16 @@ def main() -> None:
             raise SystemExit(1)
         view,theme,profile=load_yaml(args.view),load_yaml(args.theme),load_yaml(args.profile)
         projection=build_review_projection(project,result.placements,view,load_yaml(args.actual),load_yaml(args.style),theme)
+        settings = resolve_presentation_settings(load_yaml(args.presentation_settings)) if args.presentation_settings else None
         layout_slots=None
         if profile.get("version")=="chrona/layout-profile/v0.1":
             manifest=resolve_layout_profile(profile,{"title","table","timeline","summary","legend"})
             if manifest.diagnostics: raise ValueError(",".join(manifest.diagnostics))
             layout_slots=solve_layout(profile,manifest)
-            settings = resolve_presentation_settings(load_yaml(args.presentation_settings)) if args.presentation_settings else None
             svg=render_table_timeline_svg(project["project"].get("title","Chrona"),projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile,layout_slots,settings)
         elif profile.get("version")=="chrona/table-timeline-profile/v0.1": raise ValueError("E_LAYOUT_PROFILE_REQUIRED")
-        else: svg=render_review_svg(project["project"].get("title","Chrona"),projection,theme,{"sourceMetadata","accessibleText","semanticRoles","marker"},profile)
-        if args.summary_profile: svg=append_review_summary(svg,projection,load_yaml(args.summary_profile),projection.window[0],layout_slots.get("summary") if layout_slots else None)
+        else: svg=render_review_svg(project["project"].get("title","Chrona"),projection,theme,{"sourceMetadata","accessibleText","semanticRoles","marker"},profile,settings)
+        if args.summary_profile: svg=append_review_summary(svg,projection,load_yaml(args.summary_profile),projection.window[0],layout_slots.get("summary") if layout_slots else None,settings)
         Path(args.output).write_text(svg,encoding="utf-8")
         return
     print(json.dumps({"placements": result.placements, "diagnostics": [item.as_dict() for item in result.diagnostics]}, indent=2, default=_json_default))
