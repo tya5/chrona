@@ -35,7 +35,7 @@ an undocumented capability accepted.
 | WD-2b | AI proposal and authorization | **Complete.** | Versioned proposal and authorization-decision contracts bind only registered Commands, provenance, policy version, and fingerprint. | `09`, `10`, `12`, UC-06, M5; depends on WD-2a |
 | WD-3 | Current-profile release packaging | **Complete.** | Release-package manifest binds artifact, output, and acceptance identities; excluded UC state is explicitly non-publishable. | `22`, UC-13, M9; depends on WD-1/2 |
 | WD-4 | Milestone acceptance consistency | **Complete.** | Status ledger states entry/exit evidence and blockers for M0–M13. | roadmap, all milestones |
-| WD-5 | Successor designs | FD-1–FD-5 are individually reviewed, but need one current/future profile compatibility inventory that prevents a v0.2 contract being silently used by current-profile code. | Record version, opt-in trigger, unchanged v0.1 meaning, migration/compatibility rule, and owning milestone for FD-1–FD-5. | `18`–`22`, M8–M13 |
+| WD-5 | Successor designs | **Complete.** | Compatibility ledger records version, opt-in trigger, unchanged v0.1 meaning, migration/rejection rule, and owner for FD-1–FD-5. | `18`–`22`, M8–M13 |
 | WD-6 | Whole-system authorization | Earlier closure reviews conflict with WD-1–WD-5 and must not remain an authorization source. | Produce a replacement review with a machine-checkable closure checklist; retain prior reviews as historical evidence only. | depends on WD-1–WD-5 |
 
 ## 4. Execution order
