@@ -7,6 +7,7 @@ from typing import Any, Protocol
 
 from .profiles import validate_profiles
 from .revision_store import ProjectSnapshot
+from .scheduler import schedule
 
 
 class RevisionStore(Protocol):
@@ -24,6 +25,7 @@ class CommandResult:
     diagnostics: tuple[str, ...]
     result_revision: str | None = None
     command_id: str | None = None
+    invalidated: tuple[str, ...] = ()
 
 
 def set_typed_field(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]], object_id: str, field: str, value: Any) -> CommandResult:
@@ -58,10 +60,13 @@ def execute_typed_field_batch(
             return candidate
         assert candidate.project is not None
         candidate_project = candidate.project
+    evaluation = schedule(candidate_project, package_manifests=package_manifests)
+    if not evaluation.ok:
+        return CommandResult("rejected", None, tuple(item.id for item in evaluation.diagnostics))
     persisted = store.write(base_revision, candidate_project)
     if persisted is None:
         return CommandResult("rejected", None, ("E_CONFLICT",))
-    return CommandResult("accepted", persisted.project, (), persisted.revision)
+    return CommandResult("accepted", persisted.project, (), persisted.revision, invalidated=("schedule", "scene"))
 
 
 def execute_set_typed_field(

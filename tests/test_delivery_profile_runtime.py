@@ -69,6 +69,7 @@ def test_typed_field_batch_is_atomic_and_writes_one_new_snapshot():
     )
     assert accepted.status == "accepted"
     assert accepted.result_revision and accepted.result_revision != base.revision
+    assert accepted.invalidated == ("schedule", "scene")
     assert store.read().project["objects"]["idp-4"]["fields"]["workflowState"] == "blocked"
     rejected = execute_typed_field_batch(
         store, accepted.result_revision, _manifest(),
