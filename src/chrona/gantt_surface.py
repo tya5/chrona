@@ -91,7 +91,19 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         }
     else:
         font = escape(_theme_font(theme), quote=True)
-    color = lambda role, default: escape(_theme_color(theme, role, default), quote=True)
+    if settings is not None:
+        paints, strokes = settings['theme']['paints'], settings['theme']['strokes']
+        palette = {
+            'text': paints['text']['color'], 'text-muted': paints['textMuted']['color'],
+            'axis-major': strokes['axisMajor']['color'], 'background': paints['background']['color'],
+            'planned': paints['planned']['color'], 'actual': paints['actual']['color'],
+            'variance-behind': paints['varianceBehind']['color'], 'routed-connector': strokes['dependency']['color'],
+            'milestone': paints['milestone']['color'], 'table-header': paints['tableHeader']['color'],
+            'group-band': paints['groupBand']['color'], 'row-shade': paints['rowShade']['color'],
+        }
+        color = lambda role, default: escape(palette.get(role, settings['theme']['groupPaints'].get(role.removeprefix('group:'), paints['groupBand']['color'])), quote=True)
+    else:
+        color = lambda role, default: escape(_theme_color(theme, role, default), quote=True)
     ink, muted = color('text', '#102644'), color('text-muted', '#637187')
     grid, background = color('axis-major', '#DDE4EC'), color('background', '#FFFFFF')
     planned, actual = color('planned', '#3885E5'), color('actual', '#249B78')
@@ -129,7 +141,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
              f'<title id="title">{escape(title)}</title>',
              f'<desc id="desc">Plan and Actual comparison. {len(projection.items)} rows; {len(projection.unmatched_actual_ids)} unmatched observations. Actual is not a forecast.</desc>',
-             f'<defs><marker id="dependency-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto"><path d="M0 0L6 3L0 6Z" fill="{connector}"/></marker></defs>',
+             f'<defs><marker id="dependency-arrow" markerWidth="{settings["theme"]["arrow"]["width"] if settings else 6}" markerHeight="{settings["theme"]["arrow"]["height"] if settings else 6}" refX="{settings["theme"]["arrow"]["width"]-settings["theme"]["arrow"]["tipInset"] if settings else 5.5}" refY="{(settings["theme"]["arrow"]["height"] if settings else 6)/2}" orient="auto"><path d="M0 0L{settings["theme"]["arrow"]["width"] if settings else 6} {(settings["theme"]["arrow"]["height"] if settings else 6)/2}L0 {settings["theme"]["arrow"]["height"] if settings else 6}Z" fill="{connector}"/></marker></defs>',
              f'<rect width="{width}" height="{height}" fill="{background}"/>']
 
     def rect(x, y, w, h, fill, purpose, ref='', more=''):
@@ -140,12 +152,13 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
 
     def wrapped(x, cy, value, available, size=fs, weight=400, purpose='table-cell', ref=''):
         # Deliberately conservative: preserve full text instead of silent truncation.
-        limit = max(1, int(available / (metrics.width('M', size) if metrics else size*.58)))
         lines, line = [], ''
         for word in str(value).split():
-            if len(word) > limit:
+            candidate = f'{line} {word}'.strip()
+            too_wide = (metrics.width(candidate, size) > available) if metrics else (len(candidate) > max(1, int(available/(size*.58))))
+            if too_wide and not line:
                 raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:text')
-            if len(line)+len(word)+1 > limit and line:
+            if too_wide and line:
                 lines.append(line); line = ''
             line = f'{line} {word}'.strip()
         lines.append(line)
@@ -179,8 +192,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         for i, item in enumerate(items):
             cy = y+rh/2
             if i%2 == 1:
-                parts.append(rect(table.x+group_width, y, right-table.x-group_width, rh, '#FFFFFF', 'row-shade', item.object_id, 'opacity="0.34"'))
-            parts.append(f'<path data-purpose="table-row" d="M{f(table.x+group_width)} {f(y+rh)}H{f(right)}" stroke="#FFFFFF"/>')
+                parts.append(rect(table.x+group_width, y, right-table.x-group_width, rh, color('row-shade', '#FFFFFF'), 'row-shade', item.object_id, f'opacity="{settings["theme"]["paints"]["rowShade"]["opacity"] if settings else .34}"'))
+            parts.append(f'<path data-purpose="table-row" d="M{f(table.x+group_width)} {f(y+rh)}H{f(right)}" stroke="{color("row-shade", "#FFFFFF")}"/>')
             for ci, col in enumerate(columns):
                 value = _display_value(_table_value(item, project, col['source']), col['missing'])
                 foreground.append(wrapped(table.x+group_width+ci*cw+12, cy, value, cw-24, ref=item.object_id))
