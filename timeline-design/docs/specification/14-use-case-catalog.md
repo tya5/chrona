@@ -49,9 +49,9 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-16 | Plan a cross-zone event without DST ambiguity | Delivered | Delivered by M10: opt-in DateTime/DST runtime, v0.2 scheduler, recurrence, and provenance-preserving migration; Date-only remains unchanged. |
 | UC-17 | Assess capacity and accept an explicit leveling proposal | Delivered | Delivered by M11: Date-only capacity evaluator and fingerprint-bound explicit proposal/CAS path. |
 | UC-18 | Record cost and time observations without rescheduling the plan | Delivered | Delivered by M11: separately revisioned append-only observation store and unit-partitioned aggregation. |
-| UC-19 | Resolve a concurrent semantic conflict explicitly | Future | Collaboration merge design and fixtures; service deferred |
-| UC-20 | Approve and audit a controlled change | Future | Authorization/approval/audit design and fixtures; policy integration deferred |
-| UC-21 | Synchronize a replica without treating a remote tip as truth | Future | Hosted-sync design and fixtures; service deferred |
+| UC-19 | Resolve a concurrent semantic conflict explicitly | Delivered | M12 returns typed stale conflict objects; no last-writer-wins. |
+| UC-20 | Approve and audit a controlled change | Delivered | M12 enforces policy plus fingerprint/expiry-bound approval. |
+| UC-21 | Synchronize a replica without treating a remote tip as truth | Delivered | M12 exposes explicit behind-replica status. |
 
 ## 4. Detailed use cases
 
