@@ -9,3 +9,8 @@ body:
   comparison: {baseline: primary, actual: required, observationSelection: latest, deltaUnit: calendar-days, facets: [planned, actual, finishDelta, missingActual, unmatchedActual]}
   visibility: {labels: true, relations: semantic, annotations: all}
   layoutIntent: {compactness: balanced, itemStacking: stable}
+  tableColumns:
+    - {id: Owner, source: {field: owner}, missing: em-dash}
+    - {id: Workstream, source: {field: workstream}, missing: em-dash}
+    - {id: Schedule, source: {comparisonFacet: finishDelta}, missing: em-dash}
+    - {id: Activity, source: title, missing: em-dash}

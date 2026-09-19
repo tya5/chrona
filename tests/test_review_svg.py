@@ -1,5 +1,5 @@
 from datetime import date
-from chrona.review_svg import build_review_projection
+from chrona.review_svg import build_review_projection, render_table_timeline_svg
 
 def test_review_projection_keeps_actual_independent_and_marks_variance():
     project={"objects":{"fw":{"title":"FW"},"gate":{"title":"Gate"}}}
@@ -10,3 +10,13 @@ def test_review_projection_keeps_actual_independent_and_marks_variance():
     result=build_review_projection(project,placements,view,actual,style,{"body":{"roles":{"planned":{}}}})
     assert result.items[0].finish_delta == 3 and "variance-behind" in result.items[0].roles
     assert result.unmatched_actual_ids == ("unknown",) and result.window == (date(2026,3,30),date(2026,4,14))
+
+def test_table_timeline_is_resource_driven():
+    project={"objects":{"a":{"title":"A","fields":{"owner":"fw"}}},"entities":{"fw":{"title":"Firmware"}}}
+    placements={"a":{"start":date(2026,4,1),"end":date(2026,4,3)}}
+    view={"body":{"selection":{"include":{"types":["span"]}},"grouping":{"by":"field","field":"owner","missing":"none"},"ordering":{"by":"plannedStart"},"window":{"marginDays":0},"comparison":{"actual":"optional"},"tableColumns":[{"id":"Owner","source":{"field":"owner"},"missing":"em-dash"},{"id":"Task","source":"title","missing":"em-dash"}]}}
+    style={"body":{"rules":[]}}; theme={"body":{"roles":{"planned":{},"actual":{}},"values":{}}}
+    projection=build_review_projection(project,placements,view,None,style,theme)
+    profile={"groups":{"mode":"header-and-separator","gapRows":1},"axis":{}}
+    svg=render_table_timeline_svg("X",projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile)
+    assert 'table-header' in svg and 'Firmware' in svg and 'data-purpose="axis-major"' in svg

@@ -17,6 +17,7 @@ class ReviewItem:
     roles: tuple[str, ...]
     group_id: str = ""
     group_label: str = ""
+    fields: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -60,7 +61,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             finish_delta = (actual["finish"] - planned["end"]).days  # type: ignore[operator]
         roles = _roles(style, source_type, actual, finish_delta)
         grouping=body.get("grouping",{"by":"none","missing":"ungrouped"}); group_id=_group_id(project,object_id,source_type,grouping); group_label=str(project.get("entities",{}).get(group_id,{}).get("title",group_id))
-        rows.append(ReviewItem(object_id, str(project["objects"][object_id].get("title", object_id)), source_type, planned, actual, finish_delta, roles, group_id, group_label))
+        rows.append(ReviewItem(object_id, str(project["objects"][object_id].get("title", object_id)), source_type, planned, actual, finish_delta, roles, group_id, group_label, dict(project["objects"][object_id].get("fields", {}))))
     key = body["ordering"]["by"]
     rows.sort(key=lambda item: (item.group_id, item.planned.get("start", item.planned.get("at")), item.object_id) if key == "plannedStart" else (item.group_id,item.object_id))
     dates = [value for item in rows for value in item.planned.values()]
@@ -129,6 +130,65 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
         else: parts.append(f'<rect data-scene-id="item:{item.object_id}:missing" data-source-ref="{item.object_id}" data-purpose="actual" x="{left+(item.planned.get("start",item.planned.get("at"))-start).days*day}" y="{y+4}" width="18" height="9" fill="url(#missing)"/><text x="{left+(item.planned.get("start",item.planned.get("at"))-start).days*day+22}" y="{y+13}" font-family="system-ui" font-size="10">actual missing</text>')
     if projection.unmatched_actual_ids: parts.append(f'<text x="24" y="{height-24}" font-family="system-ui" font-size="11" fill="#b45309">Unmatched Actual: {escape(", ".join(projection.unmatched_actual_ids))}</text>')
     return "\n".join(parts+["</svg>"])+"\n"
+
+
+def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], summary_profile: dict[str, Any] | None = None, as_of: date | None = None) -> str:
+    """Generic M15/M16 adapter. All composition comes from supplied resources."""
+    required={"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"}
+    if not required.issubset(capabilities): raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
+    start,end=projection.window; columns=view["body"].get("tableColumns", [{"id":"title","source":"title","missing":"em-dash"}])
+    groups=profile["groups"]; left=32+150*len(columns); top=128; day=10; row=36; width=max(1080,left+(end-start).days*day+48); colors=_theme_colors(theme)
+    group_breaks=sum(1+groups["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id)
+    height=top+(len(projection.items)+group_breaks+4)*row+(120 if summary_profile else 40)
+    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="32" y="34" font-family="system-ui" font-size="20" font-weight="700">{escape(title)}</text>']
+    for n,col in enumerate(columns): p.append(f'<text data-purpose="table-header" x="{32+n*150}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">{escape(str(col["id"]))}</text>')
+    cursor=date(start.year,start.month,1)
+    while cursor<=end:
+        x=left+(cursor-start).days*day; p += [f'<line data-purpose="axis-major" x1="{x}" y1="70" x2="{x}" y2="{height-24}" stroke="#9ca3af"/>',f'<text data-purpose="axis-band" x="{x+3}" y="70" font-family="system-ui" font-size="11">{cursor:%b %Y}</text>']
+        cursor=date(cursor.year+1,1,1) if cursor.month==12 else date(cursor.year,cursor.month+1,1)
+    cursor=start
+    while cursor<=end:
+        x=left+(cursor-start).days*day; p.append(f'<line data-purpose="axis-minor" x1="{x}" y1="88" x2="{x}" y2="{height-24}" stroke="#e5e7eb"/>'); cursor=date.fromordinal(cursor.toordinal()+7)
+    y=top; previous=None
+    for item in projection.items:
+        if item.group_id!=previous:
+            if previous is not None: y+=row*(1+groups["gapRows"])
+            if groups["mode"] in {"band","header-and-separator"}: p.append(f'<rect data-purpose="group-band" x="24" y="{y}" width="{width-48}" height="{row}" fill="#f3f4f6"/>')
+            if groups["mode"]=="header-and-separator": p.append(f'<text data-purpose="group-header" x="32" y="{y+22}" font-family="system-ui" font-size="13" font-weight="700">{escape(item.group_label)}</text>'); y+=row
+            if previous is not None and groups["mode"] in {"separator","header-and-separator"}: p.append(f'<line data-purpose="group-separator" x1="24" y1="{y}" x2="{width-24}" y2="{y}" stroke="#9ca3af"/>')
+            previous=item.group_id
+        y+=row
+        for n,col in enumerate(columns):
+            value=_table_value(item,project,col["source"]); text=_display_value(value,col["missing"])
+            p.append(f'<text data-scene-id="item:{item.object_id}:cell:{escape(str(col["id"]))}" data-source-ref="{item.object_id}" data-purpose="table-cell" x="{32+n*150}" y="{y}" font-family="system-ui" font-size="12">{escape(text)}</text>')
+        if item.source_type=="span":
+            x=left+(item.planned["start"]-start).days*day; w=max(3,(item.planned["end"]-item.planned["start"]).days*day); p.append(f'<rect data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned" x="{x}" y="{y-12}" width="{w}" height="12" rx="3" fill="{colors["planned"]}"/>')
+        else:
+            x=left+(item.planned["at"]-start).days*day; p.append(f'<path data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned" d="M{x} {y-12} L{x+6} {y-6} L{x} {y} L{x-6} {y-6}Z" fill="{colors["planned"]}"/>')
+        if item.actual and item.source_type=="span" and "finish" in item.actual:
+            ax=left+(item.actual.get("start",item.planned["start"])-start).days*day; aw=max(3,(item.actual["finish"]-item.actual.get("start",item.planned["start"])).days*day); p.append(f'<rect data-scene-id="item:{item.object_id}:actual" data-source-ref="{item.object_id}" data-purpose="actual" x="{ax}" y="{y+3}" width="{aw}" height="8" rx="2" fill="{colors["actual"]}"/>')
+    if summary_profile: p.extend(_summary_svg(projection,summary_profile,as_of or start,32,height-58))
+    return "\n".join(p+["</svg>"])+"\n"
+
+
+def _table_value(item: ReviewItem, project: dict[str, Any], source: Any) -> Any:
+    if isinstance(source,str): return {"id":item.object_id,"title":item.title,"objectType":item.source_type,"entity":item.group_label}.get(source)
+    if "field" in source: return (item.fields or {}).get(source["field"])
+    facet=source["comparisonFacet"]; return {"finishDelta":item.finish_delta,"missingActual":not bool(item.actual),"progress":(item.actual or {}).get("progress")}.get(facet)
+
+
+def _display_value(value: Any, missing: str) -> str:
+    if value is None: return {"blank":"","em-dash":"—","unknown":"unknown"}[missing]
+    return f'{value:+d}d' if isinstance(value,int) and not isinstance(value,bool) else str(value)
+
+
+def _summary_svg(projection: ReviewProjection, profile: dict[str, Any], as_of: date, x: int, y: int) -> list[str]:
+    total=len(projection.items); actual=sum(bool(i.actual) for i in projection.items); missing=total-actual; variance=sum(i.finish_delta is not None for i in projection.items)
+    points=sorted(i.planned["at"] for i in projection.items if i.source_type=="point" and i.planned["at"]>=as_of); values={"selectedCount":str(total),"actualCoverage":f"{actual}/{total}" if total else "unknown","knownFinishVarianceCount":str(variance),"missingActualCount":str(missing),"nextPlannedPoint":points[0].isoformat() if points else "unknown"}
+    out=[]
+    for panel in profile["panels"]:
+        text=" · ".join(f'{m}: {values[m]}' for m in panel["metrics"]); out.append(f'<text data-purpose="summary-panel" x="{x}" y="{y}" font-family="system-ui" font-size="11">{escape(panel["id"])} — {escape(text)}</text>'); y+=18
+    return out
 
 
 def _theme_colors(theme: dict[str, Any]) -> dict[str,str]:
