@@ -28,7 +28,7 @@ class CommandResult:
     invalidated: tuple[str, ...] = ()
 
 
-def set_typed_field(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]], object_id: str, field: str, value: Any) -> CommandResult:
+def set_typed_field(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None, object_id: str, field: str, value: Any) -> CommandResult:
     if object_id not in project.get("objects", {}):
         return CommandResult("rejected", None, ("E_REFERENCE",))
     candidate = deepcopy(project)

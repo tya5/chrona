@@ -44,3 +44,13 @@ def test_cli_review_reports_stable_semantic_ids(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["chrona", "review", str(paths[0]), str(paths[1])])
     main()
     assert json.loads(capsys.readouterr().out)["changes"] == [{"kind": "object", "id": "gate", "change": "added"}]
+
+
+def test_cli_propose_set_uses_command_without_writing_input(tmp_path, monkeypatch, capsys):
+    project = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}, "relations": []}
+    path = tmp_path / "project.yaml"; path.write_text(yaml.safe_dump(project), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["chrona", "propose-set", str(path), "gate", "title", '"Release"'])
+    try: main()
+    except SystemExit as exit: assert exit.code is False
+    assert json.loads(capsys.readouterr().out)["project"]["objects"]["gate"]["fields"]["title"] == "Release"
+    assert yaml.safe_load(path.read_text()) == project
