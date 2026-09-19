@@ -202,14 +202,14 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                 x1, x2 = sx(item.planned['start']), sx(item.planned['end'])
                 if x1 < left or x2 > right:
                     raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:window')
-                foreground.append(rect(x1, py, max(1,x2-x1), bh, planned, 'planned', item.object_id, 'rx="2"'))
+                foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned, 'planned', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                 obstacles.append((x1-4, py-4, x2+4, py+bh+4))
                 anchors[item.object_id] = {'start': (x1, py+bh/2, -1), 'end': (x2, py+bh/2, 1)}
                 if item.actual and 'finish' in item.actual:
                     a1, a2 = sx(item.actual.get('start', item.planned['start'])), sx(item.actual['finish'])
                     if a1 < left or a2 > right:
                         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:actual')
-                    foreground.append(rect(a1, cy+bg/2, max(1,a2-a1), bh, actual, 'actual', item.object_id, 'rx="2"'))
+                    foreground.append(rect(a1, cy+bg/2, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual, 'actual', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                     obstacles.append((a1-4, cy+bg/2-4, a2+4, cy+bg/2+bh+4))
                     if surface.get('showVariance', True) and item.finish_delta:
                         vx = max(x2, a2)+12
@@ -263,7 +263,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             port_a, port_b = (ax+ad*8, ay), (bx+bd*8, by)
             points = [(ax, ay), *route_orthogonal(port_a, port_b, obstacles), (bx, by)]
             path = 'M'+'L'.join(f'{f(x)} {f(y)}' for x,y in points)
-            parts.append(f'<path data-purpose="routed-connector" data-source-ref="{escape(str(relation.get("id", "relation")))}" data-from-endpoint="{ak}" data-to-endpoint="{bk}" d="{path}" fill="none" stroke="{connector}" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>')
+            parts.append(f'<path data-purpose="routed-connector" data-source-ref="{escape(str(relation.get("id", "relation")))}" data-from-endpoint="{ak}" data-to-endpoint="{bk}" d="{path}" fill="none" stroke="{connector}" stroke-width="{settings["theme"]["strokes"]["dependency"]["width"] if settings else 1.4}" marker-end="url(#dependency-arrow)"/>')
     parts.extend(foreground)
     notes = slots.get('notes')
     if notes:
