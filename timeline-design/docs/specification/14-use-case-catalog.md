@@ -434,26 +434,33 @@ provenance-preserving synchronization fixtures.
 | UC-13 | `07`–`09`, `12`, `13`, `22` | output-capability schema, fidelity diagnostics, and target fixture | non-SVG target adapters |
 | UC-14 | `05`, `06`, `09`, `12`, `13`, `15`, `16` | pinned Git/local/content closure, trust/repin diagnostics, and aggregate-projection fixture | resolver and aggregate Scene adapter |
 | UC-15 | `02`, `04`, `05`, `10`, `11`, `12`, `15`, `17` | delivery profile schema, vocabulary/evidence/state fixtures, roadmap fixture, and IDP-6 review | profile UX only |
+| UC-16 | `03`, `04`, `05`, `12`, `18` | DateTime/DST schema, fixtures, ADR-0014, and FD-1 review | M10 runtime and migration adapter |
+| UC-17 | `02`, `04`, `05`, `10`, `12`, `19` | capacity schema/fixtures, ADR-0015, and FD-2 review | M11 evaluator and proposal adapter |
+| UC-18 | `05`, `06`, `12`, `19` | observation-isolation contract and capacity/cost fixtures | M11 accounting observation adapter |
+| UC-19 | `09`, `10`, `12`, `15`, `20` | collaboration schema/fixtures, ADR-0016, and FD-3 review | M12 conflict/merge service |
+| UC-20 | `09`, `10`, `12`, `15`, `20` | approval/denial fixture and audit-provenance contract | M12 policy and audit adapter |
+| UC-21 | `09`, `12`, `15`, `20` | causally-behind replica fixture and sync provenance contract | M12 hosted synchronization service |
 
 ## 7. Current gaps and release gate
 
-Every UC-01–UC-15 row has one current normative owner, canonical positive/negative
-evidence where the rule is machine-checkable, and an implementation-independent
-acceptance contract. UC-14 is design-ready through the pinned Git/local/content
-reference contract; its resolver and aggregate Scene adapter remain implementation
-work. UC-15 is complete as a self-hosting design prerequisite and prevents delivery
-work from inventing a parallel project-management model.
+Every UC-01–UC-21 row has one current normative owner, canonical positive/negative
+evidence where the rule is machine-checkable, an implementation-independent acceptance
+contract, and a named delivery milestone. UC-14 remains design-ready through the
+pinned Git/local/content reference contract; UC-15 prevents delivery work from
+inventing a parallel project-management model; UC-16–UC-21 are opt-in successor
+capabilities rather than implicit changes to the Date-only profile.
 
-The remaining gaps in this table are adapters or product features, not unresolved design
-semantics. A release claim must name the satisfied use cases and their acceptance
-evidence rather than describing the entire catalog as implemented.
+The remaining gaps in this table are planned adapters or product features, not
+unresolved design semantics. A release claim must name the satisfied use cases and
+their acceptance evidence rather than describing the entire catalog as implemented.
 
 ## 8. Output-release successor acceptance
 
-The future output release gate maps UC-01–UC-15 to each claimed target. At minimum,
+The future output release gate maps UC-01–UC-21 to each claimed target. At minimum,
 the target manifest must show deterministic output (UC-01), source/role provenance
 (UC-04/UC-09), no renderer-authoritative mutation (UC-05/UC-06), fidelity diagnostics
 (UC-13), and the exact pinned closure for federation/extension cases (UC-14/UC-15).
 An adapter may claim only the rows whose capability fixtures and acceptance evidence it
 passes; SVG baseline success does not imply PDF, raster, canvas, or presentation
-support.
+support. M13 separately reviews successor profiles and does not retroactively broaden
+an M9 current-profile claim.

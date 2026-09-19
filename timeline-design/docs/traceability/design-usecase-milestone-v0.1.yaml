@@ -14,15 +14,15 @@ areas:
   - {id: RESOURCE-CAPACITY, name: Resource capacity leveling and cost, specifications: ["19"], productFacing: true, useCases: [UC-17, UC-18], milestones: [M11], evidence: [resource-capacity-v0.2-fixture], status: covered}
   - {id: COLLABORATION, name: Collaboration synchronization and audit, specifications: ["20"], productFacing: true, useCases: [UC-19, UC-20, UC-21], milestones: [M12], evidence: [collaboration-v0.2-fixture], status: covered}
 findings:
-  - {id: T-01, severity: blocker, summary: DateTime/DST lacks use-case and milestone ownership, remediationPhase: TR-1}
-  - {id: T-02, severity: blocker, summary: Resource capacity leveling and cost lack use-case decomposition and milestone ownership, remediationPhase: TR-1}
-  - {id: T-03, severity: blocker, summary: Collaboration synchronization policy and audit lack use-case and milestone ownership, remediationPhase: TR-1}
-  - {id: T-04, severity: blocker, summary: UC-06 AI integration has no milestone deliverable, remediationPhase: TR-2}
-  - {id: T-05, severity: blocker, summary: UC-10 Actual ingestion has no milestone deliverable, remediationPhase: TR-2}
-  - {id: T-06, severity: blocker, summary: M9 overclaims UC-01 through UC-15 acceptance, remediationPhase: TR-2}
-  - {id: T-07, severity: blocker, summary: Post-M9 roadmap boundary contradicts completed successor designs, remediationPhase: TR-2}
-  - {id: T-08, severity: blocker, summary: Prior DC-4 omitted end-to-end traceability, remediationPhase: TR-0}
-  - {id: T-09, severity: high, summary: UC summary evidence is stale, remediationPhase: TR-3}
-  - {id: T-10, severity: high, summary: M0.5 completion depends on later M1 without an explicit gate, remediationPhase: TR-2}
-  - {id: T-11, severity: high, summary: FD-4 and FD-5 linkage to M8 and M9 is implicit, remediationPhase: TR-2}
-  - {id: T-12, severity: medium, summary: Traceability completeness has no machine validation gate, remediationPhase: TR-3}
+  - {id: T-01, severity: blocker, summary: DateTime/DST lacks use-case and milestone ownership, remediationPhase: TR-1, status: closed, closedBy: UC-16-and-M10}
+  - {id: T-02, severity: blocker, summary: Resource capacity leveling and cost lack use-case decomposition and milestone ownership, remediationPhase: TR-1, status: closed, closedBy: UC-17-UC-18-and-M11}
+  - {id: T-03, severity: blocker, summary: Collaboration synchronization policy and audit lack use-case and milestone ownership, remediationPhase: TR-1, status: closed, closedBy: UC-19-UC-21-and-M12}
+  - {id: T-04, severity: blocker, summary: UC-06 AI integration has no milestone deliverable, remediationPhase: TR-2, status: closed, closedBy: M5}
+  - {id: T-05, severity: blocker, summary: UC-10 Actual ingestion has no milestone deliverable, remediationPhase: TR-2, status: closed, closedBy: M5.5-and-M7}
+  - {id: T-06, severity: blocker, summary: M9 overclaims UC-01 through UC-15 acceptance, remediationPhase: TR-2, status: closed, closedBy: M9-current-profile-and-M10-M13-successor-release}
+  - {id: T-07, severity: blocker, summary: Post-M9 roadmap boundary contradicts completed successor designs, remediationPhase: TR-2, status: closed, closedBy: M10-M13}
+  - {id: T-08, severity: blocker, summary: Prior DC-4 omitted end-to-end traceability, remediationPhase: TR-0, status: closed, closedBy: design-usecase-milestone-consistency-review}
+  - {id: T-09, severity: high, summary: UC summary evidence is stale, remediationPhase: TR-3, status: closed, closedBy: UC-summary-and-evidence-mapping}
+  - {id: T-10, severity: high, summary: M0.5 completion depends on later M1 without an explicit gate, remediationPhase: TR-2, status: closed, closedBy: M0.5-provisional-and-M1-completion}
+  - {id: T-11, severity: high, summary: FD-4 and FD-5 linkage to M8 and M9 is implicit, remediationPhase: TR-2, status: closed, closedBy: M8-FD4-and-M9-FD5}
+  - {id: T-12, severity: medium, summary: Traceability completeness has no machine validation gate, remediationPhase: TR-3, status: closed, closedBy: validate-traceability}
