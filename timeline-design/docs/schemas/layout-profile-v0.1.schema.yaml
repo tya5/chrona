@@ -4,6 +4,21 @@ type: object
 additionalProperties: false
 required: [version, id, canvas, regions, slots, constraints]
 properties:
+  surface:
+    type: object
+    additionalProperties: false
+    properties:
+      groupMode: {enum: [merged, header, none]}
+      groupLabel: {type: string}
+      groupFraction: {type: number, minimum: 0.1, maximum: 0.6}
+      groupGap: {type: number, minimum: 0, maximum: 24}
+      axisLevels: {type: array, minItems: 1, uniqueItems: true, items: {enum: [month, quarter]}}
+      fontSize: {type: number, minimum: 10, maximum: 28}
+      titleSize: {type: number, minimum: 16, maximum: 48}
+      groupFontSize: {type: number, minimum: 12, maximum: 30}
+      barHeight: {type: number, minimum: 6, maximum: 24}
+      barGap: {type: number, minimum: 2, maximum: 12}
+      showVariance: {type: boolean}
   version: {const: "chrona/layout-profile/v0.1"}
   id: {type: string, minLength: 1}
   canvas:

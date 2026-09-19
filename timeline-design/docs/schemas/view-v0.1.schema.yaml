@@ -31,6 +31,7 @@ allOf:
             properties:
               by: {enum: [objectType, field, none]}
               field: {type: string, minLength: 1}
+              order: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
               missing: {type: string, minLength: 1}
             allOf:
               - if: {properties: {by: {const: field}}}
