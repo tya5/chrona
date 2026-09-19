@@ -67,3 +67,13 @@ the evaluated Project revision, revalidates fingerprint and normal scheduling, a
 creates one Project revision. Stale, altered, partial, fixed, anchored, or out-of-scope
 changes reject. Cost observations are separately revisioned append-only records; they
 never invoke the scheduler or write a Project revision.
+
+## 7. Cost observation profile
+
+`chrona/cost-observation-set/v0.2` contains a stable set ID and append-only records.
+Each record has unique `id`, ISO Date `observedOn`, positive `quantity`, `quantityUnit`,
+and optional positive `rate` with required `rateUnit`; `objectId` is attribution only.
+A rate derives `quantity * rate`; no rate contributes no monetary amount. Aggregation is
+partitioned by `quantityUnit`/`rateUnit` and never converts units. A rate whose unit
+equals its quantity unit rejects as `E_COST_UNIT_MISMATCH`. Recording requires the
+current set revision and a new ID; stale or duplicate requests reject without mutation.

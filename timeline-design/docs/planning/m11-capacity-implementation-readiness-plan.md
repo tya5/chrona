@@ -10,5 +10,5 @@ proposals. Cost observations are a separate append-only resource.
 |---|---|---|
 | M11-1 | Validate capacity resources and derive overloads. | unit/reference/duplicate availability tests; no Project mutation. |
 | M11-2 | Produce/apply deterministic proposals through CAS. | fixed/anchor/scope/stale/partial rejection tests; regression. |
-| M11-3 | Store and aggregate cost observations separately. | unit mismatch and schedule-isolation tests. |
+| M11-3 | Store and aggregate cost observations separately. | unit/rate, duplicate/stale, and schedule-isolation tests. |
 | M11-4 | UC-17/18 and reuse/release review. | full suite and conformance evidence. |
