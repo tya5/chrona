@@ -1,0 +1,8 @@
+version: chrona/presentation/v0.1
+kind: summary-profile
+id: controller-z-delivery-overview
+panels:
+  - id: Delivery overview
+    metrics: [selectedCount, actualCoverage, knownFinishVarianceCount, missingActualCount]
+  - id: Next decision
+    metrics: [nextPlannedPoint]

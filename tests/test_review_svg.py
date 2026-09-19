@@ -24,7 +24,7 @@ def test_table_timeline_is_resource_driven():
 def test_summary_uses_only_declared_metrics():
     projection=build_review_projection({"objects":{"a":{"title":"A"}}},{"a":{"at":date(2026,4,3)}},{"body":{"selection":{"include":{"types":["point"]}},"ordering":{"by":"plannedStart"},"window":{"marginDays":0},"comparison":{"actual":"optional"}}},None,{"body":{"rules":[]}},{"body":{"roles":{"planned":{}}}})
     svg=append_review_summary('<svg></svg>',projection,{"panels":[{"id":"next","metrics":["selectedCount","nextPlannedPoint"]}]},date(2026,4,1))
-    assert 'summary-panel' in svg and 'selectedCount: 1' in svg and '2026-04-03' in svg
+    assert 'summary-panel' in svg and 'Selected work: 1' in svg and '2026-04-03' in svg
 
 def test_expressive_primitives_use_generic_relations():
     project={"objects":{"a":{"title":"A"},"b":{"title":"B"}},"relations":[{"id":"ab","from":{"object":"a"},"to":{"object":"b"}}]}

@@ -1,0 +1,13 @@
+version: chrona/layout-profile/v0.1
+id: executive-light-16x9
+canvas: {aspectRatio: '16:9', margin: spacious, density: presentation}
+regions:
+  - {id: header, layout: stack}
+  - {id: main, layout: split, tracks: ['2fr', '3fr']}
+  - {id: footer, layout: grid, tracks: ['1fr']}
+slots:
+  title: {region: header, source: title, priority: required, overflow: diagnose, role: text}
+  table: {region: main, source: table, priority: required, overflow: diagnose, role: table-header}
+  timeline: {region: main, source: timeline, priority: required, overflow: diagnose, role: planned}
+  summary: {region: footer, source: summary, priority: preferred, overflow: ellipsize-with-source, role: text}
+constraints: {connectors: obstacle-aware, overlap: diagnose}

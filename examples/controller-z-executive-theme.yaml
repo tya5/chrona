@@ -1,0 +1,25 @@
+version: chrona/presentation/v0.1
+kind: theme
+id: executive-light
+body:
+  values:
+    canvas: {type: color, value: '#F8F7F4'}
+    ink: {type: color, value: '#172033'}
+    grid: {type: color, value: '#C9CED8'}
+    grid-light: {type: color, value: '#E6E9EE'}
+    header: {type: color, value: '#EAF0F8'}
+    group: {type: color, value: '#EEF3F8'}
+    plan: {type: color, value: '#3264B0'}
+    actual: {type: color, value: '#2D8A64'}
+    delay: {type: color, value: '#C8762B'}
+    editorial: {type: fontFamily, value: 'Inter, Avenir Next, Aptos, Arial, sans-serif'}
+  roles:
+    background: {fill: canvas}
+    text: {fill: ink, fontFamily: editorial}
+    axis-major: {stroke: grid}
+    axis-minor: {stroke: grid-light}
+    table-header: {fill: header}
+    group-band: {fill: group}
+    planned: {fill: plan}
+    actual: {fill: actual}
+    variance-behind: {stroke: delay}

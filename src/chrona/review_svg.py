@@ -138,23 +138,24 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     if not required.issubset(capabilities): raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
     start,end=projection.window; columns=view["body"].get("tableColumns", [{"id":"title","source":"title","missing":"em-dash"}])
     groups=profile.get("groups",{"mode":"header-and-separator","gapRows":1}); table=slots.get("table") if slots else None; timeline=slots.get("timeline") if slots else None; header=slots.get("title") if slots else None
-    col_width=(table.width//max(1,len(columns))) if table else 150; left=timeline.x if timeline else 32+col_width*len(columns); top=(timeline.y+40) if timeline else 128; day=max(4,((timeline.width if timeline else 1200)-24)//max(1,(end-start).days)) ; row=36; width=(header.x+header.width if header else max(1080,left+(end-start).days*day+48)); colors=_theme_colors(theme)
+    col_width=(table.width//max(1,len(columns))) if table else 150; left=timeline.x if timeline else 32+col_width*len(columns); top=(timeline.y+40) if timeline else 128; day=max(4,((timeline.width if timeline else 1200)-24)//max(1,(end-start).days)) ; row={"engineering":28,"review":32,"presentation":30}.get(profile.get("canvas",{}).get("density"),36); width=(header.x+header.width if header else max(1080,left+(end-start).days*day+48)); colors=_theme_colors(theme)
     group_breaks=sum(1+groups["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id)
     height=900 if slots else top+(len(projection.items)+group_breaks+4)*row+40
     title_x,title_y=(header.x,header.y+32) if header else (32,34); table_x=table.x if table else 32
-    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{title_x}" y="{title_y}" font-family="system-ui" font-size="20" font-weight="700">{escape(title)}</text>']
+    font=_theme_font(theme)
+    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{title_x}" y="{title_y}" font-family="{font}" font-size="22" font-weight="700" fill="{colors["text"]}">{escape(title)}</text>']
     p.append(f'<rect data-purpose="table-header" x="{table_x-8}" y="{top-32}" width="{col_width*len(columns)}" height="24" fill="{_theme_color(theme,"table-header","#f3f4f6")}"/>')
     for n,col in enumerate(columns): p.append(f'<text data-purpose="table-header" x="{table_x+n*col_width}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">{escape(str(col["id"]))}</text>')
     cursor=date(start.year,start.month,1)
     while cursor<=end:
-        x=left+(cursor-start).days*day; p += [f'<line data-purpose="axis-major" x1="{x}" y1="70" x2="{x}" y2="{height-24}" stroke="#9ca3af"/>',f'<text data-purpose="axis-band" x="{x+3}" y="70" font-family="system-ui" font-size="11">{cursor:%b %Y}</text>']
+        x=left+(cursor-start).days*day; p += [f'<line data-purpose="axis-major" x1="{x}" y1="70" x2="{x}" y2="{height-24}" stroke="{colors["grid"]}"/>',f'<text data-purpose="axis-band" x="{x+3}" y="70" font-family="{font}" font-size="11" fill="{colors["text"]}">{cursor:%b %Y}</text>']
         cursor=date(cursor.year+1,1,1) if cursor.month==12 else date(cursor.year,cursor.month+1,1)
     quarter=date(start.year,((start.month-1)//3)*3+1,1)
     while quarter<=end:
         x=left+(quarter-start).days*day; p.append(f'<text data-purpose="axis-quarter" x="{x+3}" y="52" font-family="system-ui" font-size="12" font-weight="700">Q{(quarter.month-1)//3+1} {quarter.year}</text>'); quarter=date(quarter.year+1,1,1) if quarter.month==10 else date(quarter.year,quarter.month+3,1)
     cursor=start
     while cursor<=end:
-        x=left+(cursor-start).days*day; p.append(f'<line data-purpose="axis-minor" x1="{x}" y1="88" x2="{x}" y2="{height-24}" stroke="#e5e7eb"/>'); cursor=date.fromordinal(cursor.toordinal()+7)
+        x=left+(cursor-start).days*day; p.append(f'<line data-purpose="axis-minor" x1="{x}" y1="88" x2="{x}" y2="{height-24}" stroke="{colors["gridMinor"]}"/>'); cursor=date.fromordinal(cursor.toordinal()+7)
     y=top; previous=None; positions: dict[str, tuple[int,int]]={}
     for item in projection.items:
         if item.group_id!=previous:
@@ -186,18 +187,24 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
         ny=notes.y+18
         for annotation in project.get("annotations",{}).values():
             p.append(f'<text data-purpose="presentation-annotation" x="{notes.x}" y="{ny}" font-family="system-ui" font-size="11">{escape(str(annotation.get("text","")))}</text>'); ny+=16
-    return "\n".join(p+["</svg>"])+"\n"
+    # Typography is a presentation token, not a renderer-specific choice.  Keeping
+    # the same resolved stack on every text primitive makes the exported SVG match
+    # the theme in browsers, slide tools, and raster verification.
+    return ("\n".join(p+["</svg>"]).replace('font-family="system-ui"', f'font-family="{font}"')+"\n")
 
 
-def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date) -> str:
+def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date, rect: Any | None = None) -> str:
     """Append only declared, read-only M16 metrics to an existing SVG composition."""
     total=len(projection.items); actual=sum(bool(item.actual) for item in projection.items)
     points=sorted(item.planned["at"] for item in projection.items if item.source_type=="point" and item.planned["at"]>=as_of)
     values={"selectedCount":str(total),"actualCoverage":f"{actual}/{total}" if total else "unknown","knownFinishVarianceCount":str(sum(item.finish_delta is not None for item in projection.items)),"missingActualCount":str(total-actual),"nextPlannedPoint":points[0].isoformat() if points else "unknown"}
-    lines=[]; y=24
+    labels={"selectedCount":"Selected work","actualCoverage":"Actual coverage","knownFinishVarianceCount":"Known finish variance","missingActualCount":"Missing Actual","nextPlannedPoint":"Next planned point"}
+    lines=[]; x=getattr(rect,"x",32); y=getattr(rect,"y",24)+22
     for panel in profile["panels"]:
-        text=" · ".join(f'{metric}: {values[metric]}' for metric in panel["metrics"])
-        lines.append(f'<text data-purpose="summary-panel" data-source-ref="derived:{escape(panel["id"])}" x="32" y="{y}" font-family="system-ui" font-size="11">{escape(panel["id"])} — {escape(text)}</text>'); y+=18
+        lines.append(f'<text data-purpose="summary-panel" data-source-ref="derived:{escape(panel["id"])}" x="{x}" y="{y}" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700">{escape(panel["id"])}</text>'); y+=15
+        for metric in panel["metrics"]:
+            lines.append(f'<text data-purpose="summary-metric" data-source-ref="derived:{escape(panel["id"])}:{metric}" x="{x}" y="{y}" font-family="Inter, Arial, sans-serif" font-size="10">{escape(labels[metric])}: {escape(values[metric])}</text>'); y+=13
+        y+=6
     return svg.replace("</svg>", "\n".join(lines)+"\n</svg>")
 
 
@@ -218,10 +225,16 @@ def _theme_colors(theme: dict[str, Any]) -> dict[str,str]:
     values={key:str(value.get("value")) for key,value in theme.get("body",{}).get("values",{}).items()}
     roles=theme.get("body",{}).get("roles",{})
     def color(role:str, fallback:str)->str: return values.get(roles.get(role,{}).get("fill") or roles.get(role,{}).get("stroke"),fallback)
-    return {"background":"#faf8f6","planned":color("planned","#2563eb"),"actual":color("actual","#16a34a"),"behind":color("variance-behind","#b45309")}
+    return {"background":color("background","#faf8f6"),"text":color("text","#111827"),"grid":color("axis-major","#9ca3af"),"gridMinor":color("axis-minor","#e5e7eb"),"planned":color("planned","#2563eb"),"actual":color("actual","#16a34a"),"behind":color("variance-behind","#b45309")}
 
 
 def _theme_color(theme: dict[str, Any], role: str, fallback: str) -> str:
     values={key:str(value.get("value")) for key,value in theme.get("body",{}).get("values",{}).items()}
     binding=theme.get("body",{}).get("roles",{}).get(role,{})
     return values.get(binding.get("fill") or binding.get("stroke"),fallback)
+
+
+def _theme_font(theme: dict[str, Any]) -> str:
+    values={key:str(value.get("value")) for key,value in theme.get("body",{}).get("values",{}).items()}
+    binding=theme.get("body",{}).get("roles",{}).get("text",{})
+    return values.get(binding.get("fontFamily"),"Inter, Arial, sans-serif")
