@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from chrona.commands import execute_set_typed_field, set_typed_field
+from chrona.commands import execute_set_typed_field, execute_typed_field_batch, set_typed_field
 from chrona.loader import schedule_snapshot, validate_snapshot
 from chrona.revision_store import LocalSnapshotReader, MemoryRevisionStore
 from chrona.scheduler import schedule
@@ -58,6 +58,26 @@ def test_typed_field_command_uses_cas_and_creates_immutable_snapshot():
     conflict = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "blocked")
     assert conflict.status == "rejected"
     assert conflict.diagnostics == ("E_CONFLICT",)
+
+
+def test_typed_field_batch_is_atomic_and_writes_one_new_snapshot():
+    store = MemoryRevisionStore(_roadmap())
+    base = store.read()
+    accepted = execute_typed_field_batch(
+        store, base.revision, _manifest(),
+        [("idp-4", "workflowState", "active"), ("idp-4", "workflowState", "blocked")],
+    )
+    assert accepted.status == "accepted"
+    assert accepted.result_revision and accepted.result_revision != base.revision
+    assert store.read().project["objects"]["idp-4"]["fields"]["workflowState"] == "blocked"
+    rejected = execute_typed_field_batch(
+        store, accepted.result_revision, _manifest(),
+        [("idp-4", "workflowState", "planned"), ("idp-4", "workflowState", "done")],
+    )
+    assert rejected.status == "rejected"
+    assert rejected.diagnostics == ("IDP-STATE-001",)
+    assert store.read().revision == accepted.result_revision
+    assert store.read().project["objects"]["idp-4"]["fields"]["workflowState"] == "blocked"
 
 
 def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
