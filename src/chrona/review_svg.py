@@ -115,26 +115,33 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     if settings:
         viewport, layout, palette = settings["context"]["viewport"], settings["layout"], settings["theme"]
         left, top, day, row = layout["margins"]["left"], layout["margins"]["top"], layout["scale"]["dayWidth"], layout["row"]["height"]
-        colors = {"background": palette["paints"]["background"]["color"], "planned": palette["paints"]["planned"]["color"], "actual": palette["paints"]["actual"]["color"], "behind": palette["paints"]["varianceBehind"]["color"]}
+        colors = {"background": palette["paints"]["background"]["color"], "planned": palette["paints"]["planned"]["color"], "actual": palette["paints"]["actual"]["color"], "behind": palette["paints"]["varianceBehind"]["color"], "text": palette["paints"]["text"]["color"], "muted": palette["paints"]["textMuted"]["color"], "grid": palette["strokes"]["axisMinor"]["color"], "separator": palette["strokes"]["groupSeparator"]["color"], "missing": palette["missingPattern"]["stroke"]["color"]}
         font, heading, body = palette["fontFamily"], palette["typography"]["heading"], palette["typography"]["body"]
+        group_profile = {"mode": layout["group"]["mode"], "gapRows": 0}
+        missing = palette["missingPattern"]
+        labels = settings["detail"]
     else:
         left, top, day, row = 220, 96, 12, 56
         colors = _theme_colors(theme); font, heading, body = "system-ui", {"size":20,"weight":700}, {"size":13,"weight":400}
-    group_profile=(profile or {}).get("groupPresentation",{"mode":"none","gapRows":0}); extra=sum(1+group_profile["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id); width, height = (viewport["width"], viewport["height"]) if settings else (max(960, left + (end - start).days * day + 80), top + (len(projection.items)+extra) * row + 100)
-    parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} review</title>',f'<desc id="desc">Planned and Actual engineering timeline review; {len(projection.unmatched_actual_ids)} unmatched Actual observations.</desc>', '<defs><pattern id="missing" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#6b7280" stroke-width="2"/></pattern></defs>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{left}" y="{top-heading["size"]}" font-family="{escape(font, quote=True)}" font-size="{heading["size"]}" font-weight="{heading["weight"]}">{escape(title)} — Plan / Actual Review</text>']
+        group_profile = (profile or {}).get("groupPresentation", {"mode":"none","gapRows":0})
+        missing = {"width": 6, "height": 6, "angle": 45, "stroke": {"color": "#6b7280", "width": 2}}
+        labels = {"title": "{title} — Plan / Actual Review", "missingActualLabel": "actual missing", "unmatchedActual": "Unmatched Actual: {unmatchedIds}", "formatting": {"signedDaysSuffix": "d", "positiveSign": "+"}}
+    extra=sum(1+group_profile["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id); width, height = (viewport["width"], viewport["height"]) if settings else (max(960, left + (end - start).days * day + 80), top + (len(projection.items)+extra) * row + 100)
+    title_text = labels["title"].replace("{title}", title)
+    parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title_text)}</title>',f'<desc id="desc">Planned and Actual engineering timeline review; {len(projection.unmatched_actual_ids)} unmatched Actual observations.</desc>', f'<defs><pattern id="missing" width="{missing["width"]}" height="{missing["height"]}" patternUnits="userSpaceOnUse" patternTransform="rotate({missing["angle"]})"><line x1="0" y1="0" x2="0" y2="{missing["height"]}" stroke="{colors.get("missing", missing["stroke"]["color"])}" stroke-width="{missing["stroke"]["width"]}"/></pattern></defs>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{left}" y="{top-heading["size"]}" font-family="{escape(font, quote=True)}" font-size="{heading["size"]}" font-weight="{heading["weight"]}" fill="{colors.get("text", "#111827")}">{escape(title_text)}</text>']
     cursor = start
     while cursor <= end:
         x=left+(cursor-start).days*day
-        if cursor.day <= 7: parts += [f'<line x1="{x}" y1="60" x2="{x}" y2="{height-30}" stroke="#ddd"/>',f'<text x="{x+3}" y="55" font-family="system-ui" font-size="11">{cursor:%Y-%m}</text>']
+        if cursor.day <= 7: parts += [f'<line x1="{x}" y1="{top-body["size"]}" x2="{x}" y2="{height-layout["margins"]["bottom"] if settings else height-30}" stroke="{colors.get("grid", "#ddd")}"/>',f'<text x="{x+layout["cellPadding"]["left"] if settings else x+3}" y="{top-body["size"]-2}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}">{cursor:%Y-%m}</text>']
         cursor=date.fromordinal(cursor.toordinal()+7)
     y=top-row
     previous=None
     for item in projection.items:
         if item.group_id!=previous:
-            if previous is not None: y+=row*(1+group_profile["gapRows"]); parts.append(f'<line data-purpose="group-separator" x1="24" y1="{y-row//2}" x2="{width-24}" y2="{y-row//2}" stroke="#9ca3af"/>')
-            if group_profile["mode"] in {"header-and-separator","band"}: parts.append(f'<text data-purpose="group-header" x="24" y="{y+row//2}" font-family="system-ui" font-size="14" font-weight="700">{escape(item.group_label)}</text>')
+            if previous is not None: y+=row*(1+group_profile["gapRows"]); parts.append(f'<line data-purpose="group-separator" x1="{left}" y1="{y-row//2}" x2="{width-left}" y2="{y-row//2}" stroke="{colors.get("separator", "#9ca3af")}"/>')
+            if group_profile["mode"] in {"header-and-separator","band", "header", "merged"}: parts.append(f'<text data-purpose="group-header" x="{left}" y="{y+row//2}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}" font-weight="700">{escape(item.group_label)}</text>')
             y+=row; previous=item.group_id
-        y+=row; parts.append(f'<text x="24" y="{y+5}" font-family="system-ui" font-size="13">{escape(item.title)}</text>')
+        y+=row; parts.append(f'<text x="{left}" y="{y+5}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}" fill="{colors.get("text", "#111827")}">{escape(item.title)}</text>')
         attrs=f'data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned"'
         if item.source_type=="point":
             x=left+(item.planned["at"]-start).days*day; parts.append(f'<path {attrs} d="M{x} {y-8} L{x+8} {y} L{x} {y+8} L{x-8} {y}Z" fill="{colors["planned"]}"/>')
@@ -142,10 +149,17 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
             x=left+(item.planned["start"]-start).days*day; w=max(4,(item.planned["end"]-item.planned["start"]).days*day); parts.append(f'<rect {attrs} x="{x}" y="{y-12}" width="{w}" height="12" rx="2" fill="{colors["planned"]}"/>')
         if item.actual:
             if "finish" in item.actual and item.source_type=="span":
-                ax=left+((item.actual.get("start",item.planned["start"])-start).days)*day; aw=max(4,(item.actual["finish"]-item.actual.get("start",item.planned["start"])).days*day); parts.append(f'<rect data-scene-id="item:{item.object_id}:actual" data-source-ref="{item.object_id}" data-purpose="actual" x="{ax}" y="{y+4}" width="{aw}" height="9" rx="2" fill="{colors["actual"]}"/>')
-            if item.finish_delta is not None: parts.append(f'<text data-scene-id="item:{item.object_id}:variance" data-source-ref="{item.object_id}" data-purpose="variance" x="{left+(item.planned.get("end",item.planned.get("at"))-start).days*day+5}" y="{y+14}" font-family="system-ui" font-size="11" fill="{colors["behind"]}">{item.finish_delta:+d}d</text>')
-        else: parts.append(f'<rect data-scene-id="item:{item.object_id}:missing" data-source-ref="{item.object_id}" data-purpose="actual" x="{left+(item.planned.get("start",item.planned.get("at"))-start).days*day}" y="{y+4}" width="18" height="9" fill="url(#missing)"/><text x="{left+(item.planned.get("start",item.planned.get("at"))-start).days*day+22}" y="{y+13}" font-family="system-ui" font-size="10">actual missing</text>')
-    if projection.unmatched_actual_ids: parts.append(f'<text x="24" y="{height-24}" font-family="system-ui" font-size="11" fill="#b45309">Unmatched Actual: {escape(", ".join(projection.unmatched_actual_ids))}</text>')
+                ax=left+((item.actual.get("start",item.planned["start"])-start).days)*day; aw=max(settings["theme"]["bar"]["minWidth"] if settings else 4,(item.actual["finish"]-item.actual.get("start",item.planned["start"])).days*day); parts.append(f'<rect data-scene-id="item:{item.object_id}:actual" data-source-ref="{item.object_id}" data-purpose="actual" x="{ax}" y="{y+layout["bars"]["gap"] if settings else y+4}" width="{aw}" height="{settings["theme"]["bar"]["actualHeight"] if settings else 9}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}" fill="{colors["actual"]}"/>')
+            if item.finish_delta is not None:
+                suffix, sign = labels["formatting"]["signedDaysSuffix"], labels["formatting"]["positiveSign"]
+                value = f'{sign}{item.finish_delta}{suffix}' if item.finish_delta > 0 else f'{item.finish_delta}{suffix}'
+                parts.append(f'<text data-scene-id="item:{item.object_id}:variance" data-source-ref="{item.object_id}" data-purpose="variance" x="{left+(item.planned.get("end",item.planned.get("at"))-start).days*day+layout["variance"]["labelGap"] if settings else left+(item.planned.get("end",item.planned.get("at"))-start).days*day+5}" y="{y+layout["variance"]["offset"] if settings else y+14}" font-family="{escape(font, quote=True)}" font-size="{palette["typography"]["variance"]["size"] if settings else 11}" fill="{colors["behind"]}">{value}</text>')
+        else:
+            missing_x=left+(item.planned.get("start",item.planned.get("at"))-start).days*day
+            parts.append(f'<rect data-scene-id="item:{item.object_id}:missing" data-source-ref="{item.object_id}" data-purpose="actual" x="{missing_x}" y="{y+layout["bars"]["gap"] if settings else y+4}" width="{missing["width"] if settings else 18}" height="{missing["height"] if settings else 9}" fill="url(#missing)"/><text x="{missing_x+(layout["missingActual"]["gap"] if settings else 22)}" y="{y+body["size"]}" font-family="{escape(font, quote=True)}" font-size="{palette["typography"]["missingActual"]["size"] if settings else 10}">{escape(labels["missingActualLabel"])}</text>')
+    if projection.unmatched_actual_ids:
+        line = labels["unmatchedActual"].replace("{unmatchedIds}", labels.get("listSeparator", ", ").join(projection.unmatched_actual_ids))
+        parts.append(f'<text x="{left}" y="{height-layout["margins"]["bottom"] if settings else height-24}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}" fill="{colors["behind"]}">{escape(line)}</text>')
     return "\n".join(parts+["</svg>"])+"\n"
 
 
