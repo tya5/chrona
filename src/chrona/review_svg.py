@@ -144,9 +144,11 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
         y+=row; parts.append(f'<text x="{left}" y="{y+5}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}" fill="{colors.get("text", "#111827")}">{escape(item.title)}</text>')
         attrs=f'data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned"'
         if item.source_type=="point":
-            x=left+(item.planned["at"]-start).days*day; parts.append(f'<path {attrs} d="M{x} {y-8} L{x+8} {y} L{x} {y+8} L{x-8} {y}Z" fill="{colors["planned"]}"/>')
+            radius = (settings["theme"]["point"]["size"] / 2) if settings else 8
+            x=left+(item.planned["at"]-start).days*day; parts.append(f'<path {attrs} d="M{x} {y-radius} L{x+radius} {y} L{x} {y+radius} L{x-radius} {y}Z" fill="{colors["planned"]}"/>')
         else:
-            x=left+(item.planned["start"]-start).days*day; w=max(4,(item.planned["end"]-item.planned["start"]).days*day); parts.append(f'<rect {attrs} x="{x}" y="{y-12}" width="{w}" height="12" rx="2" fill="{colors["planned"]}"/>')
+            bar_height = settings["theme"]["bar"]["plannedHeight"] if settings else 12
+            x=left+(item.planned["start"]-start).days*day; w=max(settings["theme"]["bar"]["minWidth"] if settings else 4,(item.planned["end"]-item.planned["start"]).days*day); parts.append(f'<rect {attrs} x="{x}" y="{y-bar_height}" width="{w}" height="{bar_height}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}" fill="{colors["planned"]}"/>')
         if item.actual:
             if "finish" in item.actual and item.source_type=="span":
                 ax=left+((item.actual.get("start",item.planned["start"])-start).days)*day; aw=max(settings["theme"]["bar"]["minWidth"] if settings else 4,(item.actual["finish"]-item.actual.get("start",item.planned["start"])).days*day); parts.append(f'<rect data-scene-id="item:{item.object_id}:actual" data-source-ref="{item.object_id}" data-purpose="actual" x="{ax}" y="{y+layout["bars"]["gap"] if settings else y+4}" width="{aw}" height="{settings["theme"]["bar"]["actualHeight"] if settings else 9}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}" fill="{colors["actual"]}"/>')
