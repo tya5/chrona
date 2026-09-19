@@ -1,6 +1,6 @@
 # Revision Store Adapter Remediation Plan
 
-**Status:** Active  
+**Status:** Complete — 2026-09-19
 **Version:** 0.1  
 **Purpose:** Remove Git as a required runtime or semantic dependency while preserving Git as a first-class persistence and review adapter.
 
@@ -38,6 +38,9 @@ long-term cross-layer contract.
 | RA-4 | Generalize federation source, pinning, and trust contracts | Federation design | provider-neutral export reference | Complete |
 | RA-5 | Add v0.2 reference/command/presentation schemas and Git/local/content fixtures | `schemas/`, `fixtures/` | validation runner passes in CI | Complete — provider-neutral Federation/Presentation successors and Git/local/content positive/negative fixtures pass the workflow command set with declared dependencies |
 | RA-6 | Perform cross-document review against the completion conditions | review | traced findings and disposition | Complete — `revision-store-adapter-readiness-review.md` |
+
+The completion evidence is incorporated by the design-closure program; this plan is
+retained as the authoritative remediation history and is not an active work queue.
 
 ## 4. Compatibility and migration
 

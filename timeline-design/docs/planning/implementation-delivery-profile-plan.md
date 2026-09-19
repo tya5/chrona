@@ -1,6 +1,6 @@
 # Implementation-Delivery Profile Plan
 
-**Status:** Planned prerequisite
+**Status:** Complete — 2026-09-19
 **Authority:** This plan owns the completion order for the standard
 `implementation-delivery` extension profile. It does not change Core scheduling,
 Actual, Command, or Revision Store semantics; those remain owned by specifications
@@ -49,7 +49,7 @@ must also be usable by other Chrona projects.
 | IDP-4 — Self-hosted roadmap fixture | **Complete.** Encode a representative Chrona delivery plan as a Chrona Project using the profile, including work items, gates, dependencies, evidence, and reuse classifications. | `implementation-delivery-roadmap-v0.1.yaml` validates its profile/evidence vocabulary and schedules deterministically. |
 | IDP-5a — Resolved-manifest runtime | **Complete.** Add typed-field validation and standard Command support for an explicitly resolved package manifest. | Runtime tests validate the self-hosted fixture through Core; CAS field Command creates a content-identified immutable snapshot and rejects invalid/stale changes unchanged. |
 | IDP-5b — Store-bound package resolution | **Complete.** Resolve the Project's immutable package reference through the Revision Store reader rather than injecting a manifest from the host. | Local immutable reader resolves the pinned package through `validate_project`/`schedule`; unavailable/Draft/content-mismatched references reject before typed-field validation. |
-| IDP-6 — Review and authorization | Reconcile the profile with Extension Model, Project Format, Command, Revision Store, Quality, and the delivery roadmap. | Cross-document review records owners, diagnostics, deferred functionality, and a published authorization for subsequent slices. |
+| IDP-6 — Review and authorization | **Complete.** Reconcile the profile with Extension Model, Project Format, Command, Revision Store, Quality, and the delivery roadmap. | `implementation-delivery-profile-design-review-2026-09-19.md` records owners, diagnostics, deferred functionality, and the authorized implementation boundary. |
 
 ## 4. Delivery order
 
@@ -57,8 +57,8 @@ IDP-1 through IDP-4 are design and conformance prerequisites. IDP-5a is the firs
 implementation slice (Slice 0) and may start only after those prerequisites pass.
 IDP-5b follows Slice I because provider-neutral package resolution requires the same
 immutable reader as a Project. IDP-6 closes the self-hosting gate after IDP-5b, before
-later adapter work begins. Each work package is independently validated, committed,
-immediately non-force published, and verified on GitHub before the next begins.
+later adapter work begins. Each work package was independently validated, committed,
+published, and verified on GitHub before the next began.
 
 ## 5. Explicitly not added
 

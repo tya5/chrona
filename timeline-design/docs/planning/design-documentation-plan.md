@@ -1,8 +1,8 @@
 # Design Documentation Plan
 
-**Status:** Draft  
+**Status:** Complete documentation-governance baseline
 **Version:** 0.1  
-**Purpose:** Define the structure, ownership, relationships, and maintenance rules for the project's design artifacts before detailed design work begins.
+**Purpose:** Define the structure, ownership, relationships, and maintenance rules for the project's design artifacts.
 
 ## 1. Purpose
 
@@ -12,7 +12,7 @@ The project is intended to provide a Git-friendly, structured, extensible system
 
 The purpose of this plan is to prevent those concerns from becoming mixed across documents and implementations.
 
-This document is therefore a **meta-specification for the design documentation itself**. Subsequent design artifacts SHOULD follow the ownership and dependency rules defined here.
+This document is therefore a **meta-specification for the design documentation itself**. Subsequent design artifacts MUST follow the ownership and dependency rules defined here.
 
 ## 2. Documentation Principles
 
@@ -1142,6 +1142,21 @@ invent its own planning model. The bounded `implementation-delivery` profile and
 self-hosted roadmap fixture are therefore a prerequisite to the first authorized
 implementation slice; `implementation-delivery-profile-plan.md` records its completion
 program.
+
+### 15.4 Design-closure and maturity rule
+
+`design-closure-program.md` is the single completion ledger for the full
+pre-implementation design. It records the ordered closure phases, authoritative
+evidence, publication records, and the final no-unresolved-design disposition.
+
+The maturity label on an individual specification has a narrower meaning than the
+closure ledger: `Stable` identifies a released compatibility profile, while `Draft` or
+`Proposed` may identify a fully specified successor that has not been promoted into a
+released profile. A non-Stable label MUST NOT conceal an incomplete authority boundary:
+before implementation, every in-scope capability still requires one owner, typed
+input/output, deterministic diagnostics, fixture evidence, and cross-document review.
+Conversely, a closure review MUST NOT promote a successor's compatibility status merely
+to make the ledger look complete.
 
 ## 16. Guiding Boundary
 
