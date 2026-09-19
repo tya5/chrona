@@ -100,7 +100,31 @@ Interactive editing may maintain a local Draft and compute fine-grained scene de
 Only accepted semantic commands create canonical snapshots. This preserves the
 reactivity rule: changing one object does not require rebuilding unrelated UI state.
 
-## 8. Federation and trust
+## 8. Named baseline capture
+
+`captureSnapshot` is a Store publication operation, not a copy of a schedule or a
+renderer artifact. Given a Project target Resource Reference, an opaque observed base
+revision, and a `snapshotId`, the adapter MUST first compare the current Project
+revision with that base. On equality it writes exactly one `snapshot-ref` resource at
+the canonical Presentation address `snapshots/<snapshotId>.yaml`. Its body contains the
+target's stable Project ID, kind, normalized address, Store identity, exact immutable
+revision token, and SHA-256 content identity. The referenced Project bytes are not
+copied into the snapshot resource.
+
+Publication is atomic at the Snapshot Store boundary: either the named resource is
+durably readable with the complete reference, or it does not exist. A stale base,
+existing `snapshotId`, unavailable immutable Project bytes, or content-identity
+mismatch rejects without creating a partial resource. The operation does not mutate
+the Project and is non-reversible: undo/redo cannot delete or retarget a published
+baseline. A result reports the created resource reference; a client must use that
+reference explicitly in a later Render Context.
+
+The Project and Snapshot resources MAY share one Store snapshot or use separately
+pinned immutable snapshots. Cross-store capture is valid only when the result records
+both Store identities and the Project reference remains independently verifiable; no
+moving branch, Draft, or current file can be captured.
+
+## 9. Federation and trust
 
 A child publishes an immutable Timeline Export through any readable adapter profile.
 The parent pins its provider-neutral resource reference; consuming it does not mutate
