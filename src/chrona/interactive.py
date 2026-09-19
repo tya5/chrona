@@ -22,6 +22,26 @@ class DeltaResult:
     diagnostics: tuple[str, ...]
 
 
+def plan_actual_review(placements: dict[str, dict[str, Any]], actual_set: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], tuple[str, ...]]:
+    """Derive comparison facets without inventing missing actual dates or forecasts."""
+    rows: dict[str, dict[str, Any]] = {}
+    diagnostics: list[str] = []
+    for observation in actual_set.get("observations", []):
+        object_id = observation.get("projectObjectId")
+        if not object_id or object_id not in placements:
+            diagnostics.append("E_ACTUAL_UNMATCHED")
+            continue
+        actual = deepcopy(observation.get("actual", {}))
+        rows[object_id] = {"planned": deepcopy(placements[object_id]), "actual": actual, "variance": "known" if actual else "unknown"}
+    return rows, tuple(sorted(set(diagnostics)))
+
+
+def accessible_scene_summary(scene: InteractiveScene) -> str:
+    """Text alternative for a completed, derived Scene projection."""
+    labels = [str(node.get("title") or scene_id) for scene_id, node in sorted(scene.nodes.items())]
+    return f"Interactive timeline with {len(labels)} items: " + ", ".join(labels)
+
+
 def apply_scene_delta(scene: InteractiveScene, delta: dict[str, Any]) -> DeltaResult:
     """Atomically reconcile derived interactive state; never accepts Project data."""
     if delta.get("baseEvaluationFingerprint") != scene.evaluation_fingerprint or delta.get("baseGeneration") != scene.generation:
