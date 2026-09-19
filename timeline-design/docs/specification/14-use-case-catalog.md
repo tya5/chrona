@@ -46,7 +46,7 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-13 | Export one evaluation to declared targets | Should | Delivered for the declared SVG adapter with capability/fidelity and exact release-package validation. |
 | UC-14 | Federate independently owned subproject timelines | Must | Delivered by M4 pinned federation resolver evidence. |
 | UC-15 | Manage a delivery roadmap using Chrona | Must | Delivered by M0.5/M1 delivery profile and pinned package-resolution evidence. |
-| UC-16 | Plan a cross-zone event without DST ambiguity | Future | DateTime/DST successor design and fixtures; runtime deferred |
+| UC-16 | Plan a cross-zone event without DST ambiguity | Delivered | Delivered by M10: opt-in DateTime/DST runtime, v0.2 scheduler, recurrence, and provenance-preserving migration; Date-only remains unchanged. |
 | UC-17 | Assess capacity and accept an explicit leveling proposal | Future | Resource/capacity successor design and fixtures; solver deferred |
 | UC-18 | Record cost and time observations without rescheduling the plan | Future | Cost/time observation boundary and fixtures; adapter deferred |
 | UC-19 | Resolve a concurrent semantic conflict explicitly | Future | Collaboration merge design and fixtures; service deferred |
@@ -435,7 +435,7 @@ provenance-preserving synchronization fixtures.
 | UC-13 | `07`–`09`, `12`, `13`, `22` | output-capability schema, fidelity diagnostics, and target fixture | non-SVG target adapters |
 | UC-14 | `05`, `06`, `09`, `12`, `13`, `15`, `16` | pinned Git/local/content closure, trust/repin diagnostics, and aggregate-projection fixture | resolver and aggregate Scene adapter |
 | UC-15 | `02`, `04`, `05`, `10`, `11`, `12`, `15`, `17` | delivery profile schema, vocabulary/evidence/state fixtures, roadmap fixture, and IDP-6 review | profile UX only |
-| UC-16 | `03`, `04`, `05`, `12`, `18` | DateTime/DST schema, fixtures, ADR-0014, and FD-1 review | M10 runtime and migration adapter |
+| UC-16 | `03`, `04`, `05`, `12`, `18` | DateTime/DST schema, fixtures, ADR-0014, M10 runtime/migration tests, and final reuse/release review | None for the declared M10 scope |
 | UC-17 | `02`, `04`, `05`, `10`, `12`, `19` | capacity schema/fixtures, ADR-0015, and FD-2 review | M11 evaluator and proposal adapter |
 | UC-18 | `05`, `06`, `12`, `19` | observation-isolation contract and capacity/cost fixtures | M11 accounting observation adapter |
 | UC-19 | `09`, `10`, `12`, `15`, `20` | collaboration schema/fixtures, ADR-0016, and FD-3 review | M12 conflict/merge service |
