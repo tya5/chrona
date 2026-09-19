@@ -22,8 +22,8 @@ evidence is present, not that a later product release is complete.
 | M9 | Complete | Declared SVG output coordinator, capability/fidelity evidence, AI-inclusive UC-01–15 acceptance manifest, and exact release-package validation. | None; publication remains a runtime operation over a named closure. |
 | M10 | Complete | DateTime/DST value, v0.2 Project Format, endpoint and recurrence runtime, opt-in migration, UC-16 acceptance and M10 final reuse/release review. | None. |
 | M11 | Complete | Date-only capacity validation, deterministic explicit leveling proposal/CAS acceptance, isolated cost observations, UC-17/18 acceptance and reuse review. | None. |
-| M12 | Complete | Explicit stale/conflict, policy/approval, audit boundary, replica status, UC-19–21 acceptance and reuse review. | None. |
-| M13 | Design complete; implementation not started | Roadmap and successor design reviews. | Cross-profile release evidence after M10–M12. |
+| M12 | Reopened — implementation correction | Audit persistence and typed conflict resolution must create their specified immutable provenance; prior result-only boundary is insufficient. | Re-run UC-19–21 evidence after correction. |
+| M13 | Design complete; implementation blocked | Exact successor release manifest and validator. | M12 corrected UC-19–21 evidence, then cross-profile release evidence. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning
