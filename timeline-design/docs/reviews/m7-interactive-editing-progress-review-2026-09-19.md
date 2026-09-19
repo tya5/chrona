@@ -19,6 +19,7 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 | No plan or Scene mutation | Pass | The Actual store is independent; no Project, scheduler, or Scene argument is accepted. |
 | Actual undo/redo interaction | Pass | Reconciliation is reversible only through a current-revision Command; undo and redo each create a new Actual revision. |
 | View-local annotation commands | Pass | Add/edit/delete accept only complete annotation intent through a CAS-bound View store; undo/redo each make a new View revision. |
+| Revision-bound baseline capture | Pass | A snapshot-ref publishes only after exact Project revision/content verification; duplicate, stale, and mismatched input leave no partial baseline. |
 | Interactive annotation editor surface | Not started | Requires a client controller that renders the Command result without creating Scene geometry authority. |
 | Client conflict/rollback presentation | Not started | Requires an interactive controller over the Command result surface. |
 
@@ -33,6 +34,6 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 
 ## Next implementation slice
 
-Implement the interactive controller result surface and revision-bound baseline capture.
-M7 is not eligible for its final reuse review until all rows above marked `Not started`
+Implement the interactive controller result surface.
+M7 is not eligible for its final reuse review until the row above marked `Not started`
 pass with full conformance inheritance.
