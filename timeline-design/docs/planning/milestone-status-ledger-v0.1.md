@@ -14,12 +14,12 @@ evidence is present, not that a later product release is complete.
 | M2 | Complete | Presentation conformance, deterministic Scene/SVG evidence. | Only SVG is claimed. |
 | M3 | Complete | Revision-bound Command/CAS/undo evidence. | None. |
 | M4 | Complete | Federation conformance and M4 reuse review. | None. |
-| M5 | Blocked | CLI/review/Command proposal slice is evidenced by `m5-automation-reuse-review-2026-09-19.md`. | AI proposal plus authorization-policy contract and acceptance (WD-2). |
+| M5 | Design complete; implementation incomplete | CLI/review/Command proposal slice is evidenced by `m5-automation-reuse-review-2026-09-19.md`; WD-2a/b define the remaining AI/policy contract. | Implement AI proposal/policy adapter and execute its acceptance evidence. |
 | M5.5 | Complete | External Actual identity/intake review and tests. | None. |
 | M6 | Complete | Interactive review and accessibility/SceneDelta evidence. | None. |
 | M7 | Complete | Gesture, annotation, Actual reconciliation, Snapshot, conflict/undo evidence. | None. |
 | M8 | Complete | Trusted declarative package closure/lifecycle review and tests. | None. |
-| M9 | Blocked | Output coordinator has SVG capability evidence. | UC-06 is excluded; release-package contract and acceptance packaging remain (WD-2, WD-3). |
+| M9 | Design complete; implementation incomplete | Output coordinator has SVG capability evidence; WD-3 defines release packaging. | Complete M5/UC-06, implement package validation, then execute full release acceptance. |
 | M10 | Design complete; implementation not started | FD-1 design/fixture/review. | Runtime and UC-16 evidence after current-profile release. |
 | M11 | Design complete; implementation not started | FD-2 design/fixture/review. | Runtime and UC-17/18 evidence after M10. |
 | M12 | Design complete; implementation not started | FD-3 design/fixture/review. | Runtime and UC-19–21 evidence after M11. |

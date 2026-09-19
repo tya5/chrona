@@ -1,6 +1,6 @@
 # Whole-Design Recompletion Plan
 
-**Status:** Active — implementation frozen pending completion
+**Status:** Complete — replaced by whole-system design reauthorization
 
 ## 1. Trigger and decision
 
@@ -36,7 +36,7 @@ an undocumented capability accepted.
 | WD-3 | Current-profile release packaging | **Complete.** | Release-package manifest binds artifact, output, and acceptance identities; excluded UC state is explicitly non-publishable. | `22`, UC-13, M9; depends on WD-1/2 |
 | WD-4 | Milestone acceptance consistency | **Complete.** | Status ledger states entry/exit evidence and blockers for M0–M13. | roadmap, all milestones |
 | WD-5 | Successor designs | **Complete.** | Compatibility ledger records version, opt-in trigger, unchanged v0.1 meaning, migration/rejection rule, and owner for FD-1–FD-5. | `18`–`22`, M8–M13 |
-| WD-6 | Whole-system authorization | Earlier closure reviews conflict with WD-1–WD-5 and must not remain an authorization source. | Produce a replacement review with a machine-checkable closure checklist; retain prior reviews as historical evidence only. | depends on WD-1–WD-5 |
+| WD-6 | Whole-system authorization | **Complete.** | Replacement review and machine-checkable closure checklist supersede prior authorization sources. | depends on WD-1–WD-5 |
 
 ## 4. Execution order
 
@@ -48,5 +48,5 @@ an undocumented capability accepted.
 5. WD-6 re-runs the whole-system design authorization review.
 
 Each completed item is validated, reviewed, committed, and published to `main` before
-the next item. Only after WD-6 passes may implementation resume; implementation then
-follows the revised milestone ledger rather than the prior apparent progress order.
+the next item. WD-6 passed; implementation now follows the milestone-status ledger
+rather than prior apparent progress order.
