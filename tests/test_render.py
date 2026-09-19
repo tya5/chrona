@@ -1,6 +1,7 @@
 from datetime import date
 
 from chrona.render import render_svg
+from chrona.presentation_settings import builtin_bases
 from chrona.scene import scene_from_schedule
 from chrona.scheduler import ScheduleResult
 
@@ -48,3 +49,11 @@ def test_svg_rejects_an_incapable_target_and_scene_is_deterministic():
         assert str(error) == "E_TARGET_CAPABILITY: marker"
     else:
         raise AssertionError("incapable target rendered SVG")
+
+
+def test_minimal_svg_consumes_resolved_presentation_settings():
+    project = {"project": {"title": "Demo"}, "objects": {"task": {"title": "Task"}}, "relations": []}
+    scene = scene_from_schedule(project, ScheduleResult({"task": {"at": date(2026, 10, 1)}}, []))
+    svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, builtin_bases()["executive-v0.2"])
+    assert 'width="1600"' in svg
+    assert 'fill="#3986E6"' in svg
