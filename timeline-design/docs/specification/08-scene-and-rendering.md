@@ -228,7 +228,16 @@ declared global invalidation reason; it is not the default for a local semantic 
 
 Canvas, PDF, image, and presentation-file exports are possible targets if they can declare their capability limits. A target that cannot preserve a required distinction must report that loss; it may not erase it without notice.
 
-## 9. Out of scope
+## 9. Output capability successor
+
+Every adapter target supplies `chrona/output-capability/v0.2` before construction. The
+output manifest records its target capability profile, adapter version, evaluation
+closure, and all loss diagnostics. SVG is the baseline; PDF, raster, canvas, and
+presentation outputs are derived adapters with no authority to alter Scene or Project.
+A missing required capability rejects the request; an explicitly permitted loss remains
+visible as a stable diagnostic and manifest entry.
+
+## 10. Out of scope
 
 This document does not define:
 
@@ -239,6 +248,6 @@ This document does not define:
 - automatic actual-driven rescheduling; or
 - reverse engineering Project semantics from SVG, pixels, or tldraw shapes.
 
-## 10. Boundary to Application Architecture
+## 11. Boundary to Application Architecture
 
 Application Architecture may choose concrete layout engines, text-shaping libraries, SVG libraries, cache keys, and renderer adapters. It must implement this document's explicit-input, identity-preservation, reproducibility, and SceneDelta reconciliation constraints. Any new standard Scene primitive, scale behavior, or editable-canvas round-trip rule requires a versioned specification change rather than an implementation-only convention.

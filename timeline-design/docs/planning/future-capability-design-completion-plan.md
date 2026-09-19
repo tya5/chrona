@@ -1,6 +1,6 @@
 # Future Capability Design Completion Plan
 
-**Status:** Active design gate  
+**Status:** Complete design gate
 **Authority:** This plan owns design order and completion evidence only. Each semantic
 decision remains owned by its applicable specification.
 
@@ -30,15 +30,17 @@ versions a successor:
 | FD-2 | **Complete:** Resource/capacity, calendars, leveling and cost/time accounting boundary | Domain, Scheduling, Project Format, Quality, schemas, fixtures, ADR | Authority table separating plan/actual/capacity; no hidden auto-leveling; deterministic infeasibility/leveling examples; review. |
 | FD-3 | **Complete:** Collaboration, hosted synchronization, merge, authorization and audit provenance | Revision Store, Application Architecture, Command Model, Quality, Federation, schemas, fixtures, ADR | Explicit concurrency/merge policy; approval/audit model; conflict fixtures; no last-writer-wins; review. |
 | FD-4 | **Complete:** Extension lifecycle: registry, acquisition, compatibility, cyclic/missing package policy, and code-plugin exclusion | Extension Model, Revision Store, Application Architecture, schemas, fixtures, ADR | Declarative package lifecycle and trust rules; compatibility/inheritance/cycle fixtures; review. |
-| FD-5 | Output expansion and release boundary | Scene/Rendering, Application Architecture, Use Cases, Quality, release acceptance plan | Target capability matrix, fidelity-loss diagnostics, UC-01–UC-15 acceptance mapping; final cross-document review. |
+| FD-5 | **Complete:** Output expansion and release boundary | Scene/Rendering, Application Architecture, Use Cases, Quality, release acceptance plan | Target capability matrix, fidelity-loss diagnostics, UC-01–UC-15 acceptance mapping; final cross-document review. |
 
 ## Implementation gate
 
 No implementation phase after the current published M7 gesture adapter may begin until
 FD-1 through FD-5 are complete and a design-completion review records that the above
 compatibility invariants, schemas, fixtures, ADRs, and cross-document ownership checks
-are satisfied. A discovered semantic ambiguity returns work to its owning phase; it is
-not resolved in implementation.
+are satisfied. This review is recorded in
+`reviews/future-capability-design-completion-review-2026-09-19.md`. A discovered
+semantic ambiguity returns work to its owning phase; it is not resolved in
+implementation.
 
 ## Completion rule
 

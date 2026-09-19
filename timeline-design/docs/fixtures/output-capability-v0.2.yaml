@@ -1,0 +1,13 @@
+version: chrona/output-capability-fixture/v0.2
+cases:
+  - id: svg-baseline-preserves-required-provenance
+    target: {version: chrona/output-capability/v0.2, target: svg, capabilities: {sourceMetadata: true, accessibleText: true, semanticRoles: true, selectableText: true, declaredMetrics: true}}
+    expect: {diagnostic: null, deterministic: true}
+  - id: raster-required-accessibility-rejects
+    target: {version: chrona/output-capability/v0.2, target: raster, capabilities: {sourceMetadata: false, accessibleText: false, semanticRoles: false}}
+    request: {requires: [accessibleText]}
+    expect: {diagnostic: E_OUTPUT_CAPABILITY_MISSING, artifact: null}
+  - id: permitted-fidelity-loss-is-reported
+    target: {version: chrona/output-capability/v0.2, target: pdf, capabilities: {sourceMetadata: false, accessibleText: true, semanticRoles: true}}
+    request: {permitsFidelityLoss: [sourceMetadata]}
+    expect: {diagnostic: W_OUTPUT_FIDELITY_LOSS, manifest: true}

@@ -347,3 +347,13 @@ parallel project-management model.
 The remaining gaps in this table are adapters or product features, not unresolved design
 semantics. A release claim must name the satisfied use cases and their acceptance
 evidence rather than describing the entire catalog as implemented.
+
+## 8. Output-release successor acceptance
+
+The future output release gate maps UC-01–UC-15 to each claimed target. At minimum,
+the target manifest must show deterministic output (UC-01), source/role provenance
+(UC-04/UC-09), no renderer-authoritative mutation (UC-05/UC-06), fidelity diagnostics
+(UC-13), and the exact pinned closure for federation/extension cases (UC-14/UC-15).
+An adapter may claim only the rows whose capability fixtures and acceptance evidence it
+passes; SVG baseline success does not imply PDF, raster, canvas, or presentation
+support.

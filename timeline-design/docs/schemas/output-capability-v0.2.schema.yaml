@@ -1,0 +1,17 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:output-capability-v0.2"
+type: object
+required: [version, target, capabilities]
+additionalProperties: false
+properties:
+  version: {const: "chrona/output-capability/v0.2"}
+  target: {enum: [svg, pdf, raster, canvas, presentation]}
+  capabilities:
+    type: object
+    required: [sourceMetadata, accessibleText, semanticRoles]
+    properties:
+      sourceMetadata: {type: boolean}
+      accessibleText: {type: boolean}
+      semanticRoles: {type: boolean}
+      selectableText: {type: boolean}
+      declaredMetrics: {type: boolean}
