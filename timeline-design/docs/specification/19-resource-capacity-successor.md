@@ -47,3 +47,23 @@ but are neither inferred from progress nor used to rewrite capacity or schedule.
 - deterministic solver objective and tie-break rule; and
 - review proving that no automatic actual-driven reschedule or hidden leveling write
   exists.
+
+## 6. M11 executable profile
+
+M11 is a Date-only profile. A capacity set contains explicit daily `availability`
+entries (`date`, `resourceId`, `amount`), and an assignment consumes its constant
+`demand` on every Date in the resolved half-open task span `[start,end)`. A missing
+entry means zero availability; duplicate `(date, resourceId)` entries reject. The only
+supported objective is `minimize-lateness-then-stable-id`: movable scheduled spans are
+considered by resolved start then stable object ID and move only forward to the earliest
+contiguous feasible interval. Fixed placements, explicit anchors, out-of-scope objects,
+dependency lower bounds, and ordinary scheduler constraints remain hard constraints.
+
+A proposal is derived only. It has a canonical fingerprint over Project and capacity
+revision/content identities, objective, movement scope, and every proposed change; its
+ID is `level:sha256:<fingerprint>`. Each change names an object ID and replacement
+Date-only `anchor.start`. `applyLevelingProposal` accepts only the complete proposal at
+the evaluated Project revision, revalidates fingerprint and normal scheduling, and then
+creates one Project revision. Stale, altered, partial, fixed, anchored, or out-of-scope
+changes reject. Cost observations are separately revisioned append-only records; they
+never invoke the scheduler or write a Project revision.

@@ -6,6 +6,8 @@ cases:
       id: platform-capacity
       resources:
         - {id: eng-a, kind: engineer, unit: engineer, capacityCalendar: weekday-1}
+      availability:
+        - {date: '2027-01-04', resourceId: eng-a, amount: 1}
       assignments:
         - {objectId: implementation, resourceId: eng-a, demand: 1, unit: engineer, role: implementer}
     expect: {diagnostic: null}
@@ -15,6 +17,8 @@ cases:
       id: platform-capacity
       resources:
         - {id: eng-a, kind: engineer, unit: engineer, capacityCalendar: weekday-1}
+      availability:
+        - {date: '2027-01-04', resourceId: eng-a, amount: 1}
       assignments:
         - {objectId: build, resourceId: eng-a, demand: 1, unit: machine}
     expect: {diagnostic: E_RESOURCE_UNIT_MISMATCH}
