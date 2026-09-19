@@ -1,7 +1,7 @@
 # M8 Extension Registry Progress Review
 
 **Date:** 2026-09-19  
-**Status:** Registry-resolution slice complete; M8 remains in progress.
+**Status:** M8 complete.
 
 | FD-4 contract | Result |
 |---|---|
@@ -11,6 +11,7 @@
 | Code-plugin exclusion | Pass: executable declaration is rejected; no package code is loaded or executed. |
 | Shared path | Pass: registry is an adapter; it does not alter profile inheritance, Project semantics, Command, or scheduler authority. |
 | Evaluation integration | Pass: verified lifecycle references are explicit validation inputs; legacy Project files are not rewritten or implicitly upgraded. |
+| Profile lifecycle UX | Pass: a read-only adapter shows state, diagnostics, and exact pinned source/version/content identity without fallback or mutation. |
 
-`tests/test_extension_registry.py` covers required FD-4 rejection cases. M8 still needs
-declared profile UX before its final reuse review.
+`tests/test_extension_registry.py` and `tests/test_package_lifecycle.py` cover required
+FD-4 rejection and lifecycle-display cases. See `m8-extension-registry-reuse-review-2026-09-19.md`.
