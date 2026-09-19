@@ -11,7 +11,9 @@ review are required before each implementation milestone begins.
 Chrona should grow from M14's decision-correct review SVG into a presentation system
 that can produce the two desired visual directions: a light, table-led executive
 timeline and a dark delivery-control dashboard. The generated images are exploratory
-visual references, not a data contract and not an acceptance artifact. Their useful
+visual references, not a data contract and not an acceptance artifact. They MUST NOT be
+encoded as Python layout branches, image-specific IDs, or renderer defaults; they are
+reproducible only as user-editable View/Profile/Style/Theme resources. Their useful
 properties are: a semantic table beside the timeline, a hierarchical calendar,
 meaningful group surfaces, planned/Actual comparison, and optional read-only decision
 summary panels.
@@ -19,6 +21,10 @@ summary panels.
 The design rule remains unchanged: **Project/Schedule/Actual own truth; View selects
 facts; Profile specifies composition; Style/Theme expresses them; Scene and Output
 render them.** No visual feature may invent progress, risk, a forecast, or a schedule.
+
+The reusable base mechanisms are deliberately part of Chrona: closed semantic columns,
+calendar levels, group modes, routed connectors, bounded metrics, and role/token
+resolution. The visual concepts themselves remain data supplied by users.
 
 ## 2. Gap analysis and layer ownership
 

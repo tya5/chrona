@@ -1,0 +1,6 @@
+version: chrona/table-timeline-profile/v0.1
+id: controller-executive
+table: {columnSizing: balanced, header: single-row}
+axis: {domain: date, levels: [quarter, month, week], minorGrid: week, majorGrid: month}
+groups: {mode: header-and-separator, gapRows: 1}
+routing: {relations: deterministic-obstacle-aware, annotations: deterministic-obstacle-aware}

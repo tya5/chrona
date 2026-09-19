@@ -1,0 +1,7 @@
+version: chrona/review-summary-profile/v0.1
+id: controller-delivery-control
+panels:
+  - id: schedule-health
+    metrics: [selectedCount, actualCoverage, knownFinishVarianceCount, missingActualCount]
+  - id: next-milestone
+    metrics: [nextPlannedPoint]
