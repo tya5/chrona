@@ -4,9 +4,9 @@ from pathlib import Path
 
 import yaml
 
-from chrona.commands import execute_set_typed_field, execute_typed_field_batch, set_typed_field
+from chrona.commands import execute_redo, execute_set_typed_field, execute_typed_field_batch, execute_undo, set_typed_field
 from chrona.loader import schedule_snapshot, validate_snapshot
-from chrona.revision_store import LocalSnapshotReader, MemoryRevisionStore
+from chrona.revision_store import LocalSnapshotReader, LocalTransactionalStore, MemoryRevisionStore
 from chrona.scheduler import schedule
 from chrona.validation import validate_project
 
@@ -78,6 +78,19 @@ def test_typed_field_batch_is_atomic_and_writes_one_new_snapshot():
     assert rejected.diagnostics == ("IDP-STATE-001",)
     assert store.read().revision == accepted.result_revision
     assert store.read().project["objects"]["idp-4"]["fields"]["workflowState"] == "blocked"
+
+
+def test_undo_redo_are_cas_commands_that_create_new_snapshots(tmp_path):
+    store = LocalTransactionalStore(tmp_path, "chrona-test", _roadmap())
+    base = store.read()
+    changed = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "active")
+    undone = execute_undo(store, changed.result_revision)
+    assert undone.status == "accepted"
+    assert undone.result_revision != base.revision
+    assert undone.project["objects"]["idp-4"]["fields"]["workflowState"] == "planned"
+    redone = execute_redo(store, undone.result_revision)
+    assert redone.status == "accepted"
+    assert redone.project["objects"]["idp-4"]["fields"]["workflowState"] == "active"
 
 
 def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):

@@ -72,3 +72,17 @@ def execute_set_typed_field(
     value: Any,
 ) -> CommandResult:
     return execute_typed_field_batch(store, base_revision, package_manifests, [(object_id, field, value)])
+
+
+def execute_undo(store: Any, base_revision: str) -> CommandResult:
+    persisted = store.undo(base_revision)
+    if persisted is None:
+        return CommandResult("rejected", None, ("E_CONFLICT",))
+    return CommandResult("accepted", persisted.project, (), persisted.revision)
+
+
+def execute_redo(store: Any, base_revision: str) -> CommandResult:
+    persisted = store.redo(base_revision)
+    if persisted is None:
+        return CommandResult("rejected", None, ("E_CONFLICT",))
+    return CommandResult("accepted", persisted.project, (), persisted.revision)
