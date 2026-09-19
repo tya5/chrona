@@ -1,15 +1,15 @@
 # M14 Review SVG Implementation Readiness Plan
 
-**Status:** Design complete; implementation not started  
+**Status:** Complete — final review passed  
 **Owner:** Review SVG adapter
 
 ## Delivery phases
 
 | Phase | Scope | Exit evidence |
 |---|---|---|
-| M14-1 | Build a typed review projection from Schedule, explicit Actual, View facets, Style roles, Theme tokens, and profile policy. | Plan/Actual, missing/unmatched, variance, ordering/window, and token-resolution tests. |
-| M14-2 | Render the completed review projection to deterministic accessible SVG with source metadata, dependencies, and annotations. | SVG structural/accessibility tests; capability rejection; repeated-output equality. |
-| M14-3 | Expose the review command, add a Controller Z acceptance sample, perform reuse/release review, and update the ledger. | CLI fixture, full suite, conformance, visual inspection, and final review. |
+| M14-1 | Build a typed review projection from Schedule, explicit Actual, View facets, Style roles, Theme tokens, and profile policy. | Plan/Actual, missing/unmatched, variance, ordering/window, and token-resolution tests. **Complete.** |
+| M14-2 | Render the completed review projection to deterministic accessible SVG with source metadata, dependencies, and annotations. | SVG structural/accessibility tests; capability rejection; repeated-output equality. **Complete.** |
+| M14-3 | Expose the review command, add a Controller Z acceptance sample, perform reuse/release review, and update the ledger. | CLI fixture, full suite, conformance, visual inspection, and final review. **Complete.** |
 
 ## Authorization boundary
 
