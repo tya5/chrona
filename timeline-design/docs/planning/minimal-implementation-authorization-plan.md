@@ -28,7 +28,8 @@ code relies on a new interpretation.
 | 0 | Standard `implementation-delivery` resolved-manifest validation, typed-field Command, and self-hosted roadmap fixture | profile and roadmap fixture validate/schedule deterministically; workflow state cannot affect schedule or Actual; evidence references are immutable and kind/content checked |
 | I | **Complete:** Revision Store adapter interface and immutable local snapshot reader, including package-reference resolution | same Project/package resource reference resolves identically twice; Draft access is rejected for reproducible evaluation |
 | II | **Complete:** Core loader/validator/scheduler integrated through that reader | pinned Project/package bytes validate and schedule deterministically through the snapshot loader; Draft access has no filesystem fallback |
-| III | Presentation closure resolver and Render Context evaluation manifest | kind/ID/content mismatch, path escape, mixed revision, and cycle fixtures fail with declared diagnostics |
+| IIIa | **Complete:** Render Context root closure resolver and evaluation manifest | project/View/Style/Theme/Scene Profile kind, ID, content, and mixed-revision mismatches reject before rendering; ordered closure is explicit |
+| IIIb | Presentation recursive closure edges and cycle diagnostics | declared extension/resource edges resolve deterministically; path escape and cycle fixtures fail with declared diagnostics |
 | IV | Command execution through compare-and-set Store write | stale base revision and partial batch fail atomically; accepted command returns a new snapshot |
 | V | Deterministic SVG adapter from Scene output | target-capability and accessibility acceptance fixtures pass; SVG never becomes canonical data |
 | VI | Read-only Federation resolver | trust, pin, repin, unavailable export, and namespace diagnostics pass; child mutation remains impossible |
