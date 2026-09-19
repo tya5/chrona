@@ -1,18 +1,18 @@
 version: chrona/design-traceability/v0.1
 areas:
   - {id: CORE-DATE, name: Date-only core, specifications: ["02", "03", "04", "05"], productFacing: true, useCases: [UC-01], milestones: [M0], evidence: [core-schema, scheduling-fixtures], status: covered}
-  - {id: DELIVERY-PROFILE, name: Self-hosted delivery profile, specifications: ["17"], productFacing: true, useCases: [UC-15], milestones: [M0.5, M1], evidence: [delivery-profile-fixtures, idp-review], status: partial, findingIds: [T-10]}
+  - {id: DELIVERY-PROFILE, name: Self-hosted delivery profile, specifications: ["17"], productFacing: true, useCases: [UC-15], milestones: [M0.5, M1], evidence: [delivery-profile-fixtures, idp-review], status: covered}
   - {id: REVISION-STORE, name: Revision Store, specifications: ["15"], productFacing: true, useCases: [UC-02, UC-04, UC-09, UC-12, UC-14, UC-15], milestones: [M1], evidence: [revision-store-fixtures], status: covered}
   - {id: PRESENTATION, name: Presentation and projection, specifications: ["06", "07", "08", "13"], productFacing: true, useCases: [UC-03, UC-04, UC-09, UC-13], milestones: [M2, M6, M9], evidence: [presentation-fixtures, scene-delta-fixtures], status: covered}
-  - {id: COMMAND, name: Controlled mutation, specifications: ["09", "10"], productFacing: true, useCases: [UC-05, UC-06, UC-10, UC-12], milestones: [M3, M5, M7], evidence: [command-schema, command-fixtures], status: partial, findingIds: [T-04, T-05]}
+  - {id: COMMAND, name: Controlled mutation, specifications: ["09", "10"], productFacing: true, useCases: [UC-05, UC-06, UC-10, UC-12], milestones: [M3, M5, M5.5, M7], evidence: [command-schema, command-fixtures], status: covered}
   - {id: FEDERATION, name: Federation, specifications: ["16"], productFacing: true, useCases: [UC-14], milestones: [M4], evidence: [federation-fixtures], status: covered}
   - {id: AUTOMATION, name: CLI and automation, specifications: ["09", "10"], productFacing: true, useCases: [UC-11], milestones: [M5], evidence: [conformance-manifest], status: covered}
-  - {id: INTERACTIVE, name: Interactive annotation and editing, specifications: ["06", "08", "10"], productFacing: true, useCases: [UC-05, UC-08, UC-10, UC-12], milestones: [M7], evidence: [gesture-boundary, annotation-contract], status: partial, findingIds: [T-05]}
-  - {id: EXTENSION-LIFECYCLE, name: Extension lifecycle, specifications: ["11", "21"], productFacing: true, useCases: [UC-07], milestones: [M8], evidence: [extension-lifecycle-fixture], status: partial, findingIds: [T-11]}
-  - {id: OUTPUT-RELEASE, name: Output and release, specifications: ["22"], productFacing: true, useCases: [UC-13], milestones: [M9], evidence: [output-capability-fixture], status: partial, findingIds: [T-06, T-11]}
-  - {id: DATETIME-DST, name: DateTime and DST successor, specifications: ["18"], productFacing: true, useCases: [UC-16], milestones: [], evidence: [datetime-v0.2-fixture], status: partial, findingIds: [T-07]}
-  - {id: RESOURCE-CAPACITY, name: Resource capacity leveling and cost, specifications: ["19"], productFacing: true, useCases: [UC-17, UC-18], milestones: [], evidence: [resource-capacity-v0.2-fixture], status: partial, findingIds: [T-07]}
-  - {id: COLLABORATION, name: Collaboration synchronization and audit, specifications: ["20"], productFacing: true, useCases: [UC-19, UC-20, UC-21], milestones: [], evidence: [collaboration-v0.2-fixture], status: partial, findingIds: [T-07]}
+  - {id: INTERACTIVE, name: Interactive annotation and editing, specifications: ["06", "08", "10"], productFacing: true, useCases: [UC-05, UC-08, UC-10, UC-12], milestones: [M5.5, M7], evidence: [gesture-boundary, annotation-contract], status: covered}
+  - {id: EXTENSION-LIFECYCLE, name: Extension lifecycle, specifications: ["11", "21"], productFacing: true, useCases: [UC-07], milestones: [M8], evidence: [extension-lifecycle-fixture], status: covered}
+  - {id: OUTPUT-RELEASE, name: Output and release, specifications: ["22"], productFacing: true, useCases: [UC-13], milestones: [M9], evidence: [output-capability-fixture], status: covered}
+  - {id: DATETIME-DST, name: DateTime and DST successor, specifications: ["18"], productFacing: true, useCases: [UC-16], milestones: [M10], evidence: [datetime-v0.2-fixture], status: covered}
+  - {id: RESOURCE-CAPACITY, name: Resource capacity leveling and cost, specifications: ["19"], productFacing: true, useCases: [UC-17, UC-18], milestones: [M11], evidence: [resource-capacity-v0.2-fixture], status: covered}
+  - {id: COLLABORATION, name: Collaboration synchronization and audit, specifications: ["20"], productFacing: true, useCases: [UC-19, UC-20, UC-21], milestones: [M12], evidence: [collaboration-v0.2-fixture], status: covered}
 findings:
   - {id: T-01, severity: blocker, summary: DateTime/DST lacks use-case and milestone ownership, remediationPhase: TR-1}
   - {id: T-02, severity: blocker, summary: Resource capacity leveling and cost lack use-case decomposition and milestone ownership, remediationPhase: TR-1}
