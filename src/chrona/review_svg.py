@@ -170,6 +170,18 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     return "\n".join(p+["</svg>"])+"\n"
 
 
+def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date) -> str:
+    """Append only declared, read-only M16 metrics to an existing SVG composition."""
+    total=len(projection.items); actual=sum(bool(item.actual) for item in projection.items)
+    points=sorted(item.planned["at"] for item in projection.items if item.source_type=="point" and item.planned["at"]>=as_of)
+    values={"selectedCount":str(total),"actualCoverage":f"{actual}/{total}" if total else "unknown","knownFinishVarianceCount":str(sum(item.finish_delta is not None for item in projection.items)),"missingActualCount":str(total-actual),"nextPlannedPoint":points[0].isoformat() if points else "unknown"}
+    lines=[]; y=24
+    for panel in profile["panels"]:
+        text=" · ".join(f'{metric}: {values[metric]}' for metric in panel["metrics"])
+        lines.append(f'<text data-purpose="summary-panel" data-source-ref="derived:{escape(panel["id"])}" x="32" y="{y}" font-family="system-ui" font-size="11">{escape(panel["id"])} — {escape(text)}</text>'); y+=18
+    return svg.replace("</svg>", "\n".join(lines)+"\n</svg>")
+
+
 def _table_value(item: ReviewItem, project: dict[str, Any], source: Any) -> Any:
     if isinstance(source,str): return {"id":item.object_id,"title":item.title,"objectType":item.source_type,"entity":item.group_label}.get(source)
     if "field" in source: return (item.fields or {}).get(source["field"])

@@ -1,5 +1,5 @@
 from datetime import date
-from chrona.review_svg import build_review_projection, render_table_timeline_svg
+from chrona.review_svg import append_review_summary, build_review_projection, render_table_timeline_svg
 
 def test_review_projection_keeps_actual_independent_and_marks_variance():
     project={"objects":{"fw":{"title":"FW"},"gate":{"title":"Gate"}}}
@@ -20,3 +20,8 @@ def test_table_timeline_is_resource_driven():
     profile={"groups":{"mode":"header-and-separator","gapRows":1},"axis":{}}
     svg=render_table_timeline_svg("X",projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile)
     assert 'table-header' in svg and 'Firmware' in svg and 'data-purpose="axis-major"' in svg
+
+def test_summary_uses_only_declared_metrics():
+    projection=build_review_projection({"objects":{"a":{"title":"A"}}},{"a":{"at":date(2026,4,3)}},{"body":{"selection":{"include":{"types":["point"]}},"ordering":{"by":"plannedStart"},"window":{"marginDays":0},"comparison":{"actual":"optional"}}},None,{"body":{"rules":[]}},{"body":{"roles":{"planned":{}}}})
+    svg=append_review_summary('<svg></svg>',projection,{"panels":[{"id":"next","metrics":["selectedCount","nextPlannedPoint"]}]},date(2026,4,1))
+    assert 'summary-panel' in svg and 'selectedCount: 1' in svg and '2026-04-03' in svg

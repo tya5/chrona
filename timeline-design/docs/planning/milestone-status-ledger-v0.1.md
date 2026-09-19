@@ -26,7 +26,7 @@ evidence is present, not that a later product release is complete.
 | M13 | Complete | Fixed successor v0.2 closure, exact UC-16–21 evidence validation, and blocked/published release boundary. | None. |
 | M14 | Complete | User-selected View grouping plus profile-selected headers/separators/bands/gaps in deterministic Review SVG. | None. |
 | M15 | Complete | Generic table-timeline SVG adapter, Controller Z user-editable preset, M15 final review, conformance, and 87 tests. | None. |
-| M16 | Design complete; implementation not started | `25-review-summary-surfaces.md`, summary schema/fixture, and M15–M18 closure review. | I16 implementation, conformance, and reuse review. |
+| M16 | Complete | Generic read-only summary adapter, Controller Z user-editable profile/preset, M16 final review, conformance, and 88 tests. | None. |
 | M17 | Design complete; implementation not started | `26-presentation-theme-expression.md` and M15–M18 closure review. | I17 implementation, conformance, and reuse review. |
 | M18 | Design complete; implementation not started | Product release conditions in presentation plan and M15–M18 closure review. | M15–M17 implementation evidence and M18 release review. |
 

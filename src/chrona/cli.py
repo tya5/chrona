@@ -11,7 +11,7 @@ from .review import review_projects
 from .commands import set_typed_field
 from .scheduler import schedule
 from .validation import load_yaml, validate_project
-from .review_svg import build_review_projection, render_review_svg, render_table_timeline_svg
+from .review_svg import append_review_summary, build_review_projection, render_review_svg, render_table_timeline_svg
 
 
 def _json_default(value: object) -> str:
@@ -35,7 +35,7 @@ def main() -> None:
         if name == "render":
             command.add_argument("--output", "-o", required=True)
         if name == "render-review":
-            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--output", "-o", required=True)
+            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--summary-profile"); command.add_argument("--output", "-o", required=True)
     args = parser.parse_args()
     project = load_yaml(args.project)
     if args.command == "review":
@@ -67,6 +67,7 @@ def main() -> None:
         projection=build_review_projection(project,result.placements,view,load_yaml(args.actual),load_yaml(args.style),theme)
         if profile.get("version")=="chrona/table-timeline-profile/v0.1": svg=render_table_timeline_svg(project["project"].get("title","Chrona"),projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile)
         else: svg=render_review_svg(project["project"].get("title","Chrona"),projection,theme,{"sourceMetadata","accessibleText","semanticRoles","marker"},profile)
+        if args.summary_profile: svg=append_review_summary(svg,projection,load_yaml(args.summary_profile),projection.window[0])
         Path(args.output).write_text(svg,encoding="utf-8")
         return
     print(json.dumps({"placements": result.placements, "diagnostics": [item.as_dict() for item in result.diagnostics]}, indent=2, default=_json_default))
