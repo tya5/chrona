@@ -68,7 +68,7 @@ def main() -> None:
         projection=build_review_projection(project,result.placements,view,load_yaml(args.actual),load_yaml(args.style),theme)
         layout_slots=None
         if profile.get("version")=="chrona/layout-profile/v0.1":
-            manifest=resolve_layout_profile(profile,{"title","table","timeline","summary"})
+            manifest=resolve_layout_profile(profile,{"title","table","timeline","summary","legend"})
             if manifest.diagnostics: raise ValueError(",".join(manifest.diagnostics))
             layout_slots=solve_layout(profile,manifest)
             svg=render_table_timeline_svg(project["project"].get("title","Chrona"),projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile,layout_slots)

@@ -4,6 +4,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any
+from pathlib import Path
+import jsonschema
+import yaml
 
 
 SOURCES = {"title", "table", "timeline", "summary", "legend", "annotations", "notes"}
@@ -28,7 +31,10 @@ def resolve_layout_profile(profile: dict[str, Any], available_sources: set[str])
     if profile.get("version") != "chrona/layout-profile/v0.1":
         raise ValueError("E_LAYOUT_PROFILE_REQUIRED")
     required={"version","id","canvas","regions","slots","constraints"}
-    if set(profile) != required: raise ValueError("E_LAYOUT_PROFILE_SHAPE")
+    if not required <= set(profile) or set(profile)-required-{"surface"}: raise ValueError("E_LAYOUT_PROFILE_SHAPE")
+    schema_path=Path(__file__).resolve().parents[2]/"timeline-design/docs/schemas/layout-profile-v0.1.schema.yaml"
+    if list(jsonschema.Draft202012Validator(yaml.safe_load(schema_path.read_text())).iter_errors(profile)):
+        raise ValueError("E_LAYOUT_PROFILE_SCHEMA")
     canvas=profile["canvas"]
     if set(canvas) != {"aspectRatio","margin","density"} or canvas["aspectRatio"] not in {"16:9","4:3","free"} or canvas["margin"] not in {"compact","balanced","spacious"}: raise ValueError("E_LAYOUT_CANVAS")
     region_ids=[r.get("id") for r in profile["regions"]]

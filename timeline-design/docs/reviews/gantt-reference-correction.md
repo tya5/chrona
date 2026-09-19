@@ -44,3 +44,38 @@ Schema validation, geometry/endpoint regression tests, alternate layout settings
 unchanged Project/Actual inputs, byte determinism, full suite, and raster comparison.
 Passing earlier tests alone is not evidence of visual correctness. Publish this gate
 before implementation; publish completed correction after visual review.
+
+## Implementation and visual review
+
+Design gate published as `d4565d5` before implementation. The prior table renderer
+was replaced by a single generic `gantt_surface` adapter, not a sample-specific path.
+The executive preset now supplies a dedicated View, a 3:7 split, merged groups,
+explicit February-to-July-1 window, month-only calendar, 19px body / 24px group /
+40px title typography, and 17px paired bars. Project and Actual resources are unchanged.
+
+Visual loop: inspected reference + old raster, inspected new raster, corrected the
+exclusive end-month caption, rerendered and checked the final artifact. Typography
+uses installed Nimbus Sans with Arial/sans-serif fallbacks. The Sharp-based verifier
+measures all 15 wrapped table/group text lines with the rasterizer: zero horizontal
+overflows. Final output is truly 1600x900. The legend explains semantics and reports
+missing/unmatched data; no supplier panel or milestone digest was implemented.
+
+Regression evidence: 12 new tests cover endpoint anchors, start-to-start dependency,
+orthogonal obstacle avoidance (including every sample bar), grid bounds, group-color
+stability, explicit windows, Actual-inclusive automatic windows, resource validation,
+overflow diagnosis, alternate group mode, relation visibility, and determinism/input
+immutability. Full suite: 104 tests. Full existing conformance: PASS.
+
+Remaining limits: this is a reference-inspired layout, not pixel identity. The
+underlying plan has different tasks, dates and Actual coverage. Grouping may require
+upward dependency arrows. Fonts are not embedded; other machines may use fallbacks.
+Conservative runtime wrapping is supplemented by raster verification for this preset,
+not a claim of universal font/layout correctness. Route-vs-route crossings are not
+globally optimized; routes avoid bar interiors. M23 external panels remain deferred.
+
+Reproduction (repository root):
+
+```sh
+PYTHONPATH=src .venv/bin/chrona render-review examples/controller-z-silicon-bringup.yaml --actual examples/controller-z-actual.yaml --view examples/controller-z-executive-view.yaml --style examples/controller-z-review-style.yaml --theme examples/controller-z-executive-theme.yaml --profile examples/controller-z-executive-layout.yaml --output examples/controller-z-executive.svg
+NODE_PATH="$CODEX_PRIMARY_RUNTIME_NODE_MODULES" "$CODEX_PRIMARY_RUNTIME_NODE" scripts/verify-gantt-svg.cjs examples/controller-z-executive.svg examples/controller-z-executive.png
+```

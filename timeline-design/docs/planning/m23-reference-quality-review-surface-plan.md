@@ -1,5 +1,10 @@
 # M23 Reference-quality review surface plan
 
+**Priority update:** User explicitly deferred outside-Gantt components. Observation
+tables and milestone digests are NOT in the current implementation scope. Gantt
+geometry/customization correction is reviewed separately in
+`../reviews/gantt-reference-correction.md`; M23 is not claimed complete by that work.
+
 The Controller Z reference demonstrates presentation surfaces that M21 named but the
 adapter did not yet implement: owner descriptions, a semantic legend, a source-labelled
 observation table, and a milestone digest.  M23 closes this implementation gap without
