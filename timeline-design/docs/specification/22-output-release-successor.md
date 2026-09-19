@@ -28,3 +28,21 @@ deterministic-output check, accessible alternative check where required, and map
 UC-01–UC-15 acceptance cases. The acceptance manifest records exact input closure and
 target adapter version. Unsupported use cases are explicitly excluded rather than
 implied by SVG success.
+
+### 3.1 Release-acceptance manifest
+
+`release-acceptance-v0.2.schema.yaml` is the canonical exchange contract for this
+release boundary.  One manifest names one immutable evaluation identity and one output
+target/version.  It MUST enumerate every current-profile use case (`UC-01` through
+`UC-15`) exactly once.  Each entry is either:
+
+- `accepted`, with one or more reproducible evidence paths; or
+- `excluded`, with a concrete reason and an owning unblocking milestone.
+
+An exclusion is a truthful statement of non-delivery, never passing acceptance
+evidence.  Consequently, M9 can be marked complete only when no entry is excluded:
+the roadmap's M9 exit requires acceptance coverage for all current-profile use cases.
+The manifest's `inputClosure` binds the Project, revision, package closure, View,
+Actual set, and Scene identities used as the release input.  An adapter MUST emit the
+same evaluation identity and target/version in its output manifest; release packaging
+rejects a mismatch rather than attaching evidence from a different evaluation.

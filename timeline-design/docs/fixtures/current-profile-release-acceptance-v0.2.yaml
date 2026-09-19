@@ -1,0 +1,30 @@
+version: chrona/release-acceptance/v0.2
+releaseId: current-profile-svg-v0.1
+inputClosure:
+  projectIdentity: project:release-fixture
+  revisionIdentity: revision:release-fixture-v1
+  packageClosureIdentity: packages:release-fixture-v1
+  viewIdentity: view:engineering
+  actualSetIdentity: actuals:release-fixture-v1
+  sceneIdentity: scene:release-fixture-v1
+  evaluationIdentity: evaluation:release-fixture-v1
+output: {target: svg, targetVersion: chrona/output-capability/v0.2}
+useCases:
+  - {id: UC-01, disposition: accepted, evidence: [tests/test_scheduler.py, tests/test_conformance.py]}
+  - {id: UC-02, disposition: accepted, evidence: [tests/test_cli.py, tests/test_snapshots.py]}
+  - {id: UC-03, disposition: accepted, evidence: [tests/test_actual_intake.py, tests/test_presentation_closure.py]}
+  - {id: UC-04, disposition: accepted, evidence: [tests/test_presentation_closure.py, tests/test_render.py]}
+  - {id: UC-05, disposition: accepted, evidence: [tests/test_editor.py, tests/test_gestures.py]}
+  - id: UC-06
+    disposition: excluded
+    reason: No AI Command-proposal adapter or authorization-policy integration is implemented.
+    unblockingMilestone: M5
+  - {id: UC-07, disposition: accepted, evidence: [tests/test_extension_registry.py, tests/test_package_lifecycle.py]}
+  - {id: UC-08, disposition: accepted, evidence: [tests/test_view_commands.py, tests/test_editor.py]}
+  - {id: UC-09, disposition: accepted, evidence: [tests/test_presentation_closure.py, tests/test_interactive.py]}
+  - {id: UC-10, disposition: accepted, evidence: [tests/test_actual_intake.py, tests/test_actual_commands.py]}
+  - {id: UC-11, disposition: accepted, evidence: [tests/test_cli.py, tests/test_conformance.py]}
+  - {id: UC-12, disposition: accepted, evidence: [tests/test_snapshots.py]}
+  - {id: UC-13, disposition: accepted, evidence: [tests/test_output.py, tests/test_render.py]}
+  - {id: UC-14, disposition: accepted, evidence: [tests/test_federation.py]}
+  - {id: UC-15, disposition: accepted, evidence: [tests/test_delivery_profile_runtime.py]}

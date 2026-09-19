@@ -13,6 +13,7 @@ COMMANDS = [
     [sys.executable, str(ROOT / "federation" / "validate_conformance.py")],
     [sys.executable, str(ROOT / "validate_implementation_delivery_profile.py")],
     [sys.executable, str(ROOT / "validate_traceability.py")],
+    [sys.executable, str(ROOT / "validate_release_acceptance.py")],
 ]
 for command in COMMANDS:
     result = subprocess.run(command, check=False)
