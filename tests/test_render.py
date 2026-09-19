@@ -36,6 +36,7 @@ def test_render_svg_projects_placements_without_owning_them():
     assert 'marker-end="url(#arrow)"' in svg
     assert '<rect ' in svg
     assert '<circle ' in svg
+    assert 'E_PRESENTATION_LEGACY_ADAPTER' in svg
 
 
 def test_svg_rejects_an_incapable_target_and_scene_is_deterministic():
