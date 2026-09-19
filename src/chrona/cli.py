@@ -6,6 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from .render import render_svg
+from .scene import scene_from_schedule
 from .scheduler import schedule
 from .validation import load_yaml, validate_project
 
@@ -35,7 +36,8 @@ def main() -> None:
         if not result.ok:
             print(json.dumps({"diagnostics": [item.as_dict() for item in result.diagnostics]}, indent=2))
             raise SystemExit(1)
-        Path(args.output).write_text(render_svg(project, result), encoding="utf-8")
+        scene = scene_from_schedule(project, result)
+        Path(args.output).write_text(render_svg(scene, {"marker", "metadata", "text-alternative"}), encoding="utf-8")
         return
     print(json.dumps({"placements": result.placements, "diagnostics": [item.as_dict() for item in result.diagnostics]}, indent=2, default=_json_default))
     raise SystemExit(not result.ok)
