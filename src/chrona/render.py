@@ -53,6 +53,8 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
         f'<rect width="{width}" height="{height}" fill="{background}" />',
         f'<text x="{left}" y="{top-heading_size}" font-family="{escape(font, quote=True)}" font-size="{heading_size}" font-weight="700" fill="{ink}">{escape(str(title))}</text>',
     ]
+    if settings is None:
+        parts.append('<metadata data-presentation-adapter="legacy-v0.1" data-diagnostic="E_PRESENTATION_LEGACY_ADAPTER"/>')
 
     for offset in range(0, span_days + 1, 7):
         x = left + offset * day_width
