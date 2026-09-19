@@ -10,9 +10,9 @@ areas:
   - {id: INTERACTIVE, name: Interactive annotation and editing, specifications: ["06", "08", "10"], productFacing: true, useCases: [UC-05, UC-08, UC-10, UC-12], milestones: [M7], evidence: [gesture-boundary, annotation-contract], status: partial, findingIds: [T-05]}
   - {id: EXTENSION-LIFECYCLE, name: Extension lifecycle, specifications: ["11", "21"], productFacing: true, useCases: [UC-07], milestones: [M8], evidence: [extension-lifecycle-fixture], status: partial, findingIds: [T-11]}
   - {id: OUTPUT-RELEASE, name: Output and release, specifications: ["22"], productFacing: true, useCases: [UC-13], milestones: [M9], evidence: [output-capability-fixture], status: partial, findingIds: [T-06, T-11]}
-  - {id: DATETIME-DST, name: DateTime and DST successor, specifications: ["18"], productFacing: true, useCases: [], milestones: [], evidence: [datetime-v0.2-fixture], status: missing, findingIds: [T-01, T-07]}
-  - {id: RESOURCE-CAPACITY, name: Resource capacity leveling and cost, specifications: ["19"], productFacing: true, useCases: [], milestones: [], evidence: [resource-capacity-v0.2-fixture], status: missing, findingIds: [T-02, T-07]}
-  - {id: COLLABORATION, name: Collaboration synchronization and audit, specifications: ["20"], productFacing: true, useCases: [], milestones: [], evidence: [collaboration-v0.2-fixture], status: missing, findingIds: [T-03, T-07]}
+  - {id: DATETIME-DST, name: DateTime and DST successor, specifications: ["18"], productFacing: true, useCases: [UC-16], milestones: [], evidence: [datetime-v0.2-fixture], status: partial, findingIds: [T-07]}
+  - {id: RESOURCE-CAPACITY, name: Resource capacity leveling and cost, specifications: ["19"], productFacing: true, useCases: [UC-17, UC-18], milestones: [], evidence: [resource-capacity-v0.2-fixture], status: partial, findingIds: [T-07]}
+  - {id: COLLABORATION, name: Collaboration synchronization and audit, specifications: ["20"], productFacing: true, useCases: [UC-19, UC-20, UC-21], milestones: [], evidence: [collaboration-v0.2-fixture], status: partial, findingIds: [T-07]}
 findings:
   - {id: T-01, severity: blocker, summary: DateTime/DST lacks use-case and milestone ownership, remediationPhase: TR-1}
   - {id: T-02, severity: blocker, summary: Resource capacity leveling and cost lack use-case decomposition and milestone ownership, remediationPhase: TR-1}

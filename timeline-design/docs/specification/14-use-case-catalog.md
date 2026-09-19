@@ -46,6 +46,12 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-13 | Export one evaluation to declared targets | Should | Scene/target capability design; SVG/PPTX adapters deferred |
 | UC-14 | Federate independently owned subproject timelines | Must | Pinned federation contract and conformance evidence; resolver/aggregate adapter required |
 | UC-15 | Manage a delivery roadmap using Chrona | Must | Delivery-profile plan; profile/fixture implementation required |
+| UC-16 | Plan a cross-zone event without DST ambiguity | Future | DateTime/DST successor design and fixtures; runtime deferred |
+| UC-17 | Assess capacity and accept an explicit leveling proposal | Future | Resource/capacity successor design and fixtures; solver deferred |
+| UC-18 | Record cost and time observations without rescheduling the plan | Future | Cost/time observation boundary and fixtures; adapter deferred |
+| UC-19 | Resolve a concurrent semantic conflict explicitly | Future | Collaboration merge design and fixtures; service deferred |
+| UC-20 | Approve and audit a controlled change | Future | Authorization/approval/audit design and fixtures; policy integration deferred |
+| UC-21 | Synchronize a replica without treating a remote tip as truth | Future | Hosted-sync design and fixtures; service deferred |
 
 ## 4. Detailed use cases
 
@@ -302,6 +308,101 @@ workflow-state changes, separate Actual resolution, immutable evidence validatio
 a self-hosted Chrona delivery-plan Project.
 
 **Owners:** `02`, `04`, `05`, `10`, `11`, `12`, `15`.
+
+### UC-16 — Plan a cross-zone event without DST ambiguity
+
+**Actor:** Program planner.
+**Trigger:** The planner schedules a DateTime event across zones or enters a local
+wall-clock time near a daylight-saving transition.
+**Preconditions:** The Project explicitly selects `temporalProfile: datetime-v0.2`.
+**Outcome:** Chrona stores an instant plus IANA zone, applies the declared local-time
+disambiguation, and derives the same cross-zone ordering for the same immutable input.
+**Exceptional behavior:** A mixed Date/DateTime dependency, an ambiguous local time
+without `earlier`, `later`, or `reject`, and a nonexistent local time are rejected with
+the specified diagnostics; no gap is silently shifted.
+**Acceptance evidence:** v0.2 temporal schema and fixtures for cross-zone comparison,
+DST folds/gaps, CalendarPeriod across DST, recurrence, and Date-only compatibility.
+**Owners:** `03`, `04`, `05`, `12`, `18`.
+
+### UC-17 — Assess capacity and accept an explicit leveling proposal
+
+**Actor:** Resource planner.
+**Trigger:** The planner evaluates a declared resource-capacity set against Project
+demand and requests a permitted leveling objective.
+**Preconditions:** The successor Project and capacity inputs name immutable revisions,
+dimensioned units, permitted movement scope, and a deterministic objective.
+**Outcome:** Chrona reports overloads and returns an explicitly derived proposal. The
+Project changes only if a reviewer accepts that proposal through a current-revision
+Command.
+**Exceptional behavior:** Incompatible units, unavailable capacity, fixed-placement
+movement, and stale proposals are diagnosed. Capacity infeasibility never silently
+rewrites dates or turns an Actual observation into a scheduling input.
+**Acceptance evidence:** successor schemas and fixtures for units, assignments,
+capacity calendars, overloads, deterministic tie breaks, and stale-proposal rejection.
+**Owners:** `02`, `04`, `05`, `10`, `12`, `19`.
+
+### UC-18 — Record cost and time observations without rescheduling the plan
+
+**Actor:** Delivery controller.
+**Trigger:** The controller records cost, timesheet, or actual-effort observations
+against planned demand.
+**Preconditions:** Each observation has its own identity and revision provenance.
+**Outcome:** Chrona derives auditable aggregates and may display them beside plan
+demand while preserving their independence from schedule and capacity authority.
+**Exceptional behavior:** Missing, mismatched, or stale observation identities are
+diagnosed. Cost, timesheet, and actual effort never infer progress or reschedule a
+Project automatically.
+**Acceptance evidence:** cost/time observation schemas and fixtures proving identity,
+aggregation provenance, and schedule isolation.
+**Owners:** `05`, `06`, `12`, `19`.
+
+### UC-19 — Resolve a concurrent semantic conflict explicitly
+
+**Actor:** Collaborating planner.
+**Trigger:** A Command based on an older immutable revision conflicts with another
+accepted semantic change.
+**Preconditions:** The submitted Command records its base revision and the service can
+identify both immutable parent snapshots.
+**Outcome:** Chrona returns a typed conflict or merge proposal with both values, paths,
+and provenance. A compatible resolution becomes a new revision only through a typed
+resolution Command.
+**Exceptional behavior:** The service never uses last-writer-wins, infers user intent,
+or merges derived schedule/Scene/output state. A stale command remains rejected until
+explicitly resolved.
+**Acceptance evidence:** stale-write, structural/semantic conflict, explicit
+resolution, and merged-parent-provenance fixtures.
+**Owners:** `09`, `10`, `12`, `15`, `20`.
+
+### UC-20 — Approve and audit a controlled change
+
+**Actor:** Authorized reviewer.
+**Trigger:** A policy requires authorization or approval before a Command can persist.
+**Preconditions:** The policy decision identifies actor, principal, action, target,
+base revision, policy version, and trusted time source.
+**Outcome:** An approval binds one exact Command fingerprint and the resulting audit
+record explains the accepted or denied persistence decision without changing semantic
+meaning.
+**Exceptional behavior:** A changed payload or base revision invalidates approval;
+denied or expired decisions cannot be replayed as a semantic bypass.
+**Acceptance evidence:** approved, denied, expired, and fingerprint-mismatch command
+fixtures plus append-only audit provenance.
+**Owners:** `09`, `10`, `12`, `15`, `20`.
+
+### UC-21 — Synchronize a replica without treating a remote tip as truth
+
+**Actor:** Offline or hosted-workspace user.
+**Trigger:** A replica exchanges immutable snapshots and pending Commands with a
+hosted synchronization service.
+**Preconditions:** The replica labels its known revision and every transferred object
+has Store-issued revision/content identity.
+**Outcome:** Chrona transfers snapshots, command results, conflict objects, and audit
+provenance while preserving the explicit revision consumed by each evaluation.
+**Exceptional behavior:** A behind replica cannot claim an unobserved tip; offline
+Commands retain their original base revision; ephemeral presence/cursor state never
+becomes Project data.
+**Acceptance evidence:** causally-behind replica, offline stale-command, and
+provenance-preserving synchronization fixtures.
+**Owners:** `09`, `12`, `15`, `20`.
 
 ## 5. Cross-cutting quality scenarios
 
