@@ -1,124 +1,111 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1528" height="900" role="img" aria-labelledby="title desc">
 <title id="title">Controller Z — Silicon Bring-up to Mass Production table timeline</title>
 <desc id="desc">Semantic table and hierarchical calendar with 8 selected rows.</desc>
+<defs><marker id="dependency-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7Z" fill="#8A97AB"/></marker></defs>
 <rect width="1528" height="900" fill="#F8F7F4"/>
 <text x="72" y="104" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="22" font-weight="700" fill="#172033">Controller Z — Silicon Bring-up to Mass Production</text>
-<rect data-purpose="table-header" x="64" y="176" width="580" height="24" fill="#EAF0F8"/>
+<rect data-purpose="table-header" x="64" y="176" width="581" height="24" fill="#EAF0F8"/>
 <text data-purpose="table-header" x="72" y="194" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Owner</text>
-<text data-purpose="table-header" x="217" y="194" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Workstream</text>
-<text data-purpose="table-header" x="362" y="194" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Schedule</text>
-<text data-purpose="table-header" x="507" y="194" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Activity</text>
-<line data-purpose="axis-major" x1="529" y1="70" x2="529" y2="876" stroke="#C9CED8"/>
-<text data-purpose="axis-band" x="532" y="70" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Jan 2026</text>
-<line data-purpose="axis-major" x1="684" y1="70" x2="684" y2="876" stroke="#C9CED8"/>
-<text data-purpose="axis-band" x="687" y="70" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Feb 2026</text>
-<line data-purpose="axis-major" x1="824" y1="70" x2="824" y2="876" stroke="#C9CED8"/>
-<text data-purpose="axis-band" x="827" y="70" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Mar 2026</text>
-<line data-purpose="axis-major" x1="979" y1="70" x2="979" y2="876" stroke="#C9CED8"/>
-<text data-purpose="axis-band" x="982" y="70" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Apr 2026</text>
-<line data-purpose="axis-major" x1="1129" y1="70" x2="1129" y2="876" stroke="#C9CED8"/>
-<text data-purpose="axis-band" x="1132" y="70" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">May 2026</text>
-<line data-purpose="axis-major" x1="1284" y1="70" x2="1284" y2="876" stroke="#C9CED8"/>
-<text data-purpose="axis-band" x="1287" y="70" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Jun 2026</text>
-<line data-purpose="axis-major" x1="1434" y1="70" x2="1434" y2="876" stroke="#C9CED8"/>
-<text data-purpose="axis-band" x="1437" y="70" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Jul 2026</text>
-<text data-purpose="axis-quarter" x="532" y="52" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Q1 2026</text>
-<text data-purpose="axis-quarter" x="982" y="52" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Q2 2026</text>
-<text data-purpose="axis-quarter" x="1437" y="52" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Q3 2026</text>
-<line data-purpose="axis-minor" x1="654" y1="88" x2="654" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="689" y1="88" x2="689" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="724" y1="88" x2="724" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="759" y1="88" x2="759" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="794" y1="88" x2="794" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="829" y1="88" x2="829" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="864" y1="88" x2="864" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="899" y1="88" x2="899" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="934" y1="88" x2="934" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="969" y1="88" x2="969" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1004" y1="88" x2="1004" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1039" y1="88" x2="1039" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1074" y1="88" x2="1074" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1109" y1="88" x2="1109" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1144" y1="88" x2="1144" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1179" y1="88" x2="1179" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1214" y1="88" x2="1214" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1249" y1="88" x2="1249" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1284" y1="88" x2="1284" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1319" y1="88" x2="1319" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1354" y1="88" x2="1354" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1389" y1="88" x2="1389" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1424" y1="88" x2="1424" y2="876" stroke="#E6E9EE"/>
-<line data-purpose="axis-minor" x1="1459" y1="88" x2="1459" y2="876" stroke="#E6E9EE"/>
-<rect data-purpose="group-band" x="24" y="208" width="1480" height="30" fill="#EEF3F8"/>
-<text data-purpose="group-header" x="32" y="230" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="13" font-weight="700">Product Engineering</text>
-<line data-purpose="table-row" x1="64" y1="278" x2="642" y2="278" stroke="#e5e7eb"/>
-<text data-scene-id="item:pvt:cell:Owner" data-source-ref="pvt" data-purpose="table-cell" x="72" y="268" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">factory-team</text>
-<text data-scene-id="item:pvt:cell:Workstream" data-source-ref="pvt" data-purpose="table-cell" x="217" y="268" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">production</text>
-<text data-scene-id="item:pvt:cell:Schedule" data-source-ref="pvt" data-purpose="table-cell" x="362" y="268" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:pvt:cell:Activity" data-source-ref="pvt" data-purpose="table-cell" x="507" y="268" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">PVT and Factory Validation</text>
-<rect data-scene-id="item:pvt:planned" data-source-ref="pvt" data-purpose="planned" x="1304" y="256" width="90" height="12" rx="3" fill="#3264B0"/>
-<line data-purpose="table-row" x1="64" y1="308" x2="642" y2="308" stroke="#e5e7eb"/>
-<text data-scene-id="item:ga:cell:Owner" data-source-ref="ga" data-purpose="table-cell" x="72" y="298" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">factory-team</text>
-<text data-scene-id="item:ga:cell:Workstream" data-source-ref="ga" data-purpose="table-cell" x="217" y="298" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:ga:cell:Schedule" data-source-ref="ga" data-purpose="table-cell" x="362" y="298" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:ga:cell:Activity" data-source-ref="ga" data-purpose="table-cell" x="507" y="298" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">General Availability</text>
-<path data-scene-id="item:ga:planned" data-source-ref="ga" data-purpose="planned" d="M1429 286 L1435 292 L1429 298 L1423 292Z" fill="#3264B0"/>
-<rect data-purpose="group-band" x="24" y="358" width="1480" height="30" fill="#EEF3F8"/>
-<text data-purpose="group-header" x="32" y="380" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="13" font-weight="700">Firmware</text>
-<line data-purpose="group-separator" x1="24" y1="388" x2="1504" y2="388" stroke="#9ca3af"/>
-<line data-purpose="table-row" x1="64" y1="428" x2="642" y2="428" stroke="#e5e7eb"/>
-<text data-scene-id="item:architecture:cell:Owner" data-source-ref="architecture" data-purpose="table-cell" x="72" y="418" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">fw-team</text>
-<text data-scene-id="item:architecture:cell:Workstream" data-source-ref="architecture" data-purpose="table-cell" x="217" y="418" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">architecture</text>
-<text data-scene-id="item:architecture:cell:Schedule" data-source-ref="architecture" data-purpose="table-cell" x="362" y="418" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:architecture:cell:Activity" data-source-ref="architecture" data-purpose="table-cell" x="507" y="418" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">Architecture Freeze</text>
-<rect data-scene-id="item:architecture:planned" data-source-ref="architecture" data-purpose="planned" x="689" y="406" width="55" height="12" rx="3" fill="#3264B0"/>
+<text data-purpose="table-header" x="236" y="194" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Workstream</text>
+<text data-purpose="table-header" x="375" y="194" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Schedule</text>
+<text data-purpose="table-header" x="514" y="194" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Activity</text>
+<line data-purpose="axis-major" x1="529" y1="170" x2="529" y2="876" stroke="#C9CED8"/>
+<text data-purpose="axis-band" x="532" y="164" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Jan 2026</text>
+<line data-purpose="axis-major" x1="684" y1="170" x2="684" y2="876" stroke="#C9CED8"/>
+<text data-purpose="axis-band" x="687" y="164" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Feb 2026</text>
+<line data-purpose="axis-major" x1="824" y1="170" x2="824" y2="876" stroke="#C9CED8"/>
+<text data-purpose="axis-band" x="827" y="164" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Mar 2026</text>
+<line data-purpose="axis-major" x1="979" y1="170" x2="979" y2="876" stroke="#C9CED8"/>
+<text data-purpose="axis-band" x="982" y="164" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Apr 2026</text>
+<line data-purpose="axis-major" x1="1129" y1="170" x2="1129" y2="876" stroke="#C9CED8"/>
+<text data-purpose="axis-band" x="1132" y="164" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">May 2026</text>
+<line data-purpose="axis-major" x1="1284" y1="170" x2="1284" y2="876" stroke="#C9CED8"/>
+<text data-purpose="axis-band" x="1287" y="164" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Jun 2026</text>
+<line data-purpose="axis-major" x1="1434" y1="170" x2="1434" y2="876" stroke="#C9CED8"/>
+<text data-purpose="axis-band" x="1437" y="164" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="11" fill="#172033">Jul 2026</text>
+<text data-purpose="axis-quarter" x="532" y="144" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Q1 2026</text>
+<text data-purpose="axis-quarter" x="982" y="144" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Q2 2026</text>
+<text data-purpose="axis-quarter" x="1437" y="144" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12" font-weight="700">Q3 2026</text>
+<line data-purpose="axis-minor" x1="654" y1="182" x2="654" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="689" y1="182" x2="689" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="724" y1="182" x2="724" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="759" y1="182" x2="759" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="794" y1="182" x2="794" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="829" y1="182" x2="829" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="864" y1="182" x2="864" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="899" y1="182" x2="899" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="934" y1="182" x2="934" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="969" y1="182" x2="969" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1004" y1="182" x2="1004" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1039" y1="182" x2="1039" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1074" y1="182" x2="1074" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1109" y1="182" x2="1109" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1144" y1="182" x2="1144" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1179" y1="182" x2="1179" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1214" y1="182" x2="1214" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1249" y1="182" x2="1249" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1284" y1="182" x2="1284" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1319" y1="182" x2="1319" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1354" y1="182" x2="1354" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1389" y1="182" x2="1389" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1424" y1="182" x2="1424" y2="876" stroke="#E6E9EE"/>
+<line data-purpose="axis-minor" x1="1459" y1="182" x2="1459" y2="876" stroke="#E6E9EE"/>
+<rect data-purpose="group-band" x="64" y="208" width="590" height="96" fill="#FFF4E4"/>
+<rect data-purpose="group-surface" x="654" y="208" width="850" height="96" fill="#FFF4E4" opacity="0.45"/>
+<text data-purpose="group-header" x="72" y="256" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="14" font-weight="700">Product Engineering</text>
+<line data-purpose="table-row" x1="64" y1="266" x2="642" y2="266" stroke="#e5e7eb"/>
+<text data-scene-id="item:pvt:cell:Workstream" data-source-ref="pvt" data-purpose="table-cell" x="236" y="256" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">production</text>
+<text data-scene-id="item:pvt:cell:Schedule" data-source-ref="pvt" data-purpose="table-cell" x="375" y="256" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:pvt:cell:Activity" data-source-ref="pvt" data-purpose="table-cell" x="514" y="256" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">PVT and Factory Validation</text>
+<rect data-scene-id="item:pvt:planned" data-source-ref="pvt" data-purpose="planned" x="1304" y="244" width="90" height="12" rx="3" fill="#3264B0"/>
+<line data-purpose="table-row" x1="64" y1="314" x2="642" y2="314" stroke="#e5e7eb"/>
+<text data-scene-id="item:ga:cell:Workstream" data-source-ref="ga" data-purpose="table-cell" x="236" y="304" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:ga:cell:Schedule" data-source-ref="ga" data-purpose="table-cell" x="375" y="304" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:ga:cell:Activity" data-source-ref="ga" data-purpose="table-cell" x="514" y="304" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">General Availability</text>
+<path data-scene-id="item:ga:planned" data-source-ref="ga" data-purpose="planned" d="M1429 292 L1435 298 L1429 304 L1423 298Z" fill="#3264B0"/>
+<rect data-purpose="group-band" x="64" y="352" width="590" height="144" fill="#E7F0FA"/>
+<rect data-purpose="group-surface" x="654" y="352" width="850" height="144" fill="#E7F0FA" opacity="0.45"/>
+<text data-purpose="group-header" x="72" y="424" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="14" font-weight="700">Firmware</text>
+<line data-purpose="table-row" x1="64" y1="410" x2="642" y2="410" stroke="#e5e7eb"/>
+<text data-scene-id="item:architecture:cell:Workstream" data-source-ref="architecture" data-purpose="table-cell" x="236" y="400" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">architecture</text>
+<text data-scene-id="item:architecture:cell:Schedule" data-source-ref="architecture" data-purpose="table-cell" x="375" y="400" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:architecture:cell:Activity" data-source-ref="architecture" data-purpose="table-cell" x="514" y="400" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">Architecture Freeze</text>
+<rect data-scene-id="item:architecture:planned" data-source-ref="architecture" data-purpose="planned" x="689" y="388" width="55" height="12" rx="3" fill="#3264B0"/>
 <line data-purpose="table-row" x1="64" y1="458" x2="642" y2="458" stroke="#e5e7eb"/>
-<text data-scene-id="item:firmware:cell:Owner" data-source-ref="firmware" data-purpose="table-cell" x="72" y="448" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">fw-team</text>
-<text data-scene-id="item:firmware:cell:Workstream" data-source-ref="firmware" data-purpose="table-cell" x="217" y="448" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">firmware</text>
-<text data-scene-id="item:firmware:cell:Schedule" data-source-ref="firmware" data-purpose="table-cell" x="362" y="448" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">+4d</text>
-<text data-scene-id="item:firmware:cell:Activity" data-source-ref="firmware" data-purpose="table-cell" x="507" y="448" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">FW Feature Complete</text>
+<text data-scene-id="item:firmware:cell:Workstream" data-source-ref="firmware" data-purpose="table-cell" x="236" y="448" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">firmware</text>
+<text data-scene-id="item:firmware:cell:Schedule" data-source-ref="firmware" data-purpose="table-cell" x="375" y="448" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">+4d</text>
+<text data-scene-id="item:firmware:cell:Activity" data-source-ref="firmware" data-purpose="table-cell" x="514" y="448" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">FW Feature Complete</text>
 <rect data-scene-id="item:firmware:planned" data-source-ref="firmware" data-purpose="planned" x="744" y="436" width="280" height="12" rx="3" fill="#3264B0"/>
 <rect data-scene-id="item:firmware:actual" data-source-ref="firmware" data-purpose="actual" x="744" y="451" width="300" height="8" rx="2" fill="#2D8A64"/>
-<line data-purpose="table-row" x1="64" y1="488" x2="642" y2="488" stroke="#e5e7eb"/>
-<text data-scene-id="item:silicon-bringup:cell:Owner" data-source-ref="silicon-bringup" data-purpose="table-cell" x="72" y="478" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">fw-team</text>
-<text data-scene-id="item:silicon-bringup:cell:Workstream" data-source-ref="silicon-bringup" data-purpose="table-cell" x="217" y="478" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">validation</text>
-<text data-scene-id="item:silicon-bringup:cell:Schedule" data-source-ref="silicon-bringup" data-purpose="table-cell" x="362" y="478" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">+4d</text>
-<text data-scene-id="item:silicon-bringup:cell:Activity" data-source-ref="silicon-bringup" data-purpose="table-cell" x="507" y="478" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">Silicon Bring-up</text>
-<rect data-scene-id="item:silicon-bringup:planned" data-source-ref="silicon-bringup" data-purpose="planned" x="1074" y="466" width="90" height="12" rx="3" fill="#3264B0"/>
-<rect data-scene-id="item:silicon-bringup:actual" data-source-ref="silicon-bringup" data-purpose="actual" x="1079" y="481" width="105" height="8" rx="2" fill="#2D8A64"/>
-<rect data-purpose="group-band" x="24" y="538" width="1480" height="30" fill="#EEF3F8"/>
-<text data-purpose="group-header" x="32" y="560" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="13" font-weight="700">System Validation</text>
-<line data-purpose="group-separator" x1="24" y1="568" x2="1504" y2="568" stroke="#9ca3af"/>
-<line data-purpose="table-row" x1="64" y1="608" x2="642" y2="608" stroke="#e5e7eb"/>
-<text data-scene-id="item:evb-arrival:cell:Owner" data-source-ref="evb-arrival" data-purpose="table-cell" x="72" y="598" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">validation-team</text>
-<text data-scene-id="item:evb-arrival:cell:Workstream" data-source-ref="evb-arrival" data-purpose="table-cell" x="217" y="598" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:evb-arrival:cell:Schedule" data-source-ref="evb-arrival" data-purpose="table-cell" x="362" y="598" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:evb-arrival:cell:Activity" data-source-ref="evb-arrival" data-purpose="table-cell" x="507" y="598" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">EVB Arrival</text>
-<path data-scene-id="item:evb-arrival:planned" data-source-ref="evb-arrival" data-purpose="planned" d="M1059 586 L1065 592 L1059 598 L1053 592Z" fill="#3264B0"/>
-<line data-purpose="table-row" x1="64" y1="638" x2="642" y2="638" stroke="#e5e7eb"/>
-<text data-scene-id="item:performance:cell:Owner" data-source-ref="performance" data-purpose="table-cell" x="72" y="628" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">validation-team</text>
-<text data-scene-id="item:performance:cell:Workstream" data-source-ref="performance" data-purpose="table-cell" x="217" y="628" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">performance</text>
-<text data-scene-id="item:performance:cell:Schedule" data-source-ref="performance" data-purpose="table-cell" x="362" y="628" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:performance:cell:Activity" data-source-ref="performance" data-purpose="table-cell" x="507" y="628" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">Performance Characterization</text>
-<rect data-scene-id="item:performance:planned" data-source-ref="performance" data-purpose="planned" x="1074" y="616" width="55" height="12" rx="3" fill="#3264B0"/>
-<line data-purpose="table-row" x1="64" y1="668" x2="642" y2="668" stroke="#e5e7eb"/>
-<text data-scene-id="item:dvt:cell:Owner" data-source-ref="dvt" data-purpose="table-cell" x="72" y="658" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">validation-team</text>
-<text data-scene-id="item:dvt:cell:Workstream" data-source-ref="dvt" data-purpose="table-cell" x="217" y="658" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">qualification</text>
-<text data-scene-id="item:dvt:cell:Schedule" data-source-ref="dvt" data-purpose="table-cell" x="362" y="658" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
-<text data-scene-id="item:dvt:cell:Activity" data-source-ref="dvt" data-purpose="table-cell" x="507" y="658" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">DVT Qualification</text>
-<rect data-scene-id="item:dvt:planned" data-source-ref="dvt" data-purpose="planned" x="1184" y="646" width="105" height="12" rx="3" fill="#3264B0"/>
-<path data-purpose="routed-connector" data-source-ref="architecture-unlocks-firmware" d="M654 412 C654 412 654 442 654 442" fill="none" stroke="#6b7280" stroke-width="1"/>
-<path data-purpose="routed-connector" data-source-ref="firmware-to-evb" d="M654 442 C654 442 654 592 654 592" fill="none" stroke="#6b7280" stroke-width="1"/>
-<path data-purpose="routed-connector" data-source-ref="evb-to-bringup" d="M654 592 C654 592 654 472 654 472" fill="none" stroke="#6b7280" stroke-width="1"/>
-<path data-purpose="routed-connector" data-source-ref="bringup-to-performance" d="M654 472 C654 472 654 622 654 622" fill="none" stroke="#6b7280" stroke-width="1"/>
-<path data-purpose="routed-connector" data-source-ref="bringup-to-dvt" d="M654 472 C654 472 654 652 654 652" fill="none" stroke="#6b7280" stroke-width="1"/>
-<path data-purpose="routed-connector" data-source-ref="dvt-to-pvt" d="M654 652 C654 652 654 262 654 262" fill="none" stroke="#6b7280" stroke-width="1"/>
-<path data-purpose="routed-connector" data-source-ref="pvt-to-ga" d="M654 262 C654 262 654 292 654 292" fill="none" stroke="#6b7280" stroke-width="1"/>
-<text data-purpose="summary-panel" data-source-ref="derived:Delivery overview" x="72" y="730" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700">Delivery overview</text>
-<text data-purpose="summary-metric" data-source-ref="derived:Delivery overview:selectedCount" x="72" y="745" font-family="Inter, Arial, sans-serif" font-size="10">Selected work: 8</text>
-<text data-purpose="summary-metric" data-source-ref="derived:Delivery overview:actualCoverage" x="72" y="758" font-family="Inter, Arial, sans-serif" font-size="10">Actual coverage: 2/8</text>
-<text data-purpose="summary-metric" data-source-ref="derived:Delivery overview:knownFinishVarianceCount" x="72" y="771" font-family="Inter, Arial, sans-serif" font-size="10">Known finish variance: 2</text>
-<text data-purpose="summary-metric" data-source-ref="derived:Delivery overview:missingActualCount" x="72" y="784" font-family="Inter, Arial, sans-serif" font-size="10">Missing Actual: 6</text>
-<text data-purpose="summary-panel" data-source-ref="derived:Next decision" x="72" y="803" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700">Next decision</text>
-<text data-purpose="summary-metric" data-source-ref="derived:Next decision:nextPlannedPoint" x="72" y="818" font-family="Inter, Arial, sans-serif" font-size="10">Next planned point: 2026-04-17</text>
+<line data-purpose="table-row" x1="64" y1="506" x2="642" y2="506" stroke="#e5e7eb"/>
+<text data-scene-id="item:silicon-bringup:cell:Workstream" data-source-ref="silicon-bringup" data-purpose="table-cell" x="236" y="496" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">validation</text>
+<text data-scene-id="item:silicon-bringup:cell:Schedule" data-source-ref="silicon-bringup" data-purpose="table-cell" x="375" y="496" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">+4d</text>
+<text data-scene-id="item:silicon-bringup:cell:Activity" data-source-ref="silicon-bringup" data-purpose="table-cell" x="514" y="496" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">Silicon Bring-up</text>
+<rect data-scene-id="item:silicon-bringup:planned" data-source-ref="silicon-bringup" data-purpose="planned" x="1074" y="484" width="90" height="12" rx="3" fill="#3264B0"/>
+<rect data-scene-id="item:silicon-bringup:actual" data-source-ref="silicon-bringup" data-purpose="actual" x="1079" y="499" width="105" height="8" rx="2" fill="#2D8A64"/>
+<rect data-purpose="group-band" x="64" y="544" width="590" height="144" fill="#E8F6F0"/>
+<rect data-purpose="group-surface" x="654" y="544" width="850" height="144" fill="#E8F6F0" opacity="0.45"/>
+<text data-purpose="group-header" x="72" y="616" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="14" font-weight="700">System Validation</text>
+<line data-purpose="table-row" x1="64" y1="602" x2="642" y2="602" stroke="#e5e7eb"/>
+<text data-scene-id="item:evb-arrival:cell:Workstream" data-source-ref="evb-arrival" data-purpose="table-cell" x="236" y="592" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:evb-arrival:cell:Schedule" data-source-ref="evb-arrival" data-purpose="table-cell" x="375" y="592" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:evb-arrival:cell:Activity" data-source-ref="evb-arrival" data-purpose="table-cell" x="514" y="592" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">EVB Arrival</text>
+<path data-scene-id="item:evb-arrival:planned" data-source-ref="evb-arrival" data-purpose="planned" d="M1059 580 L1065 586 L1059 592 L1053 586Z" fill="#3264B0"/>
+<line data-purpose="table-row" x1="64" y1="650" x2="642" y2="650" stroke="#e5e7eb"/>
+<text data-scene-id="item:performance:cell:Workstream" data-source-ref="performance" data-purpose="table-cell" x="236" y="640" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">performance</text>
+<text data-scene-id="item:performance:cell:Schedule" data-source-ref="performance" data-purpose="table-cell" x="375" y="640" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:performance:cell:Activity" data-source-ref="performance" data-purpose="table-cell" x="514" y="640" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">Performance Characterization</text>
+<rect data-scene-id="item:performance:planned" data-source-ref="performance" data-purpose="planned" x="1074" y="628" width="55" height="12" rx="3" fill="#3264B0"/>
+<line data-purpose="table-row" x1="64" y1="698" x2="642" y2="698" stroke="#e5e7eb"/>
+<text data-scene-id="item:dvt:cell:Workstream" data-source-ref="dvt" data-purpose="table-cell" x="236" y="688" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">qualification</text>
+<text data-scene-id="item:dvt:cell:Schedule" data-source-ref="dvt" data-purpose="table-cell" x="375" y="688" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">—</text>
+<text data-scene-id="item:dvt:cell:Activity" data-source-ref="dvt" data-purpose="table-cell" x="514" y="688" font-family="Inter, Avenir Next, Aptos, Arial, sans-serif" font-size="12">DVT Qualification</text>
+<rect data-scene-id="item:dvt:planned" data-source-ref="dvt" data-purpose="planned" x="1184" y="676" width="105" height="12" rx="3" fill="#3264B0"/>
+<path data-purpose="routed-connector" data-source-ref="architecture-unlocks-firmware" d="M744 394 C744 394 744 442 744 442" fill="none" stroke="#8A97AB" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="firmware-to-evb" d="M1024 442 C839 442 839 586 654 586" fill="none" stroke="#8A97AB" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="evb-to-bringup" d="M654 586 C864 586 864 490 1074 490" fill="none" stroke="#8A97AB" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="bringup-to-performance" d="M1164 490 C1119 490 1119 634 1074 634" fill="none" stroke="#8A97AB" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="bringup-to-dvt" d="M1164 490 C1174 490 1174 682 1184 682" fill="none" stroke="#8A97AB" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="dvt-to-pvt" d="M1289 682 C1296 682 1296 250 1304 250" fill="none" stroke="#8A97AB" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="pvt-to-ga" d="M1394 250 C1024 250 1024 298 654 298" fill="none" stroke="#8A97AB" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>
 </svg>

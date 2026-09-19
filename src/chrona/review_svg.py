@@ -138,40 +138,49 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     if not required.issubset(capabilities): raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
     start,end=projection.window; columns=view["body"].get("tableColumns", [{"id":"title","source":"title","missing":"em-dash"}])
     groups=profile.get("groups",{"mode":"header-and-separator","gapRows":1}); table=slots.get("table") if slots else None; timeline=slots.get("timeline") if slots else None; header=slots.get("title") if slots else None
-    col_width=(table.width//max(1,len(columns))) if table else 150; left=timeline.x if timeline else 32+col_width*len(columns); top=(timeline.y+40) if timeline else 128; day=max(4,((timeline.width if timeline else 1200)-24)//max(1,(end-start).days)) ; row={"engineering":28,"review":32,"presentation":30}.get(profile.get("canvas",{}).get("density"),36); width=(header.x+header.width if header else max(1080,left+(end-start).days*day+48)); colors=_theme_colors(theme)
-    group_breaks=sum(1+groups["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id)
+    presentation=profile.get("canvas",{}).get("density")=="presentation"; owner_width=164 if presentation else 0
+    col_width=((table.width-owner_width)//max(1,len(columns))) if table else 150; left=timeline.x if timeline else 32+owner_width+col_width*len(columns); top=(timeline.y+40) if timeline else 128; day=max(4,((timeline.width if timeline else 1200)-24)//max(1,(end-start).days)) ; row={"engineering":28,"review":32,"presentation":48}.get(profile.get("canvas",{}).get("density"),36); width=(header.x+header.width if header else max(1080,left+(end-start).days*day+48)); colors=_theme_colors(theme)
+    group_breaks=(groups["gapRows"] if presentation else sum(1+groups["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id))
     height=900 if slots else top+(len(projection.items)+group_breaks+4)*row+40
     title_x,title_y=(header.x,header.y+32) if header else (32,34); table_x=table.x if table else 32
     font=_theme_font(theme)
-    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{title_x}" y="{title_y}" font-family="{font}" font-size="22" font-weight="700" fill="{colors["text"]}">{escape(title)}</text>']
-    p.append(f'<rect data-purpose="table-header" x="{table_x-8}" y="{top-32}" width="{col_width*len(columns)}" height="24" fill="{_theme_color(theme,"table-header","#f3f4f6")}"/>')
-    for n,col in enumerate(columns): p.append(f'<text data-purpose="table-header" x="{table_x+n*col_width}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">{escape(str(col["id"]))}</text>')
+    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>','<defs><marker id="dependency-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7Z" fill="#8A97AB"/></marker></defs>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{title_x}" y="{title_y}" font-family="{font}" font-size="22" font-weight="700" fill="{colors["text"]}">{escape(title)}</text>']
+    p.append(f'<rect data-purpose="table-header" x="{table_x-8}" y="{top-32}" width="{owner_width+col_width*len(columns)}" height="24" fill="{_theme_color(theme,"table-header","#f3f4f6")}"/>')
+    if presentation: p.append(f'<text data-purpose="table-header" x="{table_x}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">Owner</text>')
+    for n,col in enumerate(columns): p.append(f'<text data-purpose="table-header" x="{table_x+owner_width+n*col_width}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">{escape(str(col["id"]))}</text>')
     cursor=date(start.year,start.month,1)
     while cursor<=end:
-        x=left+(cursor-start).days*day; p += [f'<line data-purpose="axis-major" x1="{x}" y1="70" x2="{x}" y2="{height-24}" stroke="{colors["grid"]}"/>',f'<text data-purpose="axis-band" x="{x+3}" y="70" font-family="{font}" font-size="11" fill="{colors["text"]}">{cursor:%b %Y}</text>']
+        x=left+(cursor-start).days*day; p += [f'<line data-purpose="axis-major" x1="{x}" y1="{top-38}" x2="{x}" y2="{height-24}" stroke="{colors["grid"]}"/>',f'<text data-purpose="axis-band" x="{x+3}" y="{top-44}" font-family="{font}" font-size="11" fill="{colors["text"]}">{cursor:%b %Y}</text>']
         cursor=date(cursor.year+1,1,1) if cursor.month==12 else date(cursor.year,cursor.month+1,1)
     quarter=date(start.year,((start.month-1)//3)*3+1,1)
     while quarter<=end:
-        x=left+(quarter-start).days*day; p.append(f'<text data-purpose="axis-quarter" x="{x+3}" y="52" font-family="system-ui" font-size="12" font-weight="700">Q{(quarter.month-1)//3+1} {quarter.year}</text>'); quarter=date(quarter.year+1,1,1) if quarter.month==10 else date(quarter.year,quarter.month+3,1)
+        x=left+(quarter-start).days*day; p.append(f'<text data-purpose="axis-quarter" x="{x+3}" y="{top-64}" font-family="system-ui" font-size="12" font-weight="700">Q{(quarter.month-1)//3+1} {quarter.year}</text>'); quarter=date(quarter.year+1,1,1) if quarter.month==10 else date(quarter.year,quarter.month+3,1)
     cursor=start
     while cursor<=end:
-        x=left+(cursor-start).days*day; p.append(f'<line data-purpose="axis-minor" x1="{x}" y1="88" x2="{x}" y2="{height-24}" stroke="{colors["gridMinor"]}"/>'); cursor=date.fromordinal(cursor.toordinal()+7)
-    y=top; previous=None; positions: dict[str, tuple[int,int]]={}
+        x=left+(cursor-start).days*day; p.append(f'<line data-purpose="axis-minor" x1="{x}" y1="{top-26}" x2="{x}" y2="{height-24}" stroke="{colors["gridMinor"]}"/>'); cursor=date.fromordinal(cursor.toordinal()+7)
+    y=top; previous=None; positions: dict[str, tuple[int,int,int]]={}
     for item in projection.items:
         if item.group_id!=previous:
-            if previous is not None: y+=row*(1+groups["gapRows"])
-            if groups["mode"] in {"band","header-and-separator"}: p.append(f'<rect data-purpose="group-band" x="24" y="{y}" width="{width-48}" height="{row}" fill="{_theme_color(theme,"group-band","#f3f4f6")}"/>')
-            if groups["mode"]=="header-and-separator": p.append(f'<text data-purpose="group-header" x="32" y="{y+22}" font-family="system-ui" font-size="13" font-weight="700">{escape(item.group_label)}</text>'); y+=row
-            if previous is not None and groups["mode"] in {"separator","header-and-separator"}: p.append(f'<line data-purpose="group-separator" x1="24" y1="{y}" x2="{width-24}" y2="{y}" stroke="#9ca3af"/>')
+            if previous is not None: y+=row*(groups["gapRows"] if presentation else 1+groups["gapRows"])
+            count=sum(1 for candidate in projection.items[projection.items.index(item):] if candidate.group_id==item.group_id) if presentation else 1
+            fill=_theme_color(theme,f"group-band-{len([x for x in projection.items[:projection.items.index(item)] if x.group_id!=item.group_id])}",_theme_color(theme,"group-band","#f3f4f6"))
+            if presentation:
+                p.append(f'<rect data-purpose="group-band" x="{table_x-8}" y="{y}" width="{left-table_x+8}" height="{count*row}" fill="{fill}"/>')
+                p.append(f'<rect data-purpose="group-surface" x="{left}" y="{y}" width="{width-left-24}" height="{count*row}" fill="{fill}" opacity="0.45"/>')
+                p.append(f'<text data-purpose="group-header" x="{table_x}" y="{y+count*row//2}" font-family="system-ui" font-size="14" font-weight="700">{escape(item.group_label)}</text>')
+            else:
+                if groups["mode"] in {"band","header-and-separator"}: p.append(f'<rect data-purpose="group-band" x="24" y="{y}" width="{width-48}" height="{row}" fill="{fill}"/>')
+                if groups["mode"]=="header-and-separator": p.append(f'<text data-purpose="group-header" x="32" y="{y+22}" font-family="system-ui" font-size="13" font-weight="700">{escape(item.group_label)}</text>'); y+=row
+                if previous is not None and groups["mode"] in {"separator","header-and-separator"}: p.append(f'<line data-purpose="group-separator" x1="24" y1="{y}" x2="{width-24}" y2="{y}" stroke="#9ca3af"/>')
             previous=item.group_id
         y+=row
-        positions[item.object_id]=(left,y-6)
+        positions[item.object_id]=(left,left,y-6)
         p.append(f'<line data-purpose="table-row" x1="{table_x-8}" y1="{y+10}" x2="{left-12}" y2="{y+10}" stroke="#e5e7eb"/>')
         for n,col in enumerate(columns):
             value=_table_value(item,project,col["source"]); text=_display_value(value,col["missing"])
-            p.append(f'<text data-scene-id="item:{item.object_id}:cell:{escape(str(col["id"]))}" data-source-ref="{item.object_id}" data-purpose="table-cell" x="{table_x+n*col_width}" y="{y}" font-family="system-ui" font-size="12">{escape(text)}</text>')
+            p.append(f'<text data-scene-id="item:{item.object_id}:cell:{escape(str(col["id"]))}" data-source-ref="{item.object_id}" data-purpose="table-cell" x="{table_x+owner_width+n*col_width}" y="{y}" font-family="system-ui" font-size="12">{escape(text)}</text>')
         if item.source_type=="span":
-            x=left+(item.planned["start"]-start).days*day; w=max(3,(item.planned["end"]-item.planned["start"]).days*day); p.append(f'<rect data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned" x="{x}" y="{y-12}" width="{w}" height="12" rx="3" fill="{colors["planned"]}"/>')
+            x=left+(item.planned["start"]-start).days*day; w=max(3,(item.planned["end"]-item.planned["start"]).days*day); positions[item.object_id]=(x,x+w,y-6); p.append(f'<rect data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned" x="{x}" y="{y-12}" width="{w}" height="12" rx="3" fill="{colors["planned"]}"/>')
         else:
             x=left+(item.planned["at"]-start).days*day; p.append(f'<path data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned" d="M{x} {y-12} L{x+6} {y-6} L{x} {y} L{x-6} {y-6}Z" fill="{colors["planned"]}"/>')
         if item.actual and item.source_type=="span" and "finish" in item.actual:
@@ -180,8 +189,8 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
         for relation in project.get("relations",[]):
             source=relation.get("from",{}).get("object"); target=relation.get("to",{}).get("object")
             if source in positions and target in positions:
-                x1,y1=positions[source]; x2,y2=positions[target]; mid=(x1+x2)//2
-                p.append(f'<path data-purpose="routed-connector" data-source-ref="{escape(str(relation.get("id","relation")))}" d="M{x1} {y1} C{mid} {y1} {mid} {y2} {x2} {y2}" fill="none" stroke="{_theme_color(theme,"routed-connector","#6b7280")}" stroke-width="1"/>')
+                _,x1,y1=positions[source]; x2,_,y2=positions[target]; mid=(x1+x2)//2
+                p.append(f'<path data-purpose="routed-connector" data-source-ref="{escape(str(relation.get("id","relation")))}" d="M{x1} {y1} C{mid} {y1} {mid} {y2} {x2} {y2}" fill="none" stroke="{_theme_color(theme,"routed-connector","#8A97AB")}" stroke-width="1.25" marker-end="url(#dependency-arrow)"/>')
     notes=slots.get("notes") if slots else None
     if notes:
         ny=notes.y+18
