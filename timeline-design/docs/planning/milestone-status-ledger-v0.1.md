@@ -25,6 +25,10 @@ evidence is present, not that a later product release is complete.
 | M12 | Complete | Explicit conflict/CAS resolution with two-parent provenance, append-only audit observations, and labelled replica status; UC-19–21 evidence reviewed. | None. |
 | M13 | Complete | Fixed successor v0.2 closure, exact UC-16–21 evidence validation, and blocked/published release boundary. | None. |
 | M14 | Complete | User-selected View grouping plus profile-selected headers/separators/bands/gaps in deterministic Review SVG. | None. |
+| M15 | Planned — design required | Table-timeline review surface planned in `presentation-productization-analysis-and-plan-2026-09-19.md`. | D15-1–D15-3 must close and publish before implementation. |
+| M16 | Planned — design required | Read-only decision/risk surfaces planned in `presentation-productization-analysis-and-plan-2026-09-19.md`. | D16-1–D16-2 must close and publish before implementation. |
+| M17 | Planned — design required | Presentation themes and expression planned in `presentation-productization-analysis-and-plan-2026-09-19.md`. | D17-1–D17-2 must close and publish before implementation. |
+| M18 | Planned — design required | Product presentation release planned in `presentation-productization-analysis-and-plan-2026-09-19.md`. | M15–M17 evidence and release review are required. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning

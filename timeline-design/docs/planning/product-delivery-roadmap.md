@@ -60,13 +60,20 @@ Every milestone MUST demonstrate all of the following before it is accepted:
 | M12 — Collaborative workspace product | Teams can synchronize, resolve conflicts, approve changes, and audit provenance without last-writer-wins. | FD-3 synchronization service, typed conflict/merge flow, policy/approval adapter, and append-only audit surface. | Revision Store snapshots, Command, Federation pinning, and Scene non-authority. | UC-19–UC-21 acceptance passes with conflict, approval, denial, expiry, offline, and causally-behind replica evidence. |
 | M13 — Successor-capability product release | Users can combine approved DateTime, capacity/accounting, collaboration, extension lifecycle, and output capabilities in declared profiles. | Cross-successor compatibility suite, migration/release packaging, and UC-16–UC-21 acceptance review. | All current-profile and successor contracts; each capability remains opt-in and versioned. | Release review names every claimed successor profile and passes its dedicated plus cross-profile evidence without changing Date-only meaning. |
 | M14 — Review SVG expression | A reviewer can distinguish plan, Actual, known variance, dependencies, and annotations in a deterministic accessible SVG. | Explicit Review SVG profile, View/Style/Theme projection, Review Scene, and SVG adapter. | Existing Project/Schedule/Actual/View/Style/Theme/Scene/Output contracts. | Controller review sample demonstrates Plan/Actual/missing/unmatched states; output is deterministic and capability-complete. |
+| M15 — Table-timeline review surface | A reviewer can use a semantic table, hierarchical calendar, and user-selected group presentation in one deterministic review SVG. | Closed View table columns; table-timeline profile; axis/group/routing Scene contract; light executive sample. | Project/Schedule/Actual truth, View selection/window/grouping, and M14 comparison semantics. | Design gates D15-1–D15-3 close and I15 passes deterministic, accessibility, conformance, and reuse review evidence. |
+| M16 — Decision and risk surfaces | A reviewer can add bounded, source-traceable summary panels without fabricated health or forecast values. | Read-only metric catalog; summary profile; panel Scene contract; dark delivery-control sample. | M15 projection facts, Project/Schedule/Actual authority, Output capability rules. | D16-1–D16-2 close and I16 proves metric provenance, unavailable-data diagnostics, and deterministic output. |
+| M17 — Presentation themes and expression | A user can apply accessible light executive and dark delivery-control themes to the same review semantics. | Role/token catalog, contrast rules, gallery/visual-regression policy, theme samples. | M15/M16 profiles and shared semantic closure. | D17-1–D17-2 close and I17 passes cross-theme semantic, accessibility, and deterministic-output evidence. |
+| M18 — Product presentation release | Users can rely on presentation compositions as one product surface rather than isolated SVG samples. | Cross-profile acceptance, capability/release manifest, and reuse review. | All M0–M17 shared contracts. | Full inherited conformance, declared output capability, accessibility, and no-parallel-model reuse evidence. |
 
-## 4. Boundaries after M14
+## 4. Boundaries after M18
 
-M14 is the endpoint of the currently designed product. Ticket/workflow management,
-automatic transitions, arbitrary extension code, undisclosed output degradation, and
-any successor capability not named by M10–M12 require a new owning-specification change
-and roadmap amendment. They are not hidden work inside a milestone above.
+M14 is the completed review-SVG foundation. M15–M18 are planned productization work,
+not implementation authorization: each design gate in
+`presentation-productization-analysis-and-plan-2026-09-19.md` must close and publish
+first. Ticket/workflow management, automatic transitions, arbitrary extension code,
+undisclosed output degradation, raster/PDF claims, and any successor capability not
+named by this roadmap require a new owning-specification change and roadmap amendment.
+They are not hidden work inside a milestone above.
 
 ## 4.1 Future-capability design gate
 
