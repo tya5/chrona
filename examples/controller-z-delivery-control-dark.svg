@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2300" height="744" role="img" aria-labelledby="title desc">
+<title id="title">Controller Z — Silicon Bring-up to Mass Production table timeline</title>
+<desc id="desc">Semantic table and hierarchical calendar with 8 selected rows.</desc>
+<rect width="2300" height="744" fill="#faf8f6"/>
+<text x="32" y="34" font-family="system-ui" font-size="20" font-weight="700">Controller Z — Silicon Bring-up to Mass Production</text>
+<text data-purpose="table-header" x="32" y="114" font-family="system-ui" font-size="12" font-weight="700">Owner</text>
+<text data-purpose="table-header" x="182" y="114" font-family="system-ui" font-size="12" font-weight="700">Workstream</text>
+<text data-purpose="table-header" x="332" y="114" font-family="system-ui" font-size="12" font-weight="700">Schedule</text>
+<text data-purpose="table-header" x="482" y="114" font-family="system-ui" font-size="12" font-weight="700">Activity</text>
+<line data-purpose="axis-major" x1="382" y1="70" x2="382" y2="720" stroke="#9ca3af"/>
+<text data-purpose="axis-band" x="385" y="70" font-family="system-ui" font-size="11">Jan 2026</text>
+<line data-purpose="axis-major" x1="692" y1="70" x2="692" y2="720" stroke="#9ca3af"/>
+<text data-purpose="axis-band" x="695" y="70" font-family="system-ui" font-size="11">Feb 2026</text>
+<line data-purpose="axis-major" x1="972" y1="70" x2="972" y2="720" stroke="#9ca3af"/>
+<text data-purpose="axis-band" x="975" y="70" font-family="system-ui" font-size="11">Mar 2026</text>
+<line data-purpose="axis-major" x1="1282" y1="70" x2="1282" y2="720" stroke="#9ca3af"/>
+<text data-purpose="axis-band" x="1285" y="70" font-family="system-ui" font-size="11">Apr 2026</text>
+<line data-purpose="axis-major" x1="1582" y1="70" x2="1582" y2="720" stroke="#9ca3af"/>
+<text data-purpose="axis-band" x="1585" y="70" font-family="system-ui" font-size="11">May 2026</text>
+<line data-purpose="axis-major" x1="1892" y1="70" x2="1892" y2="720" stroke="#9ca3af"/>
+<text data-purpose="axis-band" x="1895" y="70" font-family="system-ui" font-size="11">Jun 2026</text>
+<line data-purpose="axis-major" x1="2192" y1="70" x2="2192" y2="720" stroke="#9ca3af"/>
+<text data-purpose="axis-band" x="2195" y="70" font-family="system-ui" font-size="11">Jul 2026</text>
+<line data-purpose="axis-minor" x1="632" y1="88" x2="632" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="702" y1="88" x2="702" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="772" y1="88" x2="772" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="842" y1="88" x2="842" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="912" y1="88" x2="912" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="982" y1="88" x2="982" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1052" y1="88" x2="1052" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1122" y1="88" x2="1122" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1192" y1="88" x2="1192" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1262" y1="88" x2="1262" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1332" y1="88" x2="1332" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1402" y1="88" x2="1402" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1472" y1="88" x2="1472" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1542" y1="88" x2="1542" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1612" y1="88" x2="1612" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1682" y1="88" x2="1682" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1752" y1="88" x2="1752" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1822" y1="88" x2="1822" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1892" y1="88" x2="1892" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="1962" y1="88" x2="1962" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="2032" y1="88" x2="2032" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="2102" y1="88" x2="2102" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="2172" y1="88" x2="2172" y2="720" stroke="#e5e7eb"/>
+<line data-purpose="axis-minor" x1="2242" y1="88" x2="2242" y2="720" stroke="#e5e7eb"/>
+<rect data-purpose="group-band" x="24" y="128" width="2252" height="36" fill="#1F2937"/>
+<text data-purpose="group-header" x="32" y="150" font-family="system-ui" font-size="13" font-weight="700">Product Engineering</text>
+<text data-scene-id="item:pvt:cell:Owner" data-source-ref="pvt" data-purpose="table-cell" x="32" y="200" font-family="system-ui" font-size="12">factory-team</text>
+<text data-scene-id="item:pvt:cell:Workstream" data-source-ref="pvt" data-purpose="table-cell" x="182" y="200" font-family="system-ui" font-size="12">production</text>
+<text data-scene-id="item:pvt:cell:Schedule" data-source-ref="pvt" data-purpose="table-cell" x="332" y="200" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:pvt:cell:Activity" data-source-ref="pvt" data-purpose="table-cell" x="482" y="200" font-family="system-ui" font-size="12">PVT and Factory Validation</text>
+<rect data-scene-id="item:pvt:planned" data-source-ref="pvt" data-purpose="planned" x="1932" y="188" width="180" height="12" rx="3" fill="#22D3EE"/>
+<text data-scene-id="item:ga:cell:Owner" data-source-ref="ga" data-purpose="table-cell" x="32" y="236" font-family="system-ui" font-size="12">factory-team</text>
+<text data-scene-id="item:ga:cell:Workstream" data-source-ref="ga" data-purpose="table-cell" x="182" y="236" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:ga:cell:Schedule" data-source-ref="ga" data-purpose="table-cell" x="332" y="236" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:ga:cell:Activity" data-source-ref="ga" data-purpose="table-cell" x="482" y="236" font-family="system-ui" font-size="12">General Availability</text>
+<path data-scene-id="item:ga:planned" data-source-ref="ga" data-purpose="planned" d="M2182 224 L2188 230 L2182 236 L2176 230Z" fill="#22D3EE"/>
+<rect data-purpose="group-band" x="24" y="308" width="2252" height="36" fill="#1F2937"/>
+<text data-purpose="group-header" x="32" y="330" font-family="system-ui" font-size="13" font-weight="700">Firmware</text>
+<line data-purpose="group-separator" x1="24" y1="344" x2="2276" y2="344" stroke="#9ca3af"/>
+<text data-scene-id="item:architecture:cell:Owner" data-source-ref="architecture" data-purpose="table-cell" x="32" y="380" font-family="system-ui" font-size="12">fw-team</text>
+<text data-scene-id="item:architecture:cell:Workstream" data-source-ref="architecture" data-purpose="table-cell" x="182" y="380" font-family="system-ui" font-size="12">architecture</text>
+<text data-scene-id="item:architecture:cell:Schedule" data-source-ref="architecture" data-purpose="table-cell" x="332" y="380" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:architecture:cell:Activity" data-source-ref="architecture" data-purpose="table-cell" x="482" y="380" font-family="system-ui" font-size="12">Architecture Freeze</text>
+<rect data-scene-id="item:architecture:planned" data-source-ref="architecture" data-purpose="planned" x="702" y="368" width="110" height="12" rx="3" fill="#22D3EE"/>
+<text data-scene-id="item:firmware:cell:Owner" data-source-ref="firmware" data-purpose="table-cell" x="32" y="416" font-family="system-ui" font-size="12">fw-team</text>
+<text data-scene-id="item:firmware:cell:Workstream" data-source-ref="firmware" data-purpose="table-cell" x="182" y="416" font-family="system-ui" font-size="12">firmware</text>
+<text data-scene-id="item:firmware:cell:Schedule" data-source-ref="firmware" data-purpose="table-cell" x="332" y="416" font-family="system-ui" font-size="12">+4d</text>
+<text data-scene-id="item:firmware:cell:Activity" data-source-ref="firmware" data-purpose="table-cell" x="482" y="416" font-family="system-ui" font-size="12">FW Feature Complete</text>
+<rect data-scene-id="item:firmware:planned" data-source-ref="firmware" data-purpose="planned" x="812" y="404" width="560" height="12" rx="3" fill="#22D3EE"/>
+<rect data-scene-id="item:firmware:actual" data-source-ref="firmware" data-purpose="actual" x="812" y="419" width="600" height="8" rx="2" fill="#4ADE80"/>
+<text data-scene-id="item:silicon-bringup:cell:Owner" data-source-ref="silicon-bringup" data-purpose="table-cell" x="32" y="452" font-family="system-ui" font-size="12">fw-team</text>
+<text data-scene-id="item:silicon-bringup:cell:Workstream" data-source-ref="silicon-bringup" data-purpose="table-cell" x="182" y="452" font-family="system-ui" font-size="12">validation</text>
+<text data-scene-id="item:silicon-bringup:cell:Schedule" data-source-ref="silicon-bringup" data-purpose="table-cell" x="332" y="452" font-family="system-ui" font-size="12">+4d</text>
+<text data-scene-id="item:silicon-bringup:cell:Activity" data-source-ref="silicon-bringup" data-purpose="table-cell" x="482" y="452" font-family="system-ui" font-size="12">Silicon Bring-up</text>
+<rect data-scene-id="item:silicon-bringup:planned" data-source-ref="silicon-bringup" data-purpose="planned" x="1472" y="440" width="180" height="12" rx="3" fill="#22D3EE"/>
+<rect data-scene-id="item:silicon-bringup:actual" data-source-ref="silicon-bringup" data-purpose="actual" x="1482" y="455" width="210" height="8" rx="2" fill="#4ADE80"/>
+<rect data-purpose="group-band" x="24" y="524" width="2252" height="36" fill="#1F2937"/>
+<text data-purpose="group-header" x="32" y="546" font-family="system-ui" font-size="13" font-weight="700">System Validation</text>
+<line data-purpose="group-separator" x1="24" y1="560" x2="2276" y2="560" stroke="#9ca3af"/>
+<text data-scene-id="item:evb-arrival:cell:Owner" data-source-ref="evb-arrival" data-purpose="table-cell" x="32" y="596" font-family="system-ui" font-size="12">validation-team</text>
+<text data-scene-id="item:evb-arrival:cell:Workstream" data-source-ref="evb-arrival" data-purpose="table-cell" x="182" y="596" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:evb-arrival:cell:Schedule" data-source-ref="evb-arrival" data-purpose="table-cell" x="332" y="596" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:evb-arrival:cell:Activity" data-source-ref="evb-arrival" data-purpose="table-cell" x="482" y="596" font-family="system-ui" font-size="12">EVB Arrival</text>
+<path data-scene-id="item:evb-arrival:planned" data-source-ref="evb-arrival" data-purpose="planned" d="M1442 584 L1448 590 L1442 596 L1436 590Z" fill="#22D3EE"/>
+<text data-scene-id="item:performance:cell:Owner" data-source-ref="performance" data-purpose="table-cell" x="32" y="632" font-family="system-ui" font-size="12">validation-team</text>
+<text data-scene-id="item:performance:cell:Workstream" data-source-ref="performance" data-purpose="table-cell" x="182" y="632" font-family="system-ui" font-size="12">performance</text>
+<text data-scene-id="item:performance:cell:Schedule" data-source-ref="performance" data-purpose="table-cell" x="332" y="632" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:performance:cell:Activity" data-source-ref="performance" data-purpose="table-cell" x="482" y="632" font-family="system-ui" font-size="12">Performance Characterization</text>
+<rect data-scene-id="item:performance:planned" data-source-ref="performance" data-purpose="planned" x="1472" y="620" width="110" height="12" rx="3" fill="#22D3EE"/>
+<text data-scene-id="item:dvt:cell:Owner" data-source-ref="dvt" data-purpose="table-cell" x="32" y="668" font-family="system-ui" font-size="12">validation-team</text>
+<text data-scene-id="item:dvt:cell:Workstream" data-source-ref="dvt" data-purpose="table-cell" x="182" y="668" font-family="system-ui" font-size="12">qualification</text>
+<text data-scene-id="item:dvt:cell:Schedule" data-source-ref="dvt" data-purpose="table-cell" x="332" y="668" font-family="system-ui" font-size="12">—</text>
+<text data-scene-id="item:dvt:cell:Activity" data-source-ref="dvt" data-purpose="table-cell" x="482" y="668" font-family="system-ui" font-size="12">DVT Qualification</text>
+<rect data-scene-id="item:dvt:planned" data-source-ref="dvt" data-purpose="planned" x="1692" y="656" width="210" height="12" rx="3" fill="#22D3EE"/>
+<text data-purpose="summary-panel" data-source-ref="derived:schedule-health" x="32" y="24" font-family="system-ui" font-size="11">schedule-health — selectedCount: 8 · actualCoverage: 2/8 · knownFinishVarianceCount: 2 · missingActualCount: 6</text>
+<text data-purpose="summary-panel" data-source-ref="derived:next-milestone" x="32" y="42" font-family="system-ui" font-size="11">next-milestone — nextPlannedPoint: 2026-04-17</text>
+</svg>

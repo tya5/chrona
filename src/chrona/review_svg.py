@@ -153,7 +153,7 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     for item in projection.items:
         if item.group_id!=previous:
             if previous is not None: y+=row*(1+groups["gapRows"])
-            if groups["mode"] in {"band","header-and-separator"}: p.append(f'<rect data-purpose="group-band" x="24" y="{y}" width="{width-48}" height="{row}" fill="#f3f4f6"/>')
+            if groups["mode"] in {"band","header-and-separator"}: p.append(f'<rect data-purpose="group-band" x="24" y="{y}" width="{width-48}" height="{row}" fill="{_theme_color(theme,"group-band","#f3f4f6")}"/>')
             if groups["mode"]=="header-and-separator": p.append(f'<text data-purpose="group-header" x="32" y="{y+22}" font-family="system-ui" font-size="13" font-weight="700">{escape(item.group_label)}</text>'); y+=row
             if previous is not None and groups["mode"] in {"separator","header-and-separator"}: p.append(f'<line data-purpose="group-separator" x1="24" y1="{y}" x2="{width-24}" y2="{y}" stroke="#9ca3af"/>')
             previous=item.group_id
@@ -200,3 +200,9 @@ def _theme_colors(theme: dict[str, Any]) -> dict[str,str]:
     roles=theme.get("body",{}).get("roles",{})
     def color(role:str, fallback:str)->str: return values.get(roles.get(role,{}).get("fill") or roles.get(role,{}).get("stroke"),fallback)
     return {"background":"#faf8f6","planned":color("planned","#2563eb"),"actual":color("actual","#16a34a"),"behind":color("variance-behind","#b45309")}
+
+
+def _theme_color(theme: dict[str, Any], role: str, fallback: str) -> str:
+    values={key:str(value.get("value")) for key,value in theme.get("body",{}).get("values",{}).items()}
+    binding=theme.get("body",{}).get("roles",{}).get(role,{})
+    return values.get(binding.get("fill") or binding.get("stroke"),fallback)

@@ -27,7 +27,7 @@ evidence is present, not that a later product release is complete.
 | M14 | Complete | User-selected View grouping plus profile-selected headers/separators/bands/gaps in deterministic Review SVG. | None. |
 | M15 | Complete | Generic table-timeline SVG adapter, Controller Z user-editable preset, M15 final review, conformance, and 87 tests. | None. |
 | M16 | Complete | Generic read-only summary adapter, Controller Z user-editable profile/preset, M16 final review, conformance, and 88 tests. | None. |
-| M17 | Design complete; implementation not started | `26-presentation-theme-expression.md` and M15–M18 closure review. | I17 implementation, conformance, and reuse review. |
+| M17 | Complete | Generic Theme role resolution, light/dark user-editable presets, M17 final review, conformance, and 88 tests. | None. |
 | M18 | Design complete; implementation not started | Product release conditions in presentation plan and M15–M18 closure review. | M15–M17 implementation evidence and M18 release review. |
 
 Implementation may start only at a `Design complete; implementation not started`

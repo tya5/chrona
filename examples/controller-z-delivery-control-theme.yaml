@@ -1,0 +1,14 @@
+version: chrona/presentation/v0.1
+kind: theme
+id: user-dark-delivery-control
+body:
+  values:
+    planned: {type: color, value: '#22D3EE'}
+    actual: {type: color, value: '#4ADE80'}
+    behind: {type: color, value: '#FB923C'}
+    group: {type: color, value: '#1F2937'}
+  roles:
+    planned: {fill: planned}
+    actual: {fill: actual}
+    variance-behind: {stroke: behind}
+    group-band: {fill: group}
