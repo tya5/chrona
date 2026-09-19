@@ -1,0 +1,8 @@
+version: chrona/command/v0.1
+commandId: unresolve-imported-42
+type: unresolveActualObservation
+target: {kind: actual-set, id: controller-observed, path: ../actuals/controller-observed.yaml}
+baseRevision: store:local-actual:7
+payload:
+  observationId: imported-42
+  externalIdentity: {system: supplier, key: 42}

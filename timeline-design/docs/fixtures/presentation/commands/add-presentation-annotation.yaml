@@ -1,0 +1,12 @@
+version: chrona/command/v0.1
+commandId: add-supplier-risk
+type: addPresentationAnnotation
+target: {kind: view, id: controller-risk-review, path: ../views/controller-risk-review.yaml}
+baseRevision: store:local-view:14
+payload:
+  annotation:
+    id: supplier-delay
+    purpose: callout
+    anchor: {kind: object, id: firmware, endpoint: body}
+    placement: {side: above, alignment: end}
+    text: Supplier delivery risk

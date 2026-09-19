@@ -6,13 +6,13 @@ additionalProperties: false
 properties:
   version: {const: chrona/command/v0.1}
   commandId: {type: string, minLength: 1}
-  type: {enum: [editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot]}
+  type: {enum: [editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot, addPresentationAnnotation, editPresentationAnnotation, deletePresentationAnnotation]}
   target:
     type: object
     required: [kind, id, path]
     additionalProperties: false
-    properties: {kind: {enum: [project, actual-set]}, id: {type: string, minLength: 1}, path: {type: string, minLength: 1}}
-  baseRevision: {type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
+    properties: {kind: {enum: [project, actual-set, view]}, id: {type: string, minLength: 1}, path: {type: string, minLength: 1}}
+  baseRevision: {type: string, minLength: 1}
   payload: {type: object, minProperties: 1}
   reason: {type: string}
 allOf:
@@ -26,6 +26,26 @@ allOf:
       properties:
         target: {properties: {kind: {const: actual-set}}}
         payload: {required: [observationId, projectObjectId], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, projectObjectId: {type: string, minLength: 1}}}
+  - if: {properties: {type: {const: unresolveActualObservation}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: actual-set}}}
+        payload: {required: [observationId, externalIdentity], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, externalIdentity: {type: object, required: [system, key], additionalProperties: false, properties: {system: {type: string, minLength: 1}, key: {type: [string, integer]}}}}}
+  - if: {properties: {type: {const: addPresentationAnnotation}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: view}}}
+        payload: {required: [annotation], additionalProperties: false, properties: {annotation: {type: object, required: [id, purpose, placement, text], additionalProperties: true}}}
+  - if: {properties: {type: {const: editPresentationAnnotation}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: view}}}
+        payload: {required: [annotationId, annotation], additionalProperties: false, properties: {annotationId: {type: string, minLength: 1}, annotation: {type: object, required: [id, purpose, placement, text], additionalProperties: true}}}
+  - if: {properties: {type: {const: deletePresentationAnnotation}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: view}}}
+        payload: {required: [annotationId], additionalProperties: false, properties: {annotationId: {type: string, minLength: 1}}}
   - if: {properties: {type: {const: captureSnapshot}}}
     then:
       properties:

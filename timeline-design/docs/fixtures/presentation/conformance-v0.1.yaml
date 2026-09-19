@@ -36,6 +36,12 @@ cases:
   - id: actual-resolution-shape
     resource: commands/resolve-actual.yaml
     schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: actual-unresolution-shape
+    resource: commands/unresolve-actual.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: presentation-annotation-command-shape
+    resource: commands/add-presentation-annotation.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
   - id: annotation-view
     resource: views/controller-risk-review.yaml
     schema: ../../schemas/view-v0.1.schema.yaml

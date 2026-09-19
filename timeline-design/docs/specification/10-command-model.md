@@ -88,6 +88,19 @@ an implicit sequence of files or a GUI undo stack.
 | `resolveActualObservation` | `actual-set` | `observationId`, `projectObjectId` | Preserves external identity in execution record |
 | `unresolveActualObservation` | `actual-set` | `observationId`, `externalIdentity` | Restores explicit unmatched external identity |
 | `captureSnapshot` | `project` | `snapshotId` | Atomically creates immutable Snapshot bound to target base revision |
+| `addPresentationAnnotation` | `view` | complete `annotation` | Adds one View-local annotation with a stable ID |
+| `editPresentationAnnotation` | `view` | `annotationId`, complete replacement `annotation` | Replaces one View-local annotation; IDs must agree |
+| `deletePresentationAnnotation` | `view` | `annotationId` | Deletes one View-local annotation only |
+
+The `annotation` payload is exactly the v0.1 presentation-annotation intent defined by
+the View Model: a stable ID, permitted purpose, typed anchor (or typed source/target
+for an explanatory arrow), logical placement, and text. It cannot carry Scene offsets,
+renderer geometry, or a Project mutation. `editPresentationAnnotation` replaces the
+complete intent rather than applying an untyped patch; its `annotationId` and
+`annotation.id` MUST be equal.
+
+`baseRevision` is the opaque token issued by the targeted Store. Examples may use a
+Git token, but the command schema MUST NOT constrain the token syntax to Git.
 
 Unknown types, wrong target kinds, unknown payload fields, and stale base revisions are
 rejected. A transaction has one target and base revision plus an ordered, non-empty
