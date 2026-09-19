@@ -1,0 +1,176 @@
+version: timeline/v0.1
+project:
+  id: aster-enterprise-ssd
+  title: ASTER Enterprise SSD Development
+  calendar: engineering
+calendars:
+  engineering:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - {date: '2027-02-15', working: false}
+      - {date: '2027-05-03', working: false}
+      - {date: '2027-05-04', working: false}
+  factory:
+    working_days: [mon, tue, wed, thu, fri, sat]
+    exceptions:
+      - {date: '2027-07-10', working: false}
+entities:
+  platform: {type: team, title: Platform engineering}
+  firmware: {type: team, title: Firmware development}
+  performance: {type: team, title: Performance and reliability}
+  security: {type: team, title: Security assurance}
+  qualification: {type: team, title: System qualification}
+  production: {type: team, title: Production engineering}
+objects:
+  requirements:
+    type: task
+    title: Interface and power budget
+    fields: {owner: platform, risk: medium}
+    schedule: {mode: fixed, start: '2027-01-04', end: '2027-01-15'}
+  board:
+    type: gate
+    title: Prototype boards ready
+    fields: {owner: platform, risk: high}
+    schedule: {mode: fixed, at: '2027-02-01'}
+  nand:
+    type: task
+    title: NAND characterization
+    fields: {owner: platform, risk: high}
+    schedule: {mode: scheduled, amount: 20wd}
+  power:
+    type: task
+    title: Power loss validation
+    fields: {owner: platform, risk: high}
+    schedule: {mode: scheduled, amount: 15wd}
+  boot:
+    type: task
+    title: Boot and host interface
+    fields: {owner: firmware, risk: medium}
+    schedule: {mode: scheduled, amount: 10wd}
+  ftl:
+    type: task
+    title: FTL and media management
+    fields: {owner: firmware, risk: high}
+    schedule: {mode: scheduled, amount: 30wd}
+  recovery:
+    type: task
+    title: Recovery and telemetry
+    fields: {owner: firmware, risk: high}
+    schedule: {mode: scheduled, amount: 15wd}
+  fw-freeze:
+    type: gate
+    title: Firmware feature freeze
+    fields: {owner: firmware, risk: medium}
+    schedule: {mode: fixed, at: '2027-05-14'}
+  benchmark:
+    type: task
+    title: Throughput baseline
+    fields: {owner: performance, risk: low}
+    schedule: {mode: scheduled, amount: 12wd}
+  qos:
+    type: task
+    title: Tail latency tuning
+    fields: {owner: performance, risk: high}
+    schedule: {mode: scheduled, amount: 18wd}
+  endurance:
+    type: task
+    title: Endurance stress run
+    fields: {owner: performance, risk: high}
+    schedule: {mode: scheduled, amount: 42d}
+  perf-exit:
+    type: gate
+    title: Performance acceptance
+    fields: {owner: performance, risk: medium}
+    schedule: {mode: fixed, at: '2027-05-28'}
+  threat:
+    type: task
+    title: Threat model review
+    fields: {owner: security, risk: medium}
+    schedule: {mode: scheduled, amount: 10wd, anchor: {start: '2027-01-18'}}
+  secure-boot:
+    type: task
+    title: Secure boot integration
+    fields: {owner: security, risk: high}
+    schedule: {mode: scheduled, amount: 20wd}
+  crypto:
+    type: task
+    title: Crypto and key audit
+    fields: {owner: security, risk: high}
+    schedule: {mode: scheduled, amount: 15wd}
+  security-exit:
+    type: gate
+    title: Security sign-off
+    fields: {owner: security, risk: medium}
+    schedule: {mode: fixed, at: '2027-05-21'}
+  integration:
+    type: task
+    title: System integration
+    fields: {owner: qualification, risk: high}
+    schedule: {mode: scheduled, amount: 10wd}
+  thermal:
+    type: task
+    title: Thermal corner testing
+    fields: {owner: qualification, risk: medium}
+    schedule: {mode: scheduled, amount: 15wd}
+  compliance:
+    type: task
+    title: Protocol interoperability
+    fields: {owner: qualification, risk: high}
+    schedule: {mode: scheduled, amount: 12wd, constraints: {end: {max: '2027-07-02'}}}
+  qual-exit:
+    type: gate
+    title: Qualification exit
+    fields: {owner: qualification, risk: high}
+    schedule: {mode: fixed, at: '2027-07-09'}
+  tooling:
+    type: task
+    title: Factory test tooling
+    calendar: factory
+    fields: {owner: production, risk: medium}
+    schedule: {mode: scheduled, amount: 24wd, anchor: {start: '2027-05-17'}}
+  pilot:
+    type: task
+    title: Pilot build
+    calendar: factory
+    fields: {owner: production, risk: high}
+    schedule: {mode: scheduled, amount: 10wd}
+  yield:
+    type: task
+    title: Yield and traceability
+    calendar: factory
+    fields: {owner: production, risk: high}
+    schedule: {mode: scheduled, amount: 12wd}
+  release:
+    type: gate
+    title: Production release
+    fields: {owner: production, risk: high}
+    schedule: {mode: fixed, at: '2027-08-20'}
+relations:
+  - {id: req-board, type: dependency, from: {object: requirements, endpoint: end}, to: {object: board, endpoint: at}, lag: 5wd}
+  - {id: board-nand, type: dependency, from: {object: board, endpoint: at}, to: {object: nand, endpoint: start}, lag: 1wd}
+  - {id: nand-power, type: dependency, from: {object: nand, endpoint: end}, to: {object: power, endpoint: start}, lag: 2wd}
+  - {id: board-boot, type: dependency, from: {object: board, endpoint: at}, to: {object: boot, endpoint: start}, lag: 1wd}
+  - {id: boot-ftl, type: dependency, from: {object: boot, endpoint: start}, to: {object: ftl, endpoint: start}, lag: 3wd}
+  - {id: ftl-recovery, type: dependency, from: {object: ftl, endpoint: end}, to: {object: recovery, endpoint: start}, lag: 1wd}
+  - {id: recovery-freeze, type: dependency, from: {object: recovery, endpoint: end}, to: {object: fw-freeze, endpoint: at}, lag: 0d}
+  - {id: power-freeze, type: dependency, from: {object: power, endpoint: end}, to: {object: fw-freeze, endpoint: at}, lag: 0d}
+  - {id: ftl-benchmark, type: dependency, from: {object: ftl, endpoint: end}, to: {object: benchmark, endpoint: start}, lag: 1wd}
+  - {id: benchmark-qos, type: dependency, from: {object: benchmark, endpoint: end}, to: {object: qos, endpoint: start}, lag: 0d}
+  - {id: nand-endurance, type: dependency, from: {object: nand, endpoint: end}, to: {object: endurance, endpoint: start}, lag: 0d}
+  - {id: qos-perf, type: dependency, from: {object: qos, endpoint: end}, to: {object: perf-exit, endpoint: at}, lag: 0d}
+  - {id: endurance-perf, type: dependency, from: {object: endurance, endpoint: end}, to: {object: perf-exit, endpoint: at}, lag: 0d}
+  - {id: threat-secure, type: dependency, from: {object: threat, endpoint: end}, to: {object: secure-boot, endpoint: start}, lag: 1wd}
+  - {id: boot-secure, type: dependency, from: {object: boot, endpoint: end}, to: {object: secure-boot, endpoint: start}, lag: 0d}
+  - {id: secure-crypto, type: dependency, from: {object: secure-boot, endpoint: end}, to: {object: crypto, endpoint: start}, lag: 2wd}
+  - {id: crypto-security, type: dependency, from: {object: crypto, endpoint: end}, to: {object: security-exit, endpoint: at}, lag: 0d}
+  - {id: fw-integration, type: dependency, from: {object: fw-freeze, endpoint: at}, to: {object: integration, endpoint: start}, lag: 1wd}
+  - {id: perf-integration, type: dependency, from: {object: perf-exit, endpoint: at}, to: {object: integration, endpoint: start}, lag: 1wd}
+  - {id: security-integration, type: dependency, from: {object: security-exit, endpoint: at}, to: {object: integration, endpoint: start}, lag: 1wd}
+  - {id: integration-thermal, type: dependency, from: {object: integration, endpoint: start}, to: {object: thermal, endpoint: start}, lag: 3wd}
+  - {id: integration-compliance, type: dependency, from: {object: integration, endpoint: end}, to: {object: compliance, endpoint: start}, lag: 0d}
+  - {id: thermal-qual, type: dependency, from: {object: thermal, endpoint: end}, to: {object: qual-exit, endpoint: at}, lag: 0d}
+  - {id: compliance-qual, type: dependency, from: {object: compliance, endpoint: end}, to: {object: qual-exit, endpoint: at}, lag: 0d}
+  - {id: tooling-pilot, type: dependency, from: {object: tooling, endpoint: end}, to: {object: pilot, endpoint: start}, lag: 0d}
+  - {id: qual-pilot, type: dependency, from: {object: qual-exit, endpoint: at}, to: {object: pilot, endpoint: start}, lag: {value: 1wd, calendar: factory}}
+  - {id: pilot-yield, type: dependency, from: {object: pilot, endpoint: end}, to: {object: yield, endpoint: start}, lag: 1wd}
+  - {id: yield-release, type: dependency, from: {object: yield, endpoint: end}, to: {object: release, endpoint: at}, lag: 2wd}
