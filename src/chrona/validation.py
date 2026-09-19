@@ -9,6 +9,7 @@ import yaml
 
 from .diagnostics import Diagnostic
 from .profiles import resolve_package_manifests, validate_profiles
+from .extension_registry import PackageRegistry, resolve_evaluation_packages
 from .revision_store import LocalSnapshotReader
 from .temporal import Calendar, TemporalError, as_date, is_scheduled_amount, parse_amount
 
@@ -22,7 +23,7 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         return yaml.safe_load(stream)
 
 
-def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, package_manifests: dict[str, dict[str, Any]] | None = None, package_reader: LocalSnapshotReader | None = None) -> list[Diagnostic]:
+def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, package_manifests: dict[str, dict[str, Any]] | None = None, package_reader: LocalSnapshotReader | None = None, package_registry: PackageRegistry | None = None, package_references: list[dict[str, Any]] | None = None) -> list[Diagnostic]:
     """Run structural validation first, then Core rules which Schema cannot express."""
     diagnostics: list[Diagnostic] = []
     schema = yaml.safe_load(schema_path.read_text(encoding="utf-8"))
@@ -89,6 +90,9 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, p
     if package_reader is not None:
         package_manifests, resolution_diagnostics = resolve_package_manifests(project, package_reader)
         diagnostics.extend(resolution_diagnostics)
+    if package_registry is not None and package_references is not None:
+        package_manifests, registry_diagnostics = resolve_evaluation_packages(package_registry, package_references, project["version"])
+        diagnostics.extend(Diagnostic(item, "Extension lifecycle resolution failed", "/extensions") for item in registry_diagnostics)
     diagnostics.extend(validate_profiles(project, package_manifests))
     return diagnostics
 

@@ -1,4 +1,5 @@
-from chrona.extension_registry import PackageRegistry
+from chrona.extension_registry import PackageRegistry, resolve_evaluation_packages
+from chrona.validation import validate_project
 
 
 def _manifest(package_id, version, dependencies=(), **extra):
@@ -28,3 +29,12 @@ def test_registry_rejects_missing_cycle_incompatible_and_executable_packages():
     assert PackageRegistry({("registry", "approved")}, [bad_format]).resolve(_reference(bad_format), "timeline/v0.1").diagnostics == ("E_PACKAGE_INCOMPATIBLE",)
     executable = _manifest("bad", "1.0.0", executableEntry="plugin.js")
     assert PackageRegistry({("registry", "approved")}, [executable]).resolve(_reference(executable), "timeline/v0.1").diagnostics == ("E_PACKAGE_EXECUTABLE_CONTENT",)
+
+
+def test_registry_closure_is_an_explicit_validation_input_not_a_project_rewrite():
+    package = _manifest("semiconductor", "2.1.0")
+    registry = PackageRegistry({("registry", "approved")}, [package])
+    manifests, diagnostics = resolve_evaluation_packages(registry, [_reference(package)], "timeline/v0.1")
+    assert manifests == {"semiconductor": package} and diagnostics == ()
+    project = {"version": "timeline/v0.1", "project": {"id": "p"}, "objects": {}, "relations": []}
+    assert validate_project(project, package_registry=registry, package_references=[_reference(package)]) == []

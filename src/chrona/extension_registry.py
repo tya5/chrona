@@ -52,3 +52,19 @@ class PackageRegistry:
 
         diagnostic = visit(reference)
         return PackageResolution("verified" if not diagnostic else "rejected", tuple(closure), () if not diagnostic else (diagnostic,))
+
+
+def resolve_evaluation_packages(registry: PackageRegistry, references: list[dict[str, Any]], project_format: str) -> tuple[dict[str, dict[str, Any]], tuple[str, ...]]:
+    """Resolve explicit lifecycle references before Core/profile evaluation."""
+    manifests: dict[str, dict[str, Any]] = {}
+    diagnostics: list[str] = []
+    for reference in references:
+        result = registry.resolve(reference, project_format)
+        diagnostics.extend(result.diagnostics)
+        for manifest in result.manifests:
+            existing = manifests.get(manifest["packageId"])
+            if existing and existing.get("contentIdentity") != manifest.get("contentIdentity"):
+                diagnostics.append("E_PACKAGE_DUPLICATE_IDENTITY")
+            else:
+                manifests[manifest["packageId"]] = manifest
+    return manifests, tuple(sorted(set(diagnostics)))
