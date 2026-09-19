@@ -328,3 +328,16 @@ Core v0.1 is internally coherent when all of the following hold:
 - canonical examples satisfy the intended schema;
 - major irreversible choices have ADRs;
 - no normative Core rule depends on a renderer.
+# DateTime successor invariants
+
+For `datetime-v0.2`, a conforming evaluator MUST preserve the following in addition to
+the v0.1 invariants:
+
+- a Date remains timezone-free and is never normalized to a DateTime;
+- instant comparison is deterministic and independent of display locale;
+- every local-time fold selection is recorded by its explicit disambiguation policy;
+- a DST gap rejects rather than silently shifting an input; and
+- a Date-only Project evaluates identically before and after the successor is added.
+
+The fixture set must cover each invariant, including cross-zone instant equality,
+fold/gap rejection, CalendarPeriod across a transition, and mixed-domain rejection.

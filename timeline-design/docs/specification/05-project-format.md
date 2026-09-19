@@ -491,3 +491,9 @@ The v0.2 DateTime successor adds an optional top-level `temporalProfile` only to
 versioned successor Project format. `timeline/v0.1` rejects it and retains Date-only
 syntax. `datetime-v0.2` endpoints use the `temporal-datetime-v0.2` schema and MUST
 carry either an instant plus IANA zone or an explicitly disambiguated local input.
+
+Migration from v0.1 is opt-in: the original document remains valid unchanged. A
+migration tool MAY create a v0.2 copy only when it supplies a zone policy for each
+Date-to-DateTime conversion; it MUST NOT assume midnight. The result records the source
+revision and chosen policy in migration provenance. Downgrade to v0.1 is rejected when
+a Project contains any DateTime, recurrence, or intraday calendar value.

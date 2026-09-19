@@ -26,7 +26,7 @@ versions a successor:
 
 | Phase | Design scope | Owning artifacts to complete | Exit evidence |
 |---|---|---|---|
-| FD-1 | **In design:** DateTime, timezone, DST, recurrence and backward-compatible temporal versioning | Temporal Model, Scheduling Model, Project Format, Quality, schemas, positive/negative fixtures, ADR | Date-only compatibility matrix; DST ambiguity/nonexistence rules; deterministic cross-zone examples; review. |
+| FD-1 | **Complete:** DateTime, timezone, DST, recurrence and backward-compatible temporal versioning | Temporal Model, Scheduling Model, Project Format, Quality, schemas, positive/negative fixtures, ADR | Date-only compatibility matrix; DST ambiguity/nonexistence rules; deterministic cross-zone examples; review. |
 | FD-2 | Resource/capacity, calendars, leveling and cost/time accounting boundary | Domain, Scheduling, Project Format, Quality, schemas, fixtures, ADR | Authority table separating plan/actual/capacity; no hidden auto-leveling; deterministic infeasibility/leveling examples; review. |
 | FD-3 | Collaboration, hosted synchronization, merge, authorization and audit provenance | Revision Store, Application Architecture, Command Model, Quality, Federation, schemas, fixtures, ADR | Explicit concurrency/merge policy; approval/audit model; conflict fixtures; no last-writer-wins; review. |
 | FD-4 | Extension lifecycle: registry, acquisition, compatibility, cyclic/missing package policy, and code-plugin exclusion | Extension Model, Revision Store, Application Architecture, schemas, fixtures, ADR | Declarative package lifecycle and trust rules; compatibility/inheritance/cycle fixtures; review. |
