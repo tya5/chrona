@@ -1,0 +1,32 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:resource-capacity-v0.2"
+title: "Chrona resource capacity v0.2"
+type: object
+required: [version, id, resources, assignments]
+additionalProperties: false
+properties:
+  version: {const: "chrona/resource-capacity/v0.2"}
+  id: {type: string, minLength: 1}
+  resources:
+    type: array
+    items:
+      type: object
+      required: [id, kind, unit, capacityCalendar]
+      additionalProperties: false
+      properties:
+        id: {type: string, minLength: 1}
+        kind: {type: string, minLength: 1}
+        unit: {type: string, minLength: 1}
+        capacityCalendar: {type: string, minLength: 1}
+  assignments:
+    type: array
+    items:
+      type: object
+      required: [objectId, resourceId, demand, unit]
+      additionalProperties: false
+      properties:
+        objectId: {type: string, minLength: 1}
+        resourceId: {type: string, minLength: 1}
+        demand: {type: number, exclusiveMinimum: 0}
+        unit: {type: string, minLength: 1}
+        role: {type: string, minLength: 1}

@@ -270,6 +270,25 @@ discover valid operations without relying solely on prose documentation.
 
 ## 10. Scope discipline
 
+### Q-RESOURCE-1 Explicit capacity authority
+
+Capacity data may affect a schedule only through an explicit resource-leveling
+evaluation naming its capacity revision, objective, and movement scope. It MUST NOT be
+silently consulted by ordinary v0.1 scheduling.
+
+### Q-RESOURCE-2 Proposal before mutation
+
+An overload produces diagnostics and, where requested, a derived proposal. It MUST NOT
+write Project dates, move fixed placements, relax bounds, or overwrite a command base
+revision. Applying a proposal is a normal stale-checked Command.
+
+### Q-RESOURCE-3 Dimension and observation isolation
+
+Resource demand and capacity units MUST match exactly or be converted by an explicitly
+versioned conversion rule. Actual effort, timesheets, rates, and costs remain
+independently revisioned observations and MUST NOT automatically modify demand,
+capacity, or planned schedule.
+
 Core design SHOULD reject features that require turning the system into:
 
 - a resource optimizer;

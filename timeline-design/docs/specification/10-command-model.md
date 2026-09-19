@@ -230,7 +230,26 @@ AI agents use the same typed command vocabulary and base-revision checks as othe
 
 Authorization, approvals, and policy enforcement are application concerns, but an authorization decision must be applied before persistence and recorded in the result provenance where applicable. They must not change the semantic meaning of an accepted command.
 
-## 10. Out of scope
+## 10. Resource-leveling successor commands
+
+The closed v0.1 registry is unchanged. The separately versioned resource-capacity
+successor adds a two-step command boundary:
+
+| Type | Target kind | Required payload/result | Mutation boundary |
+|---|---|---|---|
+| `evaluateResourceLeveling` | `project` | explicit capacity-set reference, objective, movement scope; derived proposal and diagnostics | No canonical mutation |
+| `applyLevelingProposal` | `project` | `proposalId`, evaluated revision/fingerprint, selected proposed semantic changes | One normal Project revision |
+| `recordCostObservation` | `cost-observation-set` | independently identified rate/timesheet/cost observation | Cost observation revision only |
+
+`evaluateResourceLeveling` is not a convenience write. Its result is bound to the
+Project and capacity revisions used for evaluation and uses the declared stable
+tie-break rule after the declared objective. `applyLevelingProposal` validates its
+current `baseRevision`, the referenced evaluation fingerprint, fixed-placement and
+bound rules, and all normal scheduling constraints. A stale or selectively copied
+proposal is rejected. Cost and timesheet commands cannot target a Project or cause a
+schedule invalidation except for a separately requested display evaluation.
+
+## 11. Out of scope
 
 This document does not define:
 
@@ -241,6 +260,6 @@ This document does not define:
 - Git branching/merge policy or repository hosting workflow; or
 - direct editing/import of SVG, Scene, or tldraw store state as canonical data.
 
-## 11. Boundary to Extension and Quality specifications
+## 12. Boundary to Extension and Quality specifications
 
 [11 Extension Model](11-extension-model.md) determines which profile- and field-level changes are legal and how extension-provided command kinds, if any, remain declarative and safe. [12 Quality and Invariants](12-quality-and-invariants.md) supplies cross-system properties against which command processing is tested. New command kinds that alter Core semantic authority, scheduling behavior, or renderer round-tripping require a specification review and normally an ADR before implementation.

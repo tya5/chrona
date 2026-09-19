@@ -461,3 +461,17 @@ Normative diagnostic identifiers are defined in `core-v0.1-diagnostics.md`.
 
 Implementations may provide richer messages and structured details while preserving
 the identifier meaning.
+
+## 25. Resource-leveling successor evaluation
+
+Ordinary v0.1 scheduling has no resource-capacity input. The successor may perform a
+separate leveling evaluation only when the caller explicitly supplies the Project
+revision, capacity-set revision, assignment set, objective, movement scope, and
+deterministic tie-break rule. Its output is overload diagnostics plus an optional
+derived proposal of permitted placement changes.
+
+The evaluator MUST retain fixed placements, explicit anchors, dependency/bound
+feasibility, and unit compatibility as hard constraints. An infeasible capacity result
+is a diagnostic, not permission to relax any of them. Applying a selected proposal is
+outside evaluation and is validated by the Command Model at the then-current Project
+revision.

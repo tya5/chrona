@@ -228,3 +228,16 @@ evaluation rather than embedded as arbitrary graph traversal inside selectors.
 - View grouping is not semantic hierarchy.
 - Decorative graphics are not semantic Relations.
 - Renderer state is not domain state.
+
+## 15. Resource-capacity successor domain boundary
+
+The resource-capacity successor introduces separately identified `Resource`,
+`CapacityCalendar`, and `Assignment` planning values. A Resource has a stable identity,
+kind, and dimensioned capacity unit; an Assignment references one stable Project
+object and one Resource with demand in the same unit. Neither converts an engineer,
+machine, budget, or other unit merely because its numeric amount is equal.
+
+These planning values do not turn a Resource into the owner of a Project object, and
+cost/timesheet observations are not Assignment fields. A derived LevelingProposal is
+an evaluation result, not a domain object that can be persisted as a schedule mutation
+without Command acceptance.

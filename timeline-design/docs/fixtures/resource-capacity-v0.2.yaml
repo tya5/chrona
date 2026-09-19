@@ -1,0 +1,40 @@
+version: chrona/resource-capacity-fixture/v0.2
+cases:
+  - id: dimensioned-assignment-is-valid
+    input:
+      version: chrona/resource-capacity/v0.2
+      id: platform-capacity
+      resources:
+        - {id: eng-a, kind: engineer, unit: engineer, capacityCalendar: weekday-1}
+      assignments:
+        - {objectId: implementation, resourceId: eng-a, demand: 1, unit: engineer, role: implementer}
+    expect: {diagnostic: null}
+  - id: incompatible-demand-unit-rejects
+    input:
+      version: chrona/resource-capacity/v0.2
+      id: platform-capacity
+      resources:
+        - {id: eng-a, kind: engineer, unit: engineer, capacityCalendar: weekday-1}
+      assignments:
+        - {objectId: build, resourceId: eng-a, demand: 1, unit: machine}
+    expect: {diagnostic: E_RESOURCE_UNIT_MISMATCH}
+  - id: overload-is-a-derived-proposal
+    request:
+      type: evaluateResourceLeveling
+      target: {kind: project, id: platform, baseRevision: store:41}
+      objective: minimize-lateness-then-stable-id
+      movementScope: [implementation, verification]
+    expect:
+      diagnostic: E_CAPACITY_OVERLOAD
+      proposal: {derived: true, persistedProjectChange: false, stableTieBreak: object-id}
+  - id: stale-leveling-proposal-rejects
+    request:
+      type: applyLevelingProposal
+      target: {kind: project, id: platform, baseRevision: store:42}
+      payload: {proposalId: level:store:41:1, evaluatedRevision: store:41}
+    expect: {diagnostic: E_COMMAND_STALE_BASE_REVISION, persistedProjectChange: false}
+  - id: timesheet-never-reschedules-plan
+    request:
+      type: recordCostObservation
+      target: {kind: cost-observation-set, id: payroll, baseRevision: store:10}
+    expect: {scheduleChanged: false}
