@@ -12,6 +12,7 @@ from .commands import set_typed_field
 from .scheduler import schedule
 from .validation import load_yaml, validate_project
 from .review_svg import append_review_summary, build_review_projection, render_review_svg, render_table_timeline_svg
+from .layout import resolve_layout_profile
 
 
 def _json_default(value: object) -> str:
@@ -65,7 +66,12 @@ def main() -> None:
             raise SystemExit(1)
         view,theme,profile=load_yaml(args.view),load_yaml(args.theme),load_yaml(args.profile)
         projection=build_review_projection(project,result.placements,view,load_yaml(args.actual),load_yaml(args.style),theme)
-        if profile.get("version")=="chrona/table-timeline-profile/v0.1": svg=render_table_timeline_svg(project["project"].get("title","Chrona"),projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},profile)
+        if profile.get("version")=="chrona/layout-profile/v0.1":
+            manifest=resolve_layout_profile(profile,{"title","table","timeline","summary"})
+            if manifest.diagnostics: raise ValueError(",".join(manifest.diagnostics))
+            # M20 consumes the manifest for concrete region solving; M19 retains the legacy adapter only as output compatibility.
+            svg=render_table_timeline_svg(project["project"].get("title","Chrona"),projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},{"groups":{"mode":"header-and-separator","gapRows":1}})
+        elif profile.get("version")=="chrona/table-timeline-profile/v0.1": raise ValueError("E_LAYOUT_PROFILE_REQUIRED")
         else: svg=render_review_svg(project["project"].get("title","Chrona"),projection,theme,{"sourceMetadata","accessibleText","semanticRoles","marker"},profile)
         if args.summary_profile: svg=append_review_summary(svg,projection,load_yaml(args.summary_profile),projection.window[0])
         Path(args.output).write_text(svg,encoding="utf-8")
