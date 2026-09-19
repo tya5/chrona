@@ -50,3 +50,19 @@ not Project fields or scheduling inputs.
 - Revision Store, Application Architecture, Command, Quality, and Federation boundary
   updates plus an ADR; and
 - review proving no LWW, unpinned child mutation, or hidden merge of derived state.
+
+## 6. M12 executable profile
+
+A `submitCommand` carries one immutable base revision and canonical command fingerprint.
+Policy returns `allow` or `deny` with principal, policy version, and trusted decision
+time. An approval carries that fingerprint and an exclusive `expiresAt`; changed base,
+payload, principal, or an expired approval rejects before persistence. A stale base
+returns `E_COMMAND_STALE_BASE_REVISION` or a Conflict Object, never a write.
+
+A Conflict Object has stable `id`, two parent revisions, `path`, `kind` (`structural`
+or `semantic`), left/right values, and provenance. `resolveMergeConflict` names its ID
+and one allowed value; it creates one new revision with both parents recorded. Audit
+records append command fingerprint, decision, actor, base/result revisions and time.
+Replicas retain `knownRevision`; an offline command retains its original base and is
+submitted through the same policy/CAS path. No derived schedule, Scene, output, or
+Federation child is a mergeable field.

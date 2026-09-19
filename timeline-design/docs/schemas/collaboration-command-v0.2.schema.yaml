@@ -11,5 +11,5 @@ properties:
   target: {type: object, required: [kind, id], properties: {kind: {type: string}, id: {type: string}}}
   baseRevision: {type: string, minLength: 1}
   actor: {type: object, required: [principal, policyVersion], properties: {principal: {type: string}, policyVersion: {type: string}}}
-  approval: {type: object, properties: {commandFingerprint: {type: string}, expiresAt: {type: string, format: date-time}}}
+  approval: {type: object, required: [commandFingerprint, expiresAt], properties: {commandFingerprint: {type: string}, expiresAt: {type: string, format: date-time}}}
   payload: {type: object}

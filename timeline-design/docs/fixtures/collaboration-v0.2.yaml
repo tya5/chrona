@@ -17,3 +17,7 @@ cases:
   - id: behind-replica-labels-known-revision
     replica: {knownRevision: store:41, remoteRevision: store:42}
     expect: {canClaimRemoteCurrent: false, diagnostic: I_REPLICA_BEHIND}
+  - id: expired-or-offline-command-rechecks-normal-boundary
+    command: {baseRevision: store:41, offline: true}
+    approval: {expiresAt: 2026-09-19T00:00:00Z}
+    expect: {diagnostic: E_APPROVAL_EXPIRED, mutation: false}
