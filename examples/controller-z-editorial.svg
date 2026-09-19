@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+<title id="title">Controller Z — Silicon Bring-up to Mass Production</title>
+<desc id="desc">Plan and Actual comparison. 8 rows; 1 unmatched observations. Actual is not a forecast.</desc>
+<defs><marker id="dependency-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.0" orient="auto"><path d="M0 0L6 3.0L0 6Z" fill="#8795AA"/></marker></defs>
+<rect width="1600" height="900" fill="#FFFFFF"/>
+<text data-purpose="heading" data-source-ref="project" x="40" y="80" font-family="Nimbus Sans, Arial, sans-serif" font-size="48" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">Controller Z | Delivery roadmap</text>
+<text data-purpose="subtitle" data-source-ref="view:window" x="40" y="112" font-family="Nimbus Sans, Arial, sans-serif" font-size="20" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Silicon bring-up to mass production  /  Feb 2026 – Jun 2026</text>
+<rect data-purpose="table-header" data-source-ref="" x="40" y="148" width="1520" height="48" fill="#E8EEF5" />
+<text data-purpose="table-header" data-source-ref="" x="52" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">Owner</text>
+<text data-purpose="table-header" data-source-ref="" x="234.4" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">Workstream</text>
+<rect data-purpose="group-surface" data-source-ref="fw-team" x="40" y="196" width="1520" height="208.5" fill="#EAF1FC" opacity="1"/>
+<path data-purpose="table-row" d="M222.4 265.5H1560" stroke="#FFFFFF"/>
+<rect data-purpose="row-shade" data-source-ref="firmware" x="222.4" y="265.5" width="1337.6" height="69.5" fill="#FFFFFF" opacity="0.34"/>
+<path data-purpose="table-row" d="M222.4 335H1560" stroke="#FFFFFF"/>
+<path data-purpose="table-row" d="M222.4 404.5H1560" stroke="#FFFFFF"/>
+<rect data-purpose="group-surface" data-source-ref="validation-team" x="40" y="414.5" width="1520" height="208.5" fill="#E6F3EE" opacity="1"/>
+<path data-purpose="table-row" d="M222.4 484H1560" stroke="#FFFFFF"/>
+<rect data-purpose="row-shade" data-source-ref="performance" x="222.4" y="484" width="1337.6" height="69.5" fill="#FFFFFF" opacity="0.34"/>
+<path data-purpose="table-row" d="M222.4 553.5H1560" stroke="#FFFFFF"/>
+<path data-purpose="table-row" d="M222.4 623H1560" stroke="#FFFFFF"/>
+<rect data-purpose="group-surface" data-source-ref="factory-team" x="40" y="633" width="1520" height="139" fill="#F8E9EE" opacity="1"/>
+<path data-purpose="table-row" d="M222.4 702.5H1560" stroke="#FFFFFF"/>
+<rect data-purpose="row-shade" data-source-ref="ga" x="222.4" y="702.5" width="1337.6" height="69.5" fill="#FFFFFF" opacity="0.34"/>
+<path data-purpose="table-row" d="M222.4 772H1560" stroke="#FFFFFF"/>
+<text data-purpose="axis-band" data-source-ref="" x="611.57" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="middle">Feb 2026</text>
+<path data-purpose="axis-major" d="M516 148V772" stroke="#C9CED8" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="812.96" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="middle">Mar 2026</text>
+<path data-purpose="axis-major" d="M707.15 148V772" stroke="#C9CED8" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="1021.17" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="middle">Apr 2026</text>
+<path data-purpose="axis-major" d="M918.77 148V772" stroke="#C9CED8" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="1229.39" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="middle">May 2026</text>
+<path data-purpose="axis-major" d="M1123.57 148V772" stroke="#C9CED8" stroke-dasharray="3 4"/>
+<text data-purpose="axis-band" data-source-ref="" x="1437.6" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="middle">Jun 2026</text>
+<path data-purpose="axis-major" d="M1335.2 148V772" stroke="#C9CED8" stroke-dasharray="3 4"/>
+<rect data-purpose="table-frame" x="40" y="148" width="1520" height="624" fill="none" stroke="#C9CED8"/>
+<path data-purpose="routed-connector" data-source-ref="architecture-unlocks-firmware" data-from-endpoint="end" data-to-endpoint="start" d="M597.92 220.25L605.92 220.25L636.83 220.25L636.83 275.25L589.92 275.25L589.92 289.75L597.92 289.75" fill="none" stroke="#8795AA" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="firmware-to-evb" data-from-endpoint="end" data-to-endpoint="at" d="M980.21 289.75L988.21 289.75L1013 289.75L1013 449.25L1011 449.25L1019 449.25" fill="none" stroke="#8795AA" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="evb-to-bringup" data-from-endpoint="at" data-to-endpoint="start" d="M1037 449.25L1045 449.25L1042.48 449.25L1042.48 359.25L1040.48 359.25L1048.48 359.25" fill="none" stroke="#8795AA" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="bringup-to-performance" data-from-endpoint="start" data-to-endpoint="start" d="M1048.48 359.25L1040.48 359.25L1042.48 359.25L1042.48 508.25L1040.48 508.25L1048.48 508.25" fill="none" stroke="#8795AA" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="bringup-to-dvt" data-from-endpoint="end" data-to-endpoint="start" d="M1171.36 359.25L1179.36 359.25L1204.67 359.25L1204.67 563.25L1190.67 563.25L1190.67 577.75L1198.67 577.75" fill="none" stroke="#8795AA" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="dvt-to-pvt" data-from-endpoint="end" data-to-endpoint="start" d="M1342.03 577.75L1350.03 577.75L1350.03 657.25L1354.51 657.25L1362.51 657.25" fill="none" stroke="#8795AA" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<path data-purpose="routed-connector" data-source-ref="pvt-to-ga" data-from-endpoint="end" data-to-endpoint="at" d="M1485.39 657.25L1493.39 657.25L1493.39 737.25L1516.17 737.25L1524.17 737.25" fill="none" stroke="#8795AA" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
+<text data-box-x="52" data-box-width="158.4" data-purpose="group-header" data-source-ref="fw-team" x="52" y="308.07" font-family="Nimbus Sans, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">Firmware</text>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="architecture" x="234.4" y="237.21" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">Architecture Freeze</text>
+<rect data-purpose="planned" data-source-ref="architecture" x="522.83" y="211.75" width="75.09" height="17" fill="#347ADE" rx="2"/>
+<text data-purpose="missing-actual" data-source-ref="architecture" x="522.83" y="249.75" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Actual not reported</text>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="firmware" x="234.4" y="306.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">FW Feature Complete</text>
+<rect data-purpose="planned" data-source-ref="firmware" x="597.92" y="281.25" width="382.29" height="17" fill="#347ADE" rx="2"/>
+<rect data-purpose="actual" data-source-ref="firmware" x="597.92" y="302.25" width="409.6" height="17" fill="#148C75" rx="2"/>
+<rect data-purpose="variance-marker" data-source-ref="firmware" x="1019.52" y="281.25" width="3" height="38" fill="#C8762B" />
+<text data-purpose="variance" data-source-ref="firmware" x="1029.52" y="305.25" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#C8762B" text-anchor="start">+4d</text>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="silicon-bringup" x="234.4" y="376.21" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">Silicon Bring-up</text>
+<rect data-purpose="planned" data-source-ref="silicon-bringup" x="1048.48" y="350.75" width="122.88" height="17" fill="#347ADE" rx="2"/>
+<rect data-purpose="actual" data-source-ref="silicon-bringup" x="1055.31" y="371.75" width="143.36" height="17" fill="#148C75" rx="2"/>
+<rect data-purpose="variance-marker" data-source-ref="silicon-bringup" x="1210.67" y="350.75" width="3" height="38" fill="#C8762B" />
+<text data-purpose="variance" data-source-ref="silicon-bringup" x="1220.67" y="374.75" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#C8762B" text-anchor="start">+4d</text>
+<text data-box-x="52" data-box-width="158.4" data-purpose="group-header" data-source-ref="validation-team" x="52" y="512.77" font-family="Nimbus Sans, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">System</text><text data-box-x="52" data-box-width="158.4" data-purpose="group-header" data-source-ref="validation-team" x="52" y="540.37" font-family="Nimbus Sans, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">Validation</text>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="evb-arrival" x="234.4" y="455.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">EVB Arrival</text>
+<path data-purpose="planned" data-source-ref="evb-arrival" d="M1028 440.25l9 9l-9 9l-9 -9Z" fill="#102B50"/>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="performance" x="234.4" y="513.81" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">Performance</text><text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="performance" x="234.4" y="536.61" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">Characterization</text>
+<rect data-purpose="planned" data-source-ref="performance" x="1048.48" y="499.75" width="75.09" height="17" fill="#347ADE" rx="2"/>
+<text data-purpose="missing-actual" data-source-ref="performance" x="1048.48" y="537.75" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Actual not reported</text>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="dvt" x="234.4" y="594.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">DVT Qualification</text>
+<rect data-purpose="planned" data-source-ref="dvt" x="1198.67" y="569.25" width="143.36" height="17" fill="#347ADE" rx="2"/>
+<text data-purpose="missing-actual" data-source-ref="dvt" x="1198.67" y="607.25" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Actual not reported</text>
+<text data-box-x="52" data-box-width="158.4" data-purpose="group-header" data-source-ref="factory-team" x="52" y="696.52" font-family="Nimbus Sans, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">Product</text><text data-box-x="52" data-box-width="158.4" data-purpose="group-header" data-source-ref="factory-team" x="52" y="724.12" font-family="Nimbus Sans, Arial, sans-serif" font-size="23" font-weight="700" letter-spacing="0" fill="#132A43" text-anchor="start">Engineering</text>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="pvt" x="234.4" y="674.21" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">PVT and Factory Validation</text>
+<rect data-purpose="planned" data-source-ref="pvt" x="1362.51" y="648.75" width="122.88" height="17" fill="#347ADE" rx="2"/>
+<text data-purpose="missing-actual" data-source-ref="pvt" x="1362.51" y="686.75" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Actual not reported</text>
+<text data-box-x="234.4" data-box-width="249.6" data-purpose="table-cell" data-source-ref="ga" x="234.4" y="743.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#132A43" text-anchor="start">General Availability</text>
+<path data-purpose="planned" data-source-ref="ga" d="M1533.17 728.25l9 9l-9 9l-9 -9Z" fill="#102B50"/>
+<rect data-purpose="legend-swatch" data-source-ref="" x="40" y="801.33" width="38" height="12" fill="#347ADE" />
+<text data-purpose="legend-label" data-source-ref="" x="88" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Plan</text>
+<rect data-purpose="legend-swatch" data-source-ref="" x="150.02" y="801.33" width="38" height="12" fill="#148C75" />
+<text data-purpose="legend-label" data-source-ref="" x="198.02" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Observed actual</text>
+<rect data-purpose="legend-swatch" data-source-ref="" x="368.79" y="801.33" width="3" height="12" fill="#C8762B" />
+<text data-purpose="legend-label" data-source-ref="" x="397.79" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Finish variance</text>
+<path d="M559.1 798.33l9.0 9.0l-9.0 9.0l-9.0 -9.0Z" fill="#102B50"/>
+<text data-purpose="legend-label" data-source-ref="" x="588.1" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Milestone</text>
+<path d="M688.85 807.33h38" stroke="#8795AA" marker-end="url(#dependency-arrow)"/>
+<text data-purpose="legend-label" data-source-ref="" x="736.85" y="813" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Dependency</text>
+<text data-purpose="data-coverage" data-source-ref="" x="40" y="845" font-family="Nimbus Sans, Arial, sans-serif" font-size="14" font-weight="400" letter-spacing="0" fill="#51657B" text-anchor="start">Actual unavailable: 6/8 items · Unmatched observations: 1 · Variance in calendar days</text>
+</svg>

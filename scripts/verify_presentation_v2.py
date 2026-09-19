@@ -9,6 +9,8 @@ from hashlib import sha256
 from pathlib import Path
 import subprocess
 import sys
+import argparse
+import os
 
 import yaml
 
@@ -25,6 +27,10 @@ def load(name: str):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--settings', type=Path)
+    parser.add_argument('--output', type=Path)
+    args = parser.parse_args()
     project = load("controller-z-silicon-bringup.yaml")
     actual = load("controller-z-actual.yaml")
     view = load("controller-z-executive-view.yaml")
@@ -36,15 +42,17 @@ def main() -> None:
     settings = deepcopy(builtin_bases()["executive-v0.2"])
     font_path = Path(subprocess.run(["fc-match", "-f", "%{file}", "Nimbus Sans"], capture_output=True, text=True, check=True).stdout)
     settings["context"]["fontMetrics"]["contentIdentity"] = "sha256:" + sha256(font_path.read_bytes()).hexdigest()
+    if args.settings:
+        settings = yaml.safe_load(args.settings.read_text())
     projection = build_review_projection(project, result.placements, view, actual, style, theme)
     capabilities = {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}
     first = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, capabilities, profile, settings=settings)
     second = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, capabilities, profile, settings=settings)
     assert first == second, "E_PRESENTATION_NONDETERMINISTIC"
-    output = ROOT / "examples" / "controller-z-executive-v2.svg"
+    output = args.output or ROOT / "examples" / "controller-z-executive-v2.svg"
     output.write_text(first, encoding="utf-8")
     png = output.with_suffix(".png")
-    sharp_root = "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules"
+    sharp_root = os.environ.get('CODEX_PRIMARY_RUNTIME_NODE_MODULES', os.environ.get('NODE_PATH', ''))
     raster = "const sharp=require('sharp'); sharp(process.argv[1]).png().toFile(process.argv[2]).catch(e=>{console.error(e);process.exit(1)});"
     subprocess.run(["node", "-e", raster, str(output), str(png)], check=True, env={**__import__("os").environ, "NODE_PATH": sharp_root})
     print(output)

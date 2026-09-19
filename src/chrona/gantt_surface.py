@@ -101,7 +101,9 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             'milestone': paints['milestone']['color'], 'table-header': paints['tableHeader']['color'],
             'group-band': paints['groupBand']['color'], 'row-shade': paints['rowShade']['color'],
         }
-        color = lambda role, default: escape(palette.get(role, settings['theme']['groupPaints'].get(role.removeprefix('group:'), paints['groupBand']['color'])), quote=True)
+        def color(role, default):
+            group_paint = settings['theme']['groupPaints'].get(role.removeprefix('group:'), paints['groupBand'])
+            return escape(palette.get(role, group_paint['color']), quote=True)
     else:
         color = lambda role, default: escape(_theme_color(theme, role, default), quote=True)
     ink, muted = color('text', '#102644'), color('text-muted', '#637187')
@@ -123,7 +125,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     fs, gs, ts = surface.get('fontSize', 18), surface.get('groupFontSize', 24), surface.get('titleSize', 36)
     bh, bg = surface.get('barHeight', 16), surface.get('barGap', 4)
     levels = surface.get('axisLevels', ['quarter', 'month'])
-    axis_h = 48 + (24 if 'quarter' in levels else 0)
+    axis_h = sum(settings['layout']['axis']['bandHeights']) if settings else 48 + (24 if 'quarter' in levels else 0)
     top, bottom = table.y + axis_h, table.y + table.height
     left, right = timeline.x, timeline.x + timeline.width
     groups = [(gid, list(items)) for gid, items in groupby(projection.items, lambda item: item.group_id)]
@@ -148,7 +150,10 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         return f'<rect data-purpose="{purpose}" data-source-ref="{escape(ref)}" x="{f(x)}" y="{f(y)}" width="{f(w)}" height="{f(h)}" fill="{fill}" {more}/>'
 
     def text(x, y, value, size=fs, weight=400, fill=ink, purpose='label', ref='', anchor='start'):
-        return f'<text data-purpose="{purpose}" data-source-ref="{escape(ref)}" x="{f(x)}" y="{f(y)}" font-family="{font}" font-size="{size}" font-weight="{weight}" fill="{fill}" text-anchor="{anchor}">{escape(str(value))}</text>'
+        role = {'table-cell': 'body', 'group-header': 'group', 'table-header': 'tableHeader', 'axis-band': 'month', 'axis-quarter': 'quarter', 'legend-label': 'legend', 'data-coverage': 'coverage', 'missing-actual': 'missingActual'}.get(purpose, purpose)
+        typography = settings['theme']['typography'].get(role, {}) if settings else {}
+        size, weight = typography.get('size', size), typography.get('weight', weight)
+        return f'<text data-purpose="{purpose}" data-source-ref="{escape(ref)}" x="{f(x)}" y="{f(y)}" font-family="{font}" font-size="{size}" font-weight="{weight}" letter-spacing="{typography.get("letterSpacing", 0)}" fill="{fill}" text-anchor="{anchor}">{escape(str(value))}</text>'
 
     def wrapped(x, cy, value, available, size=fs, weight=400, purpose='table-cell', ref=''):
         # Deliberately conservative: preserve full text instead of silent truncation.
@@ -166,11 +171,16 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:text')
         return ''.join(text(x, cy-(len(lines)-1)*size*.6+i*size*1.2+size*.34, line, size, weight, purpose=purpose, ref=ref).replace('<text ', f'<text data-box-x="{f(x)}" data-box-width="{f(available)}" ') for i, line in enumerate(lines))
 
-    if (metrics.width(title, ts) if metrics else len(title)*ts*.58) > header.width:
-        raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:title')
-    parts.append(text(header.x, header.y+ts, title, ts, 700, purpose='heading', ref='project'))
     last_visible = end-timedelta(days=1) if end.day == 1 and end>start else end
-    parts.append(text(header.x, header.y+ts+30, f'{start:%b %Y} – {last_visible:%b %Y}  /  Planned and observed delivery', 19, fill=muted, purpose='subtitle', ref='view:window'))
+    values = dict(title=title, windowStart=f'{start:%b %Y}', windowLastVisible=f'{last_visible:%b %Y}', selectedCount=len(projection.items), unmatchedCount=len(projection.unmatched_actual_ids), missingCount=sum(1 for item in projection.items if not item.actual))
+    visible_title = settings['detail']['title'].format_map(values) if settings else title
+    if (metrics.width(visible_title, ts) if metrics else len(visible_title)*ts*.58) > header.width:
+        raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:title')
+    parts.append(text(header.x, header.y+ts, visible_title, ts, 700, purpose='heading', ref='project'))
+    if not settings or settings['layout']['title']['showSubtitle']:
+        subtitle = settings['detail']['subtitle'].format_map(values) if settings else f'{start:%b %Y} – {last_visible:%b %Y}  /  Planned and observed delivery'
+        offset = settings['layout']['title']['subtitleGap'] + settings['theme']['typography']['subtitle']['size'] if settings else 30
+        parts.append(text(header.x, header.y+ts+offset, subtitle, 19, fill=muted, purpose='subtitle', ref='view:window'))
     parts.append(rect(table.x, table.y, right-table.x, axis_h, color('table-header', '#F1F6FC'), 'table-header'))
     if mode == 'merged':
         parts.append(text(table.x+12, top-17, surface.get('groupLabel', 'Group'), fs, 700, purpose='table-header'))
@@ -186,7 +196,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         group_h = rh*len(items)
         fill = color(f'group:{gid}', color('group-band', '#EEF3F8'))
         if mode != 'none':
-            parts.append(rect(table.x, y, right-table.x, group_h, fill, 'group-surface', gid))
+            opacity = settings['theme']['groupPaints'].get(gid, settings['theme']['paints']['groupBand'])['opacity'] if settings else 1
+            parts.append(rect(table.x, y, right-table.x, group_h, fill, 'group-surface', gid, f'opacity="{opacity}"'))
         if mode == 'merged':
             foreground.append(wrapped(table.x+12, y+group_h/2, items[0].group_label, group_width-24, gs, 700, 'group-header', gid))
         for i, item in enumerate(items):
@@ -275,7 +286,37 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             parts.append(text(notes.x, ny, value, purpose='presentation-annotation', ref=annotation_id))
             ny += fs*1.4
     legend = slots.get('legend')
-    if legend:
+    if legend and settings:
+        spec = settings['layout']['legend']
+        typography = settings['theme']['typography']['legend']
+        size = typography['size']; line_height = size * typography['lineHeight']
+        x0 = legend.x + spec['padding']['left']; xlimit = legend.x + legend.width - spec['padding']['right']
+        lx, ly = x0, legend.y + spec['padding']['top'] + size
+        sw, sh = spec['swatchWidth'], spec['swatchHeight']
+        symbols = {'planned': (planned, 'bar'), 'actual': (actual, 'bar'), 'variance': (variance, 'variance'), 'milestone': (point_color, 'point'), 'dependency': (connector, 'line')}
+        for entry in settings['detail']['legend']:
+            label = entry['label']; paint, kind = symbols[entry['role']]
+            item_width = sw + spec['labelGap'] + metrics.width(label, size, typography['letterSpacing'])
+            if lx + item_width > xlimit and lx > x0 and spec['wrap']:
+                lx, ly = x0, ly + line_height + spec['rowGap']
+            if lx + item_width > xlimit:
+                raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:legend')
+            cy = ly-size/3
+            if kind == 'bar': parts.append(rect(lx, cy-sh/2, sw, sh, paint, 'legend-swatch'))
+            elif kind == 'variance': parts.append(rect(lx+sw/2, cy-sh/2, settings['theme']['varianceMarkerWidth'], sh, paint, 'legend-swatch'))
+            elif kind == 'point':
+                radius = settings['theme']['point']['size']/2
+                parts.append(f'<path d="M{f(lx+sw/2)} {f(cy-radius)}l{radius} {radius}l-{radius} {radius}l-{radius} -{radius}Z" fill="{paint}"/>')
+            else: parts.append(f'<path d="M{f(lx)} {f(cy)}h{sw}" stroke="{paint}" marker-end="url(#dependency-arrow)"/>')
+            parts.append(text(lx+sw+spec['labelGap'], ly, label, purpose='legend-label', fill=muted))
+            lx += item_width + spec['itemGap']
+        coverage = settings['detail']['coverage'].format_map(values)
+        cs = settings['theme']['typography']['coverage']
+        ly += spec['coverageGap'] + cs['size']
+        if ly > legend.y+legend.height-spec['padding']['bottom'] or metrics.width(coverage, cs['size'], cs['letterSpacing']) > xlimit-x0:
+            raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:legend')
+        parts.append(text(x0, ly, coverage, fill=muted, purpose='data-coverage'))
+    elif legend:
         lx, ly = legend.x, legend.y+34
         for label, paint, kind, step in [('Planned', planned, 'bar', 150), ('Actual', actual, 'bar', 145), ('Finish variance', variance, 'variance', 220), ('Milestone', point_color, 'point', 175), ('Dependency', connector, 'line', 180)]:
             if kind == 'bar': parts.append(rect(lx, ly-11, 38, 12, paint, 'legend-swatch'))
