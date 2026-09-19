@@ -166,6 +166,9 @@ def test_v2_theme_mutation_changes_gantt_output(tmp_path):
     settings["theme"]["paints"]["planned"]["color"] = "#112233"
     second = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, CAPS, profile, settings=settings)
     assert first != second and '#112233' in second
+    # These are v0.1 fallback literals.  A resolved v0.2 run must not leak them.
+    for fallback in ("#3885E5", "#249B78", "#CA8517", "#F1F6FC"):
+        assert fallback not in second
 
 
 def test_executive_resources_match_owning_schemas():
