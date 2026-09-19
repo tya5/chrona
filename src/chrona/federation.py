@@ -93,3 +93,43 @@ def resolve_federation_v2(
     if diagnostics:
         return FederationResult("rejected", {}, tuple(sorted(set(diagnostics))))
     return FederationResult("resolved", resolved, ())
+
+
+def execute_federation_command(
+    store: Any,
+    command: dict[str, Any],
+    available_exports: Iterable[tuple[dict[str, Any], dict[str, Any]]],
+    trust: FederationTrustPolicy,
+) -> FederationResult:
+    """Execute only parent-side v0.2 pin/unpin through the Store CAS boundary."""
+    snapshot = store.read()
+    if command.get("version") != "chrona/federation-command/v0.2" or command.get("target", {}).get("kind") != "federation-plan":
+        return FederationResult("rejected", {}, ("FED-COMMAND-SHAPE",))
+    if command.get("baseRevision", {}).get("token") != snapshot.revision:
+        return FederationResult("rejected", {}, ("E_CONFLICT",))
+    candidate = deepcopy(snapshot.project)
+    payload = command.get("payload", {})
+    federation_id = payload.get("federationId")
+    entries = candidate.get("exports", [])
+    index = next((i for i, entry in enumerate(entries) if entry.get("id") == federation_id), None)
+    if command.get("type") == "pinFederatedExport":
+        if not federation_id or not isinstance(payload.get("export"), dict) or not isinstance(payload.get("presentation"), dict):
+            return FederationResult("rejected", {}, ("FED-COMMAND-SHAPE",))
+        entry = {"id": federation_id, "export": deepcopy(payload["export"]), "presentation": deepcopy(payload["presentation"])}
+        if index is None:
+            entries.append(entry)
+        else:
+            entries[index] = entry
+        checked = resolve_federation_v2(candidate, available_exports, trust)
+        if checked.status != "resolved":
+            return checked
+    elif command.get("type") == "unpinFederatedExport":
+        if index is None:
+            return FederationResult("rejected", {}, ("FED-EXPORT-UNAVAILABLE",))
+        entries.pop(index)
+    else:
+        return FederationResult("rejected", {}, ("FED-COMMAND-SHAPE",))
+    persisted = store.write(snapshot.revision, candidate)
+    if persisted is None:
+        return FederationResult("rejected", {}, ("E_CONFLICT",))
+    return FederationResult("accepted", {"plan": persisted.project, "resultRevision": persisted.revision}, ())

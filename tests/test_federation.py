@@ -3,7 +3,8 @@ from pathlib import Path
 
 import yaml
 
-from chrona.federation import FederationTrustPolicy, resolve_federation, resolve_federation_v2
+from chrona.federation import FederationTrustPolicy, execute_federation_command, resolve_federation, resolve_federation_v2
+from chrona.revision_store import MemoryRevisionStore
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,3 +49,19 @@ def test_v2_federation_trusts_store_identity_and_exact_pin_only():
     assert resolved.status == "resolved"
     rejected = resolve_federation_v2(plan, [(reference, export)], FederationTrustPolicy(frozenset()))
     assert rejected.diagnostics == ("FED-STORE-UNTRUSTED",)
+
+
+def test_v2_pin_and_unpin_mutate_only_parent_plan_through_cas():
+    plan, command = _load("program-federation-v0.2.yaml"), _load("pin-firmware-v0.2.yaml")
+    plan["exports"] = []
+    store = MemoryRevisionStore(plan)
+    command["baseRevision"] = {"token": store.read().revision}
+    export_ref = command["payload"]["export"]
+    child = _load("firmware-program.yaml")
+    policy = FederationTrustPolicy(frozenset({("content", "firmware-release-key-1")}))
+    accepted = execute_federation_command(store, command, [(export_ref, child)], policy)
+    assert accepted.status == "accepted"
+    assert store.read().project["exports"][0]["id"] == "firmware"
+    unpin = {"version": "chrona/federation-command/v0.2", "type": "unpinFederatedExport", "target": {"kind": "federation-plan"}, "baseRevision": {"token": accepted.exports["resultRevision"]}, "payload": {"federationId": "firmware"}}
+    removed = execute_federation_command(store, unpin, [], policy)
+    assert removed.status == "accepted" and store.read().project["exports"] == []
