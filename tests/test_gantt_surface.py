@@ -12,6 +12,7 @@ from chrona.gantt_surface import route_orthogonal
 from chrona.layout import resolve_layout_profile, solve_layout
 from chrona.review_svg import build_review_projection, render_table_timeline_svg
 from chrona.scheduler import schedule
+from chrona.presentation_settings import builtin_bases
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPS = {'sourceMetadata', 'accessibleText', 'semanticRoles', 'marker', 'tableSemantics', 'hierarchicalAxis'}
@@ -151,6 +152,20 @@ def test_selected_comparison_window_includes_actual():
     actual['body']['observations'][0]['actual']['finish'] = date(2026, 8, 5)
     projection = build_review_projection(project, schedule(project).placements, view, actual, style, theme)
     assert projection.window[1] == date(2026, 8, 5)
+
+
+def test_v2_theme_mutation_changes_gantt_output(tmp_path):
+    import subprocess
+    from hashlib import sha256
+    resources = fixture(); project, actual, view, style, theme, profile = resources
+    settings = builtin_bases()["executive-v0.2"]
+    path = Path(subprocess.run(["fc-match", "-f", "%{file}", "Nimbus Sans"], capture_output=True, text=True, check=True).stdout)
+    settings["context"]["fontMetrics"]["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
+    projection = build_review_projection(project, schedule(project).placements, view, actual, style, theme)
+    first = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, CAPS, profile, settings=settings)
+    settings["theme"]["paints"]["planned"]["color"] = "#112233"
+    second = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, CAPS, profile, settings=settings)
+    assert first != second and '#112233' in second
 
 
 def test_executive_resources_match_owning_schemas():
