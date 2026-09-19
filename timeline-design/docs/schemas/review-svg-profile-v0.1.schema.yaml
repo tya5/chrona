@@ -2,7 +2,7 @@ $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:review-svg-profile-v0.1"
 type: object
 additionalProperties: false
-required: [version, id, axis, comparison, missingActual, annotations]
+required: [version, id, axis, comparison, missingActual, annotations, groupPresentation]
 properties:
   version: {const: "chrona/review-svg-profile/v0.1"}
   id: {type: string, minLength: 1}
@@ -32,3 +32,10 @@ properties:
     additionalProperties: false
     required: [layout]
     properties: {layout: {const: deterministic-callout-leader}}
+  groupPresentation:
+    type: object
+    additionalProperties: false
+    required: [mode, gapRows]
+    properties:
+      mode: {enum: [none, separator, band, header-and-separator]}
+      gapRows: {type: integer, minimum: 0, maximum: 4}

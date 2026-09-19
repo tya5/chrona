@@ -32,6 +32,13 @@ means later than plan and is labelled `+Nd`; it never reschedules a successor.
 - `missingActual`: hatch plus text alternative; and
 - `annotations`: deterministic callout/leader layout with a diagnostic on collision.
 
+`groupPresentation` is user-selected renderer policy: `none`, `separator`, `band`, or
+`header-and-separator`, with an explicit inter-group row gap. The View alone decides
+the stable group key (`objectType` or a declared field) and group order; the profile
+never infers a group from titles, colours, or SVG positions. Style/Theme may supply
+`group-header`, `group-separator`, and `group-band` roles/tokens. Thus the same Project
+can render an owner-oriented review, a task-shape review, or an ungrouped review.
+
 The first profile supports the existing linear Date Scene profile, stable item stacking,
 semantic dependencies, and semantic or presentation annotations. Gate/point objects use
 a diamond for planned and an outlined diamond for Actual. Span endpoints retain Core's

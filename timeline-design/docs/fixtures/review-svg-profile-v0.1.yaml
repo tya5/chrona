@@ -4,3 +4,4 @@ axis: {domain: date, grid: weekly, labels: month}
 comparison: {planned: upper, actual: lower, variance: labelled-calendar-days}
 missingActual: {treatment: hatch-and-text}
 annotations: {layout: deterministic-callout-leader}
+groupPresentation: {mode: header-and-separator, gapRows: 1}
