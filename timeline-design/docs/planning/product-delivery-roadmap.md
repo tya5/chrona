@@ -59,10 +59,11 @@ Every milestone MUST demonstrate all of the following before it is accepted:
 | M11 — Capacity and accounting product | A planner can evaluate capacity, accept an explicit leveling proposal, and review cost/time observations without automatic rescheduling. | FD-2 capacity evaluator, proposal/Command path, accounting observation adapter, and comparison surface. | Project/Actual authority split, Store, Command, and Scene contracts. | UC-17 and UC-18 acceptance passes with deterministic objective, stale-proposal, unit, overload, and schedule-isolation evidence. |
 | M12 — Collaborative workspace product | Teams can synchronize, resolve conflicts, approve changes, and audit provenance without last-writer-wins. | FD-3 synchronization service, typed conflict/merge flow, policy/approval adapter, and append-only audit surface. | Revision Store snapshots, Command, Federation pinning, and Scene non-authority. | UC-19–UC-21 acceptance passes with conflict, approval, denial, expiry, offline, and causally-behind replica evidence. |
 | M13 — Successor-capability product release | Users can combine approved DateTime, capacity/accounting, collaboration, extension lifecycle, and output capabilities in declared profiles. | Cross-successor compatibility suite, migration/release packaging, and UC-16–UC-21 acceptance review. | All current-profile and successor contracts; each capability remains opt-in and versioned. | Release review names every claimed successor profile and passes its dedicated plus cross-profile evidence without changing Date-only meaning. |
+| M14 — Review SVG expression | A reviewer can distinguish plan, Actual, known variance, dependencies, and annotations in a deterministic accessible SVG. | Explicit Review SVG profile, View/Style/Theme projection, Review Scene, and SVG adapter. | Existing Project/Schedule/Actual/View/Style/Theme/Scene/Output contracts. | Controller review sample demonstrates Plan/Actual/missing/unmatched states; output is deterministic and capability-complete. |
 
-## 4. Boundaries after M13
+## 4. Boundaries after M14
 
-M13 is the endpoint of the currently designed product. Ticket/workflow management,
+M14 is the endpoint of the currently designed product. Ticket/workflow management,
 automatic transitions, arbitrary extension code, undisclosed output degradation, and
 any successor capability not named by M10–M12 require a new owning-specification change
 and roadmap amendment. They are not hidden work inside a milestone above.

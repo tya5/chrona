@@ -1,0 +1,6 @@
+version: chrona/review-svg-profile/v0.1
+id: engineering-review
+axis: {domain: date, grid: weekly, labels: month}
+comparison: {planned: upper, actual: lower, variance: labelled-calendar-days}
+missingActual: {treatment: hatch-and-text}
+annotations: {layout: deterministic-callout-leader}
