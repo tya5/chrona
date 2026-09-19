@@ -1,8 +1,14 @@
 # Product Delivery Roadmap
 
-**Status:** Planned
+**Status:** Remediation required before implementation
 **Authority:** This document owns delivery order and reuse gates only. Current
 specifications `02`–`17` remain the sole authority for semantics and contracts.
+
+The whole-system consistency review found that UC-06 AI integration, UC-10 Actual
+ingestion, and the FD-1–FD-3 successor capabilities do not yet have complete milestone
+ownership. M9's UC-01–UC-15 acceptance claim is therefore not currently attainable.
+`preimplementation-traceability-remediation-plan.md` owns the required roadmap repair;
+the milestone table below remains the reviewed input until that repair is complete.
 
 ## 1. Outcome
 

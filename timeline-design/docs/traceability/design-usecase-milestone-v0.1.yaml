@@ -1,0 +1,28 @@
+version: chrona/design-traceability/v0.1
+areas:
+  - {id: CORE-DATE, name: Date-only core, specifications: ["02", "03", "04", "05"], productFacing: true, useCases: [UC-01], milestones: [M0], evidence: [core-schema, scheduling-fixtures], status: covered}
+  - {id: DELIVERY-PROFILE, name: Self-hosted delivery profile, specifications: ["17"], productFacing: true, useCases: [UC-15], milestones: [M0.5, M1], evidence: [delivery-profile-fixtures, idp-review], status: partial, findingIds: [T-10]}
+  - {id: REVISION-STORE, name: Revision Store, specifications: ["15"], productFacing: true, useCases: [UC-02, UC-04, UC-09, UC-12, UC-14, UC-15], milestones: [M1], evidence: [revision-store-fixtures], status: covered}
+  - {id: PRESENTATION, name: Presentation and projection, specifications: ["06", "07", "08", "13"], productFacing: true, useCases: [UC-03, UC-04, UC-09, UC-13], milestones: [M2, M6, M9], evidence: [presentation-fixtures, scene-delta-fixtures], status: covered}
+  - {id: COMMAND, name: Controlled mutation, specifications: ["09", "10"], productFacing: true, useCases: [UC-05, UC-06, UC-10, UC-12], milestones: [M3, M5, M7], evidence: [command-schema, command-fixtures], status: partial, findingIds: [T-04, T-05]}
+  - {id: FEDERATION, name: Federation, specifications: ["16"], productFacing: true, useCases: [UC-14], milestones: [M4], evidence: [federation-fixtures], status: covered}
+  - {id: AUTOMATION, name: CLI and automation, specifications: ["09", "10"], productFacing: true, useCases: [UC-11], milestones: [M5], evidence: [conformance-manifest], status: covered}
+  - {id: INTERACTIVE, name: Interactive annotation and editing, specifications: ["06", "08", "10"], productFacing: true, useCases: [UC-05, UC-08, UC-10, UC-12], milestones: [M7], evidence: [gesture-boundary, annotation-contract], status: partial, findingIds: [T-05]}
+  - {id: EXTENSION-LIFECYCLE, name: Extension lifecycle, specifications: ["11", "21"], productFacing: true, useCases: [UC-07], milestones: [M8], evidence: [extension-lifecycle-fixture], status: partial, findingIds: [T-11]}
+  - {id: OUTPUT-RELEASE, name: Output and release, specifications: ["22"], productFacing: true, useCases: [UC-13], milestones: [M9], evidence: [output-capability-fixture], status: partial, findingIds: [T-06, T-11]}
+  - {id: DATETIME-DST, name: DateTime and DST successor, specifications: ["18"], productFacing: true, useCases: [], milestones: [], evidence: [datetime-v0.2-fixture], status: missing, findingIds: [T-01, T-07]}
+  - {id: RESOURCE-CAPACITY, name: Resource capacity leveling and cost, specifications: ["19"], productFacing: true, useCases: [], milestones: [], evidence: [resource-capacity-v0.2-fixture], status: missing, findingIds: [T-02, T-07]}
+  - {id: COLLABORATION, name: Collaboration synchronization and audit, specifications: ["20"], productFacing: true, useCases: [], milestones: [], evidence: [collaboration-v0.2-fixture], status: missing, findingIds: [T-03, T-07]}
+findings:
+  - {id: T-01, severity: blocker, summary: DateTime/DST lacks use-case and milestone ownership, remediationPhase: TR-1}
+  - {id: T-02, severity: blocker, summary: Resource capacity leveling and cost lack use-case decomposition and milestone ownership, remediationPhase: TR-1}
+  - {id: T-03, severity: blocker, summary: Collaboration synchronization policy and audit lack use-case and milestone ownership, remediationPhase: TR-1}
+  - {id: T-04, severity: blocker, summary: UC-06 AI integration has no milestone deliverable, remediationPhase: TR-2}
+  - {id: T-05, severity: blocker, summary: UC-10 Actual ingestion has no milestone deliverable, remediationPhase: TR-2}
+  - {id: T-06, severity: blocker, summary: M9 overclaims UC-01 through UC-15 acceptance, remediationPhase: TR-2}
+  - {id: T-07, severity: blocker, summary: Post-M9 roadmap boundary contradicts completed successor designs, remediationPhase: TR-2}
+  - {id: T-08, severity: blocker, summary: Prior DC-4 omitted end-to-end traceability, remediationPhase: TR-0}
+  - {id: T-09, severity: high, summary: UC summary evidence is stale, remediationPhase: TR-3}
+  - {id: T-10, severity: high, summary: M0.5 completion depends on later M1 without an explicit gate, remediationPhase: TR-2}
+  - {id: T-11, severity: high, summary: FD-4 and FD-5 linkage to M8 and M9 is implicit, remediationPhase: TR-2}
+  - {id: T-12, severity: medium, summary: Traceability completeness has no machine validation gate, remediationPhase: TR-3}
