@@ -143,13 +143,13 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     return "\n".join(parts+["</svg>"])+"\n"
 
 
-def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], slots: dict[str, Any] | None = None) -> str:
+def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], slots: dict[str, Any] | None = None, settings: dict[str, Any] | None = None) -> str:
     """One generic layout-backed adapter; no sample-specific branches."""
     from .gantt_surface import render_gantt
     required = {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}
     if not required.issubset(capabilities):
         raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
-    return render_gantt(title, projection, project, view, theme, profile, slots)
+    return render_gantt(title, projection, project, view, theme, profile, slots, settings)
 
 
 def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date, rect: Any | None = None) -> str:
