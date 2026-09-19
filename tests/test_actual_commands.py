@@ -1,4 +1,9 @@
-from chrona.actual_commands import MemoryActualStore, resolve_actual_observation
+from chrona.actual_commands import (
+    MemoryActualStore,
+    redo_actual_command,
+    resolve_actual_observation,
+    undo_actual_command,
+)
 
 
 def _actual_set():
@@ -39,3 +44,17 @@ def test_actual_resolution_rejects_stale_unknown_or_non_unmatched_observation():
     accepted = resolve_actual_observation(store, base, "supplier:42", "firmware", {"firmware"})
     assert accepted.status == "accepted"
     assert resolve_actual_observation(store, accepted.result_revision, "supplier:42", "firmware", {"firmware"}).diagnostics == ("E_ACTUAL_ALIGNMENT",)
+
+
+def test_actual_undo_redo_create_new_revisions_without_rewriting_history():
+    store = MemoryActualStore(_actual_set())
+    base, original = store.read()
+    accepted = resolve_actual_observation(store, base, "supplier:42", "firmware", {"firmware"}, command_id="resolve-42")
+    undone = undo_actual_command(store, accepted.result_revision, "resolve-42")
+    assert undone.status == "accepted"
+    assert undone.result_revision != base
+    assert undone.actual_set == original
+    redone = redo_actual_command(store, undone.result_revision, "resolve-42")
+    assert redone.status == "accepted"
+    assert redone.result_revision not in {base, accepted.result_revision, undone.result_revision}
+    assert redone.actual_set == accepted.actual_set

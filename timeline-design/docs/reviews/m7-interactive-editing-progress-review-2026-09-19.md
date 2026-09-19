@@ -17,7 +17,7 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 | Stale/conflict behavior | Pass | Actual-store CAS rejects a mismatched base revision with `E_CONFLICT`. |
 | No implicit alignment | Pass | Source identity is preserved as result provenance; titles are never inputs. |
 | No plan or Scene mutation | Pass | The Actual store is independent; no Project, scheduler, or Scene argument is accepted. |
-| Undo/redo interaction | Not started | Requires the separately versioned Actual-store command history path. |
+| Actual undo/redo interaction | Pass | Reconciliation is reversible only through a current-revision Command; undo and redo each create a new Actual revision. |
 | Annotation editor | Not started | Requires the View-definition command executor. |
 | Client conflict/rollback presentation | Not started | Requires an interactive controller over the Command result surface. |
 
