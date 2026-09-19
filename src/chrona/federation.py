@@ -13,6 +13,17 @@ class FederationResult:
     diagnostics: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class FederationTrustPolicy:
+    """Allow-list trust boundary for provider-neutral Federation references."""
+
+    allowed_sources: frozenset[tuple[str, str]]
+
+    def accepts(self, reference: dict[str, Any]) -> bool:
+        store = reference.get("store", {})
+        return (store.get("provider"), store.get("identity")) in self.allowed_sources
+
+
 def resolve_federation(
     plan: dict[str, Any],
     available_exports: Iterable[dict[str, Any]],
@@ -43,6 +54,42 @@ def resolve_federation(
             diagnostics.append("FED-EXPORT-MISMATCH")
             continue
         resolved[name] = deepcopy(available)
+    if diagnostics:
+        return FederationResult("rejected", {}, tuple(sorted(set(diagnostics))))
+    return FederationResult("resolved", resolved, ())
+
+
+def resolve_federation_v2(
+    plan: dict[str, Any],
+    available_exports: Iterable[tuple[dict[str, Any], dict[str, Any]]],
+    trust: FederationTrustPolicy,
+) -> FederationResult:
+    """Resolve only exact, trusted v0.2 references; never select a latest export."""
+    available = {
+        (reference.get("revision", {}).get("token"), reference.get("contentIdentity")): body
+        for reference, body in available_exports
+    }
+    resolved: dict[str, dict[str, Any]] = {}
+    namespaces: set[str] = set()
+    diagnostics: list[str] = []
+    for entry in plan.get("exports", []):
+        reference = entry.get("export", {})
+        namespace = entry.get("presentation", {}).get("namespace")
+        if namespace in namespaces:
+            diagnostics.append("FED-NAMESPACE-COLLISION")
+            continue
+        namespaces.add(namespace)
+        if not trust.accepts(reference):
+            diagnostics.append("FED-STORE-UNTRUSTED")
+            continue
+        body = available.get((reference.get("revision", {}).get("token"), reference.get("contentIdentity")))
+        if body is None:
+            diagnostics.append("FED-EXPORT-UNAVAILABLE")
+            continue
+        if body.get("id") != reference.get("id") or body.get("kind") != "timeline-export" or body.get("project", {}).get("id") != reference.get("projectId"):
+            diagnostics.append("FED-EXPORT-MISMATCH")
+            continue
+        resolved[entry["id"]] = deepcopy(body)
     if diagnostics:
         return FederationResult("rejected", {}, tuple(sorted(set(diagnostics))))
     return FederationResult("resolved", resolved, ())

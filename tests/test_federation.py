@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from chrona.federation import resolve_federation
+from chrona.federation import FederationTrustPolicy, resolve_federation, resolve_federation_v2
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,3 +36,15 @@ def test_federation_rejects_untrusted_and_unavailable_exports():
     assert unavailable.diagnostics == ("FED-EXPORT-UNAVAILABLE",)
     collision = resolve_federation(_load("invalid-namespace-collision.yaml"), available, TRUSTED)
     assert collision.diagnostics == ("FED-NAMESPACE-COLLISION",)
+
+
+def test_v2_federation_trusts_store_identity_and_exact_pin_only():
+    plan = _load("program-federation-v0.2.yaml")
+    reference = plan["exports"][0]["export"]
+    export = _load("firmware-program.yaml")
+    export["project"]["id"] = "firmware"
+    policy = FederationTrustPolicy(frozenset({("content", "firmware-release-key-1")}))
+    resolved = resolve_federation_v2(plan, [(reference, export)], policy)
+    assert resolved.status == "resolved"
+    rejected = resolve_federation_v2(plan, [(reference, export)], FederationTrustPolicy(frozenset()))
+    assert rejected.diagnostics == ("FED-STORE-UNTRUSTED",)
