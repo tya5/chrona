@@ -1,0 +1,47 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:layout-profile-v0.1"
+type: object
+additionalProperties: false
+required: [version, id, canvas, regions, slots, constraints]
+properties:
+  version: {const: "chrona/layout-profile/v0.1"}
+  id: {type: string, minLength: 1}
+  canvas:
+    type: object
+    additionalProperties: false
+    required: [aspectRatio, margin, density]
+    properties:
+      aspectRatio: {enum: ['16:9', '4:3', 'free']}
+      margin: {enum: [compact, balanced, spacious]}
+      density: {enum: [engineering, review, presentation]}
+  regions:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, layout]
+      properties:
+        id: {type: string, minLength: 1}
+        layout: {enum: [stack, grid, split, overlay, anchor]}
+        tracks: {type: array, items: {type: string, pattern: '^(content|[1-9][0-9]*fr|[1-9][0-9]*%)$'}}
+  slots:
+    type: object
+    minProperties: 1
+    additionalProperties:
+      type: object
+      additionalProperties: false
+      required: [region, source, priority, overflow]
+      properties:
+        region: {type: string, minLength: 1}
+        source: {enum: [title, table, timeline, summary, legend, annotations, notes]}
+        priority: {enum: [required, preferred, optional]}
+        overflow: {enum: [diagnose, ellipsize-with-source, clip-optional]}
+        role: {type: string, minLength: 1}
+  constraints:
+    type: object
+    additionalProperties: false
+    required: [connectors, overlap]
+    properties:
+      connectors: {enum: [none, obstacle-aware]}
+      overlap: {const: diagnose}

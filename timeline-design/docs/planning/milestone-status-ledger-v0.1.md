@@ -29,6 +29,10 @@ evidence is present, not that a later product release is complete.
 | M16 | Complete | Generic read-only summary adapter, Controller Z user-editable profile/preset, M16 final review, conformance, and 88 tests. | None. |
 | M17 | Complete | Generic Theme role resolution, light/dark user-editable presets, M17 final review, conformance, and 88 tests. | None. |
 | M18 | Complete | M15–M17 cross-profile/reuse release review; full conformance and 88-test evidence. | None. |
+| M19 | Design complete; implementation not started | `27-layout-expression-engine.md`, layout-profile schema/fixture, ADR-0014, and M19–M22 closure review. | M20 implementation depends on M19 schema/validation. |
+| M20 | Design complete; implementation not started | Deterministic solver/manifest invariants in `27` and closure review. | M20 implementation, conformance, and reuse review. |
+| M21 | Design complete; implementation not started | Expressive primitive/role integration in `27` and closure review. | M21 implementation, conformance, and reuse review. |
+| M22 | Design complete; implementation not started | AI/human proposal and release conditions in `27` and closure review. | M19–M21 evidence and M22 release review. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning

@@ -1,6 +1,6 @@
 # Layout and Expression Engine Plan — 2026-09-19
 
-**Status:** Planned — design work required before implementation.  
+**Status:** Design complete — implementation is not started.
 **Purpose:** Let human designers and AI designers compose a high-quality Chrona review
 surface without making a renderer, a generated image, or an AI-produced coordinate map
 the source of truth.

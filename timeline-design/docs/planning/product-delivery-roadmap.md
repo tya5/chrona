@@ -64,13 +64,18 @@ Every milestone MUST demonstrate all of the following before it is accepted:
 | M16 — Decision and risk surfaces | A reviewer can add bounded, source-traceable summary panels without fabricated health or forecast values. | Read-only metric catalog; summary profile; panel Scene contract; dark delivery-control sample. | M15 projection facts, Project/Schedule/Actual authority, Output capability rules. | D16-1–D16-2 close and I16 proves metric provenance, unavailable-data diagnostics, and deterministic output. |
 | M17 — Presentation themes and expression | A user can apply accessible light executive and dark delivery-control themes to the same review semantics. | Role/token catalog, contrast rules, gallery/visual-regression policy, theme samples. | M15/M16 profiles and shared semantic closure. | D17-1–D17-2 close and I17 passes cross-theme semantic, accessibility, and deterministic-output evidence. |
 | M18 — Product presentation release | Users can rely on presentation compositions as one product surface rather than isolated SVG samples. | Cross-profile acceptance, capability/release manifest, and reuse review. | All M0–M17 shared contracts. | Full inherited conformance, declared output capability, accessibility, and no-parallel-model reuse evidence. |
+| M19 — Layout grammar | Designers can declare reusable composition constraints without creating a second semantic model. | Layout Profile schema, migration from M15 profile, validation, fixtures, and ADR. | View/Style/Theme/Render Context/Scene ownership. | Invalid overlaps and unavailable slots diagnose; two profiles validate over one View. |
+| M20 — Constraint layout runtime | A profile resolves deterministic regions, slots, and a reviewable Layout Manifest. | Solver, manifest, capability/overflow diagnostics, and SVG adapter migration. | M19 grammar and all semantic projection inputs. | Repeated output/manifest equality and no profile-ID branches. |
+| M21 — Expressive review primitives | Designers can compose calendar, table, group, milestone, callout, and connector hierarchy. | Role/slot primitives, bounded formatter catalog, and acceptance gallery. | M20 solver, Style roles, Theme tokens. | Light executive acceptance with source/accessibility evidence. |
+| M22 — Designer workflow release | Human and AI designers share one validated preset/proposal and release path. | Inheritance, proposal validation, accessibility/gallery, cross-profile release review. | M19–M21 resource closure. | Identical validation path, conformance, and reuse release evidence. |
 
-## 4. Boundaries after M18
+## 4. Boundaries after M22
 
-M14 is the completed review-SVG foundation. M15–M18 are planned productization work,
-not implementation authorization: each design gate in
-`presentation-productization-analysis-and-plan-2026-09-19.md` must close and publish
-first. Ticket/workflow management, automatic transitions, arbitrary extension code,
+M14 is the completed review-SVG foundation. M15–M18 are completed prototype/product
+work; M19–M22 replace overlapping composition authority with a Layout Profile before
+further presentation implementation. Each design gate in
+`27-layout-expression-engine.md` must close and publish first. Ticket/workflow management,
+automatic transitions, arbitrary extension code,
 undisclosed output degradation, raster/PDF claims, and any successor capability not
 named by this roadmap require a new owning-specification change and roadmap amendment.
 They are not hidden work inside a milestone above.
