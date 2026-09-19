@@ -20,8 +20,8 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 | Actual undo/redo interaction | Pass | Reconciliation is reversible only through a current-revision Command; undo and redo each create a new Actual revision. |
 | View-local annotation commands | Pass | Add/edit/delete accept only complete annotation intent through a CAS-bound View store; undo/redo each make a new View revision. |
 | Revision-bound baseline capture | Pass | A snapshot-ref publishes only after exact Project revision/content verification; duplicate, stale, and mismatched input leave no partial baseline. |
-| Interactive annotation editor surface | Not started | Requires a client controller that renders the Command result without creating Scene geometry authority. |
-| Client conflict/rollback presentation | Not started | Requires an interactive controller over the Command result surface. |
+| Interactive annotation editor surface | Pass | The client adapter displays only accepted View Command results; it creates no geometry or direct mutation path. |
+| Client conflict/rollback presentation | Pass | Rejected conflict preserves the displayed model and emits `resync-required`; other rejection preserves state. |
 
 ## Changed-code classification
 
@@ -34,6 +34,4 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 
 ## Next implementation slice
 
-Implement the interactive controller result surface.
-M7 is not eligible for its final reuse review until the row above marked `Not started`
-pass with full conformance inheritance.
+All M7 rows now have executable evidence; conduct the final M7 reuse review before M8.
