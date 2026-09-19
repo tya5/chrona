@@ -21,7 +21,7 @@ evidence is present, not that a later product release is complete.
 | M8 | Complete | Trusted declarative package closure/lifecycle review and tests. | None. |
 | M9 | Complete | Declared SVG output coordinator, capability/fidelity evidence, AI-inclusive UC-01–15 acceptance manifest, and exact release-package validation. | None; publication remains a runtime operation over a named closure. |
 | M10 | Complete | DateTime/DST value, v0.2 Project Format, endpoint and recurrence runtime, opt-in migration, UC-16 acceptance and M10 final reuse/release review. | None. |
-| M11 | Design complete; implementation not started | FD-2 design/fixture/review. | Runtime and UC-17/18 evidence after M10. |
+| M11 | Complete | Date-only capacity validation, deterministic explicit leveling proposal/CAS acceptance, isolated cost observations, UC-17/18 acceptance and reuse review. | None. |
 | M12 | Design complete; implementation not started | FD-3 design/fixture/review. | Runtime and UC-19–21 evidence after M11. |
 | M13 | Design complete; implementation not started | Roadmap and successor design reviews. | Cross-profile release evidence after M10–M12. |
 

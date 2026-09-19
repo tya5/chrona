@@ -47,8 +47,8 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-14 | Federate independently owned subproject timelines | Must | Delivered by M4 pinned federation resolver evidence. |
 | UC-15 | Manage a delivery roadmap using Chrona | Must | Delivered by M0.5/M1 delivery profile and pinned package-resolution evidence. |
 | UC-16 | Plan a cross-zone event without DST ambiguity | Delivered | Delivered by M10: opt-in DateTime/DST runtime, v0.2 scheduler, recurrence, and provenance-preserving migration; Date-only remains unchanged. |
-| UC-17 | Assess capacity and accept an explicit leveling proposal | Future | Resource/capacity successor design and fixtures; solver deferred |
-| UC-18 | Record cost and time observations without rescheduling the plan | Future | Cost/time observation boundary and fixtures; adapter deferred |
+| UC-17 | Assess capacity and accept an explicit leveling proposal | Delivered | Delivered by M11: Date-only capacity evaluator and fingerprint-bound explicit proposal/CAS path. |
+| UC-18 | Record cost and time observations without rescheduling the plan | Delivered | Delivered by M11: separately revisioned append-only observation store and unit-partitioned aggregation. |
 | UC-19 | Resolve a concurrent semantic conflict explicitly | Future | Collaboration merge design and fixtures; service deferred |
 | UC-20 | Approve and audit a controlled change | Future | Authorization/approval/audit design and fixtures; policy integration deferred |
 | UC-21 | Synchronize a replica without treating a remote tip as truth | Future | Hosted-sync design and fixtures; service deferred |
