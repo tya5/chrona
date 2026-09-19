@@ -23,6 +23,7 @@ class ProjectSnapshot:
     revision: str
     content_identity: str
     project: dict[str, Any]
+    parents: tuple[str, ...] = ()
 
 
 class MemoryRevisionStore:
@@ -31,20 +32,35 @@ class MemoryRevisionStore:
     def __init__(self, project: dict[str, Any]):
         self._sequence = 0
         self._snapshot = self._make_snapshot(project)
+        self._history: dict[str, ProjectSnapshot] = {self._snapshot.revision: self._snapshot}
         self._undo: list[dict[str, Any]] = []
         self._redo: list[dict[str, Any]] = []
         self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
         self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
 
     def read(self) -> ProjectSnapshot:
-        return ProjectSnapshot(self._snapshot.revision, self._snapshot.content_identity, deepcopy(self._snapshot.project))
+        return self._copy(self._snapshot)
+
+    def read_revision(self, revision: str) -> ProjectSnapshot | None:
+        snapshot = self._history.get(revision)
+        return self._copy(snapshot) if snapshot else None
 
     def write(self, expected_revision: str, project: dict[str, Any]) -> ProjectSnapshot | None:
         if expected_revision != self._snapshot.revision:
             return None
         self._undo.append(deepcopy(self._snapshot.project))
         self._redo.clear()
-        self._snapshot = self._make_snapshot(project)
+        self._snapshot = self._make_snapshot(project, (expected_revision,))
+        self._history[self._snapshot.revision] = self._snapshot
+        return self.read()
+
+    def write_with_parents(self, expected_revision: str, project: dict[str, Any], parents: tuple[str, ...]) -> ProjectSnapshot | None:
+        if expected_revision != self._snapshot.revision or expected_revision not in parents or any(parent not in self._history for parent in parents):
+            return None
+        self._undo.append(deepcopy(self._snapshot.project))
+        self._redo.clear()
+        self._snapshot = self._make_snapshot(project, parents)
+        self._history[self._snapshot.revision] = self._snapshot
         return self.read()
 
     def record_command(self, command_id: str, base: str, result: str | None, operations: Any) -> None:
@@ -65,10 +81,14 @@ class MemoryRevisionStore:
         self._snapshot = self._make_snapshot(self._redo.pop())
         return self.read()
 
-    def _make_snapshot(self, project: dict[str, Any]) -> ProjectSnapshot:
+    @staticmethod
+    def _copy(snapshot: ProjectSnapshot) -> ProjectSnapshot:
+        return ProjectSnapshot(snapshot.revision, snapshot.content_identity, deepcopy(snapshot.project), snapshot.parents)
+
+    def _make_snapshot(self, project: dict[str, Any], parents: tuple[str, ...] = ()) -> ProjectSnapshot:
         digest = sha256(_canonical(project)).hexdigest()
         self._sequence += 1
-        return ProjectSnapshot(f"memory:{self._sequence}:{digest}", f"sha256:{digest}", deepcopy(project))
+        return ProjectSnapshot(f"memory:{self._sequence}:{digest}", f"sha256:{digest}", deepcopy(project), parents)
 
 
 class LocalTransactionalStore:
@@ -85,16 +105,31 @@ class LocalTransactionalStore:
             self._snapshot = self._read_tip()
         else:
             self._snapshot = self._persist(project)
+        self._history: dict[str, ProjectSnapshot] = {self._snapshot.revision: self._snapshot}
 
     def read(self) -> ProjectSnapshot:
-        return ProjectSnapshot(self._snapshot.revision, self._snapshot.content_identity, deepcopy(self._snapshot.project))
+        return self._copy(self._snapshot)
+
+    def read_revision(self, revision: str) -> ProjectSnapshot | None:
+        snapshot = self._history.get(revision)
+        return self._copy(snapshot) if snapshot else None
 
     def write(self, expected_revision: str, project: dict[str, Any]) -> ProjectSnapshot | None:
         if expected_revision != self._snapshot.revision:
             return None
         self._undo.append(deepcopy(self._snapshot.project))
         self._redo.clear()
-        self._snapshot = self._persist(project)
+        self._snapshot = self._persist(project, (expected_revision,))
+        self._history[self._snapshot.revision] = self._snapshot
+        return self.read()
+
+    def write_with_parents(self, expected_revision: str, project: dict[str, Any], parents: tuple[str, ...]) -> ProjectSnapshot | None:
+        if expected_revision != self._snapshot.revision or expected_revision not in parents or any(parent not in self._history for parent in parents):
+            return None
+        self._undo.append(deepcopy(self._snapshot.project))
+        self._redo.clear()
+        self._snapshot = self._persist(project, parents)
+        self._history[self._snapshot.revision] = self._snapshot
         return self.read()
 
     def record_command(self, command_id: str, base: str, result: str | None, operations: Any) -> None:
@@ -118,7 +153,11 @@ class LocalTransactionalStore:
         self._commands[command_id] = (entry[0], entry[1], False)
         return self.read()
 
-    def _persist(self, project: dict[str, Any]) -> ProjectSnapshot:
+    @staticmethod
+    def _copy(snapshot: ProjectSnapshot) -> ProjectSnapshot:
+        return ProjectSnapshot(snapshot.revision, snapshot.content_identity, deepcopy(snapshot.project), snapshot.parents)
+
+    def _persist(self, project: dict[str, Any], parents: tuple[str, ...] = ()) -> ProjectSnapshot:
         payload = _canonical(project)
         digest = sha256(payload).hexdigest()
         self._sequence += 1
@@ -126,15 +165,18 @@ class LocalTransactionalStore:
         path = self.root / token
         path.mkdir(parents=True, exist_ok=False)
         (path / "project.json").write_bytes(payload)
+        (path / "parents.json").write_text(json.dumps(list(parents)), encoding="utf-8")
         self._tip.write_text(json.dumps({"token": token}), encoding="utf-8")
-        return ProjectSnapshot(f"local:{token}", f"sha256:{digest}", deepcopy(project))
+        return ProjectSnapshot(f"local:{token}", f"sha256:{digest}", deepcopy(project), parents)
 
     def _read_tip(self) -> ProjectSnapshot:
         token = json.loads(self._tip.read_text(encoding="utf-8"))["token"]
         payload = (self.root / token / "project.json").read_bytes()
         project = json.loads(payload)
         digest = sha256(payload).hexdigest()
-        return ProjectSnapshot(f"local:{token}", f"sha256:{digest}", project)
+        parents_path = self.root / token / "parents.json"
+        parents = tuple(json.loads(parents_path.read_text(encoding="utf-8"))) if parents_path.is_file() else ()
+        return ProjectSnapshot(f"local:{token}", f"sha256:{digest}", project, parents)
 
 
 class SnapshotReadError(ValueError):
