@@ -24,7 +24,7 @@ evidence is present, not that a later product release is complete.
 | M11 | Complete | Date-only capacity validation, deterministic explicit leveling proposal/CAS acceptance, isolated cost observations, UC-17/18 acceptance and reuse review. | None. |
 | M12 | Complete | Explicit conflict/CAS resolution with two-parent provenance, append-only audit observations, and labelled replica status; UC-19–21 evidence reviewed. | None. |
 | M13 | Complete | Fixed successor v0.2 closure, exact UC-16–21 evidence validation, and blocked/published release boundary. | None. |
-| M14 | Reopened — group presentation correction | Review SVG must consume View grouping and user-selected group presentation. | Grouped/un-grouped deterministic SVG evidence. |
+| M14 | Complete | User-selected View grouping plus profile-selected headers/separators/bands/gaps in deterministic Review SVG. | None. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning
