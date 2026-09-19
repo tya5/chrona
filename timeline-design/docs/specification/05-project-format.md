@@ -512,3 +512,21 @@ migration tool MAY create a v0.2 copy only when it supplies a zone policy for ea
 Date-to-DateTime conversion; it MUST NOT assume midnight. The result records the source
 revision and chosen policy in migration provenance. Downgrade to v0.1 is rejected when
 a Project contains any DateTime, recurrence, or intraday calendar value.
+
+## 23. DateTime Project successor (`timeline/v0.2`)
+
+`timeline/v0.2` is a distinct, opt-in document format. It requires
+`temporalProfile: datetime-v0.2`; all scheduling endpoints use the DateTime value
+contract (instant plus IANA zone, or explicit local disambiguation). It MUST NOT
+contain Date-only endpoints, and `timeline/v0.1` neither accepts nor converts it.
+
+The v0.2 structural contract is `project-v0.2.schema.yaml`. Fixed spans use
+`start`/`end`, fixed points use `at`, and scheduled spans use one explicit anchor with
+either an `exactDuration` (ISO-8601 elapsed duration) or `calendarPeriod`. A dependency
+remains `target.endpoint >= advance(source.endpoint, lag)` with an explicit matching
+lag type. WorkPeriod and intraday calendars reject until separately specified.
+
+A recurrence has `mode: recurrence` and declares local start, zone, frequency,
+interval, optional count/until, and DST disambiguation. Its occurrences are derived;
+neither it nor an occurrence may be a dependency endpoint. A v0.1→v0.2 copy records
+source revision/format and a non-implicit zone policy in migration provenance.

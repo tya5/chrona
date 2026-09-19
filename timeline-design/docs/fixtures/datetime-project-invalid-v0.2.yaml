@@ -1,0 +1,5 @@
+version: timeline/v0.2
+temporalProfile: datetime-v0.2
+project: {id: invalid}
+objects: {bad: {type: milestone, schedule: {mode: fixed, at: 2027-03-28}}}
+relations: []

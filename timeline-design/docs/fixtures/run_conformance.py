@@ -17,6 +17,7 @@ COMMANDS = [
     [sys.executable, str(ROOT / "validate_ai_command_proposal.py")],
     [sys.executable, str(ROOT / "validate_release_package.py")],
     [sys.executable, str(ROOT / "validate_design_recompletion.py")],
+    [sys.executable, str(ROOT / "validate_datetime_project.py")],
 ]
 for command in COMMANDS:
     result = subprocess.run(command, check=False)

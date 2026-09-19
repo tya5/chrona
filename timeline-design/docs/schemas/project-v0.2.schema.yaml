@@ -1,0 +1,48 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:project-v0.2"
+type: object
+additionalProperties: false
+required: [version, temporalProfile, project, objects, relations]
+properties:
+  version: {const: "timeline/v0.2"}
+  temporalProfile: {const: datetime-v0.2}
+  project: {type: object, required: [id], properties: {id: {type: string, minLength: 1}}, additionalProperties: true}
+  migration: {type: object, additionalProperties: false, required: [sourceRevision, sourceFormat, zonePolicy], properties: {sourceRevision: {type: string, minLength: 1}, sourceFormat: {const: "timeline/v0.1"}, zonePolicy: {type: string, minLength: 1}}}
+  objects: {type: object, additionalProperties: {$ref: "#/$defs/object"}}
+  relations: {type: array, items: {$ref: "#/$defs/relation"}}
+$defs:
+  dateTime:
+    oneOf:
+      - type: object
+        additionalProperties: false
+        required: [instant, zone]
+        properties: {instant: {type: string, format: date-time}, zone: {type: string, minLength: 1}}
+      - type: object
+        additionalProperties: false
+        required: [local, zone, disambiguation]
+        properties: {local: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?$"}, zone: {type: string, minLength: 1}, disambiguation: {enum: [earlier, later, reject]}}
+  amount:
+    oneOf:
+      - {type: object, additionalProperties: false, required: [kind, value], properties: {kind: {const: exactDuration}, value: {type: string, pattern: "^P"}}}
+      - {type: object, additionalProperties: false, required: [kind, value], properties: {kind: {const: calendarPeriod}, value: {type: string, minLength: 2}}}
+  object:
+    type: object
+    required: [type, schedule]
+    additionalProperties: true
+    properties:
+      type: {type: string, minLength: 1}
+      schedule:
+        oneOf:
+          - {type: object, additionalProperties: false, required: [mode, at], properties: {mode: {const: fixed}, at: {$ref: "#/$defs/dateTime"}}}
+          - {type: object, additionalProperties: false, required: [mode, start, end], properties: {mode: {const: fixed}, start: {$ref: "#/$defs/dateTime"}, end: {$ref: "#/$defs/dateTime"}}}
+          - {type: object, additionalProperties: false, required: [mode, amount, anchor], properties: {mode: {const: scheduled}, amount: {$ref: "#/$defs/amount"}, anchor: {type: object, minProperties: 1, maxProperties: 1, properties: {start: {$ref: "#/$defs/dateTime"}, end: {$ref: "#/$defs/dateTime"}}}}}
+          - {type: object, additionalProperties: false, required: [mode, recurrence], properties: {mode: {const: recurrence}, recurrence: {type: object, additionalProperties: false, required: [localStart, zone, frequency, interval, disambiguation], properties: {localStart: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}"}, zone: {type: string, minLength: 1}, frequency: {enum: [daily, weekly, monthly]}, interval: {type: integer, minimum: 1}, count: {type: integer, minimum: 1}, disambiguation: {enum: [earlier, later, reject]}}}}}
+  relation:
+    type: object
+    additionalProperties: false
+    required: [type, from, to, lag]
+    properties:
+      type: {const: dependency}
+      from: {type: object, additionalProperties: false, required: [object, endpoint], properties: {object: {type: string, minLength: 1}, endpoint: {enum: [at, start, end]}}}
+      to: {type: object, additionalProperties: false, required: [object, endpoint], properties: {object: {type: string, minLength: 1}, endpoint: {enum: [at, start, end]}}}
+      lag: {$ref: "#/$defs/amount"}

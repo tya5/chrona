@@ -320,8 +320,9 @@ disambiguation, and derives the same cross-zone ordering for the same immutable 
 **Exceptional behavior:** A mixed Date/DateTime dependency, an ambiguous local time
 without `earlier`, `later`, or `reject`, and a nonexistent local time are rejected with
 the specified diagnostics; no gap is silently shifted.
-**Acceptance evidence:** v0.2 temporal schema and fixtures for cross-zone comparison,
-DST folds/gaps, CalendarPeriod across DST, recurrence, and Date-only compatibility.
+**Acceptance evidence:** v0.2 temporal and Project schemas/fixtures for cross-zone
+comparison, DST folds/gaps, endpoint lag, CalendarPeriod across DST, recurrence,
+migration provenance, and Date-only compatibility.
 **Owners:** `03`, `04`, `05`, `12`, `18`.
 
 ### UC-17 — Assess capacity and accept an explicit leveling proposal

@@ -1,9 +1,7 @@
 # M10 DateTime Implementation Readiness Review
 
 **Date:** 2026-09-19  
-**Disposition:** Fail — implementation blocked pending successor Project Format design.
+**Disposition:** Superseded by `m10-datetime-project-format-closure-review-2026-09-19.md`.
 
-The DateTime value contract is complete, but it is not a Project serialization or
-scheduling contract. There is no v0.2 Project schema or fixture binding DateTime values
-to fixed/scheduled placements, relations, recurrence, or migration provenance. The
-M10 plan records the required owning-design work. No runtime DateTime code was added.
+The finding was correct when issued. The successor Project schema, fixtures, migration,
+and endpoint contract are now recorded in the replacement closure review.

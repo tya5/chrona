@@ -1,6 +1,6 @@
 # M10 DateTime Implementation Readiness Plan
 
-**Status:** Active — M10 implementation blocked by Project Format closure
+**Status:** Complete — successor Project Format closure
 
 ## Finding
 
@@ -26,5 +26,5 @@ cross-domain behavior outside the owning Project Format design.
 
 ## Authorization boundary
 
-M10 may implement `temporal_datetime` and the successor scheduler only after all four
-items pass conformance and the replacement readiness review is published.
+The v0.2 Project schema and positive/negative fixtures close items 1–3. The replacement
+readiness review closes item 4; only then may M10 runtime implementation begin.
