@@ -1,0 +1,12 @@
+version: chrona/presentation/v0.1
+kind: theme
+id: controller-z-light
+body:
+  values:
+    planned-blue: {type: color, value: '#2563EB'}
+    actual-green: {type: color, value: '#16A34A'}
+    behind-amber: {type: color, value: '#B45309'}
+  roles:
+    planned: {fill: planned-blue}
+    actual: {fill: actual-green}
+    variance-behind: {stroke: behind-amber}

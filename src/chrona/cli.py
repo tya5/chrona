@@ -11,6 +11,7 @@ from .review import review_projects
 from .commands import set_typed_field
 from .scheduler import schedule
 from .validation import load_yaml, validate_project
+from .review_svg import build_review_projection, render_review_svg
 
 
 def _json_default(value: object) -> str:
@@ -22,7 +23,7 @@ def _json_default(value: object) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(prog="chrona")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("validate", "schedule", "render", "review", "propose-set"):
+    for name in ("validate", "schedule", "render", "render-review", "review", "propose-set"):
         command = sub.add_parser(name)
         command.add_argument("project")
         if name == "review":
@@ -33,6 +34,8 @@ def main() -> None:
             command.add_argument("value")
         if name == "render":
             command.add_argument("--output", "-o", required=True)
+        if name == "render-review":
+            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--output", "-o", required=True)
     args = parser.parse_args()
     project = load_yaml(args.project)
     if args.command == "review":
@@ -56,6 +59,12 @@ def main() -> None:
             raise SystemExit(1)
         scene = scene_from_schedule(project, result)
         Path(args.output).write_text(render_svg(scene, {"marker", "metadata", "text-alternative"}), encoding="utf-8")
+        return
+    if args.command == "render-review":
+        if not result.ok:
+            raise SystemExit(1)
+        projection=build_review_projection(project,result.placements,load_yaml(args.view),load_yaml(args.actual),load_yaml(args.style),load_yaml(args.theme))
+        Path(args.output).write_text(render_review_svg(project["project"].get("title","Chrona"),projection,load_yaml(args.theme),{"sourceMetadata","accessibleText","semanticRoles","marker"}),encoding="utf-8")
         return
     print(json.dumps({"placements": result.placements, "diagnostics": [item.as_dict() for item in result.diagnostics]}, indent=2, default=_json_default))
     raise SystemExit(not result.ok)
