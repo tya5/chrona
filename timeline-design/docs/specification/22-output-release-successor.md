@@ -46,3 +46,14 @@ The manifest's `inputClosure` binds the Project, revision, package closure, View
 Actual set, and Scene identities used as the release input.  An adapter MUST emit the
 same evaluation identity and target/version in its output manifest; release packaging
 rejects a mismatch rather than attaching evidence from a different evaluation.
+
+### 3.2 Release package
+
+`release-package-v0.2.schema.yaml` defines the publishable package boundary. It binds
+the output-manifest identity, artifact content identity, and acceptance-manifest
+identity to the same release ID, evaluation identity, target, and target version. A
+package is `published` only when every use case is accepted and it contains an artifact
+identity. A `blocked` package is review metadata, not an artifact release: it names the
+same attempted closure and explicit blocking diagnostics but cannot be presented as a
+published target. This prevents a successful renderer invocation from being packaged
+with evidence for another evaluation or from concealing an excluded use case.

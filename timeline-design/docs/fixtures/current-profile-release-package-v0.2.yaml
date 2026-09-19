@@ -1,0 +1,12 @@
+version: chrona/release-package/v0.2
+releaseId: current-profile-svg-v0.1
+status: blocked
+evaluationIdentity: evaluation:release-fixture-v1
+output:
+  target: svg
+  targetVersion: chrona/output-capability/v0.2
+  manifestIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+acceptance:
+  manifestIdentity: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+artifact: {contentIdentity: null}
+diagnostics: [E_RELEASE_ACCEPTANCE_INCOMPLETE]
