@@ -253,6 +253,22 @@ AI agents use the same typed command vocabulary and base-revision checks as othe
 
 Authorization, approvals, and policy enforcement are application concerns, but an authorization decision must be applied before persistence and recorded in the result provenance where applicable. They must not change the semantic meaning of an accepted command.
 
+### 9.1 AI proposal and authorization exchange
+
+An AI client submits `chrona/ai-command-proposal/v0.1`, not a source rewrite. Its
+`proposedCommand` MUST validate against the closed Command registry and preserves the
+original `commandId`, target, and base revision. The proposal records the authenticated
+principal, agent identity, model identity, and a reviewable intent. It cannot contain
+arbitrary source text, executable code, a renderer edit, or an inferred title match.
+
+The application boundary computes a canonical SHA-256 command fingerprint and emits a
+separate `chrona/authorization-decision/v0.1`. An `allow` decision binds exactly one
+proposal, principal, policy version, and fingerprint. A changed payload, target, base
+revision, or principal invalidates the decision; `deny` never persists a Command.
+The Command Engine performs normal semantic validation and compare-and-set after an
+allow decision, so authorization never substitutes for validation or permits a stale
+write. The resulting provenance retains proposal ID, fingerprint, and policy version.
+
 ## 10. Resource-leveling successor commands
 
 The closed v0.1 registry is unchanged. The separately versioned resource-capacity

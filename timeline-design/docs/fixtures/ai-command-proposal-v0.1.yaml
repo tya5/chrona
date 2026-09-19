@@ -1,0 +1,27 @@
+proposal:
+  version: chrona/ai-command-proposal/v0.1
+  proposalId: ai-owner-001
+  actor: {principal: planner@example.test, agentIdentity: chrona-assistant, modelIdentity: approved-model-v1}
+  intent: Assign firmware ownership to the declared team.
+  proposedCommand:
+    version: chrona/command/v0.1
+    commandId: ai-owner-command-001
+    type: setTypedField
+    target: {kind: project, id: controller-x, path: controller-x.yaml}
+    baseRevision: store:project:41
+    payload: {objectId: firmware, field: owner, value: firmware-team}
+decision:
+  version: chrona/authorization-decision/v0.1
+  proposalId: ai-owner-001
+  commandFingerprint: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  principal: planner@example.test
+  policyVersion: policy:project-editor/v1
+  decision: allow
+deniedDecision:
+  version: chrona/authorization-decision/v0.1
+  proposalId: ai-owner-001
+  commandFingerprint: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  principal: planner@example.test
+  policyVersion: policy:project-editor/v1
+  decision: deny
+  reason: Principal lacks permission for this project.
