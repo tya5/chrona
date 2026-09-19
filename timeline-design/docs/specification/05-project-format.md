@@ -527,6 +527,7 @@ remains `target.endpoint >= advance(source.endpoint, lag)` with an explicit matc
 lag type. WorkPeriod and intraday calendars reject until separately specified.
 
 A recurrence has `mode: recurrence` and declares local start, zone, frequency,
-interval, optional count/until, and DST disambiguation. Its occurrences are derived;
+interval, exactly one terminal bound (`count` or DateTime `until`), and DST
+disambiguation. `until` is an inclusive instant boundary. Its occurrences are derived;
 neither it nor an occurrence may be a dependency endpoint. A v0.1→v0.2 copy records
 source revision/format and a non-implicit zone policy in migration provenance.

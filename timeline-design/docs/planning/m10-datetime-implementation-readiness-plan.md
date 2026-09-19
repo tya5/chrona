@@ -28,3 +28,15 @@ cross-domain behavior outside the owning Project Format design.
 
 The v0.2 Project schema and positive/negative fixtures close items 1–3. The replacement
 readiness review closes item 4; only then may M10 runtime implementation begin.
+
+## Runtime delivery sequence
+
+| Phase | Scope | Required evidence | Status |
+|---|---|---|---|
+| M10-1 | Resolve DateTime values, DST folds/gaps, ExactDuration, CalendarPeriod, and bounded recurrence in an opt-in module. | Unit tests for fold, gap, exact/calendar arithmetic, count/until recurrence; full regression and conformance. | In progress |
+| M10-2 | Interpret `timeline/v0.2` fixed/scheduled placement and dependency lower bounds without changing v0.1 scheduling. | v0.2 Project integration tests, invalid-domain diagnostics, and reuse review. | Pending |
+| M10-3 | Provide opt-in v0.1→v0.2 copy with explicit zone policy and provenance; reject v0.2 downgrade. | Migration tests, Date-only non-regression, UC-16 acceptance evidence. | Pending |
+| M10-4 | Run final UC-16/reuse/release review and update the milestone ledger. | Full suite, fixture conformance, and documented claimed/excluded scope. | Pending |
+
+Each phase is published to `main` only after its stated evidence passes. No phase may add
+DateTime behavior to `timeline/v0.1`.
