@@ -26,6 +26,11 @@ turning slide content into scheduling input.
 
 ## Layout integration
 
+For the v0.2 design successor, `29-schema-owned-presentation-settings.md` and the
+`detail` definition in `presentation-settings-v0.2.schema.json` are the single
+contract for legend labels, templates and formatters. Do not add a parallel legend
+configuration in Layout or Theme. Other M23 panels remain deferred.
+
 The Layout Profile may allocate `legend`, `observations`, and `milestones` slots.  The
 solver allocates them from declared regions and emits their rectangles; no coordinates
 are stored in a resource. Required unavailable sources diagnose.  The SVG adapter draws

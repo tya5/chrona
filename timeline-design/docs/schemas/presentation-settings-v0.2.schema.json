@@ -1,0 +1,2483 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chrona:presentation-settings-v0.2",
+  "title": "Resolved owner settings contract (design; runtime not implemented)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "context",
+    "output",
+    "theme",
+    "layout",
+    "detail"
+  ],
+  "properties": {
+    "version": {
+      "const": "chrona/presentation-settings/v0.2"
+    },
+    "context": {
+      "$ref": "#/$defs/context"
+    },
+    "output": {
+      "$ref": "#/$defs/output"
+    },
+    "theme": {
+      "$ref": "#/$defs/theme"
+    },
+    "layout": {
+      "$ref": "#/$defs/layout"
+    },
+    "detail": {
+      "$ref": "#/$defs/detail"
+    }
+  },
+  "$defs": {
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "viewport",
+        "locale",
+        "fontMetrics"
+      ],
+      "properties": {
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height"
+          ],
+          "properties": {
+            "width": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "height": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10000
+            }
+          },
+          "description": "Replaces aspectRatio→pixel mappings in both solver and renderer; only Context owns dimensions."
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Explicit locale; no process-locale strftime."
+        },
+        "fontMetrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "algorithm",
+            "revision",
+            "contentIdentity",
+            "missingFont"
+          ],
+          "properties": {
+            "algorithm": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "contentIdentity": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "missingFont": {
+              "enum": [
+                "diagnose",
+                "declared-fallback"
+              ]
+            }
+          },
+          "description": "Fixture identity is illustrative, not an available asset. Closure must resolve a real immutable font-metric resource."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coordinateDecimals",
+        "fontPolicy",
+        "overflow"
+      ],
+      "properties": {
+        "coordinateDecimals": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8,
+          "description": "Replaces .2f; round only during serialization, never routing."
+        },
+        "fontPolicy": {
+          "enum": [
+            "reference",
+            "embed",
+            "outline"
+          ],
+          "description": "Unsupported embedding/outlining is a capability error, never silent fallback."
+        },
+        "overflow": {
+          "enum": [
+            "diagnose",
+            "clip-optional"
+          ],
+          "description": "Required accessible content may not be clipped."
+        }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fontFamily",
+        "typography",
+        "paints",
+        "strokes",
+        "groupPaints",
+        "bar",
+        "point",
+        "arrow",
+        "varianceMarkerWidth",
+        "missingPattern"
+      ],
+      "properties": {
+        "fontFamily": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "One declared stack; no local hardcoded font fallback."
+        },
+        "typography": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "heading",
+            "subtitle",
+            "body",
+            "tableHeader",
+            "group",
+            "month",
+            "quarter",
+            "variance",
+            "missingActual",
+            "legend",
+            "coverage",
+            "notes",
+            "summaryHeader",
+            "summaryMetric"
+          ],
+          "properties": {
+            "heading": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "subtitle": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "body": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "tableHeader": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "group": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "month": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "quarter": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "variance": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "missingActual": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "legend": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "coverage": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "notes": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "summaryHeader": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "summaryMetric": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            }
+          }
+        },
+        "paints": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "background",
+            "text",
+            "textMuted",
+            "planned",
+            "actual",
+            "milestone",
+            "varianceAhead",
+            "varianceOnTrack",
+            "varianceBehind",
+            "varianceUnknown",
+            "tableHeader",
+            "groupBand",
+            "rowShade"
+          ],
+          "properties": {
+            "background": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "text": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "textMuted": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "planned": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "actual": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "milestone": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "varianceAhead": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "varianceOnTrack": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "varianceBehind": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "varianceUnknown": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "tableHeader": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "groupBand": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            },
+            "rowShade": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "description": "Explicit role paint; no adapter fallback color."
+            }
+          }
+        },
+        "strokes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "axisMajor",
+            "axisMinor",
+            "rowRule",
+            "frame",
+            "groupSeparator",
+            "dependency"
+          ],
+          "properties": {
+            "axisMajor": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity",
+                "width",
+                "dash"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "width": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dash": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 1000
+                  }
+                }
+              },
+              "description": "Includes implicit SVG stroke-width defaults."
+            },
+            "axisMinor": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity",
+                "width",
+                "dash"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "width": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dash": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 1000
+                  }
+                }
+              },
+              "description": "Includes implicit SVG stroke-width defaults."
+            },
+            "rowRule": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity",
+                "width",
+                "dash"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "width": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dash": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 1000
+                  }
+                }
+              },
+              "description": "Includes implicit SVG stroke-width defaults."
+            },
+            "frame": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity",
+                "width",
+                "dash"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "width": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dash": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 1000
+                  }
+                }
+              },
+              "description": "Includes implicit SVG stroke-width defaults."
+            },
+            "groupSeparator": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity",
+                "width",
+                "dash"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "width": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dash": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 1000
+                  }
+                }
+              },
+              "description": "Includes implicit SVG stroke-width defaults."
+            },
+            "dependency": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity",
+                "width",
+                "dash"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "width": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dash": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 1000
+                  }
+                }
+              },
+              "description": "Includes implicit SVG stroke-width defaults."
+            }
+          }
+        },
+        "groupPaints": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "color",
+              "opacity"
+            ],
+            "properties": {
+              "color": {
+                "type": "string",
+                "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+              },
+              "opacity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          },
+          "description": "Stable group IDs map to paint; empty map uses groupBand."
+        },
+        "bar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "radius",
+            "minWidth",
+            "plannedHeight",
+            "actualHeight"
+          ],
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "minWidth": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 10000
+            },
+            "plannedHeight": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "actualHeight": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            }
+          },
+          "description": "Replaces rounded corners, minimum widths, and all legacy bar heights."
+        },
+        "point": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shape",
+            "size"
+          ],
+          "properties": {
+            "shape": {
+              "enum": [
+                "diamond",
+                "circle",
+                "square"
+              ]
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            }
+          },
+          "description": "Size is full bounding diameter/width; ports derive from selected shape."
+        },
+        "arrow": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "shape",
+            "width",
+            "height",
+            "tipInset",
+            "orientation"
+          ],
+          "properties": {
+            "shape": {
+              "enum": [
+                "triangle",
+                "chevron",
+                "none"
+              ]
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "tipInset": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "orientation": {
+              "enum": [
+                "auto",
+                "auto-start-reverse"
+              ]
+            }
+          },
+          "description": "Normalized path is a shape algorithm, not user-authored SVG; ref point derives from dimensions."
+        },
+        "varianceMarkerWidth": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 10000,
+          "description": "Marker height derives from paired bars, not independent duplicated setting."
+        },
+        "missingPattern": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "spacing",
+            "angle",
+            "stroke",
+            "width",
+            "height"
+          ],
+          "properties": {
+            "spacing": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "angle": {
+              "type": "number",
+              "minimum": -360,
+              "maximum": 360
+            },
+            "stroke": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color",
+                "opacity",
+                "width",
+                "dash"
+              ],
+              "properties": {
+                "color": {
+                  "type": "string",
+                  "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "width": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "dash": {
+                  "type": "array",
+                  "minItems": 0,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "maximum": 1000
+                  }
+                }
+              }
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            }
+          },
+          "description": "Closes legacy hatch spacing, rotation, size and line width."
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "margins",
+        "regionGap",
+        "regions",
+        "slots",
+        "group",
+        "row",
+        "cellPadding",
+        "columnTracks",
+        "text",
+        "title",
+        "axis",
+        "scale",
+        "bars",
+        "variance",
+        "missingActual",
+        "routing",
+        "legend",
+        "notes",
+        "summary"
+      ],
+      "properties": {
+        "margins": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ],
+          "properties": {
+            "top": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "right": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "bottom": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "left": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "description": "Named compact/balanced/spacious become data presets, not code lookups."
+        },
+        "regionGap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000,
+          "description": "No implicit gaps."
+        },
+        "regions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "layout",
+              "block",
+              "tracks",
+              "gap"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "layout": {
+                "enum": [
+                  "stack",
+                  "grid",
+                  "split",
+                  "overlay",
+                  "anchor"
+                ]
+              },
+              "block": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "value",
+                  "min",
+                  "max"
+                ],
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "fixed",
+                      "fraction",
+                      "content"
+                    ]
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "min": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "max": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10000
+                  }
+                }
+              },
+              "tracks": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "value",
+                    "min",
+                    "max"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "fixed",
+                        "fraction",
+                        "content"
+                      ]
+                    },
+                    "value": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "min": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "max": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10000
+                    }
+                  }
+                }
+              },
+              "gap": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10000
+              }
+            }
+          },
+          "description": "No special meaning for header/main/footer IDs; block sizes and tracks are explicit."
+        },
+        "slots": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "region",
+              "track",
+              "source",
+              "priority",
+              "overflow",
+              "align"
+            ],
+            "properties": {
+              "region": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "track": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "source": {
+                "enum": [
+                  "title",
+                  "table",
+                  "timeline",
+                  "summary",
+                  "legend",
+                  "annotations",
+                  "notes"
+                ]
+              },
+              "priority": {
+                "enum": [
+                  "required",
+                  "preferred",
+                  "optional"
+                ]
+              },
+              "overflow": {
+                "enum": [
+                  "diagnose",
+                  "ellipsize-with-source",
+                  "clip-optional"
+                ]
+              },
+              "align": {
+                "enum": [
+                  "start",
+                  "center",
+                  "end",
+                  "stretch"
+                ]
+              }
+            }
+          },
+          "description": "Eliminates insertion-index allocation and fallback Rects; shared rows are one derived grid."
+        },
+        "group": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "fraction",
+            "gap",
+            "headerHeight",
+            "labelAlign"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "merged",
+                "header",
+                "none"
+              ]
+            },
+            "fraction": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 0.99
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "headerHeight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "labelAlign": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          },
+          "description": "Style controls color; View controls membership/order; no density-triggered semantics."
+        },
+        "row": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sizing",
+            "height",
+            "minHeight",
+            "verticalPadding",
+            "stripeEvery",
+            "stripeOffset",
+            "ruleScope"
+          ],
+          "properties": {
+            "sizing": {
+              "enum": [
+                "fit",
+                "fixed"
+              ]
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "minHeight": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "verticalPadding": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "stripeEvery": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "stripeOffset": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "ruleScope": {
+              "enum": [
+                "after-group-column",
+                "full"
+              ]
+            }
+          },
+          "description": "Minimum is max(declared minimum, measured content+padding); removes fs*2.8 approximation."
+        },
+        "cellPadding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ],
+          "properties": {
+            "top": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "right": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "bottom": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "left": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "description": "Includes wrapped group labels and notes."
+        },
+        "columnTracks": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "value",
+              "min",
+              "max"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "fixed",
+                  "fraction",
+                  "content"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "min": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "max": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10000
+              }
+            }
+          },
+          "description": "Empty means equal division by count, an explicit algorithm policy; keyed position follows View columns."
+        },
+        "text": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maxLines",
+            "horizontalAlign",
+            "verticalAlign",
+            "wrap"
+          ],
+          "properties": {
+            "maxLines": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "horizontalAlign": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ]
+            },
+            "verticalAlign": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ]
+            },
+            "wrap": {
+              "enum": [
+                "word",
+                "grapheme",
+                "none"
+              ]
+            }
+          },
+          "description": "Remove .58/.34 approximate glyph metrics; baselines use pinned ascent/descent and lineHeight."
+        },
+        "title": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "padding",
+            "subtitleGap",
+            "showSubtitle"
+          ],
+          "properties": {
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ],
+              "properties": {
+                "top": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "right": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "bottom": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "left": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                }
+              }
+            },
+            "subtitleGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "showSubtitle": {
+              "type": "boolean"
+            }
+          },
+          "description": "No hand-written title baseline or +30 offset; measured stack."
+        },
+        "axis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "levels",
+            "bandHeights",
+            "labelAlign",
+            "padding",
+            "minorVisible",
+            "tickStep",
+            "tickUnit"
+          ],
+          "properties": {
+            "levels": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "enum": [
+                  "month",
+                  "quarter",
+                  "week",
+                  "day"
+                ]
+              }
+            },
+            "bandHeights": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 10000
+              }
+            },
+            "labelAlign": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ]
+            },
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ],
+              "properties": {
+                "top": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "right": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "bottom": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "left": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                }
+              }
+            },
+            "minorVisible": {
+              "type": "boolean"
+            },
+            "tickStep": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "tickUnit": {
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "quarter"
+              ]
+            }
+          },
+          "description": "Band heights pair with levels; grid derives chart bounds; tick cadence is display-only."
+        },
+        "scale": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "dayWidth",
+            "paddingStart",
+            "paddingEnd",
+            "singlePointSpanDays"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "fit-window",
+                "fixed-day-width"
+              ]
+            },
+            "dayWidth": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 10000
+            },
+            "paddingStart": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "paddingEnd": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "singlePointSpanDays": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 366
+            }
+          },
+          "description": "Padding is independent of semantic View window; one scale maps all projected endpoints."
+        },
+        "bars": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "gap",
+            "align"
+          ],
+          "properties": {
+            "gap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "align": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          },
+          "description": "Sizes belong to Theme; band placement belongs to Layout."
+        },
+        "variance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "visible",
+            "showZero",
+            "offset",
+            "labelGap",
+            "labelAlign"
+          ],
+          "properties": {
+            "visible": {
+              "type": "boolean"
+            },
+            "showZero": {
+              "type": "boolean"
+            },
+            "offset": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "labelGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "labelAlign": {
+              "enum": [
+                "start",
+                "center",
+                "end"
+              ]
+            }
+          },
+          "description": "Label obstacle is measured; eliminates +60/+57 and manual baseline +5."
+        },
+        "missingActual": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "gap"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "label",
+                "pattern",
+                "label-and-pattern"
+              ]
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "description": "Measured label obstacle replaces width112; data coverage cannot silently disappear."
+        },
+        "routing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled",
+            "algorithm",
+            "clearance",
+            "gridOffset",
+            "portOffset",
+            "bendPenalty",
+            "strokeLayer"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "algorithm": {
+              "enum": [
+                "orthogonal-obstacle"
+              ]
+            },
+            "clearance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "gridOffset": {
+              "type": "number",
+              "minimum": 0.001,
+              "maximum": 10000
+            },
+            "portOffset": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "bendPenalty": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "strokeLayer": {
+              "enum": [
+                "behind-marks",
+                "above-marks"
+              ]
+            }
+          },
+          "description": "Semantic endpoint types are NOT configurable; geometry from actual mark bounds."
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "padding",
+            "itemGap",
+            "swatchWidth",
+            "swatchHeight",
+            "labelGap",
+            "rowGap",
+            "wrap",
+            "coverageGap"
+          ],
+          "properties": {
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ],
+              "properties": {
+                "top": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "right": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "bottom": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "left": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                }
+              }
+            },
+            "itemGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "swatchWidth": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "swatchHeight": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10000
+            },
+            "labelGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "rowGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "wrap": {
+              "type": "boolean"
+            },
+            "coverageGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "description": "Item advance is measured swatch+label+gap, never 150/145/220/175/180 by label."
+        },
+        "notes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "padding",
+            "itemGap"
+          ],
+          "properties": {
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ],
+              "properties": {
+                "top": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "right": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "bottom": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "left": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                }
+              }
+            },
+            "itemGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "description": "Typography comes from theme; placement is measured flow, not +20 or fs*1.4."
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "padding",
+            "panelGap",
+            "metricGap"
+          ],
+          "properties": {
+            "padding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "top",
+                "right",
+                "bottom",
+                "left"
+              ],
+              "properties": {
+                "top": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "right": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "bottom": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                },
+                "left": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 10000
+                }
+              }
+            },
+            "panelGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "metricGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "description": "Removes summary-only coordinates, fonts and 15/13px baselines."
+        }
+      }
+    },
+    "detail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "groupLabel",
+        "subtitle",
+        "accessibleDescription",
+        "missingActualLabel",
+        "coverage",
+        "legend",
+        "formatting",
+        "summaryLabels",
+        "title",
+        "unmatchedActual",
+        "summaryEntry",
+        "coverageRatio",
+        "listSeparator"
+      ],
+      "properties": {
+        "groupLabel": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Migrates surface.groupLabel out of Layout."
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Restricted template; dates formatted through declared format catalog."
+        },
+        "accessibleDescription": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Required accessible description uses real facts; no arbitrary expression evaluation."
+        },
+        "missingActualLabel": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Display text only."
+        },
+        "coverage": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Coverage facts remain defined by projection, not template."
+        },
+        "legend": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role",
+              "label"
+            ],
+            "properties": {
+              "role": {
+                "enum": [
+                  "planned",
+                  "actual",
+                  "variance",
+                  "milestone",
+                  "dependency"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            }
+          },
+          "description": "Order and label owned by existing Detail; symbol comes from matching Theme role."
+        },
+        "formatting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "month",
+            "quarter",
+            "date",
+            "signedDaysSuffix",
+            "positiveSign",
+            "rangeSeparator",
+            "blank",
+            "unknown",
+            "emDash"
+          ],
+          "properties": {
+            "month": {
+              "enum": [
+                "short-month-year",
+                "long-month-year",
+                "numeric-year-month"
+              ]
+            },
+            "quarter": {
+              "enum": [
+                "quarter-year",
+                "year-quarter"
+              ]
+            },
+            "date": {
+              "enum": [
+                "iso-date",
+                "localized-date"
+              ]
+            },
+            "signedDaysSuffix": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "positiveSign": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "rangeSeparator": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "blank": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "unknown": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "emDash": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "description": "Closed formatter catalog, not strftime code or arbitrary user function."
+        },
+        "summaryLabels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "selectedCount",
+            "actualCoverage",
+            "knownFinishVarianceCount",
+            "missingActualCount",
+            "nextPlannedPoint"
+          ],
+          "properties": {
+            "selectedCount": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "actualCoverage": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "knownFinishVarianceCount": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "missingActualCount": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "nextPlannedPoint": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "description": "Metric IDs/values remain existing Summary authority; only labels migrate."
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "unmatchedActual": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "summaryEntry": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "coverageRatio": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "listSeparator": {
+          "type": "string",
+          "maxLength": 4096
+        }
+      }
+    }
+  }
+}

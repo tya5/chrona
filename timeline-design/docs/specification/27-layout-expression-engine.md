@@ -67,6 +67,11 @@ Logical reading order is slot order, not paint order. Colour is never the sole s
 
 ## 6. Acceptance invariants
 
+Design successor: `29-schema-owned-presentation-settings.md` owns the v0.2
+externalization contract and the migration of prototype `surface` settings. It
+removes duplicate typography/dimension authority and named-region code defaults.
+This is a design-only successor; v0.1 runtime support remains unchanged.
+
 - Same closure plus profile yields byte-identical Layout Manifest and SVG.
 - A layout change cannot alter schedule, Actual, grouping membership, or comparison value.
 - Two profiles may differ materially while reusing the same View/Style/Theme facts.

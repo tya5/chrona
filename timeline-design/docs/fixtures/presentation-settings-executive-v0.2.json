@@ -1,0 +1,518 @@
+{
+  "version": "chrona/presentation-settings/v0.2",
+  "context": {
+    "viewport": {
+      "width": 1600,
+      "height": 900
+    },
+    "locale": "en-US",
+    "fontMetrics": {
+      "algorithm": "font-metrics-v1",
+      "revision": "fixture-not-installed",
+      "contentIdentity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "missingFont": "diagnose"
+    }
+  },
+  "output": {
+    "coordinateDecimals": 2,
+    "fontPolicy": "reference",
+    "overflow": "diagnose"
+  },
+  "theme": {
+    "fontFamily": "Nimbus Sans, Arial, sans-serif",
+    "typography": {
+      "heading": {
+        "size": 40,
+        "weight": 700,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "subtitle": {
+        "size": 19,
+        "weight": 400,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "body": {
+        "size": 19,
+        "weight": 400,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "tableHeader": {
+        "size": 19,
+        "weight": 700,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "group": {
+        "size": 24,
+        "weight": 700,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "month": {
+        "size": 19,
+        "weight": 700,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "quarter": {
+        "size": 13,
+        "weight": 700,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "variance": {
+        "size": 17,
+        "weight": 700,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "missingActual": {
+        "size": 12,
+        "weight": 400,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "legend": {
+        "size": 16,
+        "weight": 400,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "coverage": {
+        "size": 14,
+        "weight": 400,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "notes": {
+        "size": 19,
+        "weight": 400,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "summaryHeader": {
+        "size": 11,
+        "weight": 700,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      },
+      "summaryMetric": {
+        "size": 10,
+        "weight": 400,
+        "lineHeight": 1.2,
+        "letterSpacing": 0
+      }
+    },
+    "paints": {
+      "background": {
+        "color": "#FFFFFF",
+        "opacity": 1
+      },
+      "text": {
+        "color": "#172033",
+        "opacity": 1
+      },
+      "textMuted": {
+        "color": "#637187",
+        "opacity": 1
+      },
+      "planned": {
+        "color": "#3986E6",
+        "opacity": 1
+      },
+      "actual": {
+        "color": "#269D79",
+        "opacity": 1
+      },
+      "milestone": {
+        "color": "#102B50",
+        "opacity": 1
+      },
+      "varianceAhead": {
+        "color": "#269D79",
+        "opacity": 1
+      },
+      "varianceOnTrack": {
+        "color": "#637187",
+        "opacity": 1
+      },
+      "varianceBehind": {
+        "color": "#C8762B",
+        "opacity": 1
+      },
+      "varianceUnknown": {
+        "color": "#637187",
+        "opacity": 1
+      },
+      "tableHeader": {
+        "color": "#EAF0F8",
+        "opacity": 1
+      },
+      "groupBand": {
+        "color": "#EEF3F8",
+        "opacity": 1
+      },
+      "rowShade": {
+        "color": "#FFFFFF",
+        "opacity": 0.34
+      }
+    },
+    "strokes": {
+      "axisMajor": {
+        "color": "#C9CED8",
+        "opacity": 1,
+        "width": 1,
+        "dash": [
+          3,
+          4
+        ]
+      },
+      "axisMinor": {
+        "color": "#E6E9EE",
+        "opacity": 1,
+        "width": 1,
+        "dash": []
+      },
+      "rowRule": {
+        "color": "#FFFFFF",
+        "opacity": 1,
+        "width": 1,
+        "dash": []
+      },
+      "frame": {
+        "color": "#DDE4EC",
+        "opacity": 1,
+        "width": 1,
+        "dash": []
+      },
+      "groupSeparator": {
+        "color": "#9CA3AF",
+        "opacity": 1,
+        "width": 1,
+        "dash": []
+      },
+      "dependency": {
+        "color": "#8795AA",
+        "opacity": 1,
+        "width": 1.4,
+        "dash": []
+      }
+    },
+    "groupPaints": {},
+    "bar": {
+      "radius": 2,
+      "minWidth": 1,
+      "plannedHeight": 17,
+      "actualHeight": 17
+    },
+    "point": {
+      "shape": "diamond",
+      "size": 18
+    },
+    "arrow": {
+      "shape": "triangle",
+      "width": 6,
+      "height": 6,
+      "tipInset": 0.5,
+      "orientation": "auto"
+    },
+    "varianceMarkerWidth": 3,
+    "missingPattern": {
+      "spacing": 6,
+      "angle": 45,
+      "stroke": {
+        "color": "#6B7280",
+        "opacity": 1,
+        "width": 2,
+        "dash": []
+      },
+      "width": 18,
+      "height": 9
+    }
+  },
+  "layout": {
+    "margins": {
+      "top": 24,
+      "right": 24,
+      "bottom": 24,
+      "left": 24
+    },
+    "regionGap": 0,
+    "regions": [
+      {
+        "id": "header",
+        "layout": "stack",
+        "block": {
+          "kind": "fixed",
+          "value": 96,
+          "min": 96,
+          "max": 96
+        },
+        "tracks": [
+          {
+            "kind": "fraction",
+            "value": 1,
+            "min": 0,
+            "max": 10000
+          }
+        ],
+        "gap": 0
+      },
+      {
+        "id": "main",
+        "layout": "split",
+        "block": {
+          "kind": "fraction",
+          "value": 1,
+          "min": 100,
+          "max": 10000
+        },
+        "tracks": [
+          {
+            "kind": "fraction",
+            "value": 3,
+            "min": 0,
+            "max": 10000
+          },
+          {
+            "kind": "fraction",
+            "value": 7,
+            "min": 0,
+            "max": 10000
+          }
+        ],
+        "gap": 0
+      },
+      {
+        "id": "footer",
+        "layout": "stack",
+        "block": {
+          "kind": "fixed",
+          "value": 120,
+          "min": 120,
+          "max": 120
+        },
+        "tracks": [
+          {
+            "kind": "fraction",
+            "value": 1,
+            "min": 0,
+            "max": 10000
+          }
+        ],
+        "gap": 0
+      }
+    ],
+    "slots": {
+      "title": {
+        "region": "header",
+        "track": 0,
+        "source": "title",
+        "priority": "required",
+        "overflow": "diagnose",
+        "align": "start"
+      },
+      "table": {
+        "region": "main",
+        "track": 0,
+        "source": "table",
+        "priority": "required",
+        "overflow": "diagnose",
+        "align": "stretch"
+      },
+      "timeline": {
+        "region": "main",
+        "track": 1,
+        "source": "timeline",
+        "priority": "required",
+        "overflow": "diagnose",
+        "align": "stretch"
+      },
+      "legend": {
+        "region": "footer",
+        "track": 0,
+        "source": "legend",
+        "priority": "required",
+        "overflow": "diagnose",
+        "align": "start"
+      }
+    },
+    "group": {
+      "mode": "merged",
+      "fraction": 0.4,
+      "gap": 6,
+      "headerHeight": 32,
+      "labelAlign": "center"
+    },
+    "row": {
+      "sizing": "fit",
+      "height": 72,
+      "minHeight": 54,
+      "verticalPadding": 8,
+      "stripeEvery": 2,
+      "stripeOffset": 1,
+      "ruleScope": "after-group-column"
+    },
+    "cellPadding": {
+      "top": 6,
+      "right": 12,
+      "bottom": 6,
+      "left": 12
+    },
+    "columnTracks": [],
+    "text": {
+      "maxLines": 3,
+      "horizontalAlign": "start",
+      "verticalAlign": "center",
+      "wrap": "word"
+    },
+    "title": {
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "subtitleGap": 12,
+      "showSubtitle": true
+    },
+    "axis": {
+      "levels": [
+        "month"
+      ],
+      "bandHeights": [
+        48
+      ],
+      "labelAlign": "center",
+      "padding": {
+        "top": 8,
+        "right": 0,
+        "bottom": 8,
+        "left": 0
+      },
+      "minorVisible": false,
+      "tickStep": 1,
+      "tickUnit": "month"
+    },
+    "scale": {
+      "mode": "fit-window",
+      "dayWidth": 14,
+      "paddingStart": 20,
+      "paddingEnd": 20,
+      "singlePointSpanDays": 1
+    },
+    "bars": {
+      "gap": 4,
+      "align": "center"
+    },
+    "variance": {
+      "visible": true,
+      "showZero": false,
+      "offset": 12,
+      "labelGap": 7,
+      "labelAlign": "center"
+    },
+    "missingActual": {
+      "mode": "label",
+      "gap": 4
+    },
+    "routing": {
+      "enabled": true,
+      "algorithm": "orthogonal-obstacle",
+      "clearance": 4,
+      "gridOffset": 2,
+      "portOffset": 8,
+      "bendPenalty": 12,
+      "strokeLayer": "behind-marks"
+    },
+    "legend": {
+      "padding": {
+        "top": 18,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "itemGap": 28,
+      "swatchWidth": 38,
+      "swatchHeight": 12,
+      "labelGap": 10,
+      "rowGap": 12,
+      "wrap": true,
+      "coverageGap": 18
+    },
+    "notes": {
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "itemGap": 8
+    },
+    "summary": {
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "panelGap": 6,
+      "metricGap": 3
+    }
+  },
+  "detail": {
+    "groupLabel": "Owner",
+    "subtitle": "{windowStart} – {windowLastVisible} / Planned and observed delivery",
+    "accessibleDescription": "Plan and Actual comparison. {selectedCount} rows; {unmatchedCount} unmatched observations. Actual is not a forecast.",
+    "missingActualLabel": "Actual not reported",
+    "coverage": "Actual unavailable: {missingCount}/{selectedCount} items · Unmatched observations: {unmatchedCount} · Variance in calendar days",
+    "legend": [
+      {
+        "role": "planned",
+        "label": "Planned"
+      },
+      {
+        "role": "actual",
+        "label": "Actual"
+      },
+      {
+        "role": "variance",
+        "label": "Finish variance"
+      },
+      {
+        "role": "milestone",
+        "label": "Milestone"
+      },
+      {
+        "role": "dependency",
+        "label": "Dependency"
+      }
+    ],
+    "formatting": {
+      "month": "short-month-year",
+      "quarter": "quarter-year",
+      "date": "iso-date",
+      "signedDaysSuffix": "d",
+      "positiveSign": "+",
+      "rangeSeparator": " – ",
+      "blank": "",
+      "unknown": "unknown",
+      "emDash": "—"
+    },
+    "summaryLabels": {
+      "selectedCount": "Selected work",
+      "actualCoverage": "Actual coverage",
+      "knownFinishVarianceCount": "Known finish variance",
+      "missingActualCount": "Missing Actual",
+      "nextPlannedPoint": "Next planned point"
+    },
+    "title": "{title}",
+    "unmatchedActual": "Unmatched Actual: {unmatchedIds}",
+    "summaryEntry": "{label}: {value}",
+    "coverageRatio": "{actualCount}/{selectedCount}",
+    "listSeparator": ", "
+  }
+}
