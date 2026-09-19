@@ -7,3 +7,6 @@ v0.2 requires an authoritative anchor, and an omitted v0.1 dependency lag normal
 the existing zero-day meaning as CalendarPeriod `0d`. No implicit scheduling anchor or
 duration-kind choice remains. The migration adapter may now implement only the declared
 subset and diagnostics.
+
+The adapter validates the v0.1 source first and rejects entities/annotations rather
+than silently dropping them; M10 defines no v0.2 counterpart for either.

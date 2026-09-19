@@ -513,12 +513,14 @@ with IANA zone, non-midnight local time, and DST disambiguation; it MUST NOT inv
 of those values. The result records source revision/format and the complete policy in
 migration provenance. The migratable subset is v0.1 fixed points/spans, scheduled
 `d`/`w` CalendarPeriod amounts, their date anchors, and `d`/`w` dependency lags.
-WorkPeriod, calendars, extensions, constraints, derived schedules, unrecognized
-top-level fields, and unsupported amount units reject with a migration diagnostic rather
+WorkPeriod, calendars, extensions, constraints, derived schedules, entities, annotations,
+unrecognized top-level fields, and unsupported amount units reject with a migration diagnostic rather
 than being dropped. A v0.1 scheduled span without its required v0.2 anchor rejects.
 An omitted v0.1 relation lag normalizes to `{kind: calendarPeriod, value: 0d}`; an
 explicit v0.1 `d`/`w` lag maps to the same CalendarPeriod form. Downgrade to v0.1 is always rejected for a v0.2 Project, since it
 contains DateTime semantics even when its values happen to align to dates.
+Before subset conversion the adapter validates the v0.1 source structurally and
+semantically; any source diagnostic rejects the entire migration.
 
 ## 23. DateTime Project successor (`timeline/v0.2`)
 
