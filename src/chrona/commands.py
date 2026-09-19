@@ -23,6 +23,7 @@ class CommandResult:
     project: dict[str, Any] | None
     diagnostics: tuple[str, ...]
     result_revision: str | None = None
+    command_id: str | None = None
 
 
 def set_typed_field(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]], object_id: str, field: str, value: Any) -> CommandResult:
@@ -70,19 +71,23 @@ def execute_set_typed_field(
     object_id: str,
     field: str,
     value: Any,
+    command_id: str = "set-typed-field",
 ) -> CommandResult:
-    return execute_typed_field_batch(store, base_revision, package_manifests, [(object_id, field, value)])
+    result = execute_typed_field_batch(store, base_revision, package_manifests, [(object_id, field, value)])
+    if result.status == "accepted" and hasattr(store, "record_command"):
+        store.record_command(command_id, base_revision, result.result_revision, [(object_id, field, value)])
+    return CommandResult(result.status, result.project, result.diagnostics, result.result_revision, command_id)
 
 
-def execute_undo(store: Any, base_revision: str) -> CommandResult:
-    persisted = store.undo(base_revision)
+def execute_undo(store: Any, base_revision: str, command_id: str) -> CommandResult:
+    persisted = store.undo(base_revision, command_id)
     if persisted is None:
         return CommandResult("rejected", None, ("E_CONFLICT",))
     return CommandResult("accepted", persisted.project, (), persisted.revision)
 
 
-def execute_redo(store: Any, base_revision: str) -> CommandResult:
-    persisted = store.redo(base_revision)
+def execute_redo(store: Any, base_revision: str, command_id: str) -> CommandResult:
+    persisted = store.redo(base_revision, command_id)
     if persisted is None:
         return CommandResult("rejected", None, ("E_CONFLICT",))
     return CommandResult("accepted", persisted.project, (), persisted.revision)

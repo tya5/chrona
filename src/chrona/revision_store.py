@@ -33,6 +33,8 @@ class MemoryRevisionStore:
         self._snapshot = self._make_snapshot(project)
         self._undo: list[dict[str, Any]] = []
         self._redo: list[dict[str, Any]] = []
+        self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
+        self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
 
     def read(self) -> ProjectSnapshot:
         return ProjectSnapshot(self._snapshot.revision, self._snapshot.content_identity, deepcopy(self._snapshot.project))
@@ -45,8 +47,12 @@ class MemoryRevisionStore:
         self._snapshot = self._make_snapshot(project)
         return self.read()
 
-    def undo(self, expected_revision: str) -> ProjectSnapshot | None:
-        if expected_revision != self._snapshot.revision or not self._undo:
+    def record_command(self, command_id: str, base: str, result: str | None, operations: Any) -> None:
+        self._commands[command_id] = (deepcopy(self._undo[-1]), deepcopy(self._snapshot.project), False)
+
+    def undo(self, expected_revision: str, command_id: str) -> ProjectSnapshot | None:
+        entry = self._commands.get(command_id)
+        if expected_revision != self._snapshot.revision or entry is None or entry[2] or self._snapshot.project != entry[1]:
             return None
         self._redo.append(deepcopy(self._snapshot.project))
         self._snapshot = self._make_snapshot(self._undo.pop())
@@ -72,6 +78,7 @@ class LocalTransactionalStore:
         self.root, self.identity = root, identity
         self._undo: list[dict[str, Any]] = []
         self._redo: list[dict[str, Any]] = []
+        self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
         self._sequence = 0
         self._tip = root / "tip.json"
         if self._tip.is_file():
@@ -90,18 +97,25 @@ class LocalTransactionalStore:
         self._snapshot = self._persist(project)
         return self.read()
 
-    def undo(self, expected_revision: str) -> ProjectSnapshot | None:
-        if expected_revision != self._snapshot.revision or not self._undo:
+    def record_command(self, command_id: str, base: str, result: str | None, operations: Any) -> None:
+        self._commands[command_id] = (deepcopy(self._undo[-1]), deepcopy(self._snapshot.project), False)
+
+    def undo(self, expected_revision: str, command_id: str) -> ProjectSnapshot | None:
+        entry = self._commands.get(command_id)
+        if expected_revision != self._snapshot.revision or entry is None or entry[2] or self._snapshot.project != entry[1]:
             return None
         self._redo.append(deepcopy(self._snapshot.project))
-        self._snapshot = self._persist(self._undo.pop())
+        self._snapshot = self._persist(entry[0])
+        self._commands[command_id] = (entry[0], entry[1], True)
         return self.read()
 
-    def redo(self, expected_revision: str) -> ProjectSnapshot | None:
-        if expected_revision != self._snapshot.revision or not self._redo:
+    def redo(self, expected_revision: str, command_id: str) -> ProjectSnapshot | None:
+        entry = self._commands.get(command_id)
+        if expected_revision != self._snapshot.revision or entry is None or not entry[2] or self._snapshot.project != entry[0]:
             return None
         self._undo.append(deepcopy(self._snapshot.project))
-        self._snapshot = self._persist(self._redo.pop())
+        self._snapshot = self._persist(entry[1])
+        self._commands[command_id] = (entry[0], entry[1], False)
         return self.read()
 
     def _persist(self, project: dict[str, Any]) -> ProjectSnapshot:

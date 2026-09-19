@@ -83,12 +83,12 @@ def test_typed_field_batch_is_atomic_and_writes_one_new_snapshot():
 def test_undo_redo_are_cas_commands_that_create_new_snapshots(tmp_path):
     store = LocalTransactionalStore(tmp_path, "chrona-test", _roadmap())
     base = store.read()
-    changed = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "active")
-    undone = execute_undo(store, changed.result_revision)
+    changed = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "active", "change-state")
+    undone = execute_undo(store, changed.result_revision, "change-state")
     assert undone.status == "accepted"
     assert undone.result_revision != base.revision
     assert undone.project["objects"]["idp-4"]["fields"]["workflowState"] == "planned"
-    redone = execute_redo(store, undone.result_revision)
+    redone = execute_redo(store, undone.result_revision, "change-state")
     assert redone.status == "accepted"
     assert redone.project["objects"]["idp-4"]["fields"]["workflowState"] == "active"
 
