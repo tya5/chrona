@@ -207,8 +207,12 @@ def main() -> int:
             schema_path = (manifest_path.parent / case["schema"]).resolve()
             schema = load_yaml(schema_path)
             resolver = RefResolver.from_schema(schema, store=store)
-            errors = Draft202012Validator(schema, resolver=resolver).iter_errors(resource)
-            failures.extend(f"{case['id']}: {error.message}" for error in errors)
+            errors = list(Draft202012Validator(schema, resolver=resolver).iter_errors(resource))
+            if case.get("expectSchemaError"):
+                if not errors:
+                    failures.append(f"{case['id']}: expected schema rejection")
+            else:
+                failures.extend(f"{case['id']}: {error.message}" for error in errors)
         if "expect" in case:
             expected_delta = set(case.get("expectDeltaDiagnostics", []))
             actual_delta = set(delta_diagnostics(resource, case["expect"]))

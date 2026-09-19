@@ -1,0 +1,6 @@
+version: chrona/command/v0.1
+commandId: invalid-field-write
+type: setTypedField
+target: {kind: project, id: controller-x, path: ../../controller-x.yaml}
+baseRevision: store:project:41
+payload: {field: owner, value: firmware-team}

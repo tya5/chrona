@@ -33,6 +33,13 @@ cases:
   - id: snapshot-capture-shape
     resource: commands/capture-snapshot.yaml
     schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: typed-field-command-shape
+    resource: commands/set-typed-field.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
+  - id: typed-field-command-requires-stable-object-id
+    resource: commands/set-typed-field-invalid.yaml
+    schema: ../../schemas/command-request-v0.1.schema.yaml
+    expectSchemaError: true
   - id: actual-resolution-shape
     resource: commands/resolve-actual.yaml
     schema: ../../schemas/command-request-v0.1.schema.yaml

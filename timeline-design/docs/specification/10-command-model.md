@@ -88,6 +88,7 @@ an implicit sequence of files or a GUI undo stack.
 | `resolveActualObservation` | `actual-set` | `observationId`, `projectObjectId` | Preserves external identity in execution record |
 | `unresolveActualObservation` | `actual-set` | `observationId`, `externalIdentity` | Restores explicit unmatched external identity |
 | `captureSnapshot` | `project` | `snapshotId` | Atomically creates immutable Snapshot bound to target base revision |
+| `setTypedField` | `project` | `objectId`, `field`, `value` | Replaces one declared profile-owned field on one stable Project object |
 | `addPresentationAnnotation` | `view` | complete `annotation` | Adds one View-local annotation with a stable ID |
 | `editPresentationAnnotation` | `view` | `annotationId`, complete replacement `annotation` | Replaces one View-local annotation; IDs must agree |
 | `deletePresentationAnnotation` | `view` | `annotationId` | Deletes one View-local annotation only |
@@ -101,6 +102,15 @@ complete intent rather than applying an untyped patch; its `annotationId` and
 
 `baseRevision` is the opaque token issued by the targeted Store. Examples may use a
 Git token, but the command schema MUST NOT constrain the token syntax to Git.
+
+`setTypedField` is the serialized project-field form used by CLI, automation, GUI, and
+AI proposal adapters. `objectId` is a stable Project object ID, never a title or Scene
+ID. `field` names one field declared by the resolved profile/package closure and
+`value` is validated by that declaration. The command cannot alter object identity,
+Core type, placement mode, resolved schedule, derived field, renderer state, or an
+undeclared field. The Command Engine loads the declared package closure and validates
+the candidate through the same profile and scheduling path as every other project
+Command before its compare-and-set write.
 
 Unknown types, wrong target kinds, unknown payload fields, and stale base revisions are
 rejected. A transaction has one target and base revision plus an ordered, non-empty

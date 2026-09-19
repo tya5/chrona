@@ -31,7 +31,7 @@ an undocumented capability accepted.
 | ID | Area | Gap found | Required design outcome | Owner / dependency |
 |---|---|---|---|---|
 | WD-1 | Current-profile UC catalogue | **Complete.** | UC-01–UC-15 summary distinguishes delivered, blocked, partial, and future scope. | `14`, M0–M9 |
-| WD-2a | Canonical project-field Command | **New finding:** `setTypedField` is used by M3/M5 implementation evidence but absent from the closed v0.1 serialized Command registry/schema. | Define its target, stable-ID payload, validation/result boundary, and positive/negative fixtures before any AI wrapper can reference it. | `10`, `12`, UC-05/06/11, M3/M5 |
+| WD-2a | Canonical project-field Command | **Complete.** | `setTypedField` has a project target, stable-ID payload, closure validation boundary, and positive/negative schema fixtures. | `10`, `12`, UC-05/06/11, M3/M5 |
 | WD-2b | AI proposal and authorization | `10` describes principles, but has no versioned proposal/policy decision contract, diagnostics, or fixtures. | Define declarative AI proposal request/result and authorization decision boundary over only registered Commands; prohibit raw rewrites and state idempotency/provenance. | `09`, `10`, `12`, UC-06, M5; depends on WD-2a |
 | WD-3 | Current-profile release packaging | FD-5 now defines acceptance metadata, but the package composition and adapter-manifest match rule are not represented as a dedicated exchange artifact. | Define release-package manifest/schema/fixtures and its relation to output and acceptance manifests. | `22`, UC-13, M9; depends on WD-1/2 |
 | WD-4 | Milestone acceptance consistency | **Complete.** | Status ledger states entry/exit evidence and blockers for M0–M13. | roadmap, all milestones |

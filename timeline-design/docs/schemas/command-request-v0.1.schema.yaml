@@ -6,7 +6,7 @@ additionalProperties: false
 properties:
   version: {const: chrona/command/v0.1}
   commandId: {type: string, minLength: 1}
-  type: {enum: [editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot, addPresentationAnnotation, editPresentationAnnotation, deletePresentationAnnotation]}
+  type: {enum: [editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot, setTypedField, addPresentationAnnotation, editPresentationAnnotation, deletePresentationAnnotation]}
   target:
     type: object
     required: [kind, id, path]
@@ -51,3 +51,8 @@ allOf:
       properties:
         target: {properties: {kind: {const: project}}}
         payload: {required: [snapshotId], additionalProperties: false, properties: {snapshotId: {type: string, minLength: 1}}}
+  - if: {properties: {type: {const: setTypedField}}}
+    then:
+      properties:
+        target: {properties: {kind: {const: project}}}
+        payload: {required: [objectId, field, value], additionalProperties: false, properties: {objectId: {type: string, minLength: 1}, field: {type: string, minLength: 1}, value: {}}}
