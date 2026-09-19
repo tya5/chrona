@@ -37,3 +37,9 @@ def test_closure_is_ordered_pinned_and_rejects_identity_or_revision_mismatch(tmp
     bad_context = _write(tmp_path, "bad-context.yaml", context)
     with pytest.raises(ClosureError, match="E_CLOSURE_MIXED_REVISION"):
         resolve_render_context(_ref("render-context", "ctx", "bad-context.yaml", bad_context), reader)
+
+
+def test_closure_rejects_path_escape_before_reading_snapshot(tmp_path):
+    reader = LocalSnapshotReader(tmp_path, "closure-test")
+    with pytest.raises(ClosureError, match="E_IMMUTABLE_SNAPSHOT_REQUIRED"):
+        resolve_render_context({"id": "ctx", "kind": "render-context", "store": {"provider": "local", "identity": "closure-test"}, "address": "../context.yaml", "revision": {"token": "snapshot-1"}, "contentIdentity": "sha256:" + "0" * 64}, reader)

@@ -34,6 +34,15 @@ def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReade
         item = _load_reference(body[name], reader, kind)
         resources.append(item)
         revisions.add(item.revision)
+    for extension in resources[0].value.get("extensions", []):
+        reference = extension.get("resource")
+        if reference is None:
+            continue
+        package = _load_reference(reference, reader, "profile-package")
+        if package.value.get("packageId") != extension.get("packageId"):
+            raise ClosureError("E_CLOSURE_ID")
+        resources.append(package)
+        revisions.add(package.revision)
     for name, kind in (("snapshot", "snapshot-ref"), ("actual", "actual-set")):
         if name in body.get("inputs", {}):
             item = _load_reference(body["inputs"][name], reader, kind)
@@ -54,6 +63,8 @@ def _load_reference(reference: dict[str, Any], reader: LocalSnapshotReader, expe
     value = yaml.safe_load(payload)
     if expected_kind == "project":
         actual_id = value.get("project", {}).get("id") if isinstance(value, dict) else None
+    elif expected_kind == "profile-package":
+        actual_id = value.get("packageId") if isinstance(value, dict) else None
     else:
         actual_id = value.get("id") if isinstance(value, dict) else None
         if value.get("kind") != expected_kind:
