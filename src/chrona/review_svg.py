@@ -106,16 +106,22 @@ def _roles(style: dict[str, Any], source_type: str, actual: dict[str, Any] | Non
     return tuple(dict.fromkeys(roles))
 
 
-def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str, Any], capabilities: set[str], profile:dict[str,Any]|None=None) -> str:
+def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str, Any], capabilities: set[str], profile:dict[str,Any]|None=None, settings: dict[str, Any] | None = None) -> str:
     """Render the completed review projection with source metadata and text alternatives."""
     required = {"sourceMetadata", "accessibleText", "semanticRoles", "marker"}
     if not required.issubset(capabilities):
         raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
     start, end = projection.window
-    left, top, day, row = 220, 96, 12, 56
-    group_profile=(profile or {}).get("groupPresentation",{"mode":"none","gapRows":0}); extra=sum(1+group_profile["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id); width, height = max(960, left + (end - start).days * day + 80), top + (len(projection.items)+extra) * row + 100
-    colors = _theme_colors(theme)
-    parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} review</title>',f'<desc id="desc">Planned and Actual engineering timeline review; {len(projection.unmatched_actual_ids)} unmatched Actual observations.</desc>', '<defs><pattern id="missing" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#6b7280" stroke-width="2"/></pattern></defs>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="24" y="34" font-family="system-ui" font-size="20" font-weight="700">{escape(title)} — Plan / Actual Review</text>']
+    if settings:
+        viewport, layout, palette = settings["context"]["viewport"], settings["layout"], settings["theme"]
+        left, top, day, row = layout["margins"]["left"], layout["margins"]["top"], layout["scale"]["dayWidth"], layout["row"]["height"]
+        colors = {"background": palette["paints"]["background"]["color"], "planned": palette["paints"]["planned"]["color"], "actual": palette["paints"]["actual"]["color"], "behind": palette["paints"]["varianceBehind"]["color"]}
+        font, heading, body = palette["fontFamily"], palette["typography"]["heading"], palette["typography"]["body"]
+    else:
+        left, top, day, row = 220, 96, 12, 56
+        colors = _theme_colors(theme); font, heading, body = "system-ui", {"size":20,"weight":700}, {"size":13,"weight":400}
+    group_profile=(profile or {}).get("groupPresentation",{"mode":"none","gapRows":0}); extra=sum(1+group_profile["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id); width, height = (viewport["width"], viewport["height"]) if settings else (max(960, left + (end - start).days * day + 80), top + (len(projection.items)+extra) * row + 100)
+    parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} review</title>',f'<desc id="desc">Planned and Actual engineering timeline review; {len(projection.unmatched_actual_ids)} unmatched Actual observations.</desc>', '<defs><pattern id="missing" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#6b7280" stroke-width="2"/></pattern></defs>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{left}" y="{top-heading["size"]}" font-family="{escape(font, quote=True)}" font-size="{heading["size"]}" font-weight="{heading["weight"]}">{escape(title)} — Plan / Actual Review</text>']
     cursor = start
     while cursor <= end:
         x=left+(cursor-start).days*day
