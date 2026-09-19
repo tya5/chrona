@@ -42,6 +42,14 @@ chrona render timeline-design/docs/fixtures/controller-x.yaml --output controlle
 The checked-in [controller timeline SVG](timeline-design/docs/fixtures/controller-x.svg)
 is generated from [`controller-x.yaml`](timeline-design/docs/fixtures/controller-x.yaml).
 
+For a broader semiconductor bring-up example with fixed and scheduled spans, working-day
+exceptions, endpoint dependencies, parallel qualification work, gates, entities, and
+annotations, render:
+
+```bash
+chrona render examples/controller-z-silicon-bringup.yaml --output controller-z-silicon-bringup.svg
+```
+
 ## Specification
 
 The pre-repository Core v0.1 Stable Candidate is preserved verbatim in

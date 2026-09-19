@@ -1,0 +1,121 @@
+version: timeline/v0.1
+
+project:
+  id: controller-z-silicon-bringup
+  title: Controller Z — Silicon Bring-up to Mass Production
+  calendar: engineering-jp
+
+calendars:
+  engineering-jp:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - {date: 2026-02-11, working: false}
+      - {date: 2026-04-29, working: false}
+      - {date: 2026-05-04, working: false}
+      - {date: 2026-05-05, working: false}
+      - {date: 2026-05-06, working: false}
+
+entities:
+  fw-team: {type: team, title: Firmware}
+  validation-team: {type: team, title: System Validation}
+  factory-team: {type: team, title: Product Engineering}
+
+objects:
+  architecture:
+    type: task
+    title: Architecture Freeze
+    fields: {owner: fw-team, workstream: architecture}
+    schedule: {mode: fixed, start: 2026-02-02, end: 2026-02-13}
+
+  firmware:
+    type: task
+    title: FW Feature Complete
+    fields: {owner: fw-team, workstream: firmware}
+    schedule: {mode: fixed, start: 2026-02-13, end: 2026-04-10}
+
+  evb-arrival:
+    type: gate
+    title: EVB Arrival
+    fields: {owner: validation-team, review: hardware-readiness}
+    schedule: {mode: fixed, at: 2026-04-17}
+
+  silicon-bringup:
+    type: task
+    title: Silicon Bring-up
+    calendar: engineering-jp
+    fields: {owner: fw-team, workstream: validation}
+    schedule: {mode: scheduled, amount: 10wd}
+
+  performance:
+    type: task
+    title: Performance Characterization
+    calendar: engineering-jp
+    fields: {owner: validation-team, workstream: performance}
+    schedule: {mode: scheduled, amount: 8wd, constraints: {end: {max: 2026-05-22}}}
+
+  dvt:
+    type: task
+    title: DVT Qualification
+    calendar: engineering-jp
+    fields: {owner: validation-team, workstream: qualification}
+    schedule: {mode: scheduled, amount: 15wd}
+
+  pvt:
+    type: task
+    title: PVT and Factory Validation
+    calendar: engineering-jp
+    fields: {owner: factory-team, workstream: production}
+    schedule: {mode: scheduled, amount: 12wd}
+
+  ga:
+    type: gate
+    title: General Availability
+    fields: {owner: factory-team, review: release}
+    schedule: {mode: fixed, at: 2026-06-30}
+
+relations:
+  - id: architecture-unlocks-firmware
+    type: dependency
+    from: {object: architecture, endpoint: end}
+    to: {object: firmware, endpoint: start}
+    lag: 0d
+  - id: firmware-to-evb
+    type: dependency
+    from: {object: firmware, endpoint: end}
+    to: {object: evb-arrival, endpoint: at}
+    lag: 5wd
+  - id: evb-to-bringup
+    type: dependency
+    from: {object: evb-arrival, endpoint: at}
+    to: {object: silicon-bringup, endpoint: start}
+    lag: 1wd
+  - id: bringup-to-performance
+    type: dependency
+    from: {object: silicon-bringup, endpoint: start}
+    to: {object: performance, endpoint: start}
+    lag: 0d
+  - id: bringup-to-dvt
+    type: dependency
+    from: {object: silicon-bringup, endpoint: end}
+    to: {object: dvt, endpoint: start}
+    lag: 2wd
+  - id: dvt-to-pvt
+    type: dependency
+    from: {object: dvt, endpoint: end}
+    to: {object: pvt, endpoint: start}
+    lag: {value: 3wd, calendar: engineering-jp}
+  - id: pvt-to-ga
+    type: dependency
+    from: {object: pvt, endpoint: end}
+    to: {object: ga, endpoint: at}
+    lag: 0d
+
+annotations:
+  evb-risk:
+    kind: callout
+    text: Board arrival gates first silicon boot.
+    anchor: {object: evb-arrival}
+  pvt-exit:
+    kind: callout
+    text: Qualification closure precedes the release decision.
+    anchor: {object: ga}
