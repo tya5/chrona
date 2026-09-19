@@ -31,7 +31,7 @@ code relies on a new interpretation.
 | IIIa | **Complete:** Render Context root closure resolver and evaluation manifest | project/View/Style/Theme/Scene Profile kind, ID, content, and mixed-revision mismatches reject before rendering; ordered closure is explicit |
 | IIIb | **Complete:** Presentation recursive closure edges and cycle diagnostics | declared profile-package edges resolve in deterministic order; path escape rejects before read. The bounded initial profile graph has no recursive edge, so a cycle is structurally unrepresentable and remains rejected by absence of an edge syntax. |
 | IV | **Complete:** Command execution through compare-and-set Store write | stale base revision and partial batch fail atomically; accepted command returns a new snapshot |
-| V | Deterministic SVG adapter from Scene output | target-capability and accessibility acceptance fixtures pass; SVG never becomes canonical data |
+| V | **Complete:** Deterministic SVG adapter from Scene output | target-capability and accessibility acceptance fixtures pass; SVG never becomes canonical data |
 | VI | Read-only Federation resolver | trust, pin, repin, unavailable export, and namespace diagnostics pass; child mutation remains impossible |
 
 Slice 0 may be implemented only after the profile design prerequisites in

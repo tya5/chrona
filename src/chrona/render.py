@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from html import escape
-from typing import Any
-
-from .scheduler import ScheduleResult
+from .scene import Scene
 
 
 _LEFT = 180
@@ -13,13 +11,16 @@ _LANE_HEIGHT = 58
 _DAY_WIDTH = 14
 
 
-def render_svg(project: dict[str, Any], result: ScheduleResult) -> str:
-    """Render scheduled placements as a small, deterministic SVG timeline.
+def render_svg(scene: Scene, capabilities: set[str] | None = None) -> str:
+    """Render a Scene as deterministic accessible SVG.
 
-    This is intentionally a derived projection: it consumes schedule placements
-    and never stores or interprets SVG coordinates as project semantics.
+    SVG is an adapter output only; it cannot be read back as Project semantics.
     """
-    placements = result.placements
+    required_capabilities = {"marker", "metadata", "text-alternative"}
+    if capabilities is not None and not required_capabilities.issubset(capabilities):
+        missing = ", ".join(sorted(required_capabilities - capabilities))
+        raise ValueError(f"E_TARGET_CAPABILITY: {missing}")
+    placements = scene.placements
     if not placements:
         raise ValueError("Cannot render a project without resolved placements")
 
@@ -29,13 +30,13 @@ def render_svg(project: dict[str, Any], result: ScheduleResult) -> str:
     span_days = max((end - start).days, 1)
     width = max(920, _LEFT + span_days * _DAY_WIDTH + 80)
     height = _TOP + len(placements) * _LANE_HEIGHT + 70
-    title = project.get("project", {}).get("title") or project.get("project", {}).get("id", "Chrona timeline")
+    title = scene.title
     lanes = {object_id: index for index, object_id in enumerate(placements)}
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
         "<title id=\"title\">" + escape(str(title)) + "</title>",
-        "<desc id=\"desc\">Timeline rendered from Chrona semantic project data.</desc>",
+        "<desc id=\"desc\">" + escape(scene.description) + "</desc>",
         "<defs><marker id=\"arrow\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\"><path d=\"M0,0 L8,4 L0,8 Z\" fill=\"#6b7280\" /></marker></defs>",
         f'<rect width="{width}" height="{height}" fill="#faf8f6" />',
         f'<text x="24" y="34" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#1a1a1a">{escape(str(title))}</text>',
@@ -47,7 +48,7 @@ def render_svg(project: dict[str, Any], result: ScheduleResult) -> str:
         parts.append(f'<line x1="{x}" y1="52" x2="{x}" y2="{height - 36}" stroke="#e0dbd7" stroke-width="1" />')
         parts.append(f'<text x="{x + 3}" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">{label}</text>')
 
-    for relation in project.get("relations", []):
+    for relation in scene.relations:
         source_id = relation["from"]["object"]
         target_id = relation["to"]["object"]
         if source_id not in lanes or target_id not in lanes:
@@ -63,10 +64,9 @@ def render_svg(project: dict[str, Any], result: ScheduleResult) -> str:
         )
 
     for object_id, placement in placements.items():
-        item = project.get("objects", {}).get(object_id, {})
         lane = lanes[object_id]
         y = _lane_y(lane)
-        label = item.get("title") or object_id
+        label = scene.labels[object_id]
         parts.append(f'<text x="24" y="{y + 5}" font-family="system-ui, sans-serif" font-size="13" fill="#1a1a1a">{escape(str(label))}</text>')
         if "at" in placement:
             x = _endpoint_x(start, placement, "at")
