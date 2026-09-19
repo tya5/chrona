@@ -152,17 +152,21 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     return render_gantt(title, projection, project, view, theme, profile, slots, settings)
 
 
-def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date, rect: Any | None = None) -> str:
+def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date, rect: Any | None = None, settings: dict[str, Any] | None = None) -> str:
     """Append only declared, read-only M16 metrics to an existing SVG composition."""
     total=len(projection.items); actual=sum(bool(item.actual) for item in projection.items)
     points=sorted(item.planned["at"] for item in projection.items if item.source_type=="point" and item.planned["at"]>=as_of)
     values={"selectedCount":str(total),"actualCoverage":f"{actual}/{total}" if total else "unknown","knownFinishVarianceCount":str(sum(item.finish_delta is not None for item in projection.items)),"missingActualCount":str(total-actual),"nextPlannedPoint":points[0].isoformat() if points else "unknown"}
-    labels={"selectedCount":"Selected work","actualCoverage":"Actual coverage","knownFinishVarianceCount":"Known finish variance","missingActualCount":"Missing Actual","nextPlannedPoint":"Next planned point"}
+    labels = settings["detail"]["summaryLabels"] if settings else {"selectedCount":"Selected work","actualCoverage":"Actual coverage","knownFinishVarianceCount":"Known finish variance","missingActualCount":"Missing Actual","nextPlannedPoint":"Next planned point"}
+    font = settings["theme"]["fontFamily"] if settings else "Inter, Arial, sans-serif"
+    heading = settings["theme"]["typography"]["summaryHeader"] if settings else {"size": 11, "weight": 700}
+    metric_style = settings["theme"]["typography"]["summaryMetric"] if settings else {"size": 10, "weight": 400}
+    separator = settings["detail"]["formatting"]["rangeSeparator"] if settings else ": "
     lines=[]; x=getattr(rect,"x",32); y=getattr(rect,"y",24)+22
     for panel in profile["panels"]:
-        lines.append(f'<text data-purpose="summary-panel" data-source-ref="derived:{escape(panel["id"])}" x="{x}" y="{y}" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700">{escape(panel["id"])}</text>'); y+=15
+        lines.append(f'<text data-purpose="summary-panel" data-source-ref="derived:{escape(panel["id"])}" x="{x}" y="{y}" font-family="{escape(font, quote=True)}" font-size="{heading["size"]}" font-weight="{heading["weight"]}">{escape(panel["id"])}</text>'); y+=heading["size"] + 4
         for metric in panel["metrics"]:
-            lines.append(f'<text data-purpose="summary-metric" data-source-ref="derived:{escape(panel["id"])}:{metric}" x="{x}" y="{y}" font-family="Inter, Arial, sans-serif" font-size="10">{escape(labels[metric])}: {escape(values[metric])}</text>'); y+=13
+            lines.append(f'<text data-purpose="summary-metric" data-source-ref="derived:{escape(panel["id"])}:{metric}" x="{x}" y="{y}" font-family="{escape(font, quote=True)}" font-size="{metric_style["size"]}" font-weight="{metric_style["weight"]}">{escape(labels[metric])}{escape(separator)}{escape(values[metric])}</text>'); y+=metric_style["size"] + 3
         y+=6
     return svg.replace("</svg>", "\n".join(lines)+"\n</svg>")
 
