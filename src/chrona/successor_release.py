@@ -34,8 +34,11 @@ def validate_successor_acceptance(manifest: dict[str, Any], evidence_root: Path 
             diagnostics.append("E_SUCCESSOR_ACCEPTANCE")
             continue
         for path in evidence:
+            if not isinstance(path, str):
+                diagnostics.append("E_SUCCESSOR_EVIDENCE")
+                break
             candidate = (evidence_root / path).resolve()
-            if not isinstance(path, str) or evidence_root not in candidate.parents or not candidate.is_file():
+            if evidence_root not in candidate.parents or not candidate.is_file():
                 diagnostics.append("E_SUCCESSOR_EVIDENCE")
                 break
     return tuple(dict.fromkeys(diagnostics))

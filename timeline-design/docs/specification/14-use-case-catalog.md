@@ -436,11 +436,11 @@ provenance-preserving synchronization fixtures.
 | UC-14 | `05`, `06`, `09`, `12`, `13`, `15`, `16` | pinned Git/local/content closure, trust/repin diagnostics, and aggregate-projection fixture | resolver and aggregate Scene adapter |
 | UC-15 | `02`, `04`, `05`, `10`, `11`, `12`, `15`, `17` | delivery profile schema, vocabulary/evidence/state fixtures, roadmap fixture, and IDP-6 review | profile UX only |
 | UC-16 | `03`, `04`, `05`, `12`, `18` | DateTime/DST schema, fixtures, ADR-0014, M10 runtime/migration tests, and final reuse/release review | None for the declared M10 scope |
-| UC-17 | `02`, `04`, `05`, `10`, `12`, `19` | capacity schema/fixtures, ADR-0015, and FD-2 review | M11 evaluator and proposal adapter |
-| UC-18 | `05`, `06`, `12`, `19` | observation-isolation contract and capacity/cost fixtures | M11 accounting observation adapter |
-| UC-19 | `09`, `10`, `12`, `15`, `20` | collaboration schema/fixtures, ADR-0016, and FD-3 review | M12 conflict/merge service |
-| UC-20 | `09`, `10`, `12`, `15`, `20` | approval/denial fixture and audit-provenance contract | M12 policy and audit adapter |
-| UC-21 | `09`, `12`, `15`, `20` | causally-behind replica fixture and sync provenance contract | M12 hosted synchronization service |
+| UC-17 | `02`, `04`, `05`, `10`, `12`, `19` | capacity schema/fixtures, ADR-0015, M11 runtime tests, and M13 acceptance closure | None for the declared M11/M13 scope |
+| UC-18 | `05`, `06`, `12`, `19` | observation-isolation contract, M11 runtime tests, and M13 acceptance closure | None for the declared M11/M13 scope |
+| UC-19 | `09`, `10`, `12`, `15`, `20` | collaboration schema/fixtures, explicit conflict/CAS provenance tests, and M13 acceptance closure | None for the declared M12/M13 scope |
+| UC-20 | `09`, `10`, `12`, `15`, `20` | approval/denial plus append-only audit tests and M13 acceptance closure | None for the declared M12/M13 scope |
+| UC-21 | `09`, `12`, `15`, `20` | causally-behind replica fixture, offline/stale boundary, and M13 acceptance closure | None for the declared M12/M13 scope |
 
 ## 7. Current gaps and release gate
 

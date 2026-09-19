@@ -27,6 +27,9 @@ def test_successor_release_blocks_missing_or_duplicate_use_cases_and_evidence():
     manifest = _manifest()
     manifest["useCases"][0]["evidence"] = ["does-not-exist"]
     assert create_successor_release(manifest).diagnostics == ("E_SUCCESSOR_EVIDENCE",)
+    manifest = _manifest()
+    manifest["useCases"][0]["evidence"] = [None]
+    assert create_successor_release(manifest).diagnostics == ("E_SUCCESSOR_EVIDENCE",)
 
 
 def test_successor_release_blocks_exclusion_and_changed_closure():
