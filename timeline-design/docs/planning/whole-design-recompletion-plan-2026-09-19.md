@@ -31,7 +31,8 @@ an undocumented capability accepted.
 | ID | Area | Gap found | Required design outcome | Owner / dependency |
 |---|---|---|---|---|
 | WD-1 | Current-profile UC catalogue | **Complete.** | UC-01–UC-15 summary distinguishes delivered, blocked, partial, and future scope. | `14`, M0–M9 |
-| WD-2 | AI proposal and authorization | `10` describes principles, but has no versioned proposal/policy decision contract, diagnostics, or fixtures. | Define declarative AI proposal request/result and authorization decision boundary; prohibit raw rewrites and state idempotency/provenance. | `09`, `10`, `12`, UC-06, M5 |
+| WD-2a | Canonical project-field Command | **New finding:** `setTypedField` is used by M3/M5 implementation evidence but absent from the closed v0.1 serialized Command registry/schema. | Define its target, stable-ID payload, validation/result boundary, and positive/negative fixtures before any AI wrapper can reference it. | `10`, `12`, UC-05/06/11, M3/M5 |
+| WD-2b | AI proposal and authorization | `10` describes principles, but has no versioned proposal/policy decision contract, diagnostics, or fixtures. | Define declarative AI proposal request/result and authorization decision boundary over only registered Commands; prohibit raw rewrites and state idempotency/provenance. | `09`, `10`, `12`, UC-06, M5; depends on WD-2a |
 | WD-3 | Current-profile release packaging | FD-5 now defines acceptance metadata, but the package composition and adapter-manifest match rule are not represented as a dedicated exchange artifact. | Define release-package manifest/schema/fixtures and its relation to output and acceptance manifests. | `22`, UC-13, M9; depends on WD-1/2 |
 | WD-4 | Milestone acceptance consistency | **Complete.** | Status ledger states entry/exit evidence and blockers for M0–M13. | roadmap, all milestones |
 | WD-5 | Successor designs | FD-1–FD-5 are individually reviewed, but need one current/future profile compatibility inventory that prevents a v0.2 contract being silently used by current-profile code. | Record version, opt-in trigger, unchanged v0.1 meaning, migration/compatibility rule, and owning milestone for FD-1–FD-5. | `18`–`22`, M8–M13 |
@@ -40,8 +41,8 @@ an undocumented capability accepted.
 ## 4. Execution order
 
 1. WD-1 and WD-4 establish honest current delivery state.
-2. WD-2 closes the only identified current-profile semantic contract absent from an
-   implementation-ready definition.
+2. WD-2a closes the canonical project-field Command contract; WD-2b then closes the
+   AI proposal and authorization boundary over that registered vocabulary.
 3. WD-3 closes release packaging against the corrected UC set.
 4. WD-5 verifies successor isolation and compatibility.
 5. WD-6 re-runs the whole-system design authorization review.
