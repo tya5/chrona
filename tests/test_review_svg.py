@@ -25,3 +25,11 @@ def test_summary_uses_only_declared_metrics():
     projection=build_review_projection({"objects":{"a":{"title":"A"}}},{"a":{"at":date(2026,4,3)}},{"body":{"selection":{"include":{"types":["point"]}},"ordering":{"by":"plannedStart"},"window":{"marginDays":0},"comparison":{"actual":"optional"}}},None,{"body":{"rules":[]}},{"body":{"roles":{"planned":{}}}})
     svg=append_review_summary('<svg></svg>',projection,{"panels":[{"id":"next","metrics":["selectedCount","nextPlannedPoint"]}]},date(2026,4,1))
     assert 'summary-panel' in svg and 'selectedCount: 1' in svg and '2026-04-03' in svg
+
+def test_expressive_primitives_use_generic_relations():
+    project={"objects":{"a":{"title":"A"},"b":{"title":"B"}},"relations":[{"id":"ab","from":{"object":"a"},"to":{"object":"b"}}]}
+    placements={"a":{"at":date(2026,4,1)},"b":{"at":date(2026,4,3)}}
+    view={"body":{"selection":{"include":{"types":["point"]}},"ordering":{"by":"plannedStart"},"window":{"marginDays":0},"comparison":{"actual":"optional"}}}; theme={"body":{"roles":{"planned":{}},"values":{}}}
+    projection=build_review_projection(project,placements,view,None,{"body":{"rules":[]}},theme)
+    svg=render_table_timeline_svg("X",projection,project,view,theme,{"sourceMetadata","accessibleText","semanticRoles","marker","tableSemantics","hierarchicalAxis"},{"constraints":{"connectors":"obstacle-aware"}})
+    assert 'axis-quarter' in svg and 'routed-connector' in svg

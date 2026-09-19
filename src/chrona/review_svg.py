@@ -143,15 +143,19 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     height=900 if slots else top+(len(projection.items)+group_breaks+4)*row+40
     title_x,title_y=(header.x,header.y+32) if header else (32,34); table_x=table.x if table else 32
     p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title)} table timeline</title>',f'<desc id="desc">Semantic table and hierarchical calendar with {len(projection.items)} selected rows.</desc>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{title_x}" y="{title_y}" font-family="system-ui" font-size="20" font-weight="700">{escape(title)}</text>']
+    p.append(f'<rect data-purpose="table-header" x="{table_x-8}" y="{top-32}" width="{col_width*len(columns)}" height="24" fill="{_theme_color(theme,"table-header","#f3f4f6")}"/>')
     for n,col in enumerate(columns): p.append(f'<text data-purpose="table-header" x="{table_x+n*col_width}" y="{top-14}" font-family="system-ui" font-size="12" font-weight="700">{escape(str(col["id"]))}</text>')
     cursor=date(start.year,start.month,1)
     while cursor<=end:
         x=left+(cursor-start).days*day; p += [f'<line data-purpose="axis-major" x1="{x}" y1="70" x2="{x}" y2="{height-24}" stroke="#9ca3af"/>',f'<text data-purpose="axis-band" x="{x+3}" y="70" font-family="system-ui" font-size="11">{cursor:%b %Y}</text>']
         cursor=date(cursor.year+1,1,1) if cursor.month==12 else date(cursor.year,cursor.month+1,1)
+    quarter=date(start.year,((start.month-1)//3)*3+1,1)
+    while quarter<=end:
+        x=left+(quarter-start).days*day; p.append(f'<text data-purpose="axis-quarter" x="{x+3}" y="52" font-family="system-ui" font-size="12" font-weight="700">Q{(quarter.month-1)//3+1} {quarter.year}</text>'); quarter=date(quarter.year+1,1,1) if quarter.month==10 else date(quarter.year,quarter.month+3,1)
     cursor=start
     while cursor<=end:
         x=left+(cursor-start).days*day; p.append(f'<line data-purpose="axis-minor" x1="{x}" y1="88" x2="{x}" y2="{height-24}" stroke="#e5e7eb"/>'); cursor=date.fromordinal(cursor.toordinal()+7)
-    y=top; previous=None
+    y=top; previous=None; positions: dict[str, tuple[int,int]]={}
     for item in projection.items:
         if item.group_id!=previous:
             if previous is not None: y+=row*(1+groups["gapRows"])
@@ -160,6 +164,8 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
             if previous is not None and groups["mode"] in {"separator","header-and-separator"}: p.append(f'<line data-purpose="group-separator" x1="24" y1="{y}" x2="{width-24}" y2="{y}" stroke="#9ca3af"/>')
             previous=item.group_id
         y+=row
+        positions[item.object_id]=(left,y-6)
+        p.append(f'<line data-purpose="table-row" x1="{table_x-8}" y1="{y+10}" x2="{left-12}" y2="{y+10}" stroke="#e5e7eb"/>')
         for n,col in enumerate(columns):
             value=_table_value(item,project,col["source"]); text=_display_value(value,col["missing"])
             p.append(f'<text data-scene-id="item:{item.object_id}:cell:{escape(str(col["id"]))}" data-source-ref="{item.object_id}" data-purpose="table-cell" x="{table_x+n*col_width}" y="{y}" font-family="system-ui" font-size="12">{escape(text)}</text>')
@@ -169,6 +175,17 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
             x=left+(item.planned["at"]-start).days*day; p.append(f'<path data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned" d="M{x} {y-12} L{x+6} {y-6} L{x} {y} L{x-6} {y-6}Z" fill="{colors["planned"]}"/>')
         if item.actual and item.source_type=="span" and "finish" in item.actual:
             ax=left+(item.actual.get("start",item.planned["start"])-start).days*day; aw=max(3,(item.actual["finish"]-item.actual.get("start",item.planned["start"])).days*day); p.append(f'<rect data-scene-id="item:{item.object_id}:actual" data-source-ref="{item.object_id}" data-purpose="actual" x="{ax}" y="{y+3}" width="{aw}" height="8" rx="2" fill="{colors["actual"]}"/>')
+    if profile.get("constraints",{}).get("connectors")=="obstacle-aware":
+        for relation in project.get("relations",[]):
+            source=relation.get("from",{}).get("object"); target=relation.get("to",{}).get("object")
+            if source in positions and target in positions:
+                x1,y1=positions[source]; x2,y2=positions[target]; mid=(x1+x2)//2
+                p.append(f'<path data-purpose="routed-connector" data-source-ref="{escape(str(relation.get("id","relation")))}" d="M{x1} {y1} C{mid} {y1} {mid} {y2} {x2} {y2}" fill="none" stroke="{_theme_color(theme,"routed-connector","#6b7280")}" stroke-width="1"/>')
+    notes=slots.get("notes") if slots else None
+    if notes:
+        ny=notes.y+18
+        for annotation in project.get("annotations",{}).values():
+            p.append(f'<text data-purpose="presentation-annotation" x="{notes.x}" y="{ny}" font-family="system-ui" font-size="11">{escape(str(annotation.get("text","")))}</text>'); ny+=16
     return "\n".join(p+["</svg>"])+"\n"
 
 

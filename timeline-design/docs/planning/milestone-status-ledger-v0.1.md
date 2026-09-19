@@ -31,7 +31,7 @@ evidence is present, not that a later product release is complete.
 | M18 | Complete | M15–M17 cross-profile/reuse release review; full conformance and 88-test evidence. | None. |
 | M19 | Complete | Layout Profile runtime validation, deterministic Layout Manifest, old-profile rejection, M19 final review, conformance, and 89 tests. | None. |
 | M20 | Complete | Constraint solver and slot-based review rendering, M20 final review, conformance, and 90 tests. | None. |
-| M21 | Design complete; implementation not started | Expressive primitive/role integration in `27` and closure review. | M21 implementation, conformance, and reuse review. |
+| M21 | Complete | Generic calendar/table/relation/annotation primitives, M21 final review, conformance, and 91 tests. | None. |
 | M22 | Design complete; implementation not started | AI/human proposal and release conditions in `27` and closure review. | M19–M21 evidence and M22 release review. |
 
 Implementation may start only at a `Design complete; implementation not started`
