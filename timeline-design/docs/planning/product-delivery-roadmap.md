@@ -1,12 +1,13 @@
 # Product Delivery Roadmap
 
-**Status:** Planned — TR-2 milestone ownership defined
+**Status:** Planned — design authorization renewed
 **Authority:** This document owns delivery order and reuse gates only. Current
 specifications `02`–`17` remain the sole authority for semantics and contracts.
 
 TR-2 assigns milestone ownership for UC-06, UC-10, UC-16–UC-21, and the FD-1–FD-5
-successor designs. The roadmap remains implementation-blocked until TR-3 validates the
-complete traceability matrix and TR-4 renews the whole-system review.
+successor designs. TR-3 validates the complete traceability matrix and TR-4 renews the
+whole-system design review. Each implementation milestone remains independently gated
+by its declared conformance and reuse evidence.
 
 ## 1. Outcome
 

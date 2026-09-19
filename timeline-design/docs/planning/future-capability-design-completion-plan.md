@@ -1,14 +1,13 @@
 # Future Capability Design Completion Plan
 
-**Status:** Capability designs complete; roadmap integration gate reopened
+**Status:** Complete design and roadmap-integration gate
 **Authority:** This plan owns design order and completion evidence only. Each semantic
 decision remains owned by its applicable specification.
 
-FD-1–FD-5 each passed their capability-focused design review. A later whole-system
-traceability review found that FD-1–FD-3 lack user-facing use cases and implementation
-milestone ownership, while FD-4/FD-5 need explicit linkage to M8/M9. Their semantic
-designs remain valid, but implementation is blocked until the integration remediation
-plan closes those mappings and renews the final design review.
+FD-1–FD-5 each passed their capability-focused design review. The traceability
+remediation added UC-16–UC-21 and M8–M13 ownership, and the renewed whole-system review
+closed the integration findings. Their semantic designs remain versioned successors;
+implementation must retain the stated opt-in compatibility boundaries.
 
 ## Purpose
 

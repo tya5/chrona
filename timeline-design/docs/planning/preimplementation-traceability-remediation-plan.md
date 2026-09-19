@@ -1,6 +1,6 @@
 # Pre-Implementation Traceability Remediation Plan
 
-**Status:** Active — implementation blocked  
+**Status:** Complete — 2026-09-19
 **Authority:** Owns closure order for findings T-01–T-12 from the design/use-case/
 milestone consistency review. Semantic changes remain owned by their specifications.
 
@@ -19,7 +19,7 @@ published. Medium findings required by the validation gate must also be complete
 | TR-1 — Successor use cases | T-01, T-02, T-03 | **Complete.** Add separate actor/outcome/exception/acceptance use cases for DateTime/DST; resource capacity and explicit leveling; cost/time observations; collaboration conflict resolution; authorization/approval/audit; hosted synchronization. | UC-16–UC-21 and successor traceability entries; `tr-1-successor-use-case-review-2026-09-19.md`. |
 | TR-2 — Milestone ownership | T-04, T-05, T-06, T-07, T-10, T-11 | **Complete.** Assign AI integration and Actual ingestion; make M0.5→M1 gating explicit; link FD-4/FD-5 to M8/M9; add post-M9 successor milestones in dependency order; correct the stale post-M9 boundary. | M0.5–M13 roadmap ownership and `tr-2-milestone-ownership-review-2026-09-19.md`. |
 | TR-3 — Evidence normalization | T-09, T-12 | **Complete.** Reconcile the UC summary/detailed mapping and add schema/validation for design→UC→milestone completeness, uniqueness, status, and evidence fields. | Traceability Schema, `validate_traceability.py`, conformance-runner entry, and `tr-3-evidence-normalization-review-2026-09-19.md`. |
-| TR-4 — Renewed whole-system review | all | Re-run owner, compatibility, use-case, milestone, dependency, and release-claim checks. | Review with no unresolved Blocker/High finding and a new published implementation authorization. |
+| TR-4 — Renewed whole-system review | all | **Complete.** Re-run owner, compatibility, use-case, milestone, dependency, and release-claim checks. | `renewed-preimplementation-traceability-review-2026-09-19.md` with no open Blocker/High finding. |
 
 ## 3. Required design choices during remediation
 
