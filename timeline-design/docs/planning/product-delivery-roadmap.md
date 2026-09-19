@@ -58,6 +58,14 @@ universal merge, and arbitrary extension code require a new owning-specification
 and a subsequent roadmap amendment before implementation. They are not hidden work
 inside any milestone above.
 
+## 4.1 Future-capability design gate
+
+The detailed design of every capability named in the preceding boundary is governed by
+`future-capability-design-completion-plan.md`. Its FD-1–FD-5 phases must complete
+before implementation resumes after the currently published M7 gesture adapter. This
+gate exists to expose compatibility and migration consequences before implementation,
+not to let a later adapter redefine Core semantics.
+
 ## 5. Milestone reviews
 
 At the end of M2, M4, M7, and M9, conduct a reuse review in addition to feature tests.
