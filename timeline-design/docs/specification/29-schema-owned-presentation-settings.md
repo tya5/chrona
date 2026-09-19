@@ -79,6 +79,26 @@ v0.1は変更せずに存続する。v0.2は明示的な移行・opt-inのみ。
 旧経路は最後に互換adapterとして同じresolved設定→Scene→SVGへ統合する。
 旧出力の既知不具合はpixel互換の名目で維持しない。意図した変更はレビューに記録。
 
+### 3.1 v0.1互換adapterの閉包契約（P4是正）
+
+v0.1のView／Theme／Layout Profileだけでは、v0.2 Render Contextが必須とする
+`fontMetrics.contentIdentity` とviewportを再現可能に決められない。従ってadapterは
+プロセスのフォント選択、canvas自動拡張、またはコード内の既定値からv0.2設定を
+黙って補完してはならない。
+
+互換adapterは次のどちらかだけを受理する。
+
+1. 呼出者が、version/hash付き`presentation-settings/v0.2`またはPresetを明示し、
+   それを解決してv0.2 rendererへ渡す。
+2. 旧rendererを**診断付きlegacy adapter**として明示選択する。このadapterはv0.2の
+   完了条件・再現性保証の対象外であり、出力manifestに`legacyPresentation: v0.1`と
+   `E_PRESENTATION_LEGACY_ADAPTER`を記録する。v0.2設定との混在は禁止する。
+
+既存CLIのv0.1呼出は当面2へ正規化する。v0.2品質を要求する呼出は1へ移行する。
+「v0.1入力から完全なv0.2互換Presetを自動生成する」機能は、実在metrics資産を
+content-addressしたmigration inputを追加するまで実装しない。これは不足値を
+見栄えの既定値で補うことを禁止するためである。
+
 ## 4. 計測・配置の閉じ方
 
 文字幅推定の `.58`、ベースラインの `.34`、固定文字幅112/60/57は、
