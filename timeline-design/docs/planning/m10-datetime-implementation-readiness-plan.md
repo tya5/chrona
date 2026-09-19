@@ -34,7 +34,7 @@ readiness review closes item 4; only then may M10 runtime implementation begin.
 | Phase | Scope | Required evidence | Status |
 |---|---|---|---|
 | M10-1 | Resolve DateTime values, DST folds/gaps, ExactDuration, CalendarPeriod, and bounded recurrence in an opt-in module. | Unit tests for fold, gap, exact/calendar arithmetic, count/until recurrence; full regression and conformance. | Complete — `daf69f8` |
-| M10-2 | Interpret `timeline/v0.2` fixed/scheduled placement and dependency lower bounds without changing v0.1 scheduling. The owner specification now defines reverse placement from an `end` lower bound and a closed `start`/`end` anchor. | v0.2 Project integration tests, invalid-domain diagnostics, and reuse review. | Ready after this design checkpoint |
+| M10-2 | Interpret `timeline/v0.2` fixed/scheduled placement and dependency lower bounds without changing v0.1 scheduling. The owner specification now defines reverse placement from an `end` lower bound and a closed `start`/`end` anchor. | v0.2 Project integration tests, invalid-domain diagnostics, and reuse review. | Complete — DateTime-only scheduler checkpoint |
 | M10-3 | Provide opt-in v0.1→v0.2 copy with explicit zone policy and provenance; reject v0.2 downgrade. | Migration tests, Date-only non-regression, UC-16 acceptance evidence. | Pending |
 | M10-4 | Run final UC-16/reuse/release review and update the milestone ledger. | Full suite, fixture conformance, and documented claimed/excluded scope. | Pending |
 

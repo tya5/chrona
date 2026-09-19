@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import re
 from typing import Any
 
-from .temporal import advance
+from .temporal import advance, parse_amount
 
 
 class DateTimeTemporalError(ValueError):
@@ -92,6 +92,15 @@ def add_calendar_period(value: ZonedInstant, amount: str, disambiguation: str) -
     except Exception as exc:
         raise DateTimeTemporalError("E_TEMPORAL_CALENDAR_PERIOD") from exc
     return resolve_datetime({"local": datetime.combine(target_date, local.timetz().replace(tzinfo=None)).isoformat(timespec="seconds"), "zone": value.zone, "disambiguation": disambiguation})
+
+
+def subtract_calendar_period(value: ZonedInstant, amount: str, disambiguation: str) -> ZonedInstant:
+    """Inverse CalendarPeriod arithmetic with the same local DST policy."""
+    try:
+        inverse = " ".join(f"{-number}{unit}" for number, unit in parse_amount(amount))
+    except Exception as exc:
+        raise DateTimeTemporalError("E_TEMPORAL_CALENDAR_PERIOD") from exc
+    return add_calendar_period(value, inverse, disambiguation)
 
 
 def generate_recurrence(recurrence: dict[str, Any]) -> tuple[ZonedInstant, ...]:
