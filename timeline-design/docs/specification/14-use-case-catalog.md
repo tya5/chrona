@@ -29,23 +29,23 @@ acceptance evidence can be reproduced from explicit inputs.
 
 ## 3. Summary and priority
 
-| ID | Use case | Priority | Current coverage |
+| ID | Use case | Priority | Current delivered disposition |
 |---|---|---|---|
-| UC-01 | Create and validate an engineering development timeline | Must | Core v0.1 design and fixtures |
-| UC-02 | Review a schedule change in Git | Must | Core semantics and normalized files; rendered review deferred |
-| UC-03 | Review plan versus Actual | Must | View/Actual/Style design and structural fixtures |
-| UC-04 | Produce a customer-facing projection | Should | View/Style/Theme/Scene design; exporter deferred |
-| UC-05 | Edit a plan interactively without global UI replacement | Must | Command/SceneDelta contract and fixtures; editor deferred |
-| UC-06 | Request a safe AI-assisted edit | Should | Command model and request fixtures; agent adapter deferred |
-| UC-07 | Model semiconductor gates and domain vocabulary | Should | Profile/extension design; package fixtures deferred |
-| UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Presentation-annotation design; editor evidence deferred |
-| UC-09 | Maintain multiple purpose-specific views from one Project | Must | View/Style/Theme/Render Context design and fixtures |
-| UC-10 | Import and reconcile externally observed Actual data | Should | Actual-set design and unmatched fixture; ingestion adapter deferred |
-| UC-11 | Validate, render, and propose changes through CLI/automation | Should | Command/conformance design; adapter and CI deferred |
-| UC-12 | Capture and compare a named baseline | Should | Snapshot-reference design; capture command deferred |
-| UC-13 | Export one evaluation to declared targets | Should | Scene/target capability design; SVG/PPTX adapters deferred |
-| UC-14 | Federate independently owned subproject timelines | Must | Pinned federation contract and conformance evidence; resolver/aggregate adapter required |
-| UC-15 | Manage a delivery roadmap using Chrona | Must | Delivery-profile plan; profile/fixture implementation required |
+| UC-01 | Create and validate an engineering development timeline | Must | Delivered by M0; Core conformance and scheduler tests. |
+| UC-02 | Review a schedule change in Git | Must | Delivered by M1/M5 review path; immutable revision and semantic review evidence. |
+| UC-03 | Review plan versus Actual | Must | Delivered by M2 and M5.5; independently identified Actual and comparison evidence. |
+| UC-04 | Produce a customer-facing projection | Should | Delivered for the declared SVG profile by M2; no undeclared target is implied. |
+| UC-05 | Edit a plan interactively without global UI replacement | Must | Delivered by M3/M7 through revision-bound Commands and SceneDelta. |
+| UC-06 | Request a safe AI-assisted edit | Should | **Blocked:** M5 AI proposal and authorization contract is not yet closed (WD-2). |
+| UC-07 | Model semiconductor gates and domain vocabulary | Should | Delivered by M8 package-registry and lifecycle evidence. |
+| UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Delivered by M7 View-local annotation Commands. |
+| UC-09 | Maintain multiple purpose-specific views from one Project | Must | Delivered by M6 Render Context and interactive review evidence. |
+| UC-10 | Import and reconcile externally observed Actual data | Should | Delivered by M5.5 intake and M7 explicit reconciliation. |
+| UC-11 | Validate, render, and propose changes through CLI/automation | Should | Delivered by M5 CLI/automation evidence; it does not imply AI delivery. |
+| UC-12 | Capture and compare a named baseline | Should | Delivered by M7 immutable Snapshot capture. |
+| UC-13 | Export one evaluation to declared targets | Should | Partial: M9 has only the declared SVG adapter; package acceptance remains WD-3. |
+| UC-14 | Federate independently owned subproject timelines | Must | Delivered by M4 pinned federation resolver evidence. |
+| UC-15 | Manage a delivery roadmap using Chrona | Must | Delivered by M0.5/M1 delivery profile and pinned package-resolution evidence. |
 | UC-16 | Plan a cross-zone event without DST ambiguity | Future | DateTime/DST successor design and fixtures; runtime deferred |
 | UC-17 | Assess capacity and accept an explicit leveling proposal | Future | Resource/capacity successor design and fixtures; solver deferred |
 | UC-18 | Record cost and time observations without rescheduling the plan | Future | Cost/time observation boundary and fixtures; adapter deferred |

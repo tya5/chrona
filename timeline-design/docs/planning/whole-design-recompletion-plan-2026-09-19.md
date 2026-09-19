@@ -30,10 +30,10 @@ an undocumented capability accepted.
 
 | ID | Area | Gap found | Required design outcome | Owner / dependency |
 |---|---|---|---|---|
-| WD-1 | Current-profile UC catalogue | Summary still calls delivered paths deferred and has no machine-readable delivery disposition. | Normalize UC-01–UC-15 summary against the release-acceptance manifest; distinguish delivered, excluded, and successor-only behavior. | `14`, M0–M9 |
+| WD-1 | Current-profile UC catalogue | **Complete.** | UC-01–UC-15 summary distinguishes delivered, blocked, partial, and future scope. | `14`, M0–M9 |
 | WD-2 | AI proposal and authorization | `10` describes principles, but has no versioned proposal/policy decision contract, diagnostics, or fixtures. | Define declarative AI proposal request/result and authorization decision boundary; prohibit raw rewrites and state idempotency/provenance. | `09`, `10`, `12`, UC-06, M5 |
 | WD-3 | Current-profile release packaging | FD-5 now defines acceptance metadata, but the package composition and adapter-manifest match rule are not represented as a dedicated exchange artifact. | Define release-package manifest/schema/fixtures and its relation to output and acceptance manifests. | `22`, UC-13, M9; depends on WD-1/2 |
-| WD-4 | Milestone acceptance consistency | M7/M8/M9 reviews record partial slices while roadmap exit rows can be read as completed capability claims. | Add a single milestone-status ledger with entry/exit conditions, blockers, and required review references. | roadmap, all milestones |
+| WD-4 | Milestone acceptance consistency | **Complete.** | Status ledger states entry/exit evidence and blockers for M0–M13. | roadmap, all milestones |
 | WD-5 | Successor designs | FD-1–FD-5 are individually reviewed, but need one current/future profile compatibility inventory that prevents a v0.2 contract being silently used by current-profile code. | Record version, opt-in trigger, unchanged v0.1 meaning, migration/compatibility rule, and owning milestone for FD-1–FD-5. | `18`–`22`, M8–M13 |
 | WD-6 | Whole-system authorization | Earlier closure reviews conflict with WD-1–WD-5 and must not remain an authorization source. | Produce a replacement review with a machine-checkable closure checklist; retain prior reviews as historical evidence only. | depends on WD-1–WD-5 |
 
