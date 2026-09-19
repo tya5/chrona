@@ -1,7 +1,7 @@
 # M9 Output and Release Progress Review
 
 **Date:** 2026-09-19  
-**Status:** Output coordinator slice complete; M9 remains in progress.
+**Status:** Superseded by M9 release-package reuse review.
 
 | FD-5 output contract | Result |
 |---|---|
@@ -11,5 +11,5 @@
 | SVG baseline | Pass: SVG output is deterministic and carries the declared evaluation identity in its manifest. |
 | No silent adapter fallback | Pass: unsupported target returns an explicit diagnostic rather than substituted bytes. |
 
-`tests/test_output.py` covers the coordinator contract. M9 still requires release
-acceptance mapping for UC-01–UC-15 and declared target packaging.
+`tests/test_output.py` covers the coordinator contract. The prior remaining work is
+closed by the release-acceptance, release-package, and M9 reuse-review artifacts.

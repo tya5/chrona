@@ -43,7 +43,7 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-10 | Import and reconcile externally observed Actual data | Should | Delivered by M5.5 intake and M7 explicit reconciliation. |
 | UC-11 | Validate, render, and propose changes through CLI/automation | Should | Delivered by M5 CLI/automation evidence; it does not imply AI delivery. |
 | UC-12 | Capture and compare a named baseline | Should | Delivered by M7 immutable Snapshot capture. |
-| UC-13 | Export one evaluation to declared targets | Should | Partial: M9 has only the declared SVG adapter; package acceptance remains WD-3. |
+| UC-13 | Export one evaluation to declared targets | Should | Delivered for the declared SVG adapter with capability/fidelity and exact release-package validation. |
 | UC-14 | Federate independently owned subproject timelines | Must | Delivered by M4 pinned federation resolver evidence. |
 | UC-15 | Manage a delivery roadmap using Chrona | Must | Delivered by M0.5/M1 delivery profile and pinned package-resolution evidence. |
 | UC-16 | Plan a cross-zone event without DST ambiguity | Future | DateTime/DST successor design and fixtures; runtime deferred |

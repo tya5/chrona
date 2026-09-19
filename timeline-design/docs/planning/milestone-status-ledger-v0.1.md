@@ -19,7 +19,7 @@ evidence is present, not that a later product release is complete.
 | M6 | Complete | Interactive review and accessibility/SceneDelta evidence. | None. |
 | M7 | Complete | Gesture, annotation, Actual reconciliation, Snapshot, conflict/undo evidence. | None. |
 | M8 | Complete | Trusted declarative package closure/lifecycle review and tests. | None. |
-| M9 | Design complete; implementation incomplete | Output coordinator has SVG capability evidence; WD-3 defines release packaging. | Implement package validation, then execute full release acceptance. |
+| M9 | Complete | Declared SVG output coordinator, capability/fidelity evidence, AI-inclusive UC-01–15 acceptance manifest, and exact release-package validation. | None; publication remains a runtime operation over a named closure. |
 | M10 | Design complete; implementation not started | FD-1 design/fixture/review. | Runtime and UC-16 evidence after current-profile release. |
 | M11 | Design complete; implementation not started | FD-2 design/fixture/review. | Runtime and UC-17/18 evidence after M10. |
 | M12 | Design complete; implementation not started | FD-3 design/fixture/review. | Runtime and UC-19–21 evidence after M11. |
