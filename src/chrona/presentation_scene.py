@@ -12,6 +12,29 @@ from .presentation_lanes import LaneAssignment, LaneItem, LaneTrack, assign_stab
 
 
 @dataclass(frozen=True)
+class ResolvedPresentationInput:
+    """One derived input boundary between authoring resources and Scene geometry."""
+
+    title: str
+    window: tuple[date, date]
+    items: tuple[object, ...]
+    settings: dict
+
+
+@dataclass(frozen=True)
+class ScenePrimitive:
+    """A measured renderer-neutral primitive; adapters serialize but never reinterpret it."""
+
+    scene_id: str
+    kind: str
+    source_ref: str
+    source_kind: str
+    semantic_facet: str
+    visual_role: str
+    bounds: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
 class PresentationScene:
     title: str
     window: tuple[date, date]
@@ -20,17 +43,53 @@ class PresentationScene:
     marks: tuple[ComparisonMark, ...]
     lanes: tuple[LaneAssignment, ...]
     lane_tracks: tuple[LaneTrack, ...]
+    primitives: tuple[ScenePrimitive, ...]
+
+
+def _resolved_input(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> ResolvedPresentationInput:
+    return ResolvedPresentationInput(str(title), window, tuple(items), settings)
+
+
+def _scene_primitives(resolved: ResolvedPresentationInput, axes: tuple[AxisInterval, ...],
+                      marks: tuple[ComparisonMark, ...]) -> tuple[ScenePrimitive, ...]:
+    """Materialize stable Scene identity and geometry before any renderer adapter."""
+    start, end = resolved.window
+    width = float(resolved.settings["context"]["viewport"]["width"])
+    day_width = float(resolved.settings["layout"]["scale"]["dayWidth"])
+    available = max(day_width, width - 2 * float(resolved.settings["layout"]["margins"]["left"]))
+    days = max(1, (end - start).days)
+    scale = available / days
+    primitives: list[ScenePrimitive] = []
+    for interval in axes:
+        x = (interval.start - start).days * scale
+        w = max(scale, (interval.end - interval.start).days * scale)
+        scene_id = f"axis:primary:{interval.level}:{interval.index}:band"
+        primitives.append(ScenePrimitive(scene_id, "Rect", "view:window", "axis", "axis", interval.level, (x, 0.0, w, 1.0)))
+    for mark in marks:
+        projection_id = f"timeline:{mark.source_id}:{mark.facet}"
+        if mark.at is not None:
+            x = (mark.at - start).days * scale
+            bounds = (x, 0.0, 0.0, 0.0)
+            kind = "Symbol" if mark.facet != "finish-delta" else "Text"
+        else:
+            assert mark.start is not None and mark.end is not None
+            x = (mark.start - start).days * scale
+            bounds = (x, 0.0, max(scale, (mark.end - mark.start).days * scale), 0.0)
+            kind = "Rect"
+        primitives.append(ScenePrimitive(f"{projection_id}:mark", kind, mark.source_id, "object", mark.facet, mark.facet, bounds))
+    return tuple(primitives)
 
 
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
-    """Build shared temporal primitives; adapters may only assign coordinates and emit output."""
-    start, end = window
+    """Build a completed shared Scene; adapters may only serialize its primitives."""
+    resolved = _resolved_input(title, items, window, settings)
+    start, end = resolved.window
     axis = settings["layout"]["axis"]
     levels, heights = axis["levels"], axis["bandHeights"]
     order = {"quarter": 0, "month": 1, "week": 2, "day": 3}
     if len(levels) != len(heights) or len(set(levels)) != len(levels) or any(level not in order for level in levels) or levels != sorted(levels, key=order.__getitem__):
         raise ValueError("E_PRESENTATION_AXIS_INVALID")
-    copied_items = tuple(items)
+    copied_items = resolved.items
     axes = tuple(interval for level in levels for interval in axis_intervals(start, end, level))
     ticks = axis_intervals(start, end, axis["tickUnit"], tick_step=axis["tickStep"])
     marks = comparison_marks(copied_items, comparison_mode=settings["layout"]["bars"]["comparisonMode"], show_zero=settings["layout"]["variance"]["showZero"])
@@ -51,7 +110,8 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
                    else max(bar["plannedHeight"], bar["actualHeight"]))
     tracks = lane_tracks(lanes, surface=lane_spec["surface"], mark_extent=mark_extent,
                          clearance=settings["layout"]["routing"]["clearance"], padding=lane_spec["trackPadding"])
-    return PresentationScene(str(title), (start, end), axes, ticks, marks, lanes, tracks)
+    primitives = _scene_primitives(resolved, axes, marks)
+    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives)
 
 
 def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:

@@ -28,6 +28,18 @@ def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
     assert scene.lane_tracks == ()
 
 
+def test_scene_materializes_stable_primitives_without_adapter_identity():
+    settings = builtin_bases()["executive-v0.2"]
+    scene = build_presentation_scene("Roadmap", [item()], (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    assert any(node.scene_id == "axis:primary:month:0:band" and node.kind == "Rect" for node in scene.primitives)
+    planned = next(node for node in scene.primitives if node.scene_id == "timeline:a:planned:mark")
+    actual = next(node for node in scene.primitives if node.scene_id == "timeline:a:actual:mark")
+    assert planned.source_ref == actual.source_ref == "a"
+    assert planned.semantic_facet == "planned"
+    assert actual.semantic_facet == "actual"
+    assert planned.bounds != actual.bounds
+
+
 def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
     settings = builtin_bases()["executive-v0.2"]
     settings["layout"]["lanes"].update(surface="independent-lane-track", trackPadding=8)
