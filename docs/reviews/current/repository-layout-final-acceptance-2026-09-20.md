@@ -15,7 +15,8 @@
 | R5 — Presentation decomposition | `7a8b311` |
 | R6 — Packaging and OSS closure | `47b88ec` |
 | Design resource-authority correction | `714b3a7` |
-| R6A — Runtime resource authority correction | this phase commit |
+| R6A — Runtime resource authority correction | `3141bbc` |
+| R6A CI — Editable source resource discovery | this phase commit |
 
 Every published update was non-forced and its Git tree was checked against the local
 index before publication.
@@ -35,6 +36,8 @@ index before publication.
   flat presentation test, `scripts/`, or root checkpoint file remains tracked.
 - Runtime modules use `importlib.resources`; no runtime schema or preset depends on
   walking from `__file__` to the repository root.
+- Hatch dev mode exposes both `src/` and the root schema package, so editable installs
+  resolve the same sole schema authority from any working directory.
 
 The two existing `jsonschema.RefResolver` deprecation warnings remain accepted
 technical debt. They do not change the pass result and should be migrated to the

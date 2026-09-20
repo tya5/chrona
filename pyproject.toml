@@ -16,6 +16,9 @@ dev = ["pytest>=8.0"]
 [project.scripts]
 chrona = "chrona.app.cli:main"
 
+[tool.hatch.build]
+dev-mode-dirs = ["src", "."]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
