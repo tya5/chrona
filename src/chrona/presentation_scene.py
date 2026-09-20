@@ -8,6 +8,7 @@ from typing import Iterable
 
 from .presentation_axis import AxisInterval, axis_intervals
 from .presentation_marks import ComparisonMark, comparison_marks
+from .presentation_lanes import LaneAssignment, LaneItem, assign_stable_lanes
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,7 @@ class PresentationScene:
     axes: tuple[AxisInterval, ...]
     ticks: tuple[AxisInterval, ...]
     marks: tuple[ComparisonMark, ...]
+    lanes: tuple[LaneAssignment, ...]
 
 
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
@@ -31,7 +33,16 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     axes = tuple(interval for level in levels for interval in axis_intervals(start, end, level))
     ticks = axis_intervals(start, end, axis["tickUnit"], tick_step=axis["tickStep"])
     marks = comparison_marks(copied_items, comparison_mode=settings["layout"]["bars"]["comparisonMode"], show_zero=settings["layout"]["variance"]["showZero"])
-    return PresentationScene(str(title), (start, end), axes, ticks, marks)
+    lane_items = []
+    for item in copied_items:
+        planned = getattr(item, "planned")
+        if getattr(item, "source_type") == "span":
+            lane_items.append(LaneItem(str(getattr(item, "object_id")), str(getattr(item, "group_id", "")), planned["start"], planned["end"]))
+        else:
+            at = planned["at"]
+            lane_items.append(LaneItem(str(getattr(item, "object_id")), str(getattr(item, "group_id", "")), at, at + timedelta(days=1)))
+    lanes = assign_stable_lanes(lane_items, max_stack=settings["layout"]["lanes"]["maxStack"])
+    return PresentationScene(str(title), (start, end), axes, ticks, marks, lanes)
 
 
 def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:
