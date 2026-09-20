@@ -101,12 +101,13 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             type_role = {"legend-label": "legend", "coverage-text": "coverage",
                          "summary-header": "summaryHeader", "summary-metric": "summaryMetric"}.get(node.purpose, role)
+            paint_role = "body" if node.purpose in {"axis-label", "table-column-label"} else role
             typography = theme["typography"].get(type_role, theme["typography"].get("body", {}))
             anchor = "middle" if node.purpose == "axis-label" else "start"
             opening = (f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" '
                        f'font-family="{escape(node.text_layout.family, quote=True)}" font-size="{typography.get("size", 12)}" '
                        f'font-weight="{node.text_layout.weight}" letter-spacing="{typography.get("letterSpacing", 0)}" '
-                       f'fill="{color(role)}" text-anchor="{anchor}">')
+                       f'fill="{color(paint_role)}" text-anchor="{anchor}">')
             if len(node.text_layout.lines) == 1:
                 parts.append(opening + escape(node.text_layout.lines[0]) + '</text>')
             else:
