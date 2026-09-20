@@ -1,518 +1,417 @@
-{
-  "version": "chrona/presentation-settings/v0.2",
-  "context": {
-    "viewport": {
-      "width": 1600,
-      "height": 900
-    },
-    "locale": "en-US",
-    "fontMetrics": {
-      "algorithm": "font-metrics-v1",
-      "assets": [{"family": "Nimbus Sans", "weight": 400, "revision": "NimbusSans-Regular-installed", "contentIdentity": "sha256:7c25be4d78155523080ab85b10277150657ff7dabbcad7037bdd536c9b6d0d08"}, {"family": "Nimbus Sans", "weight": 700, "revision": "NimbusSans-Bold-installed", "contentIdentity": "sha256:7f33328e6b4d4cd21b45fa625791928c9407dc702db6780e56b09ca9a3ecaa67"}],
-      "missingFont": "diagnose"
-    }
-  },
-  "output": {
-    "coordinateDecimals": 2,
-    "fontPolicy": "reference",
-    "overflow": "diagnose"
-  },
-  "theme": {
-    "fontFamily": "Nimbus Sans, Arial, sans-serif",
-    "typography": {
-      "heading": {
-        "size": 46,
-        "weight": 700,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "subtitle": {
-        "size": 20,
-        "weight": 400,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "body": {
-        "size": 19,
-        "weight": 400,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "tableHeader": {
-        "size": 19,
-        "weight": 700,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "group": {
-        "size": 21,
-        "weight": 700,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "month": {
-        "size": 16,
-        "weight": 700,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "quarter": {
-        "size": 13,
-        "weight": 700,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "variance": {
-        "size": 17,
-        "weight": 700,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "missingActual": {
-        "size": 12,
-        "weight": 400,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "legend": {
-        "size": 17,
-        "weight": 400,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "coverage": {
-        "size": 14,
-        "weight": 400,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "notes": {
-        "size": 19,
-        "weight": 400,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "summaryHeader": {
-        "size": 11,
-        "weight": 700,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      },
-      "summaryMetric": {
-        "size": 10,
-        "weight": 400,
-        "lineHeight": 1.2,
-        "letterSpacing": 0
-      }
-    },
-    "paints": {
-      "background": {
-        "color": "#101D2D",
-        "opacity": 1
-      },
-      "text": {
-        "color": "#F3F2EC",
-        "opacity": 1
-      },
-      "textMuted": {
-        "color": "#B4C3D4",
-        "opacity": 1
-      },
-      "planned": {
-        "color": "#E9B35E",
-        "opacity": 1
-      },
-      "actual": {
-        "color": "#45CCCB",
-        "opacity": 1
-      },
-      "milestone": {
-        "color": "#F3F2EC",
-        "opacity": 1
-      },
-      "varianceAhead": {
-        "color": "#269D79",
-        "opacity": 1
-      },
-      "varianceOnTrack": {
-        "color": "#637187",
-        "opacity": 1
-      },
-      "varianceBehind": {
-        "color": "#FF947F",
-        "opacity": 1
-      },
-      "varianceUnknown": {
-        "color": "#637187",
-        "opacity": 1
-      },
-      "tableHeader": {
-        "color": "#203147",
-        "opacity": 1
-      },
-      "groupBand": {
-        "color": "#15263A",
-        "opacity": 1
-      },
-      "rowShade": {
-        "color": "#22364D",
-        "opacity": 0.45
-      }
-    },
-    "strokes": {
-      "axisMajor": {
-        "color": "#34465C",
-        "opacity": 1,
-        "width": 1,
-        "dash": [
-          3,
-          4
-        ]
-      },
-      "axisMinor": {
-        "color": "#E6E9EE",
-        "opacity": 1,
-        "width": 1,
-        "dash": []
-      },
-      "rowRule": {
-        "color": "#FFFFFF",
-        "opacity": 1,
-        "width": 1,
-        "dash": []
-      },
-      "frame": {
-        "color": "#DDE4EC",
-        "opacity": 1,
-        "width": 1,
-        "dash": []
-      },
-      "groupSeparator": {
-        "color": "#9CA3AF",
-        "opacity": 1,
-        "width": 1,
-        "dash": []
-      },
-      "dependency": {
-        "color": "#92A6BE",
-        "opacity": 1,
-        "width": 1.4,
-        "dash": []
-      }
-    },
-    "groupPaints": {},
-    "bar": {
-      "radius": 2,
-      "minWidth": 1,
-      "plannedHeight": 17,
-      "actualHeight": 17
-    },
-    "point": {
-      "shape": "diamond",
-      "size": 18
-    },
-    "arrow": {
-      "shape": "triangle",
-      "width": 6,
-      "height": 6,
-      "tipInset": 0.5,
-      "orientation": "auto"
-    },
-    "varianceMarkerWidth": 3,
-    "missingPattern": {
-      "spacing": 6,
-      "angle": 45,
-      "stroke": {
-        "color": "#6B7280",
-        "opacity": 1,
-        "width": 2,
-        "dash": []
-      },
-      "width": 18,
-      "height": 9
-    }
-  },
-  "layout": {
-    "margins": {
-      "top": 32,
-      "right": 40,
-      "bottom": 28,
-      "left": 40
-    },
-    "regionGap": 0,
-    "regions": [
-      {
-        "id": "header",
-        "layout": "stack",
-        "block": {
-          "kind": "fixed",
-          "value": 116,
-          "min": 116,
-          "max": 116
-        },
-        "tracks": [
-          {
-            "kind": "fraction",
-            "value": 1,
-            "min": 0,
-            "max": 10000
-          }
-        ],
-        "gap": 0
-      },
-      {
-        "id": "main",
-        "layout": "split",
-        "block": {
-          "kind": "fraction",
-          "value": 1,
-          "min": 100,
-          "max": 10000
-        },
-        "tracks": [
-          {
-            "kind": "fraction",
-            "value": 3.2,
-            "min": 0,
-            "max": 10000
-          },
-          {
-            "kind": "fraction",
-            "value": 6.8,
-            "min": 0,
-            "max": 10000
-          }
-        ],
-        "gap": 0
-      },
-      {
-        "id": "footer",
-        "layout": "stack",
-        "block": {
-          "kind": "fixed",
-          "value": 100,
-          "min": 100,
-          "max": 100
-        },
-        "tracks": [
-          {
-            "kind": "fraction",
-            "value": 1,
-            "min": 0,
-            "max": 10000
-          }
-        ],
-        "gap": 0
-      }
-    ],
-    "slots": {
-      "title": {
-        "region": "header",
-        "track": 0,
-        "source": "title",
-        "priority": "required",
-        "overflow": "diagnose",
-        "align": "start"
-      },
-      "table": {
-        "region": "main",
-        "track": 0,
-        "source": "table",
-        "priority": "required",
-        "overflow": "diagnose",
-        "align": "stretch"
-      },
-      "timeline": {
-        "region": "main",
-        "track": 1,
-        "source": "timeline",
-        "priority": "required",
-        "overflow": "diagnose",
-        "align": "stretch"
-      },
-      "legend": {
-        "region": "footer",
-        "track": 0,
-        "source": "legend",
-        "priority": "required",
-        "overflow": "diagnose",
-        "align": "start"
-      }
-    },
-    "group": {
-      "mode": "header",
-      "fraction": 0.4,
-      "gap": 12,
-      "headerHeight": 32,
-      "labelAlign": "center"
-    },
-    "row": {
-      "sizing": "fit",
-      "height": 72,
-      "minHeight": 54,
-      "verticalPadding": 8,
-      "stripeEvery": 2,
-      "stripeOffset": 1,
-      "ruleScope": "after-group-column"
-    },
-    "cellPadding": {
-      "top": 6,
-      "right": 12,
-      "bottom": 6,
-      "left": 12
-    },
-    "columnTracks": [],
-    "text": {
-      "maxLines": 3,
-      "horizontalAlign": "start",
-      "verticalAlign": "center",
-      "wrap": "word"
-    },
-    "title": {
-      "padding": {
-        "top": 0,
-        "right": 0,
-        "bottom": 0,
-        "left": 0
-      },
-      "subtitleGap": 12,
-      "showSubtitle": true
-    },
-    "axis": {
-      "levels": [
-        "month"
-      ],
-      "bandHeights": [
-        48
-      ],
-      "labelAlign": "center",
-      "padding": {
-        "top": 8,
-        "right": 0,
-        "bottom": 8,
-        "left": 0
-      },
-      "minorVisible": false,
-      "tickStep": 1,
-      "tickUnit": "month"
-    },
-    "scale": {
-      "mode": "fit-window",
-      "dayWidth": 14,
-      "paddingStart": 20,
-      "paddingEnd": 20,
-      "singlePointSpanDays": 1
-    },
-    "bars": {
-      "gap": 4,
-      "align": "center",
-      "comparisonMode": "stacked"
-    },
-    "variance": {
-      "visible": true,
-      "showZero": false,
-      "offset": 12,
-      "labelGap": 7,
-      "labelAlign": "center"
-    },
-    "missingActual": {
-      "mode": "label",
-      "gap": 4
-    },
-    "routing": {
-      "enabled": true,
-      "algorithm": "orthogonal-obstacle",
-      "clearance": 4,
-      "gridOffset": 2,
-      "portOffset": 8,
-      "bendPenalty": 12,
-      "strokeLayer": "behind-marks"
-    },
-    "legend": {
-      "padding": {
-        "top": 24,
-        "right": 0,
-        "bottom": 0,
-        "left": 0
-      },
-      "itemGap": 28,
-      "swatchWidth": 38,
-      "swatchHeight": 12,
-      "labelGap": 10,
-      "rowGap": 12,
-      "wrap": true,
-      "coverageGap": 18
-    },
-    "notes": {
-      "padding": {
-        "top": 0,
-        "right": 0,
-        "bottom": 0,
-        "left": 0
-      },
-      "itemGap": 8
-    },
-    "summary": {
-      "padding": {
-        "top": 0,
-        "right": 0,
-        "bottom": 0,
-        "left": 0
-      },
-      "panelGap": 6,
-      "metricGap": 3
-    }
-  },
-  "detail": {
-    "groupLabel": "Owner",
-    "subtitle": "Fictional SSD program / {windowStart} to {windowLastVisible} / Observations through 30 Jun 2027",
-    "accessibleDescription": "Plan and Actual comparison. {selectedCount} rows; {unmatchedCount} unmatched observations. Actual is not a forecast.",
-    "missingActualLabel": "Actual not reported",
-    "coverage": "No actual: {missingCount}/{selectedCount} items / Unmapped observations: {unmatchedCount} / Delta: calendar days",
-    "legend": [
-      {
-        "role": "planned",
-        "label": "Baseline plan"
-      },
-      {
-        "role": "actual",
-        "label": "Observed actual"
-      },
-      {
-        "role": "variance",
-        "label": "Finish variance"
-      },
-      {
-        "role": "milestone",
-        "label": "Planned gate"
-      },
-      {
-        "role": "dependency",
-        "label": "Dependency"
-      }
-    ],
-    "formatting": {
-      "month": "short-month-year",
-      "quarter": "quarter-year",
-      "date": "iso-date",
-      "signedDaysSuffix": "d",
-      "positiveSign": "+",
-      "rangeSeparator": " – ",
-      "blank": "",
-      "unknown": "unknown",
-      "emDash": "—"
-    },
-    "summaryLabels": {
-      "selectedCount": "Selected work",
-      "actualCoverage": "Actual coverage",
-      "knownFinishVarianceCount": "Known finish variance",
-      "missingActualCount": "Missing Actual",
-      "nextPlannedPoint": "Next planned point"
-    },
-    "title": "ASTER / Qualification and production",
-    "unmatchedActual": "Unmatched Actual: {unmatchedIds}",
-    "summaryEntry": "{label}: {value}",
-    "coverageRatio": "{actualCount}/{selectedCount}",
-    "listSeparator": ", "
-  }
-}
+version: chrona/presentation-settings/v0.2
+context:
+  viewport:
+    width: 1600
+    height: 900
+  locale: en-US
+  fontMetrics:
+    algorithm: font-metrics-v1
+    assets:
+    - family: Nimbus Sans
+      weight: 400
+      revision: NimbusSans-Regular-installed
+      contentIdentity: sha256:7c25be4d78155523080ab85b10277150657ff7dabbcad7037bdd536c9b6d0d08
+    - family: Nimbus Sans
+      weight: 700
+      revision: NimbusSans-Bold-installed
+      contentIdentity: sha256:7f33328e6b4d4cd21b45fa625791928c9407dc702db6780e56b09ca9a3ecaa67
+    missingFont: diagnose
+output:
+  coordinateDecimals: 2
+  fontPolicy: reference
+  overflow: diagnose
+theme:
+  fontFamily: Nimbus Sans, Arial, sans-serif
+  typography:
+    heading:
+      size: 46
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    subtitle:
+      size: 20
+      weight: 400
+      lineHeight: 1.2
+      letterSpacing: 0
+    body:
+      size: 19
+      weight: 400
+      lineHeight: 1.2
+      letterSpacing: 0
+    tableHeader:
+      size: 19
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    group:
+      size: 21
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    month:
+      size: 16
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    quarter:
+      size: 13
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    variance:
+      size: 17
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    missingActual:
+      size: 12
+      weight: 400
+      lineHeight: 1.2
+      letterSpacing: 0
+    legend:
+      size: 17
+      weight: 400
+      lineHeight: 1.2
+      letterSpacing: 0
+    coverage:
+      size: 14
+      weight: 400
+      lineHeight: 1.2
+      letterSpacing: 0
+    notes:
+      size: 19
+      weight: 400
+      lineHeight: 1.2
+      letterSpacing: 0
+    summaryHeader:
+      size: 11
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
+    summaryMetric:
+      size: 10
+      weight: 400
+      lineHeight: 1.2
+      letterSpacing: 0
+  paints:
+    background:
+      color: '#101D2D'
+      opacity: 1
+    text:
+      color: '#F3F2EC'
+      opacity: 1
+    textMuted:
+      color: '#B4C3D4'
+      opacity: 1
+    planned:
+      color: '#E9B35E'
+      opacity: 1
+    actual:
+      color: '#45CCCB'
+      opacity: 1
+    milestone:
+      color: '#F3F2EC'
+      opacity: 1
+    varianceAhead:
+      color: '#269D79'
+      opacity: 1
+    varianceOnTrack:
+      color: '#637187'
+      opacity: 1
+    varianceBehind:
+      color: '#FF947F'
+      opacity: 1
+    varianceUnknown:
+      color: '#637187'
+      opacity: 1
+    tableHeader:
+      color: '#203147'
+      opacity: 1
+    groupBand:
+      color: '#15263A'
+      opacity: 1
+    rowShade:
+      color: '#22364D'
+      opacity: 0.45
+  strokes:
+    axisMajor:
+      color: '#34465C'
+      opacity: 1
+      width: 1
+      dash:
+      - 3
+      - 4
+    axisMinor:
+      color: '#E6E9EE'
+      opacity: 1
+      width: 1
+      dash: []
+    rowRule:
+      color: '#FFFFFF'
+      opacity: 1
+      width: 1
+      dash: []
+    frame:
+      color: '#DDE4EC'
+      opacity: 1
+      width: 1
+      dash: []
+    groupSeparator:
+      color: '#9CA3AF'
+      opacity: 1
+      width: 1
+      dash: []
+    dependency:
+      color: '#92A6BE'
+      opacity: 1
+      width: 1.4
+      dash: []
+  groupPaints: {}
+  bar:
+    radius: 2
+    minWidth: 1
+    plannedHeight: 17
+    actualHeight: 17
+  point:
+    shape: diamond
+    size: 18
+  arrow:
+    shape: triangle
+    width: 6
+    height: 6
+    tipInset: 0.5
+    orientation: auto
+  varianceMarkerWidth: 3
+  missingPattern:
+    spacing: 6
+    angle: 45
+    stroke:
+      color: '#6B7280'
+      opacity: 1
+      width: 2
+      dash: []
+    width: 18
+    height: 9
+layout:
+  margins:
+    top: 32
+    right: 40
+    bottom: 28
+    left: 40
+  regionGap: 0
+  regions:
+  - id: header
+    layout: stack
+    block:
+      kind: fixed
+      value: 116
+      min: 116
+      max: 116
+    tracks:
+    - kind: fraction
+      value: 1
+      min: 0
+      max: 10000
+    gap: 0
+  - id: main
+    layout: split
+    block:
+      kind: fraction
+      value: 1
+      min: 100
+      max: 10000
+    tracks:
+    - kind: fraction
+      value: 3.2
+      min: 0
+      max: 10000
+    - kind: fraction
+      value: 6.8
+      min: 0
+      max: 10000
+    gap: 0
+  - id: footer
+    layout: stack
+    block:
+      kind: fixed
+      value: 100
+      min: 100
+      max: 100
+    tracks:
+    - kind: fraction
+      value: 1
+      min: 0
+      max: 10000
+    gap: 0
+  slots:
+    title:
+      region: header
+      track: 0
+      source: title
+      priority: required
+      overflow: diagnose
+      align: start
+    table:
+      region: main
+      track: 0
+      source: table
+      priority: required
+      overflow: diagnose
+      align: stretch
+    timeline:
+      region: main
+      track: 1
+      source: timeline
+      priority: required
+      overflow: diagnose
+      align: stretch
+    legend:
+      region: footer
+      track: 0
+      source: legend
+      priority: required
+      overflow: diagnose
+      align: start
+  group:
+    mode: header
+    fraction: 0.4
+    gap: 12
+    headerHeight: 32
+    labelAlign: center
+  row:
+    sizing: fit
+    height: 72
+    minHeight: 54
+    verticalPadding: 8
+    stripeEvery: 2
+    stripeOffset: 1
+    ruleScope: after-group-column
+  cellPadding:
+    top: 6
+    right: 12
+    bottom: 6
+    left: 12
+  columnTracks: []
+  text:
+    maxLines: 3
+    horizontalAlign: start
+    verticalAlign: center
+    wrap: word
+  title:
+    padding:
+      top: 0
+      right: 0
+      bottom: 0
+      left: 0
+    subtitleGap: 12
+    showSubtitle: true
+  axis:
+    levels:
+    - month
+    bandHeights:
+    - 48
+    labelAlign: center
+    padding:
+      top: 8
+      right: 0
+      bottom: 8
+      left: 0
+    minorVisible: false
+    tickStep: 1
+    tickUnit: month
+  scale:
+    mode: fit-window
+    dayWidth: 14
+    paddingStart: 20
+    paddingEnd: 20
+    singlePointSpanDays: 1
+  bars:
+    gap: 4
+    align: center
+    comparisonMode: stacked
+  variance:
+    visible: true
+    showZero: false
+    offset: 12
+    labelGap: 7
+    labelAlign: center
+  missingActual:
+    mode: label
+    gap: 4
+  routing:
+    enabled: true
+    algorithm: orthogonal-obstacle
+    clearance: 4
+    gridOffset: 2
+    portOffset: 8
+    bendPenalty: 12
+    strokeLayer: behind-marks
+  legend:
+    padding:
+      top: 24
+      right: 0
+      bottom: 0
+      left: 0
+    itemGap: 28
+    swatchWidth: 38
+    swatchHeight: 12
+    labelGap: 10
+    rowGap: 12
+    wrap: true
+    coverageGap: 18
+  notes:
+    padding:
+      top: 0
+      right: 0
+      bottom: 0
+      left: 0
+    itemGap: 8
+  summary:
+    padding:
+      top: 0
+      right: 0
+      bottom: 0
+      left: 0
+    panelGap: 6
+    metricGap: 3
+detail:
+  groupLabel: Owner
+  subtitle: Fictional SSD program / {windowStart} to {windowLastVisible} / Observations through 30 Jun
+    2027
+  accessibleDescription: Plan and Actual comparison. {selectedCount} rows; {unmatchedCount} unmatched
+    observations. Actual is not a forecast.
+  missingActualLabel: Actual not reported
+  coverage: 'No actual: {missingCount}/{selectedCount} items / Unmapped observations: {unmatchedCount}
+    / Delta: calendar days'
+  legend:
+  - role: planned
+    label: Baseline plan
+  - role: actual
+    label: Observed actual
+  - role: variance
+    label: Finish variance
+  - role: milestone
+    label: Planned gate
+  - role: dependency
+    label: Dependency
+  formatting:
+    month: short-month-year
+    quarter: quarter-year
+    date: iso-date
+    signedDaysSuffix: d
+    positiveSign: +
+    rangeSeparator: ' – '
+    blank: ''
+    unknown: unknown
+    emDash: —
+  summaryLabels:
+    selectedCount: Selected work
+    actualCoverage: Actual coverage
+    knownFinishVarianceCount: Known finish variance
+    missingActualCount: Missing Actual
+    nextPlannedPoint: Next planned point
+  title: ASTER / Qualification and production
+  unmatchedActual: 'Unmatched Actual: {unmatchedIds}'
+  summaryEntry: '{label}: {value}'
+  coverageRatio: '{actualCount}/{selectedCount}'
+  listSeparator: ', '
