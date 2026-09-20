@@ -32,10 +32,11 @@ working-tree paths are Drafts and are not accepted by this reproducible comparis
 
 `render-review` accepts a Render Context reference, snapshot root, Store identity, and
 output path. It does not accept the former loose Project/Actual/View/Style/Theme/Profile
-flags. Render Context v0.3 owns the current path: Project, View, Actual, resolved
-Presentation Settings, optional summary/detail profiles, locale/target, and immutable
-resource identities. The v0.1 token Theme, Style, and Scene Profile stack is frozen
-legacy input and is not mixed into v0.3.
+flags. Render Context v0.3 owns the current path: Project, View, Actual, one immutable
+Presentation Preset, optional summary/detail profiles, target, and immutable resource
+identities. The preset has the stable ID required by the reference contract and resolves
+to complete Presentation Settings before rendering. The v0.1 token Theme, Style, and
+Scene Profile stack is frozen legacy input and is not mixed into v0.3.
 
 ### D3 — Theme and Scene ownership (#22, #24)
 

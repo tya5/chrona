@@ -265,14 +265,18 @@ v0.2 presentation path without mixing the legacy v0.1 Style/Theme/Scene Profile 
 Its body contains immutable references to:
 
 - exactly one Project and View;
-- exactly one complete Presentation Settings or Presentation Preset resource;
+- exactly one Presentation Preset resource, whose stable `id` is verified before it is
+  resolved to complete Presentation Settings;
 - an Actual set when the selected View requires Actual;
 - optional Review Summary and Review Detail profiles;
 - an optional Federation Plan; and
 - explicit target kind/capabilities.
 
-Locale, viewport, fixed font metrics, Theme, Layout, Detail, and Output policy come only
-from resolved Presentation Settings. Therefore v0.3 rejects `style`, `theme`,
+Complete Presentation Settings v0.2 intentionally has no resource `id`, so it cannot be
+the direct target of an immutable typed reference. The ID-bearing Presentation Preset
+is the closure resource; preset resolution produces the complete Settings value used by
+Scene construction. Locale, viewport, fixed font metrics, Theme, Layout, Detail, and
+Output policy come only from those resolved Presentation Settings. Therefore v0.3 rejects `style`, `theme`,
 `sceneProfile`, `viewport`, `layoutMetrics`, or a second locale field as duplicate
 authority. The Runtime Coordinator resolves the entire closure before scheduling.
 
@@ -285,7 +289,8 @@ token-Theme and federation contracts. They are not accepted by the current
 | Resource | Status | Current replacement / use |
 |---|---|---|
 | Project, View, Actual set | Current | Pinned by Render Context v0.3. |
-| Presentation Settings / Preset v0.2 | Current | Sole current Theme/Layout/Detail/Context/Output closure. |
+| Presentation Preset v0.2 | Current closure resource | ID-bearing immutable input; sole current Theme/Layout/Detail/Context/Output authority. |
+| Complete Presentation Settings v0.2 | Current resolved value | Produced by Preset resolution; not directly referenceable because it has no resource ID. |
 | Review Summary / Detail Profile | Current optional input | Pinned by Render Context v0.3 when used. |
 | Style v0.1, Theme v0.1, Scene Profile v0.1 | Frozen legacy | Retained for v0.1 conformance; not mixed into v0.3. |
 | Layout Profile v0.1 | Frozen implementation prototype | Replaced by Presentation Settings `layout`. |

@@ -102,8 +102,9 @@ Store. Raw paths are Draft evaluation inputs for `validate`, `schedule`, and min
 
 Every read evaluation begins with an explicit request containing at least:
 
-- a current Render Context that names the primary Project revision, View, resolved
-  Presentation Settings, and named Snapshot/Actual/detail inputs when used;
+- a current Render Context that names the primary Project revision, View, ID-bearing
+  Presentation Preset, and named Actual/detail inputs when used; preset resolution
+  produces complete Presentation Settings before Scene construction;
 - its explicit target capabilities; locale, viewport, layout, Theme, Detail, font
   metrics, and output policy are closed by the referenced Presentation Settings; and
 - optional requested output artifact.
