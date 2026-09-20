@@ -39,7 +39,10 @@ root:
       place: {inline: start, block: center, safety: strict}
       anchor:
         self: {inline: start, block: center}
-        target: {ref: barrier:label-end, inline: end, block: center}
-        gap: {token: spacing.m}
+        target:
+          inline: {ref: barrier:label-end, point: end}
+          block: {ref: parent, point: center}
+        gap:
+          inline: {token: spacing.m}
       priority: required
       overflow: diagnose

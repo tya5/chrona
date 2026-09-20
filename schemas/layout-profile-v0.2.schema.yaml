@@ -114,12 +114,24 @@ $defs:
       target:
         type: object
         additionalProperties: false
-        required: [ref, inline, block]
+        required: [inline, block]
         properties:
-          ref: {type: string, pattern: "^(parent|node:[A-Za-z][A-Za-z0-9._-]*|guide:[A-Za-z][A-Za-z0-9._-]*|barrier:[A-Za-z][A-Za-z0-9._-]*)$"}
-          inline: {$ref: "#/$defs/point"}
-          block: {$ref: "#/$defs/point"}
-      gap: {$ref: "#/$defs/distance"}
+          inline: {$ref: "#/$defs/axisTarget"}
+          block: {$ref: "#/$defs/axisTarget"}
+      gap:
+        type: object
+        additionalProperties: false
+        minProperties: 1
+        properties:
+          inline: {$ref: "#/$defs/distance"}
+          block: {$ref: "#/$defs/distance"}
+  axisTarget:
+    type: object
+    additionalProperties: false
+    required: [ref, point]
+    properties:
+      ref: {type: string, pattern: "^(parent|node:[A-Za-z][A-Za-z0-9._-]*|guide:[A-Za-z][A-Za-z0-9._-]*|barrier:[A-Za-z][A-Za-z0-9._-]*)$"}
+      point: {$ref: "#/$defs/point"}
   anchorPoint:
     type: object
     additionalProperties: false

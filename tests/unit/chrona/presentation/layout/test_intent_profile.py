@@ -69,14 +69,14 @@ def test_wrong_type_and_missing_tokens_are_rejected():
         resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
 
 
-def test_anchor_scope_and_center_gap_are_rejected():
+def test_superseded_single_target_anchor_is_structurally_rejected():
     value = fixture("layout-profile-intent-v0.2.yaml")
     value["root"]["children"][0]["anchor"] = {
         "self": {"inline": "center", "block": "center"},
         "target": {"ref": "parent", "inline": "center", "block": "center"},
         "gap": {"token": "spacing.s"},
     }
-    with pytest.raises(LayoutError, match="E_LAYOUT_REFERENCE_SCOPE"):
+    with pytest.raises(LayoutError, match="E_LAYOUT_SCHEMA"):
         resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
 
 

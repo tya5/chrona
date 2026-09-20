@@ -124,13 +124,15 @@ source text and the decision in Scene metadata.
 Relative placement is allowed only for a child of `overlay`. An anchor contains:
 
 - `self`: inline and block points on the child;
-- `target`: a `parent`, `node:<id>`, `guide:<id>`, or `barrier:<id>` reference plus its
-  inline and block points;
-- optional logical `gap` distance.
+- `target.inline` and `target.block`: independent `parent`, `node:<id>`, `guide:<id>`,
+  or `barrier:<id>` references plus one point on that axis;
+- optional `gap.inline` and `gap.block` logical distances.
 
-Points are `start`, `center`, `end`, `first-baseline`, or `last-baseline`. Gaps are
-applied away from the target edge; a center-to-center anchor cannot declare a gap.
-There is no raw x/y offset.
+Points are `start`, `center`, `end`, `first-baseline`, or `last-baseline`. An axis may
+target a guide/barrier only when that object declares the same axis. A node may therefore
+use the inline end of a content barrier while independently using the block center of its
+parent. Gaps are applied away from the target edge on their named axis; a
+center-to-center axis cannot declare a gap. There is no raw x/y offset.
 
 A guide belongs to one overlay, has an inline or block axis, and is positioned at
 `start`, `center`, `end`, or a rational fraction string such as `1/3`. A barrier belongs
