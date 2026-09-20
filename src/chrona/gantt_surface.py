@@ -117,6 +117,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     if slots is None:
         slots = {'title': Rect(24, 24, width-48, 96), 'table': Rect(24, 120, 460, 650), 'timeline': Rect(484, 120, width-508, 650)}
     table, timeline = slots['table'], slots['timeline']
+    axis_slot = slots.get('timelineAxis', timeline)
     header = slots.get('title', Rect(24, 24, width-48, 96))
     if table.y != timeline.y or table.height != timeline.height:
         raise ValueError('E_GANTT_ROW_ALIGNMENT')
@@ -140,6 +141,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     days = max(1, (end-start).days)
     # Padding protects endpoint symbols; one continuous scale is shared by all marks.
     sx = lambda d: left+20+(d-start).days/days*(timeline.width-40)
+    axis_sx = lambda d: axis_slot.x+20+(d-start).days/days*(axis_slot.width-40)
     f = lambda n: f'{n:.2f}'.rstrip('0').rstrip('.')
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
              f'<title id="title">{escape(title)}</title>',
@@ -147,7 +149,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
              f'<defs><marker id="dependency-arrow" markerWidth="{settings["theme"]["arrow"]["width"] if settings else 6}" markerHeight="{settings["theme"]["arrow"]["height"] if settings else 6}" refX="{settings["theme"]["arrow"]["width"]-settings["theme"]["arrow"]["tipInset"] if settings else 5.5}" refY="{(settings["theme"]["arrow"]["height"] if settings else 6)/2}" orient="auto"><path d="M0 0L{settings["theme"]["arrow"]["width"] if settings else 6} {(settings["theme"]["arrow"]["height"] if settings else 6)/2}L0 {settings["theme"]["arrow"]["height"] if settings else 6}Z" fill="{connector}"/></marker></defs>',
              f'<rect width="{width}" height="{height}" fill="{background}"/>']
     if presentation_scene is not None:
-        parts.append(f'<metadata data-presentation-scene="v0.1" data-axis-count="{len(presentation_scene.axes)}" data-tick-count="{len(presentation_scene.ticks)}" data-mark-count="{len(presentation_scene.marks)}"/>')
+        scale_id = settings['layout']['slots'].get('timelineAxis', {}).get('scaleId', '') if settings else ''
+        parts.append(f'<metadata data-presentation-scene="v0.1" data-axis-count="{len(presentation_scene.axes)}" data-tick-count="{len(presentation_scene.ticks)}" data-mark-count="{len(presentation_scene.marks)}" data-axis-scale-id="{escape(scale_id)}"/>')
 
     def rect(x, y, w, h, fill, purpose, ref='', more=''):
         return f'<rect data-purpose="{purpose}" data-source-ref="{escape(ref)}" x="{f(x)}" y="{f(y)}" width="{f(w)}" height="{f(h)}" fill="{fill}" {more}/>'
@@ -266,13 +269,13 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     # Scene intervals are already clipped to the View window; adapter only maps them to x/y.
     if presentation_scene is not None:
         for interval in presentation_scene.axes:
-            x1, x2 = sx(interval.start), sx(interval.end)
+            x1, x2 = axis_sx(interval.start), axis_sx(interval.end)
             if interval.level == 'month':
                 parts.append(text((x1+x2)/2, top-17, f'{interval.start:%b %Y}', fs, 700, purpose='axis-band', anchor='middle'))
             elif interval.level == 'quarter':
                 parts.append(text((x1+x2)/2, table.y+20, f'Q{(interval.start.month-1)//3+1} {interval.start.year}', 13, 700, purpose='axis-quarter', anchor='middle'))
         for tick in presentation_scene.ticks:
-            parts.append(f'<path data-purpose="axis-major" d="M{f(sx(tick.start))} {f(table.y)}V{f(bottom)}" stroke="{grid}" stroke-dasharray="3 4"/>')
+            parts.append(f'<path data-purpose="axis-major" data-scale-id="{escape(scale_id)}" d="M{f(sx(tick.start))} {f(table.y)}V{f(bottom)}" stroke="{grid}" stroke-dasharray="3 4"/>')
     else:
         cursor = date(start.year, start.month, 1)
         while cursor < end:
