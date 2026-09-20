@@ -1,6 +1,6 @@
 # 共通表現基盤 G2–G4 設計ゲート
 
-**状態:** D1/D2設計完了。G1–G4の従前の完了判定は撤回済みであり、D3のschema/fixture/受入閉包前にvisual実装を再開しない。
+**状態:** D1–D3設計完了。G1–G4の従前の完了判定は撤回済み。実装はD3の受入表と設計validatorを満たすScene Builderから開始する。
 
 ## 1. 一意なauthoring所有者
 
@@ -87,3 +87,7 @@ G2–G4実装の前に以下を完了する。
 ## 6. D2 algorithm acceptance contract
 
 仕様30 §7.5が唯一の投影順序、purpose table、port/obstacle例外、lane式、route失敗分類を所有する。本書のG2–G4 fieldはその入力だけを定める。実装は、同一`TextLayout`の描画と衝突判定、pointの非span化、purpose別primitive、projectionInstanceIdによる同座標別markの識別、`E_PRESENTATION_ROUTE_LIMIT`と`E_CONNECTOR_UNROUTABLE`の区別を受入testで示すまで完了と報告してはならない。
+
+## 7. D3 schema and evidence closure
+
+wire schemaのroutingは`gridOffset`、`clearance`、`portOffset`、`bendPenalty`、`limit`を必須化する。`row-aligned`はstackIndexをScene metadataとして保持し、stack 0 に制限しない。`shared-presentation-foundation`の正負fixtureとvalidatorはこれらを検証し、仕様30 §7.5の入力漏れを許さない。受入トレーサビリティは`g1-g4-integration-remediation-2026-09-20.md`の必須受入ケースを仕様節・schema path・実装symbol・testへ対応づけ、実装フェーズで更新する。

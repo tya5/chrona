@@ -91,6 +91,10 @@
     "annotationLeader": "presentation-orthogonal",
     "obstacles": "mark-and-required-text-bounds",
     "layering": "behind-marks",
+    "gridOffset": 4,
+    "clearance": 6,
+    "portOffset": 2,
+    "bendPenalty": 3,
     "limit": 4096
   }
 }

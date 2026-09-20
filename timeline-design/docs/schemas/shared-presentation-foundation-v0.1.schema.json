@@ -306,7 +306,7 @@
           "maximum": 10000
         }
       },
-      "description": "Stable stacking uses View group/order and never moves an item across groups. row-aligned accepts only stack 0; independent-lane-track owns derived track geometry."
+      "description": "Stable stacking uses View group/order and never moves an item across groups. row-aligned retains stackIndex as Scene metadata; independent-lane-track owns derived track geometry."
     },
     "routing": {
       "type": "object",
@@ -316,6 +316,10 @@
         "annotationLeader",
         "obstacles",
         "layering",
+        "gridOffset",
+        "clearance",
+        "portOffset",
+        "bendPenalty",
         "limit"
       ],
       "properties": {
@@ -333,6 +337,26 @@
             "behind-marks",
             "above-marks"
           ]
+        },
+        "gridOffset": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10000
+        },
+        "clearance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "portOffset": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "bendPenalty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
         },
         "limit": {
           "type": "integer",

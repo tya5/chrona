@@ -26,6 +26,10 @@ if fixture['annotations']['laneOccupancy'] != 'exclude-annotation-boxes':
     raise SystemExit('annotation boxes must not participate in lane occupancy')
 if fixture['lanes']['surface'] != 'row-aligned' or fixture['lanes']['pitchPolicy'] != 'scene-mark-extent-plus-clearance':
     raise SystemExit('lane surface and pitch ownership are not explicit')
+if {key for key in ('gridOffset', 'clearance', 'portOffset', 'bendPenalty') if key not in fixture['routing']}:
+    raise SystemExit('routing algorithm inputs are not closed')
+if fixture['routing']['gridOffset'] <= 0 or any(fixture['routing'][key] < 0 for key in ('clearance', 'portOffset', 'bendPenalty')):
+    raise SystemExit('routing algorithm inputs are invalid')
 if not list(Draft202012Validator(schema).iter_errors(invalid)):
     raise SystemExit('invalid fixture unexpectedly passed schema validation')
 print('shared-presentation-foundation fixture valid')

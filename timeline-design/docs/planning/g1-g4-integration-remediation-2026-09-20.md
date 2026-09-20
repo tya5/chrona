@@ -39,6 +39,10 @@ line 23のAssertionErrorとなった。fixtureを再追加して診断を捏造�
 
 D1で仕様08/09/29/30/31に`ResolvedPresentationInput`、semantic facetとvisual roleの分離、slotを含むprojection instance、Scene identity、adapter非再解釈を固定した。D2で仕様30 §7.5を唯一の有限投影手順とし、TextLayoutの一回測定、purpose別primitive、shape由来port、lane式、route limitとunroutableの診断分離を固定した。D3ではこの規則をschema、fixture、受入表、validatorへ同期する。I1はD3完了前に開始しない。
 
+## D3 実施記録
+
+wire schemaのrouting入力を`gridOffset`、`clearance`、`portOffset`、`bendPenalty`、`limit`へ閉鎖し、正負fixtureとvalidatorで検証する。row-alignedはstack 0制限を撤回し、Scene metadataとしてstackIndexを保持する。D1/D2で定めた境界と有限手順に対し、owner schema・wire・正負fixtureの矛盾は残さない。I1は仕様08/30の`ResolvedPresentationInput`から完成Sceneを構築し、adapterが意味・幾何を再解釈しないことを最初の受入条件とする。
+
 ## 提案する内部構造
 
 1. 入力解決: View/Style/Theme/Detail/Layout/Contextの型・固定参照を検査し、source selectionを一度だけ決定。
