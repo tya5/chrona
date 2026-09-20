@@ -42,6 +42,14 @@ I3-BからI3-Fの実装中に、新しいprimitive family、identity入力、Tex
 surface所有権が必要と判明した場合は、実装を停止する。仕様08、仕様30、派生fixture、設計レビュー、
 この計画を同一の設計公開で閉鎖してから当該単位へ戻る。
 
+### I3-B 再オープン：単一点表示window
+
+初回I3-B実装で、標準baseの`singlePointSpanDays: 1`では、測定済みmonth labelとitem labelを
+置けないことを検出した。これはadapter内の幅救済ではなくLayoutの表示window契約である。仕様29を
+補正し、標準baseは7日を明示する。`presentation_scene_from_schedule`はこの値を表示windowに適用し、
+不足時は`E_LAYOUT_REQUIRED_OVERFLOW:text`で停止する。I3-Bはこの設計公開を親にしてTextLayoutを
+完成させるまで完了扱いにしない。
+
 ## 完了判定
 
 1. adapterの関数シグネチャと依存グラフから、authoring resourceとsettingsを受け取らないことを示す。
