@@ -35,6 +35,9 @@ def main():
     preset.validate(override)
     preset.validate({"version": "chrona/presentation-preset/v0.2", "id": "complete", "settings": fixture})
     settings.validate(merge(fixture, override["overrides"]))
+    axis_slots = [slot for slot in fixture["layout"]["slots"].values()
+                  if slot["source"] in {"timeline", "timeline-axis"}]
+    assert len(axis_slots) == 2 and {slot["scaleId"] for slot in axis_slots} == {"primary"}
 
     inventory = read("planning/presentation-fixed-value-inventory-v0.2.json")
     paths = set()
