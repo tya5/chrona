@@ -5,13 +5,13 @@ positive:
       labels:
         - objectId: build-api
           source: title
-          text: "API契約の互換性確認と移行計画のレビュー"
+          text: "Review API contract compatibility and the migration plan"
           required: true
           candidates: [above, below, end]
       annotations:
         - id: launch-risk
           purpose: callout
-          text: "実績が未報告のため計画値への置換は行わない"
+          text: "Do not substitute the planned value when Actual is unreported"
           anchor: {kind: object, id: launch, facet: planned, endpoint: finish}
           leader: orthogonal-or-none
       marks:
@@ -39,7 +39,7 @@ positive:
       annotations:
         - id: evidence-note
           purpose: note
-          text: "証跡は対象オブジェクトを参照し、画面座標を保存しない"
+          text: "Evidence references the target object and does not persist screen coordinates"
           anchor: {kind: object, id: approval, facet: actual, endpoint: finish}
           leader: orthogonal-or-none
       marks:

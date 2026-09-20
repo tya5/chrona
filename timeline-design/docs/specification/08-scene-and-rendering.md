@@ -220,7 +220,8 @@ that role to target tokens but never calculate payload geometry. A kind/payload
 mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an adapter must not repair it.
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
-following I3 core primitive set before any adapter is invoked: one title `Text`; one
+following I3 core primitive set before any adapter is invoked: one resolved heading
+`Text` and, when Detail enables it, one resolved subtitle `Text`; one
 axis-band `Rect` and one axis-label `Text` for each declared axis interval; one tick
 `Path` for each declared tick; one planned/baseline/actual/variance `Rect` or `Symbol`
 only when that semantic facet is authorized by the resolved projection; and one
@@ -235,6 +236,13 @@ Scene Builder's I3 completion scope and must be migrated in the documented order
 an adapter may not retain them as a private geometry exception.  This separation
 allows the core axis/mark/text migration to be verified without falsely declaring
 the entire surface complete.
+
+The heading and subtitle payloads are formatted by the Scene Builder from the resolved
+Detail templates and permitted values. Their primitive purposes are `title-text` and
+`subtitle-text`; both carry a measured `TextLayout`. The adapter must not format the
+Project title, View window, selection count, or subtitle wording. A group surface keeps
+its group-derived `visualRole`; the resolved Theme token supplies both color and opacity,
+and an adapter serializes both token values without choosing a fallback opacity.
 
 The remaining I3 families are closed as follows.  `table-timeline` owns table frame,
 header band, column-label Text, group surface/header, alternating row surface, row

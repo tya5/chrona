@@ -14,6 +14,7 @@ validated and published in the same revision.
 | I3-R01 | Scene contained surface slots/rows but no surface-specific axis/tick/mark/Text primitive contract | The adapter could still reconstruct geometry | Add the core primitive set, identity, and Text payload/baseline to Specification 08 §5.3 and the derived fixture |
 | I3-R02 | The scope migrated by the same I3 across table-timeline, review, and minimal was ambiguous | Core primitive migration could be mistaken for I3 completion | Plan I3-A through I3-F/V1 ordering, unmigrated families, and the completion condition for every adapter |
 | I3-R03 | The failure contract for a missing Scene was only general guidance | An adapter could justify a settings fallback | Fix stable surface/primitive diagnostics and prohibited recoveries |
+| I3-R04 | Existing Detail heading/subtitle templates and group opacity were absent from the I3-C completion inventory | A serializer could drop editorial wording or default opacity while still claiming Scene-only geometry | Require Scene-owned `title-text` / optional `subtitle-text` wording and complete resolved group paint-token serialization before I3-C resumes |
 
 ## Layer consistency
 
@@ -49,3 +50,12 @@ The regression additionally found that a base-fixture change did not propagate t
 preset `base.contentIdentity`. Digest verification was added to the design validator,
 and the fixture-reference synchronization is published first. TextLayout implementation
 does not resume until that verification succeeds.
+
+## Reopening record: editorial title and group paint closure
+
+The first I3-C serializer regression exposed two omitted existing authorities: Detail
+owns heading/subtitle templates, and Theme group paints own opacity. Specification 08,
+Specification 30, the I3 plan, and the derived fixture now require final title wording
+to enter Scene Text payloads and require the adapter to serialize the complete resolved
+group paint token. This correction is published and validated before I3-C implementation
+resumes.

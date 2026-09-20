@@ -54,6 +54,12 @@ use `(legend-slot, role, swatch|label)`; coverage uses `(legend-slot, coverage-t
 Text reuses I3-B `TextLayout`; the Scene Builder alone resolves ports, routes,
 obstacles, and line wrapping.
 
+I3-C also closes the pre-existing editorial title path: Scene formats the Detail heading
+and optional subtitle before measurement and emits `title-text` / `subtitle-text`.
+The Gantt adapter does not retain Detail templates or title/window/count formatting.
+Group surface paint serialization consumes the complete resolved token, including
+opacity; retaining an adapter opacity default does not satisfy I3-C.
+
 Before I3-C, extend the shared DTO with closed kind payloads: `shape` for Symbol and
 ordered `points`, `fromPortId`, and `toPortId` for connector-like Path primitives.
 Ticks use ordered points without ports. Structural tests reject every kind/payload

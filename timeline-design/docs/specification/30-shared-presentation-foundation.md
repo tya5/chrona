@@ -178,6 +178,13 @@ from mark plus required-text occupancy; create purpose-specific annotation primi
 and finite routes; then finalize IDs, `sourceKind`, bounds, z-order, manifest, and
 diagnostics. Later stages never reinterpret earlier ones.
 
+Before text measurement, the Scene Builder evaluates the resolved Detail heading and
+optional subtitle templates against the closed permitted-value map. It emits
+`title-text` and optional `subtitle-text` with their final wording, bounds, baseline,
+and `TextLayout`. The SVG adapter receives neither the templates nor their source facts.
+For group surfaces, resolved Theme paint serialization includes opacity as well as color;
+opacity is not an adapter default or a geometry exception.
+
 The implementation DTO is closed by primitive kind: Rect=`bounds`; Text=`text` plus
 one TextLayout; Symbol=`shape` plus bounds; Path=`points` plus optional
 `fromPortId`/`toPortId` only for non-connector ticks. A connector or leader without both

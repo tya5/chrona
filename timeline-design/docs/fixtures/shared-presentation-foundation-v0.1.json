@@ -32,6 +32,10 @@
     "facetColors": "theme-role-plus-stable-group-key"
   },
   "labels": {
+    "sceneTextPurposes": [
+      "title-text",
+      "subtitle-text"
+    ],
     "sources": [
       "title",
       "planned-date",

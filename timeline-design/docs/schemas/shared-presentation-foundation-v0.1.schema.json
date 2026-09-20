@@ -131,6 +131,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "sceneTextPurposes",
         "sources",
         "anchorKinds",
         "candidateSides",
@@ -139,6 +140,10 @@
         "anchorObstaclePolicy"
       ],
       "properties": {
+        "sceneTextPurposes": {
+          "type": "array",
+          "const": ["title-text", "subtitle-text"]
+        },
         "sources": {
           "type": "array",
           "minItems": 1,
