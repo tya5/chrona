@@ -41,6 +41,10 @@ class SurfaceContentInput:
     coverage_text: str = ""
     summary_panels: tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...] = ()
     template_values: tuple[tuple[str, str], ...] = ()
+    group_details: tuple[tuple[str, str, str], ...] = ()
+    milestones: tuple[tuple[str, str, date], ...] = ()
+    observation_columns: tuple[tuple[str, str], ...] = ()
+    observation_rows: tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -92,6 +96,8 @@ class SceneSlot:
     source: str
     scale_id: str | None
     bounds: tuple[float, float, float, float]
+    priority: str = "required"
+    overflow: str = "diagnose"
 
 
 @dataclass(frozen=True)
@@ -129,6 +135,9 @@ class ContentFamilyCounts:
     notes: int
     legend_entries: int
     summary_panels: int
+    group_details: int = 0
+    milestones: int = 0
+    observation_rows: int = 0
 
 
 @dataclass(frozen=True)
@@ -249,7 +258,8 @@ def _scene_slots(settings: dict) -> tuple[SceneSlot, ...]:
     bounds = solve_presentation_layout(settings)
     declarations = settings["layout"]["slots"]
     return tuple(SceneSlot(slot_id, declarations[slot_id]["source"], declarations[slot_id].get("scaleId"),
-                           (rect.x, rect.y, rect.width, rect.height))
+                           (rect.x, rect.y, rect.width, rect.height),
+                           str(declarations[slot_id]["priority"]), str(declarations[slot_id]["overflow"]))
                  for slot_id, rect in bounds.items())
 
 
@@ -1004,6 +1014,135 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                         layout.bounds, text=formatted_text, baseline=layout.baseline, layout=layout)
                     metric_y += layout.bounds[3]
 
+        def panel_overflow(slot: SceneSlot, source: str, bottom: float) -> bool:
+            if bottom <= slot.bounds[1] + slot.bounds[3]:
+                return False
+            if slot.priority != "required" and slot.overflow == "clip-optional":
+                return True
+            raise ValueError(f"E_LAYOUT_REQUIRED_OVERFLOW:{source}")
+
+        group_detail_slot = _optional_surface_slot(surface, "group-details")
+        if group_detail_slot is not None and content.group_details:
+            padding = settings["layout"]["notes"]["padding"]
+            left = group_detail_slot.bounds[0] + float(padding["left"])
+            top = group_detail_slot.bounds[1] + float(padding["top"])
+            available = max(1.0, group_detail_slot.bounds[2] - float(padding["left"]) - float(padding["right"]))
+            pending = []
+            y = top
+            try:
+                for group_id, label, description in content.group_details:
+                    heading = text_layout(label, left, y, role="group", available=available, wrap=True)
+                    description_top = heading.bounds[1] + heading.bounds[3]
+                    body = text_layout(description, left, description_top, role="notes", available=available,
+                                       wrap=True)
+                    pending.append((group_id, label, description, heading, body))
+                    y = body.bounds[1] + body.bounds[3] + float(settings["layout"]["notes"]["itemGap"])
+            except ValueError as error:
+                if str(error) == "E_LAYOUT_REQUIRED_OVERFLOW:text":
+                    raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:group-details") from error
+                raise
+            if not panel_overflow(group_detail_slot, "group-details", y + float(padding["bottom"])):
+                for group_id, label, description, heading, body in pending:
+                    optional = group_detail_slot.priority != "required"
+                    add("Text", group_id, "review-detail-group", "", "group", "group-detail-label",
+                        heading.bounds, text=label, baseline=heading.baseline, layout=heading, optional=optional)
+                    add("Text", group_id, "review-detail-group", "", "text-muted", "group-detail-description",
+                        body.bounds, text=description, baseline=body.baseline, layout=body, optional=optional)
+
+        observation_slot = _optional_surface_slot(surface, "observations")
+        if observation_slot is not None and content.observation_columns:
+            padding = settings["layout"]["cellPadding"]
+            left = observation_slot.bounds[0] + float(padding["left"])
+            top = observation_slot.bounds[1] + float(padding["top"])
+            inner_width = max(1.0, observation_slot.bounds[2] - float(padding["left"]) - float(padding["right"]))
+            column_width = inner_width / len(content.observation_columns)
+            row_height = float(settings["layout"]["row"]["height"])
+            header_height = max(float(settings["layout"]["row"]["minHeight"]), row_height)
+            pending_headers = []
+            pending_rows = []
+            try:
+                for index, (column_id, label) in enumerate(content.observation_columns):
+                    layout = text_layout(label, left + index * column_width, top, role="tableHeader",
+                                         available=max(1.0, column_width - float(padding["right"])), wrap=True,
+                                         max_height=header_height - float(padding["top"]) - float(padding["bottom"]))
+                    pending_headers.append((column_id, label, layout))
+                rows_top = top + header_height
+                for row_index, (row_id, source, emphasis, cells) in enumerate(content.observation_rows):
+                    row_top = rows_top + row_index * row_height
+                    source_type = settings["theme"]["typography"]["notes"]
+                    source_height = float(source_type["size"]) * float(source_type.get("lineHeight", 1.2))
+                    cell_height = max(1.0, row_height - source_height - float(padding["top"]) - float(padding["bottom"]))
+                    cell_layouts = []
+                    for index, (column_id, value) in enumerate(cells):
+                        layout = text_layout(value, left + index * column_width, row_top + float(padding["top"]),
+                                             role="body", available=max(1.0, column_width - float(padding["right"])),
+                                             wrap=True, max_height=cell_height)
+                        cell_layouts.append((column_id, value, layout))
+                    source_layout = text_layout(source, left, row_top + row_height - source_height,
+                                                role="notes", available=inner_width)
+                    pending_rows.append((row_id, source, emphasis, tuple(cell_layouts), source_layout, row_top))
+            except ValueError as error:
+                if str(error) == "E_LAYOUT_REQUIRED_OVERFLOW:text":
+                    raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:observations") from error
+                raise
+            bottom = top + header_height + len(pending_rows) * row_height + float(padding["bottom"])
+            if not panel_overflow(observation_slot, "observations", bottom):
+                optional = observation_slot.priority != "required"
+                add("Rect", "observations", "review-detail", "", "table-frame", "observation-frame",
+                    observation_slot.bounds, optional=optional)
+                add("Rect", "observations-header", "review-detail", "", "row-shade", "observation-header-band",
+                    (observation_slot.bounds[0], observation_slot.bounds[1], observation_slot.bounds[2],
+                     header_height + float(padding["top"])), optional=optional)
+                for column_id, label, layout in pending_headers:
+                    add("Text", column_id, "review-detail-column", "", "tableHeader", "observation-column-label",
+                        layout.bounds, text=label, baseline=layout.baseline, layout=layout, optional=optional)
+                emphasis_roles = {"normal": "body", "attention": "variance-ahead", "critical": "variance-behind"}
+                for row_id, source, emphasis, cells, source_layout, row_top in pending_rows:
+                    for column_id, value, layout in cells:
+                        add("Text", row_id, "review-detail-observation", emphasis, emphasis_roles[emphasis],
+                            "observation-cell", layout.bounds, text=value, baseline=layout.baseline,
+                            layout=layout, optional=optional)
+                    add("Text", row_id, "review-detail-observation-source", emphasis, "text-muted",
+                        "observation-source", source_layout.bounds, text=source,
+                        baseline=source_layout.baseline, layout=source_layout, optional=optional)
+                    rule_y = row_top + row_height
+                    add("Path", row_id, "review-detail-observation", emphasis, "table-row",
+                        "observation-row-rule", (observation_slot.bounds[0], rule_y,
+                                                 observation_slot.bounds[2], 0.0),
+                        points=((observation_slot.bounds[0], rule_y),
+                                (observation_slot.bounds[0] + observation_slot.bounds[2], rule_y)),
+                        optional=optional)
+
+        milestone_slot = _optional_surface_slot(surface, "milestones")
+        if milestone_slot is not None and content.milestones:
+            padding = settings["layout"]["summary"]["padding"]
+            left = milestone_slot.bounds[0] + float(padding["left"])
+            top = milestone_slot.bounds[1] + float(padding["top"])
+            available = max(1.0, milestone_slot.bounds[2] - float(padding["left"]) - float(padding["right"]))
+            marker_size = float(settings["theme"]["point"]["size"])
+            pending = []
+            y = top
+            try:
+                for object_id, label, at in content.milestones:
+                    value = f"{formatted_date(at)} {settings['detail']['formatting']['rangeSeparator']} {label}"
+                    layout = text_layout(value, left + marker_size + float(settings["layout"]["summary"]["metricGap"]),
+                                         y, role="summaryMetric",
+                                         available=max(1.0, available - marker_size), wrap=True)
+                    pending.append((object_id, value, layout, y))
+                    y += max(marker_size, layout.bounds[3]) + float(settings["layout"]["summary"]["metricGap"])
+            except ValueError as error:
+                if str(error) == "E_LAYOUT_REQUIRED_OVERFLOW:text":
+                    raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:milestones") from error
+                raise
+            if not panel_overflow(milestone_slot, "milestones", y + float(padding["bottom"])):
+                optional = milestone_slot.priority != "required"
+                for object_id, value, layout, item_top in pending:
+                    add("Symbol", object_id, "object", "milestone", "milestone", "milestone-digest-symbol",
+                        (left, item_top, marker_size, marker_size), shape=settings["theme"]["point"]["shape"],
+                        optional=optional)
+                    add("Text", object_id, "object", "milestone", "summaryMetric", "milestone-digest-entry",
+                        layout.bounds, text=value, baseline=layout.baseline, layout=layout, optional=optional)
+
     rank = {
         "table-frame": 0, "table-header-band": 1, "group-surface": 2, "row-shade": 3,
         "table-row-rule": 4, "axis-band": 5, "tick": 6, "comparison-mark": 7,
@@ -1013,6 +1152,11 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         "annotation-leader": 17, "legend-swatch": 18, "legend-label": 19,
         "project-note": 20, "coverage-text": 21, "summary-panel": 22,
         "summary-header": 23, "summary-metric": 24,
+        "observation-frame": 25, "observation-header-band": 26,
+        "observation-row-rule": 27, "observation-column-label": 28,
+        "observation-cell": 29, "observation-source": 30,
+        "group-detail-label": 31, "group-detail-description": 32,
+        "milestone-digest-symbol": 33, "milestone-digest-entry": 34,
     }
     primitives = sorted(primitives, key=lambda node: (rank.get(node.purpose, 99), node.z_order, node.scene_id))
     primitives = [ScenePrimitive(**{**node.__dict__, "z_order": index}) for index, node in enumerate(primitives)]
@@ -1060,6 +1204,9 @@ def _scene_manifest(resolved: ResolvedPresentationInput,
             notes=len(content.notes),
             legend_entries=len(content.legend_entries),
             summary_panels=len(content.summary_panels),
+            group_details=len(content.group_details),
+            milestones=len(content.milestones),
+            observation_rows=len(content.observation_rows),
         ),
         surface_scales=tuple(surface.scale_manifest for surface in surfaces),
     )

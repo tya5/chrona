@@ -199,7 +199,7 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     return "\n".join(parts+["</svg>"])+"\n"
 
 
-def _surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any], summary_profile: dict[str, Any] | None = None, as_of: date | None = None):
+def _surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any], summary_profile: dict[str, Any] | None = None, as_of: date | None = None, detail_profile: dict[str, Any] | None = None):
     """Normalize selected table/surface facts once, before Scene construction."""
     from .presentation_scene import SurfaceContentInput
 
@@ -220,8 +220,17 @@ def _surface_content_input(projection: ReviewProjection, project: dict[str, Any]
     coverage = settings["detail"]["coverage"].format_map(values)
     template_values = _template_values("", projection)
     summary_panels = _summary_panels(projection, summary_profile, as_of or projection.window[0], settings)
-    return SurfaceContentInput(columns, cells, relations, annotations, notes, legend, coverage,
-                               summary_panels, template_values)
+    from .review_detail import resolve_review_detail_profile
+    detail = resolve_review_detail_profile(detail_profile, projection.items, settings)
+    return SurfaceContentInput(
+        table_columns=columns, table_cells=cells, relations=relations,
+        annotations=annotations, notes=notes, legend_entries=legend,
+        coverage_text=coverage, summary_panels=summary_panels,
+        template_values=template_values, group_details=detail.group_details,
+        milestones=detail.milestones,
+        observation_columns=detail.observation_columns,
+        observation_rows=detail.observation_rows,
+    )
 
 
 def _summary_panels(projection: ReviewProjection, profile: dict[str, Any] | None,

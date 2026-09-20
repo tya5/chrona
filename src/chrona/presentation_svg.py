@@ -111,8 +111,8 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 lane += f' data-lane-offset="{number(node.bounds[1] - group.content_bounds[1])}"'
         if node.kind == "Rect":
             x, y, rect_width, rect_height = node.bounds
-            fill = "none" if node.purpose == "table-frame" else (escape(node.color, quote=True) if node.color else color(role))
-            stroke_token = strokes["frame"] if node.purpose == "table-frame" else None
+            fill = "none" if node.purpose in {"table-frame", "observation-frame"} else (escape(node.color, quote=True) if node.color else color(role))
+            stroke_token = strokes["frame"] if node.purpose in {"table-frame", "observation-frame"} else None
             stroke = escape(stroke_token["color"], quote=True) if stroke_token else "none"
             if node.purpose == "annotation-box":
                 fill = escape(theme["annotation"]["boxFill"]["color"], quote=True)
@@ -140,7 +140,9 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             type_role = {"legend-label": "legend", "coverage-text": "coverage",
                          "summary-header": "summaryHeader", "summary-metric": "summaryMetric",
-                         "project-note": "notes"}.get(node.purpose, role)
+                         "project-note": "notes", "group-detail-description": "notes",
+                         "observation-column-label": "tableHeader", "observation-cell": "body",
+                         "observation-source": "notes", "milestone-digest-entry": "summaryMetric"}.get(node.purpose, role)
             paint_role = ("body" if node.purpose in {"axis-label", "table-column-label", "annotation-text", "project-note"}
                           else role)
             typography = theme["typography"].get(type_role, theme["typography"].get("body", {}))
@@ -183,6 +185,7 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 "tick": strokes["axisMajor"],
                 "minor-tick": strokes["axisMinor"],
                 "table-row-rule": strokes["rowRule"],
+                "observation-row-rule": strokes["rowRule"],
                 "group-separator": strokes["groupSeparator"],
                 "dependency-connector": strokes["dependency"],
                 "explanatory-arrow": strokes["dependency"],

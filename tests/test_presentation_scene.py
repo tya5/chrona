@@ -75,6 +75,7 @@ def test_scene_manifest_closes_inputs_and_per_surface_scale_evidence():
     assert manifest.content_family_counts.__dict__ == {
         "relations": 1, "annotations": 1, "notes": 1,
         "legend_entries": 1, "summary_panels": 1,
+        "group_details": 0, "milestones": 0, "observation_rows": 0,
     }
     assert scene.diagnostics == ()
     assert manifest.surface_scales == tuple(surface.scale_manifest for surface in scene.surfaces)
