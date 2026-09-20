@@ -31,3 +31,9 @@ as a rendered-Scene or presentation conformance result.
 `review-detail-profile-v0.1.schema.yaml` owns the M23 authoring resource for selected
 group descriptions, milestone IDs, and source-labelled observation rows. The v0.2
 Presentation Settings Detail remains the sole legend wording/order authority.
+
+`layout-profile-v0.2.schema.yaml` is the M24 replacement authoring grammar for a
+stable-ID composition tree, intrinsic/fractional sizing, logical alignment, and bounded
+anchors/guides/barriers. `render-context-v0.4.schema.yaml` binds reusable Theme and
+Layout resources separately. They are design-complete schemas and become the only
+runtime path when M24 implementation deletes v0.1 Layout and bundled Preset authority.

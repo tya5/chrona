@@ -2,6 +2,11 @@
 
 **Status: Implemented with M22 settings-consumption remediation active.**
 
+> **M24 successor:** Specification 33 removes complete Presentation Settings as an
+> author-facing layout contract. Its Layout fields are replacement inputs, not a
+> compatibility surface. Theme, Detail, Context, and Output ownership rules remain
+> applicable until their values are bound through the replacement Presentation Profile.
+
 Resolved Theme, Layout, Detail, and Context are bound once into the Scene Builder's
 `ResolvedPresentationInput`. SVG and other adapters read only completed Scene
 primitives, token values, and the manifest. Re-resolving settings, supplying missing

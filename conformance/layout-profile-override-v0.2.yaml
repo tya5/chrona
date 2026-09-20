@@ -1,0 +1,16 @@
+version: chrona/layout-profile/v0.2
+id: compact-executive-review
+writingMode: horizontal-tb
+extends:
+  id: executive-review
+  kind: layout-profile
+  store: {provider: local, identity: review-store}
+  address: layouts/executive-review.yaml
+  revision: {token: snapshot-42}
+  contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+overrides:
+  page:
+    gap: {token: spacing.s}
+    padding: {token: spacing.m}
+  title:
+    place: {inline: start, block: start, safety: safe}

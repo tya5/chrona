@@ -2,7 +2,7 @@
 
 | Directory | Contents |
 |---|---|
-| `specification/` | Active numbered normative specifications (`00`–`30`, `32`) and supplemental design specifications; retired IDs remain reserved |
+| `specification/` | Active numbered normative specifications (`00`–`30`, `32`–`33`) and supplemental design specifications; retired IDs remain reserved |
 | `guides/` | Task-oriented user and maintainer guidance |
 | `decisions/` | Architecture Decision Records (ADRs) |
 | `research/` | Non-normative investigations, including federation research |

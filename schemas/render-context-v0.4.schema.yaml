@@ -1,0 +1,108 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:render-context-v0.4"
+title: "Chrona Render Context v0.4"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: "chrona/presentation/v0.4"}
+  kind: {const: render-context}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [project, view, theme, layout, inputs, environment, target]
+    additionalProperties: false
+    properties:
+      project: {$ref: "#/$defs/projectRef"}
+      view: {$ref: "#/$defs/viewRef"}
+      theme: {$ref: "#/$defs/themeRef"}
+      layout: {$ref: "#/$defs/layoutRef"}
+      inputs:
+        type: object
+        additionalProperties: false
+        properties:
+          actual: {$ref: "#/$defs/actualRef"}
+          summaryProfile: {$ref: "#/$defs/summaryRef"}
+          detailProfile: {$ref: "#/$defs/detailRef"}
+      environment:
+        type: object
+        additionalProperties: false
+        required: [viewport, locale, fontMetrics, scenePrecision]
+        properties:
+          viewport:
+            type: object
+            additionalProperties: false
+            required: [inlineSize, blockSize]
+            properties:
+              inlineSize: {type: number, exclusiveMinimum: 0, maximum: 1000000}
+              blockSize: {type: number, exclusiveMinimum: 0, maximum: 1000000}
+          locale: {type: string, minLength: 1}
+          fontMetrics:
+            type: object
+            additionalProperties: false
+            required: [algorithm, assets, missingFont]
+            properties:
+              algorithm: {const: declared-metrics-v1}
+              assets:
+                type: array
+                minItems: 1
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [family, weight, revision, contentIdentity, path]
+                  properties:
+                    family: {type: string, minLength: 1}
+                    weight: {type: integer, minimum: 1, maximum: 1000}
+                    revision: {type: string, minLength: 1}
+                    contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+                    path: {type: string, pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+              missingFont: {enum: [diagnose, declared-fallback]}
+          scenePrecision: {type: integer, minimum: 0, maximum: 9}
+      target:
+        type: object
+        required: [kind, capabilities]
+        additionalProperties: false
+        properties:
+          kind: {const: svg}
+          capabilities:
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items: {type: string, minLength: 1}
+$defs:
+  reference:
+    type: object
+    required: [id, kind, store, address, revision, contentIdentity]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      kind: {type: string, minLength: 1}
+      store:
+        type: object
+        required: [provider, identity]
+        additionalProperties: false
+        properties:
+          provider: {enum: [git, local, content]}
+          identity: {type: string, minLength: 1}
+          locator: {type: string, minLength: 1}
+      address: {type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      revision:
+        type: object
+        required: [token]
+        additionalProperties: false
+        properties: {token: {type: string, minLength: 1, pattern: "^\\S+$"}}
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  projectRef:
+    allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: project}}}]
+  viewRef:
+    allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: view}}}]
+  themeRef:
+    allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: theme}}}]
+  layoutRef:
+    allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: layout-profile}}}]
+  actualRef:
+    allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: actual-set}}}]
+  summaryRef:
+    allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: summary-profile}}}]
+  detailRef:
+    allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: review-detail-profile}}}]

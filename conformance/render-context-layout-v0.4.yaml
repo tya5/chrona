@@ -1,0 +1,49 @@
+version: chrona/presentation/v0.4
+kind: render-context
+id: controller-z-intent-layout
+body:
+  project: &project
+    id: controller-z
+    kind: project
+    store: &store {provider: local, identity: review-store}
+    address: project.yaml
+    revision: &revision {token: snapshot-42}
+    contentIdentity: &identity sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  view:
+    id: executive-review
+    kind: view
+    store: *store
+    address: views/executive.yaml
+    revision: *revision
+    contentIdentity: *identity
+  theme:
+    id: executive-light
+    kind: theme
+    store: *store
+    address: themes/executive-light.yaml
+    revision: *revision
+    contentIdentity: *identity
+  layout:
+    id: executive-review
+    kind: layout-profile
+    store: *store
+    address: layouts/executive-review.yaml
+    revision: *revision
+    contentIdentity: *identity
+  inputs: {}
+  environment:
+    viewport: {inlineSize: 1600, blockSize: 900}
+    locale: en-US
+    fontMetrics:
+      algorithm: declared-metrics-v1
+      assets:
+        - family: Noto Sans
+          weight: 400
+          revision: noto-sans-v1
+          contentIdentity: *identity
+          path: fonts/noto-sans-400.json
+      missingFont: diagnose
+    scenePrecision: 3
+  target:
+    kind: svg
+    capabilities: [accessibleText, semanticRoles, sourceMetadata]

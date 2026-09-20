@@ -4,6 +4,10 @@
 **Basis:** ADR-0019. This specification adds an admission boundary without replacing
 Specifications 06/07/08/27/28/29.
 
+> **M24 integration:** Specification 33 is the sole composition authority. This
+> foundation receives its resolved Layout Manifest and never reinterprets the authoring
+> tree, supplies a missing distance, or retains the superseded settings layout path.
+
 ## 1. Goals and non-goals
 
 Compose tables, labels near bars, gate-explanation bands, and team lanes from shared

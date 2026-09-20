@@ -1,0 +1,19 @@
+version: chrona/layout-profile/v0.2
+id: invalid-offset
+writingMode: horizontal-tb
+root:
+  id: page
+  kind: overlay
+  inlineSize: fill
+  blockSize: fill
+  padding: {token: spacing.none}
+  children:
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: content
+      blockSize: content
+      place: {inline: center, block: center, safety: safe}
+      offsetX: 17
+      priority: required
+      overflow: diagnose

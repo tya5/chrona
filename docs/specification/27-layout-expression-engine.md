@@ -3,6 +3,10 @@
 **Status:** Design complete  
 **Owns:** M19–M22 declarative composition and its integration with existing presentation layers.
 
+> **M24 successor:** Specification 33 replaces the prototype authoring grammar and
+> runtime described here. This document remains historical ownership context for
+> M19–M22; it no longer defines the active Layout Profile shape or solver.
+
 ## 1. Unified ownership
 
 This specification replaces the M15 table-timeline profile as the composition authority.

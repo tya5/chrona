@@ -13,8 +13,9 @@ and semantic supplements refine this path.
 ## Presentation and review output
 
 Read `01` presentation vocabulary, `06` View, `07` Style/Theme, `13` Presentation
-Format, `29` Presentation Settings, `27` Layout, `30` Shared Foundation, and `08` Scene.
-Documents `24`–`26` and `28` are focused normative surface/detail contracts whose
+Format, `33` Intent-Oriented Layout, `30` Shared Foundation, and `08` Scene. Documents
+`27` and `29` provide historical M19–M23 context but their layout-authoring contracts
+are superseded by `33`. Documents `24`–`26` and `28` are focused normative surface/detail contracts whose
 historical milestone names do not change their ownership.
 
 ## Application, commands, storage, and extensions

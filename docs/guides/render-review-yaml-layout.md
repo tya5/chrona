@@ -49,3 +49,19 @@ an author should guess or maintain manually.
 The alpha CLI currently consumes a pre-materialized local snapshot. It does not yet
 claim a snapshot/materialization command. This distinction keeps the public surface
 honest while allowing View, Preset, and Profile files to be reused without duplication.
+
+## M24 target authoring layout
+
+M24 replaces the bundled Preset with independently reusable Theme and Layout resources:
+
+| Path | Target authority |
+|---|---|
+| `themes/organization.yaml` | typography, paint, symbols, and number tokens such as `spacing.m` |
+| `layouts/review-base.yaml` | complete intent-oriented composition tree |
+| `layouts/executive.yaml` | immutable base reference plus stable-node overrides only |
+| `views/executive.yaml` | fact selection/grouping/order and any repeated-source definition |
+| `details/review.yaml` | optional wording and source-labelled detail rows |
+| `render-context.yaml` | generated immutable references plus viewport, locale, metrics and target |
+
+The target Context references Theme and Layout separately. Complete Presentation
+Settings and whole-array Layout overrides are not author-facing or compatibility paths.

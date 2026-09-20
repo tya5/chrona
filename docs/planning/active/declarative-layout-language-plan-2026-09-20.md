@@ -1,6 +1,6 @@
 # Declarative Layout Language Plan — 2026-09-20
 
-**Status:** Approved plan — design is not complete and implementation is prohibited.
+**Status:** L24-D1–L24-D3 complete; implementation planning authorized.
 **Milestone:** M24 — Intent-oriented layout authoring
 **Purpose:** Replace number-heavy presentation authoring with a reusable, deterministic
 layout language while preserving the existing semantic and rendering authorities.

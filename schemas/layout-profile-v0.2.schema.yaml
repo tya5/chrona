@@ -1,0 +1,272 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:layout-profile-v0.2"
+title: "Chrona Intent-Oriented Layout Profile v0.2"
+type: object
+additionalProperties: false
+required: [version, id, writingMode]
+properties:
+  version: {const: "chrona/layout-profile/v0.2"}
+  id: {$ref: "#/$defs/id"}
+  writingMode: {enum: [horizontal-tb, vertical-rl, vertical-lr]}
+  extends: {$ref: "#/$defs/reference"}
+  overrides:
+    type: object
+    minProperties: 1
+    propertyNames: {$ref: "#/$defs/id"}
+    additionalProperties: {$ref: "#/$defs/override"}
+  root: {$ref: "#/$defs/container"}
+oneOf:
+  - required: [root]
+    not: {anyOf: [{required: [extends]}, {required: [overrides]}]}
+  - required: [extends, overrides]
+    not: {required: [root]}
+
+$defs:
+  id: {type: string, minLength: 1, maxLength: 256, pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
+  reference:
+    type: object
+    additionalProperties: false
+    required: [id, kind, store, address, revision, contentIdentity]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {const: layout-profile}
+      store:
+        type: object
+        additionalProperties: false
+        required: [provider, identity]
+        properties:
+          provider: {enum: [git, local, content]}
+          identity: {type: string, minLength: 1}
+          locator: {type: string, minLength: 1}
+      address: {type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      revision:
+        type: object
+        additionalProperties: false
+        required: [token]
+        properties: {token: {type: string, minLength: 1, pattern: "^\\S+$"}}
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  distance:
+    oneOf:
+      - {type: number, minimum: 0, maximum: 1000000}
+      - type: object
+        additionalProperties: false
+        required: [token]
+        properties: {token: {$ref: "#/$defs/id"}}
+  simpleSize:
+    oneOf:
+      - {enum: [content, min-content, max-content, fill]}
+      - type: object
+        additionalProperties: false
+        required: [fr]
+        properties: {fr: {type: number, exclusiveMinimum: 0, maximum: 1000000}}
+      - type: object
+        additionalProperties: false
+        required: [fixed]
+        properties: {fixed: {$ref: "#/$defs/distance"}}
+      - type: object
+        additionalProperties: false
+        required: [fitContent]
+        properties: {fitContent: {$ref: "#/$defs/distance"}}
+  size:
+    oneOf:
+      - {$ref: "#/$defs/simpleSize"}
+      - type: object
+        additionalProperties: false
+        required: [minmax]
+        properties:
+          minmax:
+            type: object
+            additionalProperties: false
+            required: [min, max]
+            properties: {min: {$ref: "#/$defs/simpleSize"}, max: {$ref: "#/$defs/simpleSize"}}
+      - type: object
+        additionalProperties: false
+        required: [aspectRatio]
+        properties: {aspectRatio: {type: number, exclusiveMinimum: 0, maximum: 1000000}}
+  padding:
+    oneOf:
+      - {$ref: "#/$defs/distance"}
+      - type: object
+        additionalProperties: false
+        required: [inlineStart, inlineEnd, blockStart, blockEnd]
+        properties:
+          inlineStart: {$ref: "#/$defs/distance"}
+          inlineEnd: {$ref: "#/$defs/distance"}
+          blockStart: {$ref: "#/$defs/distance"}
+          blockEnd: {$ref: "#/$defs/distance"}
+  alignment: {enum: [start, center, end, stretch, first-baseline, last-baseline]}
+  distribution: {enum: [start, center, end, space-between, space-around, space-evenly]}
+  place:
+    type: object
+    additionalProperties: false
+    required: [inline, block, safety]
+    properties:
+      inline: {$ref: "#/$defs/alignment"}
+      block: {$ref: "#/$defs/alignment"}
+      safety: {enum: [safe, strict]}
+  point: {enum: [start, center, end, first-baseline, last-baseline]}
+  anchor:
+    type: object
+    additionalProperties: false
+    required: [self, target]
+    properties:
+      self: {$ref: "#/$defs/anchorPoint"}
+      target:
+        type: object
+        additionalProperties: false
+        required: [ref, inline, block]
+        properties:
+          ref: {type: string, pattern: "^(parent|node:[A-Za-z][A-Za-z0-9._-]*|guide:[A-Za-z][A-Za-z0-9._-]*|barrier:[A-Za-z][A-Za-z0-9._-]*)$"}
+          inline: {$ref: "#/$defs/point"}
+          block: {$ref: "#/$defs/point"}
+      gap: {$ref: "#/$defs/distance"}
+  anchorPoint:
+    type: object
+    additionalProperties: false
+    required: [inline, block]
+    properties: {inline: {$ref: "#/$defs/point"}, block: {$ref: "#/$defs/point"}}
+  node:
+    oneOf:
+      - {$ref: "#/$defs/container"}
+      - {$ref: "#/$defs/slot"}
+  container:
+    oneOf:
+      - {$ref: "#/$defs/linear"}
+      - {$ref: "#/$defs/grid"}
+      - {$ref: "#/$defs/flow"}
+      - {$ref: "#/$defs/overlay"}
+  linear:
+    type: object
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, gap, padding, alignItems, justifyContent, children]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {enum: [row, column]}
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      cell: {$ref: "#/$defs/cell"}
+      gap: {$ref: "#/$defs/distance"}
+      padding: {$ref: "#/$defs/padding"}
+      alignItems: {$ref: "#/$defs/alignment"}
+      justifyContent: {$ref: "#/$defs/distribution"}
+      children: {type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  grid:
+    type: object
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, columnTracks, rowTracks, gap, padding, alignItems, justifyContent, children]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {const: grid}
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      columnTracks: {type: array, minItems: 1, items: {$ref: "#/$defs/size"}}
+      rowTracks: {type: array, minItems: 1, items: {$ref: "#/$defs/size"}}
+      gap: {$ref: "#/$defs/distance"}
+      padding: {$ref: "#/$defs/padding"}
+      alignItems: {$ref: "#/$defs/alignment"}
+      justifyContent: {$ref: "#/$defs/distribution"}
+      cell: {$ref: "#/$defs/cell"}
+      children: {type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  cell:
+    type: object
+    additionalProperties: false
+    required: [column, row]
+    properties:
+      column: {type: integer, minimum: 1, maximum: 10000}
+      row: {type: integer, minimum: 1, maximum: 10000}
+      columnSpan: {type: integer, minimum: 1, maximum: 10000}
+      rowSpan: {type: integer, minimum: 1, maximum: 10000}
+  flow:
+    type: object
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, itemMinInlineSize, gap, padding, alignItems, justifyContent, children]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {const: flow}
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      cell: {$ref: "#/$defs/cell"}
+      itemMinInlineSize: {$ref: "#/$defs/distance"}
+      gap: {$ref: "#/$defs/distance"}
+      padding: {$ref: "#/$defs/padding"}
+      alignItems: {$ref: "#/$defs/alignment"}
+      justifyContent: {$ref: "#/$defs/distribution"}
+      children: {type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  overlay:
+    type: object
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, padding, children]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {const: overlay}
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      cell: {$ref: "#/$defs/cell"}
+      padding: {$ref: "#/$defs/padding"}
+      guides:
+        type: object
+        propertyNames: {$ref: "#/$defs/id"}
+        additionalProperties: {$ref: "#/$defs/guide"}
+      barriers:
+        type: object
+        propertyNames: {$ref: "#/$defs/id"}
+        additionalProperties: {$ref: "#/$defs/barrier"}
+      children: {type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  guide:
+    type: object
+    additionalProperties: false
+    required: [axis, at]
+    properties:
+      axis: {enum: [inline, block]}
+      at:
+        oneOf:
+          - {enum: [start, center, end]}
+          - {type: string, pattern: "^[1-9][0-9]*/[1-9][0-9]*$"}
+  barrier:
+    type: object
+    additionalProperties: false
+    required: [axis, edge, members]
+    properties:
+      axis: {enum: [inline, block]}
+      edge: {enum: [start, end]}
+      members: {type: array, minItems: 1, uniqueItems: true, items: {$ref: "#/$defs/id"}}
+  slot:
+    type: object
+    additionalProperties: false
+    required: [id, kind, source, inlineSize, blockSize, place, priority, overflow]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {const: slot}
+      source:
+        enum: [title, table, timeline, timeline-axis, summary, legend, group-details, observations, milestones, annotations, notes]
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      priority: {enum: [required, preferred, optional]}
+      overflow: {enum: [diagnose, ellipsize-with-source, clip-optional]}
+      cell: {$ref: "#/$defs/cell"}
+  override:
+    type: object
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      gap: {$ref: "#/$defs/distance"}
+      padding: {$ref: "#/$defs/padding"}
+      alignItems: {$ref: "#/$defs/alignment"}
+      justifyContent: {$ref: "#/$defs/distribution"}
+      itemMinInlineSize: {$ref: "#/$defs/distance"}
+      priority: {enum: [required, preferred, optional]}
+      overflow: {enum: [diagnose, ellipsize-with-source, clip-optional]}
