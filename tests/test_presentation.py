@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.presentation_settings import PresentationSettingsError, builtin_bases, resolve_presentation_settings
+from chrona.presentation_settings import PresentationSettingsError, builtin_base_references, builtin_bases, resolve_presentation_settings
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +34,8 @@ def test_fixed_base_and_partial_override_are_resolved():
 @pytest.mark.parametrize("mutate, diagnostic", [
     (lambda value: value.update(version="unknown"), "E_PRESENTATION_SETTINGS_REQUIRED"),
     (lambda value: value["base"].update(id="gone"), "E_PRESENTATION_REFERENCE"),
+    (lambda value: value["base"].update(revision="other"), "E_PRESENTATION_REFERENCE"),
+    (lambda value: value["base"].update(contentIdentity="sha256:" + "1" * 64), "E_PRESENTATION_REFERENCE"),
     (lambda value: value["overrides"]["theme"]["bar"].update(radius=None), "E_PRESENTATION_PRESET_SCHEMA"),
 ])
 def test_invalid_authoring_resources_are_rejected(mutate, diagnostic):
@@ -44,8 +46,8 @@ def test_invalid_authoring_resources_are_rejected(mutate, diagnostic):
 
 
 def test_bases_are_data_not_renderer_defaults():
-    bases = builtin_bases()
-    bases["executive-v0.2"]["theme"]["bar"]["radius"] = 7
+    bases = builtin_base_references()
+    bases["executive-v0.2"]["settings"]["theme"]["bar"]["radius"] = 7
     value = fixture("presentation-preset-override-v0.2.yaml")
     value["overrides"].pop("theme")
     assert resolve_presentation_settings(value, bases=bases)["theme"]["bar"]["radius"] == 7
