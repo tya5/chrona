@@ -4,6 +4,18 @@
 validated and published.  
 **Normative design:** Specification 32 and ADR-0022.
 
+## Implementation status
+
+| Phase | Status | Published commit |
+|---|---|---|
+| Design | Complete | `7823848` |
+| R1 — Root documentation and contracts | Complete | `e3ef808` |
+| R2 — User examples | Complete | `171b0cd` |
+| R3 — Test topology | Complete | `e4b24b1` |
+| R4 — Source package relocation | In verification | — |
+| R5 — Presentation module decomposition | Pending | — |
+| R6 — Packaging and OSS closure | Pending | — |
+
 ## 1. Objective
 
 Convert the legacy artifact-oriented repository into the product-oriented layout in
@@ -124,7 +136,7 @@ Every phase runs:
 
 1. `git diff --check`;
 2. full `pytest`;
-3. `conformance/run.py` (or the pre-R1 legacy path for the design-only phase);
+3. `conformance/run_conformance.py` (or the pre-R1 legacy path for the design-only phase);
 4. path/reference search for former locations introduced by that phase;
 5. exact published-tree verification after GitHub update.
 
@@ -137,4 +149,3 @@ and CLI discovery.
 Moves use Git-aware renames where possible. Each phase begins at published `main` and
 has no dependency on unpublished work. GitHub updates are serial and non-forced. A phase
 that fails acceptance is not published and later phases do not start.
-
