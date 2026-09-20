@@ -176,6 +176,13 @@ theme:
     factory-team:
       color: '#F8E9EE'
       opacity: 1
+  facetPaints:
+    default:
+      planned: {color: '#3986E6', opacity: 1}
+      actual: {color: '#269D79', opacity: 1}
+      baseline: {color: '#3986E6', opacity: 1}
+      variance: {color: '#C8762B', opacity: 1}
+    groups: {}
   bar:
     radius: 2
     minWidth: 1
@@ -271,6 +278,15 @@ layout:
       region: main
       track: 1
       source: timeline
+      scaleId: primary
+      priority: required
+      overflow: diagnose
+      align: stretch
+    timelineAxis:
+      region: main
+      track: 1
+      source: timeline-axis
+      scaleId: primary
       priority: required
       overflow: diagnose
       align: stretch
@@ -287,6 +303,10 @@ layout:
     gap: 10
     headerHeight: 32
     labelAlign: center
+  labelPlacement:
+    candidateSides: [above, below, end, start, inside]
+    maxCandidates: 5
+    overflow: clip-optional
   row:
     sizing: fit
     height: 72
@@ -355,6 +375,12 @@ layout:
     portOffset: 8
     bendPenalty: 12
     strokeLayer: behind-marks
+    limit: 4096
+  lanes:
+    grouping: view-groups
+    stacking: stable-lowest-nonoverlap
+    occupancy: mark-bounds-plus-required-label-bounds
+    maxStack: 12
   legend:
     padding:
       top: 24
@@ -384,6 +410,10 @@ layout:
     panelGap: 6
     metricGap: 3
 detail:
+  labelRules:
+  - {id: title, source: title, facet: planned, endpoint: body, required: true}
+  - {id: actual-finish, source: actual-date, facet: actual, endpoint: finish, required: false}
+  - {id: finish-variance, source: comparison-delta, facet: variance, endpoint: finish, required: false}
   groupLabel: Owner
   subtitle: Silicon bring-up to mass production  /  {windowStart} – {windowLastVisible}
   accessibleDescription: Plan and Actual comparison. {selectedCount} rows; {unmatchedCount} unmatched
