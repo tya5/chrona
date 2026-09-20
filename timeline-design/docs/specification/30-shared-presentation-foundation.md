@@ -19,7 +19,7 @@
 | 色・線・文字・箱の装飾 | Theme | 注釈専用の独立テーマ系統を作らない |
 | 文言・許可された書式 | Detail | renderer内の独自テンプレート言語を作らない |
 | 領域・寸法・配置制約・探索方針 | Layout、既存Scene profileと正規化 | Viewにpixel座標を持たせない |
-| 文字と記号の計測入力 | 明示Render Contextの固定資産 | 通常字体で太字を代用しない |
+| 文字と記号の計測入力 | family×weightごとの明示Render Context固定資産 | 通常字体で太字を代用しない |
 | 具体的な形状・位置・接続・出所 | Scene | SVG adapterで再配置しない |
 
 共通の内部構成要素は、意味データを複製する新しい永続リソースではない。
@@ -31,6 +31,11 @@
 - 配置：共通の領域境界・障害物・候補選択を適用する。
 - 接続：依存線、注釈の引き出し線、説明矢印が経路探索機構を共有する。
   sourceKind、意味、可視性、端点規則、アクセシビリティは別々に保持する。
+
+`content` region/trackの寸法は、上記テキスト領域などが確定した後に生成する一時の
+`intrinsicBlocks` / `intrinsicTracks` 入力である。これをLayout又はViewへ永続化しない。
+同じ入力closure・font asset・locale・Scene候補順なら同じintrinsic値となることを
+受入条件とし、未計測値を固定pixel値へフォールバックしない。
 
 ## 3. 吹き出しの一般化
 
