@@ -1,75 +1,92 @@
-# G1–G4 ベース設計統合レビュー
+# G1–G4 Base-Design Integration Review
 
-対象revision: `82e59f6e13fde8f6582f538da24b7523854c2cde`（レビュー開始時の公開main）。
-対象はG1〜G4であり、仕様11〜14のレビューではない。
-状態: 要改善。既存のG1–G4一括完了判定は、本レビューの証拠に照らして維持できない。
-方法: Astra独立レビューと主担当によるソース照合・回帰・設計validator実行。実装変更なし。
+Target revision: `82e59f6e13fde8f6582f538da24b7523854c2cde` (published `main` at review start).
+Scope is G1–G4, not a review of Specifications 11–14.
+Status: Remediation required. Evidence in this review does not support the former
+combined G1–G4 completion judgment.
+Method: Independent Astra review plus source tracing, regression runs, and design
+validator execution by the primary owner. No implementation change.
 
-## 結論
+## Conclusion
 
-共通化の方向は妥当だが、ベース仕様08の「配置済みSceneをrendererが消費する」境界まで統合されていない。
-関数が存在することと、公開出力で設定が有効なことを同一視した完了判定が主要因である。
-特にG4は計算器までで、独立レーンの可視化は未接続。G3にもpurpose別契約の未実装が残る。
-164件のテスト成功は既存ケースの回帰証拠であり、仕様29〜31の網羅的適合証明ではない。
+The direction of consolidation is sound, but it does not yet reach Specification 08's
+boundary in which a renderer consumes a placed Scene. The central error was treating
+the existence of a function as equivalent to effective settings on public output. G4
+stopped at calculators and did not connect independent-lane visualization. G3 retained
+unimplemented purpose-specific contracts. The 164 passing tests prove regression of
+existing cases, not comprehensive conformance to Specifications 29–31.
 
-維持する点: Date-only軸・比較mark・設定解決・配置候補・lane割当の純粋関数化、Actualの計画代替禁止、
-Theme/Detail/Layoutのauthoring所有権、固定参照検査、既存サンプル回帰。全面書き直しは不要。
+Retain the pure Date-only axis, comparison-mark, settings-resolution, placement-
+candidate, and lane-assignment functions; the prohibition on completing Actual from
+planned; Theme/Detail/Layout authoring ownership; fixed-reference checks; and existing
+sample regressions. A full rewrite is unnecessary.
 
-## 実行した検証
+## Validation performed
 
-| 検証 | 結果 | 解釈 |
+| Validation | Result | Interpretation |
 |---|---|---|
-| `PYTHONPATH=src python -m pytest -q` | 164 passed、既存警告2件 | 既存ケースのみ |
-| `validate_presentation_g2_g4_design.py` | line 23 AssertionError | 削除済みnegative診断がexpectedに残存 |
-| `validate_shared_presentation_foundation.py` | 成功 | wireの構造検査 |
-| `validate_presentation_settings.py` | 2 schemas / 4 positive / 15 negative / 82 inventory groups成功 | 文言どおり設計構造のみ |
-| 本文なしhighlightのbox投影 | `E_PRESENTATION_LABEL_INPUT` | 装飾だけのpurposeに本文計測を要求 |
-| source/target付きexplanatory-arrowのanchor解決 | `E_PRESENTATION_ANCHOR_UNSUPPORTED` | 二端点入力がsingle anchor処理へ渡される |
+| `PYTHONPATH=src python -m pytest -q` | 164 passed, two existing warnings | Existing cases only |
+| `validate_presentation_g2_g4_design.py` | AssertionError at line 23 | Expected set retained a removed negative diagnostic |
+| `validate_shared_presentation_foundation.py` | Passed | Wire-structure check |
+| `validate_presentation_settings.py` | Two schemas, four positive, fifteen negative, and 82 inventory groups passed | Design structure only, as documented |
+| Project a bodyless highlight box | `E_PRESENTATION_LABEL_INPUT` | Decoration-only purpose incorrectly requires text measurement |
+| Resolve explanatory-arrow source/target anchors | `E_PRESENTATION_ANCHOR_UNSUPPORTED` | Two-endpoint input reaches single-anchor processing |
 
-実行Pythonは隣接chrona作業環境のvenv、import先は上記固定revision。テスト数以外は静的証拠か明示した直接probeであり、画像による全面QAは未実施。
+Python ran in an adjacent Chrona work environment's venv and imported the fixed target
+revision above. Other than test counts, the evidence is static or from the explicit
+probes shown; comprehensive visual QA was not performed.
 
-## 指摘一覧
+## Findings
 
-P0 = 完了・設計承認を妨げる問題。P1 = 宣言済み機能／構造の修復が必要。P2 = 拡張時の変更局所性・検証性を改善するもの。
+P0 blocks completion/design approval. P1 repairs declared functionality or structure.
+P2 improves change locality and verifiability for extension.
 
-| ID | 優先度 | 指摘と証拠 | 影響／対応 |
+| ID | Priority | Finding and evidence | Impact / response |
 |---|---|---|---|
-| R01 | P0 | `presentation_scene.py:15–22`は軸・意味mark・laneだけ。`gantt_surface.py:78–383`が計測、配置、purpose解釈、routingとSVG生成を実施。仕様08 §3/5/7と30 §2に不一致 | 共通Sceneは未完成。配置済みprimitiveと出所をSceneへ集約し、rendererを直列化に限定 |
-| R02 | P0 | `lane_stack_offset`は`presentation_lanes.py:83`で定義されるが呼出はtestのみ。SVGは`lane_tracks`を消費せず`gantt_surface.py:219–309`で常に1項目1行 | independent-lane-track設定が可視化されない。G4.2完了判定を再開し公開SVGまで接続 |
-| R03 | P0 | validator line23が実際に失敗。仕様31はrow-aligned metadata保持へ変更したがsettings/wire/preset schema説明は「stack 0 only」のまま | 仕様・schema・fixture・レビューの同時閉鎖が未達。設計検証を通常CIの必須ゲートへ |
-| R04 | P0 | `presentation_annotations.py:64–99`は全purposeにsingle anchorとtext boxを適用。`gantt_surface.py:357–382`も同じ処理 | highlightと二端点説明矢印を正しく描けない。purpose別の閉じた型と投影に分離 |
-| R05 | P1 | `gantt_surface.py:238–254,307–308,378–380`にbody/point中心と固定offset。`obstacles if b != own`は所有者IDでなく座標一致除外。resolverは候補の先頭を選択 | 他markの誤除外、内部portによる経路不能、複数slotで誤接続。slot/source/facet/purpose付きgeometry IDと形状由来portへ |
-| R06 | P1 | `presentation_marks.py:39`で比較modeによってplannedをbaselineへ改名。anchor resolverはplanned/actual完全一致。point ActualはSceneにあるがganttのpoint分岐はplannedだけ | 見た目変更で参照が壊れ、実績を落とす。semantic facetとvisual roleを分離し、全公開adapterで同じmarkを消費 |
-| R07 | P1 | `presentation_scene.py:37–44`のLaneItemはplanned日付のみ。required label/actual/point記号幅未投入。pointを1日占有へ変換 | 画面上の衝突を時間区間だけでは判定できない。共通scale上の測定済み占有を使い、pointの日付意味を変更しない |
-| R08 | P1 | `gantt_surface.py:314–321`はmonth/quarterのみ描画。設定にweek/dayを許容。月表示とscale/row寸法もadapterで再計算 | 軸primitive生成済みでもG1の公開表示未達。band bounds/labelを共通Sceneに確定 |
-| R09 | P1 | Ganttは`resolve_font_metrics`をweight省略で一度選択。太字出力にも同じ計測。actualHeight、point size、maxCandidates等の設定未消費、固定4/5/9/12/17などが残る | schema受理と出力の不一致。roleごとに計測と描画を共有し、全設定の変異テストを追加 |
-| R10 | P1 | annotation routeはlimitだけ受け取りclearance/gridOffset/portOffset/bendPenaltyを消費しない。既存dependency routerは別実装。解なしをlimit超過と同じ診断にする | 共通routing方針が分裂。探索核を共有し、sourceKind別policyと失敗理由を保持 |
-| R11 | P2 | Scene primitiveのstable sceneId、slot instance、input manifestとの統合が不十分。source_refだけでは複数primitiveを区別できない | Reactive UIや別backend追加で再実装が増える。仕様08/09のScene identityへ統一し、差分の局所性を検証 |
-| R12 | P1 | `gantt_surface.py:122–124`はslotのsourceでなくtable/timeline等のキー名に依存。`:339`はv0.2でも旧profileでroutingを制御。`:356,387–391`はannotations slotを使わず、Project注釈をnotesへ別列挙 | 正規化した設定・View選択を迂回する経路が残る。sourceによるslot解決とcapability検証を前段へ統合 |
+| R01 | P0 | `presentation_scene.py:15–22` contains only axes, semantic marks, and lanes; `gantt_surface.py:78–383` performs measurement, placement, purpose interpretation, routing, and SVG generation. This conflicts with Specifications 08 §§3/5/7 and 30 §2. | Shared Scene is incomplete. Consolidate placed primitives and provenance in Scene; restrict renderer to serialization. |
+| R02 | P0 | `lane_stack_offset` is defined at `presentation_lanes.py:83` but called only by tests. SVG ignores `lane_tracks` and always renders one item per row in `gantt_surface.py:219–309`. | Independent-lane-track is invisible. Reopen G4.2 and connect it through public SVG. |
+| R03 | P0 | The validator really fails at line 23. Specification 31 changed row-aligned to retain metadata, but settings/wire/preset schema text still says stack zero only. | Specification, schema, fixture, and review did not close together. Make design validation a required normal-CI gate. |
+| R04 | P0 | `presentation_annotations.py:64–99` applies a single anchor and text box to every purpose; `gantt_surface.py:357–382` does likewise. | Highlight and two-endpoint explanatory arrows cannot render correctly. Split into closed purpose-specific types and projections. |
+| R05 | P1 | `gantt_surface.py:238–254,307–308,378–380` contains body/point centers and fixed offsets. `obstacles if b != own` excludes by coordinate equality, not owner ID. The resolver selects the first candidate. | May exclude other marks, route from interior ports, or connect the wrong instance across slots. Use geometry IDs with slot/source/facet/purpose and shape-derived ports. |
+| R06 | P1 | `presentation_marks.py:39` renames planned to baseline according to comparison mode; anchor resolution requires exact planned/Actual. Point Actual exists in Scene but Gantt's point branch handles planned only. | Appearance changes break references and discard Actual. Separate semantic facet from visual role; consume the same marks in every public adapter. |
+| R07 | P1 | `LaneItem` at `presentation_scene.py:37–44` uses planned dates only. Required labels, Actual, and point-symbol width are absent; a point becomes one-day occupancy. | Temporal intervals cannot detect visible collisions. Use measured occupancy on the common scale without changing point-date semantics. |
+| R08 | P1 | `gantt_surface.py:314–321` draws only month/quarter although settings allow week/day. Month display and scale/row dimensions are recalculated in the adapter. | Public G1 display is incomplete despite generated primitives. Complete band bounds and labels in common Scene. |
+| R09 | P1 | Gantt calls `resolve_font_metrics` once without weight and reuses it for bold. `actualHeight`, point size, `maxCandidates`, and other settings are unconsumed; fixed values 4/5/9/12/17 remain. | Schema acceptance differs from output. Share measurement and drawing per role and add mutation tests for every setting. |
+| R10 | P1 | Annotation routing consumes only `limit`, not `clearance`, `gridOffset`, `portOffset`, or `bendPenalty`. The dependency router is separate. No-path and limit-exceeded share a diagnostic. | Common routing policy is split. Share the search core while preserving `sourceKind` policy and failure reason. |
+| R11 | P2 | Stable primitive `sceneId`, slot instances, and input-manifest integration are incomplete. `source_ref` alone cannot distinguish multiple primitives. | Reactive UI and other backends require repeated work. Unify on Specifications 08/09 Scene identity and test locality of diffs. |
+| R12 | P1 | `gantt_surface.py:122–124` depends on table/timeline key names instead of slot sources; `:339` controls routing from the legacy profile even for v0.2; `:356,387–391` bypasses the annotations slot and lists Project annotations separately as notes. | Normalized settings and View selection can be bypassed. Resolve by source and validate capabilities before rendering. |
 
-Astra独立レビューもR01/R02/R04を完了阻害と判定した。Astra側の指摘はコード追跡であり、上記の実行結果は主担当が同じrevisionで確認したもの。
+The independent Astra review also classified R01/R02/R04 as completion blockers. Its
+findings came from code tracing; the primary owner reproduced the execution evidence at
+the same revision.
 
-## レイヤー整合評価
+## Layer-consistency evaluation
 
-| 境界 | 評価 | 設計で確定すべきこと |
+| Boundary | Assessment | Design decision required |
 |---|---|---|
-| Core/Schedule → View Projection | 独立性を維持する方針は良い | 表示modeで意味facetを改名しない。新たな日付補完は禁止 |
-| View/Style/Theme/Detail/Layout → resolved input | 所有者分離はあるが出力まで未徹底 | 設定の唯一の消費者と適用範囲を一覧化 |
-| resolved input → geometric Scene | 最大の欠落 | 測定・配置・routingを完結し、adapterに日付やViewの再解釈を要求しない |
-| Scene → SVG / 他backend | Gantt/review/minimalで機能差 | 同一primitiveとcapability検証。legacyを別境界に隔離 |
-| schema → fixture → test → 完了判定 | 不一致を検出できない | validator成功だけでなく、宣言した設定がgeometryへ作用する証拠 |
+| Core/Schedule → View Projection | Independence direction is sound | Display mode never renames semantic facets; add no date completion |
+| View/Style/Theme/Detail/Layout → resolved input | Owners are separated but output does not consistently honor them | Inventory the sole consumer and scope of each setting |
+| Resolved input → geometric Scene | Largest gap | Complete measurement, placement, and routing without requiring adapter reinterpretation of dates or View |
+| Scene → SVG / other backend | Capabilities differ among Gantt/review/minimal | Use common primitives and capability validation; isolate legacy at a separate boundary |
+| Schema → fixture → test → completion | Current process misses inconsistency | Require not only validator success but evidence that declared settings affect geometry |
 
-## 拡張性と考慮漏れ
+## Extensibility and omitted combinations
 
-「共通化」は新しい万能DSLや任意プラグインの追加ではない。既存primitiveと測定結果の共有を優先する。
-重点の組合せは、Actual欠損／point Actual、baseline表示＋planned anchor、複数slotの同一object、長い日本語・太字、
-mark同座標・必須label衝突、lane高さ不足、route探索限界、全公開SVG経路である。
-G4のlabel配置とstack割当も循環し得るため、単にannotation boxを除外するだけで停止性を証明した扱いにしない。
-局所座標で有限候補を評価してからstackを確定する等の規範的手順を先に設計する。
-track pitchはbarだけでなくpoint・必要textの縦extentを包含する必要があり、現行式のmarkExtentの定義を閉鎖する。
+"Shared" does not mean a new universal DSL or arbitrary plugin framework. Prefer
+sharing existing primitives and measurement results. Priority combinations are missing
+Actual/point Actual, baseline display plus planned anchor, the same object in multiple
+slots, long Japanese or bold text, colocated marks and required-label collisions,
+insufficient lane height, route-search limits, and every public SVG path.
 
-## レビュー範囲の限界
+Label placement and stack assignment in G4 can also form a cycle; excluding annotation
+boxes alone does not prove termination. Specify a normative order, such as evaluating
+finite candidates in local coordinates before fixing stacks. Track pitch must cover
+the vertical extent of points and required text, not only bars; close the definition of
+`markExtent` in the current formula.
 
-Core全体のStable昇格、DateTime/DST、capacity、Federation等の完了判定は今回の対象外。
-古いSTATUSを根拠にそれらが未実装と断定しない。本書の指摘はG1–G4と接続先に限定する。
-対応順・受入条件は[改善計画](../planning/g1-g4-integration-remediation-2026-09-20.md)に示す。
+## Review-scope limits
+
+Stable promotion of all Core, DateTime/DST, capacity, Federation, and similar work is
+out of scope. Do not infer from an old STATUS file that they are unimplemented. These
+findings are limited to G1–G4 and connected paths. The remediation order and acceptance
+conditions are in the [remediation plan](../planning/g1-g4-integration-remediation-2026-09-20.md).

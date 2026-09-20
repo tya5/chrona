@@ -1,110 +1,153 @@
-# G1–G4 統合改善計画
+# G1–G4 Integration Remediation Plan
 
-状態: 提案。実装修正は未着手。レビュー対象revision `82e59f6e13fde8f6582f538da24b7523854c2cde`。
-根拠: [横断レビュー](../reviews/g1-g4-integration-audit-2026-09-20.md)。
-本書は既存「G1–G4完了」に対する是正提案であり、新機能拡張計画ではない。
+Status: Proposed. Implementation correction has not started. Review target revision:
+`82e59f6e13fde8f6582f538da24b7523854c2cde`.
+Basis: [cross-cutting review](../reviews/g1-g4-integration-audit-2026-09-20.md).
+This document corrects the former G1–G4 completion judgment; it is not a feature
+expansion plan.
 
-## 原則
+## Principles
 
-すべての設計是正を先に完了・検証・公開し、その後に実装する。sample名による分岐は禁止。
-既存の純粋関数を活用し、巨大rendererを小さな純粋な処理へ分割する。公開API互換は入口adapterで担保する。
-Core・Store・Commandの意味論は変更しない。計画の承認は実装完了を意味しない。
+Complete, validate, and publish every design correction before implementation. Branches
+on sample names are prohibited. Reuse existing pure functions and split large renderers
+into small pure operations. Preserve public API compatibility at entry adapters. Do not
+change Core, Store, or Command semantics. Approval of this plan does not mean
+implementation is complete.
 
-## 優先順と依存
+## Priority and dependencies
 
-| 順序 | フェーズ | 対象 | 成果／終了条件 |
+| Order | Phase | Scope | Deliverable / exit condition |
 |---|---|---|---|
-| 1 | D0 完了判定是正 | R01–04 | 計画・レビューの完了撤回、再現ケース登録、対象SHA固定、失敗validatorの原因記録 |
-| 2 | D1 全体境界設計 | R01,06,11,12 | 仕様08/09/29/30/31の依存と責務を統一。semantic facet / visual role / slot instance / Scene identityを定義 |
-| 3 | D2 全アルゴリズム設計 | R04–10 | purpose別注釈、port例外、占有・lane pitch・行対応、軸band、metrics、routing診断・有限停止性を確定 |
-| 4 | D3 設計同期・横断検証 | 全件 | owner schema・wire・正負fixture・migration・受入表・reviewを整合。base hash参照も更新。未決定ゼロで設計ゲート承認・公開 |
-| 5 | I1 共通Scene構築 | R01,06,08,09,11 | 意味markを保持したまま測定済みText/Rect/Symbol/Pathを生成。viewport/manifest/出所付き |
-| 6 | I2 配置・lane・routing接続 | R02,04,05,07,10 | 独立laneの高さ・offsetを最終Sceneに反映。注釈purpose・port・routeを共通実装へ |
-| 7 | I3 公開adapter移行 | R01,02,06,08,09,12 | Gantt/review/minimalが同じSceneを描画。日付・配置・文言の独自計算を撤去。legacy分離 |
-| 8 | V1 受入・完了レビュー | 全件 | 構造検査＋振舞い＋画像＋不変条件を通し、実装根拠付きで初めて完了に戻す |
+| 1 | D0 completion correction | R01–R04 | Withdraw completion in plans/reviews, register reproductions, fix target SHA, record the failed validator's cause |
+| 2 | D1 complete boundary design | R01, R06, R11, R12 | Unify dependencies and responsibilities across Specifications 08/09/29/30/31; define semantic facet, visual role, slot instance, and Scene identity |
+| 3 | D2 complete algorithm design | R04–R10 | Fix purpose-specific annotations, port exceptions, occupancy, lane pitch, row correspondence, axis bands, metrics, routing diagnostics, and finite termination |
+| 4 | D3 design synchronization and cross-validation | All | Align owner schemas, wire schema, positive/negative fixtures, migration, acceptance table, and review; update base-hash references; approve/publish with zero open design decisions |
+| 5 | I1 common Scene construction | R01, R06, R08, R09, R11 | Generate measured Text/Rect/Symbol/Path while preserving semantic marks, with viewport, manifest, and provenance |
+| 6 | I2 placement, lane, and routing connection | R02, R04, R05, R07, R10 | Apply independent-lane height/offset to the final Scene; move annotation purpose, ports, and routes to common implementations |
+| 7 | I3 public-adapter migration | R01, R02, R06, R08, R09, R12 | Gantt/review/minimal draw one Scene; remove private date, placement, and wording calculation; isolate legacy |
+| 8 | V1 acceptance and completion review | All | Pass structural, behavioral, image, and invariant checks; only then restore completion with implementation evidence |
 
-D0→D1→D2→D3が完了するまでI1を開始しない。各フェーズで対象差分をレビューして公開する。
-実装中に未設計事項が判明した場合も場当たり修正せず、影響を受ける設計一式を閉鎖してから再開する。
+Do not begin I1 until D0→D1→D2→D3 is complete. Review and publish target-only diffs
+after every phase. If implementation exposes an undesigned issue, do not patch it
+locally: close the full affected design set before resuming.
 
-## D0 実施記録
+## D0 execution record
 
-対象revisionは `82e59f6e13fde8f6582f538da24b7523854c2cde` と固定する。従前のG1–G4完了表記は、本計画と
-`g1-g4-integration-audit-2026-09-20.md` が示すR01–R04により撤回した。再現条件は、同revisionで
-`PYTHONPATH=src python timeline-design/docs/fixtures/validate_presentation_g2_g4_design.py` を実行すること。
-fixtureから削除済みの `E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE` をvalidatorの期待集合だけが保持していたため、
-line 23のAssertionErrorとなった。fixtureを再追加して診断を捏造せず、validator期待集合を現行fixtureへ同期した。
-この同期はR03の全体是正ではなく、D1–D3でowner schema・wire・正負fixture・受入根拠を閉鎖するまでG1–G4を再完了扱いしない。
+The target revision is fixed at `82e59f6e13fde8f6582f538da24b7523854c2cde`.
+R01–R04 in this plan and the integration audit withdraw the former G1–G4 completion
+statement. Reproduce at that revision with
+`PYTHONPATH=src python timeline-design/docs/fixtures/validate_presentation_g2_g4_design.py`.
+The validator alone still expected the removed diagnostic
+`E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE`, causing an AssertionError at line 23.
+The expectation was synchronized with the current fixture instead of fabricating the
+diagnostic again. This synchronization is not the full R03 correction; G1–G4 remains
+incomplete until D1–D3 close the owner schemas, wire schema, fixtures, and evidence.
 
-## D1/D2 実施記録
+## D1/D2 execution record
 
-D1で仕様08/09/29/30/31に`ResolvedPresentationInput`、semantic facetとvisual roleの分離、slotを含むprojection instance、Scene identity、adapter非再解釈を固定した。D2で仕様30 §7.5を唯一の有限投影手順とし、TextLayoutの一回測定、purpose別primitive、shape由来port、lane式、route limitとunroutableの診断分離を固定した。D3ではこの規則をschema、fixture、受入表、validatorへ同期する。I1はD3完了前に開始しない。
+D1 fixes `ResolvedPresentationInput`, separation of semantic facet from visual role,
+slot-bearing projection instances, Scene identity, and non-reinterpretation by adapters
+across Specifications 08/09/29/30/31. D2 makes Specification 30 §7.5 the sole finite
+projection procedure and fixes one-time TextLayout measurement, purpose-specific
+primitives, shape-derived ports, the lane formula, and separate route-limit versus
+unroutable diagnostics. D3 synchronizes these rules into schemas, fixtures, acceptance
+tables, and validators. I1 does not start before D3 completes.
 
-## D3 実施記録
+## D3 execution record
 
-wire schemaのrouting入力を`gridOffset`、`clearance`、`portOffset`、`bendPenalty`、`limit`へ閉鎖し、正負fixtureとvalidatorで検証する。row-alignedはstack 0制限を撤回し、Scene metadataとしてstackIndexを保持する。D1/D2で定めた境界と有限手順に対し、owner schema・wire・正負fixtureの矛盾は残さない。I1は仕様08/30の`ResolvedPresentationInput`から完成Sceneを構築し、adapterが意味・幾何を再解釈しないことを最初の受入条件とする。
+The wire-routing input closes over `gridOffset`, `clearance`, `portOffset`,
+`bendPenalty`, and `limit`, verified by positive/negative fixtures and a validator.
+`row-aligned` no longer requires stack zero; it retains `stackIndex` as Scene metadata.
+No inconsistency may remain among the D1/D2 boundary, finite procedure, owner schemas,
+wire schema, and fixtures. I1's first acceptance condition is a completed Scene from
+Specifications 08/30 `ResolvedPresentationInput` with no adapter reinterpretation of
+meaning or geometry.
 
-## I3着手時の設計補正
+## Design correction when starting I3
 
-I3のadapter移行確認で、Scene入力にsurface slot、row、lane trackの解決済みboundsを明記しなければadapterが座標を再計算することを検出した。仕様08/30を補正し、I3はこの入力をScene Builderへ移すまで中断する。既に公開したI1/I2のprimitive/track作業は移行途中の基盤であり、I3完了根拠には使用しない。
+Adapter-migration inspection found that adapters would recalculate coordinates unless
+resolved bounds for surface slots, rows, and lane tracks were explicit Scene inputs.
+Specifications 08/30 were corrected, and I3 paused until those inputs moved into the
+Scene Builder. Published I1/I2 primitive/track work is an intermediate foundation, not
+evidence of I3 completion.
 
-## I3 第2設計補正：公開surface instance
+## Second I3 design correction: public surface instances
 
-table/timeline adapterのrow/group移行後に、通常reviewとminimal SVG adapterが設定の
-margin/dayWidth/row heightと投影順からdate-to-x/item-to-yを再構成していることを確認した。
-これは仕様08のadapter禁止事項およびI3の全公開経路条件に反する。`table-timeline`、`review`、
-`minimal`をそれぞれ独立したsurface instanceとしてResolvedPresentationInputに列挙し、各々の
-title/timeline/axis/ordered-row boundsと完成primitiveをScene Builderが確定する設計へ補正する。
-同じscaleIdは正規化位置だけを共有し、origin、width、dayWidth、row heightを共有しない。必要な
-surface入力又はprimitiveが無い場合はadapterがfallback計算せず診断する。この補正の仕様・派生fixture・
-validatorを公開してから、review/minimalの実装移行を再開する。
+After row/group migration in the table/timeline adapter, the regular review and minimal
+SVG adapters were found to reconstruct date-to-X and item-to-Y from settings margins,
+day width, row height, and projection order. This violates Specification 08's adapter
+prohibitions and I3's all-public-path condition. `table-timeline`, `review`, and
+`minimal` are therefore independent surface instances in ResolvedPresentationInput.
+The Scene Builder fixes each instance's title/timeline/axis/ordered-row bounds and
+completed primitives. A common `scaleId` shares only normalized positions, never
+origin, width, day width, or row height. Missing surface input or primitives diagnose;
+the adapter does not calculate a fallback. Publish specification, derived fixture, and
+validator corrections before resuming review/minimal migration.
 
-## I3 完成primitive・adapter移行の閉鎖
+## Closure of completed primitives and adapter migration in I3
 
-I3は「Sceneを参照するmetadataを出した」時点では完了しない。全公開surfaceについて、adapterが
-自前の日付→X、行→Y、axis band/tick、mark、Text、connector、annotation、table/legend/summary geometryを
-再構成しない状態を受入条件とする。実装順、primitive family、未移行範囲、各公開境界は
-`i3-surface-adapter-completion-plan-2026-09-20.md` が所有する。
+I3 is not complete when Scene-derived metadata merely exists. On every public surface,
+the adapter must stop reconstructing date→X, row→Y, axis band/ticks, marks, Text,
+connectors, annotations, and table/legend/summary geometry. The implementation order,
+primitive families, remaining scope, and publication boundaries are owned by
+`i3-surface-adapter-completion-plan-2026-09-20.md`.
 
-I3-Aの設計閉鎖では、各surfaceにtitle/axis band/axis label/tick/comparison mark/item labelの完成primitiveを
-必須化し、`SceneSurface`がprimitiveを所有すること、primitive identity、Text payload/baseline、
-`E_PRESENTATION_SURFACE_MISSING` と `E_PRESENTATION_PRIMITIVE_MISSING` を固定する。これは実装着手の
-前提であり、I3-A以降のadapter実装はこの契約を再解釈してはならない。
+I3-A design closure requires completed title, axis-band, axis-label, tick,
+comparison-mark, and item-label primitives on each surface; ownership by
+`SceneSurface`; primitive identity; Text payload/baseline; and
+`E_PRESENTATION_SURFACE_MISSING` / `E_PRESENTATION_PRIMITIVE_MISSING`. This is an
+implementation prerequisite and MUST NOT be reinterpreted by I3-A-or-later adapters.
 
-## 提案する内部構造
+## Proposed internal structure
 
-1. 入力解決: View/Style/Theme/Detail/Layout/Contextの型・固定参照を検査し、source selectionを一度だけ決定。
-2. 意味投影: semantic facetと観測値を保持。baseline等の視覚表現を別属性とする。
-3. 測定: role・family・weight・locale・固定資産を受け、TextLayout（bounds、baseline、line、選択資産）を生成。
-4. 幾何配置: scale、axis band、item row／lane、labels、annotationsを有限手順で確定。
-5. 経路: 測定済みobstacleと形状portから有限経路を探索。dependency/leader/explanatory-arrowの意味はpolicyで分離。
-6. Scene確定: primitive、stable identity、sourceKind、bounds、z-order、manifest、diagnosticsをimmutableに保持。
-7. 出力: SVG等はprimitiveを直列化。日付計算・anchor選択・再測定・再配置を禁止。
+1. Input resolution: validate typed/fixed references for View, Style, Theme, Detail,
+   Layout, and Context; select sources once.
+2. Semantic projection: preserve semantic facets and observations; keep baseline and
+   other visual presentations as separate attributes.
+3. Measurement: consume role, family, weight, locale, and fixed assets; produce
+   TextLayout with bounds, baseline, lines, and selected asset.
+4. Geometry placement: resolve scale, axis bands, item rows/lanes, labels, and
+   annotations with finite procedures.
+5. Routing: search finitely from measured obstacles and shape ports; separate meanings
+   of dependency, leader, and explanatory arrow by policy.
+6. Scene finalization: immutably retain primitives, stable identity, `sourceKind`,
+   bounds, z-order, manifest, and diagnostics.
+7. Output: serialize primitives to SVG or another target; prohibit date calculation,
+   anchor selection, remeasurement, and replacement.
 
-既存`scene.py`と`presentation_scene.py`を無条件に並立させず、semantic入力DTOと幾何Sceneの役割を命名・型で区別する。
-永続authoring形式を増やさない。typed internal DTOは派生データであり、Scheduleの第二正本にしない。
+Do not keep `scene.py` and `presentation_scene.py` in unexplained parallel roles.
+Distinguish semantic input DTO from geometric Scene in names and types. Add no
+persistent authoring format; typed internal DTOs are derived data, not a second
+Schedule source of truth.
 
-## 必須受入ケース
+## Required acceptance cases
 
-| 分類 | ケース | 合格条件 |
+| Class | Case | Pass condition |
 |---|---|---|
-| G1軸 | quarter/month/week/day、clip、ISO年境界、複数slot | 全宣言levelのlabel/bandが出力され、共通scale上の位置が一致 |
-| G1比較 | point Actual、片端欠測、baseline＋planned annotation | Actualを捨てず、補完せず、表示modeでanchor identityが変わらない |
-| G2測定 | 太字、日本語、letter spacing、長文、maxCandidates変更 | 描画と衝突判定が同一TextLayoutを使い、探索数が契約どおり |
-| G3purpose | note/callout/highlight/二端点arrow、leaderなし | 各purposeのprimitive構成・sourceKind・参照が一致 |
-| G3port | body/start/finish/point、複数slot、同座標別mark | source IDに基づく除外。最初の出口segment以外で障害物内部を通らない |
-| G4 | 重なるplanned/actual/必須label、point記号、group順 | 計測済みgeometryからstack決定。track高不足は診断、group移動なし |
-| G4出力 | 同じprojectionでrow-alignedと独立laneを切替 | SVGのy座標とtrack背景が設計どおり変化。metadataだけの差を合格にしない |
-| 全経路 | Gantt/review/minimal、設定変異 | サポート設定が出力に作用するか、明示非対応診断。無言無視なし |
-| Reactive | 同一source複数slot、単一object更新 | sceneId衝突なし、無関係scopeの全再生成を要求しない |
-| 検証 | 全design validators＋unit＋integration＋画像 | validatorを通常CIへ含め、golden更新前に意味値・source ID・boundsを検証 |
+| G1 axis | Quarter/month/week/day, clipping, ISO-year boundary, multiple slots | All declared labels/bands render and positions agree on the shared scale |
+| G1 comparison | Point Actual, one missing endpoint, baseline plus planned annotation | Do not discard or complete Actual; display mode does not change anchor identity |
+| G2 measurement | Bold, Japanese, letter spacing, long text, changed `maxCandidates` | Drawing and collision use one TextLayout; search count follows the contract |
+| G3 purpose | Note/callout/highlight/two-endpoint arrow/no leader | Primitive composition, `sourceKind`, and references match each purpose |
+| G3 port | Body/start/finish/point, multiple slots, separate marks at same coordinates | Exclusion uses source ID; only the first exit segment may cross an obstacle interior |
+| G4 | Overlapping planned/actual/required labels, point symbols, group order | Stack from measured geometry; insufficient track height diagnoses; no group moves |
+| G4 output | Switch one projection between row-aligned and independent lane | SVG Y coordinates and track backgrounds change as designed; metadata-only differences do not pass |
+| All paths | Gantt/review/minimal and setting mutations | Supported settings affect output or explicitly diagnose unsupported; no silent ignore |
+| Reactive | Same source in multiple slots; one object update | No `sceneId` collision and no required full regeneration of unrelated scopes |
+| Validation | All design validators, unit/integration tests, and images | Include validators in normal CI; verify semantic values, source IDs, and bounds before golden update |
 
-## 最終完了条件
+## Final completion conditions
 
-- 各受入ケースを仕様節・schema path・実装symbol・test・出力artifactに対応付ける。
-- ASTER/Controller Zに加えsample非依存ケースを用いる。入力Project/Schedule/Actual不変を確認。
-- 画像差分を人間が確認できる形で保存し、golden再生成だけで合格にしない。
-- 設定消費表に「消費済み／明示非対応」を記載し、未消費を完了扱いしない。
-- 設計reviewと実装reviewを区別し、証拠・対象revision・未対応範囲を固定して公開。
+- Map every acceptance case to a specification section, schema path, implementation
+  symbol, test, and output artifact.
+- Use sample-independent cases in addition to ASTER/Controller Z; confirm immutable
+  input Project/Schedule/Actual.
+- Preserve image diffs for human review; regenerating goldens alone does not pass.
+- Mark each setting consumed or explicitly unsupported; do not complete unconsumed
+  settings.
+- Separate design and implementation reviews; publish fixed evidence, target revision,
+  and remaining scope.
 
-全面刷新、自由座標DSL、個別sample用renderer、任意拡張framework、新しい時間モデルは本計画に含めない。
-所要時間の精密な見積りはD3で変更面が閉じてから行う。現段階の最大リスクはScene移管に伴うAPIとgoldenの変更量である。
+This plan excludes a complete rewrite, free-coordinate DSL, per-sample renderer,
+arbitrary extension framework, and new temporal model. Estimate precisely only after
+D3 closes the change surface. The main current risk is API and golden-output churn
+while ownership moves into Scene.
