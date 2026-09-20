@@ -158,6 +158,7 @@
         "strokes",
         "groupPaints",
         "facetPaints",
+        "annotation",
         "bar",
         "point",
         "arrow",
@@ -1220,6 +1221,17 @@
             }
           },
           "description": "Facet-paint resolution is groups[groupId][facet], then default[facet], then normalized global role; group background paint remains groupPaints."
+        },
+        "annotation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["boxFill", "boxStroke", "leader"],
+          "properties": {
+            "boxFill": {"$ref": "#/$defs/paint"},
+            "boxStroke": {"$ref": "#/$defs/paint"},
+            "leader": {"$ref": "#/$defs/paint"}
+          },
+          "description": "Concrete shared annotation paints; Layout owns candidate geometry and routing limits."
         },
         "bar": {
           "type": "object",
