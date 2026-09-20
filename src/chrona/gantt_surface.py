@@ -190,6 +190,10 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         parts.append(text(table.x+group_width+i*cw+12, top-17, col['id'], fs, 700, purpose='table-header'))
 
     foreground, obstacles, anchors = [], [], {}
+    scene_marks = {}
+    if presentation_scene is not None:
+        for mark in presentation_scene.marks:
+            scene_marks.setdefault(mark.source_id, {})[mark.facet] = mark
     y = top
     for group_index, (gid, items) in enumerate(groups):
         group_top = y
@@ -212,26 +216,37 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                 foreground.append(wrapped(table.x+group_width+ci*cw+12, cy, value, cw-24, ref=item.object_id))
             py = cy-bg/2-bh
             if item.source_type == 'span':
-                x1, x2 = sx(item.planned['start']), sx(item.planned['end'])
+                planned_mark = scene_marks.get(item.object_id, {}).get('baseline') or scene_marks.get(item.object_id, {}).get('planned')
+                mark_start, mark_end = (planned_mark.start, planned_mark.end) if planned_mark else (item.planned['start'], item.planned['end'])
+                x1, x2 = sx(mark_start), sx(mark_end)
                 if x1 < left or x2 > right:
                     raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:window')
                 foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned, 'planned', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                 obstacles.append((x1-4, py-4, x2+4, py+bh+4))
                 anchors[item.object_id] = {'start': (x1, py+bh/2, -1), 'end': (x2, py+bh/2, 1)}
-                if item.actual and 'finish' in item.actual:
-                    a1, a2 = sx(item.actual.get('start', item.planned['start'])), sx(item.actual['finish'])
+                actual_mark = scene_marks.get(item.object_id, {}).get('actual')
+                if actual_mark is None and presentation_scene is None and item.actual and 'finish' in item.actual:
+                    from types import SimpleNamespace
+                    actual_mark = SimpleNamespace(start=item.actual.get('start', item.planned['start']), end=item.actual['finish'])
+                if actual_mark is not None:
+                    a1, a2 = sx(actual_mark.start), sx(actual_mark.end)
                     if a1 < left or a2 > right:
                         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:actual')
-                    foreground.append(rect(a1, cy+bg/2, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual, 'actual', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
-                    obstacles.append((a1-4, cy+bg/2-4, a2+4, cy+bg/2+bh+4))
-                    if surface.get('showVariance', True) and item.finish_delta:
+                    actual_y = py if settings and settings['layout']['bars']['comparisonMode'] == 'overlaid' else cy+bg/2
+                    foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual, 'actual', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
+                    obstacles.append((a1-4, actual_y-4, a2+4, actual_y+bh+4))
+                    delta_mark = scene_marks.get(item.object_id, {}).get('finish-delta')
+                    if delta_mark is None and presentation_scene is None and item.finish_delta is not None:
+                        from types import SimpleNamespace
+                        delta_mark = SimpleNamespace(variance_days=item.finish_delta)
+                    if surface.get('showVariance', True) and delta_mark is not None:
                         vx = max(x2, a2)+12
-                        label = f'{item.finish_delta:+d}d'
+                        label = f'{delta_mark.variance_days:+d}d'
                         if vx+60 > right: raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:variance')
                         foreground.append(rect(vx, py, 3, 2*bh+bg, variance, 'variance-marker', item.object_id))
                         foreground.append(text(vx+10, cy+5, label, 17, 700, variance, 'variance', item.object_id))
                         obstacles.append((vx-4, py-4, vx+57, cy+bh+bg/2+4))
-                else:
+                elif not item.actual:
                     foreground.append(text(x1, cy+bh+bg/2, 'Actual not reported', 12, fill=muted, purpose='missing-actual', ref=item.object_id))
                     obstacles.append((x1-4, cy+2, x1+112, cy+bh+bg/2+4))
             else:
@@ -244,22 +259,31 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             y += rh
         y += group_gap
 
-    # Calendar is clipped mathematically, not by hiding out-of-range labels.
-    cursor = date(start.year, start.month, 1)
-    while cursor < end:
-        next_month = date(cursor.year+1, 1, 1) if cursor.month == 12 else date(cursor.year, cursor.month+1, 1)
-        lo, hi = max(start, cursor), min(end, next_month)
-        x1, x2 = max(left, sx(lo)), min(right, sx(hi))
-        if 'month' in levels:
-            parts.append(text((x1+x2)/2, top-17, f'{cursor:%b %Y}', fs, 700, purpose='axis-band', anchor='middle'))
-        parts.append(f'<path data-purpose="axis-major" d="M{f(x1)} {f(table.y)}V{f(bottom)}" stroke="{grid}" stroke-dasharray="3 4"/>')
-        cursor = next_month
-    if 'quarter' in levels:
-        cursor = date(start.year, ((start.month-1)//3)*3+1, 1)
+    # Scene intervals are already clipped to the View window; adapter only maps them to x/y.
+    if presentation_scene is not None:
+        for interval in presentation_scene.axes:
+            x1, x2 = sx(interval.start), sx(interval.end)
+            if interval.level == 'month':
+                parts.append(text((x1+x2)/2, top-17, f'{interval.start:%b %Y}', fs, 700, purpose='axis-band', anchor='middle'))
+            elif interval.level == 'quarter':
+                parts.append(text((x1+x2)/2, table.y+20, f'Q{(interval.start.month-1)//3+1} {interval.start.year}', 13, 700, purpose='axis-quarter', anchor='middle'))
+        for tick in presentation_scene.ticks:
+            parts.append(f'<path data-purpose="axis-major" d="M{f(sx(tick.start))} {f(table.y)}V{f(bottom)}" stroke="{grid}" stroke-dasharray="3 4"/>')
+    else:
+        cursor = date(start.year, start.month, 1)
         while cursor < end:
-            nq = date(cursor.year+1, 1, 1) if cursor.month == 10 else date(cursor.year, cursor.month+3, 1)
-            parts.append(text((sx(max(start,cursor))+sx(min(end,nq)))/2, table.y+20, f'Q{(cursor.month-1)//3+1} {cursor.year}', 13, 700, purpose='axis-quarter', anchor='middle'))
-            cursor = nq
+            next_month = date(cursor.year+1, 1, 1) if cursor.month == 12 else date(cursor.year, cursor.month+1, 1)
+            x1, x2 = max(left, sx(cursor)), min(right, sx(next_month))
+            if 'month' in levels:
+                parts.append(text((x1+x2)/2, top-17, f'{cursor:%b %Y}', fs, 700, purpose='axis-band', anchor='middle'))
+            parts.append(f'<path data-purpose="axis-major" d="M{f(x1)} {f(table.y)}V{f(bottom)}" stroke="{grid}" stroke-dasharray="3 4"/>')
+            cursor = next_month
+        if 'quarter' in levels:
+            cursor = date(start.year, ((start.month-1)//3)*3+1, 1)
+            while cursor < end:
+                nq = date(cursor.year+1, 1, 1) if cursor.month == 10 else date(cursor.year, cursor.month+3, 1)
+                parts.append(text((sx(max(start,cursor))+sx(min(end,nq)))/2, table.y+20, f'Q{(cursor.month-1)//3+1} {cursor.year}', 13, 700, purpose='axis-quarter', anchor='middle'))
+                cursor = nq
     parts.append(f'<rect data-purpose="table-frame" x="{table.x}" y="{table.y}" width="{f(right-table.x)}" height="{table.height}" fill="none" stroke="{grid}"/>')
 
     if profile.get('constraints', {}).get('connectors') == 'obstacle-aware' and view['body'].get('visibility', {}).get('relations', 'semantic') != 'none':
