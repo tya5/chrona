@@ -477,7 +477,7 @@
       "dayWidth": 14,
       "paddingStart": 20,
       "paddingEnd": 20,
-      "singlePointSpanDays": 1
+      "singlePointSpanDays": 7
     },
     "bars": {
       "gap": 4,

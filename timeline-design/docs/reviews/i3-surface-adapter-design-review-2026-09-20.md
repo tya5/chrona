@@ -26,3 +26,10 @@ Scene Builderが所有し、adapterは選択と直列化のみを行う。core p
 
 上記を満たした後の最初の実装はI3-Bだけである。review/minimalのadapter書換え、connector、annotation、
 table cellはI3-Bの範囲外であり、同時実装しない。
+
+## 再オープン記録：単一点TextLayout
+
+`6412b80` の初回I3-B公開後、`singlePointSpanDays: 1`ではsurfaceのaxis/item textが測定幅を
+満たさないことを実行で確認した。既存設計が表示spanを設定所有としていたため、adapter側で日数や
+slot幅を補うことは許されない。仕様29、base fixture、fixed-value inventoryを7日表示spanへ同期し、
+overflow診断を明示した。この設計補正を公開してからI3-B実装を是正する。

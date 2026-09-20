@@ -798,7 +798,7 @@
         "dayWidth": 14,
         "paddingStart": 20,
         "paddingEnd": 20,
-        "singlePointSpanDays": 1
+        "singlePointSpanDays": 7
       },
       "source": "gantt_surface.py:render_gantt; render.py:render_svg",
       "note": "Padding is independent of semantic View window; one scale maps all projected endpoints."
