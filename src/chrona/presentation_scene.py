@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
+from types import SimpleNamespace
 from typing import Iterable
 
 from .presentation_axis import AxisInterval, axis_intervals
@@ -31,3 +32,19 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     ticks = axis_intervals(start, end, axis["tickUnit"], tick_step=axis["tickStep"])
     marks = comparison_marks(copied_items, comparison_mode=settings["layout"]["bars"]["comparisonMode"], show_zero=settings["layout"]["variance"]["showZero"])
     return PresentationScene(str(title), (start, end), axes, ticks, marks)
+
+
+def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:
+    """Adapt a resolved schedule to the shared Scene without making it authoritative."""
+    if not placements:
+        raise ValueError("E_PRESENTATION_MARK_INPUT")
+    items = []
+    dates: list[date] = []
+    for object_id, placement in placements.items():
+        source_type = "point" if "at" in placement else "span"
+        items.append(SimpleNamespace(object_id=object_id, source_type=source_type, planned=placement, actual=None))
+        dates.extend(placement.values())
+    start, end = min(dates), max(dates)
+    if start == end:
+        end += timedelta(days=settings["layout"]["scale"]["singlePointSpanDays"])
+    return build_presentation_scene(title, items, (start, end), settings)
