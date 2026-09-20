@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.1完了・公開準備。設計根拠は仕様30・ADR-0019。  
+**状態:** G1.2完了・公開済み。設計根拠は仕様30・ADR-0019。  
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -23,6 +23,14 @@ month、quarter、ISO week、dayの半開区間をclipし、natural calendar buc
 stable indexを返す。既存SVG rendererはまだこのモジュールを呼ばない。
 `tests/test_presentation_axis.py`はwindow境界、ISO週年、tick step、異常入力、
 再現性を検証する。135 tests passed（既存のRefResolver deprecation warnings 2件）。
+
+### G1.2 完了記録
+
+base presetはidだけでなくrevisionとexact-byte SHA-256を照合し、family×weightの
+font assetだけを選択する。`content` region/trackは明示intrinsic入力がなければ
+診断し、fixed/content→fractionとgap/min/maxを決定的に解決する。Aster 5枚と
+Controller Zの設定を新しいfont asset配列へ移行した。139 tests passed（既存の
+RefResolver deprecation warnings 2件）。
 
 ## G1.1 の契約
 
