@@ -131,13 +131,20 @@
               "type": "string",
               "maxLength": 4096
             },
-            "revision": {
-              "type": "string",
-              "maxLength": 4096
-            },
-            "contentIdentity": {
-              "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$"
+            "assets": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["family", "weight", "revision", "contentIdentity"],
+                "properties": {
+                  "family": {"type": "string", "minLength": 1, "maxLength": 4096},
+                  "weight": {"type": "integer", "minimum": 1, "maximum": 1000},
+                  "revision": {"type": "string", "minLength": 1, "maxLength": 4096},
+                  "contentIdentity": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+                }
+              }
             },
             "missingFont": {
               "enum": [
@@ -146,7 +153,7 @@
               ]
             }
           },
-          "description": "Fixture identity is illustrative, not an available asset. Closure must resolve a real immutable font-metric resource."
+          "description": "Each usable family/weight is an immutable asset. Closure must resolve an exact declared asset; the fixture identities are illustrative only."
         }
       }
     },
@@ -1207,7 +1214,6 @@
                 "additionalProperties": false,
                 "required": [
                   "kind",
-                  "value",
                   "min",
                   "max"
                 ],
@@ -1234,7 +1240,11 @@
                     "minimum": 0,
                     "maximum": 10000
                   }
-                }
+                },
+                "allOf": [
+                  {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
+                  {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+                ]
               },
               "tracks": {
                 "type": "array",
@@ -1244,7 +1254,6 @@
                   "additionalProperties": false,
                   "required": [
                     "kind",
-                    "value",
                     "min",
                     "max"
                   ],
@@ -1271,7 +1280,11 @@
                       "minimum": 0,
                       "maximum": 10000
                     }
-                  }
+                  },
+                  "allOf": [
+                    {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
+                    {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+                  ]
                 }
               },
               "gap": {
@@ -1459,7 +1472,6 @@
             "additionalProperties": false,
             "required": [
               "kind",
-              "value",
               "min",
               "max"
             ],
@@ -1486,7 +1498,11 @@
                 "minimum": 0,
                 "maximum": 10000
               }
-            }
+            },
+            "allOf": [
+              {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
+              {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+            ]
           },
           "description": "Empty means equal division by count, an explicit algorithm policy; keyed position follows View columns."
         },
