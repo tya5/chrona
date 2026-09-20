@@ -1,4 +1,4 @@
-# Chrona implementation checkpoint — 2026-09-17
+# Chrona implementation checkpoint — 2026-09-20
 
 ## Scope
 
@@ -30,6 +30,16 @@ candidate rather than treating the working tree as an unchanged snapshot.
   semantically, then schedules without an error diagnostic.
 - Zero-lag cycles, positive contradictory cycles, fixed-target authority, and
   explicit-anchor conflicts execute with their normative diagnostic IDs.
+- The issue-remediation program for GitHub issues 1–10 is complete: Core scheduling,
+  reproducible CLI inputs, legacy rendering isolation, content-addressed font metrics,
+  and declared presentation-setting consumption are covered by regression evidence.
+- M23 Review Detail is complete: schema/semantic validation, Layout-bound group detail,
+  source-labelled observations, milestone digest Scene/SVG primitives, and reproducible
+  Controller Z visual acceptance all pass without changing scheduling authority.
+- Post-M23 presentation regressions #14, #16, and #17 are corrected and closed with
+  exact published evidence; Aster and Controller Z artifacts are reproducible.
+- The complete test suite passes 248 tests, and the complete Chrona conformance runner
+  passes every stage.
 
 ## Stable promotion
 
@@ -45,3 +55,7 @@ becomes a persisted source of project semantics.
 DateTime/DST, rendering, capacity, collaboration, and extension implementations exist
 as versioned successor or adapter modules. They do not change Date-only Core v0.1
 meaning unless an explicit successor profile is selected.
+
+M22 remediation, M23 review-detail delivery, and the post-M23 issue closure program are
+complete. The Aster and Controller Z acceptance SVG/PNG resources are reproducible from
+their YAML resources with zero raster overflow.

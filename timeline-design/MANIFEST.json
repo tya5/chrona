@@ -12,8 +12,6 @@
     "docs/specification/12-quality-and-invariants.md"
   ],
   "known_provisional_areas": [
-    "issue remediation program (active)",
-    "M23 review-detail surfaces (deferred)",
     "DateTime scheduling profile (versioned successor)",
     "precision/uncertainty (deferred)",
     "multi-file composition (deferred)",

@@ -76,6 +76,12 @@ def test_each_slide_reproduces_and_preserves_facts(index):
         nand = next(item for item in projection.items if item.object_id == 'nand')
         assert nand.finish_delta == 5 and nand.actual['finish'] == date(2027, 3, 8)
     elements = list(ET.fromstring(svg).iter())
+    if index == 0:
+        shades = [e for e in elements if e.get('data-purpose') == 'row-shade']
+        assert shades and {(e.get('fill'), e.get('opacity')) for e in shades} == {('#22364D', '0.45')}
+        milestones = [e for e in elements if e.get('data-purpose') == 'milestone']
+        assert milestones and {e.get('fill') for e in milestones} == {'#F3F2EC'}
+        assert not any(e.get('data-purpose') == 'item-label' for e in elements)
     selected = {item.object_id for item in projection.items}
     expected = {edge['id'] for edge in project['relations'] if edge['from']['object'] in selected and edge['to']['object'] in selected}
     assert {e.get('data-source-ref') for e in elements if e.get('data-purpose') == 'routed-connector'} == expected

@@ -5,12 +5,11 @@ This is a verification harness, not a renderer or a preset implementation.
 from __future__ import annotations
 
 from copy import deepcopy
-from hashlib import sha256
 from pathlib import Path
-import subprocess
 import sys
 import argparse
 import os
+import subprocess
 
 import yaml
 
@@ -40,12 +39,6 @@ def main() -> None:
     result = schedule(project)
     assert result.ok
     settings = deepcopy(builtin_bases()["executive-v0.2"])
-    for asset, style_name in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        font_path = Path(subprocess.run(
-            ["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style_name}"],
-            capture_output=True, text=True, check=True,
-        ).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(font_path.read_bytes()).hexdigest()
     if args.settings:
         settings = yaml.safe_load(args.settings.read_text())
     projection = build_review_projection(project, result.placements, view, actual, style, theme)

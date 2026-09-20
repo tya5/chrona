@@ -34,6 +34,16 @@ def main():
     override = yaml.safe_load((DOCS / "fixtures/presentation-preset-override-v0.2.yaml").read_text())
     settings.validate(fixture)
     preset.validate(override)
+    m23_override = deepcopy(override)
+    m23_override["overrides"].setdefault("layout", {}).setdefault("slots", {}).update({
+        "groupDetails": {"region": "detail", "track": 0, "source": "group-details",
+                         "priority": "required", "overflow": "diagnose", "align": "stretch"},
+        "observations": {"region": "detail", "track": 1, "source": "observations",
+                         "priority": "required", "overflow": "diagnose", "align": "stretch"},
+        "milestones": {"region": "detail", "track": 2, "source": "milestones",
+                       "priority": "required", "overflow": "diagnose", "align": "stretch"},
+    })
+    preset.validate(m23_override)
     base_bytes = (DOCS / "fixtures/presentation-settings-executive-v0.2.json").read_bytes()
     assert override["base"]["contentIdentity"] == f"sha256:{sha256(base_bytes).hexdigest()}"
     preset.validate({"version": "chrona/presentation-preset/v0.2", "id": "complete", "settings": fixture})
@@ -79,7 +89,7 @@ def main():
     missing = deepcopy(fixture)
     del missing["theme"]["bar"]["radius"]
     assert not settings.is_valid(missing)
-    print(f"PASS: 2 schemas, 4 positive fixtures, {len(cases) + 1} negative fixtures, {len(paths)} inventory groups")
+    print(f"PASS: 2 schemas, 5 positive fixtures, {len(cases) + 1} negative fixtures, {len(paths)} inventory groups")
     print("Design structure only: font assets, semantic closure and rendering remain implementation gates.")
 
 

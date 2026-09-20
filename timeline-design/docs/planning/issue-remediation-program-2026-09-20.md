@@ -1,6 +1,6 @@
 # Issue Remediation Program — 2026-09-20
 
-**Status:** Design complete; implementation authorized in the phases below  
+**Status:** Complete — R0 acceptance passed on 2026-09-20
 **Scope:** GitHub issues 1–10 reviewed against `main` at `e9c64e4`  
 **Exclusion:** M23 review-detail surfaces remain deferred
 
@@ -132,6 +132,27 @@ classification.
 | I2 | Exact font-metrics table resolver and Linux/macOS CI. | No `fc-match` or font-file opening; identity/family/weight tests; full suite. |
 | I3 | Axis formats/year, point/arrow shapes, opacity, actual-height evidence. | Settings consumption tests, visual artifacts, full suite. |
 | R0 | Full conformance, acceptance review, issue evidence and closure. | Published SHA equals verified local state. |
+
+## 8. Completion record
+
+All authorized phases are complete. The published implementation checkpoints are:
+
+| Phase | Published commit | Result |
+|---|---|---|
+| D0 | `a1629f5` | Repository authority, compatibility, CLI, font, and presentation decisions published before implementation. |
+| I0 | `70a558b` | Deterministic scheduling, endpoint/mode diagnostics, composite WorkPeriod handling, bounds, anchors, and empty-calendar validation accepted. |
+| I1 | `ddad395` | Snapshot-bound CLI input, common-Scene render input, legacy isolation/layout, documentation, and controller-x regression accepted. |
+| I2 design correction | `734d423` | Host-independent content-addressed metrics-table boundary published before the corrected implementation. |
+| I2 | `821edb3` | Metrics-table resolver and platform-independent font evidence accepted. |
+| I3 | `e53e603` | Axis formatting, point/arrow shapes, opacity, and independent planned/Actual height evidence accepted. |
+| R0 | commit containing the R0 review | Full regression, conformance, milestone reconciliation, and issue disposition accepted. |
+
+The complete suite passes 207 tests. The complete conformance runner passes every
+stage. The final acceptance record is
+`../reviews/r0-issue-remediation-acceptance-review-2026-09-20.md`. GitHub issue comments
+bind each closure to the exact published R0 commit after its branch update is verified.
+
+No part of this program authorizes the deferred M23 review-detail surfaces.
 
 Implementation stops whenever it discovers an unowned semantic choice. The choice is
 first added to this program and its owning specification, validated, and published;

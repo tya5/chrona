@@ -34,7 +34,10 @@ assert "missing-surface-or-primitive-is-a-stable-diagnostic" in case["invariants
 assert "primitive-family-presence-is-authorized-by-surface-slot-and-visibility" in case["invariants"]
 assert "routes-ports-and-text-layout-are-scene-owned" in case["invariants"]
 assert case["inputs"]["primitivePayloads"]["Text"] == ["text", "textLayout"]
+assert case["inputs"]["primitivePayloads"]["Rect"] == ["bounds", "optionalCornerRadius"]
 assert case["inputs"]["primitivePayloads"]["connectorPath"] == ["points", "fromPortId", "toPortId"]
+assert case["inputs"]["comparisonMarkMetadata"] == ["laneGroupId", "stackIndex"]
+assert set(case["inputs"]["conditionalFamilies"]) == {"missingActual", "variance", "annotation", "summary"}
 assert "primitive-kind-payload-mismatch-is-a-stable-diagnostic" in case["invariants"]
 content = case["inputs"]["surfaceContentInput"]
 assert content["adapterVisible"] is False
@@ -60,4 +63,6 @@ assert manifest["adapterBoundary"] == "identical-scale-record-on-selected-scene-
 assert case["inputs"]["diagnostics"]["successfulInitialProfile"] == []
 assert "manifest-is-derived-and-non-authoritative" in case["invariants"]
 assert "adapters-preserve-surface-scale-record-without-reconstruction" in case["invariants"]
+assert "consumption-proof-uses-trigger-fixtures" in case["invariants"]
+assert "v0.2-settings-layout-is-not-shadowed-by-v0.1-profile" in case["invariants"]
 print("presentation-scene-input derived fixture valid")

@@ -10,8 +10,8 @@ from datetime import date, timedelta
 from typing import Literal
 
 
-AxisLevel = Literal["quarter", "month", "week", "day"]
-_LEVELS = frozenset({"quarter", "month", "week", "day"})
+AxisLevel = Literal["year", "quarter", "month", "week", "day"]
+_LEVELS = frozenset({"year", "quarter", "month", "week", "day"})
 _ERROR = "E_PRESENTATION_AXIS_INVALID"
 
 
@@ -24,6 +24,7 @@ class AxisInterval:
     level: AxisLevel
     label: str
     index: int
+    natural_start: date
 
 
 def axis_intervals(start: date, end: date, level: AxisLevel, *, tick_step: int = 1) -> tuple[AxisInterval, ...]:
@@ -51,6 +52,7 @@ def axis_intervals(start: date, end: date, level: AxisLevel, *, tick_step: int =
                 level=level,
                 label=_label(bucket_start, level),
                 index=index,
+                natural_start=bucket_start,
             ))
         bucket_start = bucket_end
         index += 1
@@ -64,6 +66,8 @@ def _bucket_start(value: date, level: AxisLevel) -> date:
         return value - timedelta(days=value.weekday())
     if level == "month":
         return value.replace(day=1)
+    if level == "year":
+        return date(value.year, 1, 1)
     return date(value.year, ((value.month - 1) // 3) * 3 + 1, 1)
 
 
@@ -74,6 +78,8 @@ def _next_bucket_start(value: date, level: AxisLevel) -> date:
         return value + timedelta(days=7)
     if level == "month":
         return date(value.year + 1, 1, 1) if value.month == 12 else date(value.year, value.month + 1, 1)
+    if level == "year":
+        return date(value.year + 1, 1, 1)
     return date(value.year + 1, 1, 1) if value.month == 10 else date(value.year, value.month + 3, 1)
 
 
@@ -85,4 +91,45 @@ def _label(natural_start: date, level: AxisLevel) -> str:
         return f"{iso_year}-W{iso_week:02d}"
     if level == "month":
         return f"{natural_start:%Y-%m}"
+    if level == "year":
+        return str(natural_start.year)
     return f"{natural_start.year}-Q{(natural_start.month - 1) // 3 + 1}"
+
+
+_SHORT_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+_LONG_MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+
+def format_axis_label(interval: AxisInterval, formatting: dict, locale: str) -> str:
+    """Format one natural bucket without consulting the process locale."""
+    value, level = interval.natural_start, interval.level
+    language = locale.split("-", 1)[0].lower()
+    if level == "year":
+        return str(value.year)
+    if level == "quarter":
+        quarter = f"Q{(value.month - 1) // 3 + 1}"
+        style = formatting["quarter"]
+        if style == "quarter":
+            return quarter
+        if language == "ja":
+            return f"{value.year}年{quarter}" if style == "year-quarter" else f"{quarter} {value.year}年"
+        return f"{value.year} {quarter}" if style == "year-quarter" else f"{quarter} {value.year}"
+    if level == "month":
+        style = formatting["month"]
+        if language == "ja":
+            month = f"{value.month}月"
+            return month if style in {"short-month", "long-month", "numeric-month"} else f"{value.year}年{month}"
+        short, long = _SHORT_MONTHS[value.month - 1], _LONG_MONTHS[value.month - 1]
+        return {
+            "short-month-year": f"{short} {value.year}",
+            "long-month-year": f"{long} {value.year}",
+            "numeric-year-month": f"{value.year}-{value.month:02d}",
+            "short-month": short,
+            "long-month": long,
+            "numeric-month": f"{value.month:02d}",
+        }[style]
+    if level == "day" and formatting["date"] == "localized-date":
+        if language == "ja":
+            return f"{value.year}/{value.month:02d}/{value.day:02d}"
+        return f"{_SHORT_MONTHS[value.month - 1]} {value.day}, {value.year}"
+    return interval.label

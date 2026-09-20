@@ -10,12 +10,22 @@ Date-only scheduling profile; successor DateTime, capacity, collaboration, and
 presentation capabilities are opt-in versioned profiles rather than changes to
 Date-only meaning.
 
+![Presentation slide rendered by Chrona: a 1600x900 dark Gantt showing the ASTER
+qualification and production phase, with baseline and observed bars, finish
+variance markers, gates and routed dependencies](examples/aster-ssd/04-qualification-production.png)
+
+<sup>One of five slides in [`examples/aster-ssd`](examples/aster-ssd), rendered
+from YAML with no per-sample renderer code. The chart is a derived artifact:
+edit the project, re-run, and the slide follows.</sup>
+
 ## What is usable today
 
 - deterministic Date / CalendarPeriod / WorkPeriod arithmetic;
 - project JSON-Schema validation plus Core v0.1 semantic validation;
 - endpoint-based dependency lower bounds and Date-only scheduled-span placement;
-- executable conformance checks for the canonical Core v0.1 fixture.
+- executable conformance checks for the canonical Core v0.1 fixture;
+- deterministic Plan/Actual review SVGs with YAML-controlled legend, group detail,
+  source-labelled observations, and milestone digests.
 
 ## Quick start
 
@@ -39,6 +49,10 @@ chrona schedule \
 
 Use `chrona render --presentation-settings settings.yaml` for the common v0.2 Scene
 path. Omitting settings intentionally selects the diagnostic legacy adapter.
+
+`chrona render-review` accepts `--detail-profile` together with v0.2 presentation
+settings. The checked-in Controller Z detail resources demonstrate the complete M23
+path and produce `examples/controller-z-review-detail.svg`.
 
 `chrona schedule` is a reference implementation for the acyclic Date-only
 subset. It reports diagnostics for unsupported cycles rather than treating all
@@ -64,6 +78,44 @@ annotations, render:
 ```bash
 chrona render examples/controller-z-silicon-bringup.yaml --output controller-z-silicon-bringup.svg
 ```
+
+## Presentation slides
+
+A Plan/Actual review surface is rendered with `chrona render-review`, which takes
+the project plus the resources that describe the presentation — what to select,
+how to style it, and how to lay it out:
+
+```bash
+chrona render-review examples/controller-z-silicon-bringup.yaml \
+  --actual  examples/controller-z-actual.yaml \
+  --view    examples/controller-z-executive-view.yaml \
+  --style   examples/controller-z-review-style.yaml \
+  --theme   examples/controller-z-executive-theme.yaml \
+  --profile examples/controller-z-executive-layout.yaml \
+  --presentation-settings examples/controller-z-editorial-settings.yaml \
+  --output  executive.svg
+```
+
+Appearance lives in those documents, not in renderer code, so a different look is
+a different settings file against the same project.
+
+To build a deck rather than a single chart, describe the slides in a manifest and
+render them together:
+
+```bash
+python scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml --no-raster
+```
+
+The manifest names the shared project, actual, style, theme and profile, then one
+entry per slide giving its view, its settings and its output path. The schedule is
+solved **once** and reused for every slide, so dates cannot drift between them.
+Slides that are 16:9 are also collected into a single `slides.html` gallery, which
+prints one slide per page.
+
+[`examples/aster-ssd`](examples/aster-ssd) is the worked example: a 24-object,
+28-dependency program across two work calendars, projected into four 1600x900
+slides plus a tall master view. Drop `--no-raster` to also write PNG previews;
+that path additionally requires node with `sharp`.
 
 ## Specification
 

@@ -50,6 +50,11 @@ theme:
       weight: 700
       lineHeight: 1.2
       letterSpacing: 0.2
+    year:
+      size: 13
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
     month:
       size: 14
       weight: 700
@@ -112,7 +117,7 @@ theme:
       color: '#12A87F'
       opacity: 1
     milestone:
-      color: '#4A84E8'
+      color: '#BE8730'
       opacity: 1
     varianceAhead:
       color: '#12A87F'
@@ -133,8 +138,8 @@ theme:
       color: '#111A2E'
       opacity: 1
     rowShade:
-      color: '#0A0F1E'
-      opacity: 1
+      color: '#FFFFFF'
+      opacity: 0.035
   strokes:
     axisMajor:
       color: '#22314F'
@@ -179,16 +184,16 @@ theme:
   facetPaints:
     default:
       planned:
-        color: '#3986E6'
+        color: '#4A84E8'
         opacity: 1
       actual:
-        color: '#269D79'
+        color: '#12A87F'
         opacity: 1
       baseline:
-        color: '#3986E6'
+        color: '#4A84E8'
         opacity: 1
       variance:
-        color: '#C8762B'
+        color: '#FF5C7A'
         opacity: 1
     groups: {}
   annotation:
