@@ -51,3 +51,10 @@ def test_bases_are_data_not_renderer_defaults():
     value = fixture("presentation-preset-override-v0.2.yaml")
     value["overrides"].pop("theme")
     assert resolve_presentation_settings(value, bases=bases)["theme"]["bar"]["radius"] == 7
+
+
+def test_axis_slot_requires_the_timeline_scale_identity():
+    value = builtin_bases()["executive-v0.2"]
+    value["layout"]["slots"]["timelineAxis"]["scaleId"] = "secondary"
+    with pytest.raises(PresentationSettingsError, match="E_PRESENTATION_SCALE_MISMATCH"):
+        resolve_presentation_settings(value)
