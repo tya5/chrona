@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.4完了・公開済み。G2–G4の設計ゲートは完了・公開待ち。設計根拠は仕様30・31・ADR-0019、owner schema、正負fixture、横断reviewである。G2実装はこれらの公開確認後に開始する。  
+**状態:** G1.4・G2・G4 Scene metadata完了・公開済み。G3 visualとG4縦offset adapterは停止中。G3 anchor obstacle是正の設計根拠（仕様31、wire contract、正負fixture、横断review、計画）が公開・検証されるまで再開しない。  
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -19,7 +19,7 @@
 ### G2–G4 設計ゲート
 
 仕様31がG2–G4のauthoring owner、有限アルゴリズム、診断、禁止救済を固定する。
-owner schema、正負fixture、横断reviewを追加済みであり、この設計成果物の公開確認後にのみG2実装を再開する。
+owner schema、正負fixture、横断reviewを追加済みである。G3については、box候補時に自身のanchor markだけを除外し、routingで全markを復帰させ、annotation boxをlane occupancyから除く是正を、上記の全成果物で公開・検証した後にのみvisual実装を再開する。G4の実際の縦offsetは、そのrow-height/stack-pitch契約を設計で閉鎖するまで開始しない。
 
 ### G1.1 完了記録
 
