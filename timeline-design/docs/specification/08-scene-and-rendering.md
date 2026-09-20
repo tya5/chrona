@@ -260,6 +260,16 @@ timeline and row bounds.  A span uses `[start,end)`; a point uses its exact `at`
 position.  Actual, baseline, and variance primitives are never synthesized from a
 planned placement.
 
+Paint resolution is keyed by primitive kind and purpose as well as `visualRole`.
+An axis-band Rect uses the resolved axis surface/stroke token as its background, while
+its axis-label Text uses the resolved foreground text paint and the level-specific
+typography. Likewise, a table-header-band Rect uses the table-header surface paint,
+while table-column-label Text uses foreground text paint and table-header typography.
+An adapter MUST NOT flatten these foreground and background mappings into one color per
+role. Required foreground Text and its containing background MUST differ in resolved
+color; equality is a failed presentation validation result, never an accepted invisible
+label.
+
 Table cells, group decoration, semantic dependency paths, annotation boxes/leaders,
 legends, and summary panels are distinct primitive families.  They remain in the
 Scene Builder's I3 completion scope and must be migrated in the documented order;

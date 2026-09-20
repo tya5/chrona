@@ -1,7 +1,8 @@
 # I3 Public Surface-Adapter Completion Plan
 
-**Status:** Complete. I3-A through I3-F, the V1 manifest, and the final acceptance
-review are implemented, validated, and published.
+**Status:** Reopened for V1 foreground/background contrast correction. I3-A through
+I3-F and the manifest remain complete; final acceptance is suspended until regenerated
+axis and table-header labels are visibly distinct from their backgrounds.
 
 ## Goal
 
@@ -157,6 +158,21 @@ SVG inspection artifacts. The final suite passes 179 tests with two existing
 `RefResolver` deprecation warnings; the complete conformance runner passes. The V1
 acceptance review maps every required case to its specification, implementation, test,
 and artifact. No I3 implementation scope remains.
+
+### V1 contrast reopening
+
+Post-publication inspection found that the serializer flattened the `month` and
+`tableHeader` roles to one color for both background Rects and foreground Text. ASTER
+therefore contained valid month and column-label strings that were invisible because
+their `fill` exactly equaled the containing band. This invalidates the prior visual
+acceptance conclusion but does not reopen Scene geometry or authoring ownership.
+
+Before implementation resumes, Specifications 08/30 close kind/purpose-aware paint
+mapping: axis-label and table-column-label Text use foreground text paint while retaining
+their existing level/table-header typography; their background Rects retain the existing
+axis/table surface colors. Add sample-independent contrast assertions, regenerate all
+affected SVG/PNG/HTML artifacts, inspect every raster, then rerun the full suite and
+conformance before restoring V1 completion.
 
 If I3-B through I3-F reveals a need for a new primitive family, identity input,
 TextLayout, port, diagnostic, or surface ownership rule, implementation stops. Close

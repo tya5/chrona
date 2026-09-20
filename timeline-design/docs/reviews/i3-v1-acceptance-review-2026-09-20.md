@@ -1,6 +1,7 @@
 # I3 / V1 Acceptance Review
 
-**Conclusion:** Accepted and complete.
+**Conclusion:** Reopened. The original acceptance conclusion is withdrawn pending the
+foreground/background contrast correction and renewed raster review.
 
 **Evidence target:** manifest design
 `666007acac8602350db5cbb633c017b35a0d7d2b`; implementation
@@ -58,3 +59,15 @@ The regenerated SVG identities at the implementation target are:
 
 No sample-name branch, renderer-side geometry fallback, unrecorded design exception,
 or remaining I3/V1 work was found. G1–G4 corrective completion may be restored.
+
+## Post-acceptance finding: invisible required labels
+
+Manual inspection after publication found that ASTER axis-label Text and its axis-band
+Rect both serialized with the same resolved axis color. Table-column-label Text had the
+same defect against its table-header band. The strings, bounds, and Scene identities
+were present, so structural and reproduction tests passed while the labels were
+visually absent. The previous image review therefore did not satisfy V1.
+
+V1 is reopened only for the paint-mapping correction defined in Specifications 08/30,
+sample-independent contrast tests, regeneration of affected outputs, and complete
+raster review. The geometry, manifest, and adapter ownership conclusions remain valid.
