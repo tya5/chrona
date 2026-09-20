@@ -29,5 +29,5 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     copied_items = tuple(items)
     axes = tuple(interval for level in levels for interval in axis_intervals(start, end, level))
     ticks = axis_intervals(start, end, axis["tickUnit"], tick_step=axis["tickStep"])
-    marks = comparison_marks(copied_items, comparison_mode=settings["layout"]["bars"].get("comparisonMode", "stacked"), show_zero=settings["layout"]["variance"]["showZero"])
+    marks = comparison_marks(copied_items, comparison_mode=settings["layout"]["bars"]["comparisonMode"], show_zero=settings["layout"]["variance"]["showZero"])
     return PresentationScene(str(title), (start, end), axes, ticks, marks)
