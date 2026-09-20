@@ -170,6 +170,13 @@ from mark plus required-text occupancy; create purpose-specific annotation primi
 and finite routes; then finalize IDs, `sourceKind`, bounds, z-order, manifest, and
 diagnostics. Later stages never reinterpret earlier ones.
 
+The implementation DTO is closed by primitive kind: Rect=`bounds`; Text=`text` plus
+one TextLayout; Symbol=`shape` plus bounds; Path=`points` plus optional
+`fromPortId`/`toPortId` only for non-connector ticks. A connector or leader without both
+port IDs, a Path with fewer than two points, or any payload/kind mismatch is
+`E_PRESENTATION_PRIMITIVE_INVALID`. Path bounds are derived from the ordered points.
+Adapters map `visualRole` to paint tokens only and never repair geometry or payloads.
+
 Axis identity includes `(scaleId, level, naturalInterval.index, slotId)`, mark identity
 includes `(projectionInstanceId, facet, markRole)`, and Text identity includes
 `(projectionInstanceId, textRole)`. Adapters never recalculate band height, X/Y,
@@ -218,6 +225,7 @@ primitives. Retain the Specification 29 legacy adapter until G1 completes, alway
 | `E_PRESENTATION_LABEL_UNPLACEABLE` | Required text fits no candidate | Shrink, hide, detach |
 | `E_PRESENTATION_STACK_OVERFLOW` | Stack or lane bounds exceeded | Move group or overlap |
 | `E_PRESENTATION_DUPLICATE_AUTHORITY` | Old/new policy coexist | Merge or implicit priority |
+| `E_PRESENTATION_PRIMITIVE_INVALID` | Primitive kind and payload disagree | Infer or repair payload in an adapter |
 | `E_CONNECTOR_UNROUTABLE` | Finite search has no route | Free-form path |
 
 The positive fixture validates owners, week axes, comparison marks, labels, object

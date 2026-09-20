@@ -201,6 +201,15 @@ Every primitive in a surface has the following required fields:
 | `bounds` | Concrete logical bounds; `Text` additionally carries the measured baseline and text payload |
 | `zOrder` | Stable paint order within this surface |
 
+Primitive payloads are a closed discriminated contract. `Rect` carries only `bounds`.
+`Text` carries `text` plus exactly one `TextLayout`. `Symbol` carries a closed `shape`
+identifier and its concrete `bounds`. `Path` carries at least two ordered logical
+`points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
+tick may omit both port identifiers. `Path.bounds` is the exact union of its points,
+including zero width or height. Paint remains a resolved `visualRole`; adapters map
+that role to target tokens but never calculate payload geometry. A kind/payload
+mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an adapter must not repair it.
+
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
 following I3 core primitive set before any adapter is invoked: one title `Text`; one
 axis-band `Rect` and one axis-label `Text` for each declared axis interval; one tick

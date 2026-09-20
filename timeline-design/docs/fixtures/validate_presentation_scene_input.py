@@ -33,4 +33,7 @@ assert "surface-adapter-selects-completed-primitives-only" in case["invariants"]
 assert "missing-surface-or-primitive-is-a-stable-diagnostic" in case["invariants"]
 assert "primitive-family-presence-is-authorized-by-surface-slot-and-visibility" in case["invariants"]
 assert "routes-ports-and-text-layout-are-scene-owned" in case["invariants"]
+assert case["inputs"]["primitivePayloads"]["Text"] == ["text", "textLayout"]
+assert case["inputs"]["primitivePayloads"]["connectorPath"] == ["points", "fromPortId", "toPortId"]
+assert "primitive-kind-payload-mismatch-is-a-stable-diagnostic" in case["invariants"]
 print("presentation-scene-input derived fixture valid")
