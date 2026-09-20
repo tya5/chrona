@@ -33,7 +33,8 @@ axis slotは`layout.slots`のsource `timeline-axis` を使い、timeline slotと
 
 ## 3. G3：注釈とleader
 
-初期対象はViewのobject anchorだけである。anchorは`{objectId, facet, endpoint}`、facetは
+初期対象はViewのobject anchorだけである。既存Viewのtyped reference形式に合わせ、anchorは
+`{kind: "object", id, facet, endpoint}`、facetは
 planned/actual、endpointはstart/finish/at/body。actualが無い場合のplanned代替は禁止する。
 relation/group/temporal anchorは入力を保持するが初期実装では
 `E_PRESENTATION_ANCHOR_UNSUPPORTED`、対象facet/endpoint/投影instanceが無い場合は
