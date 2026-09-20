@@ -20,6 +20,10 @@ if fixture['annotations']['leader'] != 'orthogonal-or-none' or fixture['routing'
     raise SystemExit('annotation leader and routing ownership disagree')
 if fixture['owners']['scene'] != 'derived' or fixture['owners']['geometry'] != 'layout':
     raise SystemExit('scene/layout ownership disagree')
+if fixture['labels']['anchorObstaclePolicy'] != 'exclude-own-anchor-from-box-collision':
+    raise SystemExit('annotation box obstacle policy is not explicit')
+if fixture['annotations']['laneOccupancy'] != 'exclude-annotation-boxes':
+    raise SystemExit('annotation boxes must not participate in lane occupancy')
 if not list(Draft202012Validator(schema).iter_errors(invalid)):
     raise SystemExit('invalid fixture unexpectedly passed schema validation')
 print('shared-presentation-foundation fixture valid')
