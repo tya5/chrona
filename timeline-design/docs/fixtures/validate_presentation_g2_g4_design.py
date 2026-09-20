@@ -14,11 +14,15 @@ assert any(annotation["anchor"]["facet"] == "actual"
 assert all(annotation["anchor"]["kind"] == "object"
            for project in case["positive"]["projects"] for annotation in project["annotations"])
 assert all(project["routing"]["limit"] > 0 for project in case["positive"]["projects"])
+assert {project["laneSurface"] for project in case["positive"]["projects"]} == {"row-aligned", "independent-lane-track"}
+assert all(project["pitchPolicy"] == "scene-mark-extent-plus-clearance" for project in case["positive"]["projects"])
 
 expected = {"E_PRESENTATION_LABEL_UNPLACEABLE", "E_PRESENTATION_ANCHOR_MISSING",
             "E_PRESENTATION_ANCHOR_UNSUPPORTED", "E_PRESENTATION_STACK_OVERFLOW",
-            "E_PRESENTATION_ROUTE_LIMIT"}
+            "E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE", "E_PRESENTATION_ROUTE_LIMIT"}
 assert {entry["diagnostic"] for entry in case["negative"]} == expected
 assert case["negative"][0]["input"]["maxCandidates"] > 16
+assert any(entry["diagnostic"] == "E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE"
+           and entry["input"]["stackIndex"] > 0 for entry in case["negative"])
 assert case["negative"][-1]["input"]["routing"]["limit"] < 1
 print("G2-G4 design fixture valid: two generic projects, long Japanese text, missing actual, and five negative diagnostics")
