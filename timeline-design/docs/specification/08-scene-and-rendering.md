@@ -180,6 +180,11 @@ Scene construction follows a deterministic order:
 6. resolve declared collision, clipping, and z-order policy; and
 7. emit the Scene, manifest, and diagnostics.
 
+The detailed finite algorithm, annotation purpose table, port exception, lane formula,
+and route failure classification are owned by specification 30 §7.5. This order is
+normative: a renderer must not perform a later placement, remeasurement, lane, or
+route pass after Scene emission.
+
 ### 6.1 Planned, baseline, and actual geometry
 
 Planned placement, Snapshot placement, and Actual observation may each produce separate primitives for the same stable object. Their source identity remains the same while their primitive purpose and roles differ. The Scene MUST NOT collapse them merely because their geometry coincides.

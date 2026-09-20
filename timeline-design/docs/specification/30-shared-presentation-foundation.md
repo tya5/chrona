@@ -1,6 +1,6 @@
 # 共通表現基盤：採用境界と注釈の一般化
 
-**状態:** D1境界設計完了。ランタイム是正は未実装。
+**状態:** D1/D2設計完了。ランタイム是正は未実装。
 **根拠:** ADR-0019。既存仕様06/07/08/27/28/29を置き換えず、追加実装の採用境界を定める。
 
 ## 1. 目標と非目標
@@ -226,6 +226,31 @@ dependency、annotation leader、explanatory arrowはいずれも有限の直交
 必須mark/本文/box/arrowheadは障害物であり、path同士は障害物にしない。探索は
 gridOffset、clearance、portOffset、bendPenalty、limitとstable tie-breakを明示入力と
 する。limit超過または解なしは`E_CONNECTOR_UNROUTABLE`である。
+
+## 7.5 D2 幾何・目的別投影アルゴリズム
+
+Scene Builderは次の有限順序でのみ投影する。後段が前段を再解釈・再測定することはない。
+
+1. 一つのDate scaleからaxis band、tick、slotごとのx変換を作る。
+2. semantic facetを保ったmark boundsとshape由来portを作る。
+3. `TextLayout {bounds, baseline, lines, family, weight, assetIdentity}`を一度だけ測定し、label、障害物、SVG Textが同一値を使う。
+4. 必須labelを含むmark occupancyからstable lane stackとtrack boundsを作る。
+5. annotation purposeごとにprimitive候補を作り、確定済み障害物に対して有限routeを解く。
+6. sceneId、sourceKind、bounds、z-order、manifest、diagnosticsを確定して出力する。
+
+axis bandは`(scaleId, level, naturalInterval.index, slotId)`、markは`(projectionInstanceId, facet, markRole)`、Textは`(projectionInstanceId, textRole)`をidentityに含める。slotは同じscaleを参照しても独立したinstanceを持つ。adapterはband高さ、x/y、baseline、track、routeを再計算しない。
+
+| purpose | 許されるprimitive | anchor | 禁止 |
+|---|---|---|---|
+| callout / note | Text + Rect + optional Path leader | object 1個 | leaderをsemantic dependencyへ変換 |
+| highlight | Rect / Symbol decorationのみ。本文・leaderなし | object 1個 | text boxを要求、anchor推測 |
+| explanatory-arrow | Path + arrowheadのみ | source/target object 2個 | single-anchorへの縮退 |
+
+object portは`start`、`finish`、`at`、`body`のいずれかで、span/pointの形状境界から導く。port、obstacle、primitiveはsourceRefだけでなくprojectionInstanceIdで識別する。box候補時だけ当該annotationのanchor markを除外できる。routeでは全mark、必須label、既定annotation boxを障害物に復帰し、source portから外向きの最初のsegmentだけ境界接触を許す。同座標の別object/slot/facetを除外してはならない。
+
+occupancyは測定済みmark boundsと必須TextLayout boundsの和集合である。pointを一日spanへ意味変換してはならない。`row-aligned`はstackをmetadataだけに保ち、`independent-lane-track`は`trackPadding + stackIndex * pitch`を唯一のy offsetとして使う。`pitch = markExtent + routing.clearance`、`trackHeight = 2*trackPadding + markExtent + maxStackIndex*pitch`である。不足、maxStack超過、必須label不能は`E_PRESENTATION_STACK_OVERFLOW`で停止する。
+
+routeは`gridOffset`、`clearance`、`portOffset`、`bendPenalty`、`limit`を全て入力にし、座標・方向・bend数・stable IDでtie-breakする有限visibility gridである。state数がlimitを超えた場合は`E_PRESENTATION_ROUTE_LIMIT`、探索完了後に経路が無い場合は`E_CONNECTOR_UNROUTABLE`である。両者を同じ診断へ潰してはならない。
 
 ## 8. 移行と二重指定
 

@@ -1,6 +1,6 @@
 # 共通表現基盤 G2–G4 設計ゲート
 
-**状態:** D1境界設計完了。G1–G4の従前の完了判定は撤回済みであり、D2–D3の設計閉包前にvisual実装を再開しない。
+**状態:** D1/D2設計完了。G1–G4の従前の完了判定は撤回済みであり、D3のschema/fixture/受入閉包前にvisual実装を再開しない。
 
 ## 1. 一意なauthoring所有者
 
@@ -83,3 +83,7 @@ G2–G4実装の前に以下を完了する。
 4. sample固有ID/名称を持たない二プロジェクト受入例と、長い日本語/実績欠損の再現性を確認する。
 
 これらが終わるまで、G2のlabel/facet paint、G3のannotation、G4のlaneのPython実装は行わない。
+
+## 6. D2 algorithm acceptance contract
+
+仕様30 §7.5が唯一の投影順序、purpose table、port/obstacle例外、lane式、route失敗分類を所有する。本書のG2–G4 fieldはその入力だけを定める。実装は、同一`TextLayout`の描画と衝突判定、pointの非span化、purpose別primitive、projectionInstanceIdによる同座標別markの識別、`E_PRESENTATION_ROUTE_LIMIT`と`E_CONNECTOR_UNROUTABLE`の区別を受入testで示すまで完了と報告してはならない。

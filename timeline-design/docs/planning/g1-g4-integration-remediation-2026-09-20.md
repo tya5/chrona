@@ -35,6 +35,10 @@ fixtureから削除済みの `E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE` をvali
 line 23のAssertionErrorとなった。fixtureを再追加して診断を捏造せず、validator期待集合を現行fixtureへ同期した。
 この同期はR03の全体是正ではなく、D1–D3でowner schema・wire・正負fixture・受入根拠を閉鎖するまでG1–G4を再完了扱いしない。
 
+## D1/D2 実施記録
+
+D1で仕様08/09/29/30/31に`ResolvedPresentationInput`、semantic facetとvisual roleの分離、slotを含むprojection instance、Scene identity、adapter非再解釈を固定した。D2で仕様30 §7.5を唯一の有限投影手順とし、TextLayoutの一回測定、purpose別primitive、shape由来port、lane式、route limitとunroutableの診断分離を固定した。D3ではこの規則をschema、fixture、受入表、validatorへ同期する。I1はD3完了前に開始しない。
+
 ## 提案する内部構造
 
 1. 入力解決: View/Style/Theme/Detail/Layout/Contextの型・固定参照を検査し、source selectionを一度だけ決定。
