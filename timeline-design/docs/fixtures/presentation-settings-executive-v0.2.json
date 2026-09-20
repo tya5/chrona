@@ -216,16 +216,46 @@
     "groupPaints": {},
     "facetPaints": {
       "default": {
-        "planned": {"color": "#3986E6", "opacity": 1},
-        "actual": {"color": "#269D79", "opacity": 1},
-        "baseline": {"color": "#637187", "opacity": 1},
-        "variance": {"color": "#C8762B", "opacity": 1}
+        "planned": {
+          "color": "#3986E6",
+          "opacity": 1
+        },
+        "actual": {
+          "color": "#269D79",
+          "opacity": 1
+        },
+        "baseline": {
+          "color": "#637187",
+          "opacity": 1
+        },
+        "variance": {
+          "color": "#C8762B",
+          "opacity": 1
+        }
       },
       "groups": {
-        "delivery": {"actual": {"color": "#176F59", "opacity": 1}}
+        "delivery": {
+          "actual": {
+            "color": "#176F59",
+            "opacity": 1
+          }
+        }
       }
     },
-    "annotation": {"boxFill": {"color": "#FFFFFF", "opacity": 1}, "boxStroke": {"color": "#637187", "opacity": 1}, "leader": {"color": "#8795AA", "opacity": 1}},
+    "annotation": {
+      "boxFill": {
+        "color": "#FFFFFF",
+        "opacity": 1
+      },
+      "boxStroke": {
+        "color": "#637187",
+        "opacity": 1
+      },
+      "leader": {
+        "color": "#8795AA",
+        "opacity": 1
+      }
+    },
     "bar": {
       "radius": 2,
       "minWidth": 1,
@@ -382,7 +412,13 @@
       "labelAlign": "center"
     },
     "labelPlacement": {
-      "candidateSides": ["above", "below", "end", "start", "inside"],
+      "candidateSides": [
+        "above",
+        "below",
+        "end",
+        "start",
+        "inside"
+      ],
       "maxCandidates": 5,
       "overflow": "clip-optional"
     },
@@ -473,7 +509,11 @@
       "grouping": "view-groups",
       "stacking": "stable-lowest-nonoverlap",
       "occupancy": "mark-bounds-plus-required-label-bounds",
-      "maxStack": 12
+      "maxStack": 12,
+      "surface": "row-aligned",
+      "pitchPolicy": "scene-mark-extent-plus-clearance",
+      "trackPadding": 8,
+      "trackGap": 6
     },
     "legend": {
       "padding": {
@@ -512,10 +552,34 @@
   },
   "detail": {
     "labelRules": [
-      {"id": "title", "source": "title", "facet": "planned", "endpoint": "body", "required": true},
-      {"id": "actual-finish", "source": "actual-date", "facet": "actual", "endpoint": "finish", "required": false},
-      {"id": "finish-variance", "source": "comparison-delta", "facet": "variance", "endpoint": "finish", "required": false},
-      {"id": "annotation", "source": "annotation-text", "facet": "annotation", "endpoint": "body", "required": true}
+      {
+        "id": "title",
+        "source": "title",
+        "facet": "planned",
+        "endpoint": "body",
+        "required": true
+      },
+      {
+        "id": "actual-finish",
+        "source": "actual-date",
+        "facet": "actual",
+        "endpoint": "finish",
+        "required": false
+      },
+      {
+        "id": "finish-variance",
+        "source": "comparison-delta",
+        "facet": "variance",
+        "endpoint": "finish",
+        "required": false
+      },
+      {
+        "id": "annotation",
+        "source": "annotation-text",
+        "facet": "annotation",
+        "endpoint": "body",
+        "required": true
+      }
     ],
     "groupLabel": "Owner",
     "subtitle": "{windowStart} – {windowLastVisible} / Planned and observed delivery",
