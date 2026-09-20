@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1–G4完了・公開済み。G3/G4設計是正、実装、全回帰、横断レビューを完了。
+**状態:** G1–G4の従前の完了判定は撤回。対象revision `82e59f6e13fde8f6582f538da24b7523854c2cde` の統合監査でR01–R04を検出し、是正は `g1-g4-integration-remediation-2026-09-20.md` のD0→D3を先行する。実装修正は未着手。
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -94,6 +94,8 @@ G1.1は既存rendererへまだ接続しない。従って既存PNGのpixel変更
 4. 対象差分だけをレビューしてnon-force公開する。
 5. 未対応範囲を完了と報告しない。
 
-### G3/G4 完了記録
+### G3/G4 従前の完了記録（撤回）
 
 G3は共通annotation box/leaderを明示facet anchorでSVGへ接続した。box配置は自身のanchor markのみ除外し、leader routingでは全障害物を復帰する。G4はgroup順を保つstable lane Scene、independent lane track geometry、stack offset adapterを実装した。2026-09-20に全回帰164 passed（既存DeprecationWarning 2件）。
+
+ただし、この記録は公開出力の共通Scene消費、purpose別投影、lane geometry反映、fixture/validator同期を証明していない。統合監査でR01–R04がP0として再現されたため、本節を完了根拠として使用してはならない。

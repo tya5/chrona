@@ -19,7 +19,7 @@ assert all(project["pitchPolicy"] == "scene-mark-extent-plus-clearance" for proj
 
 expected = {"E_PRESENTATION_LABEL_UNPLACEABLE", "E_PRESENTATION_ANCHOR_MISSING",
             "E_PRESENTATION_ANCHOR_UNSUPPORTED", "E_PRESENTATION_STACK_OVERFLOW",
-            "E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE", "E_PRESENTATION_ROUTE_LIMIT"}
+            "E_PRESENTATION_ROUTE_LIMIT"}
 assert {entry["diagnostic"] for entry in case["negative"]} == expected
 assert case["negative"][0]["input"]["maxCandidates"] > 16
 assert case["negative"][-1]["input"]["routing"]["limit"] < 1

@@ -26,6 +26,15 @@ Core・Store・Commandの意味論は変更しない。計画の承認は実装�
 D0→D1→D2→D3が完了するまでI1を開始しない。各フェーズで対象差分をレビューして公開する。
 実装中に未設計事項が判明した場合も場当たり修正せず、影響を受ける設計一式を閉鎖してから再開する。
 
+## D0 実施記録
+
+対象revisionは `82e59f6e13fde8f6582f538da24b7523854c2cde` と固定する。従前のG1–G4完了表記は、本計画と
+`g1-g4-integration-audit-2026-09-20.md` が示すR01–R04により撤回した。再現条件は、同revisionで
+`PYTHONPATH=src python timeline-design/docs/fixtures/validate_presentation_g2_g4_design.py` を実行すること。
+fixtureから削除済みの `E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE` をvalidatorの期待集合だけが保持していたため、
+line 23のAssertionErrorとなった。fixtureを再追加して診断を捏造せず、validator期待集合を現行fixtureへ同期した。
+この同期はR03の全体是正ではなく、D1–D3でowner schema・wire・正負fixture・受入根拠を閉鎖するまでG1–G4を再完了扱いしない。
+
 ## 提案する内部構造
 
 1. 入力解決: View/Style/Theme/Detail/Layout/Contextの型・固定参照を検査し、source selectionを一度だけ決定。

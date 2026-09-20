@@ -1,6 +1,6 @@
 # G3/G4 Scene接続 設計レビュー
 
-**状態:** G3/G4 Scene接続・G3注釈SVG・G4独立lane track/offset adapter 実装・公開済み。
+**状態:** 従前のG3/G4完了記録。統合監査 `g1-g4-integration-audit-2026-09-20.md` により完了判定は撤回され、R01–R04の是正設計が完了するまで本書は歴史的記録としてのみ扱う。
 
 | 境界 | 固定した契約 | 禁止する救済 |
 |---|---|---|
@@ -25,9 +25,9 @@
 unsupported anchor、stack overflow、route limitを持つ。実装testはさらにbox port tie-break、
 route state limit、facet未指定のdiagnostic、lane metadata不変性を検証する。
 
-結論として、G3/G4の残実装に必要なauthoring owner、Scene出力、有限手順、diagnostic、禁止救済は一意に閉鎖した。
+従前の結論として、G3/G4の残実装に必要なauthoring owner、Scene出力、有限手順、diagnostic、禁止救済は一意に閉鎖したと記録した。しかしR01–R04の再現により、公開出力までの接続と証拠閉包は未達である。
 
 
 ## 実装確認
 
-G3は明示facet anchor、box候補時のown-anchor除外、全障害物leader routingをSVG adapterへ接続した。G4はView group順をSceneへ保持し、independent-lane-trackのtrack高とstack offsetを導出する。row-alignedは既存の1項目1行を保持する。全回帰は164 passed（既存DeprecationWarning 2件）。
+G3は明示facet anchor、box候補時のown-anchor除外、全障害物leader routingをSVG adapterへ接続した。G4はView group順をSceneへ保持し、independent-lane-trackのtrack高とstack offsetを導出する。row-alignedは既存の1項目1行を保持する。全回帰は164 passed（既存DeprecationWarning 2件）。この回帰数だけではR01–R04の受入証拠にならない。
