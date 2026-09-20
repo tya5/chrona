@@ -36,3 +36,12 @@ observations; Layout owns rectangles; Scene owns measured geometry.
 
 The schema and positive/negative fixture validator pass together with full existing
 conformance. I23 may start only after this design checkpoint is published.
+
+## D23 addendum — Preset slot-source parity
+
+A23 first use of an author-facing Preset found that the Preset override schema retained
+its own closed slot-source enum and did not yet include `group-details`, `observations`,
+or `milestones`. The owning Settings schema was correct, but a valid M23 override could
+not pass the authoring gate. The Preset enum now matches Settings, and conformance adds
+a positive override carrying all three sources. This addendum changes no runtime or
+semantic authority and must be published before A23 resumes.

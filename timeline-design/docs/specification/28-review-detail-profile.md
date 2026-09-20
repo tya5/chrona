@@ -43,6 +43,10 @@ no available content diagnoses; preferred or optional absent content emits nothi
 The SVG adapter draws completed Scene primitives in stable logical order and retains
 source metadata for every derived item.
 
+Both the complete Settings schema and the author-facing Preset override schema expose
+the same closed slot-source vocabulary. A source accepted in complete Settings MUST be
+accepted in a partial Preset Layout override.
+
 ## Resolution and validation
 
 Group details are filtered against group IDs present in the selected Review Projection
