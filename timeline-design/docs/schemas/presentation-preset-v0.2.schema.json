@@ -1009,6 +1009,11 @@
           },
           "description": "Partial preset override; the merged resolved settings must satisfy the complete facet-paint contract."
         },
+        "annotation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {"boxFill": {"type": "object"}, "boxStroke": {"type": "object"}, "leader": {"type": "object"}}
+        },
         "bar": {
           "type": "object",
           "additionalProperties": false,
