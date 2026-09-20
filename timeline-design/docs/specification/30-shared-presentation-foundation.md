@@ -164,6 +164,10 @@ Label rules specify text source, facet/endpoint, candidate-side order, requiredn
 overflow. Sources are title, closed date formatter, comparison delta, or existing
 annotation text—never arbitrary expressions. Evaluate at most sixteen candidates in
 stable source/rule/candidate order; `inside` requires measured text to fit.
+`table-timeline` emits a direct title label only from an explicit label rule; it MUST NOT
+synthesize a title rule when a colocated table already identifies rows. Previously
+accepted emitted row text, including variance and date labels, participates in the
+obstacle set for later label placement.
 
 View annotations preserve typed anchor, purpose, and text. Callout/note use a box and
 policy-controlled optional leader; highlight is decoration with no required text or
@@ -228,6 +232,11 @@ axis/table surface mapping: axis labels use foreground text paint with level typ
 and table-column labels use foreground text paint with table-header typography. A
 single role-to-color lookup that makes required foreground equal its background is
 invalid.
+
+A `row-shade` Rect carries the resolved Theme row-shade color and opacity in Scene.
+A planned or baseline point comparison mark retains its semantic facet but uses the
+`milestone` visual role and output purpose; an Actual point retains `actual`. This keeps
+point semantics distinct from span-bar paint and makes the mark agree with its legend.
 
 Every comparison mark carries its resolved `laneGroupId` and `stackIndex`. The
 row-aligned surface preserves these as output metadata even though it does not apply a

@@ -214,6 +214,11 @@ The result of each component becomes the input to the next.
 
 Month/year arithmetic can target a date that does not exist.
 
+All accepted ISO Dates use the proleptic Gregorian leap-year rule: a year divisible by
+4 is a leap year, except a year divisible by 100 is common unless it is also divisible
+by 400. Implementations MUST derive the final valid day of the target month from this
+general rule and MUST NOT use year-specific exceptions.
+
 Core v0.1 uses **clamp** semantics:
 
 ```text
@@ -231,7 +236,9 @@ retreat(advance(t, p), p) == t
 for all CalendarPeriods.
 
 The exact `advance`/`retreat` conformance cases SHALL be captured in temporal test
-fixtures before Core v0.1 becomes Stable.
+fixtures before Core v0.1 becomes Stable. A representative leap-year case is sufficient
+when the implementation uses a general Gregorian calendar operation rather than
+year-specific branching.
 
 ## 10. WorkPeriod arithmetic
 
