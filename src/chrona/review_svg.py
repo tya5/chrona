@@ -173,7 +173,11 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     required = {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}
     if not required.issubset(capabilities):
         raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
-    return render_gantt(title, projection, project, view, theme, profile, slots, settings)
+    presentation_scene = None
+    if settings is not None:
+        from .presentation_scene import build_presentation_scene
+        presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings)
+    return render_gantt(title, projection, project, view, theme, profile, slots, settings, presentation_scene=presentation_scene)
 
 
 def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date, rect: Any | None = None, settings: dict[str, Any] | None = None) -> str:
