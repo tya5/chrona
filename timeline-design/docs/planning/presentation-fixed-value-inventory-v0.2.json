@@ -459,6 +459,13 @@
     },
     {
       "owner": "theme",
+      "path": "facetPaints",
+      "value": {"default": {"planned": {"color": "#3986E6", "opacity": 1}, "actual": {"color": "#269D79", "opacity": 1}, "baseline": {"color": "#637187", "opacity": 1}, "variance": {"color": "#C8762B", "opacity": 1}}, "groups": {"delivery": {"actual": {"color": "#176F59", "opacity": 1}}}},
+      "source": "shared presentation foundation G2 design fixture",
+      "note": "Group facet overrides resolve before default facet paint; groupPaints remains background-only."
+    },
+    {
+      "owner": "theme",
       "path": "bar",
       "value": {
         "radius": 2,
@@ -635,6 +642,14 @@
           "overflow": "diagnose",
           "align": "stretch"
         },
+        "timelineAxis": {
+          "region": "main",
+          "track": 1,
+          "source": "timeline-axis",
+          "priority": "required",
+          "overflow": "diagnose",
+          "align": "stretch"
+        },
         "legend": {
           "region": "footer",
           "track": 0,
@@ -803,7 +818,8 @@
         "gridOffset": 2,
         "portOffset": 8,
         "bendPenalty": 12,
-        "strokeLayer": "behind-marks"
+        "strokeLayer": "behind-marks",
+        "limit": 4096
       },
       "source": "gantt_surface.py:route_orthogonal; gantt_surface.py:render_gantt; render.py:render_svg",
       "note": "Semantic endpoint types are NOT configurable; geometry from actual mark bounds."
@@ -987,6 +1003,27 @@
       "value": ", ",
       "source": "review_svg.py:render_review_svg",
       "note": "Human-readable list punctuation."
+    },
+    {
+      "owner": "layout",
+      "path": "labelPlacement",
+      "value": {"candidateSides": ["above", "below", "end", "start", "inside"], "maxCandidates": 5, "overflow": "clip-optional"},
+      "source": "shared presentation foundation G2 design fixture",
+      "note": "Finite shared candidate order; required labels diagnose rather than clip."
+    },
+    {
+      "owner": "layout",
+      "path": "lanes",
+      "value": {"grouping": "view-groups", "stacking": "stable-lowest-nonoverlap", "occupancy": "mark-bounds-plus-required-label-bounds", "maxStack": 12},
+      "source": "shared presentation foundation G4 design fixture",
+      "note": "Stable stack assignment accounts for required label bounds without changing group membership."
+    },
+    {
+      "owner": "detail",
+      "path": "labelRules",
+      "value": [{"id": "title", "source": "title", "facet": "planned", "endpoint": "body", "required": true}, {"id": "actual-finish", "source": "actual-date", "facet": "actual", "endpoint": "finish", "required": false}, {"id": "finish-variance", "source": "comparison-delta", "facet": "variance", "endpoint": "finish", "required": false}, {"id": "annotation", "source": "annotation-text", "facet": "annotation", "endpoint": "body", "required": true}],
+      "source": "shared presentation foundation G2 design fixture",
+      "note": "Text remains a Detail-owned closed-source rule, not renderer text."
     }
   ]
 }
