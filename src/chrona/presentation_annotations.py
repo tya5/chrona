@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from .presentation_marks import ComparisonMark
+from .presentation_labels import LabelPlacement, LabelRect, place_label
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,13 @@ class AnnotationAnchor:
     facet: str
     endpoint: str
     mark: ComparisonMark
+
+
+@dataclass(frozen=True)
+class AnnotationBox:
+    anchor: AnnotationAnchor
+    placement: LabelPlacement
+    leader_required: bool
 
 
 def resolve_annotation_anchor(annotation: dict, marks: Iterable[ComparisonMark]) -> AnnotationAnchor:
@@ -35,3 +43,15 @@ def resolve_annotation_anchor(annotation: dict, marks: Iterable[ComparisonMark])
     if endpoint == "at" and mark.at is None:
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
     return AnnotationAnchor(str(annotation.get("id", "")), object_id, facet, endpoint, mark)
+
+
+def project_annotation_box(annotation: dict, resolved: AnnotationAnchor, *, anchor_bounds: LabelRect,
+                           text_size: tuple[float, float], candidate_sides: Iterable[str],
+                           viewport: LabelRect, obstacles: Iterable[LabelRect], overflow: str) -> AnnotationBox:
+    """Place a measured annotation box; geometry is finite and leader-free at this layer."""
+    purpose = annotation.get("purpose")
+    if purpose not in {"callout", "note", "highlight", "explanatory-arrow"}:
+        raise ValueError("E_PRESENTATION_ANCHOR_UNSUPPORTED")
+    placement = place_label(anchor_bounds, text_size, candidate_sides, bounds=viewport,
+                            obstacles=obstacles, required=True, overflow=overflow)
+    return AnnotationBox(resolved, placement, purpose in {"callout", "note", "explanatory-arrow"})
