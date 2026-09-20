@@ -1,5 +1,5 @@
 // Raster acceptance: use the same font engine as the exported preview, not estimates.
-// NODE_PATH=$CODEX_PRIMARY_RUNTIME_NODE_MODULES node scripts/verify-gantt-svg.cjs in.svg out.png
+// NODE_PATH=$CODEX_PRIMARY_RUNTIME_NODE_MODULES node tools/verify-gantt-svg.cjs in.svg out.png
 const fs = require('fs');
 const sharp = require('sharp');
 

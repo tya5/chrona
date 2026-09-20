@@ -52,7 +52,7 @@ def render_manifest(path: Path, raster: bool = True):
             env = dict(os.environ)
             env['NODE_PATH'] = env.get('CODEX_PRIMARY_RUNTIME_NODE_MODULES', env.get('NODE_PATH', ''))
             preview = path.parent / slide.get('preview', str(Path(slide['output']).with_suffix('.png')))
-            subprocess.run(['node', str(ROOT/'scripts/verify-gantt-svg.cjs'), str(output), str(preview)], check=True, env=env)
+            subprocess.run(['node', str(ROOT/'tools/verify-gantt-svg.cjs'), str(output), str(preview)], check=True, env=env)
         selected = {item.object_id for item in projection.items}
         reports.append({'file': output.name, 'items': len(selected), 'visibleDependencies': sum(edge['from']['object'] in selected and edge['to']['object'] in selected for edge in project['relations']), 'observedItems': sum(bool(item.actual) for item in projection.items), 'unmatchedObservations': len(projection.unmatched_actual_ids)})
     if (project, actual) != original:

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from importlib.resources import files
+from importlib.resources.abc import Traversable
 import json
 from pathlib import Path
 
@@ -11,7 +13,7 @@ from chrona.presentation.model.settings import PresentationSettingsError
 
 @dataclass(frozen=True)
 class FontMetrics:
-    path: Path
+    path: Traversable
     content_identity: str
     units_per_em: int
     ascent: int
@@ -51,16 +53,29 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
         if not isinstance(raw_path, str):
             continue
         relative = Path(raw_path)
-        root = (asset_root or Path(__file__).resolve().parents[4]).resolve()
         if relative.is_absolute() or ".." in relative.parts:
             continue
-        path = (root / relative).resolve()
-        try:
-            path.relative_to(root)
-        except ValueError:
-            continue
-        if not path.is_file():
-            continue
+        if asset_root is not None:
+            root = asset_root.resolve()
+            path: Traversable = (root / relative).resolve()
+            try:
+                path.relative_to(root)
+            except ValueError:
+                continue
+            if not path.is_file():
+                continue
+        else:
+            allowed = (
+                len(relative.parts) == 4
+                and relative.parts[:3] == ("docs", "assets", "font-metrics")
+            ) or (
+                len(relative.parts) == 2 and relative.parts[0] == "font_metrics"
+            )
+            if not allowed:
+                continue
+            path = files("chrona.resources").joinpath("font_metrics", relative.name)
+            if not path.is_file():
+                continue
         payload = path.read_bytes()
         identity = "sha256:" + sha256(payload).hexdigest()
         requested = declared.get("contentIdentity")

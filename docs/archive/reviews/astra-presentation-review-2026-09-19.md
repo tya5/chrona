@@ -49,10 +49,10 @@ font used for this render; another font installation must supply matching metric
 ## Reproduction and acceptance
 
 ```sh
-.venv/bin/python scripts/verify_presentation_v2.py \
+.venv/bin/python tools/verify_presentation_v2.py \
   --settings examples/controller-z/variants/editorial/settings.yaml \
   --output examples/controller-z/variants/editorial/expected.svg
-node scripts/verify-gantt-svg.cjs examples/controller-z/variants/editorial/expected.svg examples/controller-z/variants/editorial/preview.png
+node tools/verify-gantt-svg.cjs examples/controller-z/variants/editorial/expected.svg examples/controller-z/variants/editorial/preview.png
 .venv/bin/pytest -q
 ```
 

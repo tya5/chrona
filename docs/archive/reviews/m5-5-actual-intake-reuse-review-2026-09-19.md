@@ -27,7 +27,7 @@ interactive reconciliation UI.
 
 | Path | Classification | Reason |
 |---|---|---|
-| `src/chrona/presentation/actual_intake.py` | adapter | Converts explicit external facts to the existing Actual-set contract only. |
+| `src/chrona/presentation/model/actual_intake.py` | adapter | Converts explicit external facts to the existing Actual-set contract only. |
 | `tests/unit/chrona/presentation/model/test_actual_intake.py` | acceptance evidence | Proves resolved/unmatched behavior and rejects implicit title matching. |
 
 ## Decision

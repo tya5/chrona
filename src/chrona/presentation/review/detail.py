@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from pathlib import Path
+from importlib.resources import files
 from typing import Any, Iterable, Mapping
 
 import yaml
@@ -11,8 +11,7 @@ from jsonschema import Draft202012Validator
 
 
 PROFILE_VERSION = "chrona/review-detail-profile/v0.1"
-_ROOT = Path(__file__).resolve().parents[4]
-_SCHEMA = _ROOT / "schemas/review-detail-profile-v0.1.schema.yaml"
+_SCHEMA = files("chrona.resources").joinpath("schemas", "review-detail-profile-v0.1.schema.yaml")
 _PANEL_SOURCES = {
     "groupDetails": "group-details",
     "milestones": "milestones",

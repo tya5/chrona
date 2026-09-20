@@ -55,7 +55,7 @@ The regenerated SVG identities at the implementation target are:
 
 - `python -m pytest -q`: 179 passed; two existing `RefResolver` deprecation warnings.
 - `PYTHONPATH=src python conformance/run_conformance.py`: PASS for all suites.
-- `python scripts/verify_presentation_v2.py`: deterministic Controller Z SVG and raster verification completed.
+- `python tools/verify_presentation_v2.py`: deterministic Controller Z SVG and raster verification completed.
 - ASTER reproduction: all five views reproduce exactly, preserve source inputs, and retain expected item/dependency/Actual counts.
 
 No sample-name branch, renderer-side geometry fallback, unrecorded design exception,

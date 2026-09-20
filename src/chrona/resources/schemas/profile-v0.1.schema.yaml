@@ -1,0 +1,61 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:profile-v0.1"
+type: object
+required: [version, packageId, contentIdentity, requires, profiles]
+additionalProperties: false
+properties:
+  version: {const: chrona/profile/v0.1}
+  packageId: {type: string, minLength: 1}
+  contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  requires:
+    type: object
+    required: [projectFormat]
+    additionalProperties: false
+    properties: {projectFormat: {const: timeline/v0.1}}
+  profiles:
+    type: object
+    minProperties: 1
+    additionalProperties:
+      $ref: "#/$defs/profile"
+  fields:
+    type: object
+    additionalProperties:
+      $ref: "#/$defs/fieldDefinition"
+
+$defs:
+  profile:
+    type: object
+    required: [extends]
+    additionalProperties: false
+    properties:
+      extends: {type: string, minLength: 1}
+      fields:
+        type: object
+        additionalProperties:
+          $ref: "#/$defs/fieldDefinition"
+      constraints: {type: array}
+      relations: {type: array}
+      derivedFields: {type: object}
+  fieldDefinition:
+    type: object
+    required: [type]
+    additionalProperties: false
+    properties:
+      type:
+        enum: [string, boolean, integer, number, date, enum, objectReference, resourceReference]
+      cardinality: {enum: [one, many]}
+      required: {type: boolean}
+      enumValues:
+        type: array
+        uniqueItems: true
+        items: {type: string, minLength: 1}
+      targetProfiles:
+        type: array
+        uniqueItems: true
+        minItems: 1
+        items: {type: string, minLength: 1}
+      resourceKinds:
+        type: array
+        uniqueItems: true
+        minItems: 1
+        items: {type: string, minLength: 1}

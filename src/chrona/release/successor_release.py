@@ -10,16 +10,14 @@ from typing import Any
 
 EXPECTED_UCS = frozenset({"UC-16", "UC-17", "UC-18", "UC-19", "UC-20", "UC-21"})
 EXPECTED_CLOSURE = {"datetime": "v0.2", "capacity": "v0.2", "collaboration": "v0.2", "extensions": "v0.2", "output": "v0.2"}
-REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
-
-
 def _identity(value: Any) -> str:
     return "sha256:" + sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
 
 
-def validate_successor_acceptance(manifest: dict[str, Any], evidence_root: Path = REPOSITORY_ROOT) -> tuple[str, ...]:
+def validate_successor_acceptance(manifest: dict[str, Any], evidence_root: Path | None = None) -> tuple[str, ...]:
     """Return stable diagnostics; a malformed closure can never be published."""
     diagnostics: list[str] = []
+    evidence_root = (evidence_root or Path.cwd()).resolve()
     if manifest.get("version") != "chrona/successor-release-acceptance/v0.3" or not manifest.get("releaseId"):
         diagnostics.append("E_SUCCESSOR_VERSION")
     if manifest.get("closure") != EXPECTED_CLOSURE:
@@ -50,7 +48,7 @@ class SuccessorReleaseResult:
     diagnostics: tuple[str, ...]
 
 
-def create_successor_release(manifest: dict[str, Any], evidence_root: Path = REPOSITORY_ROOT) -> SuccessorReleaseResult:
+def create_successor_release(manifest: dict[str, Any], evidence_root: Path | None = None) -> SuccessorReleaseResult:
     """Create a declared M13 release only when the full evidence closure passes."""
     diagnostics = validate_successor_acceptance(manifest, evidence_root)
     package = {"version": "chrona/successor-release/v0.3", "releaseId": manifest.get("releaseId", ""),

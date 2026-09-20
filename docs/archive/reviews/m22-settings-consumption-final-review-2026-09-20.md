@@ -23,7 +23,7 @@ tree-verified. M23 remained deferred.
   deprecation warnings remain non-failing.
 - `conformance/run_conformance.py`: all suites pass, including
   `Presentation setting consumption matrix: PASS (24 rows)`.
-- `scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml`: all five SVG
+- `tools/render_schedule_sample.py examples/aster-ssd/manifest.yaml`: all five SVG
   and PNG artifacts reproduced deterministically with zero reported overflow.
 - Visual review of the integrated ASTER master confirms readable planned/Actual bars,
   status markers, Actual-date and Missing-Actual labels, connectors, table rules, and

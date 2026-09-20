@@ -1,0 +1,26 @@
+name: Design proposal
+description: Propose a semantic, schema, or architecture change
+title: "[Design] "
+labels: ["design"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user need without prescribing implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Proposed contract
+      description: Identify affected specifications, schemas, diagnostics, and compatibility.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Acceptance evidence
+      description: State the conformance and test evidence that would close the proposal.
+    validations:
+      required: true

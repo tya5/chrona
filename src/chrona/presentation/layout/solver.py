@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from importlib.resources import files
 from typing import Any
-from pathlib import Path
 import jsonschema
 import yaml
 
@@ -32,7 +32,7 @@ def resolve_layout_profile(profile: dict[str, Any], available_sources: set[str])
         raise ValueError("E_LAYOUT_PROFILE_REQUIRED")
     required={"version","id","canvas","regions","slots","constraints"}
     if not required <= set(profile) or set(profile)-required-{"surface"}: raise ValueError("E_LAYOUT_PROFILE_SHAPE")
-    schema_path=Path(__file__).resolve().parents[4]/"schemas/layout-profile-v0.1.schema.yaml"
+    schema_path = files("chrona.resources").joinpath("schemas", "layout-profile-v0.1.schema.yaml")
     if list(jsonschema.Draft202012Validator(yaml.safe_load(schema_path.read_text())).iter_errors(profile)):
         raise ValueError("E_LAYOUT_PROFILE_SCHEMA")
     canvas=profile["canvas"]

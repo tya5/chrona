@@ -1,0 +1,30 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide the smallest safe project, command, and diagnostic output.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Chrona version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Relevant specification
+      description: Link the specification section or explain why none applies.

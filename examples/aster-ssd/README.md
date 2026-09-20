@@ -47,7 +47,7 @@ are compatibility resources for the current adapter; v0.2 settings control the
 visual appearance. No preset-reference resolution is required.
 
 ```sh
-.venv/bin/python scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml
+.venv/bin/python tools/render_schedule_sample.py examples/aster-ssd/manifest.yaml
 .venv/bin/pytest -q tests/acceptance/examples/test_aster_sample.py
 ```
 
@@ -56,7 +56,7 @@ and `CODEX_PRIMARY_RUNTIME_NODE_MODULES` (or an equivalent `NODE_PATH`). To rege
 and verify deterministic SVG only, without raster dependencies, run:
 
 ```sh
-.venv/bin/python scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml --no-raster
+.venv/bin/python tools/render_schedule_sample.py examples/aster-ssd/manifest.yaml --no-raster
 ```
 
 SVG files retain text, shapes and source IDs for editing. PNGs are slide-ready

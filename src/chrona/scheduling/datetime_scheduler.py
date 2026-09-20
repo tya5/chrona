@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from importlib.resources import files
 from typing import Any
 
 import jsonschema
@@ -19,8 +19,7 @@ from chrona.scheduling.temporal_datetime import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[3]
-SCHEMA_PATH = ROOT / "schemas" / "project-v0.2.schema.yaml"
+SCHEMA_PATH = files("chrona.resources").joinpath("schemas", "project-v0.2.schema.yaml")
 
 
 @dataclass

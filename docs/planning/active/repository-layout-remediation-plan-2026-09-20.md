@@ -13,8 +13,8 @@ validated and published.
 | R2 — User examples | Complete | `171b0cd` |
 | R3 — Test topology | Complete | `e4b24b1` |
 | R4 — Source package relocation | Complete | `f52a145` |
-| R5 — Presentation module decomposition | Complete | this phase commit |
-| R6 — Packaging and OSS closure | Pending | — |
+| R5 — Presentation module decomposition | Complete | `7a8b311` |
+| R6 — Packaging and OSS closure | Complete except license selection | this phase commit |
 
 ## 1. Objective
 

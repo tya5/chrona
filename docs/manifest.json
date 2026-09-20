@@ -1,5 +1,5 @@
 {
-  "artifact_set": "timeline-design",
+  "artifact_set": "chrona",
   "core_specification": "v0.1",
   "status": "Stable with versioned successors",
   "authoritative_core_documents": [
@@ -19,13 +19,13 @@
   ],
   "review": {
     "status": "completed",
-    "artifact": "docs/reviews/core-v0.1-design-review.md",
+    "artifact": "docs/archive/reviews/core-v0.1-design-review.md",
     "readiness": "Stable"
   },
-  "conformance_fixture": "docs/fixtures/conformance-v0.1.yaml",
+  "conformance_fixture": "conformance/conformance-v0.1.yaml",
   "semantic_rules": "docs/specification/supplemental/core-v0.1-semantic-rules.md",
-  "validation": "VALIDATION.json",
-  "stable_readiness_review": "docs/reviews/core-v0.1-stable-readiness-review.md",
+  "validation": "conformance/validation.json",
+  "stable_readiness_review": "docs/archive/reviews/core-v0.1-stable-readiness-review.md",
   "diagnostics": "docs/specification/supplemental/core-v0.1-diagnostics.md",
   "reference_conformance_result": {
     "returncode": 0,

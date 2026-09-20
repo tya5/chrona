@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 from hashlib import sha256
+from importlib.resources import files
 import json
-from pathlib import Path
 from typing import Any, Mapping
 
 from jsonschema import Draft202012Validator
@@ -15,9 +15,9 @@ class PresentationSettingsError(ValueError):
     """A stable diagnostic emitted while closing presentation settings."""
 
 
-_ROOT = Path(__file__).resolve().parents[4]
-_SCHEMA_DIR = _ROOT / "schemas"
-_FIXTURE = _ROOT / "conformance" / "presentation-settings-executive-v0.2.json"
+_RESOURCES = files("chrona.resources")
+_SCHEMA_DIR = _RESOURCES.joinpath("schemas")
+_FIXTURE = _RESOURCES.joinpath("presets", "presentation-settings-executive-v0.2.json")
 SETTINGS_VERSION = "chrona/presentation-settings/v0.2"
 PRESET_VERSION = "chrona/presentation-preset/v0.2"
 

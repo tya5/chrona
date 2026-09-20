@@ -1,7 +1,7 @@
 """Declarative standard-profile resolution for the initial delivery package."""
 from __future__ import annotations
 
-from pathlib import Path
+from importlib.resources import files
 from typing import Any
 
 import jsonschema
@@ -10,9 +10,8 @@ import yaml
 from chrona.core.diagnostics import Diagnostic
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 
-ROOT = Path(__file__).resolve().parents[3]
-PROFILE_SCHEMA = ROOT / "schemas" / "profile-v0.1.schema.yaml"
-RESOURCE_SCHEMA = ROOT / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml"
+PROFILE_SCHEMA = files("chrona.resources").joinpath("schemas", "profile-v0.1.schema.yaml")
+RESOURCE_SCHEMA = files("chrona.resources").joinpath("schemas", "revision-store-resource-ref-v0.1.schema.yaml")
 PACKAGE_ID = "implementation-delivery"
 DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}
 ACTOR_PROFILES = {"implementation-delivery.person", "implementation-delivery.team"}

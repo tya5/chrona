@@ -103,7 +103,7 @@ To build a deck rather than a single chart, describe the slides in a manifest an
 render them together:
 
 ```bash
-python scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml --no-raster
+python tools/render_schedule_sample.py examples/aster-ssd/manifest.yaml --no-raster
 ```
 
 The manifest names the shared project, actual, style, theme and profile, then one
@@ -132,6 +132,12 @@ candidates. Start with:
 
 Core v0.1 is Stable. Implementation discoveries are recorded through diagnostics,
 ADRs, and design-first remediation before implementation changes.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the design-first workflow and verification
+requirements, [SECURITY.md](SECURITY.md) for private vulnerability reporting, and
+[CHANGELOG.md](CHANGELOG.md) for notable changes.
 
 ## License
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
@@ -15,8 +16,7 @@ from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled
                        parse_amount, requires_working_calendar)
 
 
-ROOT = Path(__file__).resolve().parents[3]
-SCHEMA_PATH = ROOT / "schemas" / "project-v0.1.schema.yaml"
+SCHEMA_PATH = files("chrona.resources").joinpath("schemas", "project-v0.1.schema.yaml")
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
