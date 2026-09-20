@@ -71,6 +71,7 @@ def route_orthogonal(start, end, obstacles):
 def render_gantt(title, projection, project, view, theme, profile, slots, settings=None, *, presentation_scene=None):
     from .review_svg import _theme_color, _theme_font, _table_value, _display_value
     from .presentation_paint import resolve_facet_paint
+    from .presentation_labels import LabelRect, place_label
 
     surface = profile.get('surface', {})
     metrics = None
@@ -248,11 +249,23 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                     if surface.get('showVariance', True) and delta_mark is not None:
                         vx = max(x2, a2)+12
                         label = f'{delta_mark.variance_days:+d}d'
-                        if vx+60 > right: raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:variance')
+                        rule = next((rule for rule in settings['detail']['labelRules']
+                                     if rule['source'] == 'comparison-delta' and rule['facet'] == 'variance' and rule['endpoint'] == 'finish'), None) if settings else None
+                        label_width = metrics.width(label, 17) if metrics else 51
+                        placement = place_label(LabelRect(max(x2, a2), py, 3, 2*bh+bg), (label_width, 21),
+                                                settings['layout']['labelPlacement']['candidateSides'] if settings else ('end',),
+                                                bounds=LabelRect(left, top, timeline.width, bottom-top),
+                                                obstacles=[LabelRect(*box[:2], box[2]-box[0], box[3]-box[1]) for box in obstacles],
+                                                gap=settings['layout']['variance']['labelGap'] if settings else 7,
+                                                required=rule['required'] if rule else True,
+                                                overflow=settings['layout']['labelPlacement']['overflow'] if settings else 'diagnose')
+                        if placement is None:
+                            continue
+                        vx = placement.bounds.x - 10
                         variance_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, 'variance')['color'], quote=True) if settings else variance
                         foreground.append(rect(vx, py, 3, 2*bh+bg, variance_fill, 'variance-marker', item.object_id))
-                        foreground.append(text(vx+10, cy+5, label, 17, 700, variance_fill, 'variance', item.object_id))
-                        obstacles.append((vx-4, py-4, vx+57, cy+bh+bg/2+4))
+                        foreground.append(text(placement.bounds.x, placement.bounds.y+placement.bounds.height*.8, label, 17, 700, variance_fill, 'variance', item.object_id))
+                        obstacles.append((placement.bounds.x, placement.bounds.y, placement.bounds.right, placement.bounds.bottom))
                 elif not item.actual:
                     foreground.append(text(x1, cy+bh+bg/2, 'Actual not reported', 12, fill=muted, purpose='missing-actual', ref=item.object_id))
                     obstacles.append((x1-4, cy+2, x1+112, cy+bh+bg/2+4))
