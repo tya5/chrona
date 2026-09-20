@@ -61,6 +61,16 @@ class SceneGroup:
 
 
 @dataclass(frozen=True)
+class SceneSurface:
+    """Resolved geometry for one public adapter route."""
+
+    surface_id: str
+    slots: tuple[SceneSlot, ...]
+    rows: tuple[SceneRow, ...]
+    groups: tuple[SceneGroup, ...]
+
+
+@dataclass(frozen=True)
 class PresentationScene:
     title: str
     window: tuple[date, date]
@@ -73,6 +83,7 @@ class PresentationScene:
     slots: tuple[SceneSlot, ...]
     rows: tuple[SceneRow, ...]
     groups: tuple[SceneGroup, ...]
+    surfaces: tuple[SceneSurface, ...]
 
 
 def _resolved_input(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> ResolvedPresentationInput:
@@ -146,6 +157,46 @@ def _scene_rows(items: tuple[object, ...], slots: tuple[SceneSlot, ...], setting
     return tuple(rows), tuple(scene_groups)
 
 
+def _linear_surface(surface_id: str, items: tuple[object, ...], window: tuple[date, date], settings: dict,
+                    *, grouped: bool) -> SceneSurface:
+    """Resolve legacy review/minimal coordinates before their adapters serialize them."""
+    margins, viewport = settings["layout"]["margins"], settings["context"]["viewport"]
+    left, top, row_height = margins["left"], margins["top"], settings["layout"]["row"]["height"]
+    timeline_width = max(1, (window[1] - window[0]).days) * settings["layout"]["scale"]["dayWidth"]
+    slots = (
+        SceneSlot("title", "title", None, (left, 0, viewport["width"] - left - margins["right"], top)),
+        SceneSlot(f"{surface_id}Timeline", "timeline", "primary", (left, top, timeline_width, viewport["height"] - top - margins["bottom"])),
+        SceneSlot(f"{surface_id}Axis", "timeline-axis", "primary", (left, top, timeline_width, viewport["height"] - top - margins["bottom"])),
+    )
+    rows: list[SceneRow] = []
+    groups: list[SceneGroup] = []
+    y = top - row_height if grouped else top
+    grouped_items = [(gid, tuple(group)) for gid, group in groupby(items, lambda item: str(getattr(item, "group_id", "")))] if grouped else [("", items)]
+    for group_index, (group_id, group_items) in enumerate(grouped_items):
+        if grouped and group_index:
+            y += row_height
+        header = None
+        if grouped and settings["layout"]["group"]["mode"] in {"header-and-separator", "band", "header", "merged"}:
+            header = (left, y, timeline_width, row_height)
+            y += row_height
+        content_y = y
+        for item in group_items:
+            y += row_height
+            rows.append(SceneRow(str(getattr(item, "object_id")), group_id,
+                                 (left, y - row_height / 2, timeline_width, row_height)))
+        groups.append(SceneGroup(group_id, header, (left, content_y, timeline_width, y - content_y)))
+    return SceneSurface(surface_id, slots, tuple(rows), tuple(groups))
+
+
+def _scene_surfaces(items: tuple[object, ...], window: tuple[date, date], settings: dict,
+                    slots: tuple[SceneSlot, ...], rows: tuple[SceneRow, ...], groups: tuple[SceneGroup, ...]) -> tuple[SceneSurface, ...]:
+    return (
+        SceneSurface("table-timeline", slots, rows, groups),
+        _linear_surface("review", items, window, settings, grouped=True),
+        _linear_surface("minimal", items, window, settings, grouped=False),
+    )
+
+
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
     """Build a completed shared Scene; adapters may only serialize its primitives."""
     resolved = _resolved_input(title, items, window, settings)
@@ -179,7 +230,8 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     primitives = _scene_primitives(resolved, axes, marks)
     slots = _scene_slots(settings)
     rows, groups = _scene_rows(copied_items, slots, settings)
-    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots, rows, groups)
+    surfaces = _scene_surfaces(copied_items, (start, end), settings, slots, rows, groups)
+    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots, rows, groups, surfaces)
 
 
 def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:

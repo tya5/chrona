@@ -31,6 +31,9 @@ def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
     assert slots["timeline"].scale_id == slots["timelineAxis"].scale_id == "primary"
     assert scene.rows[0].object_id == "a"
     assert scene.rows[0].bounds[3] > 0
+    surfaces = {surface.surface_id: surface for surface in scene.surfaces}
+    assert {"table-timeline", "review", "minimal"} == set(surfaces)
+    assert surfaces["review"].rows[0].bounds[2] > 0
 
 
 def test_scene_materializes_stable_primitives_without_adapter_identity():
