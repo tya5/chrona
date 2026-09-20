@@ -26,3 +26,6 @@ Repository topology and packaging are owned by
 is governed by the
 [repository layout remediation plan](planning/active/repository-layout-remediation-plan-2026-09-20.md)
 and [ADR-0022](decisions/ADR-0022-product-oriented-repository-layout.md).
+
+The active M24 successor for intent-oriented, low-magic-number authoring is governed by
+the [declarative layout language plan](planning/active/declarative-layout-language-plan-2026-09-20.md).
