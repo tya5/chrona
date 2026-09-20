@@ -139,8 +139,15 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     top, bottom = table.y + axis_h, table.y + table.height
     left, right = timeline.x, timeline.x + timeline.width
     groups = [(gid, list(items)) for gid, items in groupby(projection.items, lambda item: item.group_id)]
-    extra = len(groups)*group_header_height if mode == 'header' else 0
-    rh = (bottom-top-group_gap*max(0, len(groups)-1)-extra)/max(1, len(projection.items))
+    scene_rows = {row.object_id: row for row in presentation_scene.rows} if presentation_scene is not None else {}
+    scene_groups = {group.group_id: group for group in presentation_scene.groups} if presentation_scene is not None else {}
+    if presentation_scene is not None:
+        if len(scene_rows) != len(projection.items) or not scene_rows:
+            raise ValueError('E_PRESENTATION_ROWS_MISSING')
+        rh = next(iter(scene_rows.values())).bounds[3]
+    else:
+        extra = len(groups)*group_header_height if mode == 'header' else 0
+        rh = (bottom-top-group_gap*max(0, len(groups)-1)-extra)/max(1, len(projection.items))
     if rh < max(fs*2.8, 2*bh+bg+16):
         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:rows')
     columns = view['body'].get('tableColumns', [{'id': 'Activity', 'source': 'title', 'missing': 'em-dash'}])
@@ -212,11 +219,20 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             scene_marks.setdefault(mark.source_id, {})[mark.facet] = mark
     y = top
     for group_index, (gid, items) in enumerate(groups):
-        group_top = y
+        scene_group = scene_groups.get(gid)
+        if presentation_scene is not None and scene_group is None:
+            raise ValueError('E_PRESENTATION_GROUP_MISSING')
+        if scene_group is not None:
+            y = scene_group.content_bounds[1]
         if mode == 'header':
-            parts.append(text(table.x+12, y + group_header_height - 9, items[0].group_label, gs, 700, purpose='group-header', ref=gid)); y += group_header_height
+            header_bounds = scene_group.header_bounds if scene_group is not None else (table.x, y, table.width, group_header_height)
+            if header_bounds is None:
+                raise ValueError('E_PRESENTATION_GROUP_HEADER_MISSING')
+            parts.append(text(table.x+12, header_bounds[1] + header_bounds[3] - 9, items[0].group_label, gs, 700, purpose='group-header', ref=gid))
+            if scene_group is None:
+                y += group_header_height
         lane_origin = y
-        group_h = rh*len(items)
+        group_h = scene_group.content_bounds[3] if scene_group is not None else rh*len(items)
         fill = color(f'group:{gid}', color('group-band', '#EEF3F8'))
         if mode != 'none':
             opacity = settings['theme']['groupPaints'].get(gid, settings['theme']['paints']['groupBand'])['opacity'] if settings else 1
@@ -224,6 +240,11 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         if mode == 'merged':
             foreground.append(wrapped(table.x+12, y+group_h/2, items[0].group_label, group_width-24, gs, 700, 'group-header', gid))
         for i, item in enumerate(items):
+            scene_row = scene_rows.get(item.object_id)
+            if presentation_scene is not None:
+                if scene_row is None or scene_row.group_id != gid:
+                    raise ValueError('E_PRESENTATION_ROW_MISSING')
+                y, rh = scene_row.bounds[1], scene_row.bounds[3]
             cy = y+rh/2
             if i%2 == 1:
                 parts.append(rect(table.x+group_width, y, right-table.x-group_width, rh, color('row-shade', '#FFFFFF'), 'row-shade', item.object_id, f'opacity="{settings["theme"]["paints"]["rowShade"]["opacity"] if settings else .34}"'))
@@ -324,8 +345,10 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                 obstacles.append(point_obstacle)
                 annotation_mark_obstacles[(item.object_id, 'planned')] = point_obstacle
                 annotation_ports[(item.object_id, 'planned')] = {'at': (x, cy, 1), 'body': (x, cy, 1)}
-            y += rh
-        y += group_gap
+            if presentation_scene is None:
+                y += rh
+        if presentation_scene is None:
+            y += group_gap
 
     # Scene intervals are already clipped to the View window; adapter only maps them to x/y.
     if presentation_scene is not None:
