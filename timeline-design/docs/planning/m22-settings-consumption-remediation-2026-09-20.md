@@ -86,7 +86,12 @@ choice stops implementation and reopens D24 before code continues.
 - Legacy SVG behavior is not evidence for v0.2 completion.
 - M23 remains excluded.
 
-I24-2 is complete locally: the four variance statuses, marker width, missing-Actual
+I24-2 is published at `7915501`: the four variance statuses, marker width, missing-Actual
 mode/pattern, annotation fill/stroke/leader paints, and existing group/default facet
 fallbacks have targeted observers. The ASTER artifacts were regenerated without SVG
-overflow; publication is the remaining I24-2 exit action.
+overflow.
+
+The I24-3 pre-implementation review reopened D24 before code. Specification 08 now
+closes next-finer minor tick generation and maps every label-rule source to its Scene
+family, including applicability, duplicate precedence, and required/optional failure
+behavior. I24-3 resumes only after this addendum is published and tree-verified.

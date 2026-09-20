@@ -263,5 +263,10 @@ The following settings are behavioral, not validation-only:
 - `labelRules[].required` controls diagnose-versus-optional-overflow behavior;
 - `layout.variance.visible` and `layout.routing.enabled` gate their primitive families.
 
+The label-rule source mapping, applicability rule, duplicate precedence, and optional
+omission behavior are closed in specification 08. Axis `minorVisible` likewise creates
+the next-finer unlabeled tick family there; it is not a synonym for recoloring major
+ticks.
+
 These settings may be unobservable only when the matrix predicate is false. Removing
 or ignoring them is not an allowed implementation shortcut.

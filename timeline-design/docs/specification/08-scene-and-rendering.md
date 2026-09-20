@@ -265,6 +265,13 @@ completed resolved Theme. The purpose mapping is closed: ticks/major axis use
 `dependency`. The selected token contributes color, opacity, width, and dash together;
 mixing fields from different tokens or hard-coding a dash is invalid.
 
+`layout.axis.tickUnit` and `tickStep` produce major ticks. When `minorVisible=true`,
+Scene also derives boundaries of exactly the next finer level in the closed order
+`year -> quarter -> month -> week -> day`. Boundaries coincident with a major tick are
+removed; `day` has no finer level. The remaining `minor-tick` Paths use `axisMinor` and
+carry no label. This is display subdivision only and does not change the temporal
+window or Date-only semantics.
+
 Missing Actual is an explicit conditional Scene family. A span lacks its required
 Actual facet unless its Actual mapping contains both a valid start and finish. The
 family uses the planned Rect's left edge and the row's resolved Actual-bar band. A
@@ -294,6 +301,24 @@ aligns its measured top, center, or bottom to the marker bounds. Known text uses
 `positiveSign` and `signedDaysSuffix`; unknown text uses
 `detail.formatting.unknown`. `showZero=false` suppresses the on-track family.
 Adapters do not derive status from text or color.
+
+Each Detail label rule has one closed Scene target. `title` controls the existing
+per-object item-title label anchored to the planned/baseline body; `planned-date` and
+`actual-date` create formatted endpoint labels only when the named facet and endpoint
+exist; `comparison-delta` controls the variance label; and `annotation-text` controls
+placement of the authored annotation text box. Date labels use
+`detail.formatting.date`, never host locale formatting. Rule array order breaks ties;
+the first rule for an identical `(source, facet, endpoint)` target wins.
+
+`required=true` makes an unplaceable applicable label
+`E_PRESENTATION_LABEL_UNPLACEABLE`. `required=false` permits omission only when
+`layout.labelPlacement.overflow=clip-optional`; under `diagnose` it produces the same
+diagnostic. A rule whose facet/endpoint is absent is inapplicable, not an overflow.
+Item/date/annotation labels use the declared finite candidate order and obstacle set.
+Variance retains its conditional-family placement above; its measured margin overflow
+uses the same required/optional decision. Absence of a rule does not delete authored
+title or annotation text: those families default to required. Planned/Actual date
+labels are emitted only by their explicit rules.
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
 following I3 core primitive set before any adapter is invoked: one resolved heading

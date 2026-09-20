@@ -40,3 +40,8 @@ The first I24-2 boundary test then exposed a right-edge case in the valid ASTER
 fixture. The design now closes that case with a measured whole-label left shift at the
 viewport margin, preserving text and temporal geometry. This is a placement refinement
 inside the already owned conditional families, not adapter repair.
+
+The I24-3 pre-review also stopped before code on two unspecified choices. The final
+addendum now defines next-finer minor ticks and a total mapping from every schema label
+source to Scene behavior, including duplicate precedence and optional omission. These
+rules consume existing schema only and do not widen semantic authority.
