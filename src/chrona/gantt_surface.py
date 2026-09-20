@@ -242,6 +242,23 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                     actual_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, 'actual')['color'], quote=True) if settings else actual
                     foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual_fill, 'actual', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                     obstacles.append((a1-4, actual_y-4, a2+4, actual_y+bh+4))
+                    actual_rule = next((rule for rule in settings['detail']['labelRules']
+                                        if rule['source'] == 'actual-date' and rule['facet'] == 'actual' and rule['endpoint'] == 'finish'), None) if settings else None
+                    if actual_rule is not None:
+                        actual_label = actual_mark.end.isoformat()
+                        actual_placement = place_label(LabelRect(a2, actual_y, 1, bh),
+                                                       (metrics.width(actual_label, 12) if metrics else 60, 15),
+                                                       settings['layout']['labelPlacement']['candidateSides'],
+                                                       bounds=LabelRect(left, top, timeline.width, bottom-top),
+                                                       obstacles=[LabelRect(*box[:2], box[2]-box[0], box[3]-box[1]) for box in obstacles],
+                                                       gap=settings['layout']['missingActual']['gap'],
+                                                       required=actual_rule['required'],
+                                                       overflow=settings['layout']['labelPlacement']['overflow'])
+                        if actual_placement is not None:
+                            foreground.append(text(actual_placement.bounds.x, actual_placement.bounds.y+actual_placement.bounds.height*.8,
+                                                   actual_label, 12, fill=muted, purpose='actual-date', ref=item.object_id))
+                            obstacles.append((actual_placement.bounds.x, actual_placement.bounds.y,
+                                              actual_placement.bounds.right, actual_placement.bounds.bottom))
                     delta_mark = scene_marks.get(item.object_id, {}).get('finish-delta')
                     if delta_mark is None and presentation_scene is None and item.finish_delta is not None:
                         from types import SimpleNamespace
