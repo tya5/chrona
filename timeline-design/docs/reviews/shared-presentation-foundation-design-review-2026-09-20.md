@@ -1,63 +1,73 @@
-# 共通表現基盤 G0 / G2–G4 設計整合レビュー
+# Shared Presentation Foundation G0 / G2–G4 Design-Consistency Review
 
-**結論:** G0は閉鎖済み。G2–G4は `31-presentation-g2-g4-design-gate.md`、各owner schema、正負fixtureを
-照合し、実装開始可能な設計水準で閉じた。実装完了ではない。
+**Conclusion:** G0 is closed. G2–G4 were compared against
+`31-presentation-g2-g4-design-gate.md`, each owning schema, and positive/negative
+fixtures. Their design is closed to an implementation-ready level; implementation is
+not complete.
 
-## 確認した整合
+## Confirmed consistency
 
-| 境界 | 結論 | 根拠 |
+| Boundary | Conclusion | Basis |
 |---|---|---|
-| 注釈 | 一般化可能 | 既存Viewのanchor/text、SceneのRect/Text/Path、Layout slotを組み合わせる |
-| 特例防止 | 機構はサンプル・preset名を読まない | ADR-0019の採用ゲートとwire fixtureのowner分離 |
-| 時間軸 | 複数slotの同期が可能 | View window由来のnormalized scaleと明示scaleId契約 |
-| 意味分離 | dependencyとleaderは同じ経路器を再利用できる | sourceKind、端点、role、アクセシビリティを別に保持 |
-| Detail milestones | 説明帯の第二本文源にしない | point listは派生surface、本文はView annotation |
-| legacy | 新機能と混ぜない | 仕様29のlegacy adapter診断を保持 |
+| Annotations | Generalizable | Combine existing View anchors/text, Scene Rect/Text/Path primitives, and Layout slots. |
+| Prevention of exceptions | The mechanism reads no sample or preset name | ADR-0019 admission gate and owner separation in the wire fixture. |
+| Time axis | Multiple slots can synchronize | A normalized scale derived from the View window and an explicit `scaleId` contract. |
+| Semantic separation | Dependencies and leaders can reuse one router | Keep `sourceKind`, endpoints, roles, and accessibility separate. |
+| Detail milestones | Not a second source of explanation text | The point list is a derived surface; text comes from View annotations. |
+| Legacy | Not mixed with new functionality | Retain the Specification 29 legacy-adapter diagnostic. |
 
-## 判断
+## Decisions
 
-吹き出しは「対象参照、測定済みtext bounds、有限候補、任意の直交leader」として
-採用する。特殊な尾、手動座標、手動折れ点、任意形状、無制限探索は非採用とする。
-これによりバー外ラベル、作業注記、ゲート説明の二用途以上を共通実装で扱える。
+A callout is admitted as a target reference, measured text bounds, a finite candidate
+set, and an optional orthogonal leader. Specialized tails, manual coordinates, manual
+bends, arbitrary shapes, and unbounded search are rejected. This lets the same
+implementation serve at least two uses among labels outside bars, work notes, and gate
+explanations.
 
-初期実装でrelation/group/temporal annotation anchorを描画しない決定は意図的である。
-schemaが受理する既存conceptをobjectへ曖昧に置換せず、明示診断で保留する。
+The decision not to render relation, group, or temporal annotation anchors in the
+initial implementation is intentional. Existing concepts accepted by the schema are
+held with an explicit diagnostic rather than ambiguously converted into object anchors.
 
-## fixture確認
+## Fixture verification
 
-`fixtures/validate_shared_presentation_foundation.py`はwire schemaとfixtureを検証し、
-owner、週軸、注釈leader/routing、Scene/Layoutの責務分離を確認する。
-これは設計fixtureの検証であり、SVGや配置器の動作証明ではない。
+`fixtures/validate_shared_presentation_foundation.py` validates the wire schema and
+fixture and checks owner separation, week axes, annotation leader/routing, and the
+Scene/Layout responsibility boundary. It validates design fixtures; it does not prove
+SVG or placement behavior.
 
-## 残る実装前提
+## Remaining implementation prerequisites
 
-- G1で既存v0.2設定の未消費項目とfont/metrics問題を是正する。
-- G2でschemaを各authoring ownerへ実装し、移行adapterと否定fixtureを追加する。
-- G3/G4はG2の共通テキスト、anchor、occupancy、routingを再利用できた項目だけ採用する。
+- G1 corrects unconsumed v0.2 settings and font/metrics problems.
+- G2 implements schema fields in each authoring owner and adds the migration adapter
+  and negative fixtures.
+- G3/G4 admit only elements that successfully reuse G2 shared text, anchor, occupancy,
+  and routing.
 
-実装中にこの契約を満たせない表現が判明した場合、当該実装を中断して設計を更新する。
+If implementation reveals an expression that cannot satisfy this contract, pause that
+implementation and update the design first.
 
-## G2–G4 横断照合
+## Cross-check across G2–G4
 
-| 境界 | 結論 | schema / fixture evidence |
+| Boundary | Conclusion | Schema / fixture evidence |
 |---|---|---|
-| label text と配置 | 本文はDetail、有限候補・overflowはLayout。rendererは任意式・無限探索を持たない | `detail.labelRules`、`layout.labelPlacement`、候補数超過fixture |
-| facet paint | group override、default、正規化済みglobal roleの順。group背景mapと混在しない | `theme.facetPaints`、group override fixture |
-| axis slot | `timeline-axis` はtimelineと同一scaleを共有し、異なるscaleは診断 | `layout.slots`、仕様31の `E_PRESENTATION_SCALE_MISMATCH` |
-| annotation | Viewのtyped object referenceのみを初期描画対象にし、手動座標・waypointは受理しない | `view-v0.1` のfacet付きanchor、actual欠損／unsupported anchor fixture |
-| leader routing | 直交leaderはLayoutの有界route limitを使い、意味dependencyと別roleのまま経路器を共有 | `layout.routing.limit`、route-limit fixture |
-| lane stack | View group/orderに従い、markとrequired labelのoccupancyから最小stackを選ぶ | `layout.lanes`、stack-overflow fixture |
+| Label text and placement | Detail owns text; Layout owns finite candidates and overflow. The renderer has neither arbitrary expressions nor unbounded search. | `detail.labelRules`, `layout.labelPlacement`, candidate-overflow fixture |
+| Facet paint | Resolve group override, default, then normalized global role. Do not mix it with a group-background map. | `theme.facetPaints`, group-override fixture |
+| Axis slot | `timeline-axis` shares the timeline scale; diagnose a different scale. | `layout.slots`, Specification 31 `E_PRESENTATION_SCALE_MISMATCH` |
+| Annotation | Initially render only typed View object references; accept no manual coordinates or waypoints. | Faceted anchor in `view-v0.1`, missing-Actual and unsupported-anchor fixtures |
+| Leader routing | Orthogonal leaders use Layout's bounded route limit and share a router while remaining a distinct role from semantic dependencies. | `layout.routing.limit`, route-limit fixture |
+| Lane stack | Follow View group/order and select the lowest stack from mark and required-label occupancy. | `layout.lanes`, stack-overflow fixture |
 
-## 診断と禁止救済
+## Diagnostics and prohibited recovery
 
-| diagnostic | owner | 禁止する救済 |
+| Diagnostic | Owner | Prohibited recovery |
 |---|---|---|
-| `E_PRESENTATION_LABEL_UNPLACEABLE` | Layout | required labelのclip、無制限候補探索 |
-| `E_PRESENTATION_SCALE_MISMATCH` | Layout | slotごとの別window/scale |
-| `E_PRESENTATION_ANCHOR_MISSING` | View projection | actual欠損時のplanned代替 |
-| `E_PRESENTATION_ANCHOR_UNSUPPORTED` | View / adapter | relation・group・temporalをobjectへ曖昧変換 |
-| `E_PRESENTATION_STACK_OVERFLOW` | Layout | 別group移動、暗黙縮小、隠蔽 |
-| `E_PRESENTATION_ROUTE_LIMIT` | Layout | limit超過の無制限探索 |
+| `E_PRESENTATION_LABEL_UNPLACEABLE` | Layout | Clip a required label or search unbounded candidates |
+| `E_PRESENTATION_SCALE_MISMATCH` | Layout | Use a separate window/scale per slot |
+| `E_PRESENTATION_ANCHOR_MISSING` | View projection | Substitute planned when Actual is missing |
+| `E_PRESENTATION_ANCHOR_UNSUPPORTED` | View / adapter | Ambiguously convert relation, group, or temporal to object |
+| `E_PRESENTATION_STACK_OVERFLOW` | Layout | Move to another group, implicitly shrink, or hide |
+| `E_PRESENTATION_ROUTE_LIMIT` | Layout | Search without bound after the limit |
 
-`validate_presentation_g2_g4_design.py` は、固有IDに依存しない二つのproject、長い日本語、actual欠損、
-5種のnegative diagnosticを検査する。これは設計入力の検証であり、配置・SVG描画の動作証明は後続実装testで行う。
+`validate_presentation_g2_g4_design.py` checks two projects without fixed IDs, long
+Japanese text, missing Actual, and five negative diagnostics. It validates design
+input; later implementation tests prove placement and SVG rendering behavior.
