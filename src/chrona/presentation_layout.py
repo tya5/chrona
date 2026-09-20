@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
+from typing import Mapping
 
 from .presentation_settings import PresentationSettingsError
 
@@ -14,7 +16,51 @@ class PresentationRect:
     height: float
 
 
-def solve_presentation_layout(settings: dict) -> dict[str, PresentationRect]:
+def _measure(value: object) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool) or not isfinite(value) or value < 0:
+        raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+    return float(value)
+
+
+def _sizes(tracks: list[dict], available: float, gap: float, intrinsic: Mapping[int, float]) -> list[float]:
+    if any(track["min"] > track["max"] for track in tracks):
+        raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+    remaining = available - gap * max(0, len(tracks) - 1)
+    sizes: list[float | None] = [None] * len(tracks)
+    fractions: list[tuple[int, float]] = []
+    for index, track in enumerate(tracks):
+        kind = track["kind"]
+        if kind == "fixed":
+            size = _measure(track.get("value"))
+        elif kind == "content":
+            if "value" in track or index not in intrinsic:
+                raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+            size = _measure(intrinsic[index])
+        elif kind == "fraction":
+            fractions.append((index, _measure(track.get("value"))))
+            continue
+        else:
+            raise PresentationSettingsError("E_PRESENTATION_REFERENCE")
+        sizes[index] = size
+        remaining -= size
+    if remaining < 0:
+        raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+    if fractions:
+        total = sum(weight for _, weight in fractions)
+        if total <= 0:
+            raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+        for index, weight in fractions:
+            sizes[index] = remaining * weight / total
+    elif remaining > 0:
+        raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+    completed = [float(size) for size in sizes]
+    if any(size < track["min"] or size > track["max"] for size, track in zip(completed, tracks)):
+        raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+    return completed
+
+
+def solve_presentation_layout(settings: dict, *, intrinsic_blocks: Mapping[str, float] | None = None, intrinsic_tracks: Mapping[str, Mapping[int, float]] | None = None) -> dict[str, PresentationRect]:
+    """Resolve fixed/content first, then fraction tracks; never invent an intrinsic size."""
     context, layout = settings["context"], settings["layout"]
     viewport, margins = context["viewport"], layout["margins"]
     width = viewport["width"] - margins["left"] - margins["right"]
@@ -22,19 +68,20 @@ def solve_presentation_layout(settings: dict) -> dict[str, PresentationRect]:
     if width <= 0 or height <= 0:
         raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
     regions = layout["regions"]
-    fixed = sum(region["block"]["value"] for region in regions if region["block"]["kind"] == "fixed")
-    fractional = [region for region in regions if region["block"]["kind"] == "fraction"]
-    remaining = height - fixed - layout["regionGap"] * max(0, len(regions) - 1)
-    if remaining < 0:
-        raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
-    fraction_sum = sum(region["block"]["value"] for region in fractional) or 1
+    intrinsic_blocks, intrinsic_tracks = intrinsic_blocks or {}, intrinsic_tracks or {}
+    blocks: list[dict] = []
+    block_inputs: dict[int, float] = {}
+    for index, region in enumerate(regions):
+        block = dict(region["block"])
+        blocks.append(block)
+        if block["kind"] == "content":
+            if region["id"] not in intrinsic_blocks:
+                raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+            block_inputs[index] = intrinsic_blocks[region["id"]]
+    heights = _sizes(blocks, height, layout["regionGap"], block_inputs)
     region_rects: dict[str, PresentationRect] = {}
     y = margins["top"]
-    for region in regions:
-        block = region["block"]
-        h = block["value"] if block["kind"] == "fixed" else remaining * block["value"] / fraction_sum
-        if h < block["min"] or h > block["max"]:
-            raise PresentationSettingsError("E_LAYOUT_REQUIRED_OVERFLOW")
+    for region, h in zip(regions, heights):
         region_rects[region["id"]] = PresentationRect(margins["left"], y, width, h)
         y += h + layout["regionGap"]
     slots: dict[str, PresentationRect] = {}
@@ -43,13 +90,11 @@ def solve_presentation_layout(settings: dict) -> dict[str, PresentationRect]:
         if region is None or not 0 <= slot["track"] < len(region["tracks"]):
             raise PresentationSettingsError("E_PRESENTATION_REFERENCE")
         box = region_rects[region["id"]]
-        tracks = region["tracks"]
-        weights = sum(track["value"] for track in tracks)
+        widths = _sizes(region["tracks"], box.width, region["gap"], intrinsic_tracks.get(region["id"], {}))
         x = box.x
-        for index, track in enumerate(tracks):
-            w = box.width * track["value"] / weights
+        for index, track_width in enumerate(widths):
             if index == slot["track"]:
-                slots[slot_id] = PresentationRect(x, box.y, w, box.height)
+                slots[slot_id] = PresentationRect(x, box.y, track_width, box.height)
                 break
-            x += w + region["gap"]
+            x += track_width + region["gap"]
     return slots
