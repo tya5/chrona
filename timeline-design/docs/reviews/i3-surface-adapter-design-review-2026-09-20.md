@@ -33,3 +33,7 @@ table cellはI3-Bの範囲外であり、同時実装しない。
 満たさないことを実行で確認した。既存設計が表示spanを設定所有としていたため、adapter側で日数や
 slot幅を補うことは許されない。仕様29、base fixture、fixed-value inventoryを7日表示spanへ同期し、
 overflow診断を明示した。この設計補正を公開してからI3-B実装を是正する。
+
+追加で、base fixtureの変更にpresetの`base.contentIdentity`が追随していないことを回帰で検出した。
+digest照合を設計validatorへ追加し、fixture参照を同期する公開を先に完了する。この照合が成功するまで
+TextLayout実装を再開しない。

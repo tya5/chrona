@@ -3,7 +3,7 @@ id: japanese-roomy-review
 base:
   id: executive-v0.2
   revision: design-fixture
-  contentIdentity: sha256:9b7d394798fb21c108af364dfc22d3949f44c24aae3d06d2dc3aac46329b229f
+  contentIdentity: sha256:2d71d95a3f9d56859b39f0f00fa173ae60d3e08adabf7ff2d842d51b9d5e5139
 overrides:
   context:
     locale: ja-JP
