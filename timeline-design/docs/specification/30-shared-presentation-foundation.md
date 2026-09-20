@@ -231,15 +231,15 @@ gridOffset、clearance、portOffset、bendPenalty、limitとstable tie-breakを�
 
 Scene Builderは次の有限順序でのみ投影する。後段が前段を再解釈・再測定することはない。
 
-1. Layoutのregion/track solverからsurface slot、table row、lane trackのboundsを作る。
-2. 一つのDate scaleからaxis band、tick、slotごとのx変換を作る。
+1. Layoutのregion/track solverから、選択された公開surface instanceごとのtitle、timeline、axis、ordered row、lane trackのboundsを作る。`table-timeline`、`review`、`minimal`は別instanceであり、同じscaleを共有しても座標を共有しない。
+2. 一つのDate scaleからaxis band、tick、各surface slotのdate-to-x変換を作り、mark/Text/Pathの完成boundsへ反映する。
 3. semantic facetを保ったmark boundsとshape由来portを作る。
 4. `TextLayout {bounds, baseline, lines, family, weight, assetIdentity}`を一度だけ測定し、label、障害物、SVG Textが同一値を使う。
 5. 必須labelを含むmark occupancyからstable lane stackとtrack boundsを作る。
 6. annotation purposeごとにprimitive候補を作り、確定済み障害物に対して有限routeを解く。
 7. sceneId、sourceKind、bounds、z-order、manifest、diagnosticsを確定して出力する。
 
-axis bandは`(scaleId, level, naturalInterval.index, slotId)`、markは`(projectionInstanceId, facet, markRole)`、Textは`(projectionInstanceId, textRole)`をidentityに含める。slotは同じscaleを参照しても独立したinstanceを持つ。adapterはband高さ、x/y、baseline、track、routeを再計算しない。
+axis bandは`(scaleId, level, naturalInterval.index, slotId)`、markは`(projectionInstanceId, facet, markRole)`、Textは`(projectionInstanceId, textRole)`をidentityに含める。slotは同じscaleを参照しても独立したinstanceを持つ。adapterはband高さ、x/y、baseline、track、routeを再計算しない。特にreview/minimal adapterは設定のmargin/dayWidth/row heightや投影列順から座標を再構成せず、選択surface instanceの完成primitiveだけを直列化する。
 
 | purpose | 許されるprimitive | anchor | 禁止 |
 |---|---|---|---|

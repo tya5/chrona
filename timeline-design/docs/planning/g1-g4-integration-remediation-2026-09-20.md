@@ -47,6 +47,17 @@ wire schemaのrouting入力を`gridOffset`、`clearance`、`portOffset`、`bendP
 
 I3のadapter移行確認で、Scene入力にsurface slot、row、lane trackの解決済みboundsを明記しなければadapterが座標を再計算することを検出した。仕様08/30を補正し、I3はこの入力をScene Builderへ移すまで中断する。既に公開したI1/I2のprimitive/track作業は移行途中の基盤であり、I3完了根拠には使用しない。
 
+## I3 第2設計補正：公開surface instance
+
+table/timeline adapterのrow/group移行後に、通常reviewとminimal SVG adapterが設定の
+margin/dayWidth/row heightと投影順からdate-to-x/item-to-yを再構成していることを確認した。
+これは仕様08のadapter禁止事項およびI3の全公開経路条件に反する。`table-timeline`、`review`、
+`minimal`をそれぞれ独立したsurface instanceとしてResolvedPresentationInputに列挙し、各々の
+title/timeline/axis/ordered-row boundsと完成primitiveをScene Builderが確定する設計へ補正する。
+同じscaleIdは正規化位置だけを共有し、origin、width、dayWidth、row heightを共有しない。必要な
+surface入力又はprimitiveが無い場合はadapterがfallback計算せず診断する。この補正の仕様・派生fixture・
+validatorを公開してから、review/minimalの実装移行を再開する。
+
 ## 提案する内部構造
 
 1. 入力解決: View/Style/Theme/Detail/Layout/Contextの型・固定参照を検査し、source selectionを一度だけ決定。

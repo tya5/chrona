@@ -75,6 +75,14 @@ layout/routing policy, and the resolved logical bounds for every surface slot, r
 and derived lane track; it is not another persisted authoring resource.  A slot bound
 is Scene input, not an adapter convention.
 
+The input records one named **surface instance** for every public SVG route selected by
+the coordinator.  `table-timeline`, `review`, and `minimal` each have their own title,
+timeline, axis, and ordered row bounds; a surface may share a `scaleId` with another
+surface but never borrows that surface's origin, width, day width, or row height.  The
+Builder emits mark, tick, text, and connector bounds for the selected surface instance.
+The adapter serializes those bounds and cannot derive date-to-x or item-to-y from
+settings, viewport margins, or item order.
+
 Each temporal or annotation projection has a `projectionInstanceId` composed from the
 stable slot ID, source reference, semantic facet, and declared primitive purpose.  A
 visual role may change paint or glyph choice, but MUST NOT rename or replace the
@@ -87,6 +95,9 @@ The Builder alone converts this input into measured geometry, ports, obstacles,
 track bounds, and primitives.  An adapter receives neither authoring resources nor a
 semantic View Projection and MUST NOT recreate a scale, select a slot, choose an
 anchor, measure text, assign a lane, calculate a row/track y coordinate, or resolve a route.
+It MUST also not use a settings-derived `dayWidth`, margin, or row height as a fallback
+for a completed surface instance; a missing required slot, row, mark, or primitive is a
+stable presentation diagnostic.
 
 ## 4. Coordinate system and temporal scale
 
