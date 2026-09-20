@@ -68,7 +68,7 @@ def route_orthogonal(start, end, obstacles):
     return simplified
 
 
-def render_gantt(title, projection, project, view, theme, profile, slots, settings=None):
+def render_gantt(title, projection, project, view, theme, profile, slots, settings=None, *, presentation_scene=None):
     from .review_svg import _theme_color, _theme_font, _table_value, _display_value
 
     surface = profile.get('surface', {})
@@ -135,7 +135,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:rows')
     columns = view['body'].get('tableColumns', [{'id': 'Activity', 'source': 'title', 'missing': 'em-dash'}])
     cw = (table.width-group_width)/len(columns)
-    start, end = projection.window
+    start, end = presentation_scene.window if presentation_scene is not None else projection.window
     days = max(1, (end-start).days)
     # Padding protects endpoint symbols; one continuous scale is shared by all marks.
     sx = lambda d: left+20+(d-start).days/days*(timeline.width-40)
@@ -145,6 +145,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
              f'<desc id="desc">Plan and Actual comparison. {len(projection.items)} rows; {len(projection.unmatched_actual_ids)} unmatched observations. Actual is not a forecast.</desc>',
              f'<defs><marker id="dependency-arrow" markerWidth="{settings["theme"]["arrow"]["width"] if settings else 6}" markerHeight="{settings["theme"]["arrow"]["height"] if settings else 6}" refX="{settings["theme"]["arrow"]["width"]-settings["theme"]["arrow"]["tipInset"] if settings else 5.5}" refY="{(settings["theme"]["arrow"]["height"] if settings else 6)/2}" orient="auto"><path d="M0 0L{settings["theme"]["arrow"]["width"] if settings else 6} {(settings["theme"]["arrow"]["height"] if settings else 6)/2}L0 {settings["theme"]["arrow"]["height"] if settings else 6}Z" fill="{connector}"/></marker></defs>',
              f'<rect width="{width}" height="{height}" fill="{background}"/>']
+    if presentation_scene is not None:
+        parts.append(f'<metadata data-presentation-scene="v0.1" data-axis-count="{len(presentation_scene.axes)}" data-tick-count="{len(presentation_scene.ticks)}" data-mark-count="{len(presentation_scene.marks)}"/>')
 
     def rect(x, y, w, h, fill, purpose, ref='', more=''):
         return f'<rect data-purpose="{purpose}" data-source-ref="{escape(ref)}" x="{f(x)}" y="{f(y)}" width="{f(w)}" height="{f(h)}" fill="{fill}" {more}/>'
