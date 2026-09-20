@@ -38,6 +38,25 @@ title/axis/timeline boundsを共有してはならない。欠損は次の診断
 | I3-F | 未移行のreview/minimal connector、annotation、summary及びtableとの差分primitive | 上記残存のprivate geometry | 全3 surface adapterにgeometry計算がない | 単独公開 |
 | V1 | input manifest、structural/behavior/image evidence | 完了根拠の推測 | 設定変異、Actual欠損、point、複数slot、長文、lane、routeを全経路で検証 | I3完了公開 |
 
+### I3-C〜I3-F 完全設計閉鎖
+
+I3-Cは`table-timeline`だけを対象に、table frame/header/column、group/row、table cell、semantic
+dependency、View annotation、project note、legend/coverageをScene primitiveへ移す。各table cellのidentityは
+`(table-slot, objectId, columnId, table-cell)`、connectorは`(relationId, fromProjectionInstanceId,
+toProjectionInstanceId, dependency-connector)`、annotationは`(annotationId, purpose, box|text|leader)`、
+legendは`(legend-slot, role, swatch|label)`、coverageは`(legend-slot, coverage-text)`である。TextはI3-Bの
+`TextLayout`を再利用し、port/route/obstacle/line wrapもScene Builderだけが確定する。
+
+I3-DとI3-Eは新しいprimitiveを作らない。選択surfaceのI3-A/B coreだけを受けるserializerへreview、minimalを
+それぞれ縮退する。I3-Fはその二surfaceのconnector/annotation/summaryと、未移行のsurface差分familyを同じ
+identity規則で追加する。全unitで、slot不在・visibility `none`・source不在はoptional familyを出さず、
+sourceが認可済みでrequired memberが無い場合だけ`E_PRESENTATION_PRIMITIVE_MISSING`で停止する。
+
+z-orderは`background/frame → band/group/row → rule/tick → mark → label → connector → annotation →
+legend/note → summary`に固定する。adapterは再ソート、date/row/port/route/text measurement、table wrap、
+legend wrap、summaryの値・文言生成を一切行わない。この節、仕様08 §5.3、derived fixture validatorをI3-C以降
+すべての実装前設計ゲートとする。
+
 I3-BからI3-Fの実装中に、新しいprimitive family、identity入力、TextLayout、port、diagnostic、または
 surface所有権が必要と判明した場合は、実装を停止する。仕様08、仕様30、派生fixture、設計レビュー、
 この計画を同一の設計公開で閉鎖してから当該単位へ戻る。

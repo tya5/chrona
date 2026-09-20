@@ -218,6 +218,28 @@ an adapter may not retain them as a private geometry exception.  This separation
 allows the core axis/mark/text migration to be verified without falsely declaring
 the entire surface complete.
 
+The remaining I3 families are closed as follows.  `table-timeline` owns table frame,
+header band, column-label Text, group surface/header, alternating row surface, row
+rule, and one measured table-cell Text per selected `(objectId,columnId)`.  A selected
+semantic relation owns exactly one `dependency-connector` Path with two Scene-owned
+ports.  A visible View annotation owns a box Rect, optional measured Text, and only
+when its declared purpose requires it a leader Path.  Project notes own measured Text
+in the notes slot.  A present legend slot owns its swatches, measured labels, and
+coverage Text.  A present summary slot owns a panel Rect, measured header Text, and
+one measured metric Text per declared metric.  `review` and `minimal` receive their
+remaining connector, annotation, and summary families only in I3-F; no adapter may
+invent them before their Scene family is emitted.
+
+Family presence is conditional only on an explicit resolved slot, visibility policy,
+and authorized source.  Absence of an authorized required member is
+`E_PRESENTATION_PRIMITIVE_MISSING`; an absent optional source emits no substitute.
+Paths contain ordered Scene-owned points and endpoint port identifiers.  Text always
+contains its one `TextLayout`; Rect/Symbol/Path bounds are the union of their emitted
+geometry.  The deterministic z-order is: background/frame, bands/group/row surfaces,
+rules and ticks, marks, table/axis/item labels, connectors, annotation boxes/text/leaders,
+legend and notes, then summary.  An adapter serializes this order without sorting or
+rerouting.
+
 An adapter selects exactly one named surface and serializes its primitive fields.
 It MUST NOT inspect authoring settings, source item order, dates, margins, day width,
 row height, or a different surface to repair missing geometry.  A missing surface is
