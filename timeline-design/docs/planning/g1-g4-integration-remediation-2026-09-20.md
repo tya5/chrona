@@ -43,6 +43,10 @@ D1で仕様08/09/29/30/31に`ResolvedPresentationInput`、semantic facetとvisua
 
 wire schemaのrouting入力を`gridOffset`、`clearance`、`portOffset`、`bendPenalty`、`limit`へ閉鎖し、正負fixtureとvalidatorで検証する。row-alignedはstack 0制限を撤回し、Scene metadataとしてstackIndexを保持する。D1/D2で定めた境界と有限手順に対し、owner schema・wire・正負fixtureの矛盾は残さない。I1は仕様08/30の`ResolvedPresentationInput`から完成Sceneを構築し、adapterが意味・幾何を再解釈しないことを最初の受入条件とする。
 
+## I3着手時の設計補正
+
+I3のadapter移行確認で、Scene入力にsurface slot、row、lane trackの解決済みboundsを明記しなければadapterが座標を再計算することを検出した。仕様08/30を補正し、I3はこの入力をScene Builderへ移すまで中断する。既に公開したI1/I2のprimitive/track作業は移行途中の基盤であり、I3完了根拠には使用しない。
+
 ## 提案する内部構造
 
 1. 入力解決: View/Style/Theme/Detail/Layout/Contextの型・固定参照を検査し、source selectionを一度だけ決定。

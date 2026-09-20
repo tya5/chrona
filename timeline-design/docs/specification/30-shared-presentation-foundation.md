@@ -34,7 +34,7 @@
 
 上記を組み立てる唯一の派生DTOを`ResolvedPresentationInput`と呼ぶ。DTOは
 `semanticFacet`、`visualRole`、`slotId`、`projectionInstanceId`、測定要求、解決済み
-Layout/Theme/Detail/Contextを保持する。`projectionInstanceId`は
+Layout/Theme/Detail/Context、surface slot bounds、row bounds、lane track boundsを保持する。`projectionInstanceId`は
 `slotId + sourceRef + semanticFacet + primitivePurpose`から決定的に導き、Scene primitiveの
 `sceneId`はこれを接頭辞として用いる。visualRoleはfacetを上書きしない。同一objectを複数slotへ
 投影してもinstanceは衝突せず、同座標の異なるfacet/roleも併合しない。DTO、測定結果、Sceneは
@@ -231,12 +231,13 @@ gridOffset、clearance、portOffset、bendPenalty、limitとstable tie-breakを�
 
 Scene Builderは次の有限順序でのみ投影する。後段が前段を再解釈・再測定することはない。
 
-1. 一つのDate scaleからaxis band、tick、slotごとのx変換を作る。
-2. semantic facetを保ったmark boundsとshape由来portを作る。
-3. `TextLayout {bounds, baseline, lines, family, weight, assetIdentity}`を一度だけ測定し、label、障害物、SVG Textが同一値を使う。
-4. 必須labelを含むmark occupancyからstable lane stackとtrack boundsを作る。
-5. annotation purposeごとにprimitive候補を作り、確定済み障害物に対して有限routeを解く。
-6. sceneId、sourceKind、bounds、z-order、manifest、diagnosticsを確定して出力する。
+1. Layoutのregion/track solverからsurface slot、table row、lane trackのboundsを作る。
+2. 一つのDate scaleからaxis band、tick、slotごとのx変換を作る。
+3. semantic facetを保ったmark boundsとshape由来portを作る。
+4. `TextLayout {bounds, baseline, lines, family, weight, assetIdentity}`を一度だけ測定し、label、障害物、SVG Textが同一値を使う。
+5. 必須labelを含むmark occupancyからstable lane stackとtrack boundsを作る。
+6. annotation purposeごとにprimitive候補を作り、確定済み障害物に対して有限routeを解く。
+7. sceneId、sourceKind、bounds、z-order、manifest、diagnosticsを確定して出力する。
 
 axis bandは`(scaleId, level, naturalInterval.index, slotId)`、markは`(projectionInstanceId, facet, markRole)`、Textは`(projectionInstanceId, textRole)`をidentityに含める。slotは同じscaleを参照しても独立したinstanceを持つ。adapterはband高さ、x/y、baseline、track、routeを再計算しない。
 
