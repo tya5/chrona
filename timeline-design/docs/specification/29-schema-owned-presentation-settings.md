@@ -67,6 +67,7 @@ v0.1は変更せずに存続する。v0.2は明示的な移行・opt-inのみ。
   groupFontSize → group、barHeight → plannedHeight/actualHeight。
 - groupMode/fraction/gap → Layout group、axisLevels → Layout axis.levels。
 - barGap → Layout bars.gap、showVariance → Layout variance.visible。
+- 計画/実績のband構成 → Layout bars.comparisonMode。未指定時の暗黙stackedは禁止する。
 - groupLabel → Detail groupLabel。旧固定凡例 → Detail legend。
 - canvas aspectRatio → Context viewport寸法を明記したプリセット。
   margin/density名は移行時に既定設定へ展開し、runtime分岐に使わない。
