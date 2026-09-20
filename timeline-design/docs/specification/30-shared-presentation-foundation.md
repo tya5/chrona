@@ -206,8 +206,7 @@ View groupとorderが論理lane順を決める。各itemは確定mark boundsに�
 無関係なgroupへ移動しない。
 
 lane surfaceはLayoutの`lanes.surface`で明示する。既存table/timelineの行対応を保つ
-`row-aligned`ではstack 0だけを受理し、非0 stackは`E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE`
-で停止する。複数stackは`independent-lane-track`だけが描画する。このsurfaceはView groupごとに
+`row-aligned`は1項目1行の既存surfaceであり、各markをその項目行へ描画する。このsurfaceではstackIndexを再配置の入力にせず、Scene metadataとして保持する。複数stackを一つの論理lane内で可視化するのは`independent-lane-track`だけが担う。このsurfaceはView groupごとに
 一つの派生trackを持ち、track内の`stackIndex`を縦offsetへ一対一に変換する。`pitchPolicy`
 `scene-mark-extent-plus-clearance`はSceneが解決済みThemeの比較mark block extentとLayout routing
 clearanceから一意のpitchを導く。track高は`2 * trackPadding + markExtent + maxStackIndex * pitch`、
@@ -247,7 +246,6 @@ rendererに追加しない。
 | `E_PRESENTATION_ANCHOR_MISSING` | facet/endpoint/投影instanceが存在しない | plannedへの代替 |
 | `E_PRESENTATION_LABEL_UNPLACEABLE` | 全候補で必須textが置けない | 縮小・隠蔽・切断 |
 | `E_PRESENTATION_STACK_OVERFLOW` | maxStackまたは独立lane track boundsを超える | group移動・重なり |
-| `E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE` | row-aligned surfaceで非0 stackが必要 | row対応を壊す縦offset・stack無視 |
 | `E_PRESENTATION_DUPLICATE_AUTHORITY` | 旧新policyの同時指定 | merge・暗黙優先 |
 | `E_CONNECTOR_UNROUTABLE` | 有限探索でleader/dependencyが解けない | freeform path |
 
