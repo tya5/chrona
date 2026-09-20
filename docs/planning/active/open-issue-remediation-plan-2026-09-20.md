@@ -1,6 +1,6 @@
 # Open Issue Remediation Plan — 2026-09-20
 
-**Status:** Design, O2, and O3 published; O4 contracts/docs verified.
+**Status:** Design and implementation published; issue closure in progress.
 **Scope:** GitHub issues #19–#25.  
 **User decisions:** describe the current alpha surface honestly; make Render Context the
 only `render-review` entry because there are no compatibility consumers; preserve
@@ -81,7 +81,7 @@ appear in their history.
 | O1 — Design | Complete (`361c632`) | This plan plus Specifications 01, 07–09, 13–14, 27, 30, 32 and the grouped index. | Docs/schema references resolve; design is published before code. |
 | O2 — Architecture | Complete (`0ac9a1e`) | Remove forbidden imports, centralize Theme helpers, add dependency test. | Full tests/conformance; no forbidden package edge. |
 | O3 — CLI | Complete (`deaa299`) | Unified failures/exits, immutable review, Render Context v0.3 CLI, examples and tests. | CLI negative matrix, deterministic example output, full tests/conformance. |
-| O4 — Contracts/docs | Verified; publishing | v0.3 schema/fixtures, Theme example validation, Scene contract test, navigation/archive cleanup, reachability evidence. | Every new schema fixture validates; links resolve; wheel smoke and CI pass. |
+| O4 — Contracts/docs | Complete (`21bb4da`) | v0.3 schema/fixtures, Theme example validation, Scene contract test, navigation/archive cleanup, reachability evidence. | Every new schema fixture validates; links resolve; full tests/conformance pass. |
 
 Each phase is one verified, non-forced commit published to `main`. If implementation
 reveals an unmade semantic choice, implementation stops and the design correction is
