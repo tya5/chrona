@@ -80,6 +80,11 @@ undisclosed output degradation, raster/PDF claims, and any successor capability 
 named by this roadmap require a new owning-specification change and roadmap amendment.
 They are not hidden work inside a milestone above.
 
+Issues 1–10 are governed by
+`issue-remediation-program-2026-09-20.md`. That program reopens acceptance evidence for
+M0, M1, M5, and M22 before any deferred M23 implementation; it is not a new feature
+milestone and does not authorize the deferred M23 panel families.
+
 ## 4.1 Future-capability design gate
 
 `future-capability-design-completion-plan.md` governs FD-1–FD-5. FD-4 and FD-5 are

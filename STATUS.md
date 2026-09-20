@@ -2,9 +2,9 @@
 
 ## Scope
 
-This is an initial, repository-ready implementation checkpoint for the Core v0.1
-Stable Candidate. The canonical specification snapshot in `timeline-design/` is
-preserved unchanged.
+This repository has progressed beyond the initial Core checkpoint. The current,
+living specification set is in `timeline-design/`; Git history preserves the earlier
+candidate rather than treating the working tree as an unchanged snapshot.
 
 ## Included
 
@@ -42,4 +42,6 @@ The SVG renderer is an intentionally small vertical slice, not the full View,
 Style, Theme, or Scene specification. It consumes scheduler output and never
 becomes a persisted source of project semantics.
 
-No DateTime, DST, renderer, or resource-leveling behavior has been introduced.
+DateTime/DST, rendering, capacity, collaboration, and extension implementations exist
+as versioned successor or adapter modules. They do not change Date-only Core v0.1
+meaning unless an explicit successor profile is selected.

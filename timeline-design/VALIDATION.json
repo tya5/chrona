@@ -1,5 +1,6 @@
 {
-  "timestamp": "2026-09-17T00:43:48.129002+00:00",
+  "timestamp": "2026-09-20T00:00:00+00:00",
+  "scope": "Core v0.1 YAML parsing and canonical fixture semantic checks; not the full product test suite",
   "yaml_parse": {
     "docs/fixtures/calendar.yaml": "ok",
     "docs/fixtures/conformance-v0.1.yaml": "ok",
@@ -10,5 +11,7 @@
     "docs/schemas/project-v0.1.schema.yaml": "ok"
   },
   "basic_semantic_issues": [],
+  "design_recompletion": "pass",
+  "traceability": "pass",
   "result": "pass"
 }

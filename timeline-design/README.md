@@ -1,7 +1,8 @@
 # Timeline Design — Core Specification v0.1
 
-This repository snapshot contains the initial design artifact set for a Git-friendly,
-extensible, time-axis-centered project visualization system.
+This directory contains the current living, versioned design artifact set for a
+Git-friendly, extensible, time-axis-centered project visualization system. Git history
+preserves earlier candidates and releases.
 
 ## Status
 
@@ -9,17 +10,17 @@ Core Specification: **v0.1 / Stable (Date-only scheduling profile)**
 
 The Core Specification consists of:
 
-- `docs/00-vision.md`
-- `docs/01-concepts.md`
-- `docs/02-domain-model.md`
-- `docs/03-temporal-model.md`
-- `docs/04-scheduling-model.md`
-- `docs/05-project-format.md`
-- `docs/12-quality-and-invariants.md`
+- `docs/specification/00-vision.md`
+- `docs/specification/01-concepts.md`
+- `docs/specification/02-domain-model.md`
+- `docs/specification/03-temporal-model.md`
+- `docs/specification/04-scheduling-model.md`
+- `docs/specification/05-project-format.md`
+- `docs/specification/12-quality-and-invariants.md`
 - supporting ADRs, schemas, and executable-style examples
 
-Presentation and implementation specifications are intentionally deferred until the
-Core semantics are stable enough to constrain them.
+Presentation, application, successor, and implementation specifications follow the
+stable Core dependency direction and remain separately versioned.
 
 ## Reading order
 

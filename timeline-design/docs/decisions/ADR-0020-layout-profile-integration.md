@@ -1,4 +1,4 @@
-# ADR-0014: Layout Profile integrates presentation composition
+# ADR-0020: Layout Profile integrates presentation composition
 
 **Status:** Accepted
 

@@ -4,9 +4,11 @@
 visualization.  Its source of truth is semantic, structured data; a renderer is
 a consumer, never the editor-owned authority.
 
-This repository currently contains a Date-only reference implementation for
-Core v0.1.  DateTime, time zones, DST, resource leveling, and rendering remain
-deliberately out of scope.
+This repository contains the living, versioned Chrona specification and reference
+implementations for the accepted delivery milestones. Core v0.1 remains the stable
+Date-only scheduling profile; successor DateTime, capacity, collaboration, and
+presentation capabilities are opt-in versioned profiles rather than changes to
+Date-only meaning.
 
 ## What is usable today
 
@@ -52,18 +54,17 @@ chrona render examples/controller-z-silicon-bringup.yaml --output controller-z-s
 
 ## Specification
 
-The pre-repository Core v0.1 Stable Candidate is preserved verbatim in
-[`timeline-design/`](timeline-design/).  In particular, start with:
+The current specification set is maintained in [`timeline-design/`](timeline-design/).
+Git history and versioned manifests preserve earlier candidates. Start with:
 
-1. [`timeline-design/docs/00-vision.md`](timeline-design/docs/00-vision.md)
-2. [`timeline-design/docs/03-temporal-model.md`](timeline-design/docs/03-temporal-model.md)
-3. [`timeline-design/docs/04-scheduling-model.md`](timeline-design/docs/04-scheduling-model.md)
-4. [`timeline-design/docs/05-project-format.md`](timeline-design/docs/05-project-format.md)
+1. [`timeline-design/docs/specification/00-vision.md`](timeline-design/docs/specification/00-vision.md)
+2. [`timeline-design/docs/specification/03-temporal-model.md`](timeline-design/docs/specification/03-temporal-model.md)
+3. [`timeline-design/docs/specification/04-scheduling-model.md`](timeline-design/docs/specification/04-scheduling-model.md)
+4. [`timeline-design/docs/specification/05-project-format.md`](timeline-design/docs/specification/05-project-format.md)
 5. [`timeline-design/docs/specification/17-implementation-delivery-profile.md`](timeline-design/docs/specification/17-implementation-delivery-profile.md)
 
-The candidate is **Proposed / Stable Candidate**, not yet Stable.  This code is
-an independent conformance aid: implementation discoveries must be recorded as
-diagnostics or ADR proposals, never silently rewritten into the specification.
+Core v0.1 is Stable. Implementation discoveries are recorded through diagnostics,
+ADRs, and design-first remediation before implementation changes.
 
 ## License
 

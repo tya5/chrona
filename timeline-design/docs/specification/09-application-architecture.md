@@ -77,6 +77,19 @@ new Snapshot for an accepted write. Evaluation and rendering requests bind that 
 so a schedule, View Projection, and Scene from different Project revisions cannot be
 combined accidentally. A raw editable file is a Draft until the Store snapshots it.
 
+### 4.1 CLI read modes
+
+CLI read commands expose the authority boundary rather than hiding it. A caller chooses
+either a raw Project path, which is reported and documented as Draft evaluation, or a
+complete local snapshot tuple consisting of a snapshot-reference resource, adapter
+root, and store identity. Snapshot mode calls the same `LocalSnapshotReader` and loader
+used by library evaluation and never falls back to the raw path when reference
+resolution fails.
+
+Presentation output similarly chooses either resolved Presentation Settings and the
+common Scene path, or the explicit diagnostic legacy adapter. A CLI must not infer a
+v0.2 Render Context from host fonts, locale, or canvas defaults.
+
 ## 5. Read evaluation flow
 
 ### 5.1 Evaluation request

@@ -8,13 +8,13 @@ evidence is present, not that a later product release is complete.
 
 | Milestone | Status | Entry / exit evidence | Open condition |
 |---|---|---|---|
-| M0 | Complete | Core conformance and scheduler tests; `core-v0.1-stable-readiness-review.md`. | None for current scope. |
+| M0 | Remediation authorized | Core conformance and scheduler tests; `core-v0.1-stable-readiness-review.md`; issue-remediation program. | Close scheduler issues 1–3 and the calendar/anchor portions of issue 7. |
 | M0.5 | Complete | Delivery-profile vocabulary/state/evidence fixtures. | M1 supplies its reproducible resolution dependency. |
-| M1 | Complete | Revision Store conformance and resolved package closure. | None. |
+| M1 | Remediation authorized | Revision Store conformance and resolved package closure. | Expose pinned read evaluation through the supported CLI boundary. |
 | M2 | Complete | Presentation conformance, deterministic Scene/SVG evidence. | Only SVG is claimed. |
 | M3 | Complete | Revision-bound Command/CAS/undo evidence. | None. |
 | M4 | Complete | Federation conformance and M4 reuse review. | None. |
-| M5 | Complete | CLI/review plus AI proposal adapter; fingerprint-bound policy decision and Command/CAS acceptance tests. | None. |
+| M5 | Remediation authorized | CLI/review plus AI proposal adapter; fingerprint-bound policy decision and Command/CAS acceptance tests. | Close explicit raw-versus-snapshot and legacy-versus-v0.2 CLI paths. |
 | M5.5 | Complete | External Actual identity/intake review and tests. | None. |
 | M6 | Complete | Interactive review and accessibility/SceneDelta evidence. | None. |
 | M7 | Complete | Gesture, annotation, Actual reconciliation, Snapshot, conflict/undo evidence. | None. |
@@ -32,7 +32,7 @@ evidence is present, not that a later product release is complete.
 | M19 | Complete | Layout Profile runtime validation, deterministic Layout Manifest, old-profile rejection, M19 final review, conformance, and 89 tests. | None. |
 | M20 | Complete | Constraint solver and slot-based review rendering, M20 final review, conformance, and 90 tests. | None. |
 | M21 | Complete | Generic calendar/table/relation/annotation primitives, M21 final review, conformance, and 91 tests. | None. |
-| M22 | Complete | Common human/AI declarative preset validation, M22 release review, conformance, and 92 tests. | None. |
+| M22 | Remediation authorized | Common human/AI declarative preset validation, M22 release review, conformance, and issue-remediation program. | Close exact font assets and declared axis/shape/opacity setting consumption. |
 | M23 | Design complete; implementation not started | Review Detail Profile closes reference-quality legend, group detail, observation, and milestone surfaces without changing semantic authority. | M23 implementation, visual acceptance, and release review. |
 
 Implementation may start only at a `Design complete; implementation not started`

@@ -366,6 +366,12 @@ The scheduling layer SHOULD distinguish at least:
 - Deadlines do not constrain scheduling.
 - View and renderer state do not affect scheduling.
 - Actual values do not silently redefine planned scheduling.
+- Ready-object evaluation, returned placements, and multi-object diagnostics preserve
+  Project object order; process hash order is never observable.
+- A dependency endpoint must exist on the referenced placement kind: fixed points
+  expose `at`, while fixed and scheduled spans expose `start` and `end`.
+- Calendar requirements are derived from parsed temporal-amount components. Any `wd`
+  component requires a working calendar, regardless of component position.
 
 ## 20. Feasibility and authority rules
 
@@ -388,10 +394,19 @@ rather than silently overriding the anchor.
 The opposite endpoint is derived from the amount and may then be checked against its
 bounds.
 
+If an opposite-endpoint lower bound is later than that derived endpoint, satisfying it
+would require moving the authoritative anchor. The result is
+`E_CONTRADICTORY_BOUNDS`; the scheduler does not replace the anchor.
+
 ### 20.3 Scheduled placement without explicit anchor
 
 For an acyclic forward-scheduling implementation, the earliest feasible start is the
 maximum of all applicable start lower bounds after their values are computed.
+
+An end lower bound contributes the start candidate obtained by retreating from that
+bound by the scheduled amount. It never becomes a start date directly. When both start
+and end lower bounds exist, choose the maximum of the start lower bound and every
+retreated end-bound candidate.
 
 The scheduler then applies target calendar placement validity and derives the end from
 the scheduled amount.

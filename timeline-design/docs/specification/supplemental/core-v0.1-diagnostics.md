@@ -14,6 +14,8 @@ not normative.
 | `E_INVALID_AMOUNT` | Amount is invalid for the requested scheduling role |
 | `E_CALENDAR_REQUIRED` | WorkPeriod requires a calendar but none resolves |
 | `E_CONTRADICTORY_BOUNDS` | Lower/upper bounds cannot be simultaneously satisfied |
+| `E_ENDPOINT_MODE_MISMATCH` | A relation endpoint is unavailable on the referenced point/span placement kind |
+| `E_NON_WORKING_ANCHOR` | An explicit WorkPeriod start anchor is not a working date in its calendar |
 | `E_UNSATISFIABLE_DEPENDENCIES` | Dependency system has no feasible solution |
 | `E_UNSUPPORTED_CYCLE` | Implementation supports only an acyclic subset |
 | `E_FIXED_TARGET_VIOLATION` | A bound/dependency conflicts with authoritative fixed placement |

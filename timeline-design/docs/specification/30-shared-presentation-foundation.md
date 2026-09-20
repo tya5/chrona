@@ -64,6 +64,12 @@ After measuring content, pass temporary `intrinsicBlocks` / `intrinsicTracks` to
 solver; never persist them or replace unmeasured values with fixed pixels. Equal input
 closure, font assets, locale, and candidate order must reproduce equal intrinsic values.
 
+The fixed font asset is resolved by relative resource path plus content identity and,
+for a collection, an explicit face index. A host font-family lookup is not part of the
+closure. Axis labels, Symbol shapes, marker shapes, mark opacity, and planned/Actual
+dimensions are completed Scene properties; the serializer does not recover them from
+authoring settings or replace them with adapter defaults.
+
 ## 3. Generalized callouts
 
 A callout is not a special component. Project an existing annotation into a target

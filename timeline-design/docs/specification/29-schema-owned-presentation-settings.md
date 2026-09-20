@@ -119,7 +119,11 @@ This prevents filling missing values with appearance defaults.
 Replace `.58` width estimation, `.34` baseline estimation, and fixed text widths
 112/60/57 with **measurement from fixed font metrics**, not new tuning knobs.
 `context.fontMetrics.assets` is the complete tuple
-`{family, weight, revision, contentIdentity}`. For every Theme typography weight,
+`{family, weight, revision, contentIdentity, path, faceIndex?}`. `path` is relative to
+an explicitly supplied asset root, rejects traversal, and identifies the bytes whose
+content identity is declared. `faceIndex` is required for TrueType collections and is
+otherwise absent or zero. Host family discovery such as `fc-match` is not an asset
+resolver and is prohibited in the reproducible path. For every Theme typography weight,
 select only a matching declared asset, in font-stack order. Never substitute regular
 for bold. An undeclared family/weight, identity mismatch, or absent asset yields
 `E_FONT_METRICS_UNAVAILABLE`. `missingFont: declared-fallback` permits only moving to
@@ -173,6 +177,19 @@ summary display names changes neither missingness meaning nor denominator.
 Generate month names, quarters, and dates from a closed formatter enum plus explicit
 locale. Compute `windowLastVisible` from a documented date-window-end display contract.
 Delegate DateTime/DST calculation to existing Core; do not redefine it with Date logic.
+
+The month catalog is `short-month-year`, `long-month-year`, `numeric-year-month`,
+`short-month`, `long-month`, and `numeric-month`. The quarter catalog is
+`quarter-year`, `year-quarter`, and `quarter`. Axis levels additionally include `year`,
+whose closed label is the four-digit year. Scene construction applies these formats;
+SVG adapters serialize the completed label and never call `strftime` to choose another
+spelling.
+
+Point and arrow shape enums are behavioral contracts. Scene Symbols retain the resolved
+point shape and adapters support diamond, circle, and square from identical bounds.
+Dependency and explanatory paths retain the resolved marker shape; `none` emits no
+marker reference. Every facet paint applies both `color` and `opacity`. Bar planned and
+Actual heights are independent properties and must remain independently observable.
 
 Detail legend from Specification 28 is the sole legend source of truth. Layout owns
 placement only and Theme owns swatches only. Group details, supplier observations, and
