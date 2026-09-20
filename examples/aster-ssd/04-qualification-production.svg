@@ -42,31 +42,31 @@
 <path data-purpose="routed-connector" data-source-ref="pilot-yield" data-from-endpoint="end" data-to-endpoint="start" d="M1216.07 605.25L1224.07 605.25L1241.27 605.25L1241.27 653.25L1216.15 653.25L1216.15 667.75L1224.15 667.75" fill="none" stroke="#92A6BE" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
 <path data-purpose="routed-connector" data-source-ref="yield-release" data-from-endpoint="end" data-to-endpoint="at" d="M1337.17 667.75L1345.17 667.75L1345.17 740.75L1425.12 740.75L1433.12 740.75" fill="none" stroke="#92A6BE" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="integration" x="52" y="265.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">System integration</text>
-<rect data-purpose="planned" data-source-ref="integration" x="788.2" y="240.25" width="113.02" height="17" fill="#E9B35E" rx="2"/>
-<rect data-purpose="actual" data-source-ref="integration" x="788.2" y="261.25" width="137.24" height="17" fill="#45CCCB" rx="2"/>
+<rect data-purpose="planned" data-source-ref="integration" x="788.2" y="240.25" width="113.02" height="17" fill="#E9B35E" data-stack="0" rx="2"/>
+<rect data-purpose="actual" data-source-ref="integration" x="788.2" y="261.25" width="137.24" height="17" fill="#45CCCB" data-stack="0" rx="2"/>
 <text data-purpose="actual-date" data-source-ref="integration" x="895.26" y="294.25" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">2027-06-17</text>
 <rect data-purpose="variance-marker" data-source-ref="integration" x="902.52" y="240.25" width="3" height="38" fill="#FF947F" />
 <text data-purpose="variance" data-source-ref="integration" x="912.52" y="229.05" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#FF947F" text-anchor="start">+3d</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="thermal" x="52" y="328.21" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Thermal corner testing</text>
-<rect data-purpose="planned" data-source-ref="thermal" x="812.41" y="302.75" width="169.54" height="17" fill="#E9B35E" rx="2"/>
-<rect data-purpose="actual" data-source-ref="thermal" x="812.41" y="323.75" width="201.83" height="17" fill="#45CCCB" rx="2"/>
+<rect data-purpose="planned" data-source-ref="thermal" x="812.41" y="302.75" width="169.54" height="17" fill="#E9B35E" data-stack="1" rx="2"/>
+<rect data-purpose="actual" data-source-ref="thermal" x="812.41" y="323.75" width="201.83" height="17" fill="#45CCCB" data-stack="1" rx="2"/>
 <text data-purpose="actual-date" data-source-ref="thermal" x="984.06" y="356.75" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">2027-06-28</text>
 <rect data-purpose="variance-marker" data-source-ref="thermal" x="991.33" y="302.75" width="3" height="38" fill="#FF947F" />
 <text data-purpose="variance" data-source-ref="thermal" x="1001.33" y="291.55" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#FF947F" text-anchor="start">+4d</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="compliance" x="52" y="390.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Protocol interoperability</text>
-<rect data-purpose="planned" data-source-ref="compliance" x="901.22" y="365.25" width="129.17" height="17" fill="#E9B35E" rx="2"/>
+<rect data-purpose="planned" data-source-ref="compliance" x="901.22" y="365.25" width="129.17" height="17" fill="#E9B35E" data-stack="0" rx="2"/>
 <text data-purpose="missing-actual" data-source-ref="compliance" x="901.22" y="403.25" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Actual not reported</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="qual-exit" x="52" y="453.21" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Qualification exit</text>
 <path data-purpose="planned" data-source-ref="qual-exit" d="M1103.05 437.75l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="tooling" x="52" y="559.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Factory test tooling</text>
-<rect data-purpose="planned" data-source-ref="tooling" x="675.17" y="534.25" width="226.05" height="17" fill="#E9B35E" rx="2"/>
-<rect data-purpose="actual" data-source-ref="tooling" x="675.17" y="555.25" width="226.05" height="17" fill="#45CCCB" rx="2"/>
+<rect data-purpose="planned" data-source-ref="tooling" x="675.17" y="534.25" width="226.05" height="17" fill="#E9B35E" data-stack="0" rx="2"/>
+<rect data-purpose="actual" data-source-ref="tooling" x="675.17" y="555.25" width="226.05" height="17" fill="#45CCCB" data-stack="0" rx="2"/>
 <text data-purpose="actual-date" data-source-ref="tooling" x="871.04" y="588.25" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">2027-06-14</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="pilot" x="52" y="622.21" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Pilot build</text>
-<rect data-purpose="planned" data-source-ref="pilot" x="1127.27" y="596.75" width="88.8" height="17" fill="#E9B35E" rx="2"/>
+<rect data-purpose="planned" data-source-ref="pilot" x="1127.27" y="596.75" width="88.8" height="17" fill="#E9B35E" data-stack="0" rx="2"/>
 <text data-purpose="missing-actual" data-source-ref="pilot" x="1127.27" y="634.75" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Actual not reported</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="yield" x="52" y="684.71" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Yield and traceability</text>
-<rect data-purpose="planned" data-source-ref="yield" x="1224.15" y="659.25" width="113.02" height="17" fill="#E9B35E" rx="2"/>
+<rect data-purpose="planned" data-source-ref="yield" x="1224.15" y="659.25" width="113.02" height="17" fill="#E9B35E" data-stack="0" rx="2"/>
 <text data-purpose="missing-actual" data-source-ref="yield" x="1224.15" y="697.25" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Actual not reported</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="release" x="52" y="747.21" font-family="Nimbus Sans, Arial, sans-serif" font-size="19" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Production release</text>
 <path data-purpose="planned" data-source-ref="release" d="M1442.12 731.75l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
