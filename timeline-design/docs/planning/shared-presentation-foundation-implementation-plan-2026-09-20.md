@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.4・G2・G4 Scene metadata完了・公開済み。G3 visualとG4縦offset adapterは停止中。G3 anchor obstacle是正の設計根拠（仕様31、wire contract、正負fixture、横断review、計画）が公開・検証されるまで再開しない。  
+**状態:** G1–G4完了・公開済み。G3/G4設計是正、実装、全回帰、横断レビューを完了。
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -15,7 +15,7 @@
 | G2 | axis slot統合、labels、comparison mode、group×facet paint | 仕様30 §6–7のA/D共通表現 | 単位別に公開 |
 | G3 | annotation box/leaderと説明slot | 同じ機構で作業注記と計画gate説明を通す | 単位別に公開 |
 | G4.1 | stable lane Scene | label/mark/routeの共通occupancyを再利用しstack metadataを出す | 公開済み |
-| G4.2 | lane surface adapter | row-alignedの行対応を保持し、independent-lane-trackだけをScene由来track geometryへ写像 | 単位別に公開 |
+| G4.2 | lane surface adapter | row-alignedの行対応を保持し、independent-lane-trackをScene由来track geometryとstack offsetへ写像 | 完了・公開済み |
 
 ### G2–G4 設計ゲート
 
@@ -93,3 +93,7 @@ G1.1は既存rendererへまだ接続しない。従って既存PNGのpixel変更
 3. 同じ入力で決定的に再現する。
 4. 対象差分だけをレビューしてnon-force公開する。
 5. 未対応範囲を完了と報告しない。
+
+### G3/G4 完了記録
+
+G3は共通annotation box/leaderを明示facet anchorでSVGへ接続した。box配置は自身のanchor markのみ除外し、leader routingでは全障害物を復帰する。G4はgroup順を保つstable lane Scene、independent lane track geometry、stack offset adapterを実装した。2026-09-20に全回帰164 passed（既存DeprecationWarning 2件）。
