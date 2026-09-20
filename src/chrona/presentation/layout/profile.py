@@ -118,8 +118,23 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
     distances: dict[str, Decimal] = {}
     literals: list[str] = []
 
+    def size_distances(spec: Any, path: str) -> None:
+        if not isinstance(spec, dict):
+            return
+        if "fixed" in spec:
+            distances[path + "/fixed"] = _distance(spec["fixed"], theme_values, path + "/fixed", literals)
+        elif "fitContent" in spec:
+            distances[path + "/fitContent"] = _distance(spec["fitContent"], theme_values, path + "/fitContent", literals)
+        elif "minmax" in spec:
+            size_distances(spec["minmax"]["min"], path + "/minmax/min")
+            size_distances(spec["minmax"]["max"], path + "/minmax/max")
+
     def visit(node: dict[str, Any], path: str) -> None:
         node_id, kind = node["id"], node["kind"]
+        if isinstance(node["inlineSize"], dict) and "aspectRatio" in node["inlineSize"] and isinstance(node["blockSize"], dict) and "aspectRatio" in node["blockSize"]:
+            raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", path, node_id)
+        size_distances(node["inlineSize"], path + "/inlineSize")
+        size_distances(node["blockSize"], path + "/blockSize")
         if kind == "slot":
             if node["source"] not in available_sources and node["priority"] == "required":
                 raise LayoutError("E_LAYOUT_SOURCE_UNAVAILABLE", path + "/source", node_id)
@@ -144,6 +159,10 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
         if "anchor" in node and "gap" in node["anchor"]:
             key = f"{path}/anchor/gap"; distances[key] = _distance(node["anchor"]["gap"], theme_values, key, literals)
         if kind == "grid":
+            if any(isinstance(track, dict) and "aspectRatio" in track for track in (*node["columnTracks"], *node["rowTracks"])):
+                raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", path, node_id)
+            for offset, track in enumerate(node["columnTracks"]): size_distances(track, f"{path}/columnTracks/{offset}")
+            for offset, track in enumerate(node["rowTracks"]): size_distances(track, f"{path}/rowTracks/{offset}")
             columns, rows = len(node["columnTracks"]), len(node["rowTracks"])
             for child in node["children"]:
                 cell = child.get("cell")
@@ -179,4 +198,3 @@ def resolve_layout_profile(profile: Mapping[str, Any], *, available_sources: set
     _validate_schema(resolved)
     distances, literals = _semantic_validate(resolved, available_sources, theme)
     return ResolvedLayoutProfile(str(resolved["id"]), _canonical_hash(resolved), resolved, distances, literals)
-
