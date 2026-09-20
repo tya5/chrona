@@ -30,3 +30,13 @@ without a renderer fallback.
 The focused presentation suite passes 63 tests. The full suite passes 207 tests, and
 the complete Chrona conformance runner passes every stage. The only warnings are the
 existing `jsonschema.RefResolver` deprecations.
+
+## Post-acceptance scope correction
+
+Issues 11 and 12 were filed after this review. Issue 11 correctly identifies that
+`bar.radius`, which was outside the four I3 behaviors listed above, was lost on the
+common Scene serializer. Issue 12 also shows that the wider P3/P5 claim of complete
+settings consumption was not proven by I3. This review remains evidence for axis
+formats, point/arrow shapes, facet opacity, and independent Actual height only. It does
+not claim zero unused settings. The M22 consumption-remediation plan and its final
+review supersede any broader interpretation.

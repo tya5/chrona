@@ -240,7 +240,11 @@ Every primitive in a surface has the following required fields:
 | `bounds` | Concrete logical bounds; `Text` additionally carries the measured baseline and text payload |
 | `zOrder` | Stable paint order within this surface |
 
-Primitive payloads are a closed discriminated contract. `Rect` carries only `bounds`.
+Primitive payloads are a closed discriminated contract. `Rect` carries `bounds` and an
+optional non-negative `cornerRadius`. `cornerRadius` is logical Scene geometry: it is
+present on span comparison marks, is bounded to half the smaller Rect dimension, and
+is absent on Rect families that do not declare rounding. An SVG adapter serializes it
+as equal `rx`/`ry` and never re-reads `theme.bar.radius`.
 `Text` carries `text` plus exactly one `TextLayout`. `Symbol` carries a closed `shape`
 identifier and its concrete `bounds`. `Path` carries at least two ordered logical
 `points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
@@ -248,6 +252,27 @@ tick may omit both port identifiers. `Path.bounds` is the exact union of its poi
 including zero width or height. Paint remains a resolved `visualRole`; adapters map
 that role to target tokens but never calculate payload geometry. A kind/payload
 mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an adapter must not repair it.
+
+Projected comparison marks additionally retain `laneGroupId` and `stackIndex` as Scene
+metadata. They do not alter row-aligned geometry, but every SVG adapter emits stable
+`data-lane-group-id` and `data-stack` hooks from Scene. `data-lane-offset` may coexist
+as derived inspection metadata; it is not a replacement for stack identity.
+
+Stroke decoration remains Theme-owned and is selected by primitive purpose from the
+completed resolved Theme. The purpose mapping is closed: ticks/major axis use
+`axisMajor`, minor axis uses `axisMinor`, table frame uses `frame`, row rules use
+`rowRule`, group separators use `groupSeparator`, and dependency/explanatory paths use
+`dependency`. The selected token contributes color, opacity, width, and dash together;
+mixing fields from different tokens or hard-coding a dash is invalid.
+
+Missing Actual is an explicit conditional Scene family. When an item lacks its
+required Actual facet and `layout.missingActual.mode` enables presentation, Scene emits
+a `missing-actual-pattern` Rect sized by Theme and positioned by Layout plus a
+`missing-actual-label` Text supplied by Detail. It never fabricates Actual semantics.
+Finish variance emits a `variance-marker` Rect with Theme-owned width plus an optional
+`variance-label` Text. Its visual role is `variance-ahead`, `variance-on-track`,
+`variance-behind`, or `variance-unknown`; adapters do not derive status from text or
+color.
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
 following I3 core primitive set before any adapter is invoked: one resolved heading

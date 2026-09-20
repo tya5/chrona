@@ -45,11 +45,17 @@ inputs:
     bounds: resolved-scene-geometry
     surfaces: [row-aligned, independent-lane-track]
   primitivePayloads:
-    Rect: [bounds]
+    Rect: [bounds, optionalCornerRadius]
     Text: [text, textLayout]
     Symbol: [shape, bounds]
     Path: [points]
     connectorPath: [points, fromPortId, toPortId]
+  comparisonMarkMetadata: [laneGroupId, stackIndex]
+  conditionalFamilies:
+    missingActual: [missing-actual-pattern, missing-actual-label]
+    variance: [variance-marker, variance-label]
+    annotation: [annotation-box, annotation-text, annotation-leader]
+    summary: [summary-panel, summary-header, summary-metric]
   surfaceContentInput:
     required: [tableColumns, tableCells, relations, annotations, notes, legendEntries, coverageText, summaryPanels, templateValues]
     templateValues: [title, windowStart, windowLastVisible, selectedCount, unmatchedCount, missingCount]
@@ -82,3 +88,5 @@ invariants:
   - adapters-never-read-surface-content-input
   - manifest-is-derived-and-non-authoritative
   - adapters-preserve-surface-scale-record-without-reconstruction
+  - consumption-proof-uses-trigger-fixtures
+  - v0.2-settings-layout-is-not-shadowed-by-v0.1-profile

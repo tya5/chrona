@@ -1,6 +1,6 @@
 # Schema-Owned Presentation Settings v0.2
 
-**Status: Design contract. Runtime not implemented.**
+**Status: Implemented with M22 settings-consumption remediation active.**
 
 Resolved Theme, Layout, Detail, and Context are bound once into the Scene Builder's
 `ResolvedPresentationInput`. SVG and other adapters read only completed Scene
@@ -230,3 +230,38 @@ spacing, text, symbols, legend order/wording, axes, and routing tendency. Equal
 closure/metrics/locale/output versions produce byte-identical SVG. Validate reference
 Gantt images plus long Japanese text, extensive missing data, long legends, and varied
 viewports. The current 104 tests are a baseline, not proof of new implementation.
+
+### 7.1 Conditional consumption proof
+
+Consumption is proved against the condition under which a setting owns output; it is
+not proved by mutating every leaf in one sample. Every leaf or closed object family is
+classified in the versioned consumption matrix as exactly one of `unconditional`,
+`conditional`, `validation-only`, or `superseded`. Conditional rows name a trigger
+fixture and an owned Scene/SVG observer. Validation-only values change admission,
+identity, or diagnostics rather than rendered bytes. Superseded values are rejected or
+removed because another owner is authoritative.
+
+An absent point, missing-Actual mark, annotation, summary, group fallback, axis level,
+or optional slot is not evidence that its setting is inert. Conversely, a required
+trigger fixture that produces identical owned output is a defect. Tests compare the
+owned Scene/SVG property, not only whole-document bytes.
+
+The `presentation-settings/v0.2` path uses `settings.layout` as the sole v0.2 layout
+authority. A separately supplied `layout-profile/v0.1` is accepted only by the legacy
+adapter and cannot shadow a v0.2 setting.
+
+### 7.2 Post-R0 behavioral closure
+
+The following settings are behavioral, not validation-only:
+
+- every stroke color, opacity, width, and dash is selected by primitive purpose;
+- bar `radius` and `minWidth` affect completed Rect geometry;
+- `varianceMarkerWidth` creates an observable variance marker;
+- ahead/on-track/behind/unknown variance states select distinct Theme paint roles;
+- missing Actual creates the declared pattern Rect and Detail label when enabled;
+- annotation box fill/stroke and leader paint remain purpose-specific;
+- `labelRules[].required` controls diagnose-versus-optional-overflow behavior;
+- `layout.variance.visible` and `layout.routing.enabled` gate their primitive families.
+
+These settings may be unobservable only when the matrix predicate is false. Removing
+or ignoring them is not an allowed implementation shortcut.
