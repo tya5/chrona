@@ -19,7 +19,7 @@ Actual dates do not reschedule the baseline or imply a forecast.
 
 Use an ink/navy background, amber plan bars and cyan observed bars. Team section
 headings replace Controller Z's merged owner column. The wider work-item column,
-inside-first timeline labels, and sectional whitespace provide a distinct layout
+table-owned row titles, optional timeline annotations, and sectional whitespace provide a distinct layout
 without a custom renderer.
 
 Four 1600 × 900 slides share one design: an eight-item executive selection,
@@ -47,6 +47,14 @@ visual appearance. No preset-reference resolution is required.
 ```sh
 .venv/bin/python scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml
 .venv/bin/pytest -q tests/test_aster_sample.py
+```
+
+The default command regenerates SVG and verifies PNG output. It requires Node, `sharp`,
+and `CODEX_PRIMARY_RUNTIME_NODE_MODULES` (or an equivalent `NODE_PATH`). To regenerate
+and verify deterministic SVG only, without raster dependencies, run:
+
+```sh
+.venv/bin/python scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml --no-raster
 ```
 
 SVG files retain text, shapes and source IDs for editing. PNGs are slide-ready

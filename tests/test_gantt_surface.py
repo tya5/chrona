@@ -43,6 +43,7 @@ def test_surface_is_deterministic_and_does_not_change_inputs():
     resources = fixture(); original = deepcopy(resources)
     svg, projection, slots = render(resources)
     assert render(resources)[0] == svg and resources == original
+    assert svg == (ROOT/'examples'/'controller-z-executive.svg').read_text()
     assert projection.window == (date(2026, 2, 1), date(2026, 7, 1))
     assert ET.fromstring(svg).get('width') == '1600'
     assert ET.fromstring(svg).get('height') == '900'

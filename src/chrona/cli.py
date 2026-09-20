@@ -72,7 +72,7 @@ def main() -> None:
             command.add_argument("--output", "-o", required=True)
             command.add_argument("--presentation-settings", help="resolved settings or preset for the common v0.2 Scene path")
         if name == "render-review":
-            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--presentation-settings"); command.add_argument("--summary-profile"); command.add_argument("--output", "-o", required=True)
+            command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--presentation-settings"); command.add_argument("--summary-profile"); command.add_argument("--detail-profile"); command.add_argument("--output", "-o", required=True)
     args = parser.parse_args()
     try:
         project = (_load_primary_project(args, parser)
@@ -111,8 +111,11 @@ def main() -> None:
         projection=build_review_projection(project,result.placements,view,load_yaml(args.actual),load_yaml(args.style),theme)
         settings = resolve_presentation_settings(load_yaml(args.presentation_settings)) if args.presentation_settings else None
         summary_profile = load_yaml(args.summary_profile) if args.summary_profile else None
+        detail_profile = load_yaml(args.detail_profile) if args.detail_profile else None
         surface_content = (_surface_content_input(projection, project, view, settings, summary_profile,
-                                                  projection.window[0]) if settings else None)
+                                                  projection.window[0], detail_profile) if settings else None)
+        if detail_profile and settings is None:
+            raise ValueError("E_PRESENTATION_SETTINGS_REQUIRED")
         layout_slots=None
         if profile.get("version")=="chrona/layout-profile/v0.1":
             manifest=resolve_layout_profile(profile,{"title","table","timeline","summary","legend"})

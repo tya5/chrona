@@ -1,6 +1,6 @@
 # Shared Presentation Foundation: Admission Boundary and Generalized Annotations
 
-**Status:** D1/D2 design complete; runtime correction not implemented.
+**Status:** Runtime implemented; post-R0 M22 consumption remediation designed.
 **Basis:** ADR-0019. This specification adds an admission boundary without replacing
 Specifications 06/07/08/27/28/29.
 
@@ -164,6 +164,10 @@ Label rules specify text source, facet/endpoint, candidate-side order, requiredn
 overflow. Sources are title, closed date formatter, comparison delta, or existing
 annotation text—never arbitrary expressions. Evaluate at most sixteen candidates in
 stable source/rule/candidate order; `inside` requires measured text to fit.
+`table-timeline` emits a direct title label only from an explicit label rule; it MUST NOT
+synthesize a title rule when a colocated table already identifies rows. Previously
+accepted emitted row text, including variance and date labels, participates in the
+obstacle set for later label placement.
 
 View annotations preserve typed anchor, purpose, and text. Callout/note use a box and
 policy-controlled optional leader; highlight is decoration with no required text or
@@ -216,7 +220,8 @@ The application boundary supplies that permitted-value map in
 `windowLastVisible`, `selectedCount`, `unmatchedCount`, and `missingCount`. Scene never
 parses formatted coverage text or consults a projection to reconstruct a missing value.
 
-The implementation DTO is closed by primitive kind: Rect=`bounds`; Text=`text` plus
+The implementation DTO is closed by primitive kind: Rect=`bounds` plus optional
+`cornerRadius`; Text=`text` plus
 one TextLayout; Symbol=`shape` plus bounds; Path=`points` plus optional
 `fromPortId`/`toPortId` only for non-connector ticks. A connector or leader without both
 port IDs, a Path with fewer than two points, or any payload/kind mismatch is
@@ -227,6 +232,27 @@ axis/table surface mapping: axis labels use foreground text paint with level typ
 and table-column labels use foreground text paint with table-header typography. A
 single role-to-color lookup that makes required foreground equal its background is
 invalid.
+
+A `row-shade` Rect carries the resolved Theme row-shade color and opacity in Scene.
+A planned or baseline point comparison mark retains its semantic facet but uses the
+`milestone` visual role and output purpose; an Actual point retains `actual`. This keeps
+point semantics distinct from span-bar paint and makes the mark agree with its legend.
+
+Every comparison mark carries its resolved `laneGroupId` and `stackIndex`. The
+row-aligned surface preserves these as output metadata even though it does not apply a
+stack Y offset. The independent-lane surface uses the same stack index to derive its
+Scene Y and emits the same metadata. Adapters never reconstruct a stack from bounds.
+
+Rect rounding and minimum visual width are resolved in Scene. The temporal start
+remains fixed; a span narrower than `theme.bar.minWidth` extends only its visual Rect to
+the right and its ports/hit bounds use that completed Rect. `theme.bar.radius` is
+clamped to half the smaller completed Rect dimension during semantic validation and
+stored as `cornerRadius`; it is not an SVG-only recovery.
+
+Primitive-purpose style mapping consumes the complete selected stroke token. Missing
+Actual, variance status, annotations, summaries, notes, groups, points, and fallback
+facet paints require their own trigger fixtures. A single Project is never the
+consumption oracle for optional families.
 
 Axis identity includes `(scaleId, level, naturalInterval.index, slotId)`, mark identity
 includes `(projectionInstanceId, facet, markRole)`, and Text identity includes

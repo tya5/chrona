@@ -82,11 +82,14 @@ def resolve_annotation_anchor(annotation: dict, marks: Iterable[ComparisonMark])
 
 def project_annotation_box(annotation: dict, resolved: AnnotationAnchor, *, anchor_bounds: LabelRect,
                            text_size: tuple[float, float], candidate_sides: Iterable[str],
-                           viewport: LabelRect, obstacles: Iterable[LabelRect], overflow: str) -> AnnotationBox:
+                           viewport: LabelRect, obstacles: Iterable[LabelRect], overflow: str,
+                           required: bool = True) -> AnnotationBox | None:
     """Place a measured annotation box; geometry is finite and leader-free at this layer."""
     purpose = annotation.get("purpose")
     if purpose not in {"callout", "note", "highlight", "explanatory-arrow"}:
         raise ValueError("E_PRESENTATION_ANCHOR_UNSUPPORTED")
     placement = place_label(anchor_bounds, text_size, candidate_sides, bounds=viewport,
-                            obstacles=obstacles, required=True, overflow=overflow)
+                            obstacles=obstacles, required=required, overflow=overflow)
+    if placement is None:
+        return None
     return AnnotationBox(resolved, placement, purpose in {"callout", "note", "explanatory-arrow"})

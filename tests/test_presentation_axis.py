@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation_axis import axis_intervals
+from chrona.presentation_axis import axis_intervals, format_axis_label
 
 
 def interval_values(intervals):
@@ -15,6 +15,37 @@ def test_month_and_quarter_intervals_clip_but_keep_natural_labels():
         (date(2027, 2, 1), date(2027, 3, 1), "2027-02", 1),
         (date(2027, 3, 1), date(2027, 3, 15), "2027-03", 2),
     ]
+
+
+def test_year_intervals_keep_the_natural_bucket_at_clipped_edges():
+    assert interval_values(axis_intervals(date(2026, 9, 1), date(2028, 2, 1), "year")) == [
+        (date(2026, 9, 1), date(2027, 1, 1), "2026", 0),
+        (date(2027, 1, 1), date(2028, 1, 1), "2027", 1),
+        (date(2028, 1, 1), date(2028, 2, 1), "2028", 2),
+    ]
+
+
+@pytest.mark.parametrize("style,expected", [
+    ("short-month-year", "Jan 2027"),
+    ("long-month-year", "January 2027"),
+    ("numeric-year-month", "2027-01"),
+    ("short-month", "Jan"),
+    ("long-month", "January"),
+    ("numeric-month", "01"),
+])
+def test_month_format_catalog_is_closed_and_process_locale_independent(style, expected):
+    interval = axis_intervals(date(2027, 1, 15), date(2027, 2, 1), "month")[0]
+    assert format_axis_label(interval, {"month": style, "quarter": "quarter-year", "date": "iso-date"}, "en-US") == expected
+
+
+@pytest.mark.parametrize("style,expected", [
+    ("quarter-year", "Q1 2027"),
+    ("year-quarter", "2027 Q1"),
+    ("quarter", "Q1"),
+])
+def test_quarter_format_catalog_is_closed(style, expected):
+    interval = axis_intervals(date(2027, 1, 15), date(2027, 2, 1), "quarter")[0]
+    assert format_axis_label(interval, {"month": "short-month-year", "quarter": style, "date": "iso-date"}, "en-US") == expected
     assert interval_values(axis_intervals(date(2027, 1, 15), date(2027, 4, 2), "quarter")) == [
         (date(2027, 1, 15), date(2027, 4, 1), "2027-Q1", 0),
         (date(2027, 4, 1), date(2027, 4, 2), "2027-Q2", 1),
@@ -45,7 +76,7 @@ def test_day_intervals_are_half_open_and_tick_step_only_filters_buckets():
 @pytest.mark.parametrize("start,end,level,tick_step", [
     (date(2027, 2, 1), date(2027, 2, 1), "day", 1),
     (date(2027, 2, 2), date(2027, 2, 1), "day", 1),
-    (date(2027, 2, 1), date(2027, 2, 2), "year", 1),
+    (date(2027, 2, 1), date(2027, 2, 2), "decade", 1),
     (date(2027, 2, 1), date(2027, 2, 2), "week", 0),
     (date(2027, 2, 1), date(2027, 2, 2), "week", True),
 ])

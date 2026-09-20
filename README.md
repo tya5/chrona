@@ -23,7 +23,9 @@ edit the project, re-run, and the slide follows.</sup>
 - deterministic Date / CalendarPeriod / WorkPeriod arithmetic;
 - project JSON-Schema validation plus Core v0.1 semantic validation;
 - endpoint-based dependency lower bounds and Date-only scheduled-span placement;
-- executable conformance checks for the canonical Core v0.1 fixture.
+- executable conformance checks for the canonical Core v0.1 fixture;
+- deterministic Plan/Actual review SVGs with YAML-controlled legend, group detail,
+  source-labelled observations, and milestone digests.
 
 ## Quick start
 
@@ -47,6 +49,10 @@ chrona schedule \
 
 Use `chrona render --presentation-settings settings.yaml` for the common v0.2 Scene
 path. Omitting settings intentionally selects the diagnostic legacy adapter.
+
+`chrona render-review` accepts `--detail-profile` together with v0.2 presentation
+settings. The checked-in Controller Z detail resources demonstrate the complete M23
+path and produce `examples/controller-z-review-detail.svg`.
 
 `chrona schedule` is a reference implementation for the acyclic Date-only
 subset. It reports diagnostics for unsupported cycles rather than treating all

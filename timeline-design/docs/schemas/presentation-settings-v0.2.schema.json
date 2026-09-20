@@ -214,6 +214,7 @@
             "body",
             "tableHeader",
             "group",
+            "year",
             "month",
             "quarter",
             "variance",
@@ -358,6 +359,39 @@
               "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
             },
             "group": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "size",
+                "weight",
+                "lineHeight",
+                "letterSpacing"
+              ],
+              "properties": {
+                "size": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 256
+                },
+                "weight": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1000
+                },
+                "lineHeight": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 5
+                },
+                "letterSpacing": {
+                  "type": "number",
+                  "minimum": -10,
+                  "maximum": 100
+                }
+              },
+              "description": "Role style shared with all adapters; replaces inline font sizes/weights and line-height."
+            },
+            "year": {
               "type": "object",
               "additionalProperties": false,
               "required": [
@@ -1750,6 +1784,9 @@
                   "timeline-axis",
                   "summary",
                   "legend",
+                  "group-details",
+                  "observations",
+                  "milestones",
                   "annotations",
                   "notes"
                 ]
@@ -2135,6 +2172,7 @@
               "minItems": 1,
               "items": {
                 "enum": [
+                  "year",
                   "month",
                   "quarter",
                   "week",
@@ -2203,7 +2241,8 @@
                 "day",
                 "week",
                 "month",
-                "quarter"
+                "quarter",
+                "year"
               ]
             }
           },
@@ -2782,13 +2821,17 @@
               "enum": [
                 "short-month-year",
                 "long-month-year",
-                "numeric-year-month"
+                "numeric-year-month",
+                "short-month",
+                "long-month",
+                "numeric-month"
               ]
             },
             "quarter": {
               "enum": [
                 "quarter-year",
-                "year-quarter"
+                "year-quarter",
+                "quarter"
               ]
             },
             "date": {

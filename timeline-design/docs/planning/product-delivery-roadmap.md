@@ -68,12 +68,14 @@ Every milestone MUST demonstrate all of the following before it is accepted:
 | M20 — Constraint layout runtime | A profile resolves deterministic regions, slots, and a reviewable Layout Manifest. | Solver, manifest, capability/overflow diagnostics, and SVG adapter migration. | M19 grammar and all semantic projection inputs. | Repeated output/manifest equality and no profile-ID branches. |
 | M21 — Expressive review primitives | Designers can compose calendar, table, group, milestone, callout, and connector hierarchy. | Role/slot primitives, bounded formatter catalog, and acceptance gallery. | M20 solver, Style roles, Theme tokens. | Light executive acceptance with source/accessibility evidence. |
 | M22 — Designer workflow release | Human and AI designers share one validated preset/proposal and release path. | Inheritance, proposal validation, accessibility/gallery, cross-profile release review. | M19–M21 resource closure. | Identical validation path, conformance, and reuse release evidence. |
+| M23 — Reference-quality review detail | Reviewers can combine the Gantt with source-traceable group explanations, observations, and milestone digest content. | Review Detail Profile schema/resolver, Layout sources, completed Scene/SVG primitives, and Controller Z acceptance resources. | Project/Schedule/Actual authority, View selection/group order, v0.2 Settings/Preset resolution, shared Layout/Scene/SVG path. | Schema and semantic negatives, required overflow, source metadata, byte-identical reproduction, raster/visual acceptance, inherited conformance, and final reuse review pass. |
 
-## 4. Boundaries after M22
+## 4. Boundaries after M23
 
 M14 is the completed review-SVG foundation. M15–M18 are completed prototype/product
 work; M19–M22 replace overlapping composition authority with a Layout Profile before
-further presentation implementation. Each design gate in
+further presentation implementation. M23 completes the bounded review-detail panels
+without adding scheduling, Actual, or summary-metric authority. Each design gate in
 `27-layout-expression-engine.md` must close and publish first. Ticket/workflow management,
 automatic transitions, arbitrary extension code,
 undisclosed output degradation, raster/PDF claims, and any successor capability not

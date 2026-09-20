@@ -238,9 +238,14 @@ Every primitive in a surface has the following required fields:
 | `sourceRef` / `sourceKind` | Stable semantic or View-local source and its category |
 | `semanticFacet` / `visualRole` | Meaning and decoration independently; a missing facet is explicit rather than inferred |
 | `bounds` | Concrete logical bounds; `Text` additionally carries the measured baseline and text payload |
+| `optional` | Whether Output may omit this primitive under the declared optional-overflow policy |
 | `zOrder` | Stable paint order within this surface |
 
-Primitive payloads are a closed discriminated contract. `Rect` carries only `bounds`.
+Primitive payloads are a closed discriminated contract. `Rect` carries `bounds` and an
+optional non-negative `cornerRadius`. `cornerRadius` is logical Scene geometry: it is
+present on span comparison marks, is bounded to half the smaller Rect dimension, and
+is absent on Rect families that do not declare rounding. An SVG adapter serializes it
+as equal `rx`/`ry` and never re-reads `theme.bar.radius`.
 `Text` carries `text` plus exactly one `TextLayout`. `Symbol` carries a closed `shape`
 identifier and its concrete `bounds`. `Path` carries at least two ordered logical
 `points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
@@ -248,6 +253,77 @@ tick may omit both port identifiers. `Path.bounds` is the exact union of its poi
 including zero width or height. Paint remains a resolved `visualRole`; adapters map
 that role to target tokens but never calculate payload geometry. A kind/payload
 mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an adapter must not repair it.
+
+`optional` defaults to false. It is true only for a label or annotation family whose
+applicable Detail rule has `required=false`; generated children of that optional
+annotation box inherit the flag. It is not inferred by an adapter from purpose names.
+
+Projected comparison marks additionally retain `laneGroupId` and `stackIndex` as Scene
+metadata. They do not alter row-aligned geometry, but every SVG adapter emits stable
+`data-lane-group-id` and `data-stack` hooks from Scene. `data-lane-offset` may coexist
+as derived inspection metadata; it is not a replacement for stack identity.
+
+Stroke decoration remains Theme-owned and is selected by primitive purpose from the
+completed resolved Theme. The purpose mapping is closed: ticks/major axis use
+`axisMajor`, minor axis uses `axisMinor`, table frame uses `frame`, row rules use
+`rowRule`, group separators use `groupSeparator`, and dependency/explanatory paths use
+`dependency`. The selected token contributes color, opacity, width, and dash together;
+mixing fields from different tokens or hard-coding a dash is invalid.
+
+`layout.axis.tickUnit` and `tickStep` produce major ticks. When `minorVisible=true`,
+Scene also derives boundaries of exactly the next finer level in the closed order
+`year -> quarter -> month -> week -> day`. Boundaries coincident with a major tick are
+removed; `day` has no finer level. The remaining `minor-tick` Paths use `axisMinor` and
+carry no label. This is display subdivision only and does not change the temporal
+window or Date-only semantics.
+
+Missing Actual is an explicit conditional Scene family. A span lacks its required
+Actual facet unless its Actual mapping contains both a valid start and finish. The
+family uses the planned Rect's left edge and the row's resolved Actual-bar band. A
+pattern Rect is centered vertically in that band and uses the Theme-owned width and
+height. A label's preferred x begins after that Rect plus
+`layout.missingActual.gap`, or at the planned left edge when no pattern is requested,
+and is vertically centered using the `missingActual` typography. Scene measures it
+against the viewport's horizontal margin box. If its preferred right edge exceeds that
+box, Scene shifts the complete measured label left until its right edge equals the box;
+if the measured label itself is wider than the box, it diagnoses
+`E_LAYOUT_REQUIRED_OVERFLOW:text`. `label`, `pattern`, and `label-and-pattern` emit exactly the
+families named by their modes. Label text is `detail.missingActualLabel`. It never
+fabricates Actual semantics.
+
+Finish variance is also a closed conditional family. A complete Actual finish yields
+`variance-ahead` for a negative calendar-day delta, `variance-on-track` for zero, and
+`variance-behind` for a positive delta. A non-empty but incomplete Actual mapping
+yields `variance-unknown`, anchored at the planned finish; a wholly absent/empty Actual
+mapping has no variance family and is represented only by Missing Actual. The marker's
+x coordinate is the later of planned and complete-Actual right edges plus
+`layout.variance.offset`; its width is `theme.varianceMarkerWidth`, and its vertical
+bounds are the union of the planned and complete-Actual bar bands (the planned band for
+unknown). The label's preferred x begins after the marker plus
+`layout.variance.labelGap` and uses the `variance` typography. It follows the same
+measured right-edge shift and overflow diagnostic as Missing Actual. `labelAlign`
+aligns its measured top, center, or bottom to the marker bounds. Known text uses
+`positiveSign` and `signedDaysSuffix`; unknown text uses
+`detail.formatting.unknown`. `showZero=false` suppresses the on-track family.
+Adapters do not derive status from text or color.
+
+Each Detail label rule has one closed Scene target. `title` controls the existing
+per-object item-title label anchored to the planned/baseline body; `planned-date` and
+`actual-date` create formatted endpoint labels only when the named facet and endpoint
+exist; `comparison-delta` controls the variance label; and `annotation-text` controls
+placement of the authored annotation text box. Date labels use
+`detail.formatting.date`, never host locale formatting. Rule array order breaks ties;
+the first rule for an identical `(source, facet, endpoint)` target wins.
+
+`required=true` makes an unplaceable applicable label
+`E_PRESENTATION_LABEL_UNPLACEABLE`. `required=false` permits omission only when
+`layout.labelPlacement.overflow=clip-optional`; under `diagnose` it produces the same
+diagnostic. A rule whose facet/endpoint is absent is inapplicable, not an overflow.
+Item/date/annotation labels use the declared finite candidate order and obstacle set.
+Variance retains its conditional-family placement above; its measured margin overflow
+uses the same required/optional decision. Absence of a rule does not delete authored
+title or annotation text: those families default to required. Planned/Actual date
+labels are emitted only by their explicit rules.
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
 following I3 core primitive set before any adapter is invoked: one resolved heading
@@ -415,6 +491,19 @@ closure, and all loss diagnostics. SVG is the baseline; PDF, raster, canvas, and
 presentation outputs are derived adapters with no authority to alter Scene or Project.
 A missing required capability rejects the request; an explicitly permitted loss remains
 visible as a stable diagnostic and manifest entry.
+
+The v0.2 SVG adapter consumes all three Output fields. It rounds serialized numeric
+coordinates only, using exactly `coordinateDecimals`; Scene geometry and routing remain
+unrounded. SVG currently supports `fontPolicy=reference`. `embed` and `outline` fail
+with `E_PRESENTATION_OUTPUT_CAPABILITY` until an output-capability profile supplies the
+required font operation; they never fall back to reference silently.
+
+Before serialization, each primitive bound is checked against the logical viewport.
+With `overflow=diagnose`, any out-of-bounds primitive fails with
+`E_PRESENTATION_OUTPUT_OVERFLOW`. With `clip-optional`, an out-of-bounds primitive may
+be omitted only when Scene carries `optional=true`; a required primitive still fails.
+Omission is whole-primitive, not coordinate clipping. In-bounds primitives are
+identical under both overflow policies.
 
 ## 10. Out of scope
 
