@@ -1,8 +1,7 @@
 # I3 Public Surface-Adapter Completion Plan
 
-**Status:** Reopened for V1 foreground/background contrast correction. I3-A through
-I3-F and the manifest remain complete; final acceptance is suspended until regenerated
-axis and table-header labels are visibly distinct from their backgrounds.
+**Status:** Complete. I3-A through I3-F, the V1 manifest, the contrast correction, and
+the renewed final acceptance review are implemented, validated, and published.
 
 ## Goal
 
@@ -173,6 +172,18 @@ their existing level/table-header typography; their background Rects retain the 
 axis/table surface colors. Add sample-independent contrast assertions, regenerate all
 affected SVG/PNG/HTML artifacts, inspect every raster, then rerun the full suite and
 conformance before restoring V1 completion.
+
+### V1 contrast completion record
+
+The paint-resolution clarification was published at
+`7840ce833684d304912917929ac36fd7a5074cc7`. Implementation
+`45fda25b380b8333aadadd5706c2ba6364758d3a` maps required axis-label and
+table-column-label Text to foreground text paint without changing their typography or
+geometry. Sample-independent tests assert that each foreground differs from its
+containing background. All five ASTER SVG/PNG outputs, the combined HTML, and Controller
+Z SVG were regenerated. Every ASTER raster and the Controller Z verification raster
+were inspected for visible headings/months, clipping, overlap, and route regressions.
+The 179-test suite and complete conformance runner pass. V1 is complete again.
 
 If I3-B through I3-F reveals a need for a new primitive family, identity input,
 TextLayout, port, diagnostic, or surface ownership rule, implementation stops. Close

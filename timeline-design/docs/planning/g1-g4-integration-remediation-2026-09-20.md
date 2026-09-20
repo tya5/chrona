@@ -156,9 +156,11 @@ while ownership moves into Scene.
 
 The corrective sequence completed without widening the exclusions above. Design parent
 `666007acac8602350db5cbb633c017b35a0d7d2b` closes the last manifest shape;
-implementation parent `b32b1237ee60a0da892372acc150009dc69c91b0` completes the
+manifest implementation `b32b1237ee60a0da892372acc150009dc69c91b0` completes the
 Scene DTO, all three adapter surfaces, target metadata, Japanese/long-text behavior,
-and regenerated inspection SVGs. The final acceptance review records the exact evidence
-map and image hashes. The full 179-test suite and the complete conformance runner pass;
+and initial inspection SVGs. Contrast implementation
+`45fda25b380b8333aadadd5706c2ba6364758d3a` corrects the post-acceptance invisible
+axis/table labels and regenerates the reviewed output set. The final acceptance review
+records the exact evidence map and image hashes. The full 179-test suite and the complete conformance runner pass;
 only two pre-existing `jsonschema.RefResolver` deprecation warnings remain. R01–R12 and
 all D0–D3/I1–I3/V1 work in this remediation plan are closed.

@@ -1,11 +1,13 @@
 # I3 / V1 Acceptance Review
 
-**Conclusion:** Reopened. The original acceptance conclusion is withdrawn pending the
-foreground/background contrast correction and renewed raster review.
+**Conclusion:** Accepted and complete after foreground/background contrast correction
+and renewed review of every raster.
 
 **Evidence target:** manifest design
 `666007acac8602350db5cbb633c017b35a0d7d2b`; implementation
-`b32b1237ee60a0da892372acc150009dc69c91b0`.
+`b32b1237ee60a0da892372acc150009dc69c91b0`; contrast design
+`7840ce833684d304912917929ac36fd7a5074cc7`; corrected implementation
+`45fda25b380b8333aadadd5706c2ba6364758d3a`.
 
 The final V1 review finds no open design or implementation decision. All settings-backed
 table/timeline, review, and minimal routes serialize a completed `SceneSurface`.
@@ -28,27 +30,26 @@ evidence and neither duplicates nor overrides Project, View, Schedule, or Actual
 
 ## Artifact identities
 
-The checked-in raster images were not changed by the manifest-only metadata addition.
-Their accepted SHA-256 identities are:
+The corrected and visually reviewed raster SHA-256 identities are:
 
 | Artifact | SHA-256 |
 |---|---|
-| `01-overview.png` | `1d831086c928ba4cf2e1a32765f373ced5aa9265920574709086ccd35ffa827c` |
-| `02-platform-firmware.png` | `93000de781bfb8448115b2afe63a629449e9069f68010db61094b26b3469c584` |
-| `03-performance-security.png` | `94cc02eda0ac233b05bf750c8f31e31a3642166b4a561d4d3bd50e510599f51b` |
-| `04-qualification-production.png` | `08a2f5695373c2f49e3d5e713b3d2f600aa748ba8ab6930f331884d4e5a7a768` |
-| `05-master.png` | `ae4cb3b0703c8e9781fa31bd7866f8bb5fbe9203a511057b549cbcf62972b4a7` |
+| `01-overview.png` | `12cad74d3edd6752b8b3c8a48bde726c57d08d33de720cfd3188aafdee2d3121` |
+| `02-platform-firmware.png` | `8a45688a205a68982229cd1a3c72052dff1a948f240211c268f96ff340d3d921` |
+| `03-performance-security.png` | `a7190ca76b416f1b557b40afd7cec5da6ba0cab2ba6ba7ceb8568906a9266828` |
+| `04-qualification-production.png` | `d64f8954fcaa2dc5c01d5493458b6adb8eaec6ac1f5e9620b844ae112cbeca5f` |
+| `05-master.png` | `cb6445d1b74b195ab422c5d023dbfe52923f7b8738e282d85b65c313f49d224e` |
 
 The regenerated SVG identities at the implementation target are:
 
 | Artifact | SHA-256 |
 |---|---|
-| `01-overview.svg` | `126b64dbc6ae609d58f33dcb6224bee969d2e12afea5ce06bbcbecbf58636c02` |
-| `02-platform-firmware.svg` | `14b3b839bdb7078c8e9187b1afae7fdef48332333a7ab30ec5f847c96deaa551` |
-| `03-performance-security.svg` | `6fc794a27d35a83e751782c635f516d6087d0a15be8c6d951bd7f4094ee9dfaa` |
-| `04-qualification-production.svg` | `d02c9e8d8263de7641281d2cceadd0f8988aa7c6a8f1a9d1d67b2f0f229815f0` |
-| `05-master.svg` | `e12934c55bc5c070d6de7c491b7edfb0ea7b94c8ffbb71eca25ef653f78a0645` |
-| `controller-z-executive-v2.svg` | `d5749fe7971ab85db86468e35320546181a55d5956b22bc9e5bacdb0e36ca03b` |
+| `01-overview.svg` | `ca6b38198e057a7c3a15e80ba106bd5177959dd7f3e3a4a6ee44935a2b4aec83` |
+| `02-platform-firmware.svg` | `acdb1557fdcb0af3ba08db63a20af672f21cdbba1039b108ebd4b5831532bc87` |
+| `03-performance-security.svg` | `25e0824d4becc55bcd567342a6663699eed5183853edbfcea0e885d07d20ca33` |
+| `04-qualification-production.svg` | `2292c9bee1d49c280c6979916a21865e514980c5fa110e14a76c0501c39fa611` |
+| `05-master.svg` | `535f440f700f332ceceecd80d27b51a2486a8e14be627a702c6521c4cd6300cf` |
+| `controller-z-executive-v2.svg` | `74a547399e2eaca325ff3e8ecffd39a3c8900bde3164ac68832440cf65850e2e` |
 
 ## Final gate result
 
@@ -71,3 +72,13 @@ visually absent. The previous image review therefore did not satisfy V1.
 V1 is reopened only for the paint-mapping correction defined in Specifications 08/30,
 sample-independent contrast tests, regeneration of affected outputs, and complete
 raster review. The geometry, manifest, and adapter ownership conclusions remain valid.
+
+## Renewed contrast review
+
+The correction preserves Scene geometry and typography while resolving foreground Text
+with the text paint. Structural tests now compare the serialized `fill` of axis-label
+Text against axis-band Rect and table-column-label Text against table-header-band Rect;
+both must differ. The five ASTER rasters show every month and the left column heading.
+All five were inspected at original resolution, including the 1600×2100 master.
+Controller Z likewise shows all five months and `Workstream`. No clipping, overlap,
+route, mark, or layout regression was found. The reopening is closed.

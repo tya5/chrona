@@ -136,7 +136,9 @@ viewport, selection, font, normalized-family, and per-surface scale evidence wit
 becoming an authoring resource. Missing scale evidence diagnoses rather than invoking
 an adapter fallback.
 
-The implementation parent is `b32b1237ee60a0da892372acc150009dc69c91b0`.
+The manifest implementation parent is `b32b1237ee60a0da892372acc150009dc69c91b0`;
+the renewed visual-acceptance implementation is
+`45fda25b380b8333aadadd5706c2ba6364758d3a`.
 The final suite passes 179 tests with two existing deprecation warnings, the complete
 conformance runner passes, and the acceptance review records structural, behavioral,
 and image evidence. No G1–G4 corrective implementation scope remains.
