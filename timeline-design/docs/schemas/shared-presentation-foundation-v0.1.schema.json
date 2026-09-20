@@ -262,7 +262,11 @@
         "grouping",
         "stacking",
         "occupancy",
-        "maxStack"
+        "maxStack",
+        "surface",
+        "pitchPolicy",
+        "trackPadding",
+        "trackGap"
       ],
       "properties": {
         "grouping": {
@@ -281,8 +285,28 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 100
+        },
+        "surface": {
+          "enum": [
+            "row-aligned",
+            "independent-lane-track"
+          ]
+        },
+        "pitchPolicy": {
+          "const": "scene-mark-extent-plus-clearance"
+        },
+        "trackPadding": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "trackGap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000
         }
-      }
+      },
+      "description": "Stable stacking uses View group/order and never moves an item across groups. row-aligned accepts only stack 0; independent-lane-track owns derived track geometry."
     },
     "routing": {
       "type": "object",
