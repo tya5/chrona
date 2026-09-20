@@ -167,6 +167,13 @@ theme:
       width: 1.4
       dash: []
   groupPaints: {}
+  facetPaints:
+    default:
+      planned: {color: '#E9B35E', opacity: 1}
+      actual: {color: '#45CCCB', opacity: 1}
+      baseline: {color: '#E9B35E', opacity: 1}
+      variance: {color: '#FF947F', opacity: 1}
+    groups: {}
   bar:
     radius: 2
     minWidth: 1
@@ -262,6 +269,15 @@ layout:
       region: main
       track: 1
       source: timeline
+      scaleId: primary
+      priority: required
+      overflow: diagnose
+      align: stretch
+    timelineAxis:
+      region: main
+      track: 1
+      source: timeline-axis
+      scaleId: primary
       priority: required
       overflow: diagnose
       align: stretch
@@ -278,6 +294,10 @@ layout:
     gap: 12
     headerHeight: 32
     labelAlign: center
+  labelPlacement:
+    candidateSides: [above, below, end, start, inside]
+    maxCandidates: 5
+    overflow: clip-optional
   row:
     sizing: fit
     height: 72
@@ -346,6 +366,12 @@ layout:
     portOffset: 8
     bendPenalty: 12
     strokeLayer: behind-marks
+    limit: 4096
+  lanes:
+    grouping: view-groups
+    stacking: stable-lowest-nonoverlap
+    occupancy: mark-bounds-plus-required-label-bounds
+    maxStack: 12
   legend:
     padding:
       top: 24
@@ -375,6 +401,10 @@ layout:
     panelGap: 6
     metricGap: 3
 detail:
+  labelRules:
+  - {id: title, source: title, facet: planned, endpoint: body, required: true}
+  - {id: actual-finish, source: actual-date, facet: actual, endpoint: finish, required: false}
+  - {id: finish-variance, source: comparison-delta, facet: variance, endpoint: finish, required: false}
   groupLabel: Owner
   subtitle: Fictional SSD program / {windowStart} to {windowLastVisible} / Observations through 30 Jun
     2027
