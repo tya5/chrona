@@ -1,192 +1,213 @@
-# 表現固定値のスキーマ所有設計 v0.2
+# Schema-Owned Presentation Settings v0.2
 
-**状態: 設計契約。ランタイム未実装。**
+**Status: Design contract. Runtime not implemented.**
 
-本仕様の解決済み Theme / Layout / Detail / Context は Scene Builder の
-`ResolvedPresentationInput` に一度だけ束縛される。SVGその他のadapterは完成した
-Sceneのprimitive、token値、manifestだけを読む。adapterが設定を再解決したり、欠損値を
-補い、日付・slot・font・lane・routeを再計算することは二重権限である。
+Resolved Theme, Layout, Detail, and Context are bound once into the Scene Builder's
+`ResolvedPresentationInput`. SVG and other adapters read only completed Scene
+primitives, token values, and the manifest. Re-resolving settings, supplying missing
+values, or recalculating dates, slots, fonts, lanes, or routes in an adapter creates
+duplicate authority.
 
-## 1. 目的・対象
+## 1. Purpose and scope
 
-描画コードに残るデザイン上の選択をすべて宣言データへ移す。
-対象は `gantt_surface.py`、`layout.py`、`review_svg.py`（旧レビュー・summary・
-書式化ヘルパーを含む）、`render.py`（旧最小SVG）の全公開出力経路。
-最新ガントのみを移行して旧経路の固定値を残すことは完了とみなさない。
+Move every design choice left in rendering code into declarative data. Scope includes
+all public output paths in `gantt_surface.py`, `layout.py`, `review_svg.py` (including
+legacy review, summary, and formatting helpers), and `render.py` (legacy minimal SVG).
+Migrating only the current Gantt while leaving fixed values in old paths is incomplete.
 
-正本は `presentation-settings-v0.2.schema.json` の各所有者 `$defs`。
-固定値棚卸しは `../planning/presentation-fixed-value-inventory-v0.2.json`。
-各項目はコード上の出所、移行先、型、代表値、除去方針を持つ。
-78項目群にはフォントロール14種、色ロール13種、線ロール6種などを含む。
-JSONファイルはYAMLと同じデータモデルの検証成果物であり、ユーザー入力はYAMLでよい。
+The source of truth is each owner `$defs` in
+`presentation-settings-v0.2.schema.json`. The fixed-value inventory is
+`../planning/presentation-fixed-value-inventory-v0.2.json`; each entry records code
+origin, destination, type, representative value, and removal policy. Its 78 groups
+include fourteen font roles, thirteen color roles, and six line roles. JSON artifacts
+validate the same data model as YAML; authors may use YAML.
 
-「すべて」は全デザイン選択を意味する。日数差・暦・端点・アクセス可能性の意味、
-XMLエスケープ、配列添字、中心座標の1/2、図形の正規化頂点などは、
-デザイン値ではなく不変の計算規則である。設定によって意味や安全性を変更しない。
+"Every" means every design choice. Day differences, calendars, endpoint and
+accessibility meaning, XML escaping, array indices, center-coordinate division by two,
+and normalized shape vertices are invariant calculations, not design values. Settings
+MUST NOT change meaning or safety.
 
-## 2. 一意な所有者と既存設計への統合
+## 2. Single ownership and integration with existing design
 
-| 所有者 | 正本となる設定 | 統合・廃止対象 |
+| Owner | Authoritative settings | Consolidation / removal |
 |---|---|---|
-| View | 選択・順序・グループ・表示期間・列の事実ソース | 変更なし。Layoutにコピーしない |
-| Style | 事実から意味ロールへの対応 | 変更なし。新設定の数値・文言を持たせない |
-| Theme | 色、透明度、書体、サイズ、ウェイト、行間、字間、線幅、破線、角丸、記号寸法、パターン | `surface.fontSize/titleSize/groupFontSize/barHeight`、各adapterのfallbackを統合 |
-| Layout | 領域・トラック・余白・整列・行高・列配分・軸帯高・バー間隔・障害物余白・経路評価・凡例flow | 名前依存のheader/footer分岐、density分岐、固定Rect、手動ベースラインを廃止 |
-| Detail (`28`) | 凡例、説明、欠測文言、アクセシブル説明、書式、summary表示名 | `surface.groupLabel`とコード中の英語文字列を統合 |
-| Render Context | 実際のviewport寸法・locale・固定されたフォント計測リソース | canvasの比率→寸法辞書を廃止。寸法の二重正本を禁止 |
-| Output | SVG座標精度、フォント出力方針、overflow適合方針 | 出力adapterの固定精度や暗黙clipを廃止 |
+| View | Fact sources for selection, order, grouping, visible period, and columns | Unchanged; do not copy into Layout |
+| Style | Mapping facts to semantic roles | Unchanged; add no numeric values or wording |
+| Theme | Color, opacity, typeface, size, weight, line height, letter spacing, stroke width/dash, radius, symbol size, pattern | Consolidate `surface.fontSize/titleSize/groupFontSize/barHeight` and adapter fallbacks |
+| Layout | Regions, tracks, margins, alignment, row height, column allocation, axis-band height, bar gaps, obstacle clearance, route scoring, legend flow | Remove name-based header/footer and density branches, fixed rectangles, and manual baselines |
+| Detail (`28`) | Legends, explanations, missing-data wording, accessible descriptions, formatting, summary display names | Consolidate `surface.groupLabel` and hard-coded English strings |
+| Render Context | Actual viewport dimensions, locale, and fixed font-measurement resources | Remove canvas-ratio-to-dimensions dictionaries; prohibit duplicate dimension sources |
+| Output | SVG coordinate precision, font-output policy, overflow-conformance policy | Remove fixed adapter precision and implicit clipping |
 
-`presentation-settings` の外側のobjectは検証・fixture用の集約形式であり、
-新しい所有者ではない。各 `$defs/theme|layout|detail|context|output` は既存
-リソースのv0.2 body内の `settings` に配置する。同じ設定を複数bodyへ書かない。
-View/Styleの意味スキーマ、Project/Actual/Summaryの事実スキーマは変更しない。
-Render Contextの旧 `viewport`・`evaluation.locale` と新settingsは同時に許可せず、
-移行時に一度だけ移す。旧layoutMetrics refは `context.fontMetrics` に統合する。
-ContextのasOfDateやrevision参照など、移動対象でない既存の値は保持する。
+The outer `presentation-settings` object is an aggregate for validation and fixtures,
+not a new owner. Place `$defs/theme|layout|detail|context|output` in `settings` inside
+the existing resource's v0.2 body. Never write one setting into multiple bodies. Do not
+change View/Style semantic schemas or Project/Actual/Summary fact schemas.
 
-既存Theme token→role解決は、今回の具体値契約に正規化する前段として残す。
-token alias/cycle/typeの検証後に完全なTheme設定を得る。schema対象のresolved設定
-に未解決token文字列は残さない。Layout距離はLayout所有であり、Themeに重複保存しない。
-Styleが生成したroleにThemeが未対応なら診断する。groupPaintsのキーは安定IDであり、
-グループ数・タイトル・サンプル名による分岐は禁止。
+Legacy Render Context `viewport` / `evaluation.locale` and new settings cannot coexist;
+migration moves them once. Consolidate legacy `layoutMetrics` references into
+`context.fontMetrics`. Preserve unrelated Context values such as `asOfDate` and
+revision references.
 
-## 3. 既定値・上書き・互換性
+Existing Theme token→role resolution remains the stage before normalization to this
+concrete-value contract. Validate token aliases, cycles, and types, then produce
+complete Theme settings with no unresolved token strings. Layout distances belong only
+to Layout. Diagnose a Style-generated role unsupported by Theme. `groupPaints` keys are
+stable IDs; do not branch on group count, title, or sample name.
 
-既定値はバージョンと内容hashで固定された**完全なYAMLプリセット**に置く。
-schemaの `default` は実行時注入機能として使用しない。renderer内の
-`get(..., 数字/色/文言)` による欠落救済は禁止。解決後の全項目がrequired。
-継承順は「固定base → ユーザーoverride」のみ。objectはキー単位merge、arrayは
-全置換、nullでの削除は禁止。未知フィールドはエラー。循環baseはエラー。
-authoring schemaは `presentation-preset-v0.2.schema.json`。完全なsettings、または
-固定base参照＋部分overridesのどちらか一方を許可する。array内の要素は完全な形を要求。
-YAML例 `presentation-preset-override-v0.2.yaml` は日本語ラベル・角丸・文字・余白・
-経路評価を上書きする。これは作者向け集約形式であり、解決後は各所有リソースに分配する。
-現在のdefaults fixtureは設計例であり、フォント資産identityは説明用である。
-実装時に実在する計測資産へ束縛するまでrender-readyと主張してはならない。
+## 3. Defaults, overrides, and compatibility
 
-v0.1は変更せずに存続する。v0.2は明示的な移行・opt-inのみ。
-旧 `surface` の値を同時に残すと `E_PRESENTATION_DUPLICATE_AUTHORITY`。
-旧数値の移行先:
+Defaults live in a **complete YAML preset** fixed by version and content hash. Schema
+`default` is not runtime injection. Renderer recovery through
+`get(..., number/color/wording)` is prohibited; every resolved field is required.
+Inheritance is fixed base, then user override only. Objects merge by key, arrays replace
+wholly, null cannot delete, unknown fields error, and base cycles error.
 
-- fontSize → Theme typography.body/tableHeader/month、titleSize → heading、
-  groupFontSize → group、barHeight → plannedHeight/actualHeight。
-- groupMode/fraction/gap → Layout group、axisLevels → Layout axis.levels。
-- barGap → Layout bars.gap、showVariance → Layout variance.visible。
-- 計画/実績のband構成 → Layout bars.comparisonMode。未指定時の暗黙stackedは禁止する。
-- groupLabel → Detail groupLabel。旧固定凡例 → Detail legend。
-- canvas aspectRatio → Context viewport寸法を明記したプリセット。
-  margin/density名は移行時に既定設定へ展開し、runtime分岐に使わない。
-- 旧最小幅920/960とデータ件数による自動canvas拡張は廃止し、移行adapterが
-  明示Context viewportを受け取る。必要サイズが収まらなければoverflow診断する。
-  v0.1の呼出形は互換presetで維持するが、自動拡張のpixel互換は保証しない。
-- 明示された旧Context viewportと異なる旧canvas寸法を同時指定している場合は、
-  勝手に片方を採用せず診断する。名前によるheader/footer寸法はregion.blockへ展開。
+The authoring schema is `presentation-preset-v0.2.schema.json`. It accepts exactly one
+of complete settings or a fixed-base reference with partial overrides; array elements
+must be complete. `presentation-preset-override-v0.2.yaml` overrides Japanese labels,
+radius, text, spacing, and route scoring. It is an author-facing aggregate distributed
+to owning resources after resolution. Current default fixtures are design examples and
+their font-asset identities are illustrative. Do not claim render readiness until
+implementation binds real measurement assets.
 
-旧経路は最後に互換adapterとして同じresolved設定→Scene→SVGへ統合する。
-旧出力の既知不具合はpixel互換の名目で維持しない。意図した変更はレビューに記録。
+v0.1 remains unchanged; v0.2 is explicit migration and opt-in only. Retaining legacy
+`surface` values simultaneously yields `E_PRESENTATION_DUPLICATE_AUTHORITY`.
+Legacy-value destinations:
 
-### 3.1 v0.1互換adapterの閉包契約（P4是正）
+- `fontSize` → Theme typography body/tableHeader/month; `titleSize` → heading;
+  `groupFontSize` → group; `barHeight` → plannedHeight/actualHeight.
+- `groupMode/fraction/gap` → Layout group; `axisLevels` → Layout axis levels.
+- `barGap` → Layout bars gap; `showVariance` → Layout variance visibility.
+- Planned/Actual band composition → Layout `bars.comparisonMode`; never infer stacked.
+- `groupLabel` → Detail groupLabel; fixed legacy legend → Detail legend.
+- Canvas `aspectRatio` → preset with explicit Context viewport dimensions. Expand
+  margin/density names during migration; never branch on them at runtime.
+- Remove legacy minimum widths 920/960 and data-count canvas expansion. The migration
+  adapter accepts explicit Context viewport and diagnoses overflow. A compatibility
+  preset preserves v0.1 call shape but does not promise pixel-compatible auto-growth.
+- Diagnose simultaneous legacy canvas dimensions and a different explicit legacy
+  Context viewport; do not choose silently. Expand name-based header/footer dimensions
+  into region blocks.
 
-v0.1のView／Theme／Layout Profileだけでは、v0.2 Render Contextが必須とする
-`fontMetrics.contentIdentity` とviewportを再現可能に決められない。従ってadapterは
-プロセスのフォント選択、canvas自動拡張、またはコード内の既定値からv0.2設定を
-黙って補完してはならない。
+Finally, consolidate legacy paths through compatibility adapters into the same resolved
+settings→Scene→SVG path. Do not preserve known output defects for pixel compatibility;
+record intentional changes in review.
 
-互換adapterは次のどちらかだけを受理する。
+### 3.1 Closed v0.1 compatibility-adapter contract (P4 remediation)
 
-1. 呼出者が、version/hash付き`presentation-settings/v0.2`またはPresetを明示し、
-   それを解決してv0.2 rendererへ渡す。
-2. 旧rendererを**診断付きlegacy adapter**として明示選択する。このadapterはv0.2の
-   完了条件・再現性保証の対象外であり、出力manifestに`legacyPresentation: v0.1`と
-   `E_PRESENTATION_LEGACY_ADAPTER`を記録する。v0.2設定との混在は禁止する。
+v0.1 View, Theme, and Layout Profile cannot reproducibly determine the v0.2 Render
+Context's required `fontMetrics.contentIdentity` and viewport. An adapter MUST NOT
+silently complete v0.2 from process font selection, canvas auto-growth, or code defaults.
 
-既存CLIのv0.1呼出は当面2へ正規化する。v0.2品質を要求する呼出は1へ移行する。
-「v0.1入力から完全なv0.2互換Presetを自動生成する」機能は、実在metrics資産を
-content-addressしたmigration inputを追加するまで実装しない。これは不足値を
-見栄えの既定値で補うことを禁止するためである。
+A compatibility adapter accepts exactly one of:
 
-## 4. 計測・配置の閉じ方
+1. The caller supplies version/hash-bound `presentation-settings/v0.2` or a Preset,
+   which is resolved and passed to the v0.2 renderer.
+2. The caller explicitly selects the legacy renderer as a **diagnostic legacy
+   adapter**. It is outside v0.2 completion and reproducibility guarantees and records
+   `legacyPresentation: v0.1` plus `E_PRESENTATION_LEGACY_ADAPTER` in the output
+   manifest. Mixing with v0.2 settings is prohibited.
 
-文字幅推定の `.58`、ベースラインの `.34`、固定文字幅112/60/57は、
-調整つまみに置き換えず**固定されたfont metricsによる実測**へ置き換える。
-`context.fontMetrics.assets` は `{family, weight, revision, contentIdentity}` の完全な
-組であり、Themeの各typography roleが要求するweightごとに、font stackの先頭から
-一致する宣言済み資産だけを選ぶ。通常ウェイトで太字を代用せず、未宣言のfamily又は
-weight、identity不一致、asset不在は `E_FONT_METRICS_UNAVAILABLE` とする。
-`missingFont: declared-fallback` は次の**宣言済み**familyへ進むことだけを許し、
-プロセス既定フォントや近傍weightへの代替を許さない。フォントのascent/descentと
-Theme lineHeightからbaselineを導出し、同じ計測結果を折返し・overflow・障害物判定・
-SVGに使う。計測資産・実際に選んだfamily/weight・locale資産のidentityをmanifestに含める。
+For now, existing CLI v0.1 calls normalize to option 2; callers requiring v0.2 quality
+migrate to option 1. Do not implement automatic generation of a fully v0.2-compatible
+Preset from v0.1 until migration input includes content-addressed real metrics assets.
+This prevents filling missing values with appearance defaults.
 
-region.blockはfixed/fraction/contentとmin/max。名前は意味を持たない。
-fixed/contentの確定後、残りをfractionの重みで分割する。contentは計測済みの
-intrinsic boundsである。solver入力はresolved settingsに加え、同一Scene構築で一度だけ
-算出した `intrinsicBlocks[regionId]` と `intrinsicTracks[regionId][trackIndex]` を明示的に
-受け取る。contentの`value`をfallback又は推定値として使わず、対応するintrinsic入力が
-無い場合は `E_LAYOUT_REQUIRED_OVERFLOW` とする。循環するcontent依存、min>max、負の残余は
-診断し、隠れた縮小はしない。
-slotはregionとtrack indexを明示する。同じtrackの多重配置はoverlay以外で診断。
-table/timelineは同じ行gridを共有。columnTracksが空の場合だけ等分配する。
-表示時間はViewが決め、scale paddingは時間を追加せず描画余白だけを増やす。
-単一point windowの表示用spanは`layout.scale.singlePointSpanDays`で設定できるが、意味上の日付を変更しない。
-Scene Builderはこの表示windowでaxisとrow-local TextLayoutを測定する。設定値が必須のaxis label、
-item label、point symbolを収められない場合は `E_LAYOUT_REQUIRED_OVERFLOW:text` を出し、adapterが
-局所的にwindowを拡張して救済してはならない。標準baseは、Date-only weekの最小表示として7日を
-明示する。別のspanはpreset overrideで変更できるが、同じ測定・overflow検査を通過しなければならない。
+## 4. Closing measurement and placement
 
-凡例は計測済みswatch＋label＋gapのflow。文字列ごとの150/145/220等の幅を廃止。
-summary/notesも同じ測定flowに統合する。文字やデータが増えた場合は行折返し・
-明示overflow規則を使い、外部パネルを勝手に生成しない。
+Replace `.58` width estimation, `.34` baseline estimation, and fixed text widths
+112/60/57 with **measurement from fixed font metrics**, not new tuning knobs.
+`context.fontMetrics.assets` is the complete tuple
+`{family, weight, revision, contentIdentity}`. For every Theme typography weight,
+select only a matching declared asset, in font-stack order. Never substitute regular
+for bold. An undeclared family/weight, identity mismatch, or absent asset yields
+`E_FONT_METRICS_UNAVAILABLE`. `missingFont: declared-fallback` permits only moving to
+the next **declared** family, never a process default or neighboring weight. Derive the
+baseline from asset ascent/descent and Theme line height, and reuse one measurement for
+wrapping, overflow, obstacle checks, and SVG. Include measurement asset, selected
+family/weight, and locale-asset identities in the manifest.
 
-経路評価のbendPenalty、clearance、portOffset、gridOffsetは宣言可能。
-shapeに応じたport位置を算出し、端点種別start/end/atは必ず元relationを保持。
-矢印寸法、stroke、文字領域を障害物判定に反映する。探索の安定tie-breakや探索上限は
-バージョン化された安全なアルゴリズム契約であり、任意コードや無制限探索は許可しない。
+A region block is fixed, fraction, or content, with min/max; its name has no meaning.
+After fixed/content resolution, divide the remainder by fraction weights. Content is
+measured intrinsic bounds. In addition to resolved settings, the solver explicitly
+receives `intrinsicBlocks[regionId]` and
+`intrinsicTracks[regionId][trackIndex]`, computed once during the same Scene build.
+Never use content `value` as fallback or estimate; missing intrinsic input yields
+`E_LAYOUT_REQUIRED_OVERFLOW`. Diagnose cyclic content dependencies, min>max, and
+negative remainder without hidden shrinking.
 
-## 5. 文言・書式・アクセシビリティ
+A slot explicitly names region and track index. Diagnose multiple occupants on a track
+unless it is an overlay. Table and timeline share one row grid. Allocate columns equally
+only when `columnTracks` is empty. View sets visible time; scale padding adds drawing
+space, not time. `layout.scale.singlePointSpanDays` may set a single-point display span
+without changing the semantic date. The Scene Builder measures axes and row-local
+TextLayout in this display window. If required axis labels, item labels, or point symbols
+do not fit, emit `E_LAYOUT_REQUIRED_OVERFLOW:text`; an adapter MUST NOT locally widen
+the window. The standard base explicitly uses seven days, the minimum Date-only week.
+Other preset spans must pass the same measurement and overflow checks.
 
-テンプレートは文字列と許可された `{identifier}` の置換のみ。
-共通識別子: windowStart, windowLastVisible, selectedCount, unmatchedCount, missingCount。
-titleのみ追加でtitle、unmatchedActualのみunmatchedIds、
-summaryEntryのみlabel/value、coverageRatioのみactualCountを許可する。
-unmatchedIdsはlistSeparatorで結合する。Summaryの分母0はformatting.unknownを使う。
-titleの空文字は不可。Summary値は意味型に従いdate/numberを整形してから置換し、
-一般の整数を一律に「差分日数」として整形する旧挙動は廃止する。
-式、属性アクセス、関数、HTML/SVG、evalは認めない。置換結果は必ずescapeする。
-欠測表示名・summary表示名を変更しても、データ欠測の意味・分母は変化しない。
-月名・四半期・日付は閉じたformatter enum＋明示localeから生成する。
-windowLastVisibleは日付window終端の表示用契約を明記して算出する。
-DateTime/DSTの計算は既存Coreに委譲し、日付用処理を流用して再定義しない。
+A legend is a flow of measured swatch, label, and gap; remove per-string widths such as
+150/145/220. Summary and notes use the same measurement flow. As text/data grows, wrap
+or follow explicit overflow rules; do not invent an external panel.
 
-Detail legendは既存`28`のlegendの唯一の正本。Layoutは配置だけ、Themeはswatchだけ。
-groupDetails、supplier observations、milestone digestは引き続き低優先で未実装。
-そのpanelを実装する場合も共通text/paint/layoutを使い、固定値を再導入しない。
-凡例から特定roleを除いても、必要な意味説明はaria/desc/テキスト等に残す。
-空のaccessible description、出所metadataの除去、意味のないclipは受理しない。
+`bendPenalty`, `clearance`, `portOffset`, and `gridOffset` are declarable route-scoring
+inputs. Compute ports from shape, and preserve original relation for endpoint types
+start/end/at. Include arrow dimensions, strokes, and text regions in obstacle checks.
+Stable tie breaking and search limits are versioned safe algorithm contracts; arbitrary
+code and unbounded search are prohibited.
 
-## 6. 検証境界と診断
+## 5. Wording, formatting, and accessibility
 
-schema: 型・未知フィールド・enum・正の寸法・opacity・有限の上限を検証。
-上限は安全な入力範囲であり、現在の見た目の既定値ではない。
-semantic closure validator（実装計画対象）:
+Templates allow only strings and replacement of registered `{identifier}` values.
+Common identifiers are `windowStart`, `windowLastVisible`, `selectedCount`,
+`unmatchedCount`, and `missingCount`. Only title additionally allows `title`;
+unmatchedActual allows `unmatchedIds`; summaryEntry allows `label/value`; coverageRatio
+allows `actualCount`. Join unmatched IDs with `listSeparator`. A zero Summary
+denominator uses `formatting.unknown`. Title cannot be empty. Format Summary values by
+semantic date/number type before replacement; remove the legacy behavior that formats
+every integer as variance days. Expressions, attribute access, functions, HTML/SVG,
+and eval are forbidden; always escape replacement output. Changing missing-data or
+summary display names changes neither missingness meaning nor denominator.
 
-- resource version/hash・base循環・未解決token・重複所有者。
-- region ID一意性、slot参照、track index、track bounds、軸level/height対応。
-- marker inset<width、radius<=bar bounds、clearanceとportの到達可能性。
-- formatter/templateの未登録識別子、role重複、必須説明の不足。
-- フォント計測資産・locale資産・出力capabilityの存在。
-- viewport内の必要領域、文字・矢印head・variance・欠測labelの衝突。
+Generate month names, quarters, and dates from a closed formatter enum plus explicit
+locale. Compute `windowLastVisible` from a documented date-window-end display contract.
+Delegate DateTime/DST calculation to existing Core; do not redefine it with Date logic.
 
-代表診断: E_PRESENTATION_SETTINGS_REQUIRED、E_PRESENTATION_DUPLICATE_AUTHORITY、
-E_PRESENTATION_REFERENCE、E_PRESENTATION_TEMPLATE、E_FONT_METRICS_UNAVAILABLE、
-E_LAYOUT_REQUIRED_OVERFLOW、E_CONNECTOR_UNROUTABLE、E_OUTPUT_CAPABILITY_MISSING。
-schema通過のみでsemantic closureや描画品質を保証したとは扱わない。
+Detail legend from Specification 28 is the sole legend source of truth. Layout owns
+placement only and Theme owns swatches only. Group details, supplier observations, and
+milestone digest remain low-priority and unimplemented. Any future panel uses common
+text/paint/layout without reintroducing fixed values. Removing a role from the legend
+does not remove required semantic explanation from aria/description/text. Reject empty
+accessible descriptions, removed provenance metadata, and meaningless clipping.
 
-## 7. 完了条件
+## 6. Validation boundary and diagnostics
 
-全公開SVG経路に対する固定値台帳の全行が「外部化」「計測導出」「不変規則」に分類済み。
-rendererがresolved設定しか読まず、未指定値を救済しない。YAMLだけでテーマ、言語、
-余白、文字、記号、凡例順・文言、軸、ルーティング傾向を変更する受入例が通る。
-同じclosure/metrics/locale/output版ならSVGがbyte-identical。
-基準ガント画像に加え、長い日本語、欠測多数、長い凡例、異なるviewportで検証する。
-現在の104テストは基準であり、新機能実装の証明ではない。
+Schema validates types, unknown fields, enums, positive dimensions, opacity, and finite
+limits. Limits define safe input ranges, not current appearance defaults.
+The planned semantic-closure validator checks:
+
+- Resource version/hash, base cycles, unresolved tokens, and duplicate owners.
+- Unique region IDs, slot references, track indices/bounds, and axis level/height match.
+- Marker inset below width, radius within bar bounds, and reachable clearance/ports.
+- Unregistered template identifiers, duplicate roles, and missing required explanations.
+- Font-measurement assets, locale assets, and output capabilities.
+- Required viewport regions and collisions involving text, arrowheads, variance, and
+  missing-data labels.
+
+Representative diagnostics are `E_PRESENTATION_SETTINGS_REQUIRED`,
+`E_PRESENTATION_DUPLICATE_AUTHORITY`, `E_PRESENTATION_REFERENCE`,
+`E_PRESENTATION_TEMPLATE`, `E_FONT_METRICS_UNAVAILABLE`,
+`E_LAYOUT_REQUIRED_OVERFLOW`, `E_CONNECTOR_UNROUTABLE`, and
+`E_OUTPUT_CAPABILITY_MISSING`. Schema success alone does not guarantee semantic
+closure or rendering quality.
+
+## 7. Completion conditions
+
+Every inventory row for every public SVG path is classified as externalized,
+measurement-derived, or invariant. Renderers read only resolved settings and never
+recover unspecified values. YAML-only acceptance examples change theme, language,
+spacing, text, symbols, legend order/wording, axes, and routing tendency. Equal
+closure/metrics/locale/output versions produce byte-identical SVG. Validate reference
+Gantt images plus long Japanese text, extensive missing data, long legends, and varied
+viewports. The current 104 tests are a baseline, not proof of new implementation.
