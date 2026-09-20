@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation_annotations import project_annotation_box, resolve_annotation_anchor
+from chrona.presentation_annotations import nearest_box_port, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
 from chrona.presentation_labels import LabelRect
 from chrona.presentation_marks import ComparisonMark
 
@@ -28,3 +28,12 @@ def test_annotation_box_uses_shared_finite_label_placement():
     box = project_annotation_box(annotation, resolved, anchor_bounds=LabelRect(40, 40, 10, 10), text_size=(30, 10),
                                  candidate_sides=["above", "below"], viewport=LabelRect(0, 0, 100, 100), obstacles=[], overflow="diagnose")
     assert box.placement.side == "above" and box.leader_required
+
+
+def test_leader_port_and_route_are_deterministic_and_bounded():
+    box = LabelRect(10, 10, 20, 10)
+    assert nearest_box_port(box, (20, 0)) == (20, 10)
+    route = route_annotation_leader((0, 0), (40, 0), obstacles=[box], limit=32)
+    assert route[0] == (0, 0) and route[-1] == (40, 0)
+    with pytest.raises(ValueError, match="E_PRESENTATION_ROUTE_LIMIT"):
+        route_annotation_leader((0, 0), (40, 0), obstacles=[box], limit=1)
