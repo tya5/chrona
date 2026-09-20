@@ -11,7 +11,8 @@ from .diagnostics import Diagnostic
 from .profiles import resolve_package_manifests, validate_profiles
 from .extension_registry import PackageRegistry, resolve_evaluation_packages
 from .revision_store import LocalSnapshotReader
-from .temporal import Calendar, TemporalError, as_date, is_scheduled_amount, parse_amount
+from .temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
+                       parse_amount, requires_working_calendar)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -64,7 +65,7 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, p
             amount = schedule["amount"]
             if not is_scheduled_amount(amount):
                 diagnostics.append(Diagnostic("E_INVALID_AMOUNT", "Scheduled spans allow only positive d, w, or wd", path + "/schedule/amount"))
-            if amount.endswith("wd") and not _resolve_calendar_id(item, project):
+            if requires_working_calendar(amount) and not _resolve_calendar_id(item, project):
                 diagnostics.append(Diagnostic("E_CALENDAR_REQUIRED", "WorkPeriod schedule has no calendar", path))
 
     for index, relation in enumerate(project.get("relations", [])):
@@ -73,12 +74,18 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, p
             ref = relation[side]
             if ref["object"] not in objects:
                 diagnostics.append(Diagnostic("E_REFERENCE", f"Unknown {side} object", path + f"/{side}/object"))
+            elif ref["endpoint"] not in _schedule_endpoints(objects[ref["object"]]["schedule"]):
+                diagnostics.append(Diagnostic(
+                    "E_ENDPOINT_MODE_MISMATCH",
+                    f"Endpoint {ref['endpoint']} is unavailable on the referenced schedule",
+                    path + f"/{side}/endpoint",
+                ))
         lag = relation.get("lag")
         if lag:
             value = lag if isinstance(lag, str) else lag["value"]
             try:
                 parse_amount(value)
-                if value.endswith("wd"):
+                if requires_working_calendar(value):
                     lag_calendar = lag.get("calendar") if isinstance(lag, dict) else None
                     target = objects.get(relation["to"]["object"], {})
                     if lag_calendar and lag_calendar not in calendars:
@@ -93,12 +100,25 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, p
     if package_registry is not None and package_references is not None:
         package_manifests, registry_diagnostics = resolve_evaluation_packages(package_registry, package_references, project["version"])
         diagnostics.extend(Diagnostic(item, "Extension lifecycle resolution failed", "/extensions") for item in registry_diagnostics)
-    diagnostics.extend(validate_profiles(project, package_manifests))
+    if any(isinstance(item, str) for item in project.get("extensions", [])):
+        diagnostics.append(Diagnostic(
+            "E_PACKAGE_RESOLUTION_REQUIRED",
+            "Legacy extension identifiers require migration to immutable package references",
+            "/extensions",
+        ))
+    else:
+        diagnostics.extend(validate_profiles(project, package_manifests))
     return diagnostics
 
 
 def _resolve_calendar_id(item: dict[str, Any], project: dict[str, Any]) -> str | None:
     return item.get("calendar") or project.get("project", {}).get("calendar")
+
+
+def _schedule_endpoints(schedule: dict[str, Any]) -> frozenset[str]:
+    if schedule.get("mode") == "fixed" and "at" in schedule:
+        return frozenset({"at"})
+    return frozenset({"start", "end"})
 
 
 def _schema_value(value: Any) -> Any:

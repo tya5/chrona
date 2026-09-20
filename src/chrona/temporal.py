@@ -21,6 +21,8 @@ class Calendar:
 
     @classmethod
     def from_mapping(cls, value: dict) -> "Calendar":
+        if not value["working_days"]:
+            raise TemporalError("Calendar requires at least one working day")
         return cls(
             frozenset(value["working_days"]),
             {as_date(item["date"]): item["working"] for item in value.get("exceptions", [])},
@@ -56,6 +58,11 @@ def parse_amount(value: str) -> list[tuple[int, str]]:
 
 def is_scheduled_amount(value: str) -> bool:
     return bool(re.fullmatch(r"[1-9]\d*(?:d|w|wd)", value))
+
+
+def requires_working_calendar(value: str) -> bool:
+    """Return whether any parsed amount component uses working days."""
+    return any(unit == "wd" for _, unit in parse_amount(value))
 
 
 def _clamp_month(value: date, months: int) -> date:

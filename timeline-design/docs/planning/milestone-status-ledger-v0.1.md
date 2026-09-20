@@ -8,7 +8,7 @@ evidence is present, not that a later product release is complete.
 
 | Milestone | Status | Entry / exit evidence | Open condition |
 |---|---|---|---|
-| M0 | Remediation authorized | Core conformance and scheduler tests; `core-v0.1-stable-readiness-review.md`; issue-remediation program. | Close scheduler issues 1–3 and the calendar/anchor portions of issue 7. |
+| M0 | Complete | Core conformance and scheduler tests; `core-v0.1-stable-readiness-review.md`; I0 Core issue-remediation review. | None for current scope. |
 | M0.5 | Complete | Delivery-profile vocabulary/state/evidence fixtures. | M1 supplies its reproducible resolution dependency. |
 | M1 | Remediation authorized | Revision Store conformance and resolved package closure. | Expose pinned read evaluation through the supported CLI boundary. |
 | M2 | Complete | Presentation conformance, deterministic Scene/SVG evidence. | Only SVG is claimed. |
