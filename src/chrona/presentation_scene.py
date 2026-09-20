@@ -752,7 +752,9 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots, rows, groups, surfaces)
 
 
-def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:
+def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict,
+                                     labels: dict[str, str] | None = None,
+                                     surface_content: SurfaceContentInput | None = None) -> PresentationScene:
     """Adapt a resolved schedule to the shared Scene without making it authoritative."""
     if not placements:
         raise ValueError("E_PRESENTATION_MARK_INPUT")
@@ -760,9 +762,11 @@ def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str,
     dates: list[date] = []
     for object_id, placement in placements.items():
         source_type = "point" if "at" in placement else "span"
-        items.append(SimpleNamespace(object_id=object_id, source_type=source_type, planned=placement, actual=None))
+        items.append(SimpleNamespace(object_id=object_id, title=(labels or {}).get(object_id, object_id),
+                                     source_type=source_type, planned=placement, actual=None,
+                                     group_id="", group_label=""))
         dates.extend(placement.values())
     start, end = min(dates), max(dates)
     if start == end:
         end += timedelta(days=settings["layout"]["scale"]["singlePointSpanDays"])
-    return build_presentation_scene(title, items, (start, end), settings)
+    return build_presentation_scene(title, items, (start, end), settings, surface_content)

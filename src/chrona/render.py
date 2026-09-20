@@ -27,7 +27,13 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
     presentation_scene = None
     if settings is not None:
         from .presentation_scene import presentation_scene_from_schedule
-        presentation_scene = presentation_scene_from_schedule(scene.title, placements, settings)
+        presentation_scene = presentation_scene_from_schedule(scene.title, placements, settings, scene.labels)
+        from .presentation_svg import render_scene_surface_svg
+        surface = next((candidate for candidate in presentation_scene.surfaces
+                        if candidate.surface_id == "minimal"), None)
+        if surface is None:
+            raise ValueError("E_PRESENTATION_SURFACE_MISSING")
+        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
     dates = [_placement_dates(value) for value in placements.values()]
     start = presentation_scene.window[0] if presentation_scene is not None else min(value[0] for value in dates)
     end = presentation_scene.window[1] if presentation_scene is not None else max(value[1] for value in dates)
