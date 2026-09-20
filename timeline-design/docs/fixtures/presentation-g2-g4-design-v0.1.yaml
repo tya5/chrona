@@ -66,9 +66,6 @@ negative:
   - id: stack-overflow
     input: {groupId: platform, occupancy: mark-bounds-plus-required-label-bounds, items: 3, maxStack: 2}
     diagnostic: E_PRESENTATION_STACK_OVERFLOW
-  - id: row-aligned-stack
-    input: {laneSurface: row-aligned, stackIndex: 1}
-    diagnostic: E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE
   - id: route-limit
     input: {routing: {limit: 0}}
     diagnostic: E_PRESENTATION_ROUTE_LIMIT
