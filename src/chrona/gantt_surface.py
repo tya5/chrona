@@ -70,6 +70,7 @@ def route_orthogonal(start, end, obstacles):
 
 def render_gantt(title, projection, project, view, theme, profile, slots, settings=None, *, presentation_scene=None):
     from .review_svg import _theme_color, _theme_font, _table_value, _display_value
+    from .presentation_paint import resolve_facet_paint
 
     surface = profile.get('surface', {})
     metrics = None
@@ -221,7 +222,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                 x1, x2 = sx(mark_start), sx(mark_end)
                 if x1 < left or x2 > right:
                     raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:window')
-                foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned, 'planned', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
+                planned_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, planned_mark.facet)['color'], quote=True) if settings else planned
+                foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned_fill, 'planned', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                 obstacles.append((x1-4, py-4, x2+4, py+bh+4))
                 anchors[item.object_id] = {'start': (x1, py+bh/2, -1), 'end': (x2, py+bh/2, 1)}
                 actual_mark = scene_marks.get(item.object_id, {}).get('actual')
@@ -233,7 +235,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                     if a1 < left or a2 > right:
                         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:actual')
                     actual_y = py if settings and settings['layout']['bars']['comparisonMode'] == 'overlaid' else cy+bg/2
-                    foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual, 'actual', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
+                    actual_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, 'actual')['color'], quote=True) if settings else actual
+                    foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual_fill, 'actual', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                     obstacles.append((a1-4, actual_y-4, a2+4, actual_y+bh+4))
                     delta_mark = scene_marks.get(item.object_id, {}).get('finish-delta')
                     if delta_mark is None and presentation_scene is None and item.finish_delta is not None:
@@ -243,8 +246,9 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                         vx = max(x2, a2)+12
                         label = f'{delta_mark.variance_days:+d}d'
                         if vx+60 > right: raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:variance')
-                        foreground.append(rect(vx, py, 3, 2*bh+bg, variance, 'variance-marker', item.object_id))
-                        foreground.append(text(vx+10, cy+5, label, 17, 700, variance, 'variance', item.object_id))
+                        variance_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, 'variance')['color'], quote=True) if settings else variance
+                        foreground.append(rect(vx, py, 3, 2*bh+bg, variance_fill, 'variance-marker', item.object_id))
+                        foreground.append(text(vx+10, cy+5, label, 17, 700, variance_fill, 'variance', item.object_id))
                         obstacles.append((vx-4, py-4, vx+57, cy+bh+bg/2+4))
                 elif not item.actual:
                     foreground.append(text(x1, cy+bh+bg/2, 'Actual not reported', 12, fill=muted, purpose='missing-actual', ref=item.object_id))
