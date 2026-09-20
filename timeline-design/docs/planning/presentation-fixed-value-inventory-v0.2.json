@@ -764,7 +764,8 @@
       "path": "bars",
       "value": {
         "gap": 4,
-        "align": "center"
+        "align": "center",
+        "comparisonMode": "stacked"
       },
       "source": "gantt_surface.py:render_gantt",
       "note": "Sizes belong to Theme; band placement belongs to Layout."
