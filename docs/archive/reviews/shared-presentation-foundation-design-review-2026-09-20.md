@@ -1,7 +1,7 @@
 # Shared Presentation Foundation G0 / G2–G4 Design-Consistency Review
 
 **Conclusion:** G0 is closed. G2–G4 were compared against
-`31-presentation-g2-g4-design-gate.md`, each owning schema, and positive/negative
+the archived `presentation-g2-g4-design-gate-2026-09-20.md`, each owning schema, and positive/negative
 fixtures. Their design is closed to an implementation-ready level; implementation is
 not complete.
 
@@ -52,7 +52,7 @@ implementation and update the design first.
 |---|---|---|
 | Label text and placement | Detail owns text; Layout owns finite candidates and overflow. The renderer has neither arbitrary expressions nor unbounded search. | `detail.labelRules`, `layout.labelPlacement`, candidate-overflow fixture |
 | Facet paint | Resolve group override, default, then normalized global role. Do not mix it with a group-background map. | `theme.facetPaints`, group-override fixture |
-| Axis slot | `timeline-axis` shares the timeline scale; diagnose a different scale. | `layout.slots`, Specification 31 `E_PRESENTATION_SCALE_MISMATCH` |
+| Axis slot | `timeline-axis` shares the timeline scale; diagnose a different scale. | `layout.slots`, archived gate record `E_PRESENTATION_SCALE_MISMATCH` |
 | Annotation | Initially render only typed View object references; accept no manual coordinates or waypoints. | Faceted anchor in `view-v0.1`, missing-Actual and unsupported-anchor fixtures |
 | Leader routing | Orthogonal leaders use Layout's bounded route limit and share a router while remaining a distinct role from semantic dependencies. | `layout.routing.limit`, route-limit fixture |
 | Lane stack | Follow View group/order and select the lowest stack from mark and required-label occupancy. | `layout.lanes`, stack-overflow fixture |

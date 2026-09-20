@@ -1,5 +1,8 @@
 # Shared Presentation Foundation G2–G4 Design Gate
 
+> Historical design-gate record. Normative ownership now resides in Specifications 08, 27, 29, and 30. Specification ID 31 remains retired and reserved.
+
+
 **Status:** D1–D3 design is complete. Earlier G1–G4 completion judgments are
 withdrawn. Implementation starts with a Scene Builder that satisfies the D3 acceptance
 table and design validators.
@@ -142,3 +145,4 @@ sections, schema paths, implementation symbols, and tests.
 fixture for the slots, rows, and lane-track bounds passed to ResolvedPresentationInput.
 Its validator verifies the closed input set that lets an adapter receive only a
 completed Scene.
+

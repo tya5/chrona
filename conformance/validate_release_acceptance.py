@@ -22,4 +22,8 @@ for entry in entries:
     for evidence in entry.get("evidence", []):
         if not (REPO / evidence).is_file():
             raise SystemExit(f"Release acceptance: FAIL: missing evidence {evidence}")
-print("Release acceptance: PASS (15 use cases; explicit exclusions retained)")
+accepted = [entry["id"] for entry in entries if entry["disposition"] == "accepted"]
+excluded = [entry["id"] for entry in entries if entry["disposition"] == "excluded"]
+if accepted != ["UC-01", "UC-02", "UC-03", "UC-04", "UC-09", "UC-13"]:
+    raise SystemExit("Release acceptance: FAIL: product acceptance claim drifted")
+print(f"Release acceptance: PASS ({len(accepted)} product use cases; {len(excluded)} explicit exclusions)")

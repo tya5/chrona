@@ -2,7 +2,8 @@
 
 | Directory | Contents |
 |---|---|
-| `specification/` | Numbered normative specifications (`00`–`32`) and supplemental design specifications |
+| `specification/` | Active numbered normative specifications (`00`–`30`, `32`) and supplemental design specifications; retired IDs remain reserved |
+| `guides/` | Task-oriented user and maintainer guidance |
 | `decisions/` | Architecture Decision Records (ADRs) |
 | `research/` | Non-normative investigations, including federation research |
 | `planning/active/` | Current documentation, remediation, and coverage plans |
@@ -16,6 +17,9 @@ Start with the [task-oriented specification guide](specification/README.md). Num
 stable document identifiers rather than a mandatory reading order. Review records
 describe their stated historical scope; they do not supersede the corresponding
 normative specification.
+
+For the current immutable review entry and its reusable resource split, see the
+[render-review YAML layout guide](guides/render-review-yaml-layout.md).
 
 Repository topology and packaging are owned by
 [Specification 32](specification/32-repository-layout-and-packaging.md). Its migration

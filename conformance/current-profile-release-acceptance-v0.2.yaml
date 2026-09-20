@@ -14,14 +14,14 @@ useCases:
   - {id: UC-02, disposition: accepted, evidence: [tests/cli/test_cli.py, tests/unit/chrona/storage/test_snapshots.py]}
   - {id: UC-03, disposition: accepted, evidence: [tests/unit/chrona/presentation/model/test_actual_intake.py, tests/unit/chrona/presentation/model/test_presentation_closure.py]}
   - {id: UC-04, disposition: accepted, evidence: [tests/unit/chrona/presentation/model/test_presentation_closure.py, tests/integration/test_render.py]}
-  - {id: UC-05, disposition: accepted, evidence: [tests/unit/chrona/commands/test_editor.py, tests/unit/chrona/commands/test_gestures.py]}
-  - {id: UC-06, disposition: accepted, evidence: [tests/unit/chrona/commands/test_ai_proposals.py]}
-  - {id: UC-07, disposition: accepted, evidence: [tests/unit/chrona/extensions/test_extension_registry.py, tests/unit/chrona/extensions/test_package_lifecycle.py]}
-  - {id: UC-08, disposition: accepted, evidence: [tests/unit/chrona/commands/test_view_commands.py, tests/unit/chrona/commands/test_editor.py]}
+  - {id: UC-05, disposition: excluded, reason: Interactive editor behavior has library evidence but no user-facing adapter.}
+  - {id: UC-06, disposition: excluded, reason: AI proposal behavior has library evidence but no user-facing adapter.}
+  - {id: UC-07, disposition: excluded, reason: Profile validation is partial and package acquisition/profile UX is not exposed.}
+  - {id: UC-08, disposition: excluded, reason: Annotation commands and Scene behavior are not exposed by a user-facing editor.}
   - {id: UC-09, disposition: accepted, evidence: [tests/unit/chrona/presentation/model/test_presentation_closure.py, tests/unit/chrona/app/test_interactive.py]}
-  - {id: UC-10, disposition: accepted, evidence: [tests/unit/chrona/presentation/model/test_actual_intake.py, tests/unit/chrona/commands/test_actual_commands.py]}
-  - {id: UC-11, disposition: accepted, evidence: [tests/cli/test_cli.py, tests/integration/test_conformance.py]}
-  - {id: UC-12, disposition: accepted, evidence: [tests/unit/chrona/storage/test_snapshots.py]}
+  - {id: UC-10, disposition: excluded, reason: Actual rendering exists but external intake and reconciliation are not exposed.}
+  - {id: UC-11, disposition: excluded, reason: The CLI exposes a subset but not the revision-bound automation and Command workflow required by the full use case.}
+  - {id: UC-12, disposition: excluded, reason: Immutable comparison exists but no named-baseline capture command is exposed.}
   - {id: UC-13, disposition: accepted, evidence: [tests/unit/chrona/release/test_output.py, tests/integration/test_render.py]}
-  - {id: UC-14, disposition: accepted, evidence: [tests/integration/test_federation.py]}
-  - {id: UC-15, disposition: accepted, evidence: [tests/integration/test_delivery_profile_runtime.py]}
+  - {id: UC-14, disposition: excluded, reason: Federation remains a library-only successor and is not consumed by render-review.}
+  - {id: UC-15, disposition: excluded, reason: Delivery-profile library fixtures exist but profile acquisition and roadmap UX are not exposed.}

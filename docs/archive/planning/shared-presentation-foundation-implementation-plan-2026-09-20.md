@@ -21,7 +21,7 @@ or image concepts A through D.
 
 ### G2–G4 design gate
 
-Specification 31 fixes G2–G4 authoring owners, finite algorithms, diagnostics, and
+The archived G2–G4 design-gate record fixes the historical authoring owners, finite algorithms, diagnostics, and
 prohibited recoveries. Owner schemas, positive/negative fixtures, and cross-cutting
 review exist. Resume G3 visual implementation only after publishing and validating the
 following correction across every artifact: exclude only the annotation's own anchor

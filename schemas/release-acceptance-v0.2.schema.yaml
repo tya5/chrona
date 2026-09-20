@@ -47,4 +47,4 @@ properties:
         - if: {properties: {disposition: {const: accepted}}}
           then: {required: [evidence]}
         - if: {properties: {disposition: {const: excluded}}}
-          then: {required: [reason, unblockingMilestone]}
+          then: {required: [reason]}

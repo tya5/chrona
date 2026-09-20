@@ -1,6 +1,6 @@
 # Use Case Catalog
 
-**Status:** Proposed
+**Status:** Current catalog; design/library evidence and product reachability are separate
 **Depends on:** [00 Vision](00-vision.md), [02 Domain Model](02-domain-model.md), [04 Scheduling Model](04-scheduling-model.md), [06 View Model](06-view-model.md), [09 Application Architecture](09-application-architecture.md), [10 Command Model](10-command-model.md), [12 Quality and Invariants](12-quality-and-invariants.md)  
 **Owns:** representative user goals, acceptance criteria, design-coverage analysis, and explicit use-case gaps.
 
@@ -32,14 +32,14 @@ acceptance evidence can be reproduced from explicit inputs.
 | ID | Use case | Priority | Design/library evidence | Current user product surface |
 |---|---|---|---|---|
 | UC-01 | Create and validate an engineering development timeline | Must | Delivered | CLI `validate`, `schedule` |
-| UC-02 | Review a schedule change in Git | Must | Delivered | CLI raw-Draft comparison; immutable CLI replacement is O3 |
+| UC-02 | Review a schedule change in Git | Must | Delivered | CLI `review` over two immutable Project references |
 | UC-03 | Review plan versus Actual | Must | Delivered | CLI `render-review` |
 | UC-04 | Produce a customer-facing projection | Should | Delivered for SVG | CLI `render-review` |
 | UC-05 | Edit a plan interactively without global UI replacement | Must | Library + tests | Not exposed |
 | UC-06 | Request a safe AI-assisted edit | Should | Library + tests | Not exposed |
 | UC-07 | Model semiconductor gates and domain vocabulary | Should | Library + tests | Partial validation/scheduling only |
 | UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Library + tests | Not exposed |
-| UC-09 | Maintain multiple purpose-specific views from one Project | Must | Library + tests | Loose-file review flags; Render Context CLI is O3 |
+| UC-09 | Maintain multiple purpose-specific views from one Project | Must | Library + tests | Named View through immutable Render Context v0.3 |
 | UC-10 | Import and reconcile externally observed Actual data | Should | Library + tests | Not exposed |
 | UC-11 | Validate, render, and propose changes through CLI/automation | Should | Delivered subset | `validate`, `schedule`, `render`, `review`, `propose-set` |
 | UC-12 | Capture and compare a named baseline | Should | Library + tests | Comparison only; no capture verb |
@@ -96,8 +96,8 @@ default is not accepted as a reproducible comparison input.
 comparison facets. Start/finish variance, progress, missing Actual, and unmatched Actual
 remain explicit; no Actual automatically changes the planned schedule.
 
-**Acceptance evidence:** Render Context, Actual-set fixture, View facets, Style roles,
-and diagnostics for missing or unmatched alignment.
+**Acceptance evidence:** Render Context v0.3, Actual-set fixture, View facets, resolved
+Presentation Preset, and diagnostics for missing or unmatched alignment.
 
 **Exceptional behavior:** Unknown object IDs are diagnosed and never title-matched.
 
@@ -107,11 +107,11 @@ and diagnostics for missing or unmatched alignment.
 
 **Trigger:** A program reviewer requests a named customer-facing Render Context.
 
-**Outcome:** A View selects an approved subset and a Theme changes appearance without
-changing Project facts, scheduling, or comparison identity.
+**Outcome:** A View selects an approved subset and a Presentation Preset changes
+appearance without changing Project facts, scheduling, or comparison identity.
 
-**Acceptance evidence:** Explicit Render Context, named View/Style/Theme/Scene profile,
-and reproducible Scene input manifest.
+**Acceptance evidence:** Explicit Render Context v0.3, named View and Presentation
+Preset, and reproducible Scene input manifest.
 
 **Exceptional behavior:** Missing capability or unresolved token yields a diagnostic;
 the renderer does not choose a local fallback.
@@ -189,11 +189,11 @@ does not mutate the annotation or Project. Missing anchors are diagnosed.
 **Trigger:** A team needs engineering, executive, and customer review projections of
 the same semantic Project revision.
 
-**Outcome:** Each named Render Context selects its View, Style, Theme, Scene profile,
-and comparison inputs explicitly. Project facts are not copied into presentation files.
+**Outcome:** Each named Render Context selects its View, Presentation Preset, and
+comparison inputs explicitly. Project facts are not copied into presentation files.
 
 **Acceptance evidence:** Multiple Render Context fixtures bound to one immutable Project
-revision, with distinct View/Theme identities and reproducible input manifests.
+revision, with distinct View/Preset identities and reproducible input manifests.
 
 **Exceptional behavior:** A View cannot select a hidden current branch, default theme,
 or local renderer configuration.
