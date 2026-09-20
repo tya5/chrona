@@ -269,9 +269,13 @@ Missing Actual is an explicit conditional Scene family. A span lacks its require
 Actual facet unless its Actual mapping contains both a valid start and finish. The
 family uses the planned Rect's left edge and the row's resolved Actual-bar band. A
 pattern Rect is centered vertically in that band and uses the Theme-owned width and
-height. A label begins after that Rect plus `layout.missingActual.gap`, or at the
-planned left edge when no pattern is requested, and is vertically centered using the
-`missingActual` typography. `label`, `pattern`, and `label-and-pattern` emit exactly the
+height. A label's preferred x begins after that Rect plus
+`layout.missingActual.gap`, or at the planned left edge when no pattern is requested,
+and is vertically centered using the `missingActual` typography. Scene measures it
+against the viewport's horizontal margin box. If its preferred right edge exceeds that
+box, Scene shifts the complete measured label left until its right edge equals the box;
+if the measured label itself is wider than the box, it diagnoses
+`E_LAYOUT_REQUIRED_OVERFLOW:text`. `label`, `pattern`, and `label-and-pattern` emit exactly the
 families named by their modes. Label text is `detail.missingActualLabel`. It never
 fabricates Actual semantics.
 
@@ -283,10 +287,12 @@ mapping has no variance family and is represented only by Missing Actual. The ma
 x coordinate is the later of planned and complete-Actual right edges plus
 `layout.variance.offset`; its width is `theme.varianceMarkerWidth`, and its vertical
 bounds are the union of the planned and complete-Actual bar bands (the planned band for
-unknown). The label begins after the marker plus `layout.variance.labelGap` and uses
-the `variance` typography. `labelAlign` aligns its measured top, center, or bottom to
-the marker bounds. Known text uses `positiveSign` and `signedDaysSuffix`; unknown text
-uses `detail.formatting.unknown`. `showZero=false` suppresses the on-track family.
+unknown). The label's preferred x begins after the marker plus
+`layout.variance.labelGap` and uses the `variance` typography. It follows the same
+measured right-edge shift and overflow diagnostic as Missing Actual. `labelAlign`
+aligns its measured top, center, or bottom to the marker bounds. Known text uses
+`positiveSign` and `signedDaysSuffix`; unknown text uses
+`detail.formatting.unknown`. `showZero=false` suppresses the on-track family.
 Adapters do not derive status from text or color.
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the

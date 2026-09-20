@@ -68,6 +68,10 @@ choices before I24-2 resumes.
   not a variance observation.
 - Variance offset, marker width, label gap, label alignment, and formatted label text
   have the exact ownership and geometry rules in specification 08.
+- Conditional labels use their declared preferred x, then shift left as one measured
+  box at the viewport's right margin. This keeps valid right-edge schedules visible
+  without changing dates or truncating text; a label wider than the margin box is a
+  required-overflow diagnostic.
 - This addendum changes no schema, semantic Project/Actual authority, or phase order.
 
 Each implementation phase is independently tested and published. Any new semantic

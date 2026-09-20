@@ -35,3 +35,8 @@ text named variance roles but did not close the unknown trigger or exact conditi
 family placement. Specification 08 and the M22 plan now define both without changing
 schema or semantic authority. I24-2 may resume only after this addendum is published
 and its remote tree is verified.
+
+The first I24-2 boundary test then exposed a right-edge case in the valid ASTER
+fixture. The design now closes that case with a measured whole-label left shift at the
+viewport margin, preserving text and temporal geometry. This is a placement refinement
+inside the already owned conditional families, not adapter repair.
