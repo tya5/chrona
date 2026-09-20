@@ -8,7 +8,7 @@
 | 単位 | 変更範囲 | 成果と検証 | 公開境界 |
 |---|---|---|---|
 | G1.1 軸プリミティブ | 新規の純粋Date-only軸モジュールとunit test | half-open window、月・四半期・ISO週・day区間、tick step、入力不変、範囲外診断 | この単位だけで公開 |
-| G1.2 設定・metrics閉包 | presentation settings resolver、font metrics、layout solver、否定test | revision/hash照合、font weightごとの計測、content/fraction/min/max/gap、非暗黙fallback | この単位だけで公開 |
+| G1.2 設定・metrics閉包 | presentation settings resolver、font metrics、layout solver、否定test | revision/hash照合、family×weightごとの計測、明示intrinsic入力によるcontent/fraction/min/max/gap、非暗黙fallback | この単位だけで公開 |
 | G1.3 比較markの意味 | 新規mark/anchor projection、unit test | plan/actual/baseline、span/point、欠測、負/ゼロ/正差分、stable source identity | この単位だけで公開 |
 | G1.4 Scene接続 | Scene構築とSVG adapterの境界、既存gantt移行adapter | adapterが日程・配置を再解釈しない。legacyを混ぜず出所metadataを維持 | この単位だけで公開 |
 | G1.5 消費監査 | 設定変異表、literal棚卸し、raster/再現性検証 | G1対象の未消費設定と暗黙fallbackをゼロにする | G1完了として公開 |
