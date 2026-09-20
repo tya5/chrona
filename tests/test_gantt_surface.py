@@ -159,8 +159,8 @@ def test_v2_theme_mutation_changes_gantt_output(tmp_path):
     from hashlib import sha256
     resources = fixture(); project, actual, view, style, theme, profile = resources
     settings = builtin_bases()["executive-v0.2"]
-    path = Path(subprocess.run(["fc-match", "-f", "%{file}", "Nimbus Sans"], capture_output=True, text=True, check=True).stdout)
-    settings["context"]["fontMetrics"]["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
+    path = Path(subprocess.run(["fc-match", "-f", "%{file}", "Nimbus Sans:style=Regular"], capture_output=True, text=True, check=True).stdout)
+    settings["context"]["fontMetrics"]["assets"][0]["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     projection = build_review_projection(project, schedule(project).placements, view, actual, style, theme)
     first = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, CAPS, profile, settings=settings)
     settings["theme"]["paints"]["planned"]["color"] = "#112233"
