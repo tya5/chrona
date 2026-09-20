@@ -50,6 +50,9 @@ surface所有権が必要と判明した場合は、実装を停止する。仕�
 不足時は`E_LAYOUT_REQUIRED_OVERFLOW:text`で停止する。I3-Bはこの設計公開を親にしてTextLayoutを
 完成させるまで完了扱いにしない。
 
+このbase fixture改訂ではpresetの`base.contentIdentity`も同じrevisionのSHA-256へ更新し、設計validatorが
+実ファイルのdigestと照合する。参照同期が失敗した場合はI3-Bの実装検証へ進まない。
+
 ## 完了判定
 
 1. adapterの関数シグネチャと依存グラフから、authoring resourceとsettingsを受け取らないことを示す。

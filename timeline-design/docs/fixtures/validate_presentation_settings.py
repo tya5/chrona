@@ -1,5 +1,6 @@
 """Validate design contracts only; does not implement the runtime resolver."""
 from copy import deepcopy
+from hashlib import sha256
 import json
 from pathlib import Path
 
@@ -33,6 +34,8 @@ def main():
     override = yaml.safe_load((DOCS / "fixtures/presentation-preset-override-v0.2.yaml").read_text())
     settings.validate(fixture)
     preset.validate(override)
+    base_bytes = (DOCS / "fixtures/presentation-settings-executive-v0.2.json").read_bytes()
+    assert override["base"]["contentIdentity"] == f"sha256:{sha256(base_bytes).hexdigest()}"
     preset.validate({"version": "chrona/presentation-preset/v0.2", "id": "complete", "settings": fixture})
     settings.validate(merge(fixture, override["overrides"]))
     axis_slots = [slot for slot in fixture["layout"]["slots"].values()
@@ -77,7 +80,7 @@ def main():
     del missing["theme"]["bar"]["radius"]
     assert not settings.is_valid(missing)
     print(f"PASS: 2 schemas, 4 positive fixtures, {len(cases) + 1} negative fixtures, {len(paths)} inventory groups")
-    print("Design structure only: resource hashes, font assets, semantic closure and rendering remain implementation gates.")
+    print("Design structure only: font assets, semantic closure and rendering remain implementation gates.")
 
 
 if __name__ == "__main__":
