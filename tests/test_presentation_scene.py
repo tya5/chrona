@@ -24,6 +24,21 @@ def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
     assert scene.axes[0].level == "month"
     assert scene.ticks[0].start == date(2026, 1, 1)
     assert scene.lanes[0].stack == 0
+    assert scene.lane_tracks == ()
+
+
+def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
+    settings = builtin_bases()["executive-v0.2"]
+    settings["layout"]["lanes"].update(surface="independent-lane-track", trackPadding=8)
+    left = item()
+    right = item()
+    left.object_id, left.group_id = "z", "first"
+    right.object_id, right.group_id = "a", "first"
+    right.planned = {"start": date(2026, 1, 2), "end": date(2026, 1, 11)}
+    scene = build_presentation_scene("Roadmap", [left, right], (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    assert [lane.stack for lane in scene.lanes] == [0, 1]
+    assert scene.lane_tracks[0].group_id == "first"
+    assert scene.lane_tracks[0].height == 2 * 8 + scene.lane_tracks[0].mark_extent + scene.lane_tracks[0].pitch
 
 
 def test_scene_rejects_invalid_axis_order_before_adapter_use():
