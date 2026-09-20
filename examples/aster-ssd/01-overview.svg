@@ -43,8 +43,8 @@
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="ftl" x="52" y="311.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">FTL and media management</text>
 <rect data-purpose="planned" data-source-ref="ftl" x="689.02" y="285" width="183.89" height="17" fill="#E9B35E" rx="2"/>
 <rect data-purpose="actual" data-source-ref="ftl" x="689.02" y="306" width="212.49" height="17" fill="#45CCCB" rx="2"/>
-<rect data-purpose="variance-marker" data-source-ref="ftl" x="913.52" y="285" width="3" height="38" fill="#FF947F" />
-<text data-purpose="variance" data-source-ref="ftl" x="923.52" y="309" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#FF947F" text-anchor="start">+7d</text>
+<rect data-purpose="variance-marker" data-source-ref="ftl" x="878.6" y="285" width="3" height="38" fill="#FF947F" />
+<text data-purpose="variance" data-source-ref="ftl" x="888.6" y="273.8" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#FF947F" text-anchor="start">+7d</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="fw-freeze" x="52" y="383.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Firmware feature freeze</text>
 <path data-purpose="planned" data-source-ref="fw-freeze" d="M1089.49 367l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="security-exit" x="52" y="455.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Security sign-off</text>
