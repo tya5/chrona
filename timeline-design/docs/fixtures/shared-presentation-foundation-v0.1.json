@@ -1,10 +1,92 @@
 {
   "version": "chrona/shared-presentation-foundation/v0.1",
-  "owners": {"selection": "view", "text": "view-and-detail", "geometry": "layout", "appearance": "theme", "scene": "derived"},
-  "scale": {"domain": "date-linear", "sharedAcrossSlots": true, "levels": ["month", "week"], "weekStart": "monday", "weekLabel": "iso-week", "endDisplay": "inclusive-label-only"},
-  "marks": {"comparisonModes": ["stacked", "overlaid", "baseline-and-actual"], "pointKinds": ["planned", "actual", "baseline"], "facetColors": "theme-role-plus-stable-group-key"},
-  "labels": {"sources": ["title", "planned-date", "actual-date", "comparison-delta", "annotation-text"], "anchorKinds": ["planned-start", "planned-end", "actual-start", "actual-finish", "point", "body"], "candidateSides": ["above", "below", "end", "start", "inside"], "maxCandidates": 5, "overflow": "diagnose"},
-  "annotations": {"anchorKinds": ["object", "relation", "group", "temporal"], "purposes": ["callout", "highlight", "note", "explanatory-arrow"], "box": "rect-or-none", "leader": "orthogonal-or-none", "fallback": "diagnose-no-detach-no-resize"},
-  "lanes": {"grouping": "view-groups", "stacking": "stable-lowest-nonoverlap", "occupancy": "mark-bounds-plus-required-label-bounds", "maxStack": 12},
-  "routing": {"dependency": "semantic-orthogonal", "annotationLeader": "presentation-orthogonal", "obstacles": "mark-and-required-text-bounds", "layering": "behind-marks", "limit": 4096}
+  "owners": {
+    "selection": "view",
+    "text": "view-and-detail",
+    "geometry": "layout",
+    "appearance": "theme",
+    "scene": "derived"
+  },
+  "scale": {
+    "domain": "date-linear",
+    "sharedAcrossSlots": true,
+    "levels": [
+      "month",
+      "week"
+    ],
+    "weekStart": "monday",
+    "weekLabel": "iso-week",
+    "endDisplay": "inclusive-label-only"
+  },
+  "marks": {
+    "comparisonModes": [
+      "stacked",
+      "overlaid",
+      "baseline-and-actual"
+    ],
+    "pointKinds": [
+      "planned",
+      "actual",
+      "baseline"
+    ],
+    "facetColors": "theme-role-plus-stable-group-key"
+  },
+  "labels": {
+    "sources": [
+      "title",
+      "planned-date",
+      "actual-date",
+      "comparison-delta",
+      "annotation-text"
+    ],
+    "anchorKinds": [
+      "planned-start",
+      "planned-end",
+      "actual-start",
+      "actual-finish",
+      "point",
+      "body"
+    ],
+    "candidateSides": [
+      "above",
+      "below",
+      "end",
+      "start",
+      "inside"
+    ],
+    "maxCandidates": 5,
+    "overflow": "diagnose",
+    "anchorObstaclePolicy": "exclude-own-anchor-from-box-collision"
+  },
+  "annotations": {
+    "anchorKinds": [
+      "object",
+      "relation",
+      "group",
+      "temporal"
+    ],
+    "purposes": [
+      "callout",
+      "highlight",
+      "note",
+      "explanatory-arrow"
+    ],
+    "box": "rect-or-none",
+    "leader": "orthogonal-or-none",
+    "fallback": "diagnose-no-detach-no-resize",
+    "laneOccupancy": "exclude-annotation-boxes"
+  },
+  "lanes": {
+    "grouping": "view-groups",
+    "stacking": "stable-lowest-nonoverlap",
+    "occupancy": "mark-bounds-plus-required-label-bounds",
+    "maxStack": 12
+  },
+  "routing": {
+    "dependency": "semantic-orthogonal",
+    "annotationLeader": "presentation-orthogonal",
+    "obstacles": "mark-and-required-text-bounds",
+    "layering": "behind-marks",
+    "limit": 4096
+  }
 }
