@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.4完了・公開済み、G1.5実施中。設計根拠は仕様30・ADR-0019。  
+**状態:** G1.4完了・公開済み。G2–G4は設計ゲート実施中であり、実装停止。設計根拠は仕様30・31・ADR-0019。  
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -15,6 +15,11 @@
 | G2 | axis slot統合、labels、comparison mode、group×facet paint | 仕様30 §6–7のA/D共通表現 | 単位別に公開 |
 | G3 | annotation box/leaderと説明slot | 同じ機構で作業注記と計画gate説明を通す | 単位別に公開 |
 | G4 | stable lane stacking | label/mark/routeの共通occupancyを再利用 | 単位別に公開 |
+
+### G2–G4 設計ゲート
+
+仕様31がG2–G4のauthoring owner、有限アルゴリズム、診断、禁止救済を固定する。次に
+既存owner schema、正負fixture、横断レビューを追加し、その設計完了公開後にのみG2実装を再開する。
 
 ### G1.1 完了記録
 
