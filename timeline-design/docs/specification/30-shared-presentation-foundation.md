@@ -1,6 +1,6 @@
 # 共通表現基盤：採用境界と注釈の一般化
 
-**状態:** アーキテクチャ方針確定。wire schema・移行・全fixtureは未完了。
+**状態:** 設計完了。ランタイム未実装。
 **根拠:** ADR-0019。既存仕様06/07/08/27/28/29を置き換えず、追加実装の採用境界を定める。
 
 ## 1. 目標と非目標
@@ -98,7 +98,7 @@
 - チーム色：安定group参照と意味ロールの組でThemeを解決する。
   source IDに基づくデータ上の指定は許容するが、renderer内のID分岐は禁止する。
 
-## 5. 設計整合レビューと未完了ゲート
+## 5. 設計整合レビューと実装ゲート
 
 | 既存契約 | 確認結果 | 実装前に閉じること |
 |---|---|---|
@@ -111,5 +111,134 @@
 | 現行gantt | 共通機構の利用先にできる | 直接SVG内の計測・配置・経路処理をScene構築へ移す |
 
 現行の注釈コマンドは入力検査が限定的であり、受理されたことを描画可能性の証明にしない。
-wire schema・正負fixture・互換性行列・診断catalog・受入条件の完成前に、
-新しい注釈/レーン実装へ進まない。この文書だけで「全設計完了」と報告しない。
+wire schema・正負fixture・互換性行列・診断catalog・受入条件を本節以降で閉じる。
+
+## 6. v0.1 wire 契約と将来の所有リソース
+
+`schemas/shared-presentation-foundation-v0.1.schema.json` は、G1で既存の
+View/Theme/Detail/Layoutへ分配される値の**設計検証用wire契約**である。永続的な
+第二authoring resourceでもrenderer入力でもない。実装で一つのJSONを読むことを
+認めない。fixtureは同schemaで検証する。
+
+| wire区分 | v0.2での唯一のauthoring owner | 移行先 | rendererが読む値 |
+|---|---|---|---|
+| `scale` | Layout | `layout.axis` と `layout.scale` | 解決済みLayoutのみ |
+| `marks.comparisonModes` | Layout | `layout.bars.comparisonMode` | 解決済みLayoutのみ |
+| `marks.pointKinds` | Theme | pointのplan/actual/baseline symbol定義 | 解決済みThemeのみ |
+| `facetColors` | Theme | `groupPaints`ではなく`facetPaints[groupId][facet]` | 解決済みThemeのみ |
+| `labels` | Detail（本文）＋Layout（候補・overflow） | `detail.labelRules`、`layout.labelPlacement` | 解決済みDetail/Layoutのみ |
+| `annotations` | View（本文・anchor）＋Layout（候補）＋Theme（box/leader） | 既存View annotations、Layout/Theme追加 | 解決済み三者のみ |
+| `lanes` | Layout | `layout.lanes` | 解決済みLayoutのみ |
+| `routing` | Layout | `layout.routing` | 解決済みLayoutのみ |
+
+`groupPaints` はグループ背景用の既存契約として残す。計画/実績のグループ別色を
+追加する場合、同一group keyのmapで背景とfacetを混在させない。全groupに色を
+要求しない。解決順は `Theme.facetPaints[group][facet]`、次に
+`Theme.facetPaints.default[facet]`、最後に既存のglobal facet paintである。
+これは完全なresolved Theme内で確定し、rendererはID分岐を持たない。
+
+## 7. 規範的な表示・配置規則
+
+### 7.1 時間軸
+
+- Date-only v0.1のweekはISO-8601週、月曜日開始、ラベルは`YYYY-Www`である。
+  localeは月名等の文言に使うがweek startを暗黙に変えない。
+- `levels`は粗い順（quarter, month, week, day）に一意に列挙し、`bandHeights`は
+  同じ個数でなければならない。未対応level、順序違反、重複は診断する。
+- `tickUnit`と`tickStep`はgrid cadenceだけを定める。band labelを消して時刻の意味を
+  変更しない。minorVisible=falseでも必要なaxis labelを黙って消さない。
+- 全slotが同じ`scaleId`を参照する場合、同じView windowとpaddingから同じdate→xを
+  導く。slotごとのx origin/widthは異なってよいが、同じdateは各slot内で同じ正規化
+  位置を持つ。scale共有を要求したslotが異なるwindowを要求した場合は診断する。
+- spanは常に`[start,end)`、pointは`at`に投影する。人間向けの終端表示だけが
+  `end - 1 day`を使える。geometry・差分・dependency端点は変えない。
+
+### 7.2 計画・実績・差分
+
+`comparisonMode`は`stacked`、`overlaid`、`baseline-and-actual`だけを初期値とする。
+stackedは同じrow内の別band、overlaidは同じcenterline上のz-order別mark、
+baseline-and-actualは計画を細い基準mark、actualを主markにする。いずれもActualが
+なければ計画をactualとして描かず、`missingActual` policyだけを適用する。
+
+point ActualはActualの`at`が存在する場合にのみpoint markを出す。span Actualは
+start/finishが揃った場合にのみspan markを出す。片端だけの観測は既存facetに従い
+テキストまたはpatternで表示し、開始/終了を推測しない。終了差分はactual finishと
+planned endのcalendar-day差であり、負、0、正を別roleで表現できる。0の可視化は
+`showZero`に従う。actualHeight、point size/shape、variance marker幅はThemeの値を
+必ず消費する。
+
+### 7.3 ラベルと注釈
+
+label ruleは本文source、対象facet/endpoint、候補side順、必須性、overflow policyを
+持つ。本文はtitle、閉じたdate formatter、comparison delta、または既存annotation
+textだけであり、任意式を評価しない。placement候補は最大16個で、source順、rule順、
+候補順、stable source IDで解く。`inside`は対象markのtext boundsが収まる場合だけ合法。
+
+View annotationは既存のtyped anchor/purpose/textを維持する。`callout`/`note`は
+box/leaderを要求または禁止するTheme/Layout policyを受けるが、自由なtail形状を
+持たない。`highlight`は本文を必要としないmark周囲の装飾として別primitiveにし、
+leaderを出さない。`explanatory-arrow`は既存source/targetの二anchorだけを使用し、
+semantic dependencyと同じpath型を使ってもsourceKindを混同しない。
+
+anchorのendpoint正規化表は次の通りである。
+
+| View endpoint | planned span | actual span | point |
+|---|---|---|---|
+| `start` | planned.start | actual.start（存在時のみ） | 不可 |
+| `finish` | planned.end | actual.finish（存在時のみ） | 不可 |
+| `at` | 不可 | 不可 | planned.at / actual.at（facet明示時のみ） |
+| `body` | mark bounds center | mark bounds center | symbol center |
+
+`finish`はProjectの`end`に正規化する。actual欠測をplannedに代替しない。関係・
+group・temporal anchorのv0.1入力は保持するが、G3初期ではobject以外を
+`E_PRESENTATION_ANCHOR_UNSUPPORTED`で拒否する。これにより曖昧な描画を導入しない。
+
+### 7.4 レーン、障害物、経路
+
+View groupとorderがレーン順を決める。各itemは確定mark boundsに、必須label boundsを
+加えた占有範囲が重ならない最小stack indexへ置く。同一開始位置はstable object IDで
+決める。maxStackを超える、またはlabelを入れられない場合はoverflow診断であり、
+無関係なgroupへ移動しない。
+
+dependency、annotation leader、explanatory arrowはいずれも有限の直交visibility gridを
+使える。しかしsourceKindごとにstroke layer、端点、意味、アクセシビリティを保持する。
+必須mark/本文/box/arrowheadは障害物であり、path同士は障害物にしない。探索は
+gridOffset、clearance、portOffset、bendPenalty、limitとstable tie-breakを明示入力と
+する。limit超過または解なしは`E_CONNECTOR_UNROUTABLE`である。
+
+## 8. 移行と二重指定
+
+v0.1 Viewのannotationsは論理anchor/textとしてそのままv0.2 Viewに移す。v0.1
+`layoutIntent.itemStacking: stable`は`layout.lanes.stacking`へ一方向移行する。
+v0.1 Scene Profileのrouting/collisionはv0.2 Layoutに移し、同一render closure内で
+両方を受理しない。旧profileと新Layoutが注釈候補、scale、routing、lane stackingを
+二重指定した場合は`E_PRESENTATION_DUPLICATE_AUTHORITY`で拒否する。
+
+v0.2 Detailに既に存在する`milestones`面は、View-selected point object IDだけを
+表示する派生surfaceとして残す。説明帯はDetail独自の座標や本文を持たず、View
+annotationをannotations slotへ投影する。Detail milestonesとView annotationsが同じ
+pointを参照しても別primitiveであり、統合・重複除去を暗黙に行わない。
+
+仕様29のlegacy adapterはG1完了まで保持する。legacy出力はv0.2 Layout/Theme/Detail/
+Scene経路と混ぜず、`E_PRESENTATION_LEGACY_ADAPTER`を必ず出す。新機能はlegacy
+rendererに追加しない。
+
+## 9. 診断と設計fixture
+
+| ID | 条件 | 禁止される救済 |
+|---|---|---|
+| `E_PRESENTATION_AXIS_INVALID` | levels/bandHeights、順序、week設定が不正 | 暗黙のmonth軸 |
+| `E_PRESENTATION_SCALE_MISMATCH` | 共有scale slot間のwindow/scaleが不一致 | 片方を勝手に採用 |
+| `E_PRESENTATION_ANCHOR_UNSUPPORTED` | 初期範囲外anchor | objectへの曖昧な置換 |
+| `E_PRESENTATION_ANCHOR_MISSING` | facet/endpoint/投影instanceが存在しない | plannedへの代替 |
+| `E_PRESENTATION_LABEL_UNPLACEABLE` | 全候補で必須textが置けない | 縮小・隠蔽・切断 |
+| `E_PRESENTATION_STACK_OVERFLOW` | maxStackまたはrow boundsを超える | group移動・重なり |
+| `E_PRESENTATION_DUPLICATE_AUTHORITY` | 旧新policyの同時指定 | merge・暗黙優先 |
+| `E_CONNECTOR_UNROUTABLE` | 有限探索でleader/dependencyが解けない | freeform path |
+
+`fixtures/shared-presentation-foundation-v0.1.json`はowner、週軸、比較mark、
+ラベル、object annotation、stable stacking、sourceKind別routingを検証する。
+`shared-presentation-foundation-invalid-v0.1.json`は順序違反・非ISO週開始を含み、
+schemaが否定することを確認する。validatorはruntimeではなく設計fixtureの整合だけを
+確認する。実装開始時には各診断の正負fixture、二プロジェクト、長い日本語、実績欠測、
+再現性を追加する。

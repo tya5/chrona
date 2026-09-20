@@ -1,0 +1,10 @@
+{
+  "version": "chrona/shared-presentation-foundation/v0.1",
+  "owners": {"selection": "view", "text": "view-and-detail", "geometry": "layout", "appearance": "theme", "scene": "derived"},
+  "scale": {"domain": "date-linear", "sharedAcrossSlots": true, "levels": ["week", "month"], "weekStart": "sunday", "weekLabel": "iso-week", "endDisplay": "inclusive-label-only"},
+  "marks": {"comparisonModes": ["stacked"], "pointKinds": ["planned"], "facetColors": "theme-role-plus-stable-group-key"},
+  "labels": {"sources": ["title"], "anchorKinds": ["body"], "candidateSides": ["above"], "maxCandidates": 1, "overflow": "diagnose"},
+  "annotations": {"anchorKinds": ["object"], "purposes": ["callout"], "box": "rect-or-none", "leader": "orthogonal-or-none", "fallback": "diagnose-no-detach-no-resize"},
+  "lanes": {"grouping": "view-groups", "stacking": "stable-lowest-nonoverlap", "occupancy": "mark-bounds-plus-required-label-bounds", "maxStack": 2},
+  "routing": {"dependency": "semantic-orthogonal", "annotationLeader": "presentation-orthogonal", "obstacles": "mark-and-required-text-bounds", "layering": "behind-marks", "limit": 1}
+}
