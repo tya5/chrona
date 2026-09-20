@@ -33,6 +33,15 @@
     }
   },
   "$defs": {
+    "paint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["color", "opacity"],
+      "properties": {
+        "color": {"type": "string", "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"},
+        "opacity": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
     "context": {
       "type": "object",
       "additionalProperties": false,
@@ -148,6 +157,7 @@
         "paints",
         "strokes",
         "groupPaints",
+        "facetPaints",
         "bar",
         "point",
         "arrow",
@@ -1178,6 +1188,39 @@
           },
           "description": "Stable group IDs map to paint; empty map uses groupBand."
         },
+        "facetPaints": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["default", "groups"],
+          "properties": {
+            "default": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["planned", "actual", "baseline", "variance"],
+              "properties": {
+                "planned": {"$ref": "#/$defs/paint"},
+                "actual": {"$ref": "#/$defs/paint"},
+                "baseline": {"$ref": "#/$defs/paint"},
+                "variance": {"$ref": "#/$defs/paint"}
+              }
+            },
+            "groups": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "planned": {"$ref": "#/$defs/paint"},
+                  "actual": {"$ref": "#/$defs/paint"},
+                  "baseline": {"$ref": "#/$defs/paint"},
+                  "variance": {"$ref": "#/$defs/paint"}
+                }
+              }
+            }
+          },
+          "description": "Facet-paint resolution is groups[groupId][facet], then default[facet], then normalized global role; group background paint remains groupPaints."
+        },
         "bar": {
           "type": "object",
           "additionalProperties": false,
@@ -1361,6 +1404,7 @@
         "regionGap",
         "regions",
         "slots",
+        "labelPlacement",
         "group",
         "row",
         "cellPadding",
@@ -1373,6 +1417,7 @@
         "variance",
         "missingActual",
         "routing",
+        "lanes",
         "legend",
         "notes",
         "summary"
@@ -1560,6 +1605,7 @@
                   "title",
                   "table",
                   "timeline",
+                  "timeline-axis",
                   "summary",
                   "legend",
                   "annotations",
@@ -1634,6 +1680,17 @@
             }
           },
           "description": "Style controls color; View controls membership/order; no density-triggered semantics."
+        },
+        "labelPlacement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["candidateSides", "maxCandidates", "overflow"],
+          "properties": {
+            "candidateSides": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"enum": ["above", "below", "end", "start", "inside"]}},
+            "maxCandidates": {"type": "integer", "minimum": 1, "maximum": 16},
+            "overflow": {"enum": ["diagnose", "clip-optional"]}
+          },
+          "description": "Finite, deterministic placement candidates; required content may not be clipped."
         },
         "row": {
           "type": "object",
@@ -2084,6 +2141,7 @@
             "portOffset",
             "bendPenalty",
             "strokeLayer"
+            ,"limit"
           ],
           "properties": {
             "enabled": {
@@ -2119,9 +2177,22 @@
                 "behind-marks",
                 "above-marks"
               ]
-            }
+            },
+            "limit": {"type": "integer", "minimum": 1, "maximum": 100000}
           },
-          "description": "Semantic endpoint types are NOT configurable; geometry from actual mark bounds."
+          "description": "Semantic endpoint types are NOT configurable; geometry from actual mark bounds and a bounded route search."
+        },
+        "lanes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["grouping", "stacking", "occupancy", "maxStack"],
+          "properties": {
+            "grouping": {"enum": ["view-groups"]},
+            "stacking": {"enum": ["stable-lowest-nonoverlap"]},
+            "occupancy": {"enum": ["mark-bounds-plus-required-label-bounds"]},
+            "maxStack": {"type": "integer", "minimum": 1, "maximum": 10000}
+          },
+          "description": "Stable stacking uses View group/order and never moves an item across groups."
         },
         "legend": {
           "type": "object",
@@ -2314,6 +2385,7 @@
       "additionalProperties": false,
       "required": [
         "groupLabel",
+        "labelRules",
         "subtitle",
         "accessibleDescription",
         "missingActualLabel",
@@ -2328,6 +2400,23 @@
         "listSeparator"
       ],
       "properties": {
+        "labelRules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "source", "facet", "endpoint", "required"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1, "maxLength": 4096},
+              "source": {"enum": ["title", "planned-date", "actual-date", "comparison-delta", "annotation-text"]},
+              "facet": {"enum": ["planned", "actual", "baseline", "variance", "annotation"]},
+              "endpoint": {"enum": ["start", "finish", "at", "body"]},
+              "required": {"type": "boolean"}
+            }
+          },
+          "description": "Closed text sources only; source stability, rule order and Layout candidates determine placement."
+        },
         "groupLabel": {
           "type": "string",
           "maxLength": 4096,
