@@ -25,12 +25,12 @@
 <rect data-purpose="row-shade" data-source-ref="release" x="40" y="709.5" width="1519" height="62.5" fill="#22364D" opacity="0.45"/>
 <path data-purpose="table-row" d="M40 772H1559" stroke="#22364D"/>
 <text data-purpose="axis-band" data-source-ref="" x="671.13" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">May 2027</text>
-<path data-purpose="axis-major" d="M546 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="917.37" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jun 2027</text>
-<path data-purpose="axis-major" d="M796.27 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="1163.6" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jul 2027</text>
-<path data-purpose="axis-major" d="M1038.46 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="1413.87" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Aug 2027</text>
+<path data-purpose="axis-major" d="M546 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M796.27 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M1038.46 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <path data-purpose="axis-major" d="M1288.73 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <rect data-purpose="table-frame" x="40" y="148" width="1519" height="624" fill="none" stroke="#34465C"/>
 <path data-purpose="routed-connector" data-source-ref="integration-thermal" data-from-endpoint="start" data-to-endpoint="start" d="M788.2 248.75L780.2 248.75L780.2 311.25L804.41 311.25L812.41 311.25" fill="none" stroke="#92A6BE" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
