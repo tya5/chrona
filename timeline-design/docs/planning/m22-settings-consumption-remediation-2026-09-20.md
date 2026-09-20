@@ -1,6 +1,6 @@
 # M22 Settings-consumption remediation plan — 2026-09-20
 
-**Status:** Design complete and published at `f565570`; implementation in progress
+**Status:** I24-1 published; D24 placement/status addendum complete and awaiting publication
 **Scope:** GitHub issues 11–12 and PR 13, evaluated against `main` at `9be3712`
 **Exclusion:** M23 observation tables and milestone digests remain deferred
 
@@ -53,7 +53,22 @@ matrix. A matrix row is a contract, not an allow-list of accepted defects.
 | A24 | Regenerate artifacts, visual review, full regression/conformance, reconcile issues/PR, and return M22 to Complete. | Published SHA equals verified local state. |
 
 Progress: D24 is complete. I24-1 is complete locally with 209 tests and full
-conformance passing; publication is the remaining I24-1 exit action.
+conformance passing and is published at `f39e25e`. The pre-I24-2 review found that the
+original design named four variance roles without closing the unknown trigger or exact
+marker/label geometry. Implementation paused. The following D24 addendum closes those
+choices before I24-2 resumes.
+
+### D24 addendum: conditional-family geometry
+
+- Missing Actual applies to spans whose Actual mapping lacks either required endpoint.
+  Its three modes emit only the named label/pattern families, using the planned left
+  edge and resolved Actual band defined in specification 08.
+- Known variance status is the sign of the calendar-day actual-finish minus planned-end
+  delta. A non-empty partial Actual mapping is `variance-unknown`; an absent mapping is
+  not a variance observation.
+- Variance offset, marker width, label gap, label alignment, and formatted label text
+  have the exact ownership and geometry rules in specification 08.
+- This addendum changes no schema, semantic Project/Actual authority, or phase order.
 
 Each implementation phase is independently tested and published. Any new semantic
 choice stops implementation and reopens D24 before code continues.

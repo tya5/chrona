@@ -27,3 +27,11 @@ runtime edit.
 I24-1 through I24-4 may proceed in order after the design-only commit is published and
 its GitHub tree is verified. A change to primitive families, ownership, diagnostics, or
 schema version requires a new design publication first.
+
+## D24 addendum review
+
+The pre-I24-2 implementation review correctly stopped before code because the original
+text named variance roles but did not close the unknown trigger or exact conditional
+family placement. Specification 08 and the M22 plan now define both without changing
+schema or semantic authority. I24-2 may resume only after this addendum is published
+and its remote tree is verified.

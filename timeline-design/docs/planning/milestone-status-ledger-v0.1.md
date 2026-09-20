@@ -32,7 +32,7 @@ evidence is present, not that a later product release is complete.
 | M19 | Complete | Layout Profile runtime validation, deterministic Layout Manifest, old-profile rejection, M19 final review, conformance, and 89 tests. | None. |
 | M20 | Complete | Constraint solver and slot-based review rendering, M20 final review, conformance, and 90 tests. | None. |
 | M21 | Complete | Generic calendar/table/relation/annotation primitives, M21 final review, conformance, and 91 tests. | None. |
-| M22 | Remediation design complete; implementation not started | R0 remains valid for issues 1–10. The post-R0 settings-consumption plan closes issues 11–12 and replaces PR 13's single-sample oracle with a conditional consumption matrix. | Publish D24, then complete I24-1 through I24-4 and A24. |
+| M22 | Implementation active after design closure | R0 remains valid for issues 1–10. D24 was published before implementation; I24-1 is published at `f39e25e`. The pre-I24-2 design addendum closes conditional-family triggers and geometry. | Publish the D24 addendum, then complete I24-2 through I24-4 and A24. |
 | M23 | Design complete; implementation not started | Review Detail Profile closes reference-quality legend, group detail, observation, and milestone surfaces without changing semantic authority. | M23 implementation, visual acceptance, and release review. |
 
 Implementation may start only at a `Design complete; implementation not started`

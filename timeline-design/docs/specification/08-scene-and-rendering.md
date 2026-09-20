@@ -265,14 +265,29 @@ completed resolved Theme. The purpose mapping is closed: ticks/major axis use
 `dependency`. The selected token contributes color, opacity, width, and dash together;
 mixing fields from different tokens or hard-coding a dash is invalid.
 
-Missing Actual is an explicit conditional Scene family. When an item lacks its
-required Actual facet and `layout.missingActual.mode` enables presentation, Scene emits
-a `missing-actual-pattern` Rect sized by Theme and positioned by Layout plus a
-`missing-actual-label` Text supplied by Detail. It never fabricates Actual semantics.
-Finish variance emits a `variance-marker` Rect with Theme-owned width plus an optional
-`variance-label` Text. Its visual role is `variance-ahead`, `variance-on-track`,
-`variance-behind`, or `variance-unknown`; adapters do not derive status from text or
-color.
+Missing Actual is an explicit conditional Scene family. A span lacks its required
+Actual facet unless its Actual mapping contains both a valid start and finish. The
+family uses the planned Rect's left edge and the row's resolved Actual-bar band. A
+pattern Rect is centered vertically in that band and uses the Theme-owned width and
+height. A label begins after that Rect plus `layout.missingActual.gap`, or at the
+planned left edge when no pattern is requested, and is vertically centered using the
+`missingActual` typography. `label`, `pattern`, and `label-and-pattern` emit exactly the
+families named by their modes. Label text is `detail.missingActualLabel`. It never
+fabricates Actual semantics.
+
+Finish variance is also a closed conditional family. A complete Actual finish yields
+`variance-ahead` for a negative calendar-day delta, `variance-on-track` for zero, and
+`variance-behind` for a positive delta. A non-empty but incomplete Actual mapping
+yields `variance-unknown`, anchored at the planned finish; a wholly absent/empty Actual
+mapping has no variance family and is represented only by Missing Actual. The marker's
+x coordinate is the later of planned and complete-Actual right edges plus
+`layout.variance.offset`; its width is `theme.varianceMarkerWidth`, and its vertical
+bounds are the union of the planned and complete-Actual bar bands (the planned band for
+unknown). The label begins after the marker plus `layout.variance.labelGap` and uses
+the `variance` typography. `labelAlign` aligns its measured top, center, or bottom to
+the marker bounds. Known text uses `positiveSign` and `signedDaysSuffix`; unknown text
+uses `detail.formatting.unknown`. `showZero=false` suppresses the on-track family.
+Adapters do not derive status from text or color.
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
 following I3 core primitive set before any adapter is invoked: one resolved heading
