@@ -638,6 +638,7 @@
           "region": "main",
           "track": 1,
           "source": "timeline",
+          "scaleId": "primary",
           "priority": "required",
           "overflow": "diagnose",
           "align": "stretch"
@@ -646,6 +647,7 @@
           "region": "main",
           "track": 1,
           "source": "timeline-axis",
+          "scaleId": "primary",
           "priority": "required",
           "overflow": "diagnose",
           "align": "stretch"
