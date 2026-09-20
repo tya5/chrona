@@ -3,6 +3,7 @@
 <desc id="desc">Plan and Actual comparison. 8 rows; 2 unmatched observations. Actual is not a forecast.</desc>
 <defs><marker id="dependency-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.0" orient="auto"><path d="M0 0L6 3.0L0 6Z" fill="#92A6BE"/></marker></defs>
 <rect width="1600" height="900" fill="#101D2D"/>
+<metadata data-presentation-scene="v0.1" data-axis-count="5" data-tick-count="5" data-mark-count="19"/>
 <text data-purpose="heading" data-source-ref="project" x="40" y="78" font-family="Nimbus Sans, Arial, sans-serif" font-size="46" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="start">ASTER / Platform and firmware</text>
 <text data-purpose="subtitle" data-source-ref="view:window" x="40" y="110" font-family="Nimbus Sans, Arial, sans-serif" font-size="20" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Fictional SSD program / Jan 2027 to May 2027 / Observations through 30 Jun 2027</text>
 <rect data-purpose="table-header" data-source-ref="" x="40" y="148" width="1519" height="48" fill="#203147" />
