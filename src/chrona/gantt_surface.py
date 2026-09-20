@@ -79,12 +79,16 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     metrics = None
     if settings is not None:
         from .font_metrics import resolve_font_metrics
-        from .presentation_layout import solve_presentation_layout
         metrics = resolve_font_metrics(settings['theme']['fontFamily'], settings['context']['fontMetrics'])
         font = escape(settings['theme']['fontFamily'], quote=True)
         viewport = settings['context']['viewport']; width, height = viewport['width'], viewport['height']
-        derived = solve_presentation_layout(settings)
-        slots = {key: Rect(int(value.x), int(value.y), int(value.width), int(value.height)) for key, value in derived.items()}
+        if presentation_scene is None:
+            from .presentation_layout import solve_presentation_layout
+            derived = solve_presentation_layout(settings)
+            slots = {key: Rect(int(value.x), int(value.y), int(value.width), int(value.height)) for key, value in derived.items()}
+        else:
+            slots = {slot.slot_id: Rect(int(slot.bounds[0]), int(slot.bounds[1]), int(slot.bounds[2]), int(slot.bounds[3]))
+                     for slot in presentation_scene.slots}
         surface = {
             'groupMode': settings['layout']['group']['mode'], 'groupLabel': settings['detail']['groupLabel'],
             'groupFraction': settings['layout']['group']['fraction'], 'groupGap': settings['layout']['group']['gap'],

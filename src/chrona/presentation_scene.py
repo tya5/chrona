@@ -9,6 +9,7 @@ from typing import Iterable
 from .presentation_axis import AxisInterval, axis_intervals
 from .presentation_marks import ComparisonMark, comparison_marks
 from .presentation_lanes import LaneAssignment, LaneItem, LaneTrack, assign_stable_lanes, lane_tracks
+from .presentation_layout import solve_presentation_layout
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,16 @@ class ScenePrimitive:
 
 
 @dataclass(frozen=True)
+class SceneSlot:
+    """One resolved surface bound consumed verbatim by renderer adapters."""
+
+    slot_id: str
+    source: str
+    scale_id: str | None
+    bounds: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
 class PresentationScene:
     title: str
     window: tuple[date, date]
@@ -44,6 +55,7 @@ class PresentationScene:
     lanes: tuple[LaneAssignment, ...]
     lane_tracks: tuple[LaneTrack, ...]
     primitives: tuple[ScenePrimitive, ...]
+    slots: tuple[SceneSlot, ...]
 
 
 def _resolved_input(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> ResolvedPresentationInput:
@@ -80,6 +92,15 @@ def _scene_primitives(resolved: ResolvedPresentationInput, axes: tuple[AxisInter
     return tuple(primitives)
 
 
+def _scene_slots(settings: dict) -> tuple[SceneSlot, ...]:
+    """Resolve surface bounds once; adapters must not invoke the layout solver again."""
+    bounds = solve_presentation_layout(settings)
+    declarations = settings["layout"]["slots"]
+    return tuple(SceneSlot(slot_id, declarations[slot_id]["source"], declarations[slot_id].get("scaleId"),
+                           (rect.x, rect.y, rect.width, rect.height))
+                 for slot_id, rect in bounds.items())
+
+
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
     """Build a completed shared Scene; adapters may only serialize its primitives."""
     resolved = _resolved_input(title, items, window, settings)
@@ -111,7 +132,8 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     tracks = lane_tracks(lanes, surface=lane_spec["surface"], mark_extent=mark_extent,
                          clearance=settings["layout"]["routing"]["clearance"], padding=lane_spec["trackPadding"])
     primitives = _scene_primitives(resolved, axes, marks)
-    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives)
+    slots = _scene_slots(settings)
+    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots)
 
 
 def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:

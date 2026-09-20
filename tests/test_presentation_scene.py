@@ -26,6 +26,9 @@ def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
     assert scene.ticks[0].start == date(2026, 1, 1)
     assert scene.lanes[0].stack == 0
     assert scene.lane_tracks == ()
+    slots = {slot.slot_id: slot for slot in scene.slots}
+    assert slots["timeline"].source == "timeline"
+    assert slots["timeline"].scale_id == slots["timelineAxis"].scale_id == "primary"
 
 
 def test_scene_materializes_stable_primitives_without_adapter_identity():
