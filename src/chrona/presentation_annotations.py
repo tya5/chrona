@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from heapq import heappop, heappush
 from typing import Iterable
 
 from .presentation_marks import ComparisonMark
@@ -22,6 +23,40 @@ class AnnotationBox:
     anchor: AnnotationAnchor
     placement: LabelPlacement
     leader_required: bool
+
+
+def nearest_box_port(box: LabelRect, target: tuple[float, float]) -> tuple[float, float]:
+    """Nearest edge midpoint; ties follow the fixed above/below/end/start order."""
+    x, y = target
+    ports = ((box.x + box.width / 2, box.y), (box.x + box.width / 2, box.bottom),
+             (box.right, box.y + box.height / 2), (box.x, box.y + box.height / 2))
+    return min(ports, key=lambda port: (abs(port[0] - x) + abs(port[1] - y), ports.index(port)))
+
+
+def route_annotation_leader(source: tuple[float, float], target: tuple[float, float], *,
+                            obstacles: Iterable[LabelRect], limit: int) -> tuple[tuple[float, float], ...]:
+    """Bounded deterministic orthogonal visibility-grid route for a presentation leader."""
+    if limit < 1:
+        raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+    boxes = tuple(obstacles)
+    xs = sorted({source[0], target[0], *(value for box in boxes for value in (box.x, box.right))})
+    ys = sorted({source[1], target[1], *(value for box in boxes for value in (box.y, box.bottom))})
+    start, end = (xs.index(source[0]), ys.index(source[1])), (xs.index(target[0]), ys.index(target[1]))
+    queue, parents, seen = [(0, start)], {}, {start}; states = 0
+    while queue:
+        _, node = heappop(queue); states += 1
+        if states > limit:
+            raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+        if node == end: break
+        for nxt in ((node[0]-1,node[1]), (node[0]+1,node[1]), (node[0],node[1]-1), (node[0],node[1]+1)):
+            if not (0 <= nxt[0] < len(xs) and 0 <= nxt[1] < len(ys)) or nxt in seen: continue
+            a, b = (xs[node[0]], ys[node[1]]), (xs[nxt[0]], ys[nxt[1]])
+            if any((a[1] == b[1] and box.y < a[1] < box.bottom and max(a[0],b[0]) > box.x and min(a[0],b[0]) < box.right) or (a[0] == b[0] and box.x < a[0] < box.right and max(a[1],b[1]) > box.y and min(a[1],b[1]) < box.bottom) for box in boxes): continue
+            seen.add(nxt); parents[nxt] = node; heappush(queue, (abs(xs[nxt[0]]-target[0])+abs(ys[nxt[1]]-target[1]), nxt))
+    if end not in seen: raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+    path=[]; node=end
+    while node != start: path.append((xs[node[0]],ys[node[1]])); node=parents[node]
+    return (source, *reversed(path))
 
 
 def resolve_annotation_anchor(annotation: dict, marks: Iterable[ComparisonMark]) -> AnnotationAnchor:
