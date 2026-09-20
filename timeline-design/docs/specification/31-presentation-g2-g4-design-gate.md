@@ -63,8 +63,7 @@ stack indexを採用する。`maxStack`超過又はrequired label未配置は
 `E_PRESENTATION_STACK_OVERFLOW`。別groupへの移動、暗黙の縮小、隠蔽は行わない。
 
 Sceneは各投影markに`laneGroupId`と`stackIndex`を付加する。Viewのgroup/orderがlaneGroupId順を定め、
-同一groupでは`(start or at, stable object ID)`順で割り当てる。`row-aligned` surfaceはstackIndex 0だけを受理し、
-非0なら`E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE`で停止する。複数stackは`independent-lane-track` surfaceだけが
+同一groupでは`(start or at, stable object ID)`順で割り当てる。`row-aligned` surfaceは1項目1行を保ちstackIndexをScene metadataとして保持する。複数stackを可視化する`independent-lane-track` surfaceだけが
 消費し、Sceneが解決済み比較mark block extentとrouting clearanceからpitchを導き、
 `2*trackPadding + markExtent + maxStackIndex*pitch`のgroup trackを出す。adapterはそのstackIndex/pitch/track boundsを
 縦offsetへ変換するだけで、再選択・再順序化・別groupへの移動・row対応の暗黙維持をしてはならない。
@@ -74,7 +73,7 @@ Sceneは各投影markに`laneGroupId`と`stackIndex`を付加する。Viewのgro
 G2–G4実装の前に以下を完了する。
 
 1. 上記fieldを既存View/Theme/Detail/Layout v0.2 schemaへ配置し、wire schemaは対応表だけに保つ。
-2. 各fieldのvalid/invalid fixture（候補>16、actual anchor欠損、group facet override、stack overflow、row-aligned stack不適合、route limit）を追加する。
+2. 各fieldのvalid/invalid fixture（候補>16、actual anchor欠損、group facet override、stack overflow、independent lane track、route limit）を追加する。
 3. `E_PRESENTATION_*`診断の入力・owner・禁止救済をreviewで照合する。
 4. sample固有ID/名称を持たない二プロジェクト受入例と、長い日本語/実績欠損の再現性を確認する。
 
