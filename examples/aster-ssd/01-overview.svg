@@ -3,7 +3,7 @@
 <desc id="desc">Plan and Actual comparison. 8 rows; 2 unmatched observations. Actual is not a forecast.</desc>
 <defs><marker id="dependency-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.0" orient="auto"><path d="M0 0L6 3.0L0 6Z" fill="#92A6BE"/></marker></defs>
 <rect width="1600" height="900" fill="#101D2D"/>
-<metadata data-presentation-scene="v0.1" data-axis-count="8" data-tick-count="8" data-mark-count="10"/>
+<metadata data-presentation-scene="v0.1" data-axis-count="8" data-tick-count="8" data-mark-count="10" data-axis-scale-id="primary"/>
 <text data-purpose="heading" data-source-ref="project" x="40" y="78" font-family="Nimbus Sans, Arial, sans-serif" font-size="46" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="start">ASTER / Release checkpoints</text>
 <text data-purpose="subtitle" data-source-ref="view:window" x="40" y="110" font-family="Nimbus Sans, Arial, sans-serif" font-size="20" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Fictional SSD program / Jan 2027 to Aug 2027 / Observations through 30 Jun 2027</text>
 <rect data-purpose="table-header" data-source-ref="" x="40" y="148" width="1519" height="48" fill="#203147" />
@@ -28,14 +28,14 @@
 <text data-purpose="axis-band" data-source-ref="" x="1224.35" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jun 2027</text>
 <text data-purpose="axis-band" data-source-ref="" x="1348.98" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jul 2027</text>
 <text data-purpose="axis-band" data-source-ref="" x="1475.66" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Aug 2027</text>
-<path data-purpose="axis-major" d="M546 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
-<path data-purpose="axis-major" d="M672.68 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
-<path data-purpose="axis-major" d="M787.1 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
-<path data-purpose="axis-major" d="M913.78 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
-<path data-purpose="axis-major" d="M1036.37 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
-<path data-purpose="axis-major" d="M1163.05 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
-<path data-purpose="axis-major" d="M1285.64 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
-<path data-purpose="axis-major" d="M1412.32 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M546 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M672.68 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M787.1 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M913.78 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M1036.37 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M1163.05 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M1285.64 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" data-scale-id="primary" d="M1412.32 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <rect data-purpose="table-frame" x="40" y="148" width="1519" height="624" fill="none" stroke="#34465C"/>
 <path data-purpose="routed-connector" data-source-ref="qual-pilot" data-from-endpoint="at" data-to-endpoint="start" d="M1327.33 592L1335.33 592L1335.33 639L1322.59 639L1322.59 653.5L1330.59 653.5" fill="none" stroke="#92A6BE" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="board" x="52" y="239.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Prototype boards ready</text>
