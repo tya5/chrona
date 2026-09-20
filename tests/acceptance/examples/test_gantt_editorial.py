@@ -6,7 +6,8 @@ import xml.etree.ElementTree as ET
 import pytest
 import yaml
 
-from chrona.presentation.review_svg import build_review_projection, render_table_timeline_svg
+from chrona.presentation.model.projection import build_review_projection
+from chrona.presentation.review.svg import render_table_timeline_svg
 from chrona.scheduling.scheduler import schedule
 
 

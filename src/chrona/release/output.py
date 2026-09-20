@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from chrona.presentation.render import render_svg
-from chrona.presentation.scene import Scene
+from chrona.presentation.renderers.generic import render_svg
+from chrona.presentation.scene.schedule import Scene
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,7 @@
 from datetime import date
 import pytest
-from chrona.presentation.review_svg import append_review_summary, build_review_projection, render_table_timeline_svg
+from chrona.presentation.model.projection import build_review_projection
+from chrona.presentation.review.svg import append_review_summary, render_table_timeline_svg
 
 def test_review_projection_keeps_actual_independent_and_marks_variance():
     project={"objects":{"fw":{"title":"FW"},"gate":{"title":"Gate"}}}

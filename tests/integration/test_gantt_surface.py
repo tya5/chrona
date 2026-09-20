@@ -8,11 +8,12 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator, RefResolver
 
-from chrona.presentation.gantt_surface import route_orthogonal
-from chrona.presentation.layout import resolve_layout_profile, solve_layout
-from chrona.presentation.review_svg import build_review_projection, render_table_timeline_svg
+from chrona.presentation.renderers.table_timeline import route_orthogonal
+from chrona.presentation.layout.solver import resolve_layout_profile, solve_layout
+from chrona.presentation.model.projection import build_review_projection
+from chrona.presentation.review.svg import render_table_timeline_svg
 from chrona.scheduling.scheduler import schedule
-from chrona.presentation.presentation_settings import builtin_bases
+from chrona.presentation.model.settings import builtin_bases
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 CAPS = {'sourceMetadata', 'accessibleText', 'semanticRoles', 'marker', 'tableSemantics', 'hierarchicalAxis'}

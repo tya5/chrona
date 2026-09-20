@@ -6,7 +6,7 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.scheduling.scheduler import schedule
-from chrona.presentation.presentation_settings import builtin_bases
+from chrona.presentation.model.settings import builtin_bases
 
 
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):

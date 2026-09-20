@@ -5,7 +5,7 @@ import yaml
 
 from chrona.collaboration.federation import FederationTrustPolicy, execute_federation_command, resolve_federation, resolve_federation_v2
 from chrona.storage.revision_store import MemoryRevisionStore
-from chrona.presentation.scene import federated_scene_input
+from chrona.presentation.scene.schedule import federated_scene_input
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())

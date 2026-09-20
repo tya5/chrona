@@ -16,8 +16,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from chrona.presentation.presentation_settings import builtin_bases
-from chrona.presentation.review_svg import build_review_projection, render_table_timeline_svg
+from chrona.presentation.model.settings import builtin_bases
+from chrona.presentation.model.projection import build_review_projection
+from chrona.presentation.review.svg import render_table_timeline_svg
 from chrona.scheduling.scheduler import schedule
 
 

@@ -5,18 +5,22 @@ import json
 from datetime import date
 from pathlib import Path
 
-from chrona.presentation.render import render_svg
-from chrona.presentation.scene import scene_from_schedule
+from chrona.presentation.renderers.generic import render_svg
+from chrona.presentation.scene.schedule import scene_from_schedule
 from chrona.app.review import review_projects
 from chrona.commands.commands import set_typed_field
 from chrona.scheduling.scheduler import schedule
 from chrona.core.validation import load_yaml, validate_project
-from chrona.presentation.review_svg import (_surface_content_input, append_review_summary,
-                         build_review_projection, render_review_svg,
-                         render_table_timeline_svg)
-from chrona.presentation.layout import resolve_layout_profile, solve_layout
+from chrona.presentation.model.projection import build_review_projection
+from chrona.presentation.review.surface_content import _surface_content_input
+from chrona.presentation.review.svg import (
+    append_review_summary,
+    render_review_svg,
+    render_table_timeline_svg,
+)
+from chrona.presentation.layout.solver import resolve_layout_profile, solve_layout
 from chrona.storage.loader import load_project
-from chrona.presentation.presentation_settings import resolve_presentation_settings
+from chrona.presentation.model.settings import resolve_presentation_settings
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 
 

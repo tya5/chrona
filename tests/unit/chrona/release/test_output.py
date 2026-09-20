@@ -1,6 +1,6 @@
 from datetime import date
 from chrona.release.output import render_output
-from chrona.presentation.scene import Scene
+from chrona.presentation.scene.schedule import Scene
 
 
 def _scene():

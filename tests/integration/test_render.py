@@ -1,10 +1,10 @@
 from datetime import date
 from pathlib import Path
 
-from chrona.presentation.render import render_svg
-from chrona.presentation.presentation_scene import SurfaceContentInput
-from chrona.presentation.presentation_settings import builtin_bases
-from chrona.presentation.scene import scene_from_schedule
+from chrona.presentation.renderers.generic import render_svg
+from chrona.presentation.model.surface_content import SurfaceContentInput
+from chrona.presentation.model.settings import builtin_bases
+from chrona.presentation.scene.schedule import scene_from_schedule
 from chrona.scheduling.scheduler import ScheduleResult
 
 
