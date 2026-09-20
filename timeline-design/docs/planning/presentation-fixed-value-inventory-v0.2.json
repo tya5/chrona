@@ -30,12 +30,24 @@
       "path": "fontMetrics",
       "value": {
         "algorithm": "font-metrics-v1",
-        "revision": "fixture-not-installed",
-        "contentIdentity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "assets": [
+          {
+            "family": "Nimbus Sans",
+            "weight": 400,
+            "revision": "fixture-not-installed",
+            "contentIdentity": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          {
+            "family": "Nimbus Sans",
+            "weight": 700,
+            "revision": "fixture-not-installed",
+            "contentIdentity": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
         "missingFont": "diagnose"
       },
       "source": "gantt_surface.py:render_gantt",
-      "note": "Fixture identity is illustrative, not an available asset. Closure must resolve a real immutable font-metric resource."
+      "note": "Each usable family/weight is an immutable asset. Fixture identities are illustrative; closure must resolve an exact declared asset."
     },
     {
       "owner": "output",
