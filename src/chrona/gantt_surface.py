@@ -72,6 +72,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     from .review_svg import _theme_color, _theme_font, _table_value, _display_value
     from .presentation_paint import resolve_facet_paint
     from .presentation_labels import LabelRect, place_label
+    from .presentation_annotations import (nearest_box_port, project_annotation_box,
+                                           resolve_annotation_anchor, route_annotation_leader)
 
     surface = profile.get('surface', {})
     metrics = None
@@ -195,6 +197,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         parts.append(text(table.x+group_width+i*cw+12, top-17, col['id'], fs, 700, purpose='table-header'))
 
     foreground, obstacles, anchors = [], [], {}
+    annotation_mark_obstacles, annotation_ports = {}, {}
     scene_marks = {}
     lane_stacks = {lane.object_id: lane.stack for lane in presentation_scene.lanes} if presentation_scene is not None else {}
     if presentation_scene is not None:
@@ -229,8 +232,11 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                     raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:window')
                 planned_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, planned_mark.facet)['color'], quote=True) if settings else planned
                 foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned_fill, 'planned', item.object_id, f'data-stack="{lane_stacks.get(item.object_id, 0)}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
-                obstacles.append((x1-4, py-4, x2+4, py+bh+4))
+                planned_obstacle = (x1-4, py-4, x2+4, py+bh+4)
+                obstacles.append(planned_obstacle)
                 anchors[item.object_id] = {'start': (x1, py+bh/2, -1), 'end': (x2, py+bh/2, 1)}
+                annotation_mark_obstacles[(item.object_id, 'planned')] = planned_obstacle
+                annotation_ports[(item.object_id, 'planned')] = {'start': (x1, py+bh/2, -1), 'finish': (x2, py+bh/2, 1), 'body': ((x1+x2)/2, py+bh/2, 1)}
                 actual_mark = scene_marks.get(item.object_id, {}).get('actual')
                 if actual_mark is None and presentation_scene is None and item.actual and 'finish' in item.actual:
                     from types import SimpleNamespace
@@ -242,7 +248,10 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                     actual_y = py if settings and settings['layout']['bars']['comparisonMode'] == 'overlaid' else cy+bg/2
                     actual_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, 'actual')['color'], quote=True) if settings else actual
                     foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual_fill, 'actual', item.object_id, f'data-stack="{lane_stacks.get(item.object_id, 0)}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
-                    obstacles.append((a1-4, actual_y-4, a2+4, actual_y+bh+4))
+                    actual_obstacle = (a1-4, actual_y-4, a2+4, actual_y+bh+4)
+                    obstacles.append(actual_obstacle)
+                    annotation_mark_obstacles[(item.object_id, 'actual')] = actual_obstacle
+                    annotation_ports[(item.object_id, 'actual')] = {'start': (a1, actual_y+bh/2, -1), 'finish': (a2, actual_y+bh/2, 1), 'body': ((a1+a2)/2, actual_y+bh/2, 1)}
                     actual_rule = next((rule for rule in settings['detail']['labelRules']
                                         if rule['source'] == 'actual-date' and rule['facet'] == 'actual' and rule['endpoint'] == 'finish'), None) if settings else None
                     if actual_rule is not None:
@@ -293,7 +302,10 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                     raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:point')
                 foreground.append(f'<path data-purpose="planned" data-source-ref="{escape(item.object_id)}" d="M{f(x)} {f(cy-radius)}l{radius} {radius}l-{radius} {radius}l-{radius} -{radius}Z" fill="{point_color}"/>')
                 anchors[item.object_id] = {'at': (x, cy, 0)}
-                obstacles.append((x-radius-4, cy-radius-4, x+radius+4, cy+radius+4))
+                point_obstacle = (x-radius-4, cy-radius-4, x+radius+4, cy+radius+4)
+                obstacles.append(point_obstacle)
+                annotation_mark_obstacles[(item.object_id, 'planned')] = point_obstacle
+                annotation_ports[(item.object_id, 'planned')] = {'at': (x, cy, 1), 'body': (x, cy, 1)}
             y += rh
         y += group_gap
 
@@ -340,6 +352,35 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             path = 'M'+'L'.join(f'{f(x)} {f(y)}' for x,y in points)
             parts.append(f'<path data-purpose="routed-connector" data-source-ref="{escape(str(relation.get("id", "relation")))}" data-from-endpoint="{ak}" data-to-endpoint="{bk}" d="{path}" fill="none" stroke="{connector}" stroke-width="{settings["theme"]["strokes"]["dependency"]["width"] if settings else 1.4}" marker-end="url(#dependency-arrow)"/>')
     parts.extend(foreground)
+    if settings and view['body'].get('visibility', {}).get('annotations', 'none') != 'none':
+        annotation_bounds = LabelRect(left, top, timeline.width, bottom-top)
+        for annotation in view['body'].get('annotations', []):
+            resolved = resolve_annotation_anchor(annotation, presentation_scene.marks)
+            key = (resolved.object_id, resolved.facet)
+            if key not in annotation_mark_obstacles or resolved.endpoint not in annotation_ports.get(key, {}):
+                raise ValueError('E_PRESENTATION_ANCHOR_MISSING')
+            own = annotation_mark_obstacles[key]
+            anchor_bounds = LabelRect(own[0]+4, own[1]+4, own[2]-own[0]-8, own[3]-own[1]-8)
+            value = str(annotation.get('text', ''))
+            box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds,
+                                         text_size=(metrics.width(value, fs), fs*1.3),
+                                         candidate_sides=settings['layout']['labelPlacement']['candidateSides'],
+                                         viewport=annotation_bounds,
+                                         obstacles=[LabelRect(b[0], b[1], b[2]-b[0], b[3]-b[1]) for b in obstacles if b != own],
+                                         overflow=settings['layout']['labelPlacement']['overflow'])
+            bounds = box.placement.bounds
+            annotation_box = (bounds.x, bounds.y, bounds.right, bounds.bottom)
+            paint = settings['theme']['annotation']
+            parts.append(rect(bounds.x, bounds.y, bounds.width, bounds.height, paint['boxFill']['color'], 'presentation-annotation', annotation.get('id', ''), f'stroke="{escape(paint["boxStroke"]["color"], quote=True)}"'))
+            if value:
+                parts.append(text(bounds.x+4, bounds.y+bounds.height*.78, value, fs, purpose='presentation-annotation', ref=annotation.get('id', '')))
+            if box.leader_required:
+                ax, ay, direction = annotation_ports[key][resolved.endpoint]
+                source, target = (ax+direction*5, ay), nearest_box_port(bounds, (ax, ay))
+                route = route_annotation_leader(source, target, obstacles=[LabelRect(b[0], b[1], b[2]-b[0], b[3]-b[1]) for b in [*obstacles, annotation_box]], limit=settings['layout']['routing']['limit'])
+                points = ((ax, ay), *route)
+                parts.append(f'<path data-purpose="annotation-leader" data-source-ref="{escape(str(annotation.get("id", "")))}" d="M'+ 'L'.join(f'{f(x)} {f(y)}' for x, y in points) + f'" fill="none" stroke="{escape(paint["leader"]["color"], quote=True)}"/>')
+            obstacles.append(annotation_box)
     notes = slots.get('notes')
     if notes:
         ny = notes.y+20
