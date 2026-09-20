@@ -418,7 +418,8 @@
     },
     "bars": {
       "gap": 4,
-      "align": "center"
+      "align": "center",
+      "comparisonMode": "stacked"
     },
     "variance": {
       "visible": true,
