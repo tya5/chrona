@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from importlib.resources import files
 from typing import Any
 
 import jsonschema
 import yaml
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.resources import schema_resource
 from chrona.scheduling.temporal_datetime import (
     DateTimeTemporalError,
     ZonedInstant,
@@ -19,7 +19,7 @@ from chrona.scheduling.temporal_datetime import (
 )
 
 
-SCHEMA_PATH = files("chrona.resources").joinpath("schemas", "project-v0.2.schema.yaml")
+SCHEMA_PATH = schema_resource("project-v0.2.schema.yaml")
 
 
 @dataclass

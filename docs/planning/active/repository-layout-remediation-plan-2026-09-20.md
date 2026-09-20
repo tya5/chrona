@@ -15,7 +15,7 @@ validated and published.
 | R4 — Source package relocation | Complete | `f52a145` |
 | R5 — Presentation module decomposition | Complete | `7a8b311` |
 | R6 — Packaging and OSS closure | Complete except license selection | `47b88ec` |
-| R6A — Runtime resource authority correction | Design complete; implementation pending | — |
+| R6A — Runtime resource authority correction | Complete | this phase commit |
 
 ## 1. Objective
 

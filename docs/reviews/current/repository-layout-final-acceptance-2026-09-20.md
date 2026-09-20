@@ -13,14 +13,16 @@
 | Design verifier correction | `194c73f` |
 | R4 — Source package relocation | `f52a145` |
 | R5 — Presentation decomposition | `7a8b311` |
-| R6 — Packaging and OSS closure | this phase commit |
+| R6 — Packaging and OSS closure | `47b88ec` |
+| Design resource-authority correction | `714b3a7` |
+| R6A — Runtime resource authority correction | this phase commit |
 
 Every published update was non-forced and its Git tree was checked against the local
 index before publication.
 
 ## Acceptance results
 
-- 252 pytest tests pass; the count increased by one packaged-resource mirror test.
+- 253 pytest tests pass; resource tests cover schema resolution and package-owned data.
 - Complete Chrona conformance passes.
 - Controller Z and ASTER deterministic acceptance artifacts remain reproducible.
 - The wheel contains the runtime schemas, built-in presentation settings, and both
@@ -42,8 +44,9 @@ technical debt. They do not change the pass result and should be migrated to the
 
 All ten invariants in Specification 32 are satisfied for the implemented repository
 structure, packaging, examples, tests, documentation, and serial publication history.
-The public `schemas/` files remain the authorities; packaged resource copies are
-byte-for-byte checked against them and the corresponding preset/font authorities.
+The public `schemas/` package is the sole tracked schema authority and is force-included
+only while building the wheel. Presets and font metrics have one tracked authority under
+`src/chrona/resources/`; conformance validates that packaged authority directly.
 
 ## Remaining policy dependency
 

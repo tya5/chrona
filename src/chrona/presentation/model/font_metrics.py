@@ -65,13 +65,7 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
             if not path.is_file():
                 continue
         else:
-            allowed = (
-                len(relative.parts) == 4
-                and relative.parts[:3] == ("docs", "assets", "font-metrics")
-            ) or (
-                len(relative.parts) == 2 and relative.parts[0] == "font_metrics"
-            )
-            if not allowed:
+            if len(relative.parts) != 2 or relative.parts[0] != "font_metrics":
                 continue
             path = files("chrona.resources").joinpath("font_metrics", relative.name)
             if not path.is_file():

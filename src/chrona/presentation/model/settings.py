@@ -10,20 +10,21 @@ from typing import Any, Mapping
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
+from chrona.resources import schema_resource
+
 
 class PresentationSettingsError(ValueError):
     """A stable diagnostic emitted while closing presentation settings."""
 
 
 _RESOURCES = files("chrona.resources")
-_SCHEMA_DIR = _RESOURCES.joinpath("schemas")
 _FIXTURE = _RESOURCES.joinpath("presets", "presentation-settings-executive-v0.2.json")
 SETTINGS_VERSION = "chrona/presentation-settings/v0.2"
 PRESET_VERSION = "chrona/presentation-preset/v0.2"
 
 
 def _schema(name: str) -> dict[str, Any]:
-    return json.loads((_SCHEMA_DIR / f"{name}-v0.2.schema.json").read_text(encoding="utf-8"))
+    return json.loads(schema_resource(f"{name}-v0.2.schema.json").read_text(encoding="utf-8"))
 
 
 def _validators() -> tuple[Draft202012Validator, Draft202012Validator]:

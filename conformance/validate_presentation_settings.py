@@ -1,6 +1,7 @@
 """Validate design contracts only; does not implement the runtime resolver."""
 from copy import deepcopy
 from hashlib import sha256
+from importlib.resources import files
 import json
 from pathlib import Path
 
@@ -30,7 +31,10 @@ def main():
     for schema in schemas:
         Draft202012Validator.check_schema(schema)
     settings, preset = [Draft202012Validator(s, registry=registry) for s in schemas]
-    fixture = read("conformance/presentation-settings-executive-v0.2.json")
+    fixture_resource = files("chrona.resources").joinpath(
+        "presets", "presentation-settings-executive-v0.2.json"
+    )
+    fixture = json.loads(fixture_resource.read_text(encoding="utf-8"))
     override = yaml.safe_load((REPO / "conformance/presentation-preset-override-v0.2.yaml").read_text())
     settings.validate(fixture)
     preset.validate(override)
@@ -44,7 +48,7 @@ def main():
                        "priority": "required", "overflow": "diagnose", "align": "stretch"},
     })
     preset.validate(m23_override)
-    base_bytes = (REPO / "conformance/presentation-settings-executive-v0.2.json").read_bytes()
+    base_bytes = fixture_resource.read_bytes()
     assert override["base"]["contentIdentity"] == f"sha256:{sha256(base_bytes).hexdigest()}"
     preset.validate({"version": "chrona/presentation-preset/v0.2", "id": "complete", "settings": fixture})
     settings.validate(merge(fixture, override["overrides"]))

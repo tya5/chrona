@@ -17,7 +17,7 @@ def fixture(name):
 
 
 def test_complete_settings_are_resolved_without_mutation():
-    value = fixture("presentation-settings-executive-v0.2.json")
+    value = builtin_bases()["executive-v0.2"]
     before = deepcopy(value)
     assert resolve_presentation_settings(value) == value
     assert value == before

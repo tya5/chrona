@@ -14,14 +14,14 @@
           "weight": 400,
           "revision": "nimbus-sans-metrics-v1",
           "contentIdentity": "sha256:0d6b0500eb77e9b64b2cfb9916ead13e41759840a893ee3bae7e58e86fbfb779",
-          "path": "docs/assets/font-metrics/nimbus-sans-regular-v1.json"
+          "path": "font_metrics/nimbus-sans-regular-v1.json"
         },
         {
           "family": "Nimbus Sans",
           "weight": 700,
           "revision": "nimbus-sans-metrics-v1",
           "contentIdentity": "sha256:7754bf903246d324eb09b4147136db0a35f2355604edd3731ecf3f8a9d171c23",
-          "path": "docs/assets/font-metrics/nimbus-sans-bold-v1.json"
+          "path": "font_metrics/nimbus-sans-bold-v1.json"
         }
       ],
       "missingFont": "diagnose"
