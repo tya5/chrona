@@ -21,20 +21,20 @@
 <rect data-purpose="row-shade" data-source-ref="release" x="40" y="700" width="1519" height="72" fill="#22364D" opacity="0.45"/>
 <path data-purpose="table-row" d="M40 772H1559" stroke="#22364D"/>
 <text data-purpose="axis-band" data-source-ref="" x="609.34" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jan 2027</text>
-<path data-purpose="axis-major" d="M546 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="729.89" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Feb 2027</text>
-<path data-purpose="axis-major" d="M672.68 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="850.44" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Mar 2027</text>
-<path data-purpose="axis-major" d="M787.1 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="975.07" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Apr 2027</text>
-<path data-purpose="axis-major" d="M913.78 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="1099.71" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">May 2027</text>
-<path data-purpose="axis-major" d="M1036.37 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="1224.35" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jun 2027</text>
-<path data-purpose="axis-major" d="M1163.05 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="1348.98" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Jul 2027</text>
-<path data-purpose="axis-major" d="M1285.64 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <text data-purpose="axis-band" data-source-ref="" x="1475.66" y="179" font-family="Nimbus Sans, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0" fill="#F3F2EC" text-anchor="middle">Aug 2027</text>
+<path data-purpose="axis-major" d="M546 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M672.68 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M787.1 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M913.78 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M1036.37 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M1163.05 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
+<path data-purpose="axis-major" d="M1285.64 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <path data-purpose="axis-major" d="M1412.32 148V772" stroke="#34465C" stroke-dasharray="3 4"/>
 <rect data-purpose="table-frame" x="40" y="148" width="1519" height="624" fill="none" stroke="#34465C"/>
 <path data-purpose="routed-connector" data-source-ref="qual-pilot" data-from-endpoint="at" data-to-endpoint="start" d="M1327.33 592L1335.33 592L1335.33 639L1322.59 639L1322.59 653.5L1330.59 653.5" fill="none" stroke="#92A6BE" stroke-width="1.4" marker-end="url(#dependency-arrow)"/>
