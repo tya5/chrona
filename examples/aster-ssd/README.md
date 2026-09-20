@@ -18,8 +18,9 @@ Actual dates do not reschedule the baseline or imply a forecast.
 ## Visual direction
 
 Use an ink/navy background, amber plan bars and cyan observed bars. Team section
-headings replace Controller Z's merged owner column. The wider work-item column
-and sectional whitespace provide a distinct layout without a custom renderer.
+headings replace Controller Z's merged owner column. The wider work-item column,
+inside-first timeline labels, and sectional whitespace provide a distinct layout
+without a custom renderer.
 
 Four 1600 × 900 slides share one design: an eight-item executive selection,
 platform/firmware, performance/security, and qualification/production. Three
@@ -77,7 +78,7 @@ of an additional relationship; source IDs identify the actual edges.
 
 ## Verification
 
-The full suite passed 127 tests. Five rendered outputs passed the existing
+The full suite passed 175 tests. Five rendered outputs passed the existing
 raster width check (56 annotated work-item lines in total), and all five PNGs
 were visually inspected. Tests check schema conformance, calendar behavior,
 latest observation selection, row coverage, generated SVG reproducibility and

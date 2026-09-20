@@ -214,6 +214,12 @@ def test_resolved_table_adapter_serializes_scene_ids_for_every_geometry_family()
         element = next(value for value in ET.fromstring(svg).iter()
                        if value.get("data-purpose") == purpose)
         assert element.get("data-scene-id")
+    root = ET.fromstring(svg)
+    timeline_x = next(slot.bounds[0] for slot in build_presentation_scene(
+        "Roadmap", projection.items, projection.window, settings
+    ).surfaces[0].slots if slot.source == "timeline")
+    item_labels = [value for value in root.iter() if value.get("data-purpose") == "item-label"]
+    assert item_labels and all(float(value.get("x")) >= timeline_x for value in item_labels)
 
 
 def test_review_adapter_selects_completed_review_surface():

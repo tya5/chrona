@@ -7,10 +7,16 @@ from heapq import heappop, heappush
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      obstacles: tuple[tuple[float, float, float, float], ...], *,
                      grid_offset: float = 2.0, bend_penalty: float = 12.0,
-                     limit: int = 4096) -> tuple[tuple[float, float], ...]:
+                     limit: int = 4096,
+                     bounds: tuple[float, float, float, float] | None = None) -> tuple[tuple[float, float], ...]:
     """Return the stable shortest orthogonal route on a finite visibility grid."""
-    xs = sorted({start[0], end[0], *(value for box in obstacles for value in (box[0] - grid_offset, box[2] + grid_offset))})
-    ys = sorted({start[1], end[1], *(value for box in obstacles for value in (box[1] - grid_offset, box[3] + grid_offset))})
+    xs_set = {start[0], end[0], *(value for box in obstacles for value in (box[0] - grid_offset, box[2] + grid_offset))}
+    ys_set = {start[1], end[1], *(value for box in obstacles for value in (box[1] - grid_offset, box[3] + grid_offset))}
+    if bounds is not None:
+        left, top, right, bottom = bounds
+        xs_set = {value for value in xs_set if left <= value <= right} | {left, right, start[0], end[0]}
+        ys_set = {value for value in ys_set if top <= value <= bottom} | {top, bottom, start[1], end[1]}
+    xs, ys = sorted(xs_set), sorted(ys_set)
     source = (xs.index(start[0]), ys.index(start[1]), -1)
     target = (xs.index(end[0]), ys.index(end[1]))
 

@@ -299,7 +299,7 @@ layout:
     headerHeight: 32
     labelAlign: center
   labelPlacement:
-    candidateSides: [above, below, end, start, inside]
+    candidateSides: [inside, end, start, above, below]
     maxCandidates: 5
     overflow: clip-optional
   row:

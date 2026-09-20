@@ -115,6 +115,20 @@ relation routing, and direct minimal-annotation input. The full suite passes wit
 tests and the four presentation design validators pass. Publication of this unit
 precedes V1.
 
+### V1 image preflight correction
+
+The first V1 raster inspection rejected overlapping table cells, group headings, and
+item labels. Scene now reserves header height for every header-bearing group mode,
+places table-surface item labels through the shared finite candidate mechanism, and
+routes around required Text obstacles while excluding only endpoint-owned Text during
+connector entry/exit. The finite router includes resolved timeline boundaries, so a
+legal perimeter path is searchable without leaving the surface. The verification
+harness binds both Regular and Bold font assets. Controller Z and all five ASTER
+outputs were regenerated only after semantic/source/bounds checks passed, and the
+overview plus tall master PNGs were visually inspected. The full suite remains 175
+tests. V1 remains open only for the required Scene-manifest closure and final evidence
+review.
+
 If I3-B through I3-F reveals a need for a new primitive family, identity input,
 TextLayout, port, diagnostic, or surface ownership rule, implementation stops. Close
 Specification 08, Specification 30, the derived fixture, design review, and this plan

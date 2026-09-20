@@ -204,7 +204,8 @@ def _scene_rows(items: tuple[object, ...], slots: tuple[SceneSlot, ...], setting
     axis_height = sum(settings["layout"]["axis"]["bandHeights"])
     mode = settings["layout"]["group"]["mode"]
     group_gap = settings["layout"]["group"]["gap"]
-    header_height = settings["layout"]["group"]["headerHeight"] if mode == "header" else 0
+    header_modes = {"header", "header-and-separator", "band", "merged"}
+    header_height = settings["layout"]["group"]["headerHeight"] if mode in header_modes else 0
     groups = [(group_id, tuple(group_items)) for group_id, group_items in groupby(items, lambda item: str(getattr(item, "group_id", "")))]
     available = table_height - axis_height - group_gap * max(0, len(groups) - 1) - header_height * len(groups)
     if available <= 0 or not items:
@@ -426,6 +427,9 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             y = row_y + row_height / 2.0 - height - gap / 2.0
         add("Rect", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark", (x1, y, max(0.0, x2 - x1), height))
 
+    mark_primitives = tuple(node for node in primitives
+                            if node.purpose == "comparison-mark" and node.kind in {"Rect", "Symbol"})
+    placed_item_labels = []
     for object_id, row in rows.items():
         item = items_by_id.get(object_id)
         if item is None:
@@ -433,7 +437,34 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         value = str(getattr(item, "title", object_id))
         body = settings["theme"]["typography"]["body"]
         label_top = row.bounds[1] + (row.bounds[3] - float(body["size"]) * float(body.get("lineHeight", 1.2))) / 2.0
-        label_layout = text_layout(value, row.bounds[0], label_top, role="body", available=row.bounds[2])
+        if surface.surface_id == "table-timeline":
+            from .presentation_labels import LabelRect, place_label
+
+            anchor = next((node for node in mark_primitives
+                           if node.source_ref == object_id and node.semantic_facet in {"planned", "baseline"}), None)
+            if anchor is None:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
+            measured = text_layout(value, 0.0, 0.0, role="body", available=timeline.bounds[2])
+            own_bounds = LabelRect(*anchor.bounds)
+            obstacles = [LabelRect(*node.bounds) for node in mark_primitives if node is not anchor]
+            obstacles.extend(placed_item_labels)
+            label_spec = settings["layout"]["labelPlacement"]
+            placement = place_label(
+                own_bounds, (measured.bounds[2], measured.bounds[3]),
+                label_spec["candidateSides"][:int(label_spec["maxCandidates"])],
+                bounds=LabelRect(*timeline.bounds),
+                obstacles=obstacles, required=True, overflow=label_spec["overflow"],
+            )
+            assert placement is not None
+            dx, dy = placement.bounds.x - measured.bounds[0], placement.bounds.y - measured.bounds[1]
+            label_layout = replace(
+                measured,
+                bounds=(placement.bounds.x, placement.bounds.y, measured.bounds[2], measured.bounds[3]),
+                baseline=(measured.baseline[0] + dx, measured.baseline[1] + dy),
+            )
+            placed_item_labels.append(placement.bounds)
+        else:
+            label_layout = text_layout(value, row.bounds[0], label_top, role="body", available=row.bounds[2])
         add("Text", object_id, "object", "", "body", "item-label", label_layout.bounds,
             text=value, baseline=label_layout.baseline, layout=label_layout)
 
@@ -505,10 +536,17 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 raise ValueError("E_CONNECTOR_ENDPOINT")
             return point, f"{node.projection_instance_id}:{endpoint}", direction
 
-        obstacles = tuple((node.bounds[0] - clearance, node.bounds[1] - clearance,
-                           node.bounds[0] + node.bounds[2] + clearance,
-                           node.bounds[1] + node.bounds[3] + clearance)
-                          for node in mark_nodes.values())
+        obstacle_nodes = tuple(node for node in primitives
+                               if node.purpose in {"comparison-mark", "item-label"})
+        def routed_obstacles(excluded_label_refs: set[str] | None = None):
+            excluded_label_refs = excluded_label_refs or set()
+            return tuple(
+                (node.bounds[0] - clearance, node.bounds[1] - clearance,
+                 node.bounds[0] + node.bounds[2] + clearance,
+                 node.bounds[1] + node.bounds[3] + clearance)
+                for node in obstacle_nodes
+                if not (node.kind == "Text" and node.source_ref in excluded_label_refs)
+            )
         for relation in content.relations:
             if relation.get("type", "dependency") != "dependency":
                 continue
@@ -524,9 +562,13 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             port_offset = float(routing["portOffset"])
             source_route = (source_point[0] + source_direction * port_offset, source_point[1])
             target_route = (target_point[0] + target_direction * port_offset, target_point[1])
-            route = route_orthogonal(source_route, target_route, obstacles,
+            relation_obstacles = routed_obstacles({source_node.source_ref, target_node.source_ref})
+            route_bounds = (timeline.bounds[0], timeline.bounds[1],
+                            timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3])
+            route = route_orthogonal(source_route, target_route, relation_obstacles,
                                      grid_offset=float(routing["gridOffset"]),
-                                     bend_penalty=float(routing["bendPenalty"]), limit=int(routing["limit"]))
+                                     bend_penalty=float(routing["bendPenalty"]), limit=int(routing["limit"]),
+                                     bounds=route_bounds)
             points = (source_point, *route, target_point)
             relation_id = str(relation.get("id", "relation"))
             add("Path", relation_id, "relation", "dependency", "dependency", "dependency-connector",
@@ -538,7 +580,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             from .presentation_labels import LabelRect
 
             viewport = LabelRect(timeline.bounds[0], timeline.bounds[1], timeline.bounds[2], timeline.bounds[3])
-            placed_obstacles = [LabelRect(left, top, right - left, bottom - top) for left, top, right, bottom in obstacles]
+            placed_annotation_boxes: list[LabelRect] = []
             for annotation in content.annotations:
                 annotation_id = str(annotation.get("id", ""))
                 purpose = annotation.get("purpose")
@@ -554,10 +596,14 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                     source_point, source_port, source_direction = mark_port(source_node, source_endpoint, 1)
                     target_point, target_port, target_direction = mark_port(target_node, target_endpoint, -1)
                     offset = float(routing["portOffset"])
+                    arrow_obstacles = routed_obstacles({source_node.source_ref, target_node.source_ref})
                     route = route_orthogonal((source_point[0] + source_direction * offset, source_point[1]),
-                                             (target_point[0] + target_direction * offset, target_point[1]), obstacles,
+                                             (target_point[0] + target_direction * offset, target_point[1]), arrow_obstacles,
                                              grid_offset=float(routing["gridOffset"]),
-                                             bend_penalty=float(routing["bendPenalty"]), limit=int(routing["limit"]))
+                                             bend_penalty=float(routing["bendPenalty"]), limit=int(routing["limit"]),
+                                             bounds=(timeline.bounds[0], timeline.bounds[1],
+                                                     timeline.bounds[0] + timeline.bounds[2],
+                                                     timeline.bounds[1] + timeline.bounds[3]))
                     points = (source_point, *route, target_point)
                     add("Path", annotation_id, "explanatory-arrow", "", "explanatory-arrow", "explanatory-arrow",
                         _path_bounds(points), points=points, from_port_id=source_port, to_port_id=target_port)
@@ -580,7 +626,10 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 anchor_bounds = LabelRect(x, y, width, height)
                 own_obstacle = LabelRect(x - clearance, y - clearance,
                                          width + 2.0 * clearance, height + 2.0 * clearance)
-                route_obstacles = [obstacle for obstacle in placed_obstacles if obstacle != own_obstacle]
+                base_obstacles = [LabelRect(left, top, right - left, bottom - top)
+                                  for left, top, right, bottom in routed_obstacles({resolved.object_id})]
+                route_obstacles = [obstacle for obstacle in (*base_obstacles, *placed_annotation_boxes)
+                                   if obstacle != own_obstacle]
                 box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=text_size,
                                              candidate_sides=settings["layout"]["labelPlacement"]["candidateSides"],
                                              viewport=viewport,
@@ -605,7 +654,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                     add("Path", annotation_id, "presentation-annotation", resolved.facet,
                         "presentation-annotation", "annotation-leader", _path_bounds(points), points=points,
                         from_port_id=anchor_port, to_port_id=f"{surface.surface_id}:annotation:{annotation_id}:box")
-                placed_obstacles.append(LabelRect(*box_bounds))
+                placed_annotation_boxes.append(LabelRect(*box_bounds))
 
         notes_slot = _optional_surface_slot(surface, "notes", "annotations")
         if notes_slot is not None:
