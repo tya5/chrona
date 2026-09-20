@@ -45,3 +45,12 @@ or `milestones`. The owning Settings schema was correct, but a valid M23 overrid
 not pass the authoring gate. The Preset enum now matches Settings, and conformance adds
 a positive override carrying all three sources. This addendum changes no runtime or
 semantic authority and must be published before A23 resumes.
+
+## D23 addendum — roadmap ownership
+
+The final consistency pass found that M23 was owned by its dedicated plan and milestone
+ledger but absent from the authoritative Product Delivery Roadmap, whose table ended at
+M22. The roadmap now names M23's end-user outcome, deliverables, reused contracts, and
+exit evidence, and its post-milestone boundary explicitly preserves Project, Schedule,
+Actual, and summary authority. This closes delivery-order ownership before the final
+release/reuse review.
