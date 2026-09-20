@@ -19,9 +19,18 @@ for surface in surfaces.values():
     assert surface["rows"]["bounds"] == "resolved-layout"
     assert surface["primitives"]["ownership"] == "resolved-scene-geometry"
     assert surface["primitives"]["required"] == ["title-text", "axis-band", "axis-label", "tick", "comparison-mark", "item-label"]
+assert set(surfaces["table-timeline"]["primitives"]["laterFamilies"]["I3-C"]) == {
+    "table-frame", "table-header-band", "table-column-label", "group-surface", "group-header", "row-shade",
+    "table-row-rule", "table-cell", "dependency-connector", "annotation-box", "annotation-text",
+    "annotation-leader", "project-note", "legend-swatch", "legend-label", "coverage-text",
+}
+assert set(surfaces["review"]["primitives"]["laterFamilies"]) == {"I3-F"}
+assert set(surfaces["minimal"]["primitives"]["laterFamilies"]) == {"I3-F"}
 assert case["inputs"]["laneTracks"]["bounds"] == "resolved-scene-geometry"
 assert set(case["inputs"]["laneTracks"]["surfaces"]) == {"row-aligned", "independent-lane-track"}
 assert "adapters-receive-completed-scene-only" in case["invariants"]
 assert "surface-adapter-selects-completed-primitives-only" in case["invariants"]
 assert "missing-surface-or-primitive-is-a-stable-diagnostic" in case["invariants"]
+assert "primitive-family-presence-is-authorized-by-surface-slot-and-visibility" in case["invariants"]
+assert "routes-ports-and-text-layout-are-scene-owned" in case["invariants"]
 print("presentation-scene-input derived fixture valid")
