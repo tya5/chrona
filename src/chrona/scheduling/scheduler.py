@@ -20,13 +20,16 @@ class ScheduleResult:
         return not self.diagnostics
 
 
-def schedule(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None = None, package_reader=None) -> ScheduleResult:
+def schedule(
+    project: dict[str, Any],
+    extension_diagnostics: list[Diagnostic] | tuple[Diagnostic, ...] | None = None,
+) -> ScheduleResult:
     """Reference scheduler for the acyclic Core v0.1 Date-only subset.
 
     It intentionally reports unresolved cyclic systems as capability diagnostics;
     a cycle is not thereby declared semantically invalid.
     """
-    diagnostics = validate_project(project, package_manifests=package_manifests, package_reader=package_reader)
+    diagnostics = validate_project(project, extension_diagnostics=extension_diagnostics)
     if diagnostics:
         return ScheduleResult({}, diagnostics)
     calendars = {key: Calendar.from_mapping(value) for key, value in project.get("calendars", {}).items()}

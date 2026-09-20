@@ -31,6 +31,14 @@ def resolve_package_manifests(project: dict[str, Any], reader: LocalSnapshotRead
     return manifests, diagnostics
 
 
+def resolve_profile_diagnostics(
+    project: dict[str, Any], reader: LocalSnapshotReader
+) -> list[Diagnostic]:
+    """Resolve pinned extension resources and return evaluation diagnostics."""
+    manifests, diagnostics = resolve_package_manifests(project, reader)
+    return [*diagnostics, *validate_profiles(project, manifests)]
+
+
 def validate_profiles(project: dict[str, Any], package_manifests: dict[str, dict[str, Any]] | None) -> list[Diagnostic]:
     if package_manifests is None:
         return []

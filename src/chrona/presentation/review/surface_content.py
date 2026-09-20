@@ -4,7 +4,8 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Any
 
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.model.projection import ReviewProjection
+from chrona.presentation.model.surface_content import display_value, table_value
 from chrona.presentation.model.surface_content import SurfaceContentInput
 
 def _surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any], summary_profile: dict[str, Any] | None = None, as_of: date | None = None, detail_profile: dict[str, Any] | None = None):
@@ -12,7 +13,7 @@ def _surface_content_input(projection: ReviewProjection, project: dict[str, Any]
     columns = tuple((str(column["id"]), str(column["id"]))
                     for column in view["body"].get("tableColumns", ()))
     cells = tuple(
-        (item.object_id, str(column["id"]), str(_display_value(_table_value(item, project, column["source"]), column["missing"])))
+        (item.object_id, str(column["id"]), str(display_value(table_value(item, project, column["source"]), column["missing"])))
         for item in projection.items for column in view["body"].get("tableColumns", ())
     )
     relations = tuple(project.get("relations", ())) if view["body"].get("visibility", {}).get("relations", "semantic") != "none" else ()
@@ -37,7 +38,6 @@ def _surface_content_input(projection: ReviewProjection, project: dict[str, Any]
         observation_columns=detail.observation_columns,
         observation_rows=detail.observation_rows,
     )
-
 
 def _summary_panels(projection: ReviewProjection, profile: dict[str, Any] | None,
                     as_of: date, settings: dict[str, Any]):
@@ -76,20 +76,3 @@ def _template_values(title: str, projection: ReviewProjection) -> tuple[tuple[st
         ("unmatchedCount", str(len(projection.unmatched_actual_ids))),
         ("missingCount", str(sum(1 for item in projection.items if not item.actual))),
     )
-
-
-def _table_value(item: ReviewItem, project: dict[str, Any], source: Any) -> Any:
-    if isinstance(source, str):
-        return {"id": item.object_id, "title": item.title, "objectType": item.source_type,
-                "entity": item.group_label}.get(source)
-    if "field" in source:
-        return (item.fields or {}).get(source["field"])
-    facet = source["comparisonFacet"]
-    return {"finishDelta": item.finish_delta, "missingActual": not bool(item.actual),
-            "progress": (item.actual or {}).get("progress")}.get(facet)
-
-
-def _display_value(value: Any, missing: str) -> str:
-    if value is None:
-        return {"blank": "", "em-dash": "—", "unknown": "unknown"}[missing]
-    return f"{value:+d}d" if isinstance(value, int) and not isinstance(value, bool) else str(value)

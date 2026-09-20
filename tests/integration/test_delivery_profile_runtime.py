@@ -9,6 +9,7 @@ from chrona.storage.loader import schedule_snapshot, validate_snapshot
 from chrona.storage.revision_store import LocalSnapshotReader, LocalTransactionalStore, MemoryRevisionStore
 from chrona.scheduling.scheduler import schedule
 from chrona.core.validation import validate_project
+from chrona.extensions.profiles import resolve_profile_diagnostics, validate_profiles
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 FIXTURES = ROOT / "conformance"
@@ -26,8 +27,9 @@ def _roadmap():
 
 def test_resolved_delivery_profile_validates_and_schedules_through_core():
     project = _roadmap()
-    assert validate_project(project, package_manifests=_manifest()) == []
-    assert schedule(project, package_manifests=_manifest()).ok
+    diagnostics = validate_profiles(project, _manifest())
+    assert validate_project(project, extension_diagnostics=diagnostics) == []
+    assert schedule(project, extension_diagnostics=diagnostics).ok
 
 
 def test_invalid_state_is_rejected_without_changing_project():
@@ -107,10 +109,12 @@ def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
         "contentIdentity": f"sha256:{sha256(manifest_bytes).hexdigest()}",
     }}]
     reader = LocalSnapshotReader(tmp_path, "chrona-test")
-    assert validate_project(project, package_reader=reader) == []
-    assert schedule(project, package_reader=reader).ok
+    diagnostics = resolve_profile_diagnostics(project, reader)
+    assert validate_project(project, extension_diagnostics=diagnostics) == []
+    assert schedule(project, extension_diagnostics=diagnostics).ok
     project["extensions"][0]["resource"]["contentIdentity"] = "sha256:" + "0" * 64
-    assert {item.id for item in validate_project(project, package_reader=reader)} == {"E_CONTENT_IDENTITY", "IDP-PROFILE-006"}
+    diagnostics = resolve_profile_diagnostics(project, reader)
+    assert {item.id for item in validate_project(project, extension_diagnostics=diagnostics)} == {"E_CONTENT_IDENTITY", "IDP-PROFILE-006"}
 
 
 def test_snapshot_loader_evaluates_only_pinned_project_and_package_bytes(tmp_path):

@@ -69,9 +69,8 @@ def route_orthogonal(start, end, obstacles):
 
 
 def render_gantt(title, projection, project, view, theme, profile, slots, settings=None, *, presentation_scene=None):
-    from chrona.presentation.review.svg import _theme_color, _theme_font
-    from chrona.presentation.review.surface_content import _display_value, _table_value
-    from chrona.presentation.scene.paint import resolve_facet_paint
+    from chrona.presentation.model.surface_content import display_value, table_value
+    from chrona.presentation.scene.paint import legacy_theme_color, legacy_theme_font, resolve_facet_paint
     from chrona.presentation.layout.labels import LabelRect, place_label
     from chrona.presentation.scene.annotations import (nearest_box_port, project_annotation_box,
                                            resolve_annotation_anchor, route_annotation_leader)
@@ -99,7 +98,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             'showVariance': settings['layout']['variance']['visible'],
         }
     else:
-        font = escape(_theme_font(theme), quote=True)
+        font = escape(legacy_theme_font(theme), quote=True)
     if settings is not None:
         paints, strokes = settings['theme']['paints'], settings['theme']['strokes']
         palette = {
@@ -114,7 +113,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             group_paint = settings['theme']['groupPaints'].get(role.removeprefix('group:'), paints['groupBand'])
             return escape(palette.get(role, group_paint['color']), quote=True)
     else:
-        color = lambda role, default: escape(_theme_color(theme, role, default), quote=True)
+        color = lambda role, default: escape(legacy_theme_color(theme, role, default), quote=True)
     ink, muted = color('text', '#102644'), color('text-muted', '#637187')
     grid, background = color('axis-major', '#DDE4EC'), color('background', '#FFFFFF')
     planned, actual = color('planned', '#3885E5'), color('actual', '#249B78')
@@ -251,7 +250,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                 parts.append(rect(table.x+group_width, y, right-table.x-group_width, rh, color('row-shade', '#FFFFFF'), 'row-shade', item.object_id, f'opacity="{settings["theme"]["paints"]["rowShade"]["opacity"] if settings else .34}"'))
             parts.append(f'<path data-purpose="table-row" d="M{f(table.x+group_width)} {f(y+rh)}H{f(right)}" stroke="{color("row-shade", "#FFFFFF")}"/>')
             for ci, col in enumerate(columns):
-                value = _display_value(_table_value(item, project, col['source']), col['missing'])
+                value = display_value(table_value(item, project, col['source']), col['missing'])
                 foreground.append(wrapped(table.x+group_width+ci*cw+12, cy, value, cw-24, ref=item.object_id))
             stack = lane_stacks.get(item.object_id, 0)
             track = lane_tracks.get(gid)

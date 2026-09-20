@@ -1,5 +1,4 @@
 from chrona.extensions.extension_registry import PackageRegistry, resolve_evaluation_packages
-from chrona.core.validation import validate_project
 
 
 def _manifest(package_id, version, dependencies=(), **extra):
@@ -37,4 +36,6 @@ def test_registry_closure_is_an_explicit_validation_input_not_a_project_rewrite(
     manifests, diagnostics = resolve_evaluation_packages(registry, [_reference(package)], "timeline/v0.1")
     assert manifests == {"semiconductor": package} and diagnostics == ()
     project = {"version": "timeline/v0.1", "project": {"id": "p"}, "objects": {}, "relations": []}
-    assert validate_project(project, package_registry=registry, package_references=[_reference(package)]) == []
+    # Registry resolution is an explicit outer-boundary operation; Core does not
+    # know about registry implementations.
+    assert diagnostics == ()

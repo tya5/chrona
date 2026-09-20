@@ -60,7 +60,10 @@ def execute_typed_field_batch(
             return candidate
         assert candidate.project is not None
         candidate_project = candidate.project
-    evaluation = schedule(candidate_project, package_manifests=package_manifests)
+    evaluation = schedule(
+        candidate_project,
+        extension_diagnostics=validate_profiles(candidate_project, package_manifests),
+    )
     if not evaluation.ok:
         return CommandResult("rejected", None, tuple(item.id for item in evaluation.diagnostics))
     persisted = store.write(base_revision, candidate_project)

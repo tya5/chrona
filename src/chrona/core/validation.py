@@ -8,9 +8,6 @@ import jsonschema
 import yaml
 
 from chrona.core.diagnostics import Diagnostic
-from chrona.extensions.profiles import resolve_package_manifests, validate_profiles
-from chrona.extensions.extension_registry import PackageRegistry, resolve_evaluation_packages
-from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
                        parse_amount, requires_working_calendar)
 from chrona.resources import schema_resource
@@ -24,8 +21,17 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
         return yaml.safe_load(stream)
 
 
-def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, package_manifests: dict[str, dict[str, Any]] | None = None, package_reader: LocalSnapshotReader | None = None, package_registry: PackageRegistry | None = None, package_references: list[dict[str, Any]] | None = None) -> list[Diagnostic]:
-    """Run structural validation first, then Core rules which Schema cannot express."""
+def validate_project(
+    project: dict[str, Any],
+    schema_path: Path = SCHEMA_PATH,
+    extension_diagnostics: list[Diagnostic] | tuple[Diagnostic, ...] | None = None,
+) -> list[Diagnostic]:
+    """Run structural validation and Core rules over already-resolved inputs.
+
+    Extension resolution belongs to an outer application/storage boundary.  That
+    boundary may inject its deterministic diagnostics, but Core never imports a
+    package registry or revision-store implementation.
+    """
     diagnostics: list[Diagnostic] = []
     schema = yaml.safe_load(schema_path.read_text(encoding="utf-8"))
     # PyYAML resolves unquoted ISO dates to ``date`` objects, while JSON Schema
@@ -94,20 +100,14 @@ def validate_project(project: dict[str, Any], schema_path: Path = SCHEMA_PATH, p
                         diagnostics.append(Diagnostic("E_CALENDAR_REQUIRED", "WorkPeriod lag has no calendar", path + "/lag"))
             except TemporalError as exc:
                 diagnostics.append(Diagnostic("E_INVALID_AMOUNT", str(exc), path + "/lag"))
-    if package_reader is not None:
-        package_manifests, resolution_diagnostics = resolve_package_manifests(project, package_reader)
-        diagnostics.extend(resolution_diagnostics)
-    if package_registry is not None and package_references is not None:
-        package_manifests, registry_diagnostics = resolve_evaluation_packages(package_registry, package_references, project["version"])
-        diagnostics.extend(Diagnostic(item, "Extension lifecycle resolution failed", "/extensions") for item in registry_diagnostics)
     if any(isinstance(item, str) for item in project.get("extensions", [])):
         diagnostics.append(Diagnostic(
             "E_PACKAGE_RESOLUTION_REQUIRED",
             "Legacy extension identifiers require migration to immutable package references",
             "/extensions",
         ))
-    else:
-        diagnostics.extend(validate_profiles(project, package_manifests))
+    elif extension_diagnostics:
+        diagnostics.extend(extension_diagnostics)
     return diagnostics
 
 

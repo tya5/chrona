@@ -8,6 +8,7 @@ from typing import Any
 
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
 from chrona.presentation.review.surface_content import _surface_content_input, _template_values
+from chrona.presentation.scene.paint import legacy_theme_colors
 
 def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str, Any], capabilities: set[str], profile:dict[str,Any]|None=None, settings: dict[str, Any] | None = None, surface_content: Any | None = None) -> str:
     """Render the completed review projection with source metadata and text alternatives."""
@@ -42,7 +43,7 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
         labels = settings["detail"]
     else:
         left, top, day, row = 220, 96, 12, 56
-        colors = _theme_colors(theme); font, heading, body = "system-ui", {"size":20,"weight":700}, {"size":13,"weight":400}
+        colors = legacy_theme_colors(theme); font, heading, body = "system-ui", {"size":20,"weight":700}, {"size":13,"weight":400}
         group_profile = (profile or {}).get("groupPresentation", {"mode":"none","gapRows":0})
         missing = {"width": 6, "height": 6, "angle": 45, "stroke": {"color": "#6b7280", "width": 2}}
         labels = {"title": "{title} — Plan / Actual Review", "missingActualLabel": "actual missing", "unmatchedActual": "Unmatched Actual: {unmatchedIds}", "formatting": {"signedDaysSuffix": "d", "positiveSign": "+"}}
@@ -146,22 +147,3 @@ def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[
             lines.append(f'<text data-purpose="summary-metric" data-source-ref="derived:{escape(panel["id"])}:{metric}" x="{x}" y="{y}" font-family="{escape(font, quote=True)}" font-size="{metric_style["size"]}" font-weight="{metric_style["weight"]}">{escape(labels[metric])}{escape(separator)}{escape(values[metric])}</text>'); y+=metric_style["size"] + 3
         y+=6
     return svg.replace("</svg>", "\n".join(lines)+"\n</svg>")
-
-
-def _theme_colors(theme: dict[str, Any]) -> dict[str,str]:
-    values={key:str(value.get("value")) for key,value in theme.get("body",{}).get("values",{}).items()}
-    roles=theme.get("body",{}).get("roles",{})
-    def color(role:str, fallback:str)->str: return values.get(roles.get(role,{}).get("fill") or roles.get(role,{}).get("stroke"),fallback)
-    return {"background":color("background","#faf8f6"),"text":color("text","#111827"),"grid":color("axis-major","#9ca3af"),"gridMinor":color("axis-minor","#e5e7eb"),"planned":color("planned","#2563eb"),"actual":color("actual","#16a34a"),"behind":color("variance-behind","#b45309")}
-
-
-def _theme_color(theme: dict[str, Any], role: str, fallback: str) -> str:
-    values={key:str(value.get("value")) for key,value in theme.get("body",{}).get("values",{}).items()}
-    binding=theme.get("body",{}).get("roles",{}).get(role,{})
-    return values.get(binding.get("fill") or binding.get("stroke"),fallback)
-
-
-def _theme_font(theme: dict[str, Any]) -> str:
-    values={key:str(value.get("value")) for key,value in theme.get("body",{}).get("values",{}).items()}
-    binding=theme.get("body",{}).get("roles",{}).get("text",{})
-    return values.get(binding.get("fontFamily"),"Inter, Arial, sans-serif")

@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
+
+from chrona.presentation.model.projection import ReviewItem
 
 @dataclass(frozen=True)
 class SurfaceContentInput:
@@ -32,3 +35,22 @@ class ResolvedPresentationInput:
     items: tuple[object, ...]
     settings: dict
     surface_content: SurfaceContentInput
+
+
+def table_value(item: ReviewItem, project: dict[str, Any], source: Any) -> Any:
+    """Resolve one renderer-neutral table cell from normalized review data."""
+    if isinstance(source, str):
+        return {"id": item.object_id, "title": item.title, "objectType": item.source_type,
+                "entity": item.group_label}.get(source)
+    if "field" in source:
+        return (item.fields or {}).get(source["field"])
+    facet = source["comparisonFacet"]
+    return {"finishDelta": item.finish_delta, "missingActual": not bool(item.actual),
+            "progress": (item.actual or {}).get("progress")}.get(facet)
+
+
+def display_value(value: Any, missing: str) -> str:
+    """Format a normalized table value according to the column missing policy."""
+    if value is None:
+        return {"blank": "", "em-dash": "—", "unknown": "unknown"}[missing]
+    return f"{value:+d}d" if isinstance(value, int) and not isinstance(value, bool) else str(value)
