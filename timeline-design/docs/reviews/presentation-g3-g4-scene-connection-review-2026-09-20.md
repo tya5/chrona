@@ -1,6 +1,6 @@
 # G3/G4 Scene接続 設計レビュー
 
-**状態:** G3 anchor obstacle是正を反映済み・公開待ち。G3/G4 visual実装は仕様・wire contract・正負fixture・本review・計画の公開確認後に再開する。
+**状態:** G3/G4 Scene接続・G3注釈SVG・G4独立lane track/offset adapter 実装・公開済み。
 
 | 境界 | 固定した契約 | 禁止する救済 |
 |---|---|---|
@@ -26,3 +26,8 @@ unsupported anchor、stack overflow、route limitを持つ。実装testはさら
 route state limit、facet未指定のdiagnostic、lane metadata不変性を検証する。
 
 結論として、G3/G4の残実装に必要なauthoring owner、Scene出力、有限手順、diagnostic、禁止救済は一意に閉鎖した。
+
+
+## 実装確認
+
+G3は明示facet anchor、box候補時のown-anchor除外、全障害物leader routingをSVG adapterへ接続した。G4はView group順をSceneへ保持し、independent-lane-trackのtrack高とstack offsetを導出する。row-alignedは既存の1項目1行を保持する。全回帰は164 passed（既存DeprecationWarning 2件）。
