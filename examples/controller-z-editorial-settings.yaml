@@ -183,6 +183,10 @@ theme:
       baseline: {color: '#3986E6', opacity: 1}
       variance: {color: '#C8762B', opacity: 1}
     groups: {}
+  annotation:
+    boxFill: {color: '#FFFFFF', opacity: 1}
+    boxStroke: {color: '#637187', opacity: 1}
+    leader: {color: '#8795AA', opacity: 1}
   bar:
     radius: 2
     minWidth: 1
