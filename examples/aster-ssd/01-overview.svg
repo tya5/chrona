@@ -3,7 +3,7 @@
 <desc id="desc">Completed presentation Scene.</desc>
 <defs><marker id="dependency-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.0" orient="auto"><path d="M0 0L6 3.0L0 6Z" fill="#92A6BE"/></marker></defs>
 <rect width="1600" height="900" fill="#101D2D"/>
-<metadata data-presentation-scene="v0.2" data-surface-id="table-timeline" data-axis-scale-id="primary" data-primitive-count="79"/>
+<metadata data-presentation-scene="v0.2" data-surface-id="table-timeline" data-axis-scale-id="primary" data-scale-domain-start="2027-01-01" data-scale-domain-end="2027-09-01" data-scale-range-start="546.4" data-scale-range-end="1540" data-scale-origin="546.4" data-scale-unit-ratio="4.09" data-primitive-count="79"/>
 <rect data-scene-id="table-timeline:table-frame:table::primitive" data-purpose="table-frame" data-source-ref="table" x="40" y="148" width="1520" height="624" fill="none" stroke="#34465C"/>
 <rect data-scene-id="table-timeline:table-header-band:table-header::primitive" data-purpose="table-header" data-source-ref="table-header" x="40" y="148" width="486.4" height="48" fill="#203147" stroke="none"/>
 <rect data-scene-id="table-timeline:row-shade:ftl::primitive" data-purpose="row-shade" data-source-ref="ftl" x="40" y="268" width="486.4" height="72" fill="#22364D" stroke="none"/>

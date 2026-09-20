@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import replace
 from datetime import date
 from hashlib import sha256
 from pathlib import Path
@@ -11,6 +12,7 @@ import pytest
 from chrona.presentation_lanes import lane_stack_offset
 from chrona.presentation_scene import SurfaceContentInput, build_presentation_scene
 from chrona.presentation_scene import presentation_scene_from_schedule
+from chrona.presentation_svg import render_scene_surface_svg
 from chrona.presentation_settings import builtin_bases
 from chrona.review_svg import render_review_svg, render_table_timeline_svg
 
@@ -55,6 +57,86 @@ def test_scene_materializes_stable_primitives_without_adapter_identity():
     assert planned.semantic_facet == "planned"
     assert actual.semantic_facet == "actual"
     assert planned.bounds != actual.bounds
+
+
+def test_scene_manifest_closes_inputs_and_per_surface_scale_evidence():
+    settings = scene_settings()
+    content = SurfaceContentInput(
+        relations=({"id": "r", "type": "reference"},),
+        annotations=({"id": "a", "purpose": "highlight",
+                      "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "body"}},),
+        notes=(("n", "Note"),),
+        legend_entries=(("planned", "Planned"),),
+        summary_panels=(("summary", "Summary", (("count", "One"),)),),
+    )
+    window = (date(2026, 1, 1), date(2026, 2, 1))
+    scene = build_presentation_scene("Roadmap", [item()], window, settings, content)
+    manifest = scene.manifest
+    assert manifest.version == "chrona/presentation-scene-manifest/v0.1"
+    assert manifest.settings_version == "chrona/presentation-settings/v0.2"
+    assert manifest.viewport == (1600.0, 900.0)
+    assert manifest.selected_object_ids == ("a",)
+    assert manifest.font_asset_identities == tuple(
+        asset["contentIdentity"] for asset in settings["context"]["fontMetrics"]["assets"]
+    )
+    assert manifest.content_family_counts.__dict__ == {
+        "relations": 1, "annotations": 1, "notes": 1,
+        "legend_entries": 1, "summary_panels": 1,
+    }
+    assert scene.diagnostics == ()
+    assert manifest.surface_scales == tuple(surface.scale_manifest for surface in scene.surfaces)
+    assert [scale.surface_id for scale in manifest.surface_scales] == ["table-timeline", "review", "minimal"]
+    assert all((scale.domain_start, scale.domain_end) == window for scale in manifest.surface_scales)
+    assert all(scale.origin == scale.range_start and scale.range_end > scale.range_start
+               for scale in manifest.surface_scales)
+    assert len({(scale.range_start, scale.range_end, scale.unit_ratio)
+                for scale in manifest.surface_scales}) == 2
+
+
+def test_surface_serializer_preserves_scale_manifest_without_reconstruction():
+    settings = scene_settings()
+    scene = build_presentation_scene("Roadmap", [item()],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "review")
+    svg = render_review_svg("Roadmap",
+                            SimpleNamespace(items=(item(),), window=scene.window, unmatched_actual_ids=()),
+                            {"body": {"roles": {}}},
+                            {"sourceMetadata", "accessibleText", "semanticRoles", "marker"}, settings=settings)
+    root = ET.fromstring(svg)
+    metadata = next(value for value in root.iter() if value.tag.endswith("metadata"))
+    assert metadata.get("data-axis-scale-id") == surface.scale_manifest.scale_id
+    assert metadata.get("data-scale-domain-start") == surface.scale_manifest.domain_start.isoformat()
+    assert metadata.get("data-scale-domain-end") == surface.scale_manifest.domain_end.isoformat()
+    assert float(metadata.get("data-scale-range-start")) == surface.scale_manifest.range_start
+    assert float(metadata.get("data-scale-range-end")) == surface.scale_manifest.range_end
+    assert float(metadata.get("data-scale-origin")) == surface.scale_manifest.origin
+    assert float(metadata.get("data-scale-unit-ratio")) == pytest.approx(surface.scale_manifest.unit_ratio, abs=0.01)
+
+
+def test_surface_serializer_rejects_missing_scale_identity_instead_of_reconstructing_it():
+    settings = scene_settings()
+    scene = build_presentation_scene("Roadmap", [item()],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = scene.surfaces[0]
+    invalid = replace(surface, scale_manifest=replace(surface.scale_manifest, scale_id=""))
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_MISSING"):
+        render_scene_surface_svg(invalid, viewport=settings["context"]["viewport"], theme=settings["theme"])
+
+
+def test_japanese_item_text_is_measured_once_and_long_unbreakable_text_diagnoses():
+    settings = scene_settings()
+    japanese = item()
+    japanese.title = "量産認定レビュー"
+    scene = build_presentation_scene("製品ロードマップ", [japanese],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    assert all(any(node.purpose == "item-label" and node.text == "量産認定レビュー"
+                   and node.text_layout is not None for node in surface.primitives)
+               for surface in scene.surfaces)
+
+    japanese.title = "超長期検証項目" * 100
+    with pytest.raises(ValueError, match="E_LAYOUT_REQUIRED_OVERFLOW:text"):
+        build_presentation_scene("製品ロードマップ", [japanese],
+                                 (date(2026, 1, 1), date(2026, 2, 1)), settings)
 
 
 def test_every_public_surface_owns_completed_core_primitives():

@@ -45,7 +45,9 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
     row_groups = {row.object_id: row.group_id for row in surface.rows}
     arrow = theme["arrow"]
     dependency_color = color("dependency")
-    axis_scale_id = next((slot.scale_id for slot in surface.slots if slot.source == "timeline-axis"), "") or ""
+    scale = surface.scale_manifest
+    if not scale.scale_id or scale.surface_id != surface.surface_id:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
     scene_title = next((node.text for node in surface.primitives if node.purpose == "title-text" and node.text), "Presentation")
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
@@ -57,7 +59,10 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
          f'</marker></defs>'),
         f'<rect width="{width}" height="{height}" fill="{escape(paints["background"]["color"], quote=True)}"/>',
         f'<metadata data-presentation-scene="v0.2" data-surface-id="{escape(surface.surface_id)}" '
-        f'data-axis-scale-id="{escape(axis_scale_id)}" data-primitive-count="{len(surface.primitives)}"/>',
+        f'data-axis-scale-id="{escape(scale.scale_id)}" data-scale-domain-start="{scale.domain_start.isoformat()}" '
+        f'data-scale-domain-end="{scale.domain_end.isoformat()}" data-scale-range-start="{number(scale.range_start)}" '
+        f'data-scale-range-end="{number(scale.range_end)}" data-scale-origin="{number(scale.origin)}" '
+        f'data-scale-unit-ratio="{number(scale.unit_ratio)}" data-primitive-count="{len(surface.primitives)}"/>',
     ]
 
     for node in surface.primitives:

@@ -102,6 +102,42 @@ class SceneGroup:
 
 
 @dataclass(frozen=True)
+class SurfaceScaleManifest:
+    """Closed temporal scale evidence carried by one completed surface."""
+
+    surface_id: str
+    scale_id: str
+    domain_start: date
+    domain_end: date
+    range_start: float
+    range_end: float
+    origin: float
+    unit_ratio: float
+
+
+@dataclass(frozen=True)
+class ContentFamilyCounts:
+    relations: int
+    annotations: int
+    notes: int
+    legend_entries: int
+    summary_panels: int
+
+
+@dataclass(frozen=True)
+class SceneManifest:
+    """Non-authoritative inspection evidence for one completed Scene."""
+
+    version: str
+    settings_version: str
+    viewport: tuple[float, float]
+    selected_object_ids: tuple[str, ...]
+    font_asset_identities: tuple[str, ...]
+    content_family_counts: ContentFamilyCounts
+    surface_scales: tuple[SurfaceScaleManifest, ...]
+
+
+@dataclass(frozen=True)
 class SceneSurface:
     """Resolved geometry for one public adapter route."""
 
@@ -109,6 +145,7 @@ class SceneSurface:
     slots: tuple[SceneSlot, ...]
     rows: tuple[SceneRow, ...]
     groups: tuple[SceneGroup, ...]
+    scale_manifest: SurfaceScaleManifest
     primitives: tuple[ScenePrimitive, ...] = ()
 
 
@@ -126,6 +163,8 @@ class PresentationScene:
     rows: tuple[SceneRow, ...]
     groups: tuple[SceneGroup, ...]
     surfaces: tuple[SceneSurface, ...]
+    manifest: SceneManifest
+    diagnostics: tuple[str, ...]
 
 
 def _resolved_input(title: str, items: Iterable[object], window: tuple[date, date], settings: dict,
@@ -255,7 +294,8 @@ def _linear_surface(surface_id: str, items: tuple[object, ...], window: tuple[da
             rows.append(SceneRow(str(getattr(item, "object_id")), group_id,
                                  (left, y - row_height / 2, timeline_width, row_height)))
         groups.append(SceneGroup(group_id, header, (left, content_y, timeline_width, y - content_y)))
-    return SceneSurface(surface_id, slots, tuple(rows), tuple(groups))
+    return SceneSurface(surface_id, slots, tuple(rows), tuple(groups),
+                        _surface_scale_manifest(surface_id, slots, window))
 
 
 def _surface_slot(surface: SceneSurface, source: str) -> SceneSlot:
@@ -280,6 +320,27 @@ def _surface_x(slot: SceneSlot, start: date, end: date, value: date) -> float:
     inset = min(20.0, width / 2.0)
     days = max(1, (end - start).days)
     return x + inset + (value - start).days / days * max(0.0, width - 2.0 * inset)
+
+
+def _surface_scale_manifest(surface_id: str, slots: tuple[SceneSlot, ...],
+                            window: tuple[date, date]) -> SurfaceScaleManifest:
+    timeline = next((slot for slot in slots if slot.source == "timeline"), None)
+    axis = next((slot for slot in slots if slot.source == "timeline-axis"), None)
+    if timeline is None or axis is None or not timeline.scale_id or timeline.scale_id != axis.scale_id:
+        raise ValueError("E_PRESENTATION_SCALE_MISMATCH")
+    start, end = window
+    range_start = _surface_x(timeline, start, end, start)
+    range_end = _surface_x(timeline, start, end, end)
+    return SurfaceScaleManifest(
+        surface_id=surface_id,
+        scale_id=timeline.scale_id,
+        domain_start=start,
+        domain_end=end,
+        range_start=range_start,
+        range_end=range_end,
+        origin=range_start,
+        unit_ratio=(range_end - range_start) / max(1, (end - start).days),
+    )
 
 
 def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, ...],
@@ -753,15 +814,42 @@ def _scene_surfaces(items: tuple[object, ...], window: tuple[date, date], settin
                     marks: tuple[ComparisonMark, ...], lanes: tuple[LaneAssignment, ...],
                     tracks: tuple[LaneTrack, ...], content: SurfaceContentInput) -> tuple[SceneSurface, ...]:
     raw = (
-        SceneSurface("table-timeline", slots, rows, groups),
+        SceneSurface("table-timeline", slots, rows, groups,
+                     _surface_scale_manifest("table-timeline", slots, window)),
         _linear_surface("review", items, window, settings, grouped=True,
                         optional_slots=tuple(slot for slot in slots if slot.source == "summary")),
         _linear_surface("minimal", items, window, settings, grouped=False),
     )
     return tuple(SceneSurface(surface.surface_id, surface.slots, surface.rows, surface.groups,
+                              surface.scale_manifest,
                               _surface_primitives(surface, title, items, window, axes, ticks, marks, lanes, tracks,
                                                   settings, content))
                  for surface in raw)
+
+
+def _scene_manifest(resolved: ResolvedPresentationInput,
+                    surfaces: tuple[SceneSurface, ...]) -> SceneManifest:
+    viewport = resolved.settings["context"]["viewport"]
+    identities = tuple(
+        str(asset["contentIdentity"])
+        for asset in resolved.settings["context"]["fontMetrics"]["assets"]
+    )
+    content = resolved.surface_content
+    return SceneManifest(
+        version="chrona/presentation-scene-manifest/v0.1",
+        settings_version=str(resolved.settings["version"]),
+        viewport=(float(viewport["width"]), float(viewport["height"])),
+        selected_object_ids=tuple(str(getattr(item, "object_id")) for item in resolved.items),
+        font_asset_identities=identities,
+        content_family_counts=ContentFamilyCounts(
+            relations=len(content.relations),
+            annotations=len(content.annotations),
+            notes=len(content.notes),
+            legend_entries=len(content.legend_entries),
+            summary_panels=len(content.summary_panels),
+        ),
+        surface_scales=tuple(surface.scale_manifest for surface in surfaces),
+    )
 
 
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict,
@@ -800,7 +888,9 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     rows, groups = _scene_rows(copied_items, slots, settings)
     surfaces = _scene_surfaces(copied_items, (start, end), settings, slots, rows, groups, resolved.title, axes, ticks, marks,
                               lanes, tracks, resolved.surface_content)
-    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots, rows, groups, surfaces)
+    manifest = _scene_manifest(resolved, surfaces)
+    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks,
+                             primitives, slots, rows, groups, surfaces, manifest, ())
 
 
 def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict,
