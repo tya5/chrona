@@ -10,21 +10,21 @@ from chrona.validation import load_yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = ROOT / "examples"
+EXAMPLES = ROOT / "examples" / "controller-z"
 CAPABILITIES = {"sourceMetadata", "accessibleText", "semanticRoles", "marker",
                 "tableSemantics", "hierarchicalAxis"}
 
 
 def test_controller_z_m23_resources_reproduce_checked_in_svg_without_mutation():
     names = {
-        "project": "controller-z-silicon-bringup.yaml",
-        "actual": "controller-z-actual.yaml",
-        "view": "controller-z-executive-view.yaml",
-        "style": "controller-z-review-style.yaml",
-        "theme": "controller-z-executive-theme.yaml",
-        "profile": "controller-z-executive-layout.yaml",
-        "settings": "controller-z-review-detail-settings.yaml",
-        "detail": "controller-z-review-detail.yaml",
+        "project": "project.yaml",
+        "actual": "actual.yaml",
+        "view": "shared/view.yaml",
+        "style": "shared/style.yaml",
+        "theme": "shared/theme.yaml",
+        "profile": "shared/layout.yaml",
+        "settings": "variants/review-detail/settings.yaml",
+        "detail": "variants/review-detail/detail.yaml",
     }
     resources = {key: load_yaml(EXAMPLES / name) for key, name in names.items()}
     original = deepcopy(resources)
@@ -40,7 +40,7 @@ def test_controller_z_m23_resources_reproduce_checked_in_svg_without_mutation():
         resources["view"], resources["theme"], CAPABILITIES, resources["profile"],
         settings=settings, surface_content=content,
     )
-    assert svg == (EXAMPLES / "controller-z-review-detail.svg").read_text(encoding="utf-8")
+    assert svg == (EXAMPLES / "variants/review-detail/expected.svg").read_text(encoding="utf-8")
     assert resources == original
 
     root = ET.fromstring(svg)

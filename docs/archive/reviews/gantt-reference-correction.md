@@ -76,6 +76,6 @@ globally optimized; routes avoid bar interiors. M23 external panels remain defer
 Reproduction (repository root):
 
 ```sh
-PYTHONPATH=src .venv/bin/chrona render-review examples/controller-z-silicon-bringup.yaml --actual examples/controller-z-actual.yaml --view examples/controller-z-executive-view.yaml --style examples/controller-z-review-style.yaml --theme examples/controller-z-executive-theme.yaml --profile examples/controller-z-executive-layout.yaml --output examples/controller-z-executive.svg
-NODE_PATH="$CODEX_PRIMARY_RUNTIME_NODE_MODULES" "$CODEX_PRIMARY_RUNTIME_NODE" scripts/verify-gantt-svg.cjs examples/controller-z-executive.svg examples/controller-z-executive.png
+PYTHONPATH=src .venv/bin/chrona render-review examples/controller-z/project.yaml --actual examples/controller-z/actual.yaml --view examples/controller-z/shared/view.yaml --style examples/controller-z/shared/style.yaml --theme examples/controller-z/shared/theme.yaml --profile examples/controller-z/shared/layout.yaml --output examples/controller-z/variants/executive/expected.svg
+NODE_PATH="$CODEX_PRIMARY_RUNTIME_NODE_MODULES" "$CODEX_PRIMARY_RUNTIME_NODE" scripts/verify-gantt-svg.cjs examples/controller-z/variants/executive/expected.svg examples/controller-z/variants/executive/preview.png
 ```

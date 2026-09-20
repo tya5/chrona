@@ -12,7 +12,7 @@ Date-only meaning.
 
 ![Presentation slide rendered by Chrona: a 1600x900 dark Gantt showing the ASTER
 qualification and production phase, with baseline and observed bars, finish
-variance markers, gates and routed dependencies](examples/aster-ssd/04-qualification-production.png)
+variance markers, gates and routed dependencies](examples/aster-ssd/slides/04-qualification-production/preview.png)
 
 <sup>One of five slides in [`examples/aster-ssd`](examples/aster-ssd), rendered
 from YAML with no per-sample renderer code. The chart is a derived artifact:
@@ -52,7 +52,7 @@ path. Omitting settings intentionally selects the diagnostic legacy adapter.
 
 `chrona render-review` accepts `--detail-profile` together with v0.2 presentation
 settings. The checked-in Controller Z detail resources demonstrate the complete M23
-path and produce `examples/controller-z-review-detail.svg`.
+path and produce `examples/controller-z/variants/review-detail/expected.svg`.
 
 `chrona schedule` is a reference implementation for the acyclic Date-only
 subset. It reports diagnostics for unsupported cycles rather than treating all
@@ -76,7 +76,7 @@ exceptions, endpoint dependencies, parallel qualification work, gates, entities,
 annotations, render:
 
 ```bash
-chrona render examples/controller-z-silicon-bringup.yaml --output controller-z-silicon-bringup.svg
+chrona render examples/controller-z/project.yaml --output controller-z.svg
 ```
 
 ## Presentation slides
@@ -86,13 +86,13 @@ the project plus the resources that describe the presentation — what to select
 how to style it, and how to lay it out:
 
 ```bash
-chrona render-review examples/controller-z-silicon-bringup.yaml \
-  --actual  examples/controller-z-actual.yaml \
-  --view    examples/controller-z-executive-view.yaml \
-  --style   examples/controller-z-review-style.yaml \
-  --theme   examples/controller-z-executive-theme.yaml \
-  --profile examples/controller-z-executive-layout.yaml \
-  --presentation-settings examples/controller-z-editorial-settings.yaml \
+chrona render-review examples/controller-z/project.yaml \
+  --actual  examples/controller-z/actual.yaml \
+  --view    examples/controller-z/shared/view.yaml \
+  --style   examples/controller-z/shared/style.yaml \
+  --theme   examples/controller-z/shared/theme.yaml \
+  --profile examples/controller-z/shared/layout.yaml \
+  --presentation-settings examples/controller-z/variants/editorial/settings.yaml \
   --output  executive.svg
 ```
 

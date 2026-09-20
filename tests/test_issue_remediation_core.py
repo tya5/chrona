@@ -108,7 +108,7 @@ def test_non_working_explicit_workperiod_anchor_is_rejected():
 
 
 def test_placement_order_is_project_order_and_hash_seed_independent():
-    example = ROOT / "examples" / "controller-z-silicon-bringup.yaml"
+    example = ROOT / "examples" / "controller-z" / "project.yaml"
     direct = schedule(yaml.safe_load(example.read_text()))
     expected_order = list(yaml.safe_load(example.read_text())["objects"])
     assert list(direct.placements) == expected_order

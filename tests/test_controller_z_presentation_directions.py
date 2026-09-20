@@ -12,22 +12,22 @@ from chrona.validation import load_yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLES = ROOT / "examples"
+EXAMPLES = ROOT / "examples" / "controller-z"
 CAPABILITIES = {"sourceMetadata", "accessibleText", "semanticRoles", "marker",
                 "tableSemantics", "hierarchicalAxis"}
 SHARED = {
-    "project": "controller-z-silicon-bringup.yaml",
-    "actual": "controller-z-actual.yaml",
-    "view": "controller-z-executive-view.yaml",
-    "style": "controller-z-review-style.yaml",
-    "theme": "controller-z-executive-theme.yaml",
-    "profile": "controller-z-executive-layout.yaml",
+    "project": "project.yaml",
+    "actual": "actual.yaml",
+    "view": "shared/view.yaml",
+    "style": "shared/style.yaml",
+    "theme": "shared/theme.yaml",
+    "profile": "shared/layout.yaml",
 }
 
 
 def render_direction(name):
     resources = {key: load_yaml(EXAMPLES / filename) for key, filename in SHARED.items()}
-    resources["settings"] = load_yaml(EXAMPLES / f"controller-z-{name}-settings.yaml")
+    resources["settings"] = load_yaml(EXAMPLES / "variants" / name / "settings.yaml")
     original = deepcopy(resources)
     settings = resolve_presentation_settings(resources["settings"])
     result = schedule(resources["project"])
@@ -58,7 +58,7 @@ def render_direction(name):
 )
 def test_direction_reproduces_svg_and_obeys_theme_contract(name, colors):
     settings, svg = render_direction(name)
-    assert svg == (EXAMPLES / f"controller-z-{name}.svg").read_text(encoding="utf-8")
+    assert svg == (EXAMPLES / "variants" / name / "expected.svg").read_text(encoding="utf-8")
     assert render_direction(name)[1] == svg
 
     nodes = list(ET.fromstring(svg).iter())

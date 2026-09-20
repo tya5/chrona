@@ -51,7 +51,8 @@ def test_detail_views_partition_project_and_master_covers_everything():
 def test_resources_match_existing_schemas():
     schemas = [yaml.safe_load(path.read_text()) for path in (ROOT/'schemas').glob('*.schema.yaml')]
     registry = Registry().with_resources((s['$id'], Resource.from_contents(s)) for s in schemas)
-    for filename, kind in [('actual.yaml', 'actual-set'), ('style.yaml', 'style'), ('theme.yaml', 'theme'), ('profile.yaml', 'layout-profile')]:
+    for filename, kind in [('actual.yaml', 'actual-set'), ('shared/style.yaml', 'style'),
+                           ('shared/theme.yaml', 'theme'), ('shared/profile.yaml', 'layout-profile')]:
         schema = yaml.safe_load((ROOT/f'schemas/{kind}-v0.1.schema.yaml').read_text())
         Draft202012Validator(schema, registry=registry).validate(load(filename))
     schema = yaml.safe_load((ROOT/'schemas/view-v0.1.schema.yaml').read_text())
@@ -66,7 +67,7 @@ def test_each_slide_reproduces_and_preserves_facts(index):
     before = deepcopy((project, actual))
     slide = load('manifest.yaml')['slides'][index]
     view, settings = load(slide['view']), resolve_presentation_settings(load(slide['settings']))
-    theme, style, profile = load('theme.yaml'), load('style.yaml'), load('profile.yaml')
+    theme, style, profile = load('shared/theme.yaml'), load('shared/style.yaml'), load('shared/profile.yaml')
     projection = build_review_projection(project, schedule(project).placements, view, actual, style, theme)
     svg = render_table_timeline_svg(project['project']['title'], projection, project, view, theme, CAPS, profile, settings=settings)
     assert svg == (SAMPLE/slide['output']).read_text()

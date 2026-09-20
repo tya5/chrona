@@ -42,7 +42,7 @@ design-consistency pass before broader implementation. They are not waived.
   count, seven dependency routes and milestone symbols.
 
 The complete, editable settings are in
-`examples/controller-z-editorial-settings.yaml` (JSON syntax is valid YAML).
+`examples/controller-z/variants/editorial/settings.yaml` (JSON syntax is valid YAML).
 The font content hash intentionally identifies the installed regular Nimbus Sans
 font used for this render; another font installation must supply matching metrics.
 
@@ -50,9 +50,9 @@ font used for this render; another font installation must supply matching metric
 
 ```sh
 .venv/bin/python scripts/verify_presentation_v2.py \
-  --settings examples/controller-z-editorial-settings.yaml \
-  --output examples/controller-z-editorial.svg
-node scripts/verify-gantt-svg.cjs examples/controller-z-editorial.svg examples/controller-z-editorial.png
+  --settings examples/controller-z/variants/editorial/settings.yaml \
+  --output examples/controller-z/variants/editorial/expected.svg
+node scripts/verify-gantt-svg.cjs examples/controller-z/variants/editorial/expected.svg examples/controller-z/variants/editorial/preview.png
 .venv/bin/pytest -q
 ```
 

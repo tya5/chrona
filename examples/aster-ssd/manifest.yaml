@@ -1,22 +1,27 @@
 project: project.yaml
-gallery: slides.html
+gallery: gallery.html
 actual: actual.yaml
-style: style.yaml
-theme: theme.yaml
-profile: profile.yaml
+style: shared/style.yaml
+theme: shared/theme.yaml
+profile: shared/profile.yaml
 slides:
-- view: 01-overview-view.yaml
-  settings: 01-overview-settings.yaml
-  output: 01-overview.svg
-- view: 02-platform-firmware-view.yaml
-  settings: 02-platform-firmware-settings.yaml
-  output: 02-platform-firmware.svg
-- view: 03-performance-security-view.yaml
-  settings: 03-performance-security-settings.yaml
-  output: 03-performance-security.svg
-- view: 04-qualification-production-view.yaml
-  settings: 04-qualification-production-settings.yaml
-  output: 04-qualification-production.svg
-- view: 05-master-view.yaml
-  settings: 05-master-settings.yaml
-  output: 05-master.svg
+- view: slides/01-overview/view.yaml
+  settings: slides/01-overview/settings.yaml
+  output: slides/01-overview/expected.svg
+  preview: slides/01-overview/preview.png
+- view: slides/02-platform-firmware/view.yaml
+  settings: slides/02-platform-firmware/settings.yaml
+  output: slides/02-platform-firmware/expected.svg
+  preview: slides/02-platform-firmware/preview.png
+- view: slides/03-performance-security/view.yaml
+  settings: slides/03-performance-security/settings.yaml
+  output: slides/03-performance-security/expected.svg
+  preview: slides/03-performance-security/preview.png
+- view: slides/04-qualification-production/view.yaml
+  settings: slides/04-qualification-production/settings.yaml
+  output: slides/04-qualification-production/expected.svg
+  preview: slides/04-qualification-production/preview.png
+- view: slides/05-master/view.yaml
+  settings: slides/05-master/settings.yaml
+  output: slides/05-master/expected.svg
+  preview: slides/05-master/preview.png

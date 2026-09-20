@@ -20,8 +20,9 @@ CAPS = {'sourceMetadata', 'accessibleText', 'semanticRoles', 'marker', 'tableSem
 
 def fixture():
     def read(name):
-        return yaml.safe_load((ROOT/'examples'/name).read_text())
-    return [read(name) for name in ('controller-z-silicon-bringup.yaml', 'controller-z-actual.yaml', 'controller-z-executive-view.yaml', 'controller-z-review-style.yaml', 'controller-z-executive-theme.yaml', 'controller-z-executive-layout.yaml')]
+        return yaml.safe_load((ROOT/'examples/controller-z'/name).read_text())
+    return [read(name) for name in ('project.yaml', 'actual.yaml', 'shared/view.yaml',
+                                    'shared/style.yaml', 'shared/theme.yaml', 'shared/layout.yaml')]
 
 
 def render(resources):
@@ -43,7 +44,7 @@ def test_surface_is_deterministic_and_does_not_change_inputs():
     resources = fixture(); original = deepcopy(resources)
     svg, projection, slots = render(resources)
     assert render(resources)[0] == svg and resources == original
-    assert svg == (ROOT/'examples'/'controller-z-executive.svg').read_text()
+    assert svg == (ROOT/'examples/controller-z/variants/executive/expected.svg').read_text()
     assert projection.window == (date(2026, 2, 1), date(2026, 7, 1))
     assert ET.fromstring(svg).get('width') == '1600'
     assert ET.fromstring(svg).get('height') == '900'

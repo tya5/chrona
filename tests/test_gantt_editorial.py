@@ -17,7 +17,7 @@ def render(settings):
 
 @pytest.fixture
 def settings():
-    return yaml.safe_load((ROOT/'examples/controller-z-editorial-settings.yaml').read_text())
+    return yaml.safe_load((ROOT/'examples/controller-z/variants/editorial/settings.yaml').read_text())
 
 
 def test_group_paint_object_and_opacity(settings):

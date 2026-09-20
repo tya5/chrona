@@ -37,10 +37,12 @@ federation and interactive editing are outside this rendered sample's scope.
 ## Files and regeneration
 
 `project.yaml` owns planning facts and `actual.yaml` owns observations. Each
-`*-view.yaml` selects rows and its date window. Each `*-settings.yaml` contains
+Each `slides/<slide>/view.yaml` selects rows and its date window. Each
+`slides/<slide>/settings.yaml` contains
 complete appearance settings (JSON syntax is valid YAML). Settings pin the same
 Nimbus Sans font metrics as the Controller Z example. A different font install
-must provide its verified hash. `profile.yaml`, `style.yaml` and `theme.yaml`
+must provide its verified hash. `shared/profile.yaml`, `shared/style.yaml` and
+`shared/theme.yaml`
 are compatibility resources for the current adapter; v0.2 settings control the
 visual appearance. No preset-reference resolution is required.
 
@@ -59,7 +61,7 @@ and verify deterministic SVG only, without raster dependencies, run:
 
 SVG files retain text, shapes and source IDs for editing. PNGs are slide-ready
 previews. The master is 1600 × 2100, deliberately not a presentation slide.
-`slides.html` embeds the four slide previews for offline viewing; the SVG
+`gallery.html` embeds the four slide previews for offline viewing; the SVG
 resources remain the editable originals. This is not a PowerPoint deck.
 White diamonds mean planned gates; this sample does not assert actual gate
 completion. Missing actual is not equivalent to delay. Two unmatched observations
@@ -86,7 +88,8 @@ of an additional relationship; source IDs identify the actual edges.
 
 ## Verification
 
-The full suite passed 175 tests. Five rendered outputs passed the existing
+The complete repository suite and conformance runner define current acceptance. Five
+rendered outputs pass the existing
 raster width check (56 annotated work-item lines in total), and all five PNGs
 were visually inspected. Tests check schema conformance, calendar behavior,
 latest observation selection, row coverage, generated SVG reproducibility and

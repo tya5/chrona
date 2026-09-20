@@ -22,7 +22,7 @@ from chrona.scheduler import schedule
 
 
 def load(name: str):
-    return yaml.safe_load((ROOT / "examples" / name).read_text())
+    return yaml.safe_load((ROOT / "examples" / "controller-z" / name).read_text())
 
 
 def main() -> None:
@@ -30,12 +30,12 @@ def main() -> None:
     parser.add_argument('--settings', type=Path)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
-    project = load("controller-z-silicon-bringup.yaml")
-    actual = load("controller-z-actual.yaml")
-    view = load("controller-z-executive-view.yaml")
-    style = load("controller-z-review-style.yaml")
-    theme = load("controller-z-executive-theme.yaml")
-    profile = load("controller-z-executive-layout.yaml")
+    project = load("project.yaml")
+    actual = load("actual.yaml")
+    view = load("shared/view.yaml")
+    style = load("shared/style.yaml")
+    theme = load("shared/theme.yaml")
+    profile = load("shared/layout.yaml")
     result = schedule(project)
     assert result.ok
     settings = deepcopy(builtin_bases()["executive-v0.2"])
@@ -46,7 +46,7 @@ def main() -> None:
     first = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, capabilities, profile, settings=settings)
     second = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, capabilities, profile, settings=settings)
     assert first == second, "E_PRESENTATION_NONDETERMINISTIC"
-    output = args.output or ROOT / "examples" / "controller-z-executive-v2.svg"
+    output = args.output or ROOT / "examples/controller-z/variants/executive/alternatives/executive-v2.svg"
     output.write_text(first, encoding="utf-8")
     png = output.with_suffix(".png")
     sharp_root = os.environ.get('CODEX_PRIMARY_RUNTIME_NODE_MODULES', os.environ.get('NODE_PATH', ''))
