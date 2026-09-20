@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from chrona.presentation_lanes import lane_stack_offset
 from chrona.presentation_scene import build_presentation_scene
 from chrona.presentation_scene import presentation_scene_from_schedule
 from chrona.presentation_settings import builtin_bases
@@ -39,6 +40,7 @@ def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
     assert [lane.stack for lane in scene.lanes] == [0, 1]
     assert scene.lane_tracks[0].group_id == "first"
     assert scene.lane_tracks[0].height == 2 * 8 + scene.lane_tracks[0].mark_extent + scene.lane_tracks[0].pitch
+    assert lane_stack_offset(scene.lane_tracks[0], stack=1, padding=8) == 8 + scene.lane_tracks[0].pitch
 
 
 def test_scene_rejects_invalid_axis_order_before_adapter_use():
