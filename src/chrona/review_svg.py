@@ -113,8 +113,15 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
         raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
     presentation_scene = None
     if settings is not None:
-        from .presentation_scene import build_presentation_scene
-        presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings)
+        from .presentation_scene import SurfaceContentInput, build_presentation_scene
+        content = SurfaceContentInput(template_values=_template_values(title, projection))
+        presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings, content)
+        from .presentation_svg import render_scene_surface_svg
+        surface = next((candidate for candidate in presentation_scene.surfaces
+                        if candidate.surface_id == "review"), None)
+        if surface is None:
+            raise ValueError("E_PRESENTATION_SURFACE_MISSING")
+        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
     start, end = presentation_scene.window if presentation_scene is not None else projection.window
     scene_marks = {}
     if presentation_scene is not None:
@@ -210,15 +217,20 @@ def _surface_content_input(projection: ReviewProjection, project: dict[str, Any]
         "missingCount": sum(1 for item in projection.items if not item.actual),
     }
     coverage = settings["detail"]["coverage"].format_map(values)
-    start, end = projection.window
-    last_visible = end - timedelta(days=1) if end.day == 1 and end > start else end
-    template_values = (
-        ("title", ""), ("windowStart", f"{start:%b %Y}"), ("windowLastVisible", f"{last_visible:%b %Y}"),
-        ("selectedCount", str(values["selectedCount"])), ("unmatchedCount", str(values["unmatchedCount"])),
-        ("missingCount", str(values["missingCount"])),
-    )
+    template_values = _template_values("", projection)
     return SurfaceContentInput(columns, cells, relations, annotations, notes, legend, coverage,
                                template_values=template_values)
+
+
+def _template_values(title: str, projection: ReviewProjection) -> tuple[tuple[str, str], ...]:
+    start, end = projection.window
+    last_visible = end - timedelta(days=1) if end.day == 1 and end > start else end
+    return (
+        ("title", title), ("windowStart", f"{start:%b %Y}"), ("windowLastVisible", f"{last_visible:%b %Y}"),
+        ("selectedCount", str(len(projection.items))),
+        ("unmatchedCount", str(len(projection.unmatched_actual_ids))),
+        ("missingCount", str(sum(1 for item in projection.items if not item.actual))),
+    )
 
 
 def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], slots: dict[str, Any] | None = None, settings: dict[str, Any] | None = None) -> str:

@@ -12,7 +12,7 @@ from chrona.presentation_lanes import lane_stack_offset
 from chrona.presentation_scene import SurfaceContentInput, build_presentation_scene
 from chrona.presentation_scene import presentation_scene_from_schedule
 from chrona.presentation_settings import builtin_bases
-from chrona.review_svg import render_table_timeline_svg
+from chrona.review_svg import render_review_svg, render_table_timeline_svg
 
 
 def item():
@@ -214,3 +214,15 @@ def test_resolved_table_adapter_serializes_scene_ids_for_every_geometry_family()
         element = next(value for value in ET.fromstring(svg).iter()
                        if value.get("data-purpose") == purpose)
         assert element.get("data-scene-id")
+
+
+def test_review_adapter_selects_completed_review_surface():
+    settings = scene_settings()
+    projection = SimpleNamespace(items=(item(),), window=(date(2026, 1, 1), date(2026, 2, 1)), unmatched_actual_ids=())
+    svg = render_review_svg("Roadmap", projection, {"body": {"roles": {}}},
+                            {"sourceMetadata", "accessibleText", "semanticRoles", "marker"}, settings=settings)
+    root = ET.fromstring(svg)
+    metadata = next(value for value in root.iter() if value.tag.endswith("metadata"))
+    assert metadata.get("data-surface-id") == "review"
+    assert all(value.get("data-scene-id") for value in root.iter()
+               if value.get("data-purpose") in {"heading", "axis-band", "axis-major", "planned", "actual", "item-label"})
