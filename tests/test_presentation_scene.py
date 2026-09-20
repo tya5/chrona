@@ -48,6 +48,35 @@ def test_scene_materializes_stable_primitives_without_adapter_identity():
     assert planned.bounds != actual.bounds
 
 
+def test_every_public_surface_owns_completed_core_primitives():
+    settings = builtin_bases()["executive-v0.2"]
+    scene = build_presentation_scene("Roadmap", [item()], (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    for surface in scene.surfaces:
+        primitives = surface.primitives
+        assert {primitive.purpose for primitive in primitives} >= {
+            "title-text", "axis-band", "axis-label", "tick", "comparison-mark", "item-label",
+        }
+        assert all(primitive.surface_id == surface.surface_id for primitive in primitives)
+        assert all(primitive.projection_instance_id and primitive.scene_id.startswith(primitive.projection_instance_id)
+                   for primitive in primitives)
+        assert next(primitive for primitive in primitives if primitive.purpose == "title-text").text == "Roadmap"
+        assert next(primitive for primitive in primitives if primitive.purpose == "item-label").text == "A"
+    review, minimal = (next(surface for surface in scene.surfaces if surface.surface_id == name)
+                       for name in ("review", "minimal"))
+    review_mark = next(primitive for primitive in review.primitives if primitive.source_ref == "a" and primitive.semantic_facet == "planned")
+    minimal_mark = next(primitive for primitive in minimal.primitives if primitive.source_ref == "a" and primitive.semantic_facet == "planned")
+    assert review_mark.projection_instance_id != minimal_mark.projection_instance_id
+
+
+def test_surface_primitives_never_fabricate_missing_actual():
+    settings = builtin_bases()["executive-v0.2"]
+    no_actual = item()
+    no_actual.actual = None
+    scene = build_presentation_scene("Roadmap", [no_actual], (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    assert all(primitive.semantic_facet not in {"actual", "finish-delta"}
+               for surface in scene.surfaces for primitive in surface.primitives)
+
+
 def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
     settings = builtin_bases()["executive-v0.2"]
     settings["layout"]["lanes"].update(surface="independent-lane-track", trackPadding=8)
