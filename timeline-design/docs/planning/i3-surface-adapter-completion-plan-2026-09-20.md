@@ -1,9 +1,7 @@
 # I3 Public Surface-Adapter Completion Plan
 
-**Status:** I3-A through I3-E are implemented and published. I3-F design was reopened
-before implementation to close normalized summary wording and the review/minimal entry
-paths. Implementation resumes only after this plan, Specifications 08/30, the derived
-fixture, and the design review are published and confirmed to be consistent.
+**Status:** I3-A through I3-E and the I3-F design correction are published. I3-F is
+implemented; V1 acceptance and completion review remains before I3 completion.
 
 ## Goal
 
@@ -99,6 +97,19 @@ connector → annotation → legend/note → summary`. Adapters MUST NOT re-sort
 dates/rows/ports/routes/text, wrap table or legend text, or generate summary values or
 wording. This section, Specification 08 §5.3, and the derived-fixture validator are
 the design gate before every I3-C-and-later implementation.
+
+### I3-F completion record
+
+Starting from the published design parent `41a0462`, review now receives normalized
+relations, visible annotations, and preformatted summary panels before Scene
+construction; minimal receives target-independent Scene relations. The common Scene
+Builder emits routes, ports, annotation geometry, and review/table summary primitives.
+Review's resolved optional summary slot is copied into its completed surface. All three
+settings-backed public entry paths return the shared serializer output, and the legacy
+post-SVG summary helper rejects resolved-settings use instead of appending private
+geometry. Structural tests cover review/table families, formatted wording, and minimal
+relation routing. The full suite passes with 174 tests and the four presentation design
+validators pass. Publication of this unit precedes V1.
 
 If I3-B through I3-F reveals a need for a new primitive family, identity input,
 TextLayout, port, diagnostic, or surface ownership rule, implementation stops. Close

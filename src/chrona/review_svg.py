@@ -106,7 +106,7 @@ def _roles(style: dict[str, Any], source_type: str, actual: dict[str, Any] | Non
     return tuple(dict.fromkeys(roles))
 
 
-def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str, Any], capabilities: set[str], profile:dict[str,Any]|None=None, settings: dict[str, Any] | None = None) -> str:
+def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str, Any], capabilities: set[str], profile:dict[str,Any]|None=None, settings: dict[str, Any] | None = None, surface_content: Any | None = None) -> str:
     """Render the completed review projection with source metadata and text alternatives."""
     required = {"sourceMetadata", "accessibleText", "semanticRoles", "marker"}
     if not required.issubset(capabilities):
@@ -114,7 +114,8 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     presentation_scene = None
     if settings is not None:
         from .presentation_scene import SurfaceContentInput, build_presentation_scene
-        content = SurfaceContentInput(template_values=_template_values(title, projection))
+        content = replace(surface_content or SurfaceContentInput(),
+                          template_values=_template_values(title, projection))
         presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings, content)
         from .presentation_svg import render_scene_surface_svg
         surface = next((candidate for candidate in presentation_scene.surfaces
@@ -198,7 +199,7 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     return "\n".join(parts+["</svg>"])+"\n"
 
 
-def _surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any]):
+def _surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any], summary_profile: dict[str, Any] | None = None, as_of: date | None = None):
     """Normalize selected table/surface facts once, before Scene construction."""
     from .presentation_scene import SurfaceContentInput
 
@@ -218,8 +219,37 @@ def _surface_content_input(projection: ReviewProjection, project: dict[str, Any]
     }
     coverage = settings["detail"]["coverage"].format_map(values)
     template_values = _template_values("", projection)
+    summary_panels = _summary_panels(projection, summary_profile, as_of or projection.window[0], settings)
     return SurfaceContentInput(columns, cells, relations, annotations, notes, legend, coverage,
-                               template_values=template_values)
+                               summary_panels, template_values)
+
+
+def _summary_panels(projection: ReviewProjection, profile: dict[str, Any] | None,
+                    as_of: date, settings: dict[str, Any]):
+    if not profile:
+        return ()
+    total = len(projection.items)
+    actual = sum(bool(item.actual) for item in projection.items)
+    points = sorted(item.planned["at"] for item in projection.items
+                    if item.source_type == "point" and item.planned["at"] >= as_of)
+    values = {
+        "selectedCount": str(total),
+        "actualCoverage": f"{actual}/{total}" if total else "unknown",
+        "knownFinishVarianceCount": str(sum(item.finish_delta is not None for item in projection.items)),
+        "missingActualCount": str(total - actual),
+        "nextPlannedPoint": points[0].isoformat() if points else "unknown",
+    }
+    labels = settings["detail"]["summaryLabels"]
+    separator = settings["detail"]["formatting"]["rangeSeparator"]
+    return tuple(
+        (
+            str(panel["id"]),
+            str(panel.get("title", panel["id"])),
+            tuple((str(metric), f"{labels[metric]}{separator}{values[metric]}")
+                  for metric in panel["metrics"]),
+        )
+        for panel in profile["panels"]
+    )
 
 
 def _template_values(title: str, projection: ReviewProjection) -> tuple[tuple[str, str], ...]:
@@ -233,7 +263,7 @@ def _template_values(title: str, projection: ReviewProjection) -> tuple[tuple[st
     )
 
 
-def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], slots: dict[str, Any] | None = None, settings: dict[str, Any] | None = None) -> str:
+def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], slots: dict[str, Any] | None = None, settings: dict[str, Any] | None = None, surface_content: Any | None = None) -> str:
     """One generic layout-backed adapter; no sample-specific branches."""
     from .gantt_surface import render_gantt
     required = {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}
@@ -242,7 +272,7 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     presentation_scene = None
     if settings is not None:
         from .presentation_scene import build_presentation_scene
-        content = _surface_content_input(projection, project, view, settings)
+        content = surface_content or _surface_content_input(projection, project, view, settings)
         content = replace(
             content, template_values=tuple((key, title if key == "title" else value)
                                            for key, value in content.template_values))
@@ -258,6 +288,8 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
 
 def append_review_summary(svg: str, projection: ReviewProjection, profile: dict[str, Any], as_of: date, rect: Any | None = None, settings: dict[str, Any] | None = None) -> str:
     """Append only declared, read-only M16 metrics to an existing SVG composition."""
+    if settings is not None:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
     total=len(projection.items); actual=sum(bool(item.actual) for item in projection.items)
     points=sorted(item.planned["at"] for item in projection.items if item.source_type=="point" and item.planned["at"]>=as_of)
     values={"selectedCount":str(total),"actualCoverage":f"{actual}/{total}" if total else "unknown","knownFinishVarianceCount":str(sum(item.finish_delta is not None for item in projection.items)),"missingActualCount":str(total-actual),"nextPlannedPoint":points[0].isoformat() if points else "unknown"}

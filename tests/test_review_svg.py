@@ -1,4 +1,5 @@
 from datetime import date
+import pytest
 from chrona.review_svg import append_review_summary, build_review_projection, render_table_timeline_svg
 
 def test_review_projection_keeps_actual_independent_and_marks_variance():
@@ -25,6 +26,11 @@ def test_summary_uses_only_declared_metrics():
     projection=build_review_projection({"objects":{"a":{"title":"A"}}},{"a":{"at":date(2026,4,3)}},{"body":{"selection":{"include":{"types":["point"]}},"ordering":{"by":"plannedStart"},"window":{"marginDays":0},"comparison":{"actual":"optional"}}},None,{"body":{"rules":[]}},{"body":{"roles":{"planned":{}}}})
     svg=append_review_summary('<svg></svg>',projection,{"panels":[{"id":"next","metrics":["selectedCount","nextPlannedPoint"]}]},date(2026,4,1))
     assert 'summary-panel' in svg and 'Selected work: 1' in svg and '2026-04-03' in svg
+
+def test_resolved_summary_cannot_append_private_geometry_after_scene_serialization():
+    projection=build_review_projection({"objects":{"a":{"title":"A"}}},{"a":{"at":date(2026,4,3)}},{"body":{"selection":{"include":{"types":["point"]}},"ordering":{"by":"plannedStart"},"window":{"marginDays":0},"comparison":{"actual":"optional"}}},None,{"body":{"rules":[]}},{"body":{"roles":{"planned":{}}}})
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_MISSING"):
+        append_review_summary('<svg></svg>',projection,{"panels":[{"id":"next","metrics":["selectedCount"]}]},date(2026,4,1),settings={})
 
 def test_expressive_primitives_use_generic_relations():
     project={"objects":{"a":{"title":"A"},"b":{"title":"B"}},"relations":[{"id":"ab","from":{"object":"a"},"to":{"object":"b"}}]}

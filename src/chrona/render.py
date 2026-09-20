@@ -26,8 +26,11 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
 
     presentation_scene = None
     if settings is not None:
-        from .presentation_scene import presentation_scene_from_schedule
-        presentation_scene = presentation_scene_from_schedule(scene.title, placements, settings, scene.labels)
+        from .presentation_scene import SurfaceContentInput, presentation_scene_from_schedule
+        content = SurfaceContentInput(relations=scene.relations)
+        presentation_scene = presentation_scene_from_schedule(
+            scene.title, placements, settings, scene.labels, content
+        )
         from .presentation_svg import render_scene_surface_svg
         surface = next((candidate for candidate in presentation_scene.surfaces
                         if candidate.surface_id == "minimal"), None)

@@ -226,3 +226,39 @@ def test_review_adapter_selects_completed_review_surface():
     assert metadata.get("data-surface-id") == "review"
     assert all(value.get("data-scene-id") for value in root.iter()
                if value.get("data-purpose") in {"heading", "axis-band", "axis-major", "planned", "actual", "item-label"})
+
+
+def test_i3_f_review_and_table_surfaces_own_routes_annotations_and_formatted_summary():
+    settings = scene_settings()
+    settings["layout"]["slots"]["legend"]["source"] = "summary"
+    left, right = item(), item()
+    left.object_id, left.title = "left", "Left"
+    right.object_id, right.title = "right", "Right"
+    right.planned = {"start": date(2026, 1, 16), "end": date(2026, 1, 24)}
+    content = SurfaceContentInput(
+        relations=({"id": "left-to-right", "type": "dependency",
+                    "from": {"object": "left", "endpoint": "end"},
+                    "to": {"object": "right", "endpoint": "start"}},),
+        annotations=({"id": "risk", "purpose": "callout", "text": "Check supplier",
+                      "anchor": {"kind": "object", "id": "left", "facet": "planned",
+                                 "endpoint": "finish"}},),
+        summary_panels=(("next", "Next review", (("selectedCount", "Selected work: 2"),)),),
+    )
+    projection = SimpleNamespace(items=(left, right),
+                                 window=(date(2026, 1, 1), date(2026, 2, 1)),
+                                 unmatched_actual_ids=())
+    svg = render_review_svg("Roadmap", projection, {"body": {"roles": {}}},
+                            {"sourceMetadata", "accessibleText", "semanticRoles", "marker"},
+                            settings=settings, surface_content=content)
+    root = ET.fromstring(svg)
+    purposes = {node.get("data-purpose") for node in root.iter()}
+    assert purposes >= {"routed-connector", "presentation-annotation",
+                        "annotation-leader", "summary-panel", "summary-header", "summary-metric"}
+    assert "Next review" in svg and "Selected work: 2" in svg
+    assert "selectedCount: Selected work: 2" not in svg
+
+    scene = build_presentation_scene("Roadmap", (left, right), projection.window, settings, content)
+    table = next(surface for surface in scene.surfaces if surface.surface_id == "table-timeline")
+    assert {node.purpose for node in table.primitives} >= {
+        "dependency-connector", "annotation-box", "summary-panel", "summary-header", "summary-metric"
+    }

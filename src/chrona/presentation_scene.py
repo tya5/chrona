@@ -38,7 +38,7 @@ class SurfaceContentInput:
     notes: tuple[tuple[str, str], ...] = ()
     legend_entries: tuple[tuple[str, str], ...] = ()
     coverage_text: str = ""
-    summary_panels: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = ()
+    summary_panels: tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...] = ()
     template_values: tuple[tuple[str, str], ...] = ()
 
 
@@ -226,7 +226,7 @@ def _scene_rows(items: tuple[object, ...], slots: tuple[SceneSlot, ...], setting
 
 
 def _linear_surface(surface_id: str, items: tuple[object, ...], window: tuple[date, date], settings: dict,
-                    *, grouped: bool) -> SceneSurface:
+                    *, grouped: bool, optional_slots: tuple[SceneSlot, ...] = ()) -> SceneSurface:
     """Resolve legacy review/minimal coordinates before their adapters serialize them."""
     margins, viewport = settings["layout"]["margins"], settings["context"]["viewport"]
     left, top, row_height = margins["left"], margins["top"], settings["layout"]["row"]["height"]
@@ -235,6 +235,7 @@ def _linear_surface(surface_id: str, items: tuple[object, ...], window: tuple[da
         SceneSlot("title", "title", None, (left, 0, viewport["width"] - left - margins["right"], top)),
         SceneSlot(f"{surface_id}Timeline", "timeline", "primary", (left, top, timeline_width, viewport["height"] - top - margins["bottom"])),
         SceneSlot(f"{surface_id}Axis", "timeline-axis", "primary", (left, top, timeline_width, viewport["height"] - top - margins["bottom"])),
+        *optional_slots,
     )
     rows: list[SceneRow] = []
     groups: list[SceneGroup] = []
@@ -480,7 +481,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 add("Text", f"{row.object_id}:{column_id}", "table-cell", "", "body", "table-cell",
                     layout.bounds, text=value, baseline=layout.baseline, layout=layout)
 
-    if surface.surface_id == "table-timeline":
+    if surface.surface_id in {"table-timeline", "review", "minimal"}:
         mark_nodes = {(node.source_ref, node.semantic_facet): node for node in primitives
                       if node.purpose == "comparison-mark" and node.kind in {"Rect", "Symbol"}}
         planned_nodes = {source: node for (source, facet), node in mark_nodes.items()
@@ -661,23 +662,22 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         if summary_slot is not None:
             panel_count = max(1, len(content.summary_panels))
             panel_width = summary_slot.bounds[2] / panel_count
-            for panel_index, (panel_id, metrics_values) in enumerate(content.summary_panels):
+            for panel_index, (panel_id, heading_text, metrics_values) in enumerate(content.summary_panels):
                 panel_bounds = (summary_slot.bounds[0] + panel_index * panel_width, summary_slot.bounds[1],
                                 panel_width, summary_slot.bounds[3])
                 add("Rect", panel_id, "summary", "", "summary-panel", "summary-panel", panel_bounds)
-                header = text_layout(panel_id, panel_bounds[0] + 8.0, panel_bounds[1] + 8.0,
+                header = text_layout(heading_text, panel_bounds[0] + 8.0, panel_bounds[1] + 8.0,
                                      role="summaryHeader", available=max(1.0, panel_width - 16.0), wrap=True)
                 add("Text", panel_id, "summary", "", "summary-header", "summary-header", header.bounds,
-                    text=panel_id, baseline=header.baseline, layout=header)
+                    text=heading_text, baseline=header.baseline, layout=header)
                 metric_y = header.bounds[1] + header.bounds[3] + 6.0
-                for metric_id, value in metrics_values:
-                    metric_text = f"{metric_id}: {value}"
-                    layout = text_layout(metric_text, panel_bounds[0] + 8.0, metric_y,
+                for metric_id, formatted_text in metrics_values:
+                    layout = text_layout(formatted_text, panel_bounds[0] + 8.0, metric_y,
                                          role="summaryMetric", available=max(1.0, panel_width - 16.0), wrap=True)
                     if layout.bounds[1] + layout.bounds[3] > panel_bounds[1] + panel_bounds[3]:
                         raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:summary")
                     add("Text", f"{panel_id}:{metric_id}", "summary", "", "summary-metric", "summary-metric",
-                        layout.bounds, text=metric_text, baseline=layout.baseline, layout=layout)
+                        layout.bounds, text=formatted_text, baseline=layout.baseline, layout=layout)
                     metric_y += layout.bounds[3]
 
     rank = {
@@ -704,7 +704,8 @@ def _scene_surfaces(items: tuple[object, ...], window: tuple[date, date], settin
                     tracks: tuple[LaneTrack, ...], content: SurfaceContentInput) -> tuple[SceneSurface, ...]:
     raw = (
         SceneSurface("table-timeline", slots, rows, groups),
-        _linear_surface("review", items, window, settings, grouped=True),
+        _linear_surface("review", items, window, settings, grouped=True,
+                        optional_slots=tuple(slot for slot in slots if slot.source == "summary")),
         _linear_surface("minimal", items, window, settings, grouped=False),
     )
     return tuple(SceneSurface(surface.surface_id, surface.slots, surface.rows, surface.groups,

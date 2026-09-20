@@ -67,3 +67,26 @@ def test_minimal_svg_consumes_resolved_presentation_settings():
     assert 'fill="#3986E6"' in svg
     assert 'data-surface-id="minimal"' in svg
     assert 'data-scene-id=' in svg and '>Task</text>' in svg
+
+
+def test_i3_f_minimal_svg_routes_scene_relations_from_completed_scene():
+    project = {
+        "project": {"title": "Demo"},
+        "objects": {"task": {"title": "Task"}, "gate": {"title": "Gate"}},
+        "relations": [{"id": "task-to-gate", "type": "dependency",
+                       "from": {"object": "task", "endpoint": "end"},
+                       "to": {"object": "gate", "endpoint": "at"}}],
+    }
+    scene = scene_from_schedule(project, ScheduleResult({
+        "task": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)},
+        "gate": {"at": date(2026, 10, 10)},
+    }, []))
+    settings = builtin_bases()["executive-v0.2"]
+    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
+        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
+        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
+    svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, settings)
+    assert 'data-surface-id="minimal"' in svg
+    assert 'data-purpose="routed-connector"' in svg
+    assert 'data-source-ref="task-to-gate"' in svg
+    assert 'data-from-port-id=' in svg and 'data-to-port-id=' in svg
