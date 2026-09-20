@@ -1,7 +1,5 @@
 from datetime import date
-from hashlib import sha256
 from pathlib import Path
-import subprocess
 
 from chrona.render import render_svg
 from chrona.presentation_scene import SurfaceContentInput
@@ -74,9 +72,6 @@ def test_minimal_svg_consumes_resolved_presentation_settings():
     project = {"project": {"title": "Demo"}, "objects": {"task": {"title": "Task"}}, "relations": []}
     scene = scene_from_schedule(project, ScheduleResult({"task": {"at": date(2026, 10, 1)}}, []))
     settings = builtin_bases()["executive-v0.2"]
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, settings)
     assert 'width="1600"' in svg
     assert 'fill="#3986E6"' in svg
@@ -97,9 +92,6 @@ def test_i3_f_minimal_svg_routes_scene_relations_from_completed_scene():
         "gate": {"at": date(2026, 10, 10)},
     }, []))
     settings = builtin_bases()["executive-v0.2"]
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, settings)
     assert 'data-surface-id="minimal"' in svg
     assert 'data-purpose="routed-connector"' in svg
@@ -117,9 +109,6 @@ def test_i3_f_minimal_svg_accepts_normalized_annotation_input_before_scene_build
         "task": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)},
     }, []))
     settings = builtin_bases()["executive-v0.2"]
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     content = SurfaceContentInput(annotations=({
         "id": "risk", "purpose": "callout", "text": "Review risk",
         "anchor": {"kind": "object", "id": "task", "facet": "planned", "endpoint": "finish"},

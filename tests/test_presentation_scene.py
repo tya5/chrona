@@ -1,9 +1,6 @@
 from copy import deepcopy
 from dataclasses import replace
 from datetime import date
-from hashlib import sha256
-from pathlib import Path
-import subprocess
 from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
@@ -22,11 +19,7 @@ def item():
 
 
 def scene_settings():
-    settings = builtin_bases()["executive-v0.2"]
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
-    return settings
+    return builtin_bases()["executive-v0.2"]
 
 
 def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
@@ -220,9 +213,6 @@ def test_resolved_schedule_is_adapted_to_common_scene():
 
 def test_adapter_receives_common_scene_when_resolved_settings_are_supplied():
     settings = builtin_bases()["executive-v0.2"]
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     projection = SimpleNamespace(items=(item(),), window=(date(2026, 1, 1), date(2026, 2, 1)), unmatched_actual_ids=())
     project = {"objects": {"a": {"title": "A"}}, "relations": []}
     view = {"body": {"tableColumns": [{"id": "Task", "source": "title", "missing": "em-dash"}]}}
@@ -234,9 +224,6 @@ def test_adapter_receives_common_scene_when_resolved_settings_are_supplied():
 
 def test_explicit_facet_annotation_emits_common_box_and_leader():
     settings = builtin_bases()["executive-v0.2"]
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     projection = SimpleNamespace(items=(item(),), window=(date(2026, 1, 1), date(2026, 2, 1)), unmatched_actual_ids=())
     project = {"objects": {"a": {"title": "A"}}, "relations": []}
     view = {"body": {"tableColumns": [{"id": "Task", "source": "title", "missing": "em-dash"}],

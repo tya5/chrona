@@ -1,7 +1,5 @@
 import json
 from hashlib import sha256
-from pathlib import Path
-import subprocess
 import sys
 
 import yaml
@@ -75,10 +73,6 @@ def test_cli_render_can_select_the_common_v2_scene_path(tmp_path, monkeypatch):
     project_path, settings_path, output = tmp_path / "project.yaml", tmp_path / "settings.json", tmp_path / "v2.svg"
     project_path.write_text(yaml.safe_dump(project))
     settings = builtin_bases()["executive-v0.2"]
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"],
-                                   capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     settings_path.write_text(json.dumps(settings))
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project_path), "--output", str(output),
                                       "--presentation-settings", str(settings_path)])

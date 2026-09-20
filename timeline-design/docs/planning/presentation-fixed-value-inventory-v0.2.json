@@ -29,7 +29,7 @@
       "owner": "context",
       "path": "fontMetrics",
       "value": {
-        "algorithm": "font-metrics-v1",
+        "algorithm": "declared-metrics-v1",
         "assets": [
           {
             "family": "Nimbus Sans",

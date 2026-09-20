@@ -128,8 +128,7 @@
           "additionalProperties": false,
           "properties": {
             "algorithm": {
-              "type": "string",
-              "maxLength": 4096
+              "const": "declared-metrics-v1"
             },
             "assets": {
               "type": "array",
@@ -141,7 +140,8 @@
                   "family",
                   "weight",
                   "revision",
-                  "contentIdentity"
+                  "contentIdentity",
+                  "path"
                 ],
                 "properties": {
                   "family": {
@@ -162,6 +162,10 @@
                   "contentIdentity": {
                     "type": "string",
                     "pattern": "^sha256:[0-9a-f]{64}$"
+                  },
+                  "path": {
+                    "type": "string",
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
                   }
                 }
               }

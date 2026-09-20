@@ -155,13 +155,8 @@ def test_selected_comparison_window_includes_actual():
 
 
 def test_v2_theme_mutation_changes_gantt_output(tmp_path):
-    import subprocess
-    from hashlib import sha256
     resources = fixture(); project, actual, view, style, theme, profile = resources
     settings = builtin_bases()["executive-v0.2"]
-    for asset, style_name in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style_name}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     projection = build_review_projection(project, schedule(project).placements, view, actual, style, theme)
     first = render_table_timeline_svg(project["project"]["title"], projection, project, view, theme, CAPS, profile, settings=settings)
     settings["theme"]["paints"]["planned"]["color"] = "#112233"

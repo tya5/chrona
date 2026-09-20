@@ -5,16 +5,18 @@ context:
     height: 900
   locale: en-US
   fontMetrics:
-    algorithm: font-metrics-v1
+    algorithm: declared-metrics-v1
     assets:
     - family: Nimbus Sans
       weight: 400
-      revision: NimbusSans-Regular-installed
-      contentIdentity: sha256:7c25be4d78155523080ab85b10277150657ff7dabbcad7037bdd536c9b6d0d08
+      revision: nimbus-sans-metrics-v1
+      contentIdentity: sha256:0d6b0500eb77e9b64b2cfb9916ead13e41759840a893ee3bae7e58e86fbfb779
+      path: timeline-design/docs/assets/font-metrics/nimbus-sans-regular-v1.json
     - family: Nimbus Sans
       weight: 700
-      revision: NimbusSans-Bold-installed
-      contentIdentity: sha256:7f33328e6b4d4cd21b45fa625791928c9407dc702db6780e56b09ca9a3ecaa67
+      revision: nimbus-sans-metrics-v1
+      contentIdentity: sha256:7754bf903246d324eb09b4147136db0a35f2355604edd3731ecf3f8a9d171c23
+      path: timeline-design/docs/assets/font-metrics/nimbus-sans-bold-v1.json
     missingFont: diagnose
 output:
   coordinateDecimals: 2
