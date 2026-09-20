@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.4を再オープン。G1.5監査で未移行SVG adapterを検出。設計根拠は仕様30・ADR-0019。  
+**状態:** G1.4完了・公開済み、G1.5実施中。設計根拠は仕様30・ADR-0019。  
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -51,6 +51,10 @@ G1.5の静的消費監査で、`render_review_svg` と `render_svg` が依然と
 markを直接生成していることを確認した。当初の「existing gantt」表現は仕様29の全公開SVG経路
 という完了条件を満たしていなかった。G1.4はこれら二adapterを`PresentationScene`消費へ移行し、
 同じ欠損actual・半開axis契約を適用するまで完了に戻さない。
+
+この再オープン項目は完了した。review/minimal adapterも`PresentationScene`からaxis・markを
+受け取り、単一点の表示spanには`layout.scale.singlePointSpanDays`を使う。全公開SVG経路が
+同じScene境界を通ることを149 testsで回帰確認した。
 
 ## G1.1 の契約
 
