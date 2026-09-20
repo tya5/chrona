@@ -41,8 +41,8 @@
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="board" x="52" y="239.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Prototype boards ready</text>
 <path data-purpose="planned" data-source-ref="board" d="M672.68 223l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="ftl" x="52" y="311.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">FTL and media management</text>
-<rect data-purpose="planned" data-source-ref="ftl" x="689.02" y="285" width="183.89" height="17" fill="#E9B35E" rx="2"/>
-<rect data-purpose="actual" data-source-ref="ftl" x="689.02" y="306" width="212.49" height="17" fill="#45CCCB" rx="2"/>
+<rect data-purpose="planned" data-source-ref="ftl" x="689.02" y="285" width="183.89" height="17" fill="#E9B35E" data-stack="0" rx="2"/>
+<rect data-purpose="actual" data-source-ref="ftl" x="689.02" y="306" width="212.49" height="17" fill="#45CCCB" data-stack="0" rx="2"/>
 <text data-purpose="actual-date" data-source-ref="ftl" x="871.33" y="339" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">2027-03-29</text>
 <rect data-purpose="variance-marker" data-source-ref="ftl" x="878.6" y="285" width="3" height="38" fill="#FF947F" />
 <text data-purpose="variance" data-source-ref="ftl" x="888.6" y="273.8" font-family="Nimbus Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="0" fill="#FF947F" text-anchor="start">+7d</text>
@@ -55,7 +55,7 @@
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="qual-exit" x="52" y="599.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Qualification exit</text>
 <path data-purpose="planned" data-source-ref="qual-exit" d="M1318.33 583l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="pilot" x="52" y="671.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Pilot build</text>
-<rect data-purpose="planned" data-source-ref="pilot" x="1330.59" y="645" width="44.95" height="17" fill="#E9B35E" rx="2"/>
+<rect data-purpose="planned" data-source-ref="pilot" x="1330.59" y="645" width="44.95" height="17" fill="#E9B35E" data-stack="0" rx="2"/>
 <text data-purpose="missing-actual" data-source-ref="pilot" x="1330.59" y="683" font-family="Nimbus Sans, Arial, sans-serif" font-size="12" font-weight="400" letter-spacing="0" fill="#B4C3D4" text-anchor="start">Actual not reported</text>
 <text data-box-x="52" data-box-width="462" data-purpose="table-cell" data-source-ref="release" x="52" y="743.14" font-family="Nimbus Sans, Arial, sans-serif" font-size="21" font-weight="400" letter-spacing="0" fill="#F3F2EC" text-anchor="start">Production release</text>
 <path data-purpose="planned" data-source-ref="release" d="M1489.96 727l9 9l-9 9l-9 -9Z" fill="#F3F2EC"/>
