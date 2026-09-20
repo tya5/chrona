@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
+from itertools import groupby
 from types import SimpleNamespace
 from typing import Iterable
 
@@ -46,6 +47,20 @@ class SceneSlot:
 
 
 @dataclass(frozen=True)
+class SceneRow:
+    object_id: str
+    group_id: str
+    bounds: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class SceneGroup:
+    group_id: str
+    header_bounds: tuple[float, float, float, float] | None
+    content_bounds: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
 class PresentationScene:
     title: str
     window: tuple[date, date]
@@ -56,6 +71,8 @@ class PresentationScene:
     lane_tracks: tuple[LaneTrack, ...]
     primitives: tuple[ScenePrimitive, ...]
     slots: tuple[SceneSlot, ...]
+    rows: tuple[SceneRow, ...]
+    groups: tuple[SceneGroup, ...]
 
 
 def _resolved_input(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> ResolvedPresentationInput:
@@ -101,6 +118,34 @@ def _scene_slots(settings: dict) -> tuple[SceneSlot, ...]:
                  for slot_id, rect in bounds.items())
 
 
+def _scene_rows(items: tuple[object, ...], slots: tuple[SceneSlot, ...], settings: dict) -> tuple[tuple[SceneRow, ...], tuple[SceneGroup, ...]]:
+    """Resolve group headers and row bounds once for all surface adapters."""
+    table = next(slot for slot in slots if slot.slot_id == "table")
+    _, table_y, table_width, table_height = table.bounds
+    axis_height = sum(settings["layout"]["axis"]["bandHeights"])
+    mode = settings["layout"]["group"]["mode"]
+    group_gap = settings["layout"]["group"]["gap"]
+    header_height = settings["layout"]["group"]["headerHeight"] if mode == "header" else 0
+    groups = [(group_id, tuple(group_items)) for group_id, group_items in groupby(items, lambda item: str(getattr(item, "group_id", "")))]
+    available = table_height - axis_height - group_gap * max(0, len(groups) - 1) - header_height * len(groups)
+    if available <= 0 or not items:
+        raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:rows")
+    row_height = available / len(items)
+    y = table_y + axis_height
+    rows: list[SceneRow] = []
+    scene_groups: list[SceneGroup] = []
+    for group_id, group_items in groups:
+        header = (table.bounds[0], y, table_width, header_height) if header_height else None
+        y += header_height
+        content_y = y
+        for item in group_items:
+            rows.append(SceneRow(str(getattr(item, "object_id")), group_id, (table.bounds[0], y, table_width, row_height)))
+            y += row_height
+        scene_groups.append(SceneGroup(group_id, header, (table.bounds[0], content_y, table_width, row_height * len(group_items))))
+        y += group_gap
+    return tuple(rows), tuple(scene_groups)
+
+
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
     """Build a completed shared Scene; adapters may only serialize its primitives."""
     resolved = _resolved_input(title, items, window, settings)
@@ -133,7 +178,8 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
                          clearance=settings["layout"]["routing"]["clearance"], padding=lane_spec["trackPadding"])
     primitives = _scene_primitives(resolved, axes, marks)
     slots = _scene_slots(settings)
-    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots)
+    rows, groups = _scene_rows(copied_items, slots, settings)
+    return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots, rows, groups)
 
 
 def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:
