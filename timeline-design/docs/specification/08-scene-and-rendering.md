@@ -181,6 +181,50 @@ The initial renderer-neutral vocabulary is intentionally small:
 
 Primitives contain geometry, token references, and metadata; they do not contain scheduling rules. A Scene profile may define a composite convention such as “planned span = `Rect` plus `Text`”, but renderers must not invent that convention independently.
 
+### 5.3 Public-surface primitive closure
+
+Each public SVG route is represented by one `SceneSurface`.  A `SceneSurface` is an
+immutable ordered collection of its resolved slots, rows, groups, and primitives; it
+is not a view of a shared adapter-private coordinate system.  The selected surface
+is the only Scene input an SVG adapter may receive for geometry-bearing output.
+
+Every primitive in a surface has the following required fields:
+
+| Field | Meaning |
+|---|---|
+| `sceneId` | Stable primitive identity, including its surface instance and purpose suffix |
+| `projectionInstanceId` | Stable `(slotId, sourceRef, semanticFacet, primitivePurpose)` identity; `sceneId` derives from it |
+| `surfaceId` | The selected public surface instance |
+| `kind` / `purpose` | One standard primitive kind and its closed rendering purpose |
+| `sourceRef` / `sourceKind` | Stable semantic or View-local source and its category |
+| `semanticFacet` / `visualRole` | Meaning and decoration independently; a missing facet is explicit rather than inferred |
+| `bounds` | Concrete logical bounds; `Text` additionally carries the measured baseline and text payload |
+| `zOrder` | Stable paint order within this surface |
+
+For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
+following I3 core primitive set before any adapter is invoked: one title `Text`; one
+axis-band `Rect` and one axis-label `Text` for each declared axis interval; one tick
+`Path` for each declared tick; one planned/baseline/actual/variance `Rect` or `Symbol`
+only when that semantic facet is authorized by the resolved projection; and one
+item-label `Text` for every selected object.  Mark bounds use that surface's own
+timeline and row bounds.  A span uses `[start,end)`; a point uses its exact `at`
+position.  Actual, baseline, and variance primitives are never synthesized from a
+planned placement.
+
+Table cells, group decoration, semantic dependency paths, annotation boxes/leaders,
+legends, and summary panels are distinct primitive families.  They remain in the
+Scene Builder's I3 completion scope and must be migrated in the documented order;
+an adapter may not retain them as a private geometry exception.  This separation
+allows the core axis/mark/text migration to be verified without falsely declaring
+the entire surface complete.
+
+An adapter selects exactly one named surface and serializes its primitive fields.
+It MUST NOT inspect authoring settings, source item order, dates, margins, day width,
+row height, or a different surface to repair missing geometry.  A missing surface is
+`E_PRESENTATION_SURFACE_MISSING`; a missing required primitive, row, or slot is
+`E_PRESENTATION_PRIMITIVE_MISSING`.  Both diagnostics identify the selected
+`surfaceId` and, where applicable, the expected primitive purpose and sourceRef.
+
 ## 6. Projection rules
 
 Scene construction follows a deterministic order:

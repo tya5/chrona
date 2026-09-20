@@ -58,6 +58,18 @@ title/timeline/axis/ordered-row boundsと完成primitiveをScene Builderが確�
 surface入力又はprimitiveが無い場合はadapterがfallback計算せず診断する。この補正の仕様・派生fixture・
 validatorを公開してから、review/minimalの実装移行を再開する。
 
+## I3 完成primitive・adapter移行の閉鎖
+
+I3は「Sceneを参照するmetadataを出した」時点では完了しない。全公開surfaceについて、adapterが
+自前の日付→X、行→Y、axis band/tick、mark、Text、connector、annotation、table/legend/summary geometryを
+再構成しない状態を受入条件とする。実装順、primitive family、未移行範囲、各公開境界は
+`i3-surface-adapter-completion-plan-2026-09-20.md` が所有する。
+
+I3-Aの設計閉鎖では、各surfaceにtitle/axis band/axis label/tick/comparison mark/item labelの完成primitiveを
+必須化し、`SceneSurface`がprimitiveを所有すること、primitive identity、Text payload/baseline、
+`E_PRESENTATION_SURFACE_MISSING` と `E_PRESENTATION_PRIMITIVE_MISSING` を固定する。これは実装着手の
+前提であり、I3-A以降のadapter実装はこの契約を再解釈してはならない。
+
 ## 提案する内部構造
 
 1. 入力解決: View/Style/Theme/Detail/Layout/Contextの型・固定参照を検査し、source selectionを一度だけ決定。

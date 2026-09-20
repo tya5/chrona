@@ -11,18 +11,27 @@ inputs:
         - {id: timeline, source: timeline, bounds: resolved-layout, scaleId: primary}
         - {id: timelineAxis, source: timeline-axis, bounds: resolved-layout, scaleId: primary}
       rows: {source: resolved-view-group-order, bounds: resolved-layout}
+      primitives:
+        required: [title-text, axis-band, axis-label, tick, comparison-mark, item-label]
+        ownership: resolved-scene-geometry
     - id: review
       slots:
         - {id: title, source: title, bounds: resolved-layout}
         - {id: reviewTimeline, source: timeline, bounds: resolved-layout, scaleId: primary}
         - {id: reviewAxis, source: timeline-axis, bounds: resolved-layout, scaleId: primary}
       rows: {source: resolved-view-group-order, bounds: resolved-layout}
+      primitives:
+        required: [title-text, axis-band, axis-label, tick, comparison-mark, item-label]
+        ownership: resolved-scene-geometry
     - id: minimal
       slots:
         - {id: title, source: title, bounds: resolved-layout}
         - {id: minimalTimeline, source: timeline, bounds: resolved-layout, scaleId: primary}
         - {id: minimalAxis, source: timeline-axis, bounds: resolved-layout, scaleId: primary}
       rows: {source: resolved-view-group-order, bounds: resolved-layout}
+      primitives:
+        required: [title-text, axis-band, axis-label, tick, comparison-mark, item-label]
+        ownership: resolved-scene-geometry
   laneTracks:
     source: stable-lane-stack
     bounds: resolved-scene-geometry
@@ -31,3 +40,5 @@ invariants:
   - adapters-receive-completed-scene-only
   - slot-row-track-bounds-are-not-authoring-data
   - shared-scale-slots-have-equal-normalized-date-position
+  - surface-adapter-selects-completed-primitives-only
+  - missing-surface-or-primitive-is-a-stable-diagnostic

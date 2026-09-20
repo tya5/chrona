@@ -17,7 +17,11 @@ for surface in surfaces.values():
     assert timeline["scaleId"] == axis["scaleId"] == "primary"
     assert all(slot["bounds"] == "resolved-layout" for slot in slots.values())
     assert surface["rows"]["bounds"] == "resolved-layout"
+    assert surface["primitives"]["ownership"] == "resolved-scene-geometry"
+    assert surface["primitives"]["required"] == ["title-text", "axis-band", "axis-label", "tick", "comparison-mark", "item-label"]
 assert case["inputs"]["laneTracks"]["bounds"] == "resolved-scene-geometry"
 assert set(case["inputs"]["laneTracks"]["surfaces"]) == {"row-aligned", "independent-lane-track"}
 assert "adapters-receive-completed-scene-only" in case["invariants"]
+assert "surface-adapter-selects-completed-primitives-only" in case["invariants"]
+assert "missing-surface-or-primitive-is-a-stable-diagnostic" in case["invariants"]
 print("presentation-scene-input derived fixture valid")
