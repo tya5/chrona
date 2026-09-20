@@ -33,7 +33,7 @@ evidence is present, not that a later product release is complete.
 | M20 | Complete | Constraint solver and slot-based review rendering, M20 final review, conformance, and 90 tests. | None. |
 | M21 | Complete | Generic calendar/table/relation/annotation primitives, M21 final review, conformance, and 91 tests. | None. |
 | M22 | Complete | D24 and every discovered addendum preceded implementation. I24-1 is at `f39e25e`, I24-2 at `7915501`, I24-3 at `fac5fb8`, and I24-4 at `9bf3595`; 239 tests, full conformance, matrix closure, and five regenerated ASTER artifacts pass. | None. |
-| M23 | Design complete; implementation not started | D23 profile schema, fixture, completed Layout/Scene boundary, and design review close the reference-quality legend, group detail, observation, and milestone contracts without changing semantic authority. | M23 implementation, visual acceptance, and release review. |
+| M23 | Implementation and visual acceptance complete; final review pending | D23 and its Preset addendum preceded implementation; I23 provides generic validation and Scene/SVG primitives; A23 provides reproducible Controller Z SVG/PNG evidence with zero raster overflow and 246 passing tests. | M23 final release/reuse review. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning

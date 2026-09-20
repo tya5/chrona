@@ -13,8 +13,8 @@ adding scheduling semantics.
 | Step | Deliverable | Gate |
 |---|---|---|
 | D23 | Profile schema/fixture, completed `28-review-detail-profile.md`, Layout/Scene input contract, and design review | Complete; `m23-review-detail-design-review-2026-09-20.md` authorizes I23 after publication. |
-| I23 | Generic parser/validator, deterministic slot allocation and SVG primitives | No title/preset branches; source metadata tests. |
-| A23 | Controller Z detail resource and visual comparison against the supplied reference | raster review, conformance, unit tests, and output reproducibility. |
+| I23 | Generic parser/validator, deterministic slot allocation and SVG primitives | Complete; no title/preset branches, with semantic, source metadata, overflow, and compatibility tests. |
+| A23 | Controller Z detail resource and visual comparison against the supplied reference | Complete; zero raster overflow, exact SVG reproduction, full conformance, and visual acceptance review. |
 
 The Detail Profile is owned by Presentation. Project remains the owner of plan and
 relations; Actual Set remains the owner of observations that have been reconciled as

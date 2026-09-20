@@ -1,0 +1,34 @@
+version: chrona/review-detail-profile/v0.1
+id: controller-z-review-detail
+body:
+  groupDetails:
+    - groupId: fw-team
+      label: Firmware
+      description: Architecture, firmware delivery, and silicon bring-up.
+    - groupId: validation-team
+      label: System Validation
+      description: Hardware readiness, performance, and qualification evidence.
+    - groupId: factory-team
+      label: Product Engineering
+      description: Production validation and release readiness.
+  milestones: [evb-arrival, ga]
+  observations:
+    columns:
+      - {id: area, label: Area}
+      - {id: observation, label: Observation}
+      - {id: disposition, label: Disposition}
+    rows:
+      - id: example-readiness
+        source: synthetic-example-record-CZ-001
+        emphasis: attention
+        cells:
+          area: Integration
+          observation: Evidence open.
+          disposition: Review
+      - id: example-release
+        source: synthetic-example-record-CZ-002
+        emphasis: normal
+        cells:
+          area: Release
+          observation: Criteria recorded.
+          disposition: Recorded
