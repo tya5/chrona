@@ -1705,6 +1705,9 @@
                 "center",
                 "end"
               ]
+            },
+            "comparisonMode": {
+              "enum": ["stacked", "overlaid", "baseline-and-actual"]
             }
           },
           "description": "Sizes belong to Theme; band placement belongs to Layout."
