@@ -139,10 +139,16 @@ body:
     actual: {fill: green-500}
 ```
 
-`values` declares typed concrete tokens and `roles` binds visual-role properties only to
-declared token names. This is the sole v0.1 persistent syntax; the older `tokens` map is
-not valid input. A Theme cannot introduce a semantic role, and an unbound or undefined
-role/token is a diagnostic.
+`values` declares typed concrete tokens, `roles` binds visual-role properties, and the
+optional `metrics` map binds closed semantic metric names to number tokens. This is the
+sole v0.1 persistent syntax; the older `tokens` map is not valid input. A Theme cannot
+introduce a semantic role or metric contract, and an unbound or undefined role/token is
+a diagnostic.
+
+Source adapters use metric bindings such as `text.body.size`, `timeline.row.minBlockSize`,
+and `timeline.mark.gap` while measuring and composing one source. Layout Profile distance
+fields reference the same reusable number tokens directly. Metric names never select facts
+or place source slots; they replace renderer defaults for source-internal visual geometry.
 
 ### 5.2 Tokens
 

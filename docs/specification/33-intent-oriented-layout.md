@@ -143,6 +143,26 @@ resolved profile diagnose.
 
 ## 8. Deterministic resolution
 
+### 8.1 Source measurement and composition boundary
+
+Each closed presentation source has one adapter with two pure operations. `measure`
+receives the resolved source value, resolved Theme, declared font metrics, locale, and an
+optional available inline bound, and returns min/preferred/max logical sizes plus available
+baselines. `compose` receives the same closed inputs and exactly one resolved Layout
+Manifest rectangle and emits source-linked Scene primitives inside it.
+
+Source adapters may read View-owned semantic modes and Theme `metrics` bindings. They may
+not read Layout YAML, resize or move their slot, allocate peer slots, or supply fallback
+coordinates. Every author-tunable source-internal distance is a Theme number token reached
+through a closed semantic metric name. A missing binding or non-number token diagnoses;
+there is no renderer default table. Layout source measurements are collected once, frozen,
+and reused by arrangement and Scene composition so the two passes cannot disagree.
+
+The initial metric contract is namespaced by source/component (`text.*`, `table.*`,
+`timeline.*`, `axis.*`, `legend.*`, `notes.*`). The adapter owns the closed key set and
+rejects unknown keys in its namespace. View owns grouping, comparison, visibility, and
+wording choices; Theme metrics own only concrete visual quantities.
+
 Resolution uses the following ordered passes:
 
 1. validate resource shape and immutable references;

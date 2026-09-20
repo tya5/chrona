@@ -103,6 +103,8 @@ Deliver:
 - reusable spacing tokens in Theme fixtures;
 - measured presentation sources passed once to the new engine;
 - Scene construction from resolved Layout Manifest slots;
+- one measure/compose adapter per source, with source-internal quantities resolved from
+  closed Theme metric bindings and no renderer default table;
 - CLI removal of `--presentation-settings` and any Preset/settings fallback;
 - delete Presentation Preset/Settings layout resolution, v0.1 Layout schema/runtime,
   named canvas/margin/density lookup, insertion-index allocation, and obsolete tests;
@@ -168,4 +170,3 @@ is required:
 - a second persisted resolved-settings contract;
 - renderer-specific recovery or undeclared host measurement;
 - retention of an old path for compatibility rather than a retained product semantic.
-
