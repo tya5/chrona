@@ -11,7 +11,7 @@ from chrona.scheduler import schedule
 from chrona.validation import validate_project
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = ROOT / "timeline-design" / "docs" / "fixtures"
+FIXTURES = ROOT / "conformance"
 
 
 def _manifest():

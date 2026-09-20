@@ -32,7 +32,7 @@ def resolve_layout_profile(profile: dict[str, Any], available_sources: set[str])
         raise ValueError("E_LAYOUT_PROFILE_REQUIRED")
     required={"version","id","canvas","regions","slots","constraints"}
     if not required <= set(profile) or set(profile)-required-{"surface"}: raise ValueError("E_LAYOUT_PROFILE_SHAPE")
-    schema_path=Path(__file__).resolve().parents[2]/"timeline-design/docs/schemas/layout-profile-v0.1.schema.yaml"
+    schema_path=Path(__file__).resolve().parents[2]/"schemas/layout-profile-v0.1.schema.yaml"
     if list(jsonschema.Draft202012Validator(yaml.safe_load(schema_path.read_text())).iter_errors(profile)):
         raise ValueError("E_LAYOUT_PROFILE_SCHEMA")
     canvas=profile["canvas"]

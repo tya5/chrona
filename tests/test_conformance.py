@@ -9,7 +9,7 @@ from chrona.scheduler import schedule
 
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = ROOT / "timeline-design" / "docs" / "fixtures" / "conformance-v0.1.yaml"
+FIXTURE = ROOT / "conformance" / "conformance-v0.1.yaml"
 
 
 def _date(value):

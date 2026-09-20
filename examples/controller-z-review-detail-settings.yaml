@@ -3,7 +3,7 @@ id: controller-z-review-detail
 base:
   id: executive-v0.2
   revision: design-fixture
-  contentIdentity: sha256:d58c5b6040dfbf8ee947f2a829512488245c064be4f3284f154bec04dafb8d83
+  contentIdentity: sha256:dbc5963341fd420ccbbb77a945749207ff98e2afa9a94b3c3c2c44d247958ddb
 overrides:
   context:
     viewport: {height: 1200}

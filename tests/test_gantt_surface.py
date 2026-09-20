@@ -170,10 +170,10 @@ def test_v2_theme_mutation_changes_gantt_output(tmp_path):
 
 def test_executive_resources_match_owning_schemas():
     store = {}
-    for path in (ROOT/'timeline-design/docs/schemas').glob('*.schema.yaml'):
+    for path in (ROOT/'schemas').glob('*.schema.yaml'):
         schema = yaml.safe_load(path.read_text()); store[schema['$id']] = schema
     resources = fixture()
     for name, value in [('view', resources[2]), ('theme', resources[4]), ('layout-profile', resources[5])]:
-        schema = yaml.safe_load((ROOT/f'timeline-design/docs/schemas/{name}-v0.1.schema.yaml').read_text())
+        schema = yaml.safe_load((ROOT/f'schemas/{name}-v0.1.schema.yaml').read_text())
         validator = Draft202012Validator(schema, resolver=RefResolver.from_schema(schema, store=store))
         assert not list(validator.iter_errors(value))

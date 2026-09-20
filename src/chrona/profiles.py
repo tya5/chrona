@@ -11,8 +11,8 @@ from .diagnostics import Diagnostic
 from .revision_store import LocalSnapshotReader, SnapshotReadError
 
 ROOT = Path(__file__).resolve().parents[2]
-PROFILE_SCHEMA = ROOT / "timeline-design" / "docs" / "schemas" / "profile-v0.1.schema.yaml"
-RESOURCE_SCHEMA = ROOT / "timeline-design" / "docs" / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml"
+PROFILE_SCHEMA = ROOT / "schemas" / "profile-v0.1.schema.yaml"
+RESOURCE_SCHEMA = ROOT / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml"
 PACKAGE_ID = "implementation-delivery"
 DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}
 ACTOR_PROFILES = {"implementation-delivery.person", "implementation-delivery.team"}

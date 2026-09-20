@@ -49,12 +49,12 @@ def test_detail_views_partition_project_and_master_covers_everything():
 
 
 def test_resources_match_existing_schemas():
-    schemas = [yaml.safe_load(path.read_text()) for path in (ROOT/'timeline-design/docs/schemas').glob('*.schema.yaml')]
+    schemas = [yaml.safe_load(path.read_text()) for path in (ROOT/'schemas').glob('*.schema.yaml')]
     registry = Registry().with_resources((s['$id'], Resource.from_contents(s)) for s in schemas)
     for filename, kind in [('actual.yaml', 'actual-set'), ('style.yaml', 'style'), ('theme.yaml', 'theme'), ('profile.yaml', 'layout-profile')]:
-        schema = yaml.safe_load((ROOT/f'timeline-design/docs/schemas/{kind}-v0.1.schema.yaml').read_text())
+        schema = yaml.safe_load((ROOT/f'schemas/{kind}-v0.1.schema.yaml').read_text())
         Draft202012Validator(schema, registry=registry).validate(load(filename))
-    schema = yaml.safe_load((ROOT/'timeline-design/docs/schemas/view-v0.1.schema.yaml').read_text())
+    schema = yaml.safe_load((ROOT/'schemas/view-v0.1.schema.yaml').read_text())
     for slide in load('manifest.yaml')['slides']:
         Draft202012Validator(schema, registry=registry).validate(load(slide['view']))
         resolve_presentation_settings(load(slide['settings']))

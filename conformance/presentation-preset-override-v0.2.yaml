@@ -1,0 +1,25 @@
+version: chrona/presentation-preset/v0.2
+id: japanese-roomy-review
+base:
+  id: executive-v0.2
+  revision: design-fixture
+  contentIdentity: sha256:dbc5963341fd420ccbbb77a945749207ff98e2afa9a94b3c3c2c44d247958ddb
+overrides:
+  context:
+    locale: ja-JP
+  theme:
+    bar: {radius: 0}
+    typography:
+      body: {size: 21}
+  layout:
+    cellPadding: {left: 16, right: 16}
+    routing: {bendPenalty: 24}
+  detail:
+    groupLabel: 担当
+    missingActualLabel: 実績未報告
+    legend:
+      - {role: planned, label: 計画}
+      - {role: actual, label: 実績}
+      - {role: variance, label: 完了日の差}
+      - {role: milestone, label: マイルストーン}
+      - {role: dependency, label: 依存関係}

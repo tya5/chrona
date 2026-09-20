@@ -20,7 +20,7 @@ from .temporal_datetime import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_PATH = ROOT / "timeline-design" / "docs" / "schemas" / "project-v0.2.schema.yaml"
+SCHEMA_PATH = ROOT / "schemas" / "project-v0.2.schema.yaml"
 
 
 @dataclass

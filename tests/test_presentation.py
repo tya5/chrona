@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def fixture(name):
-    path = ROOT / "timeline-design" / "docs" / "fixtures" / name
+    path = ROOT / "conformance" / name
     return yaml.safe_load(path.read_text()) if path.suffix in {".yaml", ".yml"} else json.loads(path.read_text())
 
 

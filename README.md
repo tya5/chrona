@@ -65,11 +65,11 @@ project data and are never used to schedule or validate a project.
 Try the included controller example:
 
 ```bash
-chrona render timeline-design/docs/fixtures/controller-x.yaml --output controller-x.svg
+chrona render conformance/controller-x.yaml --output controller-x.svg
 ```
 
-The checked-in [controller timeline SVG](timeline-design/docs/fixtures/controller-x.svg)
-is generated from [`controller-x.yaml`](timeline-design/docs/fixtures/controller-x.yaml).
+The checked-in [controller timeline SVG](conformance/controller-x.svg)
+is generated from [`controller-x.yaml`](conformance/controller-x.yaml).
 
 For a broader semiconductor bring-up example with fixed and scheduled spans, working-day
 exceptions, endpoint dependencies, parallel qualification work, gates, entities, and
@@ -119,14 +119,16 @@ that path additionally requires node with `sharp`.
 
 ## Specification
 
-The current specification set is maintained in [`timeline-design/`](timeline-design/).
-Git history and versioned manifests preserve earlier candidates. Start with:
+The current specification set is maintained in [`docs/specification/`](docs/specification/).
+Public schemas live in [`schemas/`](schemas/) and executable compatibility fixtures in
+[`conformance/`](conformance/). Git history and versioned manifests preserve earlier
+candidates. Start with:
 
-1. [`timeline-design/docs/specification/00-vision.md`](timeline-design/docs/specification/00-vision.md)
-2. [`timeline-design/docs/specification/03-temporal-model.md`](timeline-design/docs/specification/03-temporal-model.md)
-3. [`timeline-design/docs/specification/04-scheduling-model.md`](timeline-design/docs/specification/04-scheduling-model.md)
-4. [`timeline-design/docs/specification/05-project-format.md`](timeline-design/docs/specification/05-project-format.md)
-5. [`timeline-design/docs/specification/17-implementation-delivery-profile.md`](timeline-design/docs/specification/17-implementation-delivery-profile.md)
+1. [`docs/specification/00-vision.md`](docs/specification/00-vision.md)
+2. [`docs/specification/03-temporal-model.md`](docs/specification/03-temporal-model.md)
+3. [`docs/specification/04-scheduling-model.md`](docs/specification/04-scheduling-model.md)
+4. [`docs/specification/05-project-format.md`](docs/specification/05-project-format.md)
+5. [`docs/specification/17-implementation-delivery-profile.md`](docs/specification/17-implementation-delivery-profile.md)
 
 Core v0.1 is Stable. Implementation discoveries are recorded through diagnostics,
 ADRs, and design-first remediation before implementation changes.

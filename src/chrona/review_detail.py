@@ -12,7 +12,7 @@ from jsonschema import Draft202012Validator
 
 PROFILE_VERSION = "chrona/review-detail-profile/v0.1"
 _ROOT = Path(__file__).resolve().parents[2]
-_SCHEMA = _ROOT / "timeline-design/docs/schemas/review-detail-profile-v0.1.schema.yaml"
+_SCHEMA = _ROOT / "schemas/review-detail-profile-v0.1.schema.yaml"
 _PANEL_SOURCES = {
     "groupDetails": "group-details",
     "milestones": "milestones",

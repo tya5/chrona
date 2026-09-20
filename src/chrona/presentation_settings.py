@@ -16,8 +16,8 @@ class PresentationSettingsError(ValueError):
 
 
 _ROOT = Path(__file__).resolve().parents[2]
-_SCHEMA_DIR = _ROOT / "timeline-design" / "docs" / "schemas"
-_FIXTURE = _ROOT / "timeline-design" / "docs" / "fixtures" / "presentation-settings-executive-v0.2.json"
+_SCHEMA_DIR = _ROOT / "schemas"
+_FIXTURE = _ROOT / "conformance" / "presentation-settings-executive-v0.2.json"
 SETTINGS_VERSION = "chrona/presentation-settings/v0.2"
 PRESET_VERSION = "chrona/presentation-preset/v0.2"
 

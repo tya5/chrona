@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _manifest():
-    return yaml.safe_load((ROOT / "timeline-design/docs/fixtures/successor-release-acceptance-v0.3.yaml").read_text())
+    return yaml.safe_load((ROOT / "conformance/successor-release-acceptance-v0.3.yaml").read_text())
 
 
 def test_successor_release_publishes_only_complete_fixed_evidence_closure():

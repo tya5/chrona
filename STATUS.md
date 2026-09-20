@@ -3,7 +3,7 @@
 ## Scope
 
 This repository has progressed beyond the initial Core checkpoint. The current,
-living specification set is in `timeline-design/`; Git history preserves the earlier
+living specification set is in `docs/specification/`; Git history preserves the earlier
 candidate rather than treating the working tree as an unchanged snapshot.
 
 ## Included
@@ -14,7 +14,7 @@ candidate rather than treating the working tree as an unchanged snapshot.
   scheduler.
 - `src/chrona/render.py`: deterministic SVG projection of resolved placements.
 - `tests/`: executable checks for temporal conformance and scheduling authority.
-- `timeline-design/docs/fixtures/controller-x.yaml`: a rendered semiconductor
+- `conformance/controller-x.yaml`: a rendered semiconductor
   development example, with its derived `controller-x.svg`.
 
 ## Verified in this checkpoint

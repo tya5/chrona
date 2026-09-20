@@ -6,7 +6,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MATRIX = json.loads((ROOT / "timeline-design/docs/fixtures/presentation-setting-consumption-matrix-v0.1.json").read_text())
+MATRIX = json.loads((ROOT / "conformance/presentation-setting-consumption-matrix-v0.1.json").read_text())
 
 
 @pytest.mark.parametrize("row", MATRIX["rows"], ids=lambda row: row["id"])

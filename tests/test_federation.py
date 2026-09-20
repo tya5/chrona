@@ -9,7 +9,7 @@ from chrona.scene import federated_scene_input
 
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = ROOT / "timeline-design" / "docs" / "fixtures" / "federation"
+FIXTURES = ROOT / "conformance" / "federation"
 TRUSTED = {"git+https://example.invalid/firmware.git"}
 
 

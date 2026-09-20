@@ -16,7 +16,7 @@ from .temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_PATH = ROOT / "timeline-design" / "docs" / "schemas" / "project-v0.1.schema.yaml"
+SCHEMA_PATH = ROOT / "schemas" / "project-v0.1.schema.yaml"
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
