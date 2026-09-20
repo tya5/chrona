@@ -1,4 +1,5 @@
 from decimal import Decimal
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -74,3 +75,41 @@ def test_grid_and_distribution_are_deterministic():
     result=decisions(solve_layout(resolved,viewport_inline=1000,viewport_block=100,measurements={"legend":MEASUREMENTS["legend"],"notes":MEASUREMENTS["notes"]}))
     assert result["legend"].inline_size == result["notes"].inline_size == Decimal(492)
     assert result["notes"].inline == Decimal(508)
+
+
+def relative_profile():
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-relative-v0.2.yaml").read_text())
+    theme = {"body": {"values": {
+        "spacing.l": {"type": "number", "value": 24},
+        "spacing.m": {"type": "number", "value": 16},
+    }}}
+    return resolve_layout_profile(raw, available_sources=SOURCES | {"group-details", "observations", "milestones"}, theme=theme)
+
+
+RELATIVE_MEASUREMENTS = {
+    "group-details": m(280, 80),
+    "observations": m(360, 120),
+    "milestones": m(200, 60),
+}
+
+
+def test_axis_specific_barrier_and_parent_anchor_reflow():
+    first = solve_layout(relative_profile(), viewport_inline=1000, viewport_block=500, measurements=RELATIVE_MEASUREMENTS)
+    result = decisions(first)
+    barrier = max(result["group-details"].inline + result["group-details"].inline_size,
+                  result["observations"].inline + result["observations"].inline_size)
+    assert result["milestones"].inline == barrier + 16
+    assert result["milestones"].block + result["milestones"].block_size / 2 == Decimal(250)
+    milestone = next(item for item in first.decisions if item.node_id == "milestones")
+    assert milestone.references == ("barrier:label-end", "parent")
+
+    changed = deepcopy(RELATIVE_MEASUREMENTS)
+    changed["observations"] = m(500, 120)
+    after = decisions(solve_layout(relative_profile(), viewport_inline=1000, viewport_block=500, measurements=changed))
+    assert after["milestones"].inline > result["milestones"].inline
+
+
+def test_relative_manifest_is_deterministic():
+    first = solve_layout(relative_profile(), viewport_inline=1000, viewport_block=500, measurements=RELATIVE_MEASUREMENTS)
+    second = solve_layout(relative_profile(), viewport_inline=1000, viewport_block=500, measurements=RELATIVE_MEASUREMENTS)
+    assert first.canonical_bytes() == second.canonical_bytes()

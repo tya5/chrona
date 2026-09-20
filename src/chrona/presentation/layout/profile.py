@@ -144,9 +144,6 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
             parent = index.get(parents[node_id] or "")
             if parent is None or parent["kind"] != "overlay":
                 raise LayoutError("E_LAYOUT_REFERENCE_SCOPE", path + "/anchor", node_id)
-            anchor = node["anchor"]
-            if "gap" in anchor and anchor["self"] == {"inline": "center", "block": "center"} and anchor["target"]["inline"] == "center" and anchor["target"]["block"] == "center":
-                raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", path + "/anchor/gap", node_id)
         for name in ("gap", "padding", "itemMinInlineSize"):
             if name not in node:
                 continue
@@ -157,7 +154,12 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
             else:
                 key = f"{path}/{name}"; distances[key] = _distance(value, theme_values, key, literals)
         if "anchor" in node and "gap" in node["anchor"]:
-            key = f"{path}/anchor/gap"; distances[key] = _distance(node["anchor"]["gap"], theme_values, key, literals)
+            anchor = node["anchor"]
+            for axis, value in anchor["gap"].items():
+                key = f"{path}/anchor/gap/{axis}"
+                distances[key] = _distance(value, theme_values, key, literals)
+                if anchor["self"][axis] == "center" and anchor["target"][axis]["point"] == "center":
+                    raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", key, node_id)
         if kind == "grid":
             if any(isinstance(track, dict) and "aspectRatio" in track for track in (*node["columnTracks"], *node["rowTracks"])):
                 raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", path, node_id)
@@ -178,13 +180,47 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                 anchor = child.get("anchor")
                 if not anchor:
                     continue
-                reference = anchor["target"]["ref"]
-                if reference.startswith("node:") and reference[5:] not in descendants:
-                    raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", path + "/children", child["id"])
-                if reference.startswith("guide:") and reference[6:] not in guides:
-                    raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", path + "/children", child["id"])
-                if reference.startswith("barrier:") and reference[8:] not in barriers:
-                    raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", path + "/children", child["id"])
+                for axis in ("inline", "block"):
+                    reference = anchor["target"][axis]["ref"]
+                    target_path = path + f"/children/{child['id']}/anchor/target/{axis}"
+                    if reference.startswith("node:") and reference[5:] not in descendants:
+                        raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", target_path, child["id"])
+                    if reference.startswith("guide:"):
+                        guide = guides.get(reference[6:])
+                        if guide is None:
+                            raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", target_path, child["id"])
+                        if guide["axis"] != axis:
+                            raise LayoutError("E_LAYOUT_REFERENCE_SCOPE", target_path, child["id"])
+                    if reference.startswith("barrier:"):
+                        barrier = barriers.get(reference[8:])
+                        if barrier is None:
+                            raise LayoutError("E_LAYOUT_REFERENCE_UNKNOWN", target_path, child["id"])
+                        if barrier["axis"] != axis:
+                            raise LayoutError("E_LAYOUT_REFERENCE_SCOPE", target_path, child["id"])
+
+            dependencies: dict[str, set[str]] = {child["id"]: set() for child in node["children"]}
+            for child in node["children"]:
+                for target in child.get("anchor", {}).get("target", {}).values():
+                    reference = target["ref"]
+                    if reference.startswith("node:"):
+                        dependencies[child["id"]].add(reference[5:])
+                    elif reference.startswith("barrier:"):
+                        dependencies[child["id"]].update(barriers[reference[8:]]["members"])
+
+            visiting: set[str] = set()
+            visited: set[str] = set()
+            def check_cycle(node_name: str) -> None:
+                if node_name in visiting:
+                    raise LayoutError("E_LAYOUT_CONSTRAINT_CYCLE", path, node_name)
+                if node_name in visited:
+                    return
+                visiting.add(node_name)
+                for dependency in dependencies[node_name]:
+                    check_cycle(dependency)
+                visiting.remove(node_name)
+                visited.add(node_name)
+            for child_id in sorted(dependencies):
+                check_cycle(child_id)
         for offset, child in enumerate(node.get("children", ())):
             visit(child, f"{path}/children/{offset}")
 

@@ -152,9 +152,9 @@ class _Arranger:
         self.profile, self.measurements = profile, measurements
         self.decisions: list[LayoutDecision] = []
 
-    def arrange(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
+    def arrange(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
         kind, node_id = str(node["kind"]), str(node["id"])
-        self.decisions.append(LayoutDecision(node_id, kind, rect, node.get("source"), node.get("place", {})))
+        self.decisions.append(LayoutDecision(node_id, kind, rect, node.get("source"), node.get("place", {}), references))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)
             if node["overflow"] == "diagnose" and (rect.inline_size < measure.min_inline or rect.block_size < measure.min_block):
@@ -264,19 +264,126 @@ class _Arranger:
             cursor_b+=line_height+gap
 
     def _overlay(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
-        inline, block, inline_size, block_size=self._content(node,path,rect)
-        for i,child in enumerate(node["children"]):
-            if "anchor" in child: continue
-            child_path=f"{path}/children/{i}"; measure=_measure_node(child,child_path,self.measurements,self.profile); place=child.get("place",{})
-            _, iw, fw=_spec_base(child["inlineSize"],axis="inline",measurement=measure,profile=self.profile,path=child_path+"/inlineSize")
-            _, bh, fb=_spec_base(child["blockSize"],axis="block",measurement=measure,profile=self.profile,path=child_path+"/blockSize")
-            ci=inline_size if fw else (iw or inline_size); cb=block_size if fb else (bh or block_size)
-            si,ci=_cross_position(place.get("inline","start"),inline,inline_size,ci,place.get("safety","strict")); sb,cb=_cross_position(place.get("block","start"),block,block_size,cb,place.get("safety","strict"))
-            self.arrange(child,child_path,Rect(si,sb,ci,cb))
+        inline, block, inline_size, block_size = self._content(node, path, rect)
+        content = Rect(inline, block, inline_size, block_size)
+        children = list(node["children"])
+        indexed = {str(child["id"]): (index, child) for index, child in enumerate(children)}
+        bounds: dict[str, Rect] = {}
+
+        def child_size(child: Mapping[str, Any], child_path: str) -> tuple[Decimal, Decimal]:
+            measure = _measure_node(child, child_path, self.measurements, self.profile)
+            _, iw, inline_flex = _spec_base(child["inlineSize"], axis="inline", measurement=measure, profile=self.profile, path=child_path + "/inlineSize")
+            _, bh, block_flex = _spec_base(child["blockSize"], axis="block", measurement=measure, profile=self.profile, path=child_path + "/blockSize")
+            used_inline = inline_size if inline_flex else (iw if iw is not None else inline_size)
+            used_block = block_size if block_flex else (bh if bh is not None else block_size)
+            if isinstance(child["inlineSize"], dict) and "aspectRatio" in child["inlineSize"]:
+                used_inline = used_block * _d(child["inlineSize"]["aspectRatio"])
+            if isinstance(child["blockSize"], dict) and "aspectRatio" in child["blockSize"]:
+                used_block = used_inline / _d(child["blockSize"]["aspectRatio"])
+            return used_inline, used_block
+
+        for child_id, (index, child) in indexed.items():
+            if "anchor" in child:
+                continue
+            child_path = f"{path}/children/{index}"
+            used_inline, used_block = child_size(child, child_path)
+            place = child.get("place", {})
+            start_inline, used_inline = _cross_position(place.get("inline", "start"), inline, inline_size, used_inline, place.get("safety", "strict"))
+            start_block, used_block = _cross_position(place.get("block", "start"), block, block_size, used_block, place.get("safety", "strict"))
+            child_rect = Rect(start_inline, start_block, used_inline, used_block)
+            bounds[child_id] = child_rect
+            self.arrange(child, child_path, child_rect)
+
+        guides: dict[str, tuple[str, Decimal]] = {}
+        for guide_id, guide in node.get("guides", {}).items():
+            axis = guide["axis"]
+            origin, extent = (inline, inline_size) if axis == "inline" else (block, block_size)
+            at = guide["at"]
+            if at == "start": fraction = ZERO
+            elif at == "center": fraction = Decimal("0.5")
+            elif at == "end": fraction = Decimal(1)
+            else:
+                numerator, denominator = at.split("/")
+                fraction = Decimal(numerator) / Decimal(denominator)
+            guides[guide_id] = (axis, origin + extent * fraction)
+
+        barriers = node.get("barriers", {})
+
+        def point(rectangle: Rect, axis: str, name: str, child_id: str | None = None) -> Decimal:
+            start = rectangle.inline if axis == "inline" else rectangle.block
+            size = rectangle.inline_size if axis == "inline" else rectangle.block_size
+            if name == "start": return start
+            if name == "center": return start + size / 2
+            if name == "end": return start + size
+            if axis != "block" or child_id is None:
+                raise LayoutError("E_LAYOUT_BASELINE_UNAVAILABLE", path, child_id)
+            measure = _measure_node(indexed[child_id][1], f"{path}/children/{indexed[child_id][0]}", self.measurements, self.profile)
+            baseline = measure.first_baseline if name == "first-baseline" else measure.last_baseline
+            if baseline is None:
+                raise LayoutError("E_LAYOUT_BASELINE_UNAVAILABLE", path, child_id)
+            return start + baseline
+
+        def barrier_coordinate(barrier_id: str) -> Decimal | None:
+            barrier = barriers[barrier_id]
+            if any(member not in bounds for member in barrier["members"]):
+                return None
+            values = [point(bounds[member], barrier["axis"], barrier["edge"], member) for member in barrier["members"]]
+            return min(values) if barrier["edge"] == "start" else max(values)
+
+        def target_coordinate(target: Mapping[str, Any], axis: str) -> Decimal | None:
+            reference, target_point = target["ref"], target["point"]
+            if reference == "parent":
+                return point(content, axis, target_point)
+            if reference.startswith("node:"):
+                target_id = reference[5:]
+                return None if target_id not in bounds else point(bounds[target_id], axis, target_point, target_id)
+            if reference.startswith("guide:"):
+                return guides[reference[6:]][1]
+            return barrier_coordinate(reference[8:])
+
+        pending = {child_id for child_id, (_, child) in indexed.items() if "anchor" in child}
+        while pending:
+            progressed = False
+            for child_id in sorted(pending):
+                index, child = indexed[child_id]
+                child_path = f"{path}/children/{index}"
+                anchor = child["anchor"]
+                target_inline = target_coordinate(anchor["target"]["inline"], "inline")
+                target_block = target_coordinate(anchor["target"]["block"], "block")
+                if target_inline is None or target_block is None:
+                    continue
+                used_inline, used_block = child_size(child, child_path)
+                own = Rect(ZERO, ZERO, used_inline, used_block)
+                coordinates = {"inline": target_inline, "block": target_block}
+                for axis in ("inline", "block"):
+                    target = anchor["target"][axis]
+                    gap = _distance(self.profile, f"{child_path}/anchor/gap/{axis}") if axis in anchor.get("gap", {}) else ZERO
+                    if gap:
+                        target_name = target["point"]
+                        if target_name == "start": coordinates[axis] -= gap
+                        elif target_name == "end": coordinates[axis] += gap
+                        elif anchor["self"][axis] == "end": coordinates[axis] -= gap
+                        else: coordinates[axis] += gap
+                    coordinates[axis] -= point(own, axis, anchor["self"][axis], child_id)
+                child_rect = Rect(coordinates["inline"], coordinates["block"], used_inline, used_block)
+                safety = child.get("place", {}).get("safety", "strict")
+                outside = (child_rect.inline < inline or child_rect.block < block or child_rect.inline + used_inline > inline + inline_size or child_rect.block + used_block > block + block_size)
+                if outside and safety == "strict":
+                    raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", child_path, child_id)
+                if outside and safety == "safe":
+                    child_rect = Rect(min(max(child_rect.inline, inline), inline + inline_size - used_inline), min(max(child_rect.block, block), block + block_size - used_block), used_inline, used_block)
+                references = tuple(anchor["target"][axis]["ref"] for axis in ("inline", "block"))
+                bounds[child_id] = child_rect
+                self.arrange(child, child_path, child_rect, references)
+                pending.remove(child_id)
+                progressed = True
+                break
+            if not progressed:
+                raise LayoutError("E_LAYOUT_CONSTRAINT_CYCLE", path, sorted(pending)[0])
 
 
 def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float | Decimal, viewport_block: int | float | Decimal, measurements: Mapping[str, Measurement]) -> LayoutManifest:
-    """Measure and arrange normal-flow nodes; relative overlay children are I24-3."""
+    """Measure and arrange normal-flow and bounded relative layout nodes."""
     viewport = Rect(ZERO, ZERO, _d(viewport_inline), _d(viewport_block))
     if viewport.inline_size <= ZERO or viewport.block_size <= ZERO:
         raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")

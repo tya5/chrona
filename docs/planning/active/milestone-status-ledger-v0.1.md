@@ -34,7 +34,7 @@ evidence is present, not that a later product release is complete.
 | M21 | Complete | Generic calendar/table/relation/annotation primitives, M21 final review, conformance, and 91 tests. | None. |
 | M22 | Complete | D24 and every discovered addendum preceded implementation. I24-1 is at `f39e25e`, I24-2 at `7915501`, I24-3 at `fac5fb8`, and I24-4 at `9bf3595`; 239 tests, full conformance, matrix closure, and five regenerated ASTER artifacts pass. | None. |
 | M23 | Complete | D23 and both design addenda preceded affected work; I23 generic validation and Scene/SVG primitives, A23 reproducible Controller Z SVG/PNG with zero raster overflow, 246 tests, full conformance, and final reuse/release review pass. | None. |
-| M24 | I24-1–I24-2 complete; I24-3 authorized | Profile resolution at `fcabf30`; normal flow at `df2844e`; per-axis target design addendum closes the guide/barrier ambiguity before relative-placement code. | Publish the addendum, then implement anchors/guides/barriers. |
+| M24 | I24-1–I24-3 complete; I24-4 authorized | Profile resolution at `fcabf30`; normal flow at `df2844e`; per-axis design correction at `cc60472`; anchors, guides, barriers, cycle diagnostics, and deterministic relative reflow pass 274 tests and full conformance. | Replace the product path atomically and delete superseded layout authority. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning

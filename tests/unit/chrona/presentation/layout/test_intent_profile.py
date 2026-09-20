@@ -91,3 +91,27 @@ def test_unknown_override_and_base_cycle_are_rejected():
     cyclic = deepcopy(override); cyclic["id"] = "executive-review"; cyclic["extends"]["id"] = "executive-review"
     with pytest.raises(LayoutError, match="E_LAYOUT_BASE_CYCLE"):
         resolve_layout_profile(cyclic, available_sources=SOURCES, theme=theme(), bases={"executive-review": LayoutBase(cyclic, "snapshot-42", identity)})
+
+
+def test_relative_references_enforce_axis_scope_and_cycles():
+    value = fixture("layout-profile-relative-v0.2.yaml")
+    value["root"]["children"][2]["anchor"]["target"]["block"] = {
+        "ref": "barrier:label-end", "point": "end",
+    }
+    with pytest.raises(LayoutError, match="E_LAYOUT_REFERENCE_SCOPE"):
+        resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
+
+    value = fixture("layout-profile-relative-v0.2.yaml")
+    value["root"]["barriers"]["label-end"]["members"] = ["milestones"]
+    with pytest.raises(LayoutError, match="E_LAYOUT_CONSTRAINT_CYCLE"):
+        resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
+
+
+def test_center_to_center_axis_gap_is_rejected():
+    value = fixture("layout-profile-relative-v0.2.yaml")
+    anchor = value["root"]["children"][2]["anchor"]
+    anchor["self"]["block"] = "center"
+    anchor["target"]["block"] = {"ref": "parent", "point": "center"}
+    anchor["gap"]["block"] = {"token": "spacing.s"}
+    with pytest.raises(LayoutError, match="E_LAYOUT_CONSTRAINT_CONTRADICTORY"):
+        resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
