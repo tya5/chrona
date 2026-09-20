@@ -16,6 +16,7 @@ SCHEMAS = (
     "presentation-preset-v0.2.schema.json",
     "layout-profile-v0.1.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
+    "render-context-v0.3.schema.yaml",
 )
 
 

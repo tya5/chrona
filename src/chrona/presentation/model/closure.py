@@ -4,8 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+import jsonschema
 import yaml
 
+from chrona.resources import schema_resource
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 
 
@@ -26,6 +28,11 @@ class ClosureResource:
 
 def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReader) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
     context = _load_presentation(reference, reader, "render-context")
+    if context.get("version") == "chrona/presentation/v0.3":
+        resolved_context, resources = _resolve_current_context(context, reader)
+        if any(item.revision != reference["revision"]["token"] for item in resources):
+            raise ClosureError("E_CLOSURE_MIXED_REVISION")
+        return resolved_context, resources
     body = context["body"]
     ordered = (("project", "project"), ("view", "view"), ("style", "style"), ("theme", "theme"), ("sceneProfile", "scene-profile"))
     resources = []
@@ -53,6 +60,43 @@ def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReade
     return context, tuple(resources)
 
 
+def _resolve_current_context(
+    context: dict[str, Any], reader: LocalSnapshotReader
+) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
+    schema = yaml.safe_load(schema_resource("render-context-v0.3.schema.yaml").read_text(encoding="utf-8"))
+    if next(jsonschema.Draft202012Validator(schema).iter_errors(context), None) is not None:
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
+    body = context["body"]
+    ordered = (
+        (body["project"], "project"),
+        (body["view"], "view"),
+        (body["presentationPreset"], "presentation-preset"),
+    )
+    resources = [_load_reference(reference, reader, kind) for reference, kind in ordered]
+    for extension in resources[0].value.get("extensions", []):
+        package_reference = extension.get("resource")
+        if package_reference is None:
+            continue
+        package = _load_reference(package_reference, reader, "profile-package")
+        if package.value.get("packageId") != extension.get("packageId"):
+            raise ClosureError("E_CLOSURE_ID")
+        resources.append(package)
+    optional = (
+        ("actual", "actual-set"),
+        ("summaryProfile", "summary-profile"),
+        ("detailProfile", "review-detail-profile"),
+    )
+    for name, kind in optional:
+        if name in body["inputs"]:
+            resources.append(_load_reference(body["inputs"][name], reader, kind))
+    if len({item.revision for item in resources}) != 1:
+        raise ClosureError("E_CLOSURE_MIXED_REVISION")
+    capabilities = body["target"]["capabilities"]
+    if capabilities != sorted(capabilities):
+        raise ClosureError("E_TARGET_CAPABILITY_ORDER")
+    return context, tuple(resources)
+
+
 def _load_reference(reference: dict[str, Any], reader: LocalSnapshotReader, expected_kind: str) -> ClosureResource:
     if reference.get("kind") != expected_kind:
         raise ClosureError("E_CLOSURE_KIND")
@@ -65,9 +109,17 @@ def _load_reference(reference: dict[str, Any], reader: LocalSnapshotReader, expe
         actual_id = value.get("project", {}).get("id") if isinstance(value, dict) else None
     elif expected_kind == "profile-package":
         actual_id = value.get("packageId") if isinstance(value, dict) else None
+    elif expected_kind == "presentation-preset":
+        if not isinstance(value, dict) or value.get("version") != "chrona/presentation-preset/v0.2":
+            raise ClosureError("E_CLOSURE_KIND")
+        actual_id = value.get("id")
+    elif expected_kind == "review-detail-profile":
+        if not isinstance(value, dict) or value.get("version") != "chrona/review-detail-profile/v0.1":
+            raise ClosureError("E_CLOSURE_KIND")
+        actual_id = value.get("id")
     else:
         actual_id = value.get("id") if isinstance(value, dict) else None
-        if value.get("kind") != expected_kind:
+        if not isinstance(value, dict) or value.get("kind") != expected_kind:
             raise ClosureError("E_CLOSURE_KIND")
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
