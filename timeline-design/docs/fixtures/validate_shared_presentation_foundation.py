@@ -24,6 +24,8 @@ if fixture['labels']['anchorObstaclePolicy'] != 'exclude-own-anchor-from-box-col
     raise SystemExit('annotation box obstacle policy is not explicit')
 if fixture['annotations']['laneOccupancy'] != 'exclude-annotation-boxes':
     raise SystemExit('annotation boxes must not participate in lane occupancy')
+if fixture['lanes']['surface'] != 'row-aligned' or fixture['lanes']['pitchPolicy'] != 'scene-mark-extent-plus-clearance':
+    raise SystemExit('lane surface and pitch ownership are not explicit')
 if not list(Draft202012Validator(schema).iter_errors(invalid)):
     raise SystemExit('invalid fixture unexpectedly passed schema validation')
 print('shared-presentation-foundation fixture valid')
