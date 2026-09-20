@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.3完了・公開済み。設計根拠は仕様30・ADR-0019。  
+**状態:** G1.4完了・公開済み、G1.5実施中。設計根拠は仕様30・ADR-0019。  
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -37,6 +37,13 @@ RefResolver deprecation warnings 2件）。
 `presentation_marks.py`はspan/pointのplanned・actual・baseline・finish-deltaを
 renderer非依存で投影する。span Actualはstart/finishがともに観測された場合だけを
 受理し、片端をplannedから補わない。差分は符号を保ち、zero表示も明示policyである。
+
+### G1.4 完了記録
+
+`PresentationScene`がView windowからaxis interval・tick・comparison markを構築し、
+table/timeline SVG adapterはその結果を座標とSVGへ変換する。Scene inputのaxisは半開区間を
+そのまま出力し、旧rendererが落としていた末尾月を補正した。実績の片端欠損はactual markを
+作らず、planned endpointで補わない。ASTER基準SVGを再生成し、148 tests passed。
 
 ## G1.1 の契約
 
