@@ -50,3 +50,4 @@ def test_adapter_receives_common_scene_when_resolved_settings_are_supplied():
     theme = {"body": {"roles": {}, "values": {}}}
     svg = render_table_timeline_svg("Roadmap", projection, project, view, theme, {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}, {}, settings=settings)
     assert 'data-presentation-scene="v0.1"' in svg
+    assert 'data-axis-scale-id="primary"' in svg
