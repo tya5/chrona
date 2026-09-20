@@ -1,7 +1,7 @@
 # G1–G4 Integration Remediation Plan
 
-Status: Proposed. Implementation correction has not started. Review target revision:
-`82e59f6e13fde8f6582f538da24b7523854c2cde`.
+Status: Complete. D0–D3, I1–I3, and V1 acceptance are implemented and validated.
+Original review target revision: `82e59f6e13fde8f6582f538da24b7523854c2cde`.
 Basis: [cross-cutting review](../reviews/g1-g4-integration-audit-2026-09-20.md).
 This document corrects the former G1–G4 completion judgment; it is not a feature
 expansion plan.
@@ -151,3 +151,14 @@ This plan excludes a complete rewrite, free-coordinate DSL, per-sample renderer,
 arbitrary extension framework, and new temporal model. Estimate precisely only after
 D3 closes the change surface. The main current risk is API and golden-output churn
 while ownership moves into Scene.
+
+## Final execution record
+
+The corrective sequence completed without widening the exclusions above. Design parent
+`666007acac8602350db5cbb633c017b35a0d7d2b` closes the last manifest shape;
+implementation parent `b32b1237ee60a0da892372acc150009dc69c91b0` completes the
+Scene DTO, all three adapter surfaces, target metadata, Japanese/long-text behavior,
+and regenerated inspection SVGs. The final acceptance review records the exact evidence
+map and image hashes. The full 179-test suite and the complete conformance runner pass;
+only two pre-existing `jsonschema.RefResolver` deprecation warnings remain. R01–R12 and
+all D0–D3/I1–I3/V1 work in this remediation plan are closed.

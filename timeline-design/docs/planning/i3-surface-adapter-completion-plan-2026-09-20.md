@@ -1,8 +1,7 @@
 # I3 Public Surface-Adapter Completion Plan
 
-**Status:** I3-A through I3-E and the I3-F design correction are published. I3-F is
-implemented. The V1 manifest design is closed; its implementation and final acceptance
-review remain before I3 completion.
+**Status:** Complete. I3-A through I3-F, the V1 manifest, and the final acceptance
+review are implemented, validated, and published.
 
 ## Goal
 
@@ -145,8 +144,19 @@ legal perimeter path is searchable without leaving the surface. The verification
 harness binds both Regular and Bold font assets. Controller Z and all five ASTER
 outputs were regenerated only after semantic/source/bounds checks passed, and the
 overview plus tall master PNGs were visually inspected. The full suite remains 175
-tests. V1 remains open only for the published Scene-manifest implementation and final
-evidence review.
+tests. The Scene-manifest implementation and final evidence review subsequently close
+V1 without changing those inspected pixels.
+
+### V1 completion record
+
+The manifest design was published at `666007acac8602350db5cbb633c017b35a0d7d2b`.
+Implementation parent `b32b1237ee60a0da892372acc150009dc69c91b0` adds the closed
+Scene and per-surface scale DTOs, serializer metadata, content/font/input evidence,
+empty successful diagnostics, Japanese and explicit long-text cases, and regenerated
+SVG inspection artifacts. The final suite passes 179 tests with two existing
+`RefResolver` deprecation warnings; the complete conformance runner passes. The V1
+acceptance review maps every required case to its specification, implementation, test,
+and artifact. No I3 implementation scope remains.
 
 If I3-B through I3-F reveals a need for a new primitive family, identity input,
 TextLayout, port, diagnostic, or surface ownership rule, implementation stops. Close

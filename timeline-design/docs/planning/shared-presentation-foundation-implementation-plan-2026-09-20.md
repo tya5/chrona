@@ -1,8 +1,7 @@
 # Shared Presentation Foundation: Implementation Plan
 
-**Status:** The former G1–G4 completion judgment is withdrawn. The integrated audit of
-revision `82e59f6e13fde8f6582f538da24b7523854c2cde` found R01–R04; corrective D0→D3
-in `g1-g4-integration-remediation-2026-09-20.md` precedes implementation correction.
+**Status:** Complete. The former G1–G4 judgment remains historical, while the corrective
+D0→D3/I1→I3/V1 sequence is now implemented, validated, and accepted.
 **Scope:** Implement the shared foundation only. Do not branch on ASTER, Controller Z,
 or image concepts A through D.
 
@@ -126,3 +125,18 @@ This record does not prove shared-Scene consumption on public outputs,
 purpose-specific projection, application of lane geometry, or fixture/validator
 synchronization. Because the integration audit reproduced R01–R04 as P0, this section
 MUST NOT be used as completion evidence.
+
+### Restored completion record after remediation
+
+Completion is restored only on the corrective evidence, not on the withdrawn record
+above. Every public settings-backed SVG route selects a completed `SceneSurface` whose
+primitives already own temporal projection, rows/lanes, measured text, ports, finite
+routes, annotations, summaries, and stable identity. The V1 manifest adds immutable
+viewport, selection, font, normalized-family, and per-surface scale evidence without
+becoming an authoring resource. Missing scale evidence diagnoses rather than invoking
+an adapter fallback.
+
+The implementation parent is `b32b1237ee60a0da892372acc150009dc69c91b0`.
+The final suite passes 179 tests with two existing deprecation warnings, the complete
+conformance runner passes, and the acceptance review records structural, behavioral,
+and image evidence. No G1–G4 corrective implementation scope remains.
