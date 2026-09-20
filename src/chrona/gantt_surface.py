@@ -131,6 +131,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     mode = surface.get('groupMode', 'header')
     group_width = table.width * surface.get('groupFraction', .38) if mode == 'merged' else 0
     group_gap = surface.get('groupGap', 6)
+    group_header_height = settings['layout']['group']['headerHeight'] if settings else 32
     fs, gs, ts = surface.get('fontSize', 18), surface.get('groupFontSize', 24), surface.get('titleSize', 36)
     bh, bg = surface.get('barHeight', 16), surface.get('barGap', 4)
     levels = surface.get('axisLevels', ['quarter', 'month'])
@@ -138,7 +139,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     top, bottom = table.y + axis_h, table.y + table.height
     left, right = timeline.x, timeline.x + timeline.width
     groups = [(gid, list(items)) for gid, items in groupby(projection.items, lambda item: item.group_id)]
-    extra = len(groups)*32 if mode == 'header' else 0
+    extra = len(groups)*group_header_height if mode == 'header' else 0
     rh = (bottom-top-group_gap*max(0, len(groups)-1)-extra)/max(1, len(projection.items))
     if rh < max(fs*2.8, 2*bh+bg+16):
         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:rows')
@@ -213,7 +214,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     for group_index, (gid, items) in enumerate(groups):
         group_top = y
         if mode == 'header':
-            parts.append(text(table.x+12, y+23, items[0].group_label, gs, 700, purpose='group-header', ref=gid)); y += 32
+            parts.append(text(table.x+12, y + group_header_height - 9, items[0].group_label, gs, 700, purpose='group-header', ref=gid)); y += group_header_height
         lane_origin = y
         group_h = rh*len(items)
         fill = color(f'group:{gid}', color('group-band', '#EEF3F8'))
