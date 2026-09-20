@@ -5,72 +5,316 @@
   "description": "Design-time wire contract only. It records the values later distributed to the existing View, Theme, Detail and Layout owners; it is not a second authoring resource or a renderer input.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "owners", "scale", "marks", "labels", "annotations", "lanes", "routing"],
+  "required": [
+    "version",
+    "owners",
+    "scale",
+    "marks",
+    "labels",
+    "annotations",
+    "lanes",
+    "routing"
+  ],
   "properties": {
-    "version": {"const": "chrona/shared-presentation-foundation/v0.1"},
+    "version": {
+      "const": "chrona/shared-presentation-foundation/v0.1"
+    },
     "owners": {
-      "type": "object", "additionalProperties": false,
-      "required": ["selection", "text", "geometry", "appearance", "scene"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selection",
+        "text",
+        "geometry",
+        "appearance",
+        "scene"
+      ],
       "properties": {
-        "selection": {"const": "view"}, "text": {"const": "view-and-detail"},
-        "geometry": {"const": "layout"}, "appearance": {"const": "theme"}, "scene": {"const": "derived"}
+        "selection": {
+          "const": "view"
+        },
+        "text": {
+          "const": "view-and-detail"
+        },
+        "geometry": {
+          "const": "layout"
+        },
+        "appearance": {
+          "const": "theme"
+        },
+        "scene": {
+          "const": "derived"
+        }
       }
     },
     "scale": {
-      "type": "object", "additionalProperties": false,
-      "required": ["domain", "sharedAcrossSlots", "levels", "weekStart", "weekLabel", "endDisplay"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "sharedAcrossSlots",
+        "levels",
+        "weekStart",
+        "weekLabel",
+        "endDisplay"
+      ],
       "properties": {
-        "domain": {"const": "date-linear"}, "sharedAcrossSlots": {"type": "boolean"},
-        "levels": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["quarter", "month", "week", "day"]}},
-        "weekStart": {"const": "monday"}, "weekLabel": {"const": "iso-week"},
-        "endDisplay": {"const": "inclusive-label-only"}
+        "domain": {
+          "const": "date-linear"
+        },
+        "sharedAcrossSlots": {
+          "type": "boolean"
+        },
+        "levels": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "quarter",
+              "month",
+              "week",
+              "day"
+            ]
+          }
+        },
+        "weekStart": {
+          "const": "monday"
+        },
+        "weekLabel": {
+          "const": "iso-week"
+        },
+        "endDisplay": {
+          "const": "inclusive-label-only"
+        }
       }
     },
     "marks": {
-      "type": "object", "additionalProperties": false,
-      "required": ["comparisonModes", "pointKinds", "facetColors"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparisonModes",
+        "pointKinds",
+        "facetColors"
+      ],
       "properties": {
-        "comparisonModes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["stacked", "overlaid", "baseline-and-actual"]}},
-        "pointKinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["planned", "actual", "baseline"]}},
-        "facetColors": {"const": "theme-role-plus-stable-group-key"}
+        "comparisonModes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "stacked",
+              "overlaid",
+              "baseline-and-actual"
+            ]
+          }
+        },
+        "pointKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "planned",
+              "actual",
+              "baseline"
+            ]
+          }
+        },
+        "facetColors": {
+          "const": "theme-role-plus-stable-group-key"
+        }
       }
     },
     "labels": {
-      "type": "object", "additionalProperties": false,
-      "required": ["sources", "anchorKinds", "candidateSides", "maxCandidates", "overflow"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sources",
+        "anchorKinds",
+        "candidateSides",
+        "maxCandidates",
+        "overflow",
+        "anchorObstaclePolicy"
+      ],
       "properties": {
-        "sources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["title", "planned-date", "actual-date", "comparison-delta", "annotation-text"]}},
-        "anchorKinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["planned-start", "planned-end", "actual-start", "actual-finish", "point", "body"]}},
-        "candidateSides": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["above", "below", "start", "end", "inside"]}},
-        "maxCandidates": {"type": "integer", "minimum": 1, "maximum": 16},
-        "overflow": {"enum": ["diagnose", "ellipsize-with-source", "clip-optional"]}
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "title",
+              "planned-date",
+              "actual-date",
+              "comparison-delta",
+              "annotation-text"
+            ]
+          }
+        },
+        "anchorKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "planned-start",
+              "planned-end",
+              "actual-start",
+              "actual-finish",
+              "point",
+              "body"
+            ]
+          }
+        },
+        "candidateSides": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "above",
+              "below",
+              "start",
+              "end",
+              "inside"
+            ]
+          }
+        },
+        "maxCandidates": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "overflow": {
+          "enum": [
+            "diagnose",
+            "ellipsize-with-source",
+            "clip-optional"
+          ]
+        },
+        "anchorObstaclePolicy": {
+          "const": "exclude-own-anchor-from-box-collision"
+        }
       }
     },
     "annotations": {
-      "type": "object", "additionalProperties": false,
-      "required": ["anchorKinds", "purposes", "box", "leader", "fallback"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anchorKinds",
+        "purposes",
+        "box",
+        "leader",
+        "fallback",
+        "laneOccupancy"
+      ],
       "properties": {
-        "anchorKinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["object", "relation", "group", "temporal"]}},
-        "purposes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["callout", "highlight", "note", "explanatory-arrow"]}},
-        "box": {"enum": ["rect-or-none"]}, "leader": {"enum": ["orthogonal-or-none"]},
-        "fallback": {"const": "diagnose-no-detach-no-resize"}
+        "anchorKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "object",
+              "relation",
+              "group",
+              "temporal"
+            ]
+          }
+        },
+        "purposes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "callout",
+              "highlight",
+              "note",
+              "explanatory-arrow"
+            ]
+          }
+        },
+        "box": {
+          "enum": [
+            "rect-or-none"
+          ]
+        },
+        "leader": {
+          "enum": [
+            "orthogonal-or-none"
+          ]
+        },
+        "fallback": {
+          "const": "diagnose-no-detach-no-resize"
+        },
+        "laneOccupancy": {
+          "const": "exclude-annotation-boxes"
+        }
       }
     },
     "lanes": {
-      "type": "object", "additionalProperties": false,
-      "required": ["grouping", "stacking", "occupancy", "maxStack"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grouping",
+        "stacking",
+        "occupancy",
+        "maxStack"
+      ],
       "properties": {
-        "grouping": {"enum": ["view-groups", "none"]}, "stacking": {"const": "stable-lowest-nonoverlap"},
-        "occupancy": {"const": "mark-bounds-plus-required-label-bounds"}, "maxStack": {"type": "integer", "minimum": 1, "maximum": 100}
+        "grouping": {
+          "enum": [
+            "view-groups",
+            "none"
+          ]
+        },
+        "stacking": {
+          "const": "stable-lowest-nonoverlap"
+        },
+        "occupancy": {
+          "const": "mark-bounds-plus-required-label-bounds"
+        },
+        "maxStack": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
       }
     },
     "routing": {
-      "type": "object", "additionalProperties": false,
-      "required": ["dependency", "annotationLeader", "obstacles", "layering", "limit"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dependency",
+        "annotationLeader",
+        "obstacles",
+        "layering",
+        "limit"
+      ],
       "properties": {
-        "dependency": {"const": "semantic-orthogonal"}, "annotationLeader": {"const": "presentation-orthogonal"},
-        "obstacles": {"const": "mark-and-required-text-bounds"}, "layering": {"enum": ["behind-marks", "above-marks"]},
-        "limit": {"type": "integer", "minimum": 1, "maximum": 100000}
+        "dependency": {
+          "const": "semantic-orthogonal"
+        },
+        "annotationLeader": {
+          "const": "presentation-orthogonal"
+        },
+        "obstacles": {
+          "const": "mark-and-required-text-bounds"
+        },
+        "layering": {
+          "enum": [
+            "behind-marks",
+            "above-marks"
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        }
       }
     }
   }
