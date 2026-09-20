@@ -1,4 +1,7 @@
 from datetime import date
+from hashlib import sha256
+from pathlib import Path
+import subprocess
 
 from chrona.render import render_svg
 from chrona.presentation_settings import builtin_bases
@@ -55,6 +58,10 @@ def test_svg_rejects_an_incapable_target_and_scene_is_deterministic():
 def test_minimal_svg_consumes_resolved_presentation_settings():
     project = {"project": {"title": "Demo"}, "objects": {"task": {"title": "Task"}}, "relations": []}
     scene = scene_from_schedule(project, ScheduleResult({"task": {"at": date(2026, 10, 1)}}, []))
-    svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, builtin_bases()["executive-v0.2"])
+    settings = builtin_bases()["executive-v0.2"]
+    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
+        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
+        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
+    svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, settings)
     assert 'width="1600"' in svg
     assert 'fill="#3986E6"' in svg
