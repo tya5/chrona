@@ -1612,6 +1612,12 @@
                   "notes"
                 ]
               },
+              "scaleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096,
+                "description": "Required by semantic validation for timeline and timeline-axis slots; both must name the same derived scale."
+              },
               "priority": {
                 "enum": [
                   "required",
