@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.4完了・公開済み、G1.5実施中。設計根拠は仕様30・ADR-0019。  
+**状態:** G1.4を再オープン。G1.5監査で未移行SVG adapterを検出。設計根拠は仕様30・ADR-0019。  
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -10,7 +10,7 @@
 | G1.1 軸プリミティブ | 新規の純粋Date-only軸モジュールとunit test | half-open window、月・四半期・ISO週・day区間、tick step、入力不変、範囲外診断 | この単位だけで公開 |
 | G1.2 設定・metrics閉包 | presentation settings resolver、font metrics、layout solver、否定test | revision/hash照合、family×weightごとの計測、明示intrinsic入力によるcontent/fraction/min/max/gap、非暗黙fallback | この単位だけで公開 |
 | G1.3 比較markの意味 | 新規mark/anchor projection、unit test | plan/actual/baseline、span/point、欠測、負/ゼロ/正差分、stable source identity | この単位だけで公開 |
-| G1.4 Scene接続 | Scene構築とSVG adapterの境界、既存gantt移行adapter | adapterが日程・配置を再解釈しない。legacyを混ぜず出所metadataを維持 | この単位だけで公開 |
+| G1.4 Scene接続 | Scene構築と**全公開SVG adapter**の境界、既存gantt/review/minimal移行adapter | adapterが日程・配置を再解釈しない。legacyを混ぜず出所metadataを維持 | この単位だけで公開 |
 | G1.5 消費監査 | 設定変異表、literal棚卸し、raster/再現性検証 | G1対象の未消費設定と暗黙fallbackをゼロにする | G1完了として公開 |
 | G2 | axis slot統合、labels、comparison mode、group×facet paint | 仕様30 §6–7のA/D共通表現 | 単位別に公開 |
 | G3 | annotation box/leaderと説明slot | 同じ機構で作業注記と計画gate説明を通す | 単位別に公開 |
@@ -44,6 +44,13 @@ renderer非依存で投影する。span Actualはstart/finishがともに観測�
 table/timeline SVG adapterはその結果を座標とSVGへ変換する。Scene inputのaxisは半開区間を
 そのまま出力し、旧rendererが落としていた末尾月を補正した。実績の片端欠損はactual markを
 作らず、planned endpointで補わない。ASTER基準SVGを再生成し、148 tests passed。
+
+### G1.4 再オープン記録
+
+G1.5の静的消費監査で、`render_review_svg` と `render_svg` が依然としてaxis・planned/actual
+markを直接生成していることを確認した。当初の「existing gantt」表現は仕様29の全公開SVG経路
+という完了条件を満たしていなかった。G1.4はこれら二adapterを`PresentationScene`消費へ移行し、
+同じ欠損actual・半開axis契約を適用するまで完了に戻さない。
 
 ## G1.1 の契約
 
