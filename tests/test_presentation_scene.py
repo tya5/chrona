@@ -4,11 +4,12 @@ from hashlib import sha256
 from pathlib import Path
 import subprocess
 from types import SimpleNamespace
+import xml.etree.ElementTree as ET
 
 import pytest
 
 from chrona.presentation_lanes import lane_stack_offset
-from chrona.presentation_scene import build_presentation_scene
+from chrona.presentation_scene import SurfaceContentInput, build_presentation_scene
 from chrona.presentation_scene import presentation_scene_from_schedule
 from chrona.presentation_settings import builtin_bases
 from chrona.review_svg import render_table_timeline_svg
@@ -145,7 +146,7 @@ def test_adapter_receives_common_scene_when_resolved_settings_are_supplied():
     view = {"body": {"tableColumns": [{"id": "Task", "source": "title", "missing": "em-dash"}]}}
     theme = {"body": {"roles": {}, "values": {}}}
     svg = render_table_timeline_svg("Roadmap", projection, project, view, theme, {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}, {}, settings=settings)
-    assert 'data-presentation-scene="v0.1"' in svg
+    assert 'data-presentation-scene="v0.2"' in svg
     assert 'data-axis-scale-id="primary"' in svg
 
 
@@ -165,3 +166,51 @@ def test_explicit_facet_annotation_emits_common_box_and_leader():
                                     {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}, {}, settings=settings)
     assert 'data-purpose="presentation-annotation"' in svg
     assert 'data-purpose="annotation-leader"' in svg
+
+
+def test_table_surface_owns_content_routes_annotations_and_legend_geometry():
+    settings = scene_settings()
+    left, right = item(), item()
+    left.object_id, left.title, left.group_id, left.group_label = "left", "Left task", "team", "Team"
+    right.object_id, right.title, right.group_id, right.group_label = "right", "Right task", "team", "Team"
+    right.planned = {"start": date(2026, 1, 14), "end": date(2026, 1, 24)}
+    right.actual = None
+    right.finish_delta = None
+    content = SurfaceContentInput(
+        table_columns=(("Task", "Task"),),
+        table_cells=(("left", "Task", "Left task"), ("right", "Task", "Right task")),
+        relations=({"id": "left-to-right", "type": "dependency",
+                    "from": {"object": "left", "endpoint": "end"},
+                    "to": {"object": "right", "endpoint": "start"}},),
+        annotations=({"id": "risk", "purpose": "callout", "text": "Check supplier",
+                      "anchor": {"kind": "object", "id": "left", "facet": "planned", "endpoint": "finish"}},),
+        legend_entries=(("planned", "Planned"), ("dependency", "Dependency")),
+        coverage_text="Actual unavailable: 1/2 items",
+    )
+    scene = build_presentation_scene("Roadmap", (left, right),
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    purposes = {node.purpose for node in surface.primitives}
+    assert purposes >= {"table-frame", "table-header-band", "table-column-label", "group-surface",
+                        "group-header", "row-shade", "table-row-rule", "table-cell",
+                        "dependency-connector", "annotation-box", "annotation-text", "annotation-leader",
+                        "legend-swatch", "legend-label", "coverage-text"}
+    connector = next(node for node in surface.primitives if node.purpose == "dependency-connector")
+    assert len(connector.points) >= 2 and connector.from_port_id and connector.to_port_id
+    assert connector.bounds[2] >= 0 and connector.bounds[3] >= 0
+    assert [node.z_order for node in surface.primitives] == list(range(len(surface.primitives)))
+
+
+def test_resolved_table_adapter_serializes_scene_ids_for_every_geometry_family():
+    settings = scene_settings()
+    projection = SimpleNamespace(items=(item(),), window=(date(2026, 1, 1), date(2026, 2, 1)), unmatched_actual_ids=())
+    project = {"objects": {"a": {"title": "A"}}, "relations": []}
+    view = {"body": {"tableColumns": [{"id": "Task", "source": "title", "missing": "em-dash"}]}}
+    svg = render_table_timeline_svg("Roadmap", projection, project, view, {"body": {"roles": {}, "values": {}}},
+                                    {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"},
+                                    {}, settings=settings)
+    assert 'data-presentation-scene="v0.2"' in svg
+    for purpose in ("table-cell", "axis-band", "axis-major", "planned", "actual", "legend-label", "data-coverage"):
+        element = next(value for value in ET.fromstring(svg).iter()
+                       if value.get("data-purpose") == purpose)
+        assert element.get("data-scene-id")

@@ -1,7 +1,7 @@
 """Common presentation Scene composed before any SVG adapter is invoked."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from itertools import groupby
 from types import SimpleNamespace
@@ -12,6 +12,7 @@ from .presentation_marks import ComparisonMark, comparison_marks
 from .presentation_lanes import LaneAssignment, LaneItem, LaneTrack, assign_stable_lanes, lane_tracks
 from .presentation_layout import solve_presentation_layout
 from .font_metrics import FontMetrics, resolve_font_metrics
+from .presentation_routing import route_orthogonal
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,21 @@ class TextLayout:
 
 
 @dataclass(frozen=True)
+class SurfaceContentInput:
+    """Selected presentation facts normalized once before Scene construction."""
+
+    table_columns: tuple[tuple[str, str], ...] = ()
+    table_cells: tuple[tuple[str, str, str], ...] = ()
+    relations: tuple[dict, ...] = ()
+    annotations: tuple[dict, ...] = ()
+    notes: tuple[tuple[str, str], ...] = ()
+    legend_entries: tuple[tuple[str, str], ...] = ()
+    coverage_text: str = ""
+    summary_panels: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = ()
+    template_values: tuple[tuple[str, str], ...] = ()
+
+
+@dataclass(frozen=True)
 class ResolvedPresentationInput:
     """One derived input boundary between authoring resources and Scene geometry."""
 
@@ -34,6 +50,7 @@ class ResolvedPresentationInput:
     window: tuple[date, date]
     items: tuple[object, ...]
     settings: dict
+    surface_content: SurfaceContentInput
 
 
 @dataclass(frozen=True)
@@ -53,6 +70,10 @@ class ScenePrimitive:
     text: str | None = None
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
+    shape: str | None = None
+    points: tuple[tuple[float, float], ...] = ()
+    from_port_id: str | None = None
+    to_port_id: str | None = None
     z_order: int = 0
 
 
@@ -107,8 +128,33 @@ class PresentationScene:
     surfaces: tuple[SceneSurface, ...]
 
 
-def _resolved_input(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> ResolvedPresentationInput:
-    return ResolvedPresentationInput(str(title), window, tuple(items), settings)
+def _resolved_input(title: str, items: Iterable[object], window: tuple[date, date], settings: dict,
+                    surface_content: SurfaceContentInput | None) -> ResolvedPresentationInput:
+    copied_items = tuple(items)
+    content = surface_content or SurfaceContentInput()
+    if not content.template_values:
+        last_visible = window[1] - timedelta(days=1) if window[1].day == 1 and window[1] > window[0] else window[1]
+        values = (("title", str(title)), ("windowStart", f"{window[0]:%b %Y}"),
+                  ("windowLastVisible", f"{last_visible:%b %Y}"),
+                  ("selectedCount", str(len(copied_items))), ("unmatchedCount", "0"),
+                  ("missingCount", str(sum(1 for item in copied_items if not getattr(item, "actual", None)))))
+        content = replace(content, template_values=values)
+    return ResolvedPresentationInput(str(title), window, copied_items, settings, content)
+
+
+def _validate_primitive(node: ScenePrimitive) -> None:
+    if node.kind == "Text" and (node.text is None or node.text_layout is None):
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    if node.kind == "Symbol" and not node.shape:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    if node.kind == "Path":
+        if len(node.points) < 2:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        connector = node.purpose in {"dependency-connector", "annotation-leader", "explanatory-arrow"}
+        if connector and (not node.from_port_id or not node.to_port_id):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    elif node.points or node.from_port_id or node.to_port_id:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
 def _scene_primitives(resolved: ResolvedPresentationInput, axes: tuple[AxisInterval, ...],
@@ -137,7 +183,8 @@ def _scene_primitives(resolved: ResolvedPresentationInput, axes: tuple[AxisInter
             x = (mark.start - start).days * scale
             bounds = (x, 0.0, max(scale, (mark.end - mark.start).days * scale), 0.0)
             kind = "Rect"
-        primitives.append(ScenePrimitive(f"{projection_id}:mark", kind, mark.source_id, "object", mark.facet, mark.facet, bounds))
+        primitives.append(ScenePrimitive(f"{projection_id}:mark", kind, mark.source_id, "object", mark.facet, mark.facet, bounds,
+                                         shape="diamond" if kind == "Symbol" else None))
     return tuple(primitives)
 
 
@@ -216,6 +263,15 @@ def _surface_slot(surface: SceneSurface, source: str) -> SceneSlot:
         raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING") from error
 
 
+def _optional_surface_slot(surface: SceneSurface, *sources: str) -> SceneSlot | None:
+    return next((slot for slot in surface.slots if slot.source in sources), None)
+
+
+def _path_bounds(points: tuple[tuple[float, float], ...]) -> tuple[float, float, float, float]:
+    xs, ys = zip(*points, strict=True)
+    return min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)
+
+
 def _surface_x(slot: SceneSlot, start: date, end: date, value: date) -> float:
     """Map a Date-only value into one completed surface slot, once."""
     x, _, width, _ = slot.bounds
@@ -227,46 +283,81 @@ def _surface_x(slot: SceneSlot, start: date, end: date, value: date) -> float:
 def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, ...],
                         window: tuple[date, date], axes: tuple[AxisInterval, ...],
                         ticks: tuple[AxisInterval, ...], marks: tuple[ComparisonMark, ...],
-                        settings: dict) -> tuple[ScenePrimitive, ...]:
+                        lanes: tuple[LaneAssignment, ...], tracks: tuple[LaneTrack, ...],
+                        settings: dict, content: SurfaceContentInput) -> tuple[ScenePrimitive, ...]:
     """Emit core I3 geometry for one public surface before adapter selection."""
     title_slot, timeline, axis = (_surface_slot(surface, source) for source in ("title", "timeline", "timeline-axis"))
     start, end = window
     rows = {row.object_id: row for row in surface.rows}
     items_by_id = {str(getattr(item, "object_id")): item for item in items}
+    lane_stacks = {lane.object_id: lane.stack for lane in lanes}
+    lane_tracks_by_group = {track.group_id: track for track in tracks}
     primitives: list[ScenePrimitive] = []
 
     def text_layout(value: str, x: float, top: float, *, role: str, available: float,
-                    center: bool = False) -> TextLayout:
+                    center: bool = False, wrap: bool = False, max_height: float | None = None) -> TextLayout:
         typography = settings["theme"]["typography"].get(role, settings["theme"]["typography"]["body"])
         size, weight = float(typography["size"]), int(typography["weight"])
         line_height = float(typography.get("lineHeight", 1.2))
         metrics: FontMetrics = resolve_font_metrics(settings["theme"]["fontFamily"], settings["context"]["fontMetrics"], weight=weight)
-        width = metrics.width(value, size, float(typography.get("letterSpacing", 0)))
+        spacing = float(typography.get("letterSpacing", 0))
+        lines = [value]
+        if wrap and metrics.width(value, size, spacing) > available:
+            lines, current = [], ""
+            for word in value.split():
+                candidate = f"{current} {word}".strip()
+                if metrics.width(candidate, size, spacing) > available:
+                    if not current:
+                        raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:text")
+                    lines.append(current)
+                    current = word
+                else:
+                    current = candidate
+            lines.append(current)
+        width = max((metrics.width(line, size, spacing) for line in lines), default=0.0)
         if width > available:
             raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:text")
-        height = size * line_height
+        height = size * line_height * len(lines)
+        if max_height is not None and height > max_height:
+            raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:text")
         left = x - width / 2.0 if center else x
         return TextLayout(
             bounds=(left, top, width, height),
             baseline=(left if not center else x, metrics.baseline(top, size, line_height)),
-            lines=(value,), family=settings["theme"]["fontFamily"], weight=weight,
+            lines=tuple(lines), family=settings["theme"]["fontFamily"], weight=weight,
             asset_identity=metrics.content_identity,
         )
 
     def add(kind: str, source_ref: str, source_kind: str, facet: str, role: str,
             purpose: str, bounds: tuple[float, float, float, float], *, text: str | None = None,
-            baseline: tuple[float, float] | None = None, layout: TextLayout | None = None) -> None:
+            baseline: tuple[float, float] | None = None, layout: TextLayout | None = None,
+            shape: str | None = None, points: tuple[tuple[float, float], ...] = (),
+            from_port_id: str | None = None, to_port_id: str | None = None) -> None:
         projection = f"{surface.surface_id}:{purpose}:{source_ref}:{facet}"
         primitives.append(ScenePrimitive(
             scene_id=f"{projection}:primitive", kind=kind, source_ref=source_ref,
             source_kind=source_kind, semantic_facet=facet, visual_role=role, bounds=bounds,
             projection_instance_id=projection, surface_id=surface.surface_id, purpose=purpose,
-            text=text, baseline=baseline, text_layout=layout, z_order=len(primitives),
+            text=text, baseline=baseline, text_layout=layout, shape=shape, points=points,
+            from_port_id=from_port_id, to_port_id=to_port_id, z_order=len(primitives),
         ))
 
-    title_layout = text_layout(title, title_slot.bounds[0], title_slot.bounds[1], role="heading", available=title_slot.bounds[2])
+    template_values = dict(content.template_values)
+    expected_template_keys = {"title", "windowStart", "windowLastVisible", "selectedCount", "unmatchedCount", "missingCount"}
+    if set(template_values) != expected_template_keys:
+        raise ValueError("E_PRESENTATION_INPUT_INCOMPLETE")
+    visible_title = settings["detail"]["title"].format_map(template_values)
+    title_layout = text_layout(visible_title, title_slot.bounds[0], title_slot.bounds[1], role="heading", available=title_slot.bounds[2])
     add("Text", "project", "project", "", "heading", "title-text",
-        title_layout.bounds, text=title, baseline=title_layout.baseline, layout=title_layout)
+        title_layout.bounds, text=visible_title, baseline=title_layout.baseline, layout=title_layout)
+    if settings["layout"]["title"]["showSubtitle"]:
+        subtitle = settings["detail"]["subtitle"].format_map(template_values)
+        subtitle_top = (title_layout.bounds[1] + title_layout.bounds[3]
+                        + float(settings["layout"]["title"]["subtitleGap"]))
+        subtitle_layout = text_layout(subtitle, title_slot.bounds[0], subtitle_top,
+                                      role="subtitle", available=title_slot.bounds[2])
+        add("Text", "view:window", "view", "", "subtitle", "subtitle-text",
+            subtitle_layout.bounds, text=subtitle, baseline=subtitle_layout.baseline, layout=subtitle_layout)
 
     band_heights = dict(zip(settings["layout"]["axis"]["levels"], settings["layout"]["axis"]["bandHeights"], strict=True))
     axis_y = axis.bounds[1]
@@ -285,7 +376,9 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
     bottom = max((row.bounds[1] + row.bounds[3] for row in surface.rows), default=timeline.bounds[1] + timeline.bounds[3])
     for tick in ticks:
         x = _surface_x(axis, start, end, tick.start)
-        add("Path", f"tick:{tick.level}:{tick.index}", "axis", "axis", tick.level, "tick", (x, axis.bounds[1], 0.0, bottom - axis.bounds[1]))
+        points = ((x, axis.bounds[1]), (x, bottom))
+        add("Path", f"tick:{tick.level}:{tick.index}", "axis", "axis", tick.level, "tick",
+            (x, axis.bounds[1], 0.0, bottom - axis.bounds[1]), points=points)
 
     planned_height = float(settings["theme"]["bar"]["plannedHeight"])
     actual_height = float(settings["theme"]["bar"]["actualHeight"])
@@ -298,6 +391,16 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         if row is None or item is None:
             raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
         _, row_y, _, row_height = row.bounds
+        independent_lane = (surface.surface_id == "table-timeline"
+                            and settings["layout"]["lanes"]["surface"] == "independent-lane-track")
+        if independent_lane:
+            group_id = str(getattr(item, "group_id", ""))
+            group = next((candidate for candidate in surface.groups if candidate.group_id == group_id), None)
+            track = lane_tracks_by_group.get(group_id)
+            if group is None or track is None:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
+            row_y = (group.content_bounds[1] + float(settings["layout"]["lanes"]["trackPadding"])
+                     + lane_stacks.get(mark.source_id, 0) * track.pitch)
         if mark.at is not None:
             x = _surface_x(timeline, start, end, mark.at)
             if mark.facet == "finish-delta":
@@ -306,13 +409,17 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 add("Text", mark.source_id, "object", mark.facet, "variance", "comparison-mark",
                     delta_layout.bounds, text=text, baseline=delta_layout.baseline, layout=delta_layout)
             else:
+                symbol_y = row_y if independent_lane else row_y + (row_height - point_size) / 2.0
                 add("Symbol", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
-                    (x - point_size / 2.0, row_y + (row_height - point_size) / 2.0, point_size, point_size))
+                    (x - point_size / 2.0, symbol_y, point_size, point_size),
+                    shape="diamond")
             continue
         assert mark.start is not None and mark.end is not None
         x1, x2 = _surface_x(timeline, start, end, mark.start), _surface_x(timeline, start, end, mark.end)
         height = actual_height if mark.facet == "actual" else planned_height
-        if mark.facet == "actual" and comparison_mode != "overlaid":
+        if independent_lane:
+            y = row_y + (planned_height + gap if mark.facet == "actual" and comparison_mode != "overlaid" else 0.0)
+        elif mark.facet == "actual" and comparison_mode != "overlaid":
             y = row_y + row_height / 2.0 + gap / 2.0
         else:
             y = row_y + row_height / 2.0 - height - gap / 2.0
@@ -328,26 +435,288 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         label_layout = text_layout(value, row.bounds[0], label_top, role="body", available=row.bounds[2])
         add("Text", object_id, "object", "", "body", "item-label", label_layout.bounds,
             text=value, baseline=label_layout.baseline, layout=label_layout)
+
+    if surface.surface_id == "table-timeline" and content.table_columns:
+        table = _surface_slot(surface, "table")
+        table_x, table_y, table_width, table_height = table.bounds
+        axis_height = sum(float(value) for value in settings["layout"]["axis"]["bandHeights"])
+        add("Rect", "table", "surface", "", "table-frame", "table-frame",
+            (table_x, table_y, timeline.bounds[0] + timeline.bounds[2] - table_x, table_height))
+        add("Rect", "table-header", "surface", "", "table-header", "table-header-band",
+            (table_x, table_y, table_width, axis_height))
+        column_width = table_width / len(content.table_columns)
+        for index, (column_id, label) in enumerate(content.table_columns):
+            x = table_x + index * column_width
+            layout = text_layout(label, x + 12.0, table_y, role="tableHeader",
+                                 available=max(1.0, column_width - 24.0))
+            add("Text", column_id, "table-column", "", "tableHeader", "table-column-label",
+                layout.bounds, text=label, baseline=layout.baseline, layout=layout)
+        for group in surface.groups:
+            if settings["layout"]["group"]["mode"] != "none":
+                add("Rect", group.group_id, "group", "", "group-band", "group-surface", group.content_bounds)
+                group_items = tuple(item for item in items if str(getattr(item, "group_id", "")) == group.group_id)
+                label = str(getattr(group_items[0], "group_label", group.group_id)) if group_items else group.group_id
+                label_bounds = group.header_bounds or group.content_bounds
+                layout = text_layout(label, label_bounds[0] + 12.0, label_bounds[1],
+                                     role="group", available=max(1.0, label_bounds[2] - 24.0),
+                                     wrap=True, max_height=label_bounds[3])
+                add("Text", group.group_id, "group", "", "group", "group-header", layout.bounds,
+                    text=label, baseline=layout.baseline, layout=layout)
+        cells = {(object_id, column_id): value for object_id, column_id, value in content.table_cells}
+        for row_index, row in enumerate(surface.rows):
+            if row_index % 2:
+                add("Rect", row.object_id, "object", "", "row-shade", "row-shade", row.bounds)
+            y = row.bounds[1] + row.bounds[3]
+            add("Path", row.object_id, "object", "", "table-row", "table-row-rule",
+                (table_x, y, table_width, 0.0), points=((table_x, y), (table_x + table_width, y)))
+            for index, (column_id, _) in enumerate(content.table_columns):
+                value = cells.get((row.object_id, column_id))
+                if value is None:
+                    raise ValueError("E_PRESENTATION_INPUT_INCOMPLETE")
+                x = table_x + index * column_width + 12.0
+                top = row.bounds[1] + 4.0
+                layout = text_layout(value, x, top, role="body", available=max(1.0, column_width - 24.0),
+                                     wrap=True, max_height=max(1.0, row.bounds[3] - 8.0))
+                add("Text", f"{row.object_id}:{column_id}", "table-cell", "", "body", "table-cell",
+                    layout.bounds, text=value, baseline=layout.baseline, layout=layout)
+
+    if surface.surface_id == "table-timeline":
+        mark_nodes = {(node.source_ref, node.semantic_facet): node for node in primitives
+                      if node.purpose == "comparison-mark" and node.kind in {"Rect", "Symbol"}}
+        planned_nodes = {source: node for (source, facet), node in mark_nodes.items()
+                         if facet in {"planned", "baseline"}}
+        clearance = float(settings["layout"]["routing"]["clearance"])
+        routing = settings["layout"]["routing"]
+
+        def mark_port(node: ScenePrimitive, endpoint: str, outward: int) -> tuple[tuple[float, float], str, int]:
+            x, y, width, height = node.bounds
+            if endpoint == "start":
+                point, direction = (x, y + height / 2.0), -1
+            elif endpoint in {"end", "finish"}:
+                point, direction = (x + width, y + height / 2.0), 1
+            elif endpoint == "at":
+                direction = outward
+                point = (x + width if direction > 0 else x, y + height / 2.0)
+            elif endpoint == "body":
+                direction = outward
+                point = (x + width / 2.0, y + height / 2.0)
+            else:
+                raise ValueError("E_CONNECTOR_ENDPOINT")
+            return point, f"{node.projection_instance_id}:{endpoint}", direction
+
+        obstacles = tuple((node.bounds[0] - clearance, node.bounds[1] - clearance,
+                           node.bounds[0] + node.bounds[2] + clearance,
+                           node.bounds[1] + node.bounds[3] + clearance)
+                          for node in mark_nodes.values())
+        for relation in content.relations:
+            if relation.get("type", "dependency") != "dependency":
+                continue
+            source_spec, target_spec = relation.get("from", {}), relation.get("to", {})
+            source_node = planned_nodes.get(str(source_spec.get("object", "")))
+            target_node = planned_nodes.get(str(target_spec.get("object", "")))
+            if source_node is None or target_node is None:
+                continue
+            source_endpoint = str(source_spec.get("endpoint", "end"))
+            target_endpoint = str(target_spec.get("endpoint", "start"))
+            source_point, source_port, source_direction = mark_port(source_node, source_endpoint, 1)
+            target_point, target_port, target_direction = mark_port(target_node, target_endpoint, -1)
+            port_offset = float(routing["portOffset"])
+            source_route = (source_point[0] + source_direction * port_offset, source_point[1])
+            target_route = (target_point[0] + target_direction * port_offset, target_point[1])
+            route = route_orthogonal(source_route, target_route, obstacles,
+                                     grid_offset=float(routing["gridOffset"]),
+                                     bend_penalty=float(routing["bendPenalty"]), limit=int(routing["limit"]))
+            points = (source_point, *route, target_point)
+            relation_id = str(relation.get("id", "relation"))
+            add("Path", relation_id, "relation", "dependency", "dependency", "dependency-connector",
+                _path_bounds(points), points=points, from_port_id=source_port, to_port_id=target_port)
+
+        if content.annotations:
+            from .presentation_annotations import (nearest_box_port, project_annotation_box,
+                                                   resolve_annotation_anchor, route_annotation_leader)
+            from .presentation_labels import LabelRect
+
+            viewport = LabelRect(timeline.bounds[0], timeline.bounds[1], timeline.bounds[2], timeline.bounds[3])
+            placed_obstacles = [LabelRect(left, top, right - left, bottom - top) for left, top, right, bottom in obstacles]
+            for annotation in content.annotations:
+                annotation_id = str(annotation.get("id", ""))
+                purpose = annotation.get("purpose")
+                if purpose == "explanatory-arrow":
+                    def anchor_node(value: dict) -> tuple[ScenePrimitive, str]:
+                        facet = str(value.get("facet", "planned"))
+                        node = mark_nodes.get((str(value.get("id", "")), facet))
+                        if node is None:
+                            raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+                        return node, str(value.get("endpoint", "body"))
+                    source_node, source_endpoint = anchor_node(annotation.get("source", {}))
+                    target_node, target_endpoint = anchor_node(annotation.get("target", {}))
+                    source_point, source_port, source_direction = mark_port(source_node, source_endpoint, 1)
+                    target_point, target_port, target_direction = mark_port(target_node, target_endpoint, -1)
+                    offset = float(routing["portOffset"])
+                    route = route_orthogonal((source_point[0] + source_direction * offset, source_point[1]),
+                                             (target_point[0] + target_direction * offset, target_point[1]), obstacles,
+                                             grid_offset=float(routing["gridOffset"]),
+                                             bend_penalty=float(routing["bendPenalty"]), limit=int(routing["limit"]))
+                    points = (source_point, *route, target_point)
+                    add("Path", annotation_id, "explanatory-arrow", "", "explanatory-arrow", "explanatory-arrow",
+                        _path_bounds(points), points=points, from_port_id=source_port, to_port_id=target_port)
+                    continue
+                resolved = resolve_annotation_anchor(annotation, marks)
+                node = mark_nodes.get((resolved.object_id, resolved.facet))
+                if node is None:
+                    raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+                x, y, width, height = node.bounds
+                if purpose == "highlight":
+                    add("Rect", annotation_id, "presentation-annotation", resolved.facet,
+                        "presentation-annotation", "annotation-highlight", node.bounds)
+                    continue
+                value = str(annotation.get("text", ""))
+                typography = settings["theme"]["typography"]["body"]
+                metric = resolve_font_metrics(settings["theme"]["fontFamily"], settings["context"]["fontMetrics"],
+                                              weight=int(typography["weight"]))
+                text_size = (metric.width(value, float(typography["size"])),
+                             float(typography["size"]) * float(typography.get("lineHeight", 1.2)))
+                anchor_bounds = LabelRect(x, y, width, height)
+                own_obstacle = LabelRect(x - clearance, y - clearance,
+                                         width + 2.0 * clearance, height + 2.0 * clearance)
+                box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=text_size,
+                                             candidate_sides=settings["layout"]["labelPlacement"]["candidateSides"],
+                                             viewport=viewport,
+                                             obstacles=[obstacle for obstacle in placed_obstacles if obstacle != own_obstacle],
+                                             overflow=settings["layout"]["labelPlacement"]["overflow"])
+                box_bounds = (box.placement.bounds.x, box.placement.bounds.y,
+                              box.placement.bounds.width, box.placement.bounds.height)
+                add("Rect", annotation_id, "presentation-annotation", resolved.facet,
+                    "presentation-annotation", "annotation-box", box_bounds)
+                if value:
+                    layout = text_layout(value, box_bounds[0], box_bounds[1], role="body", available=box_bounds[2],
+                                         wrap=True, max_height=box_bounds[3])
+                    add("Text", annotation_id, "presentation-annotation", resolved.facet,
+                        "presentation-annotation", "annotation-text", layout.bounds,
+                        text=value, baseline=layout.baseline, layout=layout)
+                if box.leader_required:
+                    anchor_point, anchor_port, direction = mark_port(node, resolved.endpoint, 1)
+                    target = nearest_box_port(box.placement.bounds, anchor_point)
+                    route = route_annotation_leader((anchor_point[0] + direction * 5.0, anchor_point[1]), target,
+                                                    obstacles=placed_obstacles, limit=int(routing["limit"]))
+                    points = (anchor_point, *route)
+                    add("Path", annotation_id, "presentation-annotation", resolved.facet,
+                        "presentation-annotation", "annotation-leader", _path_bounds(points), points=points,
+                        from_port_id=anchor_port, to_port_id=f"{surface.surface_id}:annotation:{annotation_id}:box")
+                placed_obstacles.append(LabelRect(*box_bounds))
+
+        notes_slot = _optional_surface_slot(surface, "notes", "annotations")
+        if notes_slot is not None:
+            note_y = notes_slot.bounds[1]
+            for note_id, value in content.notes:
+                layout = text_layout(value, notes_slot.bounds[0], note_y, role="body", available=notes_slot.bounds[2],
+                                     wrap=True, max_height=notes_slot.bounds[3])
+                if layout.bounds[1] + layout.bounds[3] > notes_slot.bounds[1] + notes_slot.bounds[3]:
+                    raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:notes")
+                add("Text", note_id, "project-annotation", "", "presentation-annotation", "project-note",
+                    layout.bounds, text=value, baseline=layout.baseline, layout=layout)
+                note_y += layout.bounds[3]
+
+        legend_slot = _optional_surface_slot(surface, "legend")
+        if legend_slot is not None and (content.legend_entries or content.coverage_text):
+            spec = settings["layout"]["legend"]
+            legend_type = settings["theme"]["typography"]["legend"]
+            size = float(legend_type["size"])
+            line_height = size * float(legend_type["lineHeight"])
+            left = legend_slot.bounds[0] + float(spec["padding"]["left"])
+            limit = legend_slot.bounds[0] + legend_slot.bounds[2] - float(spec["padding"]["right"])
+            x, baseline_y = left, legend_slot.bounds[1] + float(spec["padding"]["top"]) + size
+            swatch_width, swatch_height = float(spec["swatchWidth"]), float(spec["swatchHeight"])
+            for role, label in content.legend_entries:
+                metric = resolve_font_metrics(settings["theme"]["fontFamily"], settings["context"]["fontMetrics"],
+                                              weight=int(legend_type["weight"]))
+                item_width = swatch_width + float(spec["labelGap"]) + metric.width(label, size, float(legend_type.get("letterSpacing", 0)))
+                if x + item_width > limit and x > left and spec["wrap"]:
+                    x, baseline_y = left, baseline_y + line_height + float(spec["rowGap"])
+                if x + item_width > limit:
+                    raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:legend")
+                swatch_bounds = (x, baseline_y - size / 3.0 - swatch_height / 2.0, swatch_width, swatch_height)
+                if role in {"milestone"}:
+                    add("Symbol", role, "legend", role, role, "legend-swatch", swatch_bounds, shape="diamond")
+                elif role == "dependency":
+                    points = ((x, baseline_y - size / 3.0), (x + swatch_width, baseline_y - size / 3.0))
+                    add("Path", role, "legend", role, role, "legend-swatch", _path_bounds(points), points=points)
+                else:
+                    add("Rect", role, "legend", role, role, "legend-swatch", swatch_bounds)
+                label_x = x + swatch_width + float(spec["labelGap"])
+                layout = text_layout(label, label_x, baseline_y - size, role="legend", available=max(1.0, limit - label_x))
+                add("Text", role, "legend", role, "text-muted", "legend-label", layout.bounds,
+                    text=label, baseline=layout.baseline, layout=layout)
+                x += item_width + float(spec["itemGap"])
+            if content.coverage_text:
+                coverage = settings["theme"]["typography"]["coverage"]
+                top = baseline_y + float(spec["coverageGap"])
+                layout = text_layout(content.coverage_text, left, top, role="coverage", available=max(1.0, limit - left))
+                if layout.bounds[1] + layout.bounds[3] > legend_slot.bounds[1] + legend_slot.bounds[3]:
+                    raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:legend")
+                add("Text", "coverage", "legend", "", "text-muted", "coverage-text", layout.bounds,
+                    text=content.coverage_text, baseline=layout.baseline, layout=layout)
+
+        summary_slot = _optional_surface_slot(surface, "summary")
+        if summary_slot is not None:
+            panel_count = max(1, len(content.summary_panels))
+            panel_width = summary_slot.bounds[2] / panel_count
+            for panel_index, (panel_id, metrics_values) in enumerate(content.summary_panels):
+                panel_bounds = (summary_slot.bounds[0] + panel_index * panel_width, summary_slot.bounds[1],
+                                panel_width, summary_slot.bounds[3])
+                add("Rect", panel_id, "summary", "", "summary-panel", "summary-panel", panel_bounds)
+                header = text_layout(panel_id, panel_bounds[0] + 8.0, panel_bounds[1] + 8.0,
+                                     role="summaryHeader", available=max(1.0, panel_width - 16.0), wrap=True)
+                add("Text", panel_id, "summary", "", "summary-header", "summary-header", header.bounds,
+                    text=panel_id, baseline=header.baseline, layout=header)
+                metric_y = header.bounds[1] + header.bounds[3] + 6.0
+                for metric_id, value in metrics_values:
+                    metric_text = f"{metric_id}: {value}"
+                    layout = text_layout(metric_text, panel_bounds[0] + 8.0, metric_y,
+                                         role="summaryMetric", available=max(1.0, panel_width - 16.0), wrap=True)
+                    if layout.bounds[1] + layout.bounds[3] > panel_bounds[1] + panel_bounds[3]:
+                        raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:summary")
+                    add("Text", f"{panel_id}:{metric_id}", "summary", "", "summary-metric", "summary-metric",
+                        layout.bounds, text=metric_text, baseline=layout.baseline, layout=layout)
+                    metric_y += layout.bounds[3]
+
+    rank = {
+        "table-frame": 0, "table-header-band": 1, "group-surface": 2, "row-shade": 3,
+        "table-row-rule": 4, "axis-band": 5, "tick": 6, "comparison-mark": 7,
+        "table-column-label": 8, "group-header": 9, "table-cell": 10,
+        "axis-label": 11, "item-label": 12, "title-text": 13, "subtitle-text": 13,
+        "dependency-connector": 14, "annotation-box": 15, "annotation-text": 16,
+        "annotation-leader": 17, "legend-swatch": 18, "legend-label": 19,
+        "project-note": 20, "coverage-text": 21, "summary-panel": 22,
+        "summary-header": 23, "summary-metric": 24,
+    }
+    primitives = sorted(primitives, key=lambda node: (rank.get(node.purpose, 99), node.z_order, node.scene_id))
+    primitives = [ScenePrimitive(**{**node.__dict__, "z_order": index}) for index, node in enumerate(primitives)]
+    for node in primitives:
+        _validate_primitive(node)
     return tuple(primitives)
 
 
 def _scene_surfaces(items: tuple[object, ...], window: tuple[date, date], settings: dict,
                     slots: tuple[SceneSlot, ...], rows: tuple[SceneRow, ...], groups: tuple[SceneGroup, ...],
                     title: str, axes: tuple[AxisInterval, ...], ticks: tuple[AxisInterval, ...],
-                    marks: tuple[ComparisonMark, ...]) -> tuple[SceneSurface, ...]:
+                    marks: tuple[ComparisonMark, ...], lanes: tuple[LaneAssignment, ...],
+                    tracks: tuple[LaneTrack, ...], content: SurfaceContentInput) -> tuple[SceneSurface, ...]:
     raw = (
         SceneSurface("table-timeline", slots, rows, groups),
         _linear_surface("review", items, window, settings, grouped=True),
         _linear_surface("minimal", items, window, settings, grouped=False),
     )
     return tuple(SceneSurface(surface.surface_id, surface.slots, surface.rows, surface.groups,
-                              _surface_primitives(surface, title, items, window, axes, ticks, marks, settings))
+                              _surface_primitives(surface, title, items, window, axes, ticks, marks, lanes, tracks,
+                                                  settings, content))
                  for surface in raw)
 
 
-def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
+def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict,
+                             surface_content: SurfaceContentInput | None = None) -> PresentationScene:
     """Build a completed shared Scene; adapters may only serialize its primitives."""
-    resolved = _resolved_input(title, items, window, settings)
+    resolved = _resolved_input(title, items, window, settings, surface_content)
     start, end = resolved.window
     axis = settings["layout"]["axis"]
     levels, heights = axis["levels"], axis["bandHeights"]
@@ -378,7 +747,8 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     primitives = _scene_primitives(resolved, axes, marks)
     slots = _scene_slots(settings)
     rows, groups = _scene_rows(copied_items, slots, settings)
-    surfaces = _scene_surfaces(copied_items, (start, end), settings, slots, rows, groups, resolved.title, axes, ticks, marks)
+    surfaces = _scene_surfaces(copied_items, (start, end), settings, slots, rows, groups, resolved.title, axes, ticks, marks,
+                              lanes, tracks, resolved.surface_content)
     return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots, rows, groups, surfaces)
 
 

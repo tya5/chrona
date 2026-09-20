@@ -1,7 +1,7 @@
 """M14 typed review projection; rendering remains a separate adapter."""
 from __future__ import annotations
-from dataclasses import dataclass
-from datetime import date
+from dataclasses import dataclass, replace
+from datetime import date, timedelta
 from html import escape
 from typing import Any
 
@@ -191,6 +191,36 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     return "\n".join(parts+["</svg>"])+"\n"
 
 
+def _surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any]):
+    """Normalize selected table/surface facts once, before Scene construction."""
+    from .presentation_scene import SurfaceContentInput
+
+    columns = tuple((str(column["id"]), str(column["id"]))
+                    for column in view["body"].get("tableColumns", ()))
+    cells = tuple(
+        (item.object_id, str(column["id"]), str(_display_value(_table_value(item, project, column["source"]), column["missing"])))
+        for item in projection.items for column in view["body"].get("tableColumns", ())
+    )
+    relations = tuple(project.get("relations", ())) if view["body"].get("visibility", {}).get("relations", "semantic") != "none" else ()
+    annotations = tuple(view["body"].get("annotations", ())) if view["body"].get("visibility", {}).get("annotations", "none") != "none" else ()
+    notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
+    legend = tuple((str(entry["role"]), str(entry["label"])) for entry in settings["detail"]["legend"])
+    values = {
+        "selectedCount": len(projection.items), "unmatchedCount": len(projection.unmatched_actual_ids),
+        "missingCount": sum(1 for item in projection.items if not item.actual),
+    }
+    coverage = settings["detail"]["coverage"].format_map(values)
+    start, end = projection.window
+    last_visible = end - timedelta(days=1) if end.day == 1 and end > start else end
+    template_values = (
+        ("title", ""), ("windowStart", f"{start:%b %Y}"), ("windowLastVisible", f"{last_visible:%b %Y}"),
+        ("selectedCount", str(values["selectedCount"])), ("unmatchedCount", str(values["unmatchedCount"])),
+        ("missingCount", str(values["missingCount"])),
+    )
+    return SurfaceContentInput(columns, cells, relations, annotations, notes, legend, coverage,
+                               template_values=template_values)
+
+
 def render_table_timeline_svg(title: str, projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], theme: dict[str, Any], capabilities: set[str], profile: dict[str, Any], slots: dict[str, Any] | None = None, settings: dict[str, Any] | None = None) -> str:
     """One generic layout-backed adapter; no sample-specific branches."""
     from .gantt_surface import render_gantt
@@ -200,7 +230,17 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
     presentation_scene = None
     if settings is not None:
         from .presentation_scene import build_presentation_scene
-        presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings)
+        content = _surface_content_input(projection, project, view, settings)
+        content = replace(
+            content, template_values=tuple((key, title if key == "title" else value)
+                                           for key, value in content.template_values))
+        presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings, content)
+        from .presentation_svg import render_scene_surface_svg
+        surface = next((candidate for candidate in presentation_scene.surfaces
+                        if candidate.surface_id == "table-timeline"), None)
+        if surface is None:
+            raise ValueError("E_PRESENTATION_SURFACE_MISSING")
+        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
     return render_gantt(title, projection, project, view, theme, profile, slots, settings, presentation_scene=presentation_scene)
 
 
