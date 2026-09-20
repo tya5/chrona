@@ -93,7 +93,9 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
         if node.purpose == "axis-label":
             purpose = "axis-quarter" if node.visual_role == "quarter" else "axis-band"
         elif node.purpose == "comparison-mark":
-            purpose = "variance" if node.semantic_facet == "finish-delta" else node.semantic_facet
+            purpose = ("variance" if node.semantic_facet == "finish-delta" else
+                       "milestone" if node.kind == "Symbol" and node.visual_role == "milestone" else
+                       node.semantic_facet)
             if purpose == "baseline":
                 purpose = "planned"
         common = (f'data-scene-id="{escape(node.scene_id)}" data-purpose="{escape(purpose)}" '

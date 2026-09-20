@@ -585,8 +585,11 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                                     anchor_x=right, vertical_bounds=(top, bottom))
             else:
                 symbol_y = row_y if independent_lane else row_y + (row_height - point_size) / 2.0
-                paint = resolve_facet_paint(settings["theme"], str(getattr(item, "group_id", "")), mark.facet)
-                add("Symbol", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
+                planned_point = mark.facet in {"planned", "baseline"}
+                role = "milestone" if planned_point else mark.facet
+                paint = (settings["theme"]["paints"]["milestone"] if planned_point else
+                         resolve_facet_paint(settings["theme"], str(getattr(item, "group_id", "")), mark.facet))
+                add("Symbol", mark.source_id, "object", mark.facet, role, "comparison-mark",
                     (x - point_size / 2.0, symbol_y, point_size, point_size),
                     shape=settings["theme"]["point"]["shape"], color=str(paint["color"]), opacity=float(paint["opacity"]),
                     lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
@@ -682,8 +685,6 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         rules = []
     else:
         rules = list(settings["detail"]["labelRules"])
-    if surface.surface_id == "table-timeline" and not any(rule["source"] == "title" for rule in rules):
-        rules.append({"source": "title", "facet": "planned", "endpoint": "body", "required": True})
     seen_targets: set[tuple[str, str, str]] = set()
     for rule in rules:
         if rule["source"] not in {"title", "planned-date", "actual-date"}:
@@ -716,6 +717,11 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 text, purpose, role = formatted_date(value), f'{rule["source"]}-label', "text-muted"
             measured = text_layout(text, 0.0, 0.0, role="body", available=timeline.bounds[2])
             obstacles = [LabelRect(*candidate.bounds) for candidate in mark_primitives if candidate is not node]
+            obstacles.extend(
+                LabelRect(*candidate.bounds) for candidate in primitives
+                if candidate.kind == "Text" and candidate.source_ref in rows
+                and candidate.purpose in {"variance-label", "missing-actual-label"}
+            )
             obstacles.extend(placed_item_labels)
             placement = place_label(
                 LabelRect(*node.bounds), (measured.bounds[2], measured.bounds[3]), candidate_sides,
@@ -767,7 +773,9 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         cells = {(object_id, column_id): value for object_id, column_id, value in content.table_cells}
         for row_index, row in enumerate(surface.rows):
             if row_index % 2:
-                add("Rect", row.object_id, "object", "", "row-shade", "row-shade", row.bounds)
+                shade = settings["theme"]["paints"]["rowShade"]
+                add("Rect", row.object_id, "object", "", "row-shade", "row-shade", row.bounds,
+                    color=str(shade["color"]), opacity=float(shade["opacity"]))
             y = row.bounds[1] + row.bounds[3]
             add("Path", row.object_id, "object", "", "table-row", "table-row-rule",
                 (table_x, y, table_width, 0.0), points=((table_x, y), (table_x + table_width, y)))

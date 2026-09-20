@@ -424,7 +424,7 @@ def test_axis_formats_and_year_band_are_consumed_by_the_completed_scene():
 def test_point_shape_and_facet_opacity_are_scene_owned_and_serialized(shape, tag):
     settings = scene_settings()
     settings["theme"]["point"]["shape"] = shape
-    settings["theme"]["facetPaints"]["default"]["planned"] = {"color": "#123456", "opacity": 0.37}
+    settings["theme"]["paints"]["milestone"] = {"color": "#123456", "opacity": 0.37}
     milestone = item()
     milestone.source_type = "point"
     milestone.planned = {"at": date(2026, 1, 8)}
@@ -436,9 +436,51 @@ def test_point_shape_and_facet_opacity_are_scene_owned_and_serialized(shape, tag
     symbol = next(node for node in surface.primitives if node.purpose == "comparison-mark")
     assert (symbol.shape, symbol.color, symbol.opacity) == (shape, "#123456", 0.37)
     svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
-    element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "planned")
+    element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "milestone")
     assert element.tag.endswith(tag)
     assert element.get("fill") == "#123456" and element.get("opacity") == "0.37"
+
+
+def test_row_shade_preserves_theme_opacity_and_table_title_has_no_implicit_plot_copy():
+    settings = scene_settings()
+    settings["theme"]["paints"]["rowShade"] = {"color": "#123456", "opacity": 0.23}
+    settings["detail"]["labelRules"] = [
+        rule for rule in settings["detail"]["labelRules"] if rule["source"] != "title"
+    ]
+    first, second = item(), item()
+    first.object_id, second.object_id = "first", "second"
+    second.title = "Second"
+    content = SurfaceContentInput(
+        table_columns=(("title", "Title"),),
+        table_cells=(("first", "title", "A"), ("second", "title", "Second")),
+    )
+    scene = build_presentation_scene("Roadmap", (first, second),
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    shade = next(node for node in surface.primitives if node.purpose == "row-shade")
+    assert (shade.color, shade.opacity) == ("#123456", 0.23)
+    assert not any(node.purpose == "item-label" for node in surface.primitives)
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"],
+                                   theme=settings["theme"], output=settings["output"])
+    element = next(value for value in ET.fromstring(svg).iter()
+                   if value.get("data-purpose") == "row-shade")
+    assert (element.get("fill"), element.get("opacity")) == ("#123456", "0.23")
+
+
+def test_explicit_plot_title_avoids_existing_variance_label():
+    settings = scene_settings()
+    settings["layout"]["labelPlacement"].update(
+        candidateSides=["end", "above", "below"], maxCandidates=3)
+    subject = item()
+    subject.title = "Long delivery title"
+    scene = build_presentation_scene("Roadmap", [subject],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    title = next(node for node in surface.primitives if node.purpose == "item-label")
+    variance = next(node for node in surface.primitives if node.purpose == "variance-label")
+    ax, ay, aw, ah = title.bounds
+    bx, by, bw, bh = variance.bounds
+    assert ax + aw <= bx or bx + bw <= ax or ay + ah <= by or by + bh <= ay
 
 
 def test_arrow_shape_none_and_independent_actual_height_are_consumed():

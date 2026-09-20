@@ -74,7 +74,7 @@ def test_minimal_svg_consumes_resolved_presentation_settings():
     settings = builtin_bases()["executive-v0.2"]
     svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, settings)
     assert 'width="1600"' in svg
-    assert 'fill="#3986E6"' in svg
+    assert 'data-purpose="milestone"' in svg and 'fill="#102B50"' in svg
     assert 'data-surface-id="minimal"' in svg
     assert 'data-scene-id=' in svg and '>Task</text>' in svg
 

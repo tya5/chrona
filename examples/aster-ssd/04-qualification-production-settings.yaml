@@ -417,7 +417,6 @@ layout:
     metricGap: 3
 detail:
   labelRules:
-  - {id: title, source: title, facet: planned, endpoint: body, required: true}
   - {id: actual-finish, source: actual-date, facet: actual, endpoint: finish, required: false}
   - {id: finish-variance, source: comparison-delta, facet: variance, endpoint: finish, required: false}
   groupLabel: Owner
