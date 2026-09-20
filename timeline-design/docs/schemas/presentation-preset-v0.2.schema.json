@@ -137,12 +137,32 @@
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["family", "weight", "revision", "contentIdentity"],
+                "required": [
+                  "family",
+                  "weight",
+                  "revision",
+                  "contentIdentity"
+                ],
                 "properties": {
-                  "family": {"type": "string", "minLength": 1, "maxLength": 4096},
-                  "weight": {"type": "integer", "minimum": 1, "maximum": 1000},
-                  "revision": {"type": "string", "minLength": 1, "maxLength": 4096},
-                  "contentIdentity": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+                  "family": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000
+                  },
+                  "revision": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "contentIdentity": {
+                    "type": "string",
+                    "pattern": "^sha256:[0-9a-f]{64}$"
+                  }
                 }
               }
             },
@@ -1004,15 +1024,29 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "default": {"type": "object"},
-            "groups": {"type": "object"}
+            "default": {
+              "type": "object"
+            },
+            "groups": {
+              "type": "object"
+            }
           },
           "description": "Partial preset override; the merged resolved settings must satisfy the complete facet-paint contract."
         },
         "annotation": {
           "type": "object",
           "additionalProperties": false,
-          "properties": {"boxFill": {"type": "object"}, "boxStroke": {"type": "object"}, "leader": {"type": "object"}}
+          "properties": {
+            "boxFill": {
+              "type": "object"
+            },
+            "boxStroke": {
+              "type": "object"
+            },
+            "leader": {
+              "type": "object"
+            }
+          }
         },
         "bar": {
           "type": "object",
@@ -1256,8 +1290,39 @@
                   }
                 },
                 "allOf": [
-                  {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
-                  {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "const": "content"
+                        }
+                      }
+                    },
+                    "then": {
+                      "not": {
+                        "required": [
+                          "value"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "fixed",
+                            "fraction"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "value"
+                      ]
+                    }
+                  }
                 ]
               },
               "tracks": {
@@ -1296,8 +1361,39 @@
                     }
                   },
                   "allOf": [
-                    {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
-                    {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "const": "content"
+                          }
+                        }
+                      },
+                      "then": {
+                        "not": {
+                          "required": [
+                            "value"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "fixed",
+                              "fraction"
+                            ]
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "value"
+                        ]
+                      }
+                    }
                   ]
                 }
               },
@@ -1381,9 +1477,32 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "candidateSides": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"enum": ["above", "below", "end", "start", "inside"]}},
-            "maxCandidates": {"type": "integer", "minimum": 1, "maximum": 16},
-            "overflow": {"enum": ["diagnose", "clip-optional"]}
+            "candidateSides": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "above",
+                  "below",
+                  "end",
+                  "start",
+                  "inside"
+                ]
+              }
+            },
+            "maxCandidates": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16
+            },
+            "overflow": {
+              "enum": [
+                "diagnose",
+                "clip-optional"
+              ]
+            }
           }
         },
         "group": {
@@ -1529,8 +1648,39 @@
               }
             },
             "allOf": [
-              {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
-              {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "content"
+                    }
+                  }
+                },
+                "then": {
+                  "not": {
+                    "required": [
+                      "value"
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "fixed",
+                        "fraction"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ]
+                }
+              }
             ]
           },
           "description": "Empty means equal division by count, an explicit algorithm policy; keyed position follows View columns."
@@ -1736,7 +1886,11 @@
               ]
             },
             "comparisonMode": {
-              "enum": ["stacked", "overlaid", "baseline-and-actual"]
+              "enum": [
+                "stacked",
+                "overlaid",
+                "baseline-and-actual"
+              ]
             }
           },
           "description": "Sizes belong to Theme; band placement belongs to Layout."
@@ -1840,11 +1994,47 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "grouping": {"enum": ["view-groups"]},
-            "stacking": {"enum": ["stable-lowest-nonoverlap"]},
-            "occupancy": {"enum": ["mark-bounds-plus-required-label-bounds"]},
-            "maxStack": {"type": "integer", "minimum": 1, "maximum": 10000}
-          }
+            "grouping": {
+              "enum": [
+                "view-groups"
+              ]
+            },
+            "stacking": {
+              "enum": [
+                "stable-lowest-nonoverlap"
+              ]
+            },
+            "occupancy": {
+              "enum": [
+                "mark-bounds-plus-required-label-bounds"
+              ]
+            },
+            "maxStack": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "surface": {
+              "enum": [
+                "row-aligned",
+                "independent-lane-track"
+              ]
+            },
+            "pitchPolicy": {
+              "const": "scene-mark-extent-plus-clearance"
+            },
+            "trackPadding": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "trackGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "description": "Stable stacking uses View group/order and never moves an item across groups. row-aligned accepts only stack 0; independent-lane-track owns derived track geometry."
         },
         "legend": {
           "type": "object",
@@ -2002,7 +2192,9 @@
         "labelRules": {
           "type": "array",
           "minItems": 1,
-          "items": {"type": "object"},
+          "items": {
+            "type": "object"
+          },
           "description": "Partial preset override; the merged resolved settings validate the closed label-rule contract."
         },
         "groupLabel": {
