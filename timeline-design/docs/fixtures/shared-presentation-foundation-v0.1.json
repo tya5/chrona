@@ -80,7 +80,11 @@
     "grouping": "view-groups",
     "stacking": "stable-lowest-nonoverlap",
     "occupancy": "mark-bounds-plus-required-label-bounds",
-    "maxStack": 12
+    "maxStack": 12,
+    "surface": "row-aligned",
+    "pitchPolicy": "scene-mark-extent-plus-clearance",
+    "trackPadding": 8,
+    "trackGap": 6
   },
   "routing": {
     "dependency": "semantic-orthogonal",
