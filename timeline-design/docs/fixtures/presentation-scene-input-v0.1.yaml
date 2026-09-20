@@ -49,6 +49,11 @@ inputs:
     Symbol: [shape, bounds]
     Path: [points]
     connectorPath: [points, fromPortId, toPortId]
+  surfaceContentInput:
+    required: [tableColumns, tableCells, relations, annotations, notes, legendEntries, coverageText, summaryPanels]
+    normalization: application-boundary-once
+    adapterVisible: false
+    authority: derived-selected-content-only
 invariants:
   - adapters-receive-completed-scene-only
   - slot-row-track-bounds-are-not-authoring-data
@@ -58,3 +63,4 @@ invariants:
   - primitive-family-presence-is-authorized-by-surface-slot-and-visibility
   - routes-ports-and-text-layout-are-scene-owned
   - primitive-kind-payload-mismatch-is-a-stable-diagnostic
+  - adapters-never-read-surface-content-input

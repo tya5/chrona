@@ -91,6 +91,15 @@ Actual point remains `actual` even when they share geometry or paint.  `sceneId`
 derived from `projectionInstanceId` plus the primitive-purpose suffix.  Array order,
 coordinates, renderer element IDs, and display text are not identity inputs.
 
+`ResolvedPresentationInput` also contains one immutable `SurfaceContentInput` derived
+before Scene construction. It contains only selected, normalized presentation facts:
+ordered table-column IDs and per-object display strings; selected relation IDs with
+typed endpoints; visible View annotations with typed anchors and purpose; ordered
+project-note text; resolved legend entries and coverage text; and declared summary
+panels with already formatted metric text. It contains no Project, View, Schedule, or
+settings object and is not persisted. Missing optional families are empty collections;
+missing required normalized content is `E_PRESENTATION_INPUT_INCOMPLETE`.
+
 The Builder alone converts this input into measured geometry, ports, obstacles,
 track bounds, and primitives.  An adapter receives neither authoring resources nor a
 semantic View Projection and MUST NOT recreate a scale, select a slot, choose an
@@ -255,6 +264,8 @@ row height, or a different surface to repair missing geometry.  A missing surfac
 `E_PRESENTATION_SURFACE_MISSING`; a missing required primitive, row, or slot is
 `E_PRESENTATION_PRIMITIVE_MISSING`.  Both diagnostics identify the selected
 `surfaceId` and, where applicable, the expected primitive purpose and sourceRef.
+The adapter never receives or consults `SurfaceContentInput`; it is consumed entirely
+by Scene construction.
 
 ## 6. Projection rules
 

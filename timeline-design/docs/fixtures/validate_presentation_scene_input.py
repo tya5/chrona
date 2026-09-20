@@ -36,4 +36,8 @@ assert "routes-ports-and-text-layout-are-scene-owned" in case["invariants"]
 assert case["inputs"]["primitivePayloads"]["Text"] == ["text", "textLayout"]
 assert case["inputs"]["primitivePayloads"]["connectorPath"] == ["points", "fromPortId", "toPortId"]
 assert "primitive-kind-payload-mismatch-is-a-stable-diagnostic" in case["invariants"]
+content = case["inputs"]["surfaceContentInput"]
+assert content["adapterVisible"] is False
+assert set(content["required"]) == {"tableColumns", "tableCells", "relations", "annotations", "notes", "legendEntries", "coverageText", "summaryPanels"}
+assert "adapters-never-read-surface-content-input" in case["invariants"]
 print("presentation-scene-input derived fixture valid")

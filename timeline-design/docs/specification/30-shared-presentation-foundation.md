@@ -40,6 +40,14 @@ Visual roles never overwrite facets. Multiple slots and colocated facet/role ins
 remain distinct. DTOs, measurements, and Scene are derived and never persisted in View
 or Layout.
 
+The DTO includes a closed `SurfaceContentInput`, normalized exactly once by the
+application boundary: ordered column IDs and cell display strings; typed selected
+relations; typed visible annotations; ordered note text; resolved legend entries plus
+coverage text; and declared summary panels with formatted metric strings. Scene
+construction consumes these values but no Project, View, Schedule, or authoring settings
+resource. Optional absent families are empty; missing required normalized values yield
+`E_PRESENTATION_INPUT_INCOMPLETE`. SVG adapters never see this DTO.
+
 After measuring content, pass temporary `intrinsicBlocks` / `intrinsicTracks` to the
 solver; never persist them or replace unmeasured values with fixed pixels. Equal input
 closure, font assets, locale, and candidate order must reproduce equal intrinsic values.
@@ -225,6 +233,7 @@ primitives. Retain the Specification 29 legacy adapter until G1 completes, alway
 | `E_PRESENTATION_LABEL_UNPLACEABLE` | Required text fits no candidate | Shrink, hide, detach |
 | `E_PRESENTATION_STACK_OVERFLOW` | Stack or lane bounds exceeded | Move group or overlap |
 | `E_PRESENTATION_DUPLICATE_AUTHORITY` | Old/new policy coexist | Merge or implicit priority |
+| `E_PRESENTATION_INPUT_INCOMPLETE` | Required normalized surface content is absent | Read Project/View/settings in an adapter |
 | `E_PRESENTATION_PRIMITIVE_INVALID` | Primitive kind and payload disagree | Infer or repair payload in an adapter |
 | `E_CONNECTOR_UNROUTABLE` | Finite search has no route | Free-form path |
 

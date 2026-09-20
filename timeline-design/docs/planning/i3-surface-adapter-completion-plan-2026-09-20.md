@@ -60,6 +60,12 @@ Ticks use ordered points without ports. Structural tests reject every kind/paylo
 mismatch with `E_PRESENTATION_PRIMITIVE_INVALID`; adapters never synthesize a missing
 payload. This DTO closure is a design-only publication before I3-C implementation.
 
+I3-C also introduces `SurfaceContentInput` at the application-to-Scene boundary. The
+entry path normalizes table cells, relations, annotations, notes, legend/coverage, and
+summary strings once; Scene Builder consumes that immutable DTO. An SVG adapter receives
+neither this input nor Project/View/settings. Tests mutate each normalized family and
+prove that only the corresponding Scene primitives change.
+
 I3-D and I3-E add no primitive families. They reduce review and minimal, respectively,
 to serializers that consume only their selected I3-A/B core. I3-F adds those surfaces'
 connectors, annotations, summaries, and remaining surface-specific families using the
