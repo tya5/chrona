@@ -24,9 +24,13 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
     if not placements:
         raise ValueError("Cannot render a project without resolved placements")
 
+    presentation_scene = None
+    if settings is not None:
+        from .presentation_scene import presentation_scene_from_schedule
+        presentation_scene = presentation_scene_from_schedule(scene.title, placements, settings)
     dates = [_placement_dates(value) for value in placements.values()]
-    start = min(value[0] for value in dates)
-    end = max(value[1] for value in dates)
+    start = presentation_scene.window[0] if presentation_scene is not None else min(value[0] for value in dates)
+    end = presentation_scene.window[1] if presentation_scene is not None else max(value[1] for value in dates)
     span_days = max((end - start).days, 1)
     if settings is None:
         left, top, lane_height, day_width = _LEFT, _TOP, _LANE_HEIGHT, _DAY_WIDTH
@@ -55,12 +59,19 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
     ]
     if settings is None:
         parts.append('<metadata data-presentation-adapter="legacy-v0.1" data-diagnostic="E_PRESENTATION_LEGACY_ADAPTER"/>')
+    else:
+        parts.append(f'<metadata data-presentation-scene="v0.1" data-axis-count="{len(presentation_scene.axes)}" data-mark-count="{len(presentation_scene.marks)}"/>')
 
-    for offset in range(0, span_days + 1, 7):
+    ticks = presentation_scene.ticks if presentation_scene is not None else tuple()
+    for offset in range(0, span_days + 1, 7) if not ticks else ():
         x = left + offset * day_width
         label = start.fromordinal(start.toordinal() + offset).isoformat()
         parts.append(f'<line x1="{x}" y1="{top-24}" x2="{x}" y2="{height - 36}" stroke="{grid}" stroke-width="1" />')
         parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="{body_size}">{label}</text>')
+    for tick in ticks:
+        x = left + (tick.start - start).days * day_width
+        parts.append(f'<line x1="{x}" y1="{top-24}" x2="{x}" y2="{height - 36}" stroke="{grid}" stroke-width="1" />')
+        parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="{body_size}">{tick.label}</text>')
 
     for relation in scene.relations:
         source_id = relation["from"]["object"]
