@@ -23,6 +23,7 @@ def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
     assert [mark.facet for mark in scene.marks] == ["planned", "actual", "finish-delta"]
     assert scene.axes[0].level == "month"
     assert scene.ticks[0].start == date(2026, 1, 1)
+    assert scene.lanes[0].stack == 0
 
 
 def test_scene_rejects_invalid_axis_order_before_adapter_use():
