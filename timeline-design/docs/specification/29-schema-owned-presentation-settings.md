@@ -103,13 +103,22 @@ content-addressしたmigration inputを追加するまで実装しない。こ�
 
 文字幅推定の `.58`、ベースラインの `.34`、固定文字幅112/60/57は、
 調整つまみに置き換えず**固定されたfont metricsによる実測**へ置き換える。
-フォントのascent/descentとTheme lineHeightからbaselineを導出し、同じ計測結果を
-折返し・overflow・障害物判定・SVGに使う。fallbackも宣言された順だけを用いる。
-計測資産・fallback選択結果・locale資産のidentityをmanifestに含める。
+`context.fontMetrics.assets` は `{family, weight, revision, contentIdentity}` の完全な
+組であり、Themeの各typography roleが要求するweightごとに、font stackの先頭から
+一致する宣言済み資産だけを選ぶ。通常ウェイトで太字を代用せず、未宣言のfamily又は
+weight、identity不一致、asset不在は `E_FONT_METRICS_UNAVAILABLE` とする。
+`missingFont: declared-fallback` は次の**宣言済み**familyへ進むことだけを許し、
+プロセス既定フォントや近傍weightへの代替を許さない。フォントのascent/descentと
+Theme lineHeightからbaselineを導出し、同じ計測結果を折返し・overflow・障害物判定・
+SVGに使う。計測資産・実際に選んだfamily/weight・locale資産のidentityをmanifestに含める。
 
 region.blockはfixed/fraction/contentとmin/max。名前は意味を持たない。
 fixed/contentの確定後、残りをfractionの重みで分割する。contentは計測済みの
-intrinsic bounds。循環するcontent依存、min>max、負の残余は診断し、隠れた縮小はしない。
+intrinsic boundsである。solver入力はresolved settingsに加え、同一Scene構築で一度だけ
+算出した `intrinsicBlocks[regionId]` と `intrinsicTracks[regionId][trackIndex]` を明示的に
+受け取る。contentの`value`をfallback又は推定値として使わず、対応するintrinsic入力が
+無い場合は `E_LAYOUT_REQUIRED_OVERFLOW` とする。循環するcontent依存、min>max、負の残余は
+診断し、隠れた縮小はしない。
 slotはregionとtrack indexを明示する。同じtrackの多重配置はoverlay以外で診断。
 table/timelineは同じ行gridを共有。columnTracksが空の場合だけ等分配する。
 表示時間はViewが決め、scale paddingは時間を追加せず描画余白だけを増やす。
