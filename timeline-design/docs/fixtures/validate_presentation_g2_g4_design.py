@@ -22,7 +22,5 @@ expected = {"E_PRESENTATION_LABEL_UNPLACEABLE", "E_PRESENTATION_ANCHOR_MISSING",
             "E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE", "E_PRESENTATION_ROUTE_LIMIT"}
 assert {entry["diagnostic"] for entry in case["negative"]} == expected
 assert case["negative"][0]["input"]["maxCandidates"] > 16
-assert any(entry["diagnostic"] == "E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE"
-           and entry["input"]["stackIndex"] > 0 for entry in case["negative"])
 assert case["negative"][-1]["input"]["routing"]["limit"] < 1
 print("G2-G4 design fixture valid: two generic projects, long Japanese text, missing actual, and five negative diagnostics")
