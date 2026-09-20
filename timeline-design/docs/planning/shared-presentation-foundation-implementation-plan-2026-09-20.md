@@ -1,6 +1,6 @@
 # 共通表現基盤：実装計画
 
-**状態:** G1.2完了・公開済み。設計根拠は仕様30・ADR-0019。  
+**状態:** G1.3完了・公開済み。設計根拠は仕様30・ADR-0019。  
 **範囲:** 共通基盤だけを実装する。ASTER、Controller Z、画像案A〜Dの名前で分岐しない。
 
 ## 実装順序
@@ -31,6 +31,12 @@ font assetだけを選択する。`content` region/trackは明示intrinsic入力
 診断し、fixed/content→fractionとgap/min/maxを決定的に解決する。Aster 5枚と
 Controller Zの設定を新しいfont asset配列へ移行した。139 tests passed（既存の
 RefResolver deprecation warnings 2件）。
+
+### G1.3 完了記録
+
+`presentation_marks.py`はspan/pointのplanned・actual・baseline・finish-deltaを
+renderer非依存で投影する。span Actualはstart/finishがともに観測された場合だけを
+受理し、片端をplannedから補わない。差分は符号を保ち、zero表示も明示policyである。
 
 ## G1.1 の契約
 
