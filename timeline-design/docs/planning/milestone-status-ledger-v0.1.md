@@ -32,7 +32,7 @@ evidence is present, not that a later product release is complete.
 | M19 | Complete | Layout Profile runtime validation, deterministic Layout Manifest, old-profile rejection, M19 final review, conformance, and 89 tests. | None. |
 | M20 | Complete | Constraint solver and slot-based review rendering, M20 final review, conformance, and 90 tests. | None. |
 | M21 | Complete | Generic calendar/table/relation/annotation primitives, M21 final review, conformance, and 91 tests. | None. |
-| M22 | Implementation active after design closure | R0 remains valid for issues 1–10. D24 and its addenda preceded implementation; I24-1 is at `f39e25e`, I24-2 at `7915501`, and I24-3 at `fac5fb8`. The final pre-I24-4 addendum closes Output behavior. | Publish the Output addendum, then complete I24-4 and A24. |
+| M22 | Complete | D24 and every discovered addendum preceded implementation. I24-1 is at `f39e25e`, I24-2 at `7915501`, I24-3 at `fac5fb8`, and I24-4 at `9bf3595`; 239 tests, full conformance, matrix closure, and five regenerated ASTER artifacts pass. | None. |
 | M23 | Design complete; implementation not started | Review Detail Profile closes reference-quality legend, group detail, observation, and milestone surfaces without changing semantic authority. | M23 implementation, visual acceptance, and release review. |
 
 Implementation may start only at a `Design complete; implementation not started`

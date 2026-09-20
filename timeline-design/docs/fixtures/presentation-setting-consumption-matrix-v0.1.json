@@ -1,6 +1,6 @@
 {
   "version": "chrona/presentation-setting-consumption-matrix/v0.1",
-  "evaluatedAt": "M22 I24-4 acceptance candidate",
+  "evaluatedAt": "main@9bf3595",
   "rows": [
     {"id":"SC-01","settingPattern":"theme.strokes.axisMajor.*","owner":"Theme","classification":"conditional","trigger":"axis-major-tick","observer":"SVG tick stroke token","disposition":"implemented","issue":12},
     {"id":"SC-02","settingPattern":"theme.strokes.axisMinor.*","owner":"Theme","classification":"conditional","trigger":"minorVisible with a tickUnit finer successor","observer":"next-finer SVG minor-tick stroke token","disposition":"implemented","issue":12},

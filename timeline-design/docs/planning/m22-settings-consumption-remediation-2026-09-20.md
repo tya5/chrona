@@ -1,6 +1,6 @@
 # M22 Settings-consumption remediation plan — 2026-09-20
 
-**Status:** I24-1 published; D24 placement/status addendum complete and awaiting publication
+**Status:** Complete through A24
 **Scope:** GitHub issues 11–12 and PR 13, evaluated against `main` at `9be3712`
 **Exclusion:** M23 observation tables and milestone digests remain deferred
 
@@ -110,3 +110,8 @@ I24-4 is complete locally. SVG consumes all Output fields, optionality is explic
 Scene data, and the matrix-driven test rejects every unresolved disposition across all
 24 rows. There is no exact-path `KNOWN_INERT` allow-list. Targeted behavioral tests
 remain the observers named by the matrix.
+
+A24 acceptance is complete: 239 tests and full conformance pass, the five ASTER SVG/PNG
+artifacts were regenerated and visually reviewed with zero reported SVG overflow, and
+the published I24-4 tree equals the verified local tree. Issues 11–12 and PR 13 are
+reconciled after this acceptance-only checkpoint is published.
