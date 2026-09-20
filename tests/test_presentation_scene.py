@@ -18,8 +18,16 @@ def item():
     return SimpleNamespace(object_id="a", title="A", source_type="span", planned={"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, actual={"start": date(2026, 1, 2), "finish": date(2026, 1, 12)}, finish_delta=2, group_id="", group_label="", fields={})
 
 
-def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
+def scene_settings():
     settings = builtin_bases()["executive-v0.2"]
+    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
+        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
+        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
+    return settings
+
+
+def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
+    settings = scene_settings()
     scene = build_presentation_scene("Roadmap", [item()], (date(2026, 1, 1), date(2026, 2, 1)), settings)
     assert [mark.facet for mark in scene.marks] == ["planned", "actual", "finish-delta"]
     assert scene.axes[0].level == "month"
@@ -37,7 +45,7 @@ def test_scene_joins_axis_ticks_and_marks_without_svg_geometry():
 
 
 def test_scene_materializes_stable_primitives_without_adapter_identity():
-    settings = builtin_bases()["executive-v0.2"]
+    settings = scene_settings()
     scene = build_presentation_scene("Roadmap", [item()], (date(2026, 1, 1), date(2026, 2, 1)), settings)
     assert any(node.scene_id == "axis:primary:month:0:band" and node.kind == "Rect" for node in scene.primitives)
     planned = next(node for node in scene.primitives if node.scene_id == "timeline:a:planned:mark")
@@ -49,7 +57,7 @@ def test_scene_materializes_stable_primitives_without_adapter_identity():
 
 
 def test_every_public_surface_owns_completed_core_primitives():
-    settings = builtin_bases()["executive-v0.2"]
+    settings = scene_settings()
     scene = build_presentation_scene("Roadmap", [item()], (date(2026, 1, 1), date(2026, 2, 1)), settings)
     for surface in scene.surfaces:
         primitives = surface.primitives
@@ -59,8 +67,13 @@ def test_every_public_surface_owns_completed_core_primitives():
         assert all(primitive.surface_id == surface.surface_id for primitive in primitives)
         assert all(primitive.projection_instance_id and primitive.scene_id.startswith(primitive.projection_instance_id)
                    for primitive in primitives)
-        assert next(primitive for primitive in primitives if primitive.purpose == "title-text").text == "Roadmap"
-        assert next(primitive for primitive in primitives if primitive.purpose == "item-label").text == "A"
+        title = next(primitive for primitive in primitives if primitive.purpose == "title-text")
+        label = next(primitive for primitive in primitives if primitive.purpose == "item-label")
+        assert title.text == "Roadmap" and label.text == "A"
+        assert title.text_layout is not None and label.text_layout is not None
+        assert title.bounds == title.text_layout.bounds
+        assert label.baseline == label.text_layout.baseline
+        assert title.text_layout.asset_identity.startswith("sha256:")
     review, minimal = (next(surface for surface in scene.surfaces if surface.surface_id == name)
                        for name in ("review", "minimal"))
     review_mark = next(primitive for primitive in review.primitives if primitive.source_ref == "a" and primitive.semantic_facet == "planned")
@@ -69,7 +82,7 @@ def test_every_public_surface_owns_completed_core_primitives():
 
 
 def test_surface_primitives_never_fabricate_missing_actual():
-    settings = builtin_bases()["executive-v0.2"]
+    settings = scene_settings()
     no_actual = item()
     no_actual.actual = None
     scene = build_presentation_scene("Roadmap", [no_actual], (date(2026, 1, 1), date(2026, 2, 1)), settings)
@@ -78,7 +91,7 @@ def test_surface_primitives_never_fabricate_missing_actual():
 
 
 def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
-    settings = builtin_bases()["executive-v0.2"]
+    settings = scene_settings()
     settings["layout"]["lanes"].update(surface="independent-lane-track", trackPadding=8)
     left = item()
     right = item()
@@ -93,11 +106,8 @@ def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
 
 
 def test_independent_lane_tracks_change_svg_bar_offsets():
-    settings = builtin_bases()["executive-v0.2"]
+    settings = scene_settings()
     settings["layout"]["lanes"].update(surface="independent-lane-track", trackPadding=8)
-    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
-        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
-        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
     left, right = item(), item()
     left.object_id = "left"
     right.object_id, right.planned = "right", {"start": date(2026, 1, 2), "end": date(2026, 1, 11)}
@@ -119,9 +129,9 @@ def test_scene_rejects_invalid_axis_order_before_adapter_use():
 
 
 def test_resolved_schedule_is_adapted_to_common_scene():
-    settings = builtin_bases()["executive-v0.2"]
+    settings = scene_settings()
     scene = presentation_scene_from_schedule("Roadmap", {"gate": {"at": date(2026, 1, 3)}}, settings)
-    assert scene.window == (date(2026, 1, 3), date(2026, 1, 4))
+    assert scene.window == (date(2026, 1, 3), date(2026, 1, 10))
     assert [mark.facet for mark in scene.marks] == ["planned"]
 
 

@@ -11,6 +11,19 @@ from .presentation_axis import AxisInterval, axis_intervals
 from .presentation_marks import ComparisonMark, comparison_marks
 from .presentation_lanes import LaneAssignment, LaneItem, LaneTrack, assign_stable_lanes, lane_tracks
 from .presentation_layout import solve_presentation_layout
+from .font_metrics import FontMetrics, resolve_font_metrics
+
+
+@dataclass(frozen=True)
+class TextLayout:
+    """One measured text result shared by Scene geometry and renderer serialization."""
+
+    bounds: tuple[float, float, float, float]
+    baseline: tuple[float, float]
+    lines: tuple[str, ...]
+    family: str
+    weight: int
+    asset_identity: str
 
 
 @dataclass(frozen=True)
@@ -39,6 +52,7 @@ class ScenePrimitive:
     purpose: str = ""
     text: str | None = None
     baseline: tuple[float, float] | None = None
+    text_layout: TextLayout | None = None
     z_order: int = 0
 
 
@@ -221,20 +235,38 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
     items_by_id = {str(getattr(item, "object_id")): item for item in items}
     primitives: list[ScenePrimitive] = []
 
+    def text_layout(value: str, x: float, top: float, *, role: str, available: float,
+                    center: bool = False) -> TextLayout:
+        typography = settings["theme"]["typography"].get(role, settings["theme"]["typography"]["body"])
+        size, weight = float(typography["size"]), int(typography["weight"])
+        line_height = float(typography.get("lineHeight", 1.2))
+        metrics: FontMetrics = resolve_font_metrics(settings["theme"]["fontFamily"], settings["context"]["fontMetrics"], weight=weight)
+        width = metrics.width(value, size, float(typography.get("letterSpacing", 0)))
+        if width > available:
+            raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:text")
+        height = size * line_height
+        left = x - width / 2.0 if center else x
+        return TextLayout(
+            bounds=(left, top, width, height),
+            baseline=(left if not center else x, metrics.baseline(top, size, line_height)),
+            lines=(value,), family=settings["theme"]["fontFamily"], weight=weight,
+            asset_identity=metrics.content_identity,
+        )
+
     def add(kind: str, source_ref: str, source_kind: str, facet: str, role: str,
             purpose: str, bounds: tuple[float, float, float, float], *, text: str | None = None,
-            baseline: tuple[float, float] | None = None) -> None:
+            baseline: tuple[float, float] | None = None, layout: TextLayout | None = None) -> None:
         projection = f"{surface.surface_id}:{purpose}:{source_ref}:{facet}"
         primitives.append(ScenePrimitive(
             scene_id=f"{projection}:primitive", kind=kind, source_ref=source_ref,
             source_kind=source_kind, semantic_facet=facet, visual_role=role, bounds=bounds,
             projection_instance_id=projection, surface_id=surface.surface_id, purpose=purpose,
-            text=text, baseline=baseline, z_order=len(primitives),
+            text=text, baseline=baseline, text_layout=layout, z_order=len(primitives),
         ))
 
-    title_height = float(settings["theme"]["typography"]["heading"]["size"])
+    title_layout = text_layout(title, title_slot.bounds[0], title_slot.bounds[1], role="heading", available=title_slot.bounds[2])
     add("Text", "project", "project", "", "heading", "title-text",
-        title_slot.bounds, text=title, baseline=(title_slot.bounds[0], title_slot.bounds[1] + title_height))
+        title_layout.bounds, text=title, baseline=title_layout.baseline, layout=title_layout)
 
     band_heights = dict(zip(settings["layout"]["axis"]["levels"], settings["layout"]["axis"]["bandHeights"], strict=True))
     axis_y = axis.bounds[1]
@@ -245,8 +277,10 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             x1, x2 = _surface_x(axis, start, end, interval.start), _surface_x(axis, start, end, interval.end)
             source = f"axis:{interval.level}:{interval.index}"
             add("Rect", source, "axis", "axis", interval.level, "axis-band", (x1, axis_y, x2 - x1, band_height))
-            add("Text", source, "axis", "axis", interval.level, "axis-label", (x1, axis_y, x2 - x1, band_height),
-                text=interval.label, baseline=((x1 + x2) / 2.0, axis_y + band_height * 0.75))
+            label_layout = text_layout(interval.label, (x1 + x2) / 2.0, axis_y, role=level,
+                                       available=axis.bounds[2], center=True)
+            add("Text", source, "axis", "axis", interval.level, "axis-label", label_layout.bounds,
+                text=interval.label, baseline=label_layout.baseline, layout=label_layout)
         axis_y += band_height
     bottom = max((row.bounds[1] + row.bounds[3] for row in surface.rows), default=timeline.bounds[1] + timeline.bounds[3])
     for tick in ticks:
@@ -268,8 +302,9 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             x = _surface_x(timeline, start, end, mark.at)
             if mark.facet == "finish-delta":
                 text = f"{mark.variance_days:+d}d"
+                delta_layout = text_layout(text, x, row_y, role="variance", available=max(1.0, timeline.bounds[0] + timeline.bounds[2] - x))
                 add("Text", mark.source_id, "object", mark.facet, "variance", "comparison-mark",
-                    (x, row_y, max(1.0, point_size), row_height), text=text, baseline=(x, row_y + row_height * 0.75))
+                    delta_layout.bounds, text=text, baseline=delta_layout.baseline, layout=delta_layout)
             else:
                 add("Symbol", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
                     (x - point_size / 2.0, row_y + (row_height - point_size) / 2.0, point_size, point_size))
@@ -283,14 +318,16 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             y = row_y + row_height / 2.0 - height - gap / 2.0
         add("Rect", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark", (x1, y, max(0.0, x2 - x1), height))
 
-    label_size = float(settings["theme"]["typography"]["body"]["size"])
     for object_id, row in rows.items():
         item = items_by_id.get(object_id)
         if item is None:
             raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
         value = str(getattr(item, "title", object_id))
-        add("Text", object_id, "object", "", "body", "item-label", row.bounds,
-            text=value, baseline=(row.bounds[0], row.bounds[1] + row.bounds[3] / 2.0 + label_size * 0.35))
+        body = settings["theme"]["typography"]["body"]
+        label_top = row.bounds[1] + (row.bounds[3] - float(body["size"]) * float(body.get("lineHeight", 1.2))) / 2.0
+        label_layout = text_layout(value, row.bounds[0], label_top, role="body", available=row.bounds[2])
+        add("Text", object_id, "object", "", "body", "item-label", label_layout.bounds,
+            text=value, baseline=label_layout.baseline, layout=label_layout)
     return tuple(primitives)
 
 
