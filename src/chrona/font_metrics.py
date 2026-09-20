@@ -29,16 +29,37 @@ class FontMetrics:
         return top + (line - size) / 2 + size * self.ascent / self.units_per_em
 
 
-def resolve_font_metrics(font_stack: str, descriptor: dict) -> FontMetrics:
-    """Resolve the declared stack through fontconfig and verify its identity."""
-    family = font_stack.split(",", 1)[0].strip()
-    match = subprocess.run(["fc-match", "-f", "%{file}", family], check=True, capture_output=True, text=True).stdout.strip()
-    path = Path(match)
-    if not path.is_file():
+def _families(font_stack: str) -> list[str]:
+    return [family.strip().strip("'\"") for family in font_stack.split(",") if family.strip()]
+
+
+def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400) -> FontMetrics:
+    """Resolve an exact declared family/weight asset through fontconfig."""
+    assets = descriptor.get("assets")
+    if not isinstance(assets, list) or not assets:
         raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
-    identity = "sha256:" + sha256(path.read_bytes()).hexdigest()
-    requested = descriptor["contentIdentity"]
-    if requested.endswith("0" * 64) or requested != identity:
+    families = _families(font_stack)
+    if not families:
+        raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
+    allow_fallback = descriptor.get("missingFont") == "declared-fallback"
+    for index, family in enumerate(families):
+        if index and not allow_fallback:
+            raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
+        declared = next((asset for asset in assets if asset.get("family", "").casefold() == family.casefold() and asset.get("weight") == weight), None)
+        if declared is None:
+            continue
+        style = "Regular" if weight == 400 else "Bold" if weight == 700 else None
+        pattern = f"{family}:style={style}" if style else f"{family}:weight={weight}"
+        match = subprocess.run(["fc-match", "-f", "%{file}", pattern], check=True, capture_output=True, text=True).stdout.strip()
+        path = Path(match)
+        if not path.is_file():
+            continue
+        identity = "sha256:" + sha256(path.read_bytes()).hexdigest()
+        requested = declared.get("contentIdentity")
+        actual_weight = TTFont(path)["OS/2"].usWeightClass
+        if requested and not requested.endswith("0" * 64) and requested == identity and actual_weight == weight:
+            break
+    else:
         raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
     font = TTFont(path)
     cmap = font.getBestCmap() or {}
