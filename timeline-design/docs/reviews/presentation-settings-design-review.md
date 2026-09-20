@@ -1,30 +1,41 @@
-# 表現固定値外部化：設計レビュー
+# Presentation Fixed-Value Externalization: Design Review
 
-対象基準: `e65dc56d01ba9abc85b28b5c9c2a673a1e0d3829`。
-今回の変更は設計文書・スキーマ・設計fixtureとその検証のみ。srcは変更しない。
+Baseline reviewed: `e65dc56d01ba9abc85b28b5c9c2a673a1e0d3829`.
+This change contains only design documents, schemas, design fixtures, and their
+validation. It does not change `src`.
 
-## 接続確認
+## Connection checks
 
-- Viewの選択・順序・日付とStyleの意味roleを保持し、設定の二重正本を作らない。
-- Themeに外観、Layoutに配置、Detailに文言、Contextに実行寸法、Outputに出力方針を集約。
-- 既存27/28仕様を29の統合契約へ接続。既存v0.1を黙って変更せずv0.2へ明示移行する。
-- 最新ガント、旧review、summary、最小SVGの4経路を移行対象に含めた。
-- プリセットは完全値または固定base＋部分上書き。配列全置換、null削除不可、未知キー拒否。
-- 文字計測は固定係数の設定化ではなく実測へ置換。意味・安全性・数学規則は不変。
-- Controller Z固有のPython分岐や専用描画命令は設計に含めない。
-- P4是正として、v0.1資源だけからfont metrics／viewportを暗黙推測してv0.2へ昇格しない
-  ことを明記した。v0.1は診断付きlegacy adapter、v0.2品質は明示settings閉包のみとする。
+- Preserve View selection/order/dates and Style semantic roles; create no duplicate
+  source of truth for settings.
+- Put appearance in Theme, placement in Layout, wording in Detail, runtime dimensions
+  in Context, and output policy in Output.
+- Connect existing Specifications 27/28 to the consolidated contract in 29. Do not
+  silently change v0.1; explicitly migrate to v0.2.
+- Include the current Gantt, legacy review, summary, and minimal SVG as four migration
+  paths.
+- A preset is either complete values or a fixed base plus partial overrides. Arrays
+  replace wholly; null deletion is forbidden; unknown keys are rejected.
+- Replace fixed-coefficient text measurement with real measurement, not configurable
+  coefficients. Semantic, safety, and mathematical rules remain invariant.
+- Do not include Controller-Z-specific Python branches or dedicated drawing commands.
+- As P4 remediation, do not implicitly infer font metrics or viewport from v0.1
+  resources and promote them to v0.2. v0.1 is a diagnostic legacy adapter; v0.2 quality
+  requires an explicit closed settings set.
 
-## 実行した検証
+## Validation performed
 
-- `fixtures/validate_presentation_settings.py`: 2スキーマ、4正常例、11不正例、78項目群の台帳と既定値の一致を確認。
-- `fixtures/validate_conformance.py`: temporal reference fixtures PASS。
-- 既存pytest: 104 passed。既存RefResolver非推奨警告2件。
+- `fixtures/validate_presentation_settings.py`: verifies two schemas, four valid
+  examples, eleven invalid examples, and agreement of the 78-item inventory with
+  defaults.
+- `fixtures/validate_conformance.py`: temporal-reference fixtures pass.
+- Existing pytest: 104 passed, with two existing RefResolver deprecation warnings.
 
-## 残る実装ゲート（設計検証で代用しない）
+## Remaining implementation gates (not replaced by design validation)
 
-P1〜P5は `planning/presentation-settings-implementation-plan.md` に定義。
-実在フォント・locale資産への束縛、参照hash、semantic closure、全設定の消費、
-AST固定値監査、SVG再現性、画像比較は実装時に検証する。
-fixtureのゼロhashは説明用であり、実行可能な資産参照ではない。
-現時点で「実装から固定値を除去済み」「YAMLだけで全設定が反映される」とは主張しない。
+P1–P5 are defined in `planning/presentation-settings-implementation-plan.md`.
+Implementation must verify binding to real font/locale assets, reference hashes,
+semantic closure, consumption of every setting, AST fixed-value audit, SVG
+reproducibility, and image comparison. A fixture's zero hash is explanatory only, not
+an executable asset reference. Do not claim that fixed values have been removed from
+implementation or that YAML alone applies every setting at this time.
