@@ -1,6 +1,6 @@
 # 共通表現基盤 G2–G4 設計ゲート
 
-**状態:** G2設計・実装済み。G3のbox/leader Theme fieldを是正中。G3 visual実装は、この文書・owner schema・正負fixture・横断レビューが揃うまで開始しない。
+**状態:** G2設計・実装済み。G3/G4のScene接続設計を是正中。G3/G4 visual実装は、この文書・owner schema・正負fixture・横断レビューが揃うまで開始しない。
 
 ## 1. 一意なauthoring所有者
 
@@ -47,12 +47,24 @@ annotation purposeはcallout/note/highlight/explanatory-arrow。callout/noteはr
 `theme.annotation` は `{boxFill, boxStroke, leader}` の三つのconcrete paintを持つ。boxの寸法・
 候補side・leaderの探索上限はThemeに置かず、既存Layoutが所有する。purposeによる別Theme系統は作らない。
 
+Sceneはannotationごとに`{annotationId, objectId, facet, endpoint, boxBounds, leader}`を出す。
+boxBoundsは共有label配置器の最初の合法候補であり、leaderのbox側portはanchorに最も近い矩形辺の中点
+（同距離は`above, below, end, start`順）とする。leaderはanchor portからbox portへの直交pathで、mark、
+required label、確定済みannotation boxを障害物に含める。`routing.limit`はvisibility-gridで展開するstate数の
+上限であり、超過は`E_PRESENTATION_ROUTE_LIMIT`。`highlight`はleaderを出さず、`explanatory-arrow`は二つの
+明示object anchorが揃う場合だけ出す。facetを省略した既存View annotationは保存互換のためschemaで受理するが、
+G3 Scene投影は`E_PRESENTATION_ANCHOR_MISSING`としplannedを推測しない。
+
 ## 4. G4：stable lane stacking
 
 lane順はView group/order、同一laneの投入順は`(mark.start or mark.at, stable object ID)`。
 各itemのoccupancyはmark boundsとrequired label boundsの和集合であり、最小の重ならない
 stack indexを採用する。`maxStack`超過又はrequired label未配置は
 `E_PRESENTATION_STACK_OVERFLOW`。別groupへの移動、暗黙の縮小、隠蔽は行わない。
+
+Sceneは各投影markに`laneGroupId`と`stackIndex`を付加する。Viewのgroup/orderがlaneGroupId順を定め、
+同一groupでは`(start or at, stable object ID)`順で割り当てる。adapterはstackIndexを縦offsetへ変換するだけで、
+再選択・再順序化・別groupへの移動をしてはならない。
 
 ## 5. 設計完了チェック
 
