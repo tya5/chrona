@@ -14,7 +14,8 @@ validated and published.
 | R3 — Test topology | Complete | `e4b24b1` |
 | R4 — Source package relocation | Complete | `f52a145` |
 | R5 — Presentation module decomposition | Complete | `7a8b311` |
-| R6 — Packaging and OSS closure | Complete except license selection | this phase commit |
+| R6 — Packaging and OSS closure | Complete except license selection | `47b88ec` |
+| R6A — Runtime resource authority correction | Design complete; implementation pending | — |
 
 ## 1. Objective
 
@@ -129,6 +130,21 @@ otherwise complete.
 
 Acceptance: all ten invariants in Specification 32, clean checkout, wheel smoke test,
 full pytest, full conformance on both local and GitHub CI, and a final acceptance review.
+
+### Phase R6A — Runtime resource authority correction
+
+- make root `schemas/` an importable resource package and the only tracked schema
+  authority;
+- use Hatch `force-include` to place schemas under `chrona/resources/schemas/` only in
+  the built wheel;
+- retain presets and font metrics only under `src/chrona/resources/`;
+- make conformance validate packaged preset data without owning a duplicate;
+- document read-only conformance-fixture access and the intentional difference between
+  shared Controller Z views and per-slide ASTER views.
+
+Acceptance: no tracked generated schema copy exists below `src/`; no preset or font
+metric has a second source-tree authority; source-checkout and isolated-wheel resource
+lookup both pass; full pytest and conformance remain green.
 
 ## 4. Verification matrix
 

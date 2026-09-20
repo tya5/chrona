@@ -50,15 +50,18 @@ normative specification.
 
 ## 4. Runtime and public data
 
-Schemas are product contracts, not documentation. Their source authority is `schemas/`.
-The wheel MUST include them under the `chrona` package and runtime code MUST load them
-through `importlib.resources`; runtime modules MUST NOT derive the repository root from
-`__file__`.
+Schemas are product contracts, not documentation. Their sole source authority is the
+importable resource package at `schemas/`. Hatch MUST force-include that directory at
+`chrona/resources/schemas/` when building a wheel. The generated wheel paths MUST NOT be
+tracked as a second source-tree copy. Runtime code MUST load the source package or the
+wheel-installed package through `importlib.resources`; runtime modules MUST NOT derive
+the repository root from `__file__`.
 
 Built-in presets and content-addressed font metric tables are runtime resources. Their
 source authority is `src/chrona/resources/`. Documentation may link to those resources
-but MUST NOT own a duplicate. Tests MUST install the built wheel into an isolated
-environment and prove schema, preset, and font-metric lookup without a repository tree.
+and conformance may validate them but MUST NOT own a duplicate. Tests MUST install the
+built wheel into an isolated environment and prove schema, preset, and font-metric
+lookup without a repository tree.
 
 ## 5. Python package boundaries
 
@@ -109,7 +112,9 @@ example reproduction and visual-contract assertions belong in
 
 Conformance is not an ordinary unit-test directory. `conformance/` remains independently
 executable and owns normative fixtures. Tests MAY invoke conformance but MUST NOT copy
-its fixtures.
+its fixtures. Repository tests that need a conformance fixture MUST use a read-only,
+repository-relative locator; conformance fixtures are neither test-package resources nor
+runtime package resources.
 
 Every implementation module with independent behavior SHOULD have a corresponding unit
 test path. This rule does not require artificial one-test-file-per-data-class splits.
@@ -132,6 +137,10 @@ examples/aster-ssd/
   shared/
   slides/<slide>/{view.yaml, settings.yaml, expected.svg, preview.png?}
 ```
+
+Shared source resources are stored once at project scope. A variant or slide owns a
+`view.yaml` only when its selection differs from its siblings. Controller Z therefore
+uses its shared project view, while the ASTER slides own distinct per-slide views.
 
 Derived artifacts MUST be reproducible and named `expected.svg`, `preview.png`, or
 `gallery.html` so source and output cannot be confused. No sample-specific behavior may
