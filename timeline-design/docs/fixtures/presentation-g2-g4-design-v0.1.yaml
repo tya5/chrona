@@ -24,6 +24,10 @@ positive:
           start: 2027-01-01
           requiredLabelBounds: true
       maxStack: 2
+      laneSurface: independent-lane-track
+      trackPadding: 8
+      trackGap: 6
+      pitchPolicy: scene-mark-extent-plus-clearance
       routing: {limit: 64}
     - id: regulatory-readiness
       labels:
@@ -44,6 +48,10 @@ positive:
           start: 2027-02-10
           requiredLabelBounds: false
       maxStack: 1
+      laneSurface: row-aligned
+      trackPadding: 8
+      trackGap: 6
+      pitchPolicy: scene-mark-extent-plus-clearance
       routing: {limit: 64}
 negative:
   - id: too-many-candidates
@@ -58,6 +66,9 @@ negative:
   - id: stack-overflow
     input: {groupId: platform, occupancy: mark-bounds-plus-required-label-bounds, items: 3, maxStack: 2}
     diagnostic: E_PRESENTATION_STACK_OVERFLOW
+  - id: row-aligned-stack
+    input: {laneSurface: row-aligned, stackIndex: 1}
+    diagnostic: E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE
   - id: route-limit
     input: {routing: {limit: 0}}
     diagnostic: E_PRESENTATION_ROUTE_LIMIT
