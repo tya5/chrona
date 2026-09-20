@@ -85,3 +85,8 @@ choice stops implementation and reopens D24 before code continues.
 - Conditional absence is permitted only when recorded in the matrix.
 - Legacy SVG behavior is not evidence for v0.2 completion.
 - M23 remains excluded.
+
+I24-2 is complete locally: the four variance statuses, marker width, missing-Actual
+mode/pattern, annotation fill/stroke/leader paints, and existing group/default facet
+fallbacks have targeted observers. The ASTER artifacts were regenerated without SVG
+overflow; publication is the remaining I24-2 exit action.

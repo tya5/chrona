@@ -470,6 +470,39 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
     gap = float(settings["layout"]["bars"]["gap"])
     point_size = float(settings["theme"]["point"]["size"])
     comparison_mode = settings["layout"]["bars"]["comparisonMode"]
+
+    def aligned_label(value: str, x: float, marker_bounds: tuple[float, float, float, float],
+                      *, role: str, align: str) -> TextLayout:
+        left = float(settings["layout"]["margins"]["left"])
+        right = float(settings["context"]["viewport"]["width"]) - float(settings["layout"]["margins"]["right"])
+        layout = text_layout(value, x, marker_bounds[1], role=role, available=max(1.0, right - left))
+        resolved_x = min(max(x, left), right - layout.bounds[2])
+        if align == "center":
+            top = marker_bounds[1] + (marker_bounds[3] - layout.bounds[3]) / 2.0
+        elif align == "end":
+            top = marker_bounds[1] + marker_bounds[3] - layout.bounds[3]
+        else:
+            top = marker_bounds[1]
+        dx, dy = resolved_x - layout.bounds[0], top - layout.bounds[1]
+        return replace(layout, bounds=(resolved_x, top, layout.bounds[2], layout.bounds[3]),
+                       baseline=(layout.baseline[0] + dx, layout.baseline[1] + dy))
+
+    def add_variance_family(source_id: str, lane_assignment: LaneAssignment, *,
+                            status: str, text: str, anchor_x: float,
+                            vertical_bounds: tuple[float, float]) -> None:
+        variance = settings["layout"]["variance"]
+        marker_width = float(settings["theme"]["varianceMarkerWidth"])
+        marker_bounds = (anchor_x + float(variance["offset"]), vertical_bounds[0],
+                         marker_width, vertical_bounds[1] - vertical_bounds[0])
+        add("Rect", source_id, "object", "finish-delta", status, "variance-marker", marker_bounds,
+            lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
+        label_x = marker_bounds[0] + marker_width + float(variance["labelGap"])
+        layout = aligned_label(text, label_x, marker_bounds, role="variance",
+                               align=str(variance["labelAlign"]))
+        add("Text", source_id, "object", "finish-delta", status, "variance-label", layout.bounds,
+            text=text, baseline=layout.baseline, layout=layout,
+            lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
+
     for mark in marks:
         row = rows.get(mark.source_id)
         item = items_by_id.get(mark.source_id)
@@ -492,11 +525,19 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         if mark.at is not None:
             x = _surface_x(timeline, start, end, mark.at)
             if mark.facet == "finish-delta":
-                text = f"{mark.variance_days:+d}d"
-                delta_layout = text_layout(text, x, row_y, role="variance", available=max(1.0, timeline.bounds[0] + timeline.bounds[2] - x))
-                add("Text", mark.source_id, "object", mark.facet, "variance", "comparison-mark",
-                    delta_layout.bounds, text=text, baseline=delta_layout.baseline, layout=delta_layout,
-                    lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
+                assert mark.variance_days is not None
+                status = ("variance-ahead" if mark.variance_days < 0 else
+                          "variance-behind" if mark.variance_days > 0 else "variance-on-track")
+                sign = settings["detail"]["formatting"]["positiveSign"] if mark.variance_days > 0 else ""
+                text = f'{sign}{mark.variance_days}{settings["detail"]["formatting"]["signedDaysSuffix"]}'
+                owned = [node for node in primitives
+                         if node.source_ref == mark.source_id and node.purpose == "comparison-mark"
+                         and node.kind == "Rect" and node.semantic_facet in {"planned", "baseline", "actual"}]
+                top = min(node.bounds[1] for node in owned)
+                bottom = max(node.bounds[1] + node.bounds[3] for node in owned)
+                right = max(node.bounds[0] + node.bounds[2] for node in owned)
+                add_variance_family(mark.source_id, lane_assignment, status=status, text=text,
+                                    anchor_x=right, vertical_bounds=(top, bottom))
             else:
                 symbol_y = row_y if independent_lane else row_y + (row_height - point_size) / 2.0
                 paint = resolve_facet_paint(settings["theme"], str(getattr(item, "group_id", "")), mark.facet)
@@ -520,6 +561,41 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         add("Rect", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
             (x1, y, width, height), color=str(paint["color"]), opacity=float(paint["opacity"]),
             corner_radius=corner_radius, lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
+
+    comparison_rects = {(node.source_ref, node.semantic_facet): node for node in primitives
+                        if node.purpose == "comparison-mark" and node.kind == "Rect"}
+    missing_mode = settings["layout"]["missingActual"]["mode"]
+    for item in items:
+        if str(getattr(item, "source_type")) != "span":
+            continue
+        object_id = str(getattr(item, "object_id"))
+        planned = (comparison_rects.get((object_id, "planned"))
+                   or comparison_rects.get((object_id, "baseline")))
+        if planned is None or (object_id, "actual") in comparison_rects:
+            continue
+        lane_assignment = lane_assignments[object_id]
+        actual = getattr(item, "actual", None)
+        if actual:
+            add_variance_family(object_id, lane_assignment, status="variance-unknown",
+                                text=str(settings["detail"]["formatting"]["unknown"]),
+                                anchor_x=planned.bounds[0] + planned.bounds[2],
+                                vertical_bounds=(planned.bounds[1], planned.bounds[1] + planned.bounds[3]))
+        actual_band_y = planned.bounds[1] if comparison_mode == "overlaid" else planned.bounds[1] + planned.bounds[3] + gap
+        pattern = settings["theme"]["missingPattern"]
+        pattern_bounds = (planned.bounds[0], actual_band_y + (actual_height - float(pattern["height"])) / 2.0,
+                          float(pattern["width"]), float(pattern["height"]))
+        if missing_mode in {"pattern", "label-and-pattern"}:
+            add("Rect", object_id, "object", "missing-actual", "missing-actual", "missing-actual-pattern",
+                pattern_bounds, lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
+        if missing_mode in {"label", "label-and-pattern"}:
+            label_x = (pattern_bounds[0] + pattern_bounds[2] + float(settings["layout"]["missingActual"]["gap"])
+                       if missing_mode == "label-and-pattern" else planned.bounds[0])
+            label = str(settings["detail"]["missingActualLabel"])
+            label_layout = aligned_label(label, label_x, (label_x, actual_band_y, 0.0, actual_height),
+                                         role="missingActual", align="center")
+            add("Text", object_id, "object", "missing-actual", "missing-actual", "missing-actual-label",
+                label_layout.bounds, text=label, baseline=label_layout.baseline, layout=label_layout,
+                lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
 
     mark_primitives = tuple(node for node in primitives
                             if node.purpose == "comparison-mark" and node.kind in {"Rect", "Symbol"})

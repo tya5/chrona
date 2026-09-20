@@ -166,6 +166,52 @@ def test_surface_primitives_never_fabricate_missing_actual():
                for surface in scene.surfaces for primitive in surface.primitives)
 
 
+def test_variance_statuses_and_missing_actual_are_explicit_scene_families():
+    settings = scene_settings()
+    settings["layout"]["variance"]["showZero"] = True
+    settings["layout"]["missingActual"]["mode"] = "label-and-pattern"
+    settings["theme"]["paints"]["varianceAhead"].update(color="#123456", opacity=.3)
+    settings["theme"]["missingPattern"].update(spacing=9, angle=30)
+    settings["theme"]["missingPattern"]["stroke"].update(color="#654321", opacity=.4, width=3, dash=[2, 5])
+    subjects = []
+    for object_id, finish in (("ahead", date(2026, 1, 8)), ("track", date(2026, 1, 10)),
+                              ("behind", date(2026, 1, 12))):
+        subject = item()
+        subject.object_id = subject.title = object_id
+        subject.actual = {"start": date(2026, 1, 2), "finish": finish}
+        subjects.append(subject)
+    partial = item()
+    partial.object_id = partial.title = "unknown"
+    partial.actual = {"start": date(2026, 1, 2)}
+    subjects.append(partial)
+
+    scene = build_presentation_scene("Roadmap", subjects,
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "minimal")
+    markers = {node.source_ref: node for node in surface.primitives if node.purpose == "variance-marker"}
+    assert {key: value.visual_role for key, value in markers.items()} == {
+        "ahead": "variance-ahead", "track": "variance-on-track",
+        "behind": "variance-behind", "unknown": "variance-unknown",
+    }
+    assert all(node.bounds[2] == settings["theme"]["varianceMarkerWidth"] for node in markers.values())
+    assert {node.purpose for node in surface.primitives if node.source_ref == "unknown"} >= {
+        "variance-marker", "variance-label", "missing-actual-pattern", "missing-actual-label",
+    }
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    root = ET.fromstring(svg)
+    pattern = next(value for value in root.iter() if value.get("id") == "missing-actual-pattern")
+    hatch = next(value for value in pattern if value.tag.endswith("path"))
+    assert (pattern.get("width"), pattern.get("patternTransform")) == ("9", "rotate(30)")
+    assert (hatch.get("stroke"), hatch.get("stroke-width"), hatch.get("stroke-opacity"),
+            hatch.get("stroke-dasharray")) == ("#654321", "3", "0.4", "2 5")
+    ahead = next(value for value in root.iter()
+                 if value.get("data-purpose") == "variance-marker"
+                 and value.get("data-source-ref") == "ahead")
+    assert (ahead.get("fill"), ahead.get("opacity")) == ("#123456", "0.3")
+    assert next(value for value in root.iter()
+                if value.get("data-purpose") == "missing-actual-pattern").get("fill") == "url(#missing-actual-pattern)"
+
+
 def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
     settings = scene_settings()
     settings["layout"]["lanes"].update(surface="independent-lane-track", trackPadding=8)
@@ -239,6 +285,9 @@ def test_explicit_facet_annotation_emits_common_box_and_leader():
 
 def test_table_surface_owns_content_routes_annotations_and_legend_geometry():
     settings = scene_settings()
+    settings["theme"]["annotation"]["boxFill"].update(color="#102030", opacity=.4)
+    settings["theme"]["annotation"]["boxStroke"].update(color="#405060", opacity=.5)
+    settings["theme"]["annotation"]["leader"].update(color="#708090", opacity=.6)
     left, right = item(), item()
     left.object_id, left.title, left.group_id, left.group_label = "left", "Left task", "team", "Team"
     right.object_id, right.title, right.group_id, right.group_label = "right", "Right task", "team", "Team"
@@ -268,6 +317,15 @@ def test_table_surface_owns_content_routes_annotations_and_legend_geometry():
     assert len(connector.points) >= 2 and connector.from_port_id and connector.to_port_id
     assert connector.bounds[2] >= 0 and connector.bounds[3] >= 0
     assert [node.z_order for node in surface.primitives] == list(range(len(surface.primitives)))
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    elements = list(ET.fromstring(svg).iter())
+    box = next(value for value in elements if value.tag.endswith("rect")
+               and value.get("data-purpose") == "presentation-annotation"
+               and value.get("data-source-ref") == "risk")
+    leader = next(value for value in elements if value.get("data-purpose") == "annotation-leader")
+    assert (box.get("fill"), box.get("fill-opacity"), box.get("stroke"), box.get("stroke-opacity")) == (
+        "#102030", "0.4", "#405060", "0.5")
+    assert (leader.get("stroke"), leader.get("stroke-opacity")) == ("#708090", "0.6")
 
 
 def test_resolved_table_adapter_serializes_scene_ids_for_every_geometry_family():

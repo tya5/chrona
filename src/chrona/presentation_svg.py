@@ -18,6 +18,11 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
         "row-shade": paints["rowShade"]["color"],
         "planned": paints["planned"]["color"], "baseline": paints["planned"]["color"],
         "actual": paints["actual"]["color"], "variance": paints["varianceBehind"]["color"],
+        "variance-ahead": paints["varianceAhead"]["color"],
+        "variance-on-track": paints["varianceOnTrack"]["color"],
+        "variance-behind": paints["varianceBehind"]["color"],
+        "variance-unknown": paints["varianceUnknown"]["color"],
+        "missing-actual": paints["textMuted"]["color"],
         "milestone": paints["milestone"]["color"], "dependency": strokes["dependency"]["color"],
         "presentation-annotation": theme["annotation"]["boxStroke"]["color"],
         "year": strokes["axisMajor"]["color"],
@@ -61,7 +66,8 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">',
         f'<title id="title">{escape(scene_title)}</title>',
         '<desc id="desc">Completed presentation Scene.</desc>',
-        _marker_definition(arrow, dependency_color, marker_shape),
+        _definitions(arrow, dependency_color, marker_shape, theme["missingPattern"],
+                     any(node.purpose == "missing-actual-pattern" for node in surface.primitives), number),
         f'<rect width="{width}" height="{height}" fill="{escape(paints["background"]["color"], quote=True)}"/>',
         f'<metadata data-presentation-scene="v0.2" data-surface-id="{escape(surface.surface_id)}" '
         f'data-axis-scale-id="{escape(scale.scale_id)}" data-scale-domain-start="{scale.domain_start.isoformat()}" '
@@ -99,13 +105,20 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
             if node.purpose == "annotation-box":
                 fill = escape(theme["annotation"]["boxFill"]["color"], quote=True)
                 stroke = escape(theme["annotation"]["boxStroke"]["color"], quote=True)
+            elif node.purpose == "missing-actual-pattern":
+                fill = "url(#missing-actual-pattern)"
             opacity = ""
             if node.purpose == "group-surface":
                 token = theme["groupPaints"].get(node.source_ref, paints["groupBand"])
                 opacity = f' opacity="{number(float(token["opacity"]))}"'
             elif node.opacity is not None:
                 opacity = f' opacity="{number(node.opacity)}"'
+            elif role in {"variance-ahead", "variance-on-track", "variance-behind", "variance-unknown"}:
+                opacity = _role_opacity(role, paints, number).replace("fill-opacity", "opacity")
             stroke_attrs = _stroke_attributes(stroke_token, number) if stroke_token else ""
+            if node.purpose == "annotation-box":
+                opacity = (f' fill-opacity="{number(float(theme["annotation"]["boxFill"]["opacity"]))}"'
+                           f' stroke-opacity="{number(float(theme["annotation"]["boxStroke"]["opacity"]))}"')
             radius = (f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"'
                       if node.corner_radius is not None else "")
             parts.append(f'<rect {common}{lane} x="{number(x)}" y="{number(y)}" width="{number(rect_width)}" '
@@ -115,13 +128,14 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             type_role = {"legend-label": "legend", "coverage-text": "coverage",
                          "summary-header": "summaryHeader", "summary-metric": "summaryMetric"}.get(node.purpose, role)
-            paint_role = "body" if node.purpose in {"axis-label", "table-column-label"} else role
+            paint_role = ("body" if node.purpose in {"axis-label", "table-column-label", "annotation-text", "project-note"}
+                          else role)
             typography = theme["typography"].get(type_role, theme["typography"].get("body", {}))
             anchor = "middle" if node.purpose == "axis-label" else "start"
             opening = (f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" '
                        f'font-family="{escape(node.text_layout.family, quote=True)}" font-size="{typography.get("size", 12)}" '
                        f'font-weight="{node.text_layout.weight}" letter-spacing="{typography.get("letterSpacing", 0)}" '
-                       f'fill="{color(paint_role)}" text-anchor="{anchor}">')
+                       f'fill="{color(paint_role)}"{_role_opacity(paint_role, paints, number)} text-anchor="{anchor}">')
             if len(node.text_layout.lines) == 1:
                 parts.append(opening + escape(node.text_layout.lines[0]) + '</text>')
             else:
@@ -159,6 +173,7 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 "dependency-connector": strokes["dependency"],
                 "explanatory-arrow": strokes["dependency"],
             }.get(node.purpose)
+            annotation_token = theme["annotation"]["leader"] if node.purpose == "annotation-leader" else None
             if node.purpose in {"dependency-connector", "explanatory-arrow"} or node.visual_role == "dependency":
                 if node.shape not in {"triangle", "chevron", "none"}:
                     raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -168,8 +183,11 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 extra += f' data-from-port-id="{escape(node.from_port_id)}" data-from-endpoint="{escape(node.from_port_id.rsplit(":", 1)[-1])}"'
             if node.to_port_id:
                 extra += f' data-to-port-id="{escape(node.to_port_id)}" data-to-endpoint="{escape(node.to_port_id.rsplit(":", 1)[-1])}"'
-            stroke_color = escape(stroke_token["color"], quote=True) if stroke_token else color(path_role)
+            stroke_color = (escape(stroke_token["color"], quote=True) if stroke_token else
+                            escape(annotation_token["color"], quote=True) if annotation_token else color(path_role))
             stroke_attrs = _stroke_attributes(stroke_token, number) if stroke_token else ""
+            if annotation_token and float(annotation_token.get("opacity", 1)) != 1:
+                stroke_attrs += f' stroke-opacity="{number(float(annotation_token["opacity"]))}"'
             parts.append(f'<path {common} d="{path}" stroke="{stroke_color}"{stroke_attrs}{extra}/>')
         else:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -186,16 +204,35 @@ def _stroke_attributes(token: dict, number) -> str:
     return attributes
 
 
-def _marker_definition(arrow: dict, color: str, shape: str) -> str:
-    if shape == "none":
-        return "<defs/>"
+def _role_opacity(role: str, paints: dict, number) -> str:
+    key = {"variance-ahead": "varianceAhead", "variance-on-track": "varianceOnTrack",
+           "variance-behind": "varianceBehind", "variance-unknown": "varianceUnknown"}.get(role)
+    if key is None or float(paints[key].get("opacity", 1)) == 1:
+        return ""
+    return f' fill-opacity="{number(float(paints[key]["opacity"]))}"'
+
+
+def _definitions(arrow: dict, color: str, shape: str, missing: dict,
+                 include_missing: bool, number) -> str:
+    definitions = []
     width, height = arrow["width"], arrow["height"]
-    common = (f'<defs><marker id="dependency-arrow" markerWidth="{width}" markerHeight="{height}" '
-              f'refX="{width - arrow["tipInset"]}" refY="{height / 2}" orient="{arrow["orientation"]}">')
-    if shape == "triangle":
-        mark = f'<path d="M0 0L{width} {height / 2}L0 {height}Z" fill="{color}"/>'
-    elif shape == "chevron":
-        mark = f'<path d="M0 0L{width} {height / 2}L0 {height}" fill="none" stroke="{color}"/>'
-    else:
-        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-    return common + mark + "</marker></defs>"
+    if shape != "none":
+        common = (f'<marker id="dependency-arrow" markerWidth="{width}" markerHeight="{height}" '
+                  f'refX="{width - arrow["tipInset"]}" refY="{height / 2}" orient="{arrow["orientation"]}">')
+        if shape == "triangle":
+            mark = f'<path d="M0 0L{width} {height / 2}L0 {height}Z" fill="{color}"/>'
+        elif shape == "chevron":
+            mark = f'<path d="M0 0L{width} {height / 2}L0 {height}" fill="none" stroke="{color}"/>'
+        else:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        definitions.append(common + mark + "</marker>")
+    if include_missing:
+        spacing = number(float(missing["spacing"]))
+        stroke = missing["stroke"]
+        attributes = _stroke_attributes(stroke, number)
+        definitions.append(
+            f'<pattern id="missing-actual-pattern" width="{spacing}" height="{spacing}" patternUnits="userSpaceOnUse" '
+            f'patternTransform="rotate({number(float(missing["angle"]))})">'
+            f'<path d="M0 0V{spacing}" stroke="{escape(stroke["color"], quote=True)}"{attributes}/></pattern>'
+        )
+    return "<defs>" + "".join(definitions) + "</defs>" if definitions else "<defs/>"
