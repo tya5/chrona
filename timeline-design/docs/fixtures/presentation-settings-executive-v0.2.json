@@ -8,8 +8,20 @@
     "locale": "en-US",
     "fontMetrics": {
       "algorithm": "font-metrics-v1",
-      "revision": "fixture-not-installed",
-      "contentIdentity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "assets": [
+        {
+          "family": "Nimbus Sans",
+          "weight": 400,
+          "revision": "fixture-not-installed",
+          "contentIdentity": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "family": "Nimbus Sans",
+          "weight": 700,
+          "revision": "fixture-not-installed",
+          "contentIdentity": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
       "missingFont": "diagnose"
     }
   },
