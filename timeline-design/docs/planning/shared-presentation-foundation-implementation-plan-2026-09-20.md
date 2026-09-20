@@ -14,12 +14,13 @@
 | G1.5 消費監査 | 設定変異表、literal棚卸し、raster/再現性検証 | G1対象の未消費設定と暗黙fallbackをゼロにする | G1完了として公開 |
 | G2 | axis slot統合、labels、comparison mode、group×facet paint | 仕様30 §6–7のA/D共通表現 | 単位別に公開 |
 | G3 | annotation box/leaderと説明slot | 同じ機構で作業注記と計画gate説明を通す | 単位別に公開 |
-| G4 | stable lane stacking | label/mark/routeの共通occupancyを再利用 | 単位別に公開 |
+| G4.1 | stable lane Scene | label/mark/routeの共通occupancyを再利用しstack metadataを出す | 公開済み |
+| G4.2 | lane surface adapter | row-aligned不適合を診断し、independent-lane-trackだけをScene由来track geometryへ写像 | 単位別に公開 |
 
 ### G2–G4 設計ゲート
 
 仕様31がG2–G4のauthoring owner、有限アルゴリズム、診断、禁止救済を固定する。
-owner schema、正負fixture、横断reviewを追加済みである。G3については、box候補時に自身のanchor markだけを除外し、routingで全markを復帰させ、annotation boxをlane occupancyから除く是正を、上記の全成果物で公開・検証した後にのみvisual実装を再開する。G4の実際の縦offsetは、そのrow-height/stack-pitch契約を設計で閉鎖するまで開始しない。
+owner schema、正負fixture、横断reviewを追加済みである。G3については、box候補時に自身のanchor markだけを除外し、routingで全markを復帰させ、annotation boxをlane occupancyから除く是正を、上記の全成果物で公開・検証した後にのみvisual実装を再開する。G4の実際の縦offsetは、`row-aligned`（stack 0のみ）と`independent-lane-track`（Scene由来pitch/track bounds）の契約を仕様・schema・fixture・reviewで閉鎖した後に開始する。
 
 ### G1.1 完了記録
 
