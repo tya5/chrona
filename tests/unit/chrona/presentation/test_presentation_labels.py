@@ -1,6 +1,6 @@
 import pytest
 
-from chrona.presentation_labels import LabelRect, place_label
+from chrona.presentation.presentation_labels import LabelRect, place_label
 
 
 def test_labels_use_declared_finite_candidate_order_and_obstacles():

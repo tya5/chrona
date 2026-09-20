@@ -1,6 +1,6 @@
 from datetime import date
 
-from chrona.scheduler import schedule
+from chrona.scheduling.scheduler import schedule
 
 
 def _project(objects, relations=()):

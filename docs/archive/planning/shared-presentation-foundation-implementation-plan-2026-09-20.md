@@ -33,7 +33,7 @@ specification, schema, fixtures, and review.
 
 ### G1.1 completion record
 
-`src/chrona/presentation_axis.py` adds renderer-independent Date-only intervals. It
+`src/chrona/presentation/presentation_axis.py` adds renderer-independent Date-only intervals. It
 clips half-open month, quarter, ISO-week, and day intervals and returns labels and
 stable indices for natural calendar buckets. Existing SVG renderers do not yet call it.
 `tests/unit/chrona/presentation/test_presentation_axis.py` verifies window boundaries, ISO week-years, tick

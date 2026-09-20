@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import pytest
 
-from chrona.presentation_paint import resolve_facet_paint
-from chrona.presentation_settings import builtin_bases
+from chrona.presentation.presentation_paint import resolve_facet_paint
+from chrona.presentation.presentation_settings import builtin_bases
 
 
 def test_facet_paint_uses_group_then_default_then_global_role():

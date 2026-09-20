@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from chrona.presentation_marks import comparison_marks
+from chrona.presentation.presentation_marks import comparison_marks
 
 
 def span(actual=None):

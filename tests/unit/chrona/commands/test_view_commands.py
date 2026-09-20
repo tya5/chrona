@@ -1,4 +1,4 @@
-from chrona.view_commands import (MemoryViewStore, add_presentation_annotation, delete_presentation_annotation, edit_presentation_annotation, redo_view_command, undo_view_command)
+from chrona.commands.view_commands import (MemoryViewStore, add_presentation_annotation, delete_presentation_annotation, edit_presentation_annotation, redo_view_command, undo_view_command)
 
 
 def test_annotation_command_is_view_local_and_revision_bound():

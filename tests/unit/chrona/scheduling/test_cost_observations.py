@@ -1,4 +1,4 @@
-from chrona.cost_observations import MemoryCostObservationStore, aggregate_cost_observations, record_cost_observation
+from chrona.scheduling.cost_observations import MemoryCostObservationStore, aggregate_cost_observations, record_cost_observation
 
 def test_cost_records_are_cas_append_only_and_aggregate_by_units():
  s=MemoryCostObservationStore({"version":"chrona/cost-observation-set/v0.2","id":"p","observations":[]}); rev,_=s.read(); o={"id":"x","observedOn":"2027-01-04","quantity":8,"quantityUnit":"hour","rate":100,"rateUnit":"JPY"}

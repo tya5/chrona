@@ -1,5 +1,5 @@
-from chrona.extension_registry import PackageRegistry
-from chrona.package_lifecycle import lifecycle_summary
+from chrona.extensions.extension_registry import PackageRegistry
+from chrona.extensions.package_lifecycle import lifecycle_summary
 
 
 def test_lifecycle_summary_exposes_only_pinned_identity_and_diagnostics():

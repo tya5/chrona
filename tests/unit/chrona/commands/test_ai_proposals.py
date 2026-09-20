@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import yaml
 
-from chrona.ai_proposals import command_fingerprint, execute_ai_proposal
-from chrona.revision_store import MemoryRevisionStore
+from chrona.commands.ai_proposals import command_fingerprint, execute_ai_proposal
+from chrona.storage.revision_store import MemoryRevisionStore
 
 
 def _project():

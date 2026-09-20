@@ -1,11 +1,11 @@
 from datetime import date
 from pathlib import Path
 
-from chrona.render import render_svg
-from chrona.presentation_scene import SurfaceContentInput
-from chrona.presentation_settings import builtin_bases
-from chrona.scene import scene_from_schedule
-from chrona.scheduler import ScheduleResult
+from chrona.presentation.render import render_svg
+from chrona.presentation.presentation_scene import SurfaceContentInput
+from chrona.presentation.presentation_settings import builtin_bases
+from chrona.presentation.scene import scene_from_schedule
+from chrona.scheduling.scheduler import ScheduleResult
 
 
 def test_render_svg_projects_placements_without_owning_them():
@@ -46,7 +46,7 @@ def test_render_svg_projects_placements_without_owning_them():
 
 def test_controller_x_legacy_documentation_artifact_is_current():
     import yaml
-    from chrona.scheduler import schedule
+    from chrona.scheduling.scheduler import schedule
 
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     project = yaml.safe_load((root / "conformance/controller-x.yaml").read_text())

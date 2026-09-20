@@ -5,7 +5,7 @@
 
 ## Evidence
 
-- `src/chrona/commands.py` and `src/chrona/cli.py` execute a project typed-field
+- `src/chrona/commands/commands.py` and `src/chrona/app/cli.py` execute a project typed-field
   mutation through `set_typed_field` / `execute_set_typed_field`.
 - `10-command-model.md` identifies `setTypedField` as a project structure/field
   command family.

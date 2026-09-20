@@ -1,5 +1,5 @@
-from chrona.collaboration import AuditLog, resolve_merge_conflict, submit, replica_status
-from chrona.revision_store import MemoryRevisionStore
+from chrona.collaboration.collaboration import AuditLog, resolve_merge_conflict, submit, replica_status
+from chrona.storage.revision_store import MemoryRevisionStore
 
 
 def test_stale_and_policy_are_explicit():

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.presentation_settings import PresentationSettingsError, builtin_base_references, builtin_bases, resolve_presentation_settings
+from chrona.presentation.presentation_settings import PresentationSettingsError, builtin_base_references, builtin_bases, resolve_presentation_settings
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())

@@ -1,5 +1,5 @@
-from chrona.extension_registry import PackageRegistry, resolve_evaluation_packages
-from chrona.validation import validate_project
+from chrona.extensions.extension_registry import PackageRegistry, resolve_evaluation_packages
+from chrona.core.validation import validate_project
 
 
 def _manifest(package_id, version, dependencies=(), **extra):

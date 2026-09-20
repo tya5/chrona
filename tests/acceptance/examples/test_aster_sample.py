@@ -10,9 +10,9 @@ import yaml
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
-from chrona.presentation_settings import resolve_presentation_settings
-from chrona.review_svg import build_review_projection, render_table_timeline_svg
-from chrona.scheduler import schedule
+from chrona.presentation.presentation_settings import resolve_presentation_settings
+from chrona.presentation.review_svg import build_review_projection, render_table_timeline_svg
+from chrona.scheduling.scheduler import schedule
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 SAMPLE = ROOT/'examples/aster-ssd'

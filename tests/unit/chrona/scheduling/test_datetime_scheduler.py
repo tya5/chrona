@@ -1,4 +1,4 @@
-from chrona.datetime_scheduler import schedule_datetime
+from chrona.scheduling.datetime_scheduler import schedule_datetime
 
 
 def _instant(value: str, zone: str = "UTC"):

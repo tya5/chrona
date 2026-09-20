@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import pytest
 
-from chrona.presentation_layout import solve_presentation_layout
-from chrona.presentation_settings import PresentationSettingsError, builtin_bases
+from chrona.presentation.presentation_layout import solve_presentation_layout
+from chrona.presentation.presentation_settings import PresentationSettingsError, builtin_bases
 
 
 def test_regions_and_slots_are_derived_from_resolved_settings():

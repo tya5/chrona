@@ -3,9 +3,9 @@ from pathlib import Path
 
 import yaml
 
-from chrona.temporal import Calendar, advance, retreat, is_scheduled_amount
-from chrona.validation import validate_project
-from chrona.scheduler import schedule
+from chrona.core.temporal import Calendar, advance, retreat, is_scheduled_amount
+from chrona.core.validation import validate_project
+from chrona.scheduling.scheduler import schedule
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())

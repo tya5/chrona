@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation_lanes import LaneItem, assign_stable_lanes
+from chrona.presentation.presentation_lanes import LaneItem, assign_stable_lanes
 
 
 def item(name, start, end, group="team", **kwargs):

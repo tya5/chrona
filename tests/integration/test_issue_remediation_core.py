@@ -11,8 +11,8 @@ import sys
 import jsonschema
 import yaml
 
-from chrona.scheduler import schedule
-from chrona.validation import SCHEMA_PATH, validate_project
+from chrona.scheduling.scheduler import schedule
+from chrona.core.validation import SCHEMA_PATH, validate_project
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -114,7 +114,7 @@ def test_placement_order_is_project_order_and_hash_seed_independent():
     assert list(direct.placements) == expected_order
 
     command = [sys.executable, "-c", (
-        "import json,yaml; from chrona.scheduler import schedule; "
+        "import json,yaml; from chrona.scheduling.scheduler import schedule; "
         f"p=yaml.safe_load(open({str(example)!r})); "
         "print(json.dumps(schedule(p).placements,default=str))"
     )]

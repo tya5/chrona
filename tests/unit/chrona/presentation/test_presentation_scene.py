@@ -6,12 +6,12 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from chrona.presentation_lanes import lane_stack_offset
-from chrona.presentation_scene import SurfaceContentInput, build_presentation_scene
-from chrona.presentation_scene import presentation_scene_from_schedule
-from chrona.presentation_svg import render_scene_surface_svg
-from chrona.presentation_settings import builtin_bases
-from chrona.review_svg import render_review_svg, render_table_timeline_svg
+from chrona.presentation.presentation_lanes import lane_stack_offset
+from chrona.presentation.presentation_scene import SurfaceContentInput, build_presentation_scene
+from chrona.presentation.presentation_scene import presentation_scene_from_schedule
+from chrona.presentation.presentation_svg import render_scene_surface_svg
+from chrona.presentation.presentation_settings import builtin_bases
+from chrona.presentation.review_svg import render_review_svg, render_table_timeline_svg
 
 
 def item():

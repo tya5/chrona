@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from chrona.successor_release import create_successor_release, validate_successor_acceptance
+from chrona.release.successor_release import create_successor_release, validate_successor_acceptance
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())

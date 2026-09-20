@@ -8,11 +8,11 @@ candidate rather than treating the working tree as an unchanged snapshot.
 
 ## Included
 
-- `src/chrona/temporal.py`: Date, CalendarPeriod, and WorkPeriod arithmetic.
-- `src/chrona/validation.py`: JSON Schema entry point and Core semantic rules.
-- `src/chrona/scheduler.py`: Date-only, endpoint-bound, acyclic reference
+- `src/chrona/core/temporal.py`: Date, CalendarPeriod, and WorkPeriod arithmetic.
+- `src/chrona/core/validation.py`: JSON Schema entry point and Core semantic rules.
+- `src/chrona/scheduling/scheduler.py`: Date-only, endpoint-bound, acyclic reference
   scheduler.
-- `src/chrona/render.py`: deterministic SVG projection of resolved placements.
+- `src/chrona/presentation/render.py`: deterministic SVG projection of resolved placements.
 - `tests/`: executable checks for temporal conformance and scheduling authority.
 - `conformance/controller-x.yaml`: a rendered semiconductor
   development example, with its derived `controller-x.svg`.

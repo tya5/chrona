@@ -6,8 +6,8 @@ import xml.etree.ElementTree as ET
 import pytest
 import yaml
 
-from chrona.review_svg import build_review_projection, render_table_timeline_svg
-from chrona.scheduler import schedule
+from chrona.presentation.review_svg import build_review_projection, render_table_timeline_svg
+from chrona.scheduling.scheduler import schedule
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents

@@ -1,6 +1,6 @@
 import pytest
 
-from chrona.gestures import propose_actual_resolution, propose_typed_field_gesture
+from chrona.commands.gestures import propose_actual_resolution, propose_typed_field_gesture
 
 
 def test_gesture_creates_only_a_stable_command_proposal():

@@ -1,8 +1,8 @@
 from copy import deepcopy
 import pytest
 
-from chrona.font_metrics import resolve_font_metrics
-from chrona.presentation_settings import PresentationSettingsError, resolve_presentation_settings
+from chrona.presentation.font_metrics import resolve_font_metrics
+from chrona.presentation.presentation_settings import PresentationSettingsError, resolve_presentation_settings
 
 
 def test_font_metrics_measurement_is_asset_bound_and_deterministic():

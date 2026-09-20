@@ -27,9 +27,9 @@ proposal, and a separately revisioned Actual-store Command performs the only mut
 
 | Path | Classification | Reason |
 |---|---|---|
-| `src/chrona/actual_commands.py` | shared service | Revision-bound Actual alignment command and explicit CAS boundary. |
-| `src/chrona/gestures.py` | adapter | Creates an inspectable request only; no direct mutation. |
-| `src/chrona/view_commands.py` | shared service | Executes View-local annotation intent through the closed M7 Command contract. |
+| `src/chrona/commands/actual_commands.py` | shared service | Revision-bound Actual alignment command and explicit CAS boundary. |
+| `src/chrona/commands/gestures.py` | adapter | Creates an inspectable request only; no direct mutation. |
+| `src/chrona/commands/view_commands.py` | shared service | Executes View-local annotation intent through the closed M7 Command contract. |
 | `tests/unit/chrona/commands/test_actual_commands.py`, `tests/unit/chrona/commands/test_gestures.py` | acceptance evidence | Covers resolution, stale conflict, invalid targets, and non-repeatable alignment. |
 
 ## Next implementation slice

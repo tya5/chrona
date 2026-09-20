@@ -5,10 +5,10 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from chrona.presentation_scene import SurfaceContentInput, build_presentation_scene
-from chrona.presentation_settings import builtin_bases
-from chrona.presentation_svg import render_scene_surface_svg
-from chrona.review_detail import ReviewDetailError, resolve_review_detail_profile
+from chrona.presentation.presentation_scene import SurfaceContentInput, build_presentation_scene
+from chrona.presentation.presentation_settings import builtin_bases
+from chrona.presentation.presentation_svg import render_scene_surface_svg
+from chrona.presentation.review_detail import ReviewDetailError, resolve_review_detail_profile
 
 
 def items():

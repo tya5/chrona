@@ -1,8 +1,8 @@
 from datetime import date
 
-from chrona.output import render_output
-from chrona.release_package import create_release_package, validate_release_package
-from chrona.scene import Scene
+from chrona.release.output import render_output
+from chrona.release.release_package import create_release_package, validate_release_package
+from chrona.presentation.scene import Scene
 
 
 def _scene():

@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation_axis import axis_intervals, format_axis_label
+from chrona.presentation.presentation_axis import axis_intervals, format_axis_label
 
 
 def interval_values(intervals):

@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from chrona.temporal_datetime import DateTimeTemporalError, add_calendar_period, add_exact_duration, generate_recurrence, resolve_datetime
+from chrona.scheduling.temporal_datetime import DateTimeTemporalError, add_calendar_period, add_exact_duration, generate_recurrence, resolve_datetime
 
 
 def test_dst_fold_requires_policy_and_selects_distinct_instants():

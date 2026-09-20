@@ -1,5 +1,5 @@
-from chrona.editor import EditorState, apply_command_result
-from chrona.view_commands import ViewCommandResult
+from chrona.commands.editor import EditorState, apply_command_result
+from chrona.commands.view_commands import ViewCommandResult
 
 
 def test_editor_applies_only_accepted_command_results_and_preserves_state_on_conflict():

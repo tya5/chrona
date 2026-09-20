@@ -1,5 +1,5 @@
-from chrona.revision_store import MemoryRevisionStore
-from chrona.snapshots import MemorySnapshotStore, capture_snapshot
+from chrona.storage.revision_store import MemoryRevisionStore
+from chrona.storage.snapshots import MemorySnapshotStore, capture_snapshot
 
 
 def _project():

@@ -2,9 +2,9 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation_annotations import nearest_box_port, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
-from chrona.presentation_labels import LabelRect
-from chrona.presentation_marks import ComparisonMark
+from chrona.presentation.presentation_annotations import nearest_box_port, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
+from chrona.presentation.presentation_labels import LabelRect
+from chrona.presentation.presentation_marks import ComparisonMark
 
 
 def test_annotation_resolves_declared_actual_finish_without_plan_substitution():

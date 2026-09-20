@@ -158,4 +158,3 @@ The restructuring is complete only when:
 8. documentation links and declared fixture paths resolve;
 9. GitHub Actions fetches sufficient history for revision-bound conformance;
 10. each migration phase is a separately verified and published commit.
-

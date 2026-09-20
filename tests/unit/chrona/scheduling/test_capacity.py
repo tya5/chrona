@@ -1,5 +1,5 @@
-from chrona.capacity import apply_leveling_proposal, evaluate_capacity, evaluate_leveling
-from chrona.revision_store import MemoryRevisionStore
+from chrona.scheduling.capacity import apply_leveling_proposal, evaluate_capacity, evaluate_leveling
+from chrona.storage.revision_store import MemoryRevisionStore
 
 
 def test_capacity_derives_daily_overload_without_mutating_project():

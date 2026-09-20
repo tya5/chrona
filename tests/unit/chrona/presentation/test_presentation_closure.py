@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.presentation import ClosureError, resolve_render_context
-from chrona.revision_store import LocalSnapshotReader
+from chrona.presentation.presentation import ClosureError, resolve_render_context
+from chrona.storage.revision_store import LocalSnapshotReader
 
 
 def _ref(kind, identifier, address, payload, token="snapshot-1"):

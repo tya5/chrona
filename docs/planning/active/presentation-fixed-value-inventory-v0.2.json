@@ -2,10 +2,10 @@
   "version": "chrona/presentation-settings-inventory/v0.2",
   "baselineCommit": "e65dc56d01ba9abc85b28b5c9c2a673a1e0d3829",
   "scope": [
-    "src/chrona/gantt_surface.py",
-    "src/chrona/layout.py",
-    "src/chrona/review_svg.py",
-    "src/chrona/render.py"
+    "src/chrona/presentation/gantt_surface.py",
+    "src/chrona/presentation/layout.py",
+    "src/chrona/presentation/review_svg.py",
+    "src/chrona/presentation/render.py"
   ],
   "entries": [
     {

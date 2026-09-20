@@ -1,6 +1,6 @@
 import pytest
 
-from chrona.actual_intake import intake_actual_observations
+from chrona.presentation.actual_intake import intake_actual_observations
 
 
 def test_intake_keeps_explicit_mapping_and_unmatched_source_identity():

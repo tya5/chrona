@@ -1,5 +1,5 @@
 import pytest
-from chrona.layout import resolve_layout_profile, solve_layout, validate_designer_preset
+from chrona.presentation.layout import resolve_layout_profile, solve_layout, validate_designer_preset
 
 def profile():
     return {"version":"chrona/layout-profile/v0.1","id":"x","canvas":{"aspectRatio":"16:9","margin":"balanced","density":"review"},"regions":[{"id":"main","layout":"split"}],"slots":{"table":{"region":"main","source":"table","priority":"required","overflow":"diagnose","role":"table"}},"constraints":{"connectors":"none","overlap":"diagnose"}}

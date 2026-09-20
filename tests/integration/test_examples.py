@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from chrona.scheduler import schedule
-from chrona.validation import load_yaml, validate_project
+from chrona.scheduling.scheduler import schedule
+from chrona.core.validation import load_yaml, validate_project
 
 
 REPO_ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())

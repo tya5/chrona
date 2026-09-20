@@ -1,5 +1,5 @@
 import pytest
-from chrona.datetime_migration import MigrationError,migrate_v1_to_v2,downgrade_v2_to_v1
+from chrona.scheduling.datetime_migration import MigrationError,migrate_v1_to_v2,downgrade_v2_to_v1
 def test_migrate_explicit_policy_and_zero_lag():
  p={"version":"timeline/v0.1","project":{"id":"p"},"objects":{"a":{"type":"milestone","schedule":{"mode":"fixed","at":"2027-01-01"}},"b":{"type":"task","schedule":{"mode":"scheduled","amount":"2d","anchor":{"start":"2027-01-02"}}}},"relations":[{"type":"dependency","from":{"object":"a","endpoint":"at"},"to":{"object":"b","endpoint":"start"}}]}
  out=migrate_v1_to_v2(p,"r1",{"zone":"UTC","localTime":"09:00","disambiguation":"reject"});assert out["relations"][0]["lag"]["value"]=="0d" and out["objects"]["a"]["schedule"]["at"]["local"]=="2027-01-01T09:00"

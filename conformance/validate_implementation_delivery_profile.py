@@ -8,7 +8,7 @@ from jsonschema import Draft202012Validator
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
-from chrona.scheduler import schedule
+from chrona.scheduling.scheduler import schedule
 
 ROOT = Path(__file__).resolve().parent
 SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "profile-v0.1.schema.yaml").read_text())

@@ -4,9 +4,9 @@ import sys
 
 import yaml
 
-from chrona.cli import main
-from chrona.scheduler import schedule
-from chrona.presentation_settings import builtin_bases
+from chrona.app.cli import main
+from chrona.scheduling.scheduler import schedule
+from chrona.presentation.presentation_settings import builtin_bases
 
 
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
