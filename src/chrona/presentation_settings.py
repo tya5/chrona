@@ -47,6 +47,17 @@ def _merge(base: Mapping[str, Any], override: Mapping[str, Any]) -> dict[str, An
     return result
 
 
+def _validate_shared_axis_slots(settings: Mapping[str, Any]) -> None:
+    """Timeline and axis slots are one temporal scale, never independently windowed."""
+    slots = settings["layout"]["slots"]
+    timeline = [slot for slot in slots.values() if slot["source"] == "timeline"]
+    axis = [slot for slot in slots.values() if slot["source"] == "timeline-axis"]
+    if axis and (len(timeline) != 1 or len(axis) != 1):
+        raise PresentationSettingsError("E_PRESENTATION_SCALE_MISMATCH")
+    if axis and (not timeline[0].get("scaleId") or timeline[0].get("scaleId") != axis[0].get("scaleId")):
+        raise PresentationSettingsError("E_PRESENTATION_SCALE_MISMATCH")
+
+
 def builtin_bases() -> dict[str, dict[str, Any]]:
     return {"executive-v0.2": json.loads(_FIXTURE.read_text(encoding="utf-8"))}
 
@@ -63,12 +74,14 @@ def resolve_presentation_settings(resource: Mapping[str, Any], *, bases: Mapping
     value = deepcopy(dict(resource))
     if value.get("version") == SETTINGS_VERSION:
         _validate(settings_validator, value, "E_PRESENTATION_SETTINGS_REQUIRED")
+        _validate_shared_axis_slots(value)
         return value
     if value.get("version") != PRESET_VERSION:
         raise PresentationSettingsError("E_PRESENTATION_SETTINGS_REQUIRED")
     _validate(preset_validator, value, "E_PRESENTATION_PRESET_SCHEMA")
     if "settings" in value:
         _validate(settings_validator, value["settings"], "E_PRESENTATION_SETTINGS_REQUIRED")
+        _validate_shared_axis_slots(value["settings"])
         return deepcopy(value["settings"])
     base = (builtin_base_references() if bases is None else bases).get(value["base"]["id"])
     if not isinstance(base, Mapping):
@@ -82,4 +95,5 @@ def resolve_presentation_settings(resource: Mapping[str, Any], *, bases: Mapping
     _validate(settings_validator, base_settings, "E_PRESENTATION_REFERENCE")
     resolved = _merge(base_settings, value["overrides"])
     _validate(settings_validator, resolved, "E_PRESENTATION_SETTINGS_REQUIRED")
+    _validate_shared_axis_slots(resolved)
     return resolved
