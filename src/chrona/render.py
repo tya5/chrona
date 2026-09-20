@@ -6,7 +6,9 @@ from .scene import Scene
 
 
 _LEFT = 180
+_GUTTER = 24
 _TOP = 76
+_LEGACY_MUTED = "#6b6b6b"
 _LANE_HEIGHT = 58
 _DAY_WIDTH = 14
 
@@ -70,7 +72,7 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
         "<desc id=\"desc\">" + escape(scene.description) + "</desc>",
         f'<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="{connector}" /></marker></defs>',
         f'<rect width="{width}" height="{height}" fill="{background}" />',
-        f'<text x="{left}" y="{top-heading_size}" font-family="{escape(font, quote=True)}" font-size="{heading_size}" font-weight="700" fill="{ink}">{escape(str(title))}</text>',
+        f'<text x="{_GUTTER}" y="34" font-family="{escape(font, quote=True)}" font-size="{heading_size}" font-weight="700" fill="{ink}">{escape(str(title))}</text>',
     ]
     if settings is None:
         parts.append('<metadata data-presentation-adapter="legacy-v0.1" data-diagnostic="E_PRESENTATION_LEGACY_ADAPTER"/>')
@@ -82,11 +84,11 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
         x = left + offset * day_width
         label = start.fromordinal(start.toordinal() + offset).isoformat()
         parts.append(f'<line x1="{x}" y1="{top-24}" x2="{x}" y2="{height - 36}" stroke="{grid}" stroke-width="1" />')
-        parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="{body_size}">{label}</text>')
+        parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="10" fill="{_LEGACY_MUTED}">{label}</text>')
     for tick in ticks:
         x = left + (tick.start - start).days * day_width
         parts.append(f'<line x1="{x}" y1="{top-24}" x2="{x}" y2="{height - 36}" stroke="{grid}" stroke-width="1" />')
-        parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="{body_size}">{tick.label}</text>')
+        parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="10" fill="{_LEGACY_MUTED}">{tick.label}</text>')
 
     for relation in scene.relations:
         source_id = relation["from"]["object"]
@@ -106,7 +108,7 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
         lane = lanes[object_id]
         y = top + lane * lane_height
         label = scene.labels[object_id]
-        parts.append(f'<text x="{left}" y="{y + 5}" font-family="{escape(font, quote=True)}" font-size="{body_size}" fill="{ink}">{escape(str(label))}</text>')
+        parts.append(f'<text x="{_GUTTER}" y="{y + 5}" font-family="{escape(font, quote=True)}" font-size="{body_size}" fill="{ink}">{escape(str(label))}</text>')
         if "at" in placement:
             x = left + (placement["at"] - start).days * day_width
             parts.append(f'<circle cx="{x}" cy="{y}" r="7" fill="{planned}" />')

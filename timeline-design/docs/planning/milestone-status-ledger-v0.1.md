@@ -10,11 +10,11 @@ evidence is present, not that a later product release is complete.
 |---|---|---|---|
 | M0 | Complete | Core conformance and scheduler tests; `core-v0.1-stable-readiness-review.md`; I0 Core issue-remediation review. | None for current scope. |
 | M0.5 | Complete | Delivery-profile vocabulary/state/evidence fixtures. | M1 supplies its reproducible resolution dependency. |
-| M1 | Remediation authorized | Revision Store conformance and resolved package closure. | Expose pinned read evaluation through the supported CLI boundary. |
+| M1 | Complete | Revision Store conformance, resolved package closure, and I1 CLI entry remediation review. | None. |
 | M2 | Complete | Presentation conformance, deterministic Scene/SVG evidence. | Only SVG is claimed. |
 | M3 | Complete | Revision-bound Command/CAS/undo evidence. | None. |
 | M4 | Complete | Federation conformance and M4 reuse review. | None. |
-| M5 | Remediation authorized | CLI/review plus AI proposal adapter; fingerprint-bound policy decision and Command/CAS acceptance tests. | Close explicit raw-versus-snapshot and legacy-versus-v0.2 CLI paths. |
+| M5 | Complete | CLI/review plus AI proposal adapter; fingerprint-bound policy decision; I1 CLI entry remediation review. | None. |
 | M5.5 | Complete | External Actual identity/intake review and tests. | None. |
 | M6 | Complete | Interactive review and accessibility/SceneDelta evidence. | None. |
 | M7 | Complete | Gesture, annotation, Actual reconciliation, Snapshot, conflict/undo evidence. | None. |

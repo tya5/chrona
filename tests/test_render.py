@@ -41,6 +41,20 @@ def test_render_svg_projects_placements_without_owning_them():
     assert '<rect ' in svg
     assert '<circle ' in svg
     assert 'E_PRESENTATION_LEGACY_ADAPTER' in svg
+    assert '<text x="24" y="34"' in svg
+    assert '<text x="24" y="81"' in svg
+    assert 'font-size="10" fill="#6b6b6b">2026-10-01</text>' in svg
+
+
+def test_controller_x_legacy_documentation_artifact_is_current():
+    import yaml
+    from chrona.scheduler import schedule
+
+    root = Path(__file__).resolve().parents[1]
+    project = yaml.safe_load((root / "timeline-design/docs/fixtures/controller-x.yaml").read_text())
+    scene = scene_from_schedule(project, schedule(project))
+    generated = render_svg(scene, {"marker", "metadata", "text-alternative"})
+    assert generated == (root / "timeline-design/docs/fixtures/controller-x.svg").read_text()
 
 
 def test_svg_rejects_an_incapable_target_and_scene_is_deterministic():

@@ -15,7 +15,9 @@ from .review_svg import (_surface_content_input, append_review_summary,
                          build_review_projection, render_review_svg,
                          render_table_timeline_svg)
 from .layout import resolve_layout_profile, solve_layout
+from .loader import load_project
 from .presentation_settings import resolve_presentation_settings
+from .revision_store import LocalSnapshotReader, SnapshotReadError
 
 
 def _json_default(value: object) -> str:
@@ -24,12 +26,42 @@ def _json_default(value: object) -> str:
     raise TypeError(f"Not JSON serializable: {type(value)!r}")
 
 
+def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("project", nargs="?", help="raw Draft Project path")
+    command.add_argument("--snapshot-reference", help="immutable Project resource-reference YAML")
+    command.add_argument("--snapshot-root", help="local snapshot adapter root")
+    command.add_argument("--store-identity", help="expected local snapshot store identity")
+
+
+def _load_primary_project(args: argparse.Namespace, parser: argparse.ArgumentParser) -> dict:
+    snapshot_values = (args.snapshot_reference, args.snapshot_root, args.store_identity)
+    if any(snapshot_values):
+        if not all(snapshot_values) or args.project:
+            parser.error("snapshot mode requires --snapshot-reference, --snapshot-root, and --store-identity without a raw project")
+        reference = load_yaml(args.snapshot_reference)
+        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity))
+    if not args.project:
+        parser.error("a raw project or complete snapshot mode is required")
+    return load_yaml(args.project)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="chrona")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("validate", "schedule", "render", "render-review", "review", "propose-set"):
-        command = sub.add_parser(name)
-        command.add_argument("project")
+    help_text = {
+        "validate": "validate a raw Draft or immutable Project snapshot",
+        "schedule": "derive a Date-only schedule from a raw Draft or immutable snapshot",
+        "render": "render the minimal timeline through v0.2 settings or the diagnostic legacy adapter",
+        "render-review": "render a Plan/Actual review surface",
+        "review": "compare two raw Project files",
+        "propose-set": "propose one typed Project field change without writing the input",
+    }
+    for name in help_text:
+        command = sub.add_parser(name, help=help_text[name], description=help_text[name])
+        if name in {"validate", "schedule", "render"}:
+            _add_snapshot_arguments(command)
+        else:
+            command.add_argument("project")
         if name == "review":
             command.add_argument("candidate")
         if name == "propose-set":
@@ -38,10 +70,17 @@ def main() -> None:
             command.add_argument("value")
         if name == "render":
             command.add_argument("--output", "-o", required=True)
+            command.add_argument("--presentation-settings", help="resolved settings or preset for the common v0.2 Scene path")
         if name == "render-review":
             command.add_argument("--actual", required=True); command.add_argument("--view", required=True); command.add_argument("--style", required=True); command.add_argument("--theme", required=True); command.add_argument("--profile", required=True); command.add_argument("--presentation-settings"); command.add_argument("--summary-profile"); command.add_argument("--output", "-o", required=True)
     args = parser.parse_args()
-    project = load_yaml(args.project)
+    try:
+        project = (_load_primary_project(args, parser)
+                   if args.command in {"validate", "schedule", "render"}
+                   else load_yaml(args.project))
+    except SnapshotReadError as error:
+        print(json.dumps({"diagnostics": [{"id": error.diagnostic_id, "path": "/project"}]}))
+        raise SystemExit(1) from error
     if args.command == "review":
         print(json.dumps(review_projects(project, load_yaml(args.candidate)), indent=2, default=_json_default))
         return
@@ -62,7 +101,8 @@ def main() -> None:
             print(json.dumps({"diagnostics": [item.as_dict() for item in result.diagnostics]}, indent=2))
             raise SystemExit(1)
         scene = scene_from_schedule(project, result)
-        Path(args.output).write_text(render_svg(scene, {"marker", "metadata", "text-alternative"}), encoding="utf-8")
+        settings = resolve_presentation_settings(load_yaml(args.presentation_settings)) if args.presentation_settings else None
+        Path(args.output).write_text(render_svg(scene, {"marker", "metadata", "text-alternative"}, settings), encoding="utf-8")
         return
     if args.command == "render-review":
         if not result.ok:

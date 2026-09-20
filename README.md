@@ -27,6 +27,19 @@ chrona schedule path/to/project.yaml
 chrona render path/to/project.yaml --output timeline.svg
 ```
 
+`validate`, `schedule`, and `render` also accept an immutable local snapshot instead of
+a raw Draft path:
+
+```bash
+chrona schedule \
+  --snapshot-reference project-reference.yaml \
+  --snapshot-root .chrona/snapshots \
+  --store-identity local-workspace
+```
+
+Use `chrona render --presentation-settings settings.yaml` for the common v0.2 Scene
+path. Omitting settings intentionally selects the diagnostic legacy adapter.
+
 `chrona schedule` is a reference implementation for the acyclic Date-only
 subset. It reports diagnostics for unsupported cycles rather than treating all
 cycles as semantic errors.
