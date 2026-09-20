@@ -143,7 +143,8 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                          "project-note": "notes", "group-detail-description": "notes",
                          "observation-column-label": "tableHeader", "observation-cell": "body",
                          "observation-source": "notes", "milestone-digest-entry": "summaryMetric"}.get(node.purpose, role)
-            paint_role = ("body" if node.purpose in {"axis-label", "table-column-label", "annotation-text", "project-note"}
+            paint_role = ("body" if node.purpose in {"axis-label", "table-column-label", "observation-column-label",
+                                                        "annotation-text", "project-note"}
                           else role)
             typography = theme["typography"].get(type_role, theme["typography"].get("body", {}))
             anchor = "middle" if node.purpose == "axis-label" else "start"

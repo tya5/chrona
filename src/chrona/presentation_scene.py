@@ -1090,7 +1090,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 optional = observation_slot.priority != "required"
                 add("Rect", "observations", "review-detail", "", "table-frame", "observation-frame",
                     observation_slot.bounds, optional=optional)
-                add("Rect", "observations-header", "review-detail", "", "row-shade", "observation-header-band",
+                add("Rect", "observations-header", "review-detail", "", "table-header", "observation-header-band",
                     (observation_slot.bounds[0], observation_slot.bounds[1], observation_slot.bounds[2],
                      header_height + float(padding["top"])), optional=optional)
                 for column_id, label, layout in pending_headers:

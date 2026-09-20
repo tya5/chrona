@@ -120,6 +120,10 @@ def test_scene_owns_detail_geometry_metadata_and_deterministic_svg():
     root = ET.fromstring(svg)
     source = next(node for node in root.iter() if node.get("data-purpose") == "observation-source")
     assert source.get("data-source-ref") == "note-1" and source.text == "example-record-R-001"
+    header = next(node for node in root.iter() if node.get("data-purpose") == "observation-header-band")
+    label = next(node for node in root.iter() if node.get("data-purpose") == "observation-column-label")
+    assert header.get("fill") == config["theme"]["paints"]["tableHeader"]["color"]
+    assert label.get("fill") == config["theme"]["paints"]["text"]["color"]
 
 
 def test_required_detail_overflow_diagnoses_with_owned_source():
