@@ -196,6 +196,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
 
     foreground, obstacles, anchors = [], [], {}
     scene_marks = {}
+    lane_stacks = {lane.object_id: lane.stack for lane in presentation_scene.lanes} if presentation_scene is not None else {}
     if presentation_scene is not None:
         for mark in presentation_scene.marks:
             scene_marks.setdefault(mark.source_id, {})[mark.facet] = mark
@@ -227,7 +228,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                 if x1 < left or x2 > right:
                     raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:window')
                 planned_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, planned_mark.facet)['color'], quote=True) if settings else planned
-                foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned_fill, 'planned', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
+                foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned_fill, 'planned', item.object_id, f'data-stack="{lane_stacks.get(item.object_id, 0)}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                 obstacles.append((x1-4, py-4, x2+4, py+bh+4))
                 anchors[item.object_id] = {'start': (x1, py+bh/2, -1), 'end': (x2, py+bh/2, 1)}
                 actual_mark = scene_marks.get(item.object_id, {}).get('actual')
@@ -240,7 +241,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:actual')
                     actual_y = py if settings and settings['layout']['bars']['comparisonMode'] == 'overlaid' else cy+bg/2
                     actual_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, 'actual')['color'], quote=True) if settings else actual
-                    foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual_fill, 'actual', item.object_id, f'rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
+                    foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual_fill, 'actual', item.object_id, f'data-stack="{lane_stacks.get(item.object_id, 0)}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                     obstacles.append((a1-4, actual_y-4, a2+4, actual_y+bh+4))
                     actual_rule = next((rule for rule in settings['detail']['labelRules']
                                         if rule['source'] == 'actual-date' and rule['facet'] == 'actual' and rule['endpoint'] == 'finish'), None) if settings else None
