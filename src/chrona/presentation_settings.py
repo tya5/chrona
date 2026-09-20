@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from hashlib import sha256
 import json
 from pathlib import Path
 from typing import Any, Mapping
@@ -50,6 +51,12 @@ def builtin_bases() -> dict[str, dict[str, Any]]:
     return {"executive-v0.2": json.loads(_FIXTURE.read_text(encoding="utf-8"))}
 
 
+def builtin_base_references() -> dict[str, dict[str, Any]]:
+    """Return immutable base declarations, including the exact fixture bytes identity."""
+    payload = _FIXTURE.read_bytes()
+    return {"executive-v0.2": {"settings": json.loads(payload), "revision": "design-fixture", "contentIdentity": "sha256:" + sha256(payload).hexdigest()}}
+
+
 def resolve_presentation_settings(resource: Mapping[str, Any], *, bases: Mapping[str, Mapping[str, Any]] | None = None) -> dict[str, Any]:
     """Return complete settings; renderers never receive an unresolved preset."""
     settings_validator, preset_validator = _validators()
@@ -63,9 +70,16 @@ def resolve_presentation_settings(resource: Mapping[str, Any], *, bases: Mapping
     if "settings" in value:
         _validate(settings_validator, value["settings"], "E_PRESENTATION_SETTINGS_REQUIRED")
         return deepcopy(value["settings"])
-    base = (builtin_bases() if bases is None else bases).get(value["base"]["id"])
-    if base is None or base.get("version") != SETTINGS_VERSION:
+    base = (builtin_base_references() if bases is None else bases).get(value["base"]["id"])
+    if not isinstance(base, Mapping):
         raise PresentationSettingsError("E_PRESENTATION_REFERENCE")
-    resolved = _merge(base, value["overrides"])
+    reference = value["base"]
+    if base.get("revision") != reference["revision"] or base.get("contentIdentity") != reference["contentIdentity"]:
+        raise PresentationSettingsError("E_PRESENTATION_REFERENCE")
+    base_settings = base.get("settings")
+    if not isinstance(base_settings, Mapping) or base_settings.get("version") != SETTINGS_VERSION:
+        raise PresentationSettingsError("E_PRESENTATION_REFERENCE")
+    _validate(settings_validator, base_settings, "E_PRESENTATION_REFERENCE")
+    resolved = _merge(base_settings, value["overrides"])
     _validate(settings_validator, resolved, "E_PRESENTATION_SETTINGS_REQUIRED")
     return resolved
