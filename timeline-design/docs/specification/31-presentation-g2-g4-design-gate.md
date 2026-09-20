@@ -49,8 +49,8 @@ annotation purposeはcallout/note/highlight/explanatory-arrow。callout/noteはr
 
 Sceneはannotationごとに`{annotationId, objectId, facet, endpoint, boxBounds, leader}`を出す。
 boxBoundsは共有label配置器の最初の合法候補であり、leaderのbox側portはanchorに最も近い矩形辺の中点
-（同距離は`above, below, end, start`順）とする。leaderはanchor portからbox portへの直交pathで、mark、
-required label、確定済みannotation boxを障害物に含める。`routing.limit`はvisibility-gridで展開するstate数の
+（同距離は`above, below, end, start`順）とする。box候補の衝突判定では**当該annotation自身のanchor markだけ**を障害物集合から除き、他のmark、required label、先に確定したannotation boxは残す。leaderはanchor portからbox portへの直交pathで、全mark、
+required label、確定済みannotation boxを障害物に含める。source portから外向きに出る最初のsegmentだけはsource mark境界への接触を許す。annotation boxはG4 lane occupancyに含めない。これによりbox配置とlane stackの循環を避け、box同士の衝突はannotationの安定順でのみ解く。`routing.limit`はvisibility-gridで展開するstate数の
 上限であり、超過は`E_PRESENTATION_ROUTE_LIMIT`。`highlight`はleaderを出さず、`explanatory-arrow`は二つの
 明示object anchorが揃う場合だけ出す。facetを省略した既存View annotationは保存互換のためschemaで受理するが、
 G3 Scene投影は`E_PRESENTATION_ANCHOR_MISSING`としplannedを推測しない。
