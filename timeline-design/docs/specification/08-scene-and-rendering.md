@@ -111,6 +111,30 @@ It MUST also not use a settings-derived `dayWidth`, margin, or row height as a f
 for a completed surface instance; a missing required slot, row, mark, or primitive is a
 stable presentation diagnostic.
 
+### 3.4 Closed Scene manifest
+
+The completed Scene contains one immutable, derived manifest with version
+`chrona/presentation-scene-manifest/v0.1`. It is inspection evidence, not a second
+authoring resource. Its closed fields are the resolved settings version, logical
+viewport width and height, ordered selected object IDs, ordered declared font-asset
+content identities, normalized content-family counts, and one ordered temporal-scale
+record for each public surface.
+
+Each surface-scale record contains `surfaceId`, `scaleId`, half-open Date-only
+`domainStart` and `domainEnd`, `rangeStart`, `rangeEnd`, `origin`, and `unitRatio`.
+For the initial linear profile, range is the usable timeline-slot interval after the
+resolved inset, origin equals `rangeStart`, and `unitRatio` is logical scene units per
+calendar day. A completed `SceneSurface` carries its own identical scale record so a
+serializer that receives only that surface can preserve the evidence. Missing scale
+evidence is `E_PRESENTATION_PRIMITIVE_MISSING`; an adapter MUST NOT reconstruct it
+from viewport, settings, slots, or primitive coordinates.
+
+The normalized content-family counts are exactly `relations`, `annotations`, `notes`,
+`legendEntries`, and `summaryPanels`. They explain which optional inputs participated
+without copying their authoring content. Diagnostics are an ordered immutable Scene
+collection separate from the manifest; the initial successful profile emits an empty
+collection. Manifest fields and diagnostics are never cache or semantic authorities.
+
 ## 4. Coordinate system and temporal scale
 
 ### 4.0 v0.1 Scene profile
@@ -152,7 +176,10 @@ TemporalSpan [start, end) = [scale(start), scale(end))
 TemporalPoint at = scale(at)
 ```
 
-The scale domain, output range, origin, and unit ratio MUST be recorded in the Scene manifest. Human-facing inclusive-end labels remain a renderer or View presentation choice; they do not change the half-open geometry rule above.
+The scale domain, output range, origin, and unit ratio MUST be recorded in the Scene
+manifest and in the matching `SceneSurface` scale record defined by §3.4. Human-facing
+inclusive-end labels remain a renderer or View presentation choice; they do not change
+the half-open geometry rule above.
 
 Non-linear working-day compression, DateTime scales, discontinuous intervals, and zoom-dependent semantic aggregation require named future Scene profiles. They MUST NOT be inferred from a calendar or a renderer's axis widget.
 

@@ -58,6 +58,18 @@ inputs:
     normalization: application-boundary-once
     adapterVisible: false
     authority: derived-selected-content-only
+  manifest:
+    version: chrona/presentation-scene-manifest/v0.1
+    authority: derived-inspection-only
+    required: [settingsVersion, viewport, selectedObjectIds, fontAssetIdentities, contentFamilyCounts, surfaceScales]
+    viewport: [width, height]
+    contentFamilyCounts: [relations, annotations, notes, legendEntries, summaryPanels]
+    surfaceScaleShape: [surfaceId, scaleId, domainStart, domainEnd, rangeStart, rangeEnd, origin, unitRatio]
+    surfaceOrder: [table-timeline, review, minimal]
+    adapterBoundary: identical-scale-record-on-selected-scene-surface
+  diagnostics:
+    shape: ordered-immutable-diagnostic-codes
+    successfulInitialProfile: []
 invariants:
   - adapters-receive-completed-scene-only
   - slot-row-track-bounds-are-not-authoring-data
@@ -68,3 +80,5 @@ invariants:
   - routes-ports-and-text-layout-are-scene-owned
   - primitive-kind-payload-mismatch-is-a-stable-diagnostic
   - adapters-never-read-surface-content-input
+  - manifest-is-derived-and-non-authoritative
+  - adapters-preserve-surface-scale-record-without-reconstruction

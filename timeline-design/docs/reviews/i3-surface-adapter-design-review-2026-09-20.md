@@ -72,3 +72,17 @@ family. Specifications 08/30, the I3 plan, and the fixture now close the DTO as
 and table only, and require an explicit resolved summary slot. The application entry
 normalizes content once; the selected serializer still receives only `SceneSurface`.
 This design correction must be validated and published before I3-F implementation.
+
+## Reopening record: V1 Scene manifest
+
+The V1 evidence trace found that Specification 08 required the temporal domain, range,
+origin, and unit ratio in a Scene manifest, while the Python Scene had neither a closed
+manifest DTO nor an adapter-visible scale fragment. Specification 08 §3.4,
+Specification 30, the derived fixture, and the I3 plan now close one immutable manifest
+shape and attach the identical scale record to each completed `SceneSurface`.
+
+This preserves the serializer boundary: an adapter can emit target metadata without
+receiving the full Scene or reconstructing scale evidence. The manifest remains derived,
+non-authoritative inspection evidence and records counts rather than authoring payloads.
+Implementation MUST NOT resume until this correction validates and is published as an
+independent design revision.

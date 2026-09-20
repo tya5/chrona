@@ -190,6 +190,14 @@ from mark plus required-text occupancy; create purpose-specific annotation primi
 and finite routes; then finalize IDs, `sourceKind`, bounds, z-order, manifest, and
 diagnostics. Later stages never reinterpret earlier ones.
 
+The final manifest is the closed derived shape in Specification 08 §3.4. In particular,
+each public surface owns a scale record with its Date domain and usable output range,
+origin, and logical-units-per-day ratio. The same record is attached to the completed
+`SceneSurface`; this is the only scale evidence available to an adapter. The manifest
+also records the settings version, logical viewport, ordered selected IDs, declared
+font-asset identities, and the five normalized optional-family counts. It contains no
+Project/View payload and introduces no new authority.
+
 Before text measurement, the Scene Builder evaluates the resolved Detail heading and
 optional subtitle templates against the closed permitted-value map. It emits
 `title-text` and optional `subtitle-text` with their final wording, bounds, baseline,

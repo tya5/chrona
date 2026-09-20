@@ -1,7 +1,8 @@
 # I3 Public Surface-Adapter Completion Plan
 
 **Status:** I3-A through I3-E and the I3-F design correction are published. I3-F is
-implemented; V1 acceptance and completion review remains before I3 completion.
+implemented. The V1 manifest design is closed; its implementation and final acceptance
+review remain before I3 completion.
 
 ## Goal
 
@@ -40,6 +41,24 @@ surface. Missing data stops processing with the following diagnostics.
 | I3-E | Selection API that consumes I3-A core primitives for minimal | Minimal date→X, row→Y, axis/tick/mark/title/item-label calculation | Emits the same SVG semantic values without settings or an item list | Stand-alone |
 | I3-F | Review connectors, annotations, and summaries; minimal connectors and annotations; table summary family | Remaining private geometry above | No settings-backed public adapter calculates geometry or wording | Stand-alone |
 | V1 | Input manifest plus structural, behavioral, and image evidence | Guessing at completion evidence | Verify setting variation, missing Actual, point items, multiple slots, long text, lanes, and routes through every path | I3 completion |
+
+### V1 manifest closure
+
+V1 uses the closed `chrona/presentation-scene-manifest/v0.1` shape from Specification
+08 §3.4. The Scene-level manifest records settings version, logical viewport, ordered
+selected object IDs, declared font-asset identities, the five normalized content-family
+counts, and ordered scale records for `table-timeline`, `review`, and `minimal`.
+Each completed surface carries its identical scale record because serializers receive
+only `SceneSurface`. A record fixes surface/scale identity, half-open Date domain,
+usable output range, origin, and logical-units-per-calendar-day ratio. The serializer
+preserves those values in target metadata and may not derive them from settings, slots,
+or primitive bounds. Scene diagnostics are an ordered immutable collection and are
+empty for a successful initial-profile build.
+
+The manifest is derived inspection evidence only. It does not persist selected content,
+duplicate Project/View fields, authorize a renderer default, or become an input to
+geometry. The implementation publication must prove that differently sized public
+surfaces share the same Date domain while retaining their own ranges and ratios.
 
 ### Complete design closure for I3-C through I3-F
 
@@ -126,8 +145,8 @@ legal perimeter path is searchable without leaving the surface. The verification
 harness binds both Regular and Bold font assets. Controller Z and all five ASTER
 outputs were regenerated only after semantic/source/bounds checks passed, and the
 overview plus tall master PNGs were visually inspected. The full suite remains 175
-tests. V1 remains open only for the required Scene-manifest closure and final evidence
-review.
+tests. V1 remains open only for the published Scene-manifest implementation and final
+evidence review.
 
 If I3-B through I3-F reveals a need for a new primitive family, identity input,
 TextLayout, port, diagnostic, or surface ownership rule, implementation stops. Close

@@ -46,4 +46,18 @@ review_slots = surfaces["review"]["slots"]
 assert any(slot.get("optional") is True and slot["source"] == "summary-or-other-authorized-optional-source"
            for slot in review_slots)
 assert "adapters-never-read-surface-content-input" in case["invariants"]
+manifest = case["inputs"]["manifest"]
+assert manifest["version"] == "chrona/presentation-scene-manifest/v0.1"
+assert manifest["authority"] == "derived-inspection-only"
+assert manifest["required"] == ["settingsVersion", "viewport", "selectedObjectIds", "fontAssetIdentities",
+                                "contentFamilyCounts", "surfaceScales"]
+assert manifest["viewport"] == ["width", "height"]
+assert manifest["contentFamilyCounts"] == ["relations", "annotations", "notes", "legendEntries", "summaryPanels"]
+assert manifest["surfaceScaleShape"] == ["surfaceId", "scaleId", "domainStart", "domainEnd", "rangeStart",
+                                           "rangeEnd", "origin", "unitRatio"]
+assert manifest["surfaceOrder"] == ["table-timeline", "review", "minimal"]
+assert manifest["adapterBoundary"] == "identical-scale-record-on-selected-scene-surface"
+assert case["inputs"]["diagnostics"]["successfulInitialProfile"] == []
+assert "manifest-is-derived-and-non-authoritative" in case["invariants"]
+assert "adapters-preserve-surface-scale-record-without-reconstruction" in case["invariants"]
 print("presentation-scene-input derived fixture valid")
