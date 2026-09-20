@@ -9,11 +9,11 @@
 | leader → routing | 全mark／required label／確定boxを障害物、source mark境界に触れ得る最初の外向きsegmentだけ許可。state数はLayout limitで打切り | 無制限探索・dependencyとの意味混同・source mark全体の透過 |
 | annotation → lane | annotation boxはlane occupancyから除外。box同士の衝突は安定annotation順でG3が解く | box配置とlane stackの循環・adapterでの再解釈 |
 | mark → lane Scene | View group/order、stable item順、最小non-overlap stackをSceneへ記録 | adapter再順序化・別group移動 |
-| lane → adapter | row-alignedはstack 0だけ、independent-lane-trackはScene由来pitch/track boundsでstackIndex→縦offset | 日程・label占有・stackの再解釈・row対応の暗黙破壊 |
+| lane → adapter | row-alignedはstackIndexをmetadataとして保持し、independent-lane-trackはScene由来pitch/track boundsでstackIndex→縦offset | 日程・label占有・stackの再解釈・row対応の暗黙破壊 |
 
 ## G4 surface境界
 
-`row-aligned`は既存table/timelineの行対応を保つ互換surfaceであり、非0 stackは`E_PRESENTATION_STACK_SURFACE_INCOMPATIBLE`とする。`independent-lane-track`だけがgroupごとの派生trackを生成し、`scene-mark-extent-plus-clearance`で決まるpitch、trackPadding、trackGapを消費する。これによりstackを視覚的に無視したり、adapterが行高を推測する余地をなくす。
+`row-aligned`は既存table/timelineの行対応を保つ互換surfaceであり、stackIndexをScene metadataとして保持する。`independent-lane-track`だけがgroupごとの派生trackを生成し、`scene-mark-extent-plus-clearance`で決まるpitch、trackPadding、trackGapを消費する。これによりstackを視覚的に無視したり、adapterが行高を推測する余地をなくす。
 
 ## 循環の閉鎖
 
