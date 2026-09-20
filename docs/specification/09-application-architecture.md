@@ -87,8 +87,14 @@ used by library evaluation and never falls back to the raw path when reference
 resolution fails.
 
 Presentation output similarly chooses either resolved Presentation Settings and the
-common Scene path, or the explicit diagnostic legacy adapter. A CLI must not infer a
-v0.2 Render Context from host fonts, locale, or canvas defaults.
+common Scene path, or the explicit diagnostic legacy adapter. `render-review` accepts
+only an immutable Render Context v0.3 reference plus its declared Store; it does not
+reconstruct a context from loose Project/Actual/View/Style/Theme/Profile flags. A CLI
+must not infer a Render Context from host fonts, locale, or canvas defaults.
+
+The reproducible `review` verb accepts two immutable Project references in one declared
+Store. Raw paths are Draft evaluation inputs for `validate`, `schedule`, and minimal
+`render`; they are not a reproducible revision comparison.
 
 ## 5. Read evaluation flow
 
@@ -96,9 +102,10 @@ v0.2 Render Context from host fonts, locale, or canvas defaults.
 
 Every read evaluation begins with an explicit request containing at least:
 
-- a Render Context that names the primary Project revision, View, Style, Theme, Scene
-  profile, and named Snapshot and Actual inputs when used;
-- its explicit locale, viewport, target capabilities, and layout metrics; and
+- a current Render Context that names the primary Project revision, View, resolved
+  Presentation Settings, and named Snapshot/Actual/detail inputs when used;
+- its explicit target capabilities; locale, viewport, layout, Theme, Detail, font
+  metrics, and output policy are closed by the referenced Presentation Settings; and
 - optional requested output artifact.
 
 The Runtime Coordinator delegates resolution to the Evaluation Closure Resolver before
@@ -123,7 +130,7 @@ Resolve temporal values and schedule
           ↓
 Build semantic View Projection
           ↓
-Resolve Style roles and Theme tokens
+Resolve the declared v0.1 Style/Theme stack or current v0.2 Presentation Settings
           ↓
 Build Scene and render target artifact
 ```
@@ -187,7 +194,9 @@ Concurrent writers require revision-aware conflict handling. A write request MUS
 
 ## 7. Diagnostics and observability
 
-The Runtime Coordinator aggregates diagnostics without changing their owner-defined meaning. A diagnostic envelope SHOULD include:
+The Runtime Coordinator aggregates diagnostics without changing their owner-defined
+meaning. Every CLI failure MUST emit one JSON object with `status` and a `diagnostics`
+array. Each diagnostic uses this envelope:
 
 | Field | Purpose |
 |---|---|
@@ -195,8 +204,12 @@ The Runtime Coordinator aggregates diagnostics without changing their owner-defi
 | `severity` | Error, warning, or informational level |
 | `component` | Producing component |
 | `sourceRef` | Relevant semantic, presentation, or command reference |
-| `revisionRefs` | Inputs used when it was produced |
+| `revisionRefs` | Inputs used when it was produced; empty when the failure precedes resolution |
 | `message` | Human-readable explanation |
+
+Project or presentation rejection returns process status 1. Invalid command syntax,
+unreadable input, malformed YAML/JSON, or an internal tooling failure returns 2. A
+handled failure never emits a Python traceback. Successful commands return 0.
 
 Evaluation output SHOULD also expose an input manifest and stage trace sufficient to answer: which revision was rendered, which View/Theme were selected, which cache entry was used, and which component produced each diagnostic. This trace is observational metadata; it must not mutate a Project merely by being collected.
 
@@ -213,9 +226,12 @@ There is no automatic inverse mapping from arbitrary SVG elements or canvas shap
 
 ## 9. Current reference implementation
 
-The initial Python implementation provides a Core v0.1 reference validator, Date-only scheduler, CLI, and a small deterministic SVG vertical slice. These modules are useful conformance evidence, but they do not yet constitute the full component architecture described here.
-
-In particular, the existing SVG path does not establish a canonical View, Style, Theme, Scene, cache, editor, or command implementation. New implementation work must be checked against the boundaries in this document and the subsequent Command and Extension specifications.
+The Python implementation provides the Core v0.1 validator and scheduler, immutable
+local Revision Store reads, typed Commands, View/Actual projection, resolved
+Presentation Settings, a renderer-neutral Scene, deterministic SVG adapters, and
+library implementations of the successor capabilities. The `chrona` CLI is a smaller
+product surface; Specification 14 records that reachability separately from library
+evidence. No library module is user-reachable merely because it has tests.
 
 ## 10. Collaboration successor integration
 

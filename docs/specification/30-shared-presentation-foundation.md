@@ -220,7 +220,7 @@ The application boundary supplies that permitted-value map in
 `windowLastVisible`, `selectedCount`, `unmatchedCount`, and `missingCount`. Scene never
 parses formatted coverage text or consults a projection to reconstruct a missing value.
 
-The implementation DTO is closed by primitive kind: Rect=`bounds` plus optional
+Specification 08 §5 is the sole primitive and identity catalog. The implementation DTO is closed by primitive kind: Rect=`bounds` plus optional
 `cornerRadius`; Text=`text` plus
 one TextLayout; Symbol=`shape` plus bounds; Path=`points` plus optional
 `fromPortId`/`toPortId` only for non-connector ticks. A connector or leader without both
@@ -254,9 +254,10 @@ Actual, variance status, annotations, summaries, notes, groups, points, and fall
 facet paints require their own trigger fixtures. A single Project is never the
 consumption oracle for optional families.
 
-Axis identity includes `(scaleId, level, naturalInterval.index, slotId)`, mark identity
-includes `(projectionInstanceId, facet, markRole)`, and Text identity includes
-`(projectionInstanceId, textRole)`. Adapters never recalculate band height, X/Y,
+Axis source identity includes `(scaleId, level, naturalInterval.index, slotId)`, mark
+purpose identity includes `(projectionInstanceId, facet, markRole)`, and Text purpose
+identity includes `(projectionInstanceId, textRole)`; each derives the single
+Specification 08 `sceneId`. Adapters never recalculate band height, X/Y,
 baseline, tracks, or routes. Review/minimal serialize only their completed selected
 surface, never settings margins/day width/row height or projected order.
 

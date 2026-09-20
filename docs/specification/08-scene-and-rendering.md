@@ -211,14 +211,18 @@ The initial renderer-neutral vocabulary is intentionally small:
 
 | Primitive | Purpose |
 |---|---|
-| `Group` | Ordered containment, transform, clipping, and shared metadata |
 | `Rect` | Span bars, bands, lane backgrounds, and callout boxes |
 | `Symbol` | Point events, markers, and reusable semantic glyphs |
 | `Path` | Dependency connectors, explanatory arrows, variance marks, and leaders |
 | `Text` | Labels, notes, axis labels, and accessible text alternatives |
-| `Clip` | Explicit viewport or group clipping region |
 
-Primitives contain geometry, token references, and metadata; they do not contain scheduling rules. A Scene profile may define a composite convention such as “planned span = `Rect` plus `Text`”, but renderers must not invent that convention independently.
+These four kinds are the closed public v0.2 primitive DTO. Grouping and clipping are
+`SceneSurface`, slot, group, bounds, and viewport metadata, not additional primitive
+kinds. `layoutRegion`, `layoutSlot`, `tableHeader`, `tableCell`, `axisBand`,
+`groupSurface`, `summaryPanel`, and `routedConnector` are closed semantic `purpose`
+families projected onto the four kinds; they are not Scene nodes of new kinds.
+Primitives contain geometry, concrete paint, and metadata; they do not contain
+scheduling rules. Renderers must not invent a composite convention independently.
 
 ### 5.3 Public-surface primitive closure
 
@@ -262,6 +266,12 @@ Projected comparison marks additionally retain `laneGroupId` and `stackIndex` as
 metadata. They do not alter row-aligned geometry, but every SVG adapter emits stable
 `data-lane-group-id` and `data-stack` hooks from Scene. `data-lane-offset` may coexist
 as derived inspection metadata; it is not a replacement for stack identity.
+
+`projectionInstanceId` is the identity of one projected semantic/facet instance.
+`sceneId` is the identity of one emitted primitive and equals that projection identity
+plus its stable primitive-purpose suffix. Axis `(scaleId, level, naturalInterval.index,
+slotId)` is source metadata used to derive a projection identity, never a second Scene
+identity rule.
 
 Stroke decoration remains Theme-owned and is selected by primitive purpose from the
 completed resolved Theme. The purpose mapping is closed: ticks/major axis use
@@ -478,6 +488,11 @@ An adapter MUST apply a SceneDelta atomically only when its base evaluation iden
 matches its completed Scene. On mismatch it retains the completed Scene and requests a
 compatible delta or completed Scene. A whole-Scene `replaceScope` is valid only with a
 declared global invalidation reason; it is not the default for a local semantic change.
+
+SceneDelta survives the shared v0.2 foundation unchanged. Its `upsert` payload is one
+of the four public primitive kinds above; surface-purpose metadata participates through
+the same `sceneId`. A delta cannot introduce a fifth primitive kind or bypass completed
+Scene validation.
 
 ### 8.3 Future renderers
 

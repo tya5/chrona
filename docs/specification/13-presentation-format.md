@@ -258,6 +258,40 @@ The resolver verifies that Plan before resolving its child exports. The v0.2 clo
 manifest records the Plan followed by exports in Plan order. It must never discover a
 newer child revision outside the Plan.
 
+### 5.5 Render Context v0.3 current review entry
+
+`chrona/presentation/v0.3` is the sole `render-review` CLI entry. It closes the current
+v0.2 presentation path without mixing the legacy v0.1 Style/Theme/Scene Profile stack.
+Its body contains immutable references to:
+
+- exactly one Project and View;
+- exactly one complete Presentation Settings or Presentation Preset resource;
+- an Actual set when the selected View requires Actual;
+- optional Review Summary and Review Detail profiles;
+- an optional Federation Plan; and
+- explicit target kind/capabilities.
+
+Locale, viewport, fixed font metrics, Theme, Layout, Detail, and Output policy come only
+from resolved Presentation Settings. Therefore v0.3 rejects `style`, `theme`,
+`sceneProfile`, `viewport`, `layoutMetrics`, or a second locale field as duplicate
+authority. The Runtime Coordinator resolves the entire closure before scheduling.
+
+The legacy v0.1/v0.2 Render Context formats remain conformance inputs for their declared
+token-Theme and federation contracts. They are not accepted by the current
+`render-review` command.
+
+### 5.6 Resource lifecycle
+
+| Resource | Status | Current replacement / use |
+|---|---|---|
+| Project, View, Actual set | Current | Pinned by Render Context v0.3. |
+| Presentation Settings / Preset v0.2 | Current | Sole current Theme/Layout/Detail/Context/Output closure. |
+| Review Summary / Detail Profile | Current optional input | Pinned by Render Context v0.3 when used. |
+| Style v0.1, Theme v0.1, Scene Profile v0.1 | Frozen legacy | Retained for v0.1 conformance; not mixed into v0.3. |
+| Layout Profile v0.1 | Frozen implementation prototype | Replaced by Presentation Settings `layout`. |
+| table-timeline-profile v0.1 | Deprecated | Rejected by the current path. |
+| Render Context v0.1/v0.2 | Frozen legacy | v0.3 is the current review-render entry. |
+
 ## 6. Normalization and validation sequence
 
 The loader evaluates resources in this order:

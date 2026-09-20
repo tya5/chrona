@@ -29,29 +29,29 @@ acceptance evidence can be reproduced from explicit inputs.
 
 ## 3. Summary and priority
 
-| ID | Use case | Priority | Current delivered disposition |
-|---|---|---|---|
-| UC-01 | Create and validate an engineering development timeline | Must | Delivered by M0; Core conformance and scheduler tests. |
-| UC-02 | Review a schedule change in Git | Must | Delivered by M1/M5 review path; immutable revision and semantic review evidence. |
-| UC-03 | Review plan versus Actual | Must | Delivered by M2 and M5.5; independently identified Actual and comparison evidence. |
-| UC-04 | Produce a customer-facing projection | Should | Delivered for the declared SVG profile by M2; no undeclared target is implied. |
-| UC-05 | Edit a plan interactively without global UI replacement | Must | Delivered by M3/M7 through revision-bound Commands and SceneDelta. |
-| UC-06 | Request a safe AI-assisted edit | Should | Delivered by M5 typed proposal, fingerprint-bound authorization decision, and Command/CAS acceptance evidence. |
-| UC-07 | Model semiconductor gates and domain vocabulary | Should | Delivered by M8 package-registry and lifecycle evidence. |
-| UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Delivered by M7 View-local annotation Commands. |
-| UC-09 | Maintain multiple purpose-specific views from one Project | Must | Delivered by M6 Render Context and interactive review evidence. |
-| UC-10 | Import and reconcile externally observed Actual data | Should | Delivered by M5.5 intake and M7 explicit reconciliation. |
-| UC-11 | Validate, render, and propose changes through CLI/automation | Should | Delivered by M5 CLI/automation evidence; it does not imply AI delivery. |
-| UC-12 | Capture and compare a named baseline | Should | Delivered by M7 immutable Snapshot capture. |
-| UC-13 | Export one evaluation to declared targets | Should | Delivered for the declared SVG adapter with capability/fidelity and exact release-package validation. |
-| UC-14 | Federate independently owned subproject timelines | Must | Delivered by M4 pinned federation resolver evidence. |
-| UC-15 | Manage a delivery roadmap using Chrona | Must | Delivered by M0.5/M1 delivery profile and pinned package-resolution evidence. |
-| UC-16 | Plan a cross-zone event without DST ambiguity | Delivered | Delivered by M10: opt-in DateTime/DST runtime, v0.2 scheduler, recurrence, and provenance-preserving migration; Date-only remains unchanged. |
-| UC-17 | Assess capacity and accept an explicit leveling proposal | Delivered | Delivered by M11: Date-only capacity evaluator and fingerprint-bound explicit proposal/CAS path. |
-| UC-18 | Record cost and time observations without rescheduling the plan | Delivered | Delivered by M11: separately revisioned append-only observation store and unit-partitioned aggregation. |
-| UC-19 | Resolve a concurrent semantic conflict explicitly | Delivered | M12 returns typed stale conflict objects; no last-writer-wins. |
-| UC-20 | Approve and audit a controlled change | Delivered | M12 enforces policy plus fingerprint/expiry-bound approval. |
-| UC-21 | Synchronize a replica without treating a remote tip as truth | Delivered | M12 exposes explicit behind-replica status. |
+| ID | Use case | Priority | Design/library evidence | Current user product surface |
+|---|---|---|---|---|
+| UC-01 | Create and validate an engineering development timeline | Must | Delivered | CLI `validate`, `schedule` |
+| UC-02 | Review a schedule change in Git | Must | Delivered | CLI raw-Draft comparison; immutable CLI replacement is O3 |
+| UC-03 | Review plan versus Actual | Must | Delivered | CLI `render-review` |
+| UC-04 | Produce a customer-facing projection | Should | Delivered for SVG | CLI `render-review` |
+| UC-05 | Edit a plan interactively without global UI replacement | Must | Library + tests | Not exposed |
+| UC-06 | Request a safe AI-assisted edit | Should | Library + tests | Not exposed |
+| UC-07 | Model semiconductor gates and domain vocabulary | Should | Library + tests | Partial validation/scheduling only |
+| UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Library + tests | Not exposed |
+| UC-09 | Maintain multiple purpose-specific views from one Project | Must | Library + tests | Loose-file review flags; Render Context CLI is O3 |
+| UC-10 | Import and reconcile externally observed Actual data | Should | Library + tests | Not exposed |
+| UC-11 | Validate, render, and propose changes through CLI/automation | Should | Delivered subset | `validate`, `schedule`, `render`, `review`, `propose-set` |
+| UC-12 | Capture and compare a named baseline | Should | Library + tests | Comparison only; no capture verb |
+| UC-13 | Export one evaluation to declared targets | Should | SVG adapter | SVG only |
+| UC-14 | Federate independently owned subproject timelines | Must | Library + tests | Not exposed |
+| UC-15 | Manage a delivery roadmap using Chrona | Must | Library + fixtures | Partial validation only |
+| UC-16 | Plan a cross-zone event without DST ambiguity | Should | Library + tests | Not exposed |
+| UC-17 | Assess capacity and accept an explicit leveling proposal | Should | Library + tests | Not exposed |
+| UC-18 | Record cost and time observations without rescheduling the plan | Should | Library + tests | Not exposed |
+| UC-19 | Resolve a concurrent semantic conflict explicitly | Must | Library + tests | Not exposed |
+| UC-20 | Approve and audit a controlled change | Must | Library + tests | Not exposed |
+| UC-21 | Synchronize a replica without treating a remote tip as truth | Should | Library + tests | Not exposed |
 
 ## 4. Detailed use cases
 
@@ -444,12 +444,11 @@ provenance-preserving synchronization fixtures.
 
 ## 7. Current gaps and release gate
 
-Every UC-01–UC-21 row has one current normative owner, canonical positive/negative
-evidence where the rule is machine-checkable, an implementation-independent acceptance
-contract, and a named delivery milestone. UC-14 remains design-ready through the
-pinned Git/local/content reference contract; UC-15 prevents delivery work from
-inventing a parallel project-management model; UC-16–UC-21 are opt-in successor
-capabilities rather than implicit changes to the Date-only profile.
+Every UC-01–UC-21 row has a normative owner and design/library evidence where the rule
+is machine-checkable. That does not make it a user-facing product feature. The current
+alpha product claim is limited to the commands and documented scripts named in the
+Product surface column. UC-16–UC-21 remain opt-in successor libraries rather than
+implicit changes to the Date-only CLI profile.
 
 The remaining gaps in this table are planned adapters or product features, not
 unresolved design semantics. A release claim must name the satisfied use cases and

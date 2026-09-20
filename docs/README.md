@@ -12,9 +12,10 @@
 Machine-readable contracts live in [`../schemas/`](../schemas/) and executable
 compatibility fixtures and runners live in [`../conformance/`](../conformance/).
 
-Start with [the documentation plan](planning/active/design-documentation-plan.md), then read
-the numbered specifications in order. Review records describe their stated historical
-scope; they do not supersede the corresponding normative specification.
+Start with the [task-oriented specification guide](specification/README.md). Numbers are
+stable document identifiers rather than a mandatory reading order. Review records
+describe their stated historical scope; they do not supersede the corresponding
+normative specification.
 
 Repository topology and packaging are owned by
 [Specification 32](specification/32-repository-layout-and-packaging.md). Its migration

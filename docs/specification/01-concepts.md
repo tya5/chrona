@@ -173,7 +173,29 @@ Scene   = Renderer-neutral visual primitives
 
 None of them may redefine Core scheduling semantics.
 
-## 17. Snapshot
+## 17. Presentation composition vocabulary
+
+An **Actual** is an independently observed fact aligned explicitly to a Project object;
+it never reschedules the plan. An **Observation** is attributed read-only evidence and
+is not automatically an Actual.
+
+A **Surface** is one public presentation projection. A Surface is divided into named
+**Regions** and **Slots**. A Slot binds one declared content source; a **Track** is one
+allocation axis inside a Region. A **Lane** is a deterministic placement band for
+overlapping temporal items. A **Facet** distinguishes planned, Actual, baseline, or
+variance meaning without changing object identity. **Detail** supplies labels,
+explanations, legends, and bounded review panels.
+
+A **Layout Profile** is the legacy v0.1 declarative composition resource. Current v0.2
+composition is the `layout` owner inside **Presentation Settings**, which closes Theme,
+Layout, Detail, Context, and Output values. A **Preset** is an authoring-time complete
+settings value or fixed-base override; renderers consume only resolved settings.
+
+A **Render Context** is the immutable entry for one reproducible presentation
+evaluation. Its **evaluation closure** is the ordered set of pinned resources and
+content identities needed for that evaluation. It never means “use the current files”.
+
+## 18. Snapshot
 
 A **Snapshot** identifies a comparison state of a Project, potentially by a Git
 reference or embedded immutable data.

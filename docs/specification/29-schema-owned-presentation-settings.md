@@ -49,11 +49,13 @@ migration moves them once. Consolidate legacy `layoutMetrics` references into
 `context.fontMetrics`. Preserve unrelated Context values such as `asOfDate` and
 revision references.
 
-Existing Theme token→role resolution remains the stage before normalization to this
-concrete-value contract. Validate token aliases, cycles, and types, then produce
-complete Theme settings with no unresolved token strings. Layout distances belong only
-to Layout. Diagnose a Style-generated role unsupported by Theme. `groupPaints` keys are
-stable IDs; do not branch on group count, title, or sample name.
+Specification 07 owns legacy v0.1 Theme token→role resolution before normalization to
+this concrete-value contract. Validate token aliases, cycles, and types, then produce
+complete Theme settings with no unresolved token strings. A current Render Context v0.3
+references the resolved settings and does not also reference legacy Style/Theme/Scene
+Profile resources. Layout distances belong only to Layout. `groupPaints` keys are stable
+IDs; do not branch on group count, title, or sample name. Scene owns the selected
+concrete paint; adapters only serialize it.
 
 ## 3. Defaults, overrides, and compatibility
 

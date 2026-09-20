@@ -130,16 +130,19 @@ version: chrona/presentation/v0.1
 kind: theme
 id: engineering-light
 body:
-  tokens:
-    planned: { fill: blue-500, stroke: blue-700 }
-    actual: { fill: green-500, stroke: green-700 }
-    variance-behind: { marker: warning, stroke: amber-700 }
-    actual-missing: { pattern: hatch, marker: unknown }
+  values:
+    blue-500: {type: color, value: "#3885E5"}
+    blue-700: {type: color, value: "#205493"}
+    green-500: {type: color, value: "#249B78"}
+  roles:
+    planned: {fill: blue-500, stroke: blue-700}
+    actual: {fill: green-500}
 ```
 
-Each token key is a visual role and each value is a closed map of token references. The
-concrete token vocabulary and inheritance remain a Theme schema concern; a Theme cannot
-introduce a semantic role, and an unbound role is a diagnostic.
+`values` declares typed concrete tokens and `roles` binds visual-role properties only to
+declared token names. This is the sole v0.1 persistent syntax; the older `tokens` map is
+not valid input. A Theme cannot introduce a semantic role, and an unbound or undefined
+role/token is a diagnostic.
 
 ### 5.2 Tokens
 
@@ -172,6 +175,12 @@ binding per property; cyclic or missing bases and undefined token names are erro
 The resolved output is a concrete scalar map for every selected role. No renderer may
 substitute a palette, default font, marker, or pattern when resolution is incomplete.
 Style resolution is source-order only; Theme resolution is base-first/property-local.
+
+Specification 29 owns the v0.2 resolved concrete Theme embedded in Presentation
+Settings. The one-way chain is `v0.1 values/roles → resolved concrete theme → Scene
+paint`. The v0.1 Theme is a legacy authoring resource; it is never supplied alongside a
+v0.2 resolved Theme. Scene stores the selected concrete paint and an adapter only
+serializes it.
 
 ## 6. Accessibility and reviewability
 

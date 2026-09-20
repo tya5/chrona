@@ -67,21 +67,28 @@ lookup without a repository tree.
 
 The final package boundaries are:
 
-| Package | Responsibility | Initial module allocation |
+| Package | Specification 09 component home | Responsibility |
 |---|---|---|
-| `chrona.core` | Diagnostics, Date-only temporal semantics, project validation. | `diagnostics`, `temporal`, `validation` |
-| `chrona.scheduling` | Date/DateTime scheduling, capacity, and cost observations. | `scheduler`, `temporal_datetime`, `datetime_scheduler`, `datetime_migration`, `capacity`, `cost_observations` |
-| `chrona.storage` | Revision stores, snapshots, and project loading. | `revision_store`, `snapshots`, `loader` |
-| `chrona.commands` | Typed project, Actual, View, AI, gesture, and editor commands. | `commands`, `actual_commands`, `view_commands`, `ai_proposals`, `gestures`, `editor` |
-| `chrona.extensions` | Profiles, registries, and package lifecycle. | `profiles`, `extension_registry`, `package_lifecycle` |
-| `chrona.collaboration` | Merge/audit and federation. | `collaboration`, `federation` |
-| `chrona.presentation` | Actual intake, closure, settings, Layout, Scene, surfaces, and SVG output. | all presentation/render/review modules |
-| `chrona.release` | Output capability, release packages, and successor release. | `output`, `release_package`, `successor_release` |
-| `chrona.app` | CLI and interactive application orchestration. | `cli`, `interactive`, `review` |
+| `chrona.core` | Temporal Engine; pure structural/profile validation | Diagnostics, Date-only temporal semantics, validation against already resolved profile manifests. |
+| `chrona.scheduling` | Scheduling Engine | Date/DateTime scheduling, capacity, and cost observations. |
+| `chrona.storage` | Revision Store adapter; Evaluation Closure Resolver | Revision stores, snapshots, project/resource loading, and immutable closure reads. |
+| `chrona.commands` | Command Engine | Typed project, Actual, View, AI, gesture, and editor commands. |
+| `chrona.extensions` | Profile Registry | Profile semantics, registries, and package lifecycle; Store access is injected by application/storage orchestration. |
+| `chrona.collaboration` | Federation Resolver; collaboration coordinator | Merge/audit, approval/synchronization, and federation. |
+| `chrona.presentation.model` | Transform/Predicate Engine; View Engine | Actual intake, projection, closure-independent normalized presentation inputs. |
+| `chrona.presentation.scene` | Style/Theme resolution; Scene Builder | Concrete paint, primitives, identity, and deterministic Scene construction. |
+| `chrona.presentation.layout` | Layout part of Scene Builder | Constraints, axes, labels, lanes, measurement placement, and routing. |
+| `chrona.presentation.renderers` | Renderer Adapters | Serialization of completed Scene only. |
+| `chrona.presentation.review` | Review-surface orchestration | Summary/detail surface-content orchestration; no adapter-private Theme authority. |
+| `chrona.release` | Output/release successor services | Output capability and release packages; not a Specification 09 evaluation component. |
+| `chrona.app` | Runtime Coordinator | CLI and interactive orchestration across public services. |
 
-Dependencies MUST point toward semantic owners. `core` cannot import presentation,
-application, release, or adapters. Scheduling may depend on core. Presentation may
-consume core/scheduling results. Application code may orchestrate all public services.
+Dependencies MUST point toward semantic owners. `core` cannot import storage,
+extensions, presentation, application, release, or adapters. Storage/application code
+resolves packages and injects plain manifests into Core. Scheduling may depend on core.
+Presentation may consume core/scheduling results. Renderers cannot import private review
+helpers. Application code may orchestrate all public services. A repository test MUST
+encode these forbidden edges.
 
 The documented stable entry point remains the `chrona` CLI. No stable Python module API
 has been declared for the alpha release. Repository-internal imports and tests therefore

@@ -59,9 +59,10 @@ resources but rendering must never branch on a preset ID.
 
 ## 5. Scene, accessibility, and output
 
-Scene gains `layoutRegion`, `layoutSlot`, `tableHeader`, `tableCell`, `axisBand`,
-`groupSurface`, `summaryPanel`, and `routedConnector`; each has source/derived provenance,
-role, text alternative, and region/slot ID. SVG requires `layoutManifest`,
+The closed primitives remain those in Specification 08 §5. `layoutRegion`,
+`layoutSlot`, `tableHeader`, `tableCell`, `axisBand`, `groupSurface`, `summaryPanel`, and
+`routedConnector` are purpose/metadata families on those primitives; each has
+source/derived provenance, role, text alternative, and region/slot ID. SVG requires `layoutManifest`,
 `tableSemantics`, `hierarchicalAxis`, and existing accessibility/source capabilities.
 Logical reading order is slot order, not paint order. Colour is never the sole state cue.
 
