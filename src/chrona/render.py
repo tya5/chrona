@@ -11,7 +11,8 @@ _LANE_HEIGHT = 58
 _DAY_WIDTH = 14
 
 
-def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dict | None = None) -> str:
+def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dict | None = None,
+               surface_content: object | None = None) -> str:
     """Render a Scene as deterministic accessible SVG.
 
     SVG is an adapter output only; it cannot be read back as Project semantics.
@@ -27,7 +28,12 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
     presentation_scene = None
     if settings is not None:
         from .presentation_scene import SurfaceContentInput, presentation_scene_from_schedule
-        content = SurfaceContentInput(relations=scene.relations)
+        if surface_content is None:
+            content = SurfaceContentInput(relations=scene.relations)
+        elif isinstance(surface_content, SurfaceContentInput):
+            content = surface_content
+        else:
+            raise TypeError("surface_content must be SurfaceContentInput")
         presentation_scene = presentation_scene_from_schedule(
             scene.title, placements, settings, scene.labels, content
         )

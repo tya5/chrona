@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 
 from chrona.render import render_svg
+from chrona.presentation_scene import SurfaceContentInput
 from chrona.presentation_settings import builtin_bases
 from chrona.scene import scene_from_schedule
 from chrona.scheduler import ScheduleResult
@@ -90,3 +91,27 @@ def test_i3_f_minimal_svg_routes_scene_relations_from_completed_scene():
     assert 'data-purpose="routed-connector"' in svg
     assert 'data-source-ref="task-to-gate"' in svg
     assert 'data-from-port-id=' in svg and 'data-to-port-id=' in svg
+
+
+def test_i3_f_minimal_svg_accepts_normalized_annotation_input_before_scene_build():
+    project = {
+        "project": {"title": "Demo"},
+        "objects": {"task": {"title": "Task"}},
+        "relations": [],
+    }
+    scene = scene_from_schedule(project, ScheduleResult({
+        "task": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)},
+    }, []))
+    settings = builtin_bases()["executive-v0.2"]
+    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
+        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
+        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
+    content = SurfaceContentInput(annotations=({
+        "id": "risk", "purpose": "callout", "text": "Review risk",
+        "anchor": {"kind": "object", "id": "task", "facet": "planned", "endpoint": "finish"},
+    },))
+    svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, settings, content)
+    assert 'data-surface-id="minimal"' in svg
+    assert 'data-purpose="presentation-annotation"' in svg
+    assert 'data-purpose="annotation-leader"' in svg
+    assert 'Review risk' in svg

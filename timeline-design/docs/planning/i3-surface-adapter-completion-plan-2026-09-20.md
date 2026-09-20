@@ -104,12 +104,16 @@ Starting from the published design parent `41a0462`, review now receives normali
 relations, visible annotations, and preformatted summary panels before Scene
 construction; minimal receives target-independent Scene relations. The common Scene
 Builder emits routes, ports, annotation geometry, and review/table summary primitives.
-Review's resolved optional summary slot is copied into its completed surface. All three
-settings-backed public entry paths return the shared serializer output, and the legacy
+Review's resolved optional summary slot is copied into its completed surface. The
+minimal entry accepts an optional normalized `SurfaceContentInput` for visible
+annotations that are not target-independent `Scene` truth; when absent it normalizes
+the Scene's selected relations. All three settings-backed public entry paths return the
+shared serializer output, and the legacy
 post-SVG summary helper rejects resolved-settings use instead of appending private
-geometry. Structural tests cover review/table families, formatted wording, and minimal
-relation routing. The full suite passes with 174 tests and the four presentation design
-validators pass. Publication of this unit precedes V1.
+geometry. Structural tests cover review/table families, formatted wording, minimal
+relation routing, and direct minimal-annotation input. The full suite passes with 175
+tests and the four presentation design validators pass. Publication of this unit
+precedes V1.
 
 If I3-B through I3-F reveals a need for a new primitive family, identity input,
 TextLayout, port, diagnostic, or surface ownership rule, implementation stops. Close

@@ -580,10 +580,11 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 anchor_bounds = LabelRect(x, y, width, height)
                 own_obstacle = LabelRect(x - clearance, y - clearance,
                                          width + 2.0 * clearance, height + 2.0 * clearance)
+                route_obstacles = [obstacle for obstacle in placed_obstacles if obstacle != own_obstacle]
                 box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=text_size,
                                              candidate_sides=settings["layout"]["labelPlacement"]["candidateSides"],
                                              viewport=viewport,
-                                             obstacles=[obstacle for obstacle in placed_obstacles if obstacle != own_obstacle],
+                                             obstacles=route_obstacles,
                                              overflow=settings["layout"]["labelPlacement"]["overflow"])
                 box_bounds = (box.placement.bounds.x, box.placement.bounds.y,
                               box.placement.bounds.width, box.placement.bounds.height)
@@ -599,7 +600,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                     anchor_point, anchor_port, direction = mark_port(node, resolved.endpoint, 1)
                     target = nearest_box_port(box.placement.bounds, anchor_point)
                     route = route_annotation_leader((anchor_point[0] + direction * 5.0, anchor_point[1]), target,
-                                                    obstacles=placed_obstacles, limit=int(routing["limit"]))
+                                                    obstacles=route_obstacles, limit=int(routing["limit"]))
                     points = (anchor_point, *route)
                     add("Path", annotation_id, "presentation-annotation", resolved.facet,
                         "presentation-annotation", "annotation-leader", _path_bounds(points), points=points,
