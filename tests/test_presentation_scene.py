@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation_scene import build_presentation_scene
+from chrona.presentation_scene import presentation_scene_from_schedule
 from chrona.presentation_settings import builtin_bases
 from chrona.review_svg import render_table_timeline_svg
 
@@ -29,6 +30,13 @@ def test_scene_rejects_invalid_axis_order_before_adapter_use():
     settings["layout"]["axis"]["levels"] = ["month", "quarter"]
     with pytest.raises(ValueError, match="E_PRESENTATION_AXIS_INVALID"):
         build_presentation_scene("Roadmap", [item()], (date(2026, 1, 1), date(2026, 2, 1)), settings)
+
+
+def test_resolved_schedule_is_adapted_to_common_scene():
+    settings = builtin_bases()["executive-v0.2"]
+    scene = presentation_scene_from_schedule("Roadmap", {"gate": {"at": date(2026, 1, 3)}}, settings)
+    assert scene.window == (date(2026, 1, 3), date(2026, 1, 4))
+    assert [mark.facet for mark in scene.marks] == ["planned"]
 
 
 def test_adapter_receives_common_scene_when_resolved_settings_are_supplied():
