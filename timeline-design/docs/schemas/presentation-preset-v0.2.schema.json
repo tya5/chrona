@@ -1000,6 +1000,15 @@
           },
           "description": "Stable group IDs map to paint; empty map uses groupBand."
         },
+        "facetPaints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "default": {"type": "object"},
+            "groups": {"type": "object"}
+          },
+          "description": "Partial preset override; the merged resolved settings must satisfy the complete facet-paint contract."
+        },
         "bar": {
           "type": "object",
           "additionalProperties": false,
@@ -1325,6 +1334,7 @@
                   "title",
                   "table",
                   "timeline",
+                  "timeline-axis",
                   "summary",
                   "legend",
                   "annotations",
@@ -1356,6 +1366,15 @@
             }
           },
           "description": "Eliminates insertion-index allocation and fallback Rects; shared rows are one derived grid."
+        },
+        "labelPlacement": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "candidateSides": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"enum": ["above", "below", "end", "start", "inside"]}},
+            "maxCandidates": {"type": "integer", "minimum": 1, "maximum": 16},
+            "overflow": {"enum": ["diagnose", "clip-optional"]}
+          }
         },
         "group": {
           "type": "object",
@@ -1798,9 +1817,24 @@
                 "behind-marks",
                 "above-marks"
               ]
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000
             }
           },
           "description": "Semantic endpoint types are NOT configurable; geometry from actual mark bounds."
+        },
+        "lanes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "grouping": {"enum": ["view-groups"]},
+            "stacking": {"enum": ["stable-lowest-nonoverlap"]},
+            "occupancy": {"enum": ["mark-bounds-plus-required-label-bounds"]},
+            "maxStack": {"type": "integer", "minimum": 1, "maximum": 10000}
+          }
         },
         "legend": {
           "type": "object",
@@ -1955,6 +1989,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "labelRules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "object"},
+          "description": "Partial preset override; the merged resolved settings validate the closed label-rule contract."
+        },
         "groupLabel": {
           "type": "string",
           "maxLength": 4096,
