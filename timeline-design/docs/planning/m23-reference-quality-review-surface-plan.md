@@ -1,5 +1,7 @@
 # M23 Reference-quality review surface plan
 
+**Status:** Complete through final reuse/release review
+
 **Priority update:** Gantt geometry/customization correction was completed separately
 and did not claim M23. M23 is now authorized as the next product-quality milestone and
 completes the previously deferred outside-Gantt review surfaces without reopening
@@ -23,3 +25,8 @@ Actual. Supplier commentary remains read-only presentation evidence with provena
 Every phase is published serially. Any implementation-discovered unowned choice pauses
 I23, updates the owning specification/schema/fixture and design review, validates and
 publishes that addendum, then resumes implementation.
+
+The final reuse/release gate passed in
+`../reviews/m23-review-detail-final-reuse-release-review-2026-09-20.md` with 246 tests,
+full conformance, deterministic Controller Z output, zero raster overflow, and no
+semantic-authority change.
