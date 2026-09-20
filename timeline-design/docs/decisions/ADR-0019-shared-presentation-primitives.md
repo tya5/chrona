@@ -1,49 +1,64 @@
-# ADR-0019: 共通表現基盤で成立する範囲に限定する
+# ADR-0019: Limit the scope to what the shared presentation foundation can support
 
-**状態:** Accepted（2026-09-20）。詳細契約は仕様30で確定、ランタイム未実装。
+**Status:** Accepted (2026-09-20). The detailed contract is fixed by Specification 30; runtime implementation has not started.
 
-## 背景
+## Context
 
-ASTERの画像生成案A〜Dは表現の検討材料であり、個別実装の仕様ではない。
-ユーザーは共通基盤の自由度を優先し、特殊対応が必要な表現の採用を望まない。
-特に吹き出しは、一般化できる場合に限って対応する。
+ASTER image-generation concepts A through D are material for evaluating presentation,
+not specifications for individual implementations. The project prioritizes the freedom
+of the shared foundation and does not adopt expressions that need special-case support.
+In particular, callouts are supported only when they can be generalized.
 
-既存仕様06 §9、08 §6.3には、安定した参照先と論理的な配置希望から注釈を
-配置する契約がある。一方、現行ガントは専用の直接SVG生成であり、この契約を
-十分に消費していない。新しい汎用キャンバスや別の注釈モデルは追加しない。
+Existing Specifications 06 §9 and 08 §6.3 define a contract for placing annotations
+from stable references and logical placement preferences. The current Gantt renderer,
+however, generates SVG directly for its own use and does not sufficiently consume that
+contract. This decision adds neither a new general-purpose canvas nor a separate
+annotation model.
 
-## 決定
+## Decision
 
-1. A/B/C/D、ASTER、Controller Z、プリセット名で描画処理を分岐しない。
-2. 表・時間軸・マーク・測定済みテキスト・参照先・接続線・配置領域を共用する。
-   共通化の対象は配置機構であり、依存関係と注釈の意味を統合しない。
-3. 吹き出しは、既存Annotationを入力とする「参照先に結び付いたテキスト領域」
-   の表現として条件付き採用する。箱や引き出し線は任意の視覚装飾である。
-4. 初期範囲は矩形の本文領域、既存Themeによる装飾、直交引き出し線、
-   有限の配置候補、収まらない場合の明示診断に限定する。
-5. 任意形状の吹き出し、手動折れ点、任意座標、独自スクリプト、画像に合わせた
-   特例、無制限の自動配置は採用しない。必要なら表現要求を縮小する。
-6. 形状・文字・経路を確定したSceneを出力adapterへ渡す。adapterが再配置しない。
+1. Rendering MUST NOT branch on A/B/C/D, ASTER, Controller Z, or preset names.
+2. Tables, axes, marks, measured text, references, connectors, and placement regions
+   are shared. The placement mechanism is generalized; dependency and annotation
+   semantics are not merged.
+3. A callout is conditionally adopted as a text region attached to a reference and
+   sourced from an existing Annotation. Its box and leader are optional decoration.
+4. The initial scope is limited to rectangular text regions, decoration from an
+   existing Theme, orthogonal leaders, a finite candidate set, and explicit diagnostics
+   when placement fails.
+5. Arbitrary-shape callouts, manual bends, arbitrary coordinates, custom scripts,
+   image-matched exceptions, and unbounded automatic placement are not adopted. The
+   presentation requirement is reduced when necessary.
+6. A completed Scene, including shapes, text, and routes, is passed to the output
+   adapter. The adapter MUST NOT lay it out again.
 
-## 採用ゲート
+## Admission gate
 
-機能は次をすべて満たす場合だけ実装対象になる。
+A capability is eligible for implementation only when it satisfies all of the
+following conditions:
 
-- 異なる二つ以上の用途で同じ機構を利用できる。
-- 既存所有者の責務に収まり、事実や設定の第二の正本を作らない。
-- 同じ入力閉包から決定的に再生成でき、意味値を改変しない。
-- 非対応・参照欠落・衝突・容量超過の処理を仕様化できる。
-- サンプルIDの変更、別プロジェクト、文言やviewport変更を特例なく扱える。
-- 追加する設定は型・意味・消費箇所・否定fixtureを持つ。
+- The same mechanism is usable by at least two distinct use cases.
+- It fits an existing owner's responsibility and creates no second source of truth for
+  facts or settings.
+- It can be deterministically regenerated from the same closed input set without
+  altering semantic values.
+- Handling for unsupported input, missing references, collisions, and capacity
+  exhaustion can be specified.
+- It handles changed sample IDs, another project, and changed wording or viewport
+  without exceptions.
+- Every added setting has a type, meaning, consumer, and negative fixture.
 
-「将来何にでも使えそう」だけでは採用理由にしない。
+Potential usefulness for an unspecified future use is not, by itself, an admission
+reason.
 
-## 帰結
+## Consequences
 
-ラベル配置を先に設計し、注釈とマイルストーン説明に同じ計測・配置・接続機構を
-適用する。B専用のマイルストーンパネルは作らない。Cも別の描画器にせず、既存の
-View内グループとレーン内積み上げ方針の実装として評価する。
+Label placement is designed first, then the same measurement, placement, and connector
+mechanism is applied to annotations and milestone explanations. No B-only milestone
+panel is created. C is also evaluated as an implementation of the existing within-View
+grouping and lane-stacking policy rather than as another renderer.
 
-このADRは方向性の決定であり、スキーマ閉包や実装完了の宣言ではない。
-詳細は[仕様30](../specification/30-shared-presentation-foundation.md)、
-実施順序は[実装計画](../planning/shared-presentation-foundation-plan.md)を参照。
+This ADR decides direction; it does not declare schema closure or implementation
+completion. See [Specification 30](../specification/30-shared-presentation-foundation.md)
+for details and the [implementation plan](../planning/shared-presentation-foundation-plan.md)
+for sequencing.

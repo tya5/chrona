@@ -1,39 +1,51 @@
-# I3 公開surface adapter 設計レビュー
+# I3 Public Surface-Adapter Design Review
 
-**対象:** `be455b796ee63957cd1b0af7fd023e6042ac543f` のI3第2設計補正後の再開境界。
-**結論:** 要修正だったprimitive data contractと移行完了条件を仕様08 §5.3、派生fixture、
-I3完成計画へ追加した。これらの成果物が同一revisionで検証・公開されるまで実装は開始しない。
+**Scope:** Restart boundary after the second I3 design correction at
+`be455b796ee63957cd1b0af7fd023e6042ac543f`.
+**Conclusion:** The primitive data contract and migration completion criteria that
+required correction have been added to Specification 08 §5.3, the derived fixture, and
+the I3 completion plan. Implementation MUST NOT start until these artifacts are
+validated and published in the same revision.
 
-## 確認した不整合
+## Inconsistencies found
 
-| ID | 検出内容 | 設計上の原因 | 是正 |
+| ID | Finding | Design cause | Correction |
 |---|---|---|---|
-| I3-R01 | Sceneにsurface slot/rowはあるが、surface別のaxis/tick/mark/Text primitive contractが無い | adapterがgeometryを再構成できる余地が残る | 仕様08 §5.3とderived fixtureにcore primitive set、identity、Text payload/baselineを追加 |
-| I3-R02 | table-timeline、review、minimalのどこまでを同じI3で移行するか曖昧 | core primitive移行だけでI3完了と誤認し得る | I3-A〜F/V1の順序、未移行family、全adapter完了条件を計画化 |
-| I3-R03 | Scene不足時のfailure contractが一般論のみ | adapterがsettings fallbackを正当化できる | surface/primitive欠損の安定診断と禁止救済を固定 |
+| I3-R01 | Scene contained surface slots/rows but no surface-specific axis/tick/mark/Text primitive contract | The adapter could still reconstruct geometry | Add the core primitive set, identity, and Text payload/baseline to Specification 08 §5.3 and the derived fixture |
+| I3-R02 | The scope migrated by the same I3 across table-timeline, review, and minimal was ambiguous | Core primitive migration could be mistaken for I3 completion | Plan I3-A through I3-F/V1 ordering, unmigrated families, and the completion condition for every adapter |
+| I3-R03 | The failure contract for a missing Scene was only general guidance | An adapter could justify a settings fallback | Fix stable surface/primitive diagnostics and prohibited recoveries |
 
-## レイヤー整合
+## Layer consistency
 
-`ResolvedPresentationInput → SceneSurface → SVG adapter` の一方向を固定する。surface instanceは
-Scene Builderが所有し、adapterは選択と直列化のみを行う。core primitive familyと後続familyを分けても、
-両方がScene Builder所有であることを明示したため、table/review/minimalにadapter私有geometryの例外は残らない。
+The direction `ResolvedPresentationInput → SceneSurface → SVG adapter` is fixed.
+The Scene Builder owns a surface instance; the adapter only selects and serializes it.
+Although core primitive families and later families are separated, both are explicitly
+owned by the Scene Builder. Therefore table, review, and minimal retain no exception
+for adapter-private geometry.
 
-## 実装着手条件
+## Preconditions for implementation
 
-- `validate_presentation_scene_input.py`、`validate_presentation_g2_g4_design.py`、shared presentation validatorが成功する。
-- 仕様08 §5.3、I3完成計画、派生fixtureのsurface/diagnostic/primitive表が矛盾しない。
-- この設計単位をGitHub `main`へ直列公開し、そのSHAをI3-Bの親として固定する。
+- `validate_presentation_scene_input.py`, `validate_presentation_g2_g4_design.py`, and
+  the shared-presentation validator succeed.
+- The surface, diagnostic, and primitive tables in Specification 08 §5.3, the I3
+  completion plan, and the derived fixture are mutually consistent.
+- This design unit is published serially to GitHub `main`, and its SHA is fixed as the
+  parent of I3-B.
 
-上記を満たした後の最初の実装はI3-Bだけである。review/minimalのadapter書換え、connector、annotation、
-table cellはI3-Bの範囲外であり、同時実装しない。
+After those conditions, the first implementation is I3-B only. Rewriting the
+review/minimal adapters, connectors, annotations, and table cells is outside I3-B and
+MUST NOT be implemented together with it.
 
-## 再オープン記録：単一点TextLayout
+## Reopening record: single-point TextLayout
 
-`6412b80` の初回I3-B公開後、`singlePointSpanDays: 1`ではsurfaceのaxis/item textが測定幅を
-満たさないことを実行で確認した。既存設計が表示spanを設定所有としていたため、adapter側で日数や
-slot幅を補うことは許されない。仕様29、base fixture、fixed-value inventoryを7日表示spanへ同期し、
-overflow診断を明示した。この設計補正を公開してからI3-B実装を是正する。
+After the first I3-B publication at `6412b80`, execution confirmed that
+`singlePointSpanDays: 1` cannot satisfy measured axis/item-text width on a surface.
+Because the existing design assigns display span to settings, an adapter cannot recover
+by adding days or slot width. Specification 29, the base fixture, and the fixed-value
+inventory are synchronized to a seven-day display span and an explicit overflow
+diagnostic. This design correction is published before I3-B implementation is fixed.
 
-追加で、base fixtureの変更にpresetの`base.contentIdentity`が追随していないことを回帰で検出した。
-digest照合を設計validatorへ追加し、fixture参照を同期する公開を先に完了する。この照合が成功するまで
-TextLayout実装を再開しない。
+The regression additionally found that a base-fixture change did not propagate to the
+preset `base.contentIdentity`. Digest verification was added to the design validator,
+and the fixture-reference synchronization is published first. TextLayout implementation
+does not resume until that verification succeeds.
