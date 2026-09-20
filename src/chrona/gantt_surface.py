@@ -200,6 +200,8 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
     annotation_mark_obstacles, annotation_ports = {}, {}
     scene_marks = {}
     lane_stacks = {lane.object_id: lane.stack for lane in presentation_scene.lanes} if presentation_scene is not None else {}
+    lane_tracks = {track.group_id: track for track in presentation_scene.lane_tracks} if presentation_scene is not None else {}
+    lane_surface = settings["layout"]["lanes"]["surface"] if settings is not None else "row-aligned"
     if presentation_scene is not None:
         for mark in presentation_scene.marks:
             scene_marks.setdefault(mark.source_id, {})[mark.facet] = mark
@@ -208,6 +210,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
         group_top = y
         if mode == 'header':
             parts.append(text(table.x+12, y+23, items[0].group_label, gs, 700, purpose='group-header', ref=gid)); y += 32
+        lane_origin = y
         group_h = rh*len(items)
         fill = color(f'group:{gid}', color('group-band', '#EEF3F8'))
         if mode != 'none':
@@ -223,7 +226,17 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
             for ci, col in enumerate(columns):
                 value = _display_value(_table_value(item, project, col['source']), col['missing'])
                 foreground.append(wrapped(table.x+group_width+ci*cw+12, cy, value, cw-24, ref=item.object_id))
-            py = cy-bg/2-bh
+            stack = lane_stacks.get(item.object_id, 0)
+            track = lane_tracks.get(gid)
+            lane_offset = 0.0
+            if lane_surface == "independent-lane-track" and track is not None:
+                lane_offset = settings["layout"]["lanes"]["trackPadding"] + stack * track.pitch
+                py = lane_origin + lane_offset
+            else:
+                py = cy-bg/2-bh
+            lane_metadata = f'data-stack="{stack}"'
+            if lane_surface == "independent-lane-track":
+                lane_metadata += f' data-lane-offset="{f(lane_offset)}"'
             if item.source_type == 'span':
                 planned_mark = scene_marks.get(item.object_id, {}).get('baseline') or scene_marks.get(item.object_id, {}).get('planned')
                 mark_start, mark_end = (planned_mark.start, planned_mark.end) if planned_mark else (item.planned['start'], item.planned['end'])
@@ -231,7 +244,7 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                 if x1 < left or x2 > right:
                     raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:window')
                 planned_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, planned_mark.facet)['color'], quote=True) if settings else planned
-                foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned_fill, 'planned', item.object_id, f'data-stack="{lane_stacks.get(item.object_id, 0)}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
+                foreground.append(rect(x1, py, max(settings['theme']['bar']['minWidth'] if settings else 1,x2-x1), bh, planned_fill, 'planned', item.object_id, f'{lane_metadata} rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                 planned_obstacle = (x1-4, py-4, x2+4, py+bh+4)
                 obstacles.append(planned_obstacle)
                 anchors[item.object_id] = {'start': (x1, py+bh/2, -1), 'end': (x2, py+bh/2, 1)}
@@ -245,9 +258,9 @@ def render_gantt(title, projection, project, view, theme, profile, slots, settin
                     a1, a2 = sx(actual_mark.start), sx(actual_mark.end)
                     if a1 < left or a2 > right:
                         raise ValueError('E_LAYOUT_REQUIRED_OVERFLOW:actual')
-                    actual_y = py if settings and settings['layout']['bars']['comparisonMode'] == 'overlaid' else cy+bg/2
+                    actual_y = py if settings and settings['layout']['bars']['comparisonMode'] == 'overlaid' else py + bh + bg
                     actual_fill = escape(resolve_facet_paint(settings['theme'], item.group_id, 'actual')['color'], quote=True) if settings else actual
-                    foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual_fill, 'actual', item.object_id, f'data-stack="{lane_stacks.get(item.object_id, 0)}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
+                    foreground.append(rect(a1, actual_y, max(settings['theme']['bar']['minWidth'] if settings else 1,a2-a1), bh, actual_fill, 'actual', item.object_id, f'{lane_metadata} rx="{settings["theme"]["bar"]["radius"] if settings else 2}"'))
                     actual_obstacle = (a1-4, actual_y-4, a2+4, actual_y+bh+4)
                     obstacles.append(actual_obstacle)
                     annotation_mark_obstacles[(item.object_id, 'actual')] = actual_obstacle

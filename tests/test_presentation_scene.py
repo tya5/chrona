@@ -55,6 +55,25 @@ def test_independent_lane_tracks_preserve_view_group_order_and_stack_geometry():
     assert lane_stack_offset(scene.lane_tracks[0], stack=1, padding=8) == 8 + scene.lane_tracks[0].pitch
 
 
+def test_independent_lane_tracks_change_svg_bar_offsets():
+    settings = builtin_bases()["executive-v0.2"]
+    settings["layout"]["lanes"].update(surface="independent-lane-track", trackPadding=8)
+    for asset, style in zip(settings["context"]["fontMetrics"]["assets"], ("Regular", "Bold")):
+        path = Path(subprocess.run(["fc-match", "-f", "%{file}", f"Nimbus Sans:style={style}"], capture_output=True, text=True, check=True).stdout)
+        asset["contentIdentity"] = "sha256:" + sha256(path.read_bytes()).hexdigest()
+    left, right = item(), item()
+    left.object_id = "left"
+    right.object_id, right.planned = "right", {"start": date(2026, 1, 2), "end": date(2026, 1, 11)}
+    projection = SimpleNamespace(items=(left, right), window=(date(2026, 1, 1), date(2026, 2, 1)), unmatched_actual_ids=())
+    project = {"objects": {"left": {"title": "Left"}, "right": {"title": "Right"}}, "relations": []}
+    view = {"body": {"tableColumns": [{"id": "Task", "source": "title", "missing": "em-dash"}]}}
+    svg = render_table_timeline_svg("Roadmap", projection, project, view, {"body": {"roles": {}, "values": {}}},
+                                    {"sourceMetadata", "accessibleText", "semanticRoles", "marker", "tableSemantics", "hierarchicalAxis"}, {}, settings=settings)
+    track = build_presentation_scene("Roadmap", projection.items, projection.window, settings).lane_tracks[0]
+    assert 'data-lane-offset="8"' in svg
+    assert f'data-lane-offset="{8 + track.pitch:g}"' in svg
+
+
 def test_scene_rejects_invalid_axis_order_before_adapter_use():
     settings = deepcopy(builtin_bases()["executive-v0.2"])
     settings["layout"]["axis"]["levels"] = ["month", "quarter"]
