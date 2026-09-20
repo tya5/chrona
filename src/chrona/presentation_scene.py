@@ -74,6 +74,7 @@ class ScenePrimitive:
     shape: str | None = None
     color: str | None = None
     opacity: float | None = None
+    optional: bool = False
     corner_radius: float | None = None
     lane_group_id: str | None = None
     stack_index: int | None = None
@@ -414,6 +415,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             shape: str | None = None, points: tuple[tuple[float, float], ...] = (),
             from_port_id: str | None = None, to_port_id: str | None = None,
             color: str | None = None, opacity: float | None = None,
+            optional: bool = False,
             corner_radius: float | None = None, lane_group_id: str | None = None,
             stack_index: int | None = None) -> None:
         projection = f"{surface.surface_id}:{purpose}:{source_ref}:{facet}"
@@ -422,6 +424,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             source_kind=source_kind, semantic_facet=facet, visual_role=role, bounds=bounds,
             projection_instance_id=projection, surface_id=surface.surface_id, purpose=purpose,
             text=text, baseline=baseline, text_layout=layout, shape=shape, color=color, opacity=opacity,
+            optional=optional,
             corner_radius=corner_radius, lane_group_id=lane_group_id, stack_index=stack_index, points=points,
             from_port_id=from_port_id, to_port_id=to_port_id, z_order=len(primitives),
         ))
@@ -523,12 +526,14 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
         label_x = marker_bounds[0] + marker_width + float(variance["labelGap"])
         rule = label_rule("comparison-delta", "variance", "finish")
+        required = True if rule is None else bool(rule["required"])
         layout = aligned_label(text, label_x, marker_bounds, role="variance",
                                align=str(variance["labelAlign"]),
-                               required=True if rule is None else bool(rule["required"]))
+                               required=required)
         if layout is not None:
             add("Text", source_id, "object", "finish-delta", status, "variance-label", layout.bounds,
                 text=text, baseline=layout.baseline, layout=layout,
+                optional=not required,
                 lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
 
     for mark in marks:
@@ -715,7 +720,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                                      measured.bounds[2], measured.bounds[3]),
                              baseline=(measured.baseline[0] + dx, measured.baseline[1] + dy))
             add("Text", object_id, "object", facet, role, purpose, layout.bounds,
-                text=text, baseline=layout.baseline, layout=layout)
+                text=text, baseline=layout.baseline, layout=layout, optional=not bool(rule["required"]))
             placed_item_labels.append(placement.bounds)
 
     if surface.surface_id == "table-timeline" and content.table_columns:
@@ -892,24 +897,25 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 route_obstacles = [obstacle for obstacle in (*base_obstacles, *placed_annotation_boxes)
                                    if obstacle != own_obstacle]
                 annotation_rule = label_rule("annotation-text", "annotation", "body")
+                annotation_required = True if annotation_rule is None else bool(annotation_rule["required"])
                 box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=text_size,
                                              candidate_sides=settings["layout"]["labelPlacement"]["candidateSides"],
                                              viewport=viewport,
                                              obstacles=route_obstacles,
                                              overflow=settings["layout"]["labelPlacement"]["overflow"],
-                                             required=True if annotation_rule is None else bool(annotation_rule["required"]))
+                                             required=annotation_required)
                 if box is None:
                     continue
                 box_bounds = (box.placement.bounds.x, box.placement.bounds.y,
                               box.placement.bounds.width, box.placement.bounds.height)
                 add("Rect", annotation_id, "presentation-annotation", resolved.facet,
-                    "presentation-annotation", "annotation-box", box_bounds)
+                    "presentation-annotation", "annotation-box", box_bounds, optional=not annotation_required)
                 if value:
                     layout = text_layout(value, box_bounds[0], box_bounds[1], role="body", available=box_bounds[2],
                                          wrap=True, max_height=box_bounds[3])
                     add("Text", annotation_id, "presentation-annotation", resolved.facet,
                         "presentation-annotation", "annotation-text", layout.bounds,
-                        text=value, baseline=layout.baseline, layout=layout)
+                        text=value, baseline=layout.baseline, layout=layout, optional=not annotation_required)
                 if box.leader_required and routing["enabled"]:
                     anchor_point, anchor_port, direction = mark_port(node, resolved.endpoint, 1)
                     target = nearest_box_port(box.placement.bounds, anchor_point)
@@ -918,7 +924,8 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                     points = (anchor_point, *route)
                     add("Path", annotation_id, "presentation-annotation", resolved.facet,
                         "presentation-annotation", "annotation-leader", _path_bounds(points), points=points,
-                        from_port_id=anchor_port, to_port_id=f"{surface.surface_id}:annotation:{annotation_id}:box")
+                        from_port_id=anchor_port, to_port_id=f"{surface.surface_id}:annotation:{annotation_id}:box",
+                        optional=not annotation_required)
                 placed_annotation_boxes.append(LabelRect(*box_bounds))
 
         notes_slot = _optional_surface_slot(surface, "notes", "annotations")

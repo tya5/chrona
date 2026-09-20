@@ -44,7 +44,7 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
                         if candidate.surface_id == "minimal"), None)
         if surface is None:
             raise ValueError("E_PRESENTATION_SURFACE_MISSING")
-        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     dates = [_placement_dates(value) for value in placements.values()]
     start = presentation_scene.window[0] if presentation_scene is not None else min(value[0] for value in dates)
     end = presentation_scene.window[1] if presentation_scene is not None else max(value[1] for value in dates)

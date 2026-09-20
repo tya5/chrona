@@ -113,7 +113,7 @@ def test_surface_serializer_rejects_missing_scale_identity_instead_of_reconstruc
     surface = scene.surfaces[0]
     invalid = replace(surface, scale_manifest=replace(surface.scale_manifest, scale_id=""))
     with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_MISSING"):
-        render_scene_surface_svg(invalid, viewport=settings["context"]["viewport"], theme=settings["theme"])
+        render_scene_surface_svg(invalid, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
 
 
 def test_japanese_item_text_is_measured_once_and_long_unbreakable_text_diagnoses():
@@ -197,7 +197,7 @@ def test_variance_statuses_and_missing_actual_are_explicit_scene_families():
     assert {node.purpose for node in surface.primitives if node.source_ref == "unknown"} >= {
         "variance-marker", "variance-label", "missing-actual-pattern", "missing-actual-label",
     }
-    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     root = ET.fromstring(svg)
     pattern = next(value for value in root.iter() if value.get("id") == "missing-actual-pattern")
     hatch = next(value for value in pattern if value.tag.endswith("path"))
@@ -317,7 +317,7 @@ def test_table_surface_owns_content_routes_annotations_and_legend_geometry():
     assert len(connector.points) >= 2 and connector.from_port_id and connector.to_port_id
     assert connector.bounds[2] >= 0 and connector.bounds[3] >= 0
     assert [node.z_order for node in surface.primitives] == list(range(len(surface.primitives)))
-    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     elements = list(ET.fromstring(svg).iter())
     box = next(value for value in elements if value.tag.endswith("rect")
                and value.get("data-purpose") == "presentation-annotation"
@@ -434,7 +434,7 @@ def test_point_shape_and_facet_opacity_are_scene_owned_and_serialized(shape, tag
     surface = next(value for value in scene.surfaces if value.surface_id == "minimal")
     symbol = next(node for node in surface.primitives if node.purpose == "comparison-mark")
     assert (symbol.shape, symbol.color, symbol.opacity) == (shape, "#123456", 0.37)
-    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "planned")
     assert element.tag.endswith(tag)
     assert element.get("fill") == "#123456" and element.get("opacity") == "0.37"
@@ -462,7 +462,7 @@ def test_arrow_shape_none_and_independent_actual_height_are_consumed():
     assert left_marks["actual"].bounds[3] == 5
     connector = next(node for node in surface.primitives if node.purpose == "dependency-connector")
     assert connector.shape == "none"
-    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     assert 'marker-end=' not in svg and '<defs/>' in svg
 
     settings["theme"]["arrow"]["shape"] = "chevron"
@@ -471,7 +471,7 @@ def test_arrow_shape_none_and_independent_actual_height_are_consumed():
     chevron_surface = next(value for value in chevron_scene.surfaces if value.surface_id == "table-timeline")
     connector = next(node for node in chevron_surface.primitives if node.purpose == "dependency-connector")
     assert connector.shape == "chevron"
-    svg = render_scene_surface_svg(chevron_surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(chevron_surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     assert 'marker-end="url(#dependency-arrow)"' in svg
     assert '<path d="M0 0L6 3.0L0 6" fill="none"' in svg
 
@@ -490,7 +490,7 @@ def test_bar_radius_minimum_width_and_stack_metadata_are_scene_owned():
     assert mark.corner_radius == 8.5
     assert (mark.lane_group_id, mark.stack_index) == ("delivery", 0)
 
-    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "planned")
     assert element.get("rx") == element.get("ry") == "8.5"
     assert element.get("data-lane-group-id") == "delivery"
@@ -519,7 +519,7 @@ def test_stroke_tokens_are_selected_by_primitive_purpose():
                                      (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
     surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
     root = ET.fromstring(render_scene_surface_svg(
-        surface, viewport=settings["context"]["viewport"], theme=settings["theme"]))
+        surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"]))
     by_purpose = {}
     for node in root.iter():
         by_purpose.setdefault(node.get("data-purpose"), node)
@@ -546,7 +546,7 @@ def test_minor_ticks_use_next_finer_level_and_axis_minor_stroke():
     surface = next(value for value in scene.surfaces if value.surface_id == "minimal")
     minor = [node for node in surface.primitives if node.purpose == "minor-tick"]
     assert minor and all(node.visual_role == "week" for node in minor)
-    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "axis-minor")
     assert (element.get("stroke"), element.get("stroke-width"), element.get("stroke-opacity"),
             element.get("stroke-dasharray")) == ("#102938", "2.5", "0.4", "2 3")
@@ -609,8 +609,47 @@ def test_date_label_rule_and_notes_typography_are_conditional_observers():
     note = next(node for node in table.primitives if node.purpose == "project-note")
     assert note.text_layout is not None and note.text_layout.bounds[3] == pytest.approx(
         21 * settings["theme"]["typography"]["notes"]["lineHeight"])
-    svg = render_scene_surface_svg(table, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    svg = render_scene_surface_svg(table, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     element = next(value for value in ET.fromstring(svg).iter()
                    if value.get("data-purpose") == "presentation-annotation"
                    and value.get("data-source-ref") == "n1")
     assert element.get("font-size") == "21"
+
+
+def test_output_precision_font_capability_and_optional_overflow_are_explicit():
+    settings = scene_settings()
+    scene = build_presentation_scene("Roadmap", [item()],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    planned = next(node for node in surface.primitives
+                   if node.purpose == "comparison-mark" and node.semantic_facet == "planned")
+
+    integer_output = deepcopy(settings["output"])
+    integer_output["coordinateDecimals"] = 0
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"],
+                                   theme=settings["theme"], output=integer_output)
+    element = next(value for value in ET.fromstring(svg).iter()
+                   if value.get("data-purpose") == "planned")
+    assert "." not in element.get("x")
+
+    unsupported = deepcopy(settings["output"])
+    unsupported["fontPolicy"] = "embed"
+    with pytest.raises(ValueError, match="E_PRESENTATION_OUTPUT_CAPABILITY"):
+        render_scene_surface_svg(surface, viewport=settings["context"]["viewport"],
+                                 theme=settings["theme"], output=unsupported)
+
+    outside = replace(planned, bounds=(settings["context"]["viewport"]["width"] + 1, 0, 10, 10),
+                      optional=True)
+    optional_surface = replace(surface, primitives=(outside,))
+    clipped = deepcopy(settings["output"])
+    clipped["overflow"] = "clip-optional"
+    svg = render_scene_surface_svg(optional_surface, viewport=settings["context"]["viewport"],
+                                   theme=settings["theme"], output=clipped)
+    assert 'data-source-ref="a"' not in svg
+
+    with pytest.raises(ValueError, match="E_PRESENTATION_OUTPUT_OVERFLOW"):
+        render_scene_surface_svg(optional_surface, viewport=settings["context"]["viewport"],
+                                 theme=settings["theme"], output=settings["output"])
+    with pytest.raises(ValueError, match="E_PRESENTATION_OUTPUT_OVERFLOW"):
+        render_scene_surface_svg(replace(optional_surface, primitives=(replace(outside, optional=False),)),
+                                 viewport=settings["context"]["viewport"], theme=settings["theme"], output=clipped)

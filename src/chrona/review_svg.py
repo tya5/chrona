@@ -122,7 +122,7 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
                         if candidate.surface_id == "review"), None)
         if surface is None:
             raise ValueError("E_PRESENTATION_SURFACE_MISSING")
-        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     start, end = presentation_scene.window if presentation_scene is not None else projection.window
     scene_marks = {}
     if presentation_scene is not None:
@@ -282,7 +282,7 @@ def render_table_timeline_svg(title: str, projection: ReviewProjection, project:
                         if candidate.surface_id == "table-timeline"), None)
         if surface is None:
             raise ValueError("E_PRESENTATION_SURFACE_MISSING")
-        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     return render_gantt(title, projection, project, view, theme, profile, slots, settings, presentation_scene=presentation_scene)
 
 

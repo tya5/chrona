@@ -6,9 +6,11 @@ from html import escape
 from .presentation_scene import ScenePrimitive, SceneSurface
 
 
-def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: dict) -> str:
+def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: dict, output: dict) -> str:
     """Serialize Scene payloads in their existing order without geometry generation."""
     width, height = viewport["width"], viewport["height"]
+    if output["fontPolicy"] != "reference":
+        raise ValueError("E_PRESENTATION_OUTPUT_CAPABILITY")
     paints, strokes = theme["paints"], theme["strokes"]
     palette = {
         "heading": paints["text"]["color"], "body": paints["text"]["color"],
@@ -31,7 +33,10 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
     }
 
     def number(value: float) -> str:
-        return f"{value:.2f}".rstrip("0").rstrip(".")
+        decimals = int(output["coordinateDecimals"])
+        if decimals == 0:
+            return f"{value:.0f}"
+        return f"{value:.{decimals}f}".rstrip("0").rstrip(".")
 
     def color(role: str) -> str:
         if role.startswith("group:"):
@@ -78,6 +83,12 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
     ]
 
     for node in surface.primitives:
+        x, y, node_width, node_height = node.bounds
+        outside = x < 0 or y < 0 or x + node_width > float(width) or y + node_height > float(height)
+        if outside:
+            if output["overflow"] == "clip-optional" and node.optional:
+                continue
+            raise ValueError("E_PRESENTATION_OUTPUT_OVERFLOW")
         purpose = purpose_map.get(node.purpose, node.purpose)
         if node.purpose == "axis-label":
             purpose = "axis-quarter" if node.visual_role == "quarter" else "axis-band"

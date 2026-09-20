@@ -105,3 +105,8 @@ The I24-4 pre-review reopened D24 for the final unresolved Output behavior.
 Specification 08 now defines `ScenePrimitive.optional`, exact coordinate rounding,
 reference-only SVG font capability, and whole-primitive optional overflow omission.
 I24-4 resumes only after this addendum is published and tree-verified.
+
+I24-4 is complete locally. SVG consumes all Output fields, optionality is explicit
+Scene data, and the matrix-driven test rejects every unresolved disposition across all
+24 rows. There is no exact-path `KNOWN_INERT` allow-list. Targeted behavioral tests
+remain the observers named by the matrix.
