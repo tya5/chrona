@@ -1,4 +1,4 @@
-# Chrona implementation checkpoint — 2026-09-17
+# Chrona implementation checkpoint — 2026-09-20
 
 ## Scope
 
@@ -30,6 +30,11 @@ candidate rather than treating the working tree as an unchanged snapshot.
   semantically, then schedules without an error diagnostic.
 - Zero-lag cycles, positive contradictory cycles, fixed-target authority, and
   explicit-anchor conflicts execute with their normative diagnostic IDs.
+- The issue-remediation program for GitHub issues 1–10 is complete: Core scheduling,
+  reproducible CLI inputs, legacy rendering isolation, content-addressed font metrics,
+  and declared presentation-setting consumption are covered by regression evidence.
+- The complete test suite passes 207 tests, and the complete Chrona conformance runner
+  passes every stage.
 
 ## Stable promotion
 
@@ -45,3 +50,6 @@ becomes a persisted source of project semantics.
 DateTime/DST, rendering, capacity, collaboration, and extension implementations exist
 as versioned successor or adapter modules. They do not change Date-only Core v0.1
 meaning unless an explicit successor profile is selected.
+
+M22 remediation is complete. M23 review-detail surfaces remain designed but explicitly
+deferred and are not part of this checkpoint.

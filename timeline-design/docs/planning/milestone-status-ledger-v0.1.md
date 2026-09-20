@@ -32,7 +32,7 @@ evidence is present, not that a later product release is complete.
 | M19 | Complete | Layout Profile runtime validation, deterministic Layout Manifest, old-profile rejection, M19 final review, conformance, and 89 tests. | None. |
 | M20 | Complete | Constraint solver and slot-based review rendering, M20 final review, conformance, and 90 tests. | None. |
 | M21 | Complete | Generic calendar/table/relation/annotation primitives, M21 final review, conformance, and 91 tests. | None. |
-| M22 | Remediation authorized | Common human/AI declarative preset validation, M22 release review, conformance, and issue-remediation program. | Close exact font assets and declared axis/shape/opacity setting consumption. |
+| M22 | Complete | Common human/AI declarative preset validation, M22 release review, exact content-addressed font metrics, declared axis/shape/opacity consumption, I3 visual artifacts, and R0 issue-remediation acceptance. | None. |
 | M23 | Design complete; implementation not started | Review Detail Profile closes reference-quality legend, group detail, observation, and milestone surfaces without changing semantic authority. | M23 implementation, visual acceptance, and release review. |
 
 Implementation may start only at a `Design complete; implementation not started`
