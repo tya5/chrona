@@ -1,95 +1,144 @@
-# 共通表現基盤 G2–G4 設計ゲート
+# Shared Presentation Foundation G2–G4 Design Gate
 
-**状態:** D1–D3設計完了。G1–G4の従前の完了判定は撤回済み。実装はD3の受入表と設計validatorを満たすScene Builderから開始する。
+**Status:** D1–D3 design is complete. Earlier G1–G4 completion judgments are
+withdrawn. Implementation starts with a Scene Builder that satisfies the D3 acceptance
+table and design validators.
 
-## 1. 一意なauthoring所有者
+## 1. Single authoring owner
 
-Scene Builderは以下の所有者から一つの`ResolvedPresentationInput`を導出し、
-`projectionInstanceId = slotId + sourceRef + semanticFacet + primitivePurpose`を確定する。
-visual roleはThemeが選ぶ装飾であり、semantic facetを改名・代替しない。Rendererは完成済み
-Sceneのみを直列化し、slot選択、font計測、anchor、lane、routeを再計算しない。
+The Scene Builder derives one `ResolvedPresentationInput` from the owners below and
+sets `projectionInstanceId = slotId + sourceRef + semanticFacet + primitivePurpose`.
+A visual role is decoration selected by Theme; it neither renames nor substitutes a
+semantic facet. A renderer serializes only a completed Scene and MUST NOT recompute
+slot selection, font measurement, anchors, lanes, or routes.
 
-| 値 | owner | renderer入力 | 禁止事項 |
+| Value | Owner | Renderer input | Prohibited behavior |
 |---|---|---|---|
-| label本文source・テンプレート | Detail | resolved Detail | 任意式・renderer文言 |
-| label候補・max候補・overflow | Layout | resolved Layout | object ID分岐・無限探索 |
-| annotation本文・typed anchor | View | resolved View | pixel座標・手動waypoint |
-| box/leaderのpaint | Theme | resolved Theme | 注釈専用Theme系統 |
-| facet paint | Theme | resolved Theme | group背景とのmap混在 |
-| lane group/stack/max | Layout | resolved Layout | rendererでのgroup移動 |
-| route grid/clearance/limit | Layout | resolved Layout | sourceKindの意味混同 |
+| Label text source and template | Detail | Resolved Detail | Arbitrary expressions or renderer wording |
+| Label candidates, maximum candidates, and overflow | Layout | Resolved Layout | Object-ID branches or unbounded search |
+| Annotation text and typed anchor | View | Resolved View | Pixel coordinates or manual waypoints |
+| Box/leader paint | Theme | Resolved Theme | Annotation-specific Theme family |
+| Facet paint | Theme | Resolved Theme | Mixing a map with group background |
+| Lane group/stack/maximum | Layout | Resolved Layout | Moving groups in the renderer |
+| Route grid/clearance/limit | Layout | Resolved Layout | Confusing `sourceKind` semantics |
 
-## 2. G2：ラベル・facet paint・axis slot
+## 2. G2: labels, facet paint, and axis slots
 
-`detail.labelRules[]` は `{id, source, facet, endpoint, required}`、
-`layout.labelPlacement` は `{candidateSides, maxCandidates, overflow}` を持つ。
-sourceは`title`、閉じたdate formatter、`comparison-delta`、`annotation-text`のみ。
-candidateSidesは最大16個で、source安定ID→rule順→候補順で評価する。`inside`は測定済み
-text boundsがmark boundsに収まる場合だけ合法。必須labelが置けなければ
-`E_PRESENTATION_LABEL_UNPLACEABLE`、optionalは`overflow`の明示policyに従う。
+`detail.labelRules[]` has `{id, source, facet, endpoint, required}` and
+`layout.labelPlacement` has `{candidateSides, maxCandidates, overflow}`. The only
+sources are `title`, a closed date formatter, `comparison-delta`, and
+`annotation-text`. At most sixteen candidate sides are evaluated in stable-source-ID,
+rule, then candidate order. `inside` is legal only when measured text bounds fit inside
+mark bounds. An unplaceable required label is
+`E_PRESENTATION_LABEL_UNPLACEABLE`; an optional one follows the explicit `overflow`
+policy.
 
-`theme.facetPaints` は`{default: {planned, actual, baseline, variance}, groups: {groupId: {...}}}`。
-解決順はgroups[groupId][facet]、default[facet]、既存global roleであり、最後のglobal roleは
-resolved Themeの正規化段階で必ず具体paintになる。rendererはこの順を再実装しない。
+`theme.facetPaints` is
+`{default: {planned, actual, baseline, variance}, groups: {groupId: {...}}}`.
+Resolution is `groups[groupId][facet]`, then `default[facet]`, then the existing global
+role. The final global role becomes a concrete paint during resolved-Theme
+normalization; the renderer does not reimplement this order.
 
-axis slotは`layout.slots`のsource `timeline-axis` を使い、timeline slotと同一`scaleId`を
-要求する。異なるwindow又はscaleの共有は`E_PRESENTATION_SCALE_MISMATCH`で拒否する。
+An axis slot uses the `timeline-axis` source in `layout.slots` and requires the same
+`scaleId` as its timeline slot. Sharing a different window or scale is rejected with
+`E_PRESENTATION_SCALE_MISMATCH`.
 
-## 3. G3：注釈とleader
+## 3. G3: annotations and leaders
 
-初期対象はViewのobject anchorだけである。既存Viewのtyped reference形式に合わせ、anchorは
-`{kind: "object", id, facet, endpoint}`、facetは
-planned/actual、endpointはstart/finish/at/body。actualが無い場合のplanned代替は禁止する。
-relation/group/temporal anchorは入力を保持するが初期実装では
-`E_PRESENTATION_ANCHOR_UNSUPPORTED`、対象facet/endpoint/投影instanceが無い場合は
-`E_PRESENTATION_ANCHOR_MISSING`である。
+The initial target is only a View object anchor. Consistent with existing typed View
+references, an anchor is `{kind: "object", id, facet, endpoint}`; facets are
+`planned`/`actual`, and endpoints are `start`/`finish`/`at`/`body`. Missing Actual MUST
+NOT fall back to planned. Relation, group, and temporal anchors remain valid input but
+produce `E_PRESENTATION_ANCHOR_UNSUPPORTED` in the initial implementation. A missing
+target facet, endpoint, or projection instance produces
+`E_PRESENTATION_ANCHOR_MISSING`.
 
-annotation purposeはcallout/note/highlight/explanatory-arrow。callout/noteはrect boxと任意の
-直交leader、highlightはboxのみ、explanatory-arrowは二つのobject anchorを持つpathだけを
-許す。leaderはmax one source/target、手動座標・曲線・tail・waypointを許さない。
-候補生成はlabelと同じ有限順、routeはLayout routingのlimitで停止する。
+Annotation purposes are `callout`, `note`, `highlight`, and `explanatory-arrow`.
+Callouts and notes allow a rectangular box and optional orthogonal leader; a highlight
+allows only a box; an explanatory arrow allows only a path with two object anchors. A
+leader has at most one source and target and allows no manual coordinates, curves,
+tails, or waypoints. Candidates use the same finite ordering as labels, and routing
+stops at the Layout routing limit.
 
-`theme.annotation` は `{boxFill, boxStroke, leader}` の三つのconcrete paintを持つ。boxの寸法・
-候補side・leaderの探索上限はThemeに置かず、既存Layoutが所有する。purposeによる別Theme系統は作らない。
+`theme.annotation` provides three concrete paints: `{boxFill, boxStroke, leader}`.
+Box dimensions, candidate sides, and leader-search limits belong to Layout, not Theme.
+No purpose-specific Theme family is created.
 
-Sceneはannotationごとに`{annotationId, objectId, facet, endpoint, boxBounds, leader}`を出す。
-boxBoundsは共有label配置器の最初の合法候補であり、leaderのbox側portはanchorに最も近い矩形辺の中点
-（同距離は`above, below, end, start`順）とする。box候補の衝突判定では**当該annotation自身のanchor markだけ**を障害物集合から除き、他のmark、required label、先に確定したannotation boxは残す。leaderはanchor portからbox portへの直交pathで、全mark、
-required label、確定済みannotation boxを障害物に含める。source portから外向きに出る最初のsegmentだけはsource mark境界への接触を許す。annotation boxはG4 lane occupancyに含めない。これによりbox配置とlane stackの循環を避け、box同士の衝突はannotationの安定順でのみ解く。`routing.limit`はvisibility-gridで展開するstate数の
-上限であり、超過は`E_PRESENTATION_ROUTE_LIMIT`。`highlight`はleaderを出さず、`explanatory-arrow`は二つの
-明示object anchorが揃う場合だけ出す。facetを省略した既存View annotationは保存互換のためschemaで受理するが、
-G3 Scene投影は`E_PRESENTATION_ANCHOR_MISSING`としplannedを推測しない。
+For each annotation, Scene emits
+`{annotationId, objectId, facet, endpoint, boxBounds, leader}`. `boxBounds` is the
+first legal candidate of the shared label placer. The box-side port is the midpoint of
+the rectangle edge closest to the anchor (`above`, `below`, `end`, `start` breaks a
+tie). Box-candidate collision checks exclude **only the annotation's own anchor mark**
+from the obstacle set; other marks, required labels, and earlier annotation boxes
+remain. A leader is an orthogonal path from the anchor port to the box port and treats
+all marks, required labels, and resolved annotation boxes as obstacles. Only the first
+outgoing source-port segment may touch the source-mark boundary. Annotation boxes are
+not part of G4 lane occupancy, preventing a placement/stacking cycle; box-to-box
+collisions are resolved solely in stable annotation order. `routing.limit` bounds the
+number of states expanded on the visibility grid; excess is
+`E_PRESENTATION_ROUTE_LIMIT`. A `highlight` emits no leader, and an
+`explanatory-arrow` emits only when both explicit object anchors are present. A legacy
+View annotation without a facet remains schema-valid for storage compatibility, but
+G3 Scene projection returns `E_PRESENTATION_ANCHOR_MISSING` and does not infer
+`planned`.
 
-## 4. G4：stable lane stacking
+## 4. G4: stable lane stacking
 
-lane順はView group/order、同一laneの投入順は`(mark.start or mark.at, stable object ID)`。
-各itemのoccupancyはmark boundsとrequired label boundsの和集合であり、最小の重ならない
-stack indexを採用する。`maxStack`超過又はrequired label未配置は
-`E_PRESENTATION_STACK_OVERFLOW`。別groupへの移動、暗黙の縮小、隠蔽は行わない。
+Lane order is View group/order; insertion order within a lane is
+`(mark.start or mark.at, stable object ID)`. An item's occupancy is the union of its
+mark and required-label bounds, and it takes the lowest non-overlapping stack index.
+Exceeding `maxStack` or failing to place a required label yields
+`E_PRESENTATION_STACK_OVERFLOW`. No item is moved to another group, implicitly shrunk,
+or hidden.
 
-Sceneは各投影markに`laneGroupId`と`stackIndex`を付加する。Viewのgroup/orderがlaneGroupId順を定め、
-同一groupでは`(start or at, stable object ID)`順で割り当てる。`row-aligned` surfaceは1項目1行を保ちstackIndexをScene metadataとして保持する。複数stackを可視化する`independent-lane-track` surfaceだけが
-消費し、Sceneが解決済み比較mark block extentとrouting clearanceからpitchを導き、
-`2*trackPadding + markExtent + maxStackIndex*pitch`のgroup trackを出す。adapterはそのstackIndex/pitch/track boundsを
-縦offsetへ変換するだけで、再選択・再順序化・別groupへの移動・row対応の暗黙維持をしてはならない。
+Scene adds `laneGroupId` and `stackIndex` to every projected mark. View group/order
+sets `laneGroupId` order, and each group assigns in `(start or at, stable object ID)`
+order. The `row-aligned` surface retains one item per row and keeps `stackIndex` as
+Scene metadata. Only `independent-lane-track`, which visualizes multiple stacks,
+consumes it: Scene derives pitch from resolved comparison-mark block extent and routing
+clearance, then emits a group track of
+`2*trackPadding + markExtent + maxStackIndex*pitch`. The adapter merely converts
+stack index, pitch, and track bounds to vertical offsets; it MUST NOT reselect,
+reorder, move items between groups, or implicitly preserve row correspondence.
 
-## 5. 設計完了チェック
+## 5. Design-completion checks
 
-G2–G4実装の前に以下を完了する。
+Before G2–G4 implementation, complete all of the following.
 
-1. 上記fieldを既存View/Theme/Detail/Layout v0.2 schemaへ配置し、wire schemaは対応表だけに保つ。
-2. 各fieldのvalid/invalid fixture（候補>16、actual anchor欠損、group facet override、stack overflow、independent lane track、route limit）を追加する。
-3. `E_PRESENTATION_*`診断の入力・owner・禁止救済をreviewで照合する。
-4. sample固有ID/名称を持たない二プロジェクト受入例と、長い日本語/実績欠損の再現性を確認する。
+1. Place the fields above in existing View/Theme/Detail/Layout v0.2 schemas; keep wire
+   schemas as mappings only.
+2. Add valid/invalid fixtures for every field: more than sixteen candidates, missing
+   Actual anchor, group facet override, stack overflow, independent lane track, and
+   route limit.
+3. Verify inputs, owners, and prohibited recoveries for `E_PRESENTATION_*`
+   diagnostics in review.
+4. Confirm reproducibility using two projects without sample-specific IDs/names and
+   with long Japanese text and missing Actual data.
 
-これらが終わるまで、G2のlabel/facet paint、G3のannotation、G4のlaneのPython実装は行わない。
+Until this work is complete, do not implement G2 label/facet paint, G3 annotations, or
+G4 lanes in Python.
 
 ## 6. D2 algorithm acceptance contract
 
-仕様30 §7.5が唯一の投影順序、purpose table、port/obstacle例外、lane式、route失敗分類を所有する。本書のG2–G4 fieldはその入力だけを定める。実装は、同一`TextLayout`の描画と衝突判定、pointの非span化、purpose別primitive、projectionInstanceIdによる同座標別markの識別、`E_PRESENTATION_ROUTE_LIMIT`と`E_CONNECTOR_UNROUTABLE`の区別を受入testで示すまで完了と報告してはならない。
+Specification 30 §7.5 is the sole owner of projection order, the purpose table,
+port/obstacle exceptions, the lane formula, and route-failure classification. The
+G2–G4 fields here define only their inputs. Implementation MUST NOT report completion
+until acceptance tests demonstrate drawing and collision checks with the same
+`TextLayout`, non-span handling for points, purpose-specific primitives,
+`projectionInstanceId` distinction of separate marks at the same coordinates, and the
+distinction between `E_PRESENTATION_ROUTE_LIMIT` and `E_CONNECTOR_UNROUTABLE`.
 
 ## 7. D3 schema and evidence closure
 
-wire schemaのroutingは`gridOffset`、`clearance`、`portOffset`、`bendPenalty`、`limit`を必須化する。`row-aligned`はstackIndexをScene metadataとして保持し、stack 0 に制限しない。`shared-presentation-foundation`の正負fixtureとvalidatorはこれらを検証し、仕様30 §7.5の入力漏れを許さない。受入トレーサビリティは`g1-g4-integration-remediation-2026-09-20.md`の必須受入ケースを仕様節・schema path・実装symbol・testへ対応づけ、実装フェーズで更新する。
+The wire-schema routing requires `gridOffset`, `clearance`, `portOffset`,
+`bendPenalty`, and `limit`. `row-aligned` retains `stackIndex` as Scene metadata and
+is not limited to stack zero. Positive/negative fixtures and the validator for
+`shared-presentation-foundation` verify these requirements and permit no missing
+Specification 30 §7.5 input. During implementation, acceptance traceability maps the
+required cases in `g1-g4-integration-remediation-2026-09-20.md` to specification
+sections, schema paths, implementation symbols, and tests.
 
-`presentation-scene-input-v0.1.yaml` はauthoring schemaではなく、ResolvedPresentationInputへ渡すslot、row、lane track boundsの派生入力fixtureである。対応validatorはadapterが完成Sceneだけを受けるための入力閉包を検証する。
+`presentation-scene-input-v0.1.yaml` is not an authoring schema. It is a derived input
+fixture for the slots, rows, and lane-track bounds passed to ResolvedPresentationInput.
+Its validator verifies the closed input set that lets an adapter receive only a
+completed Scene.
