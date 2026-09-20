@@ -45,3 +45,9 @@ The I24-3 pre-review also stopped before code on two unspecified choices. The fi
 addendum now defines next-finer minor ticks and a total mapping from every schema label
 source to Scene behavior, including duplicate precedence and optional omission. These
 rules consume existing schema only and do not widen semantic authority.
+
+The I24-4 pre-review found the remaining Output policy needed one final ownership
+decision. Scene now carries explicit optionality from Detail, while SVG consumes exact
+coordinate precision and diagnoses unsupported font operations. The adapter may omit
+only an explicitly optional out-of-bounds primitive. This closes Output without a
+purpose-name allow-list.

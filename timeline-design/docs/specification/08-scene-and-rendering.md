@@ -238,6 +238,7 @@ Every primitive in a surface has the following required fields:
 | `sourceRef` / `sourceKind` | Stable semantic or View-local source and its category |
 | `semanticFacet` / `visualRole` | Meaning and decoration independently; a missing facet is explicit rather than inferred |
 | `bounds` | Concrete logical bounds; `Text` additionally carries the measured baseline and text payload |
+| `optional` | Whether Output may omit this primitive under the declared optional-overflow policy |
 | `zOrder` | Stable paint order within this surface |
 
 Primitive payloads are a closed discriminated contract. `Rect` carries `bounds` and an
@@ -252,6 +253,10 @@ tick may omit both port identifiers. `Path.bounds` is the exact union of its poi
 including zero width or height. Paint remains a resolved `visualRole`; adapters map
 that role to target tokens but never calculate payload geometry. A kind/payload
 mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an adapter must not repair it.
+
+`optional` defaults to false. It is true only for a label or annotation family whose
+applicable Detail rule has `required=false`; generated children of that optional
+annotation box inherit the flag. It is not inferred by an adapter from purpose names.
 
 Projected comparison marks additionally retain `laneGroupId` and `stackIndex` as Scene
 metadata. They do not alter row-aligned geometry, but every SVG adapter emits stable
@@ -486,6 +491,19 @@ closure, and all loss diagnostics. SVG is the baseline; PDF, raster, canvas, and
 presentation outputs are derived adapters with no authority to alter Scene or Project.
 A missing required capability rejects the request; an explicitly permitted loss remains
 visible as a stable diagnostic and manifest entry.
+
+The v0.2 SVG adapter consumes all three Output fields. It rounds serialized numeric
+coordinates only, using exactly `coordinateDecimals`; Scene geometry and routing remain
+unrounded. SVG currently supports `fontPolicy=reference`. `embed` and `outline` fail
+with `E_PRESENTATION_OUTPUT_CAPABILITY` until an output-capability profile supplies the
+required font operation; they never fall back to reference silently.
+
+Before serialization, each primitive bound is checked against the logical viewport.
+With `overflow=diagnose`, any out-of-bounds primitive fails with
+`E_PRESENTATION_OUTPUT_OVERFLOW`. With `clip-optional`, an out-of-bounds primitive may
+be omitted only when Scene carries `optional=true`; a required primitive still fails.
+Omission is whole-primitive, not coordinate clipping. In-bounds primitives are
+identical under both overflow policies.
 
 ## 10. Out of scope
 

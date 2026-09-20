@@ -99,4 +99,9 @@ behavior. I24-3 resumes only after this addendum is published and tree-verified.
 I24-3 is complete locally with targeted observers for minor strokes, date/title label
 rules, required versus optional omission, variance/routing visibility, and optional
 typography families. The five ASTER artifacts were regenerated with zero SVG overflow;
-214 tests and full conformance are the publication gate.
+214 tests and full conformance passed, and I24-3 is published at `fac5fb8`.
+
+The I24-4 pre-review reopened D24 for the final unresolved Output behavior.
+Specification 08 now defines `ScenePrimitive.optional`, exact coordinate rounding,
+reference-only SVG font capability, and whole-primitive optional overflow omission.
+I24-4 resumes only after this addendum is published and tree-verified.

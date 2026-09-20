@@ -268,5 +268,9 @@ omission behavior are closed in specification 08. Axis `minorVisible` likewise c
 the next-finer unlabeled tick family there; it is not a synonym for recoloring major
 ticks.
 
+Output behavior is also closed there: coordinate precision is serialization-only;
+SVG v0.2 supports reference fonts and diagnoses unsupported embed/outline requests;
+overflow may omit only Scene primitives explicitly marked optional by Detail.
+
 These settings may be unobservable only when the matrix predicate is false. Removing
 or ignoring them is not an allowed implementation shortcut.

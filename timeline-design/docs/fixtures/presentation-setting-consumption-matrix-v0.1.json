@@ -25,6 +25,6 @@
     {"id":"SC-21","settingPattern":"layout.routing.enabled","owner":"Layout","classification":"conditional","trigger":"visible-dependency-and-annotation","observer":"connector/leader primitive presence","disposition":"implemented","issue":12},
     {"id":"SC-22","settingPattern":"layout.* optional-family geometry","owner":"Layout","classification":"conditional","trigger":"declared slot/family fixture","observer":"owned Scene bounds or primitive presence","disposition":"remediation-required","issue":12},
     {"id":"SC-23","settingPattern":"context.fontMetrics.assets[].contentIdentity|path|family|weight","owner":"Context","classification":"validation-only","trigger":"font-asset-resolution","observer":"admission diagnostic and manifest identity","disposition":"validation-only","issue":null},
-    {"id":"SC-24","settingPattern":"output.coordinateDecimals|fontPolicy|overflow","owner":"Output","classification":"conditional","trigger":"matching-output-policy-case","observer":"serializer precision/font/overflow result","disposition":"remediation-required","issue":12}
+    {"id":"SC-24","settingPattern":"output.coordinateDecimals|fontPolicy|overflow","owner":"Output","classification":"conditional","trigger":"fractional coordinate, unsupported font operation, and out-of-bounds optional/required primitives","observer":"serializer precision or stable capability/overflow result","disposition":"remediation-required","issue":12}
   ]
 }
