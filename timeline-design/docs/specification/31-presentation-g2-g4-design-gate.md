@@ -1,8 +1,13 @@
 # 共通表現基盤 G2–G4 設計ゲート
 
-**状態:** G2設計・実装済み。G3/G4のScene接続設計を是正中。G3/G4 visual実装は、この文書・owner schema・正負fixture・横断レビューが揃うまで開始しない。
+**状態:** D1境界設計完了。G1–G4の従前の完了判定は撤回済みであり、D2–D3の設計閉包前にvisual実装を再開しない。
 
 ## 1. 一意なauthoring所有者
+
+Scene Builderは以下の所有者から一つの`ResolvedPresentationInput`を導出し、
+`projectionInstanceId = slotId + sourceRef + semanticFacet + primitivePurpose`を確定する。
+visual roleはThemeが選ぶ装飾であり、semantic facetを改名・代替しない。Rendererは完成済み
+Sceneのみを直列化し、slot選択、font計測、anchor、lane、routeを再計算しない。
 
 | 値 | owner | renderer入力 | 禁止事項 |
 |---|---|---|---|

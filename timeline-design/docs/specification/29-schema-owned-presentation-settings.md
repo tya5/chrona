@@ -2,6 +2,11 @@
 
 **状態: 設計契約。ランタイム未実装。**
 
+本仕様の解決済み Theme / Layout / Detail / Context は Scene Builder の
+`ResolvedPresentationInput` に一度だけ束縛される。SVGその他のadapterは完成した
+Sceneのprimitive、token値、manifestだけを読む。adapterが設定を再解決したり、欠損値を
+補い、日付・slot・font・lane・routeを再計算することは二重権限である。
+
 ## 1. 目的・対象
 
 描画コードに残るデザイン上の選択をすべて宣言データへ移す。

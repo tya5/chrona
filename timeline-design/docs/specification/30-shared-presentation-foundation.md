@@ -1,6 +1,6 @@
 # 共通表現基盤：採用境界と注釈の一般化
 
-**状態:** 設計完了。ランタイム未実装。
+**状態:** D1境界設計完了。ランタイム是正は未実装。
 **根拠:** ADR-0019。既存仕様06/07/08/27/28/29を置き換えず、追加実装の採用境界を定める。
 
 ## 1. 目標と非目標
@@ -31,6 +31,14 @@
 - 配置：共通の領域境界・障害物・候補選択を適用する。
 - 接続：依存線、注釈の引き出し線、説明矢印が経路探索機構を共有する。
   sourceKind、意味、可視性、端点規則、アクセシビリティは別々に保持する。
+
+上記を組み立てる唯一の派生DTOを`ResolvedPresentationInput`と呼ぶ。DTOは
+`semanticFacet`、`visualRole`、`slotId`、`projectionInstanceId`、測定要求、解決済み
+Layout/Theme/Detail/Contextを保持する。`projectionInstanceId`は
+`slotId + sourceRef + semanticFacet + primitivePurpose`から決定的に導き、Scene primitiveの
+`sceneId`はこれを接頭辞として用いる。visualRoleはfacetを上書きしない。同一objectを複数slotへ
+投影してもinstanceは衝突せず、同座標の異なるfacet/roleも併合しない。DTO、測定結果、Sceneは
+すべて派生物であり、ViewまたはLayoutへ永続化しない。
 
 `content` region/trackの寸法は、上記テキスト領域などが確定した後に生成する一時の
 `intrinsicBlocks` / `intrinsicTracks` 入力である。これをLayout又はViewへ永続化しない。

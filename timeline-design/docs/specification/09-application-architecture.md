@@ -36,7 +36,7 @@ Application Architecture decides which component evaluates or transports each sp
 | View Engine | Build a semantic View Projection from explicit state and View Context | Colours, fonts, primitive coordinates, or project mutation |
 | Style Resolver | Resolve semantic selectors to visual roles | Scheduling, geometry, or literal token values |
 | Theme Resolver | Resolve role token references to concrete visual values | Semantic selection or role conditions |
-| Scene Builder | Produce positioned, metadata-preserving Scene primitives | Semantic source data or renderer-owned layout conventions |
+| Scene Builder | Build one ResolvedPresentationInput, then produce positioned, metadata-preserving Scene primitives | Semantic source data or renderer-owned layout conventions |
 | Renderer Adapter | Translate a completed Scene to SVG, canvas, or another declared target | Semantic inference or canonical state mutation |
 | Command Engine | Apply validated semantic or presentation-definition mutations as new revisions | Renderer-specific interaction behavior or scheduling semantics |
 | Runtime Coordinator | Bind explicit inputs, invoke components in dependency order, collect diagnostics, and manage derived caches | Hidden policy changes or alternate semantic rules |
@@ -116,6 +116,13 @@ Build Scene and render target artifact
 ```
 
 Each stage receives immutable input values and returns a value plus diagnostics. A stage may halt its dependent stages when a required invariant cannot be satisfied, but it must preserve the diagnostics that explain why. It must not repair source data, replace unknown references, or fabricate Actual values.
+
+Before Scene construction, the Runtime Coordinator binds the View Projection, resolved
+Style/Theme, Detail, Layout, metrics, viewport, and target capabilities into the
+single ResolvedPresentationInput defined by specification 08.  This is the only
+authoring-to-geometry boundary.  The Scene Builder owns its derived projection
+instances and primitive identities; Renderer Adapters receive only the completed
+Scene and may serialize it without semantic or geometric re-evaluation.
 
 Federated summary items enter the View Engine as read-only, namespaced projection
 inputs. The Scheduling Engine schedules only the parent Project; a published child

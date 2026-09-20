@@ -65,6 +65,27 @@ A Scene contains:
 
 A Scene MAY be serialized as a cache or inspection artifact, but that serialization is not the canonical Project format.
 
+### 3.3 Resolved presentation input and identity boundary
+
+The Scene Builder receives one immutable **ResolvedPresentationInput**.  It is derived
+once by the coordinator from the View Projection, resolved Style/Theme, Detail,
+Layout, Render Context, and target capability declaration.  It contains semantic
+facets, visual roles, selected slot instances, measured text inputs, and resolved
+layout/routing policy; it is not another persisted authoring resource.
+
+Each temporal or annotation projection has a `projectionInstanceId` composed from the
+stable slot ID, source reference, semantic facet, and declared primitive purpose.  A
+visual role may change paint or glyph choice, but MUST NOT rename or replace the
+semantic facet.  Thus a planned mark drawn as a baseline remains `planned`, and an
+Actual point remains `actual` even when they share geometry or paint.  `sceneId` is
+derived from `projectionInstanceId` plus the primitive-purpose suffix.  Array order,
+coordinates, renderer element IDs, and display text are not identity inputs.
+
+The Builder alone converts this input into measured geometry, ports, obstacles,
+track bounds, and primitives.  An adapter receives neither authoring resources nor a
+semantic View Projection and MUST NOT recreate a scale, select a slot, choose an
+anchor, measure text, assign a lane, or resolve a route.
+
 ## 4. Coordinate system and temporal scale
 
 ### 4.0 v0.1 Scene profile
