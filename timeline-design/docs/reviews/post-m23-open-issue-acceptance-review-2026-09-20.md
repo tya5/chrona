@@ -1,6 +1,6 @@
 # Post-M23 open-issue acceptance review — 2026-09-20
 
-**Disposition:** Pass; GitHub issue closure authorized
+**Disposition:** Pass; GitHub issues closed as completed
 **Issues:** #14, #16, #17
 
 ## Sequence
@@ -51,7 +51,7 @@ at `1f91d04`. Implementation and regenerated artifacts were then published at
 ## Release decision
 
 The accepted defects in #14, #16, and #17 are corrected by published generic contracts,
-implementation, tests, and regenerated artifacts. Each issue may be commented with
-`d123b57` plus this review's commit and closed as completed. M23 remains complete; this
-corrective program introduces no new product-feature milestone or semantic authority.
-
+implementation, tests, and regenerated artifacts. Each issue received evidence linking
+`d123b57` and this review's `1c84ac9` commit and was closed as completed. M23 remains
+complete; this corrective program introduces no new product-feature milestone or
+semantic authority.

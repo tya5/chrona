@@ -36,7 +36,9 @@ candidate rather than treating the working tree as an unchanged snapshot.
 - M23 Review Detail is complete: schema/semantic validation, Layout-bound group detail,
   source-labelled observations, milestone digest Scene/SVG primitives, and reproducible
   Controller Z visual acceptance all pass without changing scheduling authority.
-- The complete test suite passes 246 tests, and the complete Chrona conformance runner
+- Post-M23 presentation regressions #14, #16, and #17 are corrected and closed with
+  exact published evidence; Aster and Controller Z artifacts are reproducible.
+- The complete test suite passes 248 tests, and the complete Chrona conformance runner
   passes every stage.
 
 ## Stable promotion
@@ -54,5 +56,6 @@ DateTime/DST, rendering, capacity, collaboration, and extension implementations 
 as versioned successor or adapter modules. They do not change Date-only Core v0.1
 meaning unless an explicit successor profile is selected.
 
-M22 remediation and M23 review-detail delivery are complete. The Controller Z M23
-acceptance SVG/PNG is reproducible from its YAML resources with zero raster overflow.
+M22 remediation, M23 review-detail delivery, and the post-M23 issue closure program are
+complete. The Aster and Controller Z acceptance SVG/PNG resources are reproducible from
+their YAML resources with zero raster overflow.

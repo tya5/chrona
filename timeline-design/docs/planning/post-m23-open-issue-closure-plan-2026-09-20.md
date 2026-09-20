@@ -1,6 +1,6 @@
 # Post-M23 Open-Issue Closure Plan — 2026-09-20
 
-**Status:** Design complete; implementation begins only after this design is published
+**Status:** Complete — R24 accepted and issues closed on 2026-09-20
 **Scope:** GitHub issues #14, #16, and #17; Gregorian leap-year contract clarification
 **Milestone effect:** M23 remains complete. This is corrective work against accepted
 temporal and presentation contracts, not a new product-feature milestone.
@@ -95,3 +95,14 @@ Implementation stops if it discovers a semantic choice not closed above, a requi
 label that cannot be placed, a mismatch between regenerated and tested output, or a
 regression outside this scope. The owning design is corrected and published before
 implementation resumes.
+
+## 5. Completion record
+
+| Phase | Published commit | Result |
+|---|---|---|
+| D24 | `d931813`, `f4fcce5`, `1f91d04` | Initial design and both implementation-discovered scope addenda published before affected work resumed. |
+| I24/A24 | `d123b57` | Generic Scene/SVG corrections, tests, documentation, and regenerated Aster/Controller Z artifacts published. |
+| R24 | `1c84ac9` | 248 tests, full conformance, visual/overflow evidence, and final acceptance review pass. |
+
+GitHub issues #14, #16, and #17 each received exact commit evidence and were closed as
+completed. No open issue remains in the repository at this checkpoint.
