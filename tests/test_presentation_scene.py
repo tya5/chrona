@@ -534,3 +534,83 @@ def test_stroke_tokens_are_selected_by_primitive_purpose():
         assert purpose in by_purpose
         assert (by_purpose[purpose].get("stroke"), by_purpose[purpose].get("stroke-width"),
                 by_purpose[purpose].get("stroke-dasharray")) == values
+
+
+def test_minor_ticks_use_next_finer_level_and_axis_minor_stroke():
+    settings = scene_settings()
+    settings["layout"]["axis"].update(minorVisible=True, tickUnit="month", tickStep=1)
+    settings["theme"]["strokes"]["axisMinor"].update(
+        color="#102938", opacity=.4, width=2.5, dash=[2, 3])
+    scene = build_presentation_scene("Roadmap", [item()],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "minimal")
+    minor = [node for node in surface.primitives if node.purpose == "minor-tick"]
+    assert minor and all(node.visual_role == "week" for node in minor)
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "axis-minor")
+    assert (element.get("stroke"), element.get("stroke-width"), element.get("stroke-opacity"),
+            element.get("stroke-dasharray")) == ("#102938", "2.5", "0.4", "2 3")
+
+
+def test_variance_and_routing_visibility_gate_only_their_owned_families():
+    settings = scene_settings()
+    settings["layout"]["variance"]["visible"] = False
+    settings["layout"]["routing"]["enabled"] = False
+    left, right = item(), item()
+    left.object_id = "left"
+    right.object_id = "right"
+    right.planned = {"start": date(2026, 1, 14), "end": date(2026, 1, 24)}
+    content = SurfaceContentInput(
+        relations=({"id": "edge", "type": "dependency",
+                    "from": {"object": "left", "endpoint": "end"},
+                    "to": {"object": "right", "endpoint": "start"}},),
+        annotations=({"id": "risk", "purpose": "callout", "text": "Review",
+                      "anchor": {"kind": "object", "id": "left", "facet": "planned",
+                                 "endpoint": "finish"}},),
+    )
+    scene = build_presentation_scene("Roadmap", (left, right),
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    purposes = {node.purpose for node in surface.primitives}
+    assert "annotation-box" in purposes
+    assert purposes.isdisjoint({"variance-marker", "variance-label", "dependency-connector",
+                                "annotation-leader", "explanatory-arrow"})
+
+
+def test_label_rule_required_controls_diagnostic_versus_optional_omission():
+    optional = scene_settings()
+    optional["layout"]["labelPlacement"].update(candidateSides=["inside"], maxCandidates=1,
+                                                  overflow="clip-optional")
+    optional["detail"]["labelRules"][0]["required"] = False
+    subject = item()
+    subject.title = "Label wider than a one-day bar"
+    subject.planned = {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}
+    scene = build_presentation_scene("Roadmap", [subject],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), optional)
+    table = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    assert not any(node.purpose == "item-label" for node in table.primitives)
+
+    required = deepcopy(optional)
+    required["detail"]["labelRules"][0]["required"] = True
+    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
+        build_presentation_scene("Roadmap", [subject],
+                                 (date(2026, 1, 1), date(2026, 2, 1)), required)
+
+
+def test_date_label_rule_and_notes_typography_are_conditional_observers():
+    settings = scene_settings()
+    settings["layout"]["slots"]["legend"]["source"] = "annotations"
+    settings["theme"]["typography"]["notes"]["size"] = 21
+    content = SurfaceContentInput(notes=(("n1", "Review note"),))
+    scene = build_presentation_scene("Roadmap", [item()],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
+    table = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    assert any(node.purpose == "actual-date-label" for node in table.primitives)
+    note = next(node for node in table.primitives if node.purpose == "project-note")
+    assert note.text_layout is not None and note.text_layout.bounds[3] == pytest.approx(
+        21 * settings["theme"]["typography"]["notes"]["lineHeight"])
+    svg = render_scene_surface_svg(table, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    element = next(value for value in ET.fromstring(svg).iter()
+                   if value.get("data-purpose") == "presentation-annotation"
+                   and value.get("data-source-ref") == "n1")
+    assert element.get("font-size") == "21"

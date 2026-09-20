@@ -42,6 +42,7 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
     purpose_map = {
         "table-header-band": "table-header", "table-column-label": "table-header",
         "table-row-rule": "table-row", "group-separator": "group-separator", "tick": "axis-major",
+        "minor-tick": "axis-minor",
         "dependency-connector": "routed-connector", "annotation-box": "presentation-annotation",
         "annotation-text": "presentation-annotation", "project-note": "presentation-annotation",
         "coverage-text": "data-coverage",
@@ -127,7 +128,8 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             type_role = {"legend-label": "legend", "coverage-text": "coverage",
-                         "summary-header": "summaryHeader", "summary-metric": "summaryMetric"}.get(node.purpose, role)
+                         "summary-header": "summaryHeader", "summary-metric": "summaryMetric",
+                         "project-note": "notes"}.get(node.purpose, role)
             paint_role = ("body" if node.purpose in {"axis-label", "table-column-label", "annotation-text", "project-note"}
                           else role)
             typography = theme["typography"].get(type_role, theme["typography"].get("body", {}))
@@ -168,6 +170,7 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
             extra = ' fill="none"'
             stroke_token = {
                 "tick": strokes["axisMajor"],
+                "minor-tick": strokes["axisMinor"],
                 "table-row-rule": strokes["rowRule"],
                 "group-separator": strokes["groupSeparator"],
                 "dependency-connector": strokes["dependency"],

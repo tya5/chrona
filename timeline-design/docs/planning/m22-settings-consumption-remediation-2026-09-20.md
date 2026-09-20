@@ -95,3 +95,8 @@ The I24-3 pre-implementation review reopened D24 before code. Specification 08 n
 closes next-finer minor tick generation and maps every label-rule source to its Scene
 family, including applicability, duplicate precedence, and required/optional failure
 behavior. I24-3 resumes only after this addendum is published and tree-verified.
+
+I24-3 is complete locally with targeted observers for minor strokes, date/title label
+rules, required versus optional omission, variance/routing visibility, and optional
+typography families. The five ASTER artifacts were regenerated with zero SVG overflow;
+214 tests and full conformance are the publication gate.
