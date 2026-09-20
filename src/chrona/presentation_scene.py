@@ -74,6 +74,9 @@ class ScenePrimitive:
     shape: str | None = None
     color: str | None = None
     opacity: float | None = None
+    corner_radius: float | None = None
+    lane_group_id: str | None = None
+    stack_index: int | None = None
     points: tuple[tuple[float, float], ...] = ()
     from_port_id: str | None = None
     to_port_id: str | None = None
@@ -188,6 +191,11 @@ def _validate_primitive(node: ScenePrimitive) -> None:
     if node.kind == "Text" and (node.text is None or node.text_layout is None):
         raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
     if node.kind == "Symbol" and not node.shape:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    if node.corner_radius is not None:
+        if node.kind != "Rect" or node.corner_radius < 0 or node.corner_radius > min(node.bounds[2], node.bounds[3]) / 2.0:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    if node.stack_index is not None and (node.stack_index < 0 or node.lane_group_id is None):
         raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
     if node.kind == "Path":
         if len(node.points) < 2:
@@ -362,6 +370,7 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
     rows = {row.object_id: row for row in surface.rows}
     items_by_id = {str(getattr(item, "object_id")): item for item in items}
     lane_stacks = {lane.object_id: lane.stack for lane in lanes}
+    lane_assignments = {lane.object_id: lane for lane in lanes}
     lane_tracks_by_group = {track.group_id: track for track in tracks}
     primitives: list[ScenePrimitive] = []
 
@@ -404,13 +413,16 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             baseline: tuple[float, float] | None = None, layout: TextLayout | None = None,
             shape: str | None = None, points: tuple[tuple[float, float], ...] = (),
             from_port_id: str | None = None, to_port_id: str | None = None,
-            color: str | None = None, opacity: float | None = None) -> None:
+            color: str | None = None, opacity: float | None = None,
+            corner_radius: float | None = None, lane_group_id: str | None = None,
+            stack_index: int | None = None) -> None:
         projection = f"{surface.surface_id}:{purpose}:{source_ref}:{facet}"
         primitives.append(ScenePrimitive(
             scene_id=f"{projection}:primitive", kind=kind, source_ref=source_ref,
             source_kind=source_kind, semantic_facet=facet, visual_role=role, bounds=bounds,
             projection_instance_id=projection, surface_id=surface.surface_id, purpose=purpose,
-            text=text, baseline=baseline, text_layout=layout, shape=shape, color=color, opacity=opacity, points=points,
+            text=text, baseline=baseline, text_layout=layout, shape=shape, color=color, opacity=opacity,
+            corner_radius=corner_radius, lane_group_id=lane_group_id, stack_index=stack_index, points=points,
             from_port_id=from_port_id, to_port_id=to_port_id, z_order=len(primitives),
         ))
 
@@ -463,6 +475,9 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
         item = items_by_id.get(mark.source_id)
         if row is None or item is None:
             raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
+        lane_assignment = lane_assignments.get(mark.source_id)
+        if lane_assignment is None:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
         _, row_y, _, row_height = row.bounds
         independent_lane = (surface.surface_id == "table-timeline"
                             and settings["layout"]["lanes"]["surface"] == "independent-lane-track")
@@ -480,13 +495,15 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                 text = f"{mark.variance_days:+d}d"
                 delta_layout = text_layout(text, x, row_y, role="variance", available=max(1.0, timeline.bounds[0] + timeline.bounds[2] - x))
                 add("Text", mark.source_id, "object", mark.facet, "variance", "comparison-mark",
-                    delta_layout.bounds, text=text, baseline=delta_layout.baseline, layout=delta_layout)
+                    delta_layout.bounds, text=text, baseline=delta_layout.baseline, layout=delta_layout,
+                    lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
             else:
                 symbol_y = row_y if independent_lane else row_y + (row_height - point_size) / 2.0
                 paint = resolve_facet_paint(settings["theme"], str(getattr(item, "group_id", "")), mark.facet)
                 add("Symbol", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
                     (x - point_size / 2.0, symbol_y, point_size, point_size),
-                    shape=settings["theme"]["point"]["shape"], color=str(paint["color"]), opacity=float(paint["opacity"]))
+                    shape=settings["theme"]["point"]["shape"], color=str(paint["color"]), opacity=float(paint["opacity"]),
+                    lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
             continue
         assert mark.start is not None and mark.end is not None
         x1, x2 = _surface_x(timeline, start, end, mark.start), _surface_x(timeline, start, end, mark.end)
@@ -497,9 +514,12 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             y = row_y + row_height / 2.0 + gap / 2.0
         else:
             y = row_y + row_height / 2.0 - height - gap / 2.0
+        width = max(float(settings["theme"]["bar"]["minWidth"]), max(0.0, x2 - x1))
+        corner_radius = min(float(settings["theme"]["bar"]["radius"]), width / 2.0, height / 2.0)
         paint = resolve_facet_paint(settings["theme"], str(getattr(item, "group_id", "")), mark.facet)
         add("Rect", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
-            (x1, y, max(0.0, x2 - x1), height), color=str(paint["color"]), opacity=float(paint["opacity"]))
+            (x1, y, width, height), color=str(paint["color"]), opacity=float(paint["opacity"]),
+            corner_radius=corner_radius, lane_group_id=lane_assignment.group_id, stack_index=lane_assignment.stack)
 
     mark_primitives = tuple(node for node in primitives
                             if node.purpose == "comparison-mark" and node.kind in {"Rect", "Symbol"})
@@ -568,6 +588,11 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                                      wrap=True, max_height=label_bounds[3])
                 add("Text", group.group_id, "group", "", "group", "group-header", layout.bounds,
                     text=label, baseline=layout.baseline, layout=layout)
+                if settings["layout"]["group"]["mode"] in {"header-and-separator", "merged"}:
+                    separator_y = group.content_bounds[1] + group.content_bounds[3]
+                    add("Path", group.group_id, "group", "", "group-separator", "group-separator",
+                        (table_x, separator_y, table_width, 0.0),
+                        points=((table_x, separator_y), (table_x + table_width, separator_y)))
         cells = {(object_id, column_id): value for object_id, column_id, value in content.table_cells}
         for row_index, row in enumerate(surface.rows):
             if row_index % 2:

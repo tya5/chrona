@@ -13,8 +13,9 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
     palette = {
         "heading": paints["text"]["color"], "body": paints["text"]["color"],
         "text-muted": paints["textMuted"]["color"], "tableHeader": paints["tableHeader"]["color"],
-        "table-header": paints["tableHeader"]["color"], "table-frame": strokes["axisMajor"]["color"],
-        "table-row": strokes["axisMinor"]["color"], "row-shade": paints["rowShade"]["color"],
+        "table-header": paints["tableHeader"]["color"], "table-frame": strokes["frame"]["color"],
+        "table-row": strokes["rowRule"]["color"], "group-separator": strokes["groupSeparator"]["color"],
+        "row-shade": paints["rowShade"]["color"],
         "planned": paints["planned"]["color"], "baseline": paints["planned"]["color"],
         "actual": paints["actual"]["color"], "variance": paints["varianceBehind"]["color"],
         "milestone": paints["milestone"]["color"], "dependency": strokes["dependency"]["color"],
@@ -35,7 +36,7 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
 
     purpose_map = {
         "table-header-band": "table-header", "table-column-label": "table-header",
-        "table-row-rule": "table-row", "tick": "axis-major",
+        "table-row-rule": "table-row", "group-separator": "group-separator", "tick": "axis-major",
         "dependency-connector": "routed-connector", "annotation-box": "presentation-annotation",
         "annotation-text": "presentation-annotation", "project-note": "presentation-annotation",
         "coverage-text": "data-coverage",
@@ -83,14 +84,18 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
         if node.purpose == "group-surface":
             role = f"group:{node.source_ref}"
         lane = ""
+        if node.lane_group_id is not None and node.stack_index is not None:
+            lane += (f' data-lane-group-id="{escape(node.lane_group_id)}"'
+                     f' data-stack="{node.stack_index}"')
         if node.purpose == "comparison-mark" and node.source_ref in rows:
             group = groups.get(row_groups[node.source_ref])
             if group is not None:
-                lane = f' data-lane-offset="{number(node.bounds[1] - group.content_bounds[1])}"'
+                lane += f' data-lane-offset="{number(node.bounds[1] - group.content_bounds[1])}"'
         if node.kind == "Rect":
             x, y, rect_width, rect_height = node.bounds
             fill = "none" if node.purpose == "table-frame" else (escape(node.color, quote=True) if node.color else color(role))
-            stroke = color("table-frame") if node.purpose == "table-frame" else "none"
+            stroke_token = strokes["frame"] if node.purpose == "table-frame" else None
+            stroke = escape(stroke_token["color"], quote=True) if stroke_token else "none"
             if node.purpose == "annotation-box":
                 fill = escape(theme["annotation"]["boxFill"]["color"], quote=True)
                 stroke = escape(theme["annotation"]["boxStroke"]["color"], quote=True)
@@ -100,8 +105,11 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
                 opacity = f' opacity="{number(float(token["opacity"]))}"'
             elif node.opacity is not None:
                 opacity = f' opacity="{number(node.opacity)}"'
+            stroke_attrs = _stroke_attributes(stroke_token, number) if stroke_token else ""
+            radius = (f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"'
+                      if node.corner_radius is not None else "")
             parts.append(f'<rect {common}{lane} x="{number(x)}" y="{number(y)}" width="{number(rect_width)}" '
-                         f'height="{number(rect_height)}" fill="{fill}" stroke="{stroke}"{opacity}/>' )
+                         f'height="{number(rect_height)}" fill="{fill}" stroke="{stroke}"{stroke_attrs}{opacity}{radius}/>' )
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -142,23 +150,40 @@ def render_scene_surface_svg(surface: SceneSurface, *, viewport: dict, theme: di
             if len(node.points) < 2:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             path = "M" + "L".join(f"{number(x)} {number(y)}" for x, y in node.points)
-            path_role = "dependency" if node.purpose == "dependency-connector" else role
+            path_role = "dependency" if node.purpose in {"dependency-connector", "explanatory-arrow"} else role
             extra = ' fill="none"'
+            stroke_token = {
+                "tick": strokes["axisMajor"],
+                "table-row-rule": strokes["rowRule"],
+                "group-separator": strokes["groupSeparator"],
+                "dependency-connector": strokes["dependency"],
+                "explanatory-arrow": strokes["dependency"],
+            }.get(node.purpose)
             if node.purpose in {"dependency-connector", "explanatory-arrow"} or node.visual_role == "dependency":
                 if node.shape not in {"triangle", "chevron", "none"}:
                     raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
                 if node.shape != "none":
                     extra += ' marker-end="url(#dependency-arrow)"'
-            if node.purpose == "tick":
-                extra += ' stroke-dasharray="3 4"'
             if node.from_port_id:
                 extra += f' data-from-port-id="{escape(node.from_port_id)}" data-from-endpoint="{escape(node.from_port_id.rsplit(":", 1)[-1])}"'
             if node.to_port_id:
                 extra += f' data-to-port-id="{escape(node.to_port_id)}" data-to-endpoint="{escape(node.to_port_id.rsplit(":", 1)[-1])}"'
-            parts.append(f'<path {common} d="{path}" stroke="{color(path_role)}"{extra}/>')
+            stroke_color = escape(stroke_token["color"], quote=True) if stroke_token else color(path_role)
+            stroke_attrs = _stroke_attributes(stroke_token, number) if stroke_token else ""
+            parts.append(f'<path {common} d="{path}" stroke="{stroke_color}"{stroke_attrs}{extra}/>')
         else:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
     return "\n".join((*parts, "</svg>")) + "\n"
+
+
+def _stroke_attributes(token: dict, number) -> str:
+    attributes = f' stroke-width="{number(float(token["width"]))}"'
+    if float(token.get("opacity", 1)) != 1:
+        attributes += f' stroke-opacity="{number(float(token["opacity"]))}"'
+    dash = token.get("dash", [])
+    if dash:
+        attributes += ' stroke-dasharray="' + " ".join(number(float(value)) for value in dash) + '"'
+    return attributes
 
 
 def _marker_definition(arrow: dict, color: str, shape: str) -> str:

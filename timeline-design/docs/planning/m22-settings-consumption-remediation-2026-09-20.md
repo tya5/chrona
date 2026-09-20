@@ -1,6 +1,6 @@
 # M22 Settings-consumption remediation plan — 2026-09-20
 
-**Status:** Design complete; implementation authorized only after this design is published
+**Status:** Design complete and published at `f565570`; implementation in progress
 **Scope:** GitHub issues 11–12 and PR 13, evaluated against `main` at `9be3712`
 **Exclusion:** M23 observation tables and milestone digests remain deferred
 
@@ -51,6 +51,9 @@ matrix. A matrix row is a contract, not an allow-list of accepted defects.
 | I24-3 | Required label behavior plus variance/routing visibility; conditional typography and layout coverage. | Required/optional diagnostic tests and matrix rows all have observers. |
 | I24-4 | Replace PR 13's allow-list oracle with matrix-driven perturbation and targeted fixtures. | No known-inert allow-list; every matrix row is exercised or validation-only. |
 | A24 | Regenerate artifacts, visual review, full regression/conformance, reconcile issues/PR, and return M22 to Complete. | Published SHA equals verified local state. |
+
+Progress: D24 is complete. I24-1 is complete locally with 209 tests and full
+conformance passing; publication is the remaining I24-1 exit action.
 
 Each implementation phase is independently tested and published. Any new semantic
 choice stops implementation and reopens D24 before code continues.

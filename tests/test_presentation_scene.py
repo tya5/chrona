@@ -416,3 +416,63 @@ def test_arrow_shape_none_and_independent_actual_height_are_consumed():
     svg = render_scene_surface_svg(chevron_surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
     assert 'marker-end="url(#dependency-arrow)"' in svg
     assert '<path d="M0 0L6 3.0L0 6" fill="none"' in svg
+
+
+def test_bar_radius_minimum_width_and_stack_metadata_are_scene_owned():
+    settings = scene_settings()
+    settings["theme"]["bar"].update(radius=20, minWidth=60)
+    subject = item()
+    subject.group_id = "delivery"
+    scene = build_presentation_scene("Roadmap", [subject],
+                                     (date(2026, 1, 1), date(2026, 12, 31)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    mark = next(node for node in surface.primitives
+                if node.purpose == "comparison-mark" and node.semantic_facet == "planned")
+    assert mark.bounds[2] == 60
+    assert mark.corner_radius == 8.5
+    assert (mark.lane_group_id, mark.stack_index) == ("delivery", 0)
+
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "planned")
+    assert element.get("rx") == element.get("ry") == "8.5"
+    assert element.get("data-lane-group-id") == "delivery"
+    assert element.get("data-stack") == "0"
+
+
+def test_stroke_tokens_are_selected_by_primitive_purpose():
+    settings = scene_settings()
+    settings["theme"]["strokes"]["axisMajor"].update(color="#112233", width=2.5, dash=[1, 5])
+    settings["theme"]["strokes"]["frame"].update(color="#223344", width=3, dash=[2, 6])
+    settings["theme"]["strokes"]["rowRule"].update(color="#334455", width=4, dash=[3, 7])
+    settings["theme"]["strokes"]["groupSeparator"].update(color="#445566", width=5, dash=[4, 8])
+    settings["theme"]["strokes"]["dependency"].update(color="#556677", width=6, dash=[5, 9])
+    left, right = item(), item()
+    left.object_id = "left"
+    right.object_id = "right"
+    right.planned = {"start": date(2026, 1, 16), "end": date(2026, 1, 24)}
+    content = SurfaceContentInput(
+        table_columns=(("title", "Title"),),
+        table_cells=(("left", "title", "Left"), ("right", "title", "Right")),
+        relations=({"id": "left-to-right", "type": "dependency",
+                    "from": {"object": "left", "endpoint": "end"},
+                    "to": {"object": "right", "endpoint": "start"}},),
+    )
+    scene = build_presentation_scene("Roadmap", [left, right],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    root = ET.fromstring(render_scene_surface_svg(
+        surface, viewport=settings["context"]["viewport"], theme=settings["theme"]))
+    by_purpose = {}
+    for node in root.iter():
+        by_purpose.setdefault(node.get("data-purpose"), node)
+    expected = {
+        "axis-major": ("#112233", "2.5", "1 5"),
+        "table-frame": ("#223344", "3", "2 6"),
+        "table-row": ("#334455", "4", "3 7"),
+        "group-separator": ("#445566", "5", "4 8"),
+        "routed-connector": ("#556677", "6", "5 9"),
+    }
+    for purpose, values in expected.items():
+        assert purpose in by_purpose
+        assert (by_purpose[purpose].get("stroke"), by_purpose[purpose].get("stroke-width"),
+                by_purpose[purpose].get("stroke-dasharray")) == values
