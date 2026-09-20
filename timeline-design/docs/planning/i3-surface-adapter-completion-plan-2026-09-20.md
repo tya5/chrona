@@ -59,6 +59,9 @@ and optional subtitle before measurement and emits `title-text` / `subtitle-text
 The Gantt adapter does not retain Detail templates or title/window/count formatting.
 Group surface paint serialization consumes the complete resolved token, including
 opacity; retaining an adapter opacity default does not satisfy I3-C.
+The application boundary includes the six closed Detail template values in
+`SurfaceContentInput.templateValues`; Scene must not reverse-parse coverage wording to
+recover counts.
 
 Before I3-C, extend the shared DTO with closed kind payloads: `shape` for Symbol and
 ordered `points`, `fromPortId`, and `toPortId` for connector-like Path primitives.

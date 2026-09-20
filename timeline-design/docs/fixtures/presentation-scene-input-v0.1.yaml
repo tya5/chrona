@@ -50,7 +50,8 @@ inputs:
     Path: [points]
     connectorPath: [points, fromPortId, toPortId]
   surfaceContentInput:
-    required: [tableColumns, tableCells, relations, annotations, notes, legendEntries, coverageText, summaryPanels]
+    required: [tableColumns, tableCells, relations, annotations, notes, legendEntries, coverageText, summaryPanels, templateValues]
+    templateValues: [title, windowStart, windowLastVisible, selectedCount, unmatchedCount, missingCount]
     normalization: application-boundary-once
     adapterVisible: false
     authority: derived-selected-content-only

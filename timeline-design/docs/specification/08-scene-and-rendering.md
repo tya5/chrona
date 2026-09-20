@@ -96,7 +96,10 @@ before Scene construction. It contains only selected, normalized presentation fa
 ordered table-column IDs and per-object display strings; selected relation IDs with
 typed endpoints; visible View annotations with typed anchors and purpose; ordered
 project-note text; resolved legend entries and coverage text; and declared summary
-panels with already formatted metric text. It contains no Project, View, Schedule, or
+panels with already formatted metric text. It also carries the closed template-value map
+`title`, `windowStart`, `windowLastVisible`, `selectedCount`, `unmatchedCount`, and
+`missingCount`; values are normalized strings and no additional key is accepted. It
+contains no Project, View, Schedule, or
 settings object and is not persisted. Missing optional families are empty collections;
 missing required normalized content is `E_PRESENTATION_INPUT_INCOMPLETE`.
 

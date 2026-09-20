@@ -38,6 +38,7 @@ assert case["inputs"]["primitivePayloads"]["connectorPath"] == ["points", "fromP
 assert "primitive-kind-payload-mismatch-is-a-stable-diagnostic" in case["invariants"]
 content = case["inputs"]["surfaceContentInput"]
 assert content["adapterVisible"] is False
-assert set(content["required"]) == {"tableColumns", "tableCells", "relations", "annotations", "notes", "legendEntries", "coverageText", "summaryPanels"}
+assert set(content["required"]) == {"tableColumns", "tableCells", "relations", "annotations", "notes", "legendEntries", "coverageText", "summaryPanels", "templateValues"}
+assert content["templateValues"] == ["title", "windowStart", "windowLastVisible", "selectedCount", "unmatchedCount", "missingCount"]
 assert "adapters-never-read-surface-content-input" in case["invariants"]
 print("presentation-scene-input derived fixture valid")

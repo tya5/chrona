@@ -185,6 +185,11 @@ and `TextLayout`. The SVG adapter receives neither the templates nor their sourc
 For group surfaces, resolved Theme paint serialization includes opacity as well as color;
 opacity is not an adapter default or a geometry exception.
 
+The application boundary supplies that permitted-value map in
+`SurfaceContentInput.templateValues`; its closed keys are `title`, `windowStart`,
+`windowLastVisible`, `selectedCount`, `unmatchedCount`, and `missingCount`. Scene never
+parses formatted coverage text or consults a projection to reconstruct a missing value.
+
 The implementation DTO is closed by primitive kind: Rect=`bounds`; Text=`text` plus
 one TextLayout; Symbol=`shape` plus bounds; Path=`points` plus optional
 `fromPortId`/`toPortId` only for non-connector ticks. A connector or leader without both

@@ -15,6 +15,7 @@ validated and published in the same revision.
 | I3-R02 | The scope migrated by the same I3 across table-timeline, review, and minimal was ambiguous | Core primitive migration could be mistaken for I3 completion | Plan I3-A through I3-F/V1 ordering, unmigrated families, and the completion condition for every adapter |
 | I3-R03 | The failure contract for a missing Scene was only general guidance | An adapter could justify a settings fallback | Fix stable surface/primitive diagnostics and prohibited recoveries |
 | I3-R04 | Existing Detail heading/subtitle templates and group opacity were absent from the I3-C completion inventory | A serializer could drop editorial wording or default opacity while still claiming Scene-only geometry | Require Scene-owned `title-text` / optional `subtitle-text` wording and complete resolved group paint-token serialization before I3-C resumes |
+| I3-R05 | The normalized Scene input did not carry `unmatchedCount`, although Detail templates permit it | Scene could only consult the projection or parse coverage wording | Add a closed six-key `templateValues` map to `SurfaceContentInput` and prohibit reconstruction |
 
 ## Layer consistency
 
