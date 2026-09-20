@@ -1,8 +1,9 @@
 # I3 Public Surface-Adapter Completion Plan
 
-**Status:** Design closure in progress. I3-A implementation starts only after this
-plan, Specification 08 §5.3, the derived fixture, and the design review are published
-and confirmed to be consistent.
+**Status:** I3-A through I3-E are implemented and published. I3-F design was reopened
+before implementation to close normalized summary wording and the review/minimal entry
+paths. Implementation resumes only after this plan, Specifications 08/30, the derived
+fixture, and the design review are published and confirmed to be consistent.
 
 ## Goal
 
@@ -39,7 +40,7 @@ surface. Missing data stops processing with the following diagnostics.
 | I3-C | Table/group/cell and dependency/annotation/legend/summary primitives | `table-timeline` coordinate, measurement, route, and wording generation | Gantt only serializes every primitive | Stand-alone |
 | I3-D | Selection API that consumes I3-A core primitives for review | Review date→X, row→Y, axis/tick/mark/title/item-label calculation | Emits the same SVG semantic values without settings or an item list | Stand-alone |
 | I3-E | Selection API that consumes I3-A core primitives for minimal | Minimal date→X, row→Y, axis/tick/mark/title/item-label calculation | Emits the same SVG semantic values without settings or an item list | Stand-alone |
-| I3-F | Remaining review/minimal connectors, annotations, summaries, and table-specific families | Remaining private geometry above | No public adapter calculates geometry | Stand-alone |
+| I3-F | Review connectors, annotations, and summaries; minimal connectors and annotations; table summary family | Remaining private geometry above | No settings-backed public adapter calculates geometry or wording | Stand-alone |
 | V1 | Input manifest plus structural, behavioral, and image evidence | Guessing at completion evidence | Verify setting variation, missing Actual, point items, multiple slots, long text, lanes, and routes through every path | I3 completion |
 
 ### Complete design closure for I3-C through I3-F
@@ -76,11 +77,22 @@ neither this input nor Project/View/settings. Tests mutate each normalized famil
 prove that only the corresponding Scene primitives change.
 
 I3-D and I3-E add no primitive families. They reduce review and minimal, respectively,
-to serializers that consume only their selected I3-A/B core. I3-F adds those surfaces'
-connectors, annotations, summaries, and remaining surface-specific families using the
-same identity rules. In every unit, an absent slot, `none` visibility, or absent source
-emits no optional family. Only a missing required member of an authorized source stops
-with `E_PRESENTATION_PRIMITIVE_MISSING`.
+to serializers that consume only their selected I3-A/B core. I3-F adds review
+connectors, annotations, and summaries; minimal connectors and annotations; and the
+table summary family using the same identity rules. Minimal owns no summary family. In
+every unit, an absent slot, `none` visibility, or absent source emits no optional
+family. Only a missing required member of an authorized source stops with
+`E_PRESENTATION_PRIMITIVE_MISSING`.
+
+For summary input, the normalized DTO uses
+`(panelId, headingText, ((metricId, formattedText), ...))`. The application boundary
+computes the closed M16 metric catalog and localization once. Scene uses IDs only for
+stable identity and serializes the supplied heading/metric text; neither Scene nor SVG
+rebuilds wording from IDs. Review owns a summary family only when its completed surface
+contains an explicit resolved `summary` slot. The resolved-settings review entry may
+accept the normalized DTO, but its serializer still receives only `SceneSurface`.
+The minimal entry normalizes selected target-independent Scene relations into the same
+DTO before Scene construction.
 
 The fixed z-order is `background/frame → band/group/row → rule/tick → mark → label →
 connector → annotation → legend/note → summary`. Adapters MUST NOT re-sort, measure

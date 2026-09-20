@@ -255,9 +255,15 @@ ports.  A visible View annotation owns a box Rect, optional measured Text, and o
 when its declared purpose requires it a leader Path.  Project notes own measured Text
 in the notes slot.  A present legend slot owns its swatches, measured labels, and
 coverage Text.  A present summary slot owns a panel Rect, measured header Text, and
-one measured metric Text per declared metric.  `review` and `minimal` receive their
-remaining connector, annotation, and summary families only in I3-F; no adapter may
-invent them before their Scene family is emitted.
+one measured metric Text per declared metric. `review` receives its remaining
+connector, annotation, and summary families only in I3-F. `minimal` receives its
+remaining connector and annotation families in I3-F; it does not own a summary family.
+No adapter may invent any of these families before its Scene family is emitted. A
+review summary exists only when the review surface owns an explicit resolved `summary`
+slot and the normalized input contains a declared panel. Review and minimal may also
+own resolved optional layout slots in addition to their surface-specific
+title/timeline/axis slots; copying an optional slot into the completed surface is Scene
+construction, never adapter fallback.
 
 Family presence is conditional only on an explicit resolved slot, visibility policy,
 and authorized source.  Absence of an authorized required member is

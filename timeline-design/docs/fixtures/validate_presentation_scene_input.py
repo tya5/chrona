@@ -40,5 +40,10 @@ content = case["inputs"]["surfaceContentInput"]
 assert content["adapterVisible"] is False
 assert set(content["required"]) == {"tableColumns", "tableCells", "relations", "annotations", "notes", "legendEntries", "coverageText", "summaryPanels", "templateValues"}
 assert content["templateValues"] == ["title", "windowStart", "windowLastVisible", "selectedCount", "unmatchedCount", "missingCount"]
+assert content["summaryPanelShape"] == ["panelId", "headingText", "orderedMetricPairs"]
+assert content["summaryMetricShape"] == ["metricId", "formattedText"]
+review_slots = surfaces["review"]["slots"]
+assert any(slot.get("optional") is True and slot["source"] == "summary-or-other-authorized-optional-source"
+           for slot in review_slots)
 assert "adapters-never-read-surface-content-input" in case["invariants"]
 print("presentation-scene-input derived fixture valid")

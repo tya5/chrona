@@ -60,3 +60,15 @@ Specification 30, the I3 plan, and the derived fixture now require final title w
 to enter Scene Text payloads and require the adapter to serialize the complete resolved
 group paint token. This correction is published and validated before I3-C implementation
 resumes.
+
+## Reopening record: I3-F summary and entry boundaries
+
+The I3-F pre-implementation trace found that Specification 30 required formatted
+summary strings, while the Python tuple shape still allowed Scene to manufacture
+`metricId: value` wording. It also found that the plan's phrase “review/minimal
+summaries” conflicted with the derived fixture, where only review owns the summary
+family. Specifications 08/30, the I3 plan, and the fixture now close the DTO as
+`(panelId, headingText, ((metricId, formattedText), ...))`, assign summaries to review
+and table only, and require an explicit resolved summary slot. The application entry
+normalizes content once; the selected serializer still receives only `SceneSurface`.
+This design correction must be validated and published before I3-F implementation.

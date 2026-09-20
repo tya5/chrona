@@ -22,6 +22,7 @@ inputs:
         - {id: title, source: title, bounds: resolved-layout}
         - {id: reviewTimeline, source: timeline, bounds: resolved-layout, scaleId: primary}
         - {id: reviewAxis, source: timeline-axis, bounds: resolved-layout, scaleId: primary}
+        - {id: optionalResolvedSlot, source: summary-or-other-authorized-optional-source, bounds: resolved-layout, optional: true}
       rows: {source: resolved-view-group-order, bounds: resolved-layout}
       primitives:
         required: [title-text, axis-band, axis-label, tick, comparison-mark, item-label]
@@ -52,6 +53,8 @@ inputs:
   surfaceContentInput:
     required: [tableColumns, tableCells, relations, annotations, notes, legendEntries, coverageText, summaryPanels, templateValues]
     templateValues: [title, windowStart, windowLastVisible, selectedCount, unmatchedCount, missingCount]
+    summaryPanelShape: [panelId, headingText, orderedMetricPairs]
+    summaryMetricShape: [metricId, formattedText]
     normalization: application-boundary-once
     adapterVisible: false
     authority: derived-selected-content-only

@@ -43,10 +43,22 @@ or Layout.
 The DTO includes a closed `SurfaceContentInput`, normalized exactly once by the
 application boundary: ordered column IDs and cell display strings; typed selected
 relations; typed visible annotations; ordered note text; resolved legend entries plus
-coverage text; and declared summary panels with formatted metric strings. Scene
-construction consumes these values but no Project, View, Schedule, or authoring settings
-resource. Optional absent families are empty; missing required normalized values yield
+coverage text; and declared summary panels. A normalized summary panel is the closed
+tuple `(panelId, headingText, metrics)`, where every ordered metric is
+`(metricId, formattedText)`. `formattedText` already contains its localized label,
+separator, availability wording, and value. Scene retains `panelId` / `metricId` for
+identity and emits `headingText` / `formattedText` verbatim; it does not reconstruct
+display wording from IDs. Scene construction consumes these values but no Project,
+View, Schedule, or authoring-settings resource. Optional absent families are empty;
+missing required normalized values yield
 `E_PRESENTATION_INPUT_INCOMPLETE`. SVG adapters never see this DTO.
+
+The application entry path may accept `SurfaceContentInput` as a derived parameter,
+but the selected SVG serializer receives only its completed `SceneSurface`. The
+minimal entry path normalizes selected `Scene.relations` into the DTO once; the review
+entry path normalizes selected relations, visible annotations, and declared summary
+panels before Scene construction. Legacy entry paths without resolved settings remain
+explicitly isolated and are not evidence for I3 completion.
 
 After measuring content, pass temporary `intrinsicBlocks` / `intrinsicTracks` to the
 solver; never persist them or replace unmeasured values with fixed pixels. Equal input
