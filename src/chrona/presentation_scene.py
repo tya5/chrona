@@ -7,12 +7,13 @@ from itertools import groupby
 from types import SimpleNamespace
 from typing import Iterable
 
-from .presentation_axis import AxisInterval, axis_intervals
+from .presentation_axis import AxisInterval, axis_intervals, format_axis_label
 from .presentation_marks import ComparisonMark, comparison_marks
 from .presentation_lanes import LaneAssignment, LaneItem, LaneTrack, assign_stable_lanes, lane_tracks
 from .presentation_layout import solve_presentation_layout
 from .font_metrics import FontMetrics, resolve_font_metrics
 from .presentation_routing import route_orthogonal
+from .presentation_paint import resolve_facet_paint
 
 
 @dataclass(frozen=True)
@@ -71,6 +72,8 @@ class ScenePrimitive:
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
     shape: str | None = None
+    color: str | None = None
+    opacity: float | None = None
     points: tuple[tuple[float, float], ...] = ()
     from_port_id: str | None = None
     to_port_id: str | None = None
@@ -222,8 +225,13 @@ def _scene_primitives(resolved: ResolvedPresentationInput, axes: tuple[AxisInter
             x = (mark.start - start).days * scale
             bounds = (x, 0.0, max(scale, (mark.end - mark.start).days * scale), 0.0)
             kind = "Rect"
+        item = next(value for value in resolved.items if str(getattr(value, "object_id")) == mark.source_id)
+        paint = (resolve_facet_paint(resolved.settings["theme"], str(getattr(item, "group_id", "")), mark.facet)
+                 if kind in {"Rect", "Symbol"} else None)
         primitives.append(ScenePrimitive(f"{projection_id}:mark", kind, mark.source_id, "object", mark.facet, mark.facet, bounds,
-                                         shape="diamond" if kind == "Symbol" else None))
+                                         shape=resolved.settings["theme"]["point"]["shape"] if kind == "Symbol" else None,
+                                         color=str(paint["color"]) if paint else None,
+                                         opacity=float(paint["opacity"]) if paint else None))
     return tuple(primitives)
 
 
@@ -395,13 +403,14 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             purpose: str, bounds: tuple[float, float, float, float], *, text: str | None = None,
             baseline: tuple[float, float] | None = None, layout: TextLayout | None = None,
             shape: str | None = None, points: tuple[tuple[float, float], ...] = (),
-            from_port_id: str | None = None, to_port_id: str | None = None) -> None:
+            from_port_id: str | None = None, to_port_id: str | None = None,
+            color: str | None = None, opacity: float | None = None) -> None:
         projection = f"{surface.surface_id}:{purpose}:{source_ref}:{facet}"
         primitives.append(ScenePrimitive(
             scene_id=f"{projection}:primitive", kind=kind, source_ref=source_ref,
             source_kind=source_kind, semantic_facet=facet, visual_role=role, bounds=bounds,
             projection_instance_id=projection, surface_id=surface.surface_id, purpose=purpose,
-            text=text, baseline=baseline, text_layout=layout, shape=shape, points=points,
+            text=text, baseline=baseline, text_layout=layout, shape=shape, color=color, opacity=opacity, points=points,
             from_port_id=from_port_id, to_port_id=to_port_id, z_order=len(primitives),
         ))
 
@@ -431,10 +440,11 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             x1, x2 = _surface_x(axis, start, end, interval.start), _surface_x(axis, start, end, interval.end)
             source = f"axis:{interval.level}:{interval.index}"
             add("Rect", source, "axis", "axis", interval.level, "axis-band", (x1, axis_y, x2 - x1, band_height))
-            label_layout = text_layout(interval.label, (x1 + x2) / 2.0, axis_y, role=level,
+            label = format_axis_label(interval, settings["detail"]["formatting"], settings["context"]["locale"])
+            label_layout = text_layout(label, (x1 + x2) / 2.0, axis_y, role=level,
                                        available=axis.bounds[2], center=True)
             add("Text", source, "axis", "axis", interval.level, "axis-label", label_layout.bounds,
-                text=interval.label, baseline=label_layout.baseline, layout=label_layout)
+                text=label, baseline=label_layout.baseline, layout=label_layout)
         axis_y += band_height
     bottom = max((row.bounds[1] + row.bounds[3] for row in surface.rows), default=timeline.bounds[1] + timeline.bounds[3])
     for tick in ticks:
@@ -473,9 +483,10 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                     delta_layout.bounds, text=text, baseline=delta_layout.baseline, layout=delta_layout)
             else:
                 symbol_y = row_y if independent_lane else row_y + (row_height - point_size) / 2.0
+                paint = resolve_facet_paint(settings["theme"], str(getattr(item, "group_id", "")), mark.facet)
                 add("Symbol", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
                     (x - point_size / 2.0, symbol_y, point_size, point_size),
-                    shape="diamond")
+                    shape=settings["theme"]["point"]["shape"], color=str(paint["color"]), opacity=float(paint["opacity"]))
             continue
         assert mark.start is not None and mark.end is not None
         x1, x2 = _surface_x(timeline, start, end, mark.start), _surface_x(timeline, start, end, mark.end)
@@ -486,7 +497,9 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             y = row_y + row_height / 2.0 + gap / 2.0
         else:
             y = row_y + row_height / 2.0 - height - gap / 2.0
-        add("Rect", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark", (x1, y, max(0.0, x2 - x1), height))
+        paint = resolve_facet_paint(settings["theme"], str(getattr(item, "group_id", "")), mark.facet)
+        add("Rect", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
+            (x1, y, max(0.0, x2 - x1), height), color=str(paint["color"]), opacity=float(paint["opacity"]))
 
     mark_primitives = tuple(node for node in primitives
                             if node.purpose == "comparison-mark" and node.kind in {"Rect", "Symbol"})
@@ -633,7 +646,8 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
             points = (source_point, *route, target_point)
             relation_id = str(relation.get("id", "relation"))
             add("Path", relation_id, "relation", "dependency", "dependency", "dependency-connector",
-                _path_bounds(points), points=points, from_port_id=source_port, to_port_id=target_port)
+                _path_bounds(points), shape=settings["theme"]["arrow"]["shape"], points=points,
+                from_port_id=source_port, to_port_id=target_port)
 
         if content.annotations:
             from .presentation_annotations import (nearest_box_port, project_annotation_box,
@@ -667,7 +681,8 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                                                      timeline.bounds[1] + timeline.bounds[3]))
                     points = (source_point, *route, target_point)
                     add("Path", annotation_id, "explanatory-arrow", "", "explanatory-arrow", "explanatory-arrow",
-                        _path_bounds(points), points=points, from_port_id=source_port, to_port_id=target_port)
+                        _path_bounds(points), shape=settings["theme"]["arrow"]["shape"], points=points,
+                        from_port_id=source_port, to_port_id=target_port)
                     continue
                 resolved = resolve_annotation_anchor(annotation, marks)
                 node = mark_nodes.get((resolved.object_id, resolved.facet))
@@ -749,10 +764,12 @@ def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, 
                     raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:legend")
                 swatch_bounds = (x, baseline_y - size / 3.0 - swatch_height / 2.0, swatch_width, swatch_height)
                 if role in {"milestone"}:
-                    add("Symbol", role, "legend", role, role, "legend-swatch", swatch_bounds, shape="diamond")
+                    add("Symbol", role, "legend", role, role, "legend-swatch", swatch_bounds,
+                        shape=settings["theme"]["point"]["shape"])
                 elif role == "dependency":
                     points = ((x, baseline_y - size / 3.0), (x + swatch_width, baseline_y - size / 3.0))
-                    add("Path", role, "legend", role, role, "legend-swatch", _path_bounds(points), points=points)
+                    add("Path", role, "legend", role, role, "legend-swatch", _path_bounds(points),
+                        shape=settings["theme"]["arrow"]["shape"], points=points)
                 else:
                     add("Rect", role, "legend", role, role, "legend-swatch", swatch_bounds)
                 label_x = x + swatch_width + float(spec["labelGap"])
@@ -859,7 +876,7 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     start, end = resolved.window
     axis = settings["layout"]["axis"]
     levels, heights = axis["levels"], axis["bandHeights"]
-    order = {"quarter": 0, "month": 1, "week": 2, "day": 3}
+    order = {"year": 0, "quarter": 1, "month": 2, "week": 3, "day": 4}
     if len(levels) != len(heights) or len(set(levels)) != len(levels) or any(level not in order for level in levels) or levels != sorted(levels, key=order.__getitem__):
         raise ValueError("E_PRESENTATION_AXIS_INVALID")
     copied_items = resolved.items

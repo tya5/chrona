@@ -50,6 +50,11 @@ theme:
       weight: 700
       lineHeight: 1.2
       letterSpacing: 0
+    year:
+      size: 13
+      weight: 700
+      lineHeight: 1.2
+      letterSpacing: 0
     month:
       size: 16
       weight: 700

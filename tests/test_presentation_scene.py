@@ -347,3 +347,72 @@ def test_i3_f_review_and_table_surfaces_own_routes_annotations_and_formatted_sum
     assert {node.purpose for node in table.primitives} >= {
         "dependency-connector", "annotation-box", "summary-panel", "summary-header", "summary-metric"
     }
+
+
+def test_axis_formats_and_year_band_are_consumed_by_the_completed_scene():
+    settings = scene_settings()
+    settings["layout"]["axis"].update(levels=["year", "month"], bandHeights=[24, 24])
+    settings["detail"]["formatting"]["month"] = "short-month"
+    scene = build_presentation_scene("Roadmap", [item()],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "minimal")
+    labels = [node for node in surface.primitives if node.purpose == "axis-label"]
+    assert [(node.visual_role, node.text) for node in labels] == [("year", "2026"), ("month", "Jan")]
+    assert labels[0].text_layout.weight == settings["theme"]["typography"]["year"]["weight"]
+
+
+@pytest.mark.parametrize("shape,tag", [("circle", "ellipse"), ("square", "rect"), ("diamond", "path")])
+def test_point_shape_and_facet_opacity_are_scene_owned_and_serialized(shape, tag):
+    settings = scene_settings()
+    settings["theme"]["point"]["shape"] = shape
+    settings["theme"]["facetPaints"]["default"]["planned"] = {"color": "#123456", "opacity": 0.37}
+    milestone = item()
+    milestone.source_type = "point"
+    milestone.planned = {"at": date(2026, 1, 8)}
+    milestone.actual = None
+    milestone.finish_delta = None
+    scene = build_presentation_scene("Roadmap", [milestone],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings)
+    surface = next(value for value in scene.surfaces if value.surface_id == "minimal")
+    symbol = next(node for node in surface.primitives if node.purpose == "comparison-mark")
+    assert (symbol.shape, symbol.color, symbol.opacity) == (shape, "#123456", 0.37)
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    element = next(value for value in ET.fromstring(svg).iter() if value.get("data-purpose") == "planned")
+    assert element.tag.endswith(tag)
+    assert element.get("fill") == "#123456" and element.get("opacity") == "0.37"
+
+
+def test_arrow_shape_none_and_independent_actual_height_are_consumed():
+    settings = scene_settings()
+    settings["theme"]["bar"].update(plannedHeight=11, actualHeight=5)
+    settings["theme"]["arrow"]["shape"] = "none"
+    left, right = item(), item()
+    left.object_id = "left"
+    right.object_id = "right"
+    right.planned = {"start": date(2026, 1, 16), "end": date(2026, 1, 24)}
+    content = SurfaceContentInput(relations=({
+        "id": "left-to-right", "type": "dependency",
+        "from": {"object": "left", "endpoint": "end"},
+        "to": {"object": "right", "endpoint": "start"},
+    },))
+    scene = build_presentation_scene("Roadmap", [left, right],
+                                     (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
+    surface = next(value for value in scene.surfaces if value.surface_id == "table-timeline")
+    left_marks = {node.semantic_facet: node for node in surface.primitives
+                  if node.source_ref == "left" and node.purpose == "comparison-mark"}
+    assert left_marks["planned"].bounds[3] == 11
+    assert left_marks["actual"].bounds[3] == 5
+    connector = next(node for node in surface.primitives if node.purpose == "dependency-connector")
+    assert connector.shape == "none"
+    svg = render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    assert 'marker-end=' not in svg and '<defs/>' in svg
+
+    settings["theme"]["arrow"]["shape"] = "chevron"
+    chevron_scene = build_presentation_scene("Roadmap", [left, right],
+                                             (date(2026, 1, 1), date(2026, 2, 1)), settings, content)
+    chevron_surface = next(value for value in chevron_scene.surfaces if value.surface_id == "table-timeline")
+    connector = next(node for node in chevron_surface.primitives if node.purpose == "dependency-connector")
+    assert connector.shape == "chevron"
+    svg = render_scene_surface_svg(chevron_surface, viewport=settings["context"]["viewport"], theme=settings["theme"])
+    assert 'marker-end="url(#dependency-arrow)"' in svg
+    assert '<path d="M0 0L6 3.0L0 6" fill="none"' in svg
