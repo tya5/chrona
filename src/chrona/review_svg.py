@@ -111,7 +111,11 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     required = {"sourceMetadata", "accessibleText", "semanticRoles", "marker"}
     if not required.issubset(capabilities):
         raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
-    start, end = projection.window
+    presentation_scene = None
+    if settings is not None:
+        from .presentation_scene import build_presentation_scene
+        presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings)
+    start, end = presentation_scene.window if presentation_scene is not None else projection.window
     if settings:
         viewport, layout, palette = settings["context"]["viewport"], settings["layout"], settings["theme"]
         left, top, day, row = layout["margins"]["left"], layout["margins"]["top"], layout["scale"]["dayWidth"], layout["row"]["height"]
@@ -129,6 +133,8 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
     extra=sum(1+group_profile["gapRows"] for a,b in zip(projection.items,projection.items[1:]) if a.group_id!=b.group_id); width, height = (viewport["width"], viewport["height"]) if settings else (max(960, left + (end - start).days * day + 80), top + (len(projection.items)+extra) * row + 100)
     title_text = labels["title"].replace("{title}", title)
     parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" role="img" aria-labelledby="title desc">',f'<title id="title">{escape(title_text)}</title>',f'<desc id="desc">Planned and Actual engineering timeline review; {len(projection.unmatched_actual_ids)} unmatched Actual observations.</desc>', f'<defs><pattern id="missing" width="{missing["width"]}" height="{missing["height"]}" patternUnits="userSpaceOnUse" patternTransform="rotate({missing["angle"]})"><line x1="0" y1="0" x2="0" y2="{missing["height"]}" stroke="{colors.get("missing", missing["stroke"]["color"])}" stroke-width="{missing["stroke"]["width"]}"/></pattern></defs>',f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',f'<text x="{left}" y="{top-heading["size"]}" font-family="{escape(font, quote=True)}" font-size="{heading["size"]}" font-weight="{heading["weight"]}" fill="{colors.get("text", "#111827")}">{escape(title_text)}</text>']
+    if presentation_scene is not None:
+        parts.append(f'<metadata data-presentation-scene="v0.1" data-axis-count="{len(presentation_scene.axes)}" data-mark-count="{len(presentation_scene.marks)}"/>')
     if settings is None:
         parts.append('<metadata data-presentation-adapter="legacy-v0.1" data-diagnostic="E_PRESENTATION_LEGACY_ADAPTER"/>')
     cursor = start
