@@ -8,7 +8,7 @@ from typing import Iterable
 
 from .presentation_axis import AxisInterval, axis_intervals
 from .presentation_marks import ComparisonMark, comparison_marks
-from .presentation_lanes import LaneAssignment, LaneItem, assign_stable_lanes
+from .presentation_lanes import LaneAssignment, LaneItem, LaneTrack, assign_stable_lanes, lane_tracks
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,7 @@ class PresentationScene:
     ticks: tuple[AxisInterval, ...]
     marks: tuple[ComparisonMark, ...]
     lanes: tuple[LaneAssignment, ...]
+    lane_tracks: tuple[LaneTrack, ...]
 
 
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
@@ -41,8 +42,16 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
         else:
             at = planned["at"]
             lane_items.append(LaneItem(str(getattr(item, "object_id")), str(getattr(item, "group_id", "")), at, at + timedelta(days=1)))
-    lanes = assign_stable_lanes(lane_items, max_stack=settings["layout"]["lanes"]["maxStack"])
-    return PresentationScene(str(title), (start, end), axes, ticks, marks, lanes)
+    group_order = tuple(dict.fromkeys(item.group_id for item in lane_items))
+    lanes = assign_stable_lanes(lane_items, max_stack=settings["layout"]["lanes"]["maxStack"], group_order=group_order)
+    lane_spec = settings["layout"]["lanes"]
+    bar = settings["theme"]["bar"]
+    mark_extent = (bar["plannedHeight"] + settings["layout"]["bars"]["gap"] + bar["actualHeight"]
+                   if settings["layout"]["bars"]["comparisonMode"] == "stacked"
+                   else max(bar["plannedHeight"], bar["actualHeight"]))
+    tracks = lane_tracks(lanes, surface=lane_spec["surface"], mark_extent=mark_extent,
+                         clearance=settings["layout"]["routing"]["clearance"], padding=lane_spec["trackPadding"])
+    return PresentationScene(str(title), (start, end), axes, ticks, marks, lanes, tracks)
 
 
 def presentation_scene_from_schedule(title: str, placements: dict[str, dict[str, date]], settings: dict) -> PresentationScene:
