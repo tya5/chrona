@@ -36,10 +36,20 @@
     "paint": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["color", "opacity"],
+      "required": [
+        "color",
+        "opacity"
+      ],
       "properties": {
-        "color": {"type": "string", "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"},
-        "opacity": {"type": "number", "minimum": 0, "maximum": 1}
+        "color": {
+          "type": "string",
+          "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|none)$"
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
       }
     },
     "context": {
@@ -96,12 +106,32 @@
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["family", "weight", "revision", "contentIdentity"],
+                "required": [
+                  "family",
+                  "weight",
+                  "revision",
+                  "contentIdentity"
+                ],
                 "properties": {
-                  "family": {"type": "string", "minLength": 1, "maxLength": 4096},
-                  "weight": {"type": "integer", "minimum": 1, "maximum": 1000},
-                  "revision": {"type": "string", "minLength": 1, "maxLength": 4096},
-                  "contentIdentity": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+                  "family": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000
+                  },
+                  "revision": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "contentIdentity": {
+                    "type": "string",
+                    "pattern": "^sha256:[0-9a-f]{64}$"
+                  }
                 }
               }
             },
@@ -1192,17 +1222,33 @@
         "facetPaints": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["default", "groups"],
+          "required": [
+            "default",
+            "groups"
+          ],
           "properties": {
             "default": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["planned", "actual", "baseline", "variance"],
+              "required": [
+                "planned",
+                "actual",
+                "baseline",
+                "variance"
+              ],
               "properties": {
-                "planned": {"$ref": "#/$defs/paint"},
-                "actual": {"$ref": "#/$defs/paint"},
-                "baseline": {"$ref": "#/$defs/paint"},
-                "variance": {"$ref": "#/$defs/paint"}
+                "planned": {
+                  "$ref": "#/$defs/paint"
+                },
+                "actual": {
+                  "$ref": "#/$defs/paint"
+                },
+                "baseline": {
+                  "$ref": "#/$defs/paint"
+                },
+                "variance": {
+                  "$ref": "#/$defs/paint"
+                }
               }
             },
             "groups": {
@@ -1212,10 +1258,18 @@
                 "additionalProperties": false,
                 "minProperties": 1,
                 "properties": {
-                  "planned": {"$ref": "#/$defs/paint"},
-                  "actual": {"$ref": "#/$defs/paint"},
-                  "baseline": {"$ref": "#/$defs/paint"},
-                  "variance": {"$ref": "#/$defs/paint"}
+                  "planned": {
+                    "$ref": "#/$defs/paint"
+                  },
+                  "actual": {
+                    "$ref": "#/$defs/paint"
+                  },
+                  "baseline": {
+                    "$ref": "#/$defs/paint"
+                  },
+                  "variance": {
+                    "$ref": "#/$defs/paint"
+                  }
                 }
               }
             }
@@ -1225,11 +1279,21 @@
         "annotation": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["boxFill", "boxStroke", "leader"],
+          "required": [
+            "boxFill",
+            "boxStroke",
+            "leader"
+          ],
           "properties": {
-            "boxFill": {"$ref": "#/$defs/paint"},
-            "boxStroke": {"$ref": "#/$defs/paint"},
-            "leader": {"$ref": "#/$defs/paint"}
+            "boxFill": {
+              "$ref": "#/$defs/paint"
+            },
+            "boxStroke": {
+              "$ref": "#/$defs/paint"
+            },
+            "leader": {
+              "$ref": "#/$defs/paint"
+            }
           },
           "description": "Concrete shared annotation paints; Layout owns candidate geometry and routing limits."
         },
@@ -1534,8 +1598,39 @@
                   }
                 },
                 "allOf": [
-                  {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
-                  {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "const": "content"
+                        }
+                      }
+                    },
+                    "then": {
+                      "not": {
+                        "required": [
+                          "value"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "fixed",
+                            "fraction"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "value"
+                      ]
+                    }
+                  }
                 ]
               },
               "tracks": {
@@ -1574,8 +1669,39 @@
                     }
                   },
                   "allOf": [
-                    {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
-                    {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "const": "content"
+                          }
+                        }
+                      },
+                      "then": {
+                        "not": {
+                          "required": [
+                            "value"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "fixed",
+                              "fraction"
+                            ]
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "value"
+                        ]
+                      }
+                    }
                   ]
                 }
               },
@@ -1702,11 +1828,38 @@
         "labelPlacement": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["candidateSides", "maxCandidates", "overflow"],
+          "required": [
+            "candidateSides",
+            "maxCandidates",
+            "overflow"
+          ],
           "properties": {
-            "candidateSides": {"type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": {"enum": ["above", "below", "end", "start", "inside"]}},
-            "maxCandidates": {"type": "integer", "minimum": 1, "maximum": 16},
-            "overflow": {"enum": ["diagnose", "clip-optional"]}
+            "candidateSides": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "above",
+                  "below",
+                  "end",
+                  "start",
+                  "inside"
+                ]
+              }
+            },
+            "maxCandidates": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16
+            },
+            "overflow": {
+              "enum": [
+                "diagnose",
+                "clip-optional"
+              ]
+            }
           },
           "description": "Finite, deterministic placement candidates; required content may not be clipped."
         },
@@ -1832,8 +1985,39 @@
               }
             },
             "allOf": [
-              {"if": {"properties": {"kind": {"const": "content"}}}, "then": {"not": {"required": ["value"]}}},
-              {"if": {"properties": {"kind": {"enum": ["fixed", "fraction"]}}}, "then": {"required": ["value"]}}
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "content"
+                    }
+                  }
+                },
+                "then": {
+                  "not": {
+                    "required": [
+                      "value"
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "fixed",
+                        "fraction"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "value"
+                  ]
+                }
+              }
             ]
           },
           "description": "Empty means equal division by count, an explicit algorithm policy; keyed position follows View columns."
@@ -2083,7 +2267,11 @@
               ]
             },
             "comparisonMode": {
-              "enum": ["stacked", "overlaid", "baseline-and-actual"]
+              "enum": [
+                "stacked",
+                "overlaid",
+                "baseline-and-actual"
+              ]
             }
           },
           "description": "Sizes belong to Theme; band placement belongs to Layout."
@@ -2158,8 +2346,8 @@
             "gridOffset",
             "portOffset",
             "bendPenalty",
-            "strokeLayer"
-            ,"limit"
+            "strokeLayer",
+            "limit"
           ],
           "properties": {
             "enabled": {
@@ -2196,21 +2384,69 @@
                 "above-marks"
               ]
             },
-            "limit": {"type": "integer", "minimum": 1, "maximum": 100000}
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000
+            }
           },
           "description": "Semantic endpoint types are NOT configurable; geometry from actual mark bounds and a bounded route search."
         },
         "lanes": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["grouping", "stacking", "occupancy", "maxStack"],
+          "required": [
+            "grouping",
+            "stacking",
+            "occupancy",
+            "maxStack",
+            "surface",
+            "pitchPolicy",
+            "trackPadding",
+            "trackGap"
+          ],
           "properties": {
-            "grouping": {"enum": ["view-groups"]},
-            "stacking": {"enum": ["stable-lowest-nonoverlap"]},
-            "occupancy": {"enum": ["mark-bounds-plus-required-label-bounds"]},
-            "maxStack": {"type": "integer", "minimum": 1, "maximum": 10000}
+            "grouping": {
+              "enum": [
+                "view-groups"
+              ]
+            },
+            "stacking": {
+              "enum": [
+                "stable-lowest-nonoverlap"
+              ]
+            },
+            "occupancy": {
+              "enum": [
+                "mark-bounds-plus-required-label-bounds"
+              ]
+            },
+            "maxStack": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "surface": {
+              "enum": [
+                "row-aligned",
+                "independent-lane-track"
+              ]
+            },
+            "pitchPolicy": {
+              "const": "scene-mark-extent-plus-clearance"
+            },
+            "trackPadding": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "trackGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10000
+            }
           },
-          "description": "Stable stacking uses View group/order and never moves an item across groups."
+          "description": "Stable stacking uses View group/order and never moves an item across groups. row-aligned accepts only stack 0; independent-lane-track owns derived track geometry."
         },
         "legend": {
           "type": "object",
@@ -2424,13 +2660,48 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "source", "facet", "endpoint", "required"],
+            "required": [
+              "id",
+              "source",
+              "facet",
+              "endpoint",
+              "required"
+            ],
             "properties": {
-              "id": {"type": "string", "minLength": 1, "maxLength": 4096},
-              "source": {"enum": ["title", "planned-date", "actual-date", "comparison-delta", "annotation-text"]},
-              "facet": {"enum": ["planned", "actual", "baseline", "variance", "annotation"]},
-              "endpoint": {"enum": ["start", "finish", "at", "body"]},
-              "required": {"type": "boolean"}
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "source": {
+                "enum": [
+                  "title",
+                  "planned-date",
+                  "actual-date",
+                  "comparison-delta",
+                  "annotation-text"
+                ]
+              },
+              "facet": {
+                "enum": [
+                  "planned",
+                  "actual",
+                  "baseline",
+                  "variance",
+                  "annotation"
+                ]
+              },
+              "endpoint": {
+                "enum": [
+                  "start",
+                  "finish",
+                  "at",
+                  "body"
+                ]
+              },
+              "required": {
+                "type": "boolean"
+              }
             }
           },
           "description": "Closed text sources only; source stability, rule order and Layout candidates determine placement."
