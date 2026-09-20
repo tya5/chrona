@@ -269,7 +269,6 @@ Its body contains immutable references to:
   resolved to complete Presentation Settings;
 - an Actual set when the selected View requires Actual;
 - optional Review Summary and Review Detail profiles;
-- an optional Federation Plan; and
 - explicit target kind/capabilities.
 
 Complete Presentation Settings v0.2 intentionally has no resource `id`, so it cannot be
@@ -279,6 +278,8 @@ Scene construction. Locale, viewport, fixed font metrics, Theme, Layout, Detail,
 Output policy come only from those resolved Presentation Settings. Therefore v0.3 rejects `style`, `theme`,
 `sceneProfile`, `viewport`, `layoutMetrics`, or a second locale field as duplicate
 authority. The Runtime Coordinator resolves the entire closure before scheduling.
+Federation remains a library-only successor capability: v0.3 does not accept a
+Federation Plan until the current review projection consumes its resolved exports.
 
 The legacy v0.1/v0.2 Render Context formats remain conformance inputs for their declared
 token-Theme and federation contracts. They are not accepted by the current
