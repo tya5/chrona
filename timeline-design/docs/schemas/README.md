@@ -27,3 +27,7 @@ The fixture under `../fixtures/presentation/` is structural only. The companion 
 Style, Theme, and Scene profile resources deliberately use empty bodies until their
 respective semantic languages are specified. Passing this schema must not be described
 as a rendered-Scene or presentation conformance result.
+
+`review-detail-profile-v0.1.schema.yaml` owns the M23 authoring resource for selected
+group descriptions, milestone IDs, and source-labelled observation rows. The v0.2
+Presentation Settings Detail remains the sole legend wording/order authority.

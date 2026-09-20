@@ -1,0 +1,31 @@
+version: chrona/review-detail-profile/v0.1
+id: controller-z-review-detail
+body:
+  groupDetails:
+    - groupId: firmware
+      label: Firmware
+      description: Controller firmware delivery and integration readiness.
+    - groupId: validation
+      label: Validation
+      description: Qualification evidence and release acceptance.
+  milestones: [fw-freeze, production-release]
+  observations:
+    columns:
+      - {id: owner, label: Owner}
+      - {id: observation, label: Observation}
+      - {id: status, label: Status}
+    rows:
+      - id: firmware-note
+        source: example-record-R-001
+        emphasis: attention
+        cells:
+          owner: Firmware
+          observation: Example observation requiring follow-up.
+          status: Attention
+      - id: qualification
+        source: example-record-R-002
+        emphasis: normal
+        cells:
+          owner: Validation
+          observation: Example observation with no emphasis.
+          status: Normal

@@ -1784,6 +1784,9 @@
                   "timeline-axis",
                   "summary",
                   "legend",
+                  "group-details",
+                  "observations",
+                  "milestones",
                   "annotations",
                   "notes"
                 ]
