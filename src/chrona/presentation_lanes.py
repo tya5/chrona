@@ -78,3 +78,10 @@ def lane_tracks(assignments: Iterable[LaneAssignment], *, surface: str, mark_ext
     return tuple(LaneTrack(group_id, max(item.stack for item in values) + 1, mark_extent, pitch,
                            2 * padding + mark_extent + (max(item.stack for item in values) * pitch))
                  for group_id, values in grouped.items())
+
+
+def lane_stack_offset(track: LaneTrack, *, stack: int, padding: float) -> float:
+    """Map a Scene stack index to an independent-track y offset, without reordering."""
+    if stack < 0 or stack >= track.stack_count or padding < 0:
+        raise ValueError("E_PRESENTATION_STACK_OVERFLOW")
+    return padding + stack * track.pitch
