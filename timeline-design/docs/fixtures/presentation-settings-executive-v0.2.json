@@ -214,6 +214,17 @@
       }
     },
     "groupPaints": {},
+    "facetPaints": {
+      "default": {
+        "planned": {"color": "#3986E6", "opacity": 1},
+        "actual": {"color": "#269D79", "opacity": 1},
+        "baseline": {"color": "#637187", "opacity": 1},
+        "variance": {"color": "#C8762B", "opacity": 1}
+      },
+      "groups": {
+        "delivery": {"actual": {"color": "#176F59", "opacity": 1}}
+      }
+    },
     "bar": {
       "radius": 2,
       "minWidth": 1,
@@ -343,6 +354,14 @@
         "overflow": "diagnose",
         "align": "stretch"
       },
+      "timelineAxis": {
+        "region": "main",
+        "track": 1,
+        "source": "timeline-axis",
+        "priority": "required",
+        "overflow": "diagnose",
+        "align": "stretch"
+      },
       "legend": {
         "region": "footer",
         "track": 0,
@@ -358,6 +377,11 @@
       "gap": 6,
       "headerHeight": 32,
       "labelAlign": "center"
+    },
+    "labelPlacement": {
+      "candidateSides": ["above", "below", "end", "start", "inside"],
+      "maxCandidates": 5,
+      "overflow": "clip-optional"
     },
     "row": {
       "sizing": "fit",
@@ -439,7 +463,14 @@
       "gridOffset": 2,
       "portOffset": 8,
       "bendPenalty": 12,
-      "strokeLayer": "behind-marks"
+      "strokeLayer": "behind-marks",
+      "limit": 4096
+    },
+    "lanes": {
+      "grouping": "view-groups",
+      "stacking": "stable-lowest-nonoverlap",
+      "occupancy": "mark-bounds-plus-required-label-bounds",
+      "maxStack": 12
     },
     "legend": {
       "padding": {
@@ -477,6 +508,12 @@
     }
   },
   "detail": {
+    "labelRules": [
+      {"id": "title", "source": "title", "facet": "planned", "endpoint": "body", "required": true},
+      {"id": "actual-finish", "source": "actual-date", "facet": "actual", "endpoint": "finish", "required": false},
+      {"id": "finish-variance", "source": "comparison-delta", "facet": "variance", "endpoint": "finish", "required": false},
+      {"id": "annotation", "source": "annotation-text", "facet": "annotation", "endpoint": "body", "required": true}
+    ],
     "groupLabel": "Owner",
     "subtitle": "{windowStart} – {windowLastVisible} / Planned and observed delivery",
     "accessibleDescription": "Plan and Actual comparison. {selectedCount} rows; {unmatchedCount} unmatched observations. Actual is not a forecast.",
