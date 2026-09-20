@@ -91,3 +91,5 @@ G2–G4実装の前に以下を完了する。
 ## 7. D3 schema and evidence closure
 
 wire schemaのroutingは`gridOffset`、`clearance`、`portOffset`、`bendPenalty`、`limit`を必須化する。`row-aligned`はstackIndexをScene metadataとして保持し、stack 0 に制限しない。`shared-presentation-foundation`の正負fixtureとvalidatorはこれらを検証し、仕様30 §7.5の入力漏れを許さない。受入トレーサビリティは`g1-g4-integration-remediation-2026-09-20.md`の必須受入ケースを仕様節・schema path・実装symbol・testへ対応づけ、実装フェーズで更新する。
+
+`presentation-scene-input-v0.1.yaml` はauthoring schemaではなく、ResolvedPresentationInputへ渡すslot、row、lane track boundsの派生入力fixtureである。対応validatorはadapterが完成Sceneだけを受けるための入力閉包を検証する。

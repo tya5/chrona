@@ -1,0 +1,21 @@
+version: chrona/presentation-scene-input/v0.1
+kind: derived-scene-input
+authority: runtime-derived-only
+inputs:
+  resolvedSettings: chrona/presentation-settings/v0.2
+  slots:
+    - {id: title, source: title, bounds: resolved-layout}
+    - {id: table, source: table, bounds: resolved-layout}
+    - {id: timeline, source: timeline, bounds: resolved-layout, scaleId: primary}
+    - {id: timelineAxis, source: timeline-axis, bounds: resolved-layout, scaleId: primary}
+  rows:
+    source: resolved-view-group-order
+    bounds: resolved-layout
+  laneTracks:
+    source: stable-lane-stack
+    bounds: resolved-scene-geometry
+    surfaces: [row-aligned, independent-lane-track]
+invariants:
+  - adapters-receive-completed-scene-only
+  - slot-row-track-bounds-are-not-authoring-data
+  - shared-scale-slots-have-equal-normalized-date-position
