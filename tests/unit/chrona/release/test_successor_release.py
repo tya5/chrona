@@ -6,7 +6,7 @@ import yaml
 from chrona.successor_release import create_successor_release, validate_successor_acceptance
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
 
 def _manifest():

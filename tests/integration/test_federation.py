@@ -8,7 +8,7 @@ from chrona.revision_store import MemoryRevisionStore
 from chrona.scene import federated_scene_input
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 FIXTURES = ROOT / "conformance" / "federation"
 TRUSTED = {"git+https://example.invalid/firmware.git"}
 

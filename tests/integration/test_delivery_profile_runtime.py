@@ -10,7 +10,7 @@ from chrona.revision_store import LocalSnapshotReader, LocalTransactionalStore, 
 from chrona.scheduler import schedule
 from chrona.validation import validate_project
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 FIXTURES = ROOT / "conformance"
 
 

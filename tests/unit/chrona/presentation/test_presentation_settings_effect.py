@@ -5,7 +5,7 @@ import json
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 MATRIX = json.loads((ROOT / "conformance/presentation-setting-consumption-matrix-v0.1.json").read_text())
 
 

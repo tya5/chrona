@@ -8,5 +8,5 @@ otherwise its result is explicitly `blocked`. It reuses M10 temporal, M11 capaci
 observations, M12 conflict/audit/replica, extension, and output contracts without
 mutating a Project, schedule, Scene, or Date-only profile.
 
-**Evidence:** `tests/test_successor_release.py`, full suite (85 passed), and all
+**Evidence:** `tests/unit/chrona/release/test_successor_release.py`, full suite (85 passed), and all
 fixture conformance validators pass.

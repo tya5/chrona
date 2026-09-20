@@ -48,7 +48,7 @@ visual appearance. No preset-reference resolution is required.
 
 ```sh
 .venv/bin/python scripts/render_schedule_sample.py examples/aster-ssd/manifest.yaml
-.venv/bin/pytest -q tests/test_aster_sample.py
+.venv/bin/pytest -q tests/acceptance/examples/test_aster_sample.py
 ```
 
 The default command regenerates SVG and verifies PNG output. It requires Node, `sharp`,

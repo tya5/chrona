@@ -14,7 +14,7 @@ from chrona.review_svg import build_review_projection, render_table_timeline_svg
 from chrona.scheduler import schedule
 from chrona.presentation_settings import builtin_bases
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 CAPS = {'sourceMetadata', 'accessibleText', 'semanticRoles', 'marker', 'tableSemantics', 'hierarchicalAxis'}
 
 

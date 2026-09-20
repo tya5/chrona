@@ -48,7 +48,7 @@ def test_controller_x_legacy_documentation_artifact_is_current():
     import yaml
     from chrona.scheduler import schedule
 
-    root = Path(__file__).resolve().parents[1]
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     project = yaml.safe_load((root / "conformance/controller-x.yaml").read_text())
     scene = scene_from_schedule(project, schedule(project))
     generated = render_svg(scene, {"marker", "metadata", "text-alternative"})

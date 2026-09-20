@@ -7,5 +7,5 @@ separate from Project state. Explicit resolution performs a Store CAS and record
 conflict parents on the resulting immutable revision. Stale writes remain conflicts;
 no merge path accepts derived schedule, Scene, output, or Federation child state.
 
-**Evidence:** `tests/test_collaboration.py`, full suite (82 passed), and fixture
+**Evidence:** `tests/unit/chrona/collaboration/test_collaboration.py`, full suite (82 passed), and fixture
 conformance all pass.

@@ -1,12 +1,31 @@
 """Regression coverage for declarative slide presentation, not sample dates."""
 from copy import deepcopy
+from pathlib import Path
+import xml.etree.ElementTree as ET
 
 import pytest
 import yaml
 
-from test_gantt_surface import ROOT, CAPS, fixture, elements
 from chrona.review_svg import build_review_projection, render_table_timeline_svg
 from chrona.scheduler import schedule
+
+
+ROOT = next(parent for parent in Path(__file__).resolve().parents
+            if (parent / "pyproject.toml").is_file())
+CAPS = {"sourceMetadata", "accessibleText", "semanticRoles", "marker",
+        "tableSemantics", "hierarchicalAxis"}
+
+
+def fixture():
+    def read(name):
+        return yaml.safe_load((ROOT / "examples/controller-z" / name).read_text())
+    return [read(name) for name in ("project.yaml", "actual.yaml", "shared/view.yaml",
+                                    "shared/style.yaml", "shared/theme.yaml", "shared/layout.yaml")]
+
+
+def elements(svg, purpose):
+    return [node for node in ET.fromstring(svg).iter()
+            if node.get("data-purpose") == purpose]
 
 
 def render(settings):

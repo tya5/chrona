@@ -14,7 +14,7 @@ from chrona.presentation_settings import resolve_presentation_settings
 from chrona.review_svg import build_review_projection, render_table_timeline_svg
 from chrona.scheduler import schedule
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 SAMPLE = ROOT/'examples/aster-ssd'
 CAPS = {'sourceMetadata', 'accessibleText', 'semanticRoles', 'marker', 'tableSemantics', 'hierarchicalAxis'}
 

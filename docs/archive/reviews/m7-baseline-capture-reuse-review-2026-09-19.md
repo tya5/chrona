@@ -11,5 +11,5 @@
 | Reuse | Pass | Uses the existing Project Snapshot and Revision Store read boundary; no second Project model exists. |
 | Non-reversibility | Pass | No undo/delete operation is exposed for a captured baseline. |
 
-`tests/test_snapshots.py` covers the accepted and rejected paths. M7 remains in progress
+`tests/unit/chrona/storage/test_snapshots.py` covers the accepted and rejected paths. M7 remains in progress
 until the client conflict/rollback result surface is implemented.

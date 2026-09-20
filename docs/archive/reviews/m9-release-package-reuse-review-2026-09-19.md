@@ -7,6 +7,6 @@
 acceptance manifest. It computes identity from canonical values, requires the exact
 evaluation/target/version binding, and does not read or mutate Project, Scene, or
 renderer state. A fully accepted SVG result becomes `published`; excluded use cases,
-missing artifact, and substituted bindings are blocked. `tests/test_release_package.py`
+missing artifact, and substituted bindings are blocked. `tests/unit/chrona/release/test_release_package.py`
 provides the positive and rejection evidence. No PDF, raster, canvas, or presentation
 adapter is claimed.

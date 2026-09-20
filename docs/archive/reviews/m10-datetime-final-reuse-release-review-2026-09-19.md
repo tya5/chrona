@@ -8,13 +8,13 @@
 - `docs/fixtures/run_conformance.py`: Chrona conformance passes, including the
   DateTime Project schema/profile checks.
 - `docs/fixtures/validate_datetime_project.py`: v0.2 Project fixtures pass.
-- `tests/test_temporal_datetime.py` covers cross-zone instant preservation, DST fold
+- `tests/unit/chrona/scheduling/test_temporal_datetime.py` covers cross-zone instant preservation, DST fold
   selection, DST-gap rejection, exact-duration and calendar-period arithmetic, and
   bounded recurrence.
-- `tests/test_datetime_scheduler.py` covers opt-in v0.2 fixed/scheduled placement,
+- `tests/unit/chrona/scheduling/test_datetime_scheduler.py` covers opt-in v0.2 fixed/scheduled placement,
   start/end endpoint lower bounds, inverse end placement, and recurrence-endpoint
   rejection.
-- `tests/test_datetime_migration.py` covers explicit v0.1-to-v0.2 zone/time/DST
+- `tests/unit/chrona/scheduling/test_datetime_migration.py` covers explicit v0.1-to-v0.2 zone/time/DST
   policy, provenance, zero-lag normalization, unsupported-source rejection, and
   downgrade rejection.
 

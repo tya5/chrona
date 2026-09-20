@@ -13,5 +13,5 @@
 | Evaluation integration | Pass: verified lifecycle references are explicit validation inputs; legacy Project files are not rewritten or implicitly upgraded. |
 | Profile lifecycle UX | Pass: a read-only adapter shows state, diagnostics, and exact pinned source/version/content identity without fallback or mutation. |
 
-`tests/test_extension_registry.py` and `tests/test_package_lifecycle.py` cover required
+`tests/unit/chrona/extensions/test_extension_registry.py` and `tests/unit/chrona/extensions/test_package_lifecycle.py` cover required
 FD-4 rejection and lifecycle-display cases. See `m8-extension-registry-reuse-review-2026-09-19.md`.

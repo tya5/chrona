@@ -8,7 +8,7 @@ import yaml
 from chrona.presentation_settings import PresentationSettingsError, builtin_base_references, builtin_bases, resolve_presentation_settings
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
 
 def fixture(name):

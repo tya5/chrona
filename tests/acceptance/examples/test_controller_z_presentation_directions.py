@@ -11,7 +11,7 @@ from chrona.scheduler import schedule
 from chrona.validation import load_yaml
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 EXAMPLES = ROOT / "examples" / "controller-z"
 CAPABILITIES = {"sourceMetadata", "accessibleText", "semanticRoles", "marker",
                 "tableSemantics", "hierarchicalAxis"}

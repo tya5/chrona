@@ -11,5 +11,5 @@
 | SVG baseline | Pass: SVG output is deterministic and carries the declared evaluation identity in its manifest. |
 | No silent adapter fallback | Pass: unsupported target returns an explicit diagnostic rather than substituted bytes. |
 
-`tests/test_output.py` covers the coordinator contract. The prior remaining work is
+`tests/unit/chrona/release/test_output.py` covers the coordinator contract. The prior remaining work is
 closed by the release-acceptance, release-package, and M9 reuse-review artifacts.

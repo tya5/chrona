@@ -6,7 +6,8 @@ from chrona.scheduler import schedule
 from chrona.validation import load_yaml, validate_project
 
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "conformance"
+REPO_ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+EXAMPLES = REPO_ROOT / "conformance"
 PROJECT_EXAMPLES = ("calendar.yaml", "controller-x.yaml", "dependencies.yaml", "minimal.yaml", "semiconductor.yaml")
 
 

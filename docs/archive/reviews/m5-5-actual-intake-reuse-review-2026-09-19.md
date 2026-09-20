@@ -21,14 +21,14 @@ interactive reconciliation UI.
 | Visible unmatched handoff | Pass | Unknown or omitted mapping emits `externalIdentity`, `alignment: unmatched`, and `E_ACTUAL_UNMATCHED`. |
 | Actual/plan authority separation | Pass | The adapter returns an independently versioned Actual-set body and never accepts a Project, Store, Command executor, or scheduler. |
 | M7 handoff | Pass | Each unmatched observation has the exact identity required by the later `resolveActualObservation` Command. |
-| Executable inheritance | Pass | `tests/test_actual_intake.py` joins the complete preceding test and conformance suite. |
+| Executable inheritance | Pass | `tests/unit/chrona/presentation/test_actual_intake.py` joins the complete preceding test and conformance suite. |
 
 ## Changed-code classification
 
 | Path | Classification | Reason |
 |---|---|---|
 | `src/chrona/actual_intake.py` | adapter | Converts explicit external facts to the existing Actual-set contract only. |
-| `tests/test_actual_intake.py` | acceptance evidence | Proves resolved/unmatched behavior and rejects implicit title matching. |
+| `tests/unit/chrona/presentation/test_actual_intake.py` | acceptance evidence | Proves resolved/unmatched behavior and rejects implicit title matching. |
 
 ## Decision
 

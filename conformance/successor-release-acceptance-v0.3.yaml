@@ -2,9 +2,9 @@ version: chrona/successor-release-acceptance/v0.3
 releaseId: successor-v0.3
 closure: {datetime: v0.2, capacity: v0.2, collaboration: v0.2, extensions: v0.2, output: v0.2}
 useCases:
-  - {id: UC-16, disposition: accepted, evidence: [tests/test_temporal_datetime.py]}
-  - {id: UC-17, disposition: accepted, evidence: [tests/test_capacity.py]}
-  - {id: UC-18, disposition: accepted, evidence: [tests/test_cost_observations.py]}
-  - {id: UC-19, disposition: accepted, evidence: [tests/test_collaboration.py]}
-  - {id: UC-20, disposition: accepted, evidence: [tests/test_collaboration.py]}
-  - {id: UC-21, disposition: accepted, evidence: [tests/test_collaboration.py]}
+  - {id: UC-16, disposition: accepted, evidence: [tests/unit/chrona/scheduling/test_temporal_datetime.py]}
+  - {id: UC-17, disposition: accepted, evidence: [tests/unit/chrona/scheduling/test_capacity.py]}
+  - {id: UC-18, disposition: accepted, evidence: [tests/unit/chrona/scheduling/test_cost_observations.py]}
+  - {id: UC-19, disposition: accepted, evidence: [tests/unit/chrona/collaboration/test_collaboration.py]}
+  - {id: UC-20, disposition: accepted, evidence: [tests/unit/chrona/collaboration/test_collaboration.py]}
+  - {id: UC-21, disposition: accepted, evidence: [tests/unit/chrona/collaboration/test_collaboration.py]}
