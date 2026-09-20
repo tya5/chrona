@@ -119,11 +119,13 @@ This prevents filling missing values with appearance defaults.
 Replace `.58` width estimation, `.34` baseline estimation, and fixed text widths
 112/60/57 with **measurement from fixed font metrics**, not new tuning knobs.
 `context.fontMetrics.assets` is the complete tuple
-`{family, weight, revision, contentIdentity, path, faceIndex?}`. `path` is relative to
-an explicitly supplied asset root, rejects traversal, and identifies the bytes whose
-content identity is declared. `faceIndex` is required for TrueType collections and is
-otherwise absent or zero. Host family discovery such as `fc-match` is not an asset
-resolver and is prohibited in the reproducible path. For every Theme typography weight,
+`{family, weight, revision, contentIdentity, path}`. `path` is relative to an explicitly
+supplied asset root, rejects traversal, and identifies a canonical
+`chrona/font-metrics/v1` JSON table. The table contains family, weight, units-per-em,
+ascent, descent, default advance, and Unicode-codepoint advances. Its exact bytes,
+family, and weight must match the declaration. Host family discovery such as `fc-match`
+and direct host font-file opening are prohibited in the reproducible path. For every
+Theme typography weight,
 select only a matching declared asset, in font-stack order. Never substitute regular
 for bold. An undeclared family/weight, identity mismatch, or absent asset yields
 `E_FONT_METRICS_UNAVAILABLE`. `missingFont: declared-fallback` permits only moving to

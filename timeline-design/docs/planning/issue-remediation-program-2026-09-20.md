@@ -87,17 +87,21 @@ the explicit diagnostic legacy adapter. The legacy adapter keeps a separate labe
 gutter, non-overlapping heading, and muted ten-pixel tick labels, but does not acquire
 v0.2 reproducibility claims.
 
-## 5. Closed font-asset decision
+## 5. Closed font-metrics decision
 
-Font measurement consumes an explicitly declared asset file, not a family lookup from
-the host. Each `fontMetrics.assets` entry gains a required `path` relative to the
-settings resource directory or to an explicitly supplied asset root. Resolution rejects
-absolute paths, traversal, missing files, content-identity mismatch, family mismatch,
-or weight mismatch with `E_FONT_METRICS_UNAVAILABLE`.
+Font measurement consumes an explicitly declared, content-addressed metrics table, not
+a family lookup or font file selected from the host. Each `fontMetrics.assets` entry
+gains a required `path` to a `chrona/font-metrics/v1` JSON resource relative to an
+explicit asset root. The table owns family, weight, units-per-em, ascent, descent,
+default advance, and Unicode-codepoint advances. Its canonical file bytes are verified
+against `contentIdentity`; its family and weight must match the declaration.
 
-TrueType collections additionally require an optional non-negative `faceIndex`; a
-collection without it is unavailable. Plain TrueType/OpenType files prohibit a
-non-zero face index. `fc-match` is removed from the product path and tests.
+Resolution rejects absolute paths, traversal, missing files, malformed tables,
+content-identity mismatch, family mismatch, or weight mismatch with
+`E_FONT_METRICS_UNAVAILABLE`. `fc-match`, TrueType collection selection, and direct
+font-file opening are removed from the product path and tests. The repository may check
+in generated metrics tables without redistributing font outlines; the table revision
+records its source and generation contract.
 
 ## 6. Closed presentation decisions
 
@@ -125,7 +129,7 @@ classification.
 | D0 | Publish this program, owning-spec changes, manifest/readme correction, and ADR renumbering. | Design validators and link/path audit pass. |
 | I0 | #1–#3 plus #7 calendar/anchor fixes. | Reproductions become diagnostics; hash-seed outputs match; full suite passes. |
 | I1 | Snapshot CLI mode, v0.2 render option, legacy layout, help and docs. | Raw and pinned CLI fixtures; controller-x regression; full suite. |
-| I2 | Exact font asset resolver and Linux/macOS CI. | No `fc-match`; identity/weight/TTC tests; full suite. |
+| I2 | Exact font-metrics table resolver and Linux/macOS CI. | No `fc-match` or font-file opening; identity/family/weight tests; full suite. |
 | I3 | Axis formats/year, point/arrow shapes, opacity, actual-height evidence. | Settings consumption tests, visual artifacts, full suite. |
 | R0 | Full conformance, acceptance review, issue evidence and closure. | Published SHA equals verified local state. |
 
