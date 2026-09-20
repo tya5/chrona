@@ -13,9 +13,6 @@ inputs:
       rows: {source: resolved-view-group-order, bounds: resolved-layout}
       primitives:
         required: [title-text, axis-band, axis-label, tick, comparison-mark, item-label]
-        laterFamilies:
-          I3-C: [table-frame, table-header-band, table-column-label, group-surface, group-header, row-shade, table-row-rule, table-cell, dependency-connector, annotation-box, annotation-text, annotation-leader, project-note, legend-swatch, legend-label, coverage-text]
-          I3-F: [summary-panel, summary-header, summary-metric]
         ownership: resolved-scene-geometry
     - id: review
       slots:
@@ -25,8 +22,6 @@ inputs:
       rows: {source: resolved-view-group-order, bounds: resolved-layout}
       primitives:
         required: [title-text, axis-band, axis-label, tick, comparison-mark, item-label]
-        laterFamilies:
-          I3-F: [dependency-connector, annotation-box, annotation-text, annotation-leader, summary-panel, summary-header, summary-metric]
         ownership: resolved-scene-geometry
     - id: minimal
       slots:
@@ -36,8 +31,6 @@ inputs:
       rows: {source: resolved-view-group-order, bounds: resolved-layout}
       primitives:
         required: [title-text, axis-band, axis-label, tick, comparison-mark, item-label]
-        laterFamilies:
-          I3-F: [dependency-connector, annotation-box, annotation-text, annotation-leader]
         ownership: resolved-scene-geometry
   laneTracks:
     source: stable-lane-stack
@@ -49,5 +42,3 @@ invariants:
   - shared-scale-slots-have-equal-normalized-date-position
   - surface-adapter-selects-completed-primitives-only
   - missing-surface-or-primitive-is-a-stable-diagnostic
-  - primitive-family-presence-is-authorized-by-surface-slot-and-visibility
-  - routes-ports-and-text-layout-are-scene-owned

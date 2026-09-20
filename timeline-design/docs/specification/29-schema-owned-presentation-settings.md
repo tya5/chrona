@@ -128,11 +128,7 @@ intrinsic boundsである。solver入力はresolved settingsに加え、同一Sc
 slotはregionとtrack indexを明示する。同じtrackの多重配置はoverlay以外で診断。
 table/timelineは同じ行gridを共有。columnTracksが空の場合だけ等分配する。
 表示時間はViewが決め、scale paddingは時間を追加せず描画余白だけを増やす。
-単一point windowの表示用spanは`layout.scale.singlePointSpanDays`で設定できるが、意味上の日付を変更しない。
-Scene Builderはこの表示windowでaxisとrow-local TextLayoutを測定する。設定値が必須のaxis label、
-item label、point symbolを収められない場合は `E_LAYOUT_REQUIRED_OVERFLOW:text` を出し、adapterが
-局所的にwindowを拡張して救済してはならない。標準baseは、Date-only weekの最小表示として7日を
-明示する。別のspanはpreset overrideで変更できるが、同じ測定・overflow検査を通過しなければならない。
+単一point windowの表示用spanは設定できるが、意味上の日付を変更しない。
 
 凡例は計測済みswatch＋label＋gapのflow。文字列ごとの150/145/220等の幅を廃止。
 summary/notesも同じ測定flowに統合する。文字やデータが増えた場合は行折返し・

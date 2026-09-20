@@ -11,19 +11,6 @@ from .presentation_axis import AxisInterval, axis_intervals
 from .presentation_marks import ComparisonMark, comparison_marks
 from .presentation_lanes import LaneAssignment, LaneItem, LaneTrack, assign_stable_lanes, lane_tracks
 from .presentation_layout import solve_presentation_layout
-from .font_metrics import FontMetrics, resolve_font_metrics
-
-
-@dataclass(frozen=True)
-class TextLayout:
-    """One measured text result shared by Scene geometry and renderer serialization."""
-
-    bounds: tuple[float, float, float, float]
-    baseline: tuple[float, float]
-    lines: tuple[str, ...]
-    family: str
-    weight: int
-    asset_identity: str
 
 
 @dataclass(frozen=True)
@@ -47,13 +34,6 @@ class ScenePrimitive:
     semantic_facet: str
     visual_role: str
     bounds: tuple[float, float, float, float]
-    projection_instance_id: str = ""
-    surface_id: str = ""
-    purpose: str = ""
-    text: str | None = None
-    baseline: tuple[float, float] | None = None
-    text_layout: TextLayout | None = None
-    z_order: int = 0
 
 
 @dataclass(frozen=True)
@@ -88,7 +68,6 @@ class SceneSurface:
     slots: tuple[SceneSlot, ...]
     rows: tuple[SceneRow, ...]
     groups: tuple[SceneGroup, ...]
-    primitives: tuple[ScenePrimitive, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -209,140 +188,13 @@ def _linear_surface(surface_id: str, items: tuple[object, ...], window: tuple[da
     return SceneSurface(surface_id, slots, tuple(rows), tuple(groups))
 
 
-def _surface_slot(surface: SceneSurface, source: str) -> SceneSlot:
-    try:
-        return next(slot for slot in surface.slots if slot.source == source)
-    except StopIteration as error:
-        raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING") from error
-
-
-def _surface_x(slot: SceneSlot, start: date, end: date, value: date) -> float:
-    """Map a Date-only value into one completed surface slot, once."""
-    x, _, width, _ = slot.bounds
-    inset = min(20.0, width / 2.0)
-    days = max(1, (end - start).days)
-    return x + inset + (value - start).days / days * max(0.0, width - 2.0 * inset)
-
-
-def _surface_primitives(surface: SceneSurface, title: str, items: tuple[object, ...],
-                        window: tuple[date, date], axes: tuple[AxisInterval, ...],
-                        ticks: tuple[AxisInterval, ...], marks: tuple[ComparisonMark, ...],
-                        settings: dict) -> tuple[ScenePrimitive, ...]:
-    """Emit core I3 geometry for one public surface before adapter selection."""
-    title_slot, timeline, axis = (_surface_slot(surface, source) for source in ("title", "timeline", "timeline-axis"))
-    start, end = window
-    rows = {row.object_id: row for row in surface.rows}
-    items_by_id = {str(getattr(item, "object_id")): item for item in items}
-    primitives: list[ScenePrimitive] = []
-
-    def text_layout(value: str, x: float, top: float, *, role: str, available: float,
-                    center: bool = False) -> TextLayout:
-        typography = settings["theme"]["typography"].get(role, settings["theme"]["typography"]["body"])
-        size, weight = float(typography["size"]), int(typography["weight"])
-        line_height = float(typography.get("lineHeight", 1.2))
-        metrics: FontMetrics = resolve_font_metrics(settings["theme"]["fontFamily"], settings["context"]["fontMetrics"], weight=weight)
-        width = metrics.width(value, size, float(typography.get("letterSpacing", 0)))
-        if width > available:
-            raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW:text")
-        height = size * line_height
-        left = x - width / 2.0 if center else x
-        return TextLayout(
-            bounds=(left, top, width, height),
-            baseline=(left if not center else x, metrics.baseline(top, size, line_height)),
-            lines=(value,), family=settings["theme"]["fontFamily"], weight=weight,
-            asset_identity=metrics.content_identity,
-        )
-
-    def add(kind: str, source_ref: str, source_kind: str, facet: str, role: str,
-            purpose: str, bounds: tuple[float, float, float, float], *, text: str | None = None,
-            baseline: tuple[float, float] | None = None, layout: TextLayout | None = None) -> None:
-        projection = f"{surface.surface_id}:{purpose}:{source_ref}:{facet}"
-        primitives.append(ScenePrimitive(
-            scene_id=f"{projection}:primitive", kind=kind, source_ref=source_ref,
-            source_kind=source_kind, semantic_facet=facet, visual_role=role, bounds=bounds,
-            projection_instance_id=projection, surface_id=surface.surface_id, purpose=purpose,
-            text=text, baseline=baseline, text_layout=layout, z_order=len(primitives),
-        ))
-
-    title_layout = text_layout(title, title_slot.bounds[0], title_slot.bounds[1], role="heading", available=title_slot.bounds[2])
-    add("Text", "project", "project", "", "heading", "title-text",
-        title_layout.bounds, text=title, baseline=title_layout.baseline, layout=title_layout)
-
-    band_heights = dict(zip(settings["layout"]["axis"]["levels"], settings["layout"]["axis"]["bandHeights"], strict=True))
-    axis_y = axis.bounds[1]
-    for level in settings["layout"]["axis"]["levels"]:
-        level_axes = tuple(interval for interval in axes if interval.level == level)
-        band_height = float(band_heights[level])
-        for interval in level_axes:
-            x1, x2 = _surface_x(axis, start, end, interval.start), _surface_x(axis, start, end, interval.end)
-            source = f"axis:{interval.level}:{interval.index}"
-            add("Rect", source, "axis", "axis", interval.level, "axis-band", (x1, axis_y, x2 - x1, band_height))
-            label_layout = text_layout(interval.label, (x1 + x2) / 2.0, axis_y, role=level,
-                                       available=axis.bounds[2], center=True)
-            add("Text", source, "axis", "axis", interval.level, "axis-label", label_layout.bounds,
-                text=interval.label, baseline=label_layout.baseline, layout=label_layout)
-        axis_y += band_height
-    bottom = max((row.bounds[1] + row.bounds[3] for row in surface.rows), default=timeline.bounds[1] + timeline.bounds[3])
-    for tick in ticks:
-        x = _surface_x(axis, start, end, tick.start)
-        add("Path", f"tick:{tick.level}:{tick.index}", "axis", "axis", tick.level, "tick", (x, axis.bounds[1], 0.0, bottom - axis.bounds[1]))
-
-    planned_height = float(settings["theme"]["bar"]["plannedHeight"])
-    actual_height = float(settings["theme"]["bar"]["actualHeight"])
-    gap = float(settings["layout"]["bars"]["gap"])
-    point_size = float(settings["theme"]["point"]["size"])
-    comparison_mode = settings["layout"]["bars"]["comparisonMode"]
-    for mark in marks:
-        row = rows.get(mark.source_id)
-        item = items_by_id.get(mark.source_id)
-        if row is None or item is None:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
-        _, row_y, _, row_height = row.bounds
-        if mark.at is not None:
-            x = _surface_x(timeline, start, end, mark.at)
-            if mark.facet == "finish-delta":
-                text = f"{mark.variance_days:+d}d"
-                delta_layout = text_layout(text, x, row_y, role="variance", available=max(1.0, timeline.bounds[0] + timeline.bounds[2] - x))
-                add("Text", mark.source_id, "object", mark.facet, "variance", "comparison-mark",
-                    delta_layout.bounds, text=text, baseline=delta_layout.baseline, layout=delta_layout)
-            else:
-                add("Symbol", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark",
-                    (x - point_size / 2.0, row_y + (row_height - point_size) / 2.0, point_size, point_size))
-            continue
-        assert mark.start is not None and mark.end is not None
-        x1, x2 = _surface_x(timeline, start, end, mark.start), _surface_x(timeline, start, end, mark.end)
-        height = actual_height if mark.facet == "actual" else planned_height
-        if mark.facet == "actual" and comparison_mode != "overlaid":
-            y = row_y + row_height / 2.0 + gap / 2.0
-        else:
-            y = row_y + row_height / 2.0 - height - gap / 2.0
-        add("Rect", mark.source_id, "object", mark.facet, mark.facet, "comparison-mark", (x1, y, max(0.0, x2 - x1), height))
-
-    for object_id, row in rows.items():
-        item = items_by_id.get(object_id)
-        if item is None:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_MISSING")
-        value = str(getattr(item, "title", object_id))
-        body = settings["theme"]["typography"]["body"]
-        label_top = row.bounds[1] + (row.bounds[3] - float(body["size"]) * float(body.get("lineHeight", 1.2))) / 2.0
-        label_layout = text_layout(value, row.bounds[0], label_top, role="body", available=row.bounds[2])
-        add("Text", object_id, "object", "", "body", "item-label", label_layout.bounds,
-            text=value, baseline=label_layout.baseline, layout=label_layout)
-    return tuple(primitives)
-
-
 def _scene_surfaces(items: tuple[object, ...], window: tuple[date, date], settings: dict,
-                    slots: tuple[SceneSlot, ...], rows: tuple[SceneRow, ...], groups: tuple[SceneGroup, ...],
-                    title: str, axes: tuple[AxisInterval, ...], ticks: tuple[AxisInterval, ...],
-                    marks: tuple[ComparisonMark, ...]) -> tuple[SceneSurface, ...]:
-    raw = (
+                    slots: tuple[SceneSlot, ...], rows: tuple[SceneRow, ...], groups: tuple[SceneGroup, ...]) -> tuple[SceneSurface, ...]:
+    return (
         SceneSurface("table-timeline", slots, rows, groups),
         _linear_surface("review", items, window, settings, grouped=True),
         _linear_surface("minimal", items, window, settings, grouped=False),
     )
-    return tuple(SceneSurface(surface.surface_id, surface.slots, surface.rows, surface.groups,
-                              _surface_primitives(surface, title, items, window, axes, ticks, marks, settings))
-                 for surface in raw)
 
 
 def build_presentation_scene(title: str, items: Iterable[object], window: tuple[date, date], settings: dict) -> PresentationScene:
@@ -378,7 +230,7 @@ def build_presentation_scene(title: str, items: Iterable[object], window: tuple[
     primitives = _scene_primitives(resolved, axes, marks)
     slots = _scene_slots(settings)
     rows, groups = _scene_rows(copied_items, slots, settings)
-    surfaces = _scene_surfaces(copied_items, (start, end), settings, slots, rows, groups, resolved.title, axes, ticks, marks)
+    surfaces = _scene_surfaces(copied_items, (start, end), settings, slots, rows, groups)
     return PresentationScene(resolved.title, (start, end), axes, ticks, marks, lanes, tracks, primitives, slots, rows, groups, surfaces)
 
 
