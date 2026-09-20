@@ -375,6 +375,10 @@ layout:
     grouping: view-groups
     stacking: stable-lowest-nonoverlap
     occupancy: mark-bounds-plus-required-label-bounds
+    surface: row-aligned
+    pitchPolicy: scene-mark-extent-plus-clearance
+    trackPadding: 8
+    trackGap: 6
     maxStack: 12
   legend:
     padding:
