@@ -1,7 +1,6 @@
 # 共通表現基盤 G2–G4 設計ゲート
 
-**状態:** 設計作業中。G2–G4の実装は、この文書・owner schema・正負fixture・横断レビューが
-揃うまで開始しない。
+**状態:** G2設計・実装済み。G3のbox/leader Theme fieldを是正中。G3 visual実装は、この文書・owner schema・正負fixture・横断レビューが揃うまで開始しない。
 
 ## 1. 一意なauthoring所有者
 
@@ -44,6 +43,9 @@ annotation purposeはcallout/note/highlight/explanatory-arrow。callout/noteはr
 直交leader、highlightはboxのみ、explanatory-arrowは二つのobject anchorを持つpathだけを
 許す。leaderはmax one source/target、手動座標・曲線・tail・waypointを許さない。
 候補生成はlabelと同じ有限順、routeはLayout routingのlimitで停止する。
+
+`theme.annotation` は `{boxFill, boxStroke, leader}` の三つのconcrete paintを持つ。boxの寸法・
+候補side・leaderの探索上限はThemeに置かず、既存Layoutが所有する。purposeによる別Theme系統は作らない。
 
 ## 4. G4：stable lane stacking
 
