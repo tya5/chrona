@@ -116,6 +116,10 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
         from .presentation_scene import build_presentation_scene
         presentation_scene = build_presentation_scene(title, projection.items, projection.window, settings)
     start, end = presentation_scene.window if presentation_scene is not None else projection.window
+    scene_marks = {}
+    if presentation_scene is not None:
+        for mark in presentation_scene.marks:
+            scene_marks.setdefault(mark.source_id, {})[mark.facet] = mark
     if settings:
         viewport, layout, palette = settings["context"]["viewport"], settings["layout"], settings["theme"]
         left, top, day, row = layout["margins"]["left"], layout["margins"]["top"], layout["scale"]["dayWidth"], layout["row"]["height"]
@@ -137,11 +141,17 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
         parts.append(f'<metadata data-presentation-scene="v0.1" data-axis-count="{len(presentation_scene.axes)}" data-mark-count="{len(presentation_scene.marks)}"/>')
     if settings is None:
         parts.append('<metadata data-presentation-adapter="legacy-v0.1" data-diagnostic="E_PRESENTATION_LEGACY_ADAPTER"/>')
-    cursor = start
-    while cursor <= end:
-        x=left+(cursor-start).days*day
-        if cursor.day <= 7: parts += [f'<line x1="{x}" y1="{top-body["size"]}" x2="{x}" y2="{height-layout["margins"]["bottom"] if settings else height-30}" stroke="{colors.get("grid", "#ddd")}"/>',f'<text x="{x+layout["cellPadding"]["left"] if settings else x+3}" y="{top-body["size"]-2}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}">{cursor:%Y-%m}</text>']
-        cursor=date.fromordinal(cursor.toordinal()+7)
+    axis_ticks = presentation_scene.ticks if presentation_scene is not None else ()
+    if axis_ticks:
+        for tick in axis_ticks:
+            x=left+(tick.start-start).days*day
+            parts += [f'<line x1="{x}" y1="{top-body["size"]}" x2="{x}" y2="{height-layout["margins"]["bottom"]}" stroke="{colors.get("grid", "#ddd")}"/>',f'<text x="{x+layout["cellPadding"]["left"]}" y="{top-body["size"]-2}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}">{escape(tick.label)}</text>']
+    else:
+        cursor = start
+        while cursor <= end:
+            x=left+(cursor-start).days*day
+            if cursor.day <= 7: parts += [f'<line x1="{x}" y1="{top-body["size"]}" x2="{x}" y2="{height-30}" stroke="{colors.get("grid", "#ddd")}"/>',f'<text x="{x+3}" y="{top-body["size"]-2}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}">{cursor:%Y-%m}</text>']
+            cursor=date.fromordinal(cursor.toordinal()+7)
     y=top-row
     previous=None
     for item in projection.items:
@@ -150,19 +160,27 @@ def render_review_svg(title: str, projection: ReviewProjection, theme: dict[str,
             if group_profile["mode"] in {"header-and-separator","band", "header", "merged"}: parts.append(f'<text data-purpose="group-header" x="{left}" y="{y+row//2}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}" font-weight="700">{escape(item.group_label)}</text>')
             y+=row; previous=item.group_id
         y+=row; parts.append(f'<text x="{left}" y="{y+5}" font-family="{escape(font, quote=True)}" font-size="{body["size"]}" fill="{colors.get("text", "#111827")}">{escape(item.title)}</text>')
+        planned_mark = scene_marks.get(item.object_id, {}).get("baseline") or scene_marks.get(item.object_id, {}).get("planned")
         attrs=f'data-scene-id="item:{item.object_id}:planned" data-source-ref="{item.object_id}" data-purpose="planned"'
         if item.source_type=="point":
             radius = (settings["theme"]["point"]["size"] / 2) if settings else 8
-            x=left+(item.planned["at"]-start).days*day; parts.append(f'<path {attrs} d="M{x} {y-radius} L{x+radius} {y} L{x} {y+radius} L{x-radius} {y}Z" fill="{colors["planned"]}"/>')
+            at = planned_mark.at if planned_mark else item.planned["at"]
+            x=left+(at-start).days*day; parts.append(f'<path {attrs} d="M{x} {y-radius} L{x+radius} {y} L{x} {y+radius} L{x-radius} {y}Z" fill="{colors["planned"]}"/>')
         else:
             bar_height = settings["theme"]["bar"]["plannedHeight"] if settings else 12
-            x=left+(item.planned["start"]-start).days*day; w=max(settings["theme"]["bar"]["minWidth"] if settings else 4,(item.planned["end"]-item.planned["start"]).days*day); parts.append(f'<rect {attrs} x="{x}" y="{y-bar_height}" width="{w}" height="{bar_height}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}" fill="{colors["planned"]}"/>')
-        if item.actual:
-            if "finish" in item.actual and item.source_type=="span":
-                ax=left+((item.actual.get("start",item.planned["start"])-start).days)*day; aw=max(settings["theme"]["bar"]["minWidth"] if settings else 4,(item.actual["finish"]-item.actual.get("start",item.planned["start"])).days*day); parts.append(f'<rect data-scene-id="item:{item.object_id}:actual" data-source-ref="{item.object_id}" data-purpose="actual" x="{ax}" y="{y+layout["bars"]["gap"] if settings else y+4}" width="{aw}" height="{settings["theme"]["bar"]["actualHeight"] if settings else 9}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}" fill="{colors["actual"]}"/>')
-            if item.finish_delta is not None:
+            mark_start, mark_end = (planned_mark.start, planned_mark.end) if planned_mark else (item.planned["start"], item.planned["end"])
+            x=left+(mark_start-start).days*day; w=max(settings["theme"]["bar"]["minWidth"] if settings else 4,(mark_end-mark_start).days*day); parts.append(f'<rect {attrs} x="{x}" y="{y-bar_height}" width="{w}" height="{bar_height}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}" fill="{colors["planned"]}"/>')
+        actual_mark = scene_marks.get(item.object_id, {}).get("actual")
+        if actual_mark is None and presentation_scene is None and item.actual and "finish" in item.actual and item.source_type == "span":
+            from types import SimpleNamespace
+            actual_mark = SimpleNamespace(start=item.actual.get("start", item.planned["start"]), end=item.actual["finish"])
+        if actual_mark is not None and item.source_type=="span":
+            ax=left+((actual_mark.start-start).days)*day; aw=max(settings["theme"]["bar"]["minWidth"] if settings else 4,(actual_mark.end-actual_mark.start).days*day); parts.append(f'<rect data-scene-id="item:{item.object_id}:actual" data-source-ref="{item.object_id}" data-purpose="actual" x="{ax}" y="{y+layout["bars"]["gap"] if settings else y+4}" width="{aw}" height="{settings["theme"]["bar"]["actualHeight"] if settings else 9}" rx="{settings["theme"]["bar"]["radius"] if settings else 2}" fill="{colors["actual"]}"/>')
+            delta_mark = scene_marks.get(item.object_id, {}).get("finish-delta")
+            delta = delta_mark.variance_days if delta_mark is not None else item.finish_delta
+            if delta is not None:
                 suffix, sign = labels["formatting"]["signedDaysSuffix"], labels["formatting"]["positiveSign"]
-                value = f'{sign}{item.finish_delta}{suffix}' if item.finish_delta > 0 else f'{item.finish_delta}{suffix}'
+                value = f'{sign}{delta}{suffix}' if delta > 0 else f'{delta}{suffix}'
                 parts.append(f'<text data-scene-id="item:{item.object_id}:variance" data-source-ref="{item.object_id}" data-purpose="variance" x="{left+(item.planned.get("end",item.planned.get("at"))-start).days*day+layout["variance"]["labelGap"] if settings else left+(item.planned.get("end",item.planned.get("at"))-start).days*day+5}" y="{y+layout["variance"]["offset"] if settings else y+14}" font-family="{escape(font, quote=True)}" font-size="{palette["typography"]["variance"]["size"] if settings else 11}" fill="{colors["behind"]}">{value}</text>')
         else:
             missing_x=left+(item.planned.get("start",item.planned.get("at"))-start).days*day
