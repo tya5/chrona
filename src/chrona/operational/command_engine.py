@@ -10,6 +10,8 @@ from chrona.commands.actual_commands import LocalActualStore, apply_actual_intak
 from chrona.operational.references import ImmutableReader, verify_reference
 from chrona.operational.references import ReplayLedger
 from chrona.operational.resources import content_identity
+from chrona.storage.revision_store import ProjectSnapshot
+from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
 
 
 SUPPORTED = {"applyActualIntakeBatch", "resolveActualObservation", "captureSnapshot"}
@@ -44,6 +46,19 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
         checked["operation"] = "command-apply"
         return checked
     target = command["target"]
+    if command["type"] == "captureSnapshot":
+        verified = verify_reference(reader, target, kind="project")
+        registry_selector = command["payload"]["registry"]
+        root = reader.roots.get((registry_selector["provider"], registry_selector["identity"]))
+        if root is None:
+            return _rejected(command, "E_AUTOMATION_TARGET_CLOSURE")
+        class ProjectStore:
+            def read(self_nonlocal):
+                return ProjectSnapshot(target["revision"]["token"], target["contentIdentity"], verified.value)
+        result = capture_baseline_v02(ProjectStore(), command["baseRevision"], target, command["payload"]["snapshotId"], LocalBaselineRegistry(root, registry_selector["identity"]))
+        if result.status != "accepted":
+            return _rejected(command, result.diagnostics)
+        return {"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "accepted", "requestContentIdentity": content_identity(command), "inputs": [target], "resultTarget": result.snapshot_ref, "diagnostics": [], "artifacts": []}
     store_info = target["store"]
     root = reader.roots.get((store_info["provider"], store_info["identity"]))
     tip = root / "actual-tips" / f"{target['id']}.json" if root else None
