@@ -1,0 +1,55 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:color-scheme-v0.1"
+title: "Chrona Color Scheme v0.1"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: "chrona/color-scheme/v0.1"}
+  kind: {const: color-scheme}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [colors, category, suitability, provenance]
+    additionalProperties: false
+    properties:
+      colors:
+        type: object
+        required: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral]
+        additionalProperties: false
+        properties:
+          surface: {$ref: "#/$defs/color"}
+          surfaceRaised: {$ref: "#/$defs/color"}
+          text: {$ref: "#/$defs/color"}
+          textMuted: {$ref: "#/$defs/color"}
+          accent: {$ref: "#/$defs/color"}
+          positive: {$ref: "#/$defs/color"}
+          negative: {$ref: "#/$defs/color"}
+          warning: {$ref: "#/$defs/color"}
+          neutral: {$ref: "#/$defs/color"}
+      category:
+        type: array
+        minItems: 1
+        items: {$ref: "#/$defs/color"}
+      suitability:
+        type: object
+        required: [background, colorVision, print]
+        additionalProperties: false
+        properties:
+          background: {enum: [light, dark]}
+          colorVision:
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items: {enum: [none-claimed, deuteranopia, protanopia, tritanopia]}
+          print: {enum: [not-claimed, print-friendly, photocopy-friendly]}
+      provenance:
+        type: object
+        required: [kind, source, license]
+        additionalProperties: false
+        properties:
+          kind: {enum: [chrona-authored, external]}
+          source: {type: string, minLength: 1}
+          license: {type: string, minLength: 1}
+$defs:
+  color: {type: string, pattern: "^#[0-9A-Fa-f]{6}$"}
