@@ -25,6 +25,12 @@ than leaving an implementation-time decision. YAML date examples were also chang
 quoted strings so generic YAML/JSON schema validation does not reinterpret them as
 native date values.
 
+**Amendment, 2026-09-21:** I26-3 identified that Actual-set v0.1 cannot retain the
+source content identity required by the intake replay rule. The operational profile now
+requires Actual-set v0.2, whose externally identified observations retain that identity.
+This amendment is approved before I26-3 starts; v0.1 remains legacy-readable and is not
+silently upgraded.
+
 ## Evidence checked
 
 - `35-operational-review-workflows.md`, ADR-0024 through ADR-0026, all four successor
