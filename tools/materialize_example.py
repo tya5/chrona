@@ -1,4 +1,4 @@
-"""Materialize one v0.5 example through Chrona's public render-review CLI."""
+"""Materialize one v0.5/v0.6 example through Chrona's public render-review CLI."""
 from __future__ import annotations
 
 import argparse
