@@ -136,45 +136,30 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.font_asset_identity)
         primitives.append(ScenePrimitive(scene_id, "Text", source, "review", purpose, role, layout.bounds,
                                          text=content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
-    title_measurement = value.measured_sources.measurements.get("title")
-    if title_measurement is None:
-        raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/title")
-    title_baseline = float(title_measurement.first_baseline or 0)
-    text("title", "title", "title-text", "text", title, title_slot.bounds[0], title_slot.bounds[1] + title_baseline, typography_role="heading")
+    layout_text = {item.placement_id: item for item in placed_surface.text}
+    def emit_layout_text(scene_id: str, purpose: str, role: str) -> None:
+        placed = layout_text[scene_id]
+        layout = TextLayout((float(placed.bounds.inline), float(placed.bounds.block),
+                             float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                            placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
+                            placed.lines, placed.font_family, placed.font_weight, placed.font_size,
+                            placed.line_height, placed.font_asset_identity)
+        primitives.append(ScenePrimitive(scene_id, "Text", placed.source_ref, "review", purpose, role, layout.bounds,
+                                         text=placed.content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
+    emit_layout_text("title", "title-text", "text")
     body_size = float(value.theme_tokens.typography("text")[2])
-    table_placements = place_table_columns(
-        columns=value.surface_content.table_columns,
-        cells=value.surface_content.table_cells,
-        bounds=table.bounds,
-        font_metrics=value.font_metrics,
-        font_size=body_size,
-        overflow=table.overflow,
-    )
-    column_positions = {
-        placement.column_id: (placement.inline, placement.inline_size)
-        for placement in table_placements
-    }
     for column_id, label in value.surface_content.table_columns:
-        text(f"column:{column_id}", "view:tableColumns", "table-column-label", "text", label,
-             column_positions[column_id][0], table.bounds[1] + body_size)
+        emit_layout_text(f"column:{column_id}", "table-column-label", "text")
     for object_id, column_id, cell in value.surface_content.table_cells:
-        row = next((item for item in rows if item.row_id == object_id or item.object_id == object_id), None)
-        position = column_positions.get(column_id)
-        index = next((offset for offset, item in enumerate(value.surface_content.table_columns) if item[0] == column_id), None)
-        if row is not None and position is not None and index is not None:
-            indent = body_size if index == 0 and row.group_id else 0
-            text(f"cell:{object_id}:{column_id}", object_id, "table-cell", "text", cell,
-                 position[0] + indent, row.bounds[1] + row.bounds[3] / 2 + body_size / 2)
-    group_labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
-                    for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
+        if f"cell:{object_id}:{column_id}" in layout_text:
+            emit_layout_text(f"cell:{object_id}:{column_id}", "table-cell", "text")
     for group in groups:
         primitives.append(ScenePrimitive(f"group:{group.group_id}", "Rect", group.group_id, "group", "group-decoration", "group-band",
                                          group.content_bounds, opacity=0.12, z_order=len(primitives)))
         if group.header_bounds is not None:
             primitives.append(ScenePrimitive(f"group-header-band:{group.group_id}", "Rect", group.group_id, "group", "group-header-band", "group-band",
                                              group.header_bounds, opacity=0.2, z_order=len(primitives)))
-            text(f"group-header:{group.group_id}", group.group_id, "group-header", "text",
-                 group_labels[group.group_id], group.header_bounds[0], group.header_bounds[1] + body_size)
+            emit_layout_text(f"group-header:{group.group_id}", "group-header", "text")
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
     calendar_binding = semantic_binding("calendarClosed")
