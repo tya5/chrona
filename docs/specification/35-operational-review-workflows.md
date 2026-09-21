@@ -51,7 +51,7 @@ matching are deliberately out of scope.
 
 ### 3.2 Apply and reconcile operations
 
-`applyActualIntakeBatch` targets an immutable `actual-set` reference and carries an
+`applyActualIntakeBatch` targets an immutable `actual-set/v0.2` reference and carries an
 immutable batch reference. Its target revision and content identity are the required
 CAS precondition. The engine validates the batch before loading the Actual-set, then
 processes records in their declared order. A supplied `projectObjectId` is accepted
@@ -60,8 +60,10 @@ otherwise the new observation is stored with `externalIdentity` and
 `alignment: unmatched`. No title, label, position, or source URL is used for matching.
 
 The external fact key is `(source.system, externalKey)` and MUST be unique both within
-the batch and within the target Actual-set. An existing fact with byte-equivalent
-normalized Actual fields and the same source content identity is an idempotent no-op.
+the batch and within the target Actual-set. Actual-set v0.2 stores the normalized
+`sourceContentIdentity` alongside every externally identified observation; its schema is
+`actual-set-v0.2.schema.yaml`. An existing fact with byte-equivalent normalized Actual
+fields and the same source content identity is an idempotent no-op.
 An existing fact with different Actual fields or a different source content identity is
 rejected as `E_ACTUAL_EXTERNAL_CONFLICT`; an operator must use the explicit
 `editActualObservation` command. A successful non-no-op batch creates one Actual-set
