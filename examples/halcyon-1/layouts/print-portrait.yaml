@@ -1,0 +1,68 @@
+version: chrona/layout-profile/v0.2
+id: print-portrait
+writingMode: horizontal-tb
+root:
+  id: page
+  kind: grid
+  inlineSize: fill
+  blockSize: fill
+  columnTracks: [{minmax: {min: content, max: {fr: 4}}}, {fr: 6}]
+  rowTracks: [content, {fixed: {token: panel.timeline}}, content]
+  gap: {token: spacing.m}
+  padding: {token: spacing.xl}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: title
+      kind: slot
+      source: title
+      cell: {column: 1, row: 1, columnSpan: 2}
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: start, safety: safe}
+      priority: required
+      overflow: diagnose
+    - id: table
+      kind: slot
+      source: table
+      cell: {column: 1, row: 2}
+      inlineSize: fill
+      blockSize: fill
+      place: {inline: stretch, block: stretch, safety: strict}
+      priority: required
+      overflow: diagnose
+    - id: timeline-stack
+      kind: column
+      cell: {column: 2, row: 2}
+      inlineSize: fill
+      blockSize: fill
+      gap: {token: spacing.none}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: timeline-axis
+          kind: slot
+          source: timeline-axis
+          inlineSize: fill
+          blockSize: content
+          place: {inline: stretch, block: start, safety: strict}
+          priority: required
+          overflow: diagnose
+        - id: timeline
+          kind: slot
+          source: timeline
+          inlineSize: fill
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: required
+          overflow: diagnose
+    - id: notes
+      kind: slot
+      source: notes
+      cell: {column: 1, row: 3, columnSpan: 2}
+      inlineSize: fill
+      blockSize: content
+      place: {inline: start, block: end, safety: safe}
+      priority: preferred
+      overflow: ellipsize-with-source

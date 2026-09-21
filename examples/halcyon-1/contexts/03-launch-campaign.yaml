@@ -1,0 +1,94 @@
+version: chrona/presentation/v0.5
+kind: render-context
+id: halcyon-1-03-launch-campaign
+body:
+  project:
+    id: halcyon-1
+    kind: project
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: project.yaml
+    revision:
+      token: example-v1
+    contentIdentity: sha256:dacb759d1c11e5bb06d983052ad74db8ebf516ac2825115f70e4bc28e0ecbcf9
+  view:
+    id: halcyon-03-launch-campaign
+    kind: view
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: views/03-launch-campaign.yaml
+    revision:
+      token: example-v1
+    contentIdentity: sha256:eecfa27a69c42cb3a687acfb1a659ff24f9ae78aa4b529edced88e1a56218e27
+  theme:
+    id: print
+    kind: theme
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: themes/print.yaml
+    revision:
+      token: example-v1
+    contentIdentity: sha256:6fd4a04600d64a682cb24c80aae2416bdacb41cb939a8248c5595f25b4d7fba0
+  colorScheme:
+    id: print-mono
+    kind: color-scheme
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: schemes/print-mono.yaml
+    revision:
+      token: example-v1
+    contentIdentity: sha256:f41a21022943bfc4548ff2402865a3b810284703fb90f04864b78302381f0fd9
+  layout:
+    id: print-portrait
+    kind: layout-profile
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: layouts/print-portrait.yaml
+    revision:
+      token: example-v1
+    contentIdentity: sha256:69b01348e11adb8303a84286eb0020a80f4c2d641716dd04f71330cfc97ef0ee
+  inputs:
+    actual:
+      id: halcyon-1-observed-2027-08-20
+      kind: actual-set
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: actual.yaml
+      revision:
+        token: example-v1
+      contentIdentity: sha256:21672446b8bb2813efa90550b056379828d194e8dd4601397ab6b2f9fba7909e
+  environment:
+    viewport:
+      inlineSize: 1200
+      blockSize: 1120
+    locale: en-US
+    fontMetrics:
+      algorithm: declared-metrics-v1
+      assets:
+      - family: Nimbus Sans
+        weight: 400
+        revision: nimbus-sans-regular-v1
+        contentIdentity: sha256:0d6b0500eb77e9b64b2cfb9916ead13e41759840a893ee3bae7e58e86fbfb779
+        path: font_metrics/nimbus-sans-regular-v1.json
+      - family: Nimbus Sans
+        weight: 700
+        revision: nimbus-sans-bold-v1
+        contentIdentity: sha256:7754bf903246d324eb09b4147136db0a35f2355604edd3731ecf3f8a9d171c23
+        path: font_metrics/nimbus-sans-bold-v1.json
+      missingFont: diagnose
+    scenePrecision: 3
+  target:
+    kind: svg
+    capabilities:
+    - accessibleText
+    - hierarchicalAxis
+    - marker
+    - semanticRoles
+    - sourceMetadata
+    - tableSemantics

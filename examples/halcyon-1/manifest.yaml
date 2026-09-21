@@ -1,0 +1,27 @@
+title: HALCYON-1 Smallsat Mission
+project: project.yaml
+actual: actual.yaml
+style: styles/plan-actual.yaml
+gallery: gallery.html
+slides:
+  - view: views/01-mission-brief.yaml
+    theme: themes/briefing.yaml
+    colorScheme: schemes/mission-light.yaml
+    layout: layouts/briefing.yaml
+    viewport: {inlineSize: 1600, blockSize: 900}
+    output: slides/01-mission-brief/expected.svg
+    preview: slides/01-mission-brief/preview.png
+  - view: views/02-programme-board.yaml
+    theme: themes/wallboard.yaml
+    colorScheme: schemes/control-room-dark.yaml
+    layout: layouts/wallboard.yaml
+    viewport: {inlineSize: 1920, blockSize: 1080}
+    output: slides/02-programme-board/expected.svg
+    preview: slides/02-programme-board/preview.png
+  - view: views/03-launch-campaign.yaml
+    theme: themes/print.yaml
+    colorScheme: schemes/print-mono.yaml
+    layout: layouts/print-portrait.yaml
+    viewport: {inlineSize: 1200, blockSize: 1120}
+    output: slides/03-launch-campaign/expected.svg
+    preview: slides/03-launch-campaign/preview.png

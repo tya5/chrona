@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1120" viewBox="0 0 1200 1120" role="img" aria-labelledby="title desc">
+<title id="title">HALCYON-1 Smallsat Mission</title>
+<desc id="desc">Plan and Actual comparison; 12 selected items.</desc>
+<metadata data-presentation-scene="intent-layout-v0.2"/>
+<rect data-purpose="background" data-source-ref="project" x="0" y="0" width="1200" height="1120" fill="#FFFFFF"/>
+<text data-purpose="heading" data-source-ref="project" x="64" y="78" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="700" fill="#111111">HALCYON-1 Smallsat Mission</text>
+<rect data-purpose="table-header" data-source-ref="timeline-axis" x="64" y="105" width="1072" height="40" fill="#F1F1F1"/>
+<text data-purpose="table-header" data-source-ref="view:tableColumns" x="87.324" y="138" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="700" fill="#111111">Activity</text>
+<text data-purpose="table-header" data-source-ref="view:tableColumns" x="259.953" y="138" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="700" fill="#111111">Phase</text>
+<text data-purpose="table-header" data-source-ref="view:tableColumns" x="432.582" y="138" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="700" fill="#111111">Team</text>
+<line data-purpose="axis-grid" data-source-ref="timeline-axis" x1="625.211" y1="105" x2="625.211" y2="945" stroke="#BDBDBD"/>
+<text data-purpose="axis-label" data-source-ref="timeline-axis" x="631.042" y="119" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">2027-06-29</text>
+<line data-purpose="axis-grid" data-source-ref="timeline-axis" x1="716.205" y1="105" x2="716.205" y2="945" stroke="#BDBDBD"/>
+<text data-purpose="axis-label" data-source-ref="timeline-axis" x="722.036" y="119" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">2027-07-27</text>
+<line data-purpose="axis-grid" data-source-ref="timeline-axis" x1="807.198" y1="105" x2="807.198" y2="945" stroke="#BDBDBD"/>
+<text data-purpose="axis-label" data-source-ref="timeline-axis" x="813.029" y="119" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">2027-08-24</text>
+<line data-purpose="axis-grid" data-source-ref="timeline-axis" x1="898.191" y1="105" x2="898.191" y2="945" stroke="#BDBDBD"/>
+<text data-purpose="axis-label" data-source-ref="timeline-axis" x="904.022" y="119" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">2027-09-21</text>
+<line data-purpose="axis-grid" data-source-ref="timeline-axis" x1="989.185" y1="105" x2="989.185" y2="945" stroke="#BDBDBD"/>
+<text data-purpose="axis-label" data-source-ref="timeline-axis" x="995.016" y="119" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">2027-10-19</text>
+<line data-purpose="axis-grid" data-source-ref="timeline-axis" x1="1080.178" y1="105" x2="1080.178" y2="945" stroke="#BDBDBD"/>
+<text data-purpose="axis-label" data-source-ref="timeline-axis" x="1086.009" y="119" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">2027-11-16</text>
+<text data-purpose="table-cell" data-source-ref="integration" x="87.324" y="185.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Spacecraft integration</text>
+<text data-purpose="table-cell" data-source-ref="integration" x="259.953" y="185.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Integrate</text>
+<text data-purpose="table-cell" data-source-ref="integration" x="432.582" y="185.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">AIT</text>
+<rect data-purpose="planned" data-source-ref="integration" x="647.96" y="157.889" width="68.245" height="14" fill="#1F1F1F"/>
+<rect data-purpose="actual" data-source-ref="integration" x="647.96" y="184.778" width="68.245" height="14" fill="#8C8C8C"/>
+<text data-purpose="table-cell" data-source-ref="vibration" x="87.324" y="252" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Vibration and shock</text>
+<text data-purpose="table-cell" data-source-ref="vibration" x="259.953" y="252" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Verify</text>
+<text data-purpose="table-cell" data-source-ref="vibration" x="432.582" y="252" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">AIT</text>
+<rect data-purpose="planned" data-source-ref="vibration" x="719.454" y="224.556" width="22.748" height="14" fill="#1F1F1F"/>
+<rect data-purpose="actual" data-source-ref="vibration" x="719.454" y="251.444" width="22.748" height="14" fill="#8C8C8C"/>
+<text data-purpose="table-cell" data-source-ref="tvac" x="87.324" y="318.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">System thermal-vacuum</text>
+<text data-purpose="table-cell" data-source-ref="tvac" x="259.953" y="318.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Verify</text>
+<text data-purpose="table-cell" data-source-ref="tvac" x="432.582" y="318.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">AIT</text>
+<rect data-purpose="planned" data-source-ref="tvac" x="748.702" y="291.222" width="45.497" height="14" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="emc" x="87.324" y="385.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">EMC and RF compatibility</text>
+<text data-purpose="table-cell" data-source-ref="emc" x="259.953" y="385.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Verify</text>
+<text data-purpose="table-cell" data-source-ref="emc" x="432.582" y="385.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">AIT</text>
+<rect data-purpose="planned" data-source-ref="emc" x="803.948" y="357.889" width="22.748" height="14" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="rehearsals" x="87.324" y="452" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Operations rehearsals</text>
+<text data-purpose="table-cell" data-source-ref="rehearsals" x="259.953" y="452" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Verify</text>
+<text data-purpose="table-cell" data-source-ref="rehearsals" x="432.582" y="452" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Mission operations</text>
+<rect data-purpose="planned" data-source-ref="rehearsals" x="826.697" y="424.556" width="48.746" height="14" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="psr" x="87.324" y="518.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Pre-ship review</text>
+<text data-purpose="table-cell" data-source-ref="psr" x="259.953" y="518.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Verify</text>
+<text data-purpose="table-cell" data-source-ref="psr" x="432.582" y="518.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Programme</text>
+<polygon data-purpose="planned" data-source-ref="psr" points="862.444,504.667 869.444,511.667 862.444,518.667 855.444,511.667" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="shipment" x="87.324" y="585.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Ship to range</text>
+<text data-purpose="table-cell" data-source-ref="shipment" x="259.953" y="585.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Campaign</text>
+<text data-purpose="table-cell" data-source-ref="shipment" x="432.582" y="585.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Launch and range</text>
+<rect data-purpose="planned" data-source-ref="shipment" x="875.443" y="557.889" width="19.499" height="14" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="campaign" x="87.324" y="652" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Launch campaign</text>
+<text data-purpose="table-cell" data-source-ref="campaign" x="259.953" y="652" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Campaign</text>
+<text data-purpose="table-cell" data-source-ref="campaign" x="432.582" y="652" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Launch and range</text>
+<rect data-purpose="planned" data-source-ref="campaign" x="898.191" y="624.556" width="55.246" height="14" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="frr" x="87.324" y="718.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Flight readiness review</text>
+<text data-purpose="table-cell" data-source-ref="frr" x="259.953" y="718.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Campaign</text>
+<text data-purpose="table-cell" data-source-ref="frr" x="432.582" y="718.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Programme</text>
+<polygon data-purpose="planned" data-source-ref="frr" points="976.186,704.667 983.186,711.667 976.186,718.667 969.186,711.667" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="launch" x="87.324" y="785.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Launch window opens</text>
+<text data-purpose="table-cell" data-source-ref="launch" x="259.953" y="785.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Campaign</text>
+<text data-purpose="table-cell" data-source-ref="launch" x="432.582" y="785.333" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Launch and range</text>
+<polygon data-purpose="planned" data-source-ref="launch" points="998.934,771.333 1005.934,778.333 998.934,785.333 991.934,778.333" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="leop" x="87.324" y="852" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">LEOP and commissioning</text>
+<text data-purpose="table-cell" data-source-ref="leop" x="259.953" y="852" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Operate</text>
+<text data-purpose="table-cell" data-source-ref="leop" x="432.582" y="852" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Mission operations</text>
+<rect data-purpose="planned" data-source-ref="leop" x="998.934" y="824.556" width="68.245" height="14" fill="#1F1F1F"/>
+<text data-purpose="table-cell" data-source-ref="first-light" x="87.324" y="918.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">First light</text>
+<text data-purpose="table-cell" data-source-ref="first-light" x="259.953" y="918.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Operate</text>
+<text data-purpose="table-cell" data-source-ref="first-light" x="432.582" y="918.667" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Mission operations</text>
+<polygon data-purpose="planned" data-source-ref="first-light" points="1089.928,904.667 1096.928,911.667 1089.928,918.667 1082.928,911.667" fill="#1F1F1F"/>
+<line data-purpose="routed-connector" data-source-ref="integration-vibration" x1="716.205" y1="164.889" x2="742.203" y2="231.556" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="vibration-tvac" x1="742.203" y1="231.556" x2="794.199" y2="298.222" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="tvac-emc" x1="794.199" y1="298.222" x2="826.697" y2="364.889" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="emc-psr" x1="826.697" y1="364.889" x2="862.444" y2="511.667" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="psr-shipment" x1="862.444" y1="511.667" x2="894.942" y2="564.889" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="shipment-campaign" x1="894.942" y1="564.889" x2="953.437" y2="631.556" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="campaign-frr" x1="953.437" y1="631.556" x2="976.186" y2="711.667" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="frr-launch" x1="976.186" y1="711.667" x2="998.934" y2="778.333" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="launch-leop" x1="998.934" y1="778.333" x2="1067.179" y2="831.556" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="leop-firstlight" x1="1067.179" y1="831.556" x2="1089.928" y2="911.667" stroke="#BDBDBD"/>
+<line data-purpose="routed-connector" data-source-ref="rehearsals-launch" x1="875.443" y1="431.556" x2="998.934" y2="778.333" stroke="#BDBDBD"/>
+<text data-purpose="presentation-annotation" data-source-ref="window" x="64" y="979" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Launch window 22 Oct-5 Nov; missing it means Q1.</text>
+<text data-purpose="presentation-annotation" data-source-ref="tvac" x="64" y="1000" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Payload TVAC ran 7 days late; margin is now zero.</text>
+<text data-purpose="presentation-annotation" data-source-ref="station" x="64" y="1021" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="400" fill="#111111">Ground station done early; link test can move up.</text>
+</svg>
