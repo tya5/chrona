@@ -20,6 +20,7 @@ SCHEMAS = (
     "command-request-v0.2.schema.yaml",
     "automation-result-v0.1.schema.yaml",
     "snapshot-ref-v0.2.schema.yaml",
+    "store-config-v0.1.schema.yaml",
 )
 
 
