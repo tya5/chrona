@@ -22,16 +22,23 @@ def _inside(root: Path, relative: str) -> Path:
 
 def _copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict, str]:
     raw = context_path.read_bytes(); context = yaml.safe_load(raw)
-    if context.get("version") != "chrona/presentation/v0.5" or context.get("kind") != "render-context":
+    if context.get("version") not in {"chrona/presentation/v0.5", "chrona/presentation/v0.6"} or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]
-    destination = snapshot / revision
-    destination.mkdir(parents=True)
-    for reference in [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")] + list(body.get("inputs", {}).values()):
+    def copy_reference(reference: dict) -> None:
+        destination = snapshot / reference["revision"]["token"]
+        destination.mkdir(parents=True, exist_ok=True)
         source = _inside(example, reference["address"])
         target = _inside(destination, reference["address"])
         target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(source, target)
+        if reference.get("kind") == "snapshot-ref":
+            nested = yaml.safe_load(source.read_text()).get("body", {}).get("project")
+            if not isinstance(nested, dict): raise ValueError("E_MATERIALIZER_CONTEXT")
+            copy_reference(nested)
+    for reference in [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")] + list(body.get("inputs", {}).values()):
+        copy_reference(reference)
+    destination = snapshot / revision
     context_target = _inside(destination, context_path.relative_to(example).as_posix())
     context_target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(context_path, context_target)
     for asset in body["environment"]["fontMetrics"]["assets"]:
