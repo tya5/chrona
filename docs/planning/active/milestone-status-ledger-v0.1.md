@@ -35,7 +35,7 @@ evidence is present, not that a later product release is complete.
 | M22 | Complete | D24 and every discovered addendum preceded implementation. I24-1 is at `f39e25e`, I24-2 at `7915501`, I24-3 at `fac5fb8`, and I24-4 at `9bf3595`; 239 tests, full conformance, matrix closure, and five regenerated ASTER artifacts pass. | None. |
 | M23 | Complete | D23 and both design addenda preceded affected work; I23 generic validation and Scene/SVG primitives, A23 reproducible Controller Z SVG/PNG with zero raster overflow, 246 tests, full conformance, and final reuse/release review pass. | None. |
 | M24 | Complete | Profile resolution at `fcabf30`; normal flow at `df2844e`; per-axis correction at `cc60472`; source-adapter boundary at `bf37c7a`; product-path replacement at `7e81ce1`; final I24-5 acceptance review. The v0.4 Context, independent Theme/Layout resources, source measurement/composition, and manifest-driven Scene path are the only reachable layout path. | None. |
-| M25 | Design planning | Color Scheme proposal #27 is routed through C25-D1–C25-D3. No implementation is authorized until an owning specification, schema, design review, and implementation plan are published. | Complete C25 design gates. |
+| M25 | Complete | Color Scheme v0.1, Theme v0.2, Render Context v0.5, deterministic category assignment, WCAG contrast rejection, migrated examples, no reachable legacy review paint fallback, and deterministic gallery are published. 165 tests and full conformance pass. | None. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning
