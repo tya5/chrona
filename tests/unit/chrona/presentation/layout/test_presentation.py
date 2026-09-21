@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from chrona.presentation.layout.presentation import place_rows, place_table_columns
+from chrona.presentation.layout.presentation import place_mark_tracks, place_rows, place_table_columns
 
 
 class FixedMetrics:
@@ -36,3 +36,31 @@ def test_row_placements_reserve_declared_group_headers() -> None:
     assert placements[0].bounds[1] == 10.0
     assert placements[1].bounds[1] > placements[0].bounds[1]
     assert placements[2].bounds[1] > placements[1].bounds[1]
+
+
+def test_track_placements_keep_shared_members_on_one_track() -> None:
+    item = SimpleNamespace
+    rows = (
+        item(
+            row_id="owner-a",
+            group_id=None,
+            items=(
+                item(item_id="snapshot", object_id="schedule", track="shared", source_kind="snapshot"),
+                item(item_id="actual", object_id="schedule", track="shared", source_kind="actual"),
+            ),
+        ),
+    )
+    row_placements = place_rows(
+        review_rows=rows,
+        timeline_bounds=(0.0, 0.0, 100.0, 40.0),
+        group_header_size=0.0,
+    )
+
+    tracks = place_mark_tracks(
+        review_rows=rows,
+        row_placements=row_placements,
+        mark_block_size=10.0,
+    )
+
+    assert tracks[0].block == tracks[1].block
+    assert tracks[0].actual_block == tracks[1].actual_block
