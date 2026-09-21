@@ -109,6 +109,28 @@ def test_cli_review_reports_stable_semantic_ids(tmp_path, monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["changes"] == [{"kind": "object", "id": "gate", "change": "added"}]
 
 
+def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkeypatch):
+    before = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
+    after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}}
+    token = "snapshot"
+    before_ref = _snapshot_resource(tmp_path, token, "before.yaml", before, "project", "demo")
+    candidate_ref = _snapshot_resource(tmp_path, token, "after.yaml", after, "project", "demo")
+    baseline = {"version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": "q2", "body": {"project": before_ref}}
+    baseline_payload = yaml.safe_dump(baseline, sort_keys=True).encode()
+    baseline_path = tmp_path / "snapshots" / "q2.yaml"; baseline_path.parent.mkdir(); baseline_path.write_bytes(baseline_payload)
+    digest = sha256(baseline_payload).hexdigest()
+    baseline_ref = {"id": "q2", "kind": "snapshot-ref", "store": {"provider": "local", "identity": "cli-test"}, "address": "snapshots/q2.yaml", "revision": {"token": "baseline:" + digest}, "contentIdentity": "sha256:" + digest}
+    for path, value in ((tmp_path / "baseline-ref.yaml", baseline_ref), (tmp_path / "candidate-ref.yaml", candidate_ref), (tmp_path / "stores.yaml", {"version": "chrona/store-config/v0.1", "stores": [{"provider": "local", "identity": "cli-test", "root": str(tmp_path)}]})):
+        path.write_text(yaml.safe_dump(value), encoding="utf-8")
+    result = tmp_path / "result.json"
+    monkeypatch.setattr(sys, "argv", ["chrona", "baseline-compare", "--baseline-reference", str(tmp_path / "baseline-ref.yaml"), "--candidate-reference", str(tmp_path / "candidate-ref.yaml"), "--store-config", str(tmp_path / "stores.yaml"), "--result", str(result)])
+    main()
+    assert json.loads(result.read_text())["comparison"]["changes"][0]["id"] == "gate"
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 2
+
+
 def test_cli_propose_set_uses_command_without_writing_input(tmp_path, monkeypatch, capsys):
     project = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}, "relations": []}
     path = tmp_path / "project.yaml"; path.write_text(yaml.safe_dump(project), encoding="utf-8")
