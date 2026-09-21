@@ -1,0 +1,11 @@
+version: chrona/actual-intake-batch/v0.2
+kind: actual-intake-batch
+id: supplier-week-17
+body:
+  source:
+    system: supplier
+    contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  records:
+    - externalKey: FW-42
+      projectObjectId: firmware
+      actual: {finish: "2026-04-18", progress: 0.75}
