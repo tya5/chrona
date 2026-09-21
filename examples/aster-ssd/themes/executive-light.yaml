@@ -52,6 +52,7 @@ body:
     snapshot.fill: neutral
     actual.fill: positive
     as-of.stroke: warning
+    calendar-closed.fill: surfaceRaised
     missing-actual.fill: textMuted
     variance-ahead.fill: positive
     variance-on-track.fill: neutral
