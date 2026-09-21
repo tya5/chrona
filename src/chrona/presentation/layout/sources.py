@@ -64,6 +64,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     """Measure every declared source once without reading Layout or renderer state."""
     metric = resolve_theme_metrics(theme)
     typography = ThemeTokenView(theme)
+    _, _, body_size, _ = typography.typography("text")
+    metric["text.measuredAverageAdvance"] = Decimal(str(font_metrics.width("M", float(body_size))))
     result: dict[str, Measurement] = {}
     for source, value in sorted(inputs.items()):
         _, _, font_size, line_height = typography.typography(value.typography_role)
