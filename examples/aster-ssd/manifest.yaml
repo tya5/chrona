@@ -3,6 +3,7 @@ gallery: gallery.html
 actual: actual.yaml
 style: styles/plan-actual.yaml
 theme: themes/executive-light.yaml
+colorScheme: schemes/executive-light.yaml
 layout: layouts/executive-review.yaml
 slides:
 - view: views/01-overview.yaml
