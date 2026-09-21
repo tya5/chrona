@@ -21,7 +21,6 @@ from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, measure_sources
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.renderers.generic import render_svg
-from chrona.presentation.review.svg import render_table_timeline_svg
 from chrona.presentation.scene.schedule import scene_from_schedule
 from chrona.scheduling.scheduler import schedule
 from chrona.storage.loader import load_project
@@ -216,16 +215,17 @@ def _run_render_review(args: argparse.Namespace) -> None:
     bind(resolved_layout.profile["root"])
     viewport = environment["viewport"]
     manifest = solve_layout(resolved_layout, viewport_inline=viewport["inlineSize"], viewport_block=viewport["blockSize"], measurements=node_measurements)
-    from chrona.presentation.scene.review import SlotRect
-    slots = {
-        item.source: SlotRect(float(item.bounds.inline), float(item.bounds.block), float(item.bounds.inline_size), float(item.bounds.block_size))
-        for item in manifest.decisions if item.source is not None
-    }
     capabilities = set(context["body"]["target"]["capabilities"])
-    svg = render_table_timeline_svg(
-        project["project"].get("title", "Chrona"), projection, project, view, theme,
-        capabilities, {}, slots=slots, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])), metric_values=dict(measured.metric_values), font_metrics=font_metrics,
-    )
+    from chrona.presentation.model.surface_content import SurfaceContentInput, display_value, table_value
+    from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+    from chrona.presentation.renderers.v05_svg import render_v05_svg
+    columns = tuple((str(column["id"]), str(column["id"])) for column in view["body"].get("tableColumns", ()))
+    cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, project, column["source"]), column["missing"]))
+                  for item in projection.items for column in view["body"].get("tableColumns", ()))
+    scene_input = build_scene_input(projection=projection, surface_content=SurfaceContentInput(table_columns=columns, table_cells=cells),
+                                    layout_manifest=manifest, resolved_theme=theme, font_metrics=font_metrics,
+                                    measured_sources=measured, capabilities={name: True for name in capabilities})
+    svg = render_v05_svg(compose_review_surface(scene_input), viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])), tokens=scene_input.theme_tokens)
     Path(args.output).write_text(svg, encoding="utf-8")
 
 
