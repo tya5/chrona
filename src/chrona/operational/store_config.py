@@ -12,11 +12,13 @@ from chrona.storage.snapshots import LocalBaselineRegistry
 class ConfiguredStoreReader:
     def __init__(self, config: dict[str, Any]):
         self.roots: dict[tuple[str, str], Path] = {}
+        self.integrity: dict[tuple[str, str], str] = {}
         for entry in config["stores"]:
             key = (entry["provider"], entry["identity"])
             if key in self.roots:
                 raise ValueError("E_STORE_CONFIG")
             self.roots[key] = Path(entry["root"])
+            self.integrity[key] = entry.get("integrity", "optional")
 
     def read(self, reference: dict[str, Any]) -> bytes:
         store = reference.get("store", {})
@@ -24,6 +26,8 @@ class ConfiguredStoreReader:
         root = self.roots.get(key)
         if root is None:
             raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
+        if self.integrity[key] == "required" and not reference.get("contentIdentity"):
+            raise ValueError("E_CONTENT_IDENTITY_REQUIRED")
         if reference.get("kind") == "snapshot-ref":
             return LocalBaselineRegistry(root, key[1]).read(reference)
         return LocalSnapshotReader(root, key[1]).read(reference)
