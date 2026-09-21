@@ -1,5 +1,6 @@
 from chrona.commands.actual_commands import (
     MemoryActualStore,
+    LocalActualStore,
     apply_actual_intake_batch,
     redo_actual_command,
     resolve_actual_observation,
@@ -108,3 +109,13 @@ def test_resolution_keeps_v02_external_provenance_for_future_deduplication():
     assert observation["externalIdentity"] == {"system": "supplier", "key": "x"}
     assert observation["sourceContentIdentity"] == "sha256:" + "a" * 64
     assert "alignment" not in observation and observation["projectObjectId"] == "firmware"
+
+
+def test_local_actual_store_publishes_new_immutable_token_and_reopens(tmp_path):
+    store = LocalActualStore(tmp_path, _actual_set_v02())
+    base, _ = store.read()
+    accepted = apply_actual_intake_batch(store, base, _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-18"}}]), set())
+    assert accepted.status == "accepted" and accepted.result_revision != base
+    reopened = LocalActualStore(tmp_path, _actual_set_v02())
+    assert reopened.read()[0] == accepted.result_revision
+    assert (tmp_path / accepted.result_revision / "actuals" / "supplier-observed.yaml").is_file()
