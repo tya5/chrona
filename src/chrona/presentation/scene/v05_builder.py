@@ -145,8 +145,9 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         row = next((item for item in rows if item.row_id == object_id or item.object_id == object_id), None)
         index = next((offset for offset, value in enumerate(value.surface_content.table_columns) if value[0] == column_id), None)
         if row is not None and index is not None:
+            indent = body_size if index == 0 and row.group_id else 0
             text(f"cell:{object_id}:{column_id}", object_id, "table-cell", "text", cell,
-                 table.bounds[0] + index * column_width, row.bounds[1] + row.bounds[3] / 2 + body_size / 2)
+                 table.bounds[0] + index * column_width + indent, row.bounds[1] + row.bounds[3] / 2 + body_size / 2)
     group_labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
                     for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:
