@@ -21,16 +21,38 @@ allOf:
               properties:
                 id: {type: string, minLength: 1}
                 title: {type: string}
+                presentation: {enum: [lines, figures]}
                 metrics:
-                  type: object
-                  minProperties: 1
-                  additionalProperties:
-                    oneOf:
-                      - {type: string}
-                      - type: object
-                        required: [source, format]
-                        additionalProperties: false
-                        properties:
-                          label: {type: string}
-                          source: {enum: [actual.asOf, planned.nextPoint, count.selected, count.missingActual, count.knownFinishVariance]}
-                          format: {enum: [text, date, count, signedDays]}
+                  oneOf:
+                    - type: object
+                      minProperties: 1
+                      additionalProperties:
+                        oneOf:
+                          - {type: string}
+                          - {$ref: "#/$defs/typedMetric"}
+                    - type: array
+                      minItems: 1
+                      items:
+                        allOf:
+                          - {$ref: "#/$defs/typedMetric"}
+                          - required: [id]
+                            properties: {id: {type: string, minLength: 1}}
+$defs:
+  typedMetric:
+    type: object
+    required: [source, format]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      label: {type: string}
+      source:
+        oneOf:
+          - {enum: [actual.asOf, planned.nextPoint, count.selected, count.missingActual, count.knownFinishVariance]}
+          - type: object
+            additionalProperties: false
+            properties:
+              actual: {const: asOf}
+              counts: {const: finishDelta}
+              object: {type: string, minLength: 1}
+              facet: {const: planned}
+      format: {enum: [text, date, count, signedDays]}
