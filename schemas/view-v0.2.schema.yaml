@@ -145,7 +145,7 @@ allOf:
                 id: {type: string, minLength: 1}
                 source:
                   oneOf:
-                    - {enum: [id, title, objectType, entity]}
+                    - {enum: [id, title, objectType, entity, rowIndex]}
                     - type: object
                       required: [field]
                       additionalProperties: false
