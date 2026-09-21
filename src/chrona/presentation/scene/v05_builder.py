@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Mapping
 
-from chrona.presentation.layout.axis import axis_intervals
+from chrona.presentation.layout.axis import axis_intervals, format_axis_label
 from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutManifest
@@ -41,6 +41,7 @@ class SceneBuildInput:
     font_metrics: Any
     measured_sources: MeasuredSources
     capabilities: Mapping[str, bool]
+    locale: str = "en-US"
 
 
 _REQUIRED_SOURCES = frozenset(("title", "table", "timeline", "timeline-axis"))
@@ -49,7 +50,7 @@ _REQUIRED_SOURCES = frozenset(("title", "table", "timeline", "timeline-axis"))
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       layout_manifest: LayoutManifest, resolved_theme: Mapping[str, Any],
                       font_metrics: Any, measured_sources: MeasuredSources,
-                      capabilities: Mapping[str, bool]) -> SceneBuildInput:
+                      capabilities: Mapping[str, bool], locale: str = "en-US") -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -63,7 +64,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities))
+                           dict(capabilities), locale)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -217,10 +218,13 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
         primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
                                          (x, timeline.bounds[1], 0, timeline.bounds[3]), points=((x, axis.bounds[1]), (x, timeline.bounds[1] + timeline.bounds[3])), z_order=len(primitives)))
-        label_width = value.font_metrics.width(interval.label, float(value.measured_sources.metric_values["text.body.size"]))
+        axis_label = format_axis_label(interval,
+                                       {"month": "short-month", "quarter": "year-quarter", "date": "localized-date"},
+                                       value.locale)
+        label_width = value.font_metrics.width(axis_label, float(value.measured_sources.metric_values["text.body.size"]))
         clipped_width = (interval.end - interval.start).days * scale.unit_ratio
         if label_width <= clipped_width:
-            text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", interval.label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
+            text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", axis_label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
