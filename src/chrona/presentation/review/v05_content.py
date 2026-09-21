@@ -107,9 +107,24 @@ def _typed_summary_panels(summary: Mapping[str, Any], projection: ReviewProjecti
     panels = []
     for panel in summary.get("panels", ()):
         metrics = []
-        for metric_id, definition in panel.get("metrics", {}).items():
+        declared = panel.get("metrics", {})
+        entries = declared.items() if isinstance(declared, Mapping) else ((item["id"], item) for item in declared)
+        for metric_id, definition in entries:
             if isinstance(definition, Mapping):
-                source, formatter = definition.get("source"), definition.get("format")
+                source, formatter = definition.get("source"), definition.get("format", "text")
+                if isinstance(source, Mapping):
+                    if source.get("actual") == "asOf":
+                        source = "actual.asOf"
+                    elif source.get("counts") == "finishDelta":
+                        behind = sum(item.finish_delta > 0 for item in projection.items if item.finish_delta is not None)
+                        ahead = sum(item.finish_delta < 0 for item in projection.items if item.finish_delta is not None)
+                        values["counts.finishDelta"] = f"{behind} / {ahead}"
+                        source = "counts.finishDelta"
+                    elif isinstance(source.get("object"), str) and source.get("facet") == "planned":
+                        selected = next((item for item in projection.items if item.object_id == source["object"]), None)
+                        planned = selected.planned if selected is not None else {}
+                        values[f"object.{source['object']}.planned"] = planned.get("at", planned.get("end"))
+                        source = f"object.{source['object']}.planned"
                 if source not in values:
                     raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
                 if formatter not in {"text", "date", "count", "signedDays"}:
