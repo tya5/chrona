@@ -25,6 +25,11 @@ identity)` pair to a root. Actual writes resolve immutable
 a verified immutable reference; a command never bootstraps it. Baselines are
 create-once `snapshots/<id>.yaml` resources.
 
+Capture's registry is deliberately an output Store selector, not an immutable resource
+reference: it identifies the configured namespace that will contain the new baseline.
+The accepted result, rather than the request, supplies the first immutable baseline
+reference.
+
 The local profile does not claim generic Project mutation. `command-apply` supports
 only `applyActualIntakeBatch`, `resolveActualObservation`, and `captureSnapshot`;
 `setTypedField` rejects as `E_AUTOMATION_OPERATION_UNSUPPORTED`.
