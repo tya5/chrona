@@ -1,4 +1,7 @@
-from datetime import date\n\nfrom chrona.presentation.model.projection import ReviewItem\nfrom chrona.presentation.model.surface_content import display_value, table_value
+from datetime import date
+
+from chrona.presentation.model.projection import ReviewItem
+from chrona.presentation.model.surface_content import display_value, table_value
 
 
 def test_declared_table_missing_values_are_normalized_before_scene_construction():

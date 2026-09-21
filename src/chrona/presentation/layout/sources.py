@@ -35,17 +35,21 @@ REQUIRED_METRICS = (
     "table.column.minInlineSize", "table.header.blockSize",
 )
 
+OPTIONAL_METRICS = ("timeline.groupHeader.blockSize",)
+
 
 def resolve_theme_metrics(theme: Mapping[str, Any]) -> dict[str, Decimal]:
     body = theme.get("body", {})
     bindings, values = body.get("metrics", {}), body.get("values", {})
     resolved: dict[str, Decimal] = {}
-    unknown = set(bindings) - set(REQUIRED_METRICS)
+    unknown = set(bindings) - set(REQUIRED_METRICS) - set(OPTIONAL_METRICS)
     if unknown:
         raise LayoutError("E_LAYOUT_METRIC_UNKNOWN", "/body/metrics/" + sorted(unknown)[0])
-    for name in REQUIRED_METRICS:
+    for name in REQUIRED_METRICS + OPTIONAL_METRICS:
         token = bindings.get(name)
         if not isinstance(token, str):
+            if name in OPTIONAL_METRICS:
+                continue
             raise LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/" + name)
         declared = values.get(token)
         if not isinstance(declared, Mapping) or declared.get("type") != "number":

@@ -22,6 +22,7 @@ body:
     panel.side: {type: number, value: 420}
     timeline-day-width: {type: number, value: 4}
     timeline-row-height: {type: number, value: 30}
+    timeline-mark-size: {type: number, value: 10}
     timeline-axis-height: {type: number, value: 46}
     table-column-width: {type: number, value: 210}
     table-header-height: {type: number, value: 46}
@@ -66,11 +67,18 @@ body:
     variance-behind.fill: negative
     variance-behind.stroke: negative
     dependency.stroke: textMuted
+    groupHeader.fill: surfaceRaised
+    baseline.stroke: neutral
+    calendar-closed.fill: surfaceRaised
+    calendar-exception.fill: warning
+    range.fill: warning
+    asOf.stroke: warning
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body
     timeline.dayWidth: timeline-day-width
     timeline.row.minBlockSize: timeline-row-height
+    timeline.mark.blockSize: timeline-mark-size
     timeline.axis.blockSize: timeline-axis-height
     table.column.minInlineSize: table-column-width
     table.header.blockSize: table-header-height

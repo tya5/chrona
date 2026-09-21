@@ -21,6 +21,7 @@ body:
     spacing.l: {type: number, value: 36}
     timeline-day-width: {type: number, value: 4}
     timeline-row-height: {type: number, value: 30}
+    timeline-mark-size: {type: number, value: 10}
     timeline-axis-height: {type: number, value: 42}
     table-column-width: {type: number, value: 150}
     table-header-height: {type: number, value: 42}
@@ -78,6 +79,7 @@ body:
     text.body.lineHeight: leading.body
     timeline.dayWidth: timeline-day-width
     timeline.row.minBlockSize: timeline-row-height
+    timeline.mark.blockSize: timeline-mark-size
     timeline.axis.blockSize: timeline-axis-height
     table.column.minInlineSize: table-column-width
     table.header.blockSize: table-header-height

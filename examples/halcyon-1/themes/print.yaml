@@ -22,6 +22,7 @@ body:
     panel.timeline: {type: number, value: 840}
     timeline-day-width: {type: number, value: 5}
     timeline-row-height: {type: number, value: 44}
+    timeline-mark-size: {type: number, value: 12}
     timeline-axis-height: {type: number, value: 40}
     table-column-width: {type: number, value: 130}
     table-header-height: {type: number, value: 40}
@@ -79,6 +80,7 @@ body:
     text.body.lineHeight: leading.body
     timeline.dayWidth: timeline-day-width
     timeline.row.minBlockSize: timeline-row-height
+    timeline.mark.blockSize: timeline-mark-size
     timeline.axis.blockSize: timeline-axis-height
     table.column.minInlineSize: table-column-width
     table.header.blockSize: table-header-height
