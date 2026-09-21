@@ -1,0 +1,19 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/store-config-v0.1"
+title: "Chrona local Store configuration v0.1"
+type: object
+required: [version, stores]
+additionalProperties: false
+properties:
+  version: {const: chrona/store-config/v0.1}
+  stores:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [provider, identity, root]
+      additionalProperties: false
+      properties:
+        provider: {const: local}
+        identity: {type: string, minLength: 1}
+        root: {type: string, minLength: 1}
