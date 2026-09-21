@@ -159,7 +159,7 @@ def _run_render_review(args: argparse.Namespace) -> None:
     context, resources = resolve_render_context(load_yaml(args.context_reference), reader)
     project = _resource(resources, "project")
     view = _resource(resources, "view")
-    theme = _resource(resources, "theme")
+    theme = context.get("resolvedTheme")
     layout = _resource(resources, "layout-profile")
     if project is None or view is None or theme is None or layout is None:
         raise CliFailure("E_CLOSURE_REQUIRED", "Render Context closure is incomplete", "closure")
