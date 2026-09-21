@@ -66,9 +66,23 @@ allOf:
             required: [labels, relations, annotations]
             additionalProperties: false
             properties:
-              labels: {type: boolean}
+              labels:
+                oneOf:
+                  - {type: boolean}
+                  - type: object
+                    required: [members]
+                    additionalProperties: false
+                    properties: {members: {type: boolean}}
               relations: {enum: [none, semantic, all]}
               annotations: {enum: [none, semantic, presentation, all]}
+          timePresentation:
+            type: object
+            additionalProperties: false
+            properties:
+              axisLevel: {enum: [auto, day, week, month, quarter, year]}
+              asOf: {enum: [hidden, line]}
+              calendarClosed: {type: boolean}
+          annotationPresentation: {enum: [plain, numbered]}
           layoutIntent:
             type: object
             required: [compactness, itemStacking]
