@@ -8,6 +8,11 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import TextPlacement
 
 
+def measure_text_width(content: str, *, font_size: float, font_metrics: Any) -> float:
+    """Measure text width at the Layout boundary."""
+    return float(font_metrics.width(content, font_size))
+
+
 def place_text(*, placement_id: str, source_ref: str, content: str,
                inline: float, baseline_block: float, typography_role: str,
                theme_tokens: Any, font_metrics: Any, overflow: str = "fit",
@@ -15,7 +20,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     """Measure one text run before Scene turns it into a primitive."""
     family, weight, size, line_height = theme_tokens.typography(typography_role)
     font_size, leading = float(size), float(line_height)
-    width = float(font_metrics.width(content, font_size))
+    width = measure_text_width(content, font_size=font_size, font_metrics=font_metrics)
     return TextPlacement(
         placement_id, source_ref, content,
         Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),
