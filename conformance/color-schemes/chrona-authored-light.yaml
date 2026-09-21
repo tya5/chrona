@@ -1,0 +1,23 @@
+version: chrona/color-scheme/v0.1
+kind: color-scheme
+id: chrona-authored-light
+body:
+  colors:
+    surface: '#FFFFFF'
+    surfaceRaised: '#F5F7FA'
+    text: '#1B1F24'
+    textMuted: '#4B5563'
+    accent: '#1D4ED8'
+    positive: '#047857'
+    negative: '#B91C1C'
+    warning: '#A16207'
+    neutral: '#475569'
+  category: ['#1D4ED8', '#047857', '#B91C1C', '#7C3AED']
+  suitability:
+    background: light
+    colorVision: [none-claimed]
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: chrona M25 design fixture
+    license: project-pending
