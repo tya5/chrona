@@ -200,7 +200,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             instance_anchors.setdefault(item.object_id, []).append(
                 (instance_id, anchor))
             instance_rows[instance_id] = row.row_id
-    obstacles = tuple(row.bounds for row in rows)
+    obstacles = tuple((row.bounds[0], row.bounds[1], row.bounds[0] + row.bounds[2], row.bounds[1] + row.bounds[3])
+                      for row in rows)
     for relation in value.surface_content.relations:
         source = relation.get("from", {}).get("object")
         target = relation.get("to", {}).get("object")
@@ -212,7 +213,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                 target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
                 if source_port == target_port:
                     raise SceneBuildError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation.get('id', '')}")
-                route_obstacles = tuple(item.bounds for item in rows
+                route_obstacles = tuple((item.bounds[0], item.bounds[1], item.bounds[0] + item.bounds[2], item.bounds[1] + item.bounds[3])
+                                        for item in rows
                                         if instance_rows.get(source_id) != instance_rows.get(target_id)
                                         or item.row_id != instance_rows.get(source_id))
                 points = route_orthogonal(source_port, target_port, route_obstacles,
