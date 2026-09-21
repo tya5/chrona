@@ -22,7 +22,8 @@ historical milestone names do not change their ownership.
 
 Read `09` Application Architecture, `10` Command Model, `11` Extension Model, `15`
 Revision Store Adapters, `16` Federation, and `32` Repository Layout. Supplemental
-runtime reactivity and adapter-output documents refine these boundaries.
+runtime reactivity and adapter-output documents refine these boundaries. Read `35`
+Operational Review Workflows for the UC-10/UC-11/UC-12 successor operational surface.
 
 ## Opt-in successor capabilities
 
