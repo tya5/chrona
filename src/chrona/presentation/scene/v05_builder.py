@@ -148,6 +148,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         bounds=table.bounds,
         font_metrics=value.font_metrics,
         font_size=body_size,
+        overflow=table.overflow,
     )
     column_positions = {
         placement.column_id: (placement.inline, placement.inline_size)
