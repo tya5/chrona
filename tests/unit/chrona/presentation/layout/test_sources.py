@@ -9,7 +9,7 @@ from chrona.presentation.layout.sources import SourceInput, measure_sources
 def theme():
     metrics = {
         "text.body.size": 14, "text.body.lineHeight": 1.4,
-        "timeline.dayWidth": 12, "timeline.row.minBlockSize": 40,
+        "timeline.dayWidth": 12, "timeline.row.minBlockSize": 40, "timeline.mark.blockSize": 8,
         "timeline.axis.blockSize": 48, "table.column.minInlineSize": 120,
         "table.header.blockSize": 44,
     }
