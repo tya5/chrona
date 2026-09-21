@@ -17,3 +17,4 @@ properties:
         provider: {const: local}
         identity: {type: string, minLength: 1}
         root: {type: string, minLength: 1}
+        integrity: {enum: [optional, required]}
