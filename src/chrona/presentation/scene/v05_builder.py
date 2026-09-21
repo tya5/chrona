@@ -137,6 +137,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                          group.content_bounds, opacity=0.12, z_order=len(primitives)))
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
+    mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
       for member_index, item in enumerate(review_row.items):
         track_height = row.bounds[3] / len(review_row.items)
@@ -150,10 +151,12 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             x = coordinate(planned["at"])
             primitives.append(ScenePrimitive(f"planned:{instance_id}", "Symbol", item.object_id, "object", "planned", "planned",
                                              (x - height / 2, y, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+            mark_ports[instance_id] = ((x, y + height / 2), (x, y + height / 2))
         elif source_kind != "actual":
             x1, x2 = coordinate(planned["start"]), coordinate(planned["end"])
             primitives.append(ScenePrimitive(f"planned:{instance_id}", "Rect", item.object_id, "object", "planned", "planned",
                                              (x1, y, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
+            mark_ports[instance_id] = ((x1, y + height / 2), (x2, y + height / 2))
         actual = item.actual or {}
         if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
             x1, x2 = coordinate(actual["start"]), coordinate(actual["finish"])
@@ -195,7 +198,9 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         target_instances = instance_anchors.get(str(target), ())
         for source_id, source_anchor in source_instances:
             for target_id, target_anchor in target_instances:
-                points = route_orthogonal(source_anchor, target_anchor, obstacles,
+                source_port = mark_ports.get(source_id, (source_anchor, source_anchor))[1]
+                target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
+                points = route_orthogonal(source_port, target_port, obstacles,
                     bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
                 relation_id = str(relation.get("id", f"{source}-{target}"))
                 scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
