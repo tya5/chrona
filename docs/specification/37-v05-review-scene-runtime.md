@@ -76,6 +76,14 @@ labels do not overlap. If none fits, it fails with `E_PRESENTATION_AXIS_OVERFLOW
 This generic versioned rule is Scene semantics, not an adapter default or a new
 authoring resource.
 
+### 3.2 Optional content normalization
+
+`SurfaceContentInput` is produced by a current-resource normalizer over the Projection,
+Project, View, and any resolved current detail/summary profile. The normalizer does not
+accept the deleted Settings shape. It includes an optional family only when both the
+selected source and its declared Layout source exist; a missing required source is a
+diagnostic, while an absent optional family produces no primitive.
+
 ## 4. SVG adapter migration
 
 The v0.5 adapter consumes `SceneSurface` and `ThemeTokenView`. It maps primitive kinds
