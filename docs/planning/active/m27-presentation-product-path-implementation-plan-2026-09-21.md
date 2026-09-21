@@ -1,10 +1,14 @@
 # M27 Presentation Product-Path Implementation Plan — 2026-09-21
 
-**Status:** Authorized by the D27-5 design closure review.
+**Status:** Paused by `m27-completed-scene-migration-design-amendment-2026-09-21.md`.
 **Design inputs:** ADR-0028, Specifications 08/24/30/33/36, D27-4 acceptance design,
 and `m27-presentation-product-path-design-closure-review-2026-09-21.md`.
 
 ## Delivery order
+
+The slices below are superseded until the migration amendment closes its required
+design work and a corrected implementation plan is published. No M27 implementation
+slice is currently authorized.
 
 | Slice | Scope | Required evidence before completion | Publish boundary |
 |---|---|---|---|
