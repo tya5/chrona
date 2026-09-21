@@ -1,6 +1,6 @@
 # M26 Operational Review Workflows Design Plan — 2026-09-21
 
-**Status:** C26-D1 complete; normative design is in progress. Implementation is not authorized.
+**Status:** Design complete; implementation is authorized only by the published M26 implementation plan.
 **Owns:** Product reachability for UC-10 (Actual intake/reconciliation), UC-11
 (revision-bound CLI/CI automation), and UC-12 (named baseline capture/compare).
 
@@ -79,6 +79,10 @@ CI containment, and A26 acceptance contract is published in
 
 **Exit:** design review explicitly authorizes implementation with no unresolved product
 decision.
+
+**Completed:** 2026-09-21. The whole-design review and slice order are published in
+`docs/reviews/current/m26-operational-workflows-design-review-2026-09-21.md` and
+`docs/planning/active/m26-operational-workflows-implementation-plan-2026-09-21.md`.
 
 ## 4. Non-goals
 
