@@ -173,7 +173,9 @@ For a local writable Actual Store, an immutable Actual-set reference resolves as
 adapter state is the non-input pointer `<root>/actual-tips/<id>.json`. An apply first
 compares that pointer with `target.revision.token`, writes a complete new token
 directory, then atomically advances the pointer. The pointer, root default, and latest
-token are never accepted in a command document.
+token are never accepted in a command document. Store provisioning creates the first
+pointer out of band from a verified immutable Actual-set reference; a missing pointer
+is a rejection, not an implicit bootstrap write.
 
 | Command | Required inputs | Mutation | Output |
 |---|---|---|---|
