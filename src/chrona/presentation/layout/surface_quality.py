@@ -31,6 +31,37 @@ class TextPlacement:
     typography_role: str
     overflow: str = "fit"
     required: bool = True
+    baseline: tuple[float, float] | None = None
+    lines: tuple[str, ...] = ()
+    font_family: str = ""
+    font_weight: int = 0
+    font_size: float = 0.0
+    line_height: float = 0.0
+    font_asset_identity: str = ""
+
+
+@dataclass(frozen=True)
+class MarkPlacement:
+    """Completed mark geometry and ports, independent of Scene primitives."""
+
+    placement_id: str
+    source_ref: str
+    bounds: Rect
+    start_port: tuple[float, float]
+    end_port: tuple[float, float]
+    required: bool = True
+
+
+@dataclass(frozen=True)
+class ShapePlacement:
+    """Renderer-neutral completed non-text geometry for Scene projection."""
+
+    placement_id: str
+    source_ref: str
+    kind: str
+    bounds: Rect
+    points: tuple[tuple[float, float], ...] = ()
+    required: bool = True
 
 
 @dataclass(frozen=True)
@@ -60,6 +91,8 @@ class SurfacePlacement:
     """The complete geometry handoff from Layout to Scene."""
 
     text: tuple[TextPlacement, ...] = ()
+    marks: tuple[MarkPlacement, ...] = ()
+    shapes: tuple[ShapePlacement, ...] = ()
     relations: tuple[RelationPlacement, ...] = ()
 
     def assert_valid(self) -> None:
@@ -75,3 +108,12 @@ class SurfacePlacement:
                     raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
             elif len(relation.points) < 2:
                 raise ValueError(f"E_LAYOUT_RELATION_PLACEMENT_INVALID:{relation.relation_id}")
+        for mark in self.marks:
+            if mark.bounds.inline_size <= 0 or mark.bounds.block_size <= 0:
+                raise ValueError(f"E_LAYOUT_MARK_PLACEMENT_INVALID:{mark.placement_id}")
+        for shape in self.shapes:
+            if shape.kind == "Path":
+                if len(shape.points) < 2:
+                    raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{shape.placement_id}")
+            elif shape.bounds.inline_size < 0 or shape.bounds.block_size < 0:
+                raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{shape.placement_id}")
