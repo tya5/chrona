@@ -53,6 +53,10 @@ published in `docs/research/operational-workflows/m26-existing-contract-matrix-2
 **Exit:** owning specification, ADRs, schemas, positive/negative fixtures, canonical
 identity rules, and diagnostics agree.
 
+**Completed:** 2026-09-21. Specification `35`, ADR-0024 through ADR-0026, four
+versioned schemas, and acceptance/rejection examples establish the single immutable
+closure, replay, provenance, and baseline rules.
+
 ### C26-D3 — CLI/CI and release design
 
 - Define commands, exit codes, JSON output, output-directory atomicity, and credential
