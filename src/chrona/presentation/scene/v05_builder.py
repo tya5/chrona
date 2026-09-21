@@ -13,6 +13,7 @@ from chrona.presentation.layout.axis import axis_intervals, format_axis_label
 from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutManifest
+from chrona.presentation.layout.presentation import place_rows, place_table_columns
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -95,22 +96,20 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     group_header_size = float(metric.get("timeline.groupHeader.blockSize", 0))
     group_starts = tuple(index for index, row in enumerate(review_rows)
                          if row.group_id and (index == 0 or review_rows[index - 1].group_id != row.group_id))
-    available_rows = timeline.bounds[3] - group_header_size * len(group_starts)
-    row_height = available_rows / max(1, len(review_rows))
+    row_placements = place_rows(
+        review_rows=tuple(review_rows),
+        timeline_bounds=timeline.bounds,
+        group_header_size=group_header_size,
+    )
+    row_height = row_placements[0].bounds[3] if row_placements else timeline.bounds[3]
     minimum = float(metric["timeline.row.minBlockSize"])
     if any(row_height < minimum * max(1, sum(item.track != "shared" for item in review_row.items))
            for review_row in review_rows):
         raise SceneBuildError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline")
-    row_values = []
-    cursor = timeline.bounds[1]
-    for index, review_row in enumerate(review_rows):
-        if index in group_starts:
-            cursor += group_header_size
-        row_values.append(SceneRow(review_row.table_subject_id, review_row.group_id,
-                                   (timeline.bounds[0], cursor, timeline.bounds[2], row_height),
-                                   review_row.row_id))
-        cursor += row_height
-    rows = tuple(row_values)
+    rows = tuple(
+        SceneRow(review_row.table_subject_id, placement.group_id, placement.bounds, placement.row_id)
+        for review_row, placement in zip(review_rows, row_placements, strict=True)
+    )
     groups: list[SceneGroup] = []
     for row in rows:
         if groups and groups[-1].group_id == row.group_id:
@@ -140,22 +139,17 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     title_baseline = float(value.measured_sources.measurements["title"].first_baseline or 0)
     text("title", "title", "title-text", "text", title, title_slot.bounds[0], title_slot.bounds[1] + title_baseline, typography_role="heading")
     body_size = float(value.theme_tokens.typography("text")[2])
-    column_cells = {column_id: [label] for column_id, label in value.surface_content.table_columns}
-    for _, column_id, cell in value.surface_content.table_cells:
-        column_cells.setdefault(column_id, []).append(cell)
-    natural_widths = tuple(max(body_size, max((value.font_metrics.width(cell, body_size) for cell in column_cells.get(column_id, (label,))), default=body_size) + body_size)
-                           for column_id, label in value.surface_content.table_columns)
-    total_width = sum(natural_widths)
-    available_width = table.bounds[2]
-    scale_columns = min(1.0, available_width / total_width) if total_width else 1.0
-    column_widths = tuple(width * scale_columns for width in natural_widths)
-    column_starts = []
-    cursor = table.bounds[0]
-    for width in column_widths:
-        column_starts.append(cursor)
-        cursor += width
-    column_positions = {column_id: (column_starts[index], column_widths[index])
-                        for index, (column_id, _) in enumerate(value.surface_content.table_columns)}
+    table_placements = place_table_columns(
+        columns=value.surface_content.table_columns,
+        cells=value.surface_content.table_cells,
+        bounds=table.bounds,
+        font_metrics=value.font_metrics,
+        font_size=body_size,
+    )
+    column_positions = {
+        placement.column_id: (placement.inline, placement.inline_size)
+        for placement in table_placements
+    }
     for column_id, label in value.surface_content.table_columns:
         text(f"column:{column_id}", "view:tableColumns", "table-column-label", "text", label,
              column_positions[column_id][0], table.bounds[1] + body_size)
