@@ -16,3 +16,15 @@ def test_command_check_has_no_write_and_validates_target_precondition():
     command = {"version": "chrona/command/v0.2", "commandId": "c1", "type": "captureSnapshot", "target": target, "baseRevision": "r1", "expectedContentIdentity": digest, "payload": {"snapshotId": "q2", "registry": target | {"id": "r", "kind": "snapshot-registry"}}}
     assert check_command(Reader(payload), command)["status"] == "accepted"
     assert check_command(Reader(payload), command | {"baseRevision": "old"})["diagnostics"][0]["code"] == "E_AUTOMATION_BASE_REVISION"
+
+
+def test_command_check_accepts_revision_only_target_and_returns_computed_identity():
+    project = {"version": "timeline/v0.1", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
+    payload = yaml.safe_dump(project).encode()
+    target = {"id": "p", "kind": "project", "store": {"provider": "local", "identity": "s"}, "address": "p.yaml", "revision": {"token": "r1"}}
+    command = {"version": "chrona/command/v0.2", "commandId": "c1", "type": "captureSnapshot", "target": target, "baseRevision": "r1", "payload": {"snapshotId": "q2", "registry": target | {"id": "r", "kind": "snapshot-registry"}}}
+
+    result = check_command(Reader(payload), command)
+
+    assert result["status"] == "accepted"
+    assert result["inputs"][0]["contentIdentity"] == "sha256:" + sha256(payload).hexdigest()
