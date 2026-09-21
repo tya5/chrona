@@ -38,14 +38,16 @@ per address; its configured registry identity is part of every output reference.
 
 ### 3.1 Batch resource
 
-`chrona/actual-intake-batch/v0.1` is a normalized, self-contained intake document
-validated by `actual-intake-batch-v0.1.schema.yaml`. It has one source and an ordered
-list of records. `source.system` and each `externalKey` form the stable external fact
+`chrona/actual-intake-batch/v0.2` is an immutable resource document validated by
+`actual-intake-batch-v0.2.schema.yaml`. Its `kind` is `actual-intake-batch`; source and
+records live in `body`. It has one source and an ordered list of records. `source.system` and each `externalKey` form the stable external fact
 identity. `source.contentIdentity` is the SHA-256 identity of the exact normalized
 source payload from which the adapter produced this batch. `source.locator`, when
 present, is audit text only and MUST NOT be fetched by Chrona.
 
-The initial profile accepts already-normalized Date-only Actual fields only. Source
+The initial profile accepts already-normalized Date-only Actual fields only. A Command
+payload carries a complete immutable `actual-intake-batch` reference; the Engine
+verifies it before accessing `body.source` or `body.records`. Source
 parsers, HTTP clients, credential storage, webhook handling, and automatic identity
 matching are deliberately out of scope.
 
