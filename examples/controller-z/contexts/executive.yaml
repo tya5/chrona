@@ -22,7 +22,7 @@ body:
     store: {provider: local, identity: controller-z-example}
     address: themes/executive-light.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:38ea311c77309f728f0e70560c9315584c5b6c4331fc899f4f9a884dcc6ee785
+    contentIdentity: sha256:d38140bb658fd696c9d6a64b25fef670489cd2f593770726a4871e2cf1df2ef2
   colorScheme:
     id: executive-light
     kind: color-scheme
