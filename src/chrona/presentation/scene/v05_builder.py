@@ -13,7 +13,7 @@ from chrona.presentation.layout.axis import axis_intervals, format_axis_label
 from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutManifest
-from chrona.presentation.layout.presentation import place_rows, place_table_columns
+from chrona.presentation.layout.presentation import place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -181,24 +181,26 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                              calendar_binding.purpose, calendar_binding.scene_role,
                                              (x1, timeline.bounds[1], max(0.0, x2 - x1), timeline.bounds[3]),
                                              opacity=0.12, z_order=len(primitives)))
+    track_placements = {
+        placement.instance_id: placement
+        for placement in place_mark_tracks(
+            review_rows=tuple(review_rows),
+            row_placements=row_placements,
+            mark_block_size=float(metric["timeline.mark.blockSize"]),
+        )
+    }
     mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
-      stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
-      stacked_index = 0
       members = sorted(enumerate(review_row.items),
                        key=lambda pair: (0, {"snapshot": 0, "primary": 1, "actual": 2}.get(pair[1].source_kind, 3))
                        if pair[1].track == "shared" else (1, pair[0]))
       for _, item in members:
-        height = float(metric["timeline.mark.blockSize"])
-        if item.track == "shared":
-            track_height = row.bounds[3]
-            y = row.bounds[1] + (row.bounds[3] - height) / 2
-        else:
-            track_height = row.bounds[3] / stacked_total
-            y = row.bounds[1] + stacked_index * track_height + track_height * 0.25
-            stacked_index += 1
-        instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
-                       if projection.rows else item.object_id)
+        layout_instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+        track_placement = track_placements[layout_instance_id]
+        height = track_placement.block_size
+        y = track_placement.block
+        actual_y = track_placement.actual_block
+        instance_id = (layout_instance_id if projection.rows else item.object_id)
         source_kind = item.source_kind if projection.rows else "combined"
         planned = item.planned
         planned_role = "snapshot" if source_kind == "snapshot" else "planned"
@@ -216,11 +218,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
             x1, x2 = coordinate(actual["start"]), coordinate(actual["finish"])
             primitives.append(ScenePrimitive(f"actual:{instance_id}", "Rect", item.object_id, "object", "actual", "actual",
-                                             (x1, y if item.track == "shared" else y + height * 1.25, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
+                                             (x1, actual_y, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
         elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
             x = coordinate(actual["at"])
             primitives.append(ScenePrimitive(f"actual:{instance_id}", "Symbol", item.object_id, "object", "actual", "actual",
-                                             (x - height / 2, y if item.track == "shared" else y + height * 1.25, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+                                             (x - height / 2, actual_y, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
         elif source_kind in {"actual", "combined"} and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
             anchor_date = planned.get("end", planned.get("at"))
             anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
