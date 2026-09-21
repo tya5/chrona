@@ -47,6 +47,7 @@ body:
     'group:fw-team.fill': category
     'group:validation-team.fill': category
     planned.fill: accent
+    snapshot.fill: neutral
     actual.fill: positive
     missing-actual.fill: textMuted
     variance-ahead.fill: positive
