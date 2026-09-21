@@ -163,12 +163,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
     calendar_binding = semantic_binding("calendarClosed")
-    for closed_day in contract.time.calendar_closed:
-        if start <= closed_day < end:
-            x1, x2 = coordinate(closed_day), coordinate(closed_day.fromordinal(closed_day.toordinal() + 1))
-            primitives.append(ScenePrimitive(f"calendar-closed:{closed_day.isoformat()}", "Rect", "project-calendar", "calendar",
-                                             calendar_binding.purpose, calendar_binding.scene_role,
-                                             (x1, timeline.bounds[1], max(0.0, x2 - x1), timeline.bounds[3]),
+    for placed in placed_surface.shapes:
+        if placed.placement_id.startswith("calendar-closed:"):
+            bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
+            primitives.append(ScenePrimitive(placed.placement_id, "Rect", "project-calendar", "calendar",
+                                             calendar_binding.purpose, calendar_binding.scene_role, bounds,
                                              opacity=0.12, z_order=len(primitives)))
     mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
     track_placements = {placement.instance_id: placement for placement in composition.track_placements}
@@ -244,15 +243,14 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             label_id = "axis-label:" + placed.placement_id.removeprefix("axis:")
             if label_id in layout_text:
                 emit_layout_text(label_id, "axis-label", "text")
-    if contract.time.as_of is not None and start <= contract.time.as_of < end:
-        as_of_binding = semantic_binding("asOf")
-        as_of_x = coordinate(contract.time.as_of)
-        primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", as_of_binding.purpose, as_of_binding.scene_role,
-                                         (as_of_x, timeline.bounds[1], 0, timeline.bounds[3]),
-                                         points=((as_of_x, timeline.bounds[1]), (as_of_x, timeline.bounds[1] + timeline.bounds[3])),
-                                         z_order=len(primitives)))
-        text("as-of-label", "actual-set", "as-of-label", "text",
-             f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}", as_of_x, timeline.bounds[1] + body_size)
+    for placed in placed_surface.shapes:
+        if placed.placement_id == "as-of":
+            as_of_binding = semantic_binding("asOf")
+            primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", as_of_binding.purpose, as_of_binding.scene_role,
+                                             (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                                             points=placed.points,
+                                             z_order=len(primitives)))
+            emit_layout_text("as-of-label", "as-of-label", "text")
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
