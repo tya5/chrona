@@ -204,6 +204,8 @@ class LocalSnapshotReader:
         if not path.is_file():
             raise SnapshotReadError("E_STORE_REFERENCE")
         payload = path.read_bytes()
-        if reference.get("contentIdentity") != f"sha256:{sha256(payload).hexdigest()}":
+        actual_identity = f"sha256:{sha256(payload).hexdigest()}"
+        expected_identity = reference.get("contentIdentity")
+        if expected_identity is not None and expected_identity != actual_identity:
             raise SnapshotReadError("E_CONTENT_IDENTITY")
         return payload
