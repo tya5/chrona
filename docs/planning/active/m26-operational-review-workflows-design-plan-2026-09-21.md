@@ -1,6 +1,6 @@
 # M26 Operational Review Workflows Design Plan — 2026-09-21
 
-**Status:** Design planning only; implementation is not authorized.  
+**Status:** C26-D1 complete; normative design is in progress. Implementation is not authorized.
 **Owns:** Product reachability for UC-10 (Actual intake/reconciliation), UC-11
 (revision-bound CLI/CI automation), and UC-12 (named baseline capture/compare).
 
@@ -37,6 +37,9 @@ reschedules a Project. Baseline capture records the exact inspected Project revi
 
 **Exit:** a source-of-truth matrix and complete input/output examples show no hidden
 working-tree or title-matching authority.
+
+**Completed:** 2026-09-21. The compatibility, retry, and replacement decision is
+published in `docs/research/operational-workflows/m26-existing-contract-matrix-2026-09-21.md`.
 
 ### C26-D2 — Normative resource and command design
 
