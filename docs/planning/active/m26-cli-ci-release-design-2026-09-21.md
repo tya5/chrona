@@ -33,6 +33,11 @@ variables may supply adapter credentials but are never copied into a result. A C
 must not use a default working directory, Git `HEAD`, branch name, or local clock to
 fill any identity field.
 
+The first product profile defines `chrona/store-config/v0.1`: a non-empty list of
+unique `provider: local`, `identity`, and `root` mappings. It contains no credentials.
+The selected entry must exactly match each resource reference's provider and identity;
+unknown/duplicate mappings reject before reads or writes.
+
 ```yaml
 name: chrona-baseline-review
 steps:
