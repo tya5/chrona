@@ -167,6 +167,23 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    content=label, inline=x, baseline_block=float(axis.bounds.block) + axis_size * (2 if band_intervals else 1),
                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region="timeline-axis-label"))
+    contract = request.presentation_contract
+    for closed_day in contract.time.calendar_closed:
+        if start <= closed_day < end:
+            x1, x2 = _coordinate(closed_day, scale), _coordinate(closed_day.fromordinal(closed_day.toordinal() + 1), scale)
+            shapes.append(ShapePlacement(f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "Rect",
+                                         Rect(Decimal(str(x1)), timeline.bounds.block,
+                                              Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size)))
+    if contract.time.as_of is not None and start <= contract.time.as_of < end:
+        x = _coordinate(contract.time.as_of, scale)
+        shapes.append(ShapePlacement("as-of", "actual-set", "Path",
+                                     Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
+                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
+        text.append(place_text(placement_id="as-of-label", source_ref="actual-set",
+                               content=f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}", inline=x,
+                               baseline_block=float(timeline.bounds.block) + body_size, typography_role="text",
+                               theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                               collision_region="timeline-as-of"))
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]))
     track_by_id = {item.instance_id: item for item in tracks}
