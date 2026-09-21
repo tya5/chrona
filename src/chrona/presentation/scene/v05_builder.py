@@ -346,6 +346,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             if row is None:
                 raise SceneBuildError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
             anchor_bounds = _annotation_anchor_bounds(resolved.mark, resolved.endpoint, row, coordinate)
+            if "number" in annotation:
+                text(f"note-index:{annotation_id}", annotation_id, "note-index", "note-index",
+                     str(annotation["number"]), anchor_bounds.x + anchor_bounds.width, anchor_bounds.y + body_size,
+                     typography_role="annotation")
             size, line_height = (float(item) for item in value.theme_tokens.typography("annotation")[2:])
             width, height = min(annotation_slot.bounds[2], max(size * 4, value.font_metrics.width(content, size))), size * line_height
             try:
