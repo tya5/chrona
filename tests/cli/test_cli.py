@@ -139,6 +139,19 @@ def test_cli_syntax_failure_is_json_and_returns_two(monkeypatch, capsys):
     assert payload["diagnostics"][0]["code"] == "E_COMMAND_SYNTAX"
 
 
+def test_cli_gallery_requires_two_contexts(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render-review-gallery", "--context-reference", "one.yaml",
+        "--snapshot-root", str(tmp_path), "--store-identity", "test",
+        "--output-directory", str(tmp_path / "gallery"),
+    ])
+    try:
+        main()
+    except SystemExit as error:
+        assert error.code == 1
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_SCHEME_GALLERY_INPUT"
+
+
 def test_cli_propose_set_distinguishes_literal_and_json_values(tmp_path, monkeypatch, capsys):
     project = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}, "relations": []}
     path = tmp_path / "project.yaml"; path.write_text(yaml.safe_dump(project), encoding="utf-8")
@@ -154,32 +167,7 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text())
     actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text())
     theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
-    metric_values = {
-        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24, "panel.minimum": 180,
-        "metric.text-size": 14, "metric.line-height": 1.4,
-        "metric.day-width": 12, "metric.row-height": 40, "metric.axis-height": 48,
-        "metric.column-width": 120, "metric.header-height": 44,
-    }
-    theme["body"]["values"].update({name: {"type": "number", "value": value} for name, value in metric_values.items()})
-    theme["body"]["metrics"] = {
-        "text.body.size": "metric.text-size", "text.body.lineHeight": "metric.line-height",
-        "timeline.dayWidth": "metric.day-width",
-        "timeline.row.minBlockSize": "metric.row-height", "timeline.axis.blockSize": "metric.axis-height",
-        "table.column.minInlineSize": "metric.column-width", "table.header.blockSize": "metric.header-height",
-    }
-    theme["body"]["roles"]["dependency"] = {"stroke": "grid"}
-    old_values, old_roles = theme["body"]["values"], theme["body"]["roles"]
-    intent = {"canvas": "surface", "ink": "text", "grid": "neutral", "grid-light": "surfaceRaised", "header": "surfaceRaised", "group": "category", "group-firmware": "category", "group-validation": "category", "group-product": "category", "plan": "accent", "actual": "positive", "delay": "warning"}
-    bindings, non_color_roles = {}, {}
-    for role, properties in old_roles.items():
-        retained = {key: value for key, value in properties.items() if key not in {"fill", "stroke"}}
-        if retained:
-            non_color_roles[role] = retained
-        for property_name in ("fill", "stroke"):
-            if property_name in properties:
-                bindings[f"{role}.{property_name}"] = intent[properties[property_name]]
-    theme = {"version": "chrona/theme/v0.2", "kind": "theme", "id": theme["id"], "body": {"values": {key: value for key, value in old_values.items() if value["type"] != "color"}, "roles": non_color_roles, "metrics": theme["body"]["metrics"], "colorBindings": bindings}}
-    scheme = {"version": "chrona/color-scheme/v0.1", "kind": "color-scheme", "id": "test-light", "body": {"colors": {"surface": "#FFFFFF", "surfaceRaised": "#E6E9EE", "text": "#172033", "textMuted": "#4B5563", "accent": "#3986E6", "positive": "#269D79", "negative": "#B91C1C", "warning": "#C8762B", "neutral": "#C9CED8"}, "category": ["#E7F0FA", "#E8F6F0", "#FFF4E4"], "suitability": {"background": "light", "colorVision": ["none-claimed"], "print": "not-claimed"}, "provenance": {"kind": "chrona-authored", "source": "test", "license": "pending"}}}
+    scheme = yaml.safe_load((root / "examples/controller-z/schemes/executive-light.yaml").read_text())
     layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text())
     refs = {
         "project": _snapshot_resource(tmp_path, token, "project.yaml", project, "project", project["project"]["id"]),
