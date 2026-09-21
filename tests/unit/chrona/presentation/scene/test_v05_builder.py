@@ -176,3 +176,23 @@ def test_legend_entries_emit_role_derived_swatches():
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
     assert swatch.kind == "Rect"
     assert swatch.visual_role == "planned"
+
+
+def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
+    snapshot = ReviewItem("a", "Baseline", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, (), item_id="snapshot", source_kind="snapshot", track="shared")
+    primary = ReviewItem("a", "Plan", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 7)}, {"start": date(2026, 1, 3), "finish": date(2026, 1, 8)}, None, (), item_id="planned", source_kind="primary", track="shared")
+    actual = ReviewItem("a", "Actual", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 7)}, {"start": date(2026, 1, 3), "finish": date(2026, 1, 8)}, None, (), item_id="actual", source_kind="actual", track="shared")
+    row = ReviewRowProjection("release", "Release", "", "planned", (actual, primary, snapshot))
+    projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 8)), (), (), (row,))
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    marks = [node for node in surface.primitives if node.scene_id in {"planned:release:snapshot", "planned:release:planned", "actual:release:actual"}]
+
+    assert [node.scene_id for node in marks] == ["planned:release:snapshot", "planned:release:planned", "actual:release:actual"]
+    assert len({node.bounds[1] for node in marks}) == 1
