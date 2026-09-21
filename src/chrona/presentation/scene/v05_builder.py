@@ -90,7 +90,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         for item in projection.items)
     row_height = timeline.bounds[3] / max(1, len(review_rows))
     minimum = float(metric["timeline.row.minBlockSize"])
-    if any(row_height < minimum * len(review_row.items) for review_row in review_rows):
+    if any(row_height < minimum * max(1, sum(item.track != "shared" for item in review_row.items))
+           for review_row in review_rows):
         raise SceneBuildError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline")
     rows = tuple(SceneRow(
         review_row.table_subject_id, review_row.group_id,
@@ -139,10 +140,20 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
     mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
-      for member_index, item in enumerate(review_row.items):
-        track_height = row.bounds[3] / len(review_row.items)
-        y = row.bounds[1] + member_index * track_height + track_height * 0.25
+      stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
+      stacked_index = 0
+      members = sorted(enumerate(review_row.items),
+                       key=lambda pair: (0, {"snapshot": 0, "primary": 1, "actual": 2}.get(pair[1].source_kind, 3))
+                       if pair[1].track == "shared" else (1, pair[0]))
+      for _, item in members:
         height = float(metric["timeline.mark.blockSize"])
+        if item.track == "shared":
+            track_height = row.bounds[3]
+            y = row.bounds[1] + (row.bounds[3] - height) / 2
+        else:
+            track_height = row.bounds[3] / stacked_total
+            y = row.bounds[1] + stacked_index * track_height + track_height * 0.25
+            stacked_index += 1
         instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
                        if projection.rows else item.object_id)
         source_kind = item.source_kind if projection.rows else "combined"
@@ -162,11 +173,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
             x1, x2 = coordinate(actual["start"]), coordinate(actual["finish"])
             primitives.append(ScenePrimitive(f"actual:{instance_id}", "Rect", item.object_id, "object", "actual", "actual",
-                                             (x1, y + height * 1.25, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
+                                             (x1, y if item.track == "shared" else y + height * 1.25, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
         elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
             x = coordinate(actual["at"])
             primitives.append(ScenePrimitive(f"actual:{instance_id}", "Symbol", item.object_id, "object", "actual", "actual",
-                                             (x - height / 2, y + height * 1.25, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+                                             (x - height / 2, y if item.track == "shared" else y + height * 1.25, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
         elif source_kind in {"actual", "combined"} and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
             anchor_date = planned.get("end", planned.get("at"))
             anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
