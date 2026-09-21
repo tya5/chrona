@@ -47,13 +47,31 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any) -> Any:
                 "entity": item.group_label}.get(source)
     if "field" in source:
         return (item.fields or {}).get(source["field"])
+    if "facet" in source:
+        return {"planned": item.planned, "actual": item.actual,
+                "finishDelta": item.finish_delta}.get(source["facet"])
     facet = source["comparisonFacet"]
     return {"finishDelta": item.finish_delta, "missingActual": not bool(item.actual),
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 
-def display_value(value: Any, missing: str) -> str:
-    """Format a normalized table value according to the column missing policy."""
+def display_value(value: Any, missing: str, formatter: str = "text") -> str:
+    """Format a normalized table value according to its declared View contract."""
     if value is None:
-        return {"blank": "", "em-dash": "—", "unknown": "unknown"}[missing]
+        return {"blank": "", "em-dash": "—", "unknown": "unknown",
+                "in-progress": "in progress"}[missing]
+    if formatter == "date":
+        if isinstance(value, date):
+            return value.isoformat()
+        if isinstance(value, dict):
+            point = value.get("at", value.get("finish", value.get("end", value.get("start"))))
+            return point.isoformat() if isinstance(point, date) else str(point)
+    if formatter == "dateRange" and isinstance(value, dict):
+        start, end = value.get("start"), value.get("end", value.get("finish"))
+        if isinstance(start, date) and isinstance(end, date):
+            return f"{start.isoformat()} – {end.isoformat()}"
+        if isinstance(value.get("at"), date):
+            return value["at"].isoformat()
+    if formatter == "signedDays" and isinstance(value, int) and not isinstance(value, bool):
+        return f"{value:+d}d"
     return f"{value:+d}d" if isinstance(value, int) and not isinstance(value, bool) else str(value)
