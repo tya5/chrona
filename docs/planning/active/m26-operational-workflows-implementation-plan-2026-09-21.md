@@ -1,6 +1,6 @@
 # M26 Operational Workflows Implementation Plan — 2026-09-21
 
-**Status:** Reopened for cross-boundary closure; implementation is paused.  
+**Status:** Corrected cross-boundary design approved; implementation is authorized.  
 **Design inputs:** Specification `35`, ADR-0024–0026, M26 CLI/CI release design, and
 the M26 design review. No step may alter those contracts without a design amendment and
 new review.
@@ -26,6 +26,11 @@ capture, and legacy `propose-set` removal remain in this slice.
 **Closure rule:** I26-6 resumes only after the complete remaining command/CLI/Store/result
 closure review is published. Its authoritative record is
 `docs/reviews/current/m26-cross-boundary-closure-review-2026-09-21.md`.
+
+**Closure completed:** 2026-09-21. I26-6 must execute in this fixed order: (a) shared
+command dispatcher/replay/result construction; (b) intake/resolve aliases and local
+Actual CAS; (c) capture alias/registry result; (d) CLI exit/output acceptance coverage.
+No code step may add a new authority or verb.
 
 ## Implementation rules
 
