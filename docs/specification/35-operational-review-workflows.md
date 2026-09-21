@@ -161,6 +161,13 @@ only when both explicit references independently verify.
 
 ## 6. CLI and CI contract
 
+`--store-config` is a `chrona/store-config/v0.1` document. Each entry maps exactly one
+declared `(provider, identity)` to a local adapter root. Duplicate pairs reject before
+any operation. The initial product profile permits only `provider: local`; `root` is a
+client transport location and has no authority to alter the reference's provider,
+identity, address, revision, or digest. Credentials are not representable in this file.
+Future credential-bearing providers require a new versioned config format and ADR.
+
 | Command | Required inputs | Mutation | Output |
 |---|---|---|---|
 | `chrona command-check` | `--command`, store configuration, `--result` | none | atomic result file |
