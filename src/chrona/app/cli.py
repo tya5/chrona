@@ -246,7 +246,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     destination = Path(args.output_directory)
     if destination.exists() and any(destination.iterdir()):
         raise CliFailure("E_SCHEME_GALLERY_OUTPUT", "output directory must be empty", "gallery")
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
+    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=getattr(args, "require_content_identity", False))
     entries = []
     for reference_path in args.context_reference:
         context, resources = resolve_render_context(load_yaml(reference_path), reader)
