@@ -232,36 +232,18 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
             text(f"variance:{instance_id}", item.object_id, "finish-delta", role,
                  f"{item.finish_delta:+d}d", coordinate(actual.get("finish", planned.get("end", planned.get("at")))), y + height, typography_role="summary")
-    configured_levels = value.surface_content.axis_levels
-    try:
-        intervals = (axis_intervals(start, end, configured_levels[-1][0]) if configured_levels
-                     else fitting_axis(requested=value.surface_content.axis_level, start=start, end=end,
-                                       inline_size=timeline.bounds[2],
-                                       font_size=float(value.measured_sources.metric_values["text.body.size"]),
-                                       font_metrics=value.font_metrics))
-    except ValueError as error:
-        raise SceneBuildError(str(error), "/view/body/timePresentation/axisLevel") from error
-    axis_size = float(value.theme_tokens.typography("axis")[2])
-    band_intervals = axis_intervals(start, end, configured_levels[0][0]) if len(configured_levels) > 1 else (axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ())
-    format_by_level = {unit: formatter for unit, formatter in configured_levels}
-    format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
     axis_band_binding = semantic_binding("axisBand")
-    for interval in band_intervals:
-        x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
-        text(f"axis-band:{interval.level}:{interval.index}", "timeline-axis", axis_band_binding.purpose, "text",
-             format_axis_label(interval, format_by_level, value.locale),
-             x, axis.bounds[1] + axis_size, typography_role="axis")
-    for interval in intervals:
-        x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
-        primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
-                                         (x, timeline.bounds[1], 0, timeline.bounds[3]), points=((x, axis.bounds[1]), (x, timeline.bounds[1] + timeline.bounds[3])), z_order=len(primitives)))
-        axis_label = format_axis_label(interval, format_by_level, value.locale)
-        clipped_width = (interval.end - interval.start).days * scale.unit_ratio
-        if axis_label_fits(content=axis_label, available_inline=clipped_width,
-                           font_size=float(value.measured_sources.metric_values["text.body.size"]),
-                           font_metrics=value.font_metrics):
-            text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", axis_label, x,
-                 axis.bounds[1] + axis_size * (2 if band_intervals else 1), typography_role="axis")
+    for placed in placed_surface.text:
+        if placed.placement_id.startswith("axis-band:"):
+            emit_layout_text(placed.placement_id, axis_band_binding.purpose, "text")
+    for placed in placed_surface.shapes:
+        if placed.placement_id.startswith("axis:"):
+            bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
+            primitives.append(ScenePrimitive(placed.placement_id, "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
+                                             bounds, points=placed.points, z_order=len(primitives)))
+            label_id = "axis-label:" + placed.placement_id.removeprefix("axis:")
+            if label_id in layout_text:
+                emit_layout_text(label_id, "axis-label", "text")
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
         as_of_binding = semantic_binding("asOf")
         as_of_x = coordinate(contract.time.as_of)
