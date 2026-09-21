@@ -1,0 +1,23 @@
+version: chrona/color-scheme/v0.1
+kind: color-scheme
+id: print-mono
+body:
+  colors:
+    surface: '#FFFFFF'
+    surfaceRaised: '#F1F1F1'
+    text: '#111111'
+    textMuted: '#555555'
+    accent: '#1F1F1F'
+    positive: '#8C8C8C'
+    negative: '#B00020'
+    warning: '#7A5A00'
+    neutral: '#BDBDBD'
+  category: ['#F4F4F4', '#E9E9E9', '#DEDEDE', '#D3D3D3']
+  suitability:
+    background: light
+    colorVision: [deuteranopia, protanopia, tritanopia]
+    print: photocopy-friendly
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, print-mono
+    license: MIT
