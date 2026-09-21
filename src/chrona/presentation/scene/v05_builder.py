@@ -216,7 +216,17 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         for index, annotation in enumerate(value.surface_content.annotations):
             annotation_id, content = str(annotation.get("id", index)), str(annotation.get("text", ""))
             resolved = resolve_annotation_anchor(annotation, marks)
-            row = next((item for item in rows if item.object_id == resolved.object_id), None)
+            anchor = annotation.get("anchor", {})
+            matching = [(review_row, scene_row) for review_row, scene_row in zip(review_rows, rows, strict=True)
+                        if any(item.object_id == resolved.object_id for item in review_row.items)]
+            row_id, item_id = anchor.get("rowId"), anchor.get("itemId")
+            if row_id is not None or item_id is not None:
+                matching = [(review_row, scene_row) for review_row, scene_row in matching
+                            if (row_id is None or review_row.row_id == row_id)
+                            and (item_id is None or any(item.item_id == item_id and item.object_id == resolved.object_id for item in review_row.items))]
+            if len(matching) > 1:
+                raise SceneBuildError("E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS", f"/annotations/{index}/anchor")
+            row = matching[0][1] if matching else None
             if row is None:
                 raise SceneBuildError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
             anchor_bounds = _annotation_anchor_bounds(resolved.mark, resolved.endpoint, row, coordinate)
