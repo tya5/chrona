@@ -159,6 +159,13 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                  group_labels[group.group_id], group.header_bounds[0], group.header_bounds[1] + body_size)
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
+    for closed_day in value.surface_content.calendar_closed:
+        if start <= closed_day < end:
+            x1, x2 = coordinate(closed_day), coordinate(closed_day.fromordinal(closed_day.toordinal() + 1))
+            primitives.append(ScenePrimitive(f"calendar-closed:{closed_day.isoformat()}", "Rect", "project-calendar", "calendar",
+                                             "calendar-closed", "calendar-closed",
+                                             (x1, timeline.bounds[1], max(0.0, x2 - x1), timeline.bounds[3]),
+                                             opacity=0.12, z_order=len(primitives)))
     mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
       stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
