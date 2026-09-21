@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from chrona.app.cli import main
 from chrona.core.validation import validate_project
-from chrona.presentation.model.settings import builtin_bases, resolve_presentation_settings
+from chrona.resources import schema_resource
 from chrona.scheduling.scheduler import schedule
 
 
@@ -30,8 +30,7 @@ PROJECT = {
 def run() -> None:
     assert validate_project(PROJECT) == []
     assert schedule(PROJECT).ok
-    settings = builtin_bases()["executive-v0.2"]
-    assert resolve_presentation_settings(settings) == settings
+    assert schema_resource("layout-profile-v0.2.schema.yaml").is_file()
     try:
         with patch.object(sys, "argv", ["chrona", "--help"]):
             main()

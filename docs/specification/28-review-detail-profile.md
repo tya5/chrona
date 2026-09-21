@@ -13,8 +13,7 @@ alignment, or summary metric semantics. Its structural authority is
 The complete M23 surface set has four members:
 
 - `legend`: ordered semantic roles (`planned`, `actual`, `variance`, `milestone`,
-  `dependency`) with user-facing labels, owned exclusively by the resolved v0.2
-  Presentation Settings Detail;
+  `dependency`) with user-facing labels, owned by the Detail Profile;
 - `groupDetails`: presentation-only label and bounded description keyed by the
   View-selected group ID;
 - `milestones`: a View-selected ordered list of point object IDs; their title and
@@ -29,10 +28,8 @@ turning slide content into scheduling input.
 
 ## Layout integration
 
-For the v0.2 path, `29-schema-owned-presentation-settings.md` and the `detail`
-definition in `presentation-settings-v0.2.schema.json` are the single contract for
-legend labels, templates and formatters. The Review Detail Profile MUST NOT contain a
-parallel legend. Its body may contain `groupDetails`, `milestones`, and `observations`;
+The Review Detail Profile is the single contract for detail wording and rows. Its body
+may contain `groupDetails`, `milestones`, and `observations`;
 at least one is required.
 
 Resolved Layout may allocate `legend`, `group-details`, `observations`, and
@@ -43,9 +40,7 @@ no available content diagnoses; preferred or optional absent content emits nothi
 The SVG adapter draws completed Scene primitives in stable logical order and retains
 source metadata for every derived item.
 
-Both the complete Settings schema and the author-facing Preset override schema expose
-the same closed slot-source vocabulary. A source accepted in complete Settings MUST be
-accepted in a partial Preset Layout override.
+Layout Profile v0.2 exposes the closed slot-source vocabulary used by detail sources.
 
 ## Resolution and validation
 
@@ -65,18 +60,15 @@ column keys, a stable ID, and a non-empty `source`. Missing provenance yields
 presentation emphasis values. They map to existing Theme roles `body`,
 `variance-ahead`, and `variance-behind`; they do not express delivery status.
 
-Panel geometry reuses schema-owned settings rather than introducing adapter constants:
-group details use `layout.notes` plus `group`/`notes` typography; observation tables use
-`layout.cellPadding`, `layout.row`, `tableHeader`/`body` typography, and row-rule
-strokes; milestone digests use `layout.summary`, `summaryHeader`/`summaryMetric`
-typography, and Detail date formatting. If content cannot fit its slot, the declared
+Panel geometry reuses Layout slots and Theme metric bindings rather than introducing
+adapter constants. If content cannot fit its slot, the declared
 slot overflow policy applies. Required overflow yields `E_LAYOUT_REQUIRED_OVERFLOW`
 with the source suffix.
 
 ## Input and Scene boundary
 
 The review command accepts one optional Review Detail Profile alongside Project,
-Actual, View, Style, Theme, Layout, and resolved Presentation Settings. The profile is
+Actual, View, Theme, and Layout. The profile is
 validated before Scene construction. `SurfaceContentInput` carries normalized immutable
 detail content; it carries no coordinates. The Scene Builder measures and places all
 panel primitives and attaches the profile entry ID or Project object ID as

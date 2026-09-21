@@ -186,10 +186,10 @@ overlapping temporal items. A **Facet** distinguishes planned, Actual, baseline,
 variance meaning without changing object identity. **Detail** supplies labels,
 explanations, legends, and bounded review panels.
 
-A **Layout Profile** is the legacy v0.1 declarative composition resource. Current v0.2
-composition is the `layout` owner inside **Presentation Settings**, which closes Theme,
-Layout, Detail, Context, and Output values. A **Preset** is an authoring-time complete
-settings value or fixed-base override; renderers consume only resolved settings.
+A **Layout Profile** is the v0.2 intent-oriented composition resource. It owns the
+stable-node composition tree but not concrete Theme values or selected facts. Theme and
+Layout are reusable independent resources bound by Render Context v0.4; renderers consume
+only a completed Scene.
 
 A **Render Context** is the immutable entry for one reproducible presentation
 evaluation. Its **evaluation closure** is the ordered set of pinned resources and

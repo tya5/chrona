@@ -10,7 +10,6 @@ COMMANDS = [
     [sys.executable, str(ROOT / "validate_conformance.py")],
     [sys.executable, str(ROOT / "revision-store" / "validate_conformance.py")],
     [sys.executable, str(ROOT / "presentation" / "validate_conformance.py")],
-    [sys.executable, str(ROOT / "validate_presentation_setting_consumption.py")],
     [sys.executable, str(ROOT / "federation" / "validate_conformance.py")],
     [sys.executable, str(ROOT / "validate_implementation_delivery_profile.py")],
     [sys.executable, str(ROOT / "validate_traceability.py")],

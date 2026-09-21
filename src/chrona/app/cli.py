@@ -16,9 +16,11 @@ from chrona.core.validation import load_yaml, validate_project
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.model.closure import ClosureError, ClosureResource, resolve_render_context
 from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.model.settings import PresentationSettingsError, resolve_presentation_settings
+from chrona.presentation.layout.engine import solve_layout
+from chrona.presentation.layout.profile import resolve_layout_profile
+from chrona.presentation.layout.sources import SourceInput, measure_sources
+from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.renderers.generic import render_svg
-from chrona.presentation.review.surface_content import _surface_content_input
 from chrona.presentation.review.svg import render_table_timeline_svg
 from chrona.presentation.scene.schedule import scene_from_schedule
 from chrona.scheduling.scheduler import schedule
@@ -118,16 +120,15 @@ def _parser() -> JsonArgumentParser:
     commands = {
         "validate": "validate a raw Draft or immutable Project snapshot",
         "schedule": "derive a Date-only schedule from a raw Draft or immutable snapshot",
-        "render": "render the minimal timeline through v0.2 settings or the diagnostic legacy adapter",
+        "render": "render the minimal schedule scene",
     }
     for name, help_text in commands.items():
         command = sub.add_parser(name, help=help_text, description=help_text)
         _add_snapshot_arguments(command)
         if name == "render":
             command.add_argument("--output", "-o", required=True)
-            command.add_argument("--presentation-settings", help="resolved settings or preset for the common v0.2 Scene path")
 
-    command = sub.add_parser("render-review", help="render an immutable Render Context v0.3", description="render an immutable Render Context v0.3")
+    command = sub.add_parser("render-review", help="render an immutable Render Context v0.4", description="render an immutable Render Context v0.4")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
@@ -158,8 +159,9 @@ def _run_render_review(args: argparse.Namespace) -> None:
     context, resources = resolve_render_context(load_yaml(args.context_reference), reader)
     project = _resource(resources, "project")
     view = _resource(resources, "view")
-    preset = _resource(resources, "presentation-preset")
-    if project is None or view is None or preset is None:
+    theme = _resource(resources, "theme")
+    layout = _resource(resources, "layout-profile")
+    if project is None or view is None or theme is None or layout is None:
         raise CliFailure("E_CLOSURE_REQUIRED", "Render Context closure is incomplete", "closure")
     manifests = {
         item.value["packageId"]: item.value
@@ -168,18 +170,46 @@ def _run_render_review(args: argparse.Namespace) -> None:
     result = schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         _reject(result.diagnostics)
-    settings = resolve_presentation_settings(preset)
     actual = _resource(resources, "actual-set")
-    summary = _resource(resources, "summary-profile")
-    detail = _resource(resources, "review-detail-profile")
     projection = build_review_projection(project, result.placements, view, actual)
-    surface_content = _surface_content_input(
-        projection, project, view, settings, summary, projection.window[0], detail
-    )
+    source_inputs = {
+        "title": SourceInput((project["project"].get("title", "Chrona"),)),
+        "table": SourceInput(tuple(item.title for item in projection.items), len(projection.items), len(view.get("body", {}).get("tableColumns", ())) or 1),
+        "timeline": SourceInput(item_count=len(projection.items), span_days=max(1, (projection.window[1] - projection.window[0]).days)),
+        "timeline-axis": SourceInput(span_days=max(1, (projection.window[1] - projection.window[0]).days)),
+        "summary": SourceInput(("summary",)), "legend": SourceInput(("legend",)),
+        "group-details": SourceInput(("group details",)), "observations": SourceInput(("observations",)),
+        "milestones": SourceInput(("milestones",)), "annotations": SourceInput(("annotations",)),
+        "notes": SourceInput(tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values()) or ("notes",)),
+    }
+    environment = context["body"]["environment"]
+    theme_body = theme["body"]
+    family_token = theme_body.get("roles", {}).get("text", {}).get("fontFamily")
+    family = theme_body.get("values", {}).get(family_token, {}).get("value")
+    if not isinstance(family, str):
+        raise CliFailure("E_THEME_ROLE_REQUIRED", "text.fontFamily is required", "theme")
+    revision = context["body"]["theme"]["revision"]["token"]
+    font_metrics = resolve_font_metrics(family, environment["fontMetrics"], asset_root=Path(args.snapshot_root) / revision)
+    measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
+    resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
+    node_measurements = {}
+    def bind(node: dict[str, Any]) -> None:
+        if node["kind"] == "slot":
+            node_measurements[node["id"]] = measured.measurements[node["source"]]
+        for child in node.get("children", ()):
+            bind(child)
+    bind(resolved_layout.profile["root"])
+    viewport = environment["viewport"]
+    manifest = solve_layout(resolved_layout, viewport_inline=viewport["inlineSize"], viewport_block=viewport["blockSize"], measurements=node_measurements)
+    from chrona.presentation.scene.review import SlotRect
+    slots = {
+        item.source: SlotRect(float(item.bounds.inline), float(item.bounds.block), float(item.bounds.inline_size), float(item.bounds.block_size))
+        for item in manifest.decisions if item.source is not None
+    }
     capabilities = set(context["body"]["target"]["capabilities"])
     svg = render_table_timeline_svg(
-        project["project"].get("title", "Chrona"), projection, project, view, {},
-        capabilities, {}, settings=settings, surface_content=surface_content,
+        project["project"].get("title", "Chrona"), projection, project, view, theme,
+        capabilities, {}, slots=slots, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])), metric_values=dict(measured.metric_values), font_metrics=font_metrics,
     )
     Path(args.output).write_text(svg, encoding="utf-8")
 
@@ -228,8 +258,7 @@ def _run(args: argparse.Namespace) -> None:
         _reject(result.diagnostics)
     if args.command == "render":
         scene = scene_from_schedule(project, result)
-        settings = resolve_presentation_settings(load_yaml(args.presentation_settings)) if args.presentation_settings else None
-        svg = render_svg(scene, {"marker", "metadata", "text-alternative"}, settings)
+        svg = render_svg(scene, {"marker", "metadata", "text-alternative"})
         Path(args.output).write_text(svg, encoding="utf-8")
         return
     print(json.dumps({"placements": result.placements, "diagnostics": []}, indent=2, default=_json_default))
@@ -243,8 +272,6 @@ def main() -> None:
         _emit_failure(error)
     except (SnapshotReadError, ClosureError) as error:
         _emit_failure(CliFailure(error.diagnostic_id, str(error), "closure"))
-    except PresentationSettingsError as error:
-        _emit_failure(CliFailure(str(error), str(error), "presentation-settings"))
     except json.JSONDecodeError as error:
         _emit_failure(CliFailure("E_INPUT_JSON", str(error), exit_code=2))
     except yaml.YAMLError as error:

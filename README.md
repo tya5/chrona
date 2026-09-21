@@ -47,12 +47,9 @@ chrona schedule \
   --store-identity local-workspace
 ```
 
-Use `chrona render --presentation-settings settings.yaml` for the common v0.2 Scene
-path. Omitting settings intentionally selects the diagnostic legacy adapter.
-
-`chrona render-review` accepts `--detail-profile` together with v0.2 presentation
-settings. The checked-in Controller Z detail resources demonstrate the complete M23
-path and produce `examples/controller-z/variants/review-detail/expected.svg`.
+`chrona render-review` consumes only an immutable Render Context v0.4 reference. Theme,
+Layout, View, optional detail/summary inputs, viewport and Font Metrics are closed by that
+Context before layout or Scene construction.
 
 `chrona schedule` is a reference implementation for the acyclic Date-only
 subset. It reports diagnostics for unsupported cycles rather than treating all
@@ -81,36 +78,24 @@ chrona render examples/controller-z/project.yaml --output controller-z.svg
 
 ## Presentation slides
 
-A Plan/Actual review surface is rendered with `chrona render-review`, which takes
-the project plus the resources that describe the presentation — what to select,
-how to style it, and how to lay it out:
+A Plan/Actual review surface is rendered from a materialized v0.4 Context:
 
 ```bash
-chrona render-review examples/controller-z/project.yaml \
-  --actual  examples/controller-z/actual.yaml \
-  --view    examples/controller-z/shared/view.yaml \
-  --style   examples/controller-z/shared/style.yaml \
-  --theme   examples/controller-z/shared/theme.yaml \
-  --profile examples/controller-z/shared/layout.yaml \
-  --presentation-settings examples/controller-z/variants/editorial/settings.yaml \
-  --output  executive.svg
+chrona render-review \
+  --context-reference context-reference.yaml \
+  --snapshot-root .chrona/snapshots \
+  --store-identity local-workspace \
+  --output executive.svg
 ```
 
-Appearance lives in those documents, not in renderer code, so a different look is
-a different settings file against the same project.
+Reusable authoring files live under `views/`, `themes/`, `layouts/`, and optional
+`profiles/`. A different Theme changes concrete visual tokens; a different Layout changes
+composition without changing selected facts.
 
-To build a deck rather than a single chart, describe the slides in a manifest and
-render them together:
-
-```bash
-python tools/render_schedule_sample.py examples/aster-ssd/manifest.yaml --no-raster
-```
-
-The manifest names the shared project, actual, style, theme and profile, then one
-entry per slide giving its view, its settings and its output path. The schedule is
-solved **once** and reused for every slide, so dates cannot drift between them.
-Slides that are 16:9 are also collected into a single `slides.html` gallery, which
-prints one slide per page.
+For a deck, generate one v0.4 Context per view while binding the same immutable Project,
+Actual, Theme and Layout resources. `examples/aster-ssd/manifest.yaml` lists that reuse;
+`contexts/01-overview.yaml` shows one generated binding. Render every Context through the
+same `chrona render-review` command so scheduling and presentation facts cannot drift.
 
 [`examples/aster-ssd`](examples/aster-ssd) is the worked example: a 24-object,
 28-dependency program across two work calendars, projected into four 1600x900

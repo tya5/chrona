@@ -13,8 +13,7 @@ _LANE_HEIGHT = 58
 _DAY_WIDTH = 14
 
 
-def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dict | None = None,
-               surface_content: object | None = None) -> str:
+def render_svg(scene: Scene, capabilities: set[str] | None = None) -> str:
     """Render a Scene as deterministic accessible SVG.
 
     SVG is an adapter output only; it cannot be read back as Project semantics.
@@ -27,43 +26,14 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
     if not placements:
         raise ValueError("Cannot render a project without resolved placements")
 
-    presentation_scene = None
-    if settings is not None:
-        from chrona.presentation.model.surface_content import SurfaceContentInput
-        from chrona.presentation.scene.builder import presentation_scene_from_schedule
-        if surface_content is None:
-            content = SurfaceContentInput(relations=scene.relations)
-        elif isinstance(surface_content, SurfaceContentInput):
-            content = surface_content
-        else:
-            raise TypeError("surface_content must be SurfaceContentInput")
-        presentation_scene = presentation_scene_from_schedule(
-            scene.title, placements, settings, scene.labels, content
-        )
-        from chrona.presentation.renderers.scene_svg import render_scene_surface_svg
-        surface = next((candidate for candidate in presentation_scene.surfaces
-                        if candidate.surface_id == "minimal"), None)
-        if surface is None:
-            raise ValueError("E_PRESENTATION_SURFACE_MISSING")
-        return render_scene_surface_svg(surface, viewport=settings["context"]["viewport"], theme=settings["theme"], output=settings["output"])
     dates = [_placement_dates(value) for value in placements.values()]
-    start = presentation_scene.window[0] if presentation_scene is not None else min(value[0] for value in dates)
-    end = presentation_scene.window[1] if presentation_scene is not None else max(value[1] for value in dates)
+    start = min(value[0] for value in dates)
+    end = max(value[1] for value in dates)
     span_days = max((end - start).days, 1)
-    if settings is None:
-        left, top, lane_height, day_width = _LEFT, _TOP, _LANE_HEIGHT, _DAY_WIDTH
-        width, height = max(920, left + span_days * day_width + 80), top + len(placements) * lane_height + 70
-        font, heading_size, body_size = "system-ui, sans-serif", 20, 13
-        background, ink, grid, planned, connector = "#faf8f6", "#1a1a1a", "#e0dbd7", "#c8553d", "#6b7280"
-    else:
-        viewport, layout, theme = settings["context"]["viewport"], settings["layout"], settings["theme"]
-        left, top, lane_height, day_width = layout["margins"]["left"], layout["margins"]["top"], layout["row"]["height"], layout["scale"]["dayWidth"]
-        width, height = viewport["width"], viewport["height"]
-        font = theme["fontFamily"]; heading_size, body_size = theme["typography"]["heading"]["size"], theme["typography"]["body"]["size"]
-        paints, strokes = theme["paints"], theme["strokes"]
-        background, ink, grid, planned, connector = paints["background"]["color"], paints["text"]["color"], strokes["axisMinor"]["color"], paints["planned"]["color"], strokes["dependency"]["color"]
-        if left + span_days * day_width > width - layout["margins"]["right"] or top + len(placements) * lane_height > height - layout["margins"]["bottom"]:
-            raise ValueError("E_LAYOUT_REQUIRED_OVERFLOW")
+    left, top, lane_height, day_width = _LEFT, _TOP, _LANE_HEIGHT, _DAY_WIDTH
+    width, height = max(920, left + span_days * day_width + 80), top + len(placements) * lane_height + 70
+    font, heading_size, body_size = "system-ui, sans-serif", 20, 13
+    background, ink, grid, planned, connector = "#faf8f6", "#1a1a1a", "#e0dbd7", "#c8553d", "#6b7280"
     title = scene.title
     lanes = {object_id: index for index, object_id in enumerate(placements)}
 
@@ -75,21 +45,13 @@ def render_svg(scene: Scene, capabilities: set[str] | None = None, settings: dic
         f'<rect width="{width}" height="{height}" fill="{background}" />',
         f'<text x="{_GUTTER}" y="34" font-family="{escape(font, quote=True)}" font-size="{heading_size}" font-weight="700" fill="{ink}">{escape(str(title))}</text>',
     ]
-    if settings is None:
-        parts.append('<metadata data-presentation-adapter="legacy-v0.1" data-diagnostic="E_PRESENTATION_LEGACY_ADAPTER"/>')
-    else:
-        parts.append(f'<metadata data-presentation-scene="v0.1" data-axis-count="{len(presentation_scene.axes)}" data-mark-count="{len(presentation_scene.marks)}"/>')
+    parts.append('<metadata data-presentation-scene="minimal"/>')
 
-    ticks = presentation_scene.ticks if presentation_scene is not None else tuple()
-    for offset in range(0, span_days + 1, 7) if not ticks else ():
+    for offset in range(0, span_days + 1, 7):
         x = left + offset * day_width
         label = start.fromordinal(start.toordinal() + offset).isoformat()
         parts.append(f'<line x1="{x}" y1="{top-24}" x2="{x}" y2="{height - 36}" stroke="{grid}" stroke-width="1" />')
         parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="10" fill="{_LEGACY_MUTED}">{label}</text>')
-    for tick in ticks:
-        x = left + (tick.start - start).days * day_width
-        parts.append(f'<line x1="{x}" y1="{top-24}" x2="{x}" y2="{height - 36}" stroke="{grid}" stroke-width="1" />')
-        parts.append(f'<text x="{x + 3}" y="{top-26}" font-family="{escape(font, quote=True)}" font-size="10" fill="{_LEGACY_MUTED}">{tick.label}</text>')
 
     for relation in scene.relations:
         source_id = relation["from"]["object"]

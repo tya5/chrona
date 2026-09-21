@@ -258,45 +258,28 @@ The resolver verifies that Plan before resolving its child exports. The v0.2 clo
 manifest records the Plan followed by exports in Plan order. It must never discover a
 newer child revision outside the Plan.
 
-### 5.5 Render Context v0.3 current review entry
+### 5.5 Render Context v0.4 current review entry
 
-`chrona/presentation/v0.3` is the sole `render-review` CLI entry. It closes the current
-v0.2 presentation path without mixing the legacy v0.1 Style/Theme/Scene Profile stack.
-Its body contains immutable references to:
+`chrona/presentation/v0.4` is the sole `render-review` CLI entry. Its body contains
+immutable references to exactly one Project, View, Theme and Layout Profile, plus an
+Actual set and optional Review Summary/Detail profiles when used. The environment closes
+viewport, locale, exact Font Metrics and Scene precision; target closes capabilities.
 
-- exactly one Project and View;
-- exactly one Presentation Preset resource, whose stable `id` is verified before it is
-  resolved to complete Presentation Settings;
-- an Actual set when the selected View requires Actual;
-- optional Review Summary and Review Detail profiles;
-- explicit target kind/capabilities.
-
-Complete Presentation Settings v0.2 intentionally has no resource `id`, so it cannot be
-the direct target of an immutable typed reference. The ID-bearing Presentation Preset
-is the closure resource; preset resolution produces the complete Settings value used by
-Scene construction. Locale, viewport, fixed font metrics, Theme, Layout, Detail, and
-Output policy come only from those resolved Presentation Settings. Therefore v0.3 rejects `style`, `theme`,
-`sceneProfile`, `viewport`, `layoutMetrics`, or a second locale field as duplicate
-authority. The Runtime Coordinator resolves the entire closure before scheduling.
-Federation remains a library-only successor capability: v0.3 does not accept a
-Federation Plan until the current review projection consumes its resolved exports.
-
-The legacy v0.1/v0.2 Render Context formats remain conformance inputs for their declared
-token-Theme and federation contracts. They are not accepted by the current
-`render-review` command.
+The Runtime Coordinator resolves the entire closure before scheduling, measures each
+declared presentation source once, resolves Layout Profile v0.2, builds source-linked
+Scene content inside the resulting rectangles, and only then invokes an output adapter.
+No older Render Context is accepted by the command.
 
 ### 5.6 Resource lifecycle
 
 | Resource | Status | Current replacement / use |
 |---|---|---|
-| Project, View, Actual set | Current | Pinned by Render Context v0.3. |
-| Presentation Preset v0.2 | Current closure resource | ID-bearing immutable input; sole current Theme/Layout/Detail/Context/Output authority. |
-| Complete Presentation Settings v0.2 | Current resolved value | Produced by Preset resolution; not directly referenceable because it has no resource ID. |
-| Review Summary / Detail Profile | Current optional input | Pinned by Render Context v0.3 when used. |
-| Style v0.1, Theme v0.1, Scene Profile v0.1 | Frozen legacy | Retained for v0.1 conformance; not mixed into v0.3. |
-| Layout Profile v0.1 | Frozen implementation prototype | Replaced by Presentation Settings `layout`. |
+| Project, View, Actual set | Current | Pinned by Render Context v0.4. |
+| Theme v0.1 | Current | Concrete paint, typography and metric-token authority. |
+| Layout Profile v0.2 | Current | Sole author-facing composition authority. |
+| Review Summary / Detail Profile | Current optional input | Pinned by Render Context v0.4 when used. |
 | table-timeline-profile v0.1 | Deprecated | Rejected by the current path. |
-| Render Context v0.1/v0.2 | Frozen legacy | v0.3 is the current review-render entry. |
+| Render Context v0.4 | Current | Sole review-render entry. |
 
 ## 6. Normalization and validation sequence
 

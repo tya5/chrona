@@ -29,8 +29,7 @@ respective semantic languages are specified. Passing this schema must not be des
 as a rendered-Scene or presentation conformance result.
 
 `review-detail-profile-v0.1.schema.yaml` owns the M23 authoring resource for selected
-group descriptions, milestone IDs, and source-labelled observation rows. The v0.2
-Presentation Settings Detail remains the sole legend wording/order authority.
+group descriptions, milestone IDs, source-labelled observation rows, and detail wording.
 
 `layout-profile-v0.2.schema.yaml` is the M24 replacement authoring grammar for a
 stable-ID composition tree, intrinsic/fractional sizing, logical alignment, and bounded

@@ -1,32 +1,16 @@
 # Controller Z example
 
-`project.yaml` is the planning source of truth and `actual.yaml` contains observations.
-Resources shared by presentation variants live in `shared/`. Each directory below
-`variants/` owns only its additional inputs and deterministic derived artifacts.
+`project.yaml` owns the plan and `actual.yaml` owns observations. Reusable presentation
+inputs are organized by authority:
 
-| Variant | Contents |
-|---|---|
-| `baseline/` | Minimal schedule SVG. |
-| `review/` | Original Plan/Actual review resources. |
-| `executive/` | Executive table-timeline acceptance output and retained historical alternatives. |
-| `editorial/` | Editorial presentation settings and SVG/PNG. |
-| `signal/` | Dark high-signal direction. |
-| `studio/` | Light studio direction. |
-| `delivery-control/` | Delivery-control theme outputs. |
-| `review-detail/` | M23 group detail, observations, and milestone digest. |
+- `views/executive.yaml`
+- `themes/executive-light.yaml`
+- `layouts/executive-review.yaml`
+- `styles/plan-actual.yaml`
+- `profiles/summary.yaml` and `profiles/review-detail.yaml`
+- `contexts/executive.yaml` is the generated immutable binding example
 
-Example regeneration:
-
-```sh
-chrona render-review examples/controller-z/project.yaml \
-  --actual examples/controller-z/actual.yaml \
-  --view examples/controller-z/shared/view.yaml \
-  --style examples/controller-z/shared/style.yaml \
-  --theme examples/controller-z/shared/theme.yaml \
-  --profile examples/controller-z/shared/layout.yaml \
-  --presentation-settings examples/controller-z/variants/editorial/settings.yaml \
-  --output examples/controller-z/variants/editorial/expected.svg
-```
-
-No variant is selected by product code. All appearance differences remain user-editable
-resources.
+`variants/` contains derived review artifacts and visual alternatives, never a second
+layout/settings authority. Materialize the resources into one immutable snapshot, generate
+a v0.4 Context/reference, and invoke `chrona render-review` as described in the
+[YAML organization guide](../../docs/guides/render-review-yaml-layout.md).

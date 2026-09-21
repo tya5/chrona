@@ -4,7 +4,7 @@
 <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#6b7280" /></marker></defs>
 <rect width="1548" height="436" fill="#faf8f6" />
 <text x="24" y="34" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#1a1a1a">Controller X Bring-up</text>
-<metadata data-presentation-adapter="legacy-v0.1" data-diagnostic="E_PRESENTATION_LEGACY_ADAPTER"/>
+<metadata data-presentation-scene="minimal"/>
 <line x1="180" y1="52" x2="180" y2="400" stroke="#e0dbd7" stroke-width="1" />
 <text x="183" y="50" font-family="system-ui, sans-serif" font-size="10" fill="#6b6b6b">2026-10-01</text>
 <line x1="278" y1="52" x2="278" y2="400" stroke="#e0dbd7" stroke-width="1" />

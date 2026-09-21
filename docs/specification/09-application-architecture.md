@@ -86,9 +86,8 @@ root, and store identity. Snapshot mode calls the same `LocalSnapshotReader` and
 used by library evaluation and never falls back to the raw path when reference
 resolution fails.
 
-Presentation output similarly chooses either resolved Presentation Settings and the
-common Scene path, or the explicit diagnostic legacy adapter. `render-review` accepts
-only an immutable Render Context v0.3 reference plus its declared Store; it does not
+Presentation output resolves the single intent-oriented Layout/Scene path. `render-review` accepts
+only an immutable Render Context v0.4 reference plus its declared Store; it does not
 reconstruct a context from loose Project/Actual/View/Style/Theme/Profile flags. A CLI
 must not infer a Render Context from host fonts, locale, or canvas defaults.
 
@@ -102,11 +101,9 @@ Store. Raw paths are Draft evaluation inputs for `validate`, `schedule`, and min
 
 Every read evaluation begins with an explicit request containing at least:
 
-- a current Render Context that names the primary Project revision, View, ID-bearing
-  Presentation Preset, and named Actual/detail inputs when used; preset resolution
-  produces complete Presentation Settings before Scene construction;
-- its explicit target capabilities; locale, viewport, layout, Theme, Detail, font
-  metrics, and output policy are closed by the referenced Presentation Settings; and
+- a current Render Context that names the primary Project revision, View, Theme, Layout,
+  and named Actual/detail inputs when used;
+- its explicit target capabilities, locale, viewport, font metrics and Scene precision; and
 - optional requested output artifact.
 
 The Runtime Coordinator delegates resolution to the Evaluation Closure Resolver before
@@ -131,7 +128,7 @@ Resolve temporal values and schedule
           ↓
 Build semantic View Projection
           ↓
-Resolve the declared v0.1 Style/Theme stack or current v0.2 Presentation Settings
+Resolve the declared View, Theme, Layout and exact source measurements
           ↓
 Build Scene and render target artifact
 ```
@@ -229,7 +226,7 @@ There is no automatic inverse mapping from arbitrary SVG elements or canvas shap
 
 The Python implementation provides the Core v0.1 validator and scheduler, immutable
 local Revision Store reads, typed Commands, View/Actual projection, resolved
-Presentation Settings, a renderer-neutral Scene, deterministic SVG adapters, and
+intent-oriented Layout Profiles, a renderer-neutral Scene, deterministic SVG adapters, and
 library implementations of the successor capabilities. The `chrona` CLI is a smaller
 product surface; Specification 14 records that reachability separately from library
 evidence. No library module is user-reachable merely because it has tests.

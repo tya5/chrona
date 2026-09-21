@@ -7,7 +7,6 @@ import yaml
 
 from chrona.app.cli import main
 from chrona.scheduling.scheduler import schedule
-from chrona.presentation.model.settings import builtin_bases
 
 
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test"):
@@ -80,22 +79,6 @@ def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path
     assert json.loads(capsys.readouterr().out)["placements"] == {"gate": {"at": "2026-10-01"}}
 
 
-def test_cli_render_can_select_the_common_v2_scene_path(tmp_path, monkeypatch):
-    project = {"version": "timeline/v0.1", "project": {"id": "demo", "title": "Demo"},
-               "extensions": [], "objects": {"gate": {"type": "milestone", "title": "Gate",
-               "schedule": {"mode": "fixed", "at": "2026-10-01"}}}, "relations": []}
-    project_path, settings_path, output = tmp_path / "project.yaml", tmp_path / "settings.json", tmp_path / "v2.svg"
-    project_path.write_text(yaml.safe_dump(project))
-    settings = builtin_bases()["executive-v0.2"]
-    settings_path.write_text(json.dumps(settings))
-    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project_path), "--output", str(output),
-                                      "--presentation-settings", str(settings_path)])
-    main()
-    svg = output.read_text()
-    assert 'data-surface-id="minimal"' in svg
-    assert "E_PRESENTATION_LEGACY_ADAPTER" not in svg
-
-
 def test_cli_help_describes_all_commands(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["chrona", "--help"])
     try:
@@ -103,7 +86,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("immutable Project snapshot", "diagnostic legacy adapter", "immutable Render Context v0.3"):
+    for phrase in ("immutable Project snapshot", "minimal schedule scene", "immutable Render Context v0.4"):
         assert phrase in help_text
 
 
@@ -164,26 +147,45 @@ def test_cli_propose_set_distinguishes_literal_and_json_values(tmp_path, monkeyp
     assert json.loads(capsys.readouterr().out)["project"]["objects"]["gate"]["fields"]["rank"] == 3
 
 
-def test_cli_render_review_uses_only_an_immutable_v03_context(tmp_path, monkeypatch):
+def test_cli_render_review_uses_only_an_immutable_v04_context(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     token = "snapshot-render"
     project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text())
-    view = yaml.safe_load((root / "examples/controller-z/shared/view.yaml").read_text())
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text())
     actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text())
-    preset = yaml.safe_load((root / "examples/controller-z/variants/review-detail/settings.yaml").read_text())
-    detail = yaml.safe_load((root / "examples/controller-z/variants/review-detail/detail.yaml").read_text())
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
+    metric_values = {
+        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24, "panel.minimum": 180,
+        "metric.text-size": 14, "metric.line-height": 1.4,
+        "metric.day-width": 12, "metric.row-height": 40, "metric.axis-height": 48,
+        "metric.column-width": 120, "metric.header-height": 44,
+    }
+    theme["body"]["values"].update({name: {"type": "number", "value": value} for name, value in metric_values.items()})
+    theme["body"]["metrics"] = {
+        "text.body.size": "metric.text-size", "text.body.lineHeight": "metric.line-height",
+        "timeline.dayWidth": "metric.day-width",
+        "timeline.row.minBlockSize": "metric.row-height", "timeline.axis.blockSize": "metric.axis-height",
+        "table.column.minInlineSize": "metric.column-width", "table.header.blockSize": "metric.header-height",
+    }
+    theme["body"]["roles"]["dependency"] = {"stroke": "grid"}
+    layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text())
     refs = {
         "project": _snapshot_resource(tmp_path, token, "project.yaml", project, "project", project["project"]["id"]),
         "view": _snapshot_resource(tmp_path, token, "view.yaml", view, "view", view["id"]),
         "actual": _snapshot_resource(tmp_path, token, "actual.yaml", actual, "actual-set", actual["id"]),
-        "preset": _snapshot_resource(tmp_path, token, "preset.yaml", preset, "presentation-preset", preset["id"]),
-        "detail": _snapshot_resource(tmp_path, token, "detail.yaml", detail, "review-detail-profile", detail["id"]),
+        "theme": _snapshot_resource(tmp_path, token, "theme.yaml", theme, "theme", theme["id"]),
+        "layout": _snapshot_resource(tmp_path, token, "layout.yaml", layout, "layout-profile", layout["id"]),
     }
+    font_source = root / "src/chrona/resources/font_metrics/nimbus-sans-regular-v1.json"
+    font_payload = font_source.read_bytes()
+    font_path = tmp_path / token / "font_metrics/nimbus-sans-regular-v1.json"
+    font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
     context = {
-        "version": "chrona/presentation/v0.3", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/presentation/v0.4", "kind": "render-context", "id": "controller-z-current",
         "body": {
-            "project": refs["project"], "view": refs["view"], "presentationPreset": refs["preset"],
-            "inputs": {"actual": refs["actual"], "detailProfile": refs["detail"]},
+            "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "layout": refs["layout"],
+            "inputs": {"actual": refs["actual"]},
+            "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v1", "assets": [{"family": "Nimbus Sans", "weight": 400, "revision": "font-v1", "contentIdentity": "sha256:" + sha256(font_payload).hexdigest(), "path": "font_metrics/nimbus-sans-regular-v1.json"}], "missingFont": "diagnose"}, "scenePrecision": 3},
             "target": {"kind": "svg", "capabilities": sorted([
                 "sourceMetadata", "accessibleText", "semanticRoles", "marker",
                 "tableSemantics", "hierarchicalAxis",
@@ -198,4 +200,6 @@ def test_cli_render_review_uses_only_an_immutable_v03_context(tmp_path, monkeypa
         "--snapshot-root", str(tmp_path), "--store-identity", "cli-test", "--output", str(output),
     ])
     main()
-    assert 'data-surface-id="table-timeline"' in output.read_text(encoding="utf-8")
+    rendered = output.read_text(encoding="utf-8")
+    assert 'data-source-ref="firmware"' in rendered
+    assert 'data-presentation-adapter="legacy-v0.1"' not in rendered

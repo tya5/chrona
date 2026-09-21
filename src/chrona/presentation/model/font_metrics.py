@@ -8,7 +8,9 @@ from importlib.resources.abc import Traversable
 import json
 from pathlib import Path
 
-from chrona.presentation.model.settings import PresentationSettingsError
+
+class FontMetricsError(ValueError):
+    """Declared font metrics cannot be resolved exactly."""
 
 
 @dataclass(frozen=True)
@@ -38,14 +40,14 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
     """Resolve an exact declared family/weight metrics table."""
     assets = descriptor.get("assets")
     if not isinstance(assets, list) or not assets:
-        raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
     families = _families(font_stack)
     if not families:
-        raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
     allow_fallback = descriptor.get("missingFont") == "declared-fallback"
     for index, family in enumerate(families):
         if index and not allow_fallback:
-            raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
         declared = next((asset for asset in assets if asset.get("family", "").casefold() == family.casefold() and asset.get("weight") == weight), None)
         if declared is None:
             continue
@@ -92,4 +94,4 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
             continue
         return FontMetrics(path, identity, units, ascent, descent, advances, default)
     else:
-        raise PresentationSettingsError("E_FONT_METRICS_UNAVAILABLE")
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")

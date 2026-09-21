@@ -1,27 +1,22 @@
 project: project.yaml
 gallery: gallery.html
 actual: actual.yaml
-style: shared/style.yaml
-theme: shared/theme.yaml
-profile: shared/profile.yaml
+style: styles/plan-actual.yaml
+theme: themes/executive-light.yaml
+layout: layouts/executive-review.yaml
 slides:
-- view: slides/01-overview/view.yaml
-  settings: slides/01-overview/settings.yaml
+- view: views/01-overview.yaml
   output: slides/01-overview/expected.svg
   preview: slides/01-overview/preview.png
-- view: slides/02-platform-firmware/view.yaml
-  settings: slides/02-platform-firmware/settings.yaml
+- view: views/02-platform-firmware.yaml
   output: slides/02-platform-firmware/expected.svg
   preview: slides/02-platform-firmware/preview.png
-- view: slides/03-performance-security/view.yaml
-  settings: slides/03-performance-security/settings.yaml
+- view: views/03-performance-security.yaml
   output: slides/03-performance-security/expected.svg
   preview: slides/03-performance-security/preview.png
-- view: slides/04-qualification-production/view.yaml
-  settings: slides/04-qualification-production/settings.yaml
+- view: views/04-qualification-production.yaml
   output: slides/04-qualification-production/expected.svg
   preview: slides/04-qualification-production/preview.png
-- view: slides/05-master/view.yaml
-  settings: slides/05-master/settings.yaml
+- view: views/05-master.yaml
   output: slides/05-master/expected.svg
   preview: slides/05-master/preview.png

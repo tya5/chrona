@@ -96,8 +96,8 @@ default is not accepted as a reproducible comparison input.
 comparison facets. Start/finish variance, progress, missing Actual, and unmatched Actual
 remain explicit; no Actual automatically changes the planned schedule.
 
-**Acceptance evidence:** Render Context v0.3, Actual-set fixture, View facets, resolved
-Presentation Preset, and diagnostics for missing or unmatched alignment.
+**Acceptance evidence:** Render Context v0.4, Actual-set fixture, View facets, resolved
+Theme/Layout, and diagnostics for missing or unmatched alignment.
 
 **Exceptional behavior:** Unknown object IDs are diagnosed and never title-matched.
 
@@ -107,11 +107,11 @@ Presentation Preset, and diagnostics for missing or unmatched alignment.
 
 **Trigger:** A program reviewer requests a named customer-facing Render Context.
 
-**Outcome:** A View selects an approved subset and a Presentation Preset changes
-appearance without changing Project facts, scheduling, or comparison identity.
+**Outcome:** A View selects an approved subset while independently selected Theme and
+Layout change appearance/composition without changing Project facts or comparison identity.
 
-**Acceptance evidence:** Explicit Render Context v0.3, named View and Presentation
-Preset, and reproducible Scene input manifest.
+**Acceptance evidence:** Explicit Render Context v0.4, named View/Theme/Layout, and a
+reproducible Layout/Scene manifest.
 
 **Exceptional behavior:** Missing capability or unresolved token yields a diagnostic;
 the renderer does not choose a local fallback.
@@ -189,11 +189,11 @@ does not mutate the annotation or Project. Missing anchors are diagnosed.
 **Trigger:** A team needs engineering, executive, and customer review projections of
 the same semantic Project revision.
 
-**Outcome:** Each named Render Context selects its View, Presentation Preset, and
+**Outcome:** Each named Render Context selects its View, Theme, Layout, and
 comparison inputs explicitly. Project facts are not copied into presentation files.
 
 **Acceptance evidence:** Multiple Render Context fixtures bound to one immutable Project
-revision, with distinct View/Preset identities and reproducible input manifests.
+revision, with distinct resource identities and reproducible input manifests.
 
 **Exceptional behavior:** A View cannot select a hidden current branch, default theme,
 or local renderer configuration.
