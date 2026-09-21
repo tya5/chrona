@@ -1,7 +1,7 @@
 version: timeline/v0.1
 project:
   id: halcyon-1
-  title: HALCYON-1 Smallsat Mission
+  title: HALCYON-1
   calendar: engineering
 calendars:
   engineering:

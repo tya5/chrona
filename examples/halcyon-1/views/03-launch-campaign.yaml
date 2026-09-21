@@ -1,7 +1,8 @@
-version: chrona/presentation/v0.1
+version: chrona/presentation/v0.2
 kind: view
 id: halcyon-03-launch-campaign
 body:
+  rows: {mode: automatic}
   selection:
     include:
       ids: [integration, vibration, tvac, emc, psr, rehearsals, shipment, campaign, frr, launch, leop, first-light]
@@ -22,7 +23,7 @@ body:
     actual: optional
     observationSelection: latest
     deltaUnit: calendar-days
-    facets: [planned, actual, finishDelta, missingActual]
+    facets: [planned, actual, finishDelta]
   visibility:
     labels: true
     relations: semantic

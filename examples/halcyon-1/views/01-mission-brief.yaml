@@ -1,7 +1,8 @@
-version: chrona/presentation/v0.1
+version: chrona/presentation/v0.2
 kind: view
 id: halcyon-01-mission-brief
 body:
+  rows: {mode: automatic}
   selection:
     include:
       ids: [pdr, structure, avionics, bus-test, cdr, optics, payload-tvac, payload-delivery,
@@ -23,7 +24,7 @@ body:
     actual: required
     observationSelection: latest
     deltaUnit: calendar-days
-    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+    facets: [planned, actual, finishDelta, unmatchedActual]
   visibility:
     labels: true
     relations: semantic

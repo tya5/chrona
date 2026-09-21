@@ -1,173 +1,174 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img">
 <rect width="1920" height="1080" fill="#0B1220"/>
-<text data-scene-id="title" data-source-ref="title" data-purpose="" x="40" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">HALCYON-1 Smallsat Mission</text>
-<text data-scene-id="column:Work package" data-source-ref="view:tableColumns" data-purpose="" x="500" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Work package</text>
-<text data-scene-id="column:Phase" data-source-ref="view:tableColumns" data-purpose="" x="698.541" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Phase</text>
-<text data-scene-id="cell:pdr:Work package" data-source-ref="pdr" data-purpose="" x="500" y="111.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Preliminary design review</text>
-<text data-scene-id="cell:pdr:Phase" data-source-ref="pdr" data-purpose="" x="698.541" y="111.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Design</text>
-<text data-scene-id="cell:structure:Work package" data-source-ref="structure" data-purpose="" x="500" y="148.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Primary structure fabrication</text>
-<text data-scene-id="cell:structure:Phase" data-source-ref="structure" data-purpose="" x="698.541" y="148.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Build</text>
-<text data-scene-id="cell:eps:Work package" data-source-ref="eps" data-purpose="" x="500" y="185.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Power system qualification</text>
-<text data-scene-id="cell:eps:Phase" data-source-ref="eps" data-purpose="" x="698.541" y="185.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Qualify</text>
-<text data-scene-id="cell:avionics:Work package" data-source-ref="avionics" data-purpose="" x="500" y="221.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Avionics integration</text>
-<text data-scene-id="cell:avionics:Phase" data-source-ref="avionics" data-purpose="" x="698.541" y="221.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Build</text>
-<text data-scene-id="cell:bus-test:Work package" data-source-ref="bus-test" data-purpose="" x="500" y="258.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Bus functional test</text>
-<text data-scene-id="cell:bus-test:Phase" data-source-ref="bus-test" data-purpose="" x="698.541" y="258.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Qualify</text>
-<text data-scene-id="cell:cdr:Work package" data-source-ref="cdr" data-purpose="" x="500" y="295.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Critical design review</text>
-<text data-scene-id="cell:cdr:Phase" data-source-ref="cdr" data-purpose="" x="698.541" y="295.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Design</text>
-<text data-scene-id="cell:optics:Work package" data-source-ref="optics" data-purpose="" x="500" y="332" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Imager optics alignment</text>
-<text data-scene-id="cell:optics:Phase" data-source-ref="optics" data-purpose="" x="698.541" y="332" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Build</text>
-<text data-scene-id="cell:detector:Work package" data-source-ref="detector" data-purpose="" x="500" y="368.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Detector calibration</text>
-<text data-scene-id="cell:detector:Phase" data-source-ref="detector" data-purpose="" x="698.541" y="368.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Qualify</text>
-<text data-scene-id="cell:payload-tvac:Work package" data-source-ref="payload-tvac" data-purpose="" x="500" y="405.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Payload thermal-vacuum</text>
-<text data-scene-id="cell:payload-tvac:Phase" data-source-ref="payload-tvac" data-purpose="" x="698.541" y="405.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Qualify</text>
-<text data-scene-id="cell:payload-delivery:Work package" data-source-ref="payload-delivery" data-purpose="" x="500" y="442.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Payload delivered</text>
-<text data-scene-id="cell:payload-delivery:Phase" data-source-ref="payload-delivery" data-purpose="" x="698.541" y="442.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Qualify</text>
-<text data-scene-id="cell:integration:Work package" data-source-ref="integration" data-purpose="" x="500" y="478.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Spacecraft integration</text>
-<text data-scene-id="cell:integration:Phase" data-source-ref="integration" data-purpose="" x="698.541" y="478.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Integrate</text>
-<text data-scene-id="cell:vibration:Work package" data-source-ref="vibration" data-purpose="" x="500" y="515.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Vibration and shock</text>
-<text data-scene-id="cell:vibration:Phase" data-source-ref="vibration" data-purpose="" x="698.541" y="515.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Verify</text>
-<text data-scene-id="cell:tvac:Work package" data-source-ref="tvac" data-purpose="" x="500" y="552.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">System thermal-vacuum</text>
-<text data-scene-id="cell:tvac:Phase" data-source-ref="tvac" data-purpose="" x="698.541" y="552.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Verify</text>
-<text data-scene-id="cell:emc:Work package" data-source-ref="emc" data-purpose="" x="500" y="588.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">EMC and RF compatibility</text>
-<text data-scene-id="cell:emc:Phase" data-source-ref="emc" data-purpose="" x="698.541" y="588.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Verify</text>
-<text data-scene-id="cell:psr:Work package" data-source-ref="psr" data-purpose="" x="500" y="625.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Pre-ship review</text>
-<text data-scene-id="cell:psr:Phase" data-source-ref="psr" data-purpose="" x="698.541" y="625.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Verify</text>
-<text data-scene-id="cell:mcs:Work package" data-source-ref="mcs" data-purpose="" x="500" y="662.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Mission control software</text>
-<text data-scene-id="cell:mcs:Phase" data-source-ref="mcs" data-purpose="" x="698.541" y="662.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Build</text>
-<text data-scene-id="cell:station:Work package" data-source-ref="station" data-purpose="" x="500" y="698.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Ground station upgrade</text>
-<text data-scene-id="cell:station:Phase" data-source-ref="station" data-purpose="" x="698.541" y="698.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Build</text>
-<text data-scene-id="cell:comms-test:Work package" data-source-ref="comms-test" data-purpose="" x="500" y="735.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">End-to-end link test</text>
-<text data-scene-id="cell:comms-test:Phase" data-source-ref="comms-test" data-purpose="" x="698.541" y="735.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Verify</text>
-<text data-scene-id="cell:launch-contract:Work package" data-source-ref="launch-contract" data-purpose="" x="500" y="772.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Launch services confirmed</text>
-<text data-scene-id="cell:launch-contract:Phase" data-source-ref="launch-contract" data-purpose="" x="698.541" y="772.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Design</text>
-<text data-scene-id="cell:shipment:Work package" data-source-ref="shipment" data-purpose="" x="500" y="809" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Ship to range</text>
-<text data-scene-id="cell:shipment:Phase" data-source-ref="shipment" data-purpose="" x="698.541" y="809" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Campaign</text>
-<text data-scene-id="cell:campaign:Work package" data-source-ref="campaign" data-purpose="" x="500" y="845.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Launch campaign</text>
-<text data-scene-id="cell:campaign:Phase" data-source-ref="campaign" data-purpose="" x="698.541" y="845.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Campaign</text>
-<text data-scene-id="cell:frr:Work package" data-source-ref="frr" data-purpose="" x="500" y="882.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Flight readiness review</text>
-<text data-scene-id="cell:frr:Phase" data-source-ref="frr" data-purpose="" x="698.541" y="882.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Campaign</text>
-<text data-scene-id="cell:launch:Work package" data-source-ref="launch" data-purpose="" x="500" y="919.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Launch window opens</text>
-<text data-scene-id="cell:launch:Phase" data-source-ref="launch" data-purpose="" x="698.541" y="919.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Campaign</text>
-<text data-scene-id="cell:rehearsals:Work package" data-source-ref="rehearsals" data-purpose="" x="500" y="955.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Operations rehearsals</text>
-<text data-scene-id="cell:rehearsals:Phase" data-source-ref="rehearsals" data-purpose="" x="698.541" y="955.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Verify</text>
-<text data-scene-id="cell:leop:Work package" data-source-ref="leop" data-purpose="" x="500" y="992.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">LEOP and commissioning</text>
-<text data-scene-id="cell:leop:Phase" data-source-ref="leop" data-purpose="" x="698.541" y="992.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Operate</text>
-<text data-scene-id="cell:first-light:Work package" data-source-ref="first-light" data-purpose="" x="500" y="1029.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">First light</text>
-<text data-scene-id="cell:first-light:Phase" data-source-ref="first-light" data-purpose="" x="698.541" y="1029.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Operate</text>
+<defs><marker id="marker-dependency-triangle" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8EA0BA"/></marker></defs>
+<text data-scene-id="title" data-source-ref="title" data-purpose="" x="40" y="80" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="40" fill="#EAF0FA">HALCYON-1</text>
+<text data-scene-id="column:Work package" data-source-ref="view:tableColumns" data-purpose="" x="500" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Work package</text>
+<text data-scene-id="column:Phase" data-source-ref="view:tableColumns" data-purpose="" x="698.541" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Phase</text>
+<text data-scene-id="cell:pdr:Work package" data-source-ref="pdr" data-purpose="" x="500" y="111.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Preliminary design review</text>
+<text data-scene-id="cell:pdr:Phase" data-source-ref="pdr" data-purpose="" x="698.541" y="111.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Design</text>
+<text data-scene-id="cell:structure:Work package" data-source-ref="structure" data-purpose="" x="500" y="148.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Primary structure fabrication</text>
+<text data-scene-id="cell:structure:Phase" data-source-ref="structure" data-purpose="" x="698.541" y="148.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Build</text>
+<text data-scene-id="cell:eps:Work package" data-source-ref="eps" data-purpose="" x="500" y="185.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Power system qualification</text>
+<text data-scene-id="cell:eps:Phase" data-source-ref="eps" data-purpose="" x="698.541" y="185.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Qualify</text>
+<text data-scene-id="cell:avionics:Work package" data-source-ref="avionics" data-purpose="" x="500" y="221.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Avionics integration</text>
+<text data-scene-id="cell:avionics:Phase" data-source-ref="avionics" data-purpose="" x="698.541" y="221.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Build</text>
+<text data-scene-id="cell:bus-test:Work package" data-source-ref="bus-test" data-purpose="" x="500" y="258.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Bus functional test</text>
+<text data-scene-id="cell:bus-test:Phase" data-source-ref="bus-test" data-purpose="" x="698.541" y="258.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Qualify</text>
+<text data-scene-id="cell:cdr:Work package" data-source-ref="cdr" data-purpose="" x="500" y="295.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Critical design review</text>
+<text data-scene-id="cell:cdr:Phase" data-source-ref="cdr" data-purpose="" x="698.541" y="295.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Design</text>
+<text data-scene-id="cell:optics:Work package" data-source-ref="optics" data-purpose="" x="500" y="332" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Imager optics alignment</text>
+<text data-scene-id="cell:optics:Phase" data-source-ref="optics" data-purpose="" x="698.541" y="332" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Build</text>
+<text data-scene-id="cell:detector:Work package" data-source-ref="detector" data-purpose="" x="500" y="368.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Detector calibration</text>
+<text data-scene-id="cell:detector:Phase" data-source-ref="detector" data-purpose="" x="698.541" y="368.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Qualify</text>
+<text data-scene-id="cell:payload-tvac:Work package" data-source-ref="payload-tvac" data-purpose="" x="500" y="405.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Payload thermal-vacuum</text>
+<text data-scene-id="cell:payload-tvac:Phase" data-source-ref="payload-tvac" data-purpose="" x="698.541" y="405.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Qualify</text>
+<text data-scene-id="cell:payload-delivery:Work package" data-source-ref="payload-delivery" data-purpose="" x="500" y="442.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Payload delivered</text>
+<text data-scene-id="cell:payload-delivery:Phase" data-source-ref="payload-delivery" data-purpose="" x="698.541" y="442.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Qualify</text>
+<text data-scene-id="cell:integration:Work package" data-source-ref="integration" data-purpose="" x="500" y="478.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Spacecraft integration</text>
+<text data-scene-id="cell:integration:Phase" data-source-ref="integration" data-purpose="" x="698.541" y="478.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Integrate</text>
+<text data-scene-id="cell:vibration:Work package" data-source-ref="vibration" data-purpose="" x="500" y="515.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Vibration and shock</text>
+<text data-scene-id="cell:vibration:Phase" data-source-ref="vibration" data-purpose="" x="698.541" y="515.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Verify</text>
+<text data-scene-id="cell:tvac:Work package" data-source-ref="tvac" data-purpose="" x="500" y="552.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">System thermal-vacuum</text>
+<text data-scene-id="cell:tvac:Phase" data-source-ref="tvac" data-purpose="" x="698.541" y="552.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Verify</text>
+<text data-scene-id="cell:emc:Work package" data-source-ref="emc" data-purpose="" x="500" y="588.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">EMC and RF compatibility</text>
+<text data-scene-id="cell:emc:Phase" data-source-ref="emc" data-purpose="" x="698.541" y="588.846" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Verify</text>
+<text data-scene-id="cell:psr:Work package" data-source-ref="psr" data-purpose="" x="500" y="625.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Pre-ship review</text>
+<text data-scene-id="cell:psr:Phase" data-source-ref="psr" data-purpose="" x="698.541" y="625.538" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Verify</text>
+<text data-scene-id="cell:mcs:Work package" data-source-ref="mcs" data-purpose="" x="500" y="662.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Mission control software</text>
+<text data-scene-id="cell:mcs:Phase" data-source-ref="mcs" data-purpose="" x="698.541" y="662.231" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Build</text>
+<text data-scene-id="cell:station:Work package" data-source-ref="station" data-purpose="" x="500" y="698.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Ground station upgrade</text>
+<text data-scene-id="cell:station:Phase" data-source-ref="station" data-purpose="" x="698.541" y="698.923" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Build</text>
+<text data-scene-id="cell:comms-test:Work package" data-source-ref="comms-test" data-purpose="" x="500" y="735.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">End-to-end link test</text>
+<text data-scene-id="cell:comms-test:Phase" data-source-ref="comms-test" data-purpose="" x="698.541" y="735.615" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Verify</text>
+<text data-scene-id="cell:launch-contract:Work package" data-source-ref="launch-contract" data-purpose="" x="500" y="772.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Launch services confirmed</text>
+<text data-scene-id="cell:launch-contract:Phase" data-source-ref="launch-contract" data-purpose="" x="698.541" y="772.308" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Design</text>
+<text data-scene-id="cell:shipment:Work package" data-source-ref="shipment" data-purpose="" x="500" y="809" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Ship to range</text>
+<text data-scene-id="cell:shipment:Phase" data-source-ref="shipment" data-purpose="" x="698.541" y="809" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Campaign</text>
+<text data-scene-id="cell:campaign:Work package" data-source-ref="campaign" data-purpose="" x="500" y="845.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Launch campaign</text>
+<text data-scene-id="cell:campaign:Phase" data-source-ref="campaign" data-purpose="" x="698.541" y="845.692" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Campaign</text>
+<text data-scene-id="cell:frr:Work package" data-source-ref="frr" data-purpose="" x="500" y="882.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Flight readiness review</text>
+<text data-scene-id="cell:frr:Phase" data-source-ref="frr" data-purpose="" x="698.541" y="882.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Campaign</text>
+<text data-scene-id="cell:launch:Work package" data-source-ref="launch" data-purpose="" x="500" y="919.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Launch window opens</text>
+<text data-scene-id="cell:launch:Phase" data-source-ref="launch" data-purpose="" x="698.541" y="919.077" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Campaign</text>
+<text data-scene-id="cell:rehearsals:Work package" data-source-ref="rehearsals" data-purpose="" x="500" y="955.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Operations rehearsals</text>
+<text data-scene-id="cell:rehearsals:Phase" data-source-ref="rehearsals" data-purpose="" x="698.541" y="955.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Verify</text>
+<text data-scene-id="cell:leop:Work package" data-source-ref="leop" data-purpose="" x="500" y="992.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">LEOP and commissioning</text>
+<text data-scene-id="cell:leop:Phase" data-source-ref="leop" data-purpose="" x="698.541" y="992.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Operate</text>
+<text data-scene-id="cell:first-light:Work package" data-source-ref="first-light" data-purpose="" x="500" y="1029.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">First light</text>
+<text data-scene-id="cell:first-light:Phase" data-source-ref="first-light" data-purpose="" x="698.541" y="1029.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Operate</text>
 <rect data-scene-id="group:bus" data-source-ref="bus" data-purpose="" x="937.082" y="86" width="942.918" height="220.154" fill="#12302B"/>
 <rect data-scene-id="group:payload" data-source-ref="payload" data-purpose="" x="937.082" y="306.154" width="942.918" height="146.769" fill="#12302B"/>
 <rect data-scene-id="group:ait" data-source-ref="ait" data-purpose="" x="937.082" y="452.923" width="942.918" height="183.462" fill="#12302B"/>
 <rect data-scene-id="group:ground" data-source-ref="ground" data-purpose="" x="937.082" y="636.385" width="942.918" height="110.077" fill="#12302B"/>
 <rect data-scene-id="group:launch" data-source-ref="launch" data-purpose="" x="937.082" y="746.462" width="942.918" height="183.462" fill="#12302B"/>
 <rect data-scene-id="group:ops" data-source-ref="ops" data-purpose="" x="937.082" y="929.923" width="942.918" height="110.077" fill="#12302B"/>
-<polygon data-scene-id="planned:pdr" data-source-ref="pdr" data-purpose="" points="950.797,95.173 954.467,98.842 950.797,102.512 947.128,98.842" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:pdr" data-source-ref="pdr" data-purpose="" x="937.082" y="104.346" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:structure" data-source-ref="structure" data-purpose="" x="961.084" y="131.865" width="99.435" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:structure" data-source-ref="structure" data-purpose="" x="961.084" y="141.038" width="99.435" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:structure" data-source-ref="structure" data-purpose="" x="1060.519" y="139.204" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#8EA0BA">+0d</text>
-<rect data-scene-id="planned:eps" data-source-ref="eps" data-purpose="" x="1009.087" y="168.558" width="58.289" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:eps" data-source-ref="eps" data-purpose="" x="1009.087" y="177.731" width="48.003" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:eps" data-source-ref="eps" data-purpose="" x="1057.09" y="175.896" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#35D0A0">-3d</text>
-<rect data-scene-id="planned:avionics" data-source-ref="avionics" data-purpose="" x="1060.519" y="205.25" width="72.005" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:avionics" data-source-ref="avionics" data-purpose="" x="1063.948" y="214.423" width="78.862" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:avionics" data-source-ref="avionics" data-purpose="" x="1142.81" y="212.588" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#FF6B6B">+3d</text>
-<rect data-scene-id="planned:bus-test" data-source-ref="bus-test" data-purpose="" x="1139.381" y="241.942" width="48.003" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:bus-test" data-source-ref="bus-test" data-purpose="" x="1201.099" y="251.115" width="37.717" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:bus-test" data-source-ref="bus-test" data-purpose="" x="1238.816" y="249.281" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#FF6B6B">+15d</text>
-<polygon data-scene-id="planned:cdr" data-source-ref="cdr" data-purpose="" points="1166.811,278.635 1170.481,282.304 1166.811,285.973 1163.142,282.304" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:cdr" data-source-ref="cdr" data-purpose="" x="937.082" y="287.808" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:optics" data-source-ref="optics" data-purpose="" x="961.084" y="315.327" width="82.291" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:optics" data-source-ref="optics" data-purpose="" x="961.084" y="324.5" width="85.72" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:optics" data-source-ref="optics" data-purpose="" x="1046.804" y="322.665" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#FF6B6B">+1d</text>
-<rect data-scene-id="planned:detector" data-source-ref="detector" data-purpose="" x="1057.09" y="352.019" width="48.003" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:detector" data-source-ref="detector" data-purpose="" x="1081.092" y="361.192" width="30.859" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:detector" data-source-ref="detector" data-purpose="" x="1111.951" y="359.358" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#FF6B6B">+2d</text>
-<rect data-scene-id="planned:payload-tvac" data-source-ref="payload-tvac" data-purpose="" x="1105.093" y="388.712" width="27.43" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:payload-tvac" data-source-ref="payload-tvac" data-purpose="" x="1115.379" y="397.885" width="51.432" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:payload-tvac" data-source-ref="payload-tvac" data-purpose="" x="1166.811" y="396.05" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#FF6B6B">+10d</text>
-<polygon data-scene-id="planned:payload-delivery" data-source-ref="payload-delivery" data-purpose="" points="1358.824,425.404 1362.493,429.073 1358.824,432.742 1355.154,429.073" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:payload-delivery" data-source-ref="payload-delivery" data-purpose="" x="937.082" y="434.577" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:integration" data-source-ref="integration" data-purpose="" x="1372.539" y="462.096" width="72.005" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:integration" data-source-ref="integration" data-purpose="" x="1372.539" y="471.269" width="72.005" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:integration" data-source-ref="integration" data-purpose="" x="1444.543" y="469.435" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#8EA0BA">+0d</text>
-<rect data-scene-id="planned:vibration" data-source-ref="vibration" data-purpose="" x="1447.972" y="498.788" width="24.002" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:vibration" data-source-ref="vibration" data-purpose="" x="1447.972" y="507.962" width="24.002" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:vibration" data-source-ref="vibration" data-purpose="" x="1471.974" y="506.127" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#8EA0BA">+0d</text>
-<rect data-scene-id="planned:tvac" data-source-ref="tvac" data-purpose="" x="1478.831" y="535.481" width="48.003" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:tvac" data-source-ref="tvac" data-purpose="" x="937.082" y="544.654" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:emc" data-source-ref="emc" data-purpose="" x="1537.121" y="572.173" width="24.002" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:emc" data-source-ref="emc" data-purpose="" x="937.082" y="581.346" width="37.717" height="7.338" fill="#2E3F5E"/>
-<polygon data-scene-id="planned:psr" data-source-ref="psr" data-purpose="" points="1598.839,608.865 1602.508,612.535 1598.839,616.204 1595.17,612.535" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:psr" data-source-ref="psr" data-purpose="" x="937.082" y="618.038" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:mcs" data-source-ref="mcs" data-purpose="" x="961.084" y="645.558" width="219.443" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:mcs" data-source-ref="mcs" data-purpose="" x="961.084" y="654.731" width="229.729" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:mcs" data-source-ref="mcs" data-purpose="" x="1190.813" y="652.896" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#FF6B6B">+3d</text>
-<rect data-scene-id="planned:station" data-source-ref="station" data-purpose="" x="1105.093" y="682.25" width="147.438" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:station" data-source-ref="station" data-purpose="" x="1105.093" y="691.423" width="109.721" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:station" data-source-ref="station" data-purpose="" x="1214.814" y="689.588" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#35D0A0">-11d</text>
-<rect data-scene-id="planned:comms-test" data-source-ref="comms-test" data-purpose="" x="1252.531" y="718.942" width="24.002" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="actual:comms-test" data-source-ref="comms-test" data-purpose="" x="1225.101" y="728.115" width="13.715" height="7.338" fill="#35D0A0"/>
-<text data-scene-id="variance:comms-test" data-source-ref="comms-test" data-purpose="" x="1238.816" y="726.281" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#35D0A0">-11d</text>
-<polygon data-scene-id="planned:launch-contract" data-source-ref="launch-contract" data-purpose="" points="1094.807,755.635 1098.476,759.304 1094.807,762.973 1091.137,759.304" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:launch-contract" data-source-ref="launch-contract" data-purpose="" x="937.082" y="764.808" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:shipment" data-source-ref="shipment" data-purpose="" x="1612.554" y="792.327" width="20.573" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:shipment" data-source-ref="shipment" data-purpose="" x="937.082" y="801.5" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:campaign" data-source-ref="campaign" data-purpose="" x="1636.556" y="829.019" width="58.289" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:campaign" data-source-ref="campaign" data-purpose="" x="937.082" y="838.192" width="37.717" height="7.338" fill="#2E3F5E"/>
-<polygon data-scene-id="planned:frr" data-source-ref="frr" data-purpose="" points="1718.847,865.712 1722.516,869.381 1718.847,873.05 1715.178,869.381" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:frr" data-source-ref="frr" data-purpose="" x="937.082" y="874.885" width="37.717" height="7.338" fill="#2E3F5E"/>
-<polygon data-scene-id="planned:launch" data-source-ref="launch" data-purpose="" points="1742.848,902.404 1746.518,906.073 1742.848,909.742 1739.179,906.073" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:launch" data-source-ref="launch" data-purpose="" x="937.082" y="911.577" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:rehearsals" data-source-ref="rehearsals" data-purpose="" x="1561.122" y="939.096" width="51.432" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:rehearsals" data-source-ref="rehearsals" data-purpose="" x="937.082" y="948.269" width="37.717" height="7.338" fill="#2E3F5E"/>
-<rect data-scene-id="planned:leop" data-source-ref="leop" data-purpose="" x="1742.848" y="975.788" width="72.005" height="7.338" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:leop" data-source-ref="leop" data-purpose="" x="937.082" y="984.962" width="37.717" height="7.338" fill="#2E3F5E"/>
-<polygon data-scene-id="planned:first-light" data-source-ref="first-light" data-purpose="" points="1838.854,1012.481 1842.524,1016.15 1838.854,1019.819 1835.185,1016.15" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:first-light" data-source-ref="first-light" data-purpose="" x="937.082" y="1021.654" width="37.717" height="7.338" fill="#2E3F5E"/>
+<polygon data-scene-id="planned:pdr:pdr" data-source-ref="pdr" data-purpose="" points="950.797,95.173 954.467,98.842 950.797,102.512 947.128,98.842" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:pdr:pdr" data-source-ref="pdr" data-purpose="" x="950.797" y="104.346" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:structure:structure" data-source-ref="structure" data-purpose="" x="961.084" y="131.865" width="99.435" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:structure:structure" data-source-ref="structure" data-purpose="" x="961.084" y="141.038" width="99.435" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:structure:structure" data-source-ref="structure" data-purpose="" x="1060.519" y="139.204" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#8EA0BA">+0d</text>
+<rect data-scene-id="planned:eps:eps" data-source-ref="eps" data-purpose="" x="1009.087" y="168.558" width="58.289" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:eps:eps" data-source-ref="eps" data-purpose="" x="1009.087" y="177.731" width="48.003" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:eps:eps" data-source-ref="eps" data-purpose="" x="1057.09" y="175.896" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#35D0A0">-3d</text>
+<rect data-scene-id="planned:avionics:avionics" data-source-ref="avionics" data-purpose="" x="1060.519" y="205.25" width="72.005" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:avionics:avionics" data-source-ref="avionics" data-purpose="" x="1063.948" y="214.423" width="78.862" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:avionics:avionics" data-source-ref="avionics" data-purpose="" x="1142.81" y="212.588" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+3d</text>
+<rect data-scene-id="planned:bus-test:bus-test" data-source-ref="bus-test" data-purpose="" x="1139.381" y="241.942" width="48.003" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:bus-test:bus-test" data-source-ref="bus-test" data-purpose="" x="1201.099" y="251.115" width="37.717" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:bus-test:bus-test" data-source-ref="bus-test" data-purpose="" x="1238.816" y="249.281" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+15d</text>
+<polygon data-scene-id="planned:cdr:cdr" data-source-ref="cdr" data-purpose="" points="1166.811,278.635 1170.481,282.304 1166.811,285.973 1163.142,282.304" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:cdr:cdr" data-source-ref="cdr" data-purpose="" x="1166.811" y="287.808" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:optics:optics" data-source-ref="optics" data-purpose="" x="961.084" y="315.327" width="82.291" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:optics:optics" data-source-ref="optics" data-purpose="" x="961.084" y="324.5" width="85.72" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:optics:optics" data-source-ref="optics" data-purpose="" x="1046.804" y="322.665" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+1d</text>
+<rect data-scene-id="planned:detector:detector" data-source-ref="detector" data-purpose="" x="1057.09" y="352.019" width="48.003" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:detector:detector" data-source-ref="detector" data-purpose="" x="1081.092" y="361.192" width="30.859" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:detector:detector" data-source-ref="detector" data-purpose="" x="1111.951" y="359.358" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+2d</text>
+<rect data-scene-id="planned:payload-tvac:payload-tvac" data-source-ref="payload-tvac" data-purpose="" x="1105.093" y="388.712" width="27.43" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:payload-tvac:payload-tvac" data-source-ref="payload-tvac" data-purpose="" x="1115.379" y="397.885" width="51.432" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:payload-tvac:payload-tvac" data-source-ref="payload-tvac" data-purpose="" x="1166.811" y="396.05" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+10d</text>
+<polygon data-scene-id="planned:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="" points="1358.824,425.404 1362.493,429.073 1358.824,432.742 1355.154,429.073" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="" x="1358.824" y="434.577" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:integration:integration" data-source-ref="integration" data-purpose="" x="1372.539" y="462.096" width="72.005" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:integration:integration" data-source-ref="integration" data-purpose="" x="1372.539" y="471.269" width="72.005" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:integration:integration" data-source-ref="integration" data-purpose="" x="1444.543" y="469.435" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#8EA0BA">+0d</text>
+<rect data-scene-id="planned:vibration:vibration" data-source-ref="vibration" data-purpose="" x="1447.972" y="498.788" width="24.002" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:vibration:vibration" data-source-ref="vibration" data-purpose="" x="1447.972" y="507.962" width="24.002" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:vibration:vibration" data-source-ref="vibration" data-purpose="" x="1471.974" y="506.127" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#8EA0BA">+0d</text>
+<rect data-scene-id="planned:tvac:tvac" data-source-ref="tvac" data-purpose="" x="1478.831" y="535.481" width="48.003" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:tvac:tvac" data-source-ref="tvac" data-purpose="" x="1526.834" y="544.654" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:emc:emc" data-source-ref="emc" data-purpose="" x="1537.121" y="572.173" width="24.002" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:emc:emc" data-source-ref="emc" data-purpose="" x="1561.122" y="581.346" width="11.008" height="7.338" fill="#2E3F5E"/>
+<polygon data-scene-id="planned:psr:psr" data-source-ref="psr" data-purpose="" points="1598.839,608.865 1602.508,612.535 1598.839,616.204 1595.17,612.535" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:psr:psr" data-source-ref="psr" data-purpose="" x="1598.839" y="618.038" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:mcs:mcs" data-source-ref="mcs" data-purpose="" x="961.084" y="645.558" width="219.443" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:mcs:mcs" data-source-ref="mcs" data-purpose="" x="961.084" y="654.731" width="229.729" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:mcs:mcs" data-source-ref="mcs" data-purpose="" x="1190.813" y="652.896" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+3d</text>
+<rect data-scene-id="planned:station:station" data-source-ref="station" data-purpose="" x="1105.093" y="682.25" width="147.438" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:station:station" data-source-ref="station" data-purpose="" x="1105.093" y="691.423" width="109.721" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:station:station" data-source-ref="station" data-purpose="" x="1214.814" y="689.588" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#35D0A0">-11d</text>
+<rect data-scene-id="planned:comms-test:comms-test" data-source-ref="comms-test" data-purpose="" x="1252.531" y="718.942" width="24.002" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="actual:comms-test:comms-test" data-source-ref="comms-test" data-purpose="" x="1225.101" y="728.115" width="13.715" height="7.338" fill="#35D0A0"/>
+<text data-scene-id="variance:comms-test:comms-test" data-source-ref="comms-test" data-purpose="" x="1238.816" y="726.281" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#35D0A0">-11d</text>
+<polygon data-scene-id="planned:launch-contract:launch-contract" data-source-ref="launch-contract" data-purpose="" points="1094.807,755.635 1098.476,759.304 1094.807,762.973 1091.137,759.304" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:launch-contract:launch-contract" data-source-ref="launch-contract" data-purpose="" x="1094.807" y="764.808" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:shipment:shipment" data-source-ref="shipment" data-purpose="" x="1612.554" y="792.327" width="20.573" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:shipment:shipment" data-source-ref="shipment" data-purpose="" x="1633.127" y="801.5" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:campaign:campaign" data-source-ref="campaign" data-purpose="" x="1636.556" y="829.019" width="58.289" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:campaign:campaign" data-source-ref="campaign" data-purpose="" x="1694.845" y="838.192" width="11.008" height="7.338" fill="#2E3F5E"/>
+<polygon data-scene-id="planned:frr:frr" data-source-ref="frr" data-purpose="" points="1718.847,865.712 1722.516,869.381 1718.847,873.05 1715.178,869.381" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:frr:frr" data-source-ref="frr" data-purpose="" x="1718.847" y="874.885" width="11.008" height="7.338" fill="#2E3F5E"/>
+<polygon data-scene-id="planned:launch:launch" data-source-ref="launch" data-purpose="" points="1742.848,902.404 1746.518,906.073 1742.848,909.742 1739.179,906.073" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:launch:launch" data-source-ref="launch" data-purpose="" x="1742.848" y="911.577" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="" x="1561.122" y="939.096" width="51.432" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="" x="1612.554" y="948.269" width="11.008" height="7.338" fill="#2E3F5E"/>
+<rect data-scene-id="planned:leop:leop" data-source-ref="leop" data-purpose="" x="1742.848" y="975.788" width="72.005" height="7.338" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:leop:leop" data-source-ref="leop" data-purpose="" x="1814.853" y="984.962" width="11.008" height="7.338" fill="#2E3F5E"/>
+<polygon data-scene-id="planned:first-light:first-light" data-source-ref="first-light" data-purpose="" points="1838.854,1012.481 1842.524,1016.15 1838.854,1019.819 1835.185,1016.15" fill="#5FA8FF"/>
+<rect data-scene-id="missing-actual:first-light:first-light" data-source-ref="first-light" data-purpose="" x="1838.854" y="1021.654" width="11.008" height="7.338" fill="#2E3F5E"/>
 <path data-scene-id="axis:month:0" data-source-ref="timeline-axis" data-purpose="" d="M937.082 40L937.082 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:0" data-source-ref="timeline-axis" data-purpose="" x="937.082" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-03</text>
+<text data-scene-id="axis-label:month:0" data-source-ref="timeline-axis" data-purpose="" x="937.082" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-03</text>
 <path data-scene-id="axis:month:1" data-source-ref="timeline-axis" data-purpose="" d="M1043.375 40L1043.375 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:1" data-source-ref="timeline-axis" data-purpose="" x="1043.375" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-04</text>
+<text data-scene-id="axis-label:month:1" data-source-ref="timeline-axis" data-purpose="" x="1043.375" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-04</text>
 <path data-scene-id="axis:month:2" data-source-ref="timeline-axis" data-purpose="" d="M1146.239 40L1146.239 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:2" data-source-ref="timeline-axis" data-purpose="" x="1146.239" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-05</text>
+<text data-scene-id="axis-label:month:2" data-source-ref="timeline-axis" data-purpose="" x="1146.239" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-05</text>
 <path data-scene-id="axis:month:3" data-source-ref="timeline-axis" data-purpose="" d="M1252.531 40L1252.531 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:3" data-source-ref="timeline-axis" data-purpose="" x="1252.531" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-06</text>
+<text data-scene-id="axis-label:month:3" data-source-ref="timeline-axis" data-purpose="" x="1252.531" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-06</text>
 <path data-scene-id="axis:month:4" data-source-ref="timeline-axis" data-purpose="" d="M1355.395 40L1355.395 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:4" data-source-ref="timeline-axis" data-purpose="" x="1355.395" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-07</text>
+<text data-scene-id="axis-label:month:4" data-source-ref="timeline-axis" data-purpose="" x="1355.395" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-07</text>
 <path data-scene-id="axis:month:5" data-source-ref="timeline-axis" data-purpose="" d="M1461.687 40L1461.687 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:5" data-source-ref="timeline-axis" data-purpose="" x="1461.687" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-08</text>
+<text data-scene-id="axis-label:month:5" data-source-ref="timeline-axis" data-purpose="" x="1461.687" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-08</text>
 <path data-scene-id="axis:month:6" data-source-ref="timeline-axis" data-purpose="" d="M1567.98 40L1567.98 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:6" data-source-ref="timeline-axis" data-purpose="" x="1567.98" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-09</text>
+<text data-scene-id="axis-label:month:6" data-source-ref="timeline-axis" data-purpose="" x="1567.98" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-09</text>
 <path data-scene-id="axis:month:7" data-source-ref="timeline-axis" data-purpose="" d="M1670.844 40L1670.844 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:7" data-source-ref="timeline-axis" data-purpose="" x="1670.844" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-10</text>
+<text data-scene-id="axis-label:month:7" data-source-ref="timeline-axis" data-purpose="" x="1670.844" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-10</text>
 <path data-scene-id="axis:month:8" data-source-ref="timeline-axis" data-purpose="" d="M1777.136 40L1777.136 1040" fill="none" stroke="#2E3F5E"/>
-<text data-scene-id="axis-label:month:8" data-source-ref="timeline-axis" data-purpose="" x="1777.136" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">2027-11</text>
-<path data-scene-id="relation:pdr-structure" data-source-ref="pdr-structure" data-purpose="" d="M1880 104.346L1880 141.038" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:structure-avionics" data-source-ref="structure-avionics" data-purpose="" d="M1880 141.038L1880 214.423" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:eps-bustest" data-source-ref="eps-bustest" data-purpose="" d="M1880 177.731L1880 251.115" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:avionics-bustest" data-source-ref="avionics-bustest" data-purpose="" d="M1880 214.423L1880 251.115" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:avionics-cdr" data-source-ref="avionics-cdr" data-purpose="" d="M1880 214.423L1880 287.808" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:optics-detector" data-source-ref="optics-detector" data-purpose="" d="M1880 324.5L1880 361.192" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:detector-tvac" data-source-ref="detector-tvac" data-purpose="" d="M1880 361.192L1880 397.885" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:tvac-delivery" data-source-ref="tvac-delivery" data-purpose="" d="M1880 397.885L1880 434.577" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:bustest-integration" data-source-ref="bustest-integration" data-purpose="" d="M1880 251.115L1880 471.269" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:delivery-integration" data-source-ref="delivery-integration" data-purpose="" d="M1880 434.577L1880 471.269" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:integration-vibration" data-source-ref="integration-vibration" data-purpose="" d="M1880 471.269L1880 507.962" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:vibration-tvac" data-source-ref="vibration-tvac" data-purpose="" d="M1880 507.962L1880 544.654" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:tvac-emc" data-source-ref="tvac-emc" data-purpose="" d="M1880 544.654L1880 581.346" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:emc-psr" data-source-ref="emc-psr" data-purpose="" d="M1880 581.346L1880 618.038" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:mcs-comms" data-source-ref="mcs-comms" data-purpose="" d="M1880 654.731L1880 728.115" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:station-comms" data-source-ref="station-comms" data-purpose="" d="M1880 691.423L1880 728.115" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:comms-rehearsals" data-source-ref="comms-rehearsals" data-purpose="" d="M1880 728.115L1880 948.269" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:psr-shipment" data-source-ref="psr-shipment" data-purpose="" d="M1880 618.038L1880 801.5" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:shipment-campaign" data-source-ref="shipment-campaign" data-purpose="" d="M1880 801.5L1880 838.192" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:campaign-frr" data-source-ref="campaign-frr" data-purpose="" d="M1880 838.192L1880 874.885" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:frr-launch" data-source-ref="frr-launch" data-purpose="" d="M1880 874.885L1880 911.577" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:launch-leop" data-source-ref="launch-leop" data-purpose="" d="M1880 911.577L1880 984.962" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:leop-firstlight" data-source-ref="leop-firstlight" data-purpose="" d="M1880 984.962L1880 1021.654" fill="none" stroke="#8EA0BA"/>
-<path data-scene-id="relation:rehearsals-launch" data-source-ref="rehearsals-launch" data-purpose="" d="M1880 948.269L1880 911.577" fill="none" stroke="#8EA0BA"/>
-<text data-scene-id="note:window" data-source-ref="window" data-purpose="" x="40" y="100.75" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Launch window 22 Oct-5 Nov; missing it means Q1.</text>
-<text data-scene-id="note:tvac" data-source-ref="tvac" data-purpose="" x="40" y="115.75" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Payload TVAC ran 7 days late; margin is now zero.</text>
-<text data-scene-id="note:station" data-source-ref="station" data-purpose="" x="40" y="130.75" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" fill="#EAF0FA">Ground station done early; link test can move up.</text>
+<text data-scene-id="axis-label:month:8" data-source-ref="timeline-axis" data-purpose="" x="1777.136" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027-11</text>
+<path data-scene-id="relation:pdr-structure:pdr:pdr:structure:structure" data-source-ref="pdr-structure" data-purpose="" d="M1880 104.346L1880 141.038" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:structure-avionics:structure:structure:avionics:avionics" data-source-ref="structure-avionics" data-purpose="" d="M1880 141.038L1880 214.423" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:eps-bustest:eps:eps:bus-test:bus-test" data-source-ref="eps-bustest" data-purpose="" d="M1880 177.731L1880 251.115" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:avionics-bustest:avionics:avionics:bus-test:bus-test" data-source-ref="avionics-bustest" data-purpose="" d="M1880 214.423L1880 251.115" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:avionics-cdr:avionics:avionics:cdr:cdr" data-source-ref="avionics-cdr" data-purpose="" d="M1880 214.423L1880 287.808" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:optics-detector:optics:optics:detector:detector" data-source-ref="optics-detector" data-purpose="" d="M1880 324.5L1880 361.192" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:detector-tvac:detector:detector:payload-tvac:payload-tvac" data-source-ref="detector-tvac" data-purpose="" d="M1880 361.192L1880 397.885" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:tvac-delivery:payload-tvac:payload-tvac:payload-delivery:payload-delivery" data-source-ref="tvac-delivery" data-purpose="" d="M1880 397.885L1880 434.577" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:bustest-integration:bus-test:bus-test:integration:integration" data-source-ref="bustest-integration" data-purpose="" d="M1880 251.115L1880 471.269" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:delivery-integration:payload-delivery:payload-delivery:integration:integration" data-source-ref="delivery-integration" data-purpose="" d="M1880 434.577L1880 471.269" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:integration-vibration:integration:integration:vibration:vibration" data-source-ref="integration-vibration" data-purpose="" d="M1880 471.269L1880 507.962" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:vibration-tvac:vibration:vibration:tvac:tvac" data-source-ref="vibration-tvac" data-purpose="" d="M1880 507.962L1880 544.654" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:tvac-emc:tvac:tvac:emc:emc" data-source-ref="tvac-emc" data-purpose="" d="M1880 544.654L1880 581.346" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:emc-psr:emc:emc:psr:psr" data-source-ref="emc-psr" data-purpose="" d="M1880 581.346L1880 618.038" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:mcs-comms:mcs:mcs:comms-test:comms-test" data-source-ref="mcs-comms" data-purpose="" d="M1880 654.731L1880 728.115" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:station-comms:station:station:comms-test:comms-test" data-source-ref="station-comms" data-purpose="" d="M1880 691.423L1880 728.115" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:comms-rehearsals:comms-test:comms-test:rehearsals:rehearsals" data-source-ref="comms-rehearsals" data-purpose="" d="M1880 728.115L1880 948.269" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:psr-shipment:psr:psr:shipment:shipment" data-source-ref="psr-shipment" data-purpose="" d="M1880 618.038L1880 801.5" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:shipment-campaign:shipment:shipment:campaign:campaign" data-source-ref="shipment-campaign" data-purpose="" d="M1880 801.5L1880 838.192" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:campaign-frr:campaign:campaign:frr:frr" data-source-ref="campaign-frr" data-purpose="" d="M1880 838.192L1880 874.885" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:frr-launch:frr:frr:launch:launch" data-source-ref="frr-launch" data-purpose="" d="M1880 874.885L1880 911.577" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:launch-leop:launch:launch:leop:leop" data-source-ref="launch-leop" data-purpose="" d="M1880 911.577L1880 984.962" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:leop-firstlight:leop:leop:first-light:first-light" data-source-ref="leop-firstlight" data-purpose="" d="M1880 984.962L1880 1021.654" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:rehearsals-launch:rehearsals:rehearsals:launch:launch" data-source-ref="rehearsals-launch" data-purpose="" d="M1880 948.269L1880 911.577" fill="none" stroke="#8EA0BA" marker-end="url(#marker-dependency-triangle)"/>
+<text data-scene-id="note:window" data-source-ref="window" data-purpose="" x="40" y="100.75" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Launch window 22 Oct-5 Nov; missing it means Q1.</text>
+<text data-scene-id="note:tvac" data-source-ref="tvac" data-purpose="" x="40" y="115.75" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Payload TVAC ran 7 days late; margin is now zero.</text>
+<text data-scene-id="note:station" data-source-ref="station" data-purpose="" x="40" y="130.75" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Ground station done early; link test can move up.</text>
 </svg>

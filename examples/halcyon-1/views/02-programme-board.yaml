@@ -1,7 +1,8 @@
-version: chrona/presentation/v0.1
+version: chrona/presentation/v0.2
 kind: view
 id: halcyon-02-programme-board
 body:
+  rows: {mode: automatic}
   selection:
     include:
       types: [span, point]

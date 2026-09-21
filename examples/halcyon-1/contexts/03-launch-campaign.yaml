@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.5
+version: chrona/presentation/v0.6
 kind: render-context
 id: halcyon-1-03-launch-campaign
 body:
@@ -11,7 +11,7 @@ body:
     address: project.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:dacb759d1c11e5bb06d983052ad74db8ebf516ac2825115f70e4bc28e0ecbcf9
+    contentIdentity: sha256:98ed7b028bad972a34541f24415f432181552902212cbef53e32abc0af953efb
   view:
     id: halcyon-03-launch-campaign
     kind: view
@@ -21,7 +21,7 @@ body:
     address: views/03-launch-campaign.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:b515c1382d59a83160454f75e0131eb7b19add1992554526900951f2a3e8e672
+    contentIdentity: sha256:0246a037f5c2eb7363acd0628f38e335b7d5dab48e90cce3b2314f8e301d3496
   theme:
     id: print
     kind: theme
@@ -31,7 +31,7 @@ body:
     address: themes/print.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:a73726b85d715ceea2e71e434ba4b6f237dc860374e22bbc46b6449c1084583b
+    contentIdentity: sha256:c829b866236bb1c9e915904f8e53c65d063727079298a6aa6165b1f0a53cf436
   colorScheme:
     id: print-mono
     kind: color-scheme

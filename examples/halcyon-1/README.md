@@ -11,7 +11,10 @@ data.
 | `launch-campaign` | the launch phase only, July to November | `print-portrait` — a `grid` with the title spanning both tracks | `print` / `print-mono` | 1200 × 1120 |
 
 Each slide is a different **View × Layout × Theme × Color Scheme** binding of the same
-`project.yaml` and `actual.yaml`. The three Themes declare the full v0.5 role contract — per-role
+`project.yaml` and `actual.yaml`, bound by a generated `chrona/presentation/v0.6` Render Context.
+Views are `chrona/presentation/v0.2` with `rows: {mode: automatic}`, so each selected object is
+one review row; the `missingActual` facet is requested only on the programme board, where an
+unreported observation is a review fact rather than noise. The three Themes declare the full v0.5 role contract — per-role
 typography (`heading`, `subtitle`, `axis`, `legend`, `annotation`, `text`), the variance and
 missing-Actual paints, per-team `group:<id>` category bindings, and a dependency marker — so the
 example picks up richer output as the Scene runtime consumes those roles.

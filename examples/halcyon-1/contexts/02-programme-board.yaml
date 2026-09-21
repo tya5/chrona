@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.5
+version: chrona/presentation/v0.6
 kind: render-context
 id: halcyon-1-02-programme-board
 body:
@@ -11,7 +11,7 @@ body:
     address: project.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:dacb759d1c11e5bb06d983052ad74db8ebf516ac2825115f70e4bc28e0ecbcf9
+    contentIdentity: sha256:98ed7b028bad972a34541f24415f432181552902212cbef53e32abc0af953efb
   view:
     id: halcyon-02-programme-board
     kind: view
@@ -21,7 +21,7 @@ body:
     address: views/02-programme-board.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:240231b3060bedde801a5ef92f923f83eea3b58098fdebad3b01cd0b8d4bc2b3
+    contentIdentity: sha256:1255f9392487d714b7843da918de49a309bf0eae2e6aa2ebd2fcb7e6082d74ae
   theme:
     id: wallboard
     kind: theme

@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.5
+version: chrona/presentation/v0.6
 kind: render-context
 id: halcyon-1-01-mission-brief
 body:
@@ -11,7 +11,7 @@ body:
     address: project.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:dacb759d1c11e5bb06d983052ad74db8ebf516ac2825115f70e4bc28e0ecbcf9
+    contentIdentity: sha256:98ed7b028bad972a34541f24415f432181552902212cbef53e32abc0af953efb
   view:
     id: halcyon-01-mission-brief
     kind: view
@@ -21,7 +21,7 @@ body:
     address: views/01-mission-brief.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:e7fc095ebc60086740e2ae8c8871a6dcd9ab70093388d08c9ab9d072d8acdcd7
+    contentIdentity: sha256:b3579090849740e68881f50631eb35f1d671daf5fb14d7a87ecb7b04544df1b6
   theme:
     id: briefing
     kind: theme
@@ -31,7 +31,7 @@ body:
     address: themes/briefing.yaml
     revision:
       token: example-v1
-    contentIdentity: sha256:9c10d9bc2701ca42c024503805d9372f49232941d606fbe7334a4f4e0816f8b7
+    contentIdentity: sha256:f458a71af65d641d826859e7e5c6f75dd523efd74ed496b5ea486ce7efa0060b
   colorScheme:
     id: mission-light
     kind: color-scheme

@@ -53,7 +53,7 @@ body:
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    group-band.fill: category
+    group-band.fill: surface
     'group:bus.fill': category
     'group:payload.fill': category
     'group:ait.fill': category
