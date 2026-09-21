@@ -19,7 +19,7 @@ The initial resource contains no external palette bytes. A future external built
 
 ## 3. Theme v0.2 binding and literal removal
 
-M25 replaces the legacy `chrona/presentation/v0.1` Theme resource with `chrona/theme/v0.2`, defined by `schemas/theme-v0.2.schema.yaml`. Its `body.values` may contain only non-color typed values; its `body.roles` binds non-color properties; and its required `body.colorBindings` maps every color-bearing role property to one closed Scheme intent. No Theme inheritance, alias, or partial overlay survives the replacement.
+M25 replaces the legacy `chrona/presentation/v0.1` Theme resource with `chrona/theme/v0.2`, defined by `schemas/theme-v0.2.schema.yaml`. Its `body.values` may contain only non-color typed values; its `body.roles` binds non-color properties; its existing `body.metrics` retains source-measurement token bindings; and its required `body.colorBindings` maps every color-bearing role property to one closed Scheme intent. No Theme inheritance, alias, or partial overlay survives the replacement.
 
 There is no literal-color escape hatch in the shipped M25 authoring path. An earlier proposal to retain one would create a second concrete-color authority and prevent a Context from guaranteeing a coherent scheme. Existing literal-color Theme examples are migrated atomically when M25 becomes reachable; no compatibility loader remains.
 
