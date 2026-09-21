@@ -36,6 +36,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     panels = tuple((str(item["id"]), str(item.get("title", item["id"])), tuple((str(key), str(value)) for key, value in item.get("metrics", {}).items()))
                    for item in summary_body.get("panels", ()))
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
+                               show_member_labels=bool(visible.get("labels", False)),
                                notes=notes, legend_entries=legend, summary_panels=panels,
                                group_details=resolved_detail.group_details if resolved_detail else (),
                                milestones=resolved_detail.milestones if resolved_detail else (),
