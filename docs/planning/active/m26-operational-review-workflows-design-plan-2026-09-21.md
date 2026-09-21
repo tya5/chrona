@@ -67,6 +67,10 @@ closure, replay, provenance, and baseline rules.
 **Exit:** CLI contract, examples, and acceptance tests are complete; no runtime choice
 remains unspecified.
 
+**Completed:** 2026-09-21. The complete CLI, output atomicity, exit-code, credential,
+CI containment, and A26 acceptance contract is published in
+`docs/planning/active/m26-cli-ci-release-design-2026-09-21.md`.
+
 ### C26-D4 — Whole-design review
 
 - Audit Project/Actual/Snapshot/Command/Store/Render Context/CLI boundaries.
