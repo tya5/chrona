@@ -225,6 +225,14 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         clipped_width = (interval.end - interval.start).days * scale.unit_ratio
         if label_width <= clipped_width:
             text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", axis_label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
+    if value.surface_content.as_of is not None and start <= value.surface_content.as_of < end:
+        as_of_x = coordinate(value.surface_content.as_of)
+        primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", "as-of", "as-of",
+                                         (as_of_x, timeline.bounds[1], 0, timeline.bounds[3]),
+                                         points=((as_of_x, timeline.bounds[1]), (as_of_x, timeline.bounds[1] + timeline.bounds[3])),
+                                         z_order=len(primitives)))
+        text("as-of-label", "actual-set", "as-of-label", "text",
+             f"As of {value.surface_content.as_of.isoformat()}", as_of_x, timeline.bounds[1] + body_size)
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
