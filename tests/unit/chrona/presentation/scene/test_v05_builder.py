@@ -4,13 +4,14 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Rect
-from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.surface_content import SurfaceContentInput
-from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input
+from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 
 def _manifest(*sources):
-    rect = Rect(Decimal(0), Decimal(0), Decimal(1), Decimal(1))
+    rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
     return LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
                           tuple(LayoutDecision(source, "slot", rect, source) for source in sources))
 
@@ -49,3 +50,23 @@ def test_scene_input_requires_frozen_source_measurements():
         build_scene_input(projection={}, surface_content=SurfaceContentInput(),
                           layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                           resolved_theme=_theme(), font_metrics=object(), measured_sources={}, capabilities={"svg": True})
+
+
+class _Font:
+    content_identity = "sha256:test"
+    def width(self, value, size): return len(value) * size / 2
+
+
+def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
+    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None, ("planned",)),),
+                                  (date(2026, 1, 1), date(2026, 2, 1)), (), ())
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40)})
+    manifest = _manifest("title", "table", "timeline", "timeline-axis")
+    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput((("name", "Name"),), (("a", "name", "A"),)),
+                              layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    assert surface.scale_manifest.domain_start == date(2026, 1, 1)
+    assert any(item.scene_id == "cell:a:name" and item.text == "A" for item in surface.primitives)
+    assert any(item.scene_id == "planned:a" for item in surface.primitives)
+    assert any(item.scene_id == "missing-actual:a" for item in surface.primitives)
