@@ -131,15 +131,6 @@ def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkey
     assert exited.value.code == 2
 
 
-def test_cli_propose_set_uses_command_without_writing_input(tmp_path, monkeypatch, capsys):
-    project = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}, "relations": []}
-    path = tmp_path / "project.yaml"; path.write_text(yaml.safe_dump(project), encoding="utf-8")
-    monkeypatch.setattr(sys, "argv", ["chrona", "propose-set", str(path), "gate", "title", "--value", "Release"])
-    main()
-    assert json.loads(capsys.readouterr().out)["project"]["objects"]["gate"]["fields"]["title"] == "Release"
-    assert yaml.safe_load(path.read_text()) == project
-
-
 def test_cli_failures_are_one_json_envelope_without_traceback(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(tmp_path / "missing.yaml")])
     try:
@@ -189,12 +180,12 @@ def test_cli_gallery_rejects_duplicate_scheme_before_rendering(tmp_path, monkeyp
         cli._run_render_review_gallery(args)
 
 
-def test_cli_propose_set_distinguishes_literal_and_json_values(tmp_path, monkeypatch, capsys):
-    project = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}, "relations": []}
-    path = tmp_path / "project.yaml"; path.write_text(yaml.safe_dump(project), encoding="utf-8")
-    monkeypatch.setattr(sys, "argv", ["chrona", "propose-set", str(path), "gate", "rank", "--value-json", "3"])
-    main()
-    assert json.loads(capsys.readouterr().out)["project"]["objects"]["gate"]["fields"]["rank"] == 3
+def test_cli_does_not_expose_the_legacy_raw_path_propose_set_command(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["chrona", "propose-set"])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 2
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_SYNTAX"
 
 
 def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypatch):
