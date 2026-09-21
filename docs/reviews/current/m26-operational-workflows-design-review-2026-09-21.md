@@ -39,6 +39,10 @@ otherwise deduplication would be lost after an operator resolved a record.
 profile is local-only, identity-exact, and credential-free (`store-config/v0.1`). This
 closes CLI Store selection without introducing a default root or provider fallback.
 
+**Amendment, 2026-09-21:** I26-6 also requires a concrete local Actual Store write
+layout. ADR-0027 defines immutable token directories plus an adapter-private CAS tip;
+this closes command-apply without admitting a mutable path as an input.
+
 ## Evidence checked
 
 - `35-operational-review-workflows.md`, ADR-0024 through ADR-0026, all four successor
