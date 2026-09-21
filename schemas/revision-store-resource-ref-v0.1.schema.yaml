@@ -5,7 +5,7 @@ description: >-
   Provider-neutral reference shape for successor formats. The revision token is opaque
   outside the named Store; semantic adapter validation verifies the source and snapshot.
 type: object
-required: [id, kind, store, address, revision, contentIdentity]
+required: [id, kind, store, address, revision]
 additionalProperties: false
 properties:
   id:
