@@ -1,0 +1,56 @@
+# Color Scheme Authoring
+
+**Status:** Design complete; implementation not started.  
+**Owns:** Versioned Color Scheme resources, Theme color-intent bindings, color resolution, and accessibility validation.
+
+## 1. Authority
+
+Color Scheme owns concrete colors only. Theme retains typography, spacing, stroke, marker, pattern, opacity, text alternatives, and the mapping from a visual role to a closed color intent. Style continues to select roles from facts; Layout continues to own geometry; Scene and adapters consume concrete paint only.
+
+A Color Scheme MUST NOT select facts, roles, geometry, output capabilities, or a renderer fallback. A scheme choice therefore changes color values only.
+
+## 2. Resource
+
+The resource is `chrona/color-scheme/v0.1`, validated by `schemas/color-scheme-v0.1.schema.yaml`. It has no inheritance, aliases, expressions, or implicit base scheme. Its canonical identity is the SHA-256 of canonical JSON of the whole resource (sorted keys, UTF-8, no insignificant whitespace).
+
+`body.colors` is a closed map of concrete CSS `#RRGGBB` values: `surface`, `surfaceRaised`, `text`, `textMuted`, `accent`, `positive`, `negative`, `warning`, and `neutral`. `body.category` is a non-empty ordered sequence of concrete colors. `body.suitability` declares intended `background`, `colorVision`, and `print` use. `body.provenance` records `kind`, `source`, and `license`; a built-in scheme lacking all three is invalid.
+
+The initial resource contains no external palette bytes. A future external built-in requires exact source and redistribution terms in `provenance`; a familiar palette name is insufficient evidence.
+
+## 3. Theme binding and literal removal
+
+M25 replaces Theme color values with `body.colorBindings`. Each binding names a Theme role property (`role.fill` or `role.stroke`) and one closed Scheme intent. The binding set is complete for every color-bearing role property used by the Theme. Non-color role properties still name Theme values as in Theme v0.1.
+
+There is no literal-color escape hatch in the shipped M25 authoring path. An earlier proposal to retain one would create a second concrete-color authority and prevent a Context from guaranteeing a coherent scheme. Existing literal-color Theme examples are migrated atomically when M25 becomes reachable; no compatibility loader remains.
+
+## 4. Context and resolution
+
+`chrona/presentation/v0.5` Render Context requires immutable `theme` and `colorScheme` references. Resolution is exactly:
+
+1. validate Context, Theme, and Scheme resource shapes and references;
+2. validate the Theme binding set against the closed intent vocabulary;
+3. validate Scheme provenance and all required text/background contrast pairs;
+4. resolve each Theme color binding from the Scheme and retain all non-color Theme values unchanged, producing an internal concrete Theme;
+5. measure sources, resolve Layout, compose Scene, and serialize Output.
+
+No renderer, Layout adapter, or Scene constructor may read a Scheme resource or supply a color default. A gallery is multiple independent Context evaluations with one distinct `colorScheme` reference per result.
+
+## 5. Categories and variants
+
+For category key `k`, the palette index is the unsigned first eight bytes of `SHA-256(scheme-content-identity + "\\0" + k)` modulo `len(category)`. It is independent of View order, source iteration, and renderer state. A finite palette may repeat a color for distinct keys; category color is never the sole differentiator.
+
+Light/dark and print/high-contrast alternatives are separate immutable Scheme resources, not mutable variants or automatic host inference. A user selects the resource explicitly in Context. `suitability` is a declaration, not a license to remove markers, patterns, or text alternatives.
+
+## 6. Accessibility and diagnostics
+
+For each pair `(text, surface)` and `(text, surfaceRaised)`, the resolver computes WCAG relative luminance and requires contrast >= 4.5:1 for normal text. If a future Theme declares a large-text role, that role may use >= 3:1. Color distinction alone never satisfies a semantic requirement.
+
+Required stable diagnostics are `E_SCHEME_SCHEMA`, `E_SCHEME_PROVENANCE`, `E_SCHEME_INTENT_UNKNOWN`, `E_SCHEME_THEME_BINDING`, `E_SCHEME_CONTRAST`, and `E_CONTEXT_COLOR_SCHEME`. Diagnostics name the resource ID and path and never recover with a default.
+
+## 7. Acceptance invariants
+
+1. The same closed Context produces identical concrete colors and category indices.
+2. Reordering groups does not change a category key's index.
+3. Switching Scheme does not change facts, selected roles, geometry, metrics, Scene structure, or target capability requirements.
+4. Missing provenance, unknown intent, missing binding, and insufficient contrast fail before Scene emission.
+5. Markers, patterns, and text alternatives remain available after every scheme change.
