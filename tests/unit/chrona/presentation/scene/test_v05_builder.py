@@ -6,7 +6,7 @@ import pytest
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Rect
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.surface_content import SurfaceContentInput
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 
@@ -112,3 +112,26 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     assert next(item for item in surface.primitives if item.scene_id == "planned:a").purpose == "planned"
     assert leader.from_port_id == "a:planned:finish"
     assert leader.to_port_id == "annotation-box:note"
+
+
+def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
+    primary = ReviewItem("a", "Current plan", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, (), item_id="primary", source_kind="primary")
+    snapshot = ReviewItem("a", "Baseline", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 8)}, None, None, (), item_id="snapshot", source_kind="snapshot")
+    row = ReviewRowProjection("release", "Release", "", "primary", (primary, snapshot))
+    projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 10)), (), (), (row,))
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection,
+                              surface_content=SurfaceContentInput(show_member_labels=True),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    planned = next(item for item in surface.primitives if item.scene_id == "planned:release:primary")
+    baseline = next(item for item in surface.primitives if item.scene_id == "planned:release:snapshot")
+    assert planned.bounds[3] == baseline.bounds[3] == 8
+    assert baseline.visual_role == "snapshot"
+    assert any(item.scene_id == "member-label:release:primary" and item.text == "Current plan"
+               for item in surface.primitives)
