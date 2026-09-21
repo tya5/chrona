@@ -4,7 +4,10 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 import json
+from hashlib import sha256
+from pathlib import Path
 from typing import Any, Protocol
+import yaml
 
 
 class ActualStore(Protocol):
@@ -75,6 +78,54 @@ class MemoryActualStore:
         self._actual_set = deepcopy(entry[1])
         self._commands[command_id] = (entry[0], entry[1], False)
         return self.read()
+
+
+class LocalActualStore:
+    """Local immutable-token Actual Store with an adapter-private CAS pointer."""
+
+    def __init__(self, root: Path, actual_set: dict[str, Any]):
+        self.root, self.actual_set_id = root, str(actual_set.get("id", ""))
+        self.tip = root / "actual-tips" / f"{self.actual_set_id}.json"
+        self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
+        if self.tip.is_file():
+            self._revision, self._actual_set = self._load_tip()
+        else:
+            self._revision, self._actual_set = self._persist(actual_set, 1)
+
+    def read(self) -> tuple[str, dict[str, Any]]:
+        return self._revision, deepcopy(self._actual_set)
+
+    def write(self, expected_revision: str, actual_set: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
+        if expected_revision != self._revision or actual_set.get("id") != self.actual_set_id:
+            return None
+        counter = int(json.loads(self.tip.read_text())["counter"]) + 1
+        self._revision, self._actual_set = self._persist(actual_set, counter)
+        return self.read()
+
+    def record_command(self, command_id: str, before: dict[str, Any], after: dict[str, Any]) -> None:
+        self._commands[command_id] = (deepcopy(before), deepcopy(after), False)
+
+    def undo(self, expected_revision: str, command_id: str): return None
+    def redo(self, expected_revision: str, command_id: str): return None
+
+    def _persist(self, actual_set: dict[str, Any], counter: int) -> tuple[str, dict[str, Any]]:
+        payload = yaml.safe_dump(actual_set, sort_keys=True).encode()
+        digest = sha256(payload).hexdigest()
+        token = f"actual:{counter}:{digest[:12]}"
+        path = self.root / token / "actuals" / f"{self.actual_set_id}.yaml"
+        path.parent.mkdir(parents=True, exist_ok=False)
+        path.write_bytes(payload)
+        self.tip.parent.mkdir(parents=True, exist_ok=True)
+        temporary = self.tip.with_name(self.tip.name + ".tmp")
+        temporary.write_text(json.dumps({"token": token, "counter": counter}), encoding="utf-8")
+        temporary.replace(self.tip)
+        return token, deepcopy(actual_set)
+
+    def _load_tip(self) -> tuple[str, dict[str, Any]]:
+        pointer = json.loads(self.tip.read_text(encoding="utf-8"))
+        token = pointer["token"]
+        value = yaml.safe_load((self.root / token / "actuals" / f"{self.actual_set_id}.yaml").read_text(encoding="utf-8"))
+        return token, value
 
 
 def apply_actual_intake_batch(
