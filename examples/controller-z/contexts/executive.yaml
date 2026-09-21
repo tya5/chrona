@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.5
+version: chrona/presentation/v0.6
 kind: render-context
 id: controller-z-executive
 body:
@@ -15,7 +15,7 @@ body:
     store: {provider: local, identity: controller-z-example}
     address: views/executive.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:19f04109f2c74fe4ebeba85a98f1844b0fe07f5f6c84ca59e56b76eb4b17e20b
+    contentIdentity: sha256:5cd6b4f01e7bae3d29840c6021526752780e94c3ad53bf78415ae4f1924dd109
   theme:
     id: executive-light
     kind: theme
