@@ -15,8 +15,15 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     """Normalize current Project/View/profile facts without legacy Settings."""
     body = view.get("body", {})
     columns = tuple((str(column["id"]), str(column["id"])) for column in body.get("tableColumns", ()))
-    cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"]), column["missing"]))
-                  for item in projection.items for column in body.get("tableColumns", ()))
+    if projection.rows:
+        cells = tuple(
+            (row.row_id, str(column["id"]),
+             display_value(table_value(next(item for item in row.items if item.item_id == row.table_subject_id),
+                                       dict(project), column["source"]), column["missing"]))
+            for row in projection.rows for column in body.get("tableColumns", ()))
+    else:
+        cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"]), column["missing"]))
+                      for item in projection.items for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
     relations = tuple(project.get("relations", ())) if visible.get("relations", "none") != "none" else ()
     annotations = tuple(body.get("annotations", ())) if visible.get("annotations", "none") != "none" else ()
