@@ -234,7 +234,8 @@ def _run_render_review(args: argparse.Namespace) -> None:
     from chrona.presentation.renderers.v05_svg import render_v05_svg
     scene_input = build_scene_input(projection=projection, surface_content=normalize_v05_surface_content(projection, project, view),
                                     layout_manifest=manifest, resolved_theme=theme, font_metrics=font_metrics,
-                                    measured_sources=measured, capabilities={name: True for name in capabilities})
+                                    measured_sources=measured, capabilities={name: True for name in capabilities},
+                                    locale=environment["locale"])
     svg = render_v05_svg(compose_review_surface(scene_input), viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])), tokens=scene_input.theme_tokens)
     Path(args.output).write_text(svg, encoding="utf-8")
 
