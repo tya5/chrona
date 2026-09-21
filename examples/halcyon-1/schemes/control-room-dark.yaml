@@ -1,0 +1,23 @@
+version: chrona/color-scheme/v0.1
+kind: color-scheme
+id: control-room-dark
+body:
+  colors:
+    surface: '#0B1220'
+    surfaceRaised: '#16213A'
+    text: '#EAF0FA'
+    textMuted: '#8EA0BA'
+    accent: '#5FA8FF'
+    positive: '#35D0A0'
+    negative: '#FF6B6B'
+    warning: '#FFC857'
+    neutral: '#2E3F5E'
+  category: ['#142642', '#12302B', '#2C2138', '#33261A']
+  suitability:
+    background: dark
+    colorVision: [none-claimed]
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, control-room-dark
+    license: MIT

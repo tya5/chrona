@@ -8,6 +8,7 @@ or slide directory.
 |---|---|
 | [`controller-z/`](controller-z/) | Compact silicon bring-up project rendered through multiple presentation directions. |
 | [`aster-ssd/`](aster-ssd/) | Larger SSD program rendered as a five-view presentation gallery. |
+| [`halcyon-1/`](halcyon-1/) | Smallsat mission rendered three ways — briefing, dark wall board, print portrait — from one plan, each slide bound by its own generated Context. |
 
 Files named `expected.svg` are deterministic acceptance artifacts. `preview.png` is a
 raster review artifact. Edit YAML sources, regenerate the output, and verify the exact

@@ -1,0 +1,195 @@
+version: timeline/v0.1
+project:
+  id: halcyon-1
+  title: HALCYON-1 Smallsat Mission
+  calendar: engineering
+calendars:
+  engineering:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - {date: '2027-04-02', working: false}
+      - {date: '2027-05-31', working: false}
+      - {date: '2027-07-05', working: false}
+      - {date: '2027-09-06', working: false}
+  range:
+    working_days: [mon, tue, wed, thu, fri, sat]
+    exceptions:
+      - {date: '2027-10-09', working: false}
+      - {date: '2027-10-16', working: false}
+entities:
+  bus: {type: team, title: Spacecraft bus}
+  payload: {type: team, title: Imaging payload}
+  ait: {type: team, title: 'Assembly, integration and test'}
+  ground: {type: team, title: Ground segment}
+  launch: {type: team, title: Launch and range}
+  ops: {type: team, title: Mission operations}
+objects:
+  pdr:
+    type: gate
+    title: Preliminary design review
+    fields: {owner: bus, team: Programme, phase: Design, review: PDR}
+    schedule: {mode: fixed, at: '2027-03-05'}
+  structure:
+    type: task
+    title: Primary structure fabrication
+    fields: {owner: bus, team: Spacecraft bus, phase: Build}
+    schedule: {mode: scheduled, amount: 20wd}
+  avionics:
+    type: task
+    title: Avionics integration
+    fields: {owner: bus, team: Spacecraft bus, phase: Build}
+    schedule: {mode: scheduled, amount: 15wd}
+  eps:
+    type: task
+    title: Power system qualification
+    fields: {owner: bus, team: Spacecraft bus, phase: Qualify}
+    schedule: {mode: scheduled, amount: 12wd, anchor: {start: '2027-03-22'}}
+  bus-test:
+    type: task
+    title: Bus functional test
+    fields: {owner: bus, team: Spacecraft bus, phase: Qualify}
+    schedule: {mode: scheduled, amount: 10wd}
+  cdr:
+    type: gate
+    title: Critical design review
+    fields: {owner: bus, team: Programme, phase: Design, review: CDR}
+    schedule: {mode: fixed, at: '2027-05-07'}
+  optics:
+    type: task
+    title: Imager optics alignment
+    fields: {owner: payload, team: Imaging payload, phase: Build}
+    schedule: {mode: scheduled, amount: 18wd, anchor: {start: '2027-03-08'}}
+  detector:
+    type: task
+    title: Detector calibration
+    fields: {owner: payload, team: Imaging payload, phase: Qualify}
+    schedule: {mode: scheduled, amount: 10wd}
+  payload-tvac:
+    type: task
+    title: Payload thermal-vacuum
+    fields: {owner: payload, team: Imaging payload, phase: Qualify}
+    schedule: {mode: scheduled, amount: 8d}
+  payload-delivery:
+    type: gate
+    title: Payload delivered
+    fields: {owner: payload, team: Imaging payload, phase: Qualify, review: PDD}
+    schedule: {mode: fixed, at: '2027-07-02'}
+  integration:
+    type: task
+    title: Spacecraft integration
+    fields: {owner: ait, team: AIT, phase: Integrate}
+    schedule: {mode: scheduled, amount: 15wd}
+  vibration:
+    type: task
+    title: Vibration and shock
+    fields: {owner: ait, team: AIT, phase: Verify}
+    schedule: {mode: scheduled, amount: 5wd}
+  tvac:
+    type: task
+    title: System thermal-vacuum
+    fields: {owner: ait, team: AIT, phase: Verify}
+    schedule: {mode: scheduled, amount: 14d}
+  emc:
+    type: task
+    title: EMC and RF compatibility
+    fields: {owner: ait, team: AIT, phase: Verify}
+    schedule: {mode: scheduled, amount: 5wd, constraints: {end: {max: '2027-09-08'}}}
+  psr:
+    type: gate
+    title: Pre-ship review
+    fields: {owner: ait, team: Programme, phase: Verify, review: PSR}
+    schedule: {mode: fixed, at: '2027-09-10'}
+  mcs:
+    type: task
+    title: Mission control software
+    fields: {owner: ground, team: Ground segment, phase: Build}
+    schedule: {mode: scheduled, amount: 45wd, anchor: {start: '2027-03-08'}}
+  station:
+    type: task
+    title: Ground station upgrade
+    fields: {owner: ground, team: Ground segment, phase: Build}
+    schedule: {mode: scheduled, amount: 30wd, anchor: {start: '2027-04-19'}}
+  comms-test:
+    type: task
+    title: End-to-end link test
+    fields: {owner: ground, team: Ground segment, phase: Verify}
+    schedule: {mode: scheduled, amount: 5wd}
+  launch-contract:
+    type: gate
+    title: Launch services confirmed
+    fields: {owner: launch, team: Launch and range, phase: Design, review: LSA}
+    schedule: {mode: fixed, at: '2027-04-16'}
+  shipment:
+    type: task
+    title: Ship to range
+    fields: {owner: launch, team: Launch and range, phase: Campaign}
+    schedule: {mode: scheduled, amount: 4wd}
+  campaign:
+    type: task
+    title: Launch campaign
+    calendar: range
+    fields: {owner: launch, team: Launch and range, phase: Campaign}
+    schedule: {mode: scheduled, amount: 15wd}
+  frr:
+    type: gate
+    title: Flight readiness review
+    fields: {owner: launch, team: Programme, phase: Campaign, review: FRR}
+    schedule: {mode: fixed, at: '2027-10-15'}
+  launch:
+    type: gate
+    title: Launch window opens
+    fields: {owner: launch, team: Launch and range, phase: Campaign, review: L0}
+    schedule: {mode: fixed, at: '2027-10-22'}
+  rehearsals:
+    type: task
+    title: Operations rehearsals
+    fields: {owner: ops, team: Mission operations, phase: Verify}
+    schedule: {mode: scheduled, amount: 10wd, anchor: {start: '2027-08-30'}}
+  leop:
+    type: task
+    title: LEOP and commissioning
+    fields: {owner: ops, team: Mission operations, phase: Operate}
+    schedule: {mode: scheduled, amount: 21d}
+  first-light:
+    type: gate
+    title: First light
+    fields: {owner: ops, team: Mission operations, phase: Operate, review: FL}
+    schedule: {mode: fixed, at: '2027-11-19'}
+relations:
+  - {id: pdr-structure, type: dependency, from: {object: pdr, endpoint: at}, to: {object: structure, endpoint: start}, lag: 1wd}
+  - {id: structure-avionics, type: dependency, from: {object: structure, endpoint: end}, to: {object: avionics, endpoint: start}, lag: 0d}
+  - {id: eps-bustest, type: dependency, from: {object: eps, endpoint: end}, to: {object: bus-test, endpoint: start}, lag: 0d}
+  - {id: avionics-bustest, type: dependency, from: {object: avionics, endpoint: end}, to: {object: bus-test, endpoint: start}, lag: 2wd}
+  - {id: avionics-cdr, type: dependency, from: {object: avionics, endpoint: start}, to: {object: cdr, endpoint: at}, lag: 0d}
+  - {id: optics-detector, type: dependency, from: {object: optics, endpoint: end}, to: {object: detector, endpoint: start}, lag: 1wd}
+  - {id: detector-tvac, type: dependency, from: {object: detector, endpoint: end}, to: {object: payload-tvac, endpoint: start}, lag: 0d}
+  - {id: tvac-delivery, type: dependency, from: {object: payload-tvac, endpoint: end}, to: {object: payload-delivery, endpoint: at}, lag: 2wd}
+  - {id: bustest-integration, type: dependency, from: {object: bus-test, endpoint: end}, to: {object: integration, endpoint: start}, lag: 1wd}
+  - {id: delivery-integration, type: dependency, from: {object: payload-delivery, endpoint: at}, to: {object: integration, endpoint: start}, lag: 1wd}
+  - {id: integration-vibration, type: dependency, from: {object: integration, endpoint: end}, to: {object: vibration, endpoint: start}, lag: 1wd}
+  - {id: vibration-tvac, type: dependency, from: {object: vibration, endpoint: end}, to: {object: tvac, endpoint: start}, lag: 2wd}
+  - {id: tvac-emc, type: dependency, from: {object: tvac, endpoint: end}, to: {object: emc, endpoint: start}, lag: 1wd}
+  - {id: emc-psr, type: dependency, from: {object: emc, endpoint: end}, to: {object: psr, endpoint: at}, lag: 0d}
+  - {id: mcs-comms, type: dependency, from: {object: mcs, endpoint: end}, to: {object: comms-test, endpoint: start}, lag: 0d}
+  - {id: station-comms, type: dependency, from: {object: station, endpoint: end}, to: {object: comms-test, endpoint: start}, lag: 0d}
+  - {id: comms-rehearsals, type: dependency, from: {object: comms-test, endpoint: end}, to: {object: rehearsals, endpoint: start}, lag: 0d}
+  - {id: psr-shipment, type: dependency, from: {object: psr, endpoint: at}, to: {object: shipment, endpoint: start}, lag: 2wd}
+  - {id: shipment-campaign, type: dependency, from: {object: shipment, endpoint: end}, to: {object: campaign, endpoint: start}, lag: {value: 1wd, calendar: range}}
+  - {id: campaign-frr, type: dependency, from: {object: campaign, endpoint: end}, to: {object: frr, endpoint: at}, lag: 0d}
+  - {id: frr-launch, type: dependency, from: {object: frr, endpoint: at}, to: {object: launch, endpoint: at}, lag: 5d}
+  - {id: launch-leop, type: dependency, from: {object: launch, endpoint: at}, to: {object: leop, endpoint: start}, lag: 0d}
+  - {id: leop-firstlight, type: dependency, from: {object: leop, endpoint: end}, to: {object: first-light, endpoint: at}, lag: 5d}
+  - {id: rehearsals-launch, type: dependency, from: {object: rehearsals, endpoint: end}, to: {object: launch, endpoint: at}, lag: 0d}
+annotations:
+  window:
+    kind: note
+    text: 'Launch window 22 Oct-5 Nov; missing it means Q1.'
+    anchor: {object: launch}
+  tvac:
+    kind: risk
+    text: 'Payload TVAC ran 7 days late; margin is now zero.'
+    anchor: {object: payload-tvac}
+  station:
+    kind: note
+    text: 'Ground station done early; link test can move up.'
+    anchor: {object: station}

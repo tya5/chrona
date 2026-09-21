@@ -56,7 +56,7 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"; snapshot.mkdir()
-        context_path = _inside(example, str(manifest["context"]))
+        context_path = _inside(example, str(slide.get("context") or manifest["context"]))
         reference, _ = _copy_context_closure(example, context_path, snapshot)
         ref_path = Path(temporary) / "context-ref.yaml"; ref_path.write_text(yaml.safe_dump(reference, sort_keys=False))
         derived = output / "review.svg"
