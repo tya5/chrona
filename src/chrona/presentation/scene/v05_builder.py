@@ -212,14 +212,15 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
                                              (anchor_x, y + height * 1.25, max(1.0, height * 1.5), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
-        if value.surface_content.label_placement == "plot":
+        if value.surface_content.label_placement == "plot" or value.surface_content.show_member_labels:
             start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
             label_at = start_at if value.surface_content.label_placement == "plot" and isinstance(start_at, date) else end_at
             if isinstance(label_at, date):
+                label_content = value.surface_content.label_content or ("title",)
                 label_parts = []
-                if "title" in value.surface_content.label_content:
+                if "title" in label_content:
                     label_parts.append(item.title)
-                if "finishDelta" in value.surface_content.label_content and item.finish_delta is not None:
+                if "finishDelta" in label_content and item.finish_delta is not None:
                     label_parts.append(f"{item.finish_delta:+d}d")
                 if label_parts:
                     text(f"member-label:{instance_id}", item.object_id, "member-label", "text",
