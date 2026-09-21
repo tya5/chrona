@@ -1,0 +1,39 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/command-request-v0.2"
+title: "Chrona revision-bound command request v0.2"
+type: object
+required: [version, commandId, type, target, baseRevision, expectedContentIdentity, payload]
+additionalProperties: false
+properties:
+  version: {const: chrona/command/v0.2}
+  commandId: {type: string, minLength: 1}
+  type:
+    enum: [applyActualIntakeBatch, editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot, setTypedField]
+  target: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}
+  baseRevision: {type: string, minLength: 1, pattern: "^\\S+$"}
+  expectedContentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  payload: {type: object, minProperties: 1}
+  actor: {type: object, additionalProperties: true}
+  reason: {type: string}
+allOf:
+  - if: {properties: {type: {const: applyActualIntakeBatch}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: actual-set}}}]}
+        payload:
+          type: object
+          required: [batch, project]
+          additionalProperties: false
+          properties:
+            batch: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}
+            project: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}
+  - if: {properties: {type: {const: resolveActualObservation}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: actual-set}}}]}
+        payload: {type: object, required: [observationId, projectObjectId, project], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, projectObjectId: {type: string, minLength: 1}, project: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}}}
+  - if: {properties: {type: {const: captureSnapshot}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}
+        payload: {type: object, required: [snapshotId, registry], additionalProperties: false, properties: {snapshotId: {type: string, minLength: 1}, registry: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}}}
