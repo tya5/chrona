@@ -264,3 +264,19 @@ def test_month_axis_emits_quarter_band_labels():
     surface = compose_review_surface(value)
 
     assert any(node.scene_id.startswith("axis-band:quarter:") for node in surface.primitives)
+
+
+def test_table_columns_use_measured_non_overlapping_origins():
+    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),),
+                                  (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection,
+                              surface_content=SurfaceContentInput((("long", "Long heading"), ("short", "B")),
+                                                                (("a", "long", "a deliberately long table value"), ("a", "short", "B"))),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    assert next(item for item in surface.primitives if item.scene_id == "column:short").bounds[0] > next(item for item in surface.primitives if item.scene_id == "column:long").bounds[0]
