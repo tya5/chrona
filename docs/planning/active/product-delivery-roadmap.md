@@ -72,6 +72,7 @@ Every milestone MUST demonstrate all of the following before it is accepted:
 | M24 — Intent-oriented layout authoring | Designers can compose common document and visualization layouts without calculating coordinates or routinely entering raw distances. | Replacement Layout Profile grammar, spacing tokens/templates, intrinsic sizing, two-axis alignment/distribution, bounded anchors/guides/barriers, deterministic solver/manifest, obsolete-path removal and authoring examples. | View/Style/Theme/Layout/Scene authority and measured text; no legacy layout path is retained. | Design gates L24-D1–L24-D3 publish before implementation; centered/relative/barrier layouts reflow deterministically, stable-ID overrides avoid array replacement, invalid constraints diagnose, retained semantic conformance remains green, and superseded layout contracts are absent. |
 | M25 — Color Scheme authoring | A non-designer can compare coherent, accessible named color alternatives without editing Theme values or changing semantic meaning. | Versioned Color Scheme resource, Theme intent bindings, deterministic categorical assignment, accessibility validation, and preview/gallery integration. | Style role resolution, Theme typography/metrics/markers, Layout, Context, Scene, and output capability contracts. | Design gates C25-D1–C25-D3 publish before implementation; switching a scheme changes only resolved color values, semantic/non-color cues remain intact, categorical assignment is repeatable, and no renderer palette default exists. |
 | M26 — Operational review workflows | A team can intake external Actuals, capture/compare named baselines, and run the same revision-bound operations from CI. | Intake request/report, reconciliation Commands, immutable Snapshot capture/compare, automation envelope, CLI/CI adapters, and acceptance evidence. | Project/Actual/Snapshot/Command/Revision Store/Render Context authority. | Complete: C26-D1–D4, I26-1–I26-7, A26-01–A26-10 and operational conformance pass; no title matching, mutable tip, direct source-file write, scheduler mutation, or renderer fallback is reachable. |
+| M27 — Presentation product-path recovery | Review output restores the declared, source-traceable presentation vocabulary through one declarative Context→Scene→SVG path. | Complete Scene composition, policy resolution, artifact materializer, reproduction conformance, and regression acceptance. | View/Detail/Theme/Color Scheme/Layout/Scene/SVG ownership; Project/Schedule/Actual semantics remain unchanged. | D27-1–D27-5 complete before implementation; no source-ID branch, renderer-local display policy, old layout grammar, or parallel serializer fallback. |
 
 ## 4. Boundaries after M24
 
@@ -95,6 +96,10 @@ renderer-local palette feature requires a new owning specification and milestone
 M26 is complete as an operational adapter milestone. It does not redefine Project,
 Actual, Snapshot, Command, or Revision Store semantics; the CLI only consumes declared
 immutable references and the configured local Store routing.
+
+M27 repairs the presentation product path exposed by Issues #29–#33. It is design-only
+until D27-1–D27-5 close and may not turn old example output into an undeclared
+compatibility contract.
 
 Issues 1–10 are governed by
 `issue-remediation-program-2026-09-20.md`. That program reopens acceptance evidence for
