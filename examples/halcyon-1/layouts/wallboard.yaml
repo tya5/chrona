@@ -28,6 +28,14 @@ root:
           place: {inline: start, block: start, safety: safe}
           priority: required
           overflow: diagnose
+        - id: summary
+          kind: slot
+          source: summary
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source
         - id: notes
           kind: slot
           source: notes
