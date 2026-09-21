@@ -15,6 +15,10 @@ SCHEMAS = (
     "layout-profile-v0.2.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
     "render-context-v0.4.schema.yaml",
+    "actual-intake-batch-v0.1.schema.yaml",
+    "command-request-v0.2.schema.yaml",
+    "automation-result-v0.1.schema.yaml",
+    "snapshot-ref-v0.2.schema.yaml",
 )
 
 
