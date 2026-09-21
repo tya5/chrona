@@ -39,6 +39,7 @@ class TextPlacement:
     font_size: float = 0.0
     line_height: float = 0.0
     font_asset_identity: str = ""
+    collision_region: str = "surface"
 
 
 @dataclass(frozen=True)
@@ -169,7 +170,7 @@ class SurfacePlacement:
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         for index, item in enumerate(required):
             for other in required[index + 1:]:
-                if intersects(item.bounds, other.bounds):
+                if item.collision_region == other.collision_region and intersects(item.bounds, other.bounds):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
             if relation.suppressed:
