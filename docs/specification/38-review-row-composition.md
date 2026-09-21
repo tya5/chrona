@@ -4,6 +4,22 @@
 **Depends on:** Specifications 06, 08, 24, 36, 37 and ADR-0029.
 **Owns:** View-local Review row membership and its semantic projection boundary.
 
+## 0. Input closure
+
+M28 uses `chrona/presentation/v0.6` Render Contexts. `body.inputs.snapshot`, when
+present, is a typed immutable `snapshot-ref` reference. The resolver reads the
+Snapshot resource and then reads its nested immutable Project reference. It schedules
+the primary and snapshot Projects independently and requires equal Project IDs before
+building Review Items. A closure records each resource's own immutable revision; a
+historical Snapshot Project MUST NOT be rejected merely because its revision differs
+from the primary Project/configuration revision.
+
+`primary` item sources resolve from the Context's primary Project schedule;
+`snapshot` sources resolve from this named Snapshot schedule; and `actual` sources
+resolve from the selected Actual set. A View using a source absent from the Context
+diagnoses before projection. No source may mean a branch tip, local working file,
+implicit latest snapshot, or copied schedule payload.
+
 ## 1. Contract
 
 A Review row is a stable View-local presentation composition, not a Project object,

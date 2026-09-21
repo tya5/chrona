@@ -90,6 +90,11 @@ Store identity, normalized address, immutable revision, and content identity. A 
 verifies all of these values; it does not search a directory to find a matching ID.
 Duplicate `(kind, id)` pairs in an evaluation are invalid.
 
+M28's v0.6 Render Context makes `inputs.snapshot` a typed `snapshot-ref` edge. Its
+nested immutable Project reference is part of the same evaluation closure and may have
+an older revision than the primary Project. The closure records both revisions; it
+does not use one shared-revision rule to erase historical comparison capability.
+
 Multiple Render Contexts MAY refer to the same immutable Project revision. They remain
 independent evaluations: one Context's View selection, Theme, Actual input, viewport,
 or cache identity MUST NOT become an unstated default for another Context. A
@@ -358,3 +363,59 @@ implementation is conforming, the repository must add:
   recreation and a declared global invalidation case.
 
 Exact body fields for each kind belong to the owning specification and are introduced
+with its schema and canonical fixture. They must not be invented by a renderer or GUI.
+
+The schema sequence is deliberately dependency-ordered: common presentation envelope
+and typed-reference definitions; Render Context; View; Style and Theme; Scene profile;
+then Snapshot and Actual set. Command request fixtures use the Command Model envelope
+and validate any shared reference scalar separately. This prevents a command transport
+choice from becoming a hidden dependency of rendering or persistence.
+
+## 8. Schema handoff inventory
+
+The first schema and fixture tranche is intentionally structural. It proves that every
+evaluation input is explicit without prematurely freezing the selector, token, or layout
+languages still owned by the presentation specifications.
+
+| Schema / fixture | Defined here | Owner-semantic handoff required before conformance |
+|---|---|---|
+| Common presentation envelope | `version`, `kind`, `id`, `body`, and closed top-level fields | Resource-specific `body` meaning |
+| Typed presentation reference | expected kind, stable `id`, repository-relative `path` | Whether the referenced resource is optional, repeatable, or precedence-bearing |
+| Render Context | primary Project immutable reference; explicit View, Style, Theme, Scene-profile, Snapshot, Actual, viewport, and capability references | Required-versus-optional inputs and evaluation semantics from Application Architecture |
+| View | envelope and declared comparison-input references | Selection, grouping, ordering, window, and annotation language from View Model |
+| Style / Theme | envelope and declared parent/variant/reference form | Selector precedence, visual roles, token inheritance, and token value vocabulary from Style and Theme |
+| Scene profile | envelope and layout-metric/capability references | Scale, lane, routing, collision, and layout policy from Scene and Rendering |
+| Snapshot reference / Actual set | immutable Project reference; resolved or explicitly unmatched Actual alignment identity | Capture semantics and Actual observation fields from View and Command Model |
+| Command request document | command envelope, target, and base-revision scalar shapes | Command type/payload vocabulary, transaction, and undo semantics from Command Model |
+
+Canonical fixtures follow the same order. A fixture validates structural syntax first,
+then asserts the diagnostic or projection behavior supplied by its owning specification.
+For example, the first Render Context fixture must name exact paths and revisions but
+does not itself define how a View selector ranks objects; that remains a View Model
+fixture once the selector language is specified.
+
+## 8.1 Deferred semantic-format decisions
+
+Before schemas are promoted from structural validation to conformance, these owning
+documents must settle their remaining body languages in dependency order:
+
+1. Scene profile: Date lane extent, label collision diagnostics, routing constraints,
+   and metric-profile identity;
+2. Snapshot reference: immutable capture identity and Project compatibility checks;
+3. Actual set: observation fields, progress representation, and alignment diagnostics;
+4. Command request serialization: command-type registry and transaction document form.
+
+None may be inferred from a renderer, current Git branch, file order, or GUI state.
+This is deliberately a design gate: adding a permissive schema or fixture before these
+meanings are settled would make an accidental implementation choice appear normative.
+
+The Command Model has now settled its request-document boundary. It is deliberately
+excluded from the presentation resource envelope and Render Context composition; only
+its typed target references may share scalar syntax with this format.
+
+## 9. Out of scope
+
+This document does not define package acquisition, remote fetching, authentication,
+Git merge strategy, GUI/editor state persistence, command authorization, or arbitrary
+code execution. It also does not alter the Core v0.1 Project Format or make generated
+Scene state canonical.
