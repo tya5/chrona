@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
@@ -65,6 +66,64 @@ class ShapePlacement:
 
 
 @dataclass(frozen=True)
+class SlotPlacement:
+    """One resolved surface slot consumed verbatim by Scene projection."""
+
+    slot_id: str
+    source_ref: str
+    bounds: Rect
+    priority: str = "required"
+    overflow: str = "diagnose"
+    scale_id: str | None = None
+
+
+@dataclass(frozen=True)
+class RowPlacement:
+    """One completed review-row extent independent of the Scene model."""
+
+    row_id: str
+    object_id: str
+    group_id: str
+    bounds: Rect
+
+
+@dataclass(frozen=True)
+class GroupPlacement:
+    """Completed group content and optional header extents."""
+
+    group_id: str
+    content_bounds: Rect
+    header_bounds: Rect | None = None
+
+
+@dataclass(frozen=True)
+class ScalePlacement:
+    """Completed temporal-to-inline scale shared by all surface geometry."""
+
+    surface_id: str
+    scale_id: str
+    domain_start: date
+    domain_end: date
+    range_start: float
+    range_end: float
+    origin: float
+    unit_ratio: float
+
+
+@dataclass(frozen=True)
+class PrimitivePlacement:
+    """Completed renderer-neutral primitive geometry before Scene projection."""
+
+    placement_id: str
+    source_ref: str
+    kind: str
+    bounds: Rect
+    points: tuple[tuple[float, float], ...] = ()
+    text: TextPlacement | None = None
+    optional: bool = False
+
+
+@dataclass(frozen=True)
 class RelationPlacement:
     """A completed relation path or an explicit, provenance-preserving suppression."""
 
@@ -91,8 +150,13 @@ class SurfacePlacement:
     """The complete geometry handoff from Layout to Scene."""
 
     text: tuple[TextPlacement, ...] = ()
+    slots: tuple[SlotPlacement, ...] = ()
+    rows: tuple[RowPlacement, ...] = ()
+    groups: tuple[GroupPlacement, ...] = ()
+    scale: ScalePlacement | None = None
     marks: tuple[MarkPlacement, ...] = ()
     shapes: tuple[ShapePlacement, ...] = ()
+    primitives: tuple[PrimitivePlacement, ...] = ()
     relations: tuple[RelationPlacement, ...] = ()
 
     def assert_valid(self) -> None:
@@ -117,3 +181,8 @@ class SurfacePlacement:
                     raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{shape.placement_id}")
             elif shape.bounds.inline_size < 0 or shape.bounds.block_size < 0:
                 raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{shape.placement_id}")
+        for primitive in self.primitives:
+            if primitive.kind == "Path" and len(primitive.points) < 2:
+                raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")
+            if primitive.kind == "Text" and primitive.text is None:
+                raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")
