@@ -196,3 +196,23 @@ def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
 
     assert [node.scene_id for node in marks] == ["planned:release:snapshot", "planned:release:planned", "actual:release:actual"]
     assert len({node.bounds[1] for node in marks}) == 1
+
+
+def test_grouped_rows_reserve_and_emit_a_group_header():
+    item = ReviewItem("a", "Firmware", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)}, None, None, (),
+                      group_id="fw", group_label="Firmware team", item_id="a")
+    row = ReviewRowProjection("fw-row", "Firmware", "fw", "a", (item,))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 4)), (), (), (row,))
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
+                                   "timeline.groupHeader.blockSize": Decimal(20)})
+    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    assert any(node.scene_id == "group-header:fw" and node.text == "Firmware team"
+               for node in surface.primitives)
+    assert surface.groups[0].header_bounds is not None
