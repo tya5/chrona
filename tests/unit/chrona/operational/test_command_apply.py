@@ -28,3 +28,13 @@ def test_apply_intake_uses_v02_batch_cas_and_replays(tmp_path: Path):
     assert accepted["status"] == "accepted" and accepted["actualIntake"]["dispositions"] == ["inserted"]
     replay = apply_actual_command(reader, command)
     assert replay["replayed"] is True and replay["resultTarget"] == accepted["resultTarget"]
+
+
+def test_apply_capture_publishes_named_baseline(tmp_path: Path):
+    project = {"version": "timeline/v0.1", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
+    target = _write(tmp_path, "project-r1", "project.yaml", project, "project", "p")
+    reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "test", "root": str(tmp_path)}]})
+    command = {"version": "chrona/command/v0.2", "commandId": "capture-1", "type": "captureSnapshot", "target": target, "baseRevision": "project-r1", "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "test"}}}
+    accepted = apply_actual_command(reader, command)
+    assert accepted["status"] == "accepted"
+    assert reader.read(accepted["resultTarget"])
