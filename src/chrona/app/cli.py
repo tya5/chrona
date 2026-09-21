@@ -185,11 +185,20 @@ def _run_render_review(args: argparse.Namespace) -> None:
     if not result.ok:
         _reject(result.diagnostics)
     actual = _resource(resources, "actual-set")
-    projection = build_review_projection(project, result.placements, view, actual)
+    snapshot_project = _resource(resources, "snapshot-project")
+    snapshot_result = schedule(snapshot_project) if snapshot_project is not None else None
+    if snapshot_result is not None and not snapshot_result.ok:
+        _reject(snapshot_result.diagnostics)
+    projection = build_review_projection(
+        project, result.placements, view, actual,
+        snapshot_project=snapshot_project,
+        snapshot_placements=snapshot_result.placements if snapshot_result is not None else None,
+    )
+    review_rows = projection.rows or ()
     source_inputs = {
         "title": SourceInput((project["project"].get("title", "Chrona"),)),
-        "table": SourceInput(tuple(item.title for item in projection.items), len(projection.items), len(view.get("body", {}).get("tableColumns", ())) or 1),
-        "timeline": SourceInput(item_count=len(projection.items), span_days=max(1, (projection.window[1] - projection.window[0]).days)),
+        "table": SourceInput(tuple(row.label for row in review_rows) or tuple(item.title for item in projection.items), len(review_rows) or len(projection.items), len(view.get("body", {}).get("tableColumns", ())) or 1),
+        "timeline": SourceInput(item_count=len(review_rows) or len(projection.items), span_days=max(1, (projection.window[1] - projection.window[0]).days)),
         "timeline-axis": SourceInput(span_days=max(1, (projection.window[1] - projection.window[0]).days)),
         "summary": SourceInput(("summary",)), "legend": SourceInput(("legend",)),
         "group-details": SourceInput(("group details",)), "observations": SourceInput(("observations",)),
