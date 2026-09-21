@@ -40,9 +40,9 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-07 | Model semiconductor gates and domain vocabulary | Should | Library + tests | Partial validation/scheduling only |
 | UC-08 | Add expressive explanatory annotations without changing schedule semantics | Must | Library + tests | Not exposed |
 | UC-09 | Maintain multiple purpose-specific views from one Project | Must | Library + tests | Named View through immutable Render Context v0.3 |
-| UC-10 | Import and reconcile externally observed Actual data | Should | Library + tests | Not exposed |
-| UC-11 | Validate, render, and propose changes through CLI/automation | Should | Delivered subset | `validate`, `schedule`, `render`, `review`, `propose-set` |
-| UC-12 | Capture and compare a named baseline | Should | Library + tests | Comparison only; no capture verb |
+| UC-10 | Import and reconcile externally observed Actual data | Should | Delivered | `actual-intake`, `actual-resolve` through immutable command references |
+| UC-11 | Validate, render, and propose changes through CLI/automation | Should | Delivered | `command-check`, `command-apply`; legacy `propose-set` is absent |
+| UC-12 | Capture and compare a named baseline | Should | Delivered | `baseline-capture`, `baseline-compare` through immutable references |
 | UC-13 | Export one evaluation to declared targets | Should | SVG adapter | SVG only |
 | UC-14 | Federate independently owned subproject timelines | Must | Library + tests | Not exposed |
 | UC-15 | Manage a delivery roadmap using Chrona | Must | Library + fixtures | Partial validation only |
@@ -210,7 +210,7 @@ records a resolved stable `projectObjectId`. A reviewer can later issue an expli
 alignment edit.
 
 **Acceptance evidence:** Actual-set resolved/unmatched fixtures, alignment diagnostics,
-and a revision-bound Command result.
+revision-bound Command results, and A26-01–A26-03 automated evidence.
 
 **Exceptional behavior:** Title similarity never creates an alignment. An unmatched
 observation remains visible and never reschedules the plan.
@@ -225,8 +225,8 @@ a declared artifact, or submits a typed change proposal.
 **Outcome:** It uses the same schemas, explicit Render Context, Command Engine, and
 diagnostic contract as an interactive client.
 
-**Acceptance evidence:** Conformance manifest/runner, revision-bound command document,
-and deterministic output manifest.
+**Acceptance evidence:** Operational conformance manifest, revision-bound command
+document, deterministic result artifact, and A26-04–A26-06/A26-09/A26-10 evidence.
 
 **Exceptional behavior:** Automation cannot mutate a working-tree default, bypass base
 revision checks, or execute arbitrary project-file code.
@@ -241,11 +241,11 @@ current Project and/or Actual observations.
 **Outcome:** The comparison names an immutable Snapshot reference; missing or changed
 objects are comparison facts, not implicit mutations.
 
-**Acceptance evidence:** Snapshot reference fixture, immutable revision diagnostic, and
-View comparison facets.
+**Acceptance evidence:** Snapshot reference fixture, immutable revision diagnostic,
+semantic comparison result, and A26-07–A26-08 evidence.
 
 **Exceptional behavior:** A moving branch cannot be used as a reproducible baseline;
-capture workflow remains unavailable until its explicit Command is specified.
+capture is create-once through `baseline-capture` and never selects a working-tree tip.
 
 **Owners:** `05`, `06`, `10`, `12`, `13`.
 

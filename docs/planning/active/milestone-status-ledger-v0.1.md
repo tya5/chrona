@@ -36,7 +36,7 @@ evidence is present, not that a later product release is complete.
 | M23 | Complete | D23 and both design addenda preceded affected work; I23 generic validation and Scene/SVG primitives, A23 reproducible Controller Z SVG/PNG with zero raster overflow, 246 tests, full conformance, and final reuse/release review pass. | None. |
 | M24 | Complete | Profile resolution at `fcabf30`; normal flow at `df2844e`; per-axis correction at `cc60472`; source-adapter boundary at `bf37c7a`; product-path replacement at `7e81ce1`; final I24-5 acceptance review. The v0.4 Context, independent Theme/Layout resources, source measurement/composition, and manifest-driven Scene path are the only reachable layout path. | None. |
 | M25 | Complete | Color Scheme v0.1, Theme v0.2, Render Context v0.5, deterministic category assignment, WCAG contrast rejection, migrated examples, no reachable legacy review paint fallback, and deterministic gallery are published. 165 tests and full conformance pass. | None. |
-| M26 | Design planning | UC-10/UC-11/UC-12 are routed through C26-D1–C26-D4. No implementation is authorized until the operational workflow design, whole-design review, and implementation plan are published. | Complete C26 design gates. |
+| M26 | Complete | C26-D1–D4, I26-1–I26-7, the operational conformance manifest, A26-01–A26-10 acceptance evidence, and `m26-operational-workflows-final-acceptance-review-2026-09-21.md`. UC-10/UC-11/UC-12 are exposed only by the immutable-reference CLI contracts in Specification 35. | None. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning

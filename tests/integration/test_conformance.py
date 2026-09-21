@@ -56,6 +56,14 @@ def test_yaml_date_scalars_validate_against_json_compatible_schema():
     assert validate_project(project) == []
 
 
+def test_m26_operational_release_acceptance_manifest_has_complete_evidence():
+    manifest = yaml.safe_load((ROOT / "conformance" / "operational-workflows-release-acceptance-v0.1.yaml").read_text())
+    assert manifest["immutableInputsOnly"] is True
+    assert manifest["useCases"] == ["UC-10", "UC-11", "UC-12"]
+    assert [item["id"] for item in manifest["acceptance"]] == [f"A26-{index:02d}" for index in range(1, 11)]
+    assert all((ROOT / item["evidence"]).is_file() for item in manifest["acceptance"])
+
+
 def test_dependency_bound_cases_execute_through_scheduler():
     fixture = yaml.safe_load(FIXTURE.read_text())
     for case in fixture["scheduling"]["dependency_bounds"]:

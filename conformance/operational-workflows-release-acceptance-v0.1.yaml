@@ -1,0 +1,28 @@
+version: chrona/operational-release-acceptance/v0.1
+releaseId: m26-operational-workflows-v0.1
+immutableInputsOnly: true
+acceptance:
+  - id: A26-01
+    evidence: tests/unit/chrona/operational/test_command_apply.py
+  - id: A26-02
+    evidence: tests/unit/chrona/commands/test_actual_commands.py
+  - id: A26-03
+    evidence: tests/unit/chrona/operational/test_command_apply.py
+  - id: A26-04
+    evidence: tests/unit/chrona/operational/test_command_engine.py
+  - id: A26-05
+    evidence: tests/unit/chrona/operational/test_references.py
+  - id: A26-06
+    evidence: tests/cli/test_cli.py
+  - id: A26-07
+    evidence: tests/unit/chrona/operational/test_baselines.py
+  - id: A26-08
+    evidence: tests/unit/chrona/operational/test_baselines.py
+  - id: A26-09
+    evidence: tests/cli/test_cli.py
+  - id: A26-10
+    evidence: tests/cli/test_cli.py
+useCases:
+  - UC-10
+  - UC-11
+  - UC-12
