@@ -63,6 +63,24 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
         return value
 
+    def font_weight(self, role: str) -> int:
+        value = self.token(role, "fontWeight", "fontWeight")
+        try:
+            weight = int(str(value))
+        except (TypeError, ValueError) as error:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/fontWeight") from error
+        if weight < 1:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/fontWeight")
+        return weight
+
+    def typography(self, role: str) -> tuple[str, int, Decimal, Decimal]:
+        """Resolve one fully declared typography role without metric fallbacks."""
+        family, weight = self.font_family(role), self.font_weight(role)
+        size, line_height = self.number(role, "fontSize"), self.number(role, "lineHeight")
+        if size <= 0 or line_height <= 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
+        return family, weight, size, line_height
+
     def number(self, role: str, property_name: str) -> Decimal:
         value = self.token(role, property_name, "number")
         try:
