@@ -31,6 +31,10 @@ requires Actual-set v0.2, whose externally identified observations retain that i
 This amendment is approved before I26-3 starts; v0.1 remains legacy-readable and is not
 silently upgraded.
 
+**Amendment, 2026-09-21:** resolved v0.2 observations retain their external identity
+and source content identity. Reconciliation changes only alignment/Project object ID;
+otherwise deduplication would be lost after an operator resolved a record.
+
 ## Evidence checked
 
 - `35-operational-review-workflows.md`, ADR-0024 through ADR-0026, all four successor
