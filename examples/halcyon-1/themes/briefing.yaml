@@ -32,6 +32,8 @@ body:
     legend: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.legend, lineHeight: leading.body}
     annotation: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.note, lineHeight: leading.body}
     summary: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.legend, lineHeight: leading.body}
+    metric: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.heading, lineHeight: leading.tight}
+    groupHeader: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.axis, lineHeight: leading.body}
     dependency: {marker: arrow}
     missing-actual: {pattern: hatch}
   colorBindings:
@@ -48,6 +50,14 @@ body:
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     group-band.fill: surface
+    groupHeader.fill: surfaceRaised
+    baseline.stroke: neutral
+    metric.fill: text
+    calendar-closed.fill: surfaceRaised
+    calendar-exception.fill: warning
+    range.fill: warning
+    asOf.stroke: warning
+    note-index.fill: accent
     'group:bus.fill': category
     'group:payload.fill': category
     'group:ait.fill': category
