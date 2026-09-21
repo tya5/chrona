@@ -88,6 +88,12 @@ The old `scene_svg` implementation is retired rather than made conditional. Its
 role-to-legacy-paint maps are replaced by token-view lookups; its direct `theme[paints]`
 and `theme[strokes]` access is prohibited.
 
+An SVG-capable Theme binds every selected primitive role directly. Required core
+bindings are `background`, `text`, `table-header`, `axis-major`, `planned`, `actual`,
+`missing-actual`, `variance-ahead`, `variance-on-track`, `variance-behind`, and
+`dependency`; annotation bindings are required only when annotations are selected.
+There is no role-to-color fallback map.
+
 ## 5. Migration and acceptance
 
 No serialized migration is required: old settings and old Scene artifacts were not
