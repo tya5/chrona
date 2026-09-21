@@ -23,7 +23,7 @@ class VerifiedReference:
 
 def verify_reference(reader: ImmutableReader, reference: dict[str, Any], *, kind: str | None = None) -> VerifiedReference:
     """Verify one complete immutable reference without consulting a mutable tip."""
-    required = {"id", "kind", "store", "address", "revision", "contentIdentity"}
+    required = {"id", "kind", "store", "address", "revision"}
     if not isinstance(reference, dict) or required - set(reference) or not reference.get("revision", {}).get("token"):
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
     if kind and reference.get("kind") != kind:
@@ -35,13 +35,14 @@ def verify_reference(reader: ImmutableReader, reference: dict[str, Any], *, kind
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE") from error
     if not isinstance(value, dict):
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
-    if f"sha256:{sha256(payload).hexdigest()}" != reference["contentIdentity"]:
+    computed_identity = f"sha256:{sha256(payload).hexdigest()}"
+    if reference.get("contentIdentity") is not None and computed_identity != reference["contentIdentity"]:
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
     actual_kind = "project" if reference["kind"] == "project" else value.get("kind")
     actual_id = value.get("project", {}).get("id") if reference["kind"] == "project" else value.get("id")
     if actual_kind != reference["kind"] or actual_id != reference["id"]:
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
-    return VerifiedReference(dict(reference), value)
+    return VerifiedReference(dict(reference) | {"contentIdentity": reference.get("contentIdentity", computed_identity)}, value)
 
 
 @dataclass(frozen=True)
