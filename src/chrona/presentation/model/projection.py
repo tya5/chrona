@@ -40,6 +40,7 @@ class ReviewProjection:
     unmatched_actual_ids: tuple[str, ...]
     diagnostics: tuple[str, ...]
     rows: tuple[ReviewRowProjection, ...] = ()
+    comparison_facets: tuple[str, ...] = ()
 
 
 def build_review_projection(project: dict[str, Any], placements: dict[str, dict[str, date]],
@@ -91,7 +92,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             raise ValueError("E_REVIEW_WINDOW")
     return ReviewProjection(tuple(selected),
         (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
-        tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows)
+        tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
+        tuple(body["comparison"].get("facets", ())))
 
 
 def _compose_rows(body: dict[str, Any], selected: list[ReviewItem],
