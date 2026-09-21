@@ -7,6 +7,7 @@ from typing import Any
 import jsonschema
 import yaml
 
+from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.resources import schema_resource
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 
@@ -28,7 +29,7 @@ class ClosureResource:
 
 def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReader) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
     context = _load_presentation(reference, reader, "render-context")
-    if context.get("version") != "chrona/presentation/v0.4":
+    if context.get("version") != "chrona/presentation/v0.5":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     resolved_context, resources = _resolve_layout_context(context, reader)
     if any(item.revision != reference["revision"]["token"] for item in resources):
@@ -39,7 +40,7 @@ def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReade
 def _resolve_layout_context(
     context: dict[str, Any], reader: LocalSnapshotReader
 ) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
-    schema = yaml.safe_load(schema_resource("render-context-v0.4.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("render-context-v0.5.schema.yaml").read_text(encoding="utf-8"))
     if next(jsonschema.Draft202012Validator(schema).iter_errors(context), None) is not None:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     body = context["body"]
@@ -47,6 +48,7 @@ def _resolve_layout_context(
         (body["project"], "project"),
         (body["view"], "view"),
         (body["theme"], "theme"),
+        (body["colorScheme"], "color-scheme"),
         (body["layout"], "layout-profile"),
     )
     resources = [_load_reference(reference, reader, kind) for reference, kind in ordered]
@@ -64,6 +66,12 @@ def _resolve_layout_context(
         raise ClosureError("E_CLOSURE_MIXED_REVISION")
     if body["target"]["capabilities"] != sorted(body["target"]["capabilities"]):
         raise ClosureError("E_TARGET_CAPABILITY_ORDER")
+    theme, scheme = resources[2], resources[3]
+    try:
+        context = dict(context)
+        context["resolvedTheme"] = resolve_theme(theme.value, scheme.value, scheme_content_identity=scheme.content_identity)
+    except ColorSchemeError as error:
+        raise ClosureError(str(error)) from error
     return context, tuple(resources)
 
 
