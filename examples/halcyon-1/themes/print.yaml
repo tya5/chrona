@@ -59,6 +59,7 @@ body:
     calendar-exception.fill: warning
     range.fill: warning
     asOf.stroke: warning
+    as-of.stroke: warning
     note-index.fill: accent
     'group:bus.fill': category
     'group:payload.fill': category
