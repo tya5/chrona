@@ -47,11 +47,11 @@ class ResolvedPresentationInput:
     surface_content: SurfaceContentInput
 
 
-def table_value(item: ReviewItem, project: dict[str, Any], source: Any) -> Any:
+def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_index: int | None = None) -> Any:
     """Resolve one renderer-neutral table cell from normalized review data."""
     if isinstance(source, str):
         return {"id": item.object_id, "title": item.title, "objectType": item.source_type,
-                "entity": item.group_label}.get(source)
+                "entity": item.group_label, "rowIndex": row_index}.get(source)
     if "field" in source:
         return (item.fields or {}).get(source["field"])
     if "facet" in source:
