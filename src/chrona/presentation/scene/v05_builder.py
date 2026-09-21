@@ -15,6 +15,8 @@ from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
+from chrona.presentation.model.presentation_contract import normalize_presentation_input
+from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.annotations import nearest_box_port, place_annotation_rail, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
@@ -73,6 +75,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     if not hasattr(projection, "items") or not hasattr(projection, "window"):
         raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
     metric = value.measured_sources.metric_values
+    contract = normalize_presentation_input(value.surface_content)
     if "text.body.size" not in metric or "text.body.lineHeight" not in metric:
         raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
     decisions = {item.source: item for item in value.layout_manifest.decisions if item.source}
@@ -228,11 +231,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
                                              (anchor_x, y + height * 1.25, max(1.0, height * 1.5), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
-        if value.surface_content.label_placement == "plot" or value.surface_content.show_member_labels:
+        if contract.labels.enabled:
             start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
             label_at = start_at if value.surface_content.label_placement == "plot" and isinstance(start_at, date) else end_at
             if isinstance(label_at, date):
-                label_content = value.surface_content.label_content or ("title",)
+                label_content = contract.labels.content
                 label_parts = []
                 if "title" in label_content:
                     label_parts.append(item.title)
@@ -266,14 +269,15 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if label_width <= clipped_width:
             text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", axis_label, x,
                  axis.bounds[1] + axis_size * (2 if band_intervals else 1), typography_role="axis")
-    if value.surface_content.as_of is not None and start <= value.surface_content.as_of < end:
-        as_of_x = coordinate(value.surface_content.as_of)
-        primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", "as-of", "as-of",
+    if contract.time.as_of is not None and start <= contract.time.as_of < end:
+        as_of_binding = semantic_binding("asOf")
+        as_of_x = coordinate(contract.time.as_of)
+        primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", as_of_binding.purpose, as_of_binding.scene_role,
                                          (as_of_x, timeline.bounds[1], 0, timeline.bounds[3]),
                                          points=((as_of_x, timeline.bounds[1]), (as_of_x, timeline.bounds[1] + timeline.bounds[3])),
                                          z_order=len(primitives)))
         text("as-of-label", "actual-set", "as-of-label", "text",
-             f"{value.surface_content.as_of_label} {value.surface_content.as_of.isoformat()}", as_of_x, timeline.bounds[1] + body_size)
+             f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}", as_of_x, timeline.bounds[1] + body_size)
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
