@@ -17,8 +17,9 @@ new review.
 | I26-6 | CLI commands, atomic `--result`, exit mapping, and `propose-set` removal | A26-01 through A26-10; no existing output overwrite; secret redaction; no checkout CI | CLI/acceptance tests |
 | I26-7 | conformance registration, documentation surface, final review, and release claim | full test suite; conformance; acceptance matrix; docs/catalog/ledger consistency | final acceptance review |
 
-**Progress:** I26-1 and I26-2 completed and published on 2026-09-21. I26-3 is the
-next authorized slice.
+**Progress:** I26-1 and I26-2 completed and published on 2026-09-21. A reviewed design
+amendment adds Actual-set v0.2 provenance before I26-3; I26-3 is next only after its
+codec/schema-registration amendment is published.
 
 ## Implementation rules
 
