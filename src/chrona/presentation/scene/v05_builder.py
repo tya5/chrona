@@ -137,17 +137,33 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     title_baseline = float(value.measured_sources.measurements["title"].first_baseline or 0)
     text("title", "title", "title-text", "text", title, title_slot.bounds[0], title_slot.bounds[1] + title_baseline, typography_role="heading")
     body_size = float(value.theme_tokens.typography("text")[2])
-    column_width = table.bounds[2] / max(1, len(value.surface_content.table_columns))
-    for index, (column_id, label) in enumerate(value.surface_content.table_columns):
+    column_cells = {column_id: [label] for column_id, label in value.surface_content.table_columns}
+    for _, column_id, cell in value.surface_content.table_cells:
+        column_cells.setdefault(column_id, []).append(cell)
+    natural_widths = tuple(max(body_size, max((value.font_metrics.width(cell, body_size) for cell in column_cells.get(column_id, (label,))), default=body_size) + body_size)
+                           for column_id, label in value.surface_content.table_columns)
+    total_width = sum(natural_widths)
+    available_width = table.bounds[2]
+    scale_columns = min(1.0, available_width / total_width) if total_width else 1.0
+    column_widths = tuple(width * scale_columns for width in natural_widths)
+    column_starts = []
+    cursor = table.bounds[0]
+    for width in column_widths:
+        column_starts.append(cursor)
+        cursor += width
+    column_positions = {column_id: (column_starts[index], column_widths[index])
+                        for index, (column_id, _) in enumerate(value.surface_content.table_columns)}
+    for column_id, label in value.surface_content.table_columns:
         text(f"column:{column_id}", "view:tableColumns", "table-column-label", "text", label,
-             table.bounds[0] + index * column_width, table.bounds[1] + body_size)
+             column_positions[column_id][0], table.bounds[1] + body_size)
     for object_id, column_id, cell in value.surface_content.table_cells:
         row = next((item for item in rows if item.row_id == object_id or item.object_id == object_id), None)
-        index = next((offset for offset, value in enumerate(value.surface_content.table_columns) if value[0] == column_id), None)
-        if row is not None and index is not None:
+        position = column_positions.get(column_id)
+        index = next((offset for offset, item in enumerate(value.surface_content.table_columns) if item[0] == column_id), None)
+        if row is not None and position is not None and index is not None:
             indent = body_size if index == 0 and row.group_id else 0
             text(f"cell:{object_id}:{column_id}", object_id, "table-cell", "text", cell,
-                 table.bounds[0] + index * column_width + indent, row.bounds[1] + row.bounds[3] / 2 + body_size / 2)
+                 position[0] + indent, row.bounds[1] + row.bounds[3] / 2 + body_size / 2)
     group_labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
                     for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:
