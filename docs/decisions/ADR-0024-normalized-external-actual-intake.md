@@ -11,9 +11,10 @@ Project tip, create duplicate observations on retry, or title-match the wrong ob
 
 ## Decision
 
-Chrona accepts only a self-contained `actual-intake-batch/v0.1` produced by an
+Chrona accepts only a self-contained immutable `actual-intake-batch/v0.2` resource produced by an
 adapter. The batch carries a source system, normalized source content identity, and
-stable external key per record. Apply is a v0.2 CAS command against one immutable
+stable external key per record. Its resource ID/kind allow the Command Engine to verify
+the batch through the same immutable-reference protocol as every other input. Apply is a v0.2 CAS command against one immutable
 Actual-set v0.2 reference. The v0.2 observation stores its source content identity so
 the required replay/conflict check remains auditable. `(source.system, externalKey)`
 is the deduplication key.
