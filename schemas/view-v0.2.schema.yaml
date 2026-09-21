@@ -97,7 +97,12 @@ allOf:
                       required: [comparisonFacet]
                       additionalProperties: false
                       properties: {comparisonFacet: {enum: [startDelta, finishDelta, atDelta, progress, missingActual]}}
-                missing: {enum: [blank, em-dash, unknown]}
+                    - type: object
+                      required: [facet]
+                      additionalProperties: false
+                      properties: {facet: {enum: [planned, actual, finishDelta]}}
+                format: {enum: [text, dateRange, date, signedDays]}
+                missing: {enum: [blank, em-dash, unknown, in-progress]}
           annotations:
             type: array
             items:
