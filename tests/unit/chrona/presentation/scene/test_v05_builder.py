@@ -68,7 +68,7 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None, ("planned",)),),
                                   (date(2026, 1, 1), date(2026, 2, 1)), (), ())
     measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
-                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40)})
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     manifest = _manifest("title", "table", "timeline", "timeline-axis")
     value = build_scene_input(projection=projection, surface_content=SurfaceContentInput((("name", "Name"),), (("a", "name", "A"),)),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
@@ -85,7 +85,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
                                   ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 6)}, None, None, ("planned",))),
                                   (date(2026, 1, 1), date(2026, 1, 11)), (), ())
     measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
-                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40)})
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(300))
     manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", viewport, (
         LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(40)), "title"),
