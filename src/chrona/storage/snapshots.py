@@ -51,9 +51,10 @@ class MemorySnapshotStore:
 class LocalBaselineRegistry:
     """Append-only local registry for immutable v0.2 baseline resources."""
 
-    def __init__(self, root: Path, identity: str):
+    def __init__(self, root: Path, identity: str, *, require_content_identity: bool = False):
         self.root = root
         self.identity = identity
+        self.require_content_identity = require_content_identity
 
     def publish(self, snapshot_id: str, project_ref: dict[str, Any]) -> dict[str, Any] | None:
         if not snapshot_id or "/" in snapshot_id or snapshot_id in {".", ".."}:
@@ -84,7 +85,10 @@ class LocalBaselineRegistry:
             raise ValueError("E_BASELINE_REFERENCE")
         payload = path.read_bytes()
         digest = sha256(payload).hexdigest()
-        if reference.get("contentIdentity") != f"sha256:{digest}" or reference.get("revision", {}).get("token") != f"baseline:{digest}":
+        expected_identity = reference.get("contentIdentity")
+        if expected_identity is None and self.require_content_identity:
+            raise ValueError("E_CONTENT_IDENTITY_REQUIRED")
+        if (expected_identity is not None and expected_identity != f"sha256:{digest}") or reference.get("revision", {}).get("token") != f"baseline:{digest}":
             raise ValueError("E_BASELINE_REFERENCE")
         return payload
 
@@ -103,12 +107,14 @@ def capture_snapshot(
     if snapshot.revision != base_revision:
         return SnapshotCaptureResult("rejected", None, ("E_CONFLICT",))
     revision = target_reference.get("revision", {}).get("token")
-    if revision != snapshot.revision or target_reference.get("contentIdentity") != snapshot.content_identity:
+    expected_identity = target_reference.get("contentIdentity")
+    if revision != snapshot.revision or (expected_identity is not None and expected_identity != snapshot.content_identity):
         return SnapshotCaptureResult("rejected", None, ("E_CONTENT_IDENTITY",))
     project_id = snapshot.project.get("project", {}).get("id")
     if target_reference.get("id") != project_id or not target_reference.get("address") or not target_reference.get("store"):
         return SnapshotCaptureResult("rejected", None, ("E_STORE_REFERENCE",))
-    resource = snapshot_store.publish(snapshot_id, target_reference)
+    verified_reference = deepcopy(target_reference) | {"contentIdentity": snapshot.content_identity}
+    resource = snapshot_store.publish(snapshot_id, verified_reference)
     if resource is None:
         return SnapshotCaptureResult("rejected", None, ("E_SNAPSHOT_EXISTS",))
     return SnapshotCaptureResult("accepted", resource, ())
@@ -125,9 +131,11 @@ def capture_baseline_v02(
     snapshot: ProjectSnapshot = project_store.read()
     if snapshot.revision != base_revision:
         return SnapshotCaptureResult("rejected", None, ("E_CONFLICT",))
-    if target_reference.get("kind") != "project" or target_reference.get("revision", {}).get("token") != snapshot.revision or target_reference.get("contentIdentity") != snapshot.content_identity or target_reference.get("id") != snapshot.project.get("project", {}).get("id"):
+    expected_identity = target_reference.get("contentIdentity")
+    if target_reference.get("kind") != "project" or target_reference.get("revision", {}).get("token") != snapshot.revision or (expected_identity is not None and expected_identity != snapshot.content_identity) or target_reference.get("id") != snapshot.project.get("project", {}).get("id"):
         return SnapshotCaptureResult("rejected", None, ("E_BASELINE_REFERENCE",))
-    reference = registry.publish(snapshot_id, target_reference)
+    verified_reference = deepcopy(target_reference) | {"contentIdentity": snapshot.content_identity}
+    reference = registry.publish(snapshot_id, verified_reference)
     if reference is None:
         return SnapshotCaptureResult("rejected", None, ("E_BASELINE_EXISTS",))
     return SnapshotCaptureResult("accepted", reference, ())
