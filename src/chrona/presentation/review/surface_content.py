@@ -8,7 +8,7 @@ from chrona.presentation.model.projection import ReviewProjection
 from chrona.presentation.model.surface_content import display_value, table_value
 from chrona.presentation.model.surface_content import SurfaceContentInput
 
-def _surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any], summary_profile: dict[str, Any] | None = None, as_of: date | None = None, detail_profile: dict[str, Any] | None = None):
+def build_surface_content_input(projection: ReviewProjection, project: dict[str, Any], view: dict[str, Any], settings: dict[str, Any], summary_profile: dict[str, Any] | None = None, as_of: date | None = None, detail_profile: dict[str, Any] | None = None) -> SurfaceContentInput:
     """Normalize selected table/surface facts once, before Scene construction."""
     columns = tuple((str(column["id"]), str(column["id"]))
                     for column in view["body"].get("tableColumns", ()))
@@ -38,6 +38,10 @@ def _surface_content_input(projection: ReviewProjection, project: dict[str, Any]
         observation_columns=detail.observation_columns,
         observation_rows=detail.observation_rows,
     )
+
+
+# Kept private as a compatibility alias while callers migrate to the explicit boundary.
+_surface_content_input = build_surface_content_input
 
 def _summary_panels(projection: ReviewProjection, profile: dict[str, Any] | None,
                     as_of: date, settings: dict[str, Any]):
