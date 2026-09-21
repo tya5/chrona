@@ -64,6 +64,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                annotation_numbered=annotation_numbered,
                                calendar_closed=_closed_calendar_days(project, projection.window) if body.get("shading", {}).get("nonWorking", temporal.get("calendarClosed", True)) else (),
                                notes=notes, legend_entries=legend, summary_panels=panels,
+                               summary_presentations=tuple((str(item["id"]), str(item.get("presentation", "lines"))) for item in summary_body.get("panels", ())),
                                group_details=resolved_detail.group_details if resolved_detail else (),
                                milestones=resolved_detail.milestones if resolved_detail else (),
                                observation_columns=resolved_detail.observation_columns if resolved_detail else (),
