@@ -1,6 +1,6 @@
 # Table-Timeline Presentation Design
 
-**Status:** Design complete  
+**Status:** Design complete; M27 product binding accepted  
 **Owns:** the M15 table-timeline projection, profile, Scene, and SVG adapter boundary.
 
 ## 1. Contract
@@ -21,6 +21,11 @@ not declared by the active profile, and a comparison facet absent from the View,
 diagnostics. Missing data uses the declared `blank`, `em-dash`, or `unknown` treatment;
 no formatter code, title parsing, or renderer field lookup is permitted.
 
+The application normalizes every cell into `SurfaceContentInput` before Scene
+construction: `blank` becomes the empty string, `em-dash` becomes `—`, and `unknown`
+becomes the literal `unknown`. Scene emits that normalized text verbatim. Neither
+Scene nor SVG receives the enum as a display string or selects an alternative default.
+
 ## 2. Axis, groups, and layout
 
 The View continues to own its explicit temporal window. The profile may use two or
@@ -39,6 +44,12 @@ The profile owns column sizing, row metrics, clipping, and exclusion zones. Rela
 and annotations route deterministically around the table, headers, group surfaces, and
 bars. A collision that cannot be routed produces a diagnostic and a text alternative;
 routes never become View coordinates.
+
+Axis intervals are natural calendar intervals from the resolved View window. The
+declared axis formatting and explicit Render Context locale determine each label. Scene
+measures labels before emission; if a required label does not fit its resolved axis
+slot, it diagnoses overflow instead of using a fixed day stride, overlapping labels,
+or an out-of-bounds final label.
 
 ## 3. Scene and output
 

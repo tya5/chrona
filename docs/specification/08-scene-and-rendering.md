@@ -31,6 +31,21 @@ Scene is a derived artifact. It is not the source of truth for dates, dependenci
 - Scene construction MUST preserve the distinction between semantic dependencies, explanatory arrows, semantic annotations, and presentation annotations.
 - Missing inputs, unresolved tokens, unsupported scale profiles, or failed layout MUST yield diagnostics rather than renderer-specific silent defaults.
 
+### 2.1 M27 public Review SVG binding
+
+For a Render Context whose target is SVG, the public `render-review` application route
+MUST build a completed `SceneSurface` from one `ResolvedPresentationInput` and the
+resolved Layout Manifest, then invoke the SceneSurface SVG adapter. A reduced
+intermediate Scene, an adapter that receives authoring resources, and a serializer
+fallback selected by profile, example, or missing capability are invalid.
+
+Every declared and present slot family is complete-or-diagnose: title, table,
+timeline/axis, legend, notes, group details, observations, milestones, and summary
+either emit their declared primitives or fail before output. Optional families are
+absent only when their resolved input is empty and their profile contract marks them
+optional. The SVG adapter validates primitive bounds and required target capabilities;
+it does not silently clip a required label or substitute a literal policy value.
+
 ## 3. Scene inputs and output
 
 ### 3.1 Explicit inputs
