@@ -228,8 +228,15 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                     from_port_id=f"{source_id}:end", to_port_id=f"{target_id}:start", z_order=len(primitives)))
     legend = by_source.get("legend")
     if legend:
+        legend_size = float(value.theme_tokens.typography("legend")[2])
+        swatch_size = max(2.0, legend_size * 0.8)
         for index, (role, label) in enumerate(value.surface_content.legend_entries):
-            text(f"legend:{role}", role, "legend-label", "text", label, legend.bounds[0], legend.bounds[1] + (index + 1) * float(value.theme_tokens.typography("legend")[2]), typography_role="legend")
+            baseline = legend.bounds[1] + (index + 1) * legend_size
+            primitives.append(ScenePrimitive(f"legend-swatch:{role}", "Rect", role, "legend", "legend-swatch", role,
+                                             (legend.bounds[0], baseline - swatch_size, swatch_size, swatch_size),
+                                             z_order=len(primitives)))
+            text(f"legend:{role}", role, "legend-label", "text", label,
+                 legend.bounds[0] + swatch_size * 1.5, baseline, typography_role="legend")
     notes = by_source.get("notes")
     if notes:
         for index, (note_id, content) in enumerate(value.surface_content.notes):
