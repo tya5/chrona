@@ -154,6 +154,7 @@ allOf:
                         additionalProperties: false
                         properties:
                           id: {type: string, minLength: 1}
+                          track: {enum: [stacked, shared]}
                           source:
                             type: object
                             required: [kind, object]
