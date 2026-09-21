@@ -1,8 +1,7 @@
 # M27 Presentation Product-Path Design Closure Review — 2026-09-21
 
-**Decision:** D27-1 through D27-5 are complete. M27 implementation planning is
-authorized; implementation itself is authorized only by its subsequently published
-implementation plan.
+**Decision:** Superseded by the v0.5 Scene migration amendment. The original D27
+closure did not account for the removed pre-M24 runtime contracts.
 
 ## Cross-boundary result
 
