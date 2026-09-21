@@ -110,3 +110,31 @@ def project_annotation_box(annotation: dict, resolved: AnnotationAnchor, *, anch
             return None
         placement = LabelPlacement(placement.side, box)
     return AnnotationBox(resolved, placement, purpose in {"callout", "note", "explanatory-arrow"})
+
+
+def place_annotation_rail(annotation: dict, resolved: AnnotationAnchor, *, anchor_y: float,
+                          text_size: tuple[float, float], rail: LabelRect,
+                          obstacles: Iterable[LabelRect], overflow: str,
+                          required: bool) -> AnnotationBox | None:
+    """Place an object-anchored callout in its dedicated annotation rail."""
+    width, height = text_size
+    if width > rail.width or height > rail.height:
+        if required or overflow == "diagnose":
+            raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+        return None
+    occupied = tuple(obstacles)
+    y = min(max(anchor_y - height / 2, rail.y), rail.bottom - height)
+    candidates = [y]
+    step = height
+    for index in range(1, int(rail.height // max(1.0, step)) + 1):
+        candidates.extend((y + index * step, y - index * step))
+    for candidate in candidates:
+        box = LabelRect(rail.x, candidate, width, height)
+        if rail.y <= box.y and box.bottom <= rail.bottom and not any(
+            box.x < item.right and item.x < box.right and box.y < item.bottom and item.y < box.bottom
+            for item in occupied
+        ):
+            return AnnotationBox(resolved, LabelPlacement("rail", box), True)
+    if required or overflow == "diagnose":
+        raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+    return None
