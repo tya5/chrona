@@ -104,10 +104,11 @@ diagnostics but never a partial candidate. Accepted reports have `rejected: 0`.
 ### 4.1 Command v0.2
 
 `chrona/command/v0.2` replaces v0.1 for this operational profile. It contains
-`commandId`, `type`, immutable `target`, `baseRevision`, `expectedContentIdentity`,
+`commandId`, `type`, immutable `target`, `baseRevision`, optional `expectedContentIdentity`,
 typed `payload`, optional `actor`, and optional `reason`. `baseRevision` MUST equal
-`target.revision.token`; `expectedContentIdentity` MUST equal `target.contentIdentity`.
-The target never has a raw `path` field. A payload reference is immutable and verified
+the verified target revision token. When supplied, `expectedContentIdentity` MUST equal
+the verified target content identity; when omitted, immutable revision binding remains the
+precondition and the result carries the reader-computed identity. The target never has a raw `path` field. A payload reference is immutable and verified
 before use. Commands are not Presentation resources.
 
 The v0.2 registry is closed: `applyActualIntakeBatch`, `editActualObservation`,
