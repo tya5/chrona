@@ -214,19 +214,9 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if planned_mark is None:
             track = track_placements[layout_instance_id]
             height, y = track.block_size, track.block
-        if contract.labels.enabled:
-            start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
-            label_at = start_at if value.surface_content.label_placement == "plot" and isinstance(start_at, date) else end_at
-            if isinstance(label_at, date):
-                label_content = contract.labels.content
-                label_parts = []
-                if "title" in label_content:
-                    label_parts.append(item.title)
-                if "finishDelta" in label_content and item.finish_delta is not None:
-                    label_parts.append(f"{item.finish_delta:+d}d")
-                if label_parts:
-                    text(f"member-label:{instance_id}", item.object_id, "member-label", "text",
-                         " ".join(label_parts), coordinate(label_at) + height, y + height, typography_role="text")
+        label_id = f"member-label:{instance_id}"
+        if label_id in layout_text:
+            emit_layout_text(label_id, "member-label", "text")
         if source_kind == "combined" and item.finish_delta is not None:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
             text(f"variance:{instance_id}", item.object_id, "finish-delta", role,

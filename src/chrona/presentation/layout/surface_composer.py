@@ -235,6 +235,33 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
                     marks.append(MarkPlacement(f"missing-actual:{instance_id}", item.object_id, bounds,
                                                (x, track.block), (x, track.block)))
+    mark_by_id = {item.placement_id: item for item in marks}
+    if contract.labels.enabled:
+        for review_row in review_rows:
+            for item in review_row.items:
+                layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+                instance_id = layout_id if projection.rows else item.object_id
+                planned = item.planned
+                start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
+                label_at = start_at if request.surface_content.label_placement == "plot" and isinstance(start_at, date) else end_at
+                if not isinstance(label_at, date):
+                    continue
+                parts = []
+                if "title" in contract.labels.content:
+                    parts.append(item.title)
+                if "finishDelta" in contract.labels.content and item.finish_delta is not None:
+                    parts.append(f"{item.finish_delta:+d}d")
+                if not parts:
+                    continue
+                mark = mark_by_id.get(f"planned:{instance_id}")
+                track = track_by_id[layout_id]
+                height = float(mark.bounds.block_size) if mark is not None else track.block_size
+                block = float(mark.bounds.block) if mark is not None else track.block
+                text.append(place_text(placement_id=f"member-label:{instance_id}", source_ref=item.object_id,
+                                       content=" ".join(parts), inline=_coordinate(label_at, scale) + height,
+                                       baseline_block=block + height, typography_role="text",
+                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                       collision_region=f"plot-label:{instance_id}"))
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale, marks=tuple(marks), shapes=tuple(shapes))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
