@@ -1,7 +1,7 @@
 """Current-resource normalization for v0.5 optional Scene content."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Mapping
 
 from chrona.presentation.model.projection import ReviewProjection
@@ -41,8 +41,29 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                    for item in summary_body.get("panels", ()))
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=bool(visible.get("labels", False)), as_of=as_of,
+                               calendar_closed=_closed_calendar_days(project, projection.window),
                                notes=notes, legend_entries=legend, summary_panels=panels,
                                group_details=resolved_detail.group_details if resolved_detail else (),
                                milestones=resolved_detail.milestones if resolved_detail else (),
                                observation_columns=resolved_detail.observation_columns if resolved_detail else (),
                                observation_rows=resolved_detail.observation_rows if resolved_detail else ())
+
+
+def _closed_calendar_days(project: Mapping[str, Any], window: tuple[date, date]) -> tuple[date, ...]:
+    """Derive non-working calendar days from closed Project facts only."""
+    calendar_id = project.get("project", {}).get("calendar")
+    calendar = project.get("calendars", {}).get(calendar_id, {}) if isinstance(calendar_id, str) else {}
+    working = set(calendar.get("working_days", ())) if isinstance(calendar, Mapping) else set()
+    exceptions = {
+        date.fromisoformat(str(entry["date"])): bool(entry["working"])
+        for entry in calendar.get("exceptions", ())
+        if isinstance(entry, Mapping) and entry.get("date") is not None and "working" in entry
+    } if isinstance(calendar, Mapping) else {}
+    names = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+    current, end = window
+    closed = []
+    while current < end:
+        if not exceptions.get(current, names[current.weekday()] in working):
+            closed.append(current)
+        current += timedelta(days=1)
+    return tuple(closed)
