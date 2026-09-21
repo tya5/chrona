@@ -175,6 +175,29 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     if notes:
         for index, (note_id, content) in enumerate(value.surface_content.notes):
             text(f"note:{note_id}", note_id, "project-note", "text", content, notes.bounds[0], notes.bounds[1] + (index + 1) * font_size)
+    detail_slot = by_source.get("group-details")
+    if detail_slot:
+        for index, (group_id, label, description) in enumerate(value.surface_content.group_details):
+            text(f"group-detail:{group_id}", group_id, "group-detail", "text", f"{label}: {description}", detail_slot.bounds[0], detail_slot.bounds[1] + (index + 1) * font_size)
+    milestone_slot = by_source.get("milestones")
+    if milestone_slot:
+        for index, (object_id, label, at) in enumerate(value.surface_content.milestones):
+            text(f"milestone:{object_id}", object_id, "milestone-digest-entry", "text", f"{label} — {at.isoformat()}", milestone_slot.bounds[0], milestone_slot.bounds[1] + (index + 1) * font_size)
+    summary_slot = by_source.get("summary")
+    if summary_slot:
+        line = 1
+        for panel_id, panel_title, metrics in value.surface_content.summary_panels:
+            text(f"summary:{panel_id}", panel_id, "summary-header", "text", panel_title, summary_slot.bounds[0], summary_slot.bounds[1] + line * font_size); line += 1
+            for key, metric_value in metrics:
+                text(f"summary:{panel_id}:{key}", panel_id, "summary-metric", "text", f"{key}: {metric_value}", summary_slot.bounds[0], summary_slot.bounds[1] + line * font_size); line += 1
+    annotation_slot = by_source.get("annotations")
+    if annotation_slot:
+        for index, annotation in enumerate(value.surface_content.annotations):
+            annotation_id, content = str(annotation.get("id", index)), str(annotation.get("text", ""))
+            width, height = min(annotation_slot.bounds[2], max(font_size * 4, value.font_metrics.width(content, font_size))), font_size * line_height
+            bounds = (annotation_slot.bounds[0], annotation_slot.bounds[1] + index * height, width, height)
+            primitives.append(ScenePrimitive(f"annotation-box:{annotation_id}", "Rect", annotation_id, "annotation", "annotation-box", "annotation", bounds, z_order=len(primitives)))
+            text(f"annotation-text:{annotation_id}", annotation_id, "annotation-text", "text", content, bounds[0], bounds[1] + font_size)
     return SceneSurface("table-timeline", slots, rows, tuple(groups), scale, tuple(primitives))
 
 
