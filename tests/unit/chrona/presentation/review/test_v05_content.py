@@ -58,3 +58,36 @@ def test_typed_summary_figures_resolve_projection_and_actual_facts():
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
                                           actual_set={"body": {"asOf": "2026-02-03"}}, summary=summary)
     assert value.summary_panels == (("facts", "facts", (("As of", "2026-02-03"), ("Next", "2026-02-04"), ("Selected", "2"), ("Variance", "1"))),)
+
+
+def test_target_summary_figure_list_form_is_resolved_without_copied_values():
+    projection = ReviewProjection((
+        ReviewItem("launch", "Launch", "point", {"at": date(2026, 3, 8)}, None, None, ()),
+        ReviewItem("late", "Late", "span", {"start": date(2026, 3, 1), "end": date(2026, 3, 2)}, None, 4, ()),
+    ), (date(2026, 3, 1), date(2026, 3, 9)), (), ())
+    summary = {"body": {"panels": [{"id": "figures", "presentation": "figures", "metrics": [
+        {"id": "as-of", "label": "as of", "source": {"actual": "asOf"}, "format": "date"},
+        {"id": "launch", "label": "launch", "source": {"object": "launch", "facet": "planned"}, "format": "date"},
+        {"id": "variance", "label": "behind / ahead", "source": {"counts": "finishDelta"}, "format": "text"},
+    ]}]}}
+    view = {"body": {"tableColumns": (), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+                                          actual_set={"body": {"asOf": "2026-03-04"}}, summary=summary)
+    assert value.summary_panels == (("figures", "figures", (("as of", "2026-03-04"), ("launch", "2026-03-08"), ("behind / ahead", "1 / 0"))),)
+
+
+def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
+    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 3, 1), "end": date(2026, 3, 2)}, None, 2, ()),),
+                                  (date(2026, 3, 1), date(2026, 3, 8)), (), ())
+    view = {"body": {"tableColumns": (),
+                     "visibility": {"labels": {"placement": "plot", "content": ["title", "finishDelta"], "side": "auto"},
+                                    "relations": "none", "annotations": {"mode": "presentation", "marker": "numbered"}},
+                     "axis": {"levels": [{"unit": "quarter", "format": "year-quarter"}, {"unit": "month", "format": "short-month"}], "ticks": "week"},
+                     "markers": [{"kind": "asOf", "source": "actual", "label": "as of"}], "shading": {"nonWorking": False}}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+                                          actual_set={"body": {"asOf": "2026-03-04"}})
+    assert value.label_placement == "plot"
+    assert value.label_content == ("title", "finishDelta")
+    assert value.axis_levels == (("quarter", "year-quarter"), ("month", "short-month"))
+    assert value.axis_ticks == "week"
+    assert value.as_of_label == "as of"
