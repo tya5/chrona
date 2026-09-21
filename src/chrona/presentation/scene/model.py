@@ -69,6 +69,7 @@ class SceneRow:
     object_id: str
     group_id: str
     bounds: tuple[float, float, float, float]
+    row_id: str = ""
 
 
 @dataclass(frozen=True)
