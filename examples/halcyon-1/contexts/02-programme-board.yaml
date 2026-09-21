@@ -11,6 +11,7 @@ body:
     address: project.yaml
     revision:
       token: example-v1
+    contentIdentity: sha256:98ed7b028bad972a34541f24415f432181552902212cbef53e32abc0af953efb
   view:
     id: halcyon-02-programme-board
     kind: view
@@ -20,6 +21,7 @@ body:
     address: views/02-programme-board.yaml
     revision:
       token: example-v1
+    contentIdentity: sha256:c97639b1a5f898fe827709e9c735e92ee9590b698ee9661b665f01fd2e33a20c
   theme:
     id: wallboard
     kind: theme
@@ -29,6 +31,7 @@ body:
     address: themes/wallboard.yaml
     revision:
       token: example-v1
+    contentIdentity: sha256:6565c67eb153c0eb88076b5cc0fbc4f7a4d46316a14a38eb9e283de3836b9f24
   colorScheme:
     id: control-room-dark
     kind: color-scheme
@@ -38,6 +41,7 @@ body:
     address: schemes/control-room-dark.yaml
     revision:
       token: example-v1
+    contentIdentity: sha256:d85a968a46ca7a4b9f63ff90ae223f689595d1bbf08cec0aca8f489a8e8851ba
   layout:
     id: wallboard
     kind: layout-profile
@@ -47,6 +51,7 @@ body:
     address: layouts/wallboard.yaml
     revision:
       token: example-v1
+    contentIdentity: sha256:8f031d1d11125613e9070e3e343ef4b4079bbb74633cb08bba961e6c025a7bd6
   inputs:
     actual:
       id: halcyon-1-observed-2027-08-20
@@ -57,6 +62,7 @@ body:
       address: actual.yaml
       revision:
         token: example-v1
+      contentIdentity: sha256:bc99b48e780d281d9f800a49df1bafc5af87ed1fe6c70b41063bd9fa036c8b62
     summaryProfile:
       id: halcyon-key-figures
       kind: summary-profile
@@ -66,6 +72,7 @@ body:
       address: profiles/summary.yaml
       revision:
         token: example-v1
+      contentIdentity: sha256:4a9adf7a57d91a97c2667fe05e058678d7c4164021e8707f873cc43db490a747
   environment:
     viewport:
       inlineSize: 1920
