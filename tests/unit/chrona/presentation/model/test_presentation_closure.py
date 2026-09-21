@@ -26,27 +26,29 @@ def test_closure_rejects_path_escape_before_reading_snapshot(tmp_path):
         resolve_render_context({"id": "ctx", "kind": "render-context", "store": {"provider": "local", "identity": "closure-test"}, "address": "../context.yaml", "revision": {"token": "snapshot-1"}, "contentIdentity": "sha256:" + "0" * 64}, reader)
 
 
-def test_v04_closure_binds_theme_and_layout_separately(tmp_path):
+def test_v05_closure_binds_theme_scheme_and_layout_separately(tmp_path):
     project = {"version": "timeline/v0.1", "project": {"id": "p"}, "objects": {}}
     view = {"version": "chrona/presentation/v0.1", "kind": "view", "id": "v", "body": {}}
-    theme = {"version": "chrona/presentation/v0.1", "kind": "theme", "id": "t", "body": {"values": {}, "roles": {}}}
+    theme = {"version": "chrona/theme/v0.2", "kind": "theme", "id": "t", "body": {"values": {}, "roles": {}, "colorBindings": {"text.fill": "text"}}}
+    scheme = {"version": "chrona/color-scheme/v0.1", "kind": "color-scheme", "id": "s", "body": {"colors": {name: "#112233" for name in ("surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral")}, "category": ["#112233"], "suitability": {"background": "light", "colorVision": ["none-claimed"], "print": "not-claimed"}, "provenance": {"kind": "chrona-authored", "source": "test", "license": "pending"}}}
     layout = {"version": "chrona/layout-profile/v0.2", "id": "l", "writingMode": "horizontal-tb", "root": {}}
     refs = {}
     for name, kind, identifier, value in (
         ("project", "project", "p", project), ("view", "view", "v", view),
-        ("theme", "theme", "t", theme), ("layout", "layout-profile", "l", layout),
+        ("theme", "theme", "t", theme), ("scheme", "color-scheme", "s", scheme), ("layout", "layout-profile", "l", layout),
     ):
         payload = _write(tmp_path, f"{name}.yaml", value)
         refs[name] = _ref(kind, identifier, f"{name}.yaml", payload)
     identity = "sha256:" + "a" * 64
     context = {
-        "version": "chrona/presentation/v0.4", "kind": "render-context", "id": "ctx",
+        "version": "chrona/presentation/v0.5", "kind": "render-context", "id": "ctx",
         "body": {
-            **refs, "inputs": {},
+            "project": refs["project"], "view": refs["view"], "theme": refs["theme"],
+            "colorScheme": refs["scheme"], "layout": refs["layout"], "inputs": {},
             "environment": {"viewport": {"inlineSize": 1000, "blockSize": 600}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v1", "assets": [{"family": "Noto Sans", "weight": 400, "revision": "font-v1", "contentIdentity": identity, "path": "fonts/noto.json"}], "missingFont": "diagnose"}, "scenePrecision": 3},
             "target": {"kind": "svg", "capabilities": ["accessibleText"]},
         },
     }
-    payload = _write(tmp_path, "context-v04.yaml", context)
-    _, closure = resolve_render_context(_ref("render-context", "ctx", "context-v04.yaml", payload), LocalSnapshotReader(tmp_path, "closure-test"))
-    assert [(item.kind, item.id) for item in closure] == [("project", "p"), ("view", "v"), ("theme", "t"), ("layout-profile", "l")]
+    payload = _write(tmp_path, "context-v05.yaml", context)
+    _, closure = resolve_render_context(_ref("render-context", "ctx", "context-v05.yaml", payload), LocalSnapshotReader(tmp_path, "closure-test"))
+    assert [(item.kind, item.id) for item in closure] == [("project", "p"), ("view", "v"), ("theme", "t"), ("color-scheme", "s"), ("layout-profile", "l")]
