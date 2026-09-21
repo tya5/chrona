@@ -1,20 +1,8 @@
-version: chrona/presentation/v0.1
+version: chrona/theme/v0.2
 kind: theme
 id: executive-light
 body:
   values:
-    canvas: {type: color, value: '#FFFFFF'}
-    ink: {type: color, value: '#172033'}
-    grid: {type: color, value: '#C9CED8'}
-    grid-light: {type: color, value: '#E6E9EE'}
-    header: {type: color, value: '#EAF0F8'}
-    group: {type: color, value: '#EEF3F8'}
-    group-firmware: {type: color, value: '#E7F0FA'}
-    group-validation: {type: color, value: '#E8F6F0'}
-    group-product: {type: color, value: '#FFF4E4'}
-    plan: {type: color, value: '#3986E6'}
-    actual: {type: color, value: '#269D79'}
-    delay: {type: color, value: '#C8762B'}
     editorial: {type: fontFamily, value: 'Nimbus Sans, Arial, sans-serif'}
     spacing.none: {type: number, value: 0}
     spacing.s: {type: number, value: 8}
@@ -29,19 +17,21 @@ body:
     table-column-width: {type: number, value: 120}
     table-header-height: {type: number, value: 44}
   roles:
-    background: {fill: canvas}
-    text: {fill: ink, fontFamily: editorial}
-    axis-major: {stroke: grid}
-    axis-minor: {stroke: grid-light}
-    table-header: {fill: header}
-    group-band: {fill: group}
-    'group:factory-team': {fill: group-product}
-    'group:fw-team': {fill: group-firmware}
-    'group:validation-team': {fill: group-validation}
-    planned: {fill: plan}
-    actual: {fill: actual}
-    variance-behind: {stroke: delay}
-    dependency: {stroke: grid}
+    text: {fontFamily: editorial}
+  colorBindings:
+    background.fill: surface
+    text.fill: text
+    axis-major.stroke: neutral
+    axis-minor.stroke: surfaceRaised
+    table-header.fill: surfaceRaised
+    group-band.fill: category
+    'group:factory-team.fill': category
+    'group:fw-team.fill': category
+    'group:validation-team.fill': category
+    planned.fill: accent
+    actual.fill: positive
+    variance-behind.stroke: warning
+    dependency.stroke: neutral
   metrics:
     text.body.size: text-size
     text.body.lineHeight: text-line-height
