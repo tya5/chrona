@@ -1,6 +1,6 @@
 # M25 Color Scheme Design Plan — 2026-09-21
 
-**Status:** Design planning only; implementation is not authorized.  
+**Status:** C25-D1 complete; C25-D2/C25-D3 remain before implementation authorization.  
 **Origin:** GitHub issue #27.  
 **Milestone:** M25 — Color Scheme authoring.
 
