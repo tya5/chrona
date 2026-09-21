@@ -168,6 +168,13 @@ client transport location and has no authority to alter the reference's provider
 identity, address, revision, or digest. Credentials are not representable in this file.
 Future credential-bearing providers require a new versioned config format and ADR.
 
+For a local writable Actual Store, an immutable Actual-set reference resolves as
+`<root>/<revision-token>/<address>`, with `address: actuals/<id>.yaml`. The only mutable
+adapter state is the non-input pointer `<root>/actual-tips/<id>.json`. An apply first
+compares that pointer with `target.revision.token`, writes a complete new token
+directory, then atomically advances the pointer. The pointer, root default, and latest
+token are never accepted in a command document.
+
 | Command | Required inputs | Mutation | Output |
 |---|---|---|---|
 | `chrona command-check` | `--command`, store configuration, `--result` | none | atomic result file |
