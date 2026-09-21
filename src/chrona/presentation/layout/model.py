@@ -54,6 +54,8 @@ class LayoutDecision:
     source: str | None = None
     alignment: Mapping[str, str] = field(default_factory=dict)
     references: tuple[str, ...] = ()
+    priority: str | None = None
+    overflow: str | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +90,8 @@ class LayoutManifest:
                     "id": item.node_id,
                     "kind": item.kind,
                     "references": list(item.references),
+                    "priority": item.priority,
+                    "overflow": item.overflow,
                     "source": item.source,
                 }
                 for item in sorted(self.decisions, key=lambda value: value.node_id)
@@ -98,4 +102,3 @@ class LayoutManifest:
             "writingMode": self.writing_mode,
         }
         return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
-

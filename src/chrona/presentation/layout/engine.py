@@ -154,7 +154,9 @@ class _Arranger:
 
     def arrange(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
         kind, node_id = str(node["kind"]), str(node["id"])
-        self.decisions.append(LayoutDecision(node_id, kind, rect, node.get("source"), node.get("place", {}), references))
+        self.decisions.append(LayoutDecision(node_id, kind, rect, node.get("source"), node.get("place", {}), references,
+                                             node.get("priority") if kind == "slot" else None,
+                                             node.get("overflow") if kind == "slot" else None))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)
             if node["overflow"] == "diagnose" and (rect.inline_size < measure.min_inline or rect.block_size < measure.min_block):

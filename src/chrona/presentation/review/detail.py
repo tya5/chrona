@@ -8,6 +8,7 @@ from typing import Any, Iterable, Mapping
 import yaml
 
 from chrona.resources import schema_resource
+from chrona.presentation.layout.model import LayoutManifest
 from jsonschema import Draft202012Validator
 
 
@@ -109,3 +110,52 @@ def resolve_review_detail_profile(profile: Mapping[str, Any] | None, items: Iter
             rows_list.append((str(entry["id"]), source, str(entry.get("emphasis", "normal")), cells))
         rows = tuple(rows_list)
     return ResolvedReviewDetail(groups, tuple(milestones), columns, rows)
+
+
+def resolve_v05_review_detail_profile(profile: Mapping[str, Any] | None, items: Iterable[object],
+                                      manifest: LayoutManifest) -> ResolvedReviewDetail:
+    """Resolve current Detail Profile against an immutable Layout Manifest only."""
+    sources = {item.source for item in manifest.decisions if item.source}
+    required = {item.source for item in manifest.decisions if item.source and item.kind == "slot" and item.priority == "required"}
+    body = (profile or {}).get("body", {})
+    mapping = {"groupDetails": "group-details", "milestones": "milestones", "observations": "observations"}
+    for key, source in mapping.items():
+        if key in body and source not in sources:
+            raise ReviewDetailError("E_DETAIL_SLOT_REQUIRED")
+        if key not in body and source in required:
+            raise ReviewDetailError("E_LAYOUT_SOURCE_UNAVAILABLE")
+    if profile is None:
+        return ResolvedReviewDetail()
+    _validate_shape(profile)
+    selected = tuple(items)
+    items_by_id = {str(getattr(item, "object_id")): item for item in selected}
+    group_order = tuple(dict.fromkeys(str(getattr(item, "group_id", "")) for item in selected))
+    group_values = body.get("groupDetails", ())
+    _unique((str(entry["groupId"]) for entry in group_values), "E_DETAIL_DUPLICATE_GROUP")
+    group_by_id = {str(entry["groupId"]): entry for entry in group_values}
+    if any(group_id not in group_order for group_id in group_by_id):
+        raise ReviewDetailError("E_DETAIL_GROUP_REFERENCE")
+    groups = tuple((group_id, str(group_by_id[group_id]["label"]), str(group_by_id[group_id]["description"]))
+                   for group_id in group_order if group_id in group_by_id)
+    milestone_ids = tuple(str(item) for item in body.get("milestones", ()))
+    _unique(milestone_ids, "E_DETAIL_DUPLICATE_MILESTONE")
+    milestones = []
+    for object_id in milestone_ids:
+        item = items_by_id.get(object_id)
+        planned = getattr(item, "planned", {}) if item is not None else {}
+        if item is None or str(getattr(item, "source_type", "")) != "point" or not isinstance(planned.get("at"), date):
+            raise ReviewDetailError("E_DETAIL_MILESTONE_REFERENCE")
+        milestones.append((object_id, str(getattr(item, "title", object_id)), planned["at"]))
+    observation = body.get("observations")
+    if observation is None:
+        return ResolvedReviewDetail(groups, tuple(milestones))
+    columns = tuple((str(entry["id"]), str(entry["label"])) for entry in observation["columns"])
+    column_ids = tuple(column_id for column_id, _ in columns)
+    _unique(column_ids, "E_DETAIL_DUPLICATE_COLUMN")
+    rows = []
+    for entry in observation["rows"]:
+        if set(entry["cells"]) != set(column_ids):
+            raise ReviewDetailError("E_DETAIL_OBSERVATION_CELLS")
+        rows.append((str(entry["id"]), str(entry["source"]), str(entry.get("emphasis", "normal")),
+                     tuple((column_id, str(entry["cells"][column_id])) for column_id in column_ids)))
+    return ResolvedReviewDetail(groups, tuple(milestones), columns, tuple(rows))
