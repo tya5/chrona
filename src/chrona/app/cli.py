@@ -216,13 +216,10 @@ def _run_render_review(args: argparse.Namespace) -> None:
     viewport = environment["viewport"]
     manifest = solve_layout(resolved_layout, viewport_inline=viewport["inlineSize"], viewport_block=viewport["blockSize"], measurements=node_measurements)
     capabilities = set(context["body"]["target"]["capabilities"])
-    from chrona.presentation.model.surface_content import SurfaceContentInput, display_value, table_value
+    from chrona.presentation.review.v05_content import normalize_v05_surface_content
     from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
     from chrona.presentation.renderers.v05_svg import render_v05_svg
-    columns = tuple((str(column["id"]), str(column["id"])) for column in view["body"].get("tableColumns", ()))
-    cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, project, column["source"]), column["missing"]))
-                  for item in projection.items for column in view["body"].get("tableColumns", ()))
-    scene_input = build_scene_input(projection=projection, surface_content=SurfaceContentInput(table_columns=columns, table_cells=cells),
+    scene_input = build_scene_input(projection=projection, surface_content=normalize_v05_surface_content(projection, project, view),
                                     layout_manifest=manifest, resolved_theme=theme, font_metrics=font_metrics,
                                     measured_sources=measured, capabilities={name: True for name in capabilities})
     svg = render_v05_svg(compose_review_surface(scene_input), viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])), tokens=scene_input.theme_tokens)

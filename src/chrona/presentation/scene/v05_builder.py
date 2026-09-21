@@ -10,6 +10,7 @@ from datetime import date
 from typing import Any, Mapping
 
 from chrona.presentation.layout.axis import axis_intervals
+from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
@@ -118,6 +119,9 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if row is not None and index is not None:
             text(f"cell:{object_id}:{column_id}", object_id, "table-cell", "text", cell,
                  table.bounds[0] + index * column_width, row.bounds[1] + row.bounds[3] / 2 + font_size / 2)
+    for group in groups:
+        primitives.append(ScenePrimitive(f"group:{group.group_id}", "Rect", group.group_id, "group", "group-decoration", "group-band",
+                                         group.content_bounds, opacity=0.12, z_order=len(primitives)))
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
     for item, row in zip(projection.items, rows, strict=True):
@@ -154,6 +158,23 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
                                          (x, timeline.bounds[1], 0, timeline.bounds[3]), points=((x, axis.bounds[1]), (x, timeline.bounds[1] + timeline.bounds[3])), z_order=len(primitives)))
         text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", interval.label, x, axis.bounds[1] + font_size)
+    anchors = {row.object_id: (row.bounds[0] + row.bounds[2], row.bounds[1] + row.bounds[3] / 2) for row in rows}
+    obstacles = tuple(row.bounds for row in rows)
+    for relation in value.surface_content.relations:
+        source = relation.get("from", {}).get("object")
+        target = relation.get("to", {}).get("object")
+        if source in anchors and target in anchors:
+            points = route_orthogonal(anchors[source], anchors[target], obstacles, bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
+            primitives.append(ScenePrimitive(f"relation:{relation.get('id', source + '-' + target)}", "Path", str(relation.get("id", "")), "relation", "dependency", "dependency",
+                                             (0, 0, 0, 0), points=points, from_port_id=f"{source}:end", to_port_id=f"{target}:start", z_order=len(primitives)))
+    legend = by_source.get("legend")
+    if legend:
+        for index, (role, label) in enumerate(value.surface_content.legend_entries):
+            text(f"legend:{role}", role, "legend-label", "text", label, legend.bounds[0], legend.bounds[1] + (index + 1) * font_size)
+    notes = by_source.get("notes")
+    if notes:
+        for index, (note_id, content) in enumerate(value.surface_content.notes):
+            text(f"note:{note_id}", note_id, "project-note", "text", content, notes.bounds[0], notes.bounds[1] + (index + 1) * font_size)
     return SceneSurface("table-timeline", slots, rows, tuple(groups), scale, tuple(primitives))
 
 

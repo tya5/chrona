@@ -7,7 +7,8 @@
 | I27-R1 | `ThemeTokenView`, v0.5 Scene builder input seam including immutable `MeasuredSources`, and missing token/input diagnostics | typed token/measurement tests; no legacy settings/paint shape import; full regression |
 | I27-R2 | Core SceneSurface: slots/rows/groups, measured typography/table cells, calendar axis, plan/Actual/milestone/variance/missing-Actual primitives | A27-02–A27-04; overflow and provenance tests |
 | I27-R3A | v0.5 SVG token adapter and current Theme role closure | adapter has no raw-resource reads; full regression |
-| I27-R3B | Optional Scene families: group decoration, legend, detail/summary, annotations, finite routes/markers | A27-01/A27-05/A27-06 |
+| I27-R3B1 | Optional content normalization, group decoration, legend/notes, and finite dependency routes | full regression and conformance |
+| I27-R3B2 | Remaining optional families: detail/summary, annotations, and markers | A27-01/A27-05/A27-06 |
 | I27-R4 | Public CLI switch and removal of reduced-path reachability | A27-08; Context/Color Scheme/Layout integration tests |
 | I27-R5 | Generic materializer, example reproduction, conformance, final review and issue closure | A27-07/A27-09/A27-10; full suite and conformance |
 
