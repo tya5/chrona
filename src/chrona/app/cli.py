@@ -134,6 +134,12 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--store-identity", required=True)
     command.add_argument("--output", "-o", required=True)
 
+    command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
+    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.5 resource-reference YAML; repeat for each scheme")
+    command.add_argument("--snapshot-root", required=True)
+    command.add_argument("--store-identity", required=True)
+    command.add_argument("--output-directory", required=True)
+
     command = sub.add_parser("review", help="compare two immutable Project snapshots", description="compare two immutable Project snapshots")
     command.add_argument("before_reference")
     command.add_argument("candidate_reference")
@@ -214,9 +220,41 @@ def _run_render_review(args: argparse.Namespace) -> None:
     Path(args.output).write_text(svg, encoding="utf-8")
 
 
+def _run_render_review_gallery(args: argparse.Namespace) -> None:
+    if len(args.context_reference) < 2:
+        raise CliFailure("E_SCHEME_GALLERY_INPUT", "at least two Context references are required", "gallery")
+    destination = Path(args.output_directory)
+    if destination.exists() and any(destination.iterdir()):
+        raise CliFailure("E_SCHEME_GALLERY_OUTPUT", "output directory must be empty", "gallery")
+    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity)
+    entries = []
+    for reference_path in args.context_reference:
+        context, resources = resolve_render_context(load_yaml(reference_path), reader)
+        scheme = next((item for item in resources if item.kind == "color-scheme"), None)
+        if scheme is None:
+            raise CliFailure("E_CONTEXT_COLOR_SCHEME", "Color Scheme closure is missing", "gallery")
+        entries.append((scheme.id, scheme.content_identity, context["id"], reference_path))
+    if len({entry[1] for entry in entries}) != len(entries):
+        raise CliFailure("E_SCHEME_GALLERY_DUPLICATE", "Color Scheme content identity is duplicated", "gallery")
+    entries.sort(key=lambda entry: (entry[0], entry[1]))
+    if len({entry[0] for entry in entries}) != len(entries):
+        raise CliFailure("E_SCHEME_GALLERY_DUPLICATE", "Color Scheme IDs must be unique in one gallery", "gallery")
+    destination.mkdir(parents=True, exist_ok=True)
+    outputs = []
+    for scheme_id, identity, context_id, reference_path in entries:
+        output = destination / f"{scheme_id}.svg"
+        rendered_args = argparse.Namespace(**vars(args), context_reference=reference_path, output=str(output))
+        _run_render_review(rendered_args)
+        outputs.append({"contextId": context_id, "colorScheme": {"id": scheme_id, "contentIdentity": identity}, "output": output.name})
+    (destination / "gallery.json").write_text(json.dumps({"results": outputs}, indent=2) + "\n", encoding="utf-8")
+
+
 def _run(args: argparse.Namespace) -> None:
     if args.command == "render-review":
         _run_render_review(args)
+        return
+    if args.command == "render-review-gallery":
+        _run_render_review_gallery(args)
         return
     if args.command == "review":
         reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity)
