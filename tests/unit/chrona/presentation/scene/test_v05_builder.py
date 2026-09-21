@@ -216,3 +216,20 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
     assert any(node.scene_id == "group-header:fw" and node.text == "Firmware team"
                for node in surface.primitives)
     assert surface.groups[0].header_bounds is not None
+
+
+def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 10)), (), ())
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection,
+                              surface_content=SurfaceContentInput(as_of=date(2026, 1, 5)),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    assert next(node for node in surface.primitives if node.scene_id == "as-of").visual_role == "as-of"
+    assert any(node.scene_id == "as-of-label" for node in surface.primitives)
