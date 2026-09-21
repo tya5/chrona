@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.4
+version: chrona/presentation/v0.5
 kind: render-context
 id: controller-z-executive
 body:
@@ -22,7 +22,14 @@ body:
     store: {provider: local, identity: controller-z-example}
     address: themes/executive-light.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:6c444e4f06fb9e87eb1728c06026c68cb42bfaa629b783f399d13f7624f3c57f
+    contentIdentity: sha256:b4376467d3d4c26a43abaab1f06d4ef418e88ac9586cf76371b18e9f23cd6cb6
+  colorScheme:
+    id: executive-light
+    kind: color-scheme
+    store: {provider: local, identity: controller-z-example}
+    address: schemes/executive-light.yaml
+    revision: {token: example-v1}
+    contentIdentity: sha256:3371417868aa9abe64233c484ea88c97cf2ad42242dfe06406808619915bcf1b
   layout:
     id: executive-review
     kind: layout-profile
