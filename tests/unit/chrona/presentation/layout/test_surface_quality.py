@@ -4,7 +4,9 @@ import pytest
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import (
+    MarkPlacement,
     RelationPlacement,
+    ShapePlacement,
     SurfacePlacement,
     TextPlacement,
     intersects,
@@ -33,3 +35,15 @@ def test_surface_placement_allows_explicit_relation_suppression_only_with_diagno
     SurfacePlacement(relations=(RelationPlacement("r", "a:end", "b:start", suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_RELATION_SUPPRESSION_INVALID:r"):
         SurfacePlacement(relations=(RelationPlacement("r", "a:end", "b:start", suppressed=True),)).assert_valid()
+
+
+def test_surface_placement_validates_completed_mark_and_shape_geometry():
+    bounds = _rect(1, 2, 3, 4)
+    SurfacePlacement(
+        marks=(MarkPlacement("mark:a", "a", bounds, (1.0, 4.0), (4.0, 4.0)),),
+        shapes=(ShapePlacement("path:a", "a", "Path", bounds, ((1.0, 2.0), (4.0, 6.0))),),
+    ).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_MARK_PLACEMENT_INVALID:mark:bad"):
+        SurfacePlacement(marks=(MarkPlacement("mark:bad", "a", _rect(0, 0, 0, 1), (0, 0), (0, 0)),)).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_SHAPE_PLACEMENT_INVALID:path:bad"):
+        SurfacePlacement(shapes=(ShapePlacement("path:bad", "a", "Path", bounds, ((1.0, 2.0),)),)).assert_valid()
