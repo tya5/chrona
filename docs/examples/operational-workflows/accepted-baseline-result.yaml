@@ -1,0 +1,20 @@
+version: chrona/automation-result/v0.1
+operation: baseline-capture
+status: accepted
+requestContentIdentity: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+inputs:
+  - id: controller-x
+    kind: project
+    store: {provider: git, identity: github.com/acme/controller}
+    address: project.yaml
+    revision: {token: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df}
+    contentIdentity: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+resultTarget:
+  id: baseline-q2
+  kind: snapshot-ref
+  store: {provider: local, identity: ci-baselines}
+  address: snapshots/baseline-q2.yaml
+  revision: {token: registry:2026-04-24}
+  contentIdentity: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+diagnostics: []
+artifacts: []
