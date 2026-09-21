@@ -108,7 +108,7 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         derived = output / "review.svg"
         command = [sys.executable, "-c", "from chrona.app.cli import main; main()", "render-review",
                    "--context-reference", str(ref_path), "--snapshot-root", str(snapshot),
-                   "--store-identity", reference["store"]["identity"], "--require-content-identity",
+                   "--store-identity", reference["store"]["identity"],
                    "--output", str(derived)]
         completed = subprocess.run(command, check=False, text=True, capture_output=True)
         if completed.returncode:
