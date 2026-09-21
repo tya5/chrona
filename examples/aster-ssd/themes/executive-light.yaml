@@ -53,7 +53,7 @@ body:
     variance-on-track.fill: neutral
     variance-behind.fill: warning
     variance-behind.stroke: warning
-    dependency.stroke: neutral
+    dependency.stroke: textMuted
     annotation.fill: surfaceRaised
     annotation.stroke: neutral
   metrics:
