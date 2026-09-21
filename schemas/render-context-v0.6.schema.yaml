@@ -31,7 +31,7 @@ properties:
 $defs:
   reference:
     type: object
-    required: [id, kind, store, address, revision, contentIdentity]
+    required: [id, kind, store, address, revision]
     additionalProperties: false
     properties:
       id: {type: string, minLength: 1}
