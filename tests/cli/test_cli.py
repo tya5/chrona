@@ -147,7 +147,7 @@ def test_cli_propose_set_distinguishes_literal_and_json_values(tmp_path, monkeyp
     assert json.loads(capsys.readouterr().out)["project"]["objects"]["gate"]["fields"]["rank"] == 3
 
 
-def test_cli_render_review_uses_only_an_immutable_v04_context(tmp_path, monkeypatch):
+def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     token = "snapshot-render"
     project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text())
@@ -168,12 +168,25 @@ def test_cli_render_review_uses_only_an_immutable_v04_context(tmp_path, monkeypa
         "table.column.minInlineSize": "metric.column-width", "table.header.blockSize": "metric.header-height",
     }
     theme["body"]["roles"]["dependency"] = {"stroke": "grid"}
+    old_values, old_roles = theme["body"]["values"], theme["body"]["roles"]
+    intent = {"canvas": "surface", "ink": "text", "grid": "neutral", "grid-light": "surfaceRaised", "header": "surfaceRaised", "group": "category", "group-firmware": "category", "group-validation": "category", "group-product": "category", "plan": "accent", "actual": "positive", "delay": "warning"}
+    bindings, non_color_roles = {}, {}
+    for role, properties in old_roles.items():
+        retained = {key: value for key, value in properties.items() if key not in {"fill", "stroke"}}
+        if retained:
+            non_color_roles[role] = retained
+        for property_name in ("fill", "stroke"):
+            if property_name in properties:
+                bindings[f"{role}.{property_name}"] = intent[properties[property_name]]
+    theme = {"version": "chrona/theme/v0.2", "kind": "theme", "id": theme["id"], "body": {"values": {key: value for key, value in old_values.items() if value["type"] != "color"}, "roles": non_color_roles, "metrics": theme["body"]["metrics"], "colorBindings": bindings}}
+    scheme = {"version": "chrona/color-scheme/v0.1", "kind": "color-scheme", "id": "test-light", "body": {"colors": {"surface": "#FFFFFF", "surfaceRaised": "#E6E9EE", "text": "#172033", "textMuted": "#4B5563", "accent": "#3986E6", "positive": "#269D79", "negative": "#B91C1C", "warning": "#C8762B", "neutral": "#C9CED8"}, "category": ["#E7F0FA", "#E8F6F0", "#FFF4E4"], "suitability": {"background": "light", "colorVision": ["none-claimed"], "print": "not-claimed"}, "provenance": {"kind": "chrona-authored", "source": "test", "license": "pending"}}}
     layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text())
     refs = {
         "project": _snapshot_resource(tmp_path, token, "project.yaml", project, "project", project["project"]["id"]),
         "view": _snapshot_resource(tmp_path, token, "view.yaml", view, "view", view["id"]),
         "actual": _snapshot_resource(tmp_path, token, "actual.yaml", actual, "actual-set", actual["id"]),
         "theme": _snapshot_resource(tmp_path, token, "theme.yaml", theme, "theme", theme["id"]),
+        "colorScheme": _snapshot_resource(tmp_path, token, "scheme.yaml", scheme, "color-scheme", scheme["id"]),
         "layout": _snapshot_resource(tmp_path, token, "layout.yaml", layout, "layout-profile", layout["id"]),
     }
     font_source = root / "src/chrona/resources/font_metrics/nimbus-sans-regular-v1.json"
@@ -181,9 +194,9 @@ def test_cli_render_review_uses_only_an_immutable_v04_context(tmp_path, monkeypa
     font_path = tmp_path / token / "font_metrics/nimbus-sans-regular-v1.json"
     font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
     context = {
-        "version": "chrona/presentation/v0.4", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/presentation/v0.5", "kind": "render-context", "id": "controller-z-current",
         "body": {
-            "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "layout": refs["layout"],
+            "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},
             "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v1", "assets": [{"family": "Nimbus Sans", "weight": 400, "revision": "font-v1", "contentIdentity": "sha256:" + sha256(font_payload).hexdigest(), "path": "font_metrics/nimbus-sans-regular-v1.json"}], "missingFont": "diagnose"}, "scenePrecision": 3},
             "target": {"kind": "svg", "capabilities": sorted([
