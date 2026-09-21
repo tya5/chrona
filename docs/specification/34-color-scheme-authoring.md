@@ -17,9 +17,9 @@ The resource is `chrona/color-scheme/v0.1`, validated by `schemas/color-scheme-v
 
 The initial resource contains no external palette bytes. A future external built-in requires exact source and redistribution terms in `provenance`; a familiar palette name is insufficient evidence.
 
-## 3. Theme binding and literal removal
+## 3. Theme v0.2 binding and literal removal
 
-M25 replaces Theme color values with `body.colorBindings`. Each binding names a Theme role property (`role.fill` or `role.stroke`) and one closed Scheme intent. The binding set is complete for every color-bearing role property used by the Theme. Non-color role properties still name Theme values as in Theme v0.1.
+M25 replaces the legacy `chrona/presentation/v0.1` Theme resource with `chrona/theme/v0.2`, defined by `schemas/theme-v0.2.schema.yaml`. Its `body.values` may contain only non-color typed values; its `body.roles` binds non-color properties; and its required `body.colorBindings` maps every color-bearing role property to one closed Scheme intent. No Theme inheritance, alias, or partial overlay survives the replacement.
 
 There is no literal-color escape hatch in the shipped M25 authoring path. An earlier proposal to retain one would create a second concrete-color authority and prevent a Context from guaranteeing a coherent scheme. Existing literal-color Theme examples are migrated atomically when M25 becomes reachable; no compatibility loader remains.
 
@@ -54,3 +54,7 @@ Required stable diagnostics are `E_SCHEME_SCHEMA`, `E_SCHEME_PROVENANCE`, `E_SCH
 3. Switching Scheme does not change facts, selected roles, geometry, metrics, Scene structure, or target capability requirements.
 4. Missing provenance, unknown intent, missing binding, and insufficient contrast fail before Scene emission.
 5. Markers, patterns, and text alternatives remain available after every scheme change.
+
+## 8. Replacement boundary
+
+The M25 runtime accepts only Theme v0.2 and Context v0.5. Theme v0.1, Context v0.4, and the generic legacy SVG route are deleted from reachable presentation entry points in one migration. This is intentionally not a compatibility release: a stale resource diagnoses rather than being upgraded or rendered with fallback colors.
