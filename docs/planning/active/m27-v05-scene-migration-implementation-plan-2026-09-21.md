@@ -16,3 +16,7 @@ input boundary. Every slice begins with executable evidence, consumes only the S
 closure, passes the full inherited regression suite, receives a slice review, and is
 published to `main` before the next slice. A need for another token property, new
 resource input, or renderer policy reopens Specification 37 before code changes.
+
+I27-R2 uses the ISO axis fit rule approved in
+`m27-axis-policy-design-amendment-2026-09-21.md`; it does not add an axis resource or
+fall back to a fixed cadence.

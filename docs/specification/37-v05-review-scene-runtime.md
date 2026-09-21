@@ -48,8 +48,8 @@ The builder executes this bounded sequence:
 2. convert each Layout Manifest slot to `SceneSlot`; require title/table/timeline/axis;
 3. derive group and row bounds from the resolved timeline/table slots, View grouping,
    measured row minimum, and declared Layout overflow policy;
-4. derive calendar axis intervals using existing `layout.axis` functions and resolved
-   locale/formatting; measure labels before creating axis primitives;
+4. derive calendar axis intervals using existing `layout.axis` functions and the
+   versioned ISO fit rule below; measure labels before creating axis primitives;
 5. create table cells from `SurfaceContentInput.table_cells`, marks from
    `ReviewProjection`, and all conditional Actual/variance/missing-Actual families;
 6. create optional families only from present normalized content and matching slots;
@@ -65,6 +65,16 @@ it is never silently omitted, clipped, or replaced by a fixed 28-day cadence.
 The builder consumes `MeasuredSources.measurements` and `.metric_values` verbatim. It
 does not recompute Theme metrics or text measurement during composition; a missing
 measurement boundary diagnoses `E_PRESENTATION_MEASUREMENTS_REQUIRED`.
+
+### 3.1 ISO axis fit rule
+
+Current resource contracts contain no axis locale, formatting preset, or fixed
+calendar-level declaration. The v0.5 Scene runtime evaluates `year`, `quarter`,
+`month`, `week`, then `day` using `AxisInterval.label`; it selects the most detailed
+candidate for which every FontMetrics-measured label fits its interval and adjacent
+labels do not overlap. If none fits, it fails with `E_PRESENTATION_AXIS_OVERFLOW`.
+This generic versioned rule is Scene semantics, not an adapter default or a new
+authoring resource.
 
 ## 4. SVG adapter migration
 
