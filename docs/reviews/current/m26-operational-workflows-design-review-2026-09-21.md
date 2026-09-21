@@ -35,6 +35,10 @@ silently upgraded.
 and source content identity. Reconciliation changes only alignment/Project object ID;
 otherwise deduplication would be lost after an operator resolved a record.
 
+**Amendment, 2026-09-21:** I26-6 requires a concrete Store-config format. The initial
+profile is local-only, identity-exact, and credential-free (`store-config/v0.1`). This
+closes CLI Store selection without introducing a default root or provider fallback.
+
 ## Evidence checked
 
 - `35-operational-review-workflows.md`, ADR-0024 through ADR-0026, all four successor
