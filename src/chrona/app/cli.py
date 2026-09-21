@@ -99,6 +99,7 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--snapshot-reference", help="immutable Project resource-reference YAML")
     command.add_argument("--snapshot-root", help="local snapshot adapter root")
     command.add_argument("--store-identity", help="expected local snapshot store identity")
+    command.add_argument("--require-content-identity", action="store_true", help="reject snapshot references without an exact content identity")
 
 
 def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
@@ -111,7 +112,7 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
                 exit_code=2,
             )
         reference = load_yaml(args.snapshot_reference)
-        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity))
+        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=getattr(args, "require_content_identity", False)))
     if not args.project:
         raise CliFailure("E_COMMAND_SYNTAX", "a raw project or complete snapshot mode is required", exit_code=2)
     return load_yaml(args.project)
@@ -135,12 +136,14 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
+    command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
     command.add_argument("--output", "-o", required=True)
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
     command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.5 or v0.6 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
+    command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
     command.add_argument("--output-directory", required=True)
 
     command = sub.add_parser("review", help="compare two immutable Project snapshots", description="compare two immutable Project snapshots")
@@ -148,6 +151,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("candidate_reference")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
+    command.add_argument("--require-content-identity", action="store_true", help="reject Project references without an exact content identity")
 
     command = sub.add_parser("baseline-compare", help="compare a named baseline and immutable candidate")
     command.add_argument("--baseline-reference", required=True)
@@ -169,7 +173,7 @@ def _resource(resources: tuple[ClosureResource, ...], kind: str) -> dict[str, An
 
 
 def _run_render_review(args: argparse.Namespace) -> None:
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity)
+    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     context, resources = resolve_render_context(load_yaml(args.context_reference), reader)
     project = _resource(resources, "project")
     view = _resource(resources, "view")
@@ -241,7 +245,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     destination = Path(args.output_directory)
     if destination.exists() and any(destination.iterdir()):
         raise CliFailure("E_SCHEME_GALLERY_OUTPUT", "output directory must be empty", "gallery")
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity)
+    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     entries = []
     for reference_path in args.context_reference:
         context, resources = resolve_render_context(load_yaml(reference_path), reader)
@@ -300,7 +304,7 @@ def _run(args: argparse.Namespace) -> None:
         _run_render_review_gallery(args)
         return
     if args.command == "review":
-        reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity)
+        reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
         before = load_project(load_yaml(args.before_reference), reader)
         candidate = load_project(load_yaml(args.candidate_reference), reader)
         output = review_projects(before, candidate)
