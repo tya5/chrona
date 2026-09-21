@@ -88,6 +88,9 @@ Detail Profile source validation derives source presence and required/optional p
 from the immutable Layout Manifest. It does not inspect an authoring-layout/settings
 object or reconstruct slot declarations.
 
+Each slot decision carries its resolved `priority` and `overflow` policy verbatim; a
+manifest without those fields is incomplete for v0.5 optional-family composition.
+
 ## 4. SVG adapter migration
 
 The v0.5 adapter consumes `SceneSurface` and `ThemeTokenView`. It maps primitive kinds
