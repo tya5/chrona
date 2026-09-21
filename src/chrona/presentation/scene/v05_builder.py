@@ -320,10 +320,17 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     if summary_slot:
         line = 1
         summary_size = float(value.theme_tokens.typography("summary")[2])
+        presentations = dict(value.surface_content.summary_presentations)
         for panel_id, panel_title, metrics in value.surface_content.summary_panels:
             text(f"summary:{panel_id}", panel_id, "summary-header", "text", panel_title, summary_slot.bounds[0], summary_slot.bounds[1] + line * summary_size, typography_role="summary"); line += 1
             for key, metric_value in metrics:
-                text(f"summary:{panel_id}:{key}", panel_id, "summary-metric", "text", f"{key}: {metric_value}", summary_slot.bounds[0], summary_slot.bounds[1] + line * summary_size, typography_role="summary"); line += 1
+                if presentations.get(panel_id) == "figures":
+                    text(f"summary:{panel_id}:{key}:value", panel_id, "summary-figure-value", "metric", metric_value, summary_slot.bounds[0], summary_slot.bounds[1] + line * summary_size, typography_role="metric")
+                    line += 1
+                    text(f"summary:{panel_id}:{key}:caption", panel_id, "summary-figure-caption", "subtitle", key, summary_slot.bounds[0], summary_slot.bounds[1] + line * summary_size, typography_role="summary")
+                else:
+                    text(f"summary:{panel_id}:{key}", panel_id, "summary-metric", "text", f"{key}: {metric_value}", summary_slot.bounds[0], summary_slot.bounds[1] + line * summary_size, typography_role="summary")
+                line += 1
     annotation_slot = by_source.get("annotations")
     if annotation_slot:
         marks = _comparison_marks(projection)
