@@ -5,7 +5,7 @@ observations are demonstration data.
 
 - `project.yaml` and `actual.yaml` keep plan and observations independent.
 - `views/` contains the five selections/windows.
-- `themes/executive-light.yaml` supplies paint, typography and metric tokens.
+- `themes/executive-light.yaml` supplies typography and metric tokens; `schemes/executive-light.yaml` supplies paint.
 - `layouts/executive-review.yaml` supplies intent-oriented composition.
 - `styles/plan-actual.yaml` supplies semantic role selection.
 - `contexts/01-overview.yaml` shows the generated immutable binding for one view.
