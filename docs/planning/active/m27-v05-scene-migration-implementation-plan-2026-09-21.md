@@ -11,6 +11,7 @@
 | I27-R3B2 | Remaining optional families: detail/summary, annotations, and markers | A27-01/A27-05/A27-06 |
 | I27-R4 | Public CLI switch and removal of reduced-path reachability | A27-08; Context/Color Scheme/Layout integration tests |
 | I27-R5 | Generic materializer, example reproduction, conformance, final review and issue closure | A27-07/A27-09/A27-10; full suite and conformance |
+| I27-R6 | Rich primitive acceptance: role typography, bounded annotation leaders, and dependency markers | A27-01/A27-05; reopen #29/#33 only after evidence |
 
 I27-R1 was reopened by `m27-scene-input-measurement-design-amendment-2026-09-21.md`;
 its prior publication established the token API but did not yet close the measurement

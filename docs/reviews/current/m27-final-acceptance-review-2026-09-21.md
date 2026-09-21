@@ -1,6 +1,7 @@
 # M27 Presentation Product-Path Final Acceptance Review — 2026-09-21
 
-**Decision:** M27 is complete after this publication.
+**Decision:** Superseded. The materializer/reproduction evidence is valid, but the
+rich primitive acceptance amendment reopens M27 for I27-R6.
 
 The public `render-review` path now reaches only the current Context v0.5 → resolved
 Theme v0.2/Color Scheme → Layout Manifest → completed v0.5 SceneSurface → v0.5 SVG
