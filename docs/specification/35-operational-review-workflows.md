@@ -72,8 +72,11 @@ revision. A batch containing any invalid/conflicting record creates none.
 `resolveActualObservation` remains the only operation that changes an unmatched fact
 to a resolved Project ID. It requires the same immutable Actual-set and Project
 closure and rejects a stale revision, unknown observation, non-unmatched observation,
-or unknown Project object. `unresolveActualObservation` restores the recorded external
-identity; neither operation changes observed fields.
+or unknown Project object. In Actual-set v0.2, resolution adds `projectObjectId` while
+retaining `externalIdentity` and `sourceContentIdentity`; it removes only
+`alignment: unmatched`. `unresolveActualObservation` removes the Project ID and
+restores that alignment. Neither operation changes observed fields or external
+provenance.
 
 ### 3.3 Intake report
 
