@@ -135,3 +135,26 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
     assert baseline.visual_role == "snapshot"
     assert any(item.scene_id == "member-label:release:primary" and item.text == "Current plan"
                for item in surface.primitives)
+
+
+def test_same_explicit_row_relation_uses_distinct_mark_ports():
+    first = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)}, None, None, (), item_id="a", source_kind="primary")
+    second = ReviewItem("b", "B", "span", {"start": date(2026, 1, 5), "end": date(2026, 1, 9)}, None, None, (), item_id="b", source_kind="primary")
+    row = ReviewRowProjection("phase", "Phase", "", "a", (first, second))
+    projection = ReviewProjection((first, second), (date(2026, 1, 1), date(2026, 1, 9)), (), (), (row,))
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    theme = _theme()
+    theme["body"]["values"]["marker"] = {"type": "marker", "value": "triangle"}
+    theme["body"]["roles"]["dependency"] = {"marker": "marker"}
+    value = build_scene_input(projection=projection,
+                              surface_content=SurfaceContentInput(relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},)),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    relation = next(item for item in surface.primitives if item.scene_id == "relation:depends:phase:a:phase:b")
+    assert len(relation.points) >= 2
+    assert relation.points[0] != relation.points[-1]
