@@ -8,4 +8,4 @@ M25 replaces `chrona/presentation/v0.1` Theme with `chrona/theme/v0.2`. Theme v0
 
 ## Consequences
 
-The resolver can prove a single color authority before Scene construction. Legacy Theme, Context, and generic SVG inputs are rejected or removed rather than adapted. Existing fixtures move atomically, so this deliberately makes stale authoring files invalid.
+The review resolver can prove a single color authority before Scene construction. Legacy review Theme and Context inputs are rejected or removed rather than adapted. The separate core diagnostic SVG is outside this decision. Existing review fixtures move atomically, so this deliberately makes stale authoring files invalid.
