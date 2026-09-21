@@ -28,12 +28,26 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                       for item in projection.items for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
     labels = visible.get("labels", False)
-    show_member_labels = labels if isinstance(labels, bool) else bool(labels.get("members", False))
+    label_placement = "plot" if labels is True else "none"
+    label_content: tuple[str, ...] = ("title",) if labels is True else ()
+    if isinstance(labels, Mapping):
+        if "members" in labels:
+            label_placement, label_content = ("plot", ("title",)) if labels["members"] else ("none", ())
+        else:
+            label_placement = str(labels["placement"])
+            label_content = tuple(str(item) for item in labels["content"])
     temporal = body.get("timePresentation", {})
+    axis = body.get("axis", {})
+    markers = body.get("markers", ())
     as_of_value = ((actual_set or {}).get("body", actual_set or {}).get("asOf"))
-    as_of = date.fromisoformat(as_of_value) if temporal.get("asOf", "line") == "line" and isinstance(as_of_value, str) else None
+    as_of_marker = next((item for item in markers if item.get("kind") == "asOf" and item.get("source") == "actual"), None)
+    as_of = date.fromisoformat(as_of_value) if ((as_of_marker is not None) or temporal.get("asOf", "line") == "line") and isinstance(as_of_value, str) else None
+    annotation_visibility = visible.get("annotations", "none")
+    annotation_mode = annotation_visibility.get("mode", "none") if isinstance(annotation_visibility, Mapping) else annotation_visibility
+    annotation_numbered = (isinstance(annotation_visibility, Mapping) and annotation_visibility.get("marker") == "numbered") or body.get("annotationPresentation", "plain") == "numbered"
     relations = tuple(project.get("relations", ())) if visible.get("relations", "none") != "none" else ()
-    annotations = tuple({**annotation, "number": index + 1} for index, annotation in enumerate(body.get("annotations", ())) if visible.get("annotations", "none") != "none" and body.get("annotationPresentation", "plain") == "numbered") if body.get("annotationPresentation", "plain") == "numbered" else tuple(body.get("annotations", ())) if visible.get("annotations", "none") != "none" else ()
+    raw_annotations = tuple(body.get("annotations", ())) if annotation_mode != "none" else ()
+    annotations = tuple({**annotation, "number": index + 1} for index, annotation in enumerate(raw_annotations)) if annotation_numbered else raw_annotations
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
     resolved_detail = (resolve_v05_review_detail_profile(detail, projection.items, layout_manifest)
                        if layout_manifest is not None else None)
@@ -42,8 +56,13 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     legend = tuple((str(item["role"]), str(item["label"])) for item in detail_body.get("legend", ()))
     panels = _typed_summary_panels(summary_body, projection, actual_set)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
-                               show_member_labels=show_member_labels, axis_level=str(temporal.get("axisLevel", "auto")), as_of=as_of,
-                               calendar_closed=_closed_calendar_days(project, projection.window) if temporal.get("calendarClosed", True) else (),
+                               show_member_labels=label_placement == "plot", label_placement=label_placement, label_content=label_content,
+                               axis_level=str(temporal.get("axisLevel", "auto")),
+                               axis_levels=tuple((str(item["unit"]), str(item["format"])) for item in axis.get("levels", ())),
+                               axis_ticks=str(axis.get("ticks")) if axis.get("ticks") else None,
+                               as_of=as_of, as_of_label=str(as_of_marker.get("label", "As of")) if as_of_marker else "As of",
+                               annotation_numbered=annotation_numbered,
+                               calendar_closed=_closed_calendar_days(project, projection.window) if body.get("shading", {}).get("nonWorking", temporal.get("calendarClosed", True)) else (),
                                notes=notes, legend_entries=legend, summary_panels=panels,
                                group_details=resolved_detail.group_details if resolved_detail else (),
                                milestones=resolved_detail.milestones if resolved_detail else (),
