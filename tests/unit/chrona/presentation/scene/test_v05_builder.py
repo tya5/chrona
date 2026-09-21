@@ -233,3 +233,19 @@ def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
 
     assert next(node for node in surface.primitives if node.scene_id == "as-of").visual_role == "as-of"
     assert any(node.scene_id == "as-of-label" for node in surface.primitives)
+
+
+def test_project_calendar_closure_emits_background_shading():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 5)), (), ())
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection,
+                              surface_content=SurfaceContentInput(calendar_closed=(date(2026, 1, 3),)),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    assert next(node for node in surface.primitives if node.scene_id == "calendar-closed:2026-01-03").visual_role == "calendar-closed"
