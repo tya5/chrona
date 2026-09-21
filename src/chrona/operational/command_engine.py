@@ -25,7 +25,7 @@ def check_command(reader: ImmutableReader, command: dict[str, Any]) -> dict[str,
     expected = command.get("expectedContentIdentity")
     try:
         verified = verify_reference(reader, target)
-        if base != target.get("revision", {}).get("token") or expected != target.get("contentIdentity"):
+        if base != verified.reference.get("revision", {}).get("token") or (expected is not None and expected != verified.reference.get("contentIdentity")):
             raise ValueError("E_AUTOMATION_BASE_REVISION")
         if command.get("type") not in SUPPORTED:
             raise ValueError("E_AUTOMATION_OPERATION_UNSUPPORTED")
@@ -45,7 +45,7 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
     if checked["status"] != "accepted":
         checked["operation"] = "command-apply"
         return checked
-    target = command["target"]
+    target = checked["inputs"][0]
     if command["type"] == "captureSnapshot":
         verified = verify_reference(reader, target, kind="project")
         registry_selector = command["payload"]["registry"]
