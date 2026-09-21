@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
@@ -8,6 +9,13 @@ from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
+
+
+def test_scene_delegates_common_surface_geometry_to_layout_composer():
+    source = Path(__import__("chrona.presentation.scene.v05_builder", fromlist=["*"]).__file__).read_text(encoding="utf-8")
+    assert "compose_surface_layout(" in source
+    assert "place_rows(" not in source
+    assert "place_mark_tracks(" not in source
 
 
 def _manifest(*sources):
