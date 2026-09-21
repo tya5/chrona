@@ -1,9 +1,18 @@
 from chrona.commands.actual_commands import (
     MemoryActualStore,
+    apply_actual_intake_batch,
     redo_actual_command,
     resolve_actual_observation,
     undo_actual_command,
 )
+
+
+def _actual_set_v02():
+    return {"version": "chrona/actual-set/v0.2", "kind": "actual-set", "id": "supplier-observed", "body": {"observations": []}}
+
+
+def _batch(records):
+    return {"version": "chrona/actual-intake-batch/v0.1", "batchId": "supplier-17", "source": {"system": "supplier", "contentIdentity": "sha256:" + "a" * 64}, "records": records}
 
 
 def _actual_set():
@@ -58,3 +67,44 @@ def test_actual_undo_redo_create_new_revisions_without_rewriting_history():
     assert redone.status == "accepted"
     assert redone.result_revision not in {base, accepted.result_revision, undone.result_revision}
     assert redone.actual_set == accepted.actual_set
+
+
+def test_intake_is_atomic_and_replay_safe_with_explicit_unmatched_records():
+    store = MemoryActualStore(_actual_set_v02())
+    base, _ = store.read()
+    batch = _batch([
+        {"externalKey": "FW-42", "projectObjectId": "firmware", "actual": {"finish": "2026-04-18"}},
+        {"externalKey": "HW-19", "projectObjectId": "unknown", "actual": {"finish": "2026-04-20"}},
+    ])
+    accepted = apply_actual_intake_batch(store, base, batch, {"firmware"})
+    assert accepted.status == "accepted" and accepted.dispositions == ("inserted", "inserted")
+    observations = accepted.actual_set["body"]["observations"]
+    assert observations[0]["projectObjectId"] == "firmware"
+    assert observations[1]["alignment"] == "unmatched"
+    assert observations[0]["sourceContentIdentity"] == batch["source"]["contentIdentity"]
+    replay = apply_actual_intake_batch(store, accepted.result_revision, batch, {"firmware"})
+    assert replay.status == "accepted" and replay.dispositions == ("alreadyPresent", "alreadyPresent")
+    assert replay.result_revision == accepted.result_revision
+
+
+def test_intake_rejects_duplicate_or_conflicting_records_without_partial_write():
+    store = MemoryActualStore(_actual_set_v02())
+    base, original = store.read()
+    duplicate = _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-18"}}, {"externalKey": "x", "actual": {"finish": "2026-04-19"}}])
+    assert apply_actual_intake_batch(store, base, duplicate, set()).diagnostics == ("E_INTAKE_DUPLICATE_KEY",)
+    accepted = apply_actual_intake_batch(store, base, _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-18"}}]), set())
+    conflict = _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-19"}}])
+    rejected = apply_actual_intake_batch(store, accepted.result_revision, conflict, set())
+    assert rejected.diagnostics == ("E_ACTUAL_EXTERNAL_CONFLICT",)
+    assert store.read()[1] == accepted.actual_set and original != accepted.actual_set
+
+
+def test_resolution_keeps_v02_external_provenance_for_future_deduplication():
+    store = MemoryActualStore(_actual_set_v02())
+    base, _ = store.read()
+    intake = apply_actual_intake_batch(store, base, _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-18"}}]), set())
+    resolved = resolve_actual_observation(store, intake.result_revision, "supplier:x", "firmware", {"firmware"})
+    observation = resolved.actual_set["body"]["observations"][0]
+    assert observation["externalIdentity"] == {"system": "supplier", "key": "x"}
+    assert observation["sourceContentIdentity"] == "sha256:" + "a" * 64
+    assert "alignment" not in observation and observation["projectObjectId"] == "firmware"
