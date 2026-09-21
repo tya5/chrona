@@ -4,8 +4,11 @@ from pathlib import Path
 import sys
 
 import yaml
+import pytest
 
-from chrona.app.cli import main
+import chrona.app.cli as cli
+from chrona.app.cli import CliFailure, main
+from chrona.presentation.model.closure import ClosureResource
 from chrona.scheduling.scheduler import schedule
 
 
@@ -150,6 +153,18 @@ def test_cli_gallery_requires_two_contexts(tmp_path, monkeypatch, capsys):
     except SystemExit as error:
         assert error.code == 1
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_SCHEME_GALLERY_INPUT"
+
+
+def test_cli_gallery_rejects_duplicate_scheme_before_rendering(tmp_path, monkeypatch):
+    def closure(_reference, _reader):
+        scheme = ClosureResource("color-scheme", "same", "r", "sha256:" + "a" * 64, {})
+        return {"id": "context"}, (scheme,)
+    monkeypatch.setattr(cli, "resolve_render_context", closure)
+    monkeypatch.setattr(cli, "load_yaml", lambda path: {"path": str(path)})
+    monkeypatch.setattr(cli, "_run_render_review", lambda args: pytest.fail("render must not run"))
+    args = cli.argparse.Namespace(context_reference=["one.yaml", "two.yaml"], snapshot_root=str(tmp_path), store_identity="test", output_directory=str(tmp_path / "gallery"))
+    with pytest.raises(CliFailure, match="E_SCHEME_GALLERY_DUPLICATE"):
+        cli._run_render_review_gallery(args)
 
 
 def test_cli_propose_set_distinguishes_literal_and_json_values(tmp_path, monkeypatch, capsys):
