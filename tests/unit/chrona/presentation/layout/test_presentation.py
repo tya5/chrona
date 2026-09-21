@@ -1,5 +1,8 @@
 from types import SimpleNamespace
 
+import pytest
+
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import place_mark_tracks, place_rows, place_table_columns
 
 
@@ -12,13 +15,24 @@ def test_table_placements_are_ordered_and_non_overlapping() -> None:
     placements = place_table_columns(
         columns=(("owner", "Owner"), ("status", "Status")),
         cells=(("a", "owner", "Firmware"), ("a", "status", "In progress")),
-        bounds=(10.0, 0.0, 200.0, 20.0),
+        bounds=(10.0, 0.0, 240.0, 20.0),
         font_metrics=FixedMetrics(),
         font_size=10.0,
     )
 
     assert placements[0].inline < placements[1].inline
     assert placements[0].inline + placements[0].inline_size <= placements[1].inline
+
+
+def test_table_placement_diagnoses_when_required_text_cannot_fit() -> None:
+    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
+        place_table_columns(
+            columns=(("owner", "Owner"), ("status", "Status")),
+            cells=(("a", "owner", "Firmware"), ("a", "status", "In progress")),
+            bounds=(0.0, 0.0, 20.0, 20.0),
+            font_metrics=FixedMetrics(),
+            font_size=10.0,
+        )
 
 
 def test_row_placements_reserve_declared_group_headers() -> None:
