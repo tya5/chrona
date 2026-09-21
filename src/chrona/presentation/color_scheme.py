@@ -12,6 +12,22 @@ class ColorSchemeError(ValueError):
 _INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral"}
 
 
+def _luminance(color: str) -> float:
+    if not isinstance(color, str) or len(color) != 7 or not color.startswith("#"):
+        raise ColorSchemeError("E_SCHEME_SCHEMA")
+    try:
+        channels = [int(color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+    except ValueError as error:
+        raise ColorSchemeError("E_SCHEME_SCHEMA") from error
+    linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast(first: str, second: str) -> float:
+    low, high = sorted((_luminance(first), _luminance(second)))
+    return (high + 0.05) / (low + 0.05)
+
+
 def category_index(content_identity: str, key: str, count: int) -> int:
     if count < 1:
         raise ColorSchemeError("E_SCHEME_SCHEMA")
@@ -29,6 +45,8 @@ def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str, ca
         raise ColorSchemeError("E_SCHEME_PROVENANCE")
     if not _INTENTS.issubset(colors):
         raise ColorSchemeError("E_SCHEME_SCHEMA")
+    if any(_contrast(str(colors["text"]), str(colors[surface])) < 4.5 for surface in ("surface", "surfaceRaised")):
+        raise ColorSchemeError("E_SCHEME_CONTRAST")
     result = {key: str(colors[key]) for key in _INTENTS}
     category = body.get("category")
     if category_key is not None:
