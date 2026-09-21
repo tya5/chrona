@@ -2,6 +2,7 @@ version: chrona/presentation/v0.1
 kind: actual-set
 id: halcyon-1-observed-2027-08-20
 body:
+  asOf: '2027-08-20'
   observations:
     - {id: structure-final, sequence: 1, projectObjectId: structure, actual: {start: '2027-03-08', finish: '2027-04-06', progress: 1}}
     - {id: avionics-initial, sequence: 1, projectObjectId: avionics, actual: {start: '2027-04-07', finish: '2027-04-27', progress: 1}}
