@@ -27,10 +27,13 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"]), column["missing"], column.get("format", "text")))
                       for item in projection.items for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
+    labels = visible.get("labels", False)
+    show_member_labels = labels if isinstance(labels, bool) else bool(labels.get("members", False))
+    temporal = body.get("timePresentation", {})
     as_of_value = ((actual_set or {}).get("body", actual_set or {}).get("asOf"))
-    as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else None
+    as_of = date.fromisoformat(as_of_value) if temporal.get("asOf", "line") == "line" and isinstance(as_of_value, str) else None
     relations = tuple(project.get("relations", ())) if visible.get("relations", "none") != "none" else ()
-    annotations = tuple(body.get("annotations", ())) if visible.get("annotations", "none") != "none" else ()
+    annotations = tuple({**annotation, "number": index + 1} for index, annotation in enumerate(body.get("annotations", ())) if visible.get("annotations", "none") != "none" and body.get("annotationPresentation", "plain") == "numbered") if body.get("annotationPresentation", "plain") == "numbered" else tuple(body.get("annotations", ())) if visible.get("annotations", "none") != "none" else ()
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
     resolved_detail = (resolve_v05_review_detail_profile(detail, projection.items, layout_manifest)
                        if layout_manifest is not None else None)
@@ -40,8 +43,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     panels = tuple((str(item["id"]), str(item.get("title", item["id"])), tuple((str(key), str(value)) for key, value in item.get("metrics", {}).items()))
                    for item in summary_body.get("panels", ()))
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
-                               show_member_labels=bool(visible.get("labels", False)), as_of=as_of,
-                               calendar_closed=_closed_calendar_days(project, projection.window),
+                               show_member_labels=show_member_labels, axis_level=str(temporal.get("axisLevel", "auto")), as_of=as_of,
+                               calendar_closed=_closed_calendar_days(project, projection.window) if temporal.get("calendarClosed", True) else (),
                                notes=notes, legend_entries=legend, summary_panels=panels,
                                group_details=resolved_detail.group_details if resolved_detail else (),
                                milestones=resolved_detail.milestones if resolved_detail else (),
