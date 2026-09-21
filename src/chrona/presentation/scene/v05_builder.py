@@ -16,6 +16,7 @@ from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.presentation import place_table_columns
 from chrona.presentation.layout.surface_composer import compose_surface_layout
+from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -82,8 +83,13 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     if "text.body.size" not in metric or "text.body.lineHeight" not in metric:
         raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
     try:
-        composition = compose_surface_layout(projection=projection, layout_manifest=value.layout_manifest,
-                                             metric_values=metric)
+        composition = compose_surface_layout(SurfaceLayoutRequest(
+            projection=projection, presentation_contract=contract,
+            surface_content=value.surface_content, layout_manifest=value.layout_manifest,
+            measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
+            font_metrics=value.font_metrics, locale=value.locale,
+            capabilities=dict(value.capabilities),
+        ))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     placed_surface = composition.placement
