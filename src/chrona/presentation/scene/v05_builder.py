@@ -136,7 +136,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                             (x, y), (content,), family, weight, font_size, float(line_height), value.font_metrics.content_identity)
         primitives.append(ScenePrimitive(scene_id, "Text", source, "review", purpose, role, layout.bounds,
                                          text=content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
-    title_baseline = float(value.measured_sources.measurements["title"].first_baseline or 0)
+    title_measurement = value.measured_sources.measurements.get("title")
+    if title_measurement is None:
+        raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/title")
+    title_baseline = float(title_measurement.first_baseline or 0)
     text("title", "title", "title-text", "text", title, title_slot.bounds[0], title_slot.bounds[1] + title_baseline, typography_role="heading")
     body_size = float(value.theme_tokens.typography("text")[2])
     table_placements = place_table_columns(

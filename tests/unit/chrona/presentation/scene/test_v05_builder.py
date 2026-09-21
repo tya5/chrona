@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Rect
+from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
@@ -32,6 +32,10 @@ def _theme():
 
 def _measurements():
     return MeasuredSources({}, {}, {"text.body.size": Decimal(14)})
+
+
+def _title_measurement():
+    return Measurement(Decimal(1), Decimal(1), Decimal(1), Decimal(1), Decimal(1), Decimal(1), Decimal(18), Decimal(18))
 
 
 def test_scene_input_accepts_only_completed_current_runtime_boundaries():
@@ -67,7 +71,7 @@ class _Font:
 def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None, ("planned",)),),
                                   (date(2026, 1, 1), date(2026, 2, 1)), (), ())
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     manifest = _manifest("title", "table", "timeline", "timeline-axis")
     value = build_scene_input(projection=projection, surface_content=SurfaceContentInput((("name", "Name"),), (("a", "name", "A"),)),
@@ -84,7 +88,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 11)}, None, None, ("planned",)),
                                   ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 6)}, None, None, ("planned",))),
                                   (date(2026, 1, 1), date(2026, 1, 11)), (), ())
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(300))
     manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", viewport, (
@@ -119,7 +123,7 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
     snapshot = ReviewItem("a", "Baseline", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 8)}, None, None, (), item_id="snapshot", source_kind="snapshot")
     row = ReviewRowProjection("release", "Release", "", "primary", (primary, snapshot))
     projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 10)), (), (), (row,))
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
@@ -142,7 +146,7 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
     second = ReviewItem("b", "B", "span", {"start": date(2026, 1, 5), "end": date(2026, 1, 9)}, None, None, (), item_id="b", source_kind="primary")
     row = ReviewRowProjection("phase", "Phase", "", "a", (first, second))
     projection = ReviewProjection((first, second), (date(2026, 1, 1), date(2026, 1, 9)), (), (), (row,))
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     theme = _theme()
@@ -163,7 +167,7 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
 def test_legend_entries_emit_role_derived_swatches():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
@@ -184,7 +188,7 @@ def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
     actual = ReviewItem("a", "Actual", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 7)}, {"start": date(2026, 1, 3), "finish": date(2026, 1, 8)}, None, (), item_id="actual", source_kind="actual", track="shared")
     row = ReviewRowProjection("release", "Release", "", "planned", (actual, primary, snapshot))
     projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 8)), (), (), (row,))
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
@@ -203,7 +207,7 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
                       group_id="fw", group_label="Firmware team", item_id="a")
     row = ReviewRowProjection("fw-row", "Firmware", "fw", "a", (item,))
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 4)), (), (), (row,))
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
                                    "timeline.groupHeader.blockSize": Decimal(20)})
@@ -221,7 +225,7 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
 def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 10)), (), ())
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
@@ -238,7 +242,7 @@ def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
 def test_project_calendar_closure_emits_background_shading():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 5)), (), ())
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
@@ -254,7 +258,7 @@ def test_project_calendar_closure_emits_background_shading():
 def test_month_axis_emits_quarter_band_labels():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
@@ -269,7 +273,7 @@ def test_month_axis_emits_quarter_band_labels():
 def test_table_columns_use_measured_non_overlapping_origins():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),),
                                   (date(2026, 1, 1), date(2026, 1, 2)), (), ())
-    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,

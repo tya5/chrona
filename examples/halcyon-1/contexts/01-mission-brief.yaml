@@ -57,7 +57,6 @@ body:
       address: actual.yaml
       revision:
         token: example-v1
-      contentIdentity: sha256:21672446b8bb2813efa90550b056379828d194e8dd4601397ab6b2f9fba7909e
     summaryProfile:
       id: halcyon-key-figures
       kind: summary-profile

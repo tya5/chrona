@@ -62,4 +62,4 @@ def test_capture_accepts_revision_only_reference_and_publishes_computed_identity
     baseline = capture_baseline_v02(project_store, project.revision, revision_only, "q2", LocalBaselineRegistry(tmp_path, "baselines"))
     assert baseline.status == "accepted"
     assert baseline.snapshot_ref["contentIdentity"].startswith("sha256:")
-    assert baseline.snapshot_ref["body"]["project"]["contentIdentity"] == project.content_identity
+    assert set(baseline.snapshot_ref) == {"id", "kind", "store", "address", "revision", "contentIdentity"}

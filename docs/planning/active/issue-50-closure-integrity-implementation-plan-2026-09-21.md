@@ -22,8 +22,8 @@
    `E_PRESENTATION_MEASUREMENTS_REQUIRED`.
 2. Update v0.5 builder fixtures to provide their required title measurement.
 3. Correct the baseline-capture test to assert the flat snapshot-reference shape.
-4. Refresh the three stale HALCYON authored `actual` pins only after calculating their
-   exact current source digests.
+4. Remove the three stale HALCYON authored `actual` pins: #44 makes identity pinning opt-in,
+   and an absent pin must remain absent rather than be silently repaired by materialization.
 
 ## I50-3 — Evidence and regression closure
 

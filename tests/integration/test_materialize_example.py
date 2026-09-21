@@ -46,11 +46,11 @@ def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
     copied_example = tmp_path / "halcyon"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
     context = copied_example / "contexts/01-mission-brief.yaml"
-    raw = context.read_text()
-    context.write_text(raw.replace("sha256:21672446b8bb2813efa90550b056379828d194e8dd4601397ab6b2f9fba7909e", "sha256:" + "0" * 64))
+    value = yaml.safe_load(context.read_text())
+    value["body"]["inputs"]["actual"]["contentIdentity"] = "sha256:" + "0" * 64
+    context.write_text(yaml.safe_dump(value, sort_keys=False))
     with pytest.raises(ValueError, match="E_CONTENT_IDENTITY"):
         materialize(copied_example / "manifest.yaml", "mission-brief", tmp_path / "out", write=True)
-
 
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"
