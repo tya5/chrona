@@ -158,3 +158,21 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
     relation = next(item for item in surface.primitives if item.scene_id == "relation:depends:phase:a:phase:b")
     assert len(relation.points) >= 2
     assert relation.points[0] != relation.points[-1]
+
+
+def test_legend_entries_emit_role_derived_swatches():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection,
+                              surface_content=SurfaceContentInput(legend_entries=(("planned", "Plan"),)),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
+    assert swatch.kind == "Rect"
+    assert swatch.visual_role == "planned"
