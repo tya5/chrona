@@ -1,0 +1,12 @@
+version: chrona/presentation/v0.1
+kind: summary-profile
+id: halcyon-key-figures
+body:
+  panels:
+    - id: key-figures
+      title: Key figures
+      presentation: figures
+      metrics:
+        - {id: as-of, source: {actual: asOf}, label: as of, format: date}
+        - {id: launch, source: {object: launch, facet: planned}, label: launch window, format: date}
+        - {id: variance, source: {counts: finishDelta}, label: behind / ahead, format: text}
