@@ -8,9 +8,10 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
 from chrona.presentation.layout.text import place_text
 from chrona.presentation.layout.surface_quality import (
-    GroupPlacement, MarkPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfacePlacement,
+    GroupPlacement, MarkPlacement, RowPlacement, ScalePlacement, ShapePlacement, SlotPlacement, SurfacePlacement,
     SurfaceLayoutRequest,
 )
 
@@ -133,6 +134,39 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
+    axis = by_source["timeline-axis"]
+    configured_levels = request.surface_content.axis_levels
+    try:
+        intervals = (axis_intervals(start, end, configured_levels[-1][0]) if configured_levels
+                     else fitting_axis(requested=request.surface_content.axis_level, start=start, end=end,
+                                       inline_size=float(axis.bounds.inline_size),
+                                       font_size=float(metric_values["text.body.size"]), font_metrics=request.font_metrics))
+    except ValueError as error:
+        raise LayoutError(str(error), "/view/body/timePresentation/axisLevel") from error
+    axis_size = float(request.theme_tokens.typography("axis")[2])
+    band_intervals = axis_intervals(start, end, configured_levels[0][0]) if len(configured_levels) > 1 else (axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ())
+    format_by_level = {unit: formatter for unit, formatter in configured_levels}
+    format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
+    shapes: list[ShapePlacement] = []
+    for interval in band_intervals:
+        x = _coordinate(interval.start, scale)
+        text.append(place_text(placement_id=f"axis-band:{interval.level}:{interval.index}", source_ref="timeline-axis",
+                               content=format_axis_label(interval, format_by_level, request.locale), inline=x,
+                               baseline_block=float(axis.bounds.block) + axis_size, typography_role="axis",
+                               theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                               collision_region="timeline-axis-band"))
+    for interval in intervals:
+        x = _coordinate(interval.start, scale)
+        shapes.append(ShapePlacement(f"axis:{interval.level}:{interval.index}", "timeline-axis", "Path",
+                                     Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
+                                     ((x, float(axis.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
+        label = format_axis_label(interval, format_by_level, request.locale)
+        if axis_label_fits(content=label, available_inline=(interval.end - interval.start).days * scale.unit_ratio,
+                           font_size=float(metric_values["text.body.size"]), font_metrics=request.font_metrics):
+            text.append(place_text(placement_id=f"axis-label:{interval.level}:{interval.index}", source_ref="timeline-axis",
+                                   content=label, inline=x, baseline_block=float(axis.bounds.block) + axis_size * (2 if band_intervals else 1),
+                                   typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   collision_region="timeline-axis-label"))
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]))
     track_by_id = {item.instance_id: item for item in tracks}
@@ -184,7 +218,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
                     marks.append(MarkPlacement(f"missing-actual:{instance_id}", item.object_id, bounds,
                                                (x, track.block), (x, track.block)))
-    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale, marks=tuple(marks))
+    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale, marks=tuple(marks), shapes=tuple(shapes))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 
