@@ -29,10 +29,11 @@ class ClosureResource:
 
 def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReader) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
     context = _load_presentation(reference, reader, "render-context")
-    if context.get("version") != "chrona/presentation/v0.5":
+    version = context.get("version")
+    if version not in {"chrona/presentation/v0.5", "chrona/presentation/v0.6"}:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     resolved_context, resources = _resolve_layout_context(context, reader)
-    if any(item.revision != reference["revision"]["token"] for item in resources):
+    if version == "chrona/presentation/v0.5" and any(item.revision != reference["revision"]["token"] for item in resources):
         raise ClosureError("E_CLOSURE_MIXED_REVISION")
     return resolved_context, resources
 
@@ -40,7 +41,10 @@ def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReade
 def _resolve_layout_context(
     context: dict[str, Any], reader: LocalSnapshotReader
 ) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
-    schema = yaml.safe_load(schema_resource("render-context-v0.5.schema.yaml").read_text(encoding="utf-8"))
+    version = context.get("version")
+    schema = yaml.safe_load(schema_resource(
+        "render-context-v0.6.schema.yaml" if version == "chrona/presentation/v0.6" else "render-context-v0.5.schema.yaml"
+    ).read_text(encoding="utf-8"))
     if next(jsonschema.Draft202012Validator(schema).iter_errors(context), None) is not None:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     body = context["body"]
@@ -62,7 +66,18 @@ def _resolve_layout_context(
     for name, kind in (("actual", "actual-set"), ("summaryProfile", "summary-profile"), ("detailProfile", "review-detail-profile")):
         if name in body["inputs"]:
             resources.append(_load_reference(body["inputs"][name], reader, kind))
-    if len({item.revision for item in resources}) != 1:
+    if "snapshot" in body["inputs"]:
+        snapshot = _load_reference(body["inputs"]["snapshot"], reader, "snapshot-ref")
+        project_reference = snapshot.value.get("body", {}).get("project")
+        if not isinstance(project_reference, dict):
+            raise ClosureError("E_CLOSURE_KIND")
+        snapshot_project = _load_reference(project_reference, reader, "project")
+        if snapshot_project.id != resources[0].id:
+            raise ClosureError("E_CLOSURE_ID")
+        resources.extend((snapshot, ClosureResource(
+            "snapshot-project", snapshot_project.id, snapshot_project.revision,
+            snapshot_project.content_identity, snapshot_project.value)))
+    if version == "chrona/presentation/v0.5" and len({item.revision for item in resources}) != 1:
         raise ClosureError("E_CLOSURE_MIXED_REVISION")
     if body["target"]["capabilities"] != sorted(body["target"]["capabilities"]):
         raise ClosureError("E_TARGET_CAPABILITY_ORDER")
