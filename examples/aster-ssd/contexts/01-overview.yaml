@@ -8,35 +8,30 @@ body:
     store: {provider: local, identity: aster-ssd-example}
     address: project.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:19022f569bfd3746582ec160d9dffd5a4b14161136e38caa6704e2b4b917ef5e
   view:
     id: aster-01-overview
     kind: view
     store: {provider: local, identity: aster-ssd-example}
     address: views/01-overview.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:c864d2733d2e00c401f7460b94efd609ee021240c12d243d9108afc3502bfca8
   theme:
     id: executive-light
     kind: theme
     store: {provider: local, identity: aster-ssd-example}
     address: themes/executive-light.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:d38140bb658fd696c9d6a64b25fef670489cd2f593770726a4871e2cf1df2ef2
   colorScheme:
     id: executive-light
     kind: color-scheme
     store: {provider: local, identity: aster-ssd-example}
     address: schemes/executive-light.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:3371417868aa9abe64233c484ea88c97cf2ad42242dfe06406808619915bcf1b
   layout:
     id: executive-review
     kind: layout-profile
     store: {provider: local, identity: aster-ssd-example}
     address: layouts/executive-review.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:147088727142e1cfc1e56fae566843e901b6ff92f6b11912f24f6bd5afe5d6c0
   inputs:
     actual:
       id: aster-observed-2027-06-30
@@ -44,7 +39,6 @@ body:
       store: {provider: local, identity: aster-ssd-example}
       address: actual.yaml
       revision: {token: example-v1}
-      contentIdentity: sha256:12429f851585336fc8f99edaef46261d9bd692e9eeb2463ff4795e559e8502b0
   environment:
     viewport: {inlineSize: 1600, blockSize: 900}
     locale: en-US
@@ -54,7 +48,6 @@ body:
         - family: Nimbus Sans
           weight: 400
           revision: nimbus-sans-regular-v1
-          contentIdentity: sha256:0d6b0500eb77e9b64b2cfb9916ead13e41759840a893ee3bae7e58e86fbfb779
           path: font_metrics/nimbus-sans-regular-v1.json
       missingFont: declared-fallback
     scenePrecision: 3
