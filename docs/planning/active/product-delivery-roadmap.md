@@ -70,6 +70,7 @@ Every milestone MUST demonstrate all of the following before it is accepted:
 | M22 — Designer workflow release | Human and AI designers share one validated preset/proposal and release path. | Inheritance, proposal validation, accessibility/gallery, cross-profile release review. | M19–M21 resource closure. | Identical validation path, conformance, and reuse release evidence. |
 | M23 — Reference-quality review detail | Reviewers can combine the Gantt with source-traceable group explanations, observations, and milestone digest content. | Review Detail Profile schema/resolver, Layout sources, completed Scene/SVG primitives, and Controller Z acceptance resources. | Project/Schedule/Actual authority, View selection/group order, v0.2 Settings/Preset resolution, shared Layout/Scene/SVG path. | Schema and semantic negatives, required overflow, source metadata, byte-identical reproduction, raster/visual acceptance, inherited conformance, and final reuse review pass. |
 | M24 — Intent-oriented layout authoring | Designers can compose common document and visualization layouts without calculating coordinates or routinely entering raw distances. | Replacement Layout Profile grammar, spacing tokens/templates, intrinsic sizing, two-axis alignment/distribution, bounded anchors/guides/barriers, deterministic solver/manifest, obsolete-path removal and authoring examples. | View/Style/Theme/Layout/Scene authority and measured text; no legacy layout path is retained. | Design gates L24-D1–L24-D3 publish before implementation; centered/relative/barrier layouts reflow deterministically, stable-ID overrides avoid array replacement, invalid constraints diagnose, retained semantic conformance remains green, and superseded layout contracts are absent. |
+| M25 — Color Scheme authoring | A non-designer can compare coherent, accessible named color alternatives without editing Theme values or changing semantic meaning. | Versioned Color Scheme resource, Theme intent bindings, deterministic categorical assignment, accessibility validation, and preview/gallery integration. | Style role resolution, Theme typography/metrics/markers, Layout, Context, Scene, and output capability contracts. | Design gates C25-D1–C25-D3 publish before implementation; switching a scheme changes only resolved color values, semantic/non-color cues remain intact, categorical assignment is repeatable, and no renderer palette default exists. |
 
 ## 4. Boundaries after M24
 
@@ -85,6 +86,10 @@ automatic transitions, arbitrary extension code,
 undisclosed output degradation, raster/PDF claims, and any successor capability not
 named by this roadmap require a new owning-specification change and roadmap amendment.
 They are not hidden work inside a milestone above.
+
+M25 is design-only until the Color Scheme authority, semantic intent vocabulary,
+accessibility contract, and resolution path have passed C25-D1–C25-D3. It extends Theme
+resolution but does not replace Theme, Style, Layout, or Scene ownership.
 
 Issues 1–10 are governed by
 `issue-remediation-program-2026-09-20.md`. That program reopens acceptance evidence for
