@@ -9,7 +9,7 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows
 from chrona.presentation.layout.surface_quality import (
-    GroupPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfacePlacement,
+    GroupPlacement, MarkPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfacePlacement,
 )
 
 
@@ -82,7 +82,56 @@ def compose_surface_layout(*, projection: Any, layout_manifest: LayoutManifest,
                            timeline_bounds[2] / max(1, (end - start).days))
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]))
-    placement = SurfacePlacement(slots=slots, rows=rows, groups=tuple(groups), scale=scale)
+    track_by_id = {item.instance_id: item for item in tracks}
+    marks: list[MarkPlacement] = []
+    for review_row in review_rows:
+        members = sorted(
+            enumerate(review_row.items),
+            key=lambda pair: (0, {"snapshot": 0, "primary": 1, "actual": 2}.get(pair[1].source_kind, 3))
+            if pair[1].track == "shared" else (1, pair[0]),
+        )
+        for _, item in members:
+            layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+            instance_id = layout_id if projection.rows else item.object_id
+            track = track_by_id[layout_id]
+            source_kind = item.source_kind if projection.rows else "combined"
+            planned = item.planned
+            if source_kind != "actual" and item.source_type == "point":
+                x = _coordinate(planned["at"], scale)
+                bounds = Rect(Decimal(str(x - track.block_size / 2)), Decimal(str(track.block)),
+                              Decimal(str(track.block_size)), Decimal(str(track.block_size)))
+                port = (x, track.block + track.block_size / 2)
+                marks.append(MarkPlacement(f"planned:{instance_id}", item.object_id, bounds, port, port))
+            elif source_kind != "actual":
+                x1, x2 = _coordinate(planned["start"], scale), _coordinate(planned["end"], scale)
+                bounds = Rect(Decimal(str(x1)), Decimal(str(track.block)),
+                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(track.block_size)))
+                marks.append(MarkPlacement(f"planned:{instance_id}", item.object_id, bounds,
+                                           (x1, track.block + track.block_size / 2),
+                                           (x2, track.block + track.block_size / 2)))
+            actual = item.actual or {}
+            if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
+                x1, x2 = _coordinate(actual["start"], scale), _coordinate(actual["finish"], scale)
+                bounds = Rect(Decimal(str(x1)), Decimal(str(track.actual_block)),
+                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(track.block_size)))
+                marks.append(MarkPlacement(f"actual:{instance_id}", item.object_id, bounds,
+                                           (x1, track.actual_block + track.block_size / 2),
+                                           (x2, track.actual_block + track.block_size / 2)))
+            elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
+                x = _coordinate(actual["at"], scale)
+                bounds = Rect(Decimal(str(x - track.block_size / 2)), Decimal(str(track.actual_block)),
+                              Decimal(str(track.block_size)), Decimal(str(track.block_size)))
+                port = (x, track.actual_block + track.block_size / 2)
+                marks.append(MarkPlacement(f"actual:{instance_id}", item.object_id, bounds, port, port))
+            elif source_kind in {"actual", "combined"}:
+                anchor = planned.get("end", planned.get("at"))
+                if isinstance(anchor, date):
+                    x = _coordinate(anchor, scale)
+                    bounds = Rect(Decimal(str(x)), Decimal(str(track.block + track.block_size * 1.25)),
+                                  Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
+                    marks.append(MarkPlacement(f"missing-actual:{instance_id}", item.object_id, bounds,
+                                               (x, track.block), (x, track.block)))
+    placement = SurfacePlacement(slots=slots, rows=rows, groups=tuple(groups), scale=scale, marks=tuple(marks))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 
@@ -93,3 +142,7 @@ def _rect(bounds: tuple[float, float, float, float]) -> Rect:
 
 def _bounds(rect: Rect) -> tuple[float, float, float, float]:
     return (float(rect.inline), float(rect.block), float(rect.inline_size), float(rect.block_size))
+
+
+def _coordinate(value: date, scale: ScalePlacement) -> float:
+    return scale.origin + (value - scale.domain_start).days * scale.unit_ratio
