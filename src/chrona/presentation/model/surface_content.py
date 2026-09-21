@@ -16,8 +16,14 @@ class SurfaceContentInput:
     relations: tuple[dict, ...] = ()
     annotations: tuple[dict, ...] = ()
     show_member_labels: bool = False
+    label_placement: str = "none"
+    label_content: tuple[str, ...] = ()
     axis_level: str = "auto"
+    axis_levels: tuple[tuple[str, str], ...] = ()
+    axis_ticks: str | None = None
     as_of: date | None = None
+    as_of_label: str = "As of"
+    annotation_numbered: bool = False
     calendar_closed: tuple[date, ...] = ()
     notes: tuple[tuple[str, str], ...] = ()
     legend_entries: tuple[tuple[str, str], ...] = ()
