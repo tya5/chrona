@@ -28,6 +28,8 @@ from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
+from chrona.operational.command_engine import apply_actual_command, check_command
+from chrona.operational.resources import parse_document
 
 
 @dataclass(frozen=True)
@@ -154,6 +156,12 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--store-config", required=True)
     command.add_argument("--result", required=True)
 
+    for name in ("command-check", "command-apply", "actual-intake", "actual-resolve"):
+        command = sub.add_parser(name, help=f"run M26 {name} command")
+        command.add_argument("--command", dest="command_path", required=True)
+        command.add_argument("--store-config", required=True)
+        command.add_argument("--result", required=True)
+
     return parser
 
 
@@ -251,6 +259,19 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
 
 
 def _run(args: argparse.Namespace) -> None:
+    if args.command in {"command-check", "command-apply", "actual-intake", "actual-resolve"}:
+        command = parse_document(Path(args.command_path).read_text(encoding="utf-8"), "command-request-v0.2.schema.yaml")
+        required_type = {"actual-intake": "applyActualIntakeBatch", "actual-resolve": "resolveActualObservation"}.get(args.command)
+        if required_type and command["type"] != required_type:
+            result = {"version": "chrona/automation-result/v0.1", "operation": args.command, "status": "rejected", "requestContentIdentity": "sha256:" + "0" * 64, "inputs": [command["target"]], "diagnostics": [{"code": "E_AUTOMATION_OPERATION_UNSUPPORTED"}], "artifacts": []}
+        else:
+            reader = load_store_config(args.store_config)
+            result = check_command(reader, command) if args.command == "command-check" else apply_actual_command(reader, command)
+            result["operation"] = args.command
+        _write_result(Path(args.result), result)
+        if result["status"] != "accepted":
+            raise SystemExit(2)
+        return
     if args.command == "baseline-compare":
         reader = load_store_config(args.store_config)
         result = compare_baseline(reader, load_yaml(args.baseline_reference), reader, load_yaml(args.candidate_reference))
