@@ -75,7 +75,7 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
         payload = path.read_bytes()
         identity = "sha256:" + sha256(payload).hexdigest()
         requested = declared.get("contentIdentity")
-        if not requested or requested.endswith("0" * 64) or requested != identity:
+        if requested is not None and requested != identity:
             continue
         try:
             table = json.loads(payload)
