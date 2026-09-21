@@ -179,10 +179,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                              calendar_binding.purpose, calendar_binding.scene_role,
                                              (x1, timeline.bounds[1], max(0.0, x2 - x1), timeline.bounds[3]),
                                              opacity=0.12, z_order=len(primitives)))
-    track_placements = {
-        placement.instance_id: placement
-        for placement in composition.track_placements
-    }
+    mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
+    track_placements = {placement.instance_id: placement for placement in composition.track_placements}
     mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
       members = sorted(enumerate(review_row.items),
@@ -190,38 +188,42 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                        if pair[1].track == "shared" else (1, pair[0]))
       for _, item in members:
         layout_instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
-        track_placement = track_placements[layout_instance_id]
-        height = track_placement.block_size
-        y = track_placement.block
-        actual_y = track_placement.actual_block
         instance_id = (layout_instance_id if projection.rows else item.object_id)
         source_kind = item.source_kind if projection.rows else "combined"
         planned = item.planned
         planned_role = "snapshot" if source_kind == "snapshot" else "planned"
-        if source_kind != "actual" and item.source_type == "point":
-            x = coordinate(planned["at"])
-            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Symbol", item.object_id, "object", planned_role, planned_role,
-                                             (x - height / 2, y, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
-            mark_ports[instance_id] = ((x, y + height / 2), (x, y + height / 2))
-        elif source_kind != "actual":
-            x1, x2 = coordinate(planned["start"]), coordinate(planned["end"])
-            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Rect", item.object_id, "object", planned_role, planned_role,
-                                             (x1, y, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
-            mark_ports[instance_id] = ((x1, y + height / 2), (x2, y + height / 2))
+        planned_mark = mark_placements.get(f"planned:{instance_id}")
+        if planned_mark is not None:
+            bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
+                      float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
+            height, y = bounds[3], bounds[1]
+            mark_ports[instance_id] = (planned_mark.start_port, planned_mark.end_port)
+            if item.source_type == "point":
+                primitives.append(ScenePrimitive(f"planned:{instance_id}", "Symbol", item.object_id, "object", planned_role, planned_role,
+                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+            else:
+                primitives.append(ScenePrimitive(f"planned:{instance_id}", "Rect", item.object_id, "object", planned_role, planned_role,
+                                                 bounds, projection_instance_id=instance_id, z_order=len(primitives)))
         actual = item.actual or {}
-        if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
-            x1, x2 = coordinate(actual["start"]), coordinate(actual["finish"])
-            primitives.append(ScenePrimitive(f"actual:{instance_id}", "Rect", item.object_id, "object", "actual", "actual",
-                                             (x1, actual_y, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
-        elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
-            x = coordinate(actual["at"])
-            primitives.append(ScenePrimitive(f"actual:{instance_id}", "Symbol", item.object_id, "object", "actual", "actual",
-                                             (x - height / 2, actual_y, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
-        elif source_kind in {"actual", "combined"} and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
-            anchor_date = planned.get("end", planned.get("at"))
-            anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
+        actual_mark = mark_placements.get(f"actual:{instance_id}")
+        if actual_mark is not None:
+            bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
+                      float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
+            if item.source_type == "span":
+                primitives.append(ScenePrimitive(f"actual:{instance_id}", "Rect", item.object_id, "object", "actual", "actual",
+                                                 bounds, projection_instance_id=instance_id, z_order=len(primitives)))
+            else:
+                primitives.append(ScenePrimitive(f"actual:{instance_id}", "Symbol", item.object_id, "object", "actual", "actual",
+                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+        missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
+        if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
+            bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
+                      float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
-                                             (anchor_x, y + height * 1.25, max(1.0, height * 1.5), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
+                                             bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
+        if planned_mark is None:
+            track = track_placements[layout_instance_id]
+            height, y = track.block_size, track.block
         if contract.labels.enabled:
             start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
             label_at = start_at if value.surface_content.label_placement == "plot" and isinstance(start_at, date) else end_at
