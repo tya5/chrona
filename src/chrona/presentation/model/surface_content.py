@@ -16,6 +16,7 @@ class SurfaceContentInput:
     relations: tuple[dict, ...] = ()
     annotations: tuple[dict, ...] = ()
     show_member_labels: bool = False
+    as_of: date | None = None
     notes: tuple[tuple[str, str], ...] = ()
     legend_entries: tuple[tuple[str, str], ...] = ()
     coverage_text: str = ""
