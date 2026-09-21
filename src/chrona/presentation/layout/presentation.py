@@ -21,11 +21,9 @@ class RowPlacement:
 
 @dataclass(frozen=True)
 class TrackPlacement:
-    row_id: str
-    item_id: str
-    inline: float
+    instance_id: str
     block: float
-    inline_size: float
+    actual_block: float
     block_size: float
 
 
@@ -71,4 +69,32 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
         placements.append(RowPlacement(row.row_id, row.group_id,
                                        (timeline_bounds[0], cursor, timeline_bounds[2], height)))
         cursor += height
+    return tuple(placements)
+
+
+def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[RowPlacement, ...],
+                      mark_block_size: float) -> tuple[TrackPlacement, ...]:
+    """Allocate member tracks before Scene emits planned or actual marks."""
+    placements: list[TrackPlacement] = []
+    for review_row, row in zip(review_rows, row_placements, strict=True):
+        stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
+        stacked_index = 0
+        members = sorted(
+            enumerate(review_row.items),
+            key=lambda pair: (
+                0,
+                {"snapshot": 0, "primary": 1, "actual": 2}.get(pair[1].source_kind, 3),
+            ) if pair[1].track == "shared" else (1, pair[0]),
+        )
+        for _, item in members:
+            if item.track == "shared":
+                block = row.bounds[1] + (row.bounds[3] - mark_block_size) / 2
+                actual_block = block
+            else:
+                track_height = row.bounds[3] / stacked_total
+                block = row.bounds[1] + stacked_index * track_height + track_height * 0.25
+                actual_block = block + mark_block_size * 1.25
+                stacked_index += 1
+            instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+            placements.append(TrackPlacement(instance_id, block, actual_block, mark_block_size))
     return tuple(placements)
