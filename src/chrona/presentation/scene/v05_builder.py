@@ -191,6 +191,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if label_width <= clipped_width:
             text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", interval.label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
+    instance_rows: dict[str, str] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
         anchor = (row.bounds[0] + row.bounds[2], row.bounds[1] + row.bounds[3] / 2)
         for item in review_row.items:
@@ -198,6 +199,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                            if projection.rows else item.object_id)
             instance_anchors.setdefault(item.object_id, []).append(
                 (instance_id, anchor))
+            instance_rows[instance_id] = row.row_id
     obstacles = tuple(row.bounds for row in rows)
     for relation in value.surface_content.relations:
         source = relation.get("from", {}).get("object")
@@ -210,7 +212,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                 target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
                 if source_port == target_port:
                     raise SceneBuildError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation.get('id', '')}")
-                points = route_orthogonal(source_port, target_port, obstacles,
+                route_obstacles = tuple(item.bounds for item in rows
+                                        if instance_rows.get(source_id) != instance_rows.get(target_id)
+                                        or item.row_id != instance_rows.get(source_id))
+                points = route_orthogonal(source_port, target_port, route_obstacles,
                     bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
                 if len(points) < 2:
                     raise SceneBuildError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation.get('id', '')}")
