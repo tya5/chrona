@@ -249,3 +249,18 @@ def test_project_calendar_closure_emits_background_shading():
     surface = compose_review_surface(value)
 
     assert next(node for node in surface.primitives if node.scene_id == "calendar-closed:2026-01-03").visual_role == "calendar-closed"
+
+
+def test_month_axis_emits_quarter_band_labels():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
+    measurement = MeasuredSources({}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    assert any(node.scene_id.startswith("axis-band:quarter:") for node in surface.primitives)
