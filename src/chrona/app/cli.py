@@ -200,14 +200,14 @@ def _run_render_review(args: argparse.Namespace) -> None:
     )
     review_rows = projection.rows or ()
     source_inputs = {
-        "title": SourceInput((project["project"].get("title", "Chrona"),)),
+        "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(tuple(row.label for row in review_rows) or tuple(item.title for item in projection.items), len(review_rows) or len(projection.items), len(view.get("body", {}).get("tableColumns", ())) or 1),
         "timeline": SourceInput(item_count=len(review_rows) or len(projection.items), span_days=max(1, (projection.window[1] - projection.window[0]).days)),
-        "timeline-axis": SourceInput(span_days=max(1, (projection.window[1] - projection.window[0]).days)),
-        "summary": SourceInput(("summary",)), "legend": SourceInput(("legend",)),
+        "timeline-axis": SourceInput(span_days=max(1, (projection.window[1] - projection.window[0]).days), typography_role="axis"),
+        "summary": SourceInput(("summary",)), "legend": SourceInput(("legend",), typography_role="legend"),
         "group-details": SourceInput(("group details",)), "observations": SourceInput(("observations",)),
-        "milestones": SourceInput(("milestones",)), "annotations": SourceInput(("annotations",)),
-        "notes": SourceInput(tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values()) or ("notes",)),
+        "milestones": SourceInput(("milestones",)), "annotations": SourceInput(("annotations",), typography_role="annotation"),
+        "notes": SourceInput(tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values()) or ("notes",), typography_role="annotation"),
     }
     environment = context["body"]["environment"]
     theme_body = theme["body"]
