@@ -1,0 +1,19 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/snapshot-ref-v0.2"
+title: "Chrona immutable named baseline v0.2"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: chrona/snapshot-ref/v0.2}
+  kind: {const: snapshot-ref}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [project]
+    additionalProperties: false
+    properties:
+      project:
+        allOf:
+          - $ref: "urn:chrona:revision-store-resource-ref-v0.1"
+          - properties: {kind: {const: project}}
