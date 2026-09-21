@@ -1,6 +1,6 @@
 # Gantt Comparison Surface Quality — Design Review
 
-**Decision:** Design complete; implementation planning is authorized.
+**Decision:** Design complete; implementation planning is authorized, subject to the foundation-completion correction.
 **Scope:** Issue #58, ADR-0031, Specification 50.
 
 ## Review findings
@@ -21,6 +21,10 @@
 3. New View/Layout syntax is normalized exactly once at ingress; legacy shorthand has one documented mapping.
 4. Table, label, group, relation and legend verification occurs on placements before renderer output.
 5. Materializer byte identity is retained and supplemented with PNG visual evidence.
+
+## Foundation correction
+
+The initial I58-1 delivery introduced placement records but did not remove Scene's font measurement, label positioning, or router invocation. It therefore does not meet Cross-boundary check 2. The foundation-completion correction is required before I58-3; it preserves the approved design and makes the original refactor gate objectively testable.
 
 ## Refactor order
 
