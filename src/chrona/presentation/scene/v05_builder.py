@@ -10,6 +10,7 @@ from datetime import date
 from typing import Any, Mapping
 
 from chrona.presentation.layout.axis import axis_intervals, format_axis_label
+from chrona.presentation.layout.text import place_text
 from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutManifest
@@ -20,8 +21,8 @@ from chrona.presentation.model.presentation_contract import normalize_presentati
 from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
-from chrona.presentation.scene.annotations import nearest_box_port, place_annotation_rail, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
-from chrona.presentation.scene.marks import ComparisonMark
+from chrona.presentation.layout.annotations import nearest_box_port, place_annotation_rail, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
+from chrona.presentation.layout.comparison_marks import ComparisonMark
 
 
 class SceneBuildError(ValueError):
@@ -130,10 +131,14 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     primitives: list[ScenePrimitive] = []
     def text(scene_id: str, source: str, purpose: str, role: str, content: str, x: float, y: float,
              *, typography_role: str = "text") -> None:
-        family, weight, size, line_height = value.theme_tokens.typography(typography_role)
-        font_size = float(size)
-        layout = TextLayout((x, y - font_size, value.font_metrics.width(content, font_size), font_size * float(line_height)),
-                            (x, y), (content,), family, weight, font_size, float(line_height), value.font_metrics.content_identity)
+        placed = place_text(placement_id=scene_id, source_ref=source, content=content,
+                            inline=x, baseline_block=y, typography_role=typography_role,
+                            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics)
+        layout = TextLayout((float(placed.bounds.inline), float(placed.bounds.block),
+                             float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                            placed.baseline or (x, y), placed.lines, placed.font_family,
+                            placed.font_weight, placed.font_size, placed.line_height,
+                            placed.font_asset_identity)
         primitives.append(ScenePrimitive(scene_id, "Text", source, "review", purpose, role, layout.bounds,
                                          text=content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
     title_measurement = value.measured_sources.measurements.get("title")
