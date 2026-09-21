@@ -1,0 +1,63 @@
+version: chrona/presentation/v0.5
+kind: render-context
+id: controller-z-executive
+body:
+  project: &project
+    id: controller-z-silicon-bringup
+    kind: project
+    store: {provider: local, identity: controller-z-example}
+    address: project.yaml
+    revision: {token: example-v1}
+    contentIdentity: sha256:306c3aff9e4ae68531cb61c7804bfa005a724bbc367213ce278d1f85482dfd00
+  view:
+    id: controller-z-executive
+    kind: view
+    store: {provider: local, identity: controller-z-example}
+    address: views/executive.yaml
+    revision: {token: example-v1}
+    contentIdentity: sha256:19f04109f2c74fe4ebeba85a98f1844b0fe07f5f6c84ca59e56b76eb4b17e20b
+  theme:
+    id: executive-light
+    kind: theme
+    store: {provider: local, identity: controller-z-example}
+    address: themes/executive-light.yaml
+    revision: {token: example-v1}
+    contentIdentity: sha256:38ea311c77309f728f0e70560c9315584c5b6c4331fc899f4f9a884dcc6ee785
+  colorScheme:
+    id: executive-light
+    kind: color-scheme
+    store: {provider: local, identity: controller-z-example}
+    address: schemes/executive-light.yaml
+    revision: {token: example-v1}
+    contentIdentity: sha256:3371417868aa9abe64233c484ea88c97cf2ad42242dfe06406808619915bcf1b
+  layout:
+    id: executive-review
+    kind: layout-profile
+    store: {provider: local, identity: controller-z-example}
+    address: layouts/executive-review.yaml
+    revision: {token: example-v1}
+    contentIdentity: sha256:147088727142e1cfc1e56fae566843e901b6ff92f6b11912f24f6bd5afe5d6c0
+  inputs:
+    actual:
+      id: controller-z-observed
+      kind: actual-set
+      store: {provider: local, identity: controller-z-example}
+      address: actual.yaml
+      revision: {token: example-v1}
+      contentIdentity: sha256:86a8c2b706940eed776202acaa6f59965f7def78d1fbcfde482e86d7889b77cd
+  environment:
+    viewport: {inlineSize: 1600, blockSize: 900}
+    locale: en-US
+    fontMetrics:
+      algorithm: declared-metrics-v1
+      assets:
+        - family: Nimbus Sans
+          weight: 400
+          revision: nimbus-sans-regular-v1
+          contentIdentity: sha256:0d6b0500eb77e9b64b2cfb9916ead13e41759840a893ee3bae7e58e86fbfb779
+          path: font_metrics/nimbus-sans-regular-v1.json
+      missingFont: declared-fallback
+    scenePrecision: 3
+  target:
+    kind: svg
+    capabilities: [accessibleText, hierarchicalAxis, marker, semanticRoles, sourceMetadata, tableSemantics]
