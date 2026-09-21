@@ -1,0 +1,13 @@
+version: chrona/example-materializer/v0.1
+id: halcyon-1
+context: contexts/01-mission-brief.yaml
+slides:
+  - id: mission-brief
+    context: contexts/01-mission-brief.yaml
+    expectedSvg: generated/01-mission-brief.svg
+  - id: programme-board
+    context: contexts/02-programme-board.yaml
+    expectedSvg: generated/02-programme-board.svg
+  - id: launch-campaign
+    context: contexts/03-launch-campaign.yaml
+    expectedSvg: generated/03-launch-campaign.svg
