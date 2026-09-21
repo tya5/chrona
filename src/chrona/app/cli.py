@@ -11,7 +11,6 @@ from typing import Any, NoReturn
 import yaml
 
 from chrona.app.review import review_projects
-from chrona.commands.commands import set_typed_field
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
 from chrona.extensions.profiles import validate_profiles
@@ -155,13 +154,6 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--store-config", required=True)
     command.add_argument("--result", required=True)
 
-    command = sub.add_parser("propose-set", help="propose one typed Project field change without writing the input", description="propose one typed Project field change without writing the input")
-    command.add_argument("project")
-    command.add_argument("object_id")
-    command.add_argument("field")
-    values = command.add_mutually_exclusive_group(required=True)
-    values.add_argument("--value", dest="literal_value", help="literal string value")
-    values.add_argument("--value-json", dest="json_value", help="JSON scalar, array, or object")
     return parser
 
 
@@ -289,17 +281,6 @@ def _run(args: argparse.Namespace) -> None:
             raise SystemExit(1)
         print(json.dumps(output, indent=2, default=_json_default))
         return
-    if args.command == "propose-set":
-        project = load_yaml(args.project)
-        if project.get("extensions"):
-            raise CliFailure("E_PACKAGE_RESOLUTION_REQUIRED", "Extensions require immutable package resolution", "extensions", "/extensions")
-        value = json.loads(args.json_value) if args.json_value is not None else args.literal_value
-        result = set_typed_field(project, None, args.object_id, args.field, value)
-        if result.status != "accepted":
-            _reject_codes(result.diagnostics, "commands")
-        print(json.dumps({"status": result.status, "diagnostics": [], "project": result.project}, default=_json_default))
-        return
-
     project = _load_primary_project(args)
     if args.command == "validate":
         diagnostics = validate_project(project)
