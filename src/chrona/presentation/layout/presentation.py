@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from chrona.presentation.layout.model import LayoutError
+
 
 @dataclass(frozen=True)
 class TableColumnPlacement:
@@ -30,8 +32,9 @@ class TrackPlacement:
 def place_table_columns(*, columns: tuple[tuple[str, str], ...],
                         cells: tuple[tuple[str, str, str], ...],
                         bounds: tuple[float, float, float, float],
-                        font_metrics: Any, font_size: float) -> tuple[TableColumnPlacement, ...]:
-    """Measure and place all columns before Scene text emission."""
+                        font_metrics: Any, font_size: float,
+                        overflow: str = "diagnose") -> tuple[TableColumnPlacement, ...]:
+    """Measure and place columns without shrinking required text below its bounds."""
     content_by_column = {column_id: [label] for column_id, label in columns}
     for _, column_id, cell in cells:
         content_by_column.setdefault(column_id, []).append(cell)
@@ -42,6 +45,10 @@ def place_table_columns(*, columns: tuple[tuple[str, str], ...],
         for column_id, label in columns
     )
     total = sum(natural_widths)
+    if total > bounds[2] and overflow == "diagnose":
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
+    if total > bounds[2] and overflow != "ellipsize-with-source":
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW_POLICY", "/layoutManifest/table")
     scale = min(1.0, bounds[2] / total) if total else 1.0
     cursor = bounds[0]
     placements: list[TableColumnPlacement] = []
