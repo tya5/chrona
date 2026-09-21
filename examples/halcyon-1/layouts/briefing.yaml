@@ -31,14 +31,14 @@ root:
         - id: table
           kind: slot
           source: table
-          inlineSize: {minmax: {min: content, max: {fr: 3}}}
+          inlineSize: {minmax: {min: content, max: {fr: 5}}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
           priority: required
           overflow: diagnose
         - id: timeline-stack
           kind: column
-          inlineSize: {fr: 8}
+          inlineSize: {fr: 6}
           blockSize: fill
           gap: {token: spacing.none}
           padding: {token: spacing.none}
