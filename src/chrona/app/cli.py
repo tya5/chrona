@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -26,6 +27,8 @@ from chrona.presentation.scene.schedule import scene_from_schedule
 from chrona.scheduling.scheduler import schedule
 from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
+from chrona.operational.baselines import compare_baseline
+from chrona.operational.store_config import load_store_config
 
 
 @dataclass(frozen=True)
@@ -146,6 +149,12 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
 
+    command = sub.add_parser("baseline-compare", help="compare a named baseline and immutable candidate")
+    command.add_argument("--baseline-reference", required=True)
+    command.add_argument("--candidate-reference", required=True)
+    command.add_argument("--store-config", required=True)
+    command.add_argument("--result", required=True)
+
     command = sub.add_parser("propose-set", help="propose one typed Project field change without writing the input", description="propose one typed Project field change without writing the input")
     command.add_argument("project")
     command.add_argument("object_id")
@@ -250,6 +259,13 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
 
 
 def _run(args: argparse.Namespace) -> None:
+    if args.command == "baseline-compare":
+        reader = load_store_config(args.store_config)
+        result = compare_baseline(reader, load_yaml(args.baseline_reference), reader, load_yaml(args.candidate_reference))
+        _write_result(Path(args.result), result)
+        if result["status"] != "accepted":
+            raise SystemExit(2)
+        return
     if args.command == "render-review":
         _run_render_review(args)
         return
@@ -300,6 +316,22 @@ def _run(args: argparse.Namespace) -> None:
         Path(args.output).write_text(svg, encoding="utf-8")
         return
     print(json.dumps({"placements": result.placements, "diagnostics": []}, indent=2, default=_json_default))
+
+
+def _write_result(destination: Path, result: dict[str, Any]) -> None:
+    """Create one result artifact without replacing an existing result."""
+    if destination.exists():
+        raise CliFailure("E_AUTOMATION_OUTPUT_EXISTS", "result destination already exists", "automation", exit_code=2)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+    try:
+        with temporary.open("xb") as handle:
+            handle.write(json.dumps(result, sort_keys=True, default=_json_default).encode("utf-8"))
+        os.link(temporary, destination)
+    except FileExistsError as error:
+        raise CliFailure("E_AUTOMATION_OUTPUT_EXISTS", "result destination already exists", "automation", exit_code=2) from error
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def main() -> None:
