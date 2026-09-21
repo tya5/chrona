@@ -322,6 +322,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         placed: list[LabelRect] = []
         for index, annotation in enumerate(value.surface_content.annotations):
             annotation_id, content = str(annotation.get("id", index)), str(annotation.get("text", ""))
+            content = f"{annotation['number']}. {content}" if "number" in annotation else content
             resolved = resolve_annotation_anchor(annotation, marks)
             anchor = annotation.get("anchor", {})
             matching = [(review_row, scene_row) for review_row, scene_row in zip(review_rows, rows, strict=True)
@@ -401,9 +402,11 @@ def _annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: SceneRow
 
 
 def _fitting_axis(value: SceneBuildInput, start: date, end: date, timeline: SceneSlot):
-    for level in ("day", "week", "month", "quarter", "year"):
+    requested = value.surface_content.axis_level
+    levels = (requested,) if requested != "auto" else ("day", "week", "month", "quarter", "year")
+    for level in levels:
         intervals = axis_intervals(start, end, level)
         if all(value.font_metrics.width(item.label, float(value.measured_sources.metric_values["text.body.size"])) <= (item.natural_end - item.natural_start).days * timeline.bounds[2] / max(1, (end - start).days)
                for item in intervals):
             return intervals
-    raise SceneBuildError("E_PRESENTATION_AXIS_OVERFLOW", "/layoutManifest/timeline-axis")
+    raise SceneBuildError("E_PRESENTATION_AXIS_OVERFLOW", "/view/body/timePresentation/axisLevel")
