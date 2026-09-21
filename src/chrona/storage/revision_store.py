@@ -188,9 +188,10 @@ class SnapshotReadError(ValueError):
 class LocalSnapshotReader:
     """Read-only reader for pre-materialized immutable local snapshot directories."""
 
-    def __init__(self, root: Path, identity: str):
+    def __init__(self, root: Path, identity: str, *, require_content_identity: bool = False):
         self.root = root
         self.identity = identity
+        self.require_content_identity = require_content_identity
 
     def read(self, reference: dict[str, Any]) -> bytes:
         store = reference.get("store", {})
@@ -206,6 +207,8 @@ class LocalSnapshotReader:
         payload = path.read_bytes()
         actual_identity = f"sha256:{sha256(payload).hexdigest()}"
         expected_identity = reference.get("contentIdentity")
+        if expected_identity is None and self.require_content_identity:
+            raise SnapshotReadError("E_CONTENT_IDENTITY_REQUIRED")
         if expected_identity is not None and expected_identity != actual_identity:
             raise SnapshotReadError("E_CONTENT_IDENTITY")
         return payload
