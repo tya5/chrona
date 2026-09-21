@@ -9,8 +9,10 @@ source, and a named set of slides with a declared expected SVG target. The Conte
 the sole closure selector; a slide selects only an expected target and may not replace
 the Context's View/Theme/Layout resources.
 
-The materializer copies a manifest-declared snapshot directory into a temporary store,
-then invokes only `chrona render-review` with the manifest Context reference. `--check`
+The manifest's Context field names the raw Context resource path. The materializer
+copies it into the temporary snapshot and derives its immutable resource reference
+with the exact raw-byte content identity; that derived reference is then the only
+argument supplied to `chrona render-review`. `--check`
 compares the derived SVG with the named expected target; `--write` replaces only that
 target. A manifest missing Context/snapshot/slide/target, or a target outside the
 example root, is rejected. This makes the materializer generic without giving examples
