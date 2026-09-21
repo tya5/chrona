@@ -6,7 +6,7 @@ from datetime import date
 
 from chrona.presentation.layout.axis import AxisInterval
 from chrona.presentation.layout.lanes import LaneAssignment, LaneTrack
-from chrona.presentation.scene.marks import ComparisonMark
+from chrona.presentation.layout.comparison_marks import ComparisonMark
 
 @dataclass(frozen=True)
 class TextLayout:
