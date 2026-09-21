@@ -188,8 +188,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     for review_row, row in zip(review_rows, rows, strict=True):
         anchor = (row.bounds[0] + row.bounds[2], row.bounds[1] + row.bounds[3] / 2)
         for item in review_row.items:
+            instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
+                           if projection.rows else item.object_id)
             instance_anchors.setdefault(item.object_id, []).append(
-                (f"{review_row.row_id}:{item.item_id or item.object_id}", anchor))
+                (instance_id, anchor))
     obstacles = tuple(row.bounds for row in rows)
     for relation in value.surface_content.relations:
         source = relation.get("from", {}).get("object")
