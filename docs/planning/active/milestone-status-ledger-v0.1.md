@@ -37,7 +37,7 @@ evidence is present, not that a later product release is complete.
 | M24 | Complete | Profile resolution at `fcabf30`; normal flow at `df2844e`; per-axis correction at `cc60472`; source-adapter boundary at `bf37c7a`; product-path replacement at `7e81ce1`; final I24-5 acceptance review. The v0.4 Context, independent Theme/Layout resources, source measurement/composition, and manifest-driven Scene path are the only reachable layout path. | None. |
 | M25 | Complete | Color Scheme v0.1, Theme v0.2, Render Context v0.5, deterministic category assignment, WCAG contrast rejection, migrated examples, no reachable legacy review paint fallback, and deterministic gallery are published. 165 tests and full conformance pass. | None. |
 | M26 | Complete | C26-D1–D4, I26-1–I26-7, the operational conformance manifest, A26-01–A26-10 acceptance evidence, and `m26-operational-workflows-final-acceptance-review-2026-09-21.md`. UC-10/UC-11/UC-12 are exposed only by the immutable-reference CLI contracts in Specification 35. | None. |
-| M27 | In progress | I27-R1/R2/R3A/R3B1/R3B2/R4 are complete: frozen seam, complete Scene family construction, SVG adapter, and CLI switch; review: `m27-i27-r3b2-optional-family-review-2026-09-21.md`. | Complete I27-R5 and A27-01–A27-10. |
+| M27 | Complete | Current v0.5 Context→Theme/Color Scheme→Layout Manifest→SceneSurface→SVG closure, materializer reproduction, 198 tests, conformance, and `m27-final-acceptance-review-2026-09-21.md`. | None. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning

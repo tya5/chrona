@@ -1,23 +1,6 @@
-project: project.yaml
-gallery: gallery.html
-actual: actual.yaml
-style: styles/plan-actual.yaml
-theme: themes/executive-light.yaml
-colorScheme: schemes/executive-light.yaml
-layout: layouts/executive-review.yaml
+version: chrona/example-materializer/v0.1
+id: aster-ssd
+context: contexts/01-overview.yaml
 slides:
-- view: views/01-overview.yaml
-  output: slides/01-overview/expected.svg
-  preview: slides/01-overview/preview.png
-- view: views/02-platform-firmware.yaml
-  output: slides/02-platform-firmware/expected.svg
-  preview: slides/02-platform-firmware/preview.png
-- view: views/03-performance-security.yaml
-  output: slides/03-performance-security/expected.svg
-  preview: slides/03-performance-security/preview.png
-- view: views/04-qualification-production.yaml
-  output: slides/04-qualification-production/expected.svg
-  preview: slides/04-qualification-production/preview.png
-- view: views/05-master.yaml
-  output: slides/05-master/expected.svg
-  preview: slides/05-master/preview.png
+  - id: overview
+    expectedSvg: generated/overview.svg

@@ -1,0 +1,6 @@
+version: chrona/example-materializer/v0.1
+id: controller-z
+context: contexts/executive.yaml
+slides:
+  - id: executive
+    expectedSvg: generated/executive.svg
