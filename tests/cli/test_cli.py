@@ -86,7 +86,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("immutable Project snapshot", "minimal schedule scene", "immutable Render Context v0.4"):
+    for phrase in ("immutable Project snapshot", "minimal schedule scene", "immutable Render Context v0.5"):
         assert phrase in help_text
 
 
