@@ -11,17 +11,16 @@ from chrona.resources import schema_resource
 ROOT = Path(__file__).resolve().parents[3]
 
 
-def test_v04_example_contexts_bind_exact_source_bytes():
-    schema = yaml.safe_load(schema_resource("render-context-v0.4.schema.yaml").read_text())
+def test_current_example_contexts_bind_exact_source_bytes():
     for relative in (
         "examples/controller-z/contexts/executive.yaml",
         "examples/aster-ssd/contexts/01-overview.yaml",
     ):
         path = ROOT / relative
         context = yaml.safe_load(path.read_text())
-        jsonschema.Draft202012Validator(schema).validate(context)
+        version = context["version"].rsplit("/", 1)[-1]\n        schema = yaml.safe_load(schema_resource(f"render-context-{version}.schema.yaml").read_text())\n        jsonschema.Draft202012Validator(schema).validate(context)
         body = context["body"]
-        references = [body[name] for name in ("project", "view", "theme", "layout")]
+        references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
         references.extend(body["inputs"].values())
         example_root = path.parents[1]
         for reference in references:
