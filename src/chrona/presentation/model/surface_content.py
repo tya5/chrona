@@ -29,6 +29,7 @@ class SurfaceContentInput:
     legend_entries: tuple[tuple[str, str], ...] = ()
     coverage_text: str = ""
     summary_panels: tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...] = ()
+    summary_presentations: tuple[tuple[str, str], ...] = ()
     template_values: tuple[tuple[str, str], ...] = ()
     group_details: tuple[tuple[str, str, str], ...] = ()
     milestones: tuple[tuple[str, str, date], ...] = ()
