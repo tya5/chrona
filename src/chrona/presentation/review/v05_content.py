@@ -21,10 +21,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         cells = tuple(
             (row.row_id, str(column["id"]),
              display_value(table_value(next(item for item in row.items if item.item_id == row.table_subject_id),
-                                       dict(project), column["source"]), column["missing"]))
+                                       dict(project), column["source"]), column["missing"], column.get("format", "text")))
             for row in projection.rows for column in body.get("tableColumns", ()))
     else:
-        cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"]), column["missing"]))
+        cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"]), column["missing"], column.get("format", "text")))
                       for item in projection.items for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
     as_of_value = ((actual_set or {}).get("body", actual_set or {}).get("asOf"))
