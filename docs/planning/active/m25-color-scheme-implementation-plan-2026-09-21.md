@@ -12,7 +12,9 @@
 4. Migrate fixtures and examples atomically; add positive/negative resolver and
    deterministic-order tests.
 5. Add an explicit gallery command that evaluates separate closed Contexts, not adapter
-   overrides. Verify output has unchanged geometry and non-color cues across schemes.
+   overrides. It preflights all closures, rejects duplicate Scheme content identities,
+   sorts by Scheme identity, and writes an ordered manifest. Verify output has unchanged
+   geometry and non-color cues across schemes.
 6. Run the full test/conformance suite and publish final acceptance evidence.
 
 Each item is a separate GitHub-published phase. Any design mismatch returns to
