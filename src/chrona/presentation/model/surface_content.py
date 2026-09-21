@@ -15,6 +15,7 @@ class SurfaceContentInput:
     table_cells: tuple[tuple[str, str, str], ...] = ()
     relations: tuple[dict, ...] = ()
     annotations: tuple[dict, ...] = ()
+    show_member_labels: bool = False
     notes: tuple[tuple[str, str], ...] = ()
     legend_entries: tuple[tuple[str, str], ...] = ()
     coverage_text: str = ""
