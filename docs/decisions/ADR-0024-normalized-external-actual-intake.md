@@ -14,7 +14,9 @@ Project tip, create duplicate observations on retry, or title-match the wrong ob
 Chrona accepts only a self-contained `actual-intake-batch/v0.1` produced by an
 adapter. The batch carries a source system, normalized source content identity, and
 stable external key per record. Apply is a v0.2 CAS command against one immutable
-Actual-set reference. `(source.system, externalKey)` is the deduplication key.
+Actual-set v0.2 reference. The v0.2 observation stores its source content identity so
+the required replay/conflict check remains auditable. `(source.system, externalKey)`
+is the deduplication key.
 
 Exact Project IDs may be carried by a record and are checked against an explicit
 immutable Project reference. All other observations remain explicitly unmatched.
