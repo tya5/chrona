@@ -33,6 +33,8 @@ body:
     legend: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.legend, lineHeight: leading.body}
     annotation: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.note, lineHeight: leading.body}
     summary: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.legend, lineHeight: leading.body}
+    metric: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.heading, lineHeight: leading.tight}
+    groupHeader: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.axis, lineHeight: leading.body}
     dependency: {marker: arrow}
     missing-actual: {pattern: hatch}
   colorBindings:
