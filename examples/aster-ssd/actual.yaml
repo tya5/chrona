@@ -2,6 +2,7 @@ version: chrona/presentation/v0.1
 kind: actual-set
 id: aster-observed-2027-06-30
 body:
+  asOf: '2027-06-30'
   observations:
     - {id: requirements-final, sequence: 1, projectObjectId: requirements, actual: {start: '2027-01-04', finish: '2027-01-15', progress: 1}}
     - {id: nand-initial, sequence: 1, projectObjectId: nand, actual: {start: '2027-02-02', finish: '2027-03-05', progress: 1}}
