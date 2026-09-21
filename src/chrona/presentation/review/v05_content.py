@@ -40,8 +40,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     detail_body = (detail or {}).get("body", detail or {})
     summary_body = (summary or {}).get("body", summary or {})
     legend = tuple((str(item["role"]), str(item["label"])) for item in detail_body.get("legend", ()))
-    panels = tuple((str(item["id"]), str(item.get("title", item["id"])), tuple((str(key), str(value)) for key, value in item.get("metrics", {}).items()))
-                   for item in summary_body.get("panels", ()))
+    panels = _typed_summary_panels(summary_body, projection, actual_set)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=show_member_labels, axis_level=str(temporal.get("axisLevel", "auto")), as_of=as_of,
                                calendar_closed=_closed_calendar_days(project, projection.window) if temporal.get("calendarClosed", True) else (),
@@ -70,3 +69,40 @@ def _closed_calendar_days(project: Mapping[str, Any], window: tuple[date, date])
             closed.append(current)
         current += timedelta(days=1)
     return tuple(closed)
+
+
+
+def _typed_summary_panels(summary: Mapping[str, Any], projection: ReviewProjection,
+                          actual_set: Mapping[str, Any] | None) -> tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...]:
+    """Resolve summary-profile facts while keeping profiles free of copied values."""
+    points = sorted(item.planned["at"] for item in projection.items
+                    if item.source_type == "point" and isinstance(item.planned.get("at"), date))
+    as_of_value = ((actual_set or {}).get("body", actual_set or {}).get("asOf"))
+    values: dict[str, Any] = {
+        "actual.asOf": date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else None,
+        "planned.nextPoint": points[0] if points else None,
+        "count.selected": len(projection.items),
+        "count.missingActual": sum(not bool(item.actual) for item in projection.items),
+        "count.knownFinishVariance": sum(item.finish_delta is not None for item in projection.items),
+    }
+    panels = []
+    for panel in summary.get("panels", ()):
+        metrics = []
+        for metric_id, definition in panel.get("metrics", {}).items():
+            if isinstance(definition, Mapping):
+                source, formatter = definition.get("source"), definition.get("format")
+                if source not in values:
+                    raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+                if formatter not in {"text", "date", "count", "signedDays"}:
+                    raise ValueError("E_PRESENTATION_SUMMARY_FORMAT")
+                raw = values[source]
+                rendered = "unknown" if raw is None else (
+                    raw.isoformat() if formatter == "date" and isinstance(raw, date)
+                    else f"{raw:+d}d" if formatter == "signedDays" and isinstance(raw, int)
+                    else str(raw)
+                )
+                metrics.append((str(definition.get("label", metric_id)), rendered))
+            else:
+                metrics.append((str(metric_id), str(definition)))
+        panels.append((str(panel["id"]), str(panel.get("title", panel["id"])), tuple(metrics)))
+    return tuple(panels)
