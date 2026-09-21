@@ -38,6 +38,11 @@ unique `provider: local`, `identity`, and `root` mappings. It contains no creden
 The selected entry must exactly match each resource reference's provider and identity;
 unknown/duplicate mappings reject before reads or writes.
 
+A writable local Actual Store uses immutable `<root>/<token>/actuals/<id>.yaml`
+resources and an adapter-owned `actual-tips/<id>.json` CAS pointer. The pointer is not
+a resource reference and cannot be supplied by CI; the command's target token is the
+only expected-write value.
+
 ```yaml
 name: chrona-baseline-review
 steps:
