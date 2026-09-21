@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 
 AxisLevel = Literal["year", "quarter", "month", "week", "day"]
@@ -135,3 +135,22 @@ def format_axis_label(interval: AxisInterval, formatting: dict, locale: str) -> 
             return f"{value.year}/{value.month:02d}/{value.day:02d}"
         return f"{_SHORT_MONTHS[value.month - 1]} {value.day}, {value.year}"
     return interval.label
+
+
+def fitting_axis(*, requested: str, start: date, end: date, inline_size: float,
+                 font_size: float, font_metrics: Any) -> tuple[AxisInterval, ...]:
+    """Choose the first requested axis level whose labels fit natural buckets."""
+    levels = (requested,) if requested != "auto" else ("day", "week", "month", "quarter", "year")
+    for level in levels:
+        intervals = axis_intervals(start, end, level)
+        if all(float(font_metrics.width(item.label, font_size)) <=
+               (item.natural_end - item.natural_start).days * inline_size / max(1, (end - start).days)
+               for item in intervals):
+            return intervals
+    raise ValueError("E_PRESENTATION_AXIS_OVERFLOW")
+
+
+def axis_label_fits(*, content: str, available_inline: float, font_size: float,
+                    font_metrics: Any) -> bool:
+    """Return whether a selected axis label fits its clipped interval."""
+    return float(font_metrics.width(content, font_size)) <= available_inline

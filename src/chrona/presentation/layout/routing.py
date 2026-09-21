@@ -4,6 +4,13 @@ from __future__ import annotations
 from heapq import heappop, heappush
 
 
+def place_relation_route(*, source_port: tuple[float, float], target_port: tuple[float, float],
+                         obstacles: tuple[tuple[float, float, float, float], ...],
+                         bounds: tuple[float, float, float, float]) -> tuple[tuple[float, float], ...]:
+    """Complete one dependency route before Scene projects a path primitive."""
+    return route_orthogonal(source_port, target_port, obstacles, bounds=bounds)
+
+
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      obstacles: tuple[tuple[float, float, float, float], ...], *,
                      grid_offset: float = 2.0, bend_penalty: float = 12.0,

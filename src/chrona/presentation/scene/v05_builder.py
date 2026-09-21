@@ -9,9 +9,9 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Mapping
 
-from chrona.presentation.layout.axis import axis_intervals, format_axis_label
-from chrona.presentation.layout.text import place_text
-from chrona.presentation.layout.routing import route_orthogonal
+from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
+from chrona.presentation.layout.text import measure_text_width, place_text
+from chrona.presentation.layout.routing import place_relation_route
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.layout.presentation import place_mark_tracks, place_rows, place_table_columns
@@ -255,7 +255,14 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             text(f"variance:{instance_id}", item.object_id, "finish-delta", role,
                  f"{item.finish_delta:+d}d", coordinate(actual.get("finish", planned.get("end", planned.get("at")))), y + height, typography_role="summary")
     configured_levels = value.surface_content.axis_levels
-    intervals = axis_intervals(start, end, configured_levels[-1][0]) if configured_levels else _fitting_axis(value, start, end, timeline)
+    try:
+        intervals = (axis_intervals(start, end, configured_levels[-1][0]) if configured_levels
+                     else fitting_axis(requested=value.surface_content.axis_level, start=start, end=end,
+                                       inline_size=timeline.bounds[2],
+                                       font_size=float(value.measured_sources.metric_values["text.body.size"]),
+                                       font_metrics=value.font_metrics))
+    except ValueError as error:
+        raise SceneBuildError(str(error), "/view/body/timePresentation/axisLevel") from error
     axis_size = float(value.theme_tokens.typography("axis")[2])
     band_intervals = axis_intervals(start, end, configured_levels[0][0]) if len(configured_levels) > 1 else (axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ())
     format_by_level = {unit: formatter for unit, formatter in configured_levels}
@@ -271,9 +278,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
                                          (x, timeline.bounds[1], 0, timeline.bounds[3]), points=((x, axis.bounds[1]), (x, timeline.bounds[1] + timeline.bounds[3])), z_order=len(primitives)))
         axis_label = format_axis_label(interval, format_by_level, value.locale)
-        label_width = value.font_metrics.width(axis_label, float(value.measured_sources.metric_values["text.body.size"]))
         clipped_width = (interval.end - interval.start).days * scale.unit_ratio
-        if label_width <= clipped_width:
+        if axis_label_fits(content=axis_label, available_inline=clipped_width,
+                           font_size=float(value.measured_sources.metric_values["text.body.size"]),
+                           font_metrics=value.font_metrics):
             text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", axis_label, x,
                  axis.bounds[1] + axis_size * (2 if band_intervals else 1), typography_role="axis")
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
@@ -312,7 +320,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                 route_obstacles = tuple((item.bounds[0], item.bounds[1], item.bounds[0] + item.bounds[2], item.bounds[1] + item.bounds[3])
                                         for item in rows
                                         if item.row_id not in endpoint_rows)
-                points = route_orthogonal(source_port, target_port, route_obstacles,
+                points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=route_obstacles,
                     bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
                 if len(points) < 2:
                     raise SceneBuildError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation.get('id', '')}")
@@ -388,7 +396,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                      str(annotation["number"]), anchor_bounds.x + anchor_bounds.width, anchor_bounds.y + body_size,
                      typography_role="annotation")
             size, line_height = (float(item) for item in value.theme_tokens.typography("annotation")[2:])
-            width, height = min(annotation_slot.bounds[2], max(size * 4, value.font_metrics.width(content, size))), size * line_height
+            width, height = min(annotation_slot.bounds[2], max(size * 4, measure_text_width(content, font_size=size, font_metrics=value.font_metrics))), size * line_height
             try:
                 if annotation.get("purpose") == "callout":
                     box = place_annotation_rail(annotation, resolved,
@@ -448,14 +456,3 @@ def _annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: SceneRow
     if not isinstance(at, date):
         raise SceneBuildError("E_PRESENTATION_ANCHOR_MISSING", "/annotations/anchor")
     return LabelRect(coordinate(at), row.bounds[1] + row.bounds[3] * 0.35, 1.0, max(2.0, row.bounds[3] * 0.2))
-
-
-def _fitting_axis(value: SceneBuildInput, start: date, end: date, timeline: SceneSlot):
-    requested = value.surface_content.axis_level
-    levels = (requested,) if requested != "auto" else ("day", "week", "month", "quarter", "year")
-    for level in levels:
-        intervals = axis_intervals(start, end, level)
-        if all(value.font_metrics.width(item.label, float(value.measured_sources.metric_values["text.body.size"])) <= (item.natural_end - item.natural_start).days * timeline.bounds[2] / max(1, (end - start).days)
-               for item in intervals):
-            return intervals
-    raise SceneBuildError("E_PRESENTATION_AXIS_OVERFLOW", "/view/body/timePresentation/axisLevel")
