@@ -176,15 +176,27 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
                                          (x, timeline.bounds[1], 0, timeline.bounds[3]), points=((x, axis.bounds[1]), (x, timeline.bounds[1] + timeline.bounds[3])), z_order=len(primitives)))
         text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", interval.label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
-    anchors = {row.object_id: (row.bounds[0] + row.bounds[2], row.bounds[1] + row.bounds[3] / 2) for row in rows}
+    instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
+    for review_row, row in zip(review_rows, rows, strict=True):
+        anchor = (row.bounds[0] + row.bounds[2], row.bounds[1] + row.bounds[3] / 2)
+        for item in review_row.items:
+            instance_anchors.setdefault(item.object_id, []).append(
+                (f"{review_row.row_id}:{item.item_id or item.object_id}", anchor))
     obstacles = tuple(row.bounds for row in rows)
     for relation in value.surface_content.relations:
         source = relation.get("from", {}).get("object")
         target = relation.get("to", {}).get("object")
-        if source in anchors and target in anchors:
-            points = route_orthogonal(anchors[source], anchors[target], obstacles, bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
-            primitives.append(ScenePrimitive(f"relation:{relation.get('id', source + '-' + target)}", "Path", str(relation.get("id", "")), "relation", "dependency", "dependency",
-                                             (0, 0, 0, 0), shape=str(value.theme_tokens.token("dependency", "marker", "marker")), points=points, from_port_id=f"{source}:end", to_port_id=f"{target}:start", z_order=len(primitives)))
+        source_instances = instance_anchors.get(str(source), ())
+        target_instances = instance_anchors.get(str(target), ())
+        for source_id, source_anchor in source_instances:
+            for target_id, target_anchor in target_instances:
+                points = route_orthogonal(source_anchor, target_anchor, obstacles,
+                    bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
+                relation_id = str(relation.get("id", f"{source}-{target}"))
+                scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
+                primitives.append(ScenePrimitive(scene_id, "Path", relation_id, "relation", "dependency", "dependency",
+                    (0, 0, 0, 0), shape=str(value.theme_tokens.token("dependency", "marker", "marker")), points=points,
+                    from_port_id=f"{source_id}:end", to_port_id=f"{target_id}:start", z_order=len(primitives)))
     legend = by_source.get("legend")
     if legend:
         for index, (role, label) in enumerate(value.surface_content.legend_entries):
