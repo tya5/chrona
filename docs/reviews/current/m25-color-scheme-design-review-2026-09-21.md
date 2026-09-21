@@ -1,6 +1,6 @@
 # M25 Color Scheme Whole-Design Review — 2026-09-21
 
-**Decision:** Superseded — implementation paused pending source-path remediation design.
+**Decision:** Implementation authorized after source-path remediation design.
 
 ## Boundary audit
 
@@ -19,10 +19,8 @@ inputs, not compatibility resources.
 ## Correction after implementation-path audit
 
 The current `scene/paint.py` still contains legacy color fallbacks. That is a reachable
-second palette authority and invalidates the former authorization decision. Before code
-is changed, the implementation plan must name every reachable legacy paint path, decide
-its replacement or deletion, and add a rejection test proving a missing Scheme cannot
-fall back to a literal color.
+second palette authority. The published Color-Path Inventory now names every discovered
+path and requires deletion, not wrapping, plus negative rejection tests.
 
 ## Risk closure
 
@@ -34,5 +32,5 @@ fall back to a literal color.
   admitted in M25 without redistribution evidence.
 
 The D2 schema fixtures validate one positive Scheme and one missing-license rejection.
-The main Chrona conformance suite remains passing. The reachable legacy fallback is an
-unresolved design-remediation item and blocks implementation authorization.
+The main Chrona conformance suite remains passing. The source-path remedy is designed;
+implementation is authorized only to the published deletion/replacement matrix.
