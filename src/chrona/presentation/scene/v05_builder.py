@@ -88,16 +88,25 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
                            "table_subject_id": item.object_id, "items": (item,)})()
         for item in projection.items)
-    row_height = timeline.bounds[3] / max(1, len(review_rows))
+    group_header_size = float(metric.get("timeline.groupHeader.blockSize", 0))
+    group_starts = tuple(index for index, row in enumerate(review_rows)
+                         if row.group_id and (index == 0 or review_rows[index - 1].group_id != row.group_id))
+    available_rows = timeline.bounds[3] - group_header_size * len(group_starts)
+    row_height = available_rows / max(1, len(review_rows))
     minimum = float(metric["timeline.row.minBlockSize"])
     if any(row_height < minimum * max(1, sum(item.track != "shared" for item in review_row.items))
            for review_row in review_rows):
         raise SceneBuildError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline")
-    rows = tuple(SceneRow(
-        review_row.table_subject_id, review_row.group_id,
-        (timeline.bounds[0], timeline.bounds[1] + index * row_height, timeline.bounds[2], row_height),
-        review_row.row_id)
-        for index, review_row in enumerate(review_rows))
+    row_values = []
+    cursor = timeline.bounds[1]
+    for index, review_row in enumerate(review_rows):
+        if index in group_starts:
+            cursor += group_header_size
+        row_values.append(SceneRow(review_row.table_subject_id, review_row.group_id,
+                                   (timeline.bounds[0], cursor, timeline.bounds[2], row_height),
+                                   review_row.row_id))
+        cursor += row_height
+    rows = tuple(row_values)
     groups: list[SceneGroup] = []
     for row in rows:
         if groups and groups[-1].group_id == row.group_id:
@@ -106,7 +115,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                     (previous.content_bounds[0], previous.content_bounds[1], previous.content_bounds[2],
                                      previous.content_bounds[3] + row.bounds[3]))
         else:
-            groups.append(SceneGroup(row.group_id, None, row.bounds))
+            header = None
+            if row.group_id and group_header_size:
+                header = (table.bounds[0], row.bounds[1] - group_header_size,
+                          timeline.bounds[0] + timeline.bounds[2] - table.bounds[0], group_header_size)
+            groups.append(SceneGroup(row.group_id, header, row.bounds))
     scale = SurfaceScaleManifest("table-timeline", "primary", start, end, timeline.bounds[0],
                                  timeline.bounds[0] + timeline.bounds[2], timeline.bounds[0],
                                  timeline.bounds[2] / max(1, (end - start).days))
@@ -133,9 +146,16 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if row is not None and index is not None:
             text(f"cell:{object_id}:{column_id}", object_id, "table-cell", "text", cell,
                  table.bounds[0] + index * column_width, row.bounds[1] + row.bounds[3] / 2 + body_size / 2)
+    group_labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
+                    for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:
         primitives.append(ScenePrimitive(f"group:{group.group_id}", "Rect", group.group_id, "group", "group-decoration", "group-band",
                                          group.content_bounds, opacity=0.12, z_order=len(primitives)))
+        if group.header_bounds is not None:
+            primitives.append(ScenePrimitive(f"group-header-band:{group.group_id}", "Rect", group.group_id, "group", "group-header-band", "group-band",
+                                             group.header_bounds, opacity=0.2, z_order=len(primitives)))
+            text(f"group-header:{group.group_id}", group.group_id, "group-header", "text",
+                 group_labels[group.group_id], group.header_bounds[0], group.header_bounds[1] + body_size)
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
     mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
