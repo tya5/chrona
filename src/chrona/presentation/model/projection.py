@@ -21,6 +21,7 @@ class ReviewItem:
     fields: dict[str, Any] | None = None
     item_id: str = ""
     source_kind: str = "primary"
+    track: str = "stacked"
 
 
 @dataclass(frozen=True)
@@ -124,7 +125,10 @@ def _compose_rows(body: dict[str, Any], selected: list[ReviewItem],
                 raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
             if kind == "actual" and base.actual is None:
                 raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
-            members.append(replace(base, item_id=item_id, source_kind=kind))
+            track = str(spec.get("track", "stacked"))
+            if track not in {"stacked", "shared"}:
+                raise ValueError("E_REVIEW_ITEM_TRACK")
+            members.append(replace(base, item_id=item_id, source_kind=kind, track=track))
         subject = str(row.get("tableSubject", members[0].item_id if members else ""))
         if subject not in member_ids:
             raise ValueError("E_REVIEW_TABLE_SUBJECT")
