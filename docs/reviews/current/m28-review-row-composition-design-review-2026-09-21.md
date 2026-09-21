@@ -11,6 +11,10 @@ subtracks and completed primitives. The table-subject and row-label rules preven
 ambiguous table values, while row/item projection IDs preserve reproducibility and
 accessibility.
 
+The review additionally confirms that grouping is a Review-row property. This keeps
+owner/team review sections coherent even when one row contains items from different
+semantic owners, and avoids an item-level grouping rule competing with row order.
+
 Automatic rows are a named v0.2 mode, not a compatibility side path. Explicit rows
 replace selection/grouping/ordering authority rather than combining with it. The design
 therefore handles ordinary task/milestone co-location and later Actual overlays without

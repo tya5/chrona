@@ -19,6 +19,11 @@ ordinary review items. Row membership neither creates semantic containment nor c
 scheduling. The View owns row membership and order; the Layout Manifest owns row
 geometry; Scene owns bounded track assignment and primitive coordinates.
 
+View grouping belongs to the Review row, not to an item. A row may be grouped as an
+owner/team/review section even when its items have distinct semantic owner fields.
+Those owner fields remain Project facts and can be selected as table data; they do not
+compete with the row's presentation group.
+
 Automatic rows remain an explicit `rows.mode: automatic` composition: each selected
 object produces its requested baseline and Actual review items in one row after the
 View's existing selection/grouping/ordering pipeline. Explicit rows use

@@ -54,7 +54,10 @@ only in different rows; an item may not be duplicated in one row. `snapshot` req
 the named Snapshot selected by the View Context, and `actual` requires the selected
 Actual observation for that object. `tableSubject` is optional and defaults to the
 first item; when present it MUST name one item. `label` is optional and defaults to the
-table subject's resolved title. `group` is an optional View-local group key.
+table subject's resolved title. `group` is an optional View-local group key on the row,
+never on a Review Item. Items may originate from objects with different semantic
+owners/entities and may be reused by several rows; such facts remain Project fields and
+do not create a second View grouping authority.
 
 `rows.mode: automatic` has no `items`. It preserves the existing semantic selection,
 grouping, and ordering behavior by producing the requested baseline and Actual items
