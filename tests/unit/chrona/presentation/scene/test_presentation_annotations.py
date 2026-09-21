@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation.scene.annotations import nearest_box_port, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
+from chrona.presentation.scene.annotations import nearest_box_port, place_annotation_rail, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.scene.marks import ComparisonMark
 
@@ -37,3 +37,17 @@ def test_leader_port_and_route_are_deterministic_and_bounded():
     assert route[0] == (0, 0) and route[-1] == (40, 0)
     with pytest.raises(ValueError, match="E_PRESENTATION_ROUTE_LIMIT"):
         route_annotation_leader((0, 0), (40, 0), obstacles=[box], limit=1)
+
+
+def test_callout_uses_annotation_rail_without_timeline_obstacles():
+    annotation = {"id": "risk", "purpose": "callout", "anchor": {"kind": "object", "id": "ship", "facet": "planned", "endpoint": "finish"}}
+    resolved = resolve_annotation_anchor(annotation, [ComparisonMark("ship", "planned", "span", start=date(2027, 1, 1), end=date(2027, 1, 8))])
+
+    box = place_annotation_rail(annotation, resolved, anchor_y=50, text_size=(30, 10),
+                                rail=LabelRect(110, 0, 40, 100), obstacles=(),
+                                overflow="diagnose", required=True)
+
+    assert box is not None
+    assert box.placement.side == "rail"
+    assert box.placement.bounds.x == 110
+    assert box.leader_required
