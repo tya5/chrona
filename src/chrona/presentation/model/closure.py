@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from typing import Any
 
 import jsonschema
@@ -97,6 +98,7 @@ def _load_reference(reference: dict[str, Any], reader: LocalSnapshotReader, expe
         payload = reader.read(reference)
     except SnapshotReadError as error:
         raise ClosureError(error.diagnostic_id) from error
+    computed_identity = f"sha256:{sha256(payload).hexdigest()}"
     value = yaml.safe_load(payload)
     if expected_kind == "project":
         actual_id = value.get("project", {}).get("id") if isinstance(value, dict) else None
@@ -116,7 +118,7 @@ def _load_reference(reference: dict[str, Any], reader: LocalSnapshotReader, expe
             raise ClosureError("E_CLOSURE_KIND")
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
-    return ClosureResource(expected_kind, actual_id, reference["revision"]["token"], reference["contentIdentity"], value)
+    return ClosureResource(expected_kind, actual_id, reference["revision"]["token"], reference.get("contentIdentity", computed_identity), value)
 
 
 def _load_presentation(reference: dict[str, Any], reader: LocalSnapshotReader, expected_kind: str) -> dict[str, Any]:
