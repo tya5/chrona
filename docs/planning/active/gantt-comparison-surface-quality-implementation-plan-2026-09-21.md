@@ -11,7 +11,7 @@
 
 ## I58-1 — Placement foundation refactor
 
-Introduce immutable `SurfaceLayoutRequest`, `SurfacePlacement`, `TextPlacement` and `RelationPlacement`, plus `assert_surface_placement`. Migrate current table/row/track/axis calculations from Scene to Layout with characterization fixtures and no intentional SVG change.
+Introduce immutable `SurfaceLayoutRequest`, `SurfacePlacement`, `TextPlacement` and `RelationPlacement`, plus `assert_surface_placement`. Migrate all current table/row/track/axis geometry, font measurement, label candidate selection and relation routing from Scene to Layout with characterization fixtures and no intentional SVG change. This is complete only when Scene consumes completed placements and does not import or invoke font metrics or routing.
 
 **Evidence:** Scene no longer imports FontMetrics or routing; placement identity and current materializer bytes remain stable.
 
@@ -23,7 +23,7 @@ Replace uniform shrink placement with per-column measured minima, deterministic 
 
 ## I58-3 — Atomic labels and relation quality
 
-Move label candidate selection and relation routing-quality scoring into Layout. In the same slice, add normalized View/Layout policy forms, diagnostics, neutral fixtures, and HALCYON label/relation declarations plus regenerated evidence.
+After I58-1 is structurally complete, enable label candidate selection and relation routing-quality scoring through the completed Layout boundary. In the same slice, add normalized View/Layout policy forms, diagnostics, neutral fixtures, and HALCYON label/relation declarations plus regenerated evidence.
 
 **Evidence:** A58-03, A58-04 and A58-06; Scene only projects accepted placements.
 
@@ -41,7 +41,7 @@ Run full pytest, conformance, all materializer checks, and declared PNG evidence
 
 ## Publication order
 
-Each slice is a separate PR and merge. I58-2 through I58-5 may not begin before the prior slice is merged and its design invariants are green. No stricter behavior may make a declared main-branch context temporarily unmaterializable; resource adaptation belongs to that same slice.
+Each slice is a separate PR and merge. I58-2 through I58-5 may not begin before the prior slice is merged and its design invariants are green. An incomplete I58-1 may not be treated as a completed dependency merely because its placement data types exist. No stricter behavior may make a declared main-branch context temporarily unmaterializable; resource adaptation belongs to that same slice.
 
 ## Rollback / migration
 
