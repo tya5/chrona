@@ -73,6 +73,7 @@ body:
     calendar-exception.fill: warning
     range.fill: warning
     asOf.stroke: warning
+    as-of.stroke: warning
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body
