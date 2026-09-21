@@ -32,6 +32,8 @@ properties:
             pattern: {type: string, minLength: 1}
             fontFamily: {type: string, minLength: 1}
             fontWeight: {type: string, minLength: 1}
+            fontSize: {type: string, minLength: 1}
+            lineHeight: {type: string, minLength: 1}
             opacity: {type: string, minLength: 1}
             textAlternative: {type: string, minLength: 1}
       colorBindings:

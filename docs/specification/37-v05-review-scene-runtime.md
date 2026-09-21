@@ -28,7 +28,7 @@ dereferences every required role property through `resolvedTheme.body.roles` and
 
 | Need | Current source | Failure |
 |---|---|---|
-| Font family/weight | role `fontFamily` / `fontWeight` token | `E_THEME_ROLE_REQUIRED` |
+| Font family/weight/size/line height | role `fontFamily` / `fontWeight` / `fontSize` / `lineHeight` token | `E_THEME_ROLE_REQUIRED` |
 | Fill/stroke | color-bound role `fill` / `stroke` token | `E_THEME_ROLE_REQUIRED` |
 | Opacity | role `opacity` number token, otherwise explicit `1` only when the role contract declares opacity optional | `E_THEME_ROLE_REQUIRED` |
 | Marker/pattern | role `marker` / `pattern` token | `E_THEME_ROLE_REQUIRED` |
@@ -39,6 +39,43 @@ The view does not reintroduce `paints`, `strokes`, a Theme v0.1/v0.2 compatibili
 object, or global default values. Scene primitives carry their resolved role and
 completed geometry; SVG receives the token view plus primitives and may only format
 attributes.
+
+### 2.1 Role typography and marker contract
+
+Theme v0.2 roles may bind `fontSize` and `lineHeight` to declared `number` values in
+addition to `fontFamily` and `fontWeight`. The builder selects the role named by the
+primitive family (`heading`, `axis`, `legend`, `summary`, `annotation`, or `text`);
+the selected role must bind all four typography properties. A Theme may deliberately
+bind several roles to the same values, but the Scene never substitutes a renderer
+default or a body metric for a missing role binding. `TextLayout` stores the resolved
+size, family, and weight so SVG serializes rather than infers typography.
+
+The existing named metrics remain layout inputs only. `text.body.size` and
+`text.body.lineHeight` determine minimum content geometry where the Layout contract
+requires them; they are not a fallback typography contract.
+
+A dependency Path whose selected Theme role binds `marker` carries that declared
+marker token in `ScenePrimitive.shape`. The SVG adapter emits a definition only for
+referenced declared markers and attaches it only to the completed path endpoint.
+
+### 2.2 Annotation anchor and leader contract
+
+The Scene supports the existing View annotation contract for object anchors only:
+`anchor.kind: object` together with `id`, `facet`, and `endpoint`. It resolves that
+reference against projected planned/Actual marks through the existing annotation
+resolver. An absent projected mark, absent Actual, unsupported anchor kind, or
+incomplete anchor diagnoses before SVG; it never falls back to an object row or a
+free coordinate.
+
+The resolved mark endpoint is mapped through the completed timeline scale and row
+bounds. The measured annotation box is placed within its resolved `annotations` slot
+using its declared side/alignment and that slot's manifest overflow policy. For
+callout, note, and explanatory-arrow purposes, a deterministic bounded orthogonal
+leader runs from the resolved anchor to the nearest annotation-box port, avoiding
+completed row and annotation bounds. The leader's `source_ref`, endpoint port IDs,
+and `annotation` role are retained on the Path. `highlight` has no leader. This is
+derived geometry only: neither annotations nor relations may introduce authored
+coordinates or an alternative layout resource.
 
 ## 3. Scene construction sequence
 
@@ -109,11 +146,16 @@ bindings are `background`, `text`, `table-header`, `axis-major`, `planned`, `act
 `dependency`; annotation bindings are required only when annotations are selected.
 There is no role-to-color fallback map.
 
+Selected text roles bind `fontFamily`, `fontWeight`, `fontSize`, and `lineHeight`.
+Selected dependency roles bind `stroke` and `marker`; selected annotation roles bind
+`fill` and `stroke`, while annotation text uses the selected `annotation` typography
+role. A missing selected binding diagnoses at the token boundary.
+
 ## 5. Migration and acceptance
 
 No serialized migration is required: old settings and old Scene artifacts were not
 user input contracts after M24. M27 creates new derived output from the same current
 authoring resources. Fixtures must prove a missing token, missing required slot,
-invalid font metric, axis collision, and missing optional content policy all diagnose
+ invalid font metric, axis collision, incomplete annotation anchor/route, and missing optional content policy all diagnose
 before SVG output. A complete fixture proves deterministic output and no source-ID
 branch.
