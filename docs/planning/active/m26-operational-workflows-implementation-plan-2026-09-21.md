@@ -1,6 +1,6 @@
 # M26 Operational Workflows Implementation Plan — 2026-09-21
 
-**Status:** Corrected cross-boundary design approved; implementation is authorized.  
+**Status:** Corrected cross-boundary design re-approved; implementation is authorized.  
 **Design inputs:** Specification `35`, ADR-0024–0026, M26 CLI/CI release design, and
 the M26 design review. No step may alter those contracts without a design amendment and
 new review.
@@ -31,6 +31,12 @@ closure review is published. Its authoritative record is
 command dispatcher/replay/result construction; (b) intake/resolve aliases and local
 Actual CAS; (c) capture alias/registry result; (d) CLI exit/output acceptance coverage.
 No code step may add a new authority or verb.
+
+**Re-approval:** 2026-09-21. The batch reference audit replaced M26 intake input with
+immutable `actual-intake-batch/v0.2`, checked its Command/Store/result/CLI closure, and
+published the revised specification, ADR, schema, example, and closure review. The
+remaining implementation consumes `body.source` and `body.records` only after
+verifying that v0.2 resource.
 
 ## Implementation rules
 
