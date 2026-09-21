@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.1
+version: chrona/presentation/v0.2
 kind: view
 id: controller-z-review
 body:
@@ -13,3 +13,4 @@ body:
     - {id: Workstream, source: {field: workstream}, missing: em-dash}
     - {id: Schedule, source: {comparisonFacet: finishDelta}, missing: em-dash}
     - {id: Activity, source: title, missing: em-dash}
+  rows: {mode: automatic}
