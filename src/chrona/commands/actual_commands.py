@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
+import json
 from typing import Any, Protocol
 
 
@@ -25,6 +26,15 @@ class ActualCommandResult:
     diagnostics: tuple[str, ...]
     result_revision: str | None = None
     provenance: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class ActualIntakeCommandResult:
+    status: str
+    actual_set: dict[str, Any] | None
+    diagnostics: tuple[str, ...]
+    dispositions: tuple[str, ...]
+    result_revision: str | None = None
 
 
 class MemoryActualStore:
@@ -67,6 +77,94 @@ class MemoryActualStore:
         return self.read()
 
 
+def apply_actual_intake_batch(
+    store: ActualStore,
+    base_revision: str,
+    batch: dict[str, Any],
+    project_object_ids: set[str] | frozenset[str],
+    command_id: str = "apply-actual-intake-batch",
+) -> ActualIntakeCommandResult:
+    """Atomically intake one normalized batch into an Actual-set v0.2.
+
+    Replays with byte-equivalent observed facts and source provenance are no-ops.
+    Different facts for the same external identity are rejected rather than overwritten.
+    """
+    source = batch.get("source", {}) if isinstance(batch, dict) else {}
+    system = source.get("system")
+    source_identity = source.get("contentIdentity")
+    records = batch.get("records") if isinstance(batch, dict) else None
+    if not isinstance(system, str) or not system or not isinstance(source_identity, str) or not source_identity or not isinstance(records, list):
+        return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_SCHEMA",), ())
+    revision, current = store.read()
+    if revision != base_revision:
+        return ActualIntakeCommandResult("rejected", None, ("E_CONFLICT",), ())
+    if current.get("version") != "chrona/actual-set/v0.2" or current.get("kind") != "actual-set":
+        return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_SCHEMA",), ())
+
+    def identity(value: Any) -> tuple[str, str]:
+        return (type(value).__name__, json.dumps(value, sort_keys=True, separators=(",", ":")))
+
+    known_ids = frozenset(project_object_ids)
+    seen: set[tuple[str, str]] = set()
+    normalized: list[tuple[Any, dict[str, Any], tuple[str, str]]] = []
+    for record in records:
+        if not isinstance(record, dict) or not isinstance(record.get("externalKey"), (str, int)) or isinstance(record.get("externalKey"), bool) or not isinstance(record.get("actual"), dict) or not record["actual"]:
+            return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_SCHEMA",), ())
+        key = identity(record["externalKey"])
+        if key in seen:
+            return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_DUPLICATE_KEY",), ())
+        seen.add(key)
+        normalized.append((record["externalKey"], deepcopy(record), key))
+
+    candidate = deepcopy(current)
+    observations = candidate["body"].setdefault("observations", [])
+    existing: dict[tuple[str, str], dict[str, Any]] = {}
+    for observation in observations:
+        external = observation.get("externalIdentity")
+        if isinstance(external, dict) and external.get("system") == system and "key" in external:
+            key = identity(external["key"])
+            if key in existing:
+                return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_DUPLICATE_KEY",), ())
+            existing[key] = observation
+
+    dispositions: list[str] = []
+    next_sequence = max((int(item.get("sequence", 0)) for item in observations), default=0) + 1
+    for external_key, record, key in normalized:
+        prior = existing.get(key)
+        if prior is not None:
+            if prior.get("actual") == record["actual"] and prior.get("sourceContentIdentity") == source_identity:
+                dispositions.append("alreadyPresent")
+                continue
+            return ActualIntakeCommandResult("rejected", None, ("E_ACTUAL_EXTERNAL_CONFLICT",), tuple(dispositions))
+        observation_id = f"{system}:{external_key}"
+        if any(item.get("id") == observation_id for item in observations):
+            return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_DUPLICATE_KEY",), tuple(dispositions))
+        observation: dict[str, Any] = {
+            "id": observation_id,
+            "sequence": next_sequence,
+            "externalIdentity": {"system": system, "key": external_key},
+            "sourceContentIdentity": source_identity,
+            "actual": record["actual"],
+        }
+        next_sequence += 1
+        object_id = record.get("projectObjectId")
+        if isinstance(object_id, str) and object_id in known_ids:
+            observation["projectObjectId"] = object_id
+        else:
+            observation["alignment"] = "unmatched"
+        observations.append(observation)
+        dispositions.append("inserted")
+
+    if not any(value == "inserted" for value in dispositions):
+        return ActualIntakeCommandResult("accepted", current, (), tuple(dispositions), revision)
+    persisted = store.write(base_revision, candidate)
+    if persisted is None:
+        return ActualIntakeCommandResult("rejected", None, ("E_CONFLICT",), tuple(dispositions))
+    result_revision, result = persisted
+    store.record_command(command_id, current, result)
+    return ActualIntakeCommandResult("accepted", result, (), tuple(dispositions), result_revision)
+
+
 def resolve_actual_observation(
     store: ActualStore,
     base_revision: str,
@@ -91,7 +189,8 @@ def resolve_actual_observation(
 
     provenance = {"externalIdentity": deepcopy(observation["externalIdentity"])}
     observation.pop("alignment")
-    observation.pop("externalIdentity")
+    if candidate.get("version") != "chrona/actual-set/v0.2":
+        observation.pop("externalIdentity")
     observation["projectObjectId"] = project_object_id
     persisted = store.write(base_revision, candidate)
     if persisted is None:
