@@ -46,7 +46,7 @@ allOf:
     then:
       properties:
         target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}
-        payload: {type: object, required: [snapshotId, registry], additionalProperties: false, properties: {snapshotId: {type: string, minLength: 1}, registry: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}}}
+        payload: {type: object, required: [snapshotId, registry], additionalProperties: false, properties: {snapshotId: {type: string, minLength: 1}, registry: {type: object, required: [provider, identity], additionalProperties: false, properties: {provider: {const: local}, identity: {type: string, minLength: 1}}}}}
   - if: {properties: {type: {const: setTypedField}}}
     then:
       properties:
