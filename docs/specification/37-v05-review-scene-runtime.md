@@ -83,8 +83,9 @@ The builder executes this bounded sequence:
 
 1. validate target capabilities and resolve `ThemeTokenView`;
 2. convert each Layout Manifest slot to `SceneSlot`; require title/table/timeline/axis;
-3. derive group and row bounds from the resolved timeline/table slots, View grouping,
-   measured row minimum, and declared Layout overflow policy;
+3. derive group and row bounds from the resolved timeline/table slots, ordered View
+   Review rows, measured row minimum times bounded member count, and declared Layout
+   overflow policy; assign member subtracks only after row bounds are complete;
 4. derive calendar axis intervals using existing `layout.axis` functions and the
    versioned ISO fit rule below; measure labels before creating axis primitives;
 5. create table cells from `SurfaceContentInput.table_cells`, marks from
@@ -94,8 +95,8 @@ The builder executes this bounded sequence:
 8. validate source provenance, text layouts, bounds, required slot-family completion,
    and deterministic z-order before producing `SceneSurface`.
 
-Rows and groups are derived from View projection order. They never become Layout
-authoring state. Axis/mark coordinates are derived only from the completed timeline
+Rows, groups, and ordered Review Items are derived from View projection order. They
+never become Layout authoring state. Axis/mark coordinates are derived only from the completed timeline
 slot and half-open View window. A required label or panel that does not fit diagnoses;
 it is never silently omitted, clipped, or replaced by a fixed 28-day cadence.
 

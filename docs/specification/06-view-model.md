@@ -250,3 +250,13 @@ Actual-driven rescheduling and DateTime scheduling remain out of scope.
 `07-style-and-theme.md` may assume that a View Projection exposes selected objects, comparisons, lanes, order, temporal window, and annotation intent. It MUST NOT redefine selection or comparison semantics.
 
 `08-scene-and-rendering.md` may transform a styled View Projection into scene primitives. It MUST NOT become the source of object identity, temporal truth, or comparison alignment.
+
+## 13. Review row composition
+
+View v0.2 may compose several Review Items into one visible Review row. This is View
+arrangement intent, not Project containment: each item names one Primary, Snapshot, or
+Actual source and one stable Project-local object ID. A row supplies its View-local
+identity, label, group, member order, and table subject; Layout and Scene retain all
+geometry. The complete contract, diagnostics, and Scene boundary are specified by
+[Review Row Composition](38-review-row-composition.md). No View field may use titles,
+absolute coordinates, colors, fonts, or renderer identifiers to resolve a row member.
