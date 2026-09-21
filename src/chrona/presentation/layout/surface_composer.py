@@ -7,7 +7,8 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
-from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows
+from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.text import place_text
 from chrona.presentation.layout.surface_quality import (
     GroupPlacement, MarkPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfacePlacement,
     SurfaceLayoutRequest,
@@ -85,6 +86,50 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                               Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
                               Decimal(str(group_header_size)))
             groups.append(GroupPlacement(row.group_id, row.bounds, header))
+    if request.theme_tokens is None or request.font_metrics is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
+    body_size = float(request.theme_tokens.typography("text")[2])
+    title_input = measured_sources.inputs.get("title")
+    title_measurement = measured_sources.measurements.get("title")
+    if title_measurement is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/title")
+    title = title_input.lines[0] if title_input and title_input.lines else ""
+    text = [place_text(placement_id="title", source_ref="title", content=title,
+                       inline=float(by_source["title"].bounds.inline),
+                       baseline_block=float(by_source["title"].bounds.block) + float(title_measurement.first_baseline or 0),
+                       typography_role="heading", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                       collision_region="title")]
+    table_columns = request.surface_content.table_columns
+    table_cells = request.surface_content.table_cells
+    columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
+                                  font_metrics=request.font_metrics, font_size=body_size, overflow=table.overflow)
+    positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
+    for column_id, label in table_columns:
+        text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=label,
+                               inline=positions[column_id][0], baseline_block=table_bounds[1] + body_size,
+                               typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                               collision_region="table"))
+    row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
+    for object_id, column_id, content in table_cells:
+        row = row_by_subject.get(object_id)
+        position = positions.get(column_id)
+        index = next((offset for offset, item in enumerate(table_columns) if item[0] == column_id), None)
+        if row is not None and position is not None and index is not None:
+            indent = body_size if index == 0 and row.group_id else 0
+            text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=content,
+                                   inline=position[0] + indent,
+                                   baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
+                                   typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   collision_region="table"))
+    labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
+              for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
+    for group in groups:
+        if group.header_bounds is not None:
+            text.append(place_text(placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
+                                   content=labels[group.group_id], inline=float(group.header_bounds.inline),
+                                   baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
+                                   theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   collision_region=f"group:{group.group_id}"))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
@@ -139,7 +184,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
                     marks.append(MarkPlacement(f"missing-actual:{instance_id}", item.object_id, bounds,
                                                (x, track.block), (x, track.block)))
-    placement = SurfacePlacement(slots=slots, rows=rows, groups=tuple(groups), scale=scale, marks=tuple(marks))
+    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale, marks=tuple(marks))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 
