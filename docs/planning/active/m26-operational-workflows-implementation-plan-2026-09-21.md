@@ -1,6 +1,6 @@
 # M26 Operational Workflows Implementation Plan — 2026-09-21
 
-**Status:** Approved implementation plan.  
+**Status:** Reopened for cross-boundary closure; implementation is paused.  
 **Design inputs:** Specification `35`, ADR-0024–0026, M26 CLI/CI release design, and
 the M26 design review. No step may alter those contracts without a design amendment and
 new review.
@@ -22,6 +22,10 @@ v0.2 provenance amendment, append-only registry, and verified semantic baseline
 comparison all have automated evidence. I26-6 is in progress: `baseline-compare` now
 uses Store-config v0.1 and atomic result output; command check/apply, intake, resolve,
 capture, and legacy `propose-set` removal remain in this slice.
+
+**Closure rule:** I26-6 resumes only after the complete remaining command/CLI/Store/result
+closure review is published. Its authoritative record is
+`docs/reviews/current/m26-cross-boundary-closure-review-2026-09-21.md`.
 
 ## Implementation rules
 
