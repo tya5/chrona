@@ -119,8 +119,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                             (x, y), (content,), family, weight, font_size, float(line_height), value.font_metrics.content_identity)
         primitives.append(ScenePrimitive(scene_id, "Text", source, "review", purpose, role, layout.bounds,
                                          text=content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
-    heading_size = float(value.theme_tokens.typography("heading")[2])
-    text("title", "title", "title-text", "text", title, title_slot.bounds[0], title_slot.bounds[1] + heading_size, typography_role="heading")
+    title_baseline = float(value.measured_sources.measurements["title"].first_baseline or 0)
+    text("title", "title", "title-text", "text", title, title_slot.bounds[0], title_slot.bounds[1] + title_baseline, typography_role="heading")
     body_size = float(value.theme_tokens.typography("text")[2])
     column_width = table.bounds[2] / max(1, len(value.surface_content.table_columns))
     for index, (column_id, label) in enumerate(value.surface_content.table_columns):
