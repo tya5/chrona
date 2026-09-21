@@ -221,6 +221,13 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             text(f"variance:{instance_id}", item.object_id, "finish-delta", role,
                  f"{item.finish_delta:+d}d", coordinate(actual.get("finish", planned.get("end", planned.get("at")))), y + height, typography_role="summary")
     intervals = _fitting_axis(value, start, end, timeline)
+    axis_size = float(value.theme_tokens.typography("axis")[2])
+    band_intervals = axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ()
+    for interval in band_intervals:
+        x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
+        text(f"axis-band:{interval.level}:{interval.index}", "timeline-axis", "axis-band", "text",
+             format_axis_label(interval, {"month": "short-month", "quarter": "year-quarter", "date": "localized-date"}, value.locale),
+             x, axis.bounds[1] + axis_size, typography_role="axis")
     for interval in intervals:
         x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
         primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
@@ -231,7 +238,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         label_width = value.font_metrics.width(axis_label, float(value.measured_sources.metric_values["text.body.size"]))
         clipped_width = (interval.end - interval.start).days * scale.unit_ratio
         if label_width <= clipped_width:
-            text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", axis_label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
+            text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", axis_label, x,
+                 axis.bounds[1] + axis_size * (2 if band_intervals else 1), typography_role="axis")
     if value.surface_content.as_of is not None and start <= value.surface_content.as_of < end:
         as_of_x = coordinate(value.surface_content.as_of)
         primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", "as-of", "as-of",
