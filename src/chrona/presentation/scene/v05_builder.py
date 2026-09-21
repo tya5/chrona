@@ -173,11 +173,12 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                  group_labels[group.group_id], group.header_bounds[0], group.header_bounds[1] + body_size)
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
-    for closed_day in value.surface_content.calendar_closed:
+    calendar_binding = semantic_binding("calendarClosed")
+    for closed_day in contract.time.calendar_closed:
         if start <= closed_day < end:
             x1, x2 = coordinate(closed_day), coordinate(closed_day.fromordinal(closed_day.toordinal() + 1))
             primitives.append(ScenePrimitive(f"calendar-closed:{closed_day.isoformat()}", "Rect", "project-calendar", "calendar",
-                                             "calendar-closed", "calendar-closed",
+                                             calendar_binding.purpose, calendar_binding.scene_role,
                                              (x1, timeline.bounds[1], max(0.0, x2 - x1), timeline.bounds[3]),
                                              opacity=0.12, z_order=len(primitives)))
     mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
@@ -248,9 +249,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     band_intervals = axis_intervals(start, end, configured_levels[0][0]) if len(configured_levels) > 1 else (axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ())
     format_by_level = {unit: formatter for unit, formatter in configured_levels}
     format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
+    axis_band_binding = semantic_binding("axisBand")
     for interval in band_intervals:
         x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
-        text(f"axis-band:{interval.level}:{interval.index}", "timeline-axis", "axis-band", "text",
+        text(f"axis-band:{interval.level}:{interval.index}", "timeline-axis", axis_band_binding.purpose, "text",
              format_axis_label(interval, format_by_level, value.locale),
              x, axis.bounds[1] + axis_size, typography_role="axis")
     for interval in intervals:
@@ -309,12 +311,13 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                     (0, 0, 0, 0), shape=str(value.theme_tokens.token("dependency", "marker", "marker")), points=points,
                     from_port_id=f"{source_id}:end", to_port_id=f"{target_id}:start", z_order=len(primitives)))
     legend = by_source.get("legend")
+    legend_binding = semantic_binding("legendEntry")
     if legend:
         legend_size = float(value.theme_tokens.typography("legend")[2])
         swatch_size = max(2.0, legend_size * 0.8)
         for index, (role, label) in enumerate(value.surface_content.legend_entries):
             baseline = legend.bounds[1] + (index + 1) * legend_size
-            primitives.append(ScenePrimitive(f"legend-swatch:{role}", "Rect", role, "legend", "legend-swatch", role,
+            primitives.append(ScenePrimitive(f"legend-swatch:{role}", "Rect", role, "legend", legend_binding.purpose, role,
                                              (legend.bounds[0], baseline - swatch_size, swatch_size, swatch_size),
                                              z_order=len(primitives)))
             text(f"legend:{role}", role, "legend-label", "text", label,
@@ -347,6 +350,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                     text(f"summary:{panel_id}:{key}", panel_id, "summary-metric", "text", f"{key}: {metric_value}", summary_slot.bounds[0], summary_slot.bounds[1] + line * summary_size, typography_role="summary")
                 line += 1
     annotation_slot = by_source.get("annotations")
+    annotation_binding = semantic_binding("annotation")
     if annotation_slot:
         marks = _comparison_marks(projection)
         placed: list[LabelRect] = []
@@ -392,7 +396,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                 continue
             placed.append(box.placement.bounds)
             bounds = (box.placement.bounds.x, box.placement.bounds.y, box.placement.bounds.width, box.placement.bounds.height)
-            primitives.append(ScenePrimitive(f"annotation-box:{annotation_id}", "Rect", annotation_id, "annotation", "annotation-box", "annotation", bounds, z_order=len(primitives)))
+            primitives.append(ScenePrimitive(f"annotation-box:{annotation_id}", "Rect", annotation_id, "annotation", f"{annotation_binding.purpose}-box", annotation_binding.scene_role, bounds, z_order=len(primitives)))
             text(f"annotation-text:{annotation_id}", annotation_id, "annotation", "annotation-text", content, bounds[0], bounds[1] + size, typography_role="annotation")
             if box.leader_required:
                 target = nearest_box_port(box.placement.bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
@@ -401,7 +405,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                                      obstacles=placed[:-1], limit=1024)
                 except ValueError as error:
                     raise SceneBuildError(str(error), f"/annotations/{index}") from error
-                primitives.append(ScenePrimitive(f"annotation-leader:{annotation_id}", "Path", annotation_id, "annotation", "annotation-leader", "annotation", (0, 0, 0, 0),
+                primitives.append(ScenePrimitive(f"annotation-leader:{annotation_id}", "Path", annotation_id, "annotation", f"{annotation_binding.purpose}-leader", annotation_binding.scene_role, (0, 0, 0, 0),
                                                  points=points, from_port_id=f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}", to_port_id=f"annotation-box:{annotation_id}", z_order=len(primitives)))
     return SceneSurface("table-timeline", slots, rows, tuple(groups), scale, tuple(primitives))
 
