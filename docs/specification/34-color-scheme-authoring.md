@@ -57,4 +57,4 @@ Required stable diagnostics are `E_SCHEME_SCHEMA`, `E_SCHEME_PROVENANCE`, `E_SCH
 
 ## 8. Replacement boundary
 
-The M25 runtime accepts only Theme v0.2 and Context v0.5. Theme v0.1, Context v0.4, and the generic legacy SVG route are deleted from reachable presentation entry points in one migration. This is intentionally not a compatibility release: a stale resource diagnoses rather than being upgraded or rendered with fallback colors.
+The M25 `render-review` runtime accepts only Theme v0.2 and Context v0.5. Theme v0.1 and Context v0.4 are deleted from that presentation entry point in one migration. The separate core `chrona render` diagnostic SVG is outside M25 and is not a Scheme-capable presentation path. This is intentionally not a compatibility release: a stale review resource diagnoses rather than being upgraded or rendered with fallback colors.
