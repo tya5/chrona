@@ -146,6 +146,11 @@ reference. The registry creates it once only. Existing IDs reject with
 `E_BASELINE_EXISTS`, even when their contents are identical. The operation is
 non-reversible and does not mutate the Project.
 
+`payload.registry` is an output Store selector `{provider, identity}`, not a resource
+reference: capture creates the first resource in that namespace, so no immutable
+registry resource exists to verify beforehand. The configured Store must resolve the
+selector exactly; the accepted result names the created immutable snapshot reference.
+
 ### 5.2 Compare
 
 `baseline-compare` receives an immutable snapshot-ref reference and an immutable
