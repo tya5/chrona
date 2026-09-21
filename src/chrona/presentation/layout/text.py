@@ -16,7 +16,7 @@ def measure_text_width(content: str, *, font_size: float, font_metrics: Any) -> 
 def place_text(*, placement_id: str, source_ref: str, content: str,
                inline: float, baseline_block: float, typography_role: str,
                theme_tokens: Any, font_metrics: Any, overflow: str = "fit",
-               required: bool = True) -> TextPlacement:
+               required: bool = True, collision_region: str = "surface") -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     family, weight, size, line_height = theme_tokens.typography(typography_role)
     font_size, leading = float(size), float(line_height)
@@ -28,5 +28,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         typography_role, overflow, required,
         baseline=(inline, baseline_block), lines=(content,), font_family=family,
         font_weight=int(weight), font_size=font_size, line_height=leading,
-        font_asset_identity=str(font_metrics.content_identity),
+        font_asset_identity=str(font_metrics.content_identity), collision_region=collision_region,
     )
