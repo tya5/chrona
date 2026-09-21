@@ -6,7 +6,7 @@
 
 | UC | Immutable inputs | Only permitted write | Product verb |
 |---|---|---|---|
-| UC-10 intake | command v0.2: Actual-set, batch, Project refs | target Actual Store CAS | `actual-intake` |
+| UC-10 intake | command v0.2: Actual-set, `actual-intake-batch/v0.2`, Project refs | target Actual Store CAS | `actual-intake` |
 | UC-10 resolve | command v0.2: Actual-set, Project refs | target Actual Store CAS | `actual-resolve` |
 | UC-11 check | command v0.2 plus Store config | none | `command-check` |
 | UC-11 apply | command v0.2 plus Store config | one declared Actual CAS or baseline registry | `command-apply` |
@@ -62,3 +62,9 @@ failure before operation is exit `64`.
 The remaining endpoints, authority, persistence, replay, aliases, output behavior, and
 unsupported-operation policy are now closed together. Any new verb, Store layout,
 command type, or write capability reopens this review.
+
+**Batch reference amendment:** v0.1 intake batches were standalone transport documents
+and could not satisfy the immutable resource-reference contract. v0.2 is the sole M26
+batch input: it has immutable resource identity, `kind: actual-intake-batch`, and a
+`body`, so the command, Store, schema, result closure, and CLI all use one reference
+model. v0.1 is not accepted by M26 commands.
