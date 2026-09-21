@@ -1,14 +1,14 @@
-# Issue #54 strict example-closure design review
+# Issue #54 opt-in closure correction design review
 
-| Boundary | Decision |
+| Boundary | Result |
 | --- | --- |
-| #44 resource format | Preserve opt-in pinning for general callers. |
-| Canonical examples | Treat as strict reproducible evidence fixtures. |
-| Materializer | Validate pin presence and byte identity before CLI invocation; never repair metadata. |
-| Font assets | Apply the same strict-presence rule and emit the specific missing-identity diagnostic. |
-| PR #53 | Pin-only update is compatible with this strict fixture profile; it adds no runtime fallback. |
-| SVG evidence | Remains public-materializer output and must remain unchanged in check mode. |
+| #44 resource references | Optional `contentIdentity` remains authoritative. |
+| Materializer | Copies authored bytes and verifies supplied pins only; no unconditional strict flag. |
+| Closure resolver / reader | Existing optional verification remains the sole identity validator. |
+| Font assets | Optional pin preserved; supplied incorrect pin is materializer-owned diagnostic. |
+| Canonical examples | Stay unpinned and reproduce generated evidence through the public command. |
+| PR #53 | Rejected: full-pin conversion would encode a policy not selected for examples. |
 
-The separation avoids turning #44 into a global breaking requirement while giving published
-example evidence a complete immutable closure. No Settings/Theme compatibility path is
-introduced. Design is complete; implementation may proceed.
+No renderer or Settings/Theme compatibility path is introduced. The correction restores one
+identity policy across storage, closure, materializer, and examples. All design decisions are
+closed; implementation may start only from the accompanying plan.

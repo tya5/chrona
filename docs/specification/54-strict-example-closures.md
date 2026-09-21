@@ -1,37 +1,34 @@
-# Strict canonical example closures for Issue #54
+# Opt-in example closure behavior for Issue #54
 
-## Decision
+## Supersession
 
-#44's content-identity field is optional for general resource references. Canonical examples
-used as reproducible public evidence are a stricter product profile: their closure is fully
-pinned.
+This specification supersedes the previous strict-example proposal. It preserves the
+authoritative #44 contract: `contentIdentity` is optional for normal immutable resource
+references, including canonical example contexts.
 
-## Strict example profile
+## Materializer policy
 
-For each context selected by an example manifest, the materializer requires a
-`contentIdentity` for:
+The public example materializer copies every authored context and referenced resource
+byte-for-byte. It verifies a `contentIdentity` only when the author supplied one. It does
+not add or rewrite identities, and it does not unconditionally invoke the public CLI with
+`--require-content-identity`.
 
-- the context's project, view, theme, color scheme, and layout references;
-- every selected input reference, including nested snapshot-project references; and
-- every declared font-metrics asset.
+The materializer may expose an explicit strict verification option in a future release, but
+strictness is not inferred from an example manifest and is not part of the current public
+example command.
 
-The materializer copies authored bytes unchanged, verifies each present digest against those
-bytes, and passes the resulting closure to the strict CLI. It never adds, removes, or rewrites
-a pin.
+## Font assets
 
-A non-example caller may use the normal #44 opt-in policy. The strictness belongs to the
-canonical example-materializer profile, not to the generic reference format.
-
-## Diagnostics
-
-Before invoking the CLI, a missing required strict-example identity yields
-`E_CONTENT_IDENTITY_REQUIRED` with the authored context path of the reference or font asset.
-A supplied resource digest mismatch yields `E_CONTENT_IDENTITY`; a supplied font-asset
-digest mismatch yields `E_MATERIALIZER_FONT_IDENTITY`. No missing pin may surface as an
-unrelated font-resolution diagnostic.
+A font asset without a `contentIdentity` remains a valid optional-pin declaration. A font
+asset with a supplied identity is verified against the packaged bytes before render and a
+mismatch raises `E_MATERIALIZER_FONT_IDENTITY`. The materializer does not manufacture a
+font identity or alter the authored context.
 
 ## Evidence
 
-A generated SVG is accepted only after strict closure validation and public CLI rendering.
-Check mode and `--write` use the same validation path; `--write` cannot replace evidence
-after any closure failure. All canonical contexts must byte-reproduce without `--write`.
+Canonical generated SVGs are verified by materializing their unmodified authored contexts
+through the public CLI and comparing bytes in check mode. Pinning is additionally tested
+with disposable fixtures: an incorrect supplied resource pin yields `E_CONTENT_IDENTITY`;
+an incorrect supplied font pin yields `E_MATERIALIZER_FONT_IDENTITY`. Check and
+`--write` share the same validation path, so either failure leaves the expected SVG
+untouched.

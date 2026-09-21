@@ -1,29 +1,33 @@
-# Issue #54 strict example-closure design plan
+# Issue #54 opt-in example-closure correction design plan
 
-## Trigger
+## Status
 
-Issue #52 showed that preserving authored identities exposed a previously hidden policy:
-the public example materializer always invokes the CLI with strict content-identity
-requirements, while checked-in example contexts had been authored unpinned under #44's
-opt-in rule. PR #53 supplies complete pins and proves the evidence reproduces, but the
-strict-example boundary and missing-pin diagnostics were not specified.
+The prior strict-example proposal is withdrawn before implementation. It would make
+canonical examples silently stricter than the #44 resource-reference contract and force
+authors to add hashes merely to use the documented materializer.
 
-## Decisions to close
+## Authoritative decision
 
-1. General render contexts retain #44 opt-in pinning.
-2. Canonical checked-in example manifests are strict evidence fixtures: every referenced
-   resource and declared font asset is pinned.
-3. The public example materializer validates strict completeness before invoking the CLI.
-   It reports the missing authored path with `E_CONTENT_IDENTITY_REQUIRED`; it never relies
-   on a later font-metrics failure to communicate this condition.
-4. A wrong pin remains `E_CONTENT_IDENTITY` (resource) or
-   `E_MATERIALIZER_FONT_IDENTITY` (font asset).
-5. PR #53's pin-only evidence may merge only after this design and its implementation plan
-   are published; generated SVGs remain materializer output only.
+Examples use the same opt-in content-identity semantics as every ordinary render context.
+A missing `contentIdentity` is valid. When a pin is supplied, the materializer and reader
+verify it against the exact copied bytes; they never recompute, rewrite, or remove it.
 
-## Completion criteria
+## Design completion sequence
 
-- The example policy is explicitly separated from #44's general opt-in policy.
-- Missing reference and font-asset pins fail before CLI render and identify their path.
-- Every canonical manifest context is fully pinned and byte-reproduces without `--write`.
-- Tests cover unpinned and wrong resource/font cases.
+1. Reconcile #44, Revision Store, Closure Resolver, materializer, and font metrics under one
+   optional-pin rule.
+2. Define the materializer invocation policy: it must not unconditionally select the CLI's
+   strict-identity mode.
+3. Define diagnostics for supplied wrong resource/font pins, while preserving normal
+   resolution diagnostics for an unpinned optional asset.
+4. Define evidence rules: generated SVGs remain byte-reproducible from unpinned canonical
+   examples; a separately pinned fixture proves supplied-pin rejection.
+5. Review boundaries and publish an implementation plan.
+
+## Acceptance
+
+- All five unpinned canonical contexts materialize in check mode without `--write`.
+- An added wrong resource pin fails with `E_CONTENT_IDENTITY` in check and write modes.
+- An added wrong font pin fails with `E_MATERIALIZER_FONT_IDENTITY`.
+- Context bytes remain unchanged in the copied closure.
+- No generated SVG changes.
