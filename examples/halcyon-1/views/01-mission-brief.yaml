@@ -26,12 +26,20 @@ body:
     deltaUnit: calendar-days
     facets: [planned, actual, finishDelta, unmatchedActual]
   visibility:
-    labels: true
+    labels: {placement: plot, content: [title, finishDelta], side: auto}
     relations: semantic
-    annotations: none
+    annotations: {mode: presentation, marker: numbered}
+  axis:
+    levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]
+    ticks: week
+  markers: [{kind: asOf, source: actual, label: as of}]
+  shading: {nonWorking: true, exceptions: true}
   layoutIntent:
     compactness: balanced
     itemStacking: stable
   tableColumns:
+    - {id: '#', source: rowIndex, missing: em-dash}
     - {id: Milestone or work package, source: title, missing: em-dash}
-    - {id: Team, source: {field: team}, missing: em-dash}
+    - {id: Plan, source: {facet: planned}, format: dateRange, missing: em-dash}
+    - {id: Actual, source: {facet: actual}, format: dateRange, missing: in-progress}
+    - {id: Δ, source: {facet: finishDelta}, format: signedDays, missing: em-dash}
