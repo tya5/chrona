@@ -1,0 +1,43 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:theme-v0.2"
+title: "Chrona Theme v0.2"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: "chrona/theme/v0.2"}
+  kind: {const: theme}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [values, roles, colorBindings]
+    additionalProperties: false
+    properties:
+      values:
+        type: object
+        additionalProperties:
+          type: object
+          required: [type, value]
+          additionalProperties: false
+          properties:
+            type: {enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative]}
+            value: {type: [string, number]}
+      roles:
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          properties:
+            marker: {type: string, minLength: 1}
+            pattern: {type: string, minLength: 1}
+            fontFamily: {type: string, minLength: 1}
+            fontWeight: {type: string, minLength: 1}
+            opacity: {type: string, minLength: 1}
+            textAlternative: {type: string, minLength: 1}
+      colorBindings:
+        type: object
+        minProperties: 1
+        additionalProperties: false
+        patternProperties:
+          "^[A-Za-z][A-Za-z0-9._-]*\\.(fill|stroke)$":
+            enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, category]
