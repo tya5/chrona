@@ -21,11 +21,11 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         cells = tuple(
             (row.row_id, str(column["id"]),
              display_value(table_value(next(item for item in row.items if item.item_id == row.table_subject_id),
-                                       dict(project), column["source"]), column["missing"], column.get("format", "text")))
-            for row in projection.rows for column in body.get("tableColumns", ()))
+                                       dict(project), column["source"], row_index), column["missing"], column.get("format", "text")))
+            for row_index, row in enumerate(projection.rows, 1) for column in body.get("tableColumns", ()))
     else:
-        cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"]), column["missing"], column.get("format", "text")))
-                      for item in projection.items for column in body.get("tableColumns", ()))
+        cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"], row_index), column["missing"], column.get("format", "text")))
+                      for row_index, item in enumerate(projection.items, 1) for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
     labels = visible.get("labels", False)
     label_placement = "plot" if labels is True else "none"
