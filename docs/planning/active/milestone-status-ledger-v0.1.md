@@ -37,7 +37,7 @@ evidence is present, not that a later product release is complete.
 | M24 | Complete | Profile resolution at `fcabf30`; normal flow at `df2844e`; per-axis correction at `cc60472`; source-adapter boundary at `bf37c7a`; product-path replacement at `7e81ce1`; final I24-5 acceptance review. The v0.4 Context, independent Theme/Layout resources, source measurement/composition, and manifest-driven Scene path are the only reachable layout path. | None. |
 | M25 | Complete | Color Scheme v0.1, Theme v0.2, Render Context v0.5, deterministic category assignment, WCAG contrast rejection, migrated examples, no reachable legacy review paint fallback, and deterministic gallery are published. 165 tests and full conformance pass. | None. |
 | M26 | Complete | C26-D1–D4, I26-1–I26-7, the operational conformance manifest, A26-01–A26-10 acceptance evidence, and `m26-operational-workflows-final-acceptance-review-2026-09-21.md`. UC-10/UC-11/UC-12 are exposed only by the immutable-reference CLI contracts in Specification 35. | None. |
-| M27 | Design amendment | I27-R2 preflight found that the published I27-R1 seam omitted required `MeasuredSources`; amendment: `m27-scene-input-measurement-design-amendment-2026-09-21.md`. | Reclose I27-R1 with measured inputs, then complete I27-R2–I27-R5 and A27-01–A27-10. |
+| M27 | In progress | I27-R1 is reclosed with required immutable `MeasuredSources`; review: `m27-i27-r1-measured-input-correction-review-2026-09-21.md`. | Complete I27-R2–I27-R5 and A27-01–A27-10. |
 
 Implementation may start only at a `Design complete; implementation not started`
 milestone or resume only after every listed open condition is closed and its owning

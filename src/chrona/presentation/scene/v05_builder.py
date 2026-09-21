@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutManifest
+from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 
@@ -31,6 +32,7 @@ class SceneBuildInput:
     layout_manifest: LayoutManifest
     theme_tokens: ThemeTokenView
     font_metrics: Any
+    measured_sources: MeasuredSources
     capabilities: Mapping[str, bool]
 
 
@@ -39,10 +41,13 @@ _REQUIRED_SOURCES = frozenset(("title", "table", "timeline", "timeline-axis"))
 
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       layout_manifest: LayoutManifest, resolved_theme: Mapping[str, Any],
-                      font_metrics: Any, capabilities: Mapping[str, bool]) -> SceneBuildInput:
+                      font_metrics: Any, measured_sources: MeasuredSources,
+                      capabilities: Mapping[str, bool]) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
+    if not isinstance(measured_sources, MeasuredSources):
+        raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     sources = {decision.source for decision in layout_manifest.decisions if decision.source}
     missing = sorted(_REQUIRED_SOURCES - sources)
     if missing:
@@ -50,4 +55,5 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
     if not all(isinstance(name, str) and isinstance(enabled, bool) for name, enabled in capabilities.items()):
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,
-                           ThemeTokenView(resolved_theme), font_metrics, dict(capabilities))
+                           ThemeTokenView(resolved_theme), font_metrics, measured_sources,
+                           dict(capabilities))

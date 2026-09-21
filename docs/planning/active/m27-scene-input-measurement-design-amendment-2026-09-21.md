@@ -1,6 +1,7 @@
 # M27 Scene Input Measurement Design Amendment — 2026-09-21
 
-**Status:** Design correction complete; I27-R1 implementation correction required.
+**Status:** Design correction complete; I27-R1 implementation correction completed
+with its separately published review.
 
 During the I27-R2 preflight, review found that the I27-R1 `SceneBuildInput` carries
 font metrics but omits `MeasuredSources`. That contradicts Specification 37's closed

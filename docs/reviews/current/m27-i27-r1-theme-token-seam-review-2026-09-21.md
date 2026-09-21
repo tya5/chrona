@@ -1,6 +1,7 @@
 # M27 I27-R1 Theme Token and Scene Input Seam Review — 2026-09-21
 
-**Decision:** Complete and published after regression/conformance verification.
+**Decision:** Superseded by the measured-input correction review. The original
+publication established the typed token API, but did not carry `MeasuredSources`.
 
 I27-R1 adds a non-persistent `ThemeTokenView` over the already-resolved Theme
 v0.2 closure.  It performs typed role/property lookup and emits stable diagnostics
