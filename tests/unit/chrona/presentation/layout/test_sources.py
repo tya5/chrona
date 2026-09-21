@@ -13,7 +13,18 @@ def theme():
         "timeline.axis.blockSize": 48, "table.column.minInlineSize": 120,
         "table.header.blockSize": 44,
     }
-    return {"body": {"values": {f"metric.{i}": {"type": "number", "value": value} for i, value in enumerate(metrics.values())}, "metrics": {name: f"metric.{i}" for i, name in enumerate(metrics)}}}
+    values = {f"metric.{i}": {"type": "number", "value": value} for i, value in enumerate(metrics.values())}
+    values |= {
+        "family": {"type": "fontFamily", "value": "Nimbus Sans"},
+        "weight": {"type": "fontWeight", "value": 400},
+        "heading-size": {"type": "number", "value": 34},
+        "heading-line": {"type": "number", "value": 1.2},
+    }
+    text = {"fontFamily": "family", "fontWeight": "weight", "fontSize": "metric.0", "lineHeight": "metric.1"}
+    heading = {"fontFamily": "family", "fontWeight": "weight", "fontSize": "heading-size", "lineHeight": "heading-line"}
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
+            "body": {"values": values, "metrics": {name: f"metric.{i}" for i, name in enumerate(metrics)},
+                     "roles": {"text": text, "heading": heading, "axis": text, "legend": text, "annotation": text}}}
 
 
 def test_sources_are_measured_once_from_semantic_inputs_and_theme_metrics():
@@ -46,3 +57,14 @@ def test_missing_unknown_and_wrong_type_metric_bindings_diagnose():
     value = theme(); value["body"]["values"]["metric.0"] = {"type": "color", "value": "#fff"}
     with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_TYPE"):
         measure_sources({}, value, font_metrics=Metrics())
+
+
+def test_heading_source_uses_heading_extent_and_baseline():
+    class Metrics:
+        def width(self, value, size): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size
+    measured = measure_sources({"title": SourceInput(("Controller Z",), typography_role="heading")}, theme(), font_metrics=Metrics())
+    title = measured.measurements["title"]
+    assert title.preferred_inline == Decimal(204)
+    assert title.preferred_block == Decimal("40.8")
+    assert title.first_baseline == Decimal(34)
