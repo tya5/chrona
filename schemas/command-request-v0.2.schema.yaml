@@ -25,7 +25,7 @@ allOf:
           required: [batch, project]
           additionalProperties: false
           properties:
-            batch: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}
+            batch: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: actual-intake-batch}}}]}
             project: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}
   - if: {properties: {type: {const: resolveActualObservation}}}
     then:
