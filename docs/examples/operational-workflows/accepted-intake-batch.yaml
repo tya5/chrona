@@ -1,0 +1,12 @@
+version: chrona/actual-intake-batch/v0.1
+batchId: supplier-week-17
+source:
+  system: supplier
+  contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  locator: supplier-export-2026-04-24.csv
+records:
+  - externalKey: FW-42
+    projectObjectId: firmware
+    actual: {finish: "2026-04-18", progress: 0.75}
+  - externalKey: HW-19
+    actual: {finish: "2026-04-20"}
