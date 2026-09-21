@@ -51,6 +51,11 @@ class ScenePrimitive:
     to_port_id: str | None = None
     z_order: int = 0
 
+    def __post_init__(self) -> None:
+        """Preserve a non-empty completed purpose for existing positional builders."""
+        if not self.purpose:
+            object.__setattr__(self, "purpose", self.semantic_facet)
+
 
 @dataclass(frozen=True)
 class SceneSlot:
