@@ -12,7 +12,7 @@ The runtime accepts only these already-resolved inputs:
 1. `ReviewProjection` and normalized `SurfaceContentInput`;
 2. the v0.5 Render Context's resolved Theme v0.2 and Color Scheme result;
 3. the resolved Layout Profile v0.2 and immutable Layout Manifest;
-4. declared font metrics and measured source results; and
+4. declared font metrics and the immutable `MeasuredSources` result; and
 5. target capabilities.
 
 It MUST NOT read a legacy settings document, a legacy serializer configuration, a
@@ -61,6 +61,10 @@ Rows and groups are derived from View projection order. They never become Layout
 authoring state. Axis/mark coordinates are derived only from the completed timeline
 slot and half-open View window. A required label or panel that does not fit diagnoses;
 it is never silently omitted, clipped, or replaced by a fixed 28-day cadence.
+
+The builder consumes `MeasuredSources.measurements` and `.metric_values` verbatim. It
+does not recompute Theme metrics or text measurement during composition; a missing
+measurement boundary diagnoses `E_PRESENTATION_MEASUREMENTS_REQUIRED`.
 
 ## 4. SVG adapter migration
 
