@@ -6,6 +6,7 @@
 - Added all three HALCYON v0.6 contexts to schema acceptance coverage.
 - The materializer now derives SHA-256 `contentIdentity` values from every copied resource and font asset, serializes the derived Context, and invokes `render-review --require-content-identity`.
 - Materializer selects each manifest slide's own context with the documented compatibility fallback.
+- Focused integration tests inspect derived ASTER identities and each declared HALCYON slide context without requiring generated SVG mutation.
 
 ## Verification gate
 
