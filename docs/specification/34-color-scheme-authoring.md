@@ -35,6 +35,15 @@ There is no literal-color escape hatch in the shipped M25 authoring path. An ear
 
 No renderer, Layout adapter, or Scene constructor may read a Scheme resource or supply a color default. A gallery is multiple independent Context evaluations with one distinct `colorScheme` reference per result.
 
+`chrona render-review-gallery` receives two or more immutable Context references plus
+the same snapshot-root and Store identity inputs as `render-review`. It resolves every
+closure before writing output, rejects duplicate Scheme content identities with
+`E_SCHEME_GALLERY_DUPLICATE`, sorts results by `(colorScheme.id, contentIdentity)`, and
+writes one `<colorScheme.id>.svg` file per result to an empty output directory. It does
+not merge Scenes, mutate Contexts, or pass a renderer override. A write failure leaves
+no success manifest; a successful `gallery.json` records the ordered Context and Scheme
+identities plus output filenames.
+
 ## 5. Categories and variants
 
 For category key `k`, the palette index is the unsigned first eight bytes of `SHA-256(scheme-content-identity + "\\0" + k)` modulo `len(category)`. It is independent of View order, source iteration, and renderer state. A finite palette may repeat a color for distinct keys; category color is never the sole differentiator.
