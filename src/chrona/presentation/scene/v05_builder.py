@@ -251,11 +251,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                  axis.bounds[1] + axis_size * (2 if band_intervals else 1), typography_role="axis")
     if value.surface_content.as_of is not None and start <= value.surface_content.as_of < end:
         as_of_x = coordinate(value.surface_content.as_of)
-        primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", "as-of", "as-of",
+        primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", "asOf", "asOf",
                                          (as_of_x, timeline.bounds[1], 0, timeline.bounds[3]),
                                          points=((as_of_x, timeline.bounds[1]), (as_of_x, timeline.bounds[1] + timeline.bounds[3])),
                                          z_order=len(primitives)))
-        text("as-of-label", "actual-set", "as-of-label", "text",
+        text("as-of-label", "actual-set", "asOf-label", "text",
              f"{value.surface_content.as_of_label} {value.surface_content.as_of.isoformat()}", as_of_x, timeline.bounds[1] + body_size)
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
