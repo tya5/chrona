@@ -84,6 +84,10 @@ accept the deleted Settings shape. It includes an optional family only when both
 selected source and its declared Layout source exist; a missing required source is a
 diagnostic, while an absent optional family produces no primitive.
 
+Detail Profile source validation derives source presence and required/optional policy
+from the immutable Layout Manifest. It does not inspect an authoring-layout/settings
+object or reconstruct slot declarations.
+
 ## 4. SVG adapter migration
 
 The v0.5 adapter consumes `SceneSurface` and `ThemeTokenView`. It maps primitive kinds
