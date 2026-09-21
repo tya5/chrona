@@ -32,3 +32,22 @@ payload: {snapshotId: baseline, registry: {id: r}}
         assert error.code == "E_OPERATIONAL_SCHEMA"
     else:
         raise AssertionError("expected schema rejection")
+
+
+def test_actual_set_v02_requires_provenance_for_external_facts():
+    payload = """version: chrona/actual-set/v0.2
+kind: actual-set
+id: actuals
+body:
+  observations:
+    - id: external-1
+      sequence: 1
+      externalIdentity: {system: supplier, key: 1}
+      actual: {finish: '2026-04-18'}
+"""
+    try:
+        parse_document(payload, "actual-set-v0.2.schema.yaml")
+    except OperationalResourceError as error:
+        assert error.code == "E_OPERATIONAL_SCHEMA"
+    else:
+        raise AssertionError("expected provenance rejection")
