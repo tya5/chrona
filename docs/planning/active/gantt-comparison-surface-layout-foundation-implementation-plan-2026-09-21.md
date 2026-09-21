@@ -32,6 +32,13 @@ anchors, boxes, text, and leader paths.  A later slice consumes placements from 
 one; it may not repeat their geometry calculations.  Existing output behavior remains the
 characterization baseline until I58-3 introduces the separately designed quality policies.
 
+Text collision validation is scoped to an explicit Layout collision region, normally the resolved
+slot that contains the text. Text in different slots is not compared, because layout manifests
+may intentionally overlay abstract slot bounds in unit characterization while real render targets
+separate them. The placement model records the collision region; Layout validates only records
+within that region. This preserves the single Layout authority without treating independently
+layered surface regions as an infeasible collision.
+
 ## Execution slices
 
 ### F58-1 — Typed placement closure
