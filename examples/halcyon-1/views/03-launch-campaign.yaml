@@ -25,13 +25,19 @@ body:
     deltaUnit: calendar-days
     facets: [planned, actual, finishDelta]
   visibility:
-    labels: true
+    labels: {placement: plot, content: [title], side: auto}
     relations: semantic
-    annotations: none
+    annotations: {mode: presentation, marker: numbered}
+  axis:
+    levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]
+    ticks: week
+  markers: [{kind: asOf, source: actual, label: as of}]
+  shading: {nonWorking: true, exceptions: true}
   layoutIntent:
     compactness: expanded
     itemStacking: stable
   tableColumns:
     - {id: Activity, source: title, missing: em-dash}
-    - {id: Phase, source: {field: phase}, missing: em-dash}
-    - {id: Team, source: {field: team}, missing: em-dash}
+    - {id: Plan, source: {facet: planned}, format: dateRange, missing: em-dash}
+    - {id: Actual, source: {facet: actual}, format: dateRange, missing: in-progress}
+    - {id: Δ, source: {facet: finishDelta}, format: signedDays, missing: em-dash}
