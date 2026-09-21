@@ -36,3 +36,26 @@ def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str, ca
             raise ColorSchemeError("E_SCHEME_SCHEMA")
         result["category"] = str(category[category_index(content_identity, category_key, len(category))])
     return result
+
+
+def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme_content_identity: str) -> dict[str, Any]:
+    """Produce the only concrete Theme value permitted to reach presentation adapters."""
+    if theme.get("version") != "chrona/theme/v0.2" or theme.get("kind") != "theme":
+        raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+    body = theme.get("body")
+    if not isinstance(body, Mapping) or not isinstance(body.get("colorBindings"), Mapping):
+        raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+    colors = resolve_color_scheme(scheme, content_identity=scheme_content_identity)
+    values = dict(body.get("values", {}))
+    roles = {name: dict(binding) for name, binding in body.get("roles", {}).items() if isinstance(binding, Mapping)}
+    for target, intent in body["colorBindings"].items():
+        if not isinstance(target, str) or "." not in target or intent not in _INTENTS | {"category"}:
+            raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN")
+        role, property_name = target.rsplit(".", 1)
+        if property_name not in {"fill", "stroke"}:
+            raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+        token = f"__scheme.{intent}.{target}"
+        color = colors[intent] if intent != "category" else resolve_color_scheme(scheme, content_identity=scheme_content_identity, category_key=target)["category"]
+        values[token] = {"type": "color", "value": color}
+        roles.setdefault(role, {})[property_name] = token
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {}))}}
