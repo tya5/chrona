@@ -280,10 +280,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                 target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
                 if source_port == target_port:
                     raise SceneBuildError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation.get('id', '')}")
+                endpoint_rows = {instance_rows.get(source_id), instance_rows.get(target_id)}
                 route_obstacles = tuple((item.bounds[0], item.bounds[1], item.bounds[0] + item.bounds[2], item.bounds[1] + item.bounds[3])
                                         for item in rows
-                                        if instance_rows.get(source_id) != instance_rows.get(target_id)
-                                        or item.row_id != instance_rows.get(source_id))
+                                        if item.row_id not in endpoint_rows)
                 points = route_orthogonal(source_port, target_port, route_obstacles,
                     bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
                 if len(points) < 2:
