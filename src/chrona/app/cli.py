@@ -260,12 +260,15 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
 
 def _run(args: argparse.Namespace) -> None:
     if args.command in {"command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"}:
-        command = parse_document(Path(args.command_path).read_text(encoding="utf-8"), "command-request-v0.2.schema.yaml")
+        try:
+            command = parse_document(Path(args.command_path).read_text(encoding="utf-8"), "command-request-v0.2.schema.yaml")
+            reader = load_store_config(args.store_config)
+        except OSError as error:
+            raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
         required_type = {"actual-intake": "applyActualIntakeBatch", "actual-resolve": "resolveActualObservation", "baseline-capture": "captureSnapshot"}.get(args.command)
         if required_type and command["type"] != required_type:
             result = {"version": "chrona/automation-result/v0.1", "operation": args.command, "status": "rejected", "requestContentIdentity": "sha256:" + "0" * 64, "inputs": [command["target"]], "diagnostics": [{"code": "E_AUTOMATION_OPERATION_UNSUPPORTED"}], "artifacts": []}
         else:
-            reader = load_store_config(args.store_config)
             result = check_command(reader, command) if args.command == "command-check" else apply_actual_command(reader, command)
             result["operation"] = args.command
         _write_result(Path(args.result), result)
@@ -273,8 +276,13 @@ def _run(args: argparse.Namespace) -> None:
             raise SystemExit(2)
         return
     if args.command == "baseline-compare":
-        reader = load_store_config(args.store_config)
-        result = compare_baseline(reader, load_yaml(args.baseline_reference), reader, load_yaml(args.candidate_reference))
+        try:
+            reader = load_store_config(args.store_config)
+            baseline_reference = load_yaml(args.baseline_reference)
+            candidate_reference = load_yaml(args.candidate_reference)
+        except OSError as error:
+            raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
+        result = compare_baseline(reader, baseline_reference, reader, candidate_reference)
         _write_result(Path(args.result), result)
         if result["status"] != "accepted":
             raise SystemExit(2)
@@ -329,9 +337,13 @@ def _write_result(destination: Path, result: dict[str, Any]) -> None:
     try:
         with temporary.open("xb") as handle:
             handle.write(json.dumps(result, sort_keys=True, default=_json_default).encode("utf-8"))
+            handle.flush()
+            os.fsync(handle.fileno())
         os.link(temporary, destination)
     except FileExistsError as error:
         raise CliFailure("E_AUTOMATION_OUTPUT_EXISTS", "result destination already exists", "automation", exit_code=2) from error
+    except OSError as error:
+        raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
     finally:
         temporary.unlink(missing_ok=True)
 

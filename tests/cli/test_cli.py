@@ -142,6 +142,14 @@ def test_cli_command_check_writes_non_mutating_result(tmp_path, monkeypatch):
     assert json.loads(result.read_text())["status"] == "accepted"
 
 
+def test_cli_operational_request_read_failure_is_exit_three(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["chrona", "command-check", "--command", str(tmp_path / "missing.yaml"), "--store-config", str(tmp_path / "stores.yaml"), "--result", str(tmp_path / "result.json")])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 3
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_AUTOMATION_RESULT_IO"
+
+
 def test_cli_failures_are_one_json_envelope_without_traceback(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(tmp_path / "missing.yaml")])
     try:

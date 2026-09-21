@@ -52,13 +52,22 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
         root = reader.roots.get((registry_selector["provider"], registry_selector["identity"]))
         if root is None:
             return _rejected(command, "E_AUTOMATION_TARGET_CLOSURE")
+        ledger = ReplayLedger(root / "command-replays.json")
+        try:
+            replay = ledger.lookup(command["commandId"], command, target)
+        except ValueError as error:
+            return _rejected(command, str(error))
+        if replay:
+            return replay.result | {"replayed": True}
         class ProjectStore:
             def read(self_nonlocal):
                 return ProjectSnapshot(target["revision"]["token"], target["contentIdentity"], verified.value)
         result = capture_baseline_v02(ProjectStore(), command["baseRevision"], target, command["payload"]["snapshotId"], LocalBaselineRegistry(root, registry_selector["identity"]))
         if result.status != "accepted":
             return _rejected(command, result.diagnostics)
-        return {"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "accepted", "requestContentIdentity": content_identity(command), "inputs": [target], "resultTarget": result.snapshot_ref, "diagnostics": [], "artifacts": []}
+        accepted = {"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "accepted", "requestContentIdentity": content_identity(command), "inputs": [target], "resultTarget": result.snapshot_ref, "diagnostics": [], "artifacts": []}
+        ledger.record(command["commandId"], command, target, accepted)
+        return accepted
     store_info = target["store"]
     root = reader.roots.get((store_info["provider"], store_info["identity"]))
     tip = root / "actual-tips" / f"{target['id']}.json" if root else None
