@@ -1,4 +1,4 @@
-from chrona.presentation.layout.text import place_text
+from chrona.presentation.layout.text import measure_text_width, place_text
 
 
 class _Theme:
@@ -20,3 +20,7 @@ def test_place_text_returns_a_completed_measured_layout_record():
     assert (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size)) == (10, 18, 12, 18)
     assert placed.baseline == (10, 30)
     assert placed.font_asset_identity == "sha256:test"
+
+
+def test_measure_text_width_keeps_font_metrics_at_the_layout_boundary():
+    assert measure_text_width("AB", font_size=12, font_metrics=_Font()) == 12
