@@ -30,8 +30,14 @@ body:
     'group:validation-team.fill': category
     planned.fill: accent
     actual.fill: positive
+    missing-actual.fill: textMuted
+    variance-ahead.fill: positive
+    variance-on-track.fill: neutral
+    variance-behind.fill: warning
     variance-behind.stroke: warning
     dependency.stroke: neutral
+    annotation.fill: surfaceRaised
+    annotation.stroke: neutral
   metrics:
     text.body.size: text-size
     text.body.lineHeight: text-line-height

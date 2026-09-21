@@ -22,7 +22,7 @@ body:
     store: {provider: local, identity: aster-ssd-example}
     address: themes/executive-light.yaml
     revision: {token: example-v1}
-    contentIdentity: sha256:b4376467d3d4c26a43abaab1f06d4ef418e88ac9586cf76371b18e9f23cd6cb6
+    contentIdentity: sha256:5230548572c782fa48294d6cf9f5abadabeafd7f575fe9975ccdf335af31b0cd
   colorScheme:
     id: executive-light
     kind: color-scheme
