@@ -10,6 +10,7 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows
 from chrona.presentation.layout.surface_quality import (
     GroupPlacement, MarkPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfacePlacement,
+    SurfaceLayoutRequest,
 )
 
 
@@ -22,9 +23,16 @@ class SurfaceLayoutComposition:
     track_placements: tuple[TrackPlacement, ...]
 
 
-def compose_surface_layout(*, projection: Any, layout_manifest: LayoutManifest,
-                           metric_values: dict[str, Any]) -> SurfaceLayoutComposition:
+def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
+    projection = request.projection
+    layout_manifest = request.layout_manifest
+    measured_sources = request.measured_sources
+    metric_values = getattr(measured_sources, "metric_values", None)
+    if not isinstance(layout_manifest, LayoutManifest):
+        raise LayoutError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
+    if not isinstance(metric_values, dict):
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     decisions = {item.source: item for item in layout_manifest.decisions if item.source}
     required = ("title", "table", "timeline", "timeline-axis")
     missing = next((name for name in required if name not in decisions), None)

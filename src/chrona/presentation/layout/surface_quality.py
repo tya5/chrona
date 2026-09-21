@@ -1,7 +1,7 @@
 """Immutable placement values and geometry invariants for review surfaces."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
@@ -139,10 +139,15 @@ class RelationPlacement:
 class SurfaceLayoutRequest:
     """Closed Layout input; semantic values are supplied by PresentationContract."""
 
-    table_columns: tuple[tuple[str, str], ...] = ()
-    table_cells: tuple[tuple[str, str, str], ...] = ()
-    label_requests: tuple[Any, ...] = ()
-    relation_requests: tuple[Any, ...] = ()
+    projection: Any = None
+    presentation_contract: Any = None
+    surface_content: Any = None
+    layout_manifest: Any = None
+    measured_sources: Any = None
+    theme_tokens: Any = None
+    font_metrics: Any = None
+    locale: str = "en-US"
+    capabilities: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
