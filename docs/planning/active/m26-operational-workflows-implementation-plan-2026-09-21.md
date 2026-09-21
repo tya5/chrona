@@ -19,7 +19,9 @@ new review.
 
 **Progress:** I26-1 through I26-5 completed and published on 2026-09-21. The Actual-set
 v0.2 provenance amendment, append-only registry, and verified semantic baseline
-comparison all have automated evidence. I26-6 is the next authorized slice.
+comparison all have automated evidence. I26-6 is in progress: `baseline-compare` now
+uses Store-config v0.1 and atomic result output; command check/apply, intake, resolve,
+capture, and legacy `propose-set` removal remain in this slice.
 
 ## Implementation rules
 
