@@ -32,8 +32,23 @@ allOf:
       properties:
         target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: actual-set}}}]}
         payload: {type: object, required: [observationId, projectObjectId, project], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, projectObjectId: {type: string, minLength: 1}, project: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}}}
+  - if: {properties: {type: {const: editActualObservation}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: actual-set}}}]}
+        payload: {type: object, required: [observationId, actual], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, actual: {type: object, minProperties: 1}}}
+  - if: {properties: {type: {const: unresolveActualObservation}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: actual-set}}}]}
+        payload: {type: object, required: [observationId], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}}}
   - if: {properties: {type: {const: captureSnapshot}}}
     then:
       properties:
         target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}
         payload: {type: object, required: [snapshotId, registry], additionalProperties: false, properties: {snapshotId: {type: string, minLength: 1}, registry: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}}}
+  - if: {properties: {type: {const: setTypedField}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.1"}, {properties: {kind: {const: project}}}]}
+        payload: {type: object, required: [objectId, field, value], additionalProperties: false, properties: {objectId: {type: string, minLength: 1}, field: {type: string, minLength: 1}, value: {}}}
