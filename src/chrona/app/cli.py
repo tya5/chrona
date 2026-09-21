@@ -128,7 +128,7 @@ def _parser() -> JsonArgumentParser:
         if name == "render":
             command.add_argument("--output", "-o", required=True)
 
-    command = sub.add_parser("render-review", help="render an immutable Render Context v0.4", description="render an immutable Render Context v0.4")
+    command = sub.add_parser("render-review", help="render an immutable Render Context v0.5", description="render an immutable Render Context v0.5")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
