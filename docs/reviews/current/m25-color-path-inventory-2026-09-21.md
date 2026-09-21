@@ -6,7 +6,7 @@
 |---|---|---|
 | `scene/paint.py:legacy_theme_colors` | Theme role lookup plus seven literal fallbacks | Delete function; resolve the concrete Theme once from Theme + Scheme. |
 | `scene/paint.py:resolve_facet_paint` | `facetPaints` / `paints` source-order lookup | Replace with Scheme category index plus resolved semantic intents. |
-| `renderers/generic.py` | module literal colors and `_LEGACY_MUTED` | Delete legacy renderer route; it may accept only resolved Scene paint. |
+| `renderers/generic.py` | module literal colors and `_LEGACY_MUTED` | Out of M25: this is the separate core diagnostic `chrona render` route, not `render-review`. It must not become a Scheme fallback or consume M25 resources. |
 | `renderers/scene_svg.py` | `groupPaints` fallback to group-band/text | Receive category colors already resolved in Scene; absence diagnoses. |
 | `renderers/table_timeline.py` | Theme value lookup | Consume concrete resolved Theme values only; missing binding diagnoses before renderer entry. |
 
