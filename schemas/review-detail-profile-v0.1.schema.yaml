@@ -27,6 +27,16 @@ properties:
         minItems: 1
         uniqueItems: true
         items: {type: string, minLength: 1, maxLength: 4096}
+      legend:
+        type: array
+        minItems: 1
+        items:
+          type: object
+          additionalProperties: false
+          required: [role, label]
+          properties:
+            role: {type: string, minLength: 1, maxLength: 4096}
+            label: {type: string, minLength: 1, maxLength: 4096}
       observations:
         type: object
         additionalProperties: false
