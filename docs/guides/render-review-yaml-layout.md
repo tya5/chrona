@@ -18,7 +18,7 @@ spacing. A derived Layout may override stable node IDs, never array positions. T
 `metrics` bind source-internal semantic quantities to number tokens; exact glyph widths
 and baselines come from the Font Metrics assets pinned by the Context.
 
-The only review context is `chrona/presentation/v0.4`. It references Theme and Layout
+The only review context is `chrona/presentation/v0.5`. It references Theme, Color Scheme and Layout
 independently and declares viewport, locale, Font Metrics, Scene precision and output
 capabilities. `chrona render-review` accepts its immutable resource reference:
 
