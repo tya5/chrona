@@ -163,9 +163,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             x = coordinate(actual["at"])
             primitives.append(ScenePrimitive(f"actual:{instance_id}", "Symbol", item.object_id, "object", "actual", "actual",
                                              (x - height / 2, y + height * 1.25, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
-        elif source_kind in {"actual", "combined"}:
+        elif source_kind in {"actual", "combined"} and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
+            anchor_date = planned.get("end", planned.get("at"))
+            anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
-                                             (row.bounds[0], y + height * 1.25, max(1.0, row.bounds[2] * 0.04), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
+                                             (anchor_x, y + height * 1.25, max(1.0, height * 1.5), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
         if source_kind == "combined" and item.finish_delta is not None:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
             text(f"variance:{instance_id}", item.object_id, "finish-delta", role,
@@ -175,7 +177,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
         primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
                                          (x, timeline.bounds[1], 0, timeline.bounds[3]), points=((x, axis.bounds[1]), (x, timeline.bounds[1] + timeline.bounds[3])), z_order=len(primitives)))
-        text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", interval.label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
+        label_width = value.font_metrics.width(interval.label, float(value.measured_sources.metric_values["text.body.size"]))
+        clipped_width = (interval.end - interval.start).days * scale.unit_ratio
+        if label_width <= clipped_width:
+            text(f"axis-label:{interval.level}:{interval.index}", "timeline-axis", "axis-label", "text", interval.label, x, axis.bounds[1] + float(value.theme_tokens.typography("axis")[2]), typography_role="axis")
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
         anchor = (row.bounds[0] + row.bounds[2], row.bounds[1] + row.bounds[3] / 2)
@@ -301,7 +306,7 @@ def _annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: SceneRow
 def _fitting_axis(value: SceneBuildInput, start: date, end: date, timeline: SceneSlot):
     for level in ("day", "week", "month", "quarter", "year"):
         intervals = axis_intervals(start, end, level)
-        if all(value.font_metrics.width(item.label, float(value.measured_sources.metric_values["text.body.size"])) <= (item.end - item.start).days * timeline.bounds[2] / max(1, (end - start).days)
+        if all(value.font_metrics.width(item.label, float(value.measured_sources.metric_values["text.body.size"])) <= (item.natural_end - item.natural_start).days * timeline.bounds[2] / max(1, (end - start).days)
                for item in intervals):
             return intervals
     raise SceneBuildError("E_PRESENTATION_AXIS_OVERFLOW", "/layoutManifest/timeline-axis")
