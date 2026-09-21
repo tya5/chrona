@@ -1,6 +1,6 @@
 # M25 Color Scheme Implementation Plan — 2026-09-21
 
-**Status:** Paused for design remediation; implementation is not authorized.
+**Status:** Approved design; implementation pending.
 
 1. Complete a source-path inventory of every paint resolver, literal fallback, and
    renderer color default; publish the deletion/replacement matrix and negative tests.
