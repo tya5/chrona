@@ -13,8 +13,9 @@ from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fit
 from chrona.presentation.layout.text import measure_text_width, place_text
 from chrona.presentation.layout.routing import place_relation_route
 from chrona.presentation.layout.labels import LabelRect
-from chrona.presentation.layout.model import LayoutManifest
-from chrona.presentation.layout.presentation import place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.model import LayoutError, LayoutManifest
+from chrona.presentation.layout.presentation import place_table_columns
+from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -80,53 +81,41 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     contract = normalize_presentation_input(value.surface_content)
     if "text.body.size" not in metric or "text.body.lineHeight" not in metric:
         raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
-    decisions = {item.source: item for item in value.layout_manifest.decisions if item.source}
-    slots = tuple(SceneSlot(source, source, "primary" if source in {"timeline", "timeline-axis"} else None,
-                            (float(item.bounds.inline), float(item.bounds.block), float(item.bounds.inline_size), float(item.bounds.block_size)),
-                            item.priority or "required", item.overflow or "diagnose")
-                  for source, item in sorted(decisions.items()))
+    try:
+        composition = compose_surface_layout(projection=projection, layout_manifest=value.layout_manifest,
+                                             metric_values=metric)
+    except LayoutError as error:
+        raise SceneBuildError(error.diagnostic_id, error.path) from error
+    placed_surface = composition.placement
+    slots = tuple(SceneSlot(item.slot_id, item.source_ref, item.scale_id,
+                            (float(item.bounds.inline), float(item.bounds.block),
+                             float(item.bounds.inline_size), float(item.bounds.block_size)),
+                            item.priority, item.overflow)
+                  for item in placed_surface.slots)
     by_source = {slot.source: slot for slot in slots}
     table, timeline, axis, title_slot = (by_source[name] for name in ("table", "timeline", "timeline-axis", "title"))
-    start, end = projection.window
-    if not isinstance(start, date) or not isinstance(end, date) or start >= end:
-        raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
-    review_rows = projection.rows or tuple(
-        type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
-                           "table_subject_id": item.object_id, "items": (item,)})()
-        for item in projection.items)
-    group_header_size = float(metric.get("timeline.groupHeader.blockSize", 0))
-    group_starts = tuple(index for index, row in enumerate(review_rows)
-                         if row.group_id and (index == 0 or review_rows[index - 1].group_id != row.group_id))
-    row_placements = place_rows(
-        review_rows=tuple(review_rows),
-        timeline_bounds=timeline.bounds,
-        group_header_size=group_header_size,
-    )
-    row_height = row_placements[0].bounds[3] if row_placements else timeline.bounds[3]
-    minimum = float(metric["timeline.row.minBlockSize"])
-    if any(row_height < minimum * max(1, sum(item.track != "shared" for item in review_row.items))
-           for review_row in review_rows):
-        raise SceneBuildError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline")
+    review_rows = composition.review_rows
     rows = tuple(
-        SceneRow(review_row.table_subject_id, placement.group_id, placement.bounds, placement.row_id)
-        for review_row, placement in zip(review_rows, row_placements, strict=True)
+        SceneRow(placement.object_id, placement.group_id,
+                 (float(placement.bounds.inline), float(placement.bounds.block),
+                  float(placement.bounds.inline_size), float(placement.bounds.block_size)), placement.row_id)
+        for placement in placed_surface.rows
     )
-    groups: list[SceneGroup] = []
-    for row in rows:
-        if groups and groups[-1].group_id == row.group_id:
-            previous = groups[-1]
-            groups[-1] = SceneGroup(previous.group_id, previous.header_bounds,
-                                    (previous.content_bounds[0], previous.content_bounds[1], previous.content_bounds[2],
-                                     previous.content_bounds[3] + row.bounds[3]))
-        else:
-            header = None
-            if row.group_id and group_header_size:
-                header = (table.bounds[0], row.bounds[1] - group_header_size,
-                          timeline.bounds[0] + timeline.bounds[2] - table.bounds[0], group_header_size)
-            groups.append(SceneGroup(row.group_id, header, row.bounds))
-    scale = SurfaceScaleManifest("table-timeline", "primary", start, end, timeline.bounds[0],
-                                 timeline.bounds[0] + timeline.bounds[2], timeline.bounds[0],
-                                 timeline.bounds[2] / max(1, (end - start).days))
+    groups = tuple(
+        SceneGroup(item.group_id,
+                   None if item.header_bounds is None else (float(item.header_bounds.inline), float(item.header_bounds.block),
+                                                             float(item.header_bounds.inline_size), float(item.header_bounds.block_size)),
+                   (float(item.content_bounds.inline), float(item.content_bounds.block),
+                    float(item.content_bounds.inline_size), float(item.content_bounds.block_size)))
+        for item in placed_surface.groups
+    )
+    if placed_surface.scale is None:
+        raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
+    scale = SurfaceScaleManifest(placed_surface.scale.surface_id, placed_surface.scale.scale_id,
+                                 placed_surface.scale.domain_start, placed_surface.scale.domain_end,
+                                 placed_surface.scale.range_start, placed_surface.scale.range_end,
+                                 placed_surface.scale.origin, placed_surface.scale.unit_ratio)
+    start, end = scale.domain_start, scale.domain_end
     title = value.measured_sources.inputs["title"].lines[0] if value.measured_sources.inputs.get("title") and value.measured_sources.inputs["title"].lines else ""
     primitives: list[ScenePrimitive] = []
     def text(scene_id: str, source: str, purpose: str, role: str, content: str, x: float, y: float,
@@ -192,11 +181,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                              opacity=0.12, z_order=len(primitives)))
     track_placements = {
         placement.instance_id: placement
-        for placement in place_mark_tracks(
-            review_rows=tuple(review_rows),
-            row_placements=row_placements,
-            mark_block_size=float(metric["timeline.mark.blockSize"]),
-        )
+        for placement in composition.track_placements
     }
     mark_ports: dict[str, tuple[tuple[float, float], tuple[float, float]]] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
@@ -426,7 +411,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                     raise SceneBuildError(str(error), f"/annotations/{index}") from error
                 primitives.append(ScenePrimitive(f"annotation-leader:{annotation_id}", "Path", annotation_id, "annotation", f"{annotation_binding.purpose}-leader", annotation_binding.scene_role, (0, 0, 0, 0),
                                                  points=points, from_port_id=f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}", to_port_id=f"annotation-box:{annotation_id}", z_order=len(primitives)))
-    return SceneSurface("table-timeline", slots, rows, tuple(groups), scale, tuple(primitives))
+    return SceneSurface("table-timeline", slots, rows, groups, scale, tuple(primitives))
 
 
 def _comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:
