@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.4
+version: chrona/presentation/v0.5
 kind: render-context
 id: controller-z-intent-layout
 body:
@@ -21,6 +21,13 @@ body:
     kind: theme
     store: *store
     address: themes/executive-light.yaml
+    revision: *revision
+    contentIdentity: *identity
+  colorScheme:
+    id: chrona-authored-light
+    kind: color-scheme
+    store: *store
+    address: schemes/chrona-authored-light.yaml
     revision: *revision
     contentIdentity: *identity
   layout:
