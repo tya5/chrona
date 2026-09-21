@@ -142,7 +142,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
       for member_index, item in enumerate(review_row.items):
         track_height = row.bounds[3] / len(review_row.items)
         y = row.bounds[1] + member_index * track_height + track_height * 0.25
-        height = float(metric.get("timeline.mark.blockSize", minimum / 5))
+        height = float(metric["timeline.mark.blockSize"])
         instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
                        if projection.rows else item.object_id)
         source_kind = item.source_kind if projection.rows else "combined"
