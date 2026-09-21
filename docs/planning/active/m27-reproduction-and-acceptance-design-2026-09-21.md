@@ -4,11 +4,10 @@
 
 ## 1. Materializer contract
 
-`tools/materialize_example.py` is the planned generic delivery tool. Given one example
-`manifest.yaml`, a slide ID, and an output directory, it MUST:
+`tools/materialize_example.py` is the planned generic delivery tool. Given one v0.5
+example `manifest.yaml`, a slide ID, and an output directory, it MUST:
 
-1. read only the manifest-declared Project, View, Actual, Theme, Color Scheme, Layout,
-   Detail/Summary Profile, and Context inputs;
+1. read only the manifest-declared immutable Context reference and snapshot directory;
 2. materialize their canonical bytes into a temporary local immutable Revision Store;
 3. construct resource references with exact content identities and a Render Context;
 4. invoke the public `chrona render-review` CLI; and
