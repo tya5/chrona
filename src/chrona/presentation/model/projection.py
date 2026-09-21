@@ -45,7 +45,9 @@ class ReviewProjection:
 def build_review_projection(project: dict[str, Any], placements: dict[str, dict[str, date]],
                             view: dict[str, Any], actual_set: dict[str, Any] | None,
                             style: dict[str, Any] | None = None,
-                            theme: dict[str, Any] | None = None) -> ReviewProjection:
+                            theme: dict[str, Any] | None = None,
+                            snapshot_project: dict[str, Any] | None = None,
+                            snapshot_placements: dict[str, dict[str, date]] | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
     body = view["body"]
     if body["comparison"]["actual"] == "required" and actual_set is None:
@@ -75,7 +77,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         raise ValueError("E_REVIEW_EMPTY")
     if not explicit:
         _order(selected, body)
-    rows = _compose_rows(body, selected)
+    snapshots = _snapshot_items(snapshot_project, snapshot_placements, style)
+    rows = _compose_rows(body, selected, snapshots)
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     if body["window"].get("mode") == "selected-comparison":
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
@@ -91,7 +94,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows)
 
 
-def _compose_rows(body: dict[str, Any], selected: list[ReviewItem]) -> tuple[ReviewRowProjection, ...]:
+def _compose_rows(body: dict[str, Any], selected: list[ReviewItem],
+                  snapshots: dict[str, ReviewItem]) -> tuple[ReviewRowProjection, ...]:
     rows = body.get("rows", {})
     if rows.get("mode", "automatic") != "explicit":
         return tuple(ReviewRowProjection(
@@ -112,16 +116,33 @@ def _compose_rows(body: dict[str, Any], selected: list[ReviewItem]) -> tuple[Rev
             if item_id in member_ids:
                 raise ValueError("E_REVIEW_ITEM_ID_DUPLICATE")
             member_ids.add(item_id)
-            object_id = str(source["object"])
-            if source["kind"] not in {"primary", "actual"} or object_id not in available:
+            object_id, kind = str(source["object"]), source["kind"]
+            base = snapshots.get(object_id) if kind == "snapshot" else available.get(object_id)
+            if kind not in {"primary", "actual", "snapshot"} or base is None:
                 raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
-            members.append(replace(available[object_id], item_id=item_id, source_kind=source["kind"]))
+            if kind == "actual" and base.actual is None:
+                raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
+            members.append(replace(base, item_id=item_id, source_kind=kind))
         subject = str(row.get("tableSubject", members[0].item_id if members else ""))
         if subject not in member_ids:
             raise ValueError("E_REVIEW_TABLE_SUBJECT")
         output.append(ReviewRowProjection(row_id, str(row.get("label", members[0].title)),
             str(row.get("group", "")), subject, tuple(members)))
     return tuple(output)
+
+
+def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,
+                    style: dict[str, Any] | None) -> dict[str, ReviewItem]:
+    if project is None or placements is None:
+        return {}
+    result: dict[str, ReviewItem] = {}
+    for object_id, planned in placements.items():
+        source_type = "point" if "at" in planned else "span"
+        result[object_id] = ReviewItem(
+            object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
+            planned, None, None, _roles(style, source_type, None, None), "", "",
+            dict(project["objects"][object_id].get("fields", {})), object_id, "snapshot")
+    return result
 
 
 def _latest_observations(observations: list[dict[str, Any]], placements: dict[str, dict[str, date]]) -> tuple[dict[str, dict[str, Any]], list[str]]:
