@@ -16,6 +16,7 @@ class SurfaceContentInput:
     relations: tuple[dict, ...] = ()
     annotations: tuple[dict, ...] = ()
     show_member_labels: bool = False
+    axis_level: str = "auto"
     as_of: date | None = None
     calendar_closed: tuple[date, ...] = ()
     notes: tuple[tuple[str, str], ...] = ()
