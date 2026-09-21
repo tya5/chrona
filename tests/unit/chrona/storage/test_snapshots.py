@@ -48,3 +48,18 @@ def test_v02_capture_rejects_stale_or_mismatched_project_reference(tmp_path):
     registry = LocalBaselineRegistry(tmp_path, "baselines")
     assert capture_baseline_v02(project_store, "old", _reference(project), "q2", registry).diagnostics == ("E_CONFLICT",)
     assert capture_baseline_v02(project_store, project.revision, _reference(project) | {"id": "wrong"}, "q2", registry).diagnostics == ("E_BASELINE_REFERENCE",)
+
+
+def test_capture_accepts_revision_only_reference_and_publishes_computed_identity(tmp_path):
+    project_store = MemoryRevisionStore(_project())
+    project = project_store.read()
+    revision_only = _reference(project) | {"contentIdentity": None}
+    revision_only.pop("contentIdentity")
+    snapshot = capture_snapshot(project_store, project.revision, revision_only, "baseline-q2", MemorySnapshotStore("presentation-store"))
+    assert snapshot.status == "accepted"
+    assert snapshot.snapshot_ref["body"]["project"]["contentIdentity"] == project.content_identity
+
+    baseline = capture_baseline_v02(project_store, project.revision, revision_only, "q2", LocalBaselineRegistry(tmp_path, "baselines"))
+    assert baseline.status == "accepted"
+    assert baseline.snapshot_ref["contentIdentity"].startswith("sha256:")
+    assert baseline.snapshot_ref["body"]["project"]["contentIdentity"] == project.content_identity
