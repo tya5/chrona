@@ -41,3 +41,20 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     assert value.as_of is None
     assert value.calendar_closed == ()
     assert value.annotations == ({"id": "note", "text": "Watch this", "number": 1},)
+
+
+def test_typed_summary_figures_resolve_projection_and_actual_facts():
+    projection = ReviewProjection((
+        ReviewItem("a", "A", "point", {"at": date(2026, 2, 4)}, {"at": date(2026, 2, 5)}, None, ()),
+        ReviewItem("b", "B", "span", {"start": date(2026, 2, 1), "end": date(2026, 2, 3)}, None, 2, ()),
+    ), (date(2026, 2, 1), date(2026, 2, 8)), (), ())
+    summary = {"body": {"panels": [{"id": "facts", "metrics": {
+        "as_of": {"label": "As of", "source": "actual.asOf", "format": "date"},
+        "next": {"label": "Next", "source": "planned.nextPoint", "format": "date"},
+        "selected": {"label": "Selected", "source": "count.selected", "format": "count"},
+        "variance": {"label": "Variance", "source": "count.knownFinishVariance", "format": "count"},
+    }}]}}
+    view = {"body": {"tableColumns": (), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+                                          actual_set={"body": {"asOf": "2026-02-03"}}, summary=summary)
+    assert value.summary_panels == (("facts", "facts", (("As of", "2026-02-03"), ("Next", "2026-02-04"), ("Selected", "2"), ("Variance", "1"))),)
