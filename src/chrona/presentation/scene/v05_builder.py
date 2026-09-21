@@ -142,19 +142,20 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
       for member_index, item in enumerate(review_row.items):
         track_height = row.bounds[3] / len(review_row.items)
         y = row.bounds[1] + member_index * track_height + track_height * 0.25
-        height = max(2.0, track_height * 0.2)
+        height = float(metric.get("timeline.mark.blockSize", minimum / 5))
         instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
                        if projection.rows else item.object_id)
         source_kind = item.source_kind if projection.rows else "combined"
         planned = item.planned
+        planned_role = "snapshot" if source_kind == "snapshot" else "planned"
         if source_kind != "actual" and item.source_type == "point":
             x = coordinate(planned["at"])
-            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Symbol", item.object_id, "object", "planned", "planned",
+            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Symbol", item.object_id, "object", planned_role, planned_role,
                                              (x - height / 2, y, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
             mark_ports[instance_id] = ((x, y + height / 2), (x, y + height / 2))
         elif source_kind != "actual":
             x1, x2 = coordinate(planned["start"]), coordinate(planned["end"])
-            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Rect", item.object_id, "object", "planned", "planned",
+            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Rect", item.object_id, "object", planned_role, planned_role,
                                              (x1, y, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
             mark_ports[instance_id] = ((x1, y + height / 2), (x2, y + height / 2))
         actual = item.actual or {}
@@ -171,6 +172,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
                                              (anchor_x, y + height * 1.25, max(1.0, height * 1.5), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
+        if projection.rows and value.surface_content.show_member_labels:
+            label_at = planned.get("end", planned.get("at", planned.get("start")))
+            if isinstance(label_at, date):
+                text(f"member-label:{instance_id}", item.object_id, "member-label", "text",
+                     item.title, coordinate(label_at) + height, y + height, typography_role="text")
         if source_kind == "combined" and item.finish_delta is not None:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
             text(f"variance:{instance_id}", item.object_id, "finish-delta", role,
@@ -202,8 +208,12 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             for target_id, target_anchor in target_instances:
                 source_port = mark_ports.get(source_id, (source_anchor, source_anchor))[1]
                 target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
+                if source_port == target_port:
+                    raise SceneBuildError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation.get('id', '')}")
                 points = route_orthogonal(source_port, target_port, obstacles,
                     bounds=(timeline.bounds[0], timeline.bounds[1], timeline.bounds[0] + timeline.bounds[2], timeline.bounds[1] + timeline.bounds[3]))
+                if len(points) < 2:
+                    raise SceneBuildError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation.get('id', '')}")
                 relation_id = str(relation.get("id", f"{source}-{target}"))
                 scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
                 primitives.append(ScenePrimitive(scene_id, "Path", relation_id, "relation", "dependency", "dependency",
