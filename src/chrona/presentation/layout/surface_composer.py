@@ -9,10 +9,17 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
-from chrona.presentation.layout.text import place_text
+from chrona.presentation.layout.text import measure_text_width, place_text
+from chrona.presentation.layout.annotations import (
+    nearest_box_port, place_annotation_rail, project_annotation_box,
+    resolve_annotation_anchor, route_annotation_leader,
+)
+from chrona.presentation.layout.comparison_marks import ComparisonMark
+from chrona.presentation.layout.labels import LabelRect
+from chrona.presentation.layout.routing import place_relation_route
 from chrona.presentation.layout.surface_quality import (
-    GroupPlacement, MarkPlacement, RowPlacement, ScalePlacement, ShapePlacement, SlotPlacement, SurfacePlacement,
-    SurfaceLayoutRequest,
+    GroupPlacement, MarkPlacement, RelationPlacement, RowPlacement, ScalePlacement,
+    ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
 )
 
 
@@ -262,7 +269,182 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        baseline_block=block + height, typography_role="text",
                                        theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                        collision_region=f"plot-label:{instance_id}"))
-    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale, marks=tuple(marks), shapes=tuple(shapes))
+    # The remaining text and routes are part of the same completed Layout closure.
+    # Scene may select their semantic roles, but it must never remeasure or route them.
+    for review_row in review_rows:
+        for item in review_row.items:
+            layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+            instance_id = layout_id if projection.rows else item.object_id
+            if not projection.rows and item.source_kind != "combined":
+                continue
+            if item.finish_delta is None:
+                continue
+            mark = mark_by_id.get(f"planned:{instance_id}")
+            track = track_by_id[layout_id]
+            height = float(mark.bounds.block_size) if mark is not None else track.block_size
+            block = float(mark.bounds.block) if mark is not None else track.block
+            actual = item.actual or {}
+            anchor = actual.get("finish", item.planned.get("end", item.planned.get("at")))
+            if isinstance(anchor, date):
+                text.append(place_text(placement_id=f"variance:{instance_id}", source_ref=item.object_id,
+                                       content=f"{item.finish_delta:+d}d", inline=_coordinate(anchor, scale),
+                                       baseline_block=block + height, typography_role="summary",
+                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                       collision_region=f"variance:{instance_id}"))
+
+    relations: list[RelationPlacement] = []
+    instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
+    instance_rows: dict[str, str] = {}
+    for review_row, row in zip(review_rows, rows, strict=True):
+        fallback = (float(row.bounds.inline + row.bounds.inline_size),
+                    float(row.bounds.block + row.bounds.block_size / 2))
+        for item in review_row.items:
+            instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}" if projection.rows else item.object_id
+            instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
+            instance_rows[instance_id] = row.row_id
+    mark_ports = {mark.placement_id.removeprefix("planned:"): (mark.start_port, mark.end_port)
+                  for mark in marks if mark.placement_id.startswith("planned:")}
+    for relation in request.surface_content.relations:
+        source, target = relation.get("from", {}).get("object"), relation.get("to", {}).get("object")
+        relation_id = str(relation.get("id", f"{source}-{target}"))
+        for source_id, source_anchor in instance_anchors.get(str(source), ()):
+            for target_id, target_anchor in instance_anchors.get(str(target), ()):
+                source_port = mark_ports.get(source_id, (source_anchor, source_anchor))[1]
+                target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
+                if source_port == target_port:
+                    raise LayoutError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation_id}")
+                endpoint_rows = {instance_rows.get(source_id), instance_rows.get(target_id)}
+                obstacles = tuple((float(row.bounds.inline), float(row.bounds.block),
+                                   float(row.bounds.inline + row.bounds.inline_size),
+                                   float(row.bounds.block + row.bounds.block_size))
+                                  for row in rows if row.row_id not in endpoint_rows)
+                points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=obstacles,
+                                              bounds=(timeline_bounds[0], timeline_bounds[1],
+                                                      timeline_bounds[0] + timeline_bounds[2],
+                                                      timeline_bounds[1] + timeline_bounds[3]))
+                if len(points) < 2:
+                    raise LayoutError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation_id}")
+                scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
+                relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points)))
+
+    legend = by_source.get("legend")
+    if legend:
+        legend_size = float(request.theme_tokens.typography("legend")[2])
+        swatch_size = max(2.0, legend_size * 0.8)
+        for index, (role, label) in enumerate(request.surface_content.legend_entries):
+            baseline = float(legend.bounds.block) + (index + 1) * legend_size
+            shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
+                                         Rect(legend.bounds.inline, Decimal(str(baseline - swatch_size)),
+                                              Decimal(str(swatch_size)), Decimal(str(swatch_size)))))
+            text.append(place_text(placement_id=f"legend:{role}", source_ref=role, content=label,
+                                   inline=float(legend.bounds.inline) + swatch_size * 1.5, baseline_block=baseline,
+                                   typography_role="legend", theme_tokens=request.theme_tokens,
+                                   font_metrics=request.font_metrics, collision_region="legend"))
+    for slot_name, values, prefix, purpose, typography in (
+        ("notes", request.surface_content.notes, "note", "project-note", "text"),
+        ("group-details", request.surface_content.group_details, "group-detail", "group-detail", "text"),
+        ("milestones", request.surface_content.milestones, "milestone", "milestone-digest-entry", "text"),
+    ):
+        slot = by_source.get(slot_name)
+        if slot:
+            for index, value in enumerate(values):
+                if slot_name == "group-details":
+                    source, content = value[0], f"{value[1]}: {value[2]}"
+                elif slot_name == "milestones":
+                    source, content = value[0], f"{value[1]} — {value[2].isoformat()}"
+                else:
+                    source, content = value
+                text.append(place_text(placement_id=f"{prefix}:{source}", source_ref=source, content=content,
+                                       inline=float(slot.bounds.inline),
+                                       baseline_block=float(slot.bounds.block) + (index + 1) * body_size,
+                                       typography_role=typography, theme_tokens=request.theme_tokens,
+                                       font_metrics=request.font_metrics,
+                                       collision_region=f"{slot_name}:{source}"))
+    summary_slot = by_source.get("summary")
+    if summary_slot:
+        line, summary_size = 1, float(request.theme_tokens.typography("summary")[2])
+        presentations = dict(request.surface_content.summary_presentations)
+        for panel_id, panel_title, metrics in request.surface_content.summary_panels:
+            text.append(place_text(placement_id=f"summary:{panel_id}", source_ref=panel_id, content=panel_title,
+                                   inline=float(summary_slot.bounds.inline), baseline_block=float(summary_slot.bounds.block) + line * summary_size,
+                                   typography_role="summary", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   collision_region="summary")); line += 1
+            for key, metric_value in metrics:
+                if presentations.get(panel_id) == "figures":
+                    entries = ((f"summary:{panel_id}:{key}:value", str(metric_value), "metric"),
+                               (f"summary:{panel_id}:{key}:caption", key, "summary"))
+                else:
+                    entries = ((f"summary:{panel_id}:{key}", f"{key}: {metric_value}", "summary"),)
+                for placement_id, content, typography in entries:
+                    text.append(place_text(placement_id=placement_id, source_ref=panel_id, content=content,
+                                           inline=float(summary_slot.bounds.inline), baseline_block=float(summary_slot.bounds.block) + line * summary_size,
+                                           typography_role=typography, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                           collision_region="summary")); line += 1
+
+    annotation_slot = by_source.get("annotations")
+    if annotation_slot:
+        annotation_marks = _comparison_marks(projection)
+        placed_boxes: list[LabelRect] = []
+        for index, annotation in enumerate(request.surface_content.annotations):
+            annotation_id, content = str(annotation.get("id", index)), str(annotation.get("text", ""))
+            content = f"{annotation['number']}. {content}" if "number" in annotation else content
+            resolved = resolve_annotation_anchor(annotation, annotation_marks)
+            matching = [(review_row, row) for review_row, row in zip(review_rows, rows, strict=True)
+                        if any(item.object_id == resolved.object_id for item in review_row.items)]
+            anchor = annotation.get("anchor", {})
+            row_id, item_id = anchor.get("rowId"), anchor.get("itemId")
+            if row_id is not None or item_id is not None:
+                matching = [(review_row, row) for review_row, row in matching
+                            if (row_id is None or review_row.row_id == row_id)
+                            and (item_id is None or any(item.item_id == item_id and item.object_id == resolved.object_id for item in review_row.items))]
+            if len(matching) > 1:
+                raise LayoutError("E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS", f"/annotations/{index}/anchor")
+            if not matching:
+                raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+            anchor_bounds = _annotation_anchor_bounds(resolved.mark, resolved.endpoint, matching[0][1], scale)
+            size, line_height = (float(item) for item in request.theme_tokens.typography("annotation")[2:])
+            width = min(float(annotation_slot.bounds.inline_size), max(size * 4, measure_text_width(content, font_size=size, font_metrics=request.font_metrics)))
+            try:
+                if annotation.get("purpose") == "callout":
+                    box = place_annotation_rail(annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
+                                                text_size=(width, size * line_height), rail=LabelRect(*_bounds(annotation_slot.bounds)),
+                                                obstacles=placed_boxes, overflow=annotation_slot.overflow,
+                                                required=annotation_slot.priority == "required")
+                else:
+                    box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, size * line_height),
+                                                 candidate_sides=(annotation.get("placement", {}).get("side", ""),),
+                                                 viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=placed_boxes,
+                                                 overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
+            except ValueError as error:
+                raise LayoutError(str(error), f"/annotations/{index}") from error
+            if box is None:
+                continue
+            placed_boxes.append(box.placement.bounds)
+            bounds = box.placement.bounds
+            shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
+                                         Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)), Decimal(str(bounds.width)), Decimal(str(bounds.height)))))
+            text.append(place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
+                                   inline=bounds.x, baseline_block=bounds.y + size, typography_role="annotation",
+                                   theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   collision_region="annotations"))
+            if "number" in annotation:
+                text.append(place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
+                                       content=str(annotation["number"]), inline=anchor_bounds.x + anchor_bounds.width,
+                                       baseline_block=anchor_bounds.y + body_size, typography_role="annotation",
+                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                       collision_region="annotations"))
+            if box.leader_required:
+                target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
+                try:
+                    points = route_annotation_leader((anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2),
+                                                     target, obstacles=placed_boxes[:-1], limit=1024)
+                except ValueError as error:
+                    raise LayoutError(str(error), f"/annotations/{index}") from error
+                relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
+                                                   f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
+                                                   f"annotation-box:{annotation_id}", tuple(points)))
+    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
+                                 marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 
@@ -277,3 +459,34 @@ def _bounds(rect: Rect) -> tuple[float, float, float, float]:
 
 def _coordinate(value: date, scale: ScalePlacement) -> float:
     return scale.origin + (value - scale.domain_start).days * scale.unit_ratio
+
+
+def _comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:
+    marks: list[ComparisonMark] = []
+    for item in projection.items:
+        for facet, value in (("planned", item.planned), ("actual", item.actual)):
+            if not value:
+                continue
+            if item.source_type == "point" and isinstance(value.get("at"), date):
+                marks.append(ComparisonMark(item.object_id, facet, "point", at=value["at"]))
+            elif item.source_type == "span" and isinstance(value.get("start"), date) and isinstance(value.get("end", value.get("finish")), date):
+                marks.append(ComparisonMark(item.object_id, facet, "span", start=value["start"], end=value.get("end", value.get("finish"))))
+    return tuple(marks)
+
+
+def _annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: RowPlacement,
+                              scale: ScalePlacement) -> LabelRect:
+    if endpoint == "start":
+        at = mark.start
+    elif endpoint == "finish":
+        at = mark.end
+    elif endpoint == "at":
+        at = mark.at
+    elif endpoint == "body":
+        at = mark.at or (mark.start + (mark.end - mark.start) / 2 if mark.start and mark.end else None)
+    else:
+        at = None
+    if not isinstance(at, date):
+        raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", "/annotations/anchor")
+    return LabelRect(_coordinate(at, scale), float(row.bounds.block + row.bounds.block_size * Decimal("0.35")),
+                     1.0, max(2.0, float(row.bounds.block_size) * 0.2))
