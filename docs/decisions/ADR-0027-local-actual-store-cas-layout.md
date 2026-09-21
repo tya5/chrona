@@ -12,6 +12,11 @@ it is never accepted as a Command input. A write verifies the pointer equals the
 reference token, creates the complete new token directory and canonical Actual-set
 file, then atomically replaces the pointer. Failure leaves no new pointer.
 
+Store provisioning initializes the pointer out of band by naming one already verified
+immutable Actual-set reference. An M26 command never creates a missing pointer. A
+missing pointer rejects as a target-closure failure, so first use cannot silently turn
+an arbitrary file into a mutable Actual Store.
+
 ## Consequences
 
 - Every accepted intake/reconciliation command returns a new immutable resource
