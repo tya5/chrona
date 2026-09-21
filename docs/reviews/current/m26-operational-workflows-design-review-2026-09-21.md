@@ -43,6 +43,10 @@ closes CLI Store selection without introducing a default root or provider fallba
 layout. ADR-0027 defines immutable token directories plus an adapter-private CAS tip;
 this closes command-apply without admitting a mutable path as an input.
 
+**Amendment, 2026-09-21:** a missing local Actual CAS pointer is not implicitly
+bootstrapped by an M26 command. Provisioning is an adapter-administration action over a
+verified immutable reference; command execution rejects missing pointers.
+
 ## Evidence checked
 
 - `35-operational-review-workflows.md`, ADR-0024 through ADR-0026, all four successor
