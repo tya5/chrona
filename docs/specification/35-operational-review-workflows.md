@@ -45,6 +45,10 @@ identity. `source.contentIdentity` is the SHA-256 identity of the exact normaliz
 source payload from which the adapter produced this batch. `source.locator`, when
 present, is audit text only and MUST NOT be fetched by Chrona.
 
+`actual-intake-batch/v0.1` is an unreferenced historical transport shape. M26 commands
+reject it; they do not up-convert bytes, invent a resource identity, or read a batch
+from a raw CLI path.
+
 The initial profile accepts already-normalized Date-only Actual fields only. A Command
 payload carries a complete immutable `actual-intake-batch` reference; the Engine
 verifies it before accessing `body.source` or `body.records`. Source
