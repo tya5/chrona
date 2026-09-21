@@ -212,30 +212,38 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             anchor_x = coordinate(anchor_date) if isinstance(anchor_date, date) else row.bounds[0]
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
                                              (anchor_x, y + height * 1.25, max(1.0, height * 1.5), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
-        if projection.rows and value.surface_content.show_member_labels:
-            label_at = planned.get("end", planned.get("at", planned.get("start")))
+        if value.surface_content.label_placement == "plot":
+            start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
+            label_at = start_at if value.surface_content.label_placement == "plot" and isinstance(start_at, date) else end_at
             if isinstance(label_at, date):
-                text(f"member-label:{instance_id}", item.object_id, "member-label", "text",
-                     item.title, coordinate(label_at) + height, y + height, typography_role="text")
+                label_parts = []
+                if "title" in value.surface_content.label_content:
+                    label_parts.append(item.title)
+                if "finishDelta" in value.surface_content.label_content and item.finish_delta is not None:
+                    label_parts.append(f"{item.finish_delta:+d}d")
+                if label_parts:
+                    text(f"member-label:{instance_id}", item.object_id, "member-label", "text",
+                         " ".join(label_parts), coordinate(label_at) + height, y + height, typography_role="text")
         if source_kind == "combined" and item.finish_delta is not None:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
             text(f"variance:{instance_id}", item.object_id, "finish-delta", role,
                  f"{item.finish_delta:+d}d", coordinate(actual.get("finish", planned.get("end", planned.get("at")))), y + height, typography_role="summary")
-    intervals = _fitting_axis(value, start, end, timeline)
+    configured_levels = value.surface_content.axis_levels
+    intervals = axis_intervals(start, end, configured_levels[-1][0]) if configured_levels else _fitting_axis(value, start, end, timeline)
     axis_size = float(value.theme_tokens.typography("axis")[2])
-    band_intervals = axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ()
+    band_intervals = axis_intervals(start, end, configured_levels[0][0]) if len(configured_levels) > 1 else (axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ())
+    format_by_level = {unit: formatter for unit, formatter in configured_levels}
+    format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
     for interval in band_intervals:
         x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
         text(f"axis-band:{interval.level}:{interval.index}", "timeline-axis", "axis-band", "text",
-             format_axis_label(interval, {"month": "short-month", "quarter": "year-quarter", "date": "localized-date"}, value.locale),
+             format_axis_label(interval, format_by_level, value.locale),
              x, axis.bounds[1] + axis_size, typography_role="axis")
     for interval in intervals:
         x = timeline.bounds[0] + (interval.start - start).days * scale.unit_ratio
         primitives.append(ScenePrimitive(f"axis:{interval.level}:{interval.index}", "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
                                          (x, timeline.bounds[1], 0, timeline.bounds[3]), points=((x, axis.bounds[1]), (x, timeline.bounds[1] + timeline.bounds[3])), z_order=len(primitives)))
-        axis_label = format_axis_label(interval,
-                                       {"month": "short-month", "quarter": "year-quarter", "date": "localized-date"},
-                                       value.locale)
+        axis_label = format_axis_label(interval, format_by_level, value.locale)
         label_width = value.font_metrics.width(axis_label, float(value.measured_sources.metric_values["text.body.size"]))
         clipped_width = (interval.end - interval.start).days * scale.unit_ratio
         if label_width <= clipped_width:
@@ -248,7 +256,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                          points=((as_of_x, timeline.bounds[1]), (as_of_x, timeline.bounds[1] + timeline.bounds[3])),
                                          z_order=len(primitives)))
         text("as-of-label", "actual-set", "as-of-label", "text",
-             f"As of {value.surface_content.as_of.isoformat()}", as_of_x, timeline.bounds[1] + body_size)
+             f"{value.surface_content.as_of_label} {value.surface_content.as_of.isoformat()}", as_of_x, timeline.bounds[1] + body_size)
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
