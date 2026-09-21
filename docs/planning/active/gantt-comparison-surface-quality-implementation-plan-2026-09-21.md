@@ -13,6 +13,8 @@
 
 Introduce immutable `SurfaceLayoutRequest`, `SurfacePlacement`, `TextPlacement` and `RelationPlacement`, plus `assert_surface_placement`. Migrate all current table/row/track/axis geometry, font measurement, label candidate selection and relation routing from Scene to Layout with characterization fixtures and no intentional SVG change. This is complete only when Scene consumes completed placements and does not import or invoke font metrics or routing.
 
+The executable decomposition and measured baseline are recorded in `gantt-comparison-surface-layout-foundation-implementation-plan-2026-09-21.md`.
+
 **Evidence:** Scene no longer imports FontMetrics or routing; placement identity and current materializer bytes remain stable.
 
 ## I58-2 — Atomic table feasibility
