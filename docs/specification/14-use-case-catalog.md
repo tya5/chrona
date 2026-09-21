@@ -429,9 +429,9 @@ provenance-preserving synchronization fixtures.
 | UC-07 | `02`, `04`, `05`, `11`, `12` | extension package reference schema, lifecycle fixture, and diagnostics | package registry UX |
 | UC-08 | `06`, `08`, `10`, `12` | annotation intent, command, anchor, and Scene-role contracts | annotation editor adapter |
 | UC-09 | `05`–`09`, `13` | named multi-context fixture, isolation rule, and reproducible closure | view/client adapters |
-| UC-10 | `06`, `10`, `12`, `13` | resolved/unmatched Actual and resolution-command fixtures | ingestion adapter |
-| UC-11 | `05`, `09`, `10`, `12`, `13` | conformance manifest, runner contract, and revision-bound Command document | CLI/CI integration |
-| UC-12 | `05`, `06`, `10`, `12`, `13` | Snapshot reference and capture-command fixtures | comparison adapter |
+| UC-10 | `06`, `10`, `12`, `13`, `35` | normalized intake batch, reconciliation, and v0.2 command schemas/examples | M26 intake/reconciliation product adapter |
+| UC-11 | `05`, `09`, `10`, `12`, `13`, `35` | immutable v0.2 Command and automation-result schemas/examples | M26 CLI/CI product integration |
+| UC-12 | `05`, `06`, `10`, `12`, `13`, `35` | v0.2 snapshot reference, capture, and comparison contract | M26 baseline registry/comparison adapter |
 | UC-13 | `07`–`09`, `12`, `13`, `22` | output-capability schema, fidelity diagnostics, and target fixture | non-SVG target adapters |
 | UC-14 | `05`, `06`, `09`, `12`, `13`, `15`, `16` | pinned Git/local/content closure, trust/repin diagnostics, and aggregate-projection fixture | resolver and aggregate Scene adapter |
 | UC-15 | `02`, `04`, `05`, `10`, `11`, `12`, `15`, `17` | delivery profile schema, vocabulary/evidence/state fixtures, roadmap fixture, and IDP-6 review | profile UX only |
