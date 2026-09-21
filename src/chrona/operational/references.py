@@ -31,7 +31,7 @@ def verify_reference(reader: ImmutableReader, reference: dict[str, Any], *, kind
     try:
         payload = reader.read(reference)
         value = json_value(yaml.safe_load(payload))
-    except (OSError, ValueError, yaml.YAMLError) as error:
+    except (OSError, KeyError, ValueError, yaml.YAMLError) as error:
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE") from error
     if not isinstance(value, dict):
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
