@@ -1,0 +1,21 @@
+version: chrona/command/v0.2
+commandId: baseline-q2-capture
+type: captureSnapshot
+target: &project
+  id: controller-x
+  kind: project
+  store: {provider: git, identity: github.com/acme/controller}
+  address: project.yaml
+  revision: {token: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df}
+  contentIdentity: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+baseRevision: git:8de5f81481b0ad44b4532d3a485f5aee92fdd4df
+expectedContentIdentity: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+payload:
+  snapshotId: baseline-q2
+  registry:
+    id: baselines
+    kind: snapshot-registry
+    store: {provider: local, identity: ci-baselines}
+    address: snapshots
+    revision: {token: registry:2026-04-24}
+    contentIdentity: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
