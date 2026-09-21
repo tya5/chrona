@@ -11,7 +11,8 @@ durable product boundary.
 
 ## Decision
 
-A capture command verifies an immutable Project reference and creates exactly one
+A capture command verifies an immutable Project reference and selects one configured
+output Registry by `(provider, identity)`. It creates exactly one
 `snapshot-ref/v0.2` resource in a named append-only baseline registry. The resource
 contains the Project reference only; it copies no schedule, Scene, or rendering.
 Existing baseline IDs reject. Comparison resolves a baseline resource and a separately
