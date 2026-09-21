@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img">
 <rect width="1600" height="900" fill="#FFFFFF"/>
-<defs><marker id="marker-dependency-triangle" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#C9CED8"/></marker></defs>
+<defs><marker id="marker-dependency-triangle" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4B5563"/></marker></defs>
 <text data-scene-id="title" data-source-ref="title" data-purpose="" x="683.296" y="48" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="24" fill="#172033">ASTER Enterprise SSD Development</text>
 <text data-scene-id="column:Work package / gate" data-source-ref="view:tableColumns" data-purpose="" x="24" y="73.6" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#172033">Work package / gate</text>
 <text data-scene-id="cell:board:Work package / gate" data-source-ref="board" data-purpose="" x="24" y="160.4" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#172033">Prototype boards ready</text>
@@ -12,23 +12,23 @@
 <text data-scene-id="cell:pilot:Work package / gate" data-source-ref="pilot" data-purpose="" x="24" y="710" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#172033">Pilot build</text>
 <text data-scene-id="cell:release:Work package / gate" data-source-ref="release" data-purpose="" x="24" y="801.6" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#172033">Production release</text>
 <rect data-scene-id="group:" data-source-ref="" data-purpose="" x="590.4" y="107.6" width="985.6" height="732.8" fill="#FFF4E4"/>
-<polygon data-scene-id="planned:board" data-source-ref="board" data-purpose="" points="716.135,130.5 725.295,139.66 716.135,148.82 706.975,139.66" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:board" data-source-ref="board" data-purpose="" x="590.4" y="153.4" width="39.424" height="18.32" fill="#4B5563"/>
-<rect data-scene-id="planned:ftl" data-source-ref="ftl" data-purpose="" x="732.359" y="222.1" width="182.519" height="18.32" fill="#3986E6"/>
-<rect data-scene-id="actual:ftl" data-source-ref="ftl" data-purpose="" x="732.359" y="245" width="210.91" height="18.32" fill="#269D79"/>
-<text data-scene-id="variance:ftl" data-source-ref="ftl" data-purpose="" x="943.269" y="240.42" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#C8762B">+7d</text>
-<polygon data-scene-id="planned:fw-freeze" data-source-ref="fw-freeze" data-purpose="" points="1129.844,313.7 1139.004,322.86 1129.844,332.02 1120.684,322.86" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:fw-freeze" data-source-ref="fw-freeze" data-purpose="" x="590.4" y="336.6" width="39.424" height="18.32" fill="#4B5563"/>
-<polygon data-scene-id="planned:security-exit" data-source-ref="security-exit" data-purpose="" points="1158.235,405.3 1167.395,414.46 1158.235,423.62 1149.075,414.46" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:security-exit" data-source-ref="security-exit" data-purpose="" x="590.4" y="428.2" width="39.424" height="18.32" fill="#4B5563"/>
-<polygon data-scene-id="planned:perf-exit" data-source-ref="perf-exit" data-purpose="" points="1186.627,496.9 1195.787,506.06 1186.627,515.22 1177.467,506.06" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:perf-exit" data-source-ref="perf-exit" data-purpose="" x="590.4" y="519.8" width="39.424" height="18.32" fill="#4B5563"/>
-<polygon data-scene-id="planned:qual-exit" data-source-ref="qual-exit" data-purpose="" points="1356.978,588.5 1366.138,597.66 1356.978,606.82 1347.818,597.66" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:qual-exit" data-source-ref="qual-exit" data-purpose="" x="590.4" y="611.4" width="39.424" height="18.32" fill="#4B5563"/>
-<rect data-scene-id="planned:pilot" data-source-ref="pilot" data-purpose="" x="1369.146" y="680.1" width="44.616" height="18.32" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:pilot" data-source-ref="pilot" data-purpose="" x="590.4" y="703" width="39.424" height="18.32" fill="#4B5563"/>
-<polygon data-scene-id="planned:release" data-source-ref="release" data-purpose="" points="1527.328,771.7 1536.488,780.86 1527.328,790.02 1518.168,780.86" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:release" data-source-ref="release" data-purpose="" x="590.4" y="794.6" width="39.424" height="18.32" fill="#4B5563"/>
+<polygon data-scene-id="planned:board:board" data-source-ref="board" data-purpose="" points="716.135,130.5 725.295,139.66 716.135,148.82 706.975,139.66" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:board:board" data-source-ref="board" data-purpose="" x="716.135" y="153.4" width="27.48" height="18.32" fill="#4B5563"/>
+<rect data-scene-id="planned:ftl:ftl" data-source-ref="ftl" data-purpose="" x="732.359" y="222.1" width="182.519" height="18.32" fill="#3986E6"/>
+<rect data-scene-id="actual:ftl:ftl" data-source-ref="ftl" data-purpose="" x="732.359" y="245" width="210.91" height="18.32" fill="#269D79"/>
+<text data-scene-id="variance:ftl:ftl" data-source-ref="ftl" data-purpose="" x="943.269" y="240.42" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#C8762B">+7d</text>
+<polygon data-scene-id="planned:fw-freeze:fw-freeze" data-source-ref="fw-freeze" data-purpose="" points="1129.844,313.7 1139.004,322.86 1129.844,332.02 1120.684,322.86" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:fw-freeze:fw-freeze" data-source-ref="fw-freeze" data-purpose="" x="1129.844" y="336.6" width="27.48" height="18.32" fill="#4B5563"/>
+<polygon data-scene-id="planned:security-exit:security-exit" data-source-ref="security-exit" data-purpose="" points="1158.235,405.3 1167.395,414.46 1158.235,423.62 1149.075,414.46" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:security-exit:security-exit" data-source-ref="security-exit" data-purpose="" x="1158.235" y="428.2" width="27.48" height="18.32" fill="#4B5563"/>
+<polygon data-scene-id="planned:perf-exit:perf-exit" data-source-ref="perf-exit" data-purpose="" points="1186.627,496.9 1195.787,506.06 1186.627,515.22 1177.467,506.06" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:perf-exit:perf-exit" data-source-ref="perf-exit" data-purpose="" x="1186.627" y="519.8" width="27.48" height="18.32" fill="#4B5563"/>
+<polygon data-scene-id="planned:qual-exit:qual-exit" data-source-ref="qual-exit" data-purpose="" points="1356.978,588.5 1366.138,597.66 1356.978,606.82 1347.818,597.66" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:qual-exit:qual-exit" data-source-ref="qual-exit" data-purpose="" x="1356.978" y="611.4" width="27.48" height="18.32" fill="#4B5563"/>
+<rect data-scene-id="planned:pilot:pilot" data-source-ref="pilot" data-purpose="" x="1369.146" y="680.1" width="44.616" height="18.32" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:pilot:pilot" data-source-ref="pilot" data-purpose="" x="1413.761" y="703" width="27.48" height="18.32" fill="#4B5563"/>
+<polygon data-scene-id="planned:release:release" data-source-ref="release" data-purpose="" points="1527.328,771.7 1536.488,780.86 1527.328,790.02 1518.168,780.86" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:release:release" data-source-ref="release" data-purpose="" x="1527.328" y="794.6" width="27.48" height="18.32" fill="#4B5563"/>
 <path data-scene-id="axis:month:0" data-source-ref="timeline-axis" data-purpose="" d="M590.4 59.6L590.4 840.4" fill="none" stroke="#C9CED8"/>
 <text data-scene-id="axis-label:month:0" data-source-ref="timeline-axis" data-purpose="" x="590.4" y="71.6" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="12" fill="#172033">2027-01</text>
 <path data-scene-id="axis:month:1" data-source-ref="timeline-axis" data-purpose="" d="M716.135 59.6L716.135 840.4" fill="none" stroke="#C9CED8"/>
@@ -45,5 +45,5 @@
 <text data-scene-id="axis-label:month:6" data-source-ref="timeline-axis" data-purpose="" x="1324.53" y="71.6" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="12" fill="#172033">2027-07</text>
 <path data-scene-id="axis:month:7" data-source-ref="timeline-axis" data-purpose="" d="M1450.265 59.6L1450.265 840.4" fill="none" stroke="#C9CED8"/>
 <text data-scene-id="axis-label:month:7" data-source-ref="timeline-axis" data-purpose="" x="1450.265" y="71.6" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="12" fill="#172033">2027-08</text>
-<path data-scene-id="relation:qual-pilot" data-source-ref="qual-pilot" data-purpose="" d="M1576 611.4L1576 703" fill="none" stroke="#C9CED8" marker-end="url(#marker-dependency-triangle)"/>
+<path data-scene-id="relation:qual-pilot:qual-exit:qual-exit:pilot:pilot" data-source-ref="qual-pilot" data-purpose="" d="M1576 611.4L1576 703" fill="none" stroke="#4B5563" marker-end="url(#marker-dependency-triangle)"/>
 </svg>

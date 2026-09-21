@@ -18,7 +18,9 @@ def test_current_example_contexts_bind_exact_source_bytes():
     ):
         path = ROOT / relative
         context = yaml.safe_load(path.read_text())
-        version = context["version"].rsplit("/", 1)[-1]\n        schema = yaml.safe_load(schema_resource(f"render-context-{version}.schema.yaml").read_text())\n        jsonschema.Draft202012Validator(schema).validate(context)
+        version = context["version"].rsplit("/", 1)[-1]
+        schema = yaml.safe_load(schema_resource(f"render-context-{version}.schema.yaml").read_text())
+        jsonschema.Draft202012Validator(schema).validate(context)
         body = context["body"]
         references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
         references.extend(body["inputs"].values())
