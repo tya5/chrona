@@ -39,7 +39,7 @@ properties:
         minProperties: 1
         additionalProperties: false
         patternProperties:
-          "^[A-Za-z][A-Za-z0-9._-]*\\.(fill|stroke)$":
+          "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke)$":
             enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, category]
       metrics:
         type: object
