@@ -25,6 +25,7 @@ class AxisInterval:
     label: str
     index: int
     natural_start: date
+    natural_end: date
 
 
 def axis_intervals(start: date, end: date, level: AxisLevel, *, tick_step: int = 1) -> tuple[AxisInterval, ...]:
@@ -53,6 +54,7 @@ def axis_intervals(start: date, end: date, level: AxisLevel, *, tick_step: int =
                 label=_label(bucket_start, level),
                 index=index,
                 natural_start=bucket_start,
+                natural_end=bucket_end,
             ))
         bucket_start = bucket_end
         index += 1
