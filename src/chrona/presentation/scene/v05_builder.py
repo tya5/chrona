@@ -17,7 +17,7 @@ from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
-from chrona.presentation.scene.annotations import nearest_box_port, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
+from chrona.presentation.scene.annotations import nearest_box_port, place_annotation_rail, project_annotation_box, resolve_annotation_anchor, route_annotation_leader
 from chrona.presentation.scene.marks import ComparisonMark
 
 
@@ -267,10 +267,17 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             size, line_height = (float(item) for item in value.theme_tokens.typography("annotation")[2:])
             width, height = min(annotation_slot.bounds[2], max(size * 4, value.font_metrics.width(content, size))), size * line_height
             try:
-                box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, height),
-                                             candidate_sides=(annotation.get("placement", {}).get("side", ""),),
-                                             viewport=LabelRect(*annotation_slot.bounds), obstacles=(*tuple(LabelRect(*row.bounds) for row in rows), *placed),
-                                             overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
+                if annotation.get("purpose") == "callout":
+                    box = place_annotation_rail(annotation, resolved,
+                                                anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
+                                                text_size=(width, height), rail=LabelRect(*annotation_slot.bounds),
+                                                obstacles=placed, overflow=annotation_slot.overflow,
+                                                required=annotation_slot.priority == "required")
+                else:
+                    box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, height),
+                                                 candidate_sides=(annotation.get("placement", {}).get("side", ""),),
+                                                 viewport=LabelRect(*annotation_slot.bounds), obstacles=placed,
+                                                 overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
             except ValueError as error:
                 raise SceneBuildError(str(error), f"/annotations/{index}") from error
             if box is None:
@@ -283,7 +290,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                 target = nearest_box_port(box.placement.bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
                 try:
                     points = route_annotation_leader((anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2), target,
-                                                     obstacles=(*tuple(LabelRect(*row.bounds) for row in rows), *placed), limit=1024)
+                                                     obstacles=placed[:-1], limit=1024)
                 except ValueError as error:
                     raise SceneBuildError(str(error), f"/annotations/{index}") from error
                 primitives.append(ScenePrimitive(f"annotation-leader:{annotation_id}", "Path", annotation_id, "annotation", "annotation-leader", "annotation", (0, 0, 0, 0),
