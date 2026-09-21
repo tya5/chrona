@@ -6,7 +6,7 @@ root:
   kind: grid
   inlineSize: fill
   blockSize: fill
-  columnTracks: [{minmax: {min: content, max: {fr: 4}}}, {fr: 6}]
+  columnTracks: [{minmax: {min: content, max: {fr: 6}}}, {fr: 4}]
   rowTracks: [content, {fixed: {token: panel.timeline}}, content]
   gap: {token: spacing.m}
   padding: {token: spacing.xl}
