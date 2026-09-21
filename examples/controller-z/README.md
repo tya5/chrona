@@ -4,7 +4,7 @@
 inputs are organized by authority:
 
 - `views/executive.yaml`
-- `themes/executive-light.yaml`
+- `themes/executive-light.yaml` binds non-color Theme roles; `schemes/executive-light.yaml` supplies the concrete colors.
 - `layouts/executive-review.yaml`
 - `styles/plan-actual.yaml`
 - `profiles/summary.yaml` and `profiles/review-detail.yaml`
