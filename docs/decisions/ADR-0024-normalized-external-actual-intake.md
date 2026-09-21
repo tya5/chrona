@@ -24,6 +24,10 @@ Replaying identical fields from the same source identity is a no-op; differing f
 are rejected for explicit edit/reconciliation. No connector, title, or URL may select
 or mutate a Project.
 
+Reconciliation adds or removes only the exact Project object ID. It retains the
+external identity and source content identity after resolution, so later imports use
+the same deduplication key regardless of reconciliation state.
+
 ## Consequences
 
 - Initial integrations normalize data outside the core; connector implementation and
