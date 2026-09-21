@@ -84,13 +84,19 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
         raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
-    row_height = timeline.bounds[3] / max(1, len(projection.items))
+    review_rows = projection.rows or tuple(
+        type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
+                           "table_subject_id": item.object_id, "items": (item,)})()
+        for item in projection.items)
+    row_height = timeline.bounds[3] / max(1, len(review_rows))
     minimum = float(metric["timeline.row.minBlockSize"])
-    if row_height < minimum:
+    if any(row_height < minimum * len(review_row.items) for review_row in review_rows):
         raise SceneBuildError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline")
-    rows = tuple(SceneRow(item.object_id, item.group_id,
-                          (timeline.bounds[0], timeline.bounds[1] + index * row_height, timeline.bounds[2], row_height))
-                 for index, item in enumerate(projection.items))
+    rows = tuple(SceneRow(
+        review_row.table_subject_id, review_row.group_id,
+        (timeline.bounds[0], timeline.bounds[1] + index * row_height, timeline.bounds[2], row_height),
+        review_row.row_id)
+        for index, review_row in enumerate(review_rows))
     groups: list[SceneGroup] = []
     for row in rows:
         if groups and groups[-1].group_id == row.group_id:
@@ -121,7 +127,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         text(f"column:{column_id}", "view:tableColumns", "table-column-label", "text", label,
              table.bounds[0] + index * column_width, table.bounds[1] + body_size)
     for object_id, column_id, cell in value.surface_content.table_cells:
-        row = next((item for item in rows if item.object_id == object_id), None)
+        row = next((item for item in rows if item.row_id == object_id or item.object_id == object_id), None)
         index = next((offset for offset, value in enumerate(value.surface_content.table_columns) if value[0] == column_id), None)
         if row is not None and index is not None:
             text(f"cell:{object_id}:{column_id}", object_id, "table-cell", "text", cell,
@@ -131,33 +137,38 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                          group.content_bounds, opacity=0.12, z_order=len(primitives)))
     def coordinate(at: date) -> float:
         return timeline.bounds[0] + (at - start).days * scale.unit_ratio
-    for item, row in zip(projection.items, rows, strict=True):
-        y = row.bounds[1] + row.bounds[3] * 0.25
-        height = max(2.0, row.bounds[3] * 0.2)
+    for review_row, row in zip(review_rows, rows, strict=True):
+      for member_index, item in enumerate(review_row.items):
+        track_height = row.bounds[3] / len(review_row.items)
+        y = row.bounds[1] + member_index * track_height + track_height * 0.25
+        height = max(2.0, track_height * 0.2)
+        instance_id = (f"{review_row.row_id}:{item.item_id or item.object_id}"
+                       if projection.rows else item.object_id)
+        source_kind = item.source_kind if projection.rows else "combined"
         planned = item.planned
-        if item.source_type == "point":
+        if source_kind != "actual" and item.source_type == "point":
             x = coordinate(planned["at"])
-            primitives.append(ScenePrimitive(f"planned:{item.object_id}", "Symbol", item.object_id, "object", "planned", "planned",
-                                             (x - height / 2, y, height, height), shape="diamond", z_order=len(primitives)))
-        else:
+            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Symbol", item.object_id, "object", "planned", "planned",
+                                             (x - height / 2, y, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+        elif source_kind != "actual":
             x1, x2 = coordinate(planned["start"]), coordinate(planned["end"])
-            primitives.append(ScenePrimitive(f"planned:{item.object_id}", "Rect", item.object_id, "object", "planned", "planned",
-                                             (x1, y, max(1.0, x2 - x1), height), z_order=len(primitives)))
+            primitives.append(ScenePrimitive(f"planned:{instance_id}", "Rect", item.object_id, "object", "planned", "planned",
+                                             (x1, y, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
         actual = item.actual or {}
-        if item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
+        if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
             x1, x2 = coordinate(actual["start"]), coordinate(actual["finish"])
-            primitives.append(ScenePrimitive(f"actual:{item.object_id}", "Rect", item.object_id, "object", "actual", "actual",
-                                             (x1, y + height * 1.25, max(1.0, x2 - x1), height), z_order=len(primitives)))
-        elif item.source_type == "point" and isinstance(actual.get("at"), date):
+            primitives.append(ScenePrimitive(f"actual:{instance_id}", "Rect", item.object_id, "object", "actual", "actual",
+                                             (x1, y + height * 1.25, max(1.0, x2 - x1), height), projection_instance_id=instance_id, z_order=len(primitives)))
+        elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
             x = coordinate(actual["at"])
-            primitives.append(ScenePrimitive(f"actual:{item.object_id}", "Symbol", item.object_id, "object", "actual", "actual",
-                                             (x - height / 2, y + height * 1.25, height, height), shape="diamond", z_order=len(primitives)))
-        else:
-            primitives.append(ScenePrimitive(f"missing-actual:{item.object_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
-                                             (row.bounds[0], y + height * 1.25, max(1.0, row.bounds[2] * 0.04), height), optional=True, z_order=len(primitives)))
-        if item.finish_delta is not None:
+            primitives.append(ScenePrimitive(f"actual:{instance_id}", "Symbol", item.object_id, "object", "actual", "actual",
+                                             (x - height / 2, y + height * 1.25, height, height), projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+        elif source_kind in {"actual", "combined"}:
+            primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
+                                             (row.bounds[0], y + height * 1.25, max(1.0, row.bounds[2] * 0.04), height), projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
+        if source_kind == "combined" and item.finish_delta is not None:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
-            text(f"variance:{item.object_id}", item.object_id, "finish-delta", role,
+            text(f"variance:{instance_id}", item.object_id, "finish-delta", role,
                  f"{item.finish_delta:+d}d", coordinate(actual.get("finish", planned.get("end", planned.get("at")))), y + height, typography_role="summary")
     intervals = _fitting_axis(value, start, end, timeline)
     for interval in intervals:
