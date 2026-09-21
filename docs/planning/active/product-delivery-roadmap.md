@@ -87,9 +87,9 @@ undisclosed output degradation, raster/PDF claims, and any successor capability 
 named by this roadmap require a new owning-specification change and roadmap amendment.
 They are not hidden work inside a milestone above.
 
-M25 is design-only until the Color Scheme authority, semantic intent vocabulary,
-accessibility contract, and resolution path have passed C25-D1–C25-D3. It extends Theme
-resolution but does not replace Theme, Style, Layout, or Scene ownership.
+M25 is complete. Color Scheme extends Theme resolution but does not replace Theme,
+Style, Layout, or Scene ownership. A successor color-scale, automatic host-mode, or
+renderer-local palette feature requires a new owning specification and milestone.
 
 Issues 1–10 are governed by
 `issue-remediation-program-2026-09-20.md`. That program reopens acceptance evidence for
