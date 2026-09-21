@@ -18,6 +18,20 @@ At commit `67b6980`, the focused Scene/Layout suite passes 17 tests, the full su
 
 Scene maps completed records to `SceneSlot`, `SceneRow`, `SceneGroup`, `SurfaceScaleManifest`, and `ScenePrimitive`. It may select semantic roles and shapes from the normalized contract/theme, but may not calculate a bound, text width, text baseline, label coordinate, port, or path.
 
+### Boundary completion and migration order
+
+`SurfaceLayoutRequest` is the sole internal input type for the composer.  It carries the
+projection, normalized contract, surface-content values, layout manifest, measured sources,
+resolved typography tokens, font metrics, locale, and capabilities as immutable fields.  The
+composer must not read `SceneBuildInput`, and Scene must not reconstruct a request piecemeal.
+
+The extraction is ordered by data dependency, with byte-characterization after every completed
+slice: (1) slots, rows, groups, scale, and marks; (2) table allocation and all text placements;
+(3) calendar, axis, as-of, and label candidates; (4) dependency paths; and (5) annotation
+anchors, boxes, text, and leader paths.  A later slice consumes placements from the preceding
+one; it may not repeat their geometry calculations.  Existing output behavior remains the
+characterization baseline until I58-3 introduces the separately designed quality policies.
+
 ## Execution slices
 
 ### F58-1 — Typed placement closure
