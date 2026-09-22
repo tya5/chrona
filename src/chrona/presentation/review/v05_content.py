@@ -5,19 +5,20 @@ from datetime import date, timedelta
 from typing import Any, Mapping
 
 from chrona.presentation.model.projection import ReviewProjection
-from chrona.presentation.model.surface_content import SurfaceContentInput, display_value, table_value
+from chrona.presentation.model.surface_content import (
+    SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, display_value, table_value,
+)
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
 
 
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: Mapping[str, Any],
                                   *, actual_set: Mapping[str, Any] | None = None,
-                                  detail: Mapping[str, Any] | None = None, summary: Mapping[str, Any] | None = None,
+                                  detail: Mapping[str, Any] | None = None, summary: SummaryContent,
                                   layout_manifest: LayoutManifest | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     detail_body = _resource_body(detail, "DETAIL_PROFILE")
-    summary_body = _resource_body(summary, "SUMMARY_PROFILE")
     body = view.get("body", {})
     columns = tuple((str(column["id"]), str(column["id"])) for column in body.get("tableColumns", ()))
     if projection.rows:
@@ -62,7 +63,6 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     resolved_detail = (resolve_v05_review_detail_profile(detail, projection.items, layout_manifest)
                        if layout_manifest is not None else None)
     legend = tuple((str(item["role"]), str(item["label"])) for item in detail_body.get("legend", ()))
-    panels = _typed_summary_panels(summary_body, projection, actual_set)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
@@ -75,8 +75,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                annotation_numbered=annotation_numbered,
                                calendar_closed=_closed_calendar_days(project, projection.window) if body.get("shading", {}).get("nonWorking", temporal.get("calendarClosed", True)) else (),
                                    notes=notes, legend_entries=legend, coverage_text=str(body.get("coverageText", "")),
-                                   summary_panels=panels,
-                                   summary_presentations=tuple((str(item["id"]), str(item.get("presentation", "lines"))) for item in summary_body.get("panels", ())),
+                                   summary=summary,
                                    template_values=tuple((str(key), str(value)) for key, value in body.get("templateValues", {}).items()),
                                    group_details=resolved_detail.group_details if resolved_detail else (),
                                milestones=resolved_detail.milestones if resolved_detail else (),
@@ -115,9 +114,10 @@ def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, A
 
 
 
-def _typed_summary_panels(summary: Mapping[str, Any], projection: ReviewProjection,
-                          actual_set: Mapping[str, Any] | None) -> tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...]:
-    """Resolve summary-profile facts while keeping profiles free of copied values."""
+def normalize_summary_content(summary: Mapping[str, Any] | None, projection: ReviewProjection,
+                              actual_set: Mapping[str, Any] | None) -> SummaryContent:
+    """Resolve summary-profile facts once, before source measurement and Layout."""
+    summary_body = _resource_body(summary, "SUMMARY_PROFILE")
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
     as_of_value = ((actual_set or {}).get("body") or {}).get("asOf")
@@ -128,9 +128,10 @@ def _typed_summary_panels(summary: Mapping[str, Any], projection: ReviewProjecti
         "count.missingActual": sum(not bool(item.actual) for item in projection.items),
         "count.knownFinishVariance": sum(item.finish_delta is not None for item in projection.items),
     }
-    panels = []
-    for panel in summary.get("panels", ()):
-        metrics = []
+    panels: list[SummaryPanel] = []
+    for panel in summary_body.get("panels", ()):
+        runs = [SummaryTextRun(f"summary:{panel['id']}", str(panel["id"]),
+                               str(panel.get("title", panel["id"])), "summary")]
         declared = panel.get("metrics", {})
         entries = declared.items() if isinstance(declared, Mapping) else ((item["id"], item) for item in declared)
         for metric_id, definition in entries:
@@ -159,8 +160,17 @@ def _typed_summary_panels(summary: Mapping[str, Any], projection: ReviewProjecti
                     else f"{raw:+d}d" if formatter == "signedDays" and isinstance(raw, int)
                     else str(raw)
                 )
-                metrics.append((str(definition.get("label", metric_id)), rendered))
+                label = str(definition.get("label", metric_id))
+                if panel.get("presentation", "lines") == "figures":
+                    runs.extend((
+                        SummaryTextRun(f"summary:{panel['id']}:{metric_id}:value", str(panel["id"]), rendered, "metric"),
+                        SummaryTextRun(f"summary:{panel['id']}:{metric_id}:caption", str(panel["id"]), label, "summary"),
+                    ))
+                else:
+                    runs.append(SummaryTextRun(f"summary:{panel['id']}:{metric_id}", str(panel["id"]),
+                                                f"{label}: {rendered}", "summary"))
             else:
-                metrics.append((str(metric_id), str(definition)))
-        panels.append((str(panel["id"]), str(panel.get("title", panel["id"])), tuple(metrics)))
-    return tuple(panels)
+                runs.append(SummaryTextRun(f"summary:{panel['id']}:{metric_id}", str(panel["id"]),
+                                            f"{metric_id}: {definition}", "summary"))
+        panels.append(SummaryPanel(str(panel["id"]), tuple(runs)))
+    return SummaryContent(tuple(panels))

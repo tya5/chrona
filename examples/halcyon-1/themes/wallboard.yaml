@@ -49,6 +49,7 @@ body:
     annotation.fill: surfaceRaised
     annotation.stroke: neutral
     summary.fill: text
+    metric.fill: text
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised

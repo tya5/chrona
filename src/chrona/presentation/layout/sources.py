@@ -10,6 +10,14 @@ from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
 @dataclass(frozen=True)
+class SourceTextRun:
+    """Text and declared typography to measure as one source line."""
+
+    content: str
+    typography_role: str
+
+
+@dataclass(frozen=True)
 class SourceInput:
     """Semantic content facts needed to measure one closed presentation source."""
 
@@ -18,6 +26,12 @@ class SourceInput:
     column_count: int = 1
     span_days: int = 1
     typography_role: str = "text"
+    runs: tuple[SourceTextRun, ...] = ()
+
+    def text_runs(self) -> tuple[SourceTextRun, ...]:
+        if self.runs:
+            return self.runs
+        return tuple(SourceTextRun(line, self.typography_role) for line in self.lines)
 
 
 @dataclass(frozen=True)
@@ -72,12 +86,16 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     metric["text.measuredAverageAdvance"] = Decimal(str(font_metrics.width("M", float(body_size))))
     result: dict[str, Measurement] = {}
     for source, value in sorted(inputs.items()):
-        _, _, font_size, line_height = typography.typography(value.typography_role)
+        runs = value.text_runs()
+        first_role = runs[0].typography_role if runs else value.typography_role
+        _, _, font_size, line_height = typography.typography(first_role)
         text_line = font_size * line_height
         average_advance = Decimal(str(font_metrics.width("M", float(font_size))))
-        measured_width = max((Decimal(str(font_metrics.width(line, float(font_size)))) for line in value.lines), default=average_advance)
+        measured_width = max((Decimal(str(font_metrics.width(run.content, float(typography.typography(run.typography_role)[2])))) for run in runs), default=average_advance)
+        text_block = sum((typography.typography(run.typography_role)[2] * typography.typography(run.typography_role)[3] for run in runs), Decimal(0))
+        if not runs:
+            text_block = text_line
         text_inline = max(average_advance, measured_width)
-        text_block = max(text_line, Decimal(max(1, len(value.lines))) * text_line)
         if source == "table":
             preferred_inline = Decimal(max(1, value.column_count)) * metric["table.column.minInlineSize"]
             preferred_block = metric["table.header.blockSize"] + Decimal(max(1, value.item_count)) * metric["timeline.row.minBlockSize"]
@@ -91,7 +109,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             preferred_inline, preferred_block = text_inline, text_block
         result[source] = Measurement(
             min(preferred_inline, text_inline), preferred_inline, preferred_inline * 2,
-            min(preferred_block, text_line), preferred_block, preferred_block * 2,
+            min(preferred_block, text_block), preferred_block, preferred_block * 2,
             Decimal(str(font_metrics.baseline(0, float(font_size), float(line_height)))),
             Decimal(str(font_metrics.baseline(0, float(font_size), float(line_height)))),
         )

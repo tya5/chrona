@@ -3,7 +3,7 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.sources import SourceInput, measure_sources
+from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
 
 
 def theme():
@@ -24,7 +24,8 @@ def theme():
     heading = {"fontFamily": "family", "fontWeight": "weight", "fontSize": "heading-size", "lineHeight": "heading-line"}
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
             "body": {"values": values, "metrics": {name: f"metric.{i}" for i, name in enumerate(metrics)},
-                     "roles": {"text": text, "heading": heading, "axis": text, "legend": text, "annotation": text}}}
+                     "roles": {"text": text, "heading": heading, "axis": text, "legend": text,
+                               "annotation": text, "summary": text, "metric": heading}}}
 
 
 def test_sources_are_measured_once_from_semantic_inputs_and_theme_metrics():
@@ -68,3 +69,16 @@ def test_heading_source_uses_heading_extent_and_baseline():
     assert title.preferred_inline == Decimal(204)
     assert title.preferred_block == Decimal("40.8")
     assert title.first_baseline == Decimal(34)
+
+
+def test_mixed_typography_runs_measure_their_actual_cumulative_height():
+    class Metrics:
+        def width(self, value, size): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size
+    measured = measure_sources({"summary": SourceInput(runs=(
+        SourceTextRun("Key figures", "summary"), SourceTextRun("2026-03-04", "heading"),
+        SourceTextRun("as of", "summary"),
+    ))}, theme(), font_metrics=Metrics())
+    summary = measured.measurements["summary"]
+    assert summary.preferred_block == Decimal("80.0")
+    assert summary.preferred_inline == Decimal(170)
