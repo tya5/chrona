@@ -65,4 +65,4 @@ def test_render_review_reports_a_theme_without_a_text_family():
     with tempfile.TemporaryDirectory() as temporary:
         closure, _snapshot = _closure(Path(temporary))
         with pytest.raises(TypeError):
-            closure.resolved_theme.body["roles"]["text"].pop("fontFamily")
+            closure.resolved_theme.resolved_input["body"]["roles"]["text"].pop("fontFamily")

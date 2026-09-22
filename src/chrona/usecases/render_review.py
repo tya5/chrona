@@ -104,12 +104,12 @@ class ClosureReadLedger:
 def render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
-    project, view, layout = (render_closure.project.facts, render_closure.view.document,
-                             render_closure.layout_profile.profile)
-    theme = render_closure.resolved_theme.document
+    project, view, layout = (render_closure.project.scheduler_input, render_closure.view.projection_input,
+                             render_closure.layout_profile.layout_input)
+    theme = render_closure.resolved_theme.resolved_input
     ledger.required()
 
-    manifests = {item.document["packageId"]: item.document for item in render_closure.profile_packages}
+    manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
     projection = _project_review(project, view, render_closure, manifests, request.scheduler)
@@ -121,12 +121,12 @@ def render_review(request: RenderRequest) -> RenderedReview:
     environment = render_closure.context.environment
     asset_root = request.asset_root or request.snapshot_root / render_closure.context.theme.revision_token
     font_metrics = _font_metrics(theme, environment.font_metrics, asset_root)
-    summary = normalize_summary_content(render_closure.summary_profile.document if render_closure.summary_profile else None,
-                                        projection, render_closure.actual_set.document if render_closure.actual_set else None)
+    summary = normalize_summary_content(render_closure.summary_profile.summary_input if render_closure.summary_profile else None,
+                                        projection, render_closure.actual_set.observations_input if render_closure.actual_set else None)
     if render_closure.summary_profile is not None:
         ledger.summary()
     source_inputs = _source_inputs(project, view, projection, summary,
-                                   render_closure.detail_profile.document if render_closure.detail_profile else None)
+                                   render_closure.detail_profile.detail_input if render_closure.detail_profile else None)
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
@@ -139,8 +139,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
 
     surface_content = normalize_v05_surface_content(
         projection, project, view,
-        actual_set=render_closure.actual_set.document if render_closure.actual_set else None,
-        detail=render_closure.detail_profile.document if render_closure.detail_profile else None,
+        actual_set=render_closure.actual_set.observations_input if render_closure.actual_set else None,
+        detail=render_closure.detail_profile.detail_input if render_closure.detail_profile else None,
         summary=summary,
         locale=environment.locale,
     )
@@ -176,8 +176,8 @@ def _project_review(project: dict[str, Any], view: dict[str, Any], closure: Rend
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
-    actual = closure.actual_set.document if closure.actual_set is not None else None
-    snapshot_project = closure.snapshot_project.facts if closure.snapshot_project is not None else None
+    actual = closure.actual_set.observations_input if closure.actual_set is not None else None
+    snapshot_project = closure.snapshot_project.scheduler_input if closure.snapshot_project is not None else None
     snapshot_result = scheduler.schedule(snapshot_project) if snapshot_project is not None else None
     if snapshot_result is not None and not snapshot_result.ok:
         raise RenderRejected(snapshot_result.diagnostics)
