@@ -32,6 +32,20 @@ def test_calendar_closures_come_only_from_project_calendar_exceptions():
     value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
 
     assert value.calendar_closed == (date(2026, 1, 3), date(2026, 1, 4))
+    assert value.calendar_exceptions == ()
+
+
+def test_calendar_exception_closures_are_explicit_and_view_eligible():
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 4)), (), ())
+    project = {"project": {"calendar": "standard"}, "calendars": {"standard": {
+        "working_days": ["mon", "tue", "wed", "thu", "fri"],
+        "exceptions": [{"date": "2026-01-02", "working": False}],
+    }}, "relations": (), "annotations": {}}
+    view = {"body": {"tableColumns": (), "visibility": {"relations": "none", "annotations": "none"},
+                      "shading": {"nonWorking": False, "exceptions": True}}}
+    value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    assert value.calendar_closed == (date(2026, 1, 2),)
+    assert value.calendar_exceptions == (date(2026, 1, 2),)
 
 
 def test_actual_missing_display_uses_item_kind_and_actual_cutoff():

@@ -7,6 +7,3 @@
 #
 # Delete an entry when its defect is fixed; delete this file with the last entry.
 # Measured at 6c2dafa. Defects are tracked in #85.
-test_every_declared_slot_produces_a_primitive:
-  aster-ssd/overview: [legend, notes]
-  controller-z/executive: [legend]

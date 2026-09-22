@@ -49,7 +49,7 @@ REQUIRED_METRICS = (
     "table.column.minInlineSize", "table.column.gutter.inlineSize", "table.header.blockSize",
 )
 
-OPTIONAL_METRICS = ("timeline.groupHeader.blockSize",)
+OPTIONAL_METRICS = ("timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth")
 
 
 def resolve_theme_metrics(theme: Mapping[str, Any]) -> dict[str, Decimal]:

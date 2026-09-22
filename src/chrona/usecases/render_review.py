@@ -122,7 +122,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
                                         projection, render_closure.actual_set.document if render_closure.actual_set else None)
     if render_closure.summary_profile is not None:
         ledger.summary()
-    source_inputs = _source_inputs(project, view, projection, summary)
+    source_inputs = _source_inputs(project, view, projection, summary,
+                                   render_closure.detail_profile.document if render_closure.detail_profile else None)
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = environment["viewport"]
@@ -188,12 +189,14 @@ def _font_metrics(theme: dict[str, Any], environment: dict[str, Any], asset_root
 
 
 def _source_inputs(project: dict[str, Any], view: dict[str, Any], projection: Any,
-                   summary: SummaryContent) -> dict[str, SourceInput]:
+                   summary: SummaryContent, detail: dict[str, Any] | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
+    detail_body = (detail or {}).get("body", {})
+    legend = tuple(str(item["label"]) for item in detail_body.get("legend", ()) if isinstance(item, dict))
     return {
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
@@ -202,7 +205,7 @@ def _source_inputs(project: dict[str, Any], view: dict[str, Any], projection: An
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
         "summary": SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs)),
-        "legend": SourceInput(("legend",), typography_role="legend"),
+        "legend": SourceInput(legend or ("legend",), typography_role="legend"),
         "group-details": SourceInput(("group details",)),
         "observations": SourceInput(("observations",)),
         "milestones": SourceInput(("milestones",)),

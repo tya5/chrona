@@ -10,7 +10,7 @@ def surface_content(**overrides):
                  label_placement="none", label_content=(), label_side="auto", label_overflow="diagnose",
                  relation_overflow="diagnose", group_presentation="band", axis_level="auto", axis_levels=(),
                  axis_ticks=None, as_of=None, as_of_label="As of", annotation_numbered=False,
-                 calendar_closed=(), notes=(), legend_entries=(), coverage_text="", summary=SummaryContent(()),
+                 calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="", summary=SummaryContent(()),
                  template_values=(), group_details=(), milestones=(),
                  observation_columns=(), observation_rows=())
     value.update(overrides)

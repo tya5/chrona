@@ -1,6 +1,9 @@
 version: chrona/review-detail-profile/v0.1
 id: controller-z-review-detail
 body:
+  legend:
+    - {role: planned, label: Planned}
+    - {role: actual, label: Actual}
   groupDetails:
     - groupId: fw-team
       label: Firmware
