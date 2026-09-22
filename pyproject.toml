@@ -12,6 +12,7 @@ dependencies = ["PyYAML>=6.0", "jsonschema>=4.18", "fonttools>=4.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+render = ["CairoSVG==2.9.1", "svglib==2.2.0", "reportlab==5.0.1"]
 
 [project.scripts]
 chrona = "chrona.app.cli:main"

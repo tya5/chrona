@@ -35,7 +35,7 @@ def test_render_review_renders_a_closure_without_the_cli():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
         rendered = render_review(_request(closure, snapshot))
-    assert rendered.svg == (EXAMPLE / "generated/02-programme-board.svg").read_text()
+    assert rendered.artifact.content == (EXAMPLE / "generated/02-programme-board.svg").read_bytes()
     assert rendered.surface.primitives
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
 
@@ -58,7 +58,7 @@ def test_render_review_is_deterministic_for_one_closure():
         closure, snapshot = _closure(Path(temporary))
         first = render_review(_request(closure, snapshot))
         second = render_review(_request(closure, snapshot))
-    assert first.svg == second.svg
+    assert first.artifact.content == second.artifact.content
 
 
 def test_render_review_reports_a_theme_without_a_text_family():

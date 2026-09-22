@@ -126,7 +126,7 @@ def resolve_draft_render(
     *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
     layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, viewport: tuple[int, int] = (1600, 900),
-    locale: str = "en-US",
+    locale: str = "en-US", target_kind: str = "svg",
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -161,7 +161,7 @@ def resolve_draft_render(
 
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     context_value = {
-        "version": "chrona/render-context/v0.6", "kind": "render-context", "id": "draft-render",
+        "version": "chrona/render-context/v0.7", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -178,8 +178,9 @@ def resolve_draft_render(
                 "locale": locale,
                 "fontMetrics": _packaged_font_metrics(asset_root),
                 "scenePrecision": 3,
+                **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
             },
-            "target": {"kind": "svg", "capabilities": list(_DRAFT_CAPABILITIES)},
+            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else []},
         },
     }
     try:
@@ -236,9 +237,15 @@ def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
     }], "missingFont": "declared-fallback"}
 
 
+def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
+    if target_kind == "png":
+        return {"engine": "cairosvg", "version": "2.9.1", "cairoVersion": "1.18.4", "dpi": 96}
+    return {"engine": "reportlab", "svglibVersion": "2.2.0", "reportlabVersion": "5.0.1", "invariant": True}
+
+
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.get("version") != "chrona/render-context/v0.6":
+    if context.get("version") != "chrona/render-context/v0.7":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 

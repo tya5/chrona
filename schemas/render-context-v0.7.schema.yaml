@@ -1,0 +1,96 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:render-context-v0.7"
+title: "Chrona Render Context v0.7"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: "chrona/render-context/v0.7"}
+  kind: {const: render-context}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [project, view, theme, colorScheme, layout, inputs, environment, target]
+    additionalProperties: false
+    properties:
+      project: {$ref: "#/$defs/projectRef"}
+      view: {$ref: "#/$defs/viewRef"}
+      theme: {$ref: "#/$defs/themeRef"}
+      colorScheme: {$ref: "#/$defs/colorSchemeRef"}
+      layout: {$ref: "#/$defs/layoutRef"}
+      inputs:
+        type: object
+        additionalProperties: false
+        properties:
+          actual: {$ref: "#/$defs/actualRef"}
+          snapshot: {$ref: "#/$defs/snapshotRef"}
+          summaryProfile: {$ref: "#/$defs/reference"}
+          detailProfile: {$ref: "#/$defs/reference"}
+      environment:
+        type: object
+        required: [viewport, locale, fontMetrics, scenePrecision]
+        additionalProperties: false
+        properties:
+          viewport:
+            type: object
+            required: [inlineSize, blockSize]
+            additionalProperties: false
+            properties:
+              inlineSize: {type: integer, minimum: 1}
+              blockSize: {type: integer, minimum: 1}
+          locale: {type: string, minLength: 1}
+          fontMetrics: {type: object}
+          scenePrecision: {type: integer, minimum: 0}
+          rasterizer:
+            type: object
+            oneOf:
+              - type: object
+                required: [engine, version, cairoVersion, dpi]
+                additionalProperties: false
+                properties:
+                  engine: {const: cairosvg}
+                  version: {type: string, minLength: 1}
+                  cairoVersion: {type: string, minLength: 1}
+                  dpi: {type: number, exclusiveMinimum: 0}
+              - type: object
+                required: [engine, svglibVersion, reportlabVersion, invariant]
+                additionalProperties: false
+                properties:
+                  engine: {const: reportlab}
+                  svglibVersion: {type: string, minLength: 1}
+                  reportlabVersion: {type: string, minLength: 1}
+                  invariant: {const: true}
+      target:
+        type: object
+        required: [kind, capabilities]
+        additionalProperties: false
+        properties:
+          kind: {enum: [svg, png, pdf]}
+          capabilities:
+            type: array
+            items: {type: string, minLength: 1}
+            uniqueItems: true
+    allOf:
+      - if: {properties: {target: {properties: {kind: {const: svg}}}}}
+        then: {properties: {environment: {not: {required: [rasterizer]}}}}
+      - if: {properties: {target: {properties: {kind: {enum: [png, pdf]}}}}}
+        then: {properties: {environment: {required: [rasterizer]}}}
+$defs:
+  reference:
+    type: object
+    required: [id, kind, store, address, revision]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      kind: {type: string, minLength: 1}
+      store: {type: object}
+      address: {type: string, minLength: 1}
+      revision: {type: object}
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  projectRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: project}}}]}
+  viewRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: view}}}]}
+  themeRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: theme}}}]}
+  colorSchemeRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: color-scheme}}}]}
+  layoutRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: layout-profile}}}]}
+  actualRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: actual-set}}}]}
+  snapshotRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: snapshot-ref}}}]}

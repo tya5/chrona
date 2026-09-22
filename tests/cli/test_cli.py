@@ -88,7 +88,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("immutable Project snapshot", "draft review surface", "immutable Render Context v0.6"):
+    for phrase in ("immutable Project snapshot", "draft review surface", "immutable Render Context v0.7"):
         assert phrase in help_text
 
 
@@ -231,7 +231,7 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     font_path = tmp_path / token / "font_metrics/nimbus-sans-regular-v1.json"
     font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
     context = {
-        "version": "chrona/render-context/v0.6", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/render-context/v0.7", "kind": "render-context", "id": "controller-z-current",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},
@@ -276,3 +276,27 @@ def test_cli_draft_render_rejects_invalid_viewport(monkeypatch, capsys):
         main()
     assert exited.value.code == 2
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_VIEWPORT"
+
+
+@pytest.mark.parametrize(("format_name", "prefix"), [("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")])
+def test_cli_draft_render_writes_declared_binary_format(tmp_path, monkeypatch, format_name, prefix):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    output = tmp_path / f"review.{format_name}"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/executive.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--format", format_name, "--output", str(output),
+    ])
+    main()
+    assert output.read_bytes().startswith(prefix)
+
+
+def test_cli_immutable_format_assertion_does_not_write_on_mismatch(tmp_path, monkeypatch, capsys):
+    closure = SimpleNamespace(context=SimpleNamespace(body={"target": {"kind": "svg"}}))
+    with pytest.raises(CliFailure, match="E_RENDER_FORMAT_CONTEXT"):
+        cli._assert_context_format(closure, "png")
+    assert not (tmp_path / "out.svg").exists()

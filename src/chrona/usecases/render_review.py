@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from chrona.core.diagnostics import Diagnostic
-from chrona.core.ports import Renderer, Scheduler
+from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.profile import resolve_layout_profile
@@ -25,6 +25,7 @@ from chrona.presentation.model.surface_content import SummaryContent
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.renderers.registry import renderer_for
 
 # Consumed through ``context["resolvedTheme"]`` rather than through the closure
 # accessor, so they are read by construction.
@@ -66,7 +67,7 @@ class RenderRequest:
 class RenderedReview:
     """The rendered surface and the closure inputs the render actually read."""
 
-    svg: str
+    artifact: RenderArtifact
     surface: SceneSurface
     read_inputs: frozenset[str] = field(default_factory=frozenset)
 
@@ -158,9 +159,12 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "closure inputs loaded but never read: " + ", ".join(unused), "closure")
 
     surface = compose_review_surface(scene_input)
-    svg = request.renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
-                                  tokens=scene_input.theme_tokens)
-    return RenderedReview(svg, surface, frozenset(ledger.read))
+    renderer = request.renderer or renderer_for(render_closure.context.body["target"], environment)
+    artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
+                               tokens=scene_input.theme_tokens)
+    if artifact.target_kind != render_closure.context.body["target"]["kind"]:
+        raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
+    return RenderedReview(artifact, surface, frozenset(ledger.read))
 
 
 def _project_review(project: dict[str, Any], view: dict[str, Any], closure: RenderClosure,
