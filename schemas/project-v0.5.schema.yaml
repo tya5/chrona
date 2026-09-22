@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "timeline/project-v0.4"
+$id: "timeline/project-v0.5"
 title: "Timeline Project v0.4"
 type: object
 required: [version, project]
 additionalProperties: false
 
 properties:
-  version: {const: "timeline/v0.4"}
+  version: {const: "timeline/v0.5"}
   project:
     type: object
     required: [id]
@@ -50,8 +50,42 @@ properties:
           properties:
             packageId: {type: string, minLength: 1}
             resource: {type: object}
+  scenarios:
+    type: object
+    additionalProperties: {$ref: "#/$defs/scenario"}
 
 $defs:
+  scenario:
+    type: object
+    additionalProperties: false
+    properties:
+      title: {type: string, minLength: 1}
+      objects:
+        type: object
+        additionalProperties:
+          oneOf:
+            - {type: 'null'}
+            - {$ref: "#/$defs/objectOverride"}
+      relations:
+        type: object
+        additionalProperties: false
+        properties:
+          remove: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+          add: {type: array, items: {$ref: "#/$defs/relation"}}
+  objectOverride:
+    type: object
+    additionalProperties: false
+    properties:
+      type: {type: [string, 'null']}
+      title: {type: [string, 'null']}
+      calendar: {type: [string, 'null']}
+      fields: {oneOf: [{type: object}, {type: 'null'}]}
+      parent: {type: [string, 'null']}
+      wbsCode: {oneOf: [{$ref: "#/$defs/wbsCode"}, {type: 'null'}]}
+      plannedProgress: {type: [number, 'null'], minimum: 0, maximum: 1}
+      deadline: {oneOf: [{$ref: "#/$defs/date"}, {type: 'null'}]}
+      link: {oneOf: [{$ref: "#/$defs/linkHref"}, {type: object}, {type: 'null'}]}
+      schedule: {type: object}
   date: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
   temporalAmount: {type: string, pattern: "^-?(?:\\d+(?:h|min|s|d|w|mo|y|wd))(?: \\d+(?:d|w|mo|y))*$"}
   linkHref: {type: string, pattern: "^(?:https?://[^\\s]+|mailto:[^\\s]+|\\./[^\\s]+|/(?!/)[^\\s]+)$"}
