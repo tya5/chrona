@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
 from chrona.presentation.review.v05_content import normalize_v05_surface_content
 
@@ -93,3 +95,15 @@ def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
     assert value.axis_levels == (("quarter", "year-quarter"), ("month", "short-month"))
     assert value.axis_ticks == "week"
     assert value.as_of_label == "as of"
+
+
+@pytest.mark.parametrize(("argument", "value", "diagnostic"), (
+    ("actual_set", {"asOf": "2026-03-04"}, "E_PRESENTATION_ACTUAL_SET_SHAPE"),
+    ("detail", {"legend": ()}, "E_PRESENTATION_DETAIL_PROFILE_SHAPE"),
+    ("summary", {"panels": ()}, "E_PRESENTATION_SUMMARY_PROFILE_SHAPE"),
+))
+def test_optional_resources_require_their_current_body_envelope(argument, value, diagnostic):
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 8)), (), ())
+    view = {"body": {"tableColumns": (), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
+    with pytest.raises(ValueError, match=diagnostic):
+        normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view, **{argument: value})

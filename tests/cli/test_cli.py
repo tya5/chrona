@@ -194,7 +194,7 @@ def test_cli_gallery_rejects_duplicate_scheme_before_rendering(tmp_path, monkeyp
     monkeypatch.setattr(cli, "resolve_render_context", closure)
     monkeypatch.setattr(cli, "load_yaml", lambda path: {"path": str(path)})
     monkeypatch.setattr(cli, "_run_render_review", lambda args: pytest.fail("render must not run"))
-    args = cli.argparse.Namespace(context_reference=["one.yaml", "two.yaml"], snapshot_root=str(tmp_path), store_identity="test", output_directory=str(tmp_path / "gallery"))
+    args = cli.argparse.Namespace(context_reference=["one.yaml", "two.yaml"], snapshot_root=str(tmp_path), store_identity="test", require_content_identity=False, output_directory=str(tmp_path / "gallery"))
     with pytest.raises(CliFailure, match="E_SCHEME_GALLERY_DUPLICATE"):
         cli._run_render_review_gallery(args)
 

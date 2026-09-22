@@ -12,7 +12,8 @@ def test_declared_table_missing_values_are_normalized_before_scene_construction(
 
 def test_declared_table_value_is_not_replaced_by_a_missing_policy():
     assert display_value("ready", "blank") == "ready"
-    assert display_value(4, "em-dash") == "+4d"
+    assert display_value(4, "em-dash") == "4"
+    assert display_value(4, "em-dash", "signedDays") == "+4d"
 
 
 def test_typed_table_facets_are_formatted_by_the_view_contract():
