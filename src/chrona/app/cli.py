@@ -132,7 +132,7 @@ def _parser() -> JsonArgumentParser:
         if name == "render":
             command.add_argument("--output", "-o", required=True)
 
-    command = sub.add_parser("render-review", help="render an immutable Render Context v0.5 or v0.6", description="render an immutable Render Context v0.5 or v0.6")
+    command = sub.add_parser("render-review", help="render an immutable Render Context v0.6", description="render an immutable Render Context v0.6")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
@@ -140,7 +140,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--output", "-o", required=True)
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
-    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.5 or v0.6 resource-reference YAML; repeat for each scheme")
+    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.6 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
