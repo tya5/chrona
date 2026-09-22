@@ -74,6 +74,7 @@ body:
     planned.fill: accent
     network-node.fill: surfaceRaised
     network-edge.stroke: textMuted
+    dependency-critical.stroke: negative
     critical-edge.stroke: negative
     snapshot.fill: neutral
     summary-bar.fill: accent
