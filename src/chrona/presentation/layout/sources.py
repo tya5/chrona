@@ -73,19 +73,23 @@ REQUIRED_METRICS = (
 OPTIONAL_METRICS = ("timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth")
 
 
-def resolve_theme_metrics(theme: Mapping[str, Any]) -> dict[str, Decimal]:
+def resolve_theme_metrics(theme: Mapping[str, Any], *, required_metrics: tuple[str, ...] = ()) -> dict[str, Decimal]:
     body = theme.get("body", {})
     bindings, values = body.get("metrics", {}), body.get("values", {})
     resolved: dict[str, Decimal] = {}
     unknown = set(bindings) - set(REQUIRED_METRICS) - set(OPTIONAL_METRICS)
     if unknown:
         raise LayoutError("E_LAYOUT_METRIC_UNKNOWN", "/body/metrics/" + sorted(unknown)[0])
+    required = REQUIRED_METRICS + tuple(name for name in required_metrics if name not in REQUIRED_METRICS)
+    if any(name not in OPTIONAL_METRICS and name not in REQUIRED_METRICS for name in required_metrics):
+        raise LayoutError("E_LAYOUT_METRIC_UNKNOWN", "/body/metrics/" + sorted(set(required_metrics) - set(REQUIRED_METRICS) - set(OPTIONAL_METRICS))[0])
     for name in REQUIRED_METRICS + OPTIONAL_METRICS:
         token = bindings.get(name)
         if not isinstance(token, str):
-            if name in OPTIONAL_METRICS:
+            if name not in required:
                 continue
-            raise LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/" + name)
+            diagnostic = "E_THEME_METRIC_REQUIRED" if name in required_metrics else "E_LAYOUT_METRIC_REQUIRED"
+            raise LayoutError(diagnostic, "/body/metrics/" + name)
         declared = values.get(token)
         if not isinstance(declared, Mapping) or declared.get("type") != "number":
             raise LayoutError("E_LAYOUT_TOKEN_TYPE", "/body/metrics/" + name)
@@ -99,9 +103,10 @@ def resolve_theme_metrics(theme: Mapping[str, Any]) -> dict[str, Decimal]:
     return resolved
 
 
-def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any], *, font_metrics: Any) -> MeasuredSources:
+def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any], *, font_metrics: Any,
+                    required_metrics: tuple[str, ...] = ()) -> MeasuredSources:
     """Measure every declared source once without reading Layout or renderer state."""
-    metric = resolve_theme_metrics(theme)
+    metric = resolve_theme_metrics(theme, required_metrics=required_metrics)
     typography = ThemeTokenView(theme)
     _, _, body_size, _ = typography.typography("text")
     metric["text.measuredAverageAdvance"] = Decimal(str(font_metrics.width("M", float(body_size))))

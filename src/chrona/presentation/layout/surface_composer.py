@@ -66,9 +66,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for item in projection.items
     )
     timeline_bounds = _bounds(timeline.bounds)
-    group_header_size = float(metric_values.get("timeline.groupHeader.blockSize", 0)) if request.surface_content.group_presentation == "header" else 0.0
-    if request.surface_content.group_presentation == "header" and group_header_size <= 0:
-        raise LayoutError("E_LAYOUT_GROUP_HEADER_OVERFLOW", "/view/body/grouping/presentation")
+    group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
+                         if request.surface_content.group_presentation == "header" else 0.0)
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size)
     row_height = raw_rows[0].bounds[3] if raw_rows else timeline_bounds[3]

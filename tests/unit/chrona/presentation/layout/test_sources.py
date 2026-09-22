@@ -63,6 +63,17 @@ def test_missing_unknown_and_wrong_type_metric_bindings_diagnose():
         measure_sources({}, value, font_metrics=Metrics())
 
 
+def test_view_required_optional_metric_is_a_theme_diagnostic():
+    class Metrics:
+        content_identity = "sha256:test"
+        def width(self, value, size): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size
+    with pytest.raises(LayoutError, match="E_THEME_METRIC_REQUIRED") as error:
+        measure_sources({}, theme(), font_metrics=Metrics(), required_metrics=("timeline.groupHeader.blockSize",))
+    assert error.value.path == "/body/metrics/timeline.groupHeader.blockSize"
+    assert "timeline.groupHeader.blockSize" not in measure_sources({}, theme(), font_metrics=Metrics()).metric_values
+
+
 def test_heading_source_uses_heading_extent_and_baseline():
     class Metrics:
         content_identity = "sha256:test"
