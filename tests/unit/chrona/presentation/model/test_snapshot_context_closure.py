@@ -39,7 +39,21 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
     context_ref = _write(tmp_path, "current", "context.yaml", context)
     monkeypatch.setattr(closure.jsonschema, "Draft202012Validator", lambda _schema: type("V", (), {"iter_errors": lambda self, _value: iter(())})())
     monkeypatch.setattr(closure, "resolve_theme", lambda *_args, **_kwargs: {})
-    monkeypatch.setattr(closure, "parse_contract", lambda identity, value: SimpleNamespace(identity=identity, body=value.get("body", {}), document=value))
+    def fake_parse(identity, value):
+        if identity.kind != "render-context":
+            return SimpleNamespace(identity=identity, document=value)
+        body = value["body"]
+        reference = lambda name: SimpleNamespace(as_reader_reference=lambda: body[name])
+        return SimpleNamespace(
+            document=value,
+            project=reference("project"), view=reference("view"), theme=reference("theme"),
+            color_scheme=reference("colorScheme"), layout=reference("layout"),
+            actual=None, summary_profile=None, detail_profile=None,
+            snapshot=SimpleNamespace(as_reader_reference=lambda: body["inputs"]["snapshot"]),
+            target=SimpleNamespace(capabilities=()),
+        )
+
+    monkeypatch.setattr(closure, "parse_contract", fake_parse)
 
     resources = closure.resolve_render_context(context_ref, LocalSnapshotReader(tmp_path, "test")).resources
 
