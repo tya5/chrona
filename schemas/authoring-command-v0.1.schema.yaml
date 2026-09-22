@@ -7,7 +7,7 @@ additionalProperties: false
 properties:
   version: {const: chrona/authoring-command/v0.1}
   commandId: {type: string, minLength: 1}
-  type: {enum: [setWorkspaceTask, setWorkspaceActual, selectPresentationPreset, setPresentationOverride]}
+  type: {enum: [setWorkspaceTask, setWorkspaceActual, selectPresentationPreset, setPresentationOverride, materializePresentationPreset]}
   target:
     type: object
     required: [kind, path]
@@ -16,7 +16,7 @@ properties:
       kind: {const: authoring-workspace}
       path: {type: string, minLength: 1}
   baseRevision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-  payload: {type: object, minProperties: 1}
+  payload: {type: object}
 allOf:
   - if: {properties: {type: {const: setWorkspaceTask}}}
     then:
@@ -86,3 +86,11 @@ allOf:
           required: [overrides]
           additionalProperties: false
           properties: {overrides: {type: object}}
+  - if: {properties: {type: {const: materializePresentationPreset}}}
+    then:
+      properties:
+        payload:
+          type: object
+          additionalProperties: false
+          properties:
+            directory: {type: string, minLength: 1}

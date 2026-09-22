@@ -278,17 +278,29 @@ def test_cli_draft_render_rejects_invalid_viewport(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_VIEWPORT"
 
 
-def test_cli_materializes_a_guided_workspace_through_the_authoring_use_case(tmp_path, monkeypatch):
+def test_cli_materializes_through_the_authoring_command_use_case(tmp_path, monkeypatch):
     workspace = tmp_path / "workspace.yaml"
+    command = tmp_path / "command.yaml"
+    result = tmp_path / "result.json"
+    command.write_text(yaml.safe_dump({
+        "version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
+        "target": {"kind": "authoring-workspace", "path": workspace.name},
+        "baseRevision": "sha256:" + "0" * 64, "payload": {"directory": "ejected"},
+    }), encoding="utf-8")
     called = {}
-    monkeypatch.setattr(cli, "materialize_presentation_preset", lambda path, *, directory: called.update(path=path, directory=directory))
+    monkeypatch.setattr(cli, "apply_authoring_command", lambda *args, **kwargs: called.update(args=args, kwargs=kwargs) or {
+        "status": "accepted", "commandId": "eject", "baseRevision": "base", "resultRevision": "result", "diagnostics": [],
+    })
     monkeypatch.setattr(sys, "argv", [
-        "chrona", "materialize-presentation-preset", "--workspace", str(workspace), "--directory", "ejected",
+        "chrona", "materialize-presentation-preset", "--workspace", str(workspace), "--command", str(command), "--result", str(result),
     ])
 
     main()
 
-    assert called == {"path": workspace, "directory": "ejected"}
+    assert called["args"][0] == workspace
+    assert called["args"][1]["type"] == "materializePresentationPreset"
+    assert called["kwargs"]["cas_write_aggregate"] is cli.cas_write_authoring_aggregate
+    assert json.loads(result.read_text())["status"] == "accepted"
 
 
 @pytest.mark.parametrize(("format_name", "prefix"), [("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")])

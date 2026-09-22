@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 from chrona.usecases.authoring_commands import apply_authoring_command
-from chrona.operational.authoring_commands import cas_write_authoring_workspace, read_authoring_workspace
+from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import content_identity
 
 
@@ -58,3 +58,21 @@ def test_actual_command_rejects_unknown_task_without_writing(tmp_path):
     result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace)
     assert result["status"] == "rejected"
     assert path.read_bytes() == original
+
+
+def test_aggregate_writer_switches_workspace_last_and_rejects_stale_or_colliding_destinations(tmp_path):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    explicit = deepcopy(workspace)
+    explicit["body"]["presentation"] = {"mode": "explicit", "resources": {
+        name: {"id": name, "kind": name, "path": f"presentation/{name}.yaml", "contentIdentity": "sha256:" + "a" * 64}
+        for name in ("view", "theme", "colorScheme", "layout", "renderContext")
+    }, "receipt": {"id": "receipt", "kind": "receipt", "path": "presentation/receipt.yaml", "contentIdentity": "sha256:" + "a" * 64}}
+    candidates = {"workspace.yaml": yaml.safe_dump(explicit).encode(), "presentation/view.yaml": b"view"}
+
+    assert cas_write_authoring_aggregate(path, "sha256:" + "0" * 64, candidates) is None
+    assert not (tmp_path / "presentation").exists()
+    result = cas_write_authoring_aggregate(path, content_identity(workspace), candidates)
+    assert result == content_identity(explicit)
+    assert yaml.safe_load(path.read_text())["body"]["presentation"]["mode"] == "explicit"
+    assert (tmp_path / "presentation/view.yaml").read_bytes() == b"view"
