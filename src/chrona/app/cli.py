@@ -16,8 +16,9 @@ from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_render_context
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.presentation.renderers.generic import render_svg
+from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.scene.schedule import scene_from_schedule
-from chrona.scheduling.scheduler import schedule
+from chrona.scheduling.scheduler import ReferenceScheduler, schedule
 from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 from chrona.operational.baselines import compare_baseline
@@ -169,6 +170,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace) -> Rendered
     """Adapt one resolved closure to the render use case and its diagnostics."""
     request = RenderRequest(
         closure=closure, snapshot_root=Path(args.snapshot_root),
+        scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
     )
     try:

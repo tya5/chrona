@@ -41,3 +41,12 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float], toke
             parts.append(f'<path {common} d="{path}" fill="none" stroke="{color(node.visual_role, "stroke")}"{marker}/>')
         else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
     return "\n".join((*parts, "</svg>")) + "\n"
+
+
+class V05SvgRenderer:
+    """Port adapter for serialization of completed v0.5 Scene surfaces."""
+
+    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> str:
+        if not isinstance(surface, SceneSurface) or not isinstance(tokens, ThemeTokenView):
+            raise ValueError("E_PRESENTATION_RENDER_INPUT")
+        return render_v05_svg(surface, viewport=viewport, tokens=tokens)

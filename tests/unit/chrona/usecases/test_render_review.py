@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
+from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import (
     RenderFailed, RenderRequest, render_review,
@@ -25,10 +27,14 @@ def _closure(temporary: Path):
     return resolve_render_context(reference, reader), snapshot
 
 
+def _request(closure, snapshot, **kwargs):
+    return RenderRequest(closure, snapshot, ReferenceScheduler(), V05SvgRenderer(), **kwargs)
+
+
 def test_render_review_renders_a_closure_without_the_cli():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
-        rendered = render_review(RenderRequest(closure, snapshot))
+        rendered = render_review(_request(closure, snapshot))
     assert rendered.svg == (EXAMPLE / "generated/02-programme-board.svg").read_text()
     assert rendered.surface.primitives
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
@@ -39,10 +45,10 @@ def test_render_review_reports_every_closure_input_it_never_read():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
         assert closure.resource("summary-profile") is not None
-        permissive = render_review(RenderRequest(closure, snapshot))
+        permissive = render_review(_request(closure, snapshot))
         assert "summary-profile" not in permissive.read_inputs
         with pytest.raises(RenderFailed) as failure:
-            render_review(RenderRequest(closure, snapshot, require_all_inputs_read=True))
+            render_review(_request(closure, snapshot, require_all_inputs_read=True))
     assert failure.value.code == "E_CLOSURE_INPUT_UNUSED"
     assert "summary-profile" in failure.value.message
 
@@ -55,8 +61,8 @@ def test_render_review_rejects_an_incomplete_closure():
 def test_render_review_is_deterministic_for_one_closure():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
-        first = render_review(RenderRequest(closure, snapshot))
-        second = render_review(RenderRequest(closure, snapshot))
+        first = render_review(_request(closure, snapshot))
+        second = render_review(_request(closure, snapshot))
     assert first.svg == second.svg
 
 
