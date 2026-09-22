@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any
 
+import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
 import yaml
 
 
