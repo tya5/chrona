@@ -31,6 +31,17 @@ Scene is a derived artifact. It is not the source of truth for dates, dependenci
 - Scene construction MUST preserve the distinction between semantic dependencies, explanatory arrows, semantic annotations, and presentation annotations.
 - Missing inputs, unresolved tokens, unsupported scale profiles, or failed layout MUST yield diagnostics rather than renderer-specific silent defaults.
 
+### 2.2 Layout, Scene, and renderer seam
+
+Layout is the sole authority for measured geometry. It turns normalized content,
+declared slots, Theme metrics, and View intent into completed placements: bounds,
+baselines, marks, ports, label positions, route paths, and feasibility diagnostics.
+Scene maps those completed placements to ordered renderer-neutral primitives and
+z-order; it performs no measurement, coordinate search, lane allocation, or routing.
+Renderer adapters serialize primitives only. They do not infer policy, reflow text,
+or repair missing geometry. This is the single handoff defined by ADR-0031 and
+specialized by Specification 50.
+
 ### 2.1 M27 public Review SVG binding
 
 For a Render Context whose target is SVG, the public `render-review` application route
@@ -118,8 +129,8 @@ contains no Project, View, Schedule, or
 settings object and is not persisted. Missing optional families are empty collections;
 missing required normalized content is `E_PRESENTATION_INPUT_INCOMPLETE`.
 
-The Builder alone converts this input into measured geometry, ports, obstacles,
-track bounds, and primitives.  An adapter receives neither authoring resources nor a
+Layout converts this input into measured geometry, ports, obstacles, and track bounds;
+Scene projects its completed placements into primitives. An adapter receives neither authoring resources nor a
 semantic View Projection and MUST NOT recreate a scale, select a slot, choose an
 anchor, measure text, assign a lane, calculate a row/track y coordinate, or resolve a route.
 It MUST also not use a settings-derived `dayWidth`, margin, or row height as a fallback
@@ -159,7 +170,7 @@ intentionally closed so renderer adapters cannot silently choose a scale or rout
 algorithm:
 
 ```yaml
-version: chrona/presentation/v0.1
+version: chrona/scene-profile/v0.1
 kind: scene-profile
 id: date-lanes
 body:
@@ -200,7 +211,7 @@ Non-linear working-day compression, DateTime scales, discontinuous intervals, an
 
 ### 4.3 Lanes and ordering
 
-The View supplies lane membership and deterministic order. Scene assigns each lane a concrete extent and each item a concrete position within that extent under the declared layout profile. Lane geometry is presentation geometry, not Project containment.
+The View supplies lane membership and deterministic order. Layout assigns each lane a concrete extent and each item a concrete position within that extent under the declared layout profile. Lane geometry is presentation geometry, not Project containment.
 
 ## 5. Scene node model
 
@@ -426,18 +437,12 @@ by Scene construction.
 
 Scene construction follows a deterministic order:
 
-1. validate explicit inputs and resolve the temporal scale, viewport, and lane geometry;
-2. project planned, baseline, and actual temporal placements to primitive geometry;
-3. emit labels and accessible alternatives using the declared layout metrics;
-4. project semantic dependencies with dependency-specific connector rules;
-5. project explanatory arrows and annotations with their own connector and anchoring rules;
-6. resolve declared collision, clipping, and z-order policy; and
-7. emit the Scene, manifest, and diagnostics.
+1. Layout validates explicit inputs and resolves temporal scale, viewport, lanes, text, routes, and feasibility;
+2. Scene projects completed placements to primitives and z-order; and
+3. Scene emits the Scene, manifest, and ordered diagnostics.
 
-The detailed finite algorithm, annotation purpose table, port exception, lane formula,
-and route failure classification are owned by specification 30 §7.5. This order is
-normative: a renderer must not perform a later placement, remeasurement, lane, or
-route pass after Scene emission.
+This order is normative: neither Scene nor a renderer may perform a later placement,
+remeasurement, lane, or route pass after Layout completes.
 
 ### 6.1 Planned, baseline, and actual geometry
 

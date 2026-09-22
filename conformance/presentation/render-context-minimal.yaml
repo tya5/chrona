@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.1
+version: chrona/render-context/v0.1
 kind: render-context
 id: controller-review-minimal
 body:

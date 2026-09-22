@@ -5,6 +5,7 @@ allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
+      version: {const: chrona/view/v0.1}
       kind: {const: view}
       body:
         type: object

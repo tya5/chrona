@@ -2,25 +2,5 @@
 # and deliberately kept. Every entry needs a reason and an owning issue; anything
 # not listed here and not reachable fails tools/check_module_reachability.py.
 #
-# These twenty are the "reached only by tests" set in #94 Phase 3. Each needs the
-# same decision — wire it to an entry point, or delete it with its tests — which is
-# the owner's call, not a mechanical one. This file is the list to work through.
-chrona.app.interactive              # #94 Phase 3
-chrona.collaboration.collaboration  # #94 Phase 3
-chrona.collaboration.federation     # #94 Phase 3
-chrona.commands.ai_proposals        # #94 Phase 3
-chrona.commands.commands            # #94 Phase 3
-chrona.commands.editor              # #94 Phase 3
-chrona.commands.gestures            # #94 Phase 3
-chrona.commands.view_commands       # #94 Phase 3
-chrona.extensions.extension_registry   # #94 Phase 3
-chrona.extensions.package_lifecycle    # #94 Phase 3
-chrona.presentation.model.actual_intake  # #94 Phase 3
-chrona.release.output               # #94 Phase 3
-chrona.release.release_package      # #94 Phase 3
-chrona.release.successor_release    # #94 Phase 3
-chrona.scheduling.capacity          # #94 Phase 3
-chrona.scheduling.cost_observations # #94 Phase 3
-chrona.scheduling.datetime_migration   # #94 Phase 3
-chrona.scheduling.datetime_scheduler   # #94 Phase 3
-chrona.scheduling.temporal_datetime    # #94 Phase 3
+# There are currently no staged modules. A future entry must name its owning
+# issue, why it cannot yet be product-reachable, and its planned removal date.
