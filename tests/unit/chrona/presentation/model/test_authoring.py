@@ -87,3 +87,17 @@ def test_workspace_schema_rejects_geometry_override():
     document["body"]["presentation"]["binding"]["overrides"]["view"]["offset"] = {"x": 1}
     with pytest.raises(ContractError, match="E_RESOURCE_SCHEMA"):
         _contract("authoring-workspace", document)
+
+
+def test_explicit_workspace_has_no_binding_and_bypasses_guided_normalization():
+    document = _workspace()
+    digest = "sha256:" + "a" * 64
+    document["body"]["presentation"] = {"mode": "explicit", "resources": {
+        name: {"id": name, "kind": name, "path": f"presentation/{name}.yaml", "contentIdentity": digest}
+        for name in ("view", "theme", "colorScheme", "layout", "renderContext")
+    }, "receipt": {"id": "receipt", "kind": "presentation-materialization-receipt", "path": "presentation/receipt.yaml", "contentIdentity": digest}}
+    workspace = _contract("authoring-workspace", document)
+    assert workspace.mode == "explicit"
+    assert workspace.binding is None
+    with pytest.raises(AuthoringError, match="E_AUTHORING_EXPLICIT_MODE"):
+        normalize_authoring_workspace(workspace, _contract("presentation-preset", _preset(_resources())), _resources())
