@@ -38,6 +38,15 @@ def test_surface_placement_rejects_overlapping_required_text():
         surface.assert_valid()
 
 
+def test_surface_placement_rejects_overlapping_required_text_across_regions():
+    surface = SurfacePlacement(text=(
+        TextPlacement("axis", "axis", "Sep", _rect(0, 0, 10, 10), "text", collision_region="axis"),
+        TextPlacement("summary", "summary", "6 / 3", _rect(9, 0, 10, 10), "text", collision_region="summary"),
+    ))
+    with pytest.raises(ValueError, match="E_LAYOUT_TEXT_OVERLAP:axis:summary"):
+        surface.assert_valid()
+
+
 def test_surface_placement_allows_explicit_relation_suppression_only_with_diagnostic():
     SurfacePlacement(relations=(RelationPlacement("r", "a:end", "b:start", suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_RELATION_SUPPRESSION_INVALID:r"):
