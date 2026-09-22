@@ -8,7 +8,7 @@ import yaml
 
 from chrona.core.diagnostics import Diagnostic
 from chrona.resources import schema_resource
-from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
+from chrona.core.ports import SnapshotReadError, SnapshotReader
 
 PROFILE_SCHEMA = schema_resource("profile-v0.1.schema.yaml")
 RESOURCE_SCHEMA = schema_resource("revision-store-resource-ref-v0.1.schema.yaml")
@@ -17,7 +17,7 @@ DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delive
 ACTOR_PROFILES = {"implementation-delivery.person", "implementation-delivery.team"}
 
 
-def resolve_package_manifests(project: dict[str, Any], reader: LocalSnapshotReader) -> tuple[dict[str, dict[str, Any]], list[Diagnostic]]:
+def resolve_package_manifests(project: dict[str, Any], reader: SnapshotReader) -> tuple[dict[str, dict[str, Any]], list[Diagnostic]]:
     manifests: dict[str, dict[str, Any]] = {}
     diagnostics: list[Diagnostic] = []
     for index, extension in enumerate(project.get("extensions", [])):
@@ -32,7 +32,7 @@ def resolve_package_manifests(project: dict[str, Any], reader: LocalSnapshotRead
 
 
 def resolve_profile_diagnostics(
-    project: dict[str, Any], reader: LocalSnapshotReader
+    project: dict[str, Any], reader: SnapshotReader
 ) -> list[Diagnostic]:
     """Resolve pinned extension resources and return evaluation diagnostics."""
     manifests, diagnostics = resolve_package_manifests(project, reader)
