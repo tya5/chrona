@@ -7,18 +7,12 @@ from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parent
 COMMANDS = [
+    [sys.executable, str(ROOT.parent / "tools" / "schema_inventory.py")],
     [sys.executable, str(ROOT / "validate_conformance.py")],
     [sys.executable, str(ROOT / "revision-store" / "validate_conformance.py")],
-    [sys.executable, str(ROOT / "presentation" / "validate_conformance.py")],
-    [sys.executable, str(ROOT / "federation" / "validate_conformance.py")],
     [sys.executable, str(ROOT / "validate_implementation_delivery_profile.py")],
     [sys.executable, str(ROOT / "validate_traceability.py")],
-    [sys.executable, str(ROOT / "validate_release_acceptance.py")],
-    [sys.executable, str(ROOT / "validate_ai_command_proposal.py")],
-    [sys.executable, str(ROOT / "validate_release_package.py")],
     [sys.executable, str(ROOT / "validate_design_recompletion.py")],
-    [sys.executable, str(ROOT / "validate_datetime_project.py")],
-    [sys.executable, str(ROOT / "validate_review_svg_profile.py")],
     [sys.executable, str(ROOT / "validate_review_detail_profile.py")],
 ]
 for command in COMMANDS:

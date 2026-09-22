@@ -3,16 +3,18 @@ from chrona.operational.resources import OperationalResourceError, canonical_byt
 
 def test_intake_batch_parses_and_has_stable_identity_for_yaml_dates():
     value = parse_document(
-        """version: chrona/actual-intake-batch/v0.1
-batchId: batch-1
-source: {system: supplier, contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
-records:
-  - externalKey: supplier-42
-    actual: {finish: 2026-04-18}
+        """version: chrona/actual-intake-batch/v0.2
+kind: actual-intake-batch
+id: batch-1
+body:
+  source: {system: supplier, contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+  records:
+    - externalKey: supplier-42
+      actual: {finish: 2026-04-18}
 """,
-        "actual-intake-batch-v0.1.schema.yaml",
+        "actual-intake-batch-v0.2.schema.yaml",
     )
-    assert value["records"][0]["actual"]["finish"] == "2026-04-18"
+    assert value["body"]["records"][0]["actual"]["finish"] == "2026-04-18"
     assert content_identity(value).startswith("sha256:")
     assert canonical_bytes(value) == canonical_bytes(dict(value))
 

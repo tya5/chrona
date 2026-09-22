@@ -13,7 +13,7 @@ def _actual_set_v02():
 
 
 def _batch(records):
-    return {"version": "chrona/actual-intake-batch/v0.1", "batchId": "supplier-17", "source": {"system": "supplier", "contentIdentity": "sha256:" + "a" * 64}, "records": records}
+    return {"source": {"system": "supplier", "contentIdentity": "sha256:" + "a" * 64}, "records": records}
 
 
 def _actual_set():
