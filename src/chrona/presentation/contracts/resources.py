@@ -379,7 +379,6 @@ _SCHEMAS = {
     ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",
-    ("actual-set", "chrona/actual-set/v0.1"): "actual-set-v0.1.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
     ("profile-package", "chrona/profile/v0.1"): "profile-v0.1.schema.yaml",

@@ -1,7 +1,6 @@
 version: chrona/schema-inventory/v0.1
 schemas:
   - {file: actual-intake-batch-v0.2.schema.yaml, kind: actual-intake-batch, state: live, consumers: [src/chrona/operational/resources.py]}
-  - {file: actual-set-v0.1.schema.yaml, kind: actual-set, state: transitioning, successor: actual-set-v0.2.schema.yaml, removalSlice: P4, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: actual-set-v0.2.schema.yaml, kind: actual-set, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: color-scheme-v0.1.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

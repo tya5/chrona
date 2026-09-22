@@ -18,7 +18,7 @@ def _batch(records):
 
 def _actual_set():
     return {
-        "version": "chrona/actual-set/v0.1",
+        "version": "chrona/actual-set/v0.2",
         "kind": "actual-set",
         "id": "supplier-observed",
         "body": {
@@ -27,6 +27,7 @@ def _actual_set():
                     "id": "supplier:42",
                     "sequence": 1,
                     "externalIdentity": {"system": "supplier", "key": 42},
+                    "sourceContentIdentity": "sha256:" + "a" * 64,
                     "alignment": "unmatched",
                     "actual": {"finish": "2026-04-20"},
                 }
@@ -43,7 +44,7 @@ def test_explicit_actual_resolution_is_cas_bound_and_preserves_provenance():
     assert result.provenance == {"externalIdentity": {"system": "supplier", "key": 42}}
     observation = result.actual_set["body"]["observations"][0]
     assert observation["projectObjectId"] == "firmware"
-    assert "externalIdentity" not in observation and "alignment" not in observation
+    assert observation["externalIdentity"] == {"system": "supplier", "key": 42} and "alignment" not in observation
 
 
 def test_actual_resolution_rejects_stale_unknown_or_non_unmatched_observation():
