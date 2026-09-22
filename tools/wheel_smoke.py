@@ -30,7 +30,7 @@ PROJECT = {
 def run() -> None:
     assert validate_project(PROJECT) == []
     assert schedule(PROJECT).ok
-    assert schema_resource("layout-profile-v0.2.schema.yaml").is_file()
+    assert schema_resource("layout-profile-v0.3.schema.yaml").is_file()
     try:
         with patch.object(sys, "argv", ["chrona", "--help"]):
             main()

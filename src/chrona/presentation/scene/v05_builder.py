@@ -70,6 +70,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     projection = value.projection
     if not hasattr(projection, "items") or not hasattr(projection, "window"):
         raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
+    if getattr(projection, "surface", "table-timeline") != "table-timeline":
+        raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/view/body/surface")
     metric = value.measured_sources.metric_values
     contract = normalize_presentation_input(value.surface_content)
     if "text.body.size" not in metric or "text.body.lineHeight" not in metric:

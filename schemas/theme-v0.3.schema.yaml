@@ -1,11 +1,11 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:theme-v0.2"
-title: "Chrona Theme v0.2"
+$id: "urn:chrona:theme-v0.3"
+title: "Chrona Theme v0.3"
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: "chrona/theme/v0.2"}
+  version: {const: "chrona/theme/v0.3"}
   kind: {const: theme}
   id: {type: string, minLength: 1}
   body:

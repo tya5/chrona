@@ -1,4 +1,4 @@
-version: chrona/theme/v0.2
+version: chrona/theme/v0.3
 kind: theme
 id: executive-light
 body:
@@ -51,6 +51,9 @@ body:
     'group:fw-team.fill': category
     'group:validation-team.fill': category
     planned.fill: accent
+    network-node.fill: surfaceRaised
+    network-edge.stroke: textMuted
+    critical-edge.stroke: negative
     summary-bar.fill: accent
     snapshot.fill: neutral
     actual.fill: positive

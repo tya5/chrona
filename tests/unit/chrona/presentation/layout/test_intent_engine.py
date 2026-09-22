@@ -65,7 +65,7 @@ def test_missing_measurement_and_required_overflow_diagnose():
 
 def test_grid_and_distribution_are_deterministic():
     raw={
-      "version":"chrona/layout-profile/v0.2","id":"grid","writingMode":"horizontal-tb",
+      "version":"chrona/layout-profile/v0.3","id":"grid","writingMode":"horizontal-tb",
       "root":{"id":"root","kind":"grid","inlineSize":"fill","blockSize":"fill","columnTracks":[{"fr":1},{"fr":1}],"rowTracks":["content"],"gap":{"token":"spacing.m"},"padding":{"token":"spacing.none"},"alignItems":"stretch","justifyContent":"start","children":[
         {"id":"legend","kind":"slot","source":"legend","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":1,"row":1}},
         {"id":"notes","kind":"slot","source":"notes","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":2,"row":1}}

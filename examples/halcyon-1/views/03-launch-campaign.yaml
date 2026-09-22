@@ -1,7 +1,8 @@
-version: chrona/view/v0.7
+version: chrona/view/v0.8
 kind: view
 id: halcyon-03-launch-campaign
 body:
+  surface: table-timeline
   rows: {mode: automatic}
   selection:
     include:

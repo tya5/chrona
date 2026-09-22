@@ -208,6 +208,7 @@ class ViewInput:
     shading: FrozenDict | None
     time_presentation: FrozenDict | None
     annotation_presentation: str | None
+    surface: str = "table-timeline"
 
 
 @dataclass(frozen=True)
@@ -381,10 +382,10 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
     ("project", "timeline/v0.5"): "project-v0.5.schema.yaml",
-    ("view", "chrona/view/v0.7"): "view-v0.7.schema.yaml",
-    ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
+    ("view", "chrona/view/v0.8"): "view-v0.8.schema.yaml",
+    ("theme", "chrona/theme/v0.3"): "theme-v0.3.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
-    ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",
+    ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
     ("profile-package", "chrona/profile/v0.2"): "profile-v0.2.schema.yaml",
@@ -478,7 +479,8 @@ def _view_input(body: FrozenDict) -> ViewInput:
                           str(column["missing"])) for column in body.get("tableColumns", ())),
         tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
-        str(body["annotationPresentation"]) if "annotationPresentation" in body else None)
+        str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
+        str(body["surface"]))
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:

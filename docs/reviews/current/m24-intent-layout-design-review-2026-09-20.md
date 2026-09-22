@@ -7,7 +7,7 @@
 - M24 declarative-layout plan and external-system research;
 - Specification 33 and its successor notes in Specifications 27, 29, and 30;
 - ADR-0023;
-- `layout-profile-v0.2` and `render-context-v0.4` schemas;
+- `layout-profile-v0.3` and `render-context-v0.4` schemas;
 - complete, relative/barrier, inherited-override, invalid-offset, and Render Context
   fixtures;
 - roadmap, status ledger, schema index, authoring guide, and specification index.

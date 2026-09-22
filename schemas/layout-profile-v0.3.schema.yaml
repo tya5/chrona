@@ -1,11 +1,11 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:layout-profile-v0.2"
-title: "Chrona Intent-Oriented Layout Profile v0.2"
+$id: "urn:chrona:layout-profile-v0.3"
+title: "Chrona Intent-Oriented Layout Profile v0.3"
 type: object
 additionalProperties: false
 required: [version, id, writingMode]
 properties:
-  version: {const: "chrona/layout-profile/v0.2"}
+  version: {const: "chrona/layout-profile/v0.3"}
   id: {$ref: "#/$defs/id"}
   writingMode: {enum: [horizontal-tb, vertical-rl, vertical-lr]}
   extends: {$ref: "#/$defs/reference"}
@@ -265,7 +265,7 @@ $defs:
       id: {$ref: "#/$defs/id"}
       kind: {const: slot}
       source:
-        enum: [title, table, timeline, timeline-axis, summary, legend, group-details, observations, milestones, annotations, notes]
+        enum: [title, table, timeline, timeline-axis, network, summary, legend, group-details, observations, milestones, annotations, notes]
       inlineSize: {$ref: "#/$defs/size"}
       blockSize: {$ref: "#/$defs/size"}
       place: {$ref: "#/$defs/place"}

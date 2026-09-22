@@ -332,7 +332,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
             raise ClosureError("E_CLOSURE_KIND")
         actual_id = value.get("id")
     elif expected_kind == "layout-profile":
-        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.2":
+        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.3":
             raise ClosureError("E_CLOSURE_KIND")
         actual_id = value.get("id")
     else:

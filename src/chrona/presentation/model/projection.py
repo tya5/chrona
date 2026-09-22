@@ -60,6 +60,7 @@ class ReviewProjection:
     rows: tuple[ReviewRowProjection, ...] = ()
     comparison_facets: tuple[str, ...] = ()
     hierarchy_grouping: bool = False
+    surface: str = "table-timeline"
 
 
 @dataclass(frozen=True)
@@ -161,7 +162,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     return ReviewProjection(tuple(selected),
         (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
-        view.comparison.facets, hierarchy)
+        view.comparison.facets, hierarchy, view.surface)
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],

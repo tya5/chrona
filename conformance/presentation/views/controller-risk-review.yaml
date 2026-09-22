@@ -1,4 +1,4 @@
-version: chrona/view/v0.7
+version: chrona/view/v0.8
 kind: view
 id: controller-risk-review
 body:
