@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
+from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
 from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text
@@ -43,7 +44,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     if not isinstance(metric_values, dict):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     decisions = {item.source: item for item in layout_manifest.decisions if item.source}
-    required = ("title", "table", "timeline", "timeline-axis")
+    required = tuple(slot.value for slot in REQUIRED_SLOTS)
     missing = next((name for name in required if name not in decisions), None)
     if missing is not None:
         raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")

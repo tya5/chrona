@@ -14,7 +14,7 @@ from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.semantic_registry import PrimitiveKind, semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 
@@ -122,26 +122,32 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
                             placed.line_height, placed.font_asset_identity)
-        primitives.append(ScenePrimitive(scene_id, "Text", placed.source_ref, "review", purpose, role, layout.bounds,
+        primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
                                          text=placed.content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
-    emit_layout_text("title", "title-text", "text")
+    def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None) -> None:
+        binding = semantic_binding(semantic_id)
+        emit_layout_text(scene_id, binding.purpose, role or binding.scene_role)
+
+    emit_semantic_text("title", "titleText")
     for column_id, label in value.surface_content.table_columns:
-        emit_layout_text(f"column:{column_id}", "table-column-label", "text")
+        emit_semantic_text(f"column:{column_id}", "tableColumnLabel")
     for object_id, column_id, cell in value.surface_content.table_cells:
         if f"cell:{object_id}:{column_id}" in layout_text:
-            emit_layout_text(f"cell:{object_id}:{column_id}", "table-cell", "text")
+            emit_semantic_text(f"cell:{object_id}:{column_id}", "tableCell")
     for group in groups:
-        primitives.append(ScenePrimitive(f"group:{group.group_id}", "Rect", group.group_id, "group", "group-decoration", "group-band",
+        group_band = semantic_binding("groupBand")
+        primitives.append(ScenePrimitive(f"group:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", group_band.purpose, group_band.scene_role,
                                          group.content_bounds, opacity=0.12, z_order=len(primitives)))
         if group.header_bounds is not None:
-            primitives.append(ScenePrimitive(f"group-header-band:{group.group_id}", "Rect", group.group_id, "group", "group-header-band", "group-band",
+            header_band = semantic_binding("groupHeaderBand")
+            primitives.append(ScenePrimitive(f"group-header-band:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", header_band.purpose, header_band.scene_role,
                                              group.header_bounds, opacity=0.2, z_order=len(primitives)))
-            emit_layout_text(f"group-header:{group.group_id}", "group-header", "text")
+            emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
     calendar_binding = semantic_binding("calendarClosed")
     for placed in placed_surface.shapes:
         if placed.placement_id.startswith("calendar-closed:"):
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
-            primitives.append(ScenePrimitive(placed.placement_id, "Rect", "project-calendar", "calendar",
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "project-calendar", "calendar",
                                              calendar_binding.purpose, calendar_binding.scene_role, bounds,
                                              opacity=0.12, z_order=len(primitives)))
     mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
@@ -154,68 +160,73 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         instance_id = (layout_instance_id if projection.rows else item.object_id)
         source_kind = item.source_kind if projection.rows else "combined"
         planned = item.planned
-        planned_role = "snapshot" if source_kind == "snapshot" else "planned"
+        planned_binding = semantic_binding("snapshot" if source_kind == "snapshot" else "planned")
+        planned_role = planned_binding.scene_role
         planned_mark = mark_placements.get(f"planned:{instance_id}")
         if planned_mark is not None:
             bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                       float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
             if item.source_type == "point":
-                primitives.append(ScenePrimitive(f"planned:{instance_id}", "Symbol", item.object_id, "object", planned_role, planned_role,
+                primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
             else:
-                primitives.append(ScenePrimitive(f"planned:{instance_id}", "Rect", item.object_id, "object", planned_role, planned_role,
+                primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds, projection_instance_id=instance_id, z_order=len(primitives)))
         actual = item.actual or {}
+        actual_binding = semantic_binding("actual")
         actual_mark = mark_placements.get(f"actual:{instance_id}")
         if actual_mark is not None:
             bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                       float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
             if item.source_type == "span":
-                primitives.append(ScenePrimitive(f"actual:{instance_id}", "Rect", item.object_id, "object", "actual", "actual",
+                primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                  bounds, projection_instance_id=instance_id, z_order=len(primitives)))
             else:
-                primitives.append(ScenePrimitive(f"actual:{instance_id}", "Symbol", item.object_id, "object", "actual", "actual",
+                primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                  bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
-            primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
+            missing_binding = semantic_binding("missingActual")
+            primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
                                              bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
-            emit_layout_text(label_id, "member-label", "text")
+            emit_semantic_text(label_id, "memberLabel")
         variance_id = f"variance:{instance_id}"
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
-            role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
-            emit_layout_text(variance_id, "finish-delta", role)
+            role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else semantic_binding("finishDelta").scene_role
+            emit_semantic_text(variance_id, "finishDelta", role)
     axis_band_binding = semantic_binding("axisBand")
     for placed in placed_surface.text:
         if placed.placement_id.startswith("axis-band:"):
-            emit_layout_text(placed.placement_id, axis_band_binding.purpose, "text")
+            emit_semantic_text(placed.placement_id, "axisBand", "text")
     for placed in placed_surface.shapes:
         if placed.placement_id.startswith("axis:"):
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
-            primitives.append(ScenePrimitive(placed.placement_id, "Path", "timeline-axis", "axis", "axis-grid", "axis-major",
+            axis_grid = semantic_binding("axisGrid")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.PATH, "timeline-axis", "axis", axis_grid.purpose, axis_grid.scene_role,
                                              bounds, points=placed.points, z_order=len(primitives)))
             label_id = "axis-label:" + placed.placement_id.removeprefix("axis:")
             if label_id in layout_text:
-                emit_layout_text(label_id, "axis-label", "text")
+                emit_semantic_text(label_id, "axisLabel")
     for placed in placed_surface.shapes:
         if placed.placement_id == "as-of":
             as_of_binding = semantic_binding("asOf")
-            primitives.append(ScenePrimitive("as-of", "Path", "actual-set", "actual", as_of_binding.purpose, as_of_binding.scene_role,
+            primitives.append(ScenePrimitive("as-of", PrimitiveKind.PATH, "actual-set", "actual", as_of_binding.purpose, as_of_binding.scene_role,
                                              (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                                              points=placed.points,
                                              z_order=len(primitives)))
-            emit_layout_text("as-of-label", "as-of-label", "text")
+            emit_semantic_text("as-of-label", "asOfLabel")
     annotation_binding = semantic_binding("annotation")
     legend_binding = semantic_binding("legendEntry")
     for relation in placed_surface.relations:
         if relation.suppressed or relation.relation_id.startswith("annotation-leader:"):
             continue
         source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
-        primitives.append(ScenePrimitive(relation.relation_id, "Path", source, "relation", "dependency", "dependency",
+        dependency = semantic_binding("dependency")
+        primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          (0, 0, 0, 0), shape=str(value.theme_tokens.token("dependency", "marker", "marker")),
                                          points=relation.points, from_port_id=relation.source_port_id,
                                          to_port_id=relation.target_port_id, z_order=len(primitives)))
@@ -223,35 +234,41 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
         if placed.placement_id.startswith("legend-swatch:"):
-            primitives.append(ScenePrimitive(placed.placement_id, "Rect", placed.source_ref, "legend",
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
                                              legend_binding.purpose, placed.source_ref, bounds, z_order=len(primitives)))
         elif placed.placement_id.startswith("annotation-box:"):
-            primitives.append(ScenePrimitive(placed.placement_id, "Rect", placed.source_ref, "annotation",
-                                             f"{annotation_binding.purpose}-box", annotation_binding.scene_role,
+            annotation_box = semantic_binding("annotationBox")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
+                                             annotation_box.purpose, annotation_box.scene_role,
                                              bounds, z_order=len(primitives)))
-    text_roles = (
-        ("legend:", "legend-label", "text"), ("note:", "project-note", "text"),
-        ("group-detail:", "group-detail", "text"), ("milestone:", "milestone-digest-entry", "text"),
-        ("summary:", "summary-metric", "text"), ("note-index:", "note-index", "note-index"),
-        ("annotation-text:", "annotation", "annotation-text"),
-    )
+    text_roles = tuple(
+        (prefix, semantic_binding(semantic_id).purpose, role or semantic_binding(semantic_id).scene_role)
+        for prefix, semantic_id, role in (
+            ("legend:", "legendLabel", None), ("note:", "projectNote", None),
+            ("group-detail:", "groupDetail", None), ("milestone:", "milestoneDigestEntry", None),
+            ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
+            ("annotation-text:", "annotation", "annotation-text"),
+        ))
     for placed in placed_surface.text:
         for prefix, purpose, role in text_roles:
             if placed.placement_id.startswith(prefix):
                 if ":value" in placed.placement_id:
-                    purpose, role = "summary-figure-value", "metric"
+                    figure = semantic_binding("summaryFigureValue")
+                    purpose, role = figure.purpose, figure.scene_role
                 elif ":caption" in placed.placement_id:
-                    purpose, role = "summary-figure-caption", "subtitle"
+                    caption = semantic_binding("summaryFigureCaption")
+                    purpose, role = caption.purpose, caption.scene_role
                 elif placed.placement_id.count(":") == 1 and placed.placement_id.startswith("summary:"):
-                    purpose = "summary-header"
+                    purpose = semantic_binding("summaryHeader").purpose
                 emit_layout_text(placed.placement_id, purpose, role)
                 break
     for relation in placed_surface.relations:
         if relation.suppressed or not relation.relation_id.startswith("annotation-leader:"):
             continue
         source = relation.relation_id.removeprefix("annotation-leader:")
-        purpose, role, shape, layer = f"{annotation_binding.purpose}-leader", annotation_binding.scene_role, None, "annotation"
-        primitives.append(ScenePrimitive(relation.relation_id, "Path", source, layer, purpose, role, (0, 0, 0, 0),
+        leader = semantic_binding("annotationLeader")
+        purpose, role, shape, layer = leader.purpose, leader.scene_role, None, "annotation"
+        primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
                                          shape=shape, points=relation.points, from_port_id=relation.source_port_id,
                                          to_port_id=relation.target_port_id, z_order=len(primitives)))
     return SceneSurface("table-timeline", slots, rows, groups, scale, tuple(primitives))
