@@ -2,6 +2,8 @@
 
 **Design authority:** [51 Progressive Authoring](../../specification/51-progressive-authoring.md) and
 `docs/reviews/current/issue-222-progressive-authoring-architecture-review-2026-09-22.md`.
+The local aggregate commit protocol is completed by
+`docs/reviews/current/issue-222-local-aggregate-transaction-correction-2026-09-22.md`.
 
 ## Purpose
 
