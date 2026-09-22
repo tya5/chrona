@@ -298,7 +298,24 @@ all parent revisions, and an allowed typed resolution; it then follows the ordin
 validation and Store write path. Neither command accepts a raw patch, Scene mutation,
 or implicit merge preference.
 
-## 12. Out of scope
+## 12. Progressive authoring successor commands
+
+[51 Progressive Authoring](51-progressive-authoring.md) adds a separately versioned,
+closed workspace command registry. `setWorkspaceTask`, `setWorkspaceActual`,
+`selectPresentationPreset`, and `setPresentationOverride` have an
+`authoring-workspace` target and validate the complete normalized candidate. They do
+not admit arbitrary source patches, Project/Actual mutation through a presentation
+path, renderer state, or Scene geometry.
+
+`materializePresentationPreset` is the one successor aggregate transaction. Its target
+names the workspace and all generated explicit-resource destinations, and its opaque
+base revision covers that complete aggregate. The Engine resolves the exact preset and
+binding, validates the whole candidate and byte-equivalence proof, then commits all
+named resources and its receipt or none. It rejects stale bases and destination
+collisions. Its receipt is provenance, not a canonical input or inheritance fallback.
+This successor deliberately does not change the v0.1 one-target serialized registry.
+
+## 13. Out of scope
 
 This document does not define:
 
@@ -309,6 +326,6 @@ This document does not define:
 - Git branching/merge policy or repository hosting workflow; or
 - direct editing/import of SVG, Scene, or tldraw store state as canonical data.
 
-## 13. Boundary to Extension and Quality specifications
+## 14. Boundary to Extension and Quality specifications
 
 [11 Extension Model](11-extension-model.md) determines which profile- and field-level changes are legal and how extension-provided command kinds, if any, remain declarative and safe. [12 Quality and Invariants](12-quality-and-invariants.md) supplies cross-system properties against which command processing is tested. New command kinds that alter Core semantic authority, scheduling behavior, or renderer round-tripping require a specification review and normally an ADR before implementation.

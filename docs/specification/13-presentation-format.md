@@ -56,6 +56,7 @@ The initial kinds are:
 | `scene-profile` | Scene and Rendering | Temporal scale, lane layout, routing, collision, and layout-metric policy |
 | `snapshot-ref` | View Model | Immutable named Project comparison reference |
 | `actual-set` | View/Command Model | Independently observed Actual observations and explicit alignment state |
+| `presentation-preset` / `presentation-binding` / `presentation-materialization-receipt` | Progressive Authoring | Successor declarative preset, guided binding, and non-rendered materialization provenance; exact schemas are owned by `51` |
 
 `kind` is not an extension point by itself. New resource kinds require an owning
 specification and a versioned schema; unknown kinds may be preserved losslessly but
