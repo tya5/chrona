@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
@@ -239,8 +240,16 @@ def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
 
 def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
     if target_kind == "png":
-        return {"engine": "cairosvg", "version": "2.9.1", "cairoVersion": "1.18.4", "dpi": 96}
-    return {"engine": "reportlab", "svglibVersion": "2.2.0", "reportlabVersion": "5.0.1", "invariant": True}
+        try:
+            import cairocffi
+            import cairosvg
+            return {"engine": "cairosvg", "version": cairosvg.__version__, "cairoVersion": cairocffi.cairo_version_string(), "dpi": 96}
+        except ImportError:
+            return {"engine": "cairosvg", "version": "unavailable", "cairoVersion": "unavailable", "dpi": 96}
+    try:
+        return {"engine": "reportlab", "svglibVersion": version("svglib"), "reportlabVersion": version("reportlab"), "invariant": True}
+    except Exception:
+        return {"engine": "reportlab", "svglibVersion": "unavailable", "reportlabVersion": "unavailable", "invariant": True}
 
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
