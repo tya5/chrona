@@ -19,7 +19,13 @@ def _render(kind: str):
         theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
         layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml", target_kind=kind,
     )
-    return render_review(RenderRequest(draft.closure, draft.asset_root, ReferenceScheduler(), renderer_for(draft.closure.context.body["target"], draft.closure.context.body["environment"]), asset_root=draft.asset_root)).artifact
+    context = draft.closure.context
+    return render_review(RenderRequest(
+        draft.closure, draft.asset_root, ReferenceScheduler(),
+        renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
+                     {"rasterizer": context.environment.rasterizer} if context.environment.rasterizer else {}),
+        asset_root=draft.asset_root,
+    )).artifact
 
 
 @pytest.mark.parametrize(("kind", "media_type", "prefix"), [("png", "image/png", b"\x89PNG\r\n\x1a\n"), ("pdf", "application/pdf", b"%PDF-")])

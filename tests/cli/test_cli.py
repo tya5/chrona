@@ -296,7 +296,7 @@ def test_cli_draft_render_writes_declared_binary_format(tmp_path, monkeypatch, f
 
 
 def test_cli_immutable_format_assertion_does_not_write_on_mismatch(tmp_path, monkeypatch, capsys):
-    closure = SimpleNamespace(context=SimpleNamespace(body={"target": {"kind": "svg"}}))
+    closure = SimpleNamespace(context=SimpleNamespace(target=SimpleNamespace(kind="svg")))
     with pytest.raises(CliFailure, match="E_RENDER_FORMAT_CONTEXT"):
         cli._assert_context_format(closure, "png")
     assert not (tmp_path / "out.svg").exists()

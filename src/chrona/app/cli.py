@@ -180,7 +180,10 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
     """Adapt one resolved closure to the render use case and its diagnostics."""
     request = RenderRequest(
         closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
-        scheduler=ReferenceScheduler(), renderer=renderer_for(closure.context.body["target"], closure.context.body["environment"]),
+        scheduler=ReferenceScheduler(), renderer=renderer_for(
+            {"kind": closure.context.target.kind, "capabilities": list(closure.context.target.capabilities)},
+            {"rasterizer": closure.context.environment.rasterizer} if closure.context.environment.rasterizer else {},
+        ),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
         asset_root=asset_root,
     )
@@ -201,7 +204,7 @@ def _run_render_review(args: argparse.Namespace) -> None:
 
 
 def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:
-    if format_name and format_name != closure.context.body["target"]["kind"]:
+    if format_name and format_name != closure.context.target.kind:
         raise CliFailure("E_RENDER_FORMAT_CONTEXT", "--format must match the Context target", "cli", "/format", 2)
 
 
