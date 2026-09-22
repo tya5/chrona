@@ -138,6 +138,7 @@ class RelationPlacement:
     points: tuple[tuple[float, float], ...] = ()
     suppressed: bool = False
     diagnostic: str | None = None
+    semantic_id: str = "dependency"
 
 
 @dataclass(frozen=True)

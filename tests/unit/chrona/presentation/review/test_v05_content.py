@@ -60,6 +60,21 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     assert value.notes == (("n", "note"),)
 
 
+def test_critical_relation_mode_uses_only_analysis_critical_primary_endpoints():
+    projection = ReviewProjection((
+        ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (), critical=True),
+        ReviewItem("b", "B", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, (), critical=True),
+        ReviewItem("c", "C", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, (), critical=False),
+    ), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
+    project = {"relations": (
+        {"id": "critical", "from": {"object": "a"}, "to": {"object": "b"}},
+        {"id": "slack", "from": {"object": "a"}, "to": {"object": "c"}},
+    ), "annotations": {}}
+    view = {"body": {"tableColumns": (), "visibility": {"relations": "critical", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
+    assert value.relations == ({"id": "critical", "from": {"object": "a"}, "to": {"object": "b"}, "_semantic": "dependency-critical"},)
+
+
 def test_calendar_closures_come_only_from_project_calendar_exceptions():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ()),),
                                   (date(2026, 1, 1), date(2026, 1, 5)), (), ())

@@ -39,6 +39,12 @@ def test_registry_declares_stable_as_of_scene_role() -> None:
     assert binding.theme_role == "asOf"
 
 
+def test_registry_declares_closed_critical_dependency_role() -> None:
+    binding = semantic_binding("dependency-critical")
+
+    assert (binding.purpose, binding.scene_role, binding.theme_role) == ("dependency", "dependency-critical", "dependency-critical")
+
+
 def test_enabled_semantics_are_registry_derived() -> None:
     bindings = enabled_semantics(
         has_as_of=True,

@@ -225,7 +225,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if relation.suppressed or relation.relation_id.startswith("annotation-leader:"):
             continue
         source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
-        dependency = semantic_binding("dependency")
+        dependency = semantic_binding(relation.semantic_id)
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          (0, 0, 0, 0), shape=str(value.theme_tokens.token("dependency", "marker", "marker")),
                                          points=relation.points, from_port_id=relation.source_port_id,
