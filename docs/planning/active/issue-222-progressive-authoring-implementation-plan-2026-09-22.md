@@ -4,6 +4,8 @@
 `docs/reviews/current/issue-222-progressive-authoring-architecture-review-2026-09-22.md`.
 The local aggregate commit protocol is completed by
 `docs/reviews/current/issue-222-local-aggregate-transaction-correction-2026-09-22.md`.
+Stage-3 command reversibility is completed by
+`docs/reviews/current/issue-222-materialization-reversibility-correction-2026-09-22.md`.
 
 ## Purpose
 
