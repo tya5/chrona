@@ -13,6 +13,9 @@
 Machine-readable contracts live in [`../schemas/`](../schemas/) and executable
 compatibility fixtures and runners live in [`../conformance/`](../conformance/).
 
+For how `src/chrona` is arranged and which way its dependencies point, see the
+[source architecture guide](guides/source-architecture.md).
+
 Start with the [task-oriented specification guide](specification/README.md). Numbers are
 stable document identifiers rather than a mandatory reading order. Review records
 describe their stated historical scope; they do not supersede the corresponding
