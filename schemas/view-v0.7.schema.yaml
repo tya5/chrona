@@ -181,6 +181,10 @@ allOf:
                       required: [facet]
                       additionalProperties: false
                       properties: {facet: {enum: [planned, actual, finishDelta]}}
+                    - type: object
+                      required: [scenario]
+                      additionalProperties: false
+                      properties: {scenario: {enum: [id, title]}}
                 format: {enum: [text, dateRange, date, signedDays]}
                 missing: {enum: [blank, em-dash, unknown, in-progress]}
           annotations:

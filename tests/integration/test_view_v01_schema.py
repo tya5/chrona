@@ -50,6 +50,14 @@ def test_v04_rejects_unimplemented_relation_fallback_contract():
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
 
 
+def test_v07_scenario_table_source_is_closed_to_id_or_title():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value["body"]["tableColumns"][0]["source"] = {"scenario": "title"}
+    assert next(_validator().iter_errors(_json_value(value)), None) is None
+    value["body"]["tableColumns"][0]["source"] = {"scenario": "unknown"}
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
+
+
 @pytest.mark.parametrize("key", ("entityIds", "profiles"))
 def test_v03_selection_rejects_undefined_capability(key: str):
     value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))

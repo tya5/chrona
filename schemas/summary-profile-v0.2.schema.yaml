@@ -51,10 +51,21 @@ $defs:
         oneOf:
           - {enum: [actual.asOf, planned.nextPoint, count.selected, count.missingActual, count.knownFinishVariance]}
           - type: object
+            required: [actual]
+            additionalProperties: false
+            properties: {actual: {const: asOf}}
+          - type: object
+            required: [counts]
+            additionalProperties: false
+            properties: {counts: {const: finishDelta}}
+          - type: object
+            required: [scenario]
+            additionalProperties: false
+            properties: {scenario: {enum: [id, title]}}
+          - type: object
+            required: [object, facet]
             additionalProperties: false
             properties:
-              actual: {const: asOf}
-              counts: {const: finishDelta}
               object: {type: string, minLength: 1}
               facet: {const: planned}
       format: {enum: [text, date, count, signedDays]}

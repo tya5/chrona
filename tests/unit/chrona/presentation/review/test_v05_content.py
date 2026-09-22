@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.surface_content import SummaryContent
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.contracts.resources import (
@@ -123,6 +123,39 @@ def test_date_range_is_compact_and_retains_cross_year_precision():
                      "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
     assert value.table_cells == (("a", "Plan", "31 Dec 2026 – 02 Jan 2027"),)
+
+
+def test_scenario_table_facts_use_the_table_subject_and_missing_policy():
+    scenario = ReviewItem("task", "Delayed", "span", {"start": date(2026, 2, 1), "end": date(2026, 2, 2)},
+                          None, None, (), item_id="delayed", source_kind="scenario", scenario_id="delayed")
+    primary = ReviewItem("task", "Current", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+                         None, None, (), item_id="current", source_kind="primary")
+    projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 2, 2)), (), (),
+                                  (ReviewRowProjection("scenario", "Scenario", "", "delayed", (primary, scenario)),))
+    view = {"body": {"tableColumns": (
+        {"id": "Scenario", "source": {"scenario": "title"}, "missing": "em-dash"},
+        {"id": "Scenario id", "source": {"scenario": "id"}, "missing": "em-dash"},
+    ), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, {"scenarios": {"delayed": {"title": "Delayed launch"}},
+                                                        "relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
+    assert value.table_cells == (("scenario", "Scenario", "Delayed launch"), ("scenario", "Scenario id", "delayed"))
+
+
+def test_scenario_summary_facts_are_stable_and_limited_to_selected_sources():
+    early = ReviewItem("task", "Early", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+                       None, None, (), item_id="early", source_kind="scenario", scenario_id="early")
+    late = ReviewItem("task", "Late", "span", {"start": date(2026, 2, 1), "end": date(2026, 2, 2)},
+                      None, None, (), item_id="late", source_kind="scenario", scenario_id="late")
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 2, 2)), (), (),
+                                  (ReviewRowProjection("r", "", "", "early", (late, early)),))
+    summary = {"body": {"panels": [{"id": "facts", "metrics": {
+        "ids": {"label": "Scenarios", "source": {"scenario": "id"}, "format": "text"},
+        "titles": {"label": "Hypotheses", "source": {"scenario": "title"}, "format": "text"},
+    }}]}}
+    content = normalize_summary_content(typed_summary(summary), projection, None,
+                                        {"scenarios": {"late": {"title": "Late launch"}, "early": {"title": "Early launch"}}})
+    assert tuple(run.content for run in content.runs) == (
+        "facts", "Scenarios: early, late", "Hypotheses: Early launch, Late launch")
 
 
 def test_structured_temporal_and_annotation_presentation_is_normalized():
