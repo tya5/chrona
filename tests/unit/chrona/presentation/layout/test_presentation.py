@@ -25,6 +25,15 @@ def test_table_placements_are_ordered_and_non_overlapping() -> None:
     assert placements[0].inline + placements[0].inline_size <= placements[1].inline
 
 
+def test_table_placements_reserve_the_declared_positive_gutter() -> None:
+    placements = place_table_columns(
+        columns=(("owner", "Owner"), ("status", "Status")),
+        cells=(("a", "owner", "Firmware"), ("a", "status", "In progress")),
+        bounds=(10.0, 0.0, 260.0, 20.0), font_metrics=FixedMetrics(), font_size=10.0, gutter=12.0,
+    )
+    assert placements[1].inline - (placements[0].inline + placements[0].inline_size) == 12.0
+
+
 def test_table_placement_diagnoses_when_required_text_cannot_fit() -> None:
     with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
         place_table_columns(

@@ -16,7 +16,7 @@ from chrona.presentation.layout.annotations import (
     resolve_annotation_anchor, route_annotation_leader,
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import LabelRect, place_label
+from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.surface_quality import (
     GroupPlacement, MarkPlacement, RelationPlacement, RowPlacement, ScalePlacement,
@@ -113,7 +113,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
-                                  font_metrics=request.font_metrics, font_size=body_size, overflow=table.overflow)
+                                  font_metrics=request.font_metrics, font_size=body_size, overflow=table.overflow,
+                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)))
     positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
     column_widths = {item.column_id: item.inline_size for item in columns}
     def table_text(content: str, column_id: str) -> tuple[str, str]:
@@ -257,6 +258,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                (x, track.block), (x, track.block)))
     mark_by_id = {item.placement_id: item for item in marks}
     diagnostics: list[str] = []
+    label_requests: list[LabelRequest] = []
     if contract.labels.enabled:
         for review_row in review_rows:
             for item in review_row.items:
@@ -275,45 +277,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     continue
                 mark = mark_by_id.get(f"planned:{instance_id}")
                 track = track_by_id[layout_id]
-                if request.surface_content.label_placement != "plot":
-                    # The boolean legacy form has no declared candidate or overflow policy.
-                    # Preserve its existing placement until authors opt into the typed form.
-                    label_at = start_at if isinstance(start_at, date) else end_at
-                    height = float(mark.bounds.block_size) if mark is not None else track.block_size
-                    block = float(mark.bounds.block) if mark is not None else track.block
-                    text.append(place_text(placement_id=f"member-label:{instance_id}", source_ref=item.object_id,
-                                           content=" ".join(parts), inline=_coordinate(label_at, scale) + height,
-                                           baseline_block=block + height, typography_role="text",
-                                           theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                           collision_region=f"plot-label:{instance_id}"))
-                    continue
                 anchor = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
                     _coordinate(end_at if isinstance(end_at, date) else start_at, scale), track.block,
                     max(1.0, track.block_size), track.block_size)
-                _, _, font_size, line_height = request.theme_tokens.typography("text")
-                label_size = (measure_text_width(" ".join(parts), font_size=float(font_size), font_metrics=request.font_metrics),
-                              float(font_size) * float(line_height))
-                sides = ("start", "end") if contract.labels.side == "auto" else (contract.labels.side,)
-                obstacles = [LabelRect(*_bounds(item.bounds)) for item in marks]
-                obstacles.extend(LabelRect(*_bounds(item.bounds)) for item in text
-                                 if item.required and item.overflow != "suppressed")
-                timeline_rect = LabelRect(*timeline_bounds)
-                candidate = place_label(anchor, label_size, sides, bounds=timeline_rect, obstacles=obstacles,
-                                        gap=max(1.0, float(font_size) * 0.25), required=False,
-                                        overflow=contract.labels.overflow)
-                provisional = place_text(placement_id=f"member-label:{instance_id}", source_ref=item.object_id,
-                                         content=" ".join(parts), inline=0, baseline_block=float(font_size),
-                                         typography_role="text", theme_tokens=request.theme_tokens,
-                                         font_metrics=request.font_metrics, collision_region="plot-label")
-                if candidate is None:
-                    text.append(replace(provisional, overflow="suppressed", required=False))
-                    diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{instance_id}")
-                else:
-                    text.append(place_text(placement_id=provisional.placement_id, source_ref=item.object_id,
-                                           content=provisional.content, inline=candidate.bounds.x,
-                                           baseline_block=candidate.bounds.y + float(font_size), typography_role="text",
-                                           theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                           collision_region="plot-label"))
+                sides = ("above", "below", "start", "end") if contract.labels.side == "auto" else (contract.labels.side,)
+                label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
+                                                   anchor, sides, "text", "plot-label", contract.labels.overflow))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
     for review_row in review_rows:
@@ -324,18 +293,41 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 continue
             if item.finish_delta is None or "finishDelta" in contract.labels.content:
                 continue
-            mark = mark_by_id.get(f"planned:{instance_id}")
+            mark = mark_by_id.get(f"actual:{instance_id}") or mark_by_id.get(f"planned:{instance_id}")
             track = track_by_id[layout_id]
-            height = float(mark.bounds.block_size) if mark is not None else track.block_size
-            block = float(mark.bounds.block) if mark is not None else track.block
             actual = item.actual or {}
             anchor = actual.get("finish", item.planned.get("end", item.planned.get("at")))
             if isinstance(anchor, date):
-                text.append(place_text(placement_id=f"variance:{instance_id}", source_ref=item.object_id,
-                                       content=f"{item.finish_delta:+d}d", inline=_coordinate(anchor, scale),
-                                       baseline_block=block + height, typography_role="summary",
-                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                       collision_region=f"variance:{instance_id}"))
+                anchor_bounds = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
+                    _coordinate(anchor, scale), track.block, max(1.0, track.block_size), track.block_size)
+                label_requests.append(LabelRequest(f"variance:{instance_id}", item.object_id, f"{item.finish_delta:+d}d",
+                                                   anchor_bounds, ("above", "below", "end", "start"), "summary",
+                                                   f"variance:{instance_id}", request.surface_content.label_overflow))
+
+    timeline_rect = LabelRect(*timeline_bounds)
+    for label_request in label_requests:
+        _, _, font_size, line_height = request.theme_tokens.typography(label_request.typography_role)
+        label_size = (measure_text_width(label_request.content, font_size=float(font_size), font_metrics=request.font_metrics),
+                      float(font_size) * float(line_height))
+        obstacles = [LabelRect(*_bounds(item.bounds)) for item in marks]
+        obstacles.extend(LabelRect(*_bounds(item.bounds)) for item in text
+                         if item.required and item.overflow != "suppressed")
+        candidate = place_label(label_request.anchor, label_size, label_request.candidates, bounds=timeline_rect,
+                                obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                required=label_request.overflow == "diagnose", overflow=label_request.overflow)
+        provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
+                                 content=label_request.content, inline=0, baseline_block=float(font_size),
+                                 typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
+                                 font_metrics=request.font_metrics, collision_region=label_request.collision_region)
+        if candidate is None:
+            text.append(replace(provisional, overflow="suppressed", required=False))
+            diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
+        else:
+            text.append(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
+                                   content=provisional.content, inline=candidate.bounds.x,
+                                   baseline_block=candidate.bounds.y + float(font_size),
+                                   typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
+                                   font_metrics=request.font_metrics, collision_region=provisional.collision_region))
 
     relations: list[RelationPlacement] = []
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}

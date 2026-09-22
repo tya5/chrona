@@ -34,7 +34,7 @@ def place_table_columns(*, columns: tuple[tuple[str, str], ...],
                         cells: tuple[tuple[str, str, str], ...],
                         bounds: tuple[float, float, float, float],
                         font_metrics: Any, font_size: float,
-                        overflow: str = "diagnose") -> tuple[TableColumnPlacement, ...]:
+                        overflow: str = "diagnose", gutter: float = 0.0) -> tuple[TableColumnPlacement, ...]:
     """Measure and place columns without shrinking required text below its bounds."""
     content_by_column = {column_id: [label] for column_id, label in columns}
     for _, column_id, cell in cells:
@@ -45,18 +45,21 @@ def place_table_columns(*, columns: tuple[tuple[str, str], ...],
                            default=font_size) + font_size)
         for column_id, label in columns
     )
-    total = sum(natural_widths)
-    if total > bounds[2] and overflow == "diagnose":
+    if gutter < 0:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-    if total > bounds[2] and overflow != "ellipsize-with-source":
+    available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
+    total = sum(natural_widths)
+    if available < 0 or (total > available and overflow == "diagnose"):
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
+    if total > available and overflow != "ellipsize-with-source":
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW_POLICY", "/layoutManifest/table")
-    if total <= bounds[2]:
+    if total <= available:
         widths = natural_widths
     else:
         minimum = font_size * 2
-        if minimum * len(natural_widths) > bounds[2]:
+        if minimum * len(natural_widths) > available:
             raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-        remaining = bounds[2] - minimum * len(natural_widths)
+        remaining = available - minimum * len(natural_widths)
         excess = sum(max(0.0, width - minimum) for width in natural_widths)
         widths = tuple(minimum + remaining * max(0.0, width - minimum) / excess
                        if excess else minimum for width in natural_widths)
@@ -65,7 +68,7 @@ def place_table_columns(*, columns: tuple[tuple[str, str], ...],
     for (column_id, _), width in zip(columns, natural_widths, strict=True):
         placed_width = widths[len(placements)]
         placements.append(TableColumnPlacement(column_id, cursor, placed_width, width))
-        cursor += placed_width
+        cursor += placed_width + gutter
     return tuple(placements)
 
 

@@ -25,6 +25,7 @@ body:
     timeline-mark-size: {type: number, value: 12}
     timeline-axis-height: {type: number, value: 40}
     table-column-width: {type: number, value: 130}
+    table-column-gutter: {type: number, value: 10}
     table-header-height: {type: number, value: 40}
   roles:
     text: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.body, lineHeight: leading.body}
@@ -84,4 +85,5 @@ body:
     timeline.mark.blockSize: timeline-mark-size
     timeline.axis.blockSize: timeline-axis-height
     table.column.minInlineSize: table-column-width
+    table.column.gutter.inlineSize: table-column-gutter
     table.header.blockSize: table-header-height

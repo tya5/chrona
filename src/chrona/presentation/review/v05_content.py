@@ -37,10 +37,12 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     visible = body.get("visibility", {})
     group_presentation = str(body.get("grouping", {}).get("presentation", "band"))
     labels = visible.get("labels", False)
-    label_placement = "legacy" if labels is True else "none"
+    label_placement = "plot" if labels is True else "none"
     label_content: tuple[str, ...] = ("title",) if labels is True else ()
     label_side = "auto"
-    label_overflow = "diagnose"
+    # Legacy boolean visibility never declared a failure policy.  Preserve its
+    # materializability by treating a rejected candidate as optional.
+    label_overflow = "suppress" if labels is True else "diagnose"
     if isinstance(labels, Mapping):
         if "members" in labels:
             label_placement, label_content = ("plot", ("title",)) if labels["members"] else ("none", ())
