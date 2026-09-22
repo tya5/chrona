@@ -201,7 +201,9 @@ def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
         capabilities={"svg": True},
     )
     surface = compose_review_surface(value)
-    assert not any(item.scene_id == "member-label:a" for item in surface.primitives)
+    label = next(item for item in surface.primitives if item.scene_id == "member-label:a")
+    planned = next(item for item in surface.primitives if item.scene_id == "planned:a")
+    assert label.bounds[1] + label.bounds[3] <= planned.bounds[1]
     assert not any(item.scene_id.startswith("relation:depends") for item in surface.primitives)
 
 

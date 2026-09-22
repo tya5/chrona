@@ -46,7 +46,7 @@ class MeasuredSources:
 REQUIRED_METRICS = (
     "text.body.size", "text.body.lineHeight",
     "timeline.dayWidth", "timeline.row.minBlockSize", "timeline.mark.blockSize", "timeline.axis.blockSize",
-    "table.column.minInlineSize", "table.header.blockSize",
+    "table.column.minInlineSize", "table.column.gutter.inlineSize", "table.header.blockSize",
 )
 
 OPTIONAL_METRICS = ("timeline.groupHeader.blockSize",)

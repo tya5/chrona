@@ -27,6 +27,20 @@ class LabelPlacement:
     bounds: LabelRect
 
 
+@dataclass(frozen=True)
+class LabelRequest:
+    """One semantic plot-text request awaiting deterministic Layout placement."""
+
+    placement_id: str
+    source_ref: str
+    content: str
+    anchor: LabelRect
+    candidates: tuple[str, ...]
+    typography_role: str
+    collision_region: str
+    overflow: str
+
+
 def _intersects(a: LabelRect, b: LabelRect) -> bool:
     return a.x < b.right and b.x < a.right and a.y < b.bottom and b.y < a.bottom
 
