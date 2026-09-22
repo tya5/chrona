@@ -52,6 +52,13 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-19 | Resolve a concurrent semantic conflict explicitly | Must | Library + tests | Not exposed |
 | UC-20 | Approve and audit a controlled change | Must | Library + tests | Not exposed |
 | UC-21 | Synchronize a replica without treating a remote tip as truth | Should | Library + tests | Not exposed |
+| UC-22 | Start a plan-versus-Actual timeline | Must | Designed | Not exposed |
+| UC-23 | Change compact plan or Actual source | Must | Designed | Not exposed |
+| UC-24 | Adapt a guided presentation for an audience | Must | Designed | Not exposed |
+| UC-25 | Edit a guided presentation annotation | Should | Designed | Not exposed |
+| UC-26 | Inspect effective guided provenance | Must | Designed | Not exposed |
+| UC-27 | Materialize a guided preset | Must | Designed | Not exposed |
+| UC-28 | Retain an explicit project | Must | Designed | Existing explicit route |
 
 ## 4. Detailed use cases
 
@@ -405,6 +412,63 @@ becomes Project data.
 provenance-preserving synchronization fixtures.
 **Owners:** `09`, `12`, `15`, `20`.
 
+### Progressive Authoring and Presentation
+
+### UC-22 — Start a plan-versus-Actual timeline
+
+**Trigger:** An author supplies compact tasks, dates, optional Actuals, and one pinned
+preset. **Outcome:** The Authoring Normalizer produces the existing typed closure and
+the normal presentation pipeline renders it. **Acceptance evidence:** compact fixture,
+normalization closure, and deterministic Draft and immutable output. **Exceptional
+behavior:** missing or incompatible preset is diagnosed; no local default is selected.
+**Owners:** `05`, `06`–`10`, `13`, `21`, `51`.
+
+### UC-23 — Change compact plan or Actual source
+
+**Trigger:** A client submits a workspace task or Actual command. **Outcome:** the
+complete normalized Project/Actual candidate is validated and atomically revised.
+**Acceptance evidence:** accepted and rejected command fixtures preserving presentation
+identity. **Exceptional behavior:** a semantic change cannot be smuggled through a
+presentation override. **Owners:** `05`, `09`, `10`, `12`, `51`.
+
+### UC-24 — Adapt a guided presentation for an audience
+
+**Trigger:** An author changes a permitted window, grouping, visibility, annotation,
+or compatible scheme. **Outcome:** only the binding changes; Project and schedule
+identities remain unchanged. **Acceptance evidence:** typed override and closure
+fixtures. **Exceptional behavior:** Layout, fonts, target, or arbitrary paths reject.
+**Owners:** `06`, `07`, `09`, `10`, `12`, `13`, `51`.
+
+### UC-25 — Edit a guided presentation annotation
+
+**Trigger:** A client adds or edits a View-local annotation/anchor. **Outcome:** the
+binding carries logical View intent only. **Acceptance evidence:** command fixture with
+no Project or Scene-coordinate change. **Exceptional behavior:** routes and pixel
+offsets reject as derived geometry. **Owners:** `06`, `08`, `10`, `12`, `51`.
+
+### UC-26 — Inspect effective guided provenance
+
+**Trigger:** A reviewer examines a guided render. **Outcome:** its closure identifies
+workspace, preset, binding, normalizer, and effective resources. **Acceptance
+evidence:** immutable and Draft provenance fixtures. **Exceptional behavior:** a
+mutable registry tip or host default cannot appear in the closure. **Owners:** `09`,
+`12`, `13`, `21`, `51`.
+
+### UC-27 — Materialize a guided preset
+
+**Trigger:** An author elects to own an explicit presentation. **Outcome:** one Command
+creates the complete explicit resource bundle and non-rendered receipt. **Acceptance
+evidence:** atomic diff, byte-equivalence, stale, collision, failure, and undo/redo
+fixtures. **Exceptional behavior:** a partial write or silent preset upgrade is
+rejected. **Owners:** `09`, `10`, `12`, `13`, `21`, `51`.
+
+### UC-28 — Retain an explicit project
+
+**Trigger:** An existing explicit Project is evaluated. **Outcome:** it takes the
+existing closure route and has no workspace or preset edge. **Acceptance evidence:**
+explicit fixture bypassing the Authoring Normalizer. **Exceptional behavior:** no
+compatibility migration is inferred. **Owners:** `05`, `09`, `12`, `13`, `51`.
+
 ## 5. Cross-cutting quality scenarios
 
 | ID | Scenario | Acceptance criterion |
@@ -441,10 +505,11 @@ provenance-preserving synchronization fixtures.
 | UC-19 | `09`, `10`, `12`, `15`, `20` | collaboration schema/fixtures, explicit conflict/CAS provenance tests, and M13 acceptance closure | None for the declared M12/M13 scope |
 | UC-20 | `09`, `10`, `12`, `15`, `20` | approval/denial plus append-only audit tests and M13 acceptance closure | None for the declared M12/M13 scope |
 | UC-21 | `09`, `12`, `15`, `20` | causally-behind replica fixture, offline/stale boundary, and M13 acceptance closure | None for the declared M12/M13 scope |
+| UC-22–UC-28 | `05`–`10`, `12`, `13`, `21`, `51` | approved source/normalization/materialization design | closed schemas, fixtures, command engine, and product adapters |
 
 ## 7. Current gaps and release gate
 
-Every UC-01–UC-21 row has a normative owner and design/library evidence where the rule
+Every UC-01–UC-28 row has a normative owner and design/library evidence where the rule
 is machine-checkable. That does not make it a user-facing product feature. The current
 alpha product claim is limited to the commands and documented scripts named in the
 Product surface column. UC-16–UC-21 remain opt-in successor libraries rather than
@@ -456,7 +521,7 @@ their acceptance evidence rather than describing the entire catalog as implement
 
 ## 8. Output-release successor acceptance
 
-The future output release gate maps UC-01–UC-21 to each claimed target. At minimum,
+The future output release gate maps UC-01–UC-28 to each claimed target. At minimum,
 the target manifest must show deterministic output (UC-01), source/role provenance
 (UC-04/UC-09), no renderer-authoritative mutation (UC-05/UC-06), fidelity diagnostics
 (UC-13), and the exact pinned closure for federation/extension cases (UC-14/UC-15).

@@ -248,7 +248,18 @@ passes typed profiles to Core validation. A host Plugin Manager installs code pl
 under separate host policy and API compatibility checks; it cannot inject a package,
 override profile semantics, or mutate canonical state except through Command.
 
-## 12. Out of scope
+## 12. Progressive authoring successor integration
+
+The Authoring Normalizer specified by [51 Progressive Authoring](51-progressive-authoring.md)
+is an ingress adapter before the Evaluation Closure Resolver. It reads only a validated
+authoring workspace and verified pinned preset, and emits the existing typed Project,
+Actual, View, Theme, Layout, and Render Context closure. It cannot schedule, select
+geometry, call a renderer, persist derived state, or be read by View, Layout, Scene,
+or Renderer components. A guided Draft remains labelled Draft; immutable guided input
+uses the same closure validation as explicit input. Materialization remains a Command
+Engine transaction, not a Runtime Coordinator write path.
+
+## 13. Out of scope
 
 This document does not define:
 
@@ -259,6 +270,6 @@ This document does not define:
 - resource allocation, cost, timesheets, ticket workflows, portfolios, or arbitrary code extensions; or
 - DateTime/DST scheduling or automatic rescheduling from Actual observations.
 
-## 13. Boundary to subsequent specifications
+## 14. Boundary to subsequent specifications
 
 [10 Command Model](10-command-model.md) defines the canonical mutation interface used by the Command Engine. [11 Extension Model](11-extension-model.md) defines what the Profile Registry may load and how extensions remain safe and declarative. Application code may add internal modules, but must preserve this document's direction of authority: canonical semantics first, derived presentation second, target adapters last.
