@@ -3,10 +3,10 @@ kind: view
 id: halcyon-04-tvac-slip
 body:
   surface: table-timeline
-  rows: {mode: automatic}
+  rows: {mode: automatic, points: group-header}
   selection:
     include:
-      ids: [tvac, emc, psr, shipment, campaign, frr, launch]
+      ids: [tvac, emc, psr, shipment, campaign]
       types: [span, point]
   grouping:
     by: field
@@ -30,7 +30,7 @@ body:
     deltaUnit: calendar-days
     facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
   visibility:
-    labels: {placement: table, content: [title], side: auto, overflow: suppress}
+    labels: {placement: plot, content: [title], side: auto, overflow: suppress}
     relations: {mode: semantic, overflow: suppress}
     annotations: {mode: presentation, marker: numbered}
   axis:

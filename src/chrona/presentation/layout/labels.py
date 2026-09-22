@@ -43,6 +43,7 @@ class LabelRequest:
     collision_domain: CollisionDomain
     overflow: str
     wrap: str = "forbid"
+    bounds: LabelRect | None = None
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:

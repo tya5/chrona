@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any
@@ -52,6 +53,21 @@ class ReviewRowProjection:
 
 
 @dataclass(frozen=True)
+class FoldedPointProjection:
+    """A selected point whose target is a real group header, never a table row."""
+
+    item: ReviewItem
+    group_id: str
+    target_kind: str = "group-header"
+    members: tuple[ReviewItem, ...] = ()
+
+    @property
+    def all_items(self) -> tuple[ReviewItem, ...]:
+        """Keep comparison variants on the point's one header track."""
+        return (self.item, *self.members)
+
+
+@dataclass(frozen=True)
 class DependencyNetworkNode:
     """View-selected graph fact; Layout alone assigns geometry."""
 
@@ -92,6 +108,7 @@ class ReviewProjection:
     surface: str = "table-timeline"
     network: DependencyNetworkProjection | None = None
     driving_relations: frozenset[str] = frozenset()
+    folded_points: tuple[FoldedPointProjection, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -184,8 +201,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, style, snapshot_analysis)
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], style, None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
-    rows = _compose_rows(view, selected, snapshots, scenario_items, project)
+    rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
+    dates += [v for point in folded_points for v in point.item.planned.values()]
     if view.window.mode == "selected-comparison":
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
     start, end = min(dates), max(dates)
@@ -200,7 +218,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
-        frozenset(getattr(analysis, "driving_relations", ())))
+        frozenset(getattr(analysis, "driving_relations", ()),), folded_points)
 
 
 def _dependency_network_projection(project: dict[str, Any], selected: list[ReviewItem],
@@ -239,7 +257,7 @@ def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
-                  scenarios: dict[str, dict[str, ReviewItem]], project: dict[str, Any]) -> tuple[ReviewRowProjection, ...]:
+                  scenarios: dict[str, dict[str, ReviewItem]], project: dict[str, Any]) -> tuple[tuple[ReviewRowProjection, ...], tuple[FoldedPointProjection, ...]]:
     if view.rows.mode != "explicit":
         rows = tuple(ReviewRowProjection(
             item.object_id, item.title, item.group_id, item.object_id,
@@ -295,17 +313,28 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
         output.append(ReviewRowProjection(row_id, row.label or members[0].title,
             row.group or "", subject, tuple(members), depth=row.depth, parent_row_id=row.parent_row))
     _validate_explicit_row_hierarchy(output)
-    return tuple(output)
+    return tuple(output), ()
 
 
 def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInput,
-                           project: dict[str, Any]) -> tuple[ReviewRowProjection, ...]:
+                           project: dict[str, Any]) -> tuple[tuple[ReviewRowProjection, ...], tuple[FoldedPointProjection, ...]]:
     """Apply View-owned automatic point policy without exposing relation facts to Layout."""
     if view.rows.points == "own-row":
-        return rows
+        return rows, ()
     if view.rows.points == "group-header":
-        # Header-target allocation is intentionally completed by the following Layout slice.
-        return rows
+        if view.grouping is None or view.grouping.presentation != "header":
+            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED")
+        labels = view.visibility.labels
+        has_title_label = (labels is True or
+                           (isinstance(labels, Mapping) and labels.get("placement") == "plot"
+                            and "title" in labels.get("content", ())))
+        if not has_title_label:
+            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED")
+        folded = tuple(FoldedPointProjection(row.items[0], row.group_id, members=row.items[1:])
+                       for row in rows if row.items and row.items[0].source_type == "point")
+        if any(not point.group_id for point in folded):
+            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE")
+        return tuple(row for row in rows if not row.items or row.items[0].source_type != "point"), folded
     if view.rows.points != "predecessor":
         raise ValueError("E_REVIEW_POINT_POLICY")
     by_object = {row.table_subject_id: row for row in rows}
@@ -329,7 +358,7 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
         folded.add(row.row_id)
         replacements[candidates[0]] = replace(target, items=target.items + tuple(
             replace(item, track="shared") for item in row.items))
-    return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in folded)
+    return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in folded), ()
 
 
 def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:

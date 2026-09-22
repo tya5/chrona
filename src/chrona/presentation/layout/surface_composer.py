@@ -159,7 +159,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region=f"group:{group.group_id}",
-                                   collision_domain=CollisionDomain("table", "group-header")))
+                                   collision_domain=CollisionDomain("group-header", group.group_id)))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
@@ -294,6 +294,41 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
                     marks.append(place_mark(f"missing-actual:{instance_id}", item.object_id, bounds,
                                             (x, track.block), (x, track.block), shape="span"))
+    # A group-header target is a real GroupPlacement extent, not a synthetic table row.
+    group_by_id = {group.group_id: group for group in groups}
+    folded_by_group: dict[str, list[Any]] = {}
+    for folded in getattr(projection, "folded_points", ()):
+        folded_by_group.setdefault(folded.group_id, []).append(folded)
+    for group_id, folded_points in folded_by_group.items():
+        group = group_by_id.get(group_id)
+        if group is None or group.header_bounds is None:
+            folded = folded_points[0]
+            raise LayoutError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE", f"/projection/foldedPoints/{folded.item.object_id}")
+        block_size = float(metric_values["timeline.mark.blockSize"])
+        capacity = int(float(group.header_bounds.block_size) // block_size)
+        if capacity < len(folded_points):
+            raise LayoutError("E_LAYOUT_GROUP_HEADER_OVERFLOW", f"/projection/foldedPoints/{group_id}")
+        occupied = len(folded_points) * block_size
+        first_block = float(group.header_bounds.block) + (float(group.header_bounds.block_size) - occupied) / 2
+        for track_index, folded in enumerate(sorted(folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))):
+            block = first_block + track_index * block_size
+            members = sorted(enumerate(folded.all_items),
+                             key=lambda pair: (0, {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}.get(pair[1].source_kind, 4))
+                             if pair[1].track == "shared" else (1, pair[0]))
+            for _, item in members:
+                instance_id = _folded_instance_id(folded, item)
+                planned_at = item.planned.get("at")
+                if item.source_kind != "actual" and isinstance(planned_at, date):
+                    x = _coordinate(planned_at, scale)
+                    bounds = Rect(Decimal(str(x - block_size / 2)), Decimal(str(block)), Decimal(str(block_size)), Decimal(str(block_size)))
+                    port = (x, block + block_size / 2)
+                    marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point"))
+                actual_at = (item.actual or {}).get("at")
+                if item.source_kind in {"actual", "combined"} and isinstance(actual_at, date):
+                    x = _coordinate(actual_at, scale)
+                    bounds = Rect(Decimal(str(x - block_size / 2)), Decimal(str(block)), Decimal(str(block_size)), Decimal(str(block_size)))
+                    port = (x, block + block_size / 2)
+                    marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point"))
     mark_by_id = {item.placement_id: item for item in marks}
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
@@ -345,6 +380,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
                                                    wrap))
+        for folded in getattr(projection, "folded_points", ()):
+            mark = mark_by_id.get(f"planned:{_folded_instance_id(folded, folded.item)}")
+            group = group_by_id.get(folded.group_id)
+            if mark is None or group is None or group.header_bounds is None:
+                continue
+            default_ladder = ("end", "start", "inside") if contract.labels.side == "auto" else (contract.labels.side,)
+            label_requests.append(LabelRequest(
+                f"member-label:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
+                folded.item.title, LabelRect(*_bounds(mark.bounds)), default_ladder, "groupHeader", "group-header-point",
+                CollisionDomain("group-header", folded.group_id), "diagnose", bounds=LabelRect(*_bounds(group.header_bounds))))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
     for review_row in review_rows:
@@ -373,12 +418,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         lines = (wrap_text(label_request.content, available_inline=max(1.0, timeline_rect.width * 0.4),
                            font_size=float(font_size), font_metrics=request.font_metrics)
                  if label_request.wrap == "allow" else (label_request.content,))
+        placement_bounds = label_request.bounds or timeline_rect
         label_size = (max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines),
                       float(font_size) * float(line_height) * len(lines))
         obstacles = [LabelRect(*_bounds(item.bounds)) for item in marks]
         obstacles.extend(LabelRect(*_bounds(item.bounds)) for item in text
                          if item.required and item.overflow != "suppressed")
-        candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=timeline_rect,
+        candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
                                  obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
                                  required=label_request.overflow == "diagnose", overflow=label_request.overflow)
                      if label_request.candidates else None)
@@ -419,8 +465,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}" if projection.rows else item.object_id
             instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
             instance_rows[instance_id] = row.row_id
+    for folded in getattr(projection, "folded_points", ()):
+        instance_id = _folded_instance_id(folded, folded.item)
+        mark = next((item for item in marks if item.placement_id == f"planned:{instance_id}"), None)
+        if mark is not None:
+            instance_anchors.setdefault(folded.item.object_id, []).append((instance_id, mark.end_port))
+            instance_rows[instance_id] = f"group-header:{folded.group_id}"
     mark_ports = {mark.placement_id.removeprefix("planned:"): (mark.start_port, mark.end_port)
                   for mark in marks if mark.placement_id.startswith("planned:")}
+    route_top = min((float(group.header_bounds.block) for group in groups if group.header_bounds is not None),
+                    default=timeline_bounds[1])
+    route_bottom = max((timeline_bounds[1] + timeline_bounds[3],
+                        *(float(group.header_bounds.block + group.header_bounds.block_size)
+                          for group in groups if group.header_bounds is not None)))
     for relation in request.surface_content.relations:
         source, target = relation.get("from", {}).get("object"), relation.get("to", {}).get("object")
         relation_id = str(relation.get("id", f"{source}-{target}"))
@@ -443,9 +500,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   for row in rows if row.row_id not in endpoint_rows)
                 try:
                     points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=obstacles,
-                                                  bounds=(timeline_bounds[0], timeline_bounds[1],
-                                                          timeline_bounds[0] + timeline_bounds[2],
-                                                          timeline_bounds[1] + timeline_bounds[3]))
+                                                  bounds=(timeline_bounds[0], route_top,
+                                                          timeline_bounds[0] + timeline_bounds[2], route_bottom))
                 except ValueError as error:
                     if request.surface_content.relation_overflow == "suppress":
                         relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start",
@@ -533,18 +589,30 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 matching = [(review_row, row) for review_row, row in matching
                             if (row_id is None or review_row.row_id == row_id)
                             and (item_id is None or any(item.item_id == item_id and item.object_id == resolved.object_id for item in review_row.items))]
-            if len(matching) > 1:
+            folded_matches = [(folded, mark_by_id.get(f"{resolved.facet}:{_folded_instance_id(folded, folded.item)}"))
+                              for folded in getattr(projection, "folded_points", ())
+                              if folded.item.object_id == resolved.object_id]
+            if row_id is not None or item_id is not None:
+                folded_matches = [(folded, mark) for folded, mark in folded_matches
+                                  if (row_id is None or row_id == f"group-header:{folded.group_id}:{folded.item.object_id}")
+                                  and (item_id is None or item_id == folded.item.item_id)]
+            if len(matching) + len(folded_matches) > 1:
                 raise LayoutError("E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS", f"/annotations/{index}/anchor")
-            if not matching:
+            if matching:
+                anchor_bounds = _annotation_anchor_bounds(resolved.mark, resolved.endpoint, matching[0][1], scale)
+                selected_items = tuple(item for item in matching[0][0].items
+                                       if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id))
+            elif folded_matches and folded_matches[0][1] is not None:
+                folded, mark = folded_matches[0]
+                anchor_bounds = LabelRect(*_bounds(mark.bounds))
+                selected_items = (folded.item,)
+            else:
                 raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
-            anchor_bounds = _annotation_anchor_bounds(resolved.mark, resolved.endpoint, matching[0][1], scale)
             size, line_height = (float(item) for item in request.theme_tokens.typography("annotation")[2:])
             width = min(float(annotation_slot.bounds.inline_size), max(size * 4, measure_text_width(content, font_size=size, font_metrics=request.font_metrics)))
             annotation_lines = (content,)
             try:
                 if annotation.get("purpose") == "callout":
-                    selected_items = [item for item in matching[0][0].items
-                                      if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id)]
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
@@ -632,6 +700,11 @@ def _bounds(rect: Rect) -> tuple[float, float, float, float]:
 
 def _coordinate(value: date, scale: ScalePlacement) -> float:
     return scale.origin + (value - scale.domain_start).days * scale.unit_ratio
+
+
+def _folded_instance_id(folded: Any, item: Any) -> str:
+    """Keep a header point's comparison members addressable without inventing rows."""
+    return f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
 
 
 def _comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:

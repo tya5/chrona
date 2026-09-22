@@ -259,6 +259,35 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else semantic_binding("finishDelta").scene_role
             emit_semantic_text(variance_id, "finishDelta", role, href, link_title)
+    for folded in getattr(projection, "folded_points", ()):
+        for item in folded.all_items:
+            instance_id = f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
+            source_kind = item.source_kind
+            href, link_title = link_for_item(item, source_kind)
+            planned_mark = mark_placements.get(f"planned:{instance_id}")
+            if planned_mark is not None:
+                binding = semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
+                bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
+                          float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
+                primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
+                                                 binding.purpose, binding.scene_role, bounds, shape="diamond",
+                                                 projection_instance_id=instance_id,
+                                                 corner_radius=planned_mark.corner_radius,
+                                                 path_commands=planned_mark.path_commands, href=href, link_title=link_title,
+                                                 z_order=len(primitives)))
+            actual_mark = mark_placements.get(f"actual:{instance_id}")
+            if actual_mark is not None:
+                binding = semantic_binding("actual")
+                bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
+                          float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
+                primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
+                                                 binding.purpose, binding.scene_role, bounds, shape="diamond",
+                                                 projection_instance_id=instance_id,
+                                                 corner_radius=actual_mark.corner_radius,
+                                                 path_commands=actual_mark.path_commands, z_order=len(primitives)))
+        label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"
+        if label_id in layout_text:
+            emit_semantic_text(label_id, "memberLabel")
     axis_band_binding = semantic_binding("axisBand")
     for placed in placed_surface.text:
         if placed.placement_id.startswith("axis-band:"):
