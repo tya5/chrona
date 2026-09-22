@@ -30,7 +30,7 @@ class DependencyNetworkLayout:
     relations: tuple[RelationPlacement, ...]
 
 
-def compose_dependency_network_layout(network: Any, *, bounds: Rect,
+def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
                                       measured_sources: MeasuredSources,
                                       writing_mode: str,
                                       max_bends: int = 4,
@@ -51,6 +51,8 @@ def compose_dependency_network_layout(network: Any, *, bounds: Rect,
         raise LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/network") from error
     if min_inline <= 0 or min_block <= 0 or gap < 0:
         raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
+    title = _title_measurement(measured_sources)
+    title_placement = _place_title(title, title_bounds)
     measured = _node_measurements(nodes, measured_sources)
     ranks = _ranks(nodes, edges)
     by_rank: dict[int, list[Any]] = {}
@@ -58,10 +60,17 @@ def compose_dependency_network_layout(network: Any, *, bounds: Rect,
         by_rank.setdefault(ranks[node.object_id], []).append(node)
     placed = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
                           writing_mode == "horizontal-tb")
-    text = tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
-    _assert_node_quality(placed, text, bounds)
+    text = (title_placement,) + tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
+    _assert_surface_quality(placed, text, title_bounds, bounds)
     return DependencyNetworkLayout(tuple(placed), text,
                                    _route_edges(edges, placed, bounds, max_bends, max_detour_ratio))
+
+
+def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:
+    title = measured_sources.run_measurements.get("title", ())
+    if len(title) != 1:
+        raise LayoutError("E_LAYOUT_NETWORK_MEASUREMENT", "/measuredSources/title")
+    return title[0]
 
 
 def _node_measurements(nodes: tuple[Any, ...], measured_sources: MeasuredSources) -> Mapping[str, MeasuredTextRun]:
@@ -150,6 +159,18 @@ def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> T
         font_asset_identity=measured.font_asset_identity, collision_region="network")
 
 
+def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
+    text_bounds = Rect(bounds.inline, bounds.block, measured.inline_size, measured.block_size)
+    if not _contains(bounds, text_bounds):
+        raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/title")
+    return TextPlacement(
+        "title", "title", measured.content, text_bounds, measured.typography_role,
+        baseline=(float(bounds.inline), float(bounds.block + measured.baseline)), lines=(measured.content,),
+        font_family=measured.font_family, font_weight=measured.font_weight,
+        font_size=measured.font_size, line_height=measured.line_height,
+        font_asset_identity=measured.font_asset_identity, collision_region="network-title")
+
+
 def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], bounds: Rect,
                  max_bends: int, max_detour_ratio: float) -> tuple[RelationPlacement, ...]:
     by_id = {node.object_id: node for node in nodes}
@@ -173,13 +194,17 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
     return tuple(relations)
 
 
-def _assert_node_quality(nodes: list[NetworkNodePlacement], text: tuple[TextPlacement, ...], bounds: Rect) -> None:
+def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextPlacement, ...],
+                            title_bounds: Rect, bounds: Rect) -> None:
     for index, node in enumerate(nodes):
         if not _contains(bounds, node.bounds) or node.input_port == node.output_port:
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
         if any(intersects(node.bounds, other.bounds) for other in nodes[index + 1:]):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
-    for label, node in zip(text, nodes, strict=True):
+    title, *labels = text
+    if not _contains(title_bounds, title.bounds):
+        raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/title")
+    for label, node in zip(labels, nodes, strict=True):
         if not _contains(node.bounds, label.bounds) or not _contains(bounds, label.bounds):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", f"/projection/network/nodes/{node.object_id}")
 
