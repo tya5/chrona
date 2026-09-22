@@ -78,7 +78,15 @@ allOf:
             additionalProperties: false
             properties:
               labels: {type: boolean}
-              relations: {enum: [none, semantic, all]}
+              relations:
+                oneOf:
+                  - {enum: [none, semantic, all]}
+                  - type: object
+                    required: [mode, overflow]
+                    additionalProperties: false
+                    properties:
+                      mode: {enum: [none, semantic]}
+                      overflow: {enum: [suppress, diagnose]}
               annotations: {enum: [none, semantic, presentation, all]}
           layoutIntent:
             type: object
