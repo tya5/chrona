@@ -56,7 +56,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path) ->
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
     raw = context_path.read_bytes()
     context = yaml.safe_load(raw)
-    if context.get("version") != "chrona/render-context/v0.7" or context.get("kind") != "render-context":
+    if context.get("version") != "chrona/render-context/v0.8" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]
@@ -102,7 +102,7 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, reference["store"]["identity"]))
         rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler(), renderer_for(
             {"kind": closure.context.target.kind, "capabilities": list(closure.context.target.capabilities)},
-            {"rasterizer": closure.context.environment.rasterizer} if closure.context.environment.rasterizer else {},
+            closure.context.environment.renderer_environment(),
         )))
         derived = output / "review.svg"
         derived.write_bytes(rendered.artifact.content)

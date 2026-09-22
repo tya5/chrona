@@ -12,6 +12,7 @@ from chrona.presentation.contracts.resources import (
     RenderContextContract,
     RenderEnvironment,
     RenderTarget,
+    TypesetterIdentity,
     ResourceReference,
     ResolvedThemeContract,
     ResourceContract,
@@ -26,6 +27,6 @@ from chrona.presentation.contracts.resources import (
 
 __all__ = [
     "ActualSetContract", "ClosureIdentity", "ColorSchemeContract", "ContractError", "SchemaContractError", "LayoutProfileContract", "ProfilePackageContract",
-    "ProjectContract", "RenderContextContract", "RenderEnvironment", "RenderTarget", "ResourceReference", "ResolvedThemeContract", "ResourceContract", "ThemeContract",
+    "ProjectContract", "RenderContextContract", "RenderEnvironment", "RenderTarget", "TypesetterIdentity", "ResourceReference", "ResolvedThemeContract", "ResourceContract", "ThemeContract",
     "ReviewDetailProfileContract", "SnapshotRefContract", "SummaryProfileContract", "ViewContract", "freeze", "parse_contract",
 ]

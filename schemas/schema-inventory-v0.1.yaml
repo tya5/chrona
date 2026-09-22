@@ -10,7 +10,7 @@ schemas:
   - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: profile-v0.1.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: project-v0.3.schema.yaml, kind: project, state: live, consumers: [src/chrona/core/validation.py]}
-  - {file: render-context-v0.7.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: render-context-v0.8.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: review-detail-profile-v0.1.schema.yaml, kind: review-detail-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: revision-store-resource-ref-v0.1.schema.yaml, kind: revision-store-resource-reference, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

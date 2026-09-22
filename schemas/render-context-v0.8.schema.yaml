@@ -1,11 +1,11 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:render-context-v0.7"
-title: "Chrona Render Context v0.7"
+$id: "urn:chrona:render-context-v0.8"
+title: "Chrona Render Context v0.8"
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: "chrona/render-context/v0.7"}
+  version: {const: "chrona/render-context/v0.8"}
   kind: {const: render-context}
   id: {type: string, minLength: 1}
   body:
@@ -42,7 +42,6 @@ properties:
           fontMetrics: {type: object}
           scenePrecision: {type: integer, minimum: 0}
           rasterizer:
-            type: object
             oneOf:
               - type: object
                 required: [engine, version, resvgVersion, dpi]
@@ -60,21 +59,40 @@ properties:
                   svglibVersion: {type: string, minLength: 1}
                   reportlabVersion: {type: string, minLength: 1}
                   invariant: {const: true}
+          typesetter:
+            type: object
+            required: [engine, version, adapterGrammar]
+            additionalProperties: false
+            properties:
+              engine: {enum: [typst, tectonic]}
+              version: {type: string, pattern: "^[0-9]+(\\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?$"}
+              adapterGrammar: {enum: [chrona-typst/v0.1, chrona-tikz/v0.1]}
       target:
         type: object
         required: [kind, capabilities]
         additionalProperties: false
         properties:
-          kind: {enum: [svg, png, pdf]}
+          kind: {enum: [svg, png, pdf, typst, tikz]}
           capabilities:
             type: array
             items: {type: string, minLength: 1}
             uniqueItems: true
+          textMode: {const: positioned}
     allOf:
       - if: {properties: {target: {properties: {kind: {const: svg}}}}}
-        then: {properties: {environment: {not: {required: [rasterizer]}}}}
+        then: {properties: {environment: {not: {anyOf: [{required: [rasterizer]}, {required: [typesetter]}]}}}}
       - if: {properties: {target: {properties: {kind: {enum: [png, pdf]}}}}}
-        then: {properties: {environment: {required: [rasterizer]}}}
+        then: {properties: {environment: {allOf: [{required: [rasterizer]}, {not: {required: [typesetter]}}]}}}
+      - if: {properties: {target: {properties: {kind: {const: typst}}}}}
+        then:
+          properties:
+            environment: {allOf: [{required: [typesetter]}, {not: {required: [rasterizer]}}, {properties: {typesetter: {properties: {engine: {const: typst}, adapterGrammar: {const: chrona-typst/v0.1}}}}}]}
+            target: {required: [textMode]}
+      - if: {properties: {target: {properties: {kind: {const: tikz}}}}}
+        then:
+          properties:
+            environment: {allOf: [{required: [typesetter]}, {not: {required: [rasterizer]}}, {properties: {typesetter: {properties: {engine: {const: tectonic}, adapterGrammar: {const: chrona-tikz/v0.1}}}}}]}
+            target: {required: [textMode]}
 $defs:
   reference:
     type: object

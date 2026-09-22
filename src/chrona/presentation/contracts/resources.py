@@ -321,6 +321,14 @@ class ResourceReference:
 class RenderTarget:
     kind: str
     capabilities: tuple[str, ...]
+    text_mode: str | None = None
+
+
+@dataclass(frozen=True)
+class TypesetterIdentity:
+    engine: str
+    version: str
+    adapter_grammar: str
 
 
 @dataclass(frozen=True)
@@ -331,6 +339,14 @@ class RenderEnvironment:
     font_metrics: FrozenDict
     scene_precision: int
     rasterizer: FrozenDict | None
+    typesetter: TypesetterIdentity | None = None
+
+    def renderer_environment(self) -> dict[str, object]:
+        return {
+            **({"rasterizer": self.rasterizer} if self.rasterizer else {}),
+            **({"typesetter": {"engine": self.typesetter.engine, "version": self.typesetter.version,
+                                "adapterGrammar": self.typesetter.adapter_grammar}} if self.typesetter else {}),
+        }
 
 
 @dataclass(frozen=True)
@@ -357,7 +373,7 @@ class ResolvedThemeContract:
 
 
 _SCHEMAS = {
-    ("render-context", "chrona/render-context/v0.7"): "render-context-v0.7.schema.yaml",
+    ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
     ("project", "timeline/v0.3"): "project-v0.3.schema.yaml",
     ("view", "chrona/view/v0.3"): "view-v0.3.schema.yaml",
     ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
@@ -509,6 +525,11 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         rasterizer = environment.get("rasterizer")
         if rasterizer is not None and not isinstance(rasterizer, FrozenDict):
             raise ContractError("E_CLOSURE_KIND")
+        raw_typesetter = environment.get("typesetter")
+        if raw_typesetter is not None and not isinstance(raw_typesetter, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        typesetter = (TypesetterIdentity(str(raw_typesetter["engine"]), str(raw_typesetter["version"]),
+                                         str(raw_typesetter["adapterGrammar"])) if raw_typesetter else None)
         return RenderContextContract(
             identity, version,
             ResourceReference.from_value(body["project"]), ResourceReference.from_value(body["view"]),
@@ -519,8 +540,9 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             ResourceReference.from_value(inputs["summaryProfile"]) if "summaryProfile" in inputs else None,
             ResourceReference.from_value(inputs["detailProfile"]) if "detailProfile" in inputs else None,
             RenderEnvironment(int(viewport["inlineSize"]), int(viewport["blockSize"]), str(environment["locale"]),
-                              environment["fontMetrics"], int(environment["scenePrecision"]), rasterizer),
-            RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"])),
+                              environment["fontMetrics"], int(environment["scenePrecision"]), rasterizer, typesetter),
+            RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"]),
+                         str(target["textMode"]) if "textMode" in target else None),
         )
     if identity.kind == "actual-set":
         return ActualSetContract(identity, version, frozen)

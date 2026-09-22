@@ -7,6 +7,7 @@ from typing import Any
 
 from chrona.core.ports import RenderArtifact, Renderer
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstRenderer
 
 
 class ResvgPngRenderer:
@@ -55,6 +56,8 @@ def renderer_for(target: dict[str, Any], environment: dict[str, Any]) -> Rendere
         "svg": {"accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"},
         "png": set(),
         "pdf": {"accessibleText"},
+        "typst": set(),
+        "tikz": set(),
     }
     if not set(target.get("capabilities", ())).issubset(supported.get(kind, set())):
         raise ValueError("E_OUTPUT_CAPABILITY_MISSING")
@@ -70,6 +73,12 @@ def renderer_for(target: dict[str, Any], environment: dict[str, Any]) -> Rendere
         if not isinstance(descriptor, dict):
             raise ValueError("E_RENDER_RASTERIZER_IDENTITY")
         return ReportLabPdfRenderer(descriptor)
+    if kind in {"typst", "tikz"}:
+        descriptor = environment.get("typesetter")
+        expected = ("typst", "chrona-typst/v0.1") if kind == "typst" else ("tectonic", "chrona-tikz/v0.1")
+        if not isinstance(descriptor, dict) or (descriptor.get("engine"), descriptor.get("adapterGrammar")) != expected:
+            raise ValueError("E_RENDER_TYPESETTER_IDENTITY")
+        return V05TypstRenderer() if kind == "typst" else V05TikzRenderer()
     raise ValueError("E_PRESENTATION_TARGET")
 
 
