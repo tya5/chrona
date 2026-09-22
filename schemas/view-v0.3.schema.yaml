@@ -1,11 +1,11 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.2"
-title: "Chrona View v0.2"
+$id: "chrona/view-v0.3"
+title: "Chrona View v0.3"
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
-      version: {const: "chrona/view/v0.2"}
+      version: {const: "chrona/view/v0.3"}
       kind: {const: view}
       body:
         type: object
@@ -23,18 +23,23 @@ allOf:
                 properties:
                   ids: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
                   types: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
-                  entityIds: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
-                  profiles: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
           grouping:
             type: object
-            required: [by, missing]
+            required: [by]
             additionalProperties: false
             properties:
-              by: {enum: [objectType, field, none]}
+              by: {enum: [objectType, field, hierarchy, none]}
               field: {type: string, minLength: 1}
               order: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
               missing: {type: string, minLength: 1}
               presentation: {enum: [band, header]}
+              depth: {type: integer, minimum: 0}
+              rollup: {enum: [bar, header, none]}
+            allOf:
+              - if: {properties: {by: {const: field}}, required: [by]}
+                then: {required: [field, missing]}
+              - if: {properties: {by: {const: hierarchy}}, required: [by]}
+                then: {required: [depth, rollup]}
           ordering:
             type: object
             required: [by, direction, tieBreak]
@@ -155,7 +160,7 @@ allOf:
                 id: {type: string, minLength: 1}
                 source:
                   oneOf:
-                    - {enum: [id, title, objectType, entity, rowIndex]}
+                    - {enum: [id, title, objectType, entity, rowIndex, wbsCode, path]}
                     - type: object
                       required: [field]
                       additionalProperties: false
@@ -210,11 +215,13 @@ allOf:
                 minItems: 1
                 items:
                   type: object
-                  required: [id, items]
+                  required: [id, depth, items]
                   additionalProperties: false
                   properties:
                     id: {type: string, minLength: 1}
                     label: {type: string, minLength: 1}
+                    depth: {type: integer, minimum: 0}
+                    parentRow: {type: string, minLength: 1}
                     group: {type: string, minLength: 1}
                     tableSubject: {type: string, minLength: 1}
                     items:

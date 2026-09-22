@@ -47,6 +47,7 @@ REQUIRED_METRICS = (
     "text.body.size", "text.body.lineHeight",
     "timeline.dayWidth", "timeline.row.minBlockSize", "timeline.mark.blockSize", "timeline.axis.blockSize",
     "table.column.minInlineSize", "table.column.gutter.inlineSize", "table.header.blockSize",
+    "table.indent.inlineSize",
 )
 
 OPTIONAL_METRICS = ("timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth")

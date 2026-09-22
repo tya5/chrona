@@ -85,8 +85,12 @@ class ResolvedPresentationInput:
 def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_index: int | None = None) -> Any:
     """Resolve one renderer-neutral table cell from normalized review data."""
     if isinstance(source, str):
+        if source == "path":
+            return " / ".join(str(project.get("objects", {}).get(object_id, {}).get("title", object_id))
+                              for object_id in item.hierarchy_path)
         return {"id": item.object_id, "title": item.title, "objectType": item.source_type,
-                "entity": item.group_label, "rowIndex": row_index}.get(source)
+                "entity": item.group_label, "rowIndex": row_index,
+                "wbsCode": item.wbs_code}.get(source)
     if "field" in source:
         return (item.fields or {}).get(source["field"])
     if "facet" in source:

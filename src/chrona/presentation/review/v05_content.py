@@ -175,9 +175,13 @@ def normalize_summary_content(summary: Mapping[str, Any] | None, projection: Rev
                         values["counts.finishDelta"] = f"{behind} / {ahead}"
                         source = "counts.finishDelta"
                     elif isinstance(source.get("object"), str) and source.get("facet") == "planned":
-                        selected = next((item for item in projection.items if item.object_id == source["object"]), None)
-                        planned = selected.planned if selected is not None else {}
-                        values[f"object.{source['object']}.planned"] = planned.get("at", planned.get("end"))
+                        if definition.get("scope") == "subtree":
+                            values[f"object.{source['object']}.planned"] = _subtree_planned_completion(
+                                projection, source["object"])
+                        else:
+                            selected = next((item for item in projection.items if item.object_id == source["object"]), None)
+                            planned = selected.planned if selected is not None else {}
+                            values[f"object.{source['object']}.planned"] = planned.get("at", planned.get("end"))
                         source = f"object.{source['object']}.planned"
                 if source not in values:
                     raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
@@ -203,3 +207,21 @@ def normalize_summary_content(summary: Mapping[str, Any] | None, projection: Rev
                                             f"{metric_id}: {definition}", "summary"))
         panels.append(SummaryPanel(str(panel["id"]), tuple(runs)))
     return SummaryContent(tuple(panels))
+
+
+def _subtree_planned_completion(projection: ReviewProjection, root_id: str) -> date:
+    """Normalize one View-selected primary subtree into its planned completion."""
+    if not projection.hierarchy_grouping:
+        raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+    root = next((item for item in projection.items
+                 if item.object_id == root_id and item.source_kind == "primary"), None)
+    if root is None or not root.hierarchy_path:
+        raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+    prefix = root.hierarchy_path
+    members = tuple(item for item in projection.items
+                    if item.source_kind == "primary" and item.hierarchy_path[:len(prefix)] == prefix)
+    endpoints = tuple(item.planned.get("at", item.planned.get("end")) for item in members)
+    known = tuple(value for value in endpoints if isinstance(value, date))
+    if not known:
+        raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+    return max(known)

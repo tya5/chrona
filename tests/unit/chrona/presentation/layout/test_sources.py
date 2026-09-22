@@ -11,7 +11,7 @@ def theme():
         "text.body.size": 14, "text.body.lineHeight": 1.4,
         "timeline.dayWidth": 12, "timeline.row.minBlockSize": 40, "timeline.mark.blockSize": 8,
         "timeline.axis.blockSize": 48, "table.column.minInlineSize": 120, "table.column.gutter.inlineSize": 8,
-        "table.header.blockSize": 44,
+        "table.header.blockSize": 44, "table.indent.inlineSize": 16,
     }
     values = {f"metric.{i}": {"type": "number", "value": value} for i, value in enumerate(metrics.values())}
     values |= {

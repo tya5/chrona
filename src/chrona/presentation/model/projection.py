@@ -6,6 +6,8 @@ from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any
 
+from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
+
 
 @dataclass(frozen=True)
 class ReviewItem:
@@ -23,6 +25,11 @@ class ReviewItem:
     item_id: str = ""
     source_kind: str = "primary"
     track: str = "stacked"
+    parent_id: str | None = None
+    hierarchy_depth: int = 0
+    wbs_code: str = ""
+    hierarchy_path: tuple[str, ...] = ()
+    is_rollup: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,6 +40,9 @@ class ReviewRowProjection:
     group_id: str
     table_subject_id: str
     items: tuple[ReviewItem, ...]
+    depth: int = 0
+    parent_row_id: str | None = None
+    rollup_presentation: str = "none"
 
 
 @dataclass(frozen=True)
@@ -43,6 +53,7 @@ class ReviewProjection:
     diagnostics: tuple[str, ...]
     rows: tuple[ReviewRowProjection, ...] = ()
     comparison_facets: tuple[str, ...] = ()
+    hierarchy_grouping: bool = False
 
 
 @dataclass(frozen=True)
@@ -92,21 +103,34 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     ids, types = set(include.get("ids", placements)), set(include.get("types", ("span", "point")))
     grouping = body.get("grouping", {"by": "none", "missing": "ungrouped"})
     selected: list[ReviewItem] = []
+    hierarchy = grouping.get("by") == "hierarchy"
+    hierarchy_entries = {entry.object_id: entry for entry in normalize_hierarchy(project)}
+    hierarchy_root_ids: set[str] = set()
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
-        if not explicit and (object_id not in ids or source_type not in types):
+        if not explicit and not hierarchy and (object_id not in ids or source_type not in types):
             continue
+        if hierarchy and object_id in ids and source_type in types:
+            hierarchy_root_ids.add(object_id)
         actual = _actual(latest.get(object_id))
         finish_delta = _finish_delta(planned, actual)
+        entry = hierarchy_entries.get(object_id)
         group_id = _group_id(project, object_id, source_type, grouping)
         selected.append(ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, actual, finish_delta, _roles(style, source_type, actual, finish_delta),
             group_id, str(project.get("entities", {}).get(group_id, {}).get("title", group_id)),
-            dict(project["objects"][object_id].get("fields", {})), object_id, "primary"))
+            dict(project["objects"][object_id].get("fields", {})), object_id, "primary",
+            parent_id=entry.parent_id if entry else None,
+            hierarchy_depth=entry.depth if entry else 0,
+            wbs_code=entry.display_wbs_code if entry else "",
+            hierarchy_path=entry.path if entry else (),
+            is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup"))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY")
-    if not explicit:
+    if hierarchy and not explicit:
+        selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, body)
+    elif not explicit:
         _order(selected, body)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, style)
     rows = _compose_rows(body, selected, snapshots)
@@ -123,7 +147,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     return ReviewProjection(tuple(selected),
         (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
-        tuple(body["comparison"].get("facets", ())))
+        tuple(body["comparison"].get("facets", ())), hierarchy)
 
 
 def _compose_rows(body: dict[str, Any], selected: list[ReviewItem],
@@ -132,7 +156,10 @@ def _compose_rows(body: dict[str, Any], selected: list[ReviewItem],
     if rows.get("mode", "automatic") != "explicit":
         return tuple(ReviewRowProjection(
             item.object_id, item.title, item.group_id, item.object_id,
-            (replace(item, item_id=item.object_id, source_kind="combined"),))
+            (replace(item, item_id=item.object_id, source_kind="combined"),),
+            depth=item.hierarchy_depth if body.get("grouping", {}).get("by") == "hierarchy" else 0,
+            rollup_presentation=(str(body.get("grouping", {}).get("rollup", "none"))
+                                 if item.is_rollup else "none"))
             for item in selected)
     available = {item.object_id: item for item in selected}
     output: list[ReviewRowProjection] = []
@@ -162,8 +189,29 @@ def _compose_rows(body: dict[str, Any], selected: list[ReviewItem],
         if subject not in member_ids:
             raise ValueError("E_REVIEW_TABLE_SUBJECT")
         output.append(ReviewRowProjection(row_id, str(row.get("label", members[0].title)),
-            str(row.get("group", "")), subject, tuple(members)))
+            str(row.get("group", "")), subject, tuple(members), depth=int(row["depth"]),
+            parent_row_id=str(row["parentRow"]) if "parentRow" in row else None))
+    _validate_explicit_row_hierarchy(output)
     return tuple(output)
+
+
+def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
+    """Validate only asserted View row edges against the Project-owned hierarchy."""
+    by_id = {row.row_id: row for row in rows}
+    for row in rows:
+        if row.parent_row_id is None:
+            continue
+        parent = by_id.get(row.parent_row_id)
+        if parent is None:
+            raise ValueError("E_REVIEW_ROW_PARENT_UNAVAILABLE")
+        subject = next((item for item in row.items if item.item_id == row.table_subject_id), None)
+        parent_subject = next((item for item in parent.items if item.item_id == parent.table_subject_id), None)
+        if subject is None or parent_subject is None or subject.source_kind != "primary" or parent_subject.source_kind != "primary":
+            raise ValueError("E_REVIEW_ROW_PARENT_SOURCE")
+        if subject.parent_id is None:
+            raise ValueError("E_REVIEW_ROW_PARENT_ROOT")
+        if subject.parent_id != parent_subject.object_id:
+            raise ValueError("E_REVIEW_ROW_PARENT_MISMATCH")
 
 
 def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,
@@ -215,7 +263,46 @@ def _group_id(project: dict[str, Any], object_id: str, source_type: str, groupin
         return ""
     if grouping["by"] == "objectType":
         return source_type
+    if grouping["by"] == "hierarchy":
+        return ""
     return str(project["objects"][object_id].get("fields", {}).get(grouping["field"], grouping["missing"]))
+
+
+def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, HierarchyEntry],
+                            candidate_ids: set[str], body: dict[str, Any]) -> list[ReviewItem]:
+    """Expand View-selected roots without giving View authority over tree truth."""
+    item_by_id = {item.object_id: item for item in items}
+    grouping = body.get("grouping", {})
+    include = body.get("selection", {}).get("include", {})
+    predicate_omitted = not any(key in include for key in ("ids", "types"))
+    candidate_ids = candidate_ids if not predicate_omitted else {
+        entry.object_id for entry in entries.values() if entry.parent_id is None and entry.object_id in item_by_id
+    }
+    roots = [object_id for object_id in candidate_ids
+             if entries[object_id].parent_id not in candidate_ids]
+    children: dict[str, list[str]] = {object_id: [] for object_id in entries}
+    for entry in entries.values():
+        if entry.parent_id in children:
+            children[entry.parent_id].append(entry.object_id)
+    limit = int(grouping.get("depth", 0))
+    output: list[ReviewItem] = []
+
+    def visit(object_id: str, relative_depth: int) -> None:
+        item = item_by_id.get(object_id)
+        if item is not None:
+            output.append(replace(item, hierarchy_depth=relative_depth))
+        if relative_depth >= limit:
+            return
+        child_items = [item_by_id[child] for child in children.get(object_id, ()) if child in item_by_id]
+        _order(child_items, body)
+        for child in child_items:
+            visit(child.object_id, relative_depth + 1)
+
+    root_items = [item_by_id[root] for root in roots]
+    _order(root_items, body)
+    for root in root_items:
+        visit(root.object_id, 0)
+    return output
 
 
 def _date_or_number(value: Any) -> date | float:

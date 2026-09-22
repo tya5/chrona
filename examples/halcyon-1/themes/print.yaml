@@ -27,6 +27,7 @@ body:
     timeline-axis-height: {type: number, value: 40}
     table-column-width: {type: number, value: 130}
     table-column-gutter: {type: number, value: 10}
+    table-indent: {type: number, value: 16}
     table-header-height: {type: number, value: 40}
   roles:
     text: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.body, lineHeight: leading.body}
@@ -71,6 +72,7 @@ body:
     'group:launch.fill': category
     'group:ops.fill': category
     planned.fill: accent
+    summary-bar.fill: accent
     planned.stroke: text
     actual.fill: positive
     milestone.fill: accent
@@ -90,4 +92,5 @@ body:
     timeline.axis.blockSize: timeline-axis-height
     table.column.minInlineSize: table-column-width
     table.column.gutter.inlineSize: table-column-gutter
+    table.indent.inlineSize: table-indent
     table.header.blockSize: table-header-height

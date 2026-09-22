@@ -77,7 +77,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
            for row in review_rows):
         raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline")
     rows = tuple(
-        RowPlacement(item.row_id, item.table_subject_id, placement.group_id or "", _rect(placement.bounds))
+        RowPlacement(item.row_id, item.table_subject_id, placement.group_id or "", _rect(placement.bounds),
+                     depth=int(getattr(item, "depth", 0)))
         for item, placement in zip(review_rows, raw_rows, strict=True)
     )
     groups: list[GroupPlacement] = []
@@ -136,7 +137,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         position = positions.get(column_id)
         index = next((offset for offset, item in enumerate(table_columns) if item[0] == column_id), None)
         if row is not None and position is not None and index is not None:
-            indent = body_size if index == 0 and row.group_id else 0
+            indent_token = metric_values.get("table.indent.inlineSize")
+            if row.depth and indent_token is None:
+                raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues/table.indent.inlineSize")
+            indent = ((body_size if row.group_id else 0) + float(indent_token or 0) * row.depth
+                      if index == 0 else 0)
             resolved, overflow = table_text(content, column_id)
             text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                                    inline=position[0] + indent,
@@ -261,6 +266,21 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     marks.append(MarkPlacement(f"missing-actual:{instance_id}", item.object_id, bounds,
                                                (x, track.block), (x, track.block)))
     mark_by_id = {item.placement_id: item for item in marks}
+    for review_row, row in zip(review_rows, rows, strict=True):
+        if getattr(review_row, "rollup_presentation", "none") != "bar":
+            continue
+        subject = next((item for item in review_row.items
+                        if item.item_id == review_row.table_subject_id and item.source_kind != "actual"), None)
+        if subject is None or subject.source_type != "span":
+            continue
+        start_at, end_at = subject.planned.get("start"), subject.planned.get("end")
+        if not isinstance(start_at, date) or not isinstance(end_at, date):
+            continue
+        x1, x2 = _coordinate(start_at, scale), _coordinate(end_at, scale)
+        height = max(1.0, float(metric_values["timeline.mark.blockSize"]) / 3)
+        shapes.append(ShapePlacement(f"summary-bar:{review_row.row_id}", subject.object_id, "Rect",
+                                     Rect(Decimal(str(x1)), row.bounds.block,
+                                          Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))))
     diagnostics: list[str] = []
     label_requests: list[LabelRequest] = []
     if contract.labels.enabled:

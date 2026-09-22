@@ -1,4 +1,4 @@
-version: chrona/view/v0.1
+version: chrona/view/v0.3
 kind: view
 id: aster-04-qualification-production
 body:
@@ -57,3 +57,4 @@ body:
   - id: Work package / gate
     source: title
     missing: em-dash
+  rows: {mode: automatic}
