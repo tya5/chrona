@@ -12,6 +12,7 @@ def theme():
         "timeline.dayWidth": 12, "timeline.row.minBlockSize": 40, "timeline.mark.blockSize": 8,
         "timeline.axis.blockSize": 48, "table.column.minInlineSize": 120, "table.column.gutter.inlineSize": 8,
         "table.header.blockSize": 44, "table.indent.inlineSize": 16,
+        "network.node.minInlineSize": 120, "network.node.minBlockSize": 36, "network.rank.gap": 24,
     }
     values = {f"metric.{i}": {"type": "number", "value": value} for i, value in enumerate(metrics.values())}
     values |= {
@@ -30,6 +31,7 @@ def theme():
 
 def test_sources_are_measured_once_from_semantic_inputs_and_theme_metrics():
     class Metrics:
+        content_identity = "sha256:test"
         def width(self, value, size): return len(value) * size / 2
         def baseline(self, top, size, line_height): return top + size
     measured = measure_sources({
@@ -47,6 +49,7 @@ def test_sources_are_measured_once_from_semantic_inputs_and_theme_metrics():
 
 def test_missing_unknown_and_wrong_type_metric_bindings_diagnose():
     class Metrics:
+        content_identity = "sha256:test"
         def width(self, value, size): return len(value) * size / 2
         def baseline(self, top, size, line_height): return top + size
     value = theme(); del value["body"]["metrics"]["timeline.dayWidth"]
@@ -62,6 +65,7 @@ def test_missing_unknown_and_wrong_type_metric_bindings_diagnose():
 
 def test_heading_source_uses_heading_extent_and_baseline():
     class Metrics:
+        content_identity = "sha256:test"
         def width(self, value, size): return len(value) * size / 2
         def baseline(self, top, size, line_height): return top + size
     measured = measure_sources({"title": SourceInput(("Controller Z",), typography_role="heading")}, theme(), font_metrics=Metrics())
@@ -73,6 +77,7 @@ def test_heading_source_uses_heading_extent_and_baseline():
 
 def test_mixed_typography_runs_measure_their_actual_cumulative_height():
     class Metrics:
+        content_identity = "sha256:test"
         def width(self, value, size): return len(value) * size / 2
         def baseline(self, top, size, line_height): return top + size
     measured = measure_sources({"summary": SourceInput(runs=(

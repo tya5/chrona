@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -90,6 +91,20 @@ def test_scene_input_rejects_a_layout_without_a_required_source():
                           resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                           capabilities={"svg": True})
     assert error.value.path == "/layoutManifest/sources/timeline-axis"
+
+
+def test_scene_input_requires_surface_specific_network_slot_set():
+    network = SimpleNamespace(surface="dependency-network")
+    value = build_scene_input(projection=network, surface_content=surface_content(),
+                              layout_manifest=_manifest("title", "network"),
+                              resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
+                              capabilities={"svg": True})
+    assert value.projection.surface == "dependency-network"
+    with pytest.raises(SceneBuildError, match="E_PRESENTATION_SURFACE_SLOT_SET"):
+        build_scene_input(projection=network, surface_content=surface_content(),
+                          layout_manifest=_manifest("title", "network", "table"),
+                          resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
+                          capabilities={"svg": True})
 
 
 def test_scene_input_requires_frozen_source_measurements():

@@ -1,4 +1,5 @@
 from datetime import date
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -63,3 +64,17 @@ def test_v03_selection_rejects_undefined_capability(key: str):
     value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
     value["body"]["selection"]["include"][key] = ["undefined"]
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
+
+
+def test_dependency_network_keeps_common_window_and_rejects_timeline_authoring():
+    value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    body = value["body"]
+    body["surface"] = "dependency-network"
+    forbidden = ("tableColumns", "axis", "markers", "shading", "timePresentation", "annotations", "annotationPresentation")
+    saved = {name: body.pop(name) for name in forbidden if name in body}
+    assert "window" in body
+    assert next(_validator().iter_errors(_json_value(value)), None) is None
+    for name, item in saved.items():
+        candidate = deepcopy(value)
+        candidate["body"][name] = item
+        assert next(_validator().iter_errors(_json_value(candidate)), None) is not None, name

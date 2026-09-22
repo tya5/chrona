@@ -1,10 +1,12 @@
 from decimal import Decimal
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
 from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 
 
 def _network(nodes, edges):
@@ -14,16 +16,46 @@ def _network(nodes, edges):
                                        for relation, source, target in edges))
 
 
-def test_network_layout_uses_longest_path_rank_and_stable_order():
+def _measured(*ids):
+    return MeasuredSources({}, {}, {
+        "network.node.minInlineSize": Decimal(60), "network.node.minBlockSize": Decimal(30),
+        "network.rank.gap": Decimal(12),
+    }, {"network": tuple(MeasuredTextRun(item, item, "text", Decimal(20), Decimal(14), Decimal(11),
+                                            "Test Sans", 400, 14.0, 1.0, "sha256:test") for item in ids)})
+
+
+def test_network_layout_does_not_reopen_common_projection_or_view_authoring():
+    source = Path(__import__("chrona.presentation.layout.dependency_network", fromlist=["*"]).__file__).read_text(encoding="utf-8")
+    assert all(fragment not in source for fragment in (
+        "projection.window", ".axis", ".markers", ".shading", ".annotations", ".table_columns",
+    ))
+
+
+def test_network_layout_uses_longest_path_rank_measured_labels_and_stable_order():
     layout = compose_dependency_network_layout(_network(("b", "a", "c"), (("ab", "a", "b"), ("bc", "b", "c"))),
                                                bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(200)),
-                                               node_inline=Decimal(60), node_block=Decimal(30))
+                                               measured_sources=_measured("a", "b", "c"), writing_mode="horizontal-tb")
     assert [(item.object_id, item.rank) for item in layout.nodes] == [("a", 0), ("b", 1), ("c", 2)]
+    assert [item.placement_id for item in layout.text] == ["network-label:a", "network-label:b", "network-label:c"]
     assert all(len(item.points) >= 2 for item in layout.relations)
 
 
-def test_network_layout_rejects_a_cycle_before_inventing_geometry():
+def test_network_layout_advances_ranks_in_block_direction_for_vertical_writing():
+    layout = compose_dependency_network_layout(_network(("a", "b"), (("ab", "a", "b"),)),
+                                               bounds=Rect(Decimal(0), Decimal(0), Decimal(240), Decimal(240)),
+                                               measured_sources=_measured("a", "b"), writing_mode="vertical-lr")
+    first, second = layout.nodes
+    assert first.bounds.block < second.bounds.block
+    assert first.output_port[1] == float(first.bounds.block + first.bounds.block_size)
+    assert second.input_port[1] == float(second.bounds.block)
+
+
+def test_network_layout_rejects_cycle_and_missing_measurement_before_geometry():
     with pytest.raises(LayoutError, match="E_LAYOUT_NETWORK_CYCLE"):
         compose_dependency_network_layout(_network(("a", "b"), (("ab", "a", "b"), ("ba", "b", "a"))),
                                           bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(200)),
-                                          node_inline=Decimal(60), node_block=Decimal(30))
+                                          measured_sources=_measured("a", "b"), writing_mode="horizontal-tb")
+    with pytest.raises(LayoutError, match="E_LAYOUT_NETWORK_MEASUREMENT"):
+        compose_dependency_network_layout(_network(("a",), ()),
+                                          bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(200)),
+                                          measured_sources=_measured(), writing_mode="horizontal-tb")
