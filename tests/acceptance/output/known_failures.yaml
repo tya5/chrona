@@ -15,8 +15,6 @@ test_no_text_is_drawn_over_a_mark:
 test_no_text_leaves_the_viewport:
   aster-ssd/overview: [[Production release, 52.0]]
   controller-z/executive: [[General Availability, 97.2]]
-test_row_index_cells_render_an_ordinal:
-  halcyon-1/mission-brief: [[cell:pdr:#, +1d], [cell:optics:#, +2d], [cell:structure:#, +3d], [cell:avionics:#, +4d], [cell:payload-tvac:#, +5d], [cell:bus-test:#, +6d], [cell:cdr:#, +7d], [cell:payload-delivery:#, +8d], [cell:integration:#, +9d], [cell:tvac:#, +10d], [cell:psr:#, +11d], [cell:campaign:#, +12d], [cell:frr:#, +13d], [cell:launch:#, +14d], [cell:leop:#, +15d], [cell:first-light:#, +16d]]
 test_point_rows_never_render_a_span_only_state:
   halcyon-1/mission-brief: [cdr, first-light, frr, launch, payload-delivery, pdr, psr]
   halcyon-1/launch-campaign: [first-light, frr, launch, psr]

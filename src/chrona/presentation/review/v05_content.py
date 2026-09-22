@@ -15,6 +15,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   detail: Mapping[str, Any] | None = None, summary: Mapping[str, Any] | None = None,
                                   layout_manifest: LayoutManifest | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
+    actual_body = _resource_body(actual_set, "ACTUAL_SET")
+    detail_body = _resource_body(detail, "DETAIL_PROFILE")
+    summary_body = _resource_body(summary, "SUMMARY_PROFILE")
     body = view.get("body", {})
     columns = tuple((str(column["id"]), str(column["id"])) for column in body.get("tableColumns", ()))
     if projection.rows:
@@ -44,7 +47,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     temporal = body.get("timePresentation", {})
     axis = body.get("axis", {})
     markers = body.get("markers", ())
-    as_of_value = ((actual_set or {}).get("body") or {}).get("asOf")
+    as_of_value = actual_body.get("asOf")
     as_of_marker = next((item for item in markers if item.get("kind") == "asOf" and item.get("source") == "actual"), None)
     as_of = date.fromisoformat(as_of_value) if ((as_of_marker is not None) or temporal.get("asOf", "line") == "line") and isinstance(as_of_value, str) else None
     annotation_visibility = visible.get("annotations", "none")
@@ -58,8 +61,6 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
     resolved_detail = (resolve_v05_review_detail_profile(detail, projection.items, layout_manifest)
                        if layout_manifest is not None else None)
-    detail_body = (detail or {}).get("body") or {}
-    summary_body = (summary or {}).get("body") or {}
     legend = tuple((str(item["role"]), str(item["label"])) for item in detail_body.get("legend", ()))
     panels = _typed_summary_panels(summary_body, projection, actual_set)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
@@ -99,6 +100,16 @@ def _closed_calendar_days(project: Mapping[str, Any], window: tuple[date, date])
             closed.append(current)
         current += timedelta(days=1)
     return tuple(closed)
+
+
+def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, Any]:
+    """Accept one current resource envelope; malformed optional input is not empty."""
+    if value is None:
+        return {}
+    body = value.get("body") if isinstance(value, Mapping) else None
+    if not isinstance(body, Mapping):
+        raise ValueError(f"E_PRESENTATION_{name}_SHAPE")
+    return body
 
 
 
