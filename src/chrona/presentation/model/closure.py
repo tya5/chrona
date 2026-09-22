@@ -152,8 +152,8 @@ def resolve_draft_render(
         resolved_theme = ResolvedThemeContract(
             by_kind["theme"].id,
             freeze(resolve_theme(
-                by_kind["theme"].contract.document,
-                by_kind["color-scheme"].contract.document,
+                by_kind["theme"].contract.theme_input,
+                by_kind["color-scheme"].contract.scheme_input,
                 scheme_content_identity=by_kind["color-scheme"].content_identity,
             )),
         )
@@ -253,22 +253,12 @@ def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.get("version") != "chrona/render-context/v0.7":
+    if context.version != "chrona/render-context/v0.7":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 
 
-def _resolve_layout_context(
-    context: dict[str, Any], reader: SnapshotReader
-) -> RenderClosure:
-    try:
-        context_contract = parse_contract(
-            ClosureIdentity("render-context", str(context["id"]), "", ""), context
-        )
-    except SchemaContractError as error:
-        raise ClosureError("E_RENDER_CONTEXT_SCHEMA", error.source_ref) from error
-    except ContractError as error:
-        raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
+def _resolve_layout_context(context_contract: RenderContextContract, reader: SnapshotReader) -> RenderClosure:
     ordered = (
         (context_contract.project.as_reader_reference(), "project"),
         (context_contract.view.as_reader_reference(), "view"),
@@ -277,11 +267,11 @@ def _resolve_layout_context(
         (context_contract.layout.as_reader_reference(), "layout-profile"),
     )
     resources = [_load_reference(reference, reader, kind) for reference, kind in ordered]
-    for extension in resources[0].contract.document.get("extensions", []):
+    for extension in resources[0].contract.extensions:
         package_reference = extension.get("resource")
         if package_reference is not None:
             package = _load_reference(package_reference, reader, "profile-package")
-            if package.contract.document.get("packageId") != extension.get("packageId"):
+            if package.contract.package_id != extension.get("packageId"):
                 raise ClosureError("E_CLOSURE_ID")
             resources.append(package)
     for reference, kind in ((context_contract.actual, "actual-set"),
@@ -291,10 +281,7 @@ def _resolve_layout_context(
             resources.append(_load_reference(reference.as_reader_reference(), reader, kind))
     if context_contract.snapshot is not None:
         snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref")
-        project_reference = snapshot.contract.document.get("body", {}).get("project")
-        if not isinstance(project_reference, dict):
-            raise ClosureError("E_CLOSURE_KIND")
-        snapshot_project = _load_reference(project_reference, reader, "project")
+        snapshot_project = _load_reference(snapshot.contract.project.as_reader_reference(), reader, "project")
         if snapshot_project.id != resources[0].id:
             raise ClosureError("E_CLOSURE_ID")
         resources.extend((snapshot, ClosureResource(
@@ -304,7 +291,7 @@ def _resolve_layout_context(
         raise ClosureError("E_TARGET_CAPABILITY_ORDER")
     theme, scheme = resources[2], resources[3]
     try:
-        value = resolve_theme(theme.contract.document, scheme.contract.document, scheme_content_identity=scheme.content_identity)
+        value = resolve_theme(theme.contract.theme_input, scheme.contract.scheme_input, scheme_content_identity=scheme.content_identity)
         resolved_theme = ResolvedThemeContract(theme.id, freeze(value))
     except ColorSchemeError as error:
         raise ClosureError(str(error)) from error
@@ -351,6 +338,8 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     return ClosureResource(expected_kind, actual_id, identity.revision, identity.content_identity, contract)
 
 
-def _load_presentation(reference: dict[str, Any], reader: SnapshotReader) -> dict[str, Any]:
+def _load_presentation(reference: dict[str, Any], reader: SnapshotReader) -> RenderContextContract:
     item = _load_reference(reference, reader, "render-context")
-    return item.contract.document
+    if not isinstance(item.contract, RenderContextContract):
+        raise ClosureError("E_CLOSURE_KIND")
+    return item.contract

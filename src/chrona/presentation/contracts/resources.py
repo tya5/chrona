@@ -98,62 +98,58 @@ class ResourceContract:
 
     identity: ClosureIdentity
     version: str
-    body: FrozenDict
-    document: FrozenDict
 
 
 @dataclass(frozen=True)
 class ActualSetContract(ResourceContract):
-    pass
+    observations_input: FrozenDict
 
 
 @dataclass(frozen=True)
 class SnapshotRefContract(ResourceContract):
-    pass
+    project: ResourceReference
 
 
 @dataclass(frozen=True)
 class ProfilePackageContract(ResourceContract):
-    pass
+    package_id: str
+    profile_input: FrozenDict
 
 
 @dataclass(frozen=True)
 class SummaryProfileContract(ResourceContract):
-    pass
+    summary_input: FrozenDict
 
 
 @dataclass(frozen=True)
 class ReviewDetailProfileContract(ResourceContract):
-    pass
+    detail_input: FrozenDict
 
 
 @dataclass(frozen=True)
 class ProjectContract(ResourceContract):
-    @property
-    def facts(self) -> FrozenDict:
-        return self.document
+    scheduler_input: FrozenDict
+    extensions: tuple[FrozenDict, ...]
 
 
 @dataclass(frozen=True)
 class ViewContract(ResourceContract):
-    pass
+    projection_input: FrozenDict
 
 
 @dataclass(frozen=True)
 class ThemeContract(ResourceContract):
-    pass
+    theme_input: FrozenDict
 
 
 @dataclass(frozen=True)
 class ColorSchemeContract(ResourceContract):
-    pass
+    scheme_input: FrozenDict
 
 
 @dataclass(frozen=True)
 class LayoutProfileContract(ResourceContract):
-    @property
-    def profile(self) -> FrozenDict:
-        return self.document
+    layout_input: FrozenDict
 
 
 @dataclass(frozen=True)
@@ -217,11 +213,7 @@ class ResolvedThemeContract:
     """The frozen derived decorative value permitted past closure resolution."""
 
     source_theme_id: str
-    document: FrozenDict
-
-    @property
-    def body(self) -> FrozenDict:
-        return self.document["body"]
+    resolved_input: FrozenDict
 
 
 _SCHEMAS = {
@@ -287,15 +279,18 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         raise ContractError("E_CLOSURE_KIND")
     version = _validate(identity.kind, value)
     if identity.kind == "project":
-        return ProjectContract(identity, version, body, frozen)
+        extensions = frozen.get("extensions", ())
+        if not isinstance(extensions, (tuple, FrozenList)) or not all(isinstance(item, FrozenDict) for item in extensions):
+            raise ContractError("E_CLOSURE_KIND")
+        return ProjectContract(identity, version, frozen, tuple(extensions))
     if identity.kind == "view":
-        return ViewContract(identity, version, body, frozen)
+        return ViewContract(identity, version, frozen)
     if identity.kind == "theme":
-        return ThemeContract(identity, version, body, frozen)
+        return ThemeContract(identity, version, frozen)
     if identity.kind == "color-scheme":
-        return ColorSchemeContract(identity, version, body, frozen)
+        return ColorSchemeContract(identity, version, frozen)
     if identity.kind == "layout-profile":
-        return LayoutProfileContract(identity, version, body, frozen)
+        return LayoutProfileContract(identity, version, frozen)
     if identity.kind == "render-context":
         inputs, environment, target = body["inputs"], body["environment"], body["target"]
         if not all(isinstance(item, FrozenDict) for item in (inputs, environment, target)):
@@ -307,7 +302,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         if rasterizer is not None and not isinstance(rasterizer, FrozenDict):
             raise ContractError("E_CLOSURE_KIND")
         return RenderContextContract(
-            identity, version, body, frozen,
+            identity, version,
             ResourceReference.from_value(body["project"]), ResourceReference.from_value(body["view"]),
             ResourceReference.from_value(body["theme"]), ResourceReference.from_value(body["colorScheme"]),
             ResourceReference.from_value(body["layout"]),
@@ -320,13 +315,13 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"])),
         )
     if identity.kind == "actual-set":
-        return ActualSetContract(identity, version, body, frozen)
+        return ActualSetContract(identity, version, frozen)
     if identity.kind == "snapshot-ref":
-        return SnapshotRefContract(identity, version, body, frozen)
+        return SnapshotRefContract(identity, version, ResourceReference.from_value(body["project"]))
     if identity.kind == "profile-package":
-        return ProfilePackageContract(identity, version, body, frozen)
+        return ProfilePackageContract(identity, version, str(frozen["packageId"]), frozen)
     if identity.kind == "summary-profile":
-        return SummaryProfileContract(identity, version, body, frozen)
+        return SummaryProfileContract(identity, version, frozen)
     if identity.kind == "review-detail-profile":
-        return ReviewDetailProfileContract(identity, version, body, frozen)
+        return ReviewDetailProfileContract(identity, version, frozen)
     raise ContractError("E_CLOSURE_KIND")

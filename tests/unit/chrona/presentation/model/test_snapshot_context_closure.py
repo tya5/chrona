@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import yaml
 
 import chrona.presentation.model.closure as closure
+from chrona.presentation.contracts import RenderContextContract, RenderEnvironment, RenderTarget, ResourceReference, freeze
 from chrona.storage.revision_store import LocalSnapshotReader
 
 
@@ -41,16 +42,22 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
     monkeypatch.setattr(closure, "resolve_theme", lambda *_args, **_kwargs: {})
     def fake_parse(identity, value):
         if identity.kind != "render-context":
-            return SimpleNamespace(identity=identity, document=value)
+            if identity.kind == "project":
+                return SimpleNamespace(identity=identity, scheduler_input=value, extensions=())
+            if identity.kind == "snapshot-ref":
+                return SimpleNamespace(identity=identity, project=ResourceReference.from_value(freeze(value["body"]["project"])))
+            if identity.kind == "theme":
+                return SimpleNamespace(identity=identity, theme_input=value)
+            if identity.kind == "color-scheme":
+                return SimpleNamespace(identity=identity, scheme_input=value)
+            return SimpleNamespace(identity=identity, layout_input=value)
         body = value["body"]
-        reference = lambda name: SimpleNamespace(as_reader_reference=lambda: body[name])
-        return SimpleNamespace(
-            document=value,
-            project=reference("project"), view=reference("view"), theme=reference("theme"),
-            color_scheme=reference("colorScheme"), layout=reference("layout"),
-            actual=None, summary_profile=None, detail_profile=None,
-            snapshot=SimpleNamespace(as_reader_reference=lambda: body["inputs"]["snapshot"]),
-            target=SimpleNamespace(capabilities=()),
+        reference = lambda name: ResourceReference.from_value(freeze(body[name]))
+        return RenderContextContract(
+            identity, value["version"], reference("project"), reference("view"), reference("theme"),
+            reference("colorScheme"), reference("layout"), None,
+            ResourceReference.from_value(freeze(body["inputs"]["snapshot"])), None, None,
+            RenderEnvironment(1, 1, "en-US", freeze({}), 0, None), RenderTarget("svg", ()),
         )
 
     monkeypatch.setattr(closure, "parse_contract", fake_parse)

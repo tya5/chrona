@@ -15,9 +15,9 @@ def test_contract_is_schema_accepted_then_detached_and_immutable():
     contract = parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
     assert isinstance(contract, ThemeContract)
     value["body"]["roles"]["text"] = {"fontFamily": "late"}
-    assert "text" not in contract.body["roles"]
+    assert "text" not in contract.theme_input["body"]["roles"]
     with pytest.raises(TypeError):
-        contract.body["roles"]["text"] = {}
+        contract.theme_input["body"]["roles"]["text"] = {}
 
 
 def test_contract_rejects_schema_invalid_mandatory_resource():
