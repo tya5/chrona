@@ -225,6 +225,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives),
                                                  corner_radius=planned_mark.corner_radius,
+                                                 path_commands=planned_mark.path_commands,
                                                  href=href, link_title=link_title))
             else:
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
@@ -242,7 +243,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                  bounds, projection_instance_id=instance_id, z_order=len(primitives), corner_radius=actual_mark.corner_radius))
             else:
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives), corner_radius=actual_mark.corner_radius))
+                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives), corner_radius=actual_mark.corner_radius,
+                                                 path_commands=actual_mark.path_commands))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),

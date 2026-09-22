@@ -39,7 +39,8 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float], to
         x, y, w, h = node.bounds
         parts.append(f"// scene-id: {_typst_string(node.scene_id)} source-ref: {_typst_string(node.source_ref)}")
         if node.kind == "Rect":
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#rect(width: {_number(w)}pt, height: {_number(h)}pt, fill: rgb("{_color(tokens, node, "fill")}"))]')
+            radius = f', radius: {_number(node.corner_radius)}pt' if node.corner_radius else ''
+            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#rect(width: {_number(w)}pt, height: {_number(h)}pt{radius}, fill: rgb("{_color(tokens, node, "fill")}"))]')
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -50,8 +51,12 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float], to
         elif node.kind == "Symbol":
             if node.shape != "diamond":
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if node.path_commands:
+                raise ValueError("E_PRESENTATION_ROUNDED_PATH_UNSUPPORTED")
             parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#rotate(45deg, rect(width: {_number(w)}pt, height: {_number(h)}pt, fill: rgb("{_color(tokens, node, "fill")}"))]')
         elif node.kind == "Path":
+            if node.path_commands:
+                raise ValueError("E_PRESENTATION_ROUNDED_PATH_UNSUPPORTED")
             if len(node.points) < 2:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             points = ", ".join(f"({_number(px)}pt, {_number(py)}pt)" for px, py in node.points)
@@ -72,7 +77,8 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float], tok
         x, y, w, h = node.bounds
         parts.append(f"% scene-id: {_tex_string(node.scene_id)} source-ref: {_tex_string(node.source_ref)}")
         if node.kind == "Rect":
-            parts.append(f"\\path[fill={_color(tokens, node, 'fill')}] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});")
+            rounded = f", rounded corners={_number(node.corner_radius)}pt" if node.corner_radius else ""
+            parts.append(f"\\path[fill={_color(tokens, node, 'fill')}{rounded}] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});")
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -83,11 +89,39 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float], tok
         elif node.kind == "Symbol":
             if node.shape != "diamond":
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if node.path_commands:
+                commands = []
+                for command in node.path_commands:
+                    if command.kind == "move":
+                        commands.append(f"({_number(command.points[0][0])},{_number(command.points[0][1])})")
+                    elif command.kind == "line":
+                        commands.append(f"-- ({_number(command.points[0][0])},{_number(command.points[0][1])})")
+                    elif command.kind == "quadratic":
+                        control, end = command.points
+                        commands.append(f".. controls ({_number(control[0])},{_number(control[1])}) .. ({_number(end[0])},{_number(end[1])})")
+                    else:
+                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                parts.append(f"\\path[fill={_color(tokens, node, 'fill')}] {' '.join(commands)};")
+                continue
             parts.append(f"\\path[fill={_color(tokens, node, 'fill')}] ({_number(x+w/2)},{_number(y)}) -- ({_number(x+w)},{_number(y+h/2)}) -- ({_number(x+w/2)},{_number(y+h)}) -- ({_number(x)},{_number(y+h/2)}) -- cycle;")
         elif node.kind == "Path":
             if len(node.points) < 2:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            points = " -- ".join(f"({_number(px)},{_number(py)})" for px, py in node.points)
+            if node.path_commands:
+                commands = []
+                for command in node.path_commands:
+                    if command.kind == "move":
+                        commands.append(f"({_number(command.points[0][0])},{_number(command.points[0][1])})")
+                    elif command.kind == "line":
+                        commands.append(f"-- ({_number(command.points[0][0])},{_number(command.points[0][1])})")
+                    elif command.kind == "quadratic":
+                        control, end = command.points
+                        commands.append(f".. controls ({_number(control[0])},{_number(control[1])}) .. ({_number(end[0])},{_number(end[1])})")
+                    else:
+                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                points = " ".join(commands)
+            else:
+                points = " -- ".join(f"({_number(px)},{_number(py)})" for px, py in node.points)
             parts.append(f"\\draw[draw={_color(tokens, node, 'stroke')}] {points};")
         else:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

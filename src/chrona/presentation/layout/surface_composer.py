@@ -18,7 +18,7 @@ from chrona.presentation.layout.annotations import (
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
-from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
+from chrona.presentation.layout.path_geometry import rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
@@ -242,8 +242,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         requested = float(metric_values.get(
             "timeline.point.cornerRadius" if shape == "point" else "timeline.mark.cornerRadius", 0))
         radius = min(requested, float(min(bounds.inline_size, bounds.block_size)) / 2)
+        commands = (rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
+                                         inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
+                    if shape == "point" and radius > 0 else ())
         return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
-                             mark_shape=shape, corner_radius=radius)
+                             mark_shape=shape, corner_radius=radius, path_commands=commands)
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -458,11 +461,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
                     raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
+                relation_radius = float(metric_values.get("timeline.relation.cornerRadius", 0))
                 relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points),
                                                    semantic_id=str(relation.get("_semantic", "dependency")),
-                                                   corner_radius=float(metric_values.get("timeline.relation.cornerRadius", 0)),
-                                                   path_commands=rounded_orthogonal_path(
-                                                       tuple(points), float(metric_values.get("timeline.relation.cornerRadius", 0)))))
+                                                   corner_radius=relation_radius,
+                                                   path_commands=(rounded_orthogonal_path(tuple(points), relation_radius)
+                                                                  if relation_radius > 0 else ())))
 
     legend = by_source.get("legend")
     if legend:

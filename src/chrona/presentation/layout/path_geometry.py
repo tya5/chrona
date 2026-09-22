@@ -37,3 +37,29 @@ def rounded_orthogonal_path(points: tuple[tuple[float, float], ...], radius: flo
         current = after
     commands.append(PathCommand("line", (points[-1],)))
     return tuple(commands)
+
+
+def rounded_diamond_path(*, inline: float, block: float, inline_size: float, block_size: float,
+                         radius: float) -> tuple[PathCommand, ...]:
+    """Return a closed rounded-diamond boundary contained in completed bounds."""
+    vertices = ((inline + inline_size / 2, block), (inline + inline_size, block + block_size / 2),
+                (inline + inline_size / 2, block + block_size), (inline, block + block_size / 2))
+    amount = min(radius, inline_size / 4, block_size / 4)
+    if amount <= 0:
+        return ()
+    before_after = []
+    for index, vertex in enumerate(vertices):
+        previous, following = vertices[index - 1], vertices[(index + 1) % len(vertices)]
+        left = abs(vertex[0] - previous[0]) + abs(vertex[1] - previous[1])
+        right = abs(following[0] - vertex[0]) + abs(following[1] - vertex[1])
+        before_after.append(((vertex[0] + (previous[0] - vertex[0]) * amount / left,
+                              vertex[1] + (previous[1] - vertex[1]) * amount / left),
+                             (vertex[0] + (following[0] - vertex[0]) * amount / right,
+                              vertex[1] + (following[1] - vertex[1]) * amount / right)))
+    commands = [PathCommand("move", (before_after[0][0],))]
+    for index, vertex in enumerate(vertices):
+        commands.append(PathCommand("quadratic", (vertex, before_after[index][1])))
+        if index < len(vertices) - 1:
+            commands.append(PathCommand("line", (before_after[index + 1][0],)))
+    commands.append(PathCommand("line", (before_after[0][0],)))
+    return tuple(commands)
