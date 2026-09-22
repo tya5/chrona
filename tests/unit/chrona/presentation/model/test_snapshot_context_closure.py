@@ -28,7 +28,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
     resources = {}
     for name, kind in (("view", "view"), ("theme", "theme"), ("scheme", "color-scheme"), ("layout", "layout-profile")):
         versions = {
-            "view": "chrona/view/v0.4", "theme": "chrona/theme/v0.2",
+            "view": "chrona/view/v0.5", "theme": "chrona/theme/v0.2",
             "color-scheme": "chrona/color-scheme/v0.1", "layout-profile": "chrona/layout-profile/v0.2",
         }
         value = {"version": versions[kind], "kind": kind, "id": name, "body": {}}

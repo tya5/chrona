@@ -378,7 +378,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
     ("project", "timeline/v0.3"): "project-v0.3.schema.yaml",
-    ("view", "chrona/view/v0.4"): "view-v0.4.schema.yaml",
+    ("view", "chrona/view/v0.5"): "view-v0.5.schema.yaml",
     ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",

@@ -66,7 +66,17 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     annotation_numbered = (isinstance(annotation_visibility, Mapping) and annotation_visibility.get("marker") == "numbered") or view.annotation_presentation == "numbered"
     relation_value = visible.relations
     relation_overflow = str(relation_value.get("overflow", "diagnose")) if isinstance(relation_value, Mapping) else "diagnose"
-    relations = tuple(project.get("relations", ())) if (relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value) != "none" else ()
+    relation_mode = relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value
+    if relation_mode == "critical":
+        critical_ids = {item.object_id for item in projection.items if item.critical and item.source_kind == "primary"}
+        relations = tuple({**relation, "_semantic": "dependency-critical"}
+                          for relation in project.get("relations", ())
+                          if relation.get("from", {}).get("object") in critical_ids
+                          and relation.get("to", {}).get("object") in critical_ids)
+    elif relation_mode != "none":
+        relations = tuple({**relation, "_semantic": "dependency"} for relation in project.get("relations", ()))
+    else:
+        relations = ()
     raw_annotations = view.annotations if annotation_mode != "none" else ()
     annotations = tuple({**annotation, "number": index + 1} for index, annotation in enumerate(raw_annotations)) if annotation_numbered else raw_annotations
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())

@@ -428,7 +428,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
                     raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
-                relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points)))
+                relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points),
+                                                   semantic_id=str(relation.get("_semantic", "dependency"))))
 
     legend = by_source.get("legend")
     if legend:
