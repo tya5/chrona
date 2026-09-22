@@ -14,7 +14,7 @@ are migration-only and record their successor and removal slice.
 | layout-profile | layout-profile-v0.2.schema.yaml |
 | profile-package | profile-v0.1.schema.yaml |
 | project | project-v0.3.schema.yaml |
-| render-context | render-context-v0.7.schema.yaml |
+| render-context | render-context-v0.8.schema.yaml |
 | review-detail-profile | review-detail-profile-v0.1.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
@@ -45,7 +45,7 @@ Schema validation is therefore stage 1, not full Core conformance.
 
 `presentation-resource-v0.1.schema.yaml` supplies shared envelope and reference
 definitions for the listed Presentation resources. The current
-`render-context-v0.7.schema.yaml` binds immutable Project and presentation
+`render-context-v0.8.schema.yaml` binds immutable Project and presentation
 references, viewport, locale, measured font assets, and one declared target.
 `layout-profile-v0.2.schema.yaml` defines the current intent-oriented composition
 grammar. `review-detail-profile-v0.1.schema.yaml` owns selected group descriptions,

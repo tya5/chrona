@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from hashlib import sha256
 from importlib.metadata import version
 from pathlib import Path
+import re
+import subprocess
 from typing import Any
 
 import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
@@ -162,7 +164,7 @@ def resolve_draft_render(
 
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     context_value = {
-        "version": "chrona/render-context/v0.7", "kind": "render-context", "id": "draft-render",
+        "version": "chrona/render-context/v0.8", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -180,8 +182,10 @@ def resolve_draft_render(
                 "fontMetrics": _packaged_font_metrics(asset_root),
                 "scenePrecision": 3,
                 **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
+                **({"typesetter": _draft_typesetter(target_kind)} if target_kind in {"typst", "tikz"} else {}),
             },
-            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else []},
+            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else [],
+                       **({"textMode": "positioned"} if target_kind in {"typst", "tikz"} else {})},
         },
     }
     try:
@@ -251,9 +255,21 @@ def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
         return {"engine": "reportlab", "svglibVersion": "unavailable", "reportlabVersion": "unavailable", "invariant": True}
 
 
+def _draft_typesetter(target_kind: str) -> dict[str, Any]:
+    engine, grammar = ("typst", "chrona-typst/v0.1") if target_kind == "typst" else ("tectonic", "chrona-tikz/v0.1")
+    try:
+        result = subprocess.run((engine, "--version"), check=True, capture_output=True, text=True)
+    except (FileNotFoundError, subprocess.SubprocessError) as error:
+        raise ClosureError("E_RENDER_TYPESETTER_UNAVAILABLE") from error
+    found = re.search(r"\b\d+(?:\.\d+){1,3}(?:[+-][0-9A-Za-z.-]+)?\b", result.stdout + result.stderr)
+    if found is None:
+        raise ClosureError("E_RENDER_TYPESETTER_UNAVAILABLE")
+    return {"engine": engine, "version": found.group(0), "adapterGrammar": grammar}
+
+
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.version != "chrona/render-context/v0.7":
+    if context.version != "chrona/render-context/v0.8":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 

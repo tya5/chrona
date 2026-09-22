@@ -88,7 +88,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("immutable Project snapshot", "draft review surface", "immutable Render Context v0.7"):
+    for phrase in ("immutable Project snapshot", "draft review surface", "immutable Render Context v0.8"):
         assert phrase in help_text
 
 
@@ -231,7 +231,7 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     font_path = tmp_path / token / "font_metrics/nimbus-sans-regular-v1.json"
     font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
     context = {
-        "version": "chrona/render-context/v0.7", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/render-context/v0.8", "kind": "render-context", "id": "controller-z-current",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},

@@ -136,16 +136,16 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--detail", help="Review Detail Profile YAML path")
     command.add_argument("--viewport", default="1600x900", help="viewport WIDTHxHEIGHT (default: 1600x900)")
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
-    command.add_argument("--format", choices=("svg", "png", "pdf"), default="svg")
+    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
     command.add_argument("--output", "-o", required=True)
 
-    command = sub.add_parser("render-review", help="render an immutable Render Context v0.7", description="render an immutable Render Context v0.7")
+    command = sub.add_parser("render-review", help="render an immutable Render Context v0.8", description="render an immutable Render Context v0.8")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
     command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose Context declares inputs the render never reads")
-    command.add_argument("--format", choices=("svg", "png", "pdf"), help="assert the Context target format")
+    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), help="assert the Context target format")
     command.add_argument("--output", "-o", required=True)
 
     command = sub.add_parser("materialize", help="materialize one declared immutable example Context")
@@ -159,7 +159,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--example", default="halcyon-1", choices=("halcyon-1",))
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
-    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.7 resource-reference YAML; repeat for each scheme")
+    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.8 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
@@ -194,7 +194,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
         closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
         scheduler=ReferenceScheduler(), renderer=renderer_for(
             {"kind": closure.context.target.kind, "capabilities": list(closure.context.target.capabilities)},
-            {"rasterizer": closure.context.environment.rasterizer} if closure.context.environment.rasterizer else {},
+            closure.context.environment.renderer_environment(),
         ),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
         asset_root=asset_root,

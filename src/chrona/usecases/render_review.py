@@ -162,7 +162,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     surface = compose_review_surface(scene_input)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
-        {"rasterizer": environment.rasterizer} if environment.rasterizer else {},
+        environment.renderer_environment(),
     )
     artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
                                tokens=scene_input.theme_tokens)
