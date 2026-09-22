@@ -294,6 +294,29 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
                     marks.append(place_mark(f"missing-actual:{instance_id}", item.object_id, bounds,
                                             (x, track.block), (x, track.block), shape="span"))
+    # A group-header target is a real GroupPlacement extent, not a synthetic table row.
+    group_by_id = {group.group_id: group for group in groups}
+    for folded in getattr(projection, "folded_points", ()):
+        group = group_by_id.get(folded.group_id)
+        if group is None or group.header_bounds is None:
+            raise LayoutError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE", f"/projection/foldedPoints/{folded.item.object_id}")
+        at = folded.item.planned.get("at")
+        if not isinstance(at, date):
+            continue
+        x = _coordinate(at, scale)
+        block_size = float(metric_values["timeline.mark.blockSize"])
+        block = float(group.header_bounds.block + (group.header_bounds.block_size - Decimal(str(block_size))) / 2)
+        bounds = Rect(Decimal(str(x - block_size / 2)), Decimal(str(block)), Decimal(str(block_size)), Decimal(str(block_size)))
+        port = (x, block + block_size / 2)
+        marks.append(place_mark(f"planned:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
+                                bounds, port, port, shape="point"))
+        if contract.labels.enabled and "title" in contract.labels.content:
+            text.append(place_text(placement_id=f"member-label:group-header:{folded.group_id}:{folded.item.object_id}",
+                                   source_ref=folded.item.object_id, content=folded.item.title,
+                                   inline=x + block_size, baseline_block=block + block_size,
+                                   typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   overflow=contract.labels.overflow, collision_region="group-header-point",
+                                   collision_domain=CollisionDomain("timeline", f"group-header:{folded.group_id}")))
     mark_by_id = {item.placement_id: item for item in marks}
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
@@ -419,6 +442,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}" if projection.rows else item.object_id
             instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
             instance_rows[instance_id] = row.row_id
+    for folded in getattr(projection, "folded_points", ()):
+        instance_id = f"group-header:{folded.group_id}:{folded.item.object_id}"
+        mark = next((item for item in marks if item.placement_id == f"planned:{instance_id}"), None)
+        if mark is not None:
+            instance_anchors.setdefault(folded.item.object_id, []).append((instance_id, mark.end_port))
+            instance_rows[instance_id] = f"group-header:{folded.group_id}"
     mark_ports = {mark.placement_id.removeprefix("planned:"): (mark.start_port, mark.end_port)
                   for mark in marks if mark.placement_id.startswith("planned:")}
     for relation in request.surface_content.relations:
