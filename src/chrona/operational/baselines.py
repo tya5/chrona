@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from chrona.app.review import review_projects
+from chrona.usecases.review_projects import review_projects
 from chrona.operational.references import ImmutableReader, verify_reference
 from chrona.operational.resources import content_identity
 

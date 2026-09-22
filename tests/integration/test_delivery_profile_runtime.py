@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 
 from chrona.commands.commands import execute_redo, execute_set_typed_field, execute_typed_field_batch, execute_undo, set_typed_field
-from chrona.storage.loader import schedule_snapshot, validate_snapshot
+from chrona.usecases.snapshots import schedule_snapshot, validate_snapshot
 from chrona.storage.revision_store import LocalSnapshotReader, LocalTransactionalStore, MemoryRevisionStore
 from chrona.scheduling.scheduler import schedule
 from chrona.core.validation import validate_project

@@ -4,9 +4,8 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date
-from typing import Any
+from typing import Any, Mapping
 
-from chrona.scheduling.scheduler import ScheduleResult
 
 
 @dataclass(frozen=True)
@@ -27,15 +26,15 @@ class FederatedSceneInput:
     nodes: dict[str, dict[str, Any]]
 
 
-def scene_from_schedule(project: dict[str, Any], result: ScheduleResult) -> Scene:
+def scene_from_schedule(project: dict[str, Any], placements: Mapping[str, Mapping[str, date]]) -> Scene:
     """Build a Scene without retaining authority to change Project semantics."""
-    if not result.ok or not result.placements:
+    if not placements:
         raise ValueError("Cannot build a scene without resolved placements")
     title = str(project.get("project", {}).get("title") or project.get("project", {}).get("id", "Chrona timeline"))
     return Scene(
         title=title,
-        placements=deepcopy(result.placements),
-        labels={object_id: str(project.get("objects", {}).get(object_id, {}).get("title") or object_id) for object_id in result.placements},
+        placements=deepcopy(dict(placements)),
+        labels={object_id: str(project.get("objects", {}).get(object_id, {}).get("title") or object_id) for object_id in placements},
         relations=tuple(deepcopy(project.get("relations", []))),
         description="Timeline rendered from Chrona semantic project data.",
     )

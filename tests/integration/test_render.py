@@ -28,7 +28,7 @@ def test_render_svg_projects_placements_without_owning_them():
         [],
     )
 
-    scene = scene_from_schedule(project, result)
+    scene = scene_from_schedule(project, result.placements)
     svg = render_svg(scene, {"marker", "metadata", "text-alternative"})
 
     assert '<svg ' in svg
@@ -48,7 +48,7 @@ def test_controller_x_legacy_documentation_artifact_is_current():
 
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     project = yaml.safe_load((root / "conformance/controller-x.yaml").read_text())
-    scene = scene_from_schedule(project, schedule(project))
+    scene = scene_from_schedule(project, schedule(project).placements)
     generated = render_svg(scene, {"marker", "metadata", "text-alternative"})
     assert generated == (root / "conformance/controller-x.svg").read_text()
 
@@ -56,7 +56,7 @@ def test_controller_x_legacy_documentation_artifact_is_current():
 def test_svg_rejects_an_incapable_target_and_scene_is_deterministic():
     project = {"project": {"title": "Demo"}, "objects": {"task": {"title": "Task"}}, "relations": []}
     result = ScheduleResult({"task": {"at": date(2026, 10, 1)}}, [])
-    scene = scene_from_schedule(project, result)
+    scene = scene_from_schedule(project, result.placements)
     assert render_svg(scene) == render_svg(scene)
     try:
         render_svg(scene, {"metadata", "text-alternative"})

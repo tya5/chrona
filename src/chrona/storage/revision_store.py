@@ -9,6 +9,8 @@ import json
 from typing import Any
 from pathlib import Path
 
+from chrona.core.ports import SnapshotReadError
+
 
 def _canonical(value: Any) -> bytes:
     def default(item: Any) -> str:
@@ -177,12 +179,6 @@ class LocalTransactionalStore:
         parents_path = self.root / token / "parents.json"
         parents = tuple(json.loads(parents_path.read_text(encoding="utf-8"))) if parents_path.is_file() else ()
         return ProjectSnapshot(f"local:{token}", f"sha256:{digest}", project, parents)
-
-
-class SnapshotReadError(ValueError):
-    def __init__(self, diagnostic_id: str):
-        super().__init__(diagnostic_id)
-        self.diagnostic_id = diagnostic_id
 
 
 class LocalSnapshotReader:

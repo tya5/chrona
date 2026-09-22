@@ -10,7 +10,7 @@ from typing import Any, NoReturn
 
 import yaml
 
-from chrona.app.review import review_projects
+from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import ClosureError, ClosureResource, resolve_render_context
@@ -278,7 +278,7 @@ def _run(args: argparse.Namespace) -> None:
     if not result.ok:
         _reject(result.diagnostics)
     if args.command == "render":
-        scene = scene_from_schedule(project, result)
+        scene = scene_from_schedule(project, result.placements)
         svg = render_svg(scene, {"marker", "metadata", "text-alternative"})
         Path(args.output).write_text(svg, encoding="utf-8")
         return

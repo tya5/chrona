@@ -10,7 +10,7 @@ import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.resources import schema_resource
-from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
+from chrona.core.ports import SnapshotReadError, SnapshotReader
 
 
 class ClosureError(ValueError):
@@ -28,7 +28,7 @@ class ClosureResource:
     value: dict[str, Any]
 
 
-def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReader) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
+def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
     context = _load_presentation(reference, reader, "render-context")
     if context.get("version") != "chrona/presentation/v0.6":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
@@ -36,7 +36,7 @@ def resolve_render_context(reference: dict[str, Any], reader: LocalSnapshotReade
 
 
 def _resolve_layout_context(
-    context: dict[str, Any], reader: LocalSnapshotReader
+    context: dict[str, Any], reader: SnapshotReader
 ) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
     schema = yaml.safe_load(schema_resource("render-context-v0.6.schema.yaml").read_text(encoding="utf-8"))
     if next(jsonschema.Draft202012Validator(schema).iter_errors(context), None) is not None:
@@ -82,7 +82,7 @@ def _resolve_layout_context(
     return context, tuple(resources)
 
 
-def _load_reference(reference: dict[str, Any], reader: LocalSnapshotReader, expected_kind: str) -> ClosureResource:
+def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str) -> ClosureResource:
     if reference.get("kind") != expected_kind:
         raise ClosureError("E_CLOSURE_KIND")
     try:
@@ -112,6 +112,6 @@ def _load_reference(reference: dict[str, Any], reader: LocalSnapshotReader, expe
     return ClosureResource(expected_kind, actual_id, reference["revision"]["token"], reference.get("contentIdentity", computed_identity), value)
 
 
-def _load_presentation(reference: dict[str, Any], reader: LocalSnapshotReader, expected_kind: str) -> dict[str, Any]:
+def _load_presentation(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str) -> dict[str, Any]:
     item = _load_reference(reference, reader, expected_kind)
     return item.value

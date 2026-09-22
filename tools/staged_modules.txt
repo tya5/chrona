@@ -24,3 +24,8 @@ chrona.scheduling.cost_observations # #94 Phase 3
 chrona.scheduling.datetime_migration   # #94 Phase 3
 chrona.scheduling.datetime_scheduler   # #94 Phase 3
 chrona.scheduling.temporal_datetime    # #94 Phase 3
+# Surfaced by #99 step 2: validate_snapshot and schedule_snapshot lived inside
+# storage/loader.py, which the CLI reaches for load_project, so the lint could not
+# see that these two have no product caller. Only tests use them. Same decision as
+# the rest of this list: wire them to a command, or delete them with their tests.
+chrona.usecases.snapshots            # #94 Phase 3
