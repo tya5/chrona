@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img">
 <rect width="1920" height="1080" fill="#0B1220"/>
-<defs><marker id="marker-dependency-triangle" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8EA0BA"/></marker></defs>
+<defs><marker id="marker-dependency-triangle" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8EA0BA"/></marker><pattern id="pattern-missing-actual-diagonal-hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#2E3F5E" stroke-width="1"/></pattern></defs>
 <text data-scene-id="title" data-source-ref="title" data-purpose="title-text" x="40" y="72.16" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="40" fill="#EAF0FA">HALCYON-1</text>
 <text data-scene-id="column:Work package" data-source-ref="view:tableColumns" data-purpose="table-column-label" x="500" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Work package</text>
 <text data-scene-id="column:Phase" data-source-ref="view:tableColumns" data-purpose="table-column-label" x="716.545" y="55" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Phase</text>
@@ -106,7 +106,7 @@
 <rect data-scene-id="calendar-closed:2027-07-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1369.11" y="86" width="3.429" height="954" fill="#16213A"/>
 <rect data-scene-id="calendar-closed:2027-09-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1585.124" y="86" width="3.429" height="954" fill="#16213A"/>
 <polygon data-scene-id="planned:pdr:pdr" data-source-ref="pdr" data-purpose="planned" points="950.797,114.019 955.797,119.019 950.797,124.019 945.797,119.019" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:pdr:pdr" data-source-ref="pdr" data-purpose="missingActual" x="950.797" y="126.519" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:pdr:pdr" data-source-ref="pdr" data-purpose="missingActual" x="950.797" y="126.519" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:structure:structure" data-source-ref="structure" data-purpose="planned" x="961.084" y="146.096" width="99.435" height="10" fill="#5FA8FF"/>
 <rect data-scene-id="actual:structure:structure" data-source-ref="structure" data-purpose="actual" x="961.084" y="158.596" width="99.435" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:structure:structure" data-source-ref="structure" data-purpose="finish-delta" x="1064.019" y="167.446" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#8EA0BA">+0d</text>
@@ -120,7 +120,7 @@
 <rect data-scene-id="actual:bus-test:bus-test" data-source-ref="bus-test" data-purpose="actual" x="1201.099" y="254.827" width="37.717" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:bus-test:bus-test" data-source-ref="bus-test" data-purpose="finish-delta" x="1204.194" y="245.027" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+15d</text>
 <polygon data-scene-id="planned:cdr:cdr" data-source-ref="cdr" data-purpose="planned" points="1166.811,274.404 1171.811,279.404 1166.811,284.404 1161.811,279.404" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:cdr:cdr" data-source-ref="cdr" data-purpose="missingActual" x="1166.811" y="286.904" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:cdr:cdr" data-source-ref="cdr" data-purpose="missingActual" x="1166.811" y="286.904" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:optics:optics" data-source-ref="optics" data-purpose="planned" x="961.084" y="326.481" width="82.291" height="10" fill="#5FA8FF"/>
 <rect data-scene-id="actual:optics:optics" data-source-ref="optics" data-purpose="actual" x="961.084" y="338.981" width="85.72" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:optics:optics" data-source-ref="optics" data-purpose="finish-delta" x="992.072" y="366.481" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+1d</text>
@@ -131,7 +131,7 @@
 <rect data-scene-id="actual:payload-tvac:payload-tvac" data-source-ref="payload-tvac" data-purpose="actual" x="1115.379" y="403.135" width="51.432" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:payload-tvac:payload-tvac" data-source-ref="payload-tvac" data-purpose="finish-delta" x="1125.331" y="430.635" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+10d</text>
 <polygon data-scene-id="planned:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="planned" points="1358.824,422.712 1363.824,427.712 1358.824,432.712 1353.824,427.712" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="missingActual" x="1358.824" y="435.212" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="missingActual" x="1358.824" y="435.212" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:integration:integration" data-source-ref="integration" data-purpose="planned" x="1372.539" y="474.788" width="72.005" height="10" fill="#5FA8FF"/>
 <rect data-scene-id="actual:integration:integration" data-source-ref="integration" data-purpose="actual" x="1372.539" y="487.288" width="72.005" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:integration:integration" data-source-ref="integration" data-purpose="finish-delta" x="1396.669" y="514.788" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#8EA0BA">+0d</text>
@@ -139,11 +139,11 @@
 <rect data-scene-id="actual:vibration:vibration" data-source-ref="vibration" data-purpose="actual" x="1447.972" y="519.365" width="24.002" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:vibration:vibration" data-source-ref="vibration" data-purpose="finish-delta" x="1448.101" y="546.865" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#8EA0BA">+0d</text>
 <rect data-scene-id="planned:tvac:tvac" data-source-ref="tvac" data-purpose="planned" x="1478.831" y="538.942" width="48.003" height="10" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:tvac:tvac" data-source-ref="tvac" data-purpose="missingActual" x="1526.834" y="551.442" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:tvac:tvac" data-source-ref="tvac" data-purpose="missingActual" x="1526.834" y="551.442" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:emc:emc" data-source-ref="emc" data-purpose="planned" x="1537.121" y="571.019" width="24.002" height="10" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:emc:emc" data-source-ref="emc" data-purpose="missingActual" x="1561.122" y="583.519" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:emc:emc" data-source-ref="emc" data-purpose="missingActual" x="1561.122" y="583.519" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <polygon data-scene-id="planned:psr:psr" data-source-ref="psr" data-purpose="planned" points="1598.839,603.096 1603.839,608.096 1598.839,613.096 1593.839,608.096" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:psr:psr" data-source-ref="psr" data-purpose="missingActual" x="1598.839" y="615.596" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:psr:psr" data-source-ref="psr" data-purpose="missingActual" x="1598.839" y="615.596" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:mcs:mcs" data-source-ref="mcs" data-purpose="planned" x="961.084" y="655.173" width="219.443" height="10" fill="#5FA8FF"/>
 <rect data-scene-id="actual:mcs:mcs" data-source-ref="mcs" data-purpose="actual" x="961.084" y="667.673" width="229.729" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:mcs:mcs" data-source-ref="mcs" data-purpose="finish-delta" x="1064.076" y="695.173" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#FF6B6B">+3d</text>
@@ -154,21 +154,21 @@
 <rect data-scene-id="actual:comms-test:comms-test" data-source-ref="comms-test" data-purpose="actual" x="1225.101" y="731.827" width="13.715" height="10" fill="#35D0A0"/>
 <text data-scene-id="variance:comms-test:comms-test" data-source-ref="comms-test" data-purpose="finish-delta" x="1217.951" y="722.027" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#35D0A0">-11d</text>
 <polygon data-scene-id="planned:launch-contract:launch-contract" data-source-ref="launch-contract" data-purpose="planned" points="1094.807,771.404 1099.807,776.404 1094.807,781.404 1089.807,776.404" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:launch-contract:launch-contract" data-source-ref="launch-contract" data-purpose="missingActual" x="1094.807" y="783.904" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:launch-contract:launch-contract" data-source-ref="launch-contract" data-purpose="missingActual" x="1094.807" y="783.904" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:shipment:shipment" data-source-ref="shipment" data-purpose="planned" x="1612.554" y="803.481" width="20.573" height="10" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:shipment:shipment" data-source-ref="shipment" data-purpose="missingActual" x="1633.127" y="815.981" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:shipment:shipment" data-source-ref="shipment" data-purpose="missingActual" x="1633.127" y="815.981" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:campaign:campaign" data-source-ref="campaign" data-purpose="planned" x="1636.556" y="835.558" width="58.289" height="10" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:campaign:campaign" data-source-ref="campaign" data-purpose="missingActual" x="1694.845" y="848.058" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:campaign:campaign" data-source-ref="campaign" data-purpose="missingActual" x="1694.845" y="848.058" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <polygon data-scene-id="planned:frr:frr" data-source-ref="frr" data-purpose="planned" points="1718.847,867.635 1723.847,872.635 1718.847,877.635 1713.847,872.635" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:frr:frr" data-source-ref="frr" data-purpose="missingActual" x="1718.847" y="880.135" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:frr:frr" data-source-ref="frr" data-purpose="missingActual" x="1718.847" y="880.135" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <polygon data-scene-id="planned:launch:launch" data-source-ref="launch" data-purpose="planned" points="1742.848,899.712 1747.848,904.712 1742.848,909.712 1737.848,904.712" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:launch:launch" data-source-ref="launch" data-purpose="missingActual" x="1742.848" y="912.212" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:launch:launch" data-source-ref="launch" data-purpose="missingActual" x="1742.848" y="912.212" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="planned" x="1561.122" y="951.788" width="51.432" height="10" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="missingActual" x="1612.554" y="964.288" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="missingActual" x="1612.554" y="964.288" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:leop:leop" data-source-ref="leop" data-purpose="planned" x="1742.848" y="983.865" width="72.005" height="10" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:leop:leop" data-source-ref="leop" data-purpose="missingActual" x="1814.853" y="996.365" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:leop:leop" data-source-ref="leop" data-purpose="missingActual" x="1814.853" y="996.365" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <polygon data-scene-id="planned:first-light:first-light" data-source-ref="first-light" data-purpose="planned" points="1838.854,1015.942 1843.854,1020.942 1838.854,1025.942 1833.854,1020.942" fill="#5FA8FF"/>
-<rect data-scene-id="missing-actual:first-light:first-light" data-source-ref="first-light" data-purpose="missingActual" x="1838.854" y="1028.442" width="15" height="10" fill="#2E3F5E"/>
+<rect data-scene-id="missing-actual:first-light:first-light" data-source-ref="first-light" data-purpose="missingActual" x="1838.854" y="1028.442" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <text data-scene-id="axis-band:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="937.082" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027 Q1</text>
 <text data-scene-id="axis-band:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="1043.375" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027 Q2</text>
 <text data-scene-id="axis-band:quarter:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1355.395" y="53" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="13" fill="#EAF0FA">2027 Q3</text>

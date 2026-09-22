@@ -71,6 +71,7 @@ body:
     actual.fill: positive
     milestone.fill: accent
     missing-actual.fill: neutral
+    missing-actual.stroke: neutral
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
