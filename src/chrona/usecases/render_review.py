@@ -186,6 +186,8 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         project, result.placements, view, actual,
         snapshot_project=snapshot_project,
         snapshot_placements=snapshot_result.placements if snapshot_result is not None else None,
+        analysis=result.analysis,
+        snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
     )
 
 
