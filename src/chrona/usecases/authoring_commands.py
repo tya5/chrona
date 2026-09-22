@@ -45,7 +45,7 @@ def apply_authoring_command(
             result = cas_write_aggregate(workspace_path, base, candidates)
             if result is None:
                 return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
-            return {"status": "accepted", "commandId": command["commandId"], "baseRevision": base, "resultRevision": result, "diagnostics": []}
+            return {"status": "accepted", "commandId": command["commandId"], "baseRevision": base, "resultRevision": result, "reversible": False, "diagnostics": []}
         candidate = deepcopy(current)
         _apply(candidate, command)
         parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", _identity(candidate)), candidate)
