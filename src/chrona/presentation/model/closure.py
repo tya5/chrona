@@ -241,11 +241,10 @@ def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
 def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
     if target_kind == "png":
         try:
-            import cairocffi
-            import cairosvg
-            return {"engine": "cairosvg", "version": cairosvg.__version__, "cairoVersion": cairocffi.cairo_version_string(), "dpi": 96}
+            import resvg_py
+            return {"engine": "resvg-py", "version": resvg_py.__version__, "resvgVersion": resvg_py.__resvg_version__, "dpi": 96}
         except ImportError:
-            return {"engine": "cairosvg", "version": "unavailable", "cairoVersion": "unavailable", "dpi": 96}
+            return {"engine": "resvg-py", "version": "unavailable", "resvgVersion": "unavailable", "dpi": 96}
     try:
         return {"engine": "reportlab", "svglibVersion": version("svglib"), "reportlabVersion": version("reportlab"), "invariant": True}
     except Exception:

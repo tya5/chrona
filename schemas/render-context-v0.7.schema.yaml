@@ -45,12 +45,12 @@ properties:
             type: object
             oneOf:
               - type: object
-                required: [engine, version, cairoVersion, dpi]
+                required: [engine, version, resvgVersion, dpi]
                 additionalProperties: false
                 properties:
-                  engine: {const: cairosvg}
+                  engine: {const: resvg-py}
                   version: {type: string, minLength: 1}
-                  cairoVersion: {type: string, minLength: 1}
+                  resvgVersion: {type: string, minLength: 1}
                   dpi: {type: number, exclusiveMinimum: 0}
               - type: object
                 required: [engine, svglibVersion, reportlabVersion, invariant]
