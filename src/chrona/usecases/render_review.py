@@ -132,7 +132,10 @@ def render_review(request: RenderRequest) -> RenderedReview:
         ledger.summary()
     source_inputs = _source_inputs(project, view, projection, summary,
                                    render_closure.detail_profile.detail if render_closure.detail_profile else None)
-    measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
+    required_metrics = (("timeline.groupHeader.blockSize",)
+                        if view.grouping is not None and view.grouping.presentation == "header" else ())
+    measured = measure_sources(source_inputs, theme, font_metrics=font_metrics,
+                               required_metrics=required_metrics)
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     manifest = solve_layout(
