@@ -11,6 +11,20 @@ from chrona.presentation.model.projection import ReviewItem, ReviewProjection, R
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 
+def surface_content(table_columns=(), table_cells=(), **overrides):
+    value = dict(
+        table_columns=table_columns, table_cells=table_cells, relations=(), annotations=(),
+        show_member_labels=False, label_placement="none", label_content=(), label_side="auto",
+        label_overflow="diagnose", relation_overflow="diagnose", group_presentation="band",
+        axis_level="auto", axis_levels=(), axis_ticks=None, as_of=None, as_of_label="As of",
+        annotation_numbered=False, calendar_closed=(), notes=(), legend_entries=(), coverage_text="",
+        summary_panels=(), summary_presentations=(), template_values=(), group_details=(),
+        milestones=(), observation_columns=(), observation_rows=(),
+    )
+    value.update(overrides)
+    return SurfaceContentInput(**value)
+
+
 def test_scene_delegates_common_surface_geometry_to_layout_composer():
     source = Path(__import__("chrona.presentation.scene.v05_builder", fromlist=["*"]).__file__).read_text(encoding="utf-8")
     assert "compose_surface_layout(" in source
@@ -62,7 +76,7 @@ def _title_measurement():
 
 def test_scene_input_accepts_only_completed_current_runtime_boundaries():
     value = build_scene_input(projection={"window": (date(2026, 1, 1), date(2026, 1, 2))},
-                              surface_content=SurfaceContentInput(),
+                              surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                               capabilities={"svg": True})
@@ -71,7 +85,7 @@ def test_scene_input_accepts_only_completed_current_runtime_boundaries():
 
 def test_scene_input_rejects_a_layout_without_a_required_source():
     with pytest.raises(SceneBuildError, match="E_PRESENTATION_PRIMITIVE_MISSING") as error:
-        build_scene_input(projection={}, surface_content=SurfaceContentInput(),
+        build_scene_input(projection={}, surface_content=surface_content(),
                           layout_manifest=_manifest("title", "table", "timeline"),
                           resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                           capabilities={"svg": True})
@@ -80,7 +94,7 @@ def test_scene_input_rejects_a_layout_without_a_required_source():
 
 def test_scene_input_requires_frozen_source_measurements():
     with pytest.raises(SceneBuildError, match="E_PRESENTATION_MEASUREMENTS_REQUIRED"):
-        build_scene_input(projection={}, surface_content=SurfaceContentInput(),
+        build_scene_input(projection={}, surface_content=surface_content(),
                           layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                           resolved_theme=_theme(), font_metrics=object(), measured_sources={}, capabilities={"svg": True})
 
@@ -96,7 +110,7 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     manifest = _manifest("title", "table", "timeline", "timeline-axis")
-    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput((("name", "Name"),), (("a", "name", "A"),)),
+    value = build_scene_input(projection=projection, surface_content=surface_content((("name", "Name"),), (("a", "name", "A"),)),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
     surface = compose_review_surface(value)
     assert surface.scale_manifest.domain_start == date(2026, 1, 1)
@@ -123,7 +137,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     theme = _theme()
     theme["body"]["values"].update({"marker": {"type": "marker", "value": "triangle"}})
     theme["body"]["roles"]["dependency"] = {"marker": "marker"}
-    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(
+    value = build_scene_input(projection=projection, surface_content=surface_content(
         relations=({"id": "r", "from": {"object": "a"}, "to": {"object": "b"}},),
         annotations=({"id": "note", "purpose": "callout", "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "finish"},
                       "placement": {"side": "end", "alignment": "center"}, "text": "Check"},)),
@@ -149,7 +163,7 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
-                              surface_content=SurfaceContentInput(show_member_labels=True),
+                              surface_content=surface_content(show_member_labels=True),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -178,7 +192,7 @@ def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
                               relation_max_bends=0)
     value = build_scene_input(
         projection=projection,
-        surface_content=SurfaceContentInput(
+        surface_content=surface_content(
             relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},),
             label_placement="plot", label_content=("title",), label_side="auto", label_overflow="suppress",
             relation_overflow="suppress",
@@ -203,7 +217,7 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
     theme["body"]["values"]["marker"] = {"type": "marker", "value": "triangle"}
     theme["body"]["roles"]["dependency"] = {"marker": "marker"}
     value = build_scene_input(projection=projection,
-                              surface_content=SurfaceContentInput(relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},)),
+                              surface_content=surface_content(relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -221,7 +235,7 @@ def test_legend_entries_emit_role_derived_swatches():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
-                              surface_content=SurfaceContentInput(legend_entries=(("planned", "Plan"),)),
+                              surface_content=surface_content(legend_entries=(("planned", "Plan"),)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -241,7 +255,7 @@ def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
+    value = build_scene_input(projection=projection, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -261,7 +275,7 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
                                    "timeline.groupHeader.blockSize": Decimal(20)})
-    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(group_presentation="header"),
+    value = build_scene_input(projection=projection, surface_content=surface_content(group_presentation="header"),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -279,7 +293,7 @@ def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
-                              surface_content=SurfaceContentInput(as_of=date(2026, 1, 5)),
+                              surface_content=surface_content(as_of=date(2026, 1, 5)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -296,7 +310,7 @@ def test_project_calendar_closure_emits_background_shading():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
-                              surface_content=SurfaceContentInput(calendar_closed=(date(2026, 1, 3),)),
+                              surface_content=surface_content(calendar_closed=(date(2026, 1, 3),)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -311,7 +325,7 @@ def test_month_axis_emits_quarter_band_labels():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
+    value = build_scene_input(projection=projection, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
@@ -327,7 +341,7 @@ def test_table_columns_use_measured_non_overlapping_origins():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
-                              surface_content=SurfaceContentInput((("long", "Long heading"), ("short", "B")),
+                              surface_content=surface_content((("long", "Long heading"), ("short", "B")),
                                                                 (("a", "long", "a deliberately long table value"), ("a", "short", "B"))),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,

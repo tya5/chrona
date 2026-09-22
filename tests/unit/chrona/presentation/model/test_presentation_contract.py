@@ -5,8 +5,20 @@ from chrona.presentation.model.semantic_registry import enabled_semantics, seman
 from chrona.presentation.model.surface_content import SurfaceContentInput
 
 
+def surface_content(**overrides):
+    value = dict(table_columns=(), table_cells=(), relations=(), annotations=(), show_member_labels=False,
+                 label_placement="none", label_content=(), label_side="auto", label_overflow="diagnose",
+                 relation_overflow="diagnose", group_presentation="band", axis_level="auto", axis_levels=(),
+                 axis_ticks=None, as_of=None, as_of_label="As of", annotation_numbered=False,
+                 calendar_closed=(), notes=(), legend_entries=(), coverage_text="", summary_panels=(),
+                 summary_presentations=(), template_values=(), group_details=(), milestones=(),
+                 observation_columns=(), observation_rows=())
+    value.update(overrides)
+    return SurfaceContentInput(**value)
+
+
 def test_normalizer_consumes_member_label_alias_once() -> None:
-    contract = normalize_presentation_input(SurfaceContentInput(show_member_labels=True))
+    contract = normalize_presentation_input(surface_content(show_member_labels=True))
 
     assert contract.labels.enabled is True
     assert contract.labels.placement == "none"
@@ -15,7 +27,7 @@ def test_normalizer_consumes_member_label_alias_once() -> None:
 
 def test_normalizer_retains_canonical_time_fact() -> None:
     as_of = date(2027, 8, 20)
-    contract = normalize_presentation_input(SurfaceContentInput(as_of=as_of))
+    contract = normalize_presentation_input(surface_content(as_of=as_of))
 
     assert contract.time.as_of == as_of
 
