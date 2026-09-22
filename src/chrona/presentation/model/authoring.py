@@ -62,6 +62,8 @@ def normalize_authoring_workspace(
     only validates that the already-acquired documents match the declarative preset;
     it never searches a directory or selects a fallback.
     """
+    if workspace.mode != "guided" or workspace.binding is None:
+        raise AuthoringError("E_AUTHORING_EXPLICIT_MODE")
     binding_preset = workspace.binding["preset"]
     if binding_preset["id"] != preset.identity.id or binding_preset["version"] != preset.package_version:
         raise AuthoringError("E_AUTHORING_PRESET_IDENTITY")

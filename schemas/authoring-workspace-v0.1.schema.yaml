@@ -41,12 +41,27 @@ properties:
             actual: {$ref: "#/$defs/dateRange"}
             progress: {type: number, minimum: 0, maximum: 1}
       presentation:
-        type: object
-        required: [mode, binding]
-        additionalProperties: false
-        properties:
-          mode: {const: guided}
-          binding: {$ref: "#/$defs/binding"}
+        oneOf:
+          - type: object
+            required: [mode, binding]
+            additionalProperties: false
+            properties: {mode: {const: guided}, binding: {$ref: "#/$defs/binding"}}
+          - type: object
+            required: [mode, resources, receipt]
+            additionalProperties: false
+            properties:
+              mode: {const: explicit}
+              resources:
+                type: object
+                required: [view, theme, colorScheme, layout, renderContext]
+                additionalProperties: false
+                properties:
+                  view: {$ref: "#/$defs/localReference"}
+                  theme: {$ref: "#/$defs/localReference"}
+                  colorScheme: {$ref: "#/$defs/localReference"}
+                  layout: {$ref: "#/$defs/localReference"}
+                  renderContext: {$ref: "#/$defs/localReference"}
+              receipt: {$ref: "#/$defs/localReference"}
 $defs:
   date: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
   dateRange:
@@ -64,6 +79,15 @@ $defs:
       id: {type: string, minLength: 1}
       version: {type: string, minLength: 1}
       path: {type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+  localReference:
+    type: object
+    required: [id, kind, path, contentIdentity]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      kind: {type: string, minLength: 1}
+      path: {type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   binding:
     type: object
     required: [preset]
