@@ -13,13 +13,8 @@ import yaml
 from chrona.app.review import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
-from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.model.closure import ClosureError, ClosureResource, resolve_render_context
-from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.layout.engine import solve_layout
-from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.sources import SourceInput, measure_sources
-from chrona.presentation.model.font_metrics import resolve_font_metrics
+from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.presentation.renderers.generic import render_svg
 from chrona.presentation.scene.schedule import scene_from_schedule
 from chrona.scheduling.scheduler import schedule
@@ -169,102 +164,27 @@ def _parser() -> JsonArgumentParser:
     return parser
 
 
-def _resource(resources: tuple[ClosureResource, ...], kind: str, *, read: set[str] | None = None) -> dict[str, Any] | None:
-    if read is not None:
-        read.add(kind)
-    return next((item.value for item in resources if item.kind == kind), None)
 
-
-def unused_closure_inputs(resources: tuple[ClosureResource, ...], read: set[str]) -> tuple[str, ...]:
-    """Resource kinds the closure loaded that the render never read.
-
-    The Theme and Color Scheme are consumed through ``context["resolvedTheme"]``
-    rather than through ``_resource``, so they are read by construction.
-    """
-    return tuple(sorted({item.kind for item in resources} - read - {"color-scheme", "theme"}))
-
-
-def _reject_unused_closure_inputs(resources: tuple[ClosureResource, ...], read: set[str]) -> None:
-    """Reject a closure whose declared inputs the render silently ignores."""
-    unused = unused_closure_inputs(resources, read)
-    if unused:
-        raise CliFailure("E_CLOSURE_INPUT_UNUSED",
-                         "closure inputs loaded but never read: " + ", ".join(unused), "closure")
+def _render_review(context: dict[str, Any], resources: tuple[ClosureResource, ...],
+                   args: argparse.Namespace) -> RenderedReview:
+    """Adapt one resolved closure to the render use case and its diagnostics."""
+    request = RenderRequest(
+        context=context, resources=resources, snapshot_root=Path(args.snapshot_root),
+        require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
+    )
+    try:
+        return render_review(request)
+    except RenderRejected as error:
+        _reject(error.diagnostics, error.component)
+    except RenderFailed as error:
+        raise CliFailure(error.code, error.message, error.component) from error
 
 
 def _run_render_review(args: argparse.Namespace) -> None:
     reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     context, resources = resolve_render_context(load_yaml(args.context_reference), reader)
-    read: set[str] = set()
-    project = _resource(resources, "project", read=read)
-    view = _resource(resources, "view", read=read)
-    theme = context.get("resolvedTheme")
-    layout = _resource(resources, "layout-profile", read=read)
-    if project is None or view is None or theme is None or layout is None:
-        raise CliFailure("E_CLOSURE_REQUIRED", "Render Context closure is incomplete", "closure")
-    manifests = {
-        item.value["packageId"]: item.value
-        for item in resources if item.kind == "profile-package"
-    }
-    if manifests:
-        read.add("profile-package")
-    result = schedule(project, extension_diagnostics=validate_profiles(project, manifests))
-    if not result.ok:
-        _reject(result.diagnostics)
-    actual = _resource(resources, "actual-set", read=read)
-    snapshot_project = _resource(resources, "snapshot-project", read=read)
-    snapshot_result = schedule(snapshot_project) if snapshot_project is not None else None
-    if snapshot_result is not None and not snapshot_result.ok:
-        _reject(snapshot_result.diagnostics)
-    projection = build_review_projection(
-        project, result.placements, view, actual,
-        snapshot_project=snapshot_project,
-        snapshot_placements=snapshot_result.placements if snapshot_result is not None else None,
-    )
-    review_rows = projection.rows or ()
-    source_inputs = {
-        "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
-        "table": SourceInput(tuple(row.label for row in review_rows) or tuple(item.title for item in projection.items), len(review_rows) or len(projection.items), len(view.get("body", {}).get("tableColumns", ())) or 1),
-        "timeline": SourceInput(item_count=len(review_rows) or len(projection.items), span_days=max(1, (projection.window[1] - projection.window[0]).days)),
-        "timeline-axis": SourceInput(span_days=max(1, (projection.window[1] - projection.window[0]).days), typography_role="axis"),
-        "summary": SourceInput(("summary",)), "legend": SourceInput(("legend",), typography_role="legend"),
-        "group-details": SourceInput(("group details",)), "observations": SourceInput(("observations",)),
-        "milestones": SourceInput(("milestones",)), "annotations": SourceInput(("annotations",), typography_role="annotation"),
-        "notes": SourceInput(tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values()) or ("notes",), typography_role="annotation"),
-    }
-    environment = context["body"]["environment"]
-    theme_body = theme["body"]
-    family_token = theme_body.get("roles", {}).get("text", {}).get("fontFamily")
-    family = theme_body.get("values", {}).get(family_token, {}).get("value")
-    if not isinstance(family, str):
-        raise CliFailure("E_THEME_ROLE_REQUIRED", "text.fontFamily is required", "theme")
-    revision = context["body"]["theme"]["revision"]["token"]
-    font_metrics = resolve_font_metrics(family, environment["fontMetrics"], asset_root=Path(args.snapshot_root) / revision)
-    measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
-    resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
-    node_measurements = {}
-    def bind(node: dict[str, Any]) -> None:
-        if node["kind"] == "slot":
-            node_measurements[node["id"]] = measured.measurements[node["source"]]
-        for child in node.get("children", ()):
-            bind(child)
-    bind(resolved_layout.profile["root"])
-    viewport = environment["viewport"]
-    manifest = solve_layout(resolved_layout, viewport_inline=viewport["inlineSize"], viewport_block=viewport["blockSize"], measurements=node_measurements)
-    capabilities = set(context["body"]["target"]["capabilities"])
-    from chrona.presentation.review.v05_content import normalize_v05_surface_content
-    from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
-    from chrona.presentation.renderers.v05_svg import render_v05_svg
-    scene_input = build_scene_input(projection=projection, surface_content=normalize_v05_surface_content(
-                                    projection, project, view, actual_set=actual,
-                                    detail=_resource(resources, "review-detail-profile", read=read)),
-                                    layout_manifest=manifest, resolved_theme=theme, font_metrics=font_metrics,
-                                    measured_sources=measured, capabilities={name: True for name in capabilities},
-                                    locale=environment["locale"])
-    if getattr(args, "reject_unused_closure_inputs", False):
-        _reject_unused_closure_inputs(resources, read)
-    svg = render_v05_svg(compose_review_surface(scene_input), viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])), tokens=scene_input.theme_tokens)
-    Path(args.output).write_text(svg, encoding="utf-8")
+    rendered = _render_review(context, resources, args)
+    Path(args.output).write_text(rendered.svg, encoding="utf-8")
 
 
 def _run_render_review_gallery(args: argparse.Namespace) -> None:
@@ -280,7 +200,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
         scheme = next((item for item in resources if item.kind == "color-scheme"), None)
         if scheme is None:
             raise CliFailure("E_CONTEXT_COLOR_SCHEME", "Color Scheme closure is missing", "gallery")
-        entries.append((scheme.id, scheme.content_identity, context["id"], reference_path))
+        entries.append((scheme.id, scheme.content_identity, context["id"], reference_path, context, resources))
     if len({entry[1] for entry in entries}) != len(entries):
         raise CliFailure("E_SCHEME_GALLERY_DUPLICATE", "Color Scheme content identity is duplicated", "gallery")
     entries.sort(key=lambda entry: (entry[0], entry[1]))
@@ -288,10 +208,9 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
         raise CliFailure("E_SCHEME_GALLERY_DUPLICATE", "Color Scheme IDs must be unique in one gallery", "gallery")
     destination.mkdir(parents=True, exist_ok=True)
     outputs = []
-    for scheme_id, identity, context_id, reference_path in entries:
+    for scheme_id, identity, context_id, _reference, context, resources in entries:
         output = destination / f"{scheme_id}.svg"
-        rendered_args = argparse.Namespace(**vars(args), context_reference=reference_path, output=str(output))
-        _run_render_review(rendered_args)
+        output.write_text(_render_review(context, resources, args).svg, encoding="utf-8")
         outputs.append({"contextId": context_id, "colorScheme": {"id": scheme_id, "contentIdentity": identity}, "output": output.name})
     (destination / "gallery.json").write_text(json.dumps({"results": outputs}, indent=2) + "\n", encoding="utf-8")
 
