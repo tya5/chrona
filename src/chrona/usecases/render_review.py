@@ -68,45 +68,48 @@ class RenderedReview:
     read_inputs: frozenset[str] = field(default_factory=frozenset)
 
 
-class _Closure:
-    """Resource access that records which declared inputs the render reads."""
+class ClosureReadLedger:
+    """Records named typed-closure dependencies without generic kind lookup."""
 
     def __init__(self, closure: RenderClosure):
-        self._closure = closure
+        self._declared = {item.kind for item in closure.resources}
         self.read: set[str] = set()
 
-    def get(self, kind: str) -> dict[str, Any] | None:
-        self.read.add(kind)
-        item = self._closure.resource(kind)
-        return item.contract.document if item is not None else None
+    def required(self) -> None:
+        self.read.update({"project", "view", "layout-profile", "theme", "color-scheme"})
 
-    def all_of(self, kind: str) -> tuple[dict[str, Any], ...]:
-        values = tuple(item.contract.document for item in self._closure.resources if item.kind == kind)
-        if values:
-            self.read.add(kind)
-        return values
+    def actual(self) -> None:
+        self.read.add("actual-set")
+
+    def snapshot(self) -> None:
+        self.read.update({"snapshot-ref", "snapshot-project"})
+
+    def detail(self) -> None:
+        self.read.add("review-detail-profile")
+
+    def packages(self) -> None:
+        self.read.add("profile-package")
 
     def unused(self) -> tuple[str, ...]:
-        declared = {item.kind for item in self._closure.resources}
-        return tuple(sorted(declared - self.read - _IMPLICITLY_READ))
+        return tuple(sorted(self._declared - self.read - _IMPLICITLY_READ))
 
 
 def render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
-    render_closure, closure = request.closure, _Closure(request.closure)
+    render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
     project, view, layout = (render_closure.project.facts, render_closure.view.document,
                              render_closure.layout_profile.profile)
     theme = render_closure.resolved_theme.document
-    closure.read.update({"project", "view", "layout-profile", "theme", "color-scheme"})
+    ledger.required()
 
     manifests = {item.document["packageId"]: item.document for item in render_closure.profile_packages}
     if manifests:
-        closure.read.add("profile-package")
+        ledger.packages()
     projection = _project_review(project, view, render_closure, manifests)
     if render_closure.actual_set is not None:
-        closure.read.add("actual-set")
+        ledger.actual()
     if render_closure.snapshot is not None:
-        closure.read.update({"snapshot-ref", "snapshot-project"})
+        ledger.snapshot()
 
     environment = render_closure.context.body["environment"]
     font_metrics = _font_metrics(theme, environment, request.snapshot_root / render_closure.context.body["theme"]["revision"]["token"])
@@ -127,7 +130,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         detail=render_closure.detail_profile.document if render_closure.detail_profile else None,
     )
     if render_closure.detail_profile is not None:
-        closure.read.add("review-detail-profile")
+        ledger.detail()
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
@@ -135,7 +138,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         locale=environment["locale"],
     )
 
-    unused = closure.unused()
+    unused = ledger.unused()
     if request.require_all_inputs_read and unused:
         raise RenderFailed("E_CLOSURE_INPUT_UNUSED",
                            "closure inputs loaded but never read: " + ", ".join(unused), "closure")
@@ -143,7 +146,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     surface = compose_review_surface(scene_input)
     svg = render_v05_svg(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
                          tokens=scene_input.theme_tokens)
-    return RenderedReview(svg, surface, frozenset(closure.read))
+    return RenderedReview(svg, surface, frozenset(ledger.read))
 
 
 def _project_review(project: dict[str, Any], view: dict[str, Any], closure: RenderClosure,
