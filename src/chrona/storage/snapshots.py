@@ -35,7 +35,7 @@ class MemorySnapshotStore:
         if snapshot_id in self._resources:
             return None
         resource = {
-            "version": "chrona/presentation/v0.1",
+            "version": "chrona/snapshot-ref/v0.1",
             "kind": "snapshot-ref",
             "id": snapshot_id,
             "body": {"project": deepcopy(project_ref)},

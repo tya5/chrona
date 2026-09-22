@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.2
+version: chrona/view/v0.2
 kind: view
 id: controller-z-executive
 body:

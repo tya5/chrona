@@ -29,9 +29,9 @@ first federation capability instead has two explicit resources:
   child exports.
 
 The plan is canonical parent-side configuration, but it is not a second Project and it
-does not merge child objects into the primary Project. `chrona/presentation/v0.2` adds
-one required typed `federationPlan` reference to a Render Context. v0.1 Render Contexts
-remain unchanged and cannot claim federation support.
+does not merge child objects into the primary Project. The retired v0.2 Render
+Context experiment is not an accepted input contract; current Render Contexts
+do not claim federation support.
 
 The resolver first verifies the Federation Plan, then resolves only the export
 references recorded in that Plan revision. A newer child export, child branch tip, or

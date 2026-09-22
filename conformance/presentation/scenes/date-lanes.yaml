@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.1
+version: chrona/scene-profile/v0.1
 kind: scene-profile
 id: date-lanes
 body:

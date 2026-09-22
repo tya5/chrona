@@ -39,7 +39,7 @@ Every resource uses a common YAML envelope. The resource-specific body is valida
 the schema for its `kind`.
 
 ```yaml
-version: chrona/presentation/v0.1
+version: chrona/view/v0.1
 kind: view
 id: controller-review
 body: {}
@@ -206,7 +206,7 @@ The View owns whether a Snapshot or Actual input is meaningful or required; the 
 Context owns which explicitly named instance is used for this evaluation.
 
 ```yaml
-version: chrona/presentation/v0.1
+version: chrona/render-context/v0.1
 kind: render-context
 id: controller-plan-vs-actual
 body:
@@ -257,7 +257,7 @@ Render Context until a target-capability specification defines their portable me
 
 ### 5.4 Render Context v0.2 federation extension
 
-`chrona/presentation/v0.2` preserves the v0.1 fields and adds required
+`chrona/view/v0.2` preserves the v0.1 fields and adds required
 `body.federationPlan`, a full immutable reference whose `kind` is `federation-plan`.
 The resolver verifies that Plan before resolving its child exports. The v0.2 closure
 manifest records the Plan followed by exports in Plan order. It must never discover a
