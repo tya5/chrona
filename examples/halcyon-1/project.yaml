@@ -193,3 +193,9 @@ annotations:
     kind: note
     text: 'Ground station done early; link test can move up.'
     anchor: {object: station}
+scenarios:
+  tvac-slip:
+    title: System TVAC slips one week
+    objects:
+      tvac:
+        schedule: {amount: 21d}

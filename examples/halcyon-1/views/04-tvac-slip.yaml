@@ -1,0 +1,46 @@
+version: chrona/view/v0.7
+kind: view
+id: halcyon-04-tvac-slip
+body:
+  rows: {mode: automatic}
+  selection:
+    include:
+      ids: [tvac, emc, psr, shipment, campaign, frr, launch]
+      types: [span, point]
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order: [ait, launch]
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2027-07-01'
+    end: '2027-12-01'
+  comparison:
+    baseline: scenario
+    scenario: tvac-slip
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+  visibility:
+    labels: {placement: table, content: [title], side: auto, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: {mode: presentation, marker: numbered}
+  axis:
+    levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]
+    ticks: week
+  markers: [{kind: asOf, source: actual, label: as of}]
+  shading: {nonWorking: true, exceptions: true}
+  layoutIntent:
+    compactness: compact
+    itemStacking: stable
+  tableColumns:
+    - {id: Work package, source: title, missing: em-dash}
+    - {id: Scenario, source: {scenario: title}, missing: em-dash}
+    - {id: Δ, source: {facet: finishDelta}, format: signedDays, missing: em-dash}

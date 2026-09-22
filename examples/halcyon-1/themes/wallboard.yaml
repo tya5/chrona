@@ -64,6 +64,7 @@ body:
     'group:launch.fill': category
     'group:ops.fill': category
     planned.fill: accent
+    snapshot.fill: neutral
     summary-bar.fill: accent
     actual.fill: positive
     milestone.fill: accent

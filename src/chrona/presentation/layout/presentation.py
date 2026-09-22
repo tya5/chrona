@@ -103,7 +103,7 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
             enumerate(review_row.items),
             key=lambda pair: (
                 0,
-                {"snapshot": 0, "primary": 1, "actual": 2}.get(pair[1].source_kind, 3),
+                {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}.get(pair[1].source_kind, 4),
             ) if pair[1].track == "shared" else (1, pair[0]),
         )
         for _, item in members:

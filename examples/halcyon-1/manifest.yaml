@@ -11,3 +11,6 @@ slides:
   - id: launch-campaign
     context: contexts/03-launch-campaign.yaml
     expectedSvg: generated/03-launch-campaign.svg
+  - id: tvac-slip
+    context: contexts/04-tvac-slip.yaml
+    expectedSvg: generated/04-tvac-slip.svg

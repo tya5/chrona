@@ -15,7 +15,7 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
     materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
     materialize(ROOT / "examples/aster-ssd/manifest.yaml", "overview", tmp_path / "aster", write=False)
     manifest = ROOT / "examples/halcyon-1/manifest.yaml"
-    for slide in ("mission-brief", "programme-board", "launch-campaign"):
+    for slide in ("mission-brief", "programme-board", "launch-campaign", "tvac-slip"):
         materialize(manifest, slide, tmp_path / slide, write=False)
 
 
@@ -61,6 +61,7 @@ def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
         "contexts/01-mission-brief.yaml",
         "contexts/02-programme-board.yaml",
         "contexts/03-launch-campaign.yaml",
+        "contexts/04-tvac-slip.yaml",
     )):
         snapshot = tmp_path / str(index)
         snapshot.mkdir()
@@ -80,3 +81,28 @@ def test_materializer_rejects_a_supplied_wrong_font_pin_without_writing_svg(tmp_
     with pytest.raises(ValueError, match="E_MATERIALIZER_FONT_IDENTITY"):
         materialize(copied_example / "manifest.yaml", "programme-board", tmp_path / "out-font", write=True)
     assert expected.read_bytes() == original
+
+
+def test_materializer_records_selected_scenario_evidence_and_omits_unselected_scenarios(tmp_path):
+    example = ROOT / "examples/halcyon-1"
+    manifest = example / "manifest.yaml"
+    materialize(manifest, "tvac-slip", tmp_path / "scenario", write=False)
+    evidence = yaml.safe_load((tmp_path / "scenario/closure.yaml").read_text())
+    assert evidence["scenarios"][0]["scenarioId"] == "tvac-slip"
+    assert evidence["scenarios"][0]["title"] == "System TVAC slips one week"
+    assert evidence["scenarios"][0]["contentIdentity"].startswith("sha256:")
+    assert "data-purpose=\"snapshot\"" in (tmp_path / "scenario/review.svg").read_text()
+    assert "System TVAC slips one week" in (tmp_path / "scenario/review.svg").read_text()
+
+    materialize(manifest, "programme-board", tmp_path / "primary", write=False)
+    assert "scenarios" not in yaml.safe_load((tmp_path / "primary/closure.yaml").read_text())
+
+    copied = tmp_path / "changed"
+    shutil.copytree(example, copied)
+    project = copied / "project.yaml"
+    changed = yaml.safe_load(project.read_text())
+    changed["scenarios"]["tvac-slip"]["objects"]["tvac"]["schedule"]["amount"] = "20d"
+    project.write_text(yaml.safe_dump(changed, sort_keys=False))
+    materialize(copied / "manifest.yaml", "tvac-slip", tmp_path / "changed-output", write=True)
+    changed_evidence = yaml.safe_load((tmp_path / "changed-output/closure.yaml").read_text())
+    assert changed_evidence["scenarios"][0]["contentIdentity"] != evidence["scenarios"][0]["contentIdentity"]
