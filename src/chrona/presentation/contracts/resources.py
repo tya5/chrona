@@ -314,7 +314,10 @@ class AuthoringWorkspaceContract(ResourceContract):
 
     project: FrozenDict
     actuals: tuple[FrozenDict, ...]
-    binding: FrozenDict
+    mode: str
+    binding: FrozenDict | None
+    explicit_resources: FrozenDict | None
+    receipt: FrozenDict | None
 
 
 @dataclass(frozen=True)
@@ -617,11 +620,19 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             raise ContractError("E_CLOSURE_KIND")
         if not isinstance(actuals, (FrozenList, tuple)) or not all(isinstance(item, FrozenDict) for item in actuals):
             raise ContractError("E_CLOSURE_KIND")
-        binding = presentation["binding"]
-        if not isinstance(binding, FrozenDict):
+        mode = str(presentation["mode"])
+        binding = presentation.get("binding")
+        resources = presentation.get("resources")
+        receipt = presentation.get("receipt")
+        if mode == "guided" and not isinstance(binding, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        if mode == "explicit" and (not isinstance(resources, FrozenDict) or not isinstance(receipt, FrozenDict)):
             raise ContractError("E_CLOSURE_KIND")
         _validate_workspace_identifiers(project, actuals)
-        return AuthoringWorkspaceContract(identity, version, project, tuple(actuals), binding)
+        return AuthoringWorkspaceContract(identity, version, project, tuple(actuals), mode,
+                                         binding if isinstance(binding, FrozenDict) else None,
+                                         resources if isinstance(resources, FrozenDict) else None,
+                                         receipt if isinstance(receipt, FrozenDict) else None)
     raise ContractError("E_CLOSURE_KIND")
 
 
