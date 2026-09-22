@@ -40,6 +40,7 @@ class TextPlacement:
     line_height: float = 0.0
     font_asset_identity: str = ""
     collision_region: str = "surface"
+    source_content: str | None = None
 
 
 @dataclass(frozen=True)

@@ -12,6 +12,7 @@ class TableColumnPlacement:
     column_id: str
     inline: float
     inline_size: float
+    natural_inline_size: float
 
 
 @dataclass(frozen=True)
@@ -49,12 +50,21 @@ def place_table_columns(*, columns: tuple[tuple[str, str], ...],
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
     if total > bounds[2] and overflow != "ellipsize-with-source":
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW_POLICY", "/layoutManifest/table")
-    scale = min(1.0, bounds[2] / total) if total else 1.0
+    if total <= bounds[2]:
+        widths = natural_widths
+    else:
+        minimum = font_size * 2
+        if minimum * len(natural_widths) > bounds[2]:
+            raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
+        remaining = bounds[2] - minimum * len(natural_widths)
+        excess = sum(max(0.0, width - minimum) for width in natural_widths)
+        widths = tuple(minimum + remaining * max(0.0, width - minimum) / excess
+                       if excess else minimum for width in natural_widths)
     cursor = bounds[0]
     placements: list[TableColumnPlacement] = []
     for (column_id, _), width in zip(columns, natural_widths, strict=True):
-        placed_width = width * scale
-        placements.append(TableColumnPlacement(column_id, cursor, placed_width))
+        placed_width = widths[len(placements)]
+        placements.append(TableColumnPlacement(column_id, cursor, placed_width, width))
         cursor += placed_width
     return tuple(placements)
 
