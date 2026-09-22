@@ -18,6 +18,7 @@ from chrona.presentation.layout.annotations import (
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
+from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
@@ -235,6 +236,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]))
     track_by_id = {item.instance_id: item for item in tracks}
     marks: list[MarkPlacement] = []
+
+    def place_mark(placement_id: str, source_ref: str, bounds: Rect,
+                   start_port: tuple[float, float], end_port: tuple[float, float], *, shape: str) -> MarkPlacement:
+        requested = float(metric_values.get(
+            "timeline.point.cornerRadius" if shape == "point" else "timeline.mark.cornerRadius", 0))
+        radius = min(requested, float(min(bounds.inline_size, bounds.block_size)) / 2)
+        return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
+                             mark_shape=shape, corner_radius=radius)
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -252,36 +261,36 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 bounds = Rect(Decimal(str(x - track.block_size / 2)), Decimal(str(track.block)),
                               Decimal(str(track.block_size)), Decimal(str(track.block_size)))
                 port = (x, track.block + track.block_size / 2)
-                marks.append(MarkPlacement(f"planned:{instance_id}", item.object_id, bounds, port, port))
+                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point"))
             elif source_kind != "actual":
                 x1, x2 = _coordinate(planned["start"], scale), _coordinate(planned["end"], scale)
                 bounds = Rect(Decimal(str(x1)), Decimal(str(track.block)),
                               Decimal(str(max(1.0, x2 - x1))), Decimal(str(track.block_size)))
-                marks.append(MarkPlacement(f"planned:{instance_id}", item.object_id, bounds,
-                                           (x1, track.block + track.block_size / 2),
-                                           (x2, track.block + track.block_size / 2)))
+                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds,
+                                        (x1, track.block + track.block_size / 2),
+                                        (x2, track.block + track.block_size / 2), shape="span"))
             actual = item.actual or {}
             if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
                 x1, x2 = _coordinate(actual["start"], scale), _coordinate(actual["finish"], scale)
                 bounds = Rect(Decimal(str(x1)), Decimal(str(track.actual_block)),
                               Decimal(str(max(1.0, x2 - x1))), Decimal(str(track.block_size)))
-                marks.append(MarkPlacement(f"actual:{instance_id}", item.object_id, bounds,
-                                           (x1, track.actual_block + track.block_size / 2),
-                                           (x2, track.actual_block + track.block_size / 2)))
+                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds,
+                                        (x1, track.actual_block + track.block_size / 2),
+                                        (x2, track.actual_block + track.block_size / 2), shape="span"))
             elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
                 x = _coordinate(actual["at"], scale)
                 bounds = Rect(Decimal(str(x - track.block_size / 2)), Decimal(str(track.actual_block)),
                               Decimal(str(track.block_size)), Decimal(str(track.block_size)))
                 port = (x, track.actual_block + track.block_size / 2)
-                marks.append(MarkPlacement(f"actual:{instance_id}", item.object_id, bounds, port, port))
+                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point"))
             elif source_kind in {"actual", "combined"}:
                 anchor = planned.get("end", planned.get("at"))
                 if isinstance(anchor, date):
                     x = _coordinate(anchor, scale)
                     bounds = Rect(Decimal(str(x)), Decimal(str(track.block + track.block_size * 1.25)),
                                   Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
-                    marks.append(MarkPlacement(f"missing-actual:{instance_id}", item.object_id, bounds,
-                                               (x, track.block), (x, track.block)))
+                    marks.append(place_mark(f"missing-actual:{instance_id}", item.object_id, bounds,
+                                            (x, track.block), (x, track.block), shape="span"))
     mark_by_id = {item.placement_id: item for item in marks}
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
@@ -450,7 +459,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         continue
                     raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
                 relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points),
-                                                   semantic_id=str(relation.get("_semantic", "dependency"))))
+                                                   semantic_id=str(relation.get("_semantic", "dependency")),
+                                                   corner_radius=float(metric_values.get("timeline.relation.cornerRadius", 0)),
+                                                   path_commands=rounded_orthogonal_path(
+                                                       tuple(points), float(metric_values.get("timeline.relation.cornerRadius", 0)))))
 
     legend = by_source.get("legend")
     if legend:

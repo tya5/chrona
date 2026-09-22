@@ -224,10 +224,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             if item.source_type == "point":
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives),
+                                                 corner_radius=planned_mark.corner_radius,
                                                  href=href, link_title=link_title))
             else:
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds, projection_instance_id=instance_id, z_order=len(primitives),
+                                                 corner_radius=planned_mark.corner_radius,
                                                  href=href, link_title=link_title))
         actual = item.actual or {}
         actual_binding = semantic_binding("actual")
@@ -237,17 +239,17 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                       float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
             if item.source_type == "span":
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, projection_instance_id=instance_id, z_order=len(primitives)))
+                                                 bounds, projection_instance_id=instance_id, z_order=len(primitives), corner_radius=actual_mark.corner_radius))
             else:
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives), corner_radius=actual_mark.corner_radius))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
             missing_binding = semantic_binding("missingActual")
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
-                                             bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
+                                             bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives), corner_radius=missing_mark.corner_radius))
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
             emit_semantic_text(label_id, "memberLabel", href=href, link_title=link_title)
@@ -294,7 +296,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          (0, 0, 0, 0), shape=str(value.theme_tokens.token("dependency", "marker", "marker")),
                                          points=relation.points, from_port_id=relation.source_port_id,
-                                         to_port_id=relation.target_port_id, z_order=len(primitives)))
+                                         to_port_id=relation.target_port_id, path_commands=relation.path_commands,
+                                         z_order=len(primitives)))
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))

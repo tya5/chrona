@@ -3,7 +3,7 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
+from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
 
 
 def theme():
@@ -72,6 +72,17 @@ def test_view_required_optional_metric_is_a_theme_diagnostic():
         measure_sources({}, theme(), font_metrics=Metrics(), required_metrics=("timeline.groupHeader.blockSize",))
     assert error.value.path == "/body/metrics/timeline.groupHeader.blockSize"
     assert "timeline.groupHeader.blockSize" not in measure_sources({}, theme(), font_metrics=Metrics()).metric_values
+
+
+def test_corner_radius_metrics_are_optional_and_explicitly_allow_zero():
+    value = theme()
+    assert "timeline.mark.cornerRadius" not in resolve_theme_metrics(value)
+    value["body"]["values"]["mark-radius"] = {"type": "number", "value": 0}
+    value["body"]["metrics"]["timeline.mark.cornerRadius"] = "mark-radius"
+    assert resolve_theme_metrics(value)["timeline.mark.cornerRadius"] == Decimal(0)
+    value["body"]["values"]["mark-radius"]["value"] = -1
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_TYPE"):
+        resolve_theme_metrics(value)
 
 
 def test_heading_source_uses_heading_extent_and_baseline():
