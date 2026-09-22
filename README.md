@@ -30,7 +30,7 @@ edit the project, re-run, and the slide follows.</sup>
 ## Quick start
 
 ```bash
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev,render]'
 pytest
 chrona validate path/to/project.yaml
 chrona schedule path/to/project.yaml
