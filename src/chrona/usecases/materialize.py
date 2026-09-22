@@ -106,7 +106,17 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         )))
         derived = output / "review.svg"
         derived.write_bytes(rendered.artifact.content)
-        (output / "closure.yaml").write_text(yaml.safe_dump(reference, sort_keys=True))
+        evidence: dict[str, Any] = reference
+        if rendered.scenario_provenance:
+            evidence = {
+                "context": reference,
+                "scenarios": [
+                    {"scenarioId": item.scenario_id, "title": item.title,
+                     "contentIdentity": item.content_identity}
+                    for item in rendered.scenario_provenance
+                ],
+            }
+        (output / "closure.yaml").write_text(yaml.safe_dump(evidence, sort_keys=True))
         if write:
             expected.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(derived, expected)
         elif not expected.is_file() or derived.read_bytes() != expected.read_bytes():
