@@ -141,6 +141,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     explicit = view.rows.mode == "explicit"
     ids = set(view.selection.ids) if view.selection and view.selection.ids else set(placements)
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
+    object_types = set(view.selection.object_types) if view.selection else set()
+    excluded_object_types = set(view.selection.excluded_object_types) if view.selection else set()
     grouping = view.grouping
     selected: list[ReviewItem] = []
     hierarchy = grouping is not None and grouping.by == "hierarchy"
@@ -148,9 +150,12 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     hierarchy_root_ids: set[str] = set()
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
-        if not explicit and not hierarchy and (object_id not in ids or source_type not in types):
+        project_type = str(project["objects"][object_id].get("type", ""))
+        if not hierarchy and (object_id not in ids or source_type not in types
+                              or (object_types and project_type not in object_types)
+                              or project_type in excluded_object_types):
             continue
-        if hierarchy and object_id in ids and source_type in types:
+        if hierarchy and object_id in ids and source_type in types and (not object_types or project_type in object_types) and project_type not in excluded_object_types:
             hierarchy_root_ids.add(object_id)
         actual = _actual(latest.get(object_id))
         finish_delta = _finish_delta(planned, actual)
@@ -386,7 +391,8 @@ def _expand_hierarchy_roots(items: list[ReviewItem], entries: dict[str, Hierarch
     """Expand View-selected roots without giving View authority over tree truth."""
     item_by_id = {item.object_id: item for item in items}
     grouping = view.grouping
-    predicate_omitted = view.selection is None or (not view.selection.ids and not view.selection.types)
+    predicate_omitted = view.selection is None or (not view.selection.ids and not view.selection.types
+                                                   and not view.selection.object_types and not view.selection.excluded_object_types)
     candidate_ids = candidate_ids if not predicate_omitted else {
         entry.object_id for entry in entries.values() if entry.parent_id is None and entry.object_id in item_by_id
     }

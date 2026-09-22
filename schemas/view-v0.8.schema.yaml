@@ -24,6 +24,12 @@ allOf:
                 properties:
                   ids: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
                   types: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+                  objectTypes: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+              exclude:
+                type: object
+                additionalProperties: false
+                properties:
+                  objectTypes: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
           grouping:
             type: object
             required: [by]
