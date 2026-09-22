@@ -1,0 +1,44 @@
+from datetime import date
+from pathlib import Path
+from typing import Any, Mapping
+
+import jsonschema
+import pytest
+import yaml
+
+from chrona.resources import schema_resource
+
+
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+
+
+def _json_value(value: Any) -> Any:
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {key: _json_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_value(item) for item in value]
+    return value
+
+
+def _validator() -> jsonschema.Draft202012Validator:
+    schema = yaml.safe_load(schema_resource("view-v0.1.schema.yaml").read_text(encoding="utf-8"))
+    foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
+    return jsonschema.Draft202012Validator(
+        schema, resolver=jsonschema.RefResolver.from_schema(schema, store={foundation["$id"]: foundation})
+    )
+
+
+@pytest.mark.parametrize("path", sorted(ROOT.glob("examples/**/views/*.yaml")))
+def test_declared_public_v01_view_validates(path: Path):
+    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if value.get("version") != "chrona/view/v0.1":
+        pytest.skip("not a v0.1 View")
+    assert next(_validator().iter_errors(_json_value(value)), None) is None, path
+
+
+def test_v01_relation_visibility_object_rejects_unsupported_policy():
+    value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    value["body"]["visibility"]["relations"] = {"mode": "all", "overflow": "truncate"}
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
