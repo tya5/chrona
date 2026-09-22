@@ -112,7 +112,7 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
                 exit_code=2,
             )
         reference = load_yaml(args.snapshot_reference)
-        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=getattr(args, "require_content_identity", False)))
+        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity))
     if not args.project:
         raise CliFailure("E_COMMAND_SYNTAX", "a raw project or complete snapshot mode is required", exit_code=2)
     return load_yaml(args.project)
@@ -248,7 +248,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     destination = Path(args.output_directory)
     if destination.exists() and any(destination.iterdir()):
         raise CliFailure("E_SCHEME_GALLERY_OUTPUT", "output directory must be empty", "gallery")
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=getattr(args, "require_content_identity", False))
+    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     entries = []
     for reference_path in args.context_reference:
         context, resources = resolve_render_context(load_yaml(reference_path), reader)

@@ -44,7 +44,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     temporal = body.get("timePresentation", {})
     axis = body.get("axis", {})
     markers = body.get("markers", ())
-    as_of_value = ((actual_set or {}).get("body", actual_set or {}).get("asOf"))
+    as_of_value = ((actual_set or {}).get("body") or {}).get("asOf")
     as_of_marker = next((item for item in markers if item.get("kind") == "asOf" and item.get("source") == "actual"), None)
     as_of = date.fromisoformat(as_of_value) if ((as_of_marker is not None) or temporal.get("asOf", "line") == "line") and isinstance(as_of_value, str) else None
     annotation_visibility = visible.get("annotations", "none")
@@ -58,8 +58,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
     resolved_detail = (resolve_v05_review_detail_profile(detail, projection.items, layout_manifest)
                        if layout_manifest is not None else None)
-    detail_body = (detail or {}).get("body", detail or {})
-    summary_body = (summary or {}).get("body", summary or {})
+    detail_body = (detail or {}).get("body") or {}
+    summary_body = (summary or {}).get("body") or {}
     legend = tuple((str(item["role"]), str(item["label"])) for item in detail_body.get("legend", ()))
     panels = _typed_summary_panels(summary_body, projection, actual_set)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
@@ -107,7 +107,7 @@ def _typed_summary_panels(summary: Mapping[str, Any], projection: ReviewProjecti
     """Resolve summary-profile facts while keeping profiles free of copied values."""
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
-    as_of_value = ((actual_set or {}).get("body", actual_set or {}).get("asOf"))
+    as_of_value = ((actual_set or {}).get("body") or {}).get("asOf")
     values: dict[str, Any] = {
         "actual.asOf": date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else None,
         "planned.nextPoint": points[0] if points else None,

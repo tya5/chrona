@@ -86,4 +86,4 @@ def display_value(value: Any, missing: str, formatter: str = "text") -> str:
             return value["at"].isoformat()
     if formatter == "signedDays" and isinstance(value, int) and not isinstance(value, bool):
         return f"{value:+d}d"
-    return f"{value:+d}d" if isinstance(value, int) and not isinstance(value, bool) else str(value)
+    return str(value)
