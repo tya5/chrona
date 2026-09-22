@@ -228,6 +228,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
+    network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
     legend = tuple(item.label for item in detail.legend) if detail is not None else ()
     return {
@@ -237,6 +238,10 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
             row_count, len(view.table_columns) or 1),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
+        "network": SourceInput(
+            runs=tuple(SourceTextRun(node.title, "text", node.object_id)
+                       for node in network.nodes) if network is not None else (),
+            typography_role="text"),
         "summary": SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs)),
         "legend": SourceInput(legend or ("legend",), typography_role="legend"),
         "group-details": SourceInput(("group details",)),

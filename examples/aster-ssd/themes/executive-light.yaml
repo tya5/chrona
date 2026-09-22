@@ -28,6 +28,9 @@ body:
     timeline-mark-size: {type: number, value: 8}
     timeline-group-header-size: {type: number, value: 20}
     timeline-axis-height: {type: number, value: 48}
+    network-node-min-inline: {type: number, value: 120}
+    network-node-min-block: {type: number, value: 36}
+    network-rank-gap: {type: number, value: 24}
     table-column-width: {type: number, value: 120}
     table-column-gutter: {type: number, value: 10}
     table-indent: {type: number, value: 16}
@@ -75,6 +78,9 @@ body:
     timeline.mark.blockSize: timeline-mark-size
     timeline.groupHeader.blockSize: timeline-group-header-size
     timeline.axis.blockSize: timeline-axis-height
+    network.node.minInlineSize: network-node-min-inline
+    network.node.minBlockSize: network-node-min-block
+    network.rank.gap: network-rank-gap
     table.column.minInlineSize: table-column-width
     table.column.gutter.inlineSize: table-column-gutter
     table.indent.inlineSize: table-indent

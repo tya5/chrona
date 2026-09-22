@@ -42,7 +42,10 @@ class SceneBuildInput:
     locale: str = "en-US"
 
 
-_REQUIRED_SOURCES = frozenset(("title", "table", "timeline", "timeline-axis"))
+_REQUIRED_SOURCES = {
+    "table-timeline": frozenset(("title", "table", "timeline", "timeline-axis")),
+    "dependency-network": frozenset(("title", "network")),
+}
 
 
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
@@ -54,10 +57,18 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
     if not isinstance(measured_sources, MeasuredSources):
         raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    sources = {decision.source for decision in layout_manifest.decisions if decision.source}
-    missing = sorted(_REQUIRED_SOURCES - sources)
+    surface = getattr(projection, "surface", "table-timeline")
+    if surface not in _REQUIRED_SOURCES:
+        raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
+    required_sources = {decision.source for decision in layout_manifest.decisions
+                        if decision.source and decision.priority in {None, "required"}}
+    missing = sorted(_REQUIRED_SOURCES[surface] - required_sources)
     if missing:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/" + missing[0])
+    if surface == "dependency-network":
+        table_sources = {"table", "timeline", "timeline-axis"}
+        if required_sources & table_sources:
+            raise SceneBuildError("E_PRESENTATION_SURFACE_SLOT_SET", "/layoutManifest/sources")
     if not all(isinstance(name, str) and isinstance(enabled, bool) for name, enabled in capabilities.items()):
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,

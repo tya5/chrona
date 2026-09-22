@@ -269,6 +269,17 @@ allOf:
             then: {properties: {comparison: {required: [scenario]}}}
           - if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
             then: {not: {anyOf: [{required: [selection]}, {required: [grouping]}, {required: [ordering]}]}, required: [window]}
+          - if: {properties: {surface: {const: dependency-network}}, required: [surface]}
+            then:
+              not:
+                anyOf:
+                  - {required: [tableColumns]}
+                  - {required: [axis]}
+                  - {required: [markers]}
+                  - {required: [shading]}
+                  - {required: [timePresentation]}
+                  - {required: [annotations]}
+                  - {required: [annotationPresentation]}
 $defs:
   presentationIntent:
     type: object

@@ -1,7 +1,7 @@
 """Pure source measurement inputs shared by layout and Scene composition."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
@@ -15,6 +15,24 @@ class SourceTextRun:
 
     content: str
     typography_role: str
+    source_ref: str | None = None
+
+
+@dataclass(frozen=True)
+class MeasuredTextRun:
+    """One closed text measurement addressable by its source fact."""
+
+    source_ref: str | None
+    content: str
+    typography_role: str
+    inline_size: Decimal
+    block_size: Decimal
+    baseline: Decimal
+    font_family: str
+    font_weight: int
+    font_size: float
+    line_height: float
+    font_asset_identity: str
 
 
 @dataclass(frozen=True)
@@ -41,6 +59,7 @@ class MeasuredSources:
     measurements: Mapping[str, Measurement]
     inputs: Mapping[str, SourceInput]
     metric_values: Mapping[str, Decimal]
+    run_measurements: Mapping[str, tuple[MeasuredTextRun, ...]] = field(default_factory=dict)
 
 
 REQUIRED_METRICS = (
@@ -48,6 +67,7 @@ REQUIRED_METRICS = (
     "timeline.dayWidth", "timeline.row.minBlockSize", "timeline.mark.blockSize", "timeline.axis.blockSize",
     "table.column.minInlineSize", "table.column.gutter.inlineSize", "table.header.blockSize",
     "table.indent.inlineSize",
+    "network.node.minInlineSize", "network.node.minBlockSize", "network.rank.gap",
 )
 
 OPTIONAL_METRICS = ("timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth")
@@ -86,13 +106,24 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     _, _, body_size, _ = typography.typography("text")
     metric["text.measuredAverageAdvance"] = Decimal(str(font_metrics.width("M", float(body_size))))
     result: dict[str, Measurement] = {}
+    run_measurements: dict[str, tuple[MeasuredTextRun, ...]] = {}
     for source, value in sorted(inputs.items()):
         runs = value.text_runs()
         first_role = runs[0].typography_role if runs else value.typography_role
         _, _, font_size, line_height = typography.typography(first_role)
         text_line = font_size * line_height
         average_advance = Decimal(str(font_metrics.width("M", float(font_size))))
-        measured_width = max((Decimal(str(font_metrics.width(run.content, float(typography.typography(run.typography_role)[2])))) for run in runs), default=average_advance)
+        measured_runs = []
+        for run in runs:
+            family, weight, run_size, run_line_height = typography.typography(run.typography_role)
+            width = Decimal(str(font_metrics.width(run.content, float(run_size))))
+            baseline = Decimal(str(font_metrics.baseline(0, float(run_size), float(run_line_height))))
+            measured_runs.append(MeasuredTextRun(
+                run.source_ref, run.content, run.typography_role, width,
+                run_size * run_line_height, baseline, family, int(weight),
+                float(run_size), float(run_line_height), str(font_metrics.content_identity)))
+        run_measurements[source] = tuple(measured_runs)
+        measured_width = max((run.inline_size for run in measured_runs), default=average_advance)
         text_block = sum((typography.typography(run.typography_role)[2] * typography.typography(run.typography_role)[3] for run in runs), Decimal(0))
         if not runs:
             text_block = text_line
@@ -114,4 +145,4 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             Decimal(str(font_metrics.baseline(0, float(font_size), float(line_height)))),
             Decimal(str(font_metrics.baseline(0, float(font_size), float(line_height)))),
         )
-    return MeasuredSources(result, dict(inputs), metric)
+    return MeasuredSources(result, dict(inputs), metric, run_measurements)
