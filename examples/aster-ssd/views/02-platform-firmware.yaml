@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.1
+version: chrona/view/v0.1
 kind: view
 id: aster-02-platform-firmware
 body:

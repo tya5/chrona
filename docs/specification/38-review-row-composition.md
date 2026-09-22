@@ -6,7 +6,7 @@
 
 ## 0. Input closure
 
-M28 uses `chrona/presentation/v0.6` Render Contexts. `body.inputs.snapshot`, when
+M28 uses `chrona/render-context/v0.6` Render Contexts. `body.inputs.snapshot`, when
 present, is a typed immutable `snapshot-ref` reference. The resolver reads the
 Snapshot resource and then reads its nested immutable Project reference. It schedules
 the primary and snapshot Projects independently and requires equal Project IDs before
@@ -29,7 +29,7 @@ source placement: `primary`, `snapshot`, or `actual`, aligned by a stable
 Project-local object ID. A task, milestone, snapshot placement, and Actual observation
 are therefore all ordinary review items; none is a renderer-only exception.
 
-The row model is introduced by `chrona/presentation/v0.2` View resources:
+The row model is introduced by `chrona/view/v0.2` View resources:
 
 ```yaml
 rows:

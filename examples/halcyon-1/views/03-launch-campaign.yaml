@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.2
+version: chrona/view/v0.2
 kind: view
 id: halcyon-03-launch-campaign
 body:

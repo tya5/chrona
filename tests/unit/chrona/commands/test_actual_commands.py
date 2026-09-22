@@ -18,7 +18,7 @@ def _batch(records):
 
 def _actual_set():
     return {
-        "version": "chrona/presentation/v0.1",
+        "version": "chrona/actual-set/v0.1",
         "kind": "actual-set",
         "id": "supplier-observed",
         "body": {

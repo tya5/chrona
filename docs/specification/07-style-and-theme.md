@@ -44,7 +44,7 @@ exposed by the View Projection and adds named visual roles; it cannot set a colo
 font, coordinate, or token value.
 
 ```yaml
-version: chrona/presentation/v0.1
+version: chrona/style/v0.1
 kind: style
 id: plan-actual
 body:
@@ -126,7 +126,7 @@ View's selection, schedule, or Scene geometry unless the changed token is declar
 layout metric.
 
 ```yaml
-version: chrona/presentation/v0.1
+version: chrona/theme/v0.1
 kind: theme
 id: engineering-light
 body:

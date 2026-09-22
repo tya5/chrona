@@ -5,7 +5,7 @@ type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: "chrona/presentation/v0.6"}
+  version: {const: "chrona/render-context/v0.6"}
   kind: {const: render-context}
   id: {type: string, minLength: 1}
   body:
