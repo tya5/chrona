@@ -185,7 +185,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
     for review_row, row in zip(review_rows, rows, strict=True):
       members = sorted(enumerate(review_row.items),
-                       key=lambda pair: (0, {"snapshot": 0, "primary": 1, "actual": 2}.get(pair[1].source_kind, 3))
+                       key=lambda pair: (0, {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}.get(pair[1].source_kind, 4))
                        if pair[1].track == "shared" else (1, pair[0]))
       for _, item in members:
         layout_instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
@@ -193,7 +193,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         source_kind = item.source_kind if projection.rows else "combined"
         href, link_title = link_for_item(item, source_kind)
         planned = item.planned
-        planned_binding = semantic_binding("snapshot" if source_kind == "snapshot" else "planned")
+        planned_binding = semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
         planned_role = planned_binding.scene_role
         planned_mark = mark_placements.get(f"planned:{instance_id}")
         if planned_mark is not None:

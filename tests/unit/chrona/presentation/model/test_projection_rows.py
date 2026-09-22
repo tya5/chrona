@@ -93,6 +93,23 @@ def test_explicit_row_selects_each_named_scenario_by_its_declared_id():
     assert [(item.scenario_id, item.title) for item in projection.rows[0].items] == [("early", "Early"), ("late", "Late")]
 
 
+def test_automatic_rows_overlay_the_selected_scenario_on_the_shared_track():
+    project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
+    view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
+        ViewComparison("scenario", "optional", None, None, (), scenario_id="recovery"),
+        ViewVisibility(False, "none", "none"), freeze({}), (), (), ViewRows("automatic", ()), None, (), None, None, None)
+    projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}}, view, None,
+        scenarios={"recovery": (
+            {"objects": {"task": {"title": "Recovery", "fields": {}}}},
+            {"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}},
+        )})
+
+    assert [(item.item_id, item.source_kind, item.scenario_id, item.track, item.title) for item in projection.rows[0].items] == [
+        ("task", "combined", None, "shared", "Current"),
+        ("scenario:recovery:task", "scenario", "recovery", "shared", "Recovery"),
+    ]
+
+
 def test_projection_carries_current_and_snapshot_analysis_without_crossing_them():
     project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
     historic = {"objects": {"task": {"title": "Historic", "fields": {}}}, "entities": {}}
