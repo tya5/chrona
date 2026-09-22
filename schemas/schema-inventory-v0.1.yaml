@@ -10,6 +10,7 @@ schemas:
   - {file: layout-profile-v0.3.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: presentation-materialization-receipt-v0.1.schema.yaml, kind: presentation-materialization-receipt, state: live, consumers: [src/chrona/usecases/authoring_materialization.py]}
   - {file: profile-v0.2.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: project-v0.5.schema.yaml, kind: project, state: live, consumers: [src/chrona/core/validation.py]}
   - {file: render-context-v0.8.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

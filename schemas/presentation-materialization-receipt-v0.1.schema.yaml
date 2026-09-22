@@ -1,0 +1,18 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/presentation-materialization-receipt-v0.1"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: chrona/presentation-materialization-receipt/v0.1}
+  kind: {const: presentation-materialization-receipt}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [presetContentIdentity, bindingContentIdentity, normalizerVersion, resources]
+    additionalProperties: false
+    properties:
+      presetContentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      bindingContentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      normalizerVersion: {const: chrona/authoring-normalizer/v0.1}
+      resources: {type: object, minProperties: 1, additionalProperties: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}}
