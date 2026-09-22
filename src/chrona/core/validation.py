@@ -13,7 +13,7 @@ from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled
 from chrona.resources import schema_resource
 
 
-SCHEMA_PATH = schema_resource("project-v0.3.schema.yaml")
+SCHEMA_PATH = schema_resource("project-v0.4.schema.yaml")
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:

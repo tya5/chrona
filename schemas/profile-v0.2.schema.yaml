@@ -1,17 +1,17 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:profile-v0.1"
+$id: "urn:chrona:profile-v0.2"
 type: object
 required: [version, packageId, contentIdentity, requires, profiles]
 additionalProperties: false
 properties:
-  version: {const: chrona/profile/v0.1}
+  version: {const: chrona/profile/v0.2}
   packageId: {type: string, minLength: 1}
   contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   requires:
     type: object
     required: [projectFormat]
     additionalProperties: false
-    properties: {projectFormat: {const: timeline/v0.3}}
+    properties: {projectFormat: {const: timeline/v0.4}}
   profiles:
     type: object
     minProperties: 1

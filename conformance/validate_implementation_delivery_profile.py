@@ -12,7 +12,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from chrona.scheduling.scheduler import schedule
 
 ROOT = Path(__file__).resolve().parent
-SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "profile-v0.1.schema.yaml").read_text())
+SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "profile-v0.2.schema.yaml").read_text())
 RESOURCE_SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml").read_text())
 EXPECTED = {
     "implementation-delivery.work-item": "task",
@@ -119,14 +119,14 @@ def check_self_hosted_roadmap():
 
 
 def main():
-    positive = fixture_diagnostics("implementation-delivery-profile-v0.1.yaml")
+    positive = fixture_diagnostics("implementation-delivery-profile-v0.2.yaml")
     if positive:
         raise AssertionError(f"positive fixture diagnostics: {positive}")
-    negative = fixture_diagnostics("implementation-delivery-profile-invalid-field-v0.1.yaml")
+    negative = fixture_diagnostics("implementation-delivery-profile-invalid-field-v0.2.yaml")
     expected = {"IDP-PROFILE-003", "IDP-PROFILE-004", "IDP-PROFILE-005"}
     if set(negative) != expected:
         raise AssertionError(f"negative fixture diagnostics: {negative}")
-    invalid_state = fixture_diagnostics("implementation-delivery-profile-invalid-state-v0.1.yaml")
+    invalid_state = fixture_diagnostics("implementation-delivery-profile-invalid-state-v0.2.yaml")
     if invalid_state != ["IDP-STATE-001"]:
         raise AssertionError(f"invalid state fixture diagnostics: {invalid_state}")
     check_state_isolation()

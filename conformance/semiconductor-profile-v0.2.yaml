@@ -1,7 +1,7 @@
-version: chrona/profile/v0.1
+version: chrona/profile/v0.2
 packageId: semiconductor-development
 contentIdentity: sha256:0000000000000000000000000000000000000000000000000000000000000000
-requires: {projectFormat: timeline/v0.3}
+requires: {projectFormat: timeline/v0.4}
 profiles:
   EVT: {extends: milestone}
   DVT: {extends: milestone}

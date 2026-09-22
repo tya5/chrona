@@ -12,8 +12,8 @@ are migration-only and record their successor and removal slice.
 | color-scheme | color-scheme-v0.1.schema.yaml |
 | command-request | command-request-v0.2.schema.yaml |
 | layout-profile | layout-profile-v0.2.schema.yaml |
-| profile-package | profile-v0.1.schema.yaml |
-| project | project-v0.3.schema.yaml |
+| profile-package | profile-v0.2.schema.yaml |
+| project | project-v0.4.schema.yaml |
 | render-context | render-context-v0.8.schema.yaml |
 | review-detail-profile | review-detail-profile-v0.1.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |

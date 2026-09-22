@@ -8,7 +8,7 @@
     "docs/fixtures/semiconductor.yaml": "ok",
     "docs/fixtures/dependencies.yaml": "ok",
     "docs/schemas/semiconductor.example.yaml": "ok",
-    "docs/schemas/project-v0.3.schema.yaml": "ok"
+    "docs/schemas/project-v0.4.schema.yaml": "ok"
   },
   "basic_semantic_issues": [],
   "design_recompletion": "pass",

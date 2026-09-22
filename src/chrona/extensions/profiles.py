@@ -10,7 +10,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.resources import schema_resource
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
-PROFILE_SCHEMA = schema_resource("profile-v0.1.schema.yaml")
+PROFILE_SCHEMA = schema_resource("profile-v0.2.schema.yaml")
 RESOURCE_SCHEMA = schema_resource("revision-store-resource-ref-v0.1.schema.yaml")
 PACKAGE_ID = "implementation-delivery"
 DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}
