@@ -1,14 +1,19 @@
 """Schema-accepted, immutable runtime contracts for presentation closures."""
 
 from chrona.presentation.contracts.resources import (
+    ActualSetContract,
     ClosureIdentity,
     ColorSchemeContract,
     ContractError,
     LayoutProfileContract,
+    ProfilePackageContract,
     ProjectContract,
     RenderContextContract,
     ResolvedThemeContract,
     ResourceContract,
+    ReviewDetailProfileContract,
+    SnapshotRefContract,
+    SummaryProfileContract,
     ThemeContract,
     ViewContract,
     freeze,
@@ -16,7 +21,7 @@ from chrona.presentation.contracts.resources import (
 )
 
 __all__ = [
-    "ClosureIdentity", "ColorSchemeContract", "ContractError", "LayoutProfileContract",
+    "ActualSetContract", "ClosureIdentity", "ColorSchemeContract", "ContractError", "LayoutProfileContract", "ProfilePackageContract",
     "ProjectContract", "RenderContextContract", "ResolvedThemeContract", "ResourceContract", "ThemeContract",
-    "ViewContract", "freeze", "parse_contract",
+    "ReviewDetailProfileContract", "SnapshotRefContract", "SummaryProfileContract", "ViewContract", "freeze", "parse_contract",
 ]
