@@ -101,30 +101,30 @@
 <rect data-scene-id="calendar-closed:2027-11-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1112.727" y="156.2" width="2.327" height="800" fill="#F1F1F1"/>
 <rect data-scene-id="calendar-closed:2027-11-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1126.691" y="156.2" width="2.327" height="800" fill="#F1F1F1"/>
 <rect data-scene-id="calendar-closed:2027-11-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1129.018" y="156.2" width="2.327" height="800" fill="#F1F1F1"/>
-<rect data-scene-id="planned:integration:integration" data-source-ref="integration" data-purpose="planned" x="791.561" y="172.867" width="48.873" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:integration:integration" data-source-ref="integration" data-purpose="planned" x="791.561" y="172.867" width="48.873" height="12" fill="none" stroke="#111111"/>
 <rect data-scene-id="actual:integration:integration" data-source-ref="integration" data-purpose="actual" x="791.561" y="187.867" width="48.873" height="12" fill="#8C8C8C"/>
 <text data-scene-id="variance:integration:integration" data-source-ref="integration" data-purpose="finish-delta" x="843.684" y="197.117" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="13" fill="#555555">+0d</text>
-<rect data-scene-id="planned:vibration:vibration" data-source-ref="vibration" data-purpose="planned" x="842.762" y="239.533" width="16.291" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:vibration:vibration" data-source-ref="vibration" data-purpose="planned" x="842.762" y="239.533" width="16.291" height="12" fill="none" stroke="#111111"/>
 <rect data-scene-id="actual:vibration:vibration" data-source-ref="vibration" data-purpose="actual" x="842.762" y="254.533" width="16.291" height="12" fill="#8C8C8C"/>
 <text data-scene-id="member-label:vibration:vibration" data-source-ref="vibration" data-purpose="member-label" x="789.433" y="229.033" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">Vibration and shock</text>
 <text data-scene-id="variance:vibration:vibration" data-source-ref="vibration" data-purpose="finish-delta" x="862.303" y="263.783" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="13" fill="#555555">+0d</text>
-<rect data-scene-id="planned:tvac:tvac" data-source-ref="tvac" data-purpose="planned" x="863.707" y="306.2" width="32.582" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:tvac:tvac" data-source-ref="tvac" data-purpose="planned" x="863.707" y="306.2" width="32.582" height="12" fill="none" stroke="#111111"/>
 <text data-scene-id="member-label:tvac:tvac" data-source-ref="tvac" data-purpose="member-label" x="804.538" y="295.7" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">System thermal-vacuum</text>
-<rect data-scene-id="planned:emc:emc" data-source-ref="emc" data-purpose="planned" x="903.271" y="372.867" width="16.291" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:emc:emc" data-source-ref="emc" data-purpose="planned" x="903.271" y="372.867" width="16.291" height="12" fill="none" stroke="#111111"/>
 <text data-scene-id="member-label:emc:emc" data-source-ref="emc" data-purpose="member-label" x="830.511" y="362.367" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">EMC and RF compatibility</text>
-<rect data-scene-id="planned:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="planned" x="919.562" y="439.533" width="34.909" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="planned" x="919.562" y="439.533" width="34.909" height="12" fill="none" stroke="#111111"/>
 <text data-scene-id="member-label:rehearsals:rehearsals" data-source-ref="rehearsals" data-purpose="member-label" x="868.158" y="429.033" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">Operations rehearsals</text>
 <polygon data-scene-id="planned:psr:psr" data-source-ref="psr" data-purpose="planned" points="945.162,506.2 951.162,512.2 945.162,518.2 939.162,512.2" fill="#1F1F1F"/>
 <text data-scene-id="member-label:psr:psr" data-source-ref="psr" data-purpose="member-label" x="896.932" y="495.7" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">Pre-ship review</text>
-<rect data-scene-id="planned:shipment:shipment" data-source-ref="shipment" data-purpose="planned" x="954.471" y="572.867" width="13.964" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:shipment:shipment" data-source-ref="shipment" data-purpose="planned" x="954.471" y="572.867" width="13.964" height="12" fill="none" stroke="#111111"/>
 <text data-scene-id="member-label:shipment:shipment" data-source-ref="shipment" data-purpose="member-label" x="919.817" y="562.367" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">Ship to range</text>
-<rect data-scene-id="planned:campaign:campaign" data-source-ref="campaign" data-purpose="planned" x="970.762" y="639.533" width="39.564" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:campaign:campaign" data-source-ref="campaign" data-purpose="planned" x="970.762" y="639.533" width="39.564" height="12" fill="none" stroke="#111111"/>
 <text data-scene-id="member-label:campaign:campaign" data-source-ref="campaign" data-purpose="member-label" x="935.293" y="629.033" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">Launch campaign</text>
 <polygon data-scene-id="planned:frr:frr" data-source-ref="frr" data-purpose="planned" points="1026.617,706.2 1032.617,712.2 1026.617,718.2 1020.617,712.2" fill="#1F1F1F"/>
 <text data-scene-id="member-label:frr:frr" data-source-ref="frr" data-purpose="member-label" x="955.042" y="695.7" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">Flight readiness review</text>
 <polygon data-scene-id="planned:launch:launch" data-source-ref="launch" data-purpose="planned" points="1042.908,772.867 1048.908,778.867 1042.908,784.867 1036.908,778.867" fill="#1F1F1F"/>
 <text data-scene-id="member-label:launch:launch" data-source-ref="launch" data-purpose="member-label" x="973.65" y="762.367" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">Launch window opens</text>
-<rect data-scene-id="planned:leop:leop" data-source-ref="leop" data-purpose="planned" x="1042.908" y="839.533" width="48.873" height="12" fill="#1F1F1F"/>
+<rect data-scene-id="planned:leop:leop" data-source-ref="leop" data-purpose="planned" x="1042.908" y="839.533" width="48.873" height="12" fill="none" stroke="#111111"/>
 <text data-scene-id="member-label:leop:leop" data-source-ref="leop" data-purpose="member-label" x="878.352" y="849.033" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">LEOP and commissioning</text>
 <polygon data-scene-id="planned:first-light:first-light" data-source-ref="first-light" data-purpose="planned" points="1108.073,906.2 1114.073,912.2 1108.073,918.2 1102.073,912.2" fill="#1F1F1F"/>
 <text data-scene-id="member-label:first-light:first-light" data-source-ref="first-light" data-purpose="member-label" x="1041.789" y="915.7" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">First light</text>

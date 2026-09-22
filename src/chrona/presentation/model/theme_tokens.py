@@ -57,6 +57,16 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
         return value
 
+    def optional_pattern(self, role: str) -> str | None:
+        """Return explicitly declared renderer form intent, if the role has one."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or "pattern" not in binding:
+            return None
+        value = self.token(role, "pattern", "pattern")
+        if not isinstance(value, str):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/pattern")
+        return value
+
     def font_family(self, role: str = "text", property_name: str = "fontFamily") -> str:
         value = self.token(role, property_name, "fontFamily")
         if not isinstance(value, str):
