@@ -44,11 +44,12 @@ def test_every_declared_closure_input_is_read(slide, example, context_path):
              "--store-identity", reference["store"]["identity"], "--reject-unused-closure-inputs",
              "--output", str(Path(temporary) / "review.svg")],
             check=False, text=True, capture_output=True)
-    pinned = KNOWN.get(slide) or []
+    expected = KNOWN.get(slide)
     if not completed.returncode:
-        assert not pinned, f"{slide} now reads every input: remove it from known_unused.yaml"
+        assert expected is None, f"{slide} now reads every input: remove it from known_unused.yaml"
         return
-    unused = [kind for kind in pinned if kind in completed.stdout]
-    if "E_CLOSURE_INPUT_UNUSED" in completed.stdout and len(unused) == len(pinned) and pinned:
-        pytest.xfail(f"{slide} drops {', '.join(pinned)}")
-    raise AssertionError(completed.stdout.strip() or completed.stderr.strip())
+    prefix = "closure inputs loaded but never read: "
+    actual = completed.stdout.split(prefix, 1)[1].split('"', 1)[0].strip().split(", ") if prefix in completed.stdout else None
+    assert actual is not None, completed.stdout.strip() or completed.stderr.strip()
+    assert actual == expected, f"{slide} unused-input fingerprint changed: {actual!r}"
+    pytest.xfail(f"{slide} drops {', '.join(actual)}")

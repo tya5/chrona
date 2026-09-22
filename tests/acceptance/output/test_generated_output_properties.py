@@ -53,20 +53,22 @@ SLIDES = list(_slides())
 CASES = pytest.mark.parametrize("slide,context_path,svg_path", SLIDES)
 
 
-def check(slide: str, request, holds: bool, message: str) -> None:
-    """Assert one property, honouring the pinned known-failure list.
+def check(slide: str, request, actual: list | set, message: str) -> None:
+    """Assert one property, honouring its complete pinned failure fingerprint.
 
     A pinned pair that still fails is reported as xfail rather than breaking the build.
     A pinned pair that starts passing fails, so a fix removes its pin in the same change.
     Any pair that is not pinned fails normally.
     """
-    pinned = slide in (KNOWN.get(request.node.originalname or request.node.name) or ())
-    if holds:
-        assert not pinned, f"{slide} now satisfies this property: remove it from known_failures.yaml"
+    expected = (KNOWN.get(request.node.originalname or request.node.name) or {}).get(slide)
+    normalized = sorted(actual) if isinstance(actual, set) else actual
+    if not normalized:
+        assert expected is None, f"{slide} now satisfies this property: remove it from known_failures.yaml"
         return
-    if pinned:
+    assert expected is not None, message
+    assert normalized == expected, f"{slide} failure fingerprint changed: {normalized!r}"
+    if expected:
         pytest.xfail(message)
-    raise AssertionError(message)
 
 
 def _load(svg_path: Path, context_path: Path):
@@ -112,7 +114,7 @@ def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
     marks = list(_marks(tree))
     collisions = [(purpose, content) for purpose, content, box in _texts(tree, metrics)
                   if purpose in PLOT_TEXT_PURPOSES and any(_overlaps(box, mark) for mark in marks)]
-    check(slide, request, not collisions, f"{len(collisions)} labels drawn over a mark: {collisions[:5]}")
+    check(slide, request, [list(item) for item in collisions], f"{len(collisions)} labels drawn over a mark: {collisions[:5]}")
 
 
 @CASES
@@ -120,7 +122,7 @@ def test_no_text_leaves_the_viewport(slide, context_path, svg_path, request):
     tree, (width, height), metrics = _load(svg_path, context_path)
     escaped = [(content, round(box[2] - width, 1)) for _, content, box in _texts(tree, metrics)
                if box[0] < 0 or box[1] < 0 or box[2] > width or box[3] > height]
-    check(slide, request, not escaped, f"text past the canvas edge: {escaped}")
+    check(slide, request, [list(item) for item in escaped], f"text past the canvas edge: {escaped}")
 
 
 @CASES
@@ -136,7 +138,7 @@ def test_row_index_cells_render_an_ordinal(slide, context_path, svg_path, reques
              if node.get("data-purpose") == "table-cell"
              and (node.get("data-scene-id") or "").rsplit(":", 1)[-1] in columns
              and not re.fullmatch(r"\d+", (node.text or "").strip())]
-    check(slide, request, not wrong, f"row-index cells that are not an ordinal: {wrong[:3]}")
+    check(slide, request, [list(item) for item in wrong], f"row-index cells that are not an ordinal: {wrong[:3]}")
 
 
 @CASES
@@ -152,7 +154,7 @@ def test_point_rows_never_render_a_span_only_state(slide, context_path, svg_path
         if node.get("data-purpose") == "table-cell" and len(parts) >= 3 and parts[1] in points:
             if (node.text or "").strip() == "in progress":
                 offenders.add(parts[1])
-    check(slide, request, not offenders, f"point-kind rows labelled 'in progress': {sorted(offenders)}")
+    check(slide, request, offenders, f"point-kind rows labelled 'in progress': {sorted(offenders)}")
 
 
 @CASES
@@ -163,4 +165,4 @@ def test_every_declared_slot_produces_a_primitive(slide, context_path, svg_path,
     declared = set(re.findall(r"source:\s*([a-z-]+)", yaml.safe_dump(_bound(context_path, body, "layout"))))
     produced = {node.get("data-purpose") for node in tree.iter()}
     empty = sorted(slot for slot in declared & set(SLOT_PURPOSES) if not SLOT_PURPOSES[slot] & produced)
-    check(slide, request, not empty, f"slots declared in the Layout Profile that drew nothing: {empty}")
+    check(slide, request, empty, f"slots declared in the Layout Profile that drew nothing: {empty}")
