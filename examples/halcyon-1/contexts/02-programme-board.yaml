@@ -66,6 +66,15 @@ body:
       address: profiles/summary.yaml
       revision:
         token: example-v1
+    detailProfile:
+      id: halcyon-board-legend
+      kind: review-detail-profile
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: profiles/detail.yaml
+      revision:
+        token: example-v1
   environment:
     viewport:
       inlineSize: 1920

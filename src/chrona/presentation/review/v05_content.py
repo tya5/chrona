@@ -27,6 +27,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"], row_index), column["missing"], column.get("format", "text")))
                       for row_index, item in enumerate(projection.items, 1) for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
+    group_presentation = str(body.get("grouping", {}).get("presentation", "band"))
     labels = visible.get("labels", False)
     label_placement = "legacy" if labels is True else "none"
     label_content: tuple[str, ...] = ("title",) if labels is True else ()
@@ -65,6 +66,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
+                               group_presentation=group_presentation,
                                axis_level=str(temporal.get("axisLevel", "auto")),
                                axis_levels=tuple((str(item["unit"]), str(item["format"])) for item in axis.get("levels", ())),
                                axis_ticks=str(axis.get("ticks")) if axis.get("ticks") else None,

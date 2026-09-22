@@ -3,7 +3,7 @@ kind: view
 id: controller-z-executive
 body:
   selection: {include: {types: [span, point]}}
-  grouping: {by: field, field: owner, missing: ungrouped, order: [fw-team, validation-team, factory-team]}
+  grouping: {by: field, field: owner, missing: ungrouped, order: [fw-team, validation-team, factory-team], presentation: header}
   ordering: {by: plannedStart, direction: ascending, tieBreak: id}
   window: {mode: explicit, start: '2026-02-01', end: '2026-07-01'}
   comparison: {baseline: primary, actual: required, observationSelection: latest, deltaUnit: calendar-days, facets: [planned, actual, finishDelta, missingActual, unmatchedActual]}
