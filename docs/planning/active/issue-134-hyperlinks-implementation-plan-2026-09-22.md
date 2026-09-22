@@ -1,7 +1,8 @@
 # Issue 134 Typed Hyperlinks Implementation Plan
 
-1. **Project v0.4.** Atomically migrate Project resources and validation to the
-   typed object Link contract, including profile requirement and Context tests.
+1. **Project v0.4 and Profile v0.2.** Atomically migrate Project resources,
+   Profile requirements/loader and validation to the typed object Link
+   contract, including Context tests.
 2. **View v0.6 and projection.** Atomically migrate View resources; normalize
    link modes and title columns; carry object link facts into primary review
    items and completed Scene selection metadata.
