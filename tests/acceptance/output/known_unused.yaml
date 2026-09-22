@@ -1,0 +1,10 @@
+# Render Context inputs that the render loads and never reads, pinned on the same rules
+# as known_failures.yaml. Measured at 6c2dafa; tracked in #86.
+#
+# The detail profile now reaches the render; the summary profile still does not.
+halcyon-1/mission-brief:
+  - summary-profile
+halcyon-1/programme-board:
+  - summary-profile
+halcyon-1/launch-campaign:
+  - summary-profile

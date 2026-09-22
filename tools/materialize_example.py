@@ -1,4 +1,4 @@
-"""Materialize one v0.5/v0.6 example through Chrona's public render-review CLI."""
+"""Materialize one v0.6 example through Chrona's public render-review CLI."""
 from __future__ import annotations
 
 import argparse
@@ -54,7 +54,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path) ->
 def _copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
     raw = context_path.read_bytes()
     context = yaml.safe_load(raw)
-    if context.get("version") not in {"chrona/presentation/v0.5", "chrona/presentation/v0.6"} or context.get("kind") != "render-context":
+    if context.get("version") != "chrona/presentation/v0.6" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]

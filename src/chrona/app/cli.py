@@ -132,15 +132,16 @@ def _parser() -> JsonArgumentParser:
         if name == "render":
             command.add_argument("--output", "-o", required=True)
 
-    command = sub.add_parser("render-review", help="render an immutable Render Context v0.5 or v0.6", description="render an immutable Render Context v0.5 or v0.6")
+    command = sub.add_parser("render-review", help="render an immutable Render Context v0.6", description="render an immutable Render Context v0.6")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
+    command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose Context declares inputs the render never reads")
     command.add_argument("--output", "-o", required=True)
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
-    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.5 or v0.6 resource-reference YAML; repeat for each scheme")
+    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.6 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
@@ -168,28 +169,50 @@ def _parser() -> JsonArgumentParser:
     return parser
 
 
-def _resource(resources: tuple[ClosureResource, ...], kind: str) -> dict[str, Any] | None:
+def _resource(resources: tuple[ClosureResource, ...], kind: str, *, read: set[str] | None = None) -> dict[str, Any] | None:
+    if read is not None:
+        read.add(kind)
     return next((item.value for item in resources if item.kind == kind), None)
+
+
+def unused_closure_inputs(resources: tuple[ClosureResource, ...], read: set[str]) -> tuple[str, ...]:
+    """Resource kinds the closure loaded that the render never read.
+
+    The Theme and Color Scheme are consumed through ``context["resolvedTheme"]``
+    rather than through ``_resource``, so they are read by construction.
+    """
+    return tuple(sorted({item.kind for item in resources} - read - {"color-scheme", "theme"}))
+
+
+def _reject_unused_closure_inputs(resources: tuple[ClosureResource, ...], read: set[str]) -> None:
+    """Reject a closure whose declared inputs the render silently ignores."""
+    unused = unused_closure_inputs(resources, read)
+    if unused:
+        raise CliFailure("E_CLOSURE_INPUT_UNUSED",
+                         "closure inputs loaded but never read: " + ", ".join(unused), "closure")
 
 
 def _run_render_review(args: argparse.Namespace) -> None:
     reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     context, resources = resolve_render_context(load_yaml(args.context_reference), reader)
-    project = _resource(resources, "project")
-    view = _resource(resources, "view")
+    read: set[str] = set()
+    project = _resource(resources, "project", read=read)
+    view = _resource(resources, "view", read=read)
     theme = context.get("resolvedTheme")
-    layout = _resource(resources, "layout-profile")
+    layout = _resource(resources, "layout-profile", read=read)
     if project is None or view is None or theme is None or layout is None:
         raise CliFailure("E_CLOSURE_REQUIRED", "Render Context closure is incomplete", "closure")
     manifests = {
         item.value["packageId"]: item.value
         for item in resources if item.kind == "profile-package"
     }
+    if manifests:
+        read.add("profile-package")
     result = schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         _reject(result.diagnostics)
-    actual = _resource(resources, "actual-set")
-    snapshot_project = _resource(resources, "snapshot-project")
+    actual = _resource(resources, "actual-set", read=read)
+    snapshot_project = _resource(resources, "snapshot-project", read=read)
     snapshot_result = schedule(snapshot_project) if snapshot_project is not None else None
     if snapshot_result is not None and not snapshot_result.ok:
         _reject(snapshot_result.diagnostics)
@@ -234,10 +257,12 @@ def _run_render_review(args: argparse.Namespace) -> None:
     from chrona.presentation.renderers.v05_svg import render_v05_svg
     scene_input = build_scene_input(projection=projection, surface_content=normalize_v05_surface_content(
                                     projection, project, view, actual_set=actual,
-                                    detail=_resource(resources, "review-detail-profile")),
+                                    detail=_resource(resources, "review-detail-profile", read=read)),
                                     layout_manifest=manifest, resolved_theme=theme, font_metrics=font_metrics,
                                     measured_sources=measured, capabilities={name: True for name in capabilities},
                                     locale=environment["locale"])
+    if getattr(args, "reject_unused_closure_inputs", False):
+        _reject_unused_closure_inputs(resources, read)
     svg = render_v05_svg(compose_review_surface(scene_input), viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])), tokens=scene_input.theme_tokens)
     Path(args.output).write_text(svg, encoding="utf-8")
 
