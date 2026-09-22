@@ -5,16 +5,56 @@ import pytest
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
 from chrona.presentation.model.surface_content import SummaryContent
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
+from chrona.presentation.contracts.resources import (
+    SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
+    ViewRows, ViewVisibility, ViewWindow, freeze,
+)
 
 
 EMPTY_SUMMARY = SummaryContent(())
+
+
+def typed_view(value):
+    body = value["body"]
+    grouping = body.get("grouping")
+    visibility = body.get("visibility", {})
+    return ViewInput(
+        None,
+        ViewGrouping(grouping["by"], grouping.get("field"), tuple(grouping.get("order", ())), grouping.get("missing"), grouping.get("presentation"), grouping.get("depth"), grouping.get("rollup")) if grouping else None,
+        None,
+        ViewWindow(body.get("window", {}).get("mode", "selected-planned"), None, None, 0),
+        ViewComparison(None, body.get("comparison", {}).get("actual", "optional"), None, None, ()),
+        ViewVisibility(visibility.get("labels", False), visibility.get("relations", "none"), visibility.get("annotations", "none")), freeze(body.get("layoutIntent", {})),
+        tuple(TableColumn(item["id"], item["source"], item.get("format", "text"), item["missing"])
+              for item in body.get("tableColumns", ())),
+        tuple(freeze(item) for item in body.get("annotations", ())), ViewRows(body.get("rows", {}).get("mode", "automatic"), ()),
+        freeze(body.get("axis")) if body.get("axis") else None, tuple(freeze(item) for item in body.get("markers", ())),
+        freeze(body.get("shading")) if body.get("shading") else None,
+        freeze(body.get("timePresentation")) if body.get("timePresentation") else None,
+        body.get("annotationPresentation"),
+    )
+
+
+def typed_summary(value):
+    body = value["body"]
+    panels = []
+    for panel in body["panels"]:
+        declared = panel["metrics"]
+        entries = declared.items() if isinstance(declared, dict) else ((item["id"], item) for item in declared)
+        metrics = tuple(
+            SummaryMetric(metric_id, definition.get("label", metric_id), definition["source"], definition["format"], definition.get("scope"))
+            if isinstance(definition, dict) else (metric_id, definition)
+            for metric_id, definition in entries
+        )
+        panels.append(SummaryPanelInput(panel["id"], panel.get("title"), panel.get("presentation", "lines"), metrics))
+    return SummaryProfileInput(tuple(panels))
 
 
 def test_optional_content_is_selected_only_from_current_project_and_view():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
     project = {"relations": ({"id": "r", "from": {"object": "a"}, "to": {"object": "a"}},), "annotations": {"n": {"text": "note"}}}
     view = {"body": {"tableColumns": ({"id": "Name", "source": "title", "missing": "blank"},), "visibility": {"relations": "semantic", "annotations": "none"}}}
-    value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
     assert value.table_cells == (("a", "Name", "A"),)
     assert value.relations[0]["id"] == "r"
     assert value.notes == (("n", "note"),)
@@ -29,7 +69,7 @@ def test_calendar_closures_come_only_from_project_calendar_exceptions():
                "relations": (), "annotations": {}}
     view = {"body": {"tableColumns": (), "visibility": {"relations": "none", "annotations": "none"}}}
 
-    value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
 
     assert value.calendar_closed == (date(2026, 1, 3), date(2026, 1, 4))
     assert value.calendar_exceptions == ()
@@ -43,7 +83,7 @@ def test_calendar_exception_closures_are_explicit_and_view_eligible():
     }}, "relations": (), "annotations": {}}
     view = {"body": {"tableColumns": (), "visibility": {"relations": "none", "annotations": "none"},
                       "shading": {"nonWorking": False, "exceptions": True}}}
-    value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
     assert value.calendar_closed == (date(2026, 1, 2),)
     assert value.calendar_exceptions == (date(2026, 1, 2),)
 
@@ -56,7 +96,7 @@ def test_actual_missing_display_uses_item_kind_and_actual_cutoff():
     ), (date(2026, 1, 1), date(2026, 1, 20)), (), ())
     view = {"body": {"tableColumns": ({"id": "Actual", "source": {"facet": "actual"}, "format": "dateRange", "missing": "in-progress"},),
                      "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-01-05"}}, summary=EMPTY_SUMMARY)
     assert value.table_cells == (("active", "Actual", "in progress"), ("future", "Actual", "—"), ("gate", "Actual", "—"))
 
@@ -66,7 +106,7 @@ def test_date_range_is_compact_and_retains_cross_year_precision():
                                   (date(2026, 12, 1), date(2027, 2, 1)), (), ())
     view = {"body": {"tableColumns": ({"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"},),
                      "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view, summary=EMPTY_SUMMARY)
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
     assert value.table_cells == (("a", "Plan", "31 Dec 2026 – 02 Jan 2027"),)
 
 
@@ -76,7 +116,7 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     view = {"body": {"tableColumns": (), "visibility": {"labels": {"members": True}, "relations": "none", "annotations": "presentation"},
                      "timePresentation": {"axisLevel": "week", "asOf": "hidden", "calendarClosed": False},
                      "annotationPresentation": "numbered", "annotations": [{"id": "note", "text": "Watch this"}]}}
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-01-03"}}, summary=EMPTY_SUMMARY)
     assert value.show_member_labels is True
     assert value.axis_level == "week"
@@ -97,8 +137,8 @@ def test_typed_summary_figures_resolve_projection_and_actual_facts():
         "variance": {"label": "Variance", "source": "count.knownFinishVariance", "format": "count"},
     }}]}}
     view = {"body": {"tableColumns": (), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
-    content = normalize_summary_content(summary, projection, {"body": {"asOf": "2026-02-03"}})
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+    content = normalize_summary_content(typed_summary(summary), projection, {"body": {"asOf": "2026-02-03"}})
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-02-03"}}, summary=content)
     assert tuple((run.content, run.typography_role) for run in value.summary.runs) == (
         ("facts", "summary"), ("As of: 2026-02-03", "summary"), ("Next: 2026-02-04", "summary"),
@@ -117,8 +157,8 @@ def test_target_summary_figure_list_form_is_resolved_without_copied_values():
         {"id": "variance", "label": "behind / ahead", "source": {"counts": "finishDelta"}, "format": "text"},
     ]}]}}
     view = {"body": {"tableColumns": (), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
-    content = normalize_summary_content(summary, projection, {"body": {"asOf": "2026-03-04"}})
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+    content = normalize_summary_content(typed_summary(summary), projection, {"body": {"asOf": "2026-03-04"}})
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-03-04"}}, summary=content)
     assert tuple((run.content, run.typography_role) for run in value.summary.runs) == (
         ("figures", "summary"), ("2026-03-04", "metric"), ("as of", "summary"),
@@ -142,7 +182,7 @@ def test_subtree_summary_normalizes_latest_selected_primary_planned_completion()
                     "scope": "subtree", "format": "date"},
     }}]}}
 
-    content = normalize_summary_content(summary, projection, None)
+    content = normalize_summary_content(typed_summary(summary), projection, None)
 
     assert tuple(run.content for run in content.runs) == ("completion", "Complete: 2026-03-12")
 
@@ -158,7 +198,7 @@ def test_subtree_summary_rejects_non_hierarchy_or_unselected_root(projection):
         "planned": {"source": {"object": "programme", "facet": "planned"}, "scope": "subtree", "format": "date"},
     }}]}}
     with pytest.raises(ValueError, match="E_PRESENTATION_SUMMARY_SOURCE"):
-        normalize_summary_content(summary, projection, None)
+        normalize_summary_content(typed_summary(summary), projection, None)
 
 
 def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
@@ -169,7 +209,7 @@ def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
                                     "relations": "none", "annotations": {"mode": "presentation", "marker": "numbered"}},
                      "axis": {"levels": [{"unit": "quarter", "format": "year-quarter"}, {"unit": "month", "format": "short-month"}], "ticks": "week"},
                      "markers": [{"kind": "asOf", "source": "actual", "label": "as of"}], "shading": {"nonWorking": False}}}
-    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-03-04"}}, summary=EMPTY_SUMMARY)
     assert value.label_placement == "plot"
     assert value.label_content == ("title", "finishDelta")
@@ -180,19 +220,9 @@ def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
     assert value.as_of_label == "as of"
 
 
-@pytest.mark.parametrize(("argument", "value", "diagnostic"), (
-    ("actual_set", {"asOf": "2026-03-04"}, "E_PRESENTATION_ACTUAL_SET_SHAPE"),
-    ("detail", {"legend": ()}, "E_PRESENTATION_DETAIL_PROFILE_SHAPE"),
-))
-def test_optional_resources_require_their_current_body_envelope(argument, value, diagnostic):
+def test_actual_set_requires_the_current_body_envelope():
     projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 8)), (), ())
     view = {"body": {"tableColumns": (), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
-    with pytest.raises(ValueError, match=diagnostic):
-        normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
-                                      summary=EMPTY_SUMMARY, **{argument: value})
-
-
-def test_summary_profile_requires_the_current_body_envelope():
-    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 8)), (), ())
-    with pytest.raises(ValueError, match="E_PRESENTATION_SUMMARY_PROFILE_SHAPE"):
-        normalize_summary_content({"panels": ()}, projection, None)
+    with pytest.raises(ValueError, match="E_PRESENTATION_ACTUAL_SET_SHAPE"):
+        normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
+                                      summary=EMPTY_SUMMARY, actual_set={"asOf": "2026-03-04"})

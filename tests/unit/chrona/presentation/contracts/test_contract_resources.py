@@ -1,6 +1,8 @@
 from dataclasses import fields
+from pathlib import Path
 
 import pytest
+import yaml
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, ThemeContract, parse_contract
 from chrona.presentation.contracts.resources import (
@@ -8,6 +10,9 @@ from chrona.presentation.contracts.resources import (
     ProjectContract, RenderContextContract, ReviewDetailProfileContract, SnapshotRefContract,
     SummaryProfileContract, ViewContract,
 )
+
+
+ROOT = Path(__file__).resolve().parents[5]
 
 
 def _theme():
@@ -56,3 +61,29 @@ def test_resource_contracts_have_no_generic_document_or_body_escape_hatch():
         SummaryProfileContract, ThemeContract, ViewContract,
     )
     assert all({field.name for field in fields(contract)}.isdisjoint({"body", "document"}) for contract in contracts)
+
+
+def test_live_closed_resources_become_named_presentation_records():
+    view = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text())
+    summary = yaml.safe_load((ROOT / "examples/halcyon-1/profiles/summary.yaml").read_text())
+    view_contract = parse_contract(ClosureIdentity("view", view["id"], "r", "sha256:" + "a" * 64), view)
+    summary_contract = parse_contract(ClosureIdentity("summary-profile", summary["id"], "r", "sha256:" + "a" * 64), summary)
+
+    assert isinstance(view_contract, ViewContract)
+    assert view_contract.view.rows.mode == "automatic"
+    assert all(column.id and column.missing for column in view_contract.view.table_columns)
+    assert isinstance(view_contract.view.visibility.labels, bool)
+    assert isinstance(summary_contract, SummaryProfileContract)
+    assert summary_contract.summary.panels[0].metrics
+
+
+def test_downstream_presentation_code_has_no_raw_contract_input_escape_hatch():
+    source_root = ROOT / "src/chrona"
+    source = "\n".join(path.read_text() for path in (
+        source_root / "usecases/render_review.py",
+        source_root / "presentation/model/projection.py",
+        source_root / "presentation/review/v05_content.py",
+    ))
+    assert "projection_input" not in source
+    assert "summary_input" not in source
+    assert "detail_input" not in source
