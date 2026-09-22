@@ -52,3 +52,29 @@ def test_svg_projects_completed_multiline_text_without_rewrapping():
                                text="one two", baseline=layout.baseline, text_layout=layout)
     output = render_v05_svg(SceneSurface("s", (), (), (), scale, (primitive,)), viewport=(10, 30), tokens=ThemeTokenView(theme))
     assert '<tspan x="1" dy="0">one</tspan><tspan x="1" dy="12">two</tspan>' in output
+
+
+def test_svg_wraps_only_linked_completed_primitives_and_escapes_link_attributes():
+    theme = {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {"metrics": {},
+        "values": {"surface": {"type": "color", "value": "#ffffff"}, "ink": {"type": "color", "value": "#000000"}},
+        "roles": {"background": {"fill": "surface"}, "planned": {"fill": "ink"}}}}
+    scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 10, 0, 10)
+    linked = ScenePrimitive("linked", "Rect", "a", "object", "planned", "planned", (1, 2, 3, 4),
+                            href="https://example.test/a?x=1&y=2", link_title='A "detail"')
+    plain = ScenePrimitive("plain", "Rect", "b", "object", "planned", "planned", (5, 2, 3, 4))
+    output = render_v05_svg(SceneSurface("s", (), (), (), scale, (linked, plain)), viewport=(10, 10), tokens=ThemeTokenView(theme))
+    assert 'xmlns:xlink="http://www.w3.org/1999/xlink"' in output
+    assert '<a href="https://example.test/a?x=1&amp;y=2" target="_top" xlink:title="A &quot;detail&quot;">' in output
+    assert '<a href="' in output and 'data-scene-id="linked"' in output
+    assert output.count('<a href="') == 1 and 'data-scene-id="plain"' in output
+
+
+def test_svg_without_links_preserves_the_existing_root_contract():
+    theme = {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {"metrics": {},
+        "values": {"surface": {"type": "color", "value": "#ffffff"}, "ink": {"type": "color", "value": "#000000"}},
+        "roles": {"background": {"fill": "surface"}, "planned": {"fill": "ink"}}}}
+    scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 10, 0, 10)
+    output = render_v05_svg(SceneSurface("s", (), (), (), scale, (
+        ScenePrimitive("plain", "Rect", "a", "object", "planned", "planned", (1, 2, 3, 4)),)),
+        viewport=(10, 10), tokens=ThemeTokenView(theme))
+    assert "xmlns:xlink" not in output and "<a " not in output
