@@ -4,6 +4,7 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.text import ellipsize_text
 
 
 class FixedMetrics:
@@ -33,6 +34,22 @@ def test_table_placement_diagnoses_when_required_text_cannot_fit() -> None:
             font_metrics=FixedMetrics(),
             font_size=10.0,
         )
+
+
+def test_ellipsize_allocation_preserves_a_minimum_for_each_column() -> None:
+    placements = place_table_columns(
+        columns=(("first", "Long heading"), ("second", "Another heading")),
+        cells=(("a", "first", "a very long value"), ("a", "second", "another long value")),
+        bounds=(0.0, 0.0, 60.0, 20.0), font_metrics=FixedMetrics(), font_size=10.0,
+        overflow="ellipsize-with-source",
+    )
+    assert sum(item.inline_size for item in placements) == 60.0
+    assert all(item.inline_size >= 20.0 for item in placements)
+    assert all(item.inline_size <= item.natural_inline_size for item in placements)
+
+
+def test_ellipsize_text_keeps_the_longest_measured_prefix() -> None:
+    assert ellipsize_text("Firmware", available_inline=50.0, font_size=10.0, font_metrics=FixedMetrics()) == "Firm…"
 
 
 def test_row_placements_reserve_declared_group_headers() -> None:

@@ -9,7 +9,7 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
-from chrona.presentation.layout.text import measure_text_width, place_text
+from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text
 from chrona.presentation.layout.annotations import (
     nearest_box_port, place_annotation_rail, project_annotation_box,
     resolve_annotation_anchor, route_annotation_leader,
@@ -112,11 +112,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
                                   font_metrics=request.font_metrics, font_size=body_size, overflow=table.overflow)
     positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
+    column_widths = {item.column_id: item.inline_size for item in columns}
+    def table_text(content: str, column_id: str) -> tuple[str, str]:
+        if table.overflow != "ellipsize-with-source":
+            return content, "fit"
+        available = max(0.0, column_widths[column_id] - body_size)
+        resolved = ellipsize_text(content, available_inline=available, font_size=body_size,
+                                  font_metrics=request.font_metrics)
+        return resolved, "ellipsized" if resolved != content else "fit"
     for column_id, label in table_columns:
-        text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=label,
+        resolved, overflow = table_text(label, column_id)
+        text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
                                inline=positions[column_id][0], baseline_block=table_bounds[1] + body_size,
                                typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                               collision_region="table"))
+                               overflow=overflow, collision_region="table", source_content=label))
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for object_id, column_id, content in table_cells:
         row = row_by_subject.get(object_id)
@@ -124,11 +133,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         index = next((offset for offset, item in enumerate(table_columns) if item[0] == column_id), None)
         if row is not None and position is not None and index is not None:
             indent = body_size if index == 0 and row.group_id else 0
-            text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=content,
+            resolved, overflow = table_text(content, column_id)
+            text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                                    inline=position[0] + indent,
                                    baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
                                    typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="table"))
+                                   overflow=overflow, collision_region="table", source_content=content))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:

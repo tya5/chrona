@@ -13,10 +13,24 @@ def measure_text_width(content: str, *, font_size: float, font_metrics: Any) -> 
     return float(font_metrics.width(content, font_size))
 
 
+def ellipsize_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any) -> str:
+    """Return the longest deterministic source prefix that fits with an ellipsis."""
+    if measure_text_width(content, font_size=font_size, font_metrics=font_metrics) <= available_inline:
+        return content
+    marker = "…"
+    if measure_text_width(marker, font_size=font_size, font_metrics=font_metrics) > available_inline:
+        return ""
+    prefix = content
+    while prefix and measure_text_width(prefix + marker, font_size=font_size, font_metrics=font_metrics) > available_inline:
+        prefix = prefix[:-1]
+    return prefix + marker
+
+
 def place_text(*, placement_id: str, source_ref: str, content: str,
                inline: float, baseline_block: float, typography_role: str,
                theme_tokens: Any, font_metrics: Any, overflow: str = "fit",
-               required: bool = True, collision_region: str = "surface") -> TextPlacement:
+               required: bool = True, collision_region: str = "surface",
+               source_content: str | None = None) -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     family, weight, size, line_height = theme_tokens.typography(typography_role)
     font_size, leading = float(size), float(line_height)
@@ -29,4 +43,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         baseline=(inline, baseline_block), lines=(content,), font_family=family,
         font_weight=int(weight), font_size=font_size, line_height=leading,
         font_asset_identity=str(font_metrics.content_identity), collision_region=collision_region,
+        source_content=source_content,
     )
