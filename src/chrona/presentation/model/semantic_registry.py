@@ -90,6 +90,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text"),
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
+    _binding("dependency-critical", "line", "dependency", "dependency-critical", "dependency-critical"),
     # Legend, notes and annotations.
     _binding("legendEntry", "decoration", "legend-swatch", "legend-swatch", "legend"),
     _binding("legendLabel", "label", "legend-label", "text", "legend"),
