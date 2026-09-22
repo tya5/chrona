@@ -189,7 +189,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region="timeline-axis-label"))
     contract = request.presentation_contract
-    for closed_day in contract.time.calendar_closed:
+    minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
+    closed_days = contract.time.calendar_closed
+    if minimum_closed_day_width is not None and scale.unit_ratio < float(minimum_closed_day_width):
+        closed_days = contract.time.calendar_exceptions
+    for closed_day in closed_days:
         if start <= closed_day < end:
             x1, x2 = _coordinate(closed_day, scale), _coordinate(closed_day.fromordinal(closed_day.toordinal() + 1), scale)
             shapes.append(ShapePlacement(f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "Rect",

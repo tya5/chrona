@@ -59,6 +59,7 @@ class SurfaceContentInput:
     as_of_label: str
     annotation_numbered: bool
     calendar_closed: tuple[date, ...]
+    calendar_exceptions: tuple[date, ...]
     notes: tuple[tuple[str, str], ...]
     legend_entries: tuple[tuple[str, str], ...]
     coverage_text: str

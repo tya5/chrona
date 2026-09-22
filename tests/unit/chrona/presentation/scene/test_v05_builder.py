@@ -17,7 +17,7 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
         show_member_labels=False, label_placement="none", label_content=(), label_side="auto",
         label_overflow="diagnose", relation_overflow="diagnose", group_presentation="band",
         axis_level="auto", axis_levels=(), axis_ticks=None, as_of=None, as_of_label="As of",
-        annotation_numbered=False, calendar_closed=(), notes=(), legend_entries=(), coverage_text="",
+        annotation_numbered=False, calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="",
         summary=SummaryContent(()), template_values=(), group_details=(),
         milestones=(), observation_columns=(), observation_rows=(),
     )
@@ -319,6 +319,23 @@ def test_project_calendar_closure_emits_background_shading():
     surface = compose_review_surface(value)
 
     assert next(node for node in surface.primitives if node.scene_id == "calendar-closed:2026-01-03").visual_role == "calendar-closed"
+
+
+def test_narrow_calendar_density_retains_only_declared_exception_closures():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 5)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
+        "timeline.calendarClosed.minimumDayWidth": Decimal(500),
+    })
+    value = build_scene_input(projection=projection, surface_content=surface_content(
+        calendar_closed=(date(2026, 1, 2), date(2026, 1, 3)), calendar_exceptions=(date(2026, 1, 2),)),
+        layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
+        font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    closure_ids = {node.scene_id for node in surface.primitives if node.scene_id.startswith("calendar-closed:")}
+    assert closure_ids == {"calendar-closed:2026-01-02"}
 
 
 def test_month_axis_emits_quarter_band_labels():

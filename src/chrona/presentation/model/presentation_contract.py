@@ -27,6 +27,7 @@ class TimeContract:
     axis_level: str
     axis_levels: tuple[tuple[str, str], ...]
     calendar_closed: tuple[date, ...]
+    calendar_exceptions: tuple[date, ...]
 
 
 @dataclass(frozen=True)
@@ -60,7 +61,7 @@ def normalize_presentation_input(value: SurfaceContentInput) -> PresentationCont
         relations=value.relations,
         labels=LabelContract(labels_enabled, placement, label_content, value.label_side, value.label_overflow),
         time=TimeContract(value.as_of, value.as_of_label, value.axis_level,
-                          value.axis_levels, value.calendar_closed),
+                          value.axis_levels, value.calendar_closed, value.calendar_exceptions),
         decorations=DecorationContract(value.legend_entries, value.annotations, value.notes),
         source=value,
     )

@@ -95,6 +95,23 @@ def _marks(tree):
             yield x, y, x + float(node.get("width")), y + float(node.get("height"))
 
 
+def _declared_slots(layout: dict) -> set[str]:
+    """Return only slots whose authoring contract requires visible content."""
+    required: set[str] = set()
+    def visit(value):
+        if isinstance(value, dict):
+            source = value.get("source")
+            if isinstance(source, str) and value.get("priority", "required") == "required":
+                required.add(source)
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+    visit(layout)
+    return required
+
+
 def _texts(tree, metrics):
     for node in tree.iter(SVG + "text"):
         size = float(node.get("font-size"))
@@ -162,7 +179,7 @@ def test_every_declared_slot_produces_a_primitive(slide, context_path, svg_path,
     """A slot that draws nothing is an authored intent the render silently dropped."""
     tree, _, _ = _load(svg_path, context_path)
     body = yaml.safe_load(context_path.read_text())["body"]
-    declared = set(re.findall(r"source:\s*([a-z-]+)", yaml.safe_dump(_bound(context_path, body, "layout"))))
+    declared = _declared_slots(_bound(context_path, body, "layout"))
     produced = {node.get("data-purpose") for node in tree.iter()}
     empty = sorted(slot for slot in declared & set(SLOT_PURPOSES) if not SLOT_PURPOSES[slot] & produced)
     check(slide, request, empty, f"slots declared in the Layout Profile that drew nothing: {empty}")

@@ -69,6 +69,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     resolved_detail = (resolve_v05_review_detail_profile(detail, projection.items, layout_manifest)
                        if layout_manifest is not None else None)
     legend = tuple((str(item["role"]), str(item["label"])) for item in detail_body.get("legend", ()))
+    calendar_closed, calendar_exceptions = _calendar_closures(project, projection.window, body, temporal)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
@@ -79,7 +80,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                axis_ticks=str(axis.get("ticks")) if axis.get("ticks") else None,
                                as_of=as_of, as_of_label=str(as_of_marker.get("label", "As of")) if as_of_marker else "As of",
                                annotation_numbered=annotation_numbered,
-                               calendar_closed=_closed_calendar_days(project, projection.window) if body.get("shading", {}).get("nonWorking", temporal.get("calendarClosed", True)) else (),
+                               calendar_closed=calendar_closed, calendar_exceptions=calendar_exceptions,
                                    notes=notes, legend_entries=legend, coverage_text=str(body.get("coverageText", "")),
                                    summary=summary,
                                    template_values=tuple((str(key), str(value)) for key, value in body.get("templateValues", {}).items()),
@@ -89,8 +90,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                observation_rows=resolved_detail.observation_rows if resolved_detail else ())
 
 
-def _closed_calendar_days(project: Mapping[str, Any], window: tuple[date, date]) -> tuple[date, ...]:
-    """Derive non-working calendar days from closed Project facts only."""
+def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], body: Mapping[str, Any],
+                       temporal: Mapping[str, Any]) -> tuple[tuple[date, ...], tuple[date, ...]]:
+    """Derive View-eligible closure and exception facts from the Project calendar."""
     calendar_id = project.get("project", {}).get("calendar")
     calendar = project.get("calendars", {}).get(calendar_id, {}) if isinstance(calendar_id, str) else {}
     working = set(calendar.get("working_days", ())) if isinstance(calendar, Mapping) else set()
@@ -101,12 +103,19 @@ def _closed_calendar_days(project: Mapping[str, Any], window: tuple[date, date])
     } if isinstance(calendar, Mapping) else {}
     names = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
     current, end = window
-    closed = []
+    closed, exception_closed = [], []
     while current < end:
-        if not exceptions.get(current, names[current.weekday()] in working):
+        is_closed = not exceptions.get(current, names[current.weekday()] in working)
+        if is_closed:
             closed.append(current)
+            if current in exceptions:
+                exception_closed.append(current)
         current += timedelta(days=1)
-    return tuple(closed)
+    shading = body.get("shading", {})
+    non_working = shading.get("nonWorking", temporal.get("calendarClosed", True)) if isinstance(shading, Mapping) else temporal.get("calendarClosed", True)
+    exceptions_enabled = shading.get("exceptions", True) if isinstance(shading, Mapping) else True
+    selected = tuple(closed) if non_working else tuple(exception_closed) if exceptions_enabled else ()
+    return selected, tuple(exception_closed) if exceptions_enabled else ()
 
 
 def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, Any]:
