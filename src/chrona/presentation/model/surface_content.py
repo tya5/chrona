@@ -96,7 +96,7 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 
-def display_value(value: Any, missing: str, formatter: str = "text") -> str:
+def display_value(value: Any, missing: str, formatter: str = "text", *, locale: str = "en-US") -> str:
     """Format a normalized table value according to its declared View contract."""
     if value is None:
         return {"blank": "", "em-dash": "—", "unknown": "unknown",
@@ -110,9 +110,25 @@ def display_value(value: Any, missing: str, formatter: str = "text") -> str:
     if formatter == "dateRange" and isinstance(value, dict):
         start, end = value.get("start"), value.get("end", value.get("finish"))
         if isinstance(start, date) and isinstance(end, date):
-            return f"{start.isoformat()} – {end.isoformat()}"
+            return _format_date_range(start, end, locale=locale)
         if isinstance(value.get("at"), date):
-            return value["at"].isoformat()
+            return _format_compact_date(value["at"], include_year=True, locale=locale)
     if formatter == "signedDays" and isinstance(value, int) and not isinstance(value, bool):
         return f"{value:+d}d"
     return str(value)
+
+
+def _format_date_range(start: date, end: date, *, locale: str) -> str:
+    if start == end:
+        return _format_compact_date(start, include_year=True, locale=locale)
+    if start.year == end.year:
+        return f"{_format_compact_date(start, include_year=False, locale=locale)} – {_format_compact_date(end, include_year=False, locale=locale)}"
+    return f"{_format_compact_date(start, include_year=True, locale=locale)} – {_format_compact_date(end, include_year=True, locale=locale)}"
+
+
+def _format_compact_date(value: date, *, include_year: bool, locale: str) -> str:
+    if locale != "en-US":
+        raise ValueError("E_PRESENTATION_LOCALE_UNSUPPORTED")
+    months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    rendered = f"{value.day:02d} {months[value.month - 1]}"
+    return f"{rendered} {value.year}" if include_year else rendered

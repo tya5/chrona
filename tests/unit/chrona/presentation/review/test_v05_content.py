@@ -34,6 +34,28 @@ def test_calendar_closures_come_only_from_project_calendar_exceptions():
     assert value.calendar_closed == (date(2026, 1, 3), date(2026, 1, 4))
 
 
+def test_actual_missing_display_uses_item_kind_and_actual_cutoff():
+    projection = ReviewProjection((
+        ReviewItem("active", "Active", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, ()),
+        ReviewItem("future", "Future", "span", {"start": date(2026, 1, 11), "end": date(2026, 1, 20)}, None, None, ()),
+        ReviewItem("gate", "Gate", "point", {"at": date(2026, 1, 5)}, None, None, ()),
+    ), (date(2026, 1, 1), date(2026, 1, 20)), (), ())
+    view = {"body": {"tableColumns": ({"id": "Actual", "source": {"facet": "actual"}, "format": "dateRange", "missing": "in-progress"},),
+                     "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+                                          actual_set={"body": {"asOf": "2026-01-05"}}, summary=EMPTY_SUMMARY)
+    assert value.table_cells == (("active", "Actual", "in progress"), ("future", "Actual", "—"), ("gate", "Actual", "—"))
+
+
+def test_date_range_is_compact_and_retains_cross_year_precision():
+    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 12, 31), "end": date(2027, 1, 2)}, None, None, ()),),
+                                  (date(2026, 12, 1), date(2027, 2, 1)), (), ())
+    view = {"body": {"tableColumns": ({"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"},),
+                     "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view, summary=EMPTY_SUMMARY)
+    assert value.table_cells == (("a", "Plan", "31 Dec 2026 – 02 Jan 2027"),)
+
+
 def test_structured_temporal_and_annotation_presentation_is_normalized():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ()),),
                                   (date(2026, 1, 1), date(2026, 1, 5)), (), ())

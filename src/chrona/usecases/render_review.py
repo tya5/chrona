@@ -138,6 +138,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         actual_set=render_closure.actual_set.document if render_closure.actual_set else None,
         detail=render_closure.detail_profile.document if render_closure.detail_profile else None,
         summary=summary,
+        locale=environment["locale"],
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
