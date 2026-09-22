@@ -60,12 +60,12 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     assert value.notes == (("n", "note"),)
 
 
-def test_critical_relation_mode_uses_only_analysis_critical_primary_endpoints():
+def test_critical_relation_mode_uses_only_scheduler_driving_relations():
     projection = ReviewProjection((
         ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (), critical=True),
         ReviewItem("b", "B", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, (), critical=True),
         ReviewItem("c", "C", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 3)}, None, None, (), critical=False),
-    ), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
+    ), (date(2026, 1, 1), date(2026, 1, 3)), (), (), driving_relations=frozenset({"relation:0:critical"}))
     project = {"relations": (
         {"id": "critical", "from": {"object": "a"}, "to": {"object": "b"}},
         {"id": "slack", "from": {"object": "a"}, "to": {"object": "c"}},

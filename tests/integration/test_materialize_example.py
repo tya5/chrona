@@ -73,7 +73,9 @@ def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path)
     evidence = yaml.safe_load((tmp_path / "flight-readiness/closure.yaml").read_text())
     assert evidence["scenarios"][0]["scenarioId"] == "tvac-slip"
     assert '<a href="https://example.test/halcyon-1/reviews/frr"' in artifact
-    assert artifact.count('marker-end="url(#marker-dependency-critical-triangle)"') == 12
+    # Only launch→LEOP is driving; its four current/scenario comparison facets
+    # remain visible. Endpoint-critical neighbours must not become a critical chain.
+    assert artifact.count('marker-end="url(#marker-dependency-critical-triangle)"') == 4
     for object_id, wbs in (("mission-closeout", "6"), ("frr", "6.1"), ("launch", "6.2"), ("leop", "6.3"), ("first-light", "6.4")):
         assert f'data-scene-id="cell:{object_id}:WBS"' in artifact
         assert f'>{wbs}</text>' in artifact

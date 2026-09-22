@@ -91,6 +91,7 @@ class ReviewProjection:
     hierarchy_grouping: bool = False
     surface: str = "table-timeline"
     network: DependencyNetworkProjection | None = None
+    driving_relations: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -193,7 +194,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
-        _dependency_network_projection(project, selected, view))
+        _dependency_network_projection(project, selected, view),
+        frozenset(getattr(analysis, "driving_relations", ())))
 
 
 def _dependency_network_projection(project: dict[str, Any], selected: list[ReviewItem],

@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from typing import Any, Mapping
 
 from chrona.presentation.model.projection import ReviewProjection
+from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
     SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, display_value, table_value,
 )
@@ -77,11 +78,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     relation_overflow = str(relation_value.get("overflow", "diagnose")) if isinstance(relation_value, Mapping) else "diagnose"
     relation_mode = relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value
     if relation_mode == "critical":
-        critical_ids = {item.object_id for item in projection.items if item.critical and item.source_kind == "primary"}
         relations = tuple({**relation, "_semantic": "dependency-critical"}
-                          for relation in project.get("relations", ())
-                          if relation.get("from", {}).get("object") in critical_ids
-                          and relation.get("to", {}).get("object") in critical_ids)
+                          for index, relation in enumerate(project.get("relations", ()))
+                          if relation_identity(index, relation) in projection.driving_relations)
     elif relation_mode != "none":
         relations = tuple({**relation, "_semantic": "dependency"} for relation in project.get("relations", ()))
     else:
