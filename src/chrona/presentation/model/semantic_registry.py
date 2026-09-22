@@ -74,8 +74,10 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed"),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
+    _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration"),
     _binding("axisLabel", "label", "axis-label", "text", "axis"),
     _binding("axisGrid", "line", "axis-grid", "axis-major", "axis-major"),
+    _binding("axisGridMinor", "line", "axis-grid", "axis-minor", "axis-minor"),
     # Grouping.
     _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band"),
     _binding("groupHeaderBand", "decoration", "group-header-band", "group-band", "group-band"),

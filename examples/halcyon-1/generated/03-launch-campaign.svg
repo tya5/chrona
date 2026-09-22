@@ -128,18 +128,22 @@
 <text data-scene-id="member-label:leop:leop" data-source-ref="leop" data-purpose="member-label" x="878.352" y="849.033" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">LEOP and commissioning</text>
 <polygon data-scene-id="planned:first-light:first-light" data-source-ref="first-light" data-purpose="planned" points="1108.073,906.2 1114.073,912.2 1108.073,918.2 1102.073,912.2" fill="#1F1F1F"/>
 <text data-scene-id="member-label:first-light:first-light" data-source-ref="first-light" data-purpose="member-label" x="1041.789" y="915.7" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">First light</text>
-<text data-scene-id="axis-band:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="779.925" y="128.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">2027 Q3</text>
-<text data-scene-id="axis-band:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="994.035" y="128.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">2027 Q4</text>
-<path data-scene-id="axis:month:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M779.925 116.2L779.925 956.2" fill="none" stroke="#BDBDBD"/>
+<text data-scene-id="axis-band:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="863.964" y="128.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">2027 Q3</text>
+<text data-scene-id="axis-band:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="1042.002" y="128.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">2027 Q4</text>
+<rect data-scene-id="axis-band-rect:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="779.925" y="116.2" width="214.111" height="40" fill="#FFFFFF"/>
+<rect data-scene-id="axis-band-rect:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="994.035" y="116.2" width="141.965" height="40" fill="#FFFFFF"/>
+<path data-scene-id="axis-grid:minor:month:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M779.925 156.2L779.925 956.2" fill="none" stroke="#F1F1F1"/>
 <text data-scene-id="axis-label:month:0" data-source-ref="timeline-axis" data-purpose="axis-label" x="779.925" y="140.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">Jul</text>
-<path data-scene-id="axis:month:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M852.071 116.2L852.071 956.2" fill="none" stroke="#BDBDBD"/>
+<path data-scene-id="axis-grid:minor:month:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M852.071 156.2L852.071 956.2" fill="none" stroke="#F1F1F1"/>
 <text data-scene-id="axis-label:month:1" data-source-ref="timeline-axis" data-purpose="axis-label" x="852.071" y="140.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">Aug</text>
-<path data-scene-id="axis:month:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M924.217 116.2L924.217 956.2" fill="none" stroke="#BDBDBD"/>
+<path data-scene-id="axis-grid:minor:month:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M924.217 156.2L924.217 956.2" fill="none" stroke="#F1F1F1"/>
 <text data-scene-id="axis-label:month:2" data-source-ref="timeline-axis" data-purpose="axis-label" x="924.217" y="140.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">Sep</text>
-<path data-scene-id="axis:month:3" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M994.035 116.2L994.035 956.2" fill="none" stroke="#BDBDBD"/>
+<path data-scene-id="axis-grid:minor:month:3" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M994.035 156.2L994.035 956.2" fill="none" stroke="#F1F1F1"/>
 <text data-scene-id="axis-label:month:3" data-source-ref="timeline-axis" data-purpose="axis-label" x="994.035" y="140.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">Oct</text>
-<path data-scene-id="axis:month:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1066.181 116.2L1066.181 956.2" fill="none" stroke="#BDBDBD"/>
+<path data-scene-id="axis-grid:minor:month:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1066.181 156.2L1066.181 956.2" fill="none" stroke="#F1F1F1"/>
 <text data-scene-id="axis-label:month:4" data-source-ref="timeline-axis" data-purpose="axis-label" x="1066.181" y="140.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="12" fill="#111111">Nov</text>
+<path data-scene-id="axis-grid:major:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M779.925 156.2L779.925 956.2" fill="none" stroke="#BDBDBD"/>
+<path data-scene-id="axis-grid:major:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M994.035 156.2L994.035 956.2" fill="none" stroke="#BDBDBD"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M896.289 156.2L896.289 956.2" fill="none" stroke="#7A5A00"/>
 <text data-scene-id="as-of-label" data-source-ref="actual-set" data-purpose="as-of-label" x="896.289" y="170.2" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" fill="#111111">as of 2027-08-20</text>
 <path data-scene-id="relation:integration-vibration:integration:integration:vibration:vibration" data-source-ref="integration-vibration" data-purpose="dependency" d="M840.434 178.867L840.434 245.533L842.762 245.533" fill="none" stroke="#555555" marker-end="url(#marker-dependency-triangle)"/>
