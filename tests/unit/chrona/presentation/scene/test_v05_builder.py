@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
-from chrona.presentation.layout.sources import MeasuredSources, SourceInput
+from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
@@ -105,6 +105,29 @@ def test_scene_input_requires_surface_specific_network_slot_set():
                           layout_manifest=_manifest("title", "network", "table"),
                           resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
                           capabilities={"svg": True})
+
+
+def test_scene_dispatches_completed_network_layout_through_registry_semantics_only():
+    node = SimpleNamespace(object_id="a", title="A", order_key=("a",), critical=True, source_kind="primary")
+    projection = SimpleNamespace(surface="dependency-network", network=SimpleNamespace(nodes=(node,), edges=()))
+    title_bounds = Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40))
+    network_bounds = Rect(Decimal(0), Decimal(50), Decimal(400), Decimal(200))
+    manifest = LayoutManifest("network", "sha256:test", "horizontal-tb", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(250)), (
+        LayoutDecision("title", "slot", title_bounds, "title", priority="required"),
+        LayoutDecision("network", "slot", network_bounds, "network", priority="required"),
+    ))
+    run = lambda source, content, role, width, block, base: MeasuredTextRun(source, content, role, Decimal(width), Decimal(block), Decimal(base), "Test Sans", 400, float(block), 1.0, "sha256:test")
+    measured = MeasuredSources({}, {}, {
+        "network.node.minInlineSize": Decimal(60), "network.node.minBlockSize": Decimal(30), "network.rank.gap": Decimal(12),
+    }, {"title": (run(None, "Network", "heading", 80, 24, 20),), "network": (run("a", "A", "text", 20, 14, 11),)})
+    value = build_scene_input(projection=projection, surface_content=surface_content(), layout_manifest=manifest,
+                              resolved_theme=_theme(), font_metrics=object(), measured_sources=measured, capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    assert surface.surface_id == "dependency-network"
+    assert surface.scale_manifest is None
+    assert {(node.scene_id, node.visual_role) for node in surface.primitives} >= {
+        ("title", "text"), ("network-label:a", "text"), ("network-node:a", "network-node"),
+    }
 
 
 def test_scene_input_requires_frozen_source_measurements():

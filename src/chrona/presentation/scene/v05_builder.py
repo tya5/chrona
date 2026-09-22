@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -77,12 +78,20 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
+    """Dispatch a typed surface intent to an adapter of completed Layout output."""
+    surface = getattr(value.projection, "surface", "table-timeline")
+    if surface == "table-timeline":
+        return _compose_table_timeline_surface(value)
+    if surface == "dependency-network":
+        return _compose_dependency_network_surface(value)
+    raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
+
+
+def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     """Build the core, fully measured table/timeline surface from the frozen closure."""
     projection = value.projection
     if not hasattr(projection, "items") or not hasattr(projection, "window"):
         raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
-    if getattr(projection, "surface", "table-timeline") != "table-timeline":
-        raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/view/body/surface")
     metric = value.measured_sources.metric_values
     contract = normalize_presentation_input(value.surface_content)
     if "text.body.size" not in metric or "text.body.lineHeight" not in metric:
@@ -324,3 +333,64 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                          shape=shape, points=relation.points, from_port_id=relation.source_port_id,
                                          to_port_id=relation.target_port_id, z_order=len(primitives)))
     return SceneSurface("table-timeline", slots, rows, groups, scale, tuple(primitives))
+
+
+def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
+    """Project completed network placements; never measure, rank, or route here."""
+    projection = value.projection
+    network = getattr(projection, "network", None)
+    if network is None:
+        raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/network")
+    decisions = tuple(item for item in value.layout_manifest.decisions if item.kind == "slot" and item.source)
+    by_source = {item.source: item for item in decisions}
+    try:
+        title, network_slot = by_source["title"], by_source["network"]
+    except KeyError as error:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network") from error
+    try:
+        placed = compose_dependency_network_layout(
+            network, title_bounds=title.bounds, bounds=network_slot.bounds,
+            measured_sources=value.measured_sources, writing_mode=value.layout_manifest.writing_mode,
+            max_bends=value.layout_manifest.relation_max_bends,
+            max_detour_ratio=value.layout_manifest.relation_max_detour_ratio)
+    except LayoutError as error:
+        raise SceneBuildError(error.diagnostic_id, error.path) from error
+    slots = tuple(SceneSlot(item.node_id, item.source, None,
+                            (float(item.bounds.inline), float(item.bounds.block),
+                             float(item.bounds.inline_size), float(item.bounds.block_size)),
+                            item.priority or "required", item.overflow or "diagnose")
+                  for item in decisions)
+    primitives: list[ScenePrimitive] = []
+    title_binding = semantic_binding("titleText")
+    node_binding = semantic_binding("networkNode")
+    edge_bindings = {"dependency": semantic_binding("networkEdge"),
+                     "dependency-critical": semantic_binding("criticalEdge")}
+    def emit_text(text: Any) -> None:
+        binding = title_binding
+        layout = TextLayout((float(text.bounds.inline), float(text.bounds.block),
+                             float(text.bounds.inline_size), float(text.bounds.block_size)),
+                            text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
+                            text.lines, text.font_family, text.font_weight, text.font_size,
+                            text.line_height, text.font_asset_identity)
+        primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
+                                         binding.purpose, binding.scene_role, layout.bounds, text=text.content,
+                                         baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
+    title_text = next(item for item in placed.text if item.placement_id == "title")
+    emit_text(title_text)
+    for relation in placed.relations:
+        binding = edge_bindings[relation.semantic_id]
+        primitives.append(ScenePrimitive(f"network-edge:{relation.relation_id}", PrimitiveKind.PATH,
+                                         relation.relation_id, "network", binding.purpose, binding.scene_role,
+                                         (0, 0, 0, 0), points=relation.points,
+                                         from_port_id=relation.source_port_id, to_port_id=relation.target_port_id,
+                                         z_order=len(primitives)))
+    for node in placed.nodes:
+        bounds = (float(node.bounds.inline), float(node.bounds.block),
+                  float(node.bounds.inline_size), float(node.bounds.block_size))
+        primitives.append(ScenePrimitive(f"network-node:{node.object_id}", PrimitiveKind.RECT, node.object_id,
+                                         "network", node_binding.purpose, node_binding.scene_role, bounds,
+                                         z_order=len(primitives)))
+    for text in placed.text:
+        if text.placement_id != "title":
+            emit_text(text)
+    return SceneSurface("dependency-network", slots, (), (), None, tuple(primitives))
