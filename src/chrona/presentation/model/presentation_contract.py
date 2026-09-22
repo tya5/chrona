@@ -16,6 +16,8 @@ class LabelContract:
     enabled: bool
     placement: str
     content: tuple[str, ...]
+    side: str
+    overflow: str
 
 
 @dataclass(frozen=True)
@@ -56,7 +58,7 @@ def normalize_presentation_input(value: SurfaceContentInput) -> PresentationCont
         table_columns=value.table_columns,
         table_cells=value.table_cells,
         relations=value.relations,
-        labels=LabelContract(labels_enabled, placement, label_content),
+        labels=LabelContract(labels_enabled, placement, label_content, value.label_side, value.label_overflow),
         time=TimeContract(value.as_of, value.as_of_label, value.axis_level,
                           value.axis_levels, value.calendar_closed),
         decorations=DecorationContract(value.legend_entries, value.annotations, value.notes),

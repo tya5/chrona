@@ -28,14 +28,18 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                       for row_index, item in enumerate(projection.items, 1) for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
     labels = visible.get("labels", False)
-    label_placement = "plot" if labels is True else "none"
+    label_placement = "legacy" if labels is True else "none"
     label_content: tuple[str, ...] = ("title",) if labels is True else ()
+    label_side = "auto"
+    label_overflow = "diagnose"
     if isinstance(labels, Mapping):
         if "members" in labels:
             label_placement, label_content = ("plot", ("title",)) if labels["members"] else ("none", ())
         else:
             label_placement = str(labels["placement"])
             label_content = tuple(str(item) for item in labels["content"])
+            label_side = str(labels["side"])
+            label_overflow = str(labels.get("overflow", "diagnose"))
     temporal = body.get("timePresentation", {})
     axis = body.get("axis", {})
     markers = body.get("markers", ())
@@ -45,7 +49,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     annotation_visibility = visible.get("annotations", "none")
     annotation_mode = annotation_visibility.get("mode", "none") if isinstance(annotation_visibility, Mapping) else annotation_visibility
     annotation_numbered = (isinstance(annotation_visibility, Mapping) and annotation_visibility.get("marker") == "numbered") or body.get("annotationPresentation", "plain") == "numbered"
-    relations = tuple(project.get("relations", ())) if visible.get("relations", "none") != "none" else ()
+    relation_value = visible.get("relations", "none")
+    relation_overflow = str(relation_value.get("overflow", "diagnose")) if isinstance(relation_value, Mapping) else "diagnose"
+    relations = tuple(project.get("relations", ())) if (relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value) != "none" else ()
     raw_annotations = tuple(body.get("annotations", ())) if annotation_mode != "none" else ()
     annotations = tuple({**annotation, "number": index + 1} for index, annotation in enumerate(raw_annotations)) if annotation_numbered else raw_annotations
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
@@ -56,7 +62,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     legend = tuple((str(item["role"]), str(item["label"])) for item in detail_body.get("legend", ()))
     panels = _typed_summary_panels(summary_body, projection, actual_set)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
-                               show_member_labels=label_placement == "plot", label_placement=label_placement, label_content=label_content,
+                               show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
+                               label_side=label_side,
+                               label_overflow=label_overflow, relation_overflow=relation_overflow,
                                axis_level=str(temporal.get("axisLevel", "auto")),
                                axis_levels=tuple((str(item["unit"]), str(item["format"])) for item in axis.get("levels", ())),
                                axis_ticks=str(axis.get("ticks")) if axis.get("ticks") else None,

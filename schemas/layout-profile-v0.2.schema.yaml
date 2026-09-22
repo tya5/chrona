@@ -14,6 +14,13 @@ properties:
     minProperties: 1
     propertyNames: {$ref: "#/$defs/id"}
     additionalProperties: {$ref: "#/$defs/override"}
+  relationRouting:
+    type: object
+    additionalProperties: false
+    required: [maxBends, maxDetourRatio]
+    properties:
+      maxBends: {type: integer, minimum: 0, maximum: 64}
+      maxDetourRatio: {type: number, minimum: 1, maximum: 100}
   root: {$ref: "#/$defs/container"}
 oneOf:
   - required: [root]

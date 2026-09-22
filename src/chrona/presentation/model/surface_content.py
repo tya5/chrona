@@ -18,6 +18,9 @@ class SurfaceContentInput:
     show_member_labels: bool = False
     label_placement: str = "none"
     label_content: tuple[str, ...] = ()
+    label_side: str = "auto"
+    label_overflow: str = "diagnose"
+    relation_overflow: str = "diagnose"
     axis_level: str = "auto"
     axis_levels: tuple[tuple[str, str], ...] = ()
     axis_ticks: str | None = None

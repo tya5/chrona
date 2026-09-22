@@ -1,7 +1,7 @@
 """Complete shared surface geometry before Scene primitive projection."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -15,8 +15,8 @@ from chrona.presentation.layout.annotations import (
     resolve_annotation_anchor, route_annotation_leader,
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import LabelRect
-from chrona.presentation.layout.routing import place_relation_route
+from chrona.presentation.layout.labels import LabelRect, place_label
+from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.surface_quality import (
     GroupPlacement, MarkPlacement, RelationPlacement, RowPlacement, ScalePlacement,
     ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
@@ -253,6 +253,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     marks.append(MarkPlacement(f"missing-actual:{instance_id}", item.object_id, bounds,
                                                (x, track.block), (x, track.block)))
     mark_by_id = {item.placement_id: item for item in marks}
+    diagnostics: list[str] = []
     if contract.labels.enabled:
         for review_row in review_rows:
             for item in review_row.items:
@@ -260,8 +261,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 instance_id = layout_id if projection.rows else item.object_id
                 planned = item.planned
                 start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
-                label_at = start_at if request.surface_content.label_placement == "plot" and isinstance(start_at, date) else end_at
-                if not isinstance(label_at, date):
+                if not isinstance(start_at, date) and not isinstance(end_at, date):
                     continue
                 parts = []
                 if "title" in contract.labels.content:
@@ -272,13 +272,45 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     continue
                 mark = mark_by_id.get(f"planned:{instance_id}")
                 track = track_by_id[layout_id]
-                height = float(mark.bounds.block_size) if mark is not None else track.block_size
-                block = float(mark.bounds.block) if mark is not None else track.block
-                text.append(place_text(placement_id=f"member-label:{instance_id}", source_ref=item.object_id,
-                                       content=" ".join(parts), inline=_coordinate(label_at, scale) + height,
-                                       baseline_block=block + height, typography_role="text",
-                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                       collision_region=f"plot-label:{instance_id}"))
+                if request.surface_content.label_placement != "plot":
+                    # The boolean legacy form has no declared candidate or overflow policy.
+                    # Preserve its existing placement until authors opt into the typed form.
+                    label_at = start_at if isinstance(start_at, date) else end_at
+                    height = float(mark.bounds.block_size) if mark is not None else track.block_size
+                    block = float(mark.bounds.block) if mark is not None else track.block
+                    text.append(place_text(placement_id=f"member-label:{instance_id}", source_ref=item.object_id,
+                                           content=" ".join(parts), inline=_coordinate(label_at, scale) + height,
+                                           baseline_block=block + height, typography_role="text",
+                                           theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                           collision_region=f"plot-label:{instance_id}"))
+                    continue
+                anchor = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
+                    _coordinate(end_at if isinstance(end_at, date) else start_at, scale), track.block,
+                    max(1.0, track.block_size), track.block_size)
+                _, _, font_size, line_height = request.theme_tokens.typography("text")
+                label_size = (measure_text_width(" ".join(parts), font_size=float(font_size), font_metrics=request.font_metrics),
+                              float(font_size) * float(line_height))
+                sides = ("start", "end") if contract.labels.side == "auto" else (contract.labels.side,)
+                obstacles = [LabelRect(*_bounds(item.bounds)) for item in marks]
+                obstacles.extend(LabelRect(*_bounds(item.bounds)) for item in text
+                                 if item.required and item.overflow != "suppressed")
+                timeline_rect = LabelRect(*timeline_bounds)
+                candidate = place_label(anchor, label_size, sides, bounds=timeline_rect, obstacles=obstacles,
+                                        gap=max(1.0, float(font_size) * 0.25), required=False,
+                                        overflow=contract.labels.overflow)
+                provisional = place_text(placement_id=f"member-label:{instance_id}", source_ref=item.object_id,
+                                         content=" ".join(parts), inline=0, baseline_block=float(font_size),
+                                         typography_role="text", theme_tokens=request.theme_tokens,
+                                         font_metrics=request.font_metrics, collision_region="plot-label")
+                if candidate is None:
+                    text.append(replace(provisional, overflow="suppressed", required=False))
+                    diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{instance_id}")
+                else:
+                    text.append(place_text(placement_id=provisional.placement_id, source_ref=item.object_id,
+                                           content=provisional.content, inline=candidate.bounds.x,
+                                           baseline_block=candidate.bounds.y + float(font_size), typography_role="text",
+                                           theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                           collision_region="plot-label"))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
     for review_row in review_rows:
@@ -287,7 +319,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             instance_id = layout_id if projection.rows else item.object_id
             if not projection.rows and item.source_kind != "combined":
                 continue
-            if item.finish_delta is None:
+            if item.finish_delta is None or "finishDelta" in contract.labels.content:
                 continue
             mark = mark_by_id.get(f"planned:{instance_id}")
             track = track_by_id[layout_id]
@@ -321,20 +353,39 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             for target_id, target_anchor in instance_anchors.get(str(target), ()):
                 source_port = mark_ports.get(source_id, (source_anchor, source_anchor))[1]
                 target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
+                scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
                 if source_port == target_port:
-                    raise LayoutError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation_id}")
+                    if request.surface_content.relation_overflow == "suppress":
+                        relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start",
+                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
+                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                        continue
+                    raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
                 endpoint_rows = {instance_rows.get(source_id), instance_rows.get(target_id)}
                 obstacles = tuple((float(row.bounds.inline), float(row.bounds.block),
                                    float(row.bounds.inline + row.bounds.inline_size),
                                    float(row.bounds.block + row.bounds.block_size))
                                   for row in rows if row.row_id not in endpoint_rows)
-                points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=obstacles,
-                                              bounds=(timeline_bounds[0], timeline_bounds[1],
-                                                      timeline_bounds[0] + timeline_bounds[2],
-                                                      timeline_bounds[1] + timeline_bounds[3]))
-                if len(points) < 2:
-                    raise LayoutError("E_PRESENTATION_ROUTE_UNAVAILABLE", f"/relations/{relation_id}")
-                scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
+                try:
+                    points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=obstacles,
+                                                  bounds=(timeline_bounds[0], timeline_bounds[1],
+                                                          timeline_bounds[0] + timeline_bounds[2],
+                                                          timeline_bounds[1] + timeline_bounds[3]))
+                except ValueError as error:
+                    if request.surface_content.relation_overflow == "suppress":
+                        relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start",
+                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
+                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                        continue
+                    raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}") from error
+                if not relation_route_quality(tuple(points), max_bends=layout_manifest.relation_max_bends,
+                                              max_detour_ratio=layout_manifest.relation_max_detour_ratio):
+                    if request.surface_content.relation_overflow == "suppress":
+                        relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start",
+                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
+                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                        continue
+                    raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
                 relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points)))
 
     legend = by_source.get("legend")
@@ -454,7 +505,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
-                                 marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations))
+                                 marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
+                                 diagnostics=tuple(diagnostics))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 

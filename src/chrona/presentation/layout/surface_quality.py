@@ -165,6 +165,7 @@ class SurfacePlacement:
     shapes: tuple[ShapePlacement, ...] = ()
     primitives: tuple[PrimitivePlacement, ...] = ()
     relations: tuple[RelationPlacement, ...] = ()
+    diagnostics: tuple[str, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""

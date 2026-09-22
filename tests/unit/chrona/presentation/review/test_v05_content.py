@@ -88,6 +88,8 @@ def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
                                           actual_set={"body": {"asOf": "2026-03-04"}})
     assert value.label_placement == "plot"
     assert value.label_content == ("title", "finishDelta")
+    assert value.label_side == "auto"
+    assert value.label_overflow == "diagnose"
     assert value.axis_levels == (("quarter", "year-quarter"), ("month", "short-month"))
     assert value.axis_ticks == "week"
     assert value.as_of_label == "as of"

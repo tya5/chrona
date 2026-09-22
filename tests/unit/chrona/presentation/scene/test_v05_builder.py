@@ -163,6 +163,34 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
                for item in surface.primitives)
 
 
+def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
+    projection = ReviewProjection((
+        ReviewItem("a", "A very long label", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, ()),
+        ReviewItem("b", "B", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 9)}, None, None, ()),
+    ), (date(2026, 1, 1), date(2026, 1, 10)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
+    manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
+                              tuple(LayoutDecision(source, "slot", rect, source)
+                                    for source in ("title", "table", "timeline", "timeline-axis")),
+                              relation_max_bends=0)
+    value = build_scene_input(
+        projection=projection,
+        surface_content=SurfaceContentInput(
+            relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},),
+            label_placement="plot", label_content=("title",), label_side="auto", label_overflow="suppress",
+            relation_overflow="suppress",
+        ),
+        layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+        capabilities={"svg": True},
+    )
+    surface = compose_review_surface(value)
+    assert not any(item.scene_id == "member-label:a" for item in surface.primitives)
+    assert not any(item.scene_id.startswith("relation:depends") for item in surface.primitives)
+
+
 def test_same_explicit_row_relation_uses_distinct_mark_ports():
     first = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)}, None, None, (), item_id="a", source_kind="primary")
     second = ReviewItem("b", "B", "span", {"start": date(2026, 1, 5), "end": date(2026, 1, 9)}, None, None, (), item_id="b", source_kind="primary")
