@@ -41,3 +41,13 @@ reachability lint, full test suite, and no-output-diff requirement.
 
 P94-3 through P94-6 may proceed only in the order declared by the design plan.
 Each merged slice is the basis for the next slice.
+
+## P94-3 conformance amendment
+
+The P94-3 deletion audit found an executable M13 successor-release claim whose
+only evidence is the inactive code selected for deletion.  The claim is not a
+current product route and must be retired with that code.  Current-profile
+acceptance remains, but its UC-03/09/13 evidence must point to the surviving
+operational/Render Context/Scene-SVG path.  This correction preserves the
+catalog's distinction between proposed library design and product reachability;
+it authorizes the P94-3 implementation to make those conformance changes.
