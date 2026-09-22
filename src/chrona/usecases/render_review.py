@@ -59,6 +59,7 @@ class RenderRequest:
     scheduler: Scheduler
     renderer: Renderer
     require_all_inputs_read: bool = False
+    asset_root: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -117,7 +118,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
         ledger.snapshot()
 
     environment = render_closure.context.body["environment"]
-    font_metrics = _font_metrics(theme, environment, request.snapshot_root / render_closure.context.body["theme"]["revision"]["token"])
+    asset_root = request.asset_root or request.snapshot_root / render_closure.context.body["theme"]["revision"]["token"]
+    font_metrics = _font_metrics(theme, environment, asset_root)
     summary = normalize_summary_content(render_closure.summary_profile.document if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.document if render_closure.actual_set else None)
     if render_closure.summary_profile is not None:

@@ -45,13 +45,12 @@ def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     assert output["placements"] == json.loads(json.dumps(schedule(project).placements, default=str))
 
 
-def test_cli_render_consumes_scene_adapter(tmp_path, monkeypatch):
-    project = {"version": "timeline/v0.1", "project": {"id": "demo"}, "extensions": [], "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}, "relations": []}
-    path, output = tmp_path / "project.yaml", tmp_path / "timeline.svg"
-    path.write_text(yaml.safe_dump(project), encoding="utf-8")
-    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(path), "--output", str(output)])
-    main()
-    assert "<svg " in output.read_text(encoding="utf-8")
+def test_cli_render_requires_draft_review_inputs(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", "project.yaml", "--output", "timeline.svg"])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 2
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_SYNTAX"
 
 
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):
@@ -89,7 +88,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("immutable Project snapshot", "minimal schedule scene", "immutable Render Context v0.6"):
+    for phrase in ("immutable Project snapshot", "draft review surface", "immutable Render Context v0.6"):
         assert phrase in help_text
 
 
@@ -254,3 +253,26 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     rendered = output.read_text(encoding="utf-8")
     assert 'data-source-ref="firmware"' in rendered
     assert 'data-presentation-adapter="legacy-v0.1"' not in rendered
+
+    draft_output = tmp_path / "draft.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/executive.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"), "--output", str(draft_output),
+    ])
+    main()
+    assert draft_output.read_text(encoding="utf-8") == rendered
+
+
+def test_cli_draft_render_rejects_invalid_viewport(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", "project.yaml", "--view", "view.yaml", "--theme", "theme.yaml",
+        "--scheme", "scheme.yaml", "--layout", "layout.yaml", "--viewport", "wide", "--output", "out.svg",
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 2
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_VIEWPORT"

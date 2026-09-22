@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from pathlib import Path
 from typing import Any
 
 import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
@@ -105,6 +106,134 @@ class RenderClosure:
         if not all(isinstance(item, ProfilePackageContract) for item in values):
             raise ClosureError("E_CLOSURE_KIND")
         return values  # type: ignore[return-value]
+
+
+@dataclass(frozen=True)
+class DraftRender:
+    """A non-evidence closure and the packaged assets it is allowed to read."""
+
+    closure: RenderClosure
+    asset_root: Path
+
+
+_DRAFT_CAPABILITIES = (
+    "accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata",
+    "tableSemantics",
+)
+
+
+def resolve_draft_render(
+    *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
+    layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
+    detail_path: Path | None = None, viewport: tuple[int, int] = (1600, 900),
+    locale: str = "en-US",
+) -> DraftRender:
+    """Build a typed, in-memory closure from explicit authoring inputs.
+
+    This is deliberately an ingress adapter, not an alternate render pipeline:
+    its identities are marked ``draft`` and it creates no Context or snapshot
+    artifact.  Once returned, the normal review use case cannot distinguish it
+    from an immutable closure.
+    """
+    paths = (
+        ("project", project_path), ("view", view_path), ("theme", theme_path),
+        ("color-scheme", scheme_path), ("layout-profile", layout_path),
+    )
+    optional = (
+        ("actual-set", actual_path), ("summary-profile", summary_path),
+        ("review-detail-profile", detail_path),
+    )
+    resources = [_load_draft_resource(kind, path) for kind, path in paths]
+    resources.extend(_load_draft_resource(kind, path) for kind, path in optional if path is not None)
+    by_kind = {item.kind: item for item in resources}
+
+    try:
+        resolved_theme = ResolvedThemeContract(
+            by_kind["theme"].id,
+            freeze(resolve_theme(
+                by_kind["theme"].contract.document,
+                by_kind["color-scheme"].contract.document,
+                scheme_content_identity=by_kind["color-scheme"].content_identity,
+            )),
+        )
+    except ColorSchemeError as error:
+        raise ClosureError(str(error)) from error
+
+    asset_root = Path(__file__).resolve().parents[2] / "resources"
+    context_value = {
+        "version": "chrona/render-context/v0.6", "kind": "render-context", "id": "draft-render",
+        "body": {
+            "project": _draft_reference(by_kind["project"]),
+            "view": _draft_reference(by_kind["view"]),
+            "theme": _draft_reference(by_kind["theme"]),
+            "colorScheme": _draft_reference(by_kind["color-scheme"]),
+            "layout": _draft_reference(by_kind["layout-profile"]),
+            "inputs": {
+                **({"actual": _draft_reference(by_kind["actual-set"])} if "actual-set" in by_kind else {}),
+                **({"summaryProfile": _draft_reference(by_kind["summary-profile"])} if "summary-profile" in by_kind else {}),
+                **({"detailProfile": _draft_reference(by_kind["review-detail-profile"])} if "review-detail-profile" in by_kind else {}),
+            },
+            "environment": {
+                "viewport": {"inlineSize": viewport[0], "blockSize": viewport[1]},
+                "locale": locale,
+                "fontMetrics": _packaged_font_metrics(asset_root),
+                "scenePrecision": 3,
+            },
+            "target": {"kind": "svg", "capabilities": list(_DRAFT_CAPABILITIES)},
+        },
+    }
+    try:
+        context = parse_contract(
+            ClosureIdentity("render-context", "draft-render", "draft", "draft"), context_value
+        )
+    except SchemaContractError as error:
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA", error.source_ref) from error
+    except ContractError as error:
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
+    if not isinstance(context, RenderContextContract):  # defensive contract boundary
+        raise ClosureError("E_CLOSURE_KIND")
+    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme), asset_root)
+
+
+def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
+    """Read one explicit draft input and freeze it through its resource contract."""
+    value = yaml.safe_load(path.read_bytes())
+    if not isinstance(value, dict):
+        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+    identifier = _resource_id(kind, value)
+    if not isinstance(identifier, str) or not identifier:
+        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+    payload = path.read_bytes()
+    identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
+    try:
+        contract = parse_contract(identity, value)
+    except SchemaContractError as error:
+        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA", error.source_ref) from error
+    except ContractError as error:
+        raise ClosureError(str(error)) from error
+    return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
+
+
+def _resource_id(kind: str, value: dict[str, Any]) -> object:
+    return value.get("project", {}).get("id") if kind == "project" and isinstance(value.get("project"), dict) else value.get("id")
+
+
+def _draft_reference(resource: ClosureResource) -> dict[str, Any]:
+    return {
+        "id": resource.id, "kind": resource.kind,
+        "store": {"provider": "draft", "identity": "draft"},
+        "address": resource.kind, "revision": {"token": "draft"},
+        "contentIdentity": resource.content_identity,
+    }
+
+
+def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
+    path = asset_root / "font_metrics" / "nimbus-sans-regular-v1.json"
+    return {"algorithm": "declared-metrics-v1", "assets": [{
+        "family": "Nimbus Sans", "weight": 400, "revision": "nimbus-sans-regular-v1",
+        "contentIdentity": "sha256:" + sha256(path.read_bytes()).hexdigest(),
+        "path": "font_metrics/nimbus-sans-regular-v1.json",
+    }], "missingFont": "declared-fallback"}
 
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:

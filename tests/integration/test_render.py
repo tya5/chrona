@@ -1,66 +1,42 @@
-from datetime import date
+"""Current render-product integration evidence.
+
+The former minimal schedule-SVG adapter is intentionally absent: this proves
+authoring inputs enter the same review pipeline as immutable evidence renders.
+"""
 from pathlib import Path
 
-from chrona.presentation.renderers.generic import render_svg
-from chrona.presentation.scene.schedule import scene_from_schedule
-from chrona.scheduling.scheduler import ScheduleResult
+from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.usecases.render_review import RenderRequest, render_review
 
 
-def test_render_svg_projects_placements_without_owning_them():
-    project = {
-        "project": {"title": "Demo"},
-        "objects": {
-            "task": {"title": "Build & Test"},
-            "gate": {"title": "Release"},
-        },
-        "relations": [
-            {
-                "from": {"object": "task", "endpoint": "end"},
-                "to": {"object": "gate", "endpoint": "at"},
-            }
-        ],
-    }
-    result = ScheduleResult(
-        {
-            "task": {"start": date(2026, 10, 1), "end": date(2026, 10, 8)},
-            "gate": {"at": date(2026, 10, 9)},
-        },
-        [],
+def _root() -> Path:
+    return next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+
+
+def _draft_request() -> RenderRequest:
+    root = _root()
+    draft = resolve_draft_render(
+        project_path=root / "examples/controller-z/project.yaml",
+        view_path=root / "examples/controller-z/views/executive.yaml",
+        theme_path=root / "examples/controller-z/themes/executive-light.yaml",
+        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
+        actual_path=root / "examples/controller-z/actual.yaml",
+    )
+    return RenderRequest(
+        closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
+        scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(),
     )
 
-    scene = scene_from_schedule(project, result.placements)
-    svg = render_svg(scene, {"marker", "metadata", "text-alternative"})
 
+def test_draft_render_materializes_the_review_surface():
+    svg = render_review(_draft_request()).svg
     assert '<svg ' in svg
-    assert 'Build &amp; Test' in svg
-    assert 'marker-end="url(#arrow)"' in svg
-    assert '<rect ' in svg
-    assert '<circle ' in svg
-    assert 'data-presentation-scene="minimal"' in svg
-    assert '<text x="24" y="34"' in svg
-    assert '<text x="24" y="81"' in svg
-    assert 'font-size="10" fill="#6b6b6b">2026-10-01</text>' in svg
+    assert 'data-source-ref="firmware"' in svg
+    assert 'data-presentation-adapter="legacy-v0.1"' not in svg
 
 
-def test_controller_x_legacy_documentation_artifact_is_current():
-    import yaml
-    from chrona.scheduling.scheduler import schedule
-
-    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-    project = yaml.safe_load((root / "conformance/controller-x.yaml").read_text())
-    scene = scene_from_schedule(project, schedule(project).placements)
-    generated = render_svg(scene, {"marker", "metadata", "text-alternative"})
-    assert generated == (root / "conformance/controller-x.svg").read_text()
-
-
-def test_svg_rejects_an_incapable_target_and_scene_is_deterministic():
-    project = {"project": {"title": "Demo"}, "objects": {"task": {"title": "Task"}}, "relations": []}
-    result = ScheduleResult({"task": {"at": date(2026, 10, 1)}}, [])
-    scene = scene_from_schedule(project, result.placements)
-    assert render_svg(scene) == render_svg(scene)
-    try:
-        render_svg(scene, {"metadata", "text-alternative"})
-    except ValueError as error:
-        assert str(error) == "E_TARGET_CAPABILITY: marker"
-    else:
-        raise AssertionError("incapable target rendered SVG")
+def test_draft_render_is_deterministic():
+    assert render_review(_draft_request()).svg == render_review(_draft_request()).svg

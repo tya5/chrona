@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from chrona.presentation.scene.schedule import federated_scene_input
+from chrona.presentation.model.projection import federated_scene_input
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
