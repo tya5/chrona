@@ -26,6 +26,7 @@ body:
     timeline-axis-height: {type: number, value: 46}
     table-column-width: {type: number, value: 210}
     table-header-height: {type: number, value: 46}
+    timeline-group-header-size: {type: number, value: 20}
   roles:
     text: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.body, lineHeight: leading.body}
     heading: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.heading, lineHeight: leading.tight}
@@ -83,3 +84,4 @@ body:
     timeline.axis.blockSize: timeline-axis-height
     table.column.minInlineSize: table-column-width
     table.header.blockSize: table-header-height
+    timeline.groupHeader.blockSize: timeline-group-header-size

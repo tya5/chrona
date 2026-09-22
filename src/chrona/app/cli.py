@@ -232,7 +232,9 @@ def _run_render_review(args: argparse.Namespace) -> None:
     from chrona.presentation.review.v05_content import normalize_v05_surface_content
     from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
     from chrona.presentation.renderers.v05_svg import render_v05_svg
-    scene_input = build_scene_input(projection=projection, surface_content=normalize_v05_surface_content(projection, project, view, actual_set=actual),
+    scene_input = build_scene_input(projection=projection, surface_content=normalize_v05_surface_content(
+                                    projection, project, view, actual_set=actual,
+                                    detail=_resource(resources, "review-detail-profile")),
                                     layout_manifest=manifest, resolved_theme=theme, font_metrics=font_metrics,
                                     measured_sources=measured, capabilities={name: True for name in capabilities},
                                     locale=environment["locale"])

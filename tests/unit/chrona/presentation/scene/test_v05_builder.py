@@ -261,7 +261,7 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
                                    "timeline.groupHeader.blockSize": Decimal(20)})
-    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(),
+    value = build_scene_input(projection=projection, surface_content=SurfaceContentInput(group_presentation="header"),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})

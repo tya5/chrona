@@ -65,7 +65,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for item in projection.items
     )
     timeline_bounds = _bounds(timeline.bounds)
-    group_header_size = float(metric_values.get("timeline.groupHeader.blockSize", 0))
+    group_header_size = float(metric_values.get("timeline.groupHeader.blockSize", 0)) if request.surface_content.group_presentation == "header" else 0.0
+    if request.surface_content.group_presentation == "header" and group_header_size <= 0:
+        raise LayoutError("E_LAYOUT_GROUP_HEADER_OVERFLOW", "/view/body/grouping/presentation")
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size)
     row_height = raw_rows[0].bounds[3] if raw_rows else timeline_bounds[3]
@@ -144,8 +146,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     for group in groups:
         if group.header_bounds is not None:
             text.append(place_text(placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
-                                   content=labels[group.group_id], inline=float(group.header_bounds.inline),
-                                   baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
+                                       content=labels[group.group_id], inline=float(group.header_bounds.inline),
+                                       baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region=f"group:{group.group_id}"))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
@@ -390,10 +392,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     legend = by_source.get("legend")
     if legend:
-        legend_size = float(request.theme_tokens.typography("legend")[2])
+        _, _, legend_font_size, legend_line_height = request.theme_tokens.typography("legend")
+        legend_size = float(legend_font_size)
+        legend_step = legend_size * float(legend_line_height)
         swatch_size = max(2.0, legend_size * 0.8)
         for index, (role, label) in enumerate(request.surface_content.legend_entries):
-            baseline = float(legend.bounds.block) + (index + 1) * legend_size
+            baseline = float(legend.bounds.block) + (index + 1) * legend_step
             shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
                                          Rect(legend.bounds.inline, Decimal(str(baseline - swatch_size)),
                                               Decimal(str(swatch_size)), Decimal(str(swatch_size)))))
@@ -423,7 +427,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        collision_region=f"{slot_name}:{source}"))
     summary_slot = by_source.get("summary")
     if summary_slot:
-        line, summary_size = 1, float(request.theme_tokens.typography("summary")[2])
+        line = 1
+        _, _, summary_font_size, summary_line_height = request.theme_tokens.typography("summary")
+        summary_size = float(summary_font_size) * float(summary_line_height)
         presentations = dict(request.surface_content.summary_presentations)
         for panel_id, panel_title, metrics in request.surface_content.summary_panels:
             text.append(place_text(placement_id=f"summary:{panel_id}", source_ref=panel_id, content=panel_title,

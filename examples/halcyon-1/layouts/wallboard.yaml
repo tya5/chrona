@@ -45,6 +45,14 @@ root:
           place: {inline: start, block: start, safety: safe}
           priority: preferred
           overflow: ellipsize-with-source
+        - id: legend
+          kind: slot
+          source: legend
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source
     - id: table
       kind: slot
       source: table
