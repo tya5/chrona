@@ -39,6 +39,7 @@ class LabelRequest:
     typography_role: str
     collision_region: str
     overflow: str
+    wrap: str = "forbid"
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:

@@ -39,6 +39,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     label_placement = "plot" if labels is True else "none"
     label_content: tuple[str, ...] = ("title",) if labels is True else ()
     label_side = "auto"
+    label_fallback: tuple[str, ...] = ()
+    annotation_fallback: tuple[str, ...] = ()
     # Legacy boolean visibility never declared a failure policy.  Preserve its
     # materializability by treating a rejected candidate as optional.
     label_overflow = "suppress" if labels is True else "diagnose"
@@ -50,6 +52,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             label_content = tuple(str(item) for item in labels["content"])
             label_side = str(labels["side"])
             label_overflow = str(labels.get("overflow", "diagnose"))
+    if isinstance(visible.fallback, Mapping):
+        label_fallback = tuple(str(item) for item in visible.fallback.get("labels", ()))
+        annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
     temporal = view.time_presentation or {}
     axis = view.axis or {}
     markers = view.markers
@@ -86,7 +91,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    group_details=resolved_detail.group_details if resolved_detail else (),
                                milestones=resolved_detail.milestones if resolved_detail else (),
                                observation_columns=resolved_detail.observation_columns if resolved_detail else (),
-                               observation_rows=resolved_detail.observation_rows if resolved_detail else ())
+                               observation_rows=resolved_detail.observation_rows if resolved_detail else (),
+                               label_fallback=label_fallback, annotation_fallback=annotation_fallback)
 
 
 def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], shading: Mapping[str, Any],

@@ -7,6 +7,7 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import (
     GroupPlacement,
     MarkPlacement,
+    PlacementDecision,
     PrimitivePlacement,
     RelationPlacement,
     RowPlacement,
@@ -67,3 +68,12 @@ def test_surface_placement_carries_the_completed_surface_projection_closure():
     ).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:text:bad"):
         SurfacePlacement(primitives=(PrimitivePlacement("text:bad", "a", "Text", bounds),)).assert_valid()
+
+
+def test_surface_placement_validates_inspectable_late_decisions():
+    SurfacePlacement(decisions=(
+        PlacementDecision("label:a", "a", ("above", "suppress"), "above", "placed"),
+        PlacementDecision("label:b", "b", ("below", "suppress"), "suppress", "suppressed"),
+    )).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_DECISION_INVALID:label:a"):
+        SurfacePlacement(decisions=(PlacementDecision("label:a", "a", ("above", "above"), "above", "placed"),)).assert_valid()

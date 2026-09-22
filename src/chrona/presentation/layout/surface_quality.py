@@ -41,6 +41,8 @@ class TextPlacement:
     font_asset_identity: str = ""
     collision_region: str = "surface"
     source_content: str | None = None
+    fallback_ladder: tuple[str, ...] = ()
+    selected_rung: str | None = None
 
 
 @dataclass(frozen=True)
@@ -139,6 +141,17 @@ class RelationPlacement:
 
 
 @dataclass(frozen=True)
+class PlacementDecision:
+    """Inspectable late Layout decision; never an input allocation record."""
+
+    decision_id: str
+    source_ref: str
+    requested_ladder: tuple[str, ...]
+    selected_rung: str | None
+    outcome: str
+
+
+@dataclass(frozen=True)
 class SurfaceLayoutRequest:
     """Closed Layout input; semantic values are supplied by PresentationContract."""
 
@@ -166,6 +179,7 @@ class SurfacePlacement:
     shapes: tuple[ShapePlacement, ...] = ()
     primitives: tuple[PrimitivePlacement, ...] = ()
     relations: tuple[RelationPlacement, ...] = ()
+    decisions: tuple[PlacementDecision, ...] = ()
     diagnostics: tuple[str, ...] = ()
 
     def assert_valid(self) -> None:
@@ -195,3 +209,12 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")
             if primitive.kind == "Text" and primitive.text is None:
                 raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")
+        for decision in self.decisions:
+            if decision.outcome not in {"placed", "suppressed", "diagnosed"}:
+                raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")
+            if not decision.requested_ladder or len(set(decision.requested_ladder)) != len(decision.requested_ladder):
+                raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")
+            if decision.outcome == "placed" and decision.selected_rung not in decision.requested_ladder:
+                raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")
+            if decision.outcome == "suppressed" and decision.selected_rung != "suppress":
+                raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")

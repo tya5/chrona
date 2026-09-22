@@ -1,11 +1,11 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.3"
-title: "Chrona View v0.3"
+$id: "chrona/view-v0.4"
+title: "Chrona View v0.4"
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
-      version: {const: "chrona/view/v0.3"}
+      version: {const: "chrona/view/v0.4"}
       kind: {const: view}
       body:
         type: object
@@ -81,7 +81,7 @@ allOf:
                     properties:
                       placement: {enum: [plot, table, none]}
                       content: {type: array, minItems: 1, uniqueItems: true, items: {enum: [title, finishDelta]}}
-                      side: {enum: [auto, start, end]}
+                      side: {enum: [auto, above, below, start, end]}
                       overflow: {enum: [suppress, diagnose]}
               relations:
                 oneOf:
@@ -101,6 +101,12 @@ allOf:
                     properties:
                       mode: {enum: [none, semantic, presentation, all]}
                       marker: {enum: [none, numbered]}
+              fallback:
+                type: object
+                additionalProperties: false
+                properties:
+                  labels: {type: array, minItems: 1, uniqueItems: true, items: {enum: [above, below, start, end, suppress]}}
+                  annotations: {type: array, minItems: 1, uniqueItems: true, items: {enum: [above, below, start, end, rail, suppress]}}
           axis:
             type: object
             required: [levels, ticks]
@@ -224,6 +230,7 @@ allOf:
                     parentRow: {type: string, minLength: 1}
                     group: {type: string, minLength: 1}
                     tableSubject: {type: string, minLength: 1}
+                    presentation: {$ref: "#/$defs/presentationIntent"}
                     items:
                       type: array
                       minItems: 1
@@ -234,6 +241,7 @@ allOf:
                         properties:
                           id: {type: string, minLength: 1}
                           track: {enum: [stacked, shared]}
+                          presentation: {$ref: "#/$defs/presentationIntent"}
                           source:
                             type: object
                             required: [kind, object]
@@ -251,3 +259,23 @@ allOf:
             then: {required: [selection, grouping, ordering, window]}
           - if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
             then: {not: {anyOf: [{required: [selection]}, {required: [grouping]}, {required: [ordering]}]}, required: [window]}
+$defs:
+  presentationIntent:
+    type: object
+    additionalProperties: false
+    properties:
+      label:
+        type: object
+        required: [side]
+        additionalProperties: false
+        properties: {side: {enum: [above, below, start, end]}}
+      callout:
+        type: object
+        required: [placement]
+        additionalProperties: false
+        properties: {placement: {enum: [above, below, start, end, rail]}}
+      text:
+        type: object
+        required: [wrap]
+        additionalProperties: false
+        properties: {wrap: {enum: [allow, forbid]}}
