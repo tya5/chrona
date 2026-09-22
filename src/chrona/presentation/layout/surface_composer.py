@@ -19,7 +19,7 @@ from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.surface_quality import (
-    GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    CollisionDomain, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
 )
 
@@ -110,7 +110,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        inline=float(by_source["title"].bounds.inline),
                        baseline_block=float(by_source["title"].bounds.block) + float(title_measurement.first_baseline or 0),
                        typography_role="heading", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                       collision_region="title")]
+                       collision_region="title", collision_domain=CollisionDomain("title", "content"))]
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
@@ -130,7 +130,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
                                inline=positions[column_id][0], baseline_block=table_bounds[1] + body_size,
                                typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                               overflow=overflow, collision_region="table", source_content=label))
+                               overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
+                               source_content=label))
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for object_id, column_id, content in table_cells:
         row = row_by_subject.get(object_id)
@@ -147,7 +148,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    inline=position[0] + indent,
                                    baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
                                    typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   overflow=overflow, collision_region="table", source_content=content))
+                                   overflow=overflow, collision_region="table",
+                                   collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:
@@ -156,7 +158,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        content=labels[group.group_id], inline=float(group.header_bounds.inline),
                                        baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region=f"group:{group.group_id}"))
+                                   collision_region=f"group:{group.group_id}",
+                                   collision_domain=CollisionDomain("table", "group-header")))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
@@ -180,7 +183,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                content=format_axis_label(interval, format_by_level, request.locale), inline=x,
                                baseline_block=float(axis.bounds.block) + axis_size, typography_role="axis",
                                theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                               collision_region="timeline-axis-band"))
+                               collision_region="timeline-axis-band",
+                               collision_domain=CollisionDomain("timeline-axis", "coarse-band")))
     for interval in intervals:
         x = _coordinate(interval.start, scale)
         shapes.append(ShapePlacement(f"axis:{interval.level}:{interval.index}", "timeline-axis", "Path",
@@ -192,7 +196,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             text.append(place_text(placement_id=f"axis-label:{interval.level}:{interval.index}", source_ref="timeline-axis",
                                    content=label, inline=x, baseline_block=float(axis.bounds.block) + axis_size * (2 if band_intervals else 1),
                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="timeline-axis-label"))
+                                   collision_region="timeline-axis-label",
+                                   collision_domain=CollisionDomain("timeline-axis", "fine-label")))
     contract = request.presentation_contract
     minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
     closed_days = contract.time.calendar_closed
@@ -213,7 +218,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                content=f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}", inline=x,
                                baseline_block=float(timeline.bounds.block) + body_size, typography_role="text",
                                theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                               collision_region="timeline-as-of"))
+                               collision_region="timeline-as-of",
+                               collision_domain=CollisionDomain("timeline", "overlay")))
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]))
     track_by_id = {item.instance_id: item for item in tracks}
@@ -313,7 +319,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                           if preferred_side else default_ladder)
                 sides = tuple(side for side in ladder if side != "suppress")
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
-                                                   anchor, sides, "text", "plot-label", "suppress" if "suppress" in ladder else contract.labels.overflow,
+                                                   anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
+                                                   "suppress" if "suppress" in ladder else contract.labels.overflow,
                                                    wrap))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
@@ -334,7 +341,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     _coordinate(anchor, scale), track.block, max(1.0, track.block_size), track.block_size)
                 label_requests.append(LabelRequest(f"variance:{instance_id}", item.object_id, f"{item.finish_delta:+d}d",
                                                    anchor_bounds, ("above", "below", "end", "start"), "summary",
-                                                   f"variance:{instance_id}", request.surface_content.label_overflow))
+                                                   f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
+                                                   request.surface_content.label_overflow))
 
     timeline_rect = LabelRect(*timeline_bounds)
     for label_request in label_requests:
@@ -354,7 +362,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
                                  content=label_request.content, inline=0, baseline_block=float(font_size),
                                  typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
-                                 font_metrics=request.font_metrics, collision_region=label_request.collision_region)
+                                 font_metrics=request.font_metrics, collision_region=label_request.collision_region,
+                                 collision_domain=label_request.collision_domain)
         if candidate is None:
             ladder = label_request.candidates + (("suppress",) if label_request.overflow == "suppress" else ())
             if not ladder:
@@ -371,6 +380,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    baseline_block=candidate.bounds.y + float(font_size),
                                    typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region=provisional.collision_region,
+                                   collision_domain=provisional.collision_domain,
                                    lines=lines),
                                 fallback_ladder=label_request.candidates, selected_rung=candidate.side))
             placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
@@ -445,7 +455,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             text.append(place_text(placement_id=f"legend:{role}", source_ref=role, content=label,
                                    inline=float(legend.bounds.inline) + swatch_size * 1.5, baseline_block=baseline,
                                    typography_role="legend", theme_tokens=request.theme_tokens,
-                                   font_metrics=request.font_metrics, collision_region="legend"))
+                                   font_metrics=request.font_metrics, collision_region="legend",
+                                   collision_domain=CollisionDomain("legend", "content")))
     for slot_name, values, prefix, purpose, typography in (
         ("notes", request.surface_content.notes, "note", "project-note", "text"),
         ("group-details", request.surface_content.group_details, "group-detail", "group-detail", "text"),
@@ -465,7 +476,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        baseline_block=float(slot.bounds.block) + (index + 1) * body_size,
                                        typography_role=typography, theme_tokens=request.theme_tokens,
                                        font_metrics=request.font_metrics,
-                                       collision_region=f"{slot_name}:{source}"))
+                                       collision_region=f"{slot_name}:{source}",
+                                       collision_domain=CollisionDomain(slot_name, f"line:{index}")))
     summary_slot = by_source.get("summary")
     if summary_slot:
         cursor = float(summary_slot.bounds.block)
@@ -474,7 +486,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             text.append(place_text(placement_id=run.placement_id, source_ref=run.source_ref, content=run.content,
                                    inline=float(summary_slot.bounds.inline), baseline_block=cursor + float(font_size),
                                    typography_role=run.typography_role, theme_tokens=request.theme_tokens,
-                                   font_metrics=request.font_metrics, collision_region="summary"))
+                                   font_metrics=request.font_metrics, collision_region="summary",
+                                   collision_domain=CollisionDomain("summary", "content")))
             cursor += float(font_size) * float(line_height)
 
     annotation_slot = by_source.get("annotations")
@@ -555,13 +568,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             text.append(place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                    inline=bounds.x, baseline_block=bounds.y + size, typography_role="annotation",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="annotations", lines=annotation_lines))
+                                   collision_region="annotations", collision_domain=CollisionDomain("annotations", "content"),
+                                   lines=annotation_lines))
             if "number" in annotation:
                 text.append(place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
                                        content=str(annotation["number"]), inline=anchor_bounds.x + anchor_bounds.width,
                                        baseline_block=anchor_bounds.y + body_size, typography_role="annotation",
                                        theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                       collision_region="annotations"))
+                                       collision_region="annotations",
+                                       collision_domain=CollisionDomain("timeline", "overlay")))
             if box.leader_required:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
                 try:

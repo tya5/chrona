@@ -22,6 +22,19 @@ def intersects(left: Rect, right: Rect) -> bool:
 
 
 @dataclass(frozen=True)
+class CollisionDomain:
+    """One physical text plane owned by Layout composition.
+
+    ``collision_region`` remains diagnostic provenance. A domain instead names the
+    slot and lane whose text shares physical space, so independent axis lanes do not
+    exempt an overlay simply because it has a different provenance label.
+    """
+
+    slot: str
+    lane: str
+
+
+@dataclass(frozen=True)
 class TextPlacement:
     """One measured text decision made by Layout before Scene emission."""
 
@@ -40,6 +53,7 @@ class TextPlacement:
     line_height: float = 0.0
     font_asset_identity: str = ""
     collision_region: str = "surface"
+    collision_domain: CollisionDomain = CollisionDomain("surface", "content")
     source_content: str | None = None
     fallback_ladder: tuple[str, ...] = ()
     selected_rung: str | None = None
@@ -188,7 +202,7 @@ class SurfacePlacement:
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         for index, item in enumerate(required):
             for other in required[index + 1:]:
-                if item.collision_region == other.collision_region and intersects(item.bounds, other.bounds):
+                if _collision_domains_intersect(item.collision_domain, other.collision_domain) and intersects(item.bounds, other.bounds):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
             if relation.suppressed:
@@ -219,3 +233,8 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")
             if decision.outcome == "suppressed" and decision.selected_rung != "suppress":
                 raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")
+
+
+def _collision_domains_intersect(left: CollisionDomain, right: CollisionDomain) -> bool:
+    """Return whether two explicit physical text planes share collision space."""
+    return left == right

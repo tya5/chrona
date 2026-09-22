@@ -8,7 +8,7 @@ from typing import Any, Mapping
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
-from chrona.presentation.layout.surface_quality import RelationPlacement, TextPlacement, intersects
+from chrona.presentation.layout.surface_quality import CollisionDomain, RelationPlacement, TextPlacement, intersects
 
 
 @dataclass(frozen=True)
@@ -156,7 +156,8 @@ def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> T
         measured.typography_role, baseline=(float(inline), float(baseline)), lines=(measured.content,),
         font_family=measured.font_family, font_weight=measured.font_weight,
         font_size=measured.font_size, line_height=measured.line_height,
-        font_asset_identity=measured.font_asset_identity, collision_region="network")
+        font_asset_identity=measured.font_asset_identity, collision_region="network",
+        collision_domain=CollisionDomain("network", "nodes"))
 
 
 def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
@@ -168,7 +169,8 @@ def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
         baseline=(float(bounds.inline), float(bounds.block + measured.baseline)), lines=(measured.content,),
         font_family=measured.font_family, font_weight=measured.font_weight,
         font_size=measured.font_size, line_height=measured.line_height,
-        font_asset_identity=measured.font_asset_identity, collision_region="network-title")
+        font_asset_identity=measured.font_asset_identity, collision_region="network-title",
+        collision_domain=CollisionDomain("network-title", "content"))
 
 
 def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], bounds: Rect,

@@ -5,6 +5,7 @@ import pytest
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import (
+    CollisionDomain,
     GroupPlacement,
     MarkPlacement,
     PlacementDecision,
@@ -36,6 +37,28 @@ def test_surface_placement_rejects_overlapping_required_text():
     ))
     with pytest.raises(ValueError, match="E_LAYOUT_TEXT_OVERLAP:left:right"):
         surface.assert_valid()
+
+
+def test_surface_placement_rejects_cross_region_text_in_the_same_physical_domain():
+    domain = CollisionDomain("timeline", "overlay")
+    surface = SurfacePlacement(text=(
+        TextPlacement("as-of", "actual-set", "As of", _rect(0, 0, 10, 10), "text",
+                      collision_region="timeline-as-of", collision_domain=domain),
+        TextPlacement("label", "task:a", "Task A", _rect(9, 0, 10, 10), "text",
+                      collision_region="plot-label", collision_domain=domain),
+    ))
+    with pytest.raises(ValueError, match="E_LAYOUT_TEXT_OVERLAP:as-of:label"):
+        surface.assert_valid()
+
+
+def test_surface_placement_allows_overlapping_text_in_distinct_axis_lanes():
+    surface = SurfacePlacement(text=(
+        TextPlacement("coarse", "timeline-axis", "Q1", _rect(0, 0, 10, 10), "axis",
+                      collision_domain=CollisionDomain("timeline-axis", "coarse-band")),
+        TextPlacement("fine", "timeline-axis", "Jan", _rect(0, 0, 10, 10), "axis",
+                      collision_domain=CollisionDomain("timeline-axis", "fine-label")),
+    ))
+    surface.assert_valid()
 
 
 def test_surface_placement_allows_explicit_relation_suppression_only_with_diagnostic():

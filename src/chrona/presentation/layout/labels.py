@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
+from chrona.presentation.layout.surface_quality import CollisionDomain
+
 
 @dataclass(frozen=True)
 class LabelRect:
@@ -38,6 +40,7 @@ class LabelRequest:
     candidates: tuple[str, ...]
     typography_role: str
     collision_region: str
+    collision_domain: CollisionDomain
     overflow: str
     wrap: str = "forbid"
 
