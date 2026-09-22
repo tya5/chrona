@@ -229,7 +229,7 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     font_path = tmp_path / token / "font_metrics/nimbus-sans-regular-v1.json"
     font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
     context = {
-        "version": "chrona/presentation/v0.6", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/render-context/v0.6", "kind": "render-context", "id": "controller-z-current",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},

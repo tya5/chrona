@@ -30,7 +30,7 @@ class ClosureResource:
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
     context = _load_presentation(reference, reader, "render-context")
-    if context.get("version") != "chrona/presentation/v0.6":
+    if context.get("version") != "chrona/render-context/v0.6":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 
@@ -105,7 +105,9 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
         actual_id = value.get("id")
     else:
         actual_id = value.get("id") if isinstance(value, dict) else None
-        if not isinstance(value, dict) or value.get("kind") != expected_kind:
+        expected_version_prefix = f"chrona/{expected_kind}/v"
+        if (not isinstance(value, dict) or value.get("kind") != expected_kind
+                or not str(value.get("version", "")).startswith(expected_version_prefix)):
             raise ClosureError("E_CLOSURE_KIND")
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
