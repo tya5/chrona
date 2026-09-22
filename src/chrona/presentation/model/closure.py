@@ -269,13 +269,12 @@ def _resolve_layout_context(
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA", error.source_ref) from error
     except ContractError as error:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
-    body = context_contract.body
     ordered = (
-        (body["project"], "project"),
-        (body["view"], "view"),
-        (body["theme"], "theme"),
-        (body["colorScheme"], "color-scheme"),
-        (body["layout"], "layout-profile"),
+        (context_contract.project.as_reader_reference(), "project"),
+        (context_contract.view.as_reader_reference(), "view"),
+        (context_contract.theme.as_reader_reference(), "theme"),
+        (context_contract.color_scheme.as_reader_reference(), "color-scheme"),
+        (context_contract.layout.as_reader_reference(), "layout-profile"),
     )
     resources = [_load_reference(reference, reader, kind) for reference, kind in ordered]
     for extension in resources[0].contract.document.get("extensions", []):
@@ -285,11 +284,13 @@ def _resolve_layout_context(
             if package.contract.document.get("packageId") != extension.get("packageId"):
                 raise ClosureError("E_CLOSURE_ID")
             resources.append(package)
-    for name, kind in (("actual", "actual-set"), ("summaryProfile", "summary-profile"), ("detailProfile", "review-detail-profile")):
-        if name in body["inputs"]:
-            resources.append(_load_reference(body["inputs"][name], reader, kind))
-    if "snapshot" in body["inputs"]:
-        snapshot = _load_reference(body["inputs"]["snapshot"], reader, "snapshot-ref")
+    for reference, kind in ((context_contract.actual, "actual-set"),
+                            (context_contract.summary_profile, "summary-profile"),
+                            (context_contract.detail_profile, "review-detail-profile")):
+        if reference is not None:
+            resources.append(_load_reference(reference.as_reader_reference(), reader, kind))
+    if context_contract.snapshot is not None:
+        snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref")
         project_reference = snapshot.contract.document.get("body", {}).get("project")
         if not isinstance(project_reference, dict):
             raise ClosureError("E_CLOSURE_KIND")
@@ -299,7 +300,7 @@ def _resolve_layout_context(
         resources.extend((snapshot, ClosureResource(
             "snapshot-project", snapshot_project.id, snapshot_project.revision,
             snapshot_project.content_identity, snapshot_project.contract)))
-    if body["target"]["capabilities"] != sorted(body["target"]["capabilities"]):
+    if context_contract.target.capabilities != tuple(sorted(context_contract.target.capabilities)):
         raise ClosureError("E_TARGET_CAPABILITY_ORDER")
     theme, scheme = resources[2], resources[3]
     try:

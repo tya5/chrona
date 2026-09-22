@@ -118,9 +118,9 @@ def render_review(request: RenderRequest) -> RenderedReview:
     if render_closure.snapshot is not None:
         ledger.snapshot()
 
-    environment = render_closure.context.body["environment"]
-    asset_root = request.asset_root or request.snapshot_root / render_closure.context.body["theme"]["revision"]["token"]
-    font_metrics = _font_metrics(theme, environment, asset_root)
+    environment = render_closure.context.environment
+    asset_root = request.asset_root or request.snapshot_root / render_closure.context.theme.revision_token
+    font_metrics = _font_metrics(theme, environment.font_metrics, asset_root)
     summary = normalize_summary_content(render_closure.summary_profile.document if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.document if render_closure.actual_set else None)
     if render_closure.summary_profile is not None:
@@ -129,7 +129,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
                                    render_closure.detail_profile.document if render_closure.detail_profile else None)
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
-    viewport = environment["viewport"]
+    viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     manifest = solve_layout(
         resolved_layout,
         viewport_inline=viewport["inlineSize"],
@@ -142,15 +142,15 @@ def render_review(request: RenderRequest) -> RenderedReview:
         actual_set=render_closure.actual_set.document if render_closure.actual_set else None,
         detail=render_closure.detail_profile.document if render_closure.detail_profile else None,
         summary=summary,
-        locale=environment["locale"],
+        locale=environment.locale,
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
-        capabilities={name: True for name in render_closure.context.body["target"]["capabilities"]},
-        locale=environment["locale"],
+        capabilities={name: True for name in render_closure.context.target.capabilities},
+        locale=environment.locale,
     )
 
     unused = ledger.unused()
@@ -159,10 +159,13 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "closure inputs loaded but never read: " + ", ".join(unused), "closure")
 
     surface = compose_review_surface(scene_input)
-    renderer = request.renderer or renderer_for(render_closure.context.body["target"], environment)
+    renderer = request.renderer or renderer_for(
+        {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
+        {"rasterizer": environment.rasterizer} if environment.rasterizer else {},
+    )
     artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
                                tokens=scene_input.theme_tokens)
-    if artifact.target_kind != render_closure.context.body["target"]["kind"]:
+    if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
     return RenderedReview(artifact, surface, frozenset(ledger.read))
 
@@ -185,13 +188,13 @@ def _project_review(project: dict[str, Any], view: dict[str, Any], closure: Rend
     )
 
 
-def _font_metrics(theme: dict[str, Any], environment: dict[str, Any], asset_root: Path) -> Any:
+def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path) -> Any:
     body = theme["body"]
     family_token = body.get("roles", {}).get("text", {}).get("fontFamily")
     family = body.get("values", {}).get(family_token, {}).get("value")
     if not isinstance(family, str):
         raise RenderFailed("E_THEME_ROLE_REQUIRED", "text.fontFamily is required", "theme")
-    return resolve_font_metrics(family, environment["fontMetrics"], asset_root=asset_root)
+    return resolve_font_metrics(family, font_metrics, asset_root=asset_root)
 
 
 def _source_inputs(project: dict[str, Any], view: dict[str, Any], projection: Any,

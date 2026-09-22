@@ -157,10 +157,59 @@ class LayoutProfileContract(ResourceContract):
 
 
 @dataclass(frozen=True)
+class ResourceReference:
+    """One immutable Context edge, decoded after Context schema acceptance."""
+
+    id: str
+    kind: str
+    store: FrozenDict
+    address: str
+    revision_token: str
+    content_identity: str | None
+
+    @classmethod
+    def from_value(cls, value: FrozenDict) -> "ResourceReference":
+        revision = value["revision"]
+        if not isinstance(revision, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        return cls(str(value["id"]), str(value["kind"]), value["store"], str(value["address"]),
+                   str(revision["token"]), value.get("contentIdentity"))
+
+    def as_reader_reference(self) -> FrozenDict:
+        return freeze({"id": self.id, "kind": self.kind, "store": self.store,
+                       "address": self.address, "revision": {"token": self.revision_token},
+                       **({"contentIdentity": self.content_identity} if self.content_identity else {})})
+
+
+@dataclass(frozen=True)
+class RenderTarget:
+    kind: str
+    capabilities: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RenderEnvironment:
+    viewport_inline: int
+    viewport_block: int
+    locale: str
+    font_metrics: FrozenDict
+    scene_precision: int
+    rasterizer: FrozenDict | None
+
+
+@dataclass(frozen=True)
 class RenderContextContract(ResourceContract):
-    @property
-    def context(self) -> FrozenDict:
-        return self.document
+    project: ResourceReference
+    view: ResourceReference
+    theme: ResourceReference
+    color_scheme: ResourceReference
+    layout: ResourceReference
+    actual: ResourceReference | None
+    snapshot: ResourceReference | None
+    summary_profile: ResourceReference | None
+    detail_profile: ResourceReference | None
+    environment: RenderEnvironment
+    target: RenderTarget
 
 
 @dataclass(frozen=True)
@@ -248,7 +297,28 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
     if identity.kind == "layout-profile":
         return LayoutProfileContract(identity, version, body, frozen)
     if identity.kind == "render-context":
-        return RenderContextContract(identity, version, body, frozen)
+        inputs, environment, target = body["inputs"], body["environment"], body["target"]
+        if not all(isinstance(item, FrozenDict) for item in (inputs, environment, target)):
+            raise ContractError("E_CLOSURE_KIND")
+        viewport = environment["viewport"]
+        if not isinstance(viewport, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        rasterizer = environment.get("rasterizer")
+        if rasterizer is not None and not isinstance(rasterizer, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        return RenderContextContract(
+            identity, version, body, frozen,
+            ResourceReference.from_value(body["project"]), ResourceReference.from_value(body["view"]),
+            ResourceReference.from_value(body["theme"]), ResourceReference.from_value(body["colorScheme"]),
+            ResourceReference.from_value(body["layout"]),
+            ResourceReference.from_value(inputs["actual"]) if "actual" in inputs else None,
+            ResourceReference.from_value(inputs["snapshot"]) if "snapshot" in inputs else None,
+            ResourceReference.from_value(inputs["summaryProfile"]) if "summaryProfile" in inputs else None,
+            ResourceReference.from_value(inputs["detailProfile"]) if "detailProfile" in inputs else None,
+            RenderEnvironment(int(viewport["inlineSize"]), int(viewport["blockSize"]), str(environment["locale"]),
+                              environment["fontMetrics"], int(environment["scenePrecision"]), rasterizer),
+            RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"])),
+        )
     if identity.kind == "actual-set":
         return ActualSetContract(identity, version, body, frozen)
     if identity.kind == "snapshot-ref":
