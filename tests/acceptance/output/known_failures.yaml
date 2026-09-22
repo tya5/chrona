@@ -1,0 +1,26 @@
+# Output properties that fail today, pinned so the gate can be enforced before every
+# defect behind it is fixed.
+#
+# A pin is the complete, ordered failure fingerprint. A changed fingerprint (including
+# one additional failure on an already-pinned slide) fails the build. A pin that starts
+# passing also fails, so a fix removes its pin in the same change.
+#
+# Delete an entry when its defect is fixed; delete this file with the last entry.
+# Measured at 6c2dafa. Defects are tracked in #85.
+test_no_text_is_drawn_over_a_mark:
+  aster-ssd/overview: [[member-label, FTL and media management], [member-label, Pilot build]]
+  controller-z/executive: [[member-label, Architecture Freeze], [member-label, FW Feature Complete], [member-label, Silicon Bring-up], [member-label, Performance Characterization], [member-label, DVT Qualification], [member-label, PVT and Factory Validation]]
+  halcyon-1/programme-board: [[finish-delta, -3d], [finish-delta, +0d], [finish-delta, -11d], [finish-delta, -11d]]
+  halcyon-1/launch-campaign: [[finish-delta, +0d]]
+test_no_text_leaves_the_viewport:
+  aster-ssd/overview: [[Production release, 52.0]]
+  controller-z/executive: [[General Availability, 97.2]]
+test_row_index_cells_render_an_ordinal:
+  halcyon-1/mission-brief: [[cell:pdr:#, +1d], [cell:optics:#, +2d], [cell:structure:#, +3d], [cell:avionics:#, +4d], [cell:payload-tvac:#, +5d], [cell:bus-test:#, +6d], [cell:cdr:#, +7d], [cell:payload-delivery:#, +8d], [cell:integration:#, +9d], [cell:tvac:#, +10d], [cell:psr:#, +11d], [cell:campaign:#, +12d], [cell:frr:#, +13d], [cell:launch:#, +14d], [cell:leop:#, +15d], [cell:first-light:#, +16d]]
+test_point_rows_never_render_a_span_only_state:
+  halcyon-1/mission-brief: [cdr, first-light, frr, launch, payload-delivery, pdr, psr]
+  halcyon-1/launch-campaign: [first-light, frr, launch, psr]
+test_every_declared_slot_produces_a_primitive:
+  aster-ssd/overview: [legend, notes]
+  controller-z/executive: [legend]
+  halcyon-1/programme-board: [summary]
