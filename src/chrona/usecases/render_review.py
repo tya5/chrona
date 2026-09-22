@@ -99,8 +99,14 @@ def render_review(request: RenderRequest) -> RenderedReview:
     theme = render_closure.resolved_theme.document
     closure.read.update({"project", "view", "layout-profile", "theme", "color-scheme"})
 
-    manifests = {item["packageId"]: item for item in closure.all_of("profile-package")}
-    projection = _project_review(project, view, closure, manifests)
+    manifests = {item.document["packageId"]: item.document for item in render_closure.profile_packages}
+    if manifests:
+        closure.read.add("profile-package")
+    projection = _project_review(project, view, render_closure, manifests)
+    if render_closure.actual_set is not None:
+        closure.read.add("actual-set")
+    if render_closure.snapshot is not None:
+        closure.read.update({"snapshot-ref", "snapshot-project"})
 
     environment = render_closure.context.body["environment"]
     font_metrics = _font_metrics(theme, environment, request.snapshot_root / render_closure.context.body["theme"]["revision"]["token"])
@@ -117,9 +123,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
 
     surface_content = normalize_v05_surface_content(
         projection, project, view,
-        actual_set=closure.get("actual-set"),
-        detail=closure.get("review-detail-profile"),
+        actual_set=render_closure.actual_set.document if render_closure.actual_set else None,
+        detail=render_closure.detail_profile.document if render_closure.detail_profile else None,
     )
+    if render_closure.detail_profile is not None:
+        closure.read.add("review-detail-profile")
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
@@ -138,14 +146,14 @@ def render_review(request: RenderRequest) -> RenderedReview:
     return RenderedReview(svg, surface, frozenset(closure.read))
 
 
-def _project_review(project: dict[str, Any], view: dict[str, Any], closure: _Closure,
+def _project_review(project: dict[str, Any], view: dict[str, Any], closure: RenderClosure,
                     manifests: dict[str, dict[str, Any]]) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
     result = schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
-    actual = closure.get("actual-set")
-    snapshot_project = closure.get("snapshot-project")
+    actual = closure.actual_set.document if closure.actual_set is not None else None
+    snapshot_project = closure.snapshot_project.facts if closure.snapshot_project is not None else None
     snapshot_result = schedule(snapshot_project) if snapshot_project is not None else None
     if snapshot_result is not None and not snapshot_result.ok:
         raise RenderRejected(snapshot_result.diagnostics)

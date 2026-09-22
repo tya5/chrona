@@ -10,8 +10,10 @@ import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.contracts import (
-    ClosureIdentity, ContractError, LayoutProfileContract, ProjectContract,
-    RenderContextContract, ResolvedThemeContract, ResourceContract, ViewContract,
+    ActualSetContract, ClosureIdentity, ContractError, LayoutProfileContract,
+    ProfilePackageContract, ProjectContract, RenderContextContract,
+    ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
+    SnapshotRefContract, SummaryProfileContract, ViewContract,
     freeze, parse_contract,
 )
 from chrona.resources import schema_resource
@@ -67,6 +69,41 @@ class RenderClosure:
         if not isinstance(item.contract, LayoutProfileContract):
             raise ClosureError("E_CLOSURE_KIND")
         return item.contract
+
+    def _optional(self, kind: str, expected: type[ResourceContract]) -> ResourceContract | None:
+        item = self.resource(kind)
+        if item is None:
+            return None
+        if not isinstance(item.contract, expected):
+            raise ClosureError("E_CLOSURE_KIND")
+        return item.contract
+
+    @property
+    def actual_set(self) -> ActualSetContract | None:
+        return self._optional("actual-set", ActualSetContract)  # type: ignore[return-value]
+
+    @property
+    def summary_profile(self) -> SummaryProfileContract | None:
+        return self._optional("summary-profile", SummaryProfileContract)  # type: ignore[return-value]
+
+    @property
+    def detail_profile(self) -> ReviewDetailProfileContract | None:
+        return self._optional("review-detail-profile", ReviewDetailProfileContract)  # type: ignore[return-value]
+
+    @property
+    def snapshot(self) -> SnapshotRefContract | None:
+        return self._optional("snapshot-ref", SnapshotRefContract)  # type: ignore[return-value]
+
+    @property
+    def snapshot_project(self) -> ProjectContract | None:
+        return self._optional("snapshot-project", ProjectContract)  # type: ignore[return-value]
+
+    @property
+    def profile_packages(self) -> tuple[ProfilePackageContract, ...]:
+        values = tuple(item.contract for item in self.resources if item.kind == "profile-package")
+        if not all(isinstance(item, ProfilePackageContract) for item in values):
+            raise ClosureError("E_CLOSURE_KIND")
+        return values  # type: ignore[return-value]
 
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:

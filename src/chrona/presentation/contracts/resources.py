@@ -95,8 +95,28 @@ class ResourceContract:
 
 
 @dataclass(frozen=True)
-class OpaqueResourceContract(ResourceContract):
-    """Frozen legacy optional resource awaiting its C99-4B exact parser."""
+class ActualSetContract(ResourceContract):
+    pass
+
+
+@dataclass(frozen=True)
+class SnapshotRefContract(ResourceContract):
+    pass
+
+
+@dataclass(frozen=True)
+class ProfilePackageContract(ResourceContract):
+    pass
+
+
+@dataclass(frozen=True)
+class SummaryProfileContract(ResourceContract):
+    pass
+
+
+@dataclass(frozen=True)
+class ReviewDetailProfileContract(ResourceContract):
+    pass
 
 
 @dataclass(frozen=True)
@@ -156,12 +176,22 @@ _SCHEMAS = {
     ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",
+    ("actual-set", "chrona/actual-set/v0.1"): "actual-set-v0.1.schema.yaml",
+    ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
+    ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
+    ("profile-package", "chrona/profile/v0.1"): "profile-v0.1.schema.yaml",
+    ("summary-profile", "chrona/summary-profile/v0.1"): "summary-profile-v0.2.schema.yaml",
+    ("review-detail-profile", "chrona/review-detail-profile/v0.1"): "review-detail-profile-v0.1.schema.yaml",
 }
 
 
 def _registry() -> Registry:
-    foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
-    return Registry().with_resource("urn:chrona:presentation-resource-v0.1", Resource.from_contents(foundation))
+    names = ("presentation-resource-v0.1.schema.yaml", "revision-store-resource-ref-v0.1.schema.yaml")
+    registry = Registry()
+    for name in names:
+        schema = yaml.safe_load(schema_resource(name).read_text(encoding="utf-8"))
+        registry = registry.with_resource(schema["$id"], Resource.from_contents(schema))
+    return registry
 
 
 def _validate(kind: str, value: Mapping[str, Any]) -> str:
@@ -191,8 +221,6 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
     body = frozen.get("body", FrozenDict())
     if not isinstance(body, FrozenDict):
         raise ContractError("E_CLOSURE_KIND")
-    if (identity.kind, value.get("version")) not in _SCHEMAS:
-        return OpaqueResourceContract(identity, str(value.get("version", "")), body, frozen)
     version = _validate(identity.kind, value)
     if identity.kind == "project":
         return ProjectContract(identity, version, body, frozen)
@@ -206,4 +234,14 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         return LayoutProfileContract(identity, version, body, frozen)
     if identity.kind == "render-context":
         return RenderContextContract(identity, version, body, frozen)
-    return OpaqueResourceContract(identity, version, body, frozen)
+    if identity.kind == "actual-set":
+        return ActualSetContract(identity, version, body, frozen)
+    if identity.kind == "snapshot-ref":
+        return SnapshotRefContract(identity, version, body, frozen)
+    if identity.kind == "profile-package":
+        return ProfilePackageContract(identity, version, body, frozen)
+    if identity.kind == "summary-profile":
+        return SummaryProfileContract(identity, version, body, frozen)
+    if identity.kind == "review-detail-profile":
+        return ReviewDetailProfileContract(identity, version, body, frozen)
+    raise ContractError("E_CLOSURE_KIND")
