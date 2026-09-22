@@ -52,6 +52,35 @@ class ReviewRowProjection:
 
 
 @dataclass(frozen=True)
+class DependencyNetworkNode:
+    """View-selected graph fact; Layout alone assigns geometry."""
+
+    object_id: str
+    title: str
+    order_key: tuple[Any, ...]
+    critical: bool
+    source_kind: str
+
+
+@dataclass(frozen=True)
+class DependencyNetworkEdge:
+    """A selected dependency with stable endpoint provenance."""
+
+    relation_id: str
+    source_id: str
+    target_id: str
+    source_endpoint: str
+    target_endpoint: str
+    critical: bool
+
+
+@dataclass(frozen=True)
+class DependencyNetworkProjection:
+    nodes: tuple[DependencyNetworkNode, ...]
+    edges: tuple[DependencyNetworkEdge, ...]
+
+
+@dataclass(frozen=True)
 class ReviewProjection:
     items: tuple[ReviewItem, ...]
     window: tuple[date, date]
@@ -61,6 +90,7 @@ class ReviewProjection:
     comparison_facets: tuple[str, ...] = ()
     hierarchy_grouping: bool = False
     surface: str = "table-timeline"
+    network: DependencyNetworkProjection | None = None
 
 
 @dataclass(frozen=True)
@@ -162,7 +192,43 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     return ReviewProjection(tuple(selected),
         (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
-        view.comparison.facets, hierarchy, view.surface)
+        view.comparison.facets, hierarchy, view.surface,
+        _dependency_network_projection(project, selected, view))
+
+
+def _dependency_network_projection(project: dict[str, Any], selected: list[ReviewItem],
+                                   view: ViewInput) -> DependencyNetworkProjection | None:
+    """Close Project relation facts at the View boundary for a network surface."""
+    if view.surface != "dependency-network":
+        return None
+    selected_ids = {item.object_id for item in selected}
+    nodes = tuple(DependencyNetworkNode(item.object_id, item.title,
+                                        _network_order_key(item, view), item.critical, item.source_kind)
+                  for item in selected)
+    edges = []
+    for relation in project.get("relations", ()):
+        source = relation.get("from", {})
+        target = relation.get("to", {})
+        source_id, target_id = source.get("object"), target.get("object")
+        if source_id not in selected_ids or target_id not in selected_ids:
+            continue
+        edges.append(DependencyNetworkEdge(str(relation["id"]), str(source_id), str(target_id),
+                                           str(source.get("endpoint", "end")), str(target.get("endpoint", "start")),
+                                           all(item.critical for item in selected if item.object_id in {source_id, target_id})))
+    return DependencyNetworkProjection(nodes, tuple(sorted(edges, key=lambda item: item.relation_id)))
+
+
+def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
+    ordering = view.ordering
+    if ordering is None or ordering.by == "id":
+        value: Any = item.object_id
+    elif ordering.by == "title":
+        value = item.title
+    elif ordering.by == "plannedEnd":
+        value = item.planned.get("at", item.planned.get("end"))
+    else:
+        value = item.planned.get("start", item.planned.get("at"))
+    return (value, item.object_id)
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],

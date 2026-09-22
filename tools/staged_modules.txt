@@ -4,3 +4,4 @@
 #
 # There are currently no staged modules. A future entry must name its owning
 # issue, why it cannot yet be product-reachable, and its planned removal date.
+chrona.presentation.layout.dependency_network  # Issue #145 N145-2; pure typed layout closure, becomes reachable in N145-3 Scene adapter
