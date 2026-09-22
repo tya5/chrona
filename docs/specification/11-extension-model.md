@@ -40,7 +40,7 @@ implementation-defined, but a loaded manifest is canonical and schema-valid:
 version: chrona/profile/v0.1
 packageId: semiconductor-development
 contentIdentity: sha256:<64-hex>
-requires: {projectFormat: timeline/v0.1}
+requires: {projectFormat: timeline/v0.3}
 profiles:
   EVT: {extends: milestone}
 ```

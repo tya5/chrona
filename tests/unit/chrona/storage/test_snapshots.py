@@ -3,7 +3,7 @@ from chrona.storage.snapshots import LocalBaselineRegistry, MemorySnapshotStore,
 
 
 def _project():
-    return {"version": "timeline/v0.1", "project": {"id": "controller"}, "objects": {}, "relations": []}
+    return {"version": "timeline/v0.3", "project": {"id": "controller"}, "objects": {}, "relations": []}
 
 
 def _reference(snapshot):

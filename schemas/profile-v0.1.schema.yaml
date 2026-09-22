@@ -11,7 +11,7 @@ properties:
     type: object
     required: [projectFormat]
     additionalProperties: false
-    properties: {projectFormat: {const: timeline/v0.1}}
+    properties: {projectFormat: {const: timeline/v0.3}}
   profiles:
     type: object
     minProperties: 1
