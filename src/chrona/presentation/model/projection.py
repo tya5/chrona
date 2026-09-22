@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any
@@ -58,6 +59,12 @@ class FoldedPointProjection:
     item: ReviewItem
     group_id: str
     target_kind: str = "group-header"
+    members: tuple[ReviewItem, ...] = ()
+
+    @property
+    def all_items(self) -> tuple[ReviewItem, ...]:
+        """Keep comparison variants on the point's one header track."""
+        return (self.item, *self.members)
 
 
 @dataclass(frozen=True)
@@ -317,7 +324,13 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
     if view.rows.points == "group-header":
         if view.grouping is None or view.grouping.presentation != "header":
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED")
-        folded = tuple(FoldedPointProjection(row.items[0], row.group_id)
+        labels = view.visibility.labels
+        has_title_label = (labels is True or
+                           (isinstance(labels, Mapping) and labels.get("placement") == "plot"
+                            and "title" in labels.get("content", ())))
+        if not has_title_label:
+            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED")
+        folded = tuple(FoldedPointProjection(row.items[0], row.group_id, members=row.items[1:])
                        for row in rows if row.items and row.items[0].source_type == "point")
         if any(not point.group_id for point in folded):
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE")

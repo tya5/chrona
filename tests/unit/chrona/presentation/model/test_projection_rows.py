@@ -1,5 +1,6 @@
 from datetime import date
 from dataclasses import replace
+import pytest
 
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import table_value
@@ -121,6 +122,40 @@ def test_automatic_predecessor_policy_folds_a_point_with_one_selected_span_prede
                                                    "gate": {"at": date(2026, 1, 2)}}, view, None)
     assert [(row.row_id, [item.object_id for item in row.items]) for row in projection.rows] == [("task", ["task", "gate"])]
     assert projection.rows[0].items[1].track == "shared"
+
+
+def test_automatic_group_header_policy_keeps_point_out_of_table_rows_with_a_header_target():
+    project = {"objects": {
+        "task": {"title": "Task", "fields": {"owner": "delivery"}},
+        "gate": {"title": "Gate", "fields": {"owner": "delivery"}},
+    }, "entities": {}}
+    view = ViewInput(None,
+        ViewGrouping("field", "owner", (), "ungrouped", "header", None, None), None,
+        ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()),
+        ViewVisibility(freeze({"placement": "plot", "content": ("title",), "side": "auto"}), "none", "none"),
+        freeze({}), (), (), ViewRows("automatic", (), "group-header"), None, (), None, None, None)
+    projection = build_review_projection(project, {
+        "task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+        "gate": {"at": date(2026, 1, 2)},
+    }, view, None)
+
+    assert [row.row_id for row in projection.rows] == ["task"]
+    assert [(point.item.object_id, point.group_id, point.target_kind) for point in projection.folded_points] == [
+        ("gate", "delivery", "group-header")]
+
+
+def test_automatic_group_header_policy_requires_a_visible_plot_title():
+    project = {"objects": {"gate": {"title": "Gate", "fields": {"owner": "delivery"}}}, "entities": {}}
+    view = ViewInput(None,
+        ViewGrouping("field", "owner", (), "ungrouped", "header", None, None), None,
+        ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()),
+        ViewVisibility(freeze({"placement": "table", "content": ("title",), "side": "auto"}), "none", "none"),
+        freeze({}), (), (), ViewRows("automatic", (), "group-header"), None, (), None, None, None)
+
+    with pytest.raises(ValueError, match="E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED"):
+        build_review_projection(project, {"gate": {"at": date(2026, 1, 2)}}, view, None)
 
 
 def test_projection_carries_current_and_snapshot_analysis_without_crossing_them():

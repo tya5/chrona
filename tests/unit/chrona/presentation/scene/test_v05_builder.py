@@ -8,7 +8,7 @@ import pytest
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 
@@ -63,7 +63,7 @@ def _theme():
                    "axis-size": {"type": "number", "value": 12},
                    "line": {"type": "number", "value": "1.4"}},
         "roles": {**{name: {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"}
-                     for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size"}.items()},
+                     for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size"}.items()},
                   "text": {"fill": "ink", "fontFamily": "body", "fontWeight": "regular", "fontSize": "body-size", "lineHeight": "line"}}, "metrics": {}}}
 
 
@@ -387,6 +387,55 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
     assert any(node.scene_id == "group-header:fw" and node.text == "Firmware team"
                for node in surface.primitives)
     assert surface.groups[0].header_bounds is not None
+
+
+def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_table_row():
+    span = ReviewItem("task", "Task", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)},
+                      None, None, (), group_id="fw", group_label="Firmware team", item_id="task")
+    point = ReviewItem("gate", "Release gate", "point", {"at": date(2026, 1, 5)},
+                       {"at": date(2026, 1, 6)}, None, (), group_id="fw", group_label="Firmware team",
+                       item_id="gate", source_kind="combined", track="shared")
+    scenario = ReviewItem("gate", "Baseline gate", "point", {"at": date(2026, 1, 4)},
+                          None, None, (), group_id="fw", group_label="Firmware team",
+                          item_id="scenario:baseline:gate", source_kind="scenario", track="shared")
+    row = ReviewRowProjection("fw-row", "Task", "fw", "task", (span,))
+    projection = ReviewProjection((span, point), (date(2026, 1, 1), date(2026, 1, 6)), (), (), (row,),
+                                  folded_points=(FoldedPointProjection(point, "fw", members=(scenario,)),))
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
+        "timeline.groupHeader.blockSize": Decimal(20),
+    })
+    viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(400))
+    manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", viewport, (
+        LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(40)), "title"),
+        LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(40), Decimal(100), Decimal(160)), "table"),
+        LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(40), Decimal(700), Decimal(160)), "timeline"),
+        LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(200), Decimal(700), Decimal(40)), "timeline-axis"),
+        LayoutDecision("annotations", "slot", Rect(Decimal(800), Decimal(40), Decimal(200), Decimal(160)), "annotations"),
+    ))
+    theme = _theme()
+    theme["body"]["values"]["marker"] = {"type": "marker", "value": "triangle"}
+    theme["body"]["roles"]["dependency"] = {"marker": "marker"}
+    value = build_scene_input(projection=projection, surface_content=surface_content(
+        table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),
+        group_presentation="header", label_placement="plot", label_content=("title",), label_overflow="diagnose",
+        relations=({"id": "task-gate", "from": {"object": "task"}, "to": {"object": "gate"}},),
+        annotations=({"id": "gate-note", "purpose": "callout", "anchor": {"kind": "object", "id": "gate", "facet": "planned", "endpoint": "at"},
+                      "placement": {"side": "end", "alignment": "center"}, "text": "Review"},),
+    ), layout_manifest=manifest, resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement,
+        capabilities={"svg": True})
+
+    surface = compose_review_surface(value)
+
+    assert not any(node.scene_id.startswith("cell:gate:") for node in surface.primitives)
+    assert any(node.scene_id == "planned:group-header:fw:gate" for node in surface.primitives)
+    assert any(node.scene_id == "actual:group-header:fw:gate" for node in surface.primitives)
+    assert any(node.scene_id == "planned:group-header:fw:scenario:baseline:gate" for node in surface.primitives)
+    assert any(node.scene_id == "member-label:group-header:fw:gate" and node.text == "Release gate"
+               for node in surface.primitives)
+    assert any(node.scene_id.startswith("relation:task-gate:") for node in surface.primitives)
+    assert any(node.scene_id == "annotation-leader:gate-note" for node in surface.primitives)
 
 
 def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
