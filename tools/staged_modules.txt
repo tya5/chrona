@@ -2,6 +2,5 @@
 # and deliberately kept. Every entry needs a reason and an owning issue; anything
 # not listed here and not reachable fails tools/check_module_reachability.py.
 #
-# Issue #222 I222-1: the Authoring Normalizer is intentionally not product-reachable
-# until I222-2 adds the sole guided Draft ingress. Remove this entry in I222-2.
-chrona.presentation.model.authoring
+# There are currently no staged modules. A future entry must name its owning
+# issue, why it cannot yet be product-reachable, and its planned removal date.

@@ -13,7 +13,7 @@ import yaml
 from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
-from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_render_context
+from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
@@ -139,6 +139,14 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
     command.add_argument("--output", "-o", required=True)
 
+    command = sub.add_parser("render-workspace", help="render a guided authoring workspace Draft (not reproducible evidence)")
+    command.add_argument("workspace", help="guided authoring workspace YAML path")
+    command.add_argument("--viewport", default="1600x900", help="viewport WIDTHxHEIGHT (default: 1600x900)")
+    command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
+    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
+    command.add_argument("--provenance", help="write non-Scene guided closure provenance JSON")
+    command.add_argument("--output", "-o", required=True)
+
     command = sub.add_parser("render-review", help="render an immutable Render Context v0.8", description="render an immutable Render Context v0.8")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
@@ -246,6 +254,27 @@ def _run_draft_render(args: argparse.Namespace) -> None:
     Path(args.output).write_bytes(rendered.artifact.content)
 
 
+def _run_guided_draft_render(args: argparse.Namespace) -> None:
+    draft = resolve_guided_draft_render(
+        workspace_path=Path(args.workspace), viewport=_parse_viewport(args.viewport),
+        locale=args.locale, target_kind=args.format,
+    )
+    rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
+    Path(args.output).write_bytes(rendered.artifact.content)
+    if args.provenance:
+        provenance = draft.closure.guided_provenance
+        if provenance is None:  # defensive: this route must never become an explicit Draft alias
+            raise CliFailure("E_AUTHORING_PROVENANCE", "guided closure provenance is required", "authoring")
+        destination = Path(args.provenance)
+        if destination.exists():
+            raise CliFailure("E_AUTHORING_PROVENANCE_OUTPUT", "provenance destination already exists", "authoring", exit_code=2)
+        destination.write_text(json.dumps({
+            "origin": "draft", "workspaceContentIdentity": provenance.workspace_identity,
+            "presetContentIdentity": provenance.preset_identity, "bindingContentIdentity": provenance.binding_identity,
+            "normalizerVersion": provenance.normalizer_version,
+        }, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def _parse_viewport(value: str) -> tuple[int, int]:
     parts = value.lower().split("x")
     if len(parts) != 2:
@@ -327,6 +356,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "render":
         _run_draft_render(args)
+        return
+    if args.command == "render-workspace":
+        _run_guided_draft_render(args)
         return
     if args.command == "render-review-gallery":
         _run_render_review_gallery(args)

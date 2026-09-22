@@ -7,7 +7,7 @@ from importlib.metadata import version
 from pathlib import Path
 import re
 import subprocess
-from typing import Any
+from typing import Any, Mapping
 
 import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
 import yaml
@@ -15,12 +15,14 @@ import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.contracts import (
-    ActualSetContract, ClosureIdentity, ContractError, SchemaContractError, LayoutProfileContract,
+    ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, LayoutProfileContract,
+    PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
     SnapshotRefContract, SummaryProfileContract, ViewContract,
     freeze, parse_contract,
 )
+from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
 
@@ -44,6 +46,7 @@ class RenderClosure:
     context: RenderContextContract
     resources: tuple[ClosureResource, ...]
     resolved_theme: ResolvedThemeContract
+    guided_provenance: "GuidedAuthoringProvenance | None" = None
 
     def resource(self, kind: str) -> ClosureResource | None:
         return next((item for item in self.resources if item.kind == kind), None)
@@ -119,6 +122,16 @@ class DraftRender:
     asset_root: Path
 
 
+@dataclass(frozen=True)
+class GuidedAuthoringProvenance:
+    """Non-Scene provenance for a guided closure."""
+
+    workspace_identity: str
+    preset_identity: str
+    binding_identity: str
+    normalizer_version: str = "chrona/authoring-normalizer/v0.1"
+
+
 _DRAFT_CAPABILITIES = (
     "accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata",
     "tableSemantics",
@@ -148,6 +161,72 @@ def resolve_draft_render(
     )
     resources = [_load_draft_resource(kind, path) for kind, path in paths]
     resources.extend(_load_draft_resource(kind, path) for kind, path in optional if path is not None)
+    return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind)
+
+
+def resolve_guided_draft_render(
+    *, workspace_path: Path, viewport: tuple[int, int] = (1600, 900),
+    locale: str = "en-US", target_kind: str = "svg",
+) -> DraftRender:
+    """Resolve one guided Draft without creating files or a second render pipeline."""
+    workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
+    if not isinstance(workspace_resource.contract, AuthoringWorkspaceContract):
+        raise ClosureError("E_AUTHORING_WORKSPACE_SCHEMA")
+    preset_selector = workspace_resource.contract.binding["preset"]
+    preset_path = _declared_child(workspace_path.parent, str(preset_selector["path"]))
+    preset_resource = _load_draft_resource("presentation-preset", preset_path)
+    if not isinstance(preset_resource.contract, PresentationPresetContract):
+        raise ClosureError("E_AUTHORING_PRESET_SCHEMA")
+    resources_by_path = {
+        str(declaration["path"]): yaml.safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
+        for declaration in (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
+    }
+    if not all(isinstance(value, dict) for value in resources_by_path.values()):
+        raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
+    try:
+        normalized = normalize_authoring_workspace(workspace_resource.contract, preset_resource.contract, resources_by_path)
+    except (AuthoringError, ContractError) as error:
+        raise ClosureError(str(error)) from error
+    resources = [_normalized_draft_resource(kind, source) for kind, source in normalized.draft_sources()]
+    binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
+    provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
+    return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
+                                        provenance=provenance)
+
+
+def _declared_child(root: Path, relative: str) -> Path:
+    candidate = (root / relative).resolve()
+    if root.resolve() not in candidate.parents:
+        raise ClosureError("E_AUTHORING_PRESET_PATH")
+    return candidate
+
+
+def _plain_value(value: Any) -> Any:
+    """Detach frozen contract containers for canonical provenance serialization."""
+    if isinstance(value, Mapping):
+        return {str(key): _plain_value(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_plain_value(item) for item in value]
+    return value
+
+
+def _normalized_draft_resource(kind: str, document: Mapping[str, Any]) -> ClosureResource:
+    payload = yaml.safe_dump(document, sort_keys=True).encode("utf-8")
+    identifier = _resource_id(kind, dict(document))
+    if not isinstance(identifier, str) or not identifier:
+        raise ClosureError("E_AUTHORING_NORMALIZATION")
+    identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
+    try:
+        contract = parse_contract(identity, document)
+    except ContractError as error:
+        raise ClosureError(str(error)) from error
+    return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
+
+
+def _draft_render_from_resources(
+    resources: list[ClosureResource], *, viewport: tuple[int, int], locale: str, target_kind: str,
+    provenance: GuidedAuthoringProvenance | None = None,
+) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
 
     try:
@@ -198,7 +277,7 @@ def resolve_draft_render(
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise ClosureError("E_CLOSURE_KIND")
-    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme), asset_root)
+    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, provenance), asset_root)
 
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
