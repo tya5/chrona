@@ -133,7 +133,7 @@ class SceneSurface:
     slots: tuple[SceneSlot, ...]
     rows: tuple[SceneRow, ...]
     groups: tuple[SceneGroup, ...]
-    scale_manifest: SurfaceScaleManifest
+    scale_manifest: SurfaceScaleManifest | None
     primitives: tuple[ScenePrimitive, ...] = ()
 
 

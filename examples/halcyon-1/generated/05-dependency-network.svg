@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img">
+<rect width="1600" height="900" fill="#FFFFFF"/>
+<text data-scene-id="title" data-source-ref="title" data-purpose="title-text" x="36" y="63.336" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="34" fill="#101828">HALCYON-1</text>
+<path data-scene-id="network-edge:avionics-bustest" data-source-ref="avionics-bustest" data-purpose="network-edge" d="M596.46 137.1L638.82 137.1" fill="none" stroke="#5B6B7F"/>
+<path data-scene-id="network-edge:avionics-cdr" data-source-ref="avionics-cdr" data-purpose="network-edge" d="M596.46 137.1L638.82 137.1L638.82 197.1" fill="none" stroke="#5B6B7F"/>
+<path data-scene-id="network-edge:bustest-integration" data-source-ref="bustest-integration" data-purpose="network-edge" d="M761.385 137.1L835.38 137.1" fill="none" stroke="#5B6B7F"/>
+<path data-scene-id="network-edge:campaign-frr" data-source-ref="campaign-frr" data-purpose="network-edge" d="M180 437.1L254.865 437.1L254.865 257.1" fill="none" stroke="#5B6B7F"/>
+<path data-scene-id="network-edge:delivery-integration" data-source-ref="delivery-integration" data-purpose="network-edge" d="M374.865 197.1L374.865 157.1L835.38 157.1L835.38 137.1" fill="none" stroke="#5B6B7F"/>
+<path data-scene-id="network-edge:frr-launch" data-source-ref="frr-launch" data-purpose="critical-edge" d="M408.24 257.1L408.24 197.1L466.41 197.1" fill="none" stroke="#C0392B"/>
+<path data-scene-id="network-edge:launch-leop" data-source-ref="launch-leop" data-purpose="critical-edge" d="M614.82 197.1L614.82 257.1L638.82 257.1" fill="none" stroke="#C0392B"/>
+<path data-scene-id="network-edge:leop-firstlight" data-source-ref="leop-firstlight" data-purpose="critical-edge" d="M811.38 257.1L811.38 197.1L835.38 197.1" fill="none" stroke="#C0392B"/>
+<path data-scene-id="network-edge:pdr-structure" data-source-ref="pdr-structure" data-purpose="network-edge" d="M230.865 137.1L254.865 137.1" fill="none" stroke="#5B6B7F"/>
+<path data-scene-id="network-edge:structure-avionics" data-source-ref="structure-avionics" data-purpose="network-edge" d="M442.41 137.1L466.41 137.1" fill="none" stroke="#5B6B7F"/>
+<path data-scene-id="network-edge:tvac-delivery" data-source-ref="tvac-delivery" data-purpose="network-edge" d="M225.885 257.1L225.885 197.1L254.865 197.1" fill="none" stroke="#5B6B7F"/>
+<rect data-scene-id="network-node:pdr" data-source-ref="pdr" data-purpose="network-node" x="60" y="119.1" width="170.865" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:optics" data-source-ref="optics" data-purpose="network-node" x="60" y="179.1" width="159.225" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:payload-tvac" data-source-ref="payload-tvac" data-purpose="network-node" x="60" y="239.1" width="165.885" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:tvac" data-source-ref="tvac" data-purpose="network-node" x="60" y="299.1" width="161.7" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:psr" data-source-ref="psr" data-purpose="network-node" x="60" y="359.1" width="120" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:campaign" data-source-ref="campaign" data-purpose="network-node" x="60" y="419.1" width="120" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:structure" data-source-ref="structure" data-purpose="network-node" x="254.865" y="119.1" width="187.545" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:payload-delivery" data-source-ref="payload-delivery" data-purpose="network-node" x="254.865" y="179.1" width="120" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:frr" data-source-ref="frr" data-purpose="network-node" x="254.865" y="239.1" width="153.375" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:avionics" data-source-ref="avionics" data-purpose="network-node" x="466.41" y="119.1" width="130.05" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:launch" data-source-ref="launch" data-purpose="network-node" x="466.41" y="179.1" width="148.41" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:bus-test" data-source-ref="bus-test" data-purpose="network-node" x="638.82" y="119.1" width="122.565" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:cdr" data-source-ref="cdr" data-purpose="network-node" x="638.82" y="179.1" width="141.69" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:leop" data-source-ref="leop" data-purpose="network-node" x="638.82" y="239.1" width="172.56" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:integration" data-source-ref="integration" data-purpose="network-node" x="835.38" y="119.1" width="145.905" height="36" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:first-light" data-source-ref="first-light" data-purpose="network-node" x="835.38" y="179.1" width="120" height="36" fill="#EEF2F7"/>
+<text data-scene-id="network-label:pdr" data-source-ref="pdr" data-purpose="title-text" x="60" y="140.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Preliminary design review</text>
+<text data-scene-id="network-label:optics" data-source-ref="optics" data-purpose="title-text" x="60" y="200.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Imager optics alignment</text>
+<text data-scene-id="network-label:payload-tvac" data-source-ref="payload-tvac" data-purpose="title-text" x="60" y="260.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Payload thermal-vacuum</text>
+<text data-scene-id="network-label:tvac" data-source-ref="tvac" data-purpose="title-text" x="60" y="320.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">System thermal-vacuum</text>
+<text data-scene-id="network-label:psr" data-source-ref="psr" data-purpose="title-text" x="68.325" y="380.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Pre-ship review</text>
+<text data-scene-id="network-label:campaign" data-source-ref="campaign" data-purpose="title-text" x="60.803" y="440.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Launch campaign</text>
+<text data-scene-id="network-label:structure" data-source-ref="structure" data-purpose="title-text" x="254.865" y="140.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Primary structure fabrication</text>
+<text data-scene-id="network-label:payload-delivery" data-source-ref="payload-delivery" data-purpose="title-text" x="255.255" y="200.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Payload delivered</text>
+<text data-scene-id="network-label:frr" data-source-ref="frr" data-purpose="title-text" x="254.865" y="260.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Flight readiness review</text>
+<text data-scene-id="network-label:avionics" data-source-ref="avionics" data-purpose="title-text" x="466.41" y="140.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Avionics integration</text>
+<text data-scene-id="network-label:launch" data-source-ref="launch" data-purpose="title-text" x="466.41" y="200.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Launch window opens</text>
+<text data-scene-id="network-label:bus-test" data-source-ref="bus-test" data-purpose="title-text" x="638.82" y="140.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Bus functional test</text>
+<text data-scene-id="network-label:cdr" data-source-ref="cdr" data-purpose="title-text" x="638.82" y="200.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Critical design review</text>
+<text data-scene-id="network-label:leop" data-source-ref="leop" data-purpose="title-text" x="638.82" y="260.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">LEOP and commissioning</text>
+<text data-scene-id="network-label:integration" data-source-ref="integration" data-purpose="title-text" x="835.38" y="140.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">Spacecraft integration</text>
+<text data-scene-id="network-label:first-light" data-source-ref="first-light" data-purpose="title-text" x="864.96" y="200.535" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">First light</text>
+</svg>

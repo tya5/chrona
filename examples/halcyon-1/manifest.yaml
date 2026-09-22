@@ -14,3 +14,6 @@ slides:
   - id: tvac-slip
     context: contexts/04-tvac-slip.yaml
     expectedSvg: generated/04-tvac-slip.svg
+  - id: dependency-network
+    context: contexts/05-dependency-network.yaml
+    expectedSvg: generated/05-dependency-network.svg
