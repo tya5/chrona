@@ -1,4 +1,4 @@
-version: chrona/actual-set/v0.1
+version: chrona/actual-set/v0.2
 kind: actual-set
 id: halcyon-1-observed-2027-08-20
 body:
@@ -17,5 +17,5 @@ body:
     - {id: station-final, sequence: 1, projectObjectId: station, actual: {start: '2027-04-19', finish: '2027-05-21', progress: 1}}
     - {id: mcs-final, sequence: 1, projectObjectId: mcs, actual: {start: '2027-03-08', finish: '2027-05-14', progress: 1}}
     - {id: comms-test-final, sequence: 1, projectObjectId: comms-test, actual: {start: '2027-05-24', finish: '2027-05-28', progress: 1}}
-    - {id: range-safety-unmapped, sequence: 1, externalIdentity: {system: range-safety, key: RS-2027-114}, alignment: unmatched, actual: {finish: '2027-08-13'}}
-    - {id: supplier-battery-unmapped, sequence: 1, externalIdentity: {system: supplier-portal, key: BAT-7}, alignment: unmatched, actual: {finish: '2027-04-01'}}
+    - {id: range-safety-unmapped, sequence: 1, externalIdentity: {system: range-safety, key: RS-2027-114}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: '2027-08-13'}}
+    - {id: supplier-battery-unmapped, sequence: 1, externalIdentity: {system: supplier-portal, key: BAT-7}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: '2027-04-01'}}
