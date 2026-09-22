@@ -1,4 +1,4 @@
-version: chrona/actual-set/v0.1
+version: chrona/actual-set/v0.2
 kind: actual-set
 id: aster-observed-2027-06-30
 body:
@@ -20,5 +20,5 @@ body:
     - {id: integration-final, sequence: 1, projectObjectId: integration, actual: {start: '2027-05-31', finish: '2027-06-17', progress: 1}}
     - {id: thermal-final, sequence: 1, projectObjectId: thermal, actual: {start: '2027-06-03', finish: '2027-06-28', progress: 1}}
     - {id: tooling-final, sequence: 1, projectObjectId: tooling, actual: {start: '2027-05-17', finish: '2027-06-14', progress: 1}}
-    - {id: supplier-lab-unmapped, sequence: 1, externalIdentity: {system: supplier-lab, key: NAND-R2}, alignment: unmatched, actual: {finish: '2027-03-09'}}
-    - {id: external-audit-unmapped, sequence: 1, externalIdentity: {system: audit-lab, key: KEY-17}, alignment: unmatched, actual: {finish: '2027-04-14'}}
+    - {id: supplier-lab-unmapped, sequence: 1, externalIdentity: {system: supplier-lab, key: NAND-R2}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: '2027-03-09'}}
+    - {id: external-audit-unmapped, sequence: 1, externalIdentity: {system: audit-lab, key: KEY-17}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: '2027-04-14'}}
