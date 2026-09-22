@@ -1,4 +1,27 @@
-# Project Schema v0.1 Notes
+# Schema inventory
+
+`schema-inventory-v0.1.yaml` is the exact machine-checked lifecycle index.
+Only `live` entries are authorable current contracts. `transitioning` entries
+are migration-only and record their successor and removal slice.
+
+| Kind | Live schema |
+| --- | --- |
+| actual-intake-batch | actual-intake-batch-v0.2.schema.yaml |
+| actual-set | actual-set-v0.2.schema.yaml |
+| automation-result | automation-result-v0.1.schema.yaml |
+| color-scheme | color-scheme-v0.1.schema.yaml |
+| command-request | command-request-v0.2.schema.yaml |
+| layout-profile | layout-profile-v0.2.schema.yaml |
+| profile-package | profile-v0.1.schema.yaml |
+| render-context | render-context-v0.7.schema.yaml |
+| review-detail-profile | review-detail-profile-v0.1.schema.yaml |
+| snapshot-ref | snapshot-ref-v0.2.schema.yaml |
+| store-config | store-config-v0.1.schema.yaml |
+| summary-profile | summary-profile-v0.2.schema.yaml |
+| theme | theme-v0.2.schema.yaml |
+| view | view-v0.2.schema.yaml |
+
+# Historical Project Schema v0.1 Notes
 
 The structural schema intentionally does not encode every semantic rule.
 
@@ -17,22 +40,10 @@ Schema validation is therefore stage 1, not full Core conformance.
 
 ## Presentation schemas
 
-`presentation-resource-v0.1.schema.yaml` defines the common Presentation resource
-envelope and shared reference shapes. `render-context-v0.1.schema.yaml` is the first
-kind-specific structural schema. It validates that a renderable evaluation explicitly
-binds its Project revision, presentation resources, locale, viewport, target
-capabilities, and layout metrics.
-
-The fixture under `../fixtures/presentation/` is structural only. The companion View,
-Style, Theme, and Scene profile resources deliberately use empty bodies until their
-respective semantic languages are specified. Passing this schema must not be described
-as a rendered-Scene or presentation conformance result.
-
-`review-detail-profile-v0.1.schema.yaml` owns the M23 authoring resource for selected
-group descriptions, milestone IDs, source-labelled observation rows, and detail wording.
-
-`layout-profile-v0.2.schema.yaml` is the M24 replacement authoring grammar for a
-stable-ID composition tree, intrinsic/fractional sizing, logical alignment, and bounded
-anchors/guides/barriers. `render-context-v0.4.schema.yaml` binds reusable Theme and
-Layout resources separately. They are design-complete schemas and become the only
-runtime path when M24 implementation deletes v0.1 Layout and bundled Preset authority.
+`presentation-resource-v0.1.schema.yaml` supplies shared envelope and reference
+definitions for the listed Presentation resources. The current
+`render-context-v0.7.schema.yaml` binds immutable Project and presentation
+references, viewport, locale, measured font assets, and one declared target.
+`layout-profile-v0.2.schema.yaml` defines the current intent-oriented composition
+grammar. `review-detail-profile-v0.1.schema.yaml` owns selected group descriptions,
+milestone IDs, and source-labelled review detail.

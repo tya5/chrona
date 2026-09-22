@@ -62,7 +62,7 @@ def parse_document(payload: str | bytes, schema_name: str) -> dict[str, Any]:
 def _schema_store() -> dict[str, Any]:
     names = (
         "revision-store-resource-ref-v0.1.schema.yaml",
-        "actual-intake-batch-v0.1.schema.yaml",
+        "actual-intake-batch-v0.2.schema.yaml",
         "actual-set-v0.2.schema.yaml",
         "command-request-v0.2.schema.yaml",
         "automation-result-v0.1.schema.yaml",

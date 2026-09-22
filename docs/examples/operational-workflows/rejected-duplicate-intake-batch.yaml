@@ -1,10 +1,12 @@
-version: chrona/actual-intake-batch/v0.1
-batchId: supplier-week-17-duplicate
-source:
-  system: supplier
-  contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-records:
-  - externalKey: FW-42
-    actual: {finish: "2026-04-18"}
-  - externalKey: FW-42
-    actual: {finish: "2026-04-19"}
+version: chrona/actual-intake-batch/v0.2
+kind: actual-intake-batch
+id: supplier-week-17-duplicate
+body:
+  source:
+    system: supplier
+    contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  records:
+    - externalKey: FW-42
+      actual: {finish: "2026-04-18"}
+    - externalKey: FW-42
+      actual: {finish: "2026-04-19"}
