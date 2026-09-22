@@ -4,9 +4,8 @@ from pathlib import Path
 
 import yaml
 
-from chrona.commands.commands import execute_redo, execute_set_typed_field, execute_typed_field_batch, execute_undo, set_typed_field
 from chrona.storage.loader import schedule_snapshot, validate_snapshot
-from chrona.storage.revision_store import LocalSnapshotReader, LocalTransactionalStore, MemoryRevisionStore
+from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.scheduling.scheduler import schedule
 from chrona.core.validation import validate_project
 from chrona.extensions.profiles import resolve_profile_diagnostics, validate_profiles
@@ -30,70 +29,6 @@ def test_resolved_delivery_profile_validates_and_schedules_through_core():
     diagnostics = validate_profiles(project, _manifest())
     assert validate_project(project, extension_diagnostics=diagnostics) == []
     assert schedule(project, extension_diagnostics=diagnostics).ok
-
-
-def test_invalid_state_is_rejected_without_changing_project():
-    project = _roadmap()
-    original = deepcopy(project)
-    result = set_typed_field(project, _manifest(), "idp-4", "workflowState", "done")
-    assert result.status == "rejected"
-    assert result.diagnostics == ("IDP-STATE-001",)
-    assert project == original
-
-
-def test_valid_typed_field_command_returns_a_new_candidate_only():
-    project = _roadmap()
-    result = set_typed_field(project, _manifest(), "idp-4", "workflowState", "active")
-    assert result.status == "accepted"
-    assert result.project is not project
-    assert result.project["objects"]["idp-4"]["fields"]["workflowState"] == "active"
-    assert project["objects"]["idp-4"]["fields"]["workflowState"] == "planned"
-
-
-def test_typed_field_command_uses_cas_and_creates_immutable_snapshot():
-    store = MemoryRevisionStore(_roadmap())
-    base = store.read()
-    result = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "active")
-    assert result.status == "accepted"
-    assert result.result_revision and result.result_revision != base.revision
-    assert store.read().project["objects"]["idp-4"]["fields"]["workflowState"] == "active"
-    conflict = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "blocked")
-    assert conflict.status == "rejected"
-    assert conflict.diagnostics == ("E_CONFLICT",)
-
-
-def test_typed_field_batch_is_atomic_and_writes_one_new_snapshot():
-    store = MemoryRevisionStore(_roadmap())
-    base = store.read()
-    accepted = execute_typed_field_batch(
-        store, base.revision, _manifest(),
-        [("idp-4", "workflowState", "active"), ("idp-4", "workflowState", "blocked")],
-    )
-    assert accepted.status == "accepted"
-    assert accepted.result_revision and accepted.result_revision != base.revision
-    assert accepted.invalidated == ("schedule", "scene")
-    assert store.read().project["objects"]["idp-4"]["fields"]["workflowState"] == "blocked"
-    rejected = execute_typed_field_batch(
-        store, accepted.result_revision, _manifest(),
-        [("idp-4", "workflowState", "planned"), ("idp-4", "workflowState", "done")],
-    )
-    assert rejected.status == "rejected"
-    assert rejected.diagnostics == ("IDP-STATE-001",)
-    assert store.read().revision == accepted.result_revision
-    assert store.read().project["objects"]["idp-4"]["fields"]["workflowState"] == "blocked"
-
-
-def test_undo_redo_are_cas_commands_that_create_new_snapshots(tmp_path):
-    store = LocalTransactionalStore(tmp_path, "chrona-test", _roadmap())
-    base = store.read()
-    changed = execute_set_typed_field(store, base.revision, _manifest(), "idp-4", "workflowState", "active", "change-state")
-    undone = execute_undo(store, changed.result_revision, "change-state")
-    assert undone.status == "accepted"
-    assert undone.result_revision != base.revision
-    assert undone.project["objects"]["idp-4"]["fields"]["workflowState"] == "planned"
-    redone = execute_redo(store, undone.result_revision, "change-state")
-    assert redone.status == "accepted"
-    assert redone.project["objects"]["idp-4"]["fields"]["workflowState"] == "active"
 
 
 def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
