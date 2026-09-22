@@ -1,11 +1,11 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.5"
-title: "Chrona View v0.5"
+$id: "chrona/view-v0.6"
+title: "Chrona View v0.6"
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
-      version: {const: "chrona/view/v0.5"}
+      version: {const: "chrona/view/v0.6"}
       kind: {const: view}
       body:
         type: object
@@ -101,6 +101,7 @@ allOf:
                     properties:
                       mode: {enum: [none, semantic, presentation, all]}
                       marker: {enum: [none, numbered]}
+              links: {enum: [none, title, row]}
               fallback:
                 type: object
                 additionalProperties: false

@@ -34,7 +34,7 @@ def test_draft_closure_accepts_optional_review_inputs():
 
 def test_draft_closure_reports_the_invalid_resource_schema_pointer(tmp_path):
     invalid_view = tmp_path / "view.yaml"
-    invalid_view.write_text("version: chrona/view/v0.5\nkind: view\nid: bad\nbody: {}\n", encoding="utf-8")
+    invalid_view.write_text("version: chrona/view/v0.6\nkind: view\nid: bad\nbody: {}\n", encoding="utf-8")
     with pytest.raises(ClosureError) as error:
         resolve_draft_render(**(_paths(_root()) | {"view_path": invalid_view}))
     assert error.value.diagnostic_id == "E_VIEW_SCHEMA"

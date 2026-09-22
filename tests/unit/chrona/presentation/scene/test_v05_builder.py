@@ -120,6 +120,44 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     assert next(item for item in surface.primitives if item.scene_id == "title").text_layout.font_size == 24
 
 
+def test_scene_projects_title_links_only_to_selected_current_title_cells():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)},
+                      None, None, ("planned",), link={"href": "https://example.test/a", "title": "Open A"})
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 2, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(
+        projection=projection,
+        surface_content=surface_content((("title", "Title"),), (("a", "title", "A"),),
+                                        link_mode="title", title_link_columns=("title",),
+                                        table_cell_objects=(("a", "title", "a", True),)),
+        layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
+        font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    cell = next(node for node in surface.primitives if node.scene_id == "cell:a:title")
+    mark = next(node for node in surface.primitives if node.scene_id == "planned:a")
+    assert (cell.href, cell.link_title) == ("https://example.test/a", "Open A")
+    assert mark.href is None
+
+
+def test_scene_projects_row_links_to_current_marks_but_not_actual_comparison_marks():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)},
+                      {"start": date(2026, 1, 2), "finish": date(2026, 2, 2)}, None, ("planned",),
+                      link={"href": "https://example.test/a"})
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 2, 2)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(
+        projection=projection, surface_content=surface_content(link_mode="row"),
+        layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
+        font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    assert next(node for node in surface.primitives if node.scene_id == "planned:a").href == "https://example.test/a"
+    assert next(node for node in surface.primitives if node.scene_id == "actual:a").href is None
+
+
 def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 11)}, None, None, ("planned",)),
                                   ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 6)}, None, None, ("planned",))),

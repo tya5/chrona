@@ -50,6 +50,8 @@ class ScenePrimitive:
     from_port_id: str | None = None
     to_port_id: str | None = None
     z_order: int = 0
+    href: str | None = None
+    link_title: str | None = None
 
     def __post_init__(self) -> None:
         """Preserve a non-empty completed purpose for existing positional builders."""

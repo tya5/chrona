@@ -184,6 +184,7 @@ class ViewVisibility:
     relations: str | FrozenDict
     annotations: str | FrozenDict
     fallback: FrozenDict | None = None
+    links: str = "none"
 
 
 @dataclass(frozen=True)
@@ -378,7 +379,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
     ("project", "timeline/v0.4"): "project-v0.4.schema.yaml",
-    ("view", "chrona/view/v0.5"): "view-v0.5.schema.yaml",
+    ("view", "chrona/view/v0.6"): "view-v0.6.schema.yaml",
     ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",
@@ -457,7 +458,7 @@ def _view_input(body: FrozenDict) -> ViewInput:
     raw_visibility = body["visibility"]
     _validate_view_fallback(raw_visibility.get("fallback"))
     visibility = ViewVisibility(raw_visibility["labels"], raw_visibility["relations"], raw_visibility["annotations"],
-                                raw_visibility.get("fallback"))
+                                raw_visibility.get("fallback"), str(raw_visibility.get("links", "none")))
     row_items = tuple(
         ViewRow(str(row["id"]), str(row["label"]) if "label" in row else None, int(row["depth"]),
                 str(row["parentRow"]) if "parentRow" in row else None,
