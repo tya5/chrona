@@ -101,6 +101,146 @@ class ResourceContract:
 
 
 @dataclass(frozen=True)
+class TableColumn:
+    """One schema-accepted View table-column declaration."""
+
+    id: str
+    source: str | FrozenDict
+    format: str
+    missing: str
+
+
+@dataclass(frozen=True)
+class ViewRowItem:
+    id: str
+    source_kind: str
+    source_object: str
+    track: str
+
+
+@dataclass(frozen=True)
+class ViewRow:
+    id: str
+    label: str | None
+    depth: int
+    parent_row: str | None
+    group: str | None
+    table_subject: str | None
+    items: tuple[ViewRowItem, ...]
+
+
+@dataclass(frozen=True)
+class ViewRows:
+    mode: str
+    items: tuple[ViewRow, ...]
+
+
+@dataclass(frozen=True)
+class ViewSelection:
+    ids: tuple[str, ...]
+    types: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ViewGrouping:
+    by: str
+    field: str | None
+    order: tuple[str, ...]
+    missing: str | None
+    presentation: str | None
+    depth: int | None
+    rollup: str | None
+
+
+@dataclass(frozen=True)
+class ViewOrdering:
+    by: str
+    direction: str
+    tie_break: str
+
+
+@dataclass(frozen=True)
+class ViewWindow:
+    mode: str
+    start: str | None
+    end: str | None
+    margin_days: int
+
+
+@dataclass(frozen=True)
+class ViewComparison:
+    baseline: str | None
+    actual: str
+    observation_selection: str | None
+    delta_unit: str | None
+    facets: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ViewVisibility:
+    labels: bool | FrozenDict
+    relations: str | FrozenDict
+    annotations: str | FrozenDict
+
+
+@dataclass(frozen=True)
+class ViewInput:
+    """Closed View v0.3 vocabulary after schema acceptance."""
+
+    selection: ViewSelection | None
+    grouping: ViewGrouping | None
+    ordering: ViewOrdering | None
+    window: ViewWindow
+    comparison: ViewComparison
+    visibility: ViewVisibility
+    layout_intent: FrozenDict
+    table_columns: tuple[TableColumn, ...]
+    annotations: tuple[FrozenDict, ...]
+    rows: ViewRows
+    axis: FrozenDict | None
+    markers: tuple[FrozenDict, ...]
+    shading: FrozenDict | None
+    time_presentation: FrozenDict | None
+    annotation_presentation: str | None
+
+
+@dataclass(frozen=True)
+class SummaryMetric:
+    id: str
+    label: str
+    source: str | FrozenDict
+    format: str
+    scope: str | None
+
+
+@dataclass(frozen=True)
+class SummaryPanelInput:
+    id: str
+    title: str | None
+    presentation: str
+    metrics: tuple[SummaryMetric | tuple[str, str], ...]
+
+
+@dataclass(frozen=True)
+class SummaryProfileInput:
+    panels: tuple[SummaryPanelInput, ...]
+
+
+@dataclass(frozen=True)
+class LegendEntry:
+    role: str
+    label: str
+
+
+@dataclass(frozen=True)
+class ReviewDetailInput:
+    group_details: tuple[FrozenDict, ...]
+    milestones: tuple[str, ...]
+    legend: tuple[LegendEntry, ...]
+    observations: FrozenDict | None
+
+
+@dataclass(frozen=True)
 class ActualSetContract(ResourceContract):
     observations_input: FrozenDict
 
@@ -118,12 +258,12 @@ class ProfilePackageContract(ResourceContract):
 
 @dataclass(frozen=True)
 class SummaryProfileContract(ResourceContract):
-    summary_input: FrozenDict
+    summary: SummaryProfileInput
 
 
 @dataclass(frozen=True)
 class ReviewDetailProfileContract(ResourceContract):
-    detail_input: FrozenDict
+    detail: ReviewDetailInput
 
 
 @dataclass(frozen=True)
@@ -134,7 +274,7 @@ class ProjectContract(ResourceContract):
 
 @dataclass(frozen=True)
 class ViewContract(ResourceContract):
-    projection_input: FrozenDict
+    view: ViewInput
 
 
 @dataclass(frozen=True)
@@ -270,6 +410,75 @@ def _schema_value(value: Any) -> Any:
     return value
 
 
+def _view_input(body: FrozenDict) -> ViewInput:
+    rows = body["rows"]
+    raw_selection = body.get("selection", FrozenDict())
+    raw_include = raw_selection.get("include", FrozenDict())
+    selection = ViewSelection(tuple(str(item) for item in raw_include.get("ids", ())),
+                              tuple(str(item) for item in raw_include.get("types", ()))) if raw_selection else None
+    raw_grouping = body.get("grouping")
+    grouping = (ViewGrouping(str(raw_grouping["by"]), str(raw_grouping["field"]) if "field" in raw_grouping else None,
+                             tuple(str(item) for item in raw_grouping.get("order", ())),
+                             str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
+                             str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
+                             int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
+                             str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None)
+                if raw_grouping else None)
+    raw_ordering = body.get("ordering")
+    ordering = (ViewOrdering(str(raw_ordering["by"]), str(raw_ordering["direction"]), str(raw_ordering["tieBreak"]))
+                if raw_ordering else None)
+    raw_window = body["window"]
+    window = ViewWindow(str(raw_window["mode"]), str(raw_window["start"]) if "start" in raw_window else None,
+                        str(raw_window["end"]) if "end" in raw_window else None, int(raw_window.get("marginDays", 0)))
+    raw_comparison = body["comparison"]
+    comparison = ViewComparison(str(raw_comparison["baseline"]) if "baseline" in raw_comparison else None,
+                                str(raw_comparison["actual"]),
+                                str(raw_comparison["observationSelection"]) if "observationSelection" in raw_comparison else None,
+                                str(raw_comparison["deltaUnit"]) if "deltaUnit" in raw_comparison else None,
+                                tuple(str(item) for item in raw_comparison.get("facets", ())))
+    raw_visibility = body["visibility"]
+    visibility = ViewVisibility(raw_visibility["labels"], raw_visibility["relations"], raw_visibility["annotations"])
+    row_items = tuple(
+        ViewRow(str(row["id"]), str(row["label"]) if "label" in row else None, int(row["depth"]),
+                str(row["parentRow"]) if "parentRow" in row else None,
+                str(row["group"]) if "group" in row else None,
+                str(row["tableSubject"]) if "tableSubject" in row else None,
+                tuple(ViewRowItem(str(item["id"]), str(item["source"]["kind"]),
+                                  str(item["source"]["object"]), str(item.get("track", "stacked")))
+                      for item in row.get("items", ())))
+        for row in rows.get("items", ()))
+    return ViewInput(
+        selection, grouping, ordering, window, comparison, visibility, body["layoutIntent"],
+        tuple(TableColumn(str(column["id"]), column["source"], str(column.get("format", "text")),
+                          str(column["missing"])) for column in body.get("tableColumns", ())),
+        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items), body.get("axis"),
+        tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
+        str(body["annotationPresentation"]) if "annotationPresentation" in body else None)
+
+
+def _summary_input(body: FrozenDict) -> SummaryProfileInput:
+    panels: list[SummaryPanelInput] = []
+    for panel in body["panels"]:
+        declared = panel["metrics"]
+        entries = declared.items() if isinstance(declared, FrozenDict) else ((item["id"], item) for item in declared)
+        metrics: list[SummaryMetric | tuple[str, str]] = []
+        for metric_id, definition in entries:
+            if isinstance(definition, FrozenDict):
+                metrics.append(SummaryMetric(str(metric_id), str(definition.get("label", metric_id)), definition["source"],
+                                             str(definition["format"]), str(definition["scope"]) if "scope" in definition else None))
+            else:
+                metrics.append((str(metric_id), str(definition)))
+        panels.append(SummaryPanelInput(str(panel["id"]), str(panel["title"]) if "title" in panel else None,
+                                        str(panel.get("presentation", "lines")), tuple(metrics)))
+    return SummaryProfileInput(tuple(panels))
+
+
+def _review_detail_input(body: FrozenDict) -> ReviewDetailInput:
+    return ReviewDetailInput(tuple(body.get("groupDetails", ())), tuple(str(item) for item in body.get("milestones", ())),
+                             tuple(LegendEntry(str(item["role"]), str(item["label"])) for item in body.get("legend", ())),
+                             body.get("observations"))
+
+
 def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> ResourceContract:
     """Validate an exact schema then construct its frozen, kind-specific contract."""
     frozen = freeze(value)
@@ -283,7 +492,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             raise ContractError("E_CLOSURE_KIND")
         return ProjectContract(identity, version, frozen, tuple(extensions))
     if identity.kind == "view":
-        return ViewContract(identity, version, frozen)
+        return ViewContract(identity, version, _view_input(body))
     if identity.kind == "theme":
         return ThemeContract(identity, version, frozen)
     if identity.kind == "color-scheme":
@@ -320,7 +529,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
     if identity.kind == "profile-package":
         return ProfilePackageContract(identity, version, str(frozen["packageId"]), frozen)
     if identity.kind == "summary-profile":
-        return SummaryProfileContract(identity, version, frozen)
+        return SummaryProfileContract(identity, version, _summary_input(body))
     if identity.kind == "review-detail-profile":
-        return ReviewDetailProfileContract(identity, version, frozen)
+        return ReviewDetailProfileContract(identity, version, _review_detail_input(body))
     raise ContractError("E_CLOSURE_KIND")

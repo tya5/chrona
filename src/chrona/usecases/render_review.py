@@ -22,6 +22,7 @@ from chrona.presentation.model.closure import RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent
+from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
@@ -104,7 +105,7 @@ class ClosureReadLedger:
 def render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
-    project, view, layout = (render_closure.project.scheduler_input, render_closure.view.projection_input,
+    project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
     theme = render_closure.resolved_theme.resolved_input
     ledger.required()
@@ -121,12 +122,12 @@ def render_review(request: RenderRequest) -> RenderedReview:
     environment = render_closure.context.environment
     asset_root = request.asset_root or request.snapshot_root / render_closure.context.theme.revision_token
     font_metrics = _font_metrics(theme, environment.font_metrics, asset_root)
-    summary = normalize_summary_content(render_closure.summary_profile.summary_input if render_closure.summary_profile else None,
+    summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None)
     if render_closure.summary_profile is not None:
         ledger.summary()
     source_inputs = _source_inputs(project, view, projection, summary,
-                                   render_closure.detail_profile.detail_input if render_closure.detail_profile else None)
+                                   render_closure.detail_profile.detail if render_closure.detail_profile else None)
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
@@ -140,7 +141,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     surface_content = normalize_v05_surface_content(
         projection, project, view,
         actual_set=render_closure.actual_set.observations_input if render_closure.actual_set else None,
-        detail=render_closure.detail_profile.detail_input if render_closure.detail_profile else None,
+        detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
         summary=summary,
         locale=environment.locale,
     )
@@ -170,7 +171,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     return RenderedReview(artifact, surface, frozenset(ledger.read))
 
 
-def _project_review(project: dict[str, Any], view: dict[str, Any], closure: RenderClosure,
+def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
                     manifests: dict[str, dict[str, Any]], scheduler: Scheduler) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
@@ -197,20 +198,19 @@ def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_roo
     return resolve_font_metrics(family, font_metrics, asset_root=asset_root)
 
 
-def _source_inputs(project: dict[str, Any], view: dict[str, Any], projection: Any,
-                   summary: SummaryContent, detail: dict[str, Any] | None = None) -> dict[str, SourceInput]:
+def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
+                   summary: SummaryContent, detail: ReviewDetailInput | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
-    detail_body = (detail or {}).get("body", {})
-    legend = tuple(str(item["label"]) for item in detail_body.get("legend", ()) if isinstance(item, dict))
+    legend = tuple(item.label for item in detail.legend) if detail is not None else ()
     return {
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
             tuple(row.label for row in rows) or tuple(item.title for item in projection.items),
-            row_count, len(view.get("body", {}).get("tableColumns", ())) or 1),
+            row_count, len(view.table_columns) or 1),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
         "summary": SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs)),
