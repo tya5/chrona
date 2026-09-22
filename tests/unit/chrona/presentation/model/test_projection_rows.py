@@ -111,6 +111,18 @@ def test_automatic_rows_overlay_the_selected_scenario_on_the_shared_track():
     ]
 
 
+def test_automatic_predecessor_policy_folds_a_point_with_one_selected_span_predecessor():
+    project = {"objects": {"task": {"title": "Task", "fields": {}}, "gate": {"title": "Gate", "fields": {}}},
+               "entities": {}, "relations": [{"id": "task-gate", "from": {"object": "task"}, "to": {"object": "gate"}}]}
+    view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), freeze({}), (), (),
+        ViewRows("automatic", (), "predecessor"), None, (), None, None, None)
+    projection = build_review_projection(project, {"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+                                                   "gate": {"at": date(2026, 1, 2)}}, view, None)
+    assert [(row.row_id, [item.object_id for item in row.items]) for row in projection.rows] == [("task", ["task", "gate"])]
+    assert projection.rows[0].items[1].track == "shared"
+
+
 def test_projection_carries_current_and_snapshot_analysis_without_crossing_them():
     project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
     historic = {"objects": {"task": {"title": "Historic", "fields": {}}}, "entities": {}}
