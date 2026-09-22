@@ -34,7 +34,21 @@ class NormalizedAuthoring:
     theme: ThemeContract
     color_scheme: ColorSchemeContract
     layout: LayoutProfileContract
-    documents: Mapping[str, Mapping[str, Any]]
+    project_source: Mapping[str, Any]
+    actual_source: Mapping[str, Any] | None
+    view_source: Mapping[str, Any]
+    theme_source: Mapping[str, Any]
+    color_scheme_source: Mapping[str, Any]
+    layout_source: Mapping[str, Any]
+
+    def draft_sources(self) -> tuple[tuple[str, Mapping[str, Any]], ...]:
+        """Internal typed-ingress handoff; never exposed to downstream use cases."""
+        return (
+            ("project", self.project_source),
+            *(((("actual-set", self.actual_source),) if self.actual_source is not None else ())),
+            ("view", self.view_source), ("theme", self.theme_source),
+            ("color-scheme", self.color_scheme_source), ("layout-profile", self.layout_source),
+        )
 
 
 def normalize_authoring_workspace(
@@ -59,7 +73,7 @@ def normalize_authoring_workspace(
     selected_scheme = _select_scheme(workspace, preset, resources_by_path, loaded["colorScheme"])
     view = deepcopy(loaded["view"])
     _apply_view_overrides(view, workspace.binding.get("overrides", {}).get("view", {}))
-    documents: dict[str, Mapping[str, Any]] = {
+    sources: dict[str, Mapping[str, Any]] = {
         "project": _project_document(workspace),
         **({"actual-set": _actual_document(workspace)} if workspace.actuals else {}),
         "view": view,
@@ -68,8 +82,8 @@ def normalize_authoring_workspace(
         "layout-profile": loaded["layout"],
     }
     contracts = {
-        kind: parse_contract(_identity(kind, document), document)
-        for kind, document in documents.items()
+        kind: parse_contract(_identity(kind, source), source)
+        for kind, source in sources.items()
     }
     if not isinstance(contracts["project"], ProjectContract) or not isinstance(contracts["view"], ViewContract):
         raise AuthoringError("E_AUTHORING_NORMALIZATION")
@@ -81,7 +95,9 @@ def normalize_authoring_workspace(
     if actual is not None and not isinstance(actual, ActualSetContract):
         raise AuthoringError("E_AUTHORING_NORMALIZATION")
     return NormalizedAuthoring(contracts["project"], actual, contracts["view"], contracts["theme"],
-                               contracts["color-scheme"], contracts["layout-profile"], documents)
+                               contracts["color-scheme"], contracts["layout-profile"], sources["project"],
+                               sources.get("actual-set"), sources["view"], sources["theme"],
+                               sources["color-scheme"], sources["layout-profile"])
 
 
 def _declared_resource(name: str, declaration: Mapping[str, Any], resources: Mapping[str, Mapping[str, Any]]) -> Mapping[str, Any]:
