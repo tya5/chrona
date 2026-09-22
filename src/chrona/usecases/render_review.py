@@ -28,6 +28,7 @@ from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.core.scenarios import resolve_scenario, ScenarioError
+from chrona.core.scenarios import ScenarioProvenance
 
 # Consumed through ``context["resolvedTheme"]`` rather than through the closure
 # accessor, so they are read by construction.
@@ -72,6 +73,7 @@ class RenderedReview:
     artifact: RenderArtifact
     surface: SceneSurface
     read_inputs: frozenset[str] = field(default_factory=frozenset)
+    scenario_provenance: tuple[ScenarioProvenance, ...] = ()
 
 
 class ClosureReadLedger:
@@ -114,7 +116,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
-    projection = _project_review(project, view, render_closure, manifests, request.scheduler)
+    projection, scenario_provenance = _project_review(project, view, render_closure, manifests, request.scheduler)
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -169,7 +171,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
                                tokens=scene_input.theme_tokens)
     if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
-    return RenderedReview(artifact, surface, frozenset(ledger.read))
+    return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance)
 
 
 def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
@@ -188,15 +190,18 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     if None in scenario_ids:
         raise RenderFailed("E_SCENARIO_REQUIRED", "Scenario source requires a scenario id", "view")
     scenarios = {}
+    provenance = []
     for scenario_id in sorted(scenario_ids):
         try:
-            scenario_project = resolve_scenario(project, scenario_id).project
+            resolved = resolve_scenario(project, scenario_id)
+            scenario_project = resolved.project
         except ScenarioError as error:
             raise RenderFailed(error.diagnostic.id, error.diagnostic.message, "scenario") from error
         scenario_result = scheduler.schedule(scenario_project)
         if not scenario_result.ok:
             raise RenderRejected(scenario_result.diagnostics)
         scenarios[scenario_id] = (scenario_project, scenario_result.placements)
+        provenance.append(resolved.provenance)
     return build_review_projection(
         project, result.placements, view, actual,
         snapshot_project=snapshot_project,
@@ -204,7 +209,7 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         scenarios=scenarios,
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
-    )
+    ), tuple(provenance)
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path) -> Any:
