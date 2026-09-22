@@ -44,7 +44,8 @@ def materialize_presentation_preset(workspace_path: Path, *, directory: str = "p
                 continue
             payload = yaml.safe_dump(sources[kind], sort_keys=False).encode()
             (staged / filename).write_bytes(payload)
-            written[kind] = {"id": str(sources[kind]["id"]), "kind": kind, "path": f"{directory}/{filename}", "contentIdentity": _digest_bytes(payload)}
+            identifier = sources[kind].get("id") if kind != "project" else sources[kind]["project"]["id"]
+            written[kind] = {"id": str(identifier), "kind": kind, "path": f"{directory}/{filename}", "contentIdentity": _digest_bytes(payload)}
         context = _context(sources, written)
         context_payload = yaml.safe_dump(context, sort_keys=False).encode()
         (staged / "context.yaml").write_bytes(context_payload)
