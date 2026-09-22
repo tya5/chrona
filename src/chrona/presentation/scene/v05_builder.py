@@ -236,6 +236,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         if placed.placement_id.startswith("legend-swatch:"):
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
                                              legend_binding.purpose, placed.source_ref, bounds, z_order=len(primitives)))
+        elif placed.placement_id.startswith("summary-bar:"):
+            summary_bar = semantic_binding("summaryBar")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
+                                             summary_bar.purpose, summary_bar.scene_role, bounds, z_order=len(primitives)))
         elif placed.placement_id.startswith("annotation-box:"):
             annotation_box = semantic_binding("annotationBox")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",

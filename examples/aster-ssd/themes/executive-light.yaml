@@ -30,6 +30,7 @@ body:
     timeline-axis-height: {type: number, value: 48}
     table-column-width: {type: number, value: 120}
     table-column-gutter: {type: number, value: 10}
+    table-indent: {type: number, value: 16}
     table-header-height: {type: number, value: 44}
   roles:
     text: {fontFamily: editorial, fontWeight: text-weight, fontSize: text-size, lineHeight: text-line-height}
@@ -50,6 +51,7 @@ body:
     'group:fw-team.fill': category
     'group:validation-team.fill': category
     planned.fill: accent
+    summary-bar.fill: accent
     snapshot.fill: neutral
     actual.fill: positive
     as-of.stroke: warning
@@ -72,4 +74,5 @@ body:
     timeline.axis.blockSize: timeline-axis-height
     table.column.minInlineSize: table-column-width
     table.column.gutter.inlineSize: table-column-gutter
+    table.indent.inlineSize: table-indent
     table.header.blockSize: table-header-height

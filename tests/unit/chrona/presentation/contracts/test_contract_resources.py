@@ -34,6 +34,21 @@ def test_contract_rejects_schema_invalid_mandatory_resource():
         parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
 
 
+def test_summary_subtree_scope_is_limited_to_a_typed_object_planned_source():
+    identity = ClosureIdentity("summary-profile", "summary", "r", "sha256:" + "a" * 64)
+    value = {
+        "version": "chrona/summary-profile/v0.1", "kind": "summary-profile", "id": "summary",
+        "body": {"panels": [{"id": "completion", "metrics": {
+            "planned": {"source": {"object": "programme", "facet": "planned"},
+                        "scope": "subtree", "format": "date"},
+        }}]},
+    }
+    assert isinstance(parse_contract(identity, value), SummaryProfileContract)
+    value["body"]["panels"][0]["metrics"]["planned"]["source"] = "planned.nextPoint"
+    with pytest.raises(ContractError, match="E_RESOURCE_SCHEMA"):
+        parse_contract(identity, value)
+
+
 def test_resource_contracts_have_no_generic_document_or_body_escape_hatch():
     contracts = (
         ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,

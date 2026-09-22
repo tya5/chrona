@@ -177,6 +177,31 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
                for item in surface.primitives)
 
 
+def test_scene_projects_layout_completed_rollup_summary_bar():
+    rollup = ReviewItem("programme", "Programme", "span",
+                        {"start": date(2026, 1, 1), "end": date(2026, 1, 10)},
+                        None, None, (), item_id="programme", source_kind="primary")
+    row = ReviewRowProjection("programme", "Programme", "", "programme", (rollup,),
+                              rollup_presentation="bar")
+    projection = ReviewProjection((rollup,), (date(2026, 1, 1), date(2026, 1, 10)), (), (), (row,))
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(9)})
+    value = build_scene_input(projection=projection, surface_content=surface_content(),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+
+    surface = compose_review_surface(value)
+    summary_bar = next(item for item in surface.primitives if item.scene_id == "summary-bar:programme")
+
+    assert summary_bar.kind == "Rect"
+    assert summary_bar.purpose == "summary-bar"
+    assert summary_bar.visual_role == "summary-bar"
+    assert summary_bar.bounds[2] > 0
+    assert summary_bar.bounds[3] == 3
+
+
 def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
     projection = ReviewProjection((
         ReviewItem("a", "A very long label", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, ()),

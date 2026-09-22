@@ -1,4 +1,4 @@
-version: chrona/view/v0.1
+version: chrona/view/v0.3
 kind: view
 id: controller-risk-review
 body:
@@ -15,3 +15,4 @@ body:
       anchor: {kind: object, id: firmware, endpoint: body}
       placement: {side: above, alignment: end}
       text: Supplier confirmation pending
+  rows: {mode: automatic}

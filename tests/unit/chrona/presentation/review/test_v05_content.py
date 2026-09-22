@@ -126,6 +126,41 @@ def test_target_summary_figure_list_form_is_resolved_without_copied_values():
     )
 
 
+def test_subtree_summary_normalizes_latest_selected_primary_planned_completion():
+    projection = ReviewProjection((
+        ReviewItem("programme", "Programme", "span", {"start": date(2026, 3, 1), "end": date(2026, 3, 4)}, None, None, (),
+                   hierarchy_path=("programme",)),
+        ReviewItem("build", "Build", "span", {"start": date(2026, 3, 2), "end": date(2026, 3, 9)}, None, None, (),
+                   hierarchy_path=("programme", "build")),
+        ReviewItem("launch", "Launch", "point", {"at": date(2026, 3, 12)}, None, None, (),
+                   hierarchy_path=("programme", "launch")),
+        ReviewItem("baseline", "Baseline", "span", {"start": date(2026, 3, 1), "end": date(2026, 4, 1)}, None, None, (),
+                   item_id="baseline", source_kind="snapshot", hierarchy_path=("programme", "build")),
+    ), (date(2026, 3, 1), date(2026, 3, 12)), (), (), hierarchy_grouping=True)
+    summary = {"body": {"panels": [{"id": "completion", "metrics": {
+        "planned": {"label": "Complete", "source": {"object": "programme", "facet": "planned"},
+                    "scope": "subtree", "format": "date"},
+    }}]}}
+
+    content = normalize_summary_content(summary, projection, None)
+
+    assert tuple(run.content for run in content.runs) == ("completion", "Complete: 2026-03-12")
+
+
+@pytest.mark.parametrize("projection", (
+    ReviewProjection((ReviewItem("programme", "Programme", "span", {"start": date(2026, 3, 1), "end": date(2026, 3, 4)}, None, None, (),
+                                 hierarchy_path=("programme",)),), (date(2026, 3, 1), date(2026, 3, 4)), (), ()),
+    ReviewProjection((ReviewItem("other", "Other", "span", {"start": date(2026, 3, 1), "end": date(2026, 3, 4)}, None, None, (),
+                                 hierarchy_path=("other",)),), (date(2026, 3, 1), date(2026, 3, 4)), (), (), hierarchy_grouping=True),
+))
+def test_subtree_summary_rejects_non_hierarchy_or_unselected_root(projection):
+    summary = {"body": {"panels": [{"id": "completion", "metrics": {
+        "planned": {"source": {"object": "programme", "facet": "planned"}, "scope": "subtree", "format": "date"},
+    }}]}}
+    with pytest.raises(ValueError, match="E_PRESENTATION_SUMMARY_SOURCE"):
+        normalize_summary_content(summary, projection, None)
+
+
 def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 3, 1), "end": date(2026, 3, 2)}, None, 2, ()),),
                                   (date(2026, 3, 1), date(2026, 3, 8)), (), ())

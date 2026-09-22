@@ -87,6 +87,7 @@ class RowPlacement:
     object_id: str
     group_id: str
     bounds: Rect
+    depth: int = 0
 
 
 @dataclass(frozen=True)
