@@ -42,9 +42,15 @@ def test_required_slots_are_slots():
 
 def test_every_semantic_resolves_and_is_unique():
     bindings = [semantic_binding(semantic_id) for semantic_id in semantic_ids()]
-    assert len({binding.purpose for binding in bindings}) == len(bindings), "two semantics share one purpose"
+    assert len({(binding.purpose, binding.scene_role) for binding in bindings}) == len(bindings), "two semantics share one render-facing identity"
     assert all(binding.primitive_kind for binding in bindings)
     assert all(binding.theme_role for binding in bindings)
+
+
+def test_dependency_variants_share_the_subject_but_not_the_scene_role():
+    regular, critical = semantic_binding("dependency"), semantic_binding("dependency-critical")
+    assert regular.purpose == critical.purpose == "dependency"
+    assert regular.scene_role != critical.scene_role
 
 
 @pytest.mark.parametrize("svg_path", GENERATED, ids=lambda path: f"{path.parents[1].name}/{path.stem}")
