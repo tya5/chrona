@@ -104,6 +104,13 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
     if "facet" in source:
         return {"planned": item.planned, "actual": item.actual,
                 "finishDelta": item.finish_delta}.get(source["facet"])
+    if "scenario" in source:
+        if item.source_kind != "scenario" or item.scenario_id is None:
+            return None
+        if source["scenario"] == "id":
+            return item.scenario_id
+        declared = project.get("scenarios", {}).get(item.scenario_id, {})
+        return declared.get("title") if isinstance(declared, dict) else None
     facet = source["comparisonFacet"]
     return {"finishDelta": item.finish_delta, "missingActual": not bool(item.actual),
             "progress": (item.actual or {}).get("progress")}.get(facet)

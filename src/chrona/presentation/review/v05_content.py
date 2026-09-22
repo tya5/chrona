@@ -178,7 +178,8 @@ def _missing_actual_display(item: Any, as_of: date | None) -> str:
 
 
 def normalize_summary_content(summary: SummaryProfileInput | None, projection: ReviewProjection,
-                              actual_set: Mapping[str, Any] | None) -> SummaryContent:
+                              actual_set: Mapping[str, Any] | None,
+                              project: Mapping[str, Any] | None = None) -> SummaryContent:
     """Resolve summary-profile facts once, before source measurement and Layout."""
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
@@ -204,6 +205,10 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                         ahead = sum(item.finish_delta < 0 for item in projection.items if item.finish_delta is not None)
                         values["counts.finishDelta"] = f"{behind} / {ahead}"
                         source = "counts.finishDelta"
+                    elif source.get("scenario") in {"id", "title"}:
+                        values[f"scenario.{source['scenario']}"] = _scenario_summary_value(
+                            projection, project or {}, source["scenario"])
+                        source = f"scenario.{source['scenario']}"
                     elif isinstance(source.get("object"), str) and source.get("facet") == "planned":
                         if definition.scope == "subtree":
                             values[f"object.{source['object']}.planned"] = _subtree_planned_completion(
@@ -238,6 +243,20 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                                             f"{metric_id}: {literal}", "summary"))
         panels.append(SummaryPanel(panel.id, tuple(runs)))
     return SummaryContent(tuple(panels))
+
+
+def _scenario_summary_value(projection: ReviewProjection, project: Mapping[str, Any], selector: str) -> str | None:
+    """Resolve only Scenario identities that the View has actually selected."""
+    scenario_ids = tuple(sorted({item.scenario_id for row in projection.rows for item in row.items
+                                 if item.source_kind == "scenario" and item.scenario_id is not None}))
+    if not scenario_ids:
+        return None
+    if selector == "id":
+        return ", ".join(scenario_ids)
+    declarations = project.get("scenarios", {})
+    titles = tuple(declarations.get(item, {}).get("title") for item in scenario_ids
+                   if isinstance(declarations, Mapping) and isinstance(declarations.get(item), Mapping))
+    return ", ".join(titles) if len(titles) == len(scenario_ids) and all(isinstance(item, str) for item in titles) else None
 
 
 def _subtree_planned_completion(projection: ReviewProjection, root_id: str) -> date:

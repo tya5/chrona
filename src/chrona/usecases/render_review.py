@@ -126,7 +126,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     asset_root = request.asset_root or request.snapshot_root / render_closure.context.theme.revision_token
     font_metrics = _font_metrics(theme, environment.font_metrics, asset_root)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
-                                        projection, render_closure.actual_set.observations_input if render_closure.actual_set else None)
+                                        projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
+                                        project)
     if render_closure.summary_profile is not None:
         ledger.summary()
     source_inputs = _source_inputs(project, view, projection, summary,

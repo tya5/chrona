@@ -54,6 +54,20 @@ def test_summary_subtree_scope_is_limited_to_a_typed_object_planned_source():
         parse_contract(identity, value)
 
 
+def test_summary_scenario_source_is_closed_to_id_or_title():
+    identity = ClosureIdentity("summary-profile", "summary", "r", "sha256:" + "a" * 64)
+    value = {
+        "version": "chrona/summary-profile/v0.1", "kind": "summary-profile", "id": "summary",
+        "body": {"panels": [{"id": "scenario", "metrics": {
+            "hypothesis": {"source": {"scenario": "title"}, "format": "text"},
+        }}]},
+    }
+    assert isinstance(parse_contract(identity, value), SummaryProfileContract)
+    value["body"]["panels"][0]["metrics"]["hypothesis"]["source"] = {"scenario": "unknown"}
+    with pytest.raises(ContractError, match="E_RESOURCE_SCHEMA"):
+        parse_contract(identity, value)
+
+
 def test_resource_contracts_have_no_generic_document_or_body_escape_hatch():
     contracts = (
         ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,
