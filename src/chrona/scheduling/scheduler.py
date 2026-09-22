@@ -16,10 +16,21 @@ from chrona.core.validation import validate_project
 class ScheduleResult:
     placements: dict[str, dict[str, date]]
     diagnostics: list[Diagnostic]
+    analysis: "ScheduleAnalysis | None" = None
 
     @property
     def ok(self) -> bool:
         return not self.diagnostics
+
+
+@dataclass(frozen=True)
+class ScheduleAnalysis:
+    """Immutable backward-pass evidence derived from one successful schedule."""
+
+    latest_placements: dict[str, dict[str, date]]
+    total_float: dict[str, int]
+    critical: frozenset[str]
+    component_targets: dict[str, date]
 
 
 def schedule(
@@ -94,7 +105,8 @@ def schedule(
 
     _validate_fixed_targets(project, placements, calendars, diagnostics)
     ordered = {object_id: placements[object_id] for object_id in objects if object_id in placements}
-    return ScheduleResult(ordered, diagnostics)
+    analysis = _analyze_criticality(project, ordered, calendars) if not diagnostics else None
+    return ScheduleResult(ordered, diagnostics, analysis)
 
 
 class ReferenceScheduler:
@@ -102,7 +114,7 @@ class ReferenceScheduler:
 
     def schedule(self, project: dict[str, Any], *, extension_diagnostics=()) -> ScheduleOutcome:
         result = schedule(project, extension_diagnostics=extension_diagnostics)
-        return ScheduleOutcome(result.placements, tuple(result.diagnostics))
+        return ScheduleOutcome(result.placements, tuple(result.diagnostics), result.analysis)
 
 
 def _fixed_placement(raw: dict[str, Any]) -> dict[str, date]:
@@ -207,6 +219,136 @@ def _validate_fixed_targets(project: dict, placements: dict, calendars: dict[str
         actual = placements[target_id][relation["to"]["endpoint"]]
         if actual < required:
             diagnostics.append(Diagnostic("E_FIXED_TARGET_VIOLATION", "Fixed target violates dependency lower bound", f"/relations/{relation.get('id', target_id)}"))
+
+
+def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str, date]],
+                         calendars: dict[str, Calendar]) -> ScheduleAnalysis:
+    """Run a bounded reverse pass over already validated, acyclic placements."""
+    objects = project["objects"]
+    eligible = {object_id for object_id, item in objects.items()
+                if object_id in placements and item["schedule"]["mode"] != "rollup"}
+    components = _dependency_components(project, eligible)
+    latest: dict[str, dict[str, date]] = {}
+    component_targets: dict[str, date] = {}
+    for component in components:
+        target = max(_placement_finish(placements[object_id]) for object_id in component)
+        component_key = min(component)
+        component_targets[component_key] = target
+        for object_id in component:
+            latest[object_id] = _latest_at_target(object_id, objects[object_id], placements[object_id], target, project, calendars)
+
+    # Each reverse dependency converts the target's current latest endpoint
+    # into an upper bound for the source endpoint.  Dates only decrease, so a
+    # finite bounded relaxation reaches the same result as reverse topological order.
+    relations = tuple(relation for relation in project.get("relations", ())
+                      if relation["from"]["object"] in eligible and relation["to"]["object"] in eligible)
+    for _ in range(max(1, len(eligible) * max(1, len(relations)))):
+        changed = False
+        for relation in relations:
+            source_id, target_id = relation["from"]["object"], relation["to"]["object"]
+            target_value = latest[target_id][relation["to"]["endpoint"]]
+            amount = relation.get("lag", "0d")
+            amount_value = amount if isinstance(amount, str) else amount["value"]
+            calendar = _relation_calendar(relation, project, calendars)
+            bound = retreat(target_value, amount_value, calendar)
+            changed |= _cap_latest_endpoint(source_id, relation["from"]["endpoint"], bound,
+                                            latest, objects, project, calendars)
+        if not changed:
+            break
+
+    total_float: dict[str, int] = {}
+    for object_id in eligible:
+        early, late = _placement_start(placements[object_id]), _placement_start(latest[object_id])
+        total_float[object_id] = _calendar_distance(early, late, _object_calendar(objects[object_id], project, calendars))
+    return ScheduleAnalysis(latest, total_float,
+                            frozenset(object_id for object_id, value in total_float.items() if value == 0),
+                            component_targets)
+
+
+def _dependency_components(project: dict[str, Any], eligible: set[str]) -> tuple[frozenset[str], ...]:
+    neighbours = {object_id: set() for object_id in eligible}
+    for relation in project.get("relations", ()):
+        source, target = relation["from"]["object"], relation["to"]["object"]
+        if source in eligible and target in eligible:
+            neighbours[source].add(target)
+            neighbours[target].add(source)
+    output: list[frozenset[str]] = []
+    unseen = set(eligible)
+    while unseen:
+        start, component, pending = min(unseen), set(), [min(unseen)]
+        while pending:
+            current = pending.pop()
+            if current in component:
+                continue
+            component.add(current)
+            pending.extend(neighbours[current] - component)
+        unseen -= component
+        output.append(frozenset(component))
+    return tuple(output)
+
+
+def _placement_start(value: dict[str, date]) -> date:
+    return value["start"] if "start" in value else value["at"]
+
+
+def _placement_finish(value: dict[str, date]) -> date:
+    return value["end"] if "end" in value else value["at"]
+
+
+def _object_calendar(item: dict[str, Any], project: dict[str, Any], calendars: dict[str, Calendar]) -> Calendar | None:
+    calendar_id = item.get("calendar") or project.get("project", {}).get("calendar")
+    return calendars.get(calendar_id)
+
+
+def _relation_calendar(relation: dict[str, Any], project: dict[str, Any], calendars: dict[str, Calendar]) -> Calendar | None:
+    lag = relation.get("lag", "0d")
+    amount = lag if isinstance(lag, str) else lag["value"]
+    calendar_id = (lag.get("calendar") if isinstance(lag, dict) else None) or project["objects"][relation["to"]["object"]].get("calendar") or project.get("project", {}).get("calendar")
+    return calendars.get(calendar_id) if requires_working_calendar(amount) else None
+
+
+def _latest_at_target(object_id: str, item: dict[str, Any], early: dict[str, date], target: date,
+                      project: dict[str, Any], calendars: dict[str, Calendar]) -> dict[str, date]:
+    raw = item["schedule"]
+    if raw["mode"] == "fixed" or raw.get("anchor"):
+        return dict(early)
+    if "at" in early:
+        return {"at": target}
+    amount = raw["amount"]
+    calendar = _object_calendar(item, project, calendars) if requires_working_calendar(amount) else None
+    end = min(target, as_date(raw.get("constraints", {}).get("end", {}).get("max", target)))
+    return {"start": retreat(end, amount, calendar), "end": end}
+
+
+def _cap_latest_endpoint(object_id: str, endpoint: str, bound: date,
+                         latest: dict[str, dict[str, date]], objects: dict[str, Any],
+                         project: dict[str, Any], calendars: dict[str, Calendar]) -> bool:
+    item, value = objects[object_id], latest[object_id]
+    raw = item["schedule"]
+    if raw["mode"] == "fixed" or raw.get("anchor"):
+        return False
+    if endpoint == "at":
+        if bound >= value["at"]:
+            return False
+        value["at"] = bound
+        return True
+    amount = raw["amount"]
+    calendar = _object_calendar(item, project, calendars) if requires_working_calendar(amount) else None
+    candidate_end = bound if endpoint == "end" else advance(bound, amount, calendar)
+    if candidate_end >= value["end"]:
+        return False
+    value["end"] = candidate_end
+    value["start"] = retreat(candidate_end, amount, calendar)
+    return True
+
+
+def _calendar_distance(early: date, late: date, calendar: Calendar | None) -> int:
+    if late < early:
+        raise TemporalError("Latest placement precedes earliest placement")
+    if calendar is None:
+        return (late - early).days
+    return sum(1 for ordinal in range(early.toordinal() + 1, late.toordinal() + 1)
+               if calendar.is_working(date.fromordinal(ordinal)))
 
 
 def _has_positive_dependency_cycle(project: dict) -> bool:

@@ -33,6 +33,7 @@ class ScheduleOutcome:
 
     placements: Mapping[str, Mapping[str, date]]
     diagnostics: Sequence[Diagnostic]
+    analysis: Any | None = None
 
     @property
     def ok(self) -> bool:
