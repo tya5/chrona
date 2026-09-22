@@ -28,7 +28,9 @@ derived output.
 ## 2. Source and resource contracts
 
 `authoring-workspace/v0.1` is a closed document with compact `project`, optional
-`actuals`, and exactly one `presentation` member.  Project spelling normalizes to
+`actuals`, and exactly one mode-discriminated `presentation` member. Guided mode carries
+a binding; explicit mode carries exact local View, Theme, Scheme, Layout, Render Context,
+and receipt references and has no binding or inheritance edge. Project spelling normalizes to
 Project v0.5; observations normalize to Actual Set v0.2.  Those existing schemas remain
 the semantic acceptance authority.  The compact document cannot express derived or
 renderer-local state.
@@ -75,6 +77,8 @@ pinned preset and binding once, atomically writes canonical local View, Theme, S
 Layout, and Render Context resources, switches the workspace to `explicit`, and writes
 a receipt.  The receipt records preset and binding identities, normalizer version, and
 generated resource identities; it is provenance, never a fallback inheritance edge.
+The explicit workspace is evaluated only through its ordinary explicit resource closure;
+the Authoring Normalizer never reads explicit mode.
 
 ## 4. Mutation, closure, and evidence
 
