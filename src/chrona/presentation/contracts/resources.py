@@ -142,6 +142,8 @@ class ViewRows:
 class ViewSelection:
     ids: tuple[str, ...]
     types: tuple[str, ...]
+    object_types: tuple[str, ...] = ()
+    excluded_object_types: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -459,8 +461,11 @@ def _view_input(body: FrozenDict) -> ViewInput:
     rows = body["rows"]
     raw_selection = body.get("selection", FrozenDict())
     raw_include = raw_selection.get("include", FrozenDict())
+    raw_exclude = raw_selection.get("exclude", FrozenDict())
     selection = ViewSelection(tuple(str(item) for item in raw_include.get("ids", ())),
-                              tuple(str(item) for item in raw_include.get("types", ()))) if raw_selection else None
+                              tuple(str(item) for item in raw_include.get("types", ())),
+                              tuple(str(item) for item in raw_include.get("objectTypes", ())),
+                              tuple(str(item) for item in raw_exclude.get("objectTypes", ()))) if raw_selection else None
     raw_grouping = body.get("grouping")
     grouping = (ViewGrouping(str(raw_grouping["by"]), str(raw_grouping["field"]) if "field" in raw_grouping else None,
                              tuple(str(item) for item in raw_grouping.get("order", ())),

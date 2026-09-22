@@ -1,4 +1,5 @@
 from datetime import date
+from dataclasses import replace
 
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import table_value
@@ -179,3 +180,23 @@ def test_hierarchy_selection_expands_predicate_roots_to_the_inclusive_depth_limi
     design = projection.items[-1]
     assert table_value(design, project, "wbsCode") == "1.1"
     assert table_value(design, project, "path") == "Programme / Design"
+
+
+def test_object_type_selection_intersects_geometry_and_exclusion_before_rows():
+    project = {"objects": {
+        "task-span": {"type": "task", "title": "Task", "fields": {}},
+        "gate-point": {"type": "gate", "title": "Gate", "fields": {}},
+        "phase-span": {"type": "phase", "title": "Phase", "fields": {}},
+    }, "entities": {}}
+    view = typed_view({"body": {"comparison": {"actual": "optional"},
+        "selection": {"include": {"types": ["span"], "objectTypes": ["task", "phase"]},
+                      "exclude": {"objectTypes": ["phase"]}},
+        "window": {"mode": "selected-planned"}, "rows": {"mode": "automatic"}}})
+    view = replace(view, selection=ViewSelection(view.selection.ids, view.selection.types,
+                                                  ("task", "phase"), ("phase",)))
+    projection = build_review_projection(project, {
+        "task-span": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+        "gate-point": {"at": date(2026, 1, 2)},
+        "phase-span": {"start": date(2026, 1, 2), "end": date(2026, 1, 3)},
+    }, view, None)
+    assert [item.object_id for item in projection.items] == ["task-span"]
