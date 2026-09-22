@@ -6,6 +6,7 @@ from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGrouping, ViewInput, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
     ViewVisibility, ViewWindow, freeze,
 )
+from chrona.scheduling.scheduler import ScheduleAnalysis
 
 
 def typed_view(value):
@@ -75,6 +76,24 @@ def test_explicit_row_resolves_named_snapshot_item():
         snapshot_placements={"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}})
     assert [(item.source_kind, item.title, item.planned["start"]) for item in projection.rows[0].items] == [
         ("snapshot", "Historic", date(2026, 1, 1)), ("primary", "Current", date(2026, 2, 1))]
+
+
+def test_projection_carries_current_and_snapshot_analysis_without_crossing_them():
+    project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
+    historic = {"objects": {"task": {"title": "Historic", "fields": {}}}, "entities": {}}
+    view = {"body": {"comparison": {"actual": "optional"}, "window": {"mode": "selected-planned"},
+        "rows": {"mode": "explicit", "items": [{"id": "r", "depth": 0, "items": [
+            {"id": "old", "source": {"kind": "snapshot", "object": "task"}},
+            {"id": "now", "source": {"kind": "primary", "object": "task"}}]}]}}}
+    current_analysis = ScheduleAnalysis({}, {"task": 3}, frozenset(), {"task": date(2026, 2, 2)})
+    snapshot_analysis = ScheduleAnalysis({}, {"task": 0}, frozenset({"task"}), {"task": date(2026, 1, 2)})
+    projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}},
+        typed_view(view), None, snapshot_project=historic,
+        snapshot_placements={"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}},
+        analysis=current_analysis, snapshot_analysis=snapshot_analysis)
+    old, now = projection.rows[0].items
+    assert (old.total_float, old.critical, now.total_float, now.critical) == (0, True, 3, False)
+    assert table_value(now, project, "totalFloat") == 3
 
 
 def test_explicit_parent_row_must_assert_the_project_parent_edge():

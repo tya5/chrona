@@ -91,7 +91,7 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
             return " / ".join(str(project.get("objects", {}).get(object_id, {}).get("title", object_id))
                               for object_id in item.hierarchy_path)
         return {"id": item.object_id, "title": item.title, "objectType": item.source_type,
-                "entity": item.group_label, "rowIndex": row_index,
+                "entity": item.group_label, "rowIndex": row_index, "totalFloat": item.total_float,
                 "wbsCode": item.wbs_code}.get(source)
     if "field" in source:
         return (item.fields or {}).get(source["field"])

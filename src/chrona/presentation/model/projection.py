@@ -32,6 +32,8 @@ class ReviewItem:
     hierarchy_path: tuple[str, ...] = ()
     is_rollup: bool = False
     presentation: dict[str, Any] | None = None
+    total_float: int | None = None
+    critical: bool = False
 
 
 @dataclass(frozen=True)
@@ -91,7 +93,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                             style: dict[str, Any] | None = None,
                             theme: dict[str, Any] | None = None,
                             snapshot_project: dict[str, Any] | None = None,
-                            snapshot_placements: dict[str, dict[str, date]] | None = None) -> ReviewProjection:
+                            snapshot_placements: dict[str, dict[str, date]] | None = None,
+                            analysis: Any | None = None,
+                            snapshot_analysis: Any | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
     if view.comparison.actual == "required" and actual_set is None:
         raise ValueError("E_ACTUAL_REQUIRED")
@@ -115,25 +119,28 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             hierarchy_root_ids.add(object_id)
         actual = _actual(latest.get(object_id))
         finish_delta = _finish_delta(planned, actual)
+        total_float = analysis.total_float.get(object_id) if analysis is not None else None
+        critical = object_id in analysis.critical if analysis is not None else False
         entry = hierarchy_entries.get(object_id)
         group_id = _group_id(project, object_id, source_type, grouping)
         selected.append(ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, actual, finish_delta, _roles(style, source_type, actual, finish_delta),
+            planned, actual, finish_delta, _roles(style, source_type, actual, finish_delta, critical),
             group_id, str(project.get("entities", {}).get(group_id, {}).get("title", group_id)),
             dict(project["objects"][object_id].get("fields", {})), object_id, "primary",
             parent_id=entry.parent_id if entry else None,
             hierarchy_depth=entry.depth if entry else 0,
             wbs_code=entry.display_wbs_code if entry else "",
             hierarchy_path=entry.path if entry else (),
-            is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup"))
+            is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
+            total_float=total_float, critical=critical))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY")
     if hierarchy and not explicit:
         selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view)
     elif not explicit:
         _order(selected, view)
-    snapshots = _snapshot_items(snapshot_project, snapshot_placements, style)
+    snapshots = _snapshot_items(snapshot_project, snapshot_placements, style, snapshot_analysis)
     rows = _compose_rows(view, selected, snapshots)
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     if view.window.mode == "selected-comparison":
@@ -216,16 +223,19 @@ def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
 
 
 def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,
-                    style: dict[str, Any] | None) -> dict[str, ReviewItem]:
+                    style: dict[str, Any] | None, analysis: Any | None = None) -> dict[str, ReviewItem]:
     if project is None or placements is None:
         return {}
     result: dict[str, ReviewItem] = {}
     for object_id, planned in placements.items():
         source_type = "point" if "at" in planned else "span"
+        total_float = analysis.total_float.get(object_id) if analysis is not None else None
+        critical = object_id in analysis.critical if analysis is not None else False
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, None, None, _roles(style, source_type, None, None), "", "",
-            dict(project["objects"][object_id].get("fields", {})), object_id, "snapshot")
+            planned, None, None, _roles(style, source_type, None, None, critical), "", "",
+            dict(project["objects"][object_id].get("fields", {})), object_id, "snapshot",
+            total_float=total_float, critical=critical)
     return result
 
 
@@ -313,16 +323,21 @@ def _date_or_number(value: Any) -> date | float:
     return value if isinstance(value, date) else date.fromisoformat(value) if isinstance(value, str) else float(value)
 
 
-def _roles(style: dict[str, Any] | None, source_type: str, actual: dict[str, Any] | None, finish_delta: int | None) -> tuple[str, ...]:
+def _roles(style: dict[str, Any] | None, source_type: str, actual: dict[str, Any] | None,
+           finish_delta: int | None, critical: bool = False) -> tuple[str, ...]:
     facets = {"planned"} | ({"actual"} if actual else {"missingActual"}) | ({"finishDelta"} if finish_delta is not None else set())
     if style is None:
         roles = ["planned", "actual" if actual else "missing-actual"]
         if finish_delta is not None:
             roles.append("variance-behind" if finish_delta > 0 else "variance-ahead" if finish_delta < 0 else "variance-on-plan")
+        if critical:
+            roles.append("critical")
         return tuple(roles)
     roles: list[str] = []
     for rule in style.get("body", {}).get("rules", []):
         when, category = rule["when"], "behind" if (finish_delta or 0) > 0 else "on-track"
         if when.get("facet") in facets and ("sourceType" not in when or when["sourceType"] == source_type) and ("comparisonCategory" not in when or when["comparisonCategory"] == category):
             roles.extend(rule["addRoles"])
+    if critical:
+        roles.append("critical")
     return tuple(dict.fromkeys(roles))
