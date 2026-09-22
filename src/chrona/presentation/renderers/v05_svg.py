@@ -16,7 +16,9 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float], toke
     markers = {(node.visual_role, node.shape) for node in surface.primitives if node.kind == "Path" and node.shape}
     patterns = {(node.visual_role, tokens.optional_pattern(node.visual_role))
                 for node in surface.primitives if node.kind == "Rect" and tokens.optional_pattern(node.visual_role)}
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{number(width)}" height="{number(height)}" viewBox="0 0 {number(width)} {number(height)}" role="img">',
+    has_links = any(node.href is not None for node in surface.primitives)
+    xlink_namespace = ' xmlns:xlink="http://www.w3.org/1999/xlink"' if has_links else ""
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg"{xlink_namespace} width="{number(width)}" height="{number(height)}" viewBox="0 0 {number(width)} {number(height)}" role="img">',
              f'<rect width="{number(width)}" height="{number(height)}" fill="{color("background", "fill")}"/>']
     if markers or patterns:
         definitions = []
@@ -31,6 +33,14 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float], toke
             elif pattern != "outline":
                 raise ValueError("E_PRESENTATION_PATTERN_UNSUPPORTED")
         parts.append("<defs>" + "".join(definitions) + "</defs>")
+    def append(node, content: str) -> None:
+        """Wrap a completed primitive only when Scene explicitly supplied a link."""
+        if node.href is None:
+            parts.append(content)
+            return
+        title = f' xlink:title="{escape(node.link_title, quote=True)}"' if node.link_title is not None else ""
+        parts.append(f'<a href="{escape(node.href, quote=True)}" target="_top"{title}>{content}</a>')
+
     for node in surface.primitives:
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         x, y, w, h = node.bounds
@@ -44,7 +54,7 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float], toke
                 paint = f'fill="{color(node.visual_role, "fill")}"'
             else:
                 raise ValueError("E_PRESENTATION_PATTERN_UNSUPPORTED")
-            parts.append(f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" {paint}/>')
+            append(node, f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" {paint}/>')
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             lines = node.text_layout.lines
@@ -54,16 +64,16 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float], toke
                 step = number(node.text_layout.font_size * node.text_layout.line_height)
                 body = "".join(f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else step}">{escape(line)}</tspan>'
                                for index, line in enumerate(lines))
-            parts.append(f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}" fill="{color(node.visual_role, "fill")}">{body}</text>')
+            append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}" fill="{color(node.visual_role, "fill")}">{body}</text>')
         elif node.kind == "Symbol":
             if node.shape != "diamond": raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             points = ((x+w/2,y),(x+w,y+h/2),(x+w/2,y+h),(x,y+h/2))
-            parts.append(f'<polygon {common} points="{" ".join(f"{number(px)},{number(py)}" for px,py in points)}" fill="{color(node.visual_role, "fill")}"/>')
+            append(node, f'<polygon {common} points="{" ".join(f"{number(px)},{number(py)}" for px,py in points)}" fill="{color(node.visual_role, "fill")}"/>')
         elif node.kind == "Path":
             if len(node.points) < 2: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             path = "M" + "L".join(f"{number(px)} {number(py)}" for px, py in node.points)
             marker = f' marker-end="url(#marker-{escape(node.visual_role, quote=True)}-{escape(node.shape, quote=True)})"' if node.shape else ""
-            parts.append(f'<path {common} d="{path}" fill="none" stroke="{color(node.visual_role, "stroke")}"{marker}/>')
+            append(node, f'<path {common} d="{path}" fill="none" stroke="{color(node.visual_role, "stroke")}"{marker}/>')
         else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
     return "\n".join((*parts, "</svg>")) + "\n"
 
