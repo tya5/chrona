@@ -136,6 +136,7 @@ class ViewRow:
 class ViewRows:
     mode: str
     items: tuple[ViewRow, ...]
+    points: str = "own-row"
 
 
 @dataclass(frozen=True)
@@ -505,7 +506,7 @@ def _view_input(body: FrozenDict) -> ViewInput:
         selection, grouping, ordering, window, comparison, visibility, body["layoutIntent"],
         tuple(TableColumn(str(column["id"]), column["source"], str(column.get("format", "text")),
                           str(column["missing"])) for column in body.get("tableColumns", ())),
-        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items), body.get("axis"),
+        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row"))), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]))

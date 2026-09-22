@@ -184,7 +184,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, style, snapshot_analysis)
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], style, None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
-    rows = _compose_rows(view, selected, snapshots, scenario_items)
+    rows = _compose_rows(view, selected, snapshots, scenario_items, project)
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     if view.window.mode == "selected-comparison":
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
@@ -239,9 +239,9 @@ def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
-                  scenarios: dict[str, dict[str, ReviewItem]]) -> tuple[ReviewRowProjection, ...]:
+                  scenarios: dict[str, dict[str, ReviewItem]], project: dict[str, Any]) -> tuple[ReviewRowProjection, ...]:
     if view.rows.mode != "explicit":
-        return tuple(ReviewRowProjection(
+        rows = tuple(ReviewRowProjection(
             item.object_id, item.title, item.group_id, item.object_id,
             tuple(member for member in (
                 replace(item, item_id=item.object_id, source_kind="combined",
@@ -260,6 +260,7 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             rollup_presentation=(view.grouping.rollup or "none"
                                  if item.is_rollup else "none"))
             for item in selected)
+        return _fold_automatic_points(rows, view, project)
     available = {item.object_id: item for item in selected}
     output: list[ReviewRowProjection] = []
     seen_rows: set[str] = set()
@@ -295,6 +296,40 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             row.group or "", subject, tuple(members), depth=row.depth, parent_row_id=row.parent_row))
     _validate_explicit_row_hierarchy(output)
     return tuple(output)
+
+
+def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInput,
+                           project: dict[str, Any]) -> tuple[ReviewRowProjection, ...]:
+    """Apply View-owned automatic point policy without exposing relation facts to Layout."""
+    if view.rows.points == "own-row":
+        return rows
+    if view.rows.points == "group-header":
+        # Header-target allocation is intentionally completed by the following Layout slice.
+        return rows
+    if view.rows.points != "predecessor":
+        raise ValueError("E_REVIEW_POINT_POLICY")
+    by_object = {row.table_subject_id: row for row in rows}
+    incoming: dict[str, list[str]] = {}
+    for relation in project.get("relations", ()):
+        source, target = relation.get("from", {}).get("object"), relation.get("to", {}).get("object")
+        if isinstance(source, str) and isinstance(target, str):
+            incoming.setdefault(target, []).append(source)
+    folded: set[str] = set()
+    replacements: dict[str, ReviewRowProjection] = {}
+    for row in rows:
+        subject = row.items[0] if row.items else None
+        if subject is None or subject.source_type != "point":
+            continue
+        candidates = [source for source in incoming.get(subject.object_id, ())
+                      if source in by_object and by_object[source].items
+                      and by_object[source].items[0].source_type == "span"]
+        if len(candidates) != 1:
+            continue
+        target = replacements.get(candidates[0], by_object[candidates[0]])
+        folded.add(row.row_id)
+        replacements[candidates[0]] = replace(target, items=target.items + tuple(
+            replace(item, track="shared") for item in row.items))
+    return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in folded)
 
 
 def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
