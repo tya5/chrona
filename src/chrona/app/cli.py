@@ -22,6 +22,7 @@ from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
 from chrona.operational.command_engine import apply_actual_command, check_command
+from chrona.operational.authoring_commands import apply_authoring_command, parse_authoring_command
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
@@ -138,6 +139,11 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
     command.add_argument("--output", "-o", required=True)
+
+    command = sub.add_parser("authoring-command-apply", help="apply one revision-bound guided workspace command")
+    command.add_argument("--workspace", required=True)
+    command.add_argument("--command", dest="authoring_command", required=True)
+    command.add_argument("--result", required=True)
 
     command = sub.add_parser("render-workspace", help="render a guided authoring workspace Draft (not reproducible evidence)")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
@@ -275,6 +281,13 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
         }, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def _run_authoring_command(args: argparse.Namespace) -> None:
+    result = apply_authoring_command(Path(args.workspace), parse_authoring_command(Path(args.authoring_command)))
+    _write_result(Path(args.result), result)
+    if result["status"] != "accepted":
+        raise SystemExit(2)
+
+
 def _parse_viewport(value: str) -> tuple[int, int]:
     parts = value.lower().split("x")
     if len(parts) != 2:
@@ -359,6 +372,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "render-workspace":
         _run_guided_draft_render(args)
+        return
+    if args.command == "authoring-command-apply":
+        _run_authoring_command(args)
         return
     if args.command == "render-review-gallery":
         _run_render_review_gallery(args)

@@ -3,6 +3,7 @@ schemas:
   - {file: actual-intake-batch-v0.2.schema.yaml, kind: actual-intake-batch, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: actual-set-v0.2.schema.yaml, kind: actual-set, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: authoring-workspace-v0.1.schema.yaml, kind: authoring-workspace, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: authoring-command-v0.1.schema.yaml, kind: authoring-command, state: live, consumers: [src/chrona/operational/authoring_commands.py]}
   - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: color-scheme-v0.1.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: command-request-v0.2.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
