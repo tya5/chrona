@@ -1,4 +1,4 @@
-version: chrona/presentation/v0.5
+version: chrona/presentation/v0.6
 kind: render-context
 id: aster-01-overview
 body:
