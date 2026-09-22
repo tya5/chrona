@@ -11,6 +11,18 @@ def place_relation_route(*, source_port: tuple[float, float], target_port: tuple
     return route_orthogonal(source_port, target_port, obstacles, bounds=bounds)
 
 
+def relation_route_quality(points: tuple[tuple[float, float], ...], *,
+                           max_bends: int, max_detour_ratio: float) -> bool:
+    """Evaluate a completed route against the explicit Layout Profile limits."""
+    if len(points) < 2:
+        return False
+    bends = max(0, len(points) - 2)
+    length = sum(abs(right[0] - left[0]) + abs(right[1] - left[1])
+                 for left, right in zip(points, points[1:]))
+    direct = abs(points[-1][0] - points[0][0]) + abs(points[-1][1] - points[0][1])
+    return bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
+
+
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      obstacles: tuple[tuple[float, float, float, float], ...], *,
                      grid_offset: float = 2.0, bend_penalty: float = 12.0,

@@ -64,7 +64,7 @@ body:
     - unmatchedActual
   visibility:
     labels: true
-    relations: semantic
+    relations: {mode: semantic, overflow: suppress}
     annotations: none
   layoutIntent:
     compactness: balanced

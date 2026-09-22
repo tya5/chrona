@@ -26,8 +26,8 @@ body:
     deltaUnit: calendar-days
     facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
   visibility:
-    labels: {placement: table, content: [title], side: auto}
-    relations: semantic
+    labels: {placement: table, content: [title], side: auto, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
     annotations: {mode: presentation, marker: numbered}
   axis:
     levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]

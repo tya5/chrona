@@ -55,7 +55,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                 required: bool = True, overflow: str = "diagnose") -> LabelPlacement | None:
     """Choose the first legal candidate in declared order; never search indefinitely."""
     sides = tuple(candidates)
-    if not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides) or overflow not in {"diagnose", "clip-optional"}:
+    if not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides) or overflow not in {"diagnose", "suppress", "clip-optional"}:
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     blocked = tuple(obstacles)
     for side in sides:

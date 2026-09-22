@@ -183,11 +183,12 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", "Rect", item.object_id, "object", "missingActual", "missing-actual",
                                              bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
         label_id = f"member-label:{instance_id}"
-        if label_id in layout_text:
+        if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
             emit_layout_text(label_id, "member-label", "text")
-        if source_kind == "combined" and item.finish_delta is not None:
+        variance_id = f"variance:{instance_id}"
+        if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else "variance-on-track"
-            emit_layout_text(f"variance:{instance_id}", "finish-delta", role)
+            emit_layout_text(variance_id, "finish-delta", role)
     axis_band_binding = semantic_binding("axisBand")
     for placed in placed_surface.text:
         if placed.placement_id.startswith("axis-band:"):

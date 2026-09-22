@@ -76,7 +76,16 @@ allOf:
                       placement: {enum: [plot, table, none]}
                       content: {type: array, minItems: 1, uniqueItems: true, items: {enum: [title, finishDelta]}}
                       side: {enum: [auto, start, end]}
-              relations: {enum: [none, semantic, all]}
+                      overflow: {enum: [suppress, diagnose]}
+              relations:
+                oneOf:
+                  - {enum: [none, semantic, all]}
+                  - type: object
+                    required: [mode, overflow]
+                    additionalProperties: false
+                    properties:
+                      mode: {enum: [none, semantic]}
+                      overflow: {enum: [suppress, diagnose]}
               annotations:
                 oneOf:
                   - {enum: [none, semantic, presentation, all]}

@@ -66,6 +66,8 @@ class LayoutManifest:
     viewport: Rect
     decisions: tuple[LayoutDecision, ...]
     diagnostics: tuple[str, ...] = ()
+    relation_max_bends: int = 4
+    relation_max_detour_ratio: float = 2.0
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
@@ -98,6 +100,10 @@ class LayoutManifest:
             ],
             "profileHash": self.profile_hash,
             "profileId": self.profile_id,
+            "relationRouting": {
+                "maxBends": self.relation_max_bends,
+                "maxDetourRatio": self.relation_max_detour_ratio,
+            },
             "viewport": rect(self.viewport),
             "writingMode": self.writing_mode,
         }

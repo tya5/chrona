@@ -392,4 +392,10 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
     root = profile.profile["root"]
     _measure_node(root, "/root", measurements, profile)
     arranger = _Arranger(profile, measurements); arranger.arrange(root, "/root", viewport)
-    return LayoutManifest(profile.profile_id, profile.content_hash, str(profile.profile["writingMode"]), viewport, tuple(arranger.decisions))
+    relation_routing = profile.profile.get("relationRouting", {})
+    return LayoutManifest(
+        profile.profile_id, profile.content_hash, str(profile.profile["writingMode"]), viewport,
+        tuple(arranger.decisions),
+        relation_max_bends=int(relation_routing.get("maxBends", 4)),
+        relation_max_detour_ratio=float(relation_routing.get("maxDetourRatio", 2.0)),
+    )
