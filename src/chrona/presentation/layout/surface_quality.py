@@ -8,6 +8,21 @@ from typing import Any
 from chrona.presentation.layout.model import Rect
 
 
+@dataclass(frozen=True)
+class PathCommand:
+    """One renderer-neutral, completed path instruction owned by Layout."""
+
+    kind: str
+    points: tuple[tuple[float, float], ...]
+
+    def __post_init__(self) -> None:
+        expected = {"move": 1, "line": 1, "quadratic": 2}.get(self.kind)
+        if expected is None or len(self.points) != expected:
+            raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
+        if not all(all(isinstance(value, (int, float)) for value in point) for point in self.points):
+            raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
+
+
 def _edges(rect: Rect) -> tuple[float, float, float, float]:
     return (float(rect.inline), float(rect.block),
             float(rect.inline + rect.inline_size),
@@ -69,6 +84,9 @@ class MarkPlacement:
     start_port: tuple[float, float]
     end_port: tuple[float, float]
     required: bool = True
+    mark_shape: str = "span"
+    corner_radius: float = 0.0
+    path_commands: tuple[PathCommand, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -153,6 +171,8 @@ class RelationPlacement:
     suppressed: bool = False
     diagnostic: str | None = None
     semantic_id: str = "dependency"
+    corner_radius: float = 0.0
+    path_commands: tuple[PathCommand, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -205,14 +225,21 @@ class SurfacePlacement:
                 if _collision_domains_intersect(item.collision_domain, other.collision_domain) and intersects(item.bounds, other.bounds):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
+            if relation.corner_radius < 0:
+                raise ValueError(f"E_LAYOUT_RELATION_CORNER_RADIUS_INVALID:{relation.relation_id}")
             if relation.suppressed:
                 if relation.points or not relation.diagnostic:
                     raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
             elif len(relation.points) < 2:
                 raise ValueError(f"E_LAYOUT_RELATION_PLACEMENT_INVALID:{relation.relation_id}")
+            elif relation.path_commands and (relation.path_commands[0].kind != "move"
+                                              or relation.path_commands[-1].points[-1] != relation.points[-1]):
+                raise ValueError(f"E_LAYOUT_RELATION_PATH_INVALID:{relation.relation_id}")
         for mark in self.marks:
             if mark.bounds.inline_size <= 0 or mark.bounds.block_size <= 0:
                 raise ValueError(f"E_LAYOUT_MARK_PLACEMENT_INVALID:{mark.placement_id}")
+            if mark.corner_radius < 0 or mark.corner_radius > float(min(mark.bounds.inline_size, mark.bounds.block_size)) / 2:
+                raise ValueError(f"E_LAYOUT_MARK_CORNER_RADIUS_INVALID:{mark.placement_id}")
         for shape in self.shapes:
             if shape.kind == "Path":
                 if len(shape.points) < 2:

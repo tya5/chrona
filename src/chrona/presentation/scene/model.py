@@ -7,6 +7,7 @@ from datetime import date
 from chrona.presentation.layout.axis import AxisInterval
 from chrona.presentation.layout.lanes import LaneAssignment, LaneTrack
 from chrona.presentation.layout.comparison_marks import ComparisonMark
+from chrona.presentation.layout.surface_quality import PathCommand
 
 @dataclass(frozen=True)
 class TextLayout:
@@ -44,6 +45,7 @@ class ScenePrimitive:
     opacity: float | None = None
     optional: bool = False
     corner_radius: float | None = None
+    path_commands: tuple[PathCommand, ...] = ()
     lane_group_id: str | None = None
     stack_index: int | None = None
     points: tuple[tuple[float, float], ...] = ()

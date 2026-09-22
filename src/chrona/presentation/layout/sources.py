@@ -70,7 +70,14 @@ REQUIRED_METRICS = (
     "network.node.minInlineSize", "network.node.minBlockSize", "network.rank.gap",
 )
 
-OPTIONAL_METRICS = ("timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth")
+OPTIONAL_METRICS = (
+    "timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth",
+    "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
+)
+
+_NON_NEGATIVE_METRICS = frozenset((
+    "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
+))
 
 
 def resolve_theme_metrics(theme: Mapping[str, Any], *, required_metrics: tuple[str, ...] = ()) -> dict[str, Decimal]:
@@ -97,7 +104,8 @@ def resolve_theme_metrics(theme: Mapping[str, Any], *, required_metrics: tuple[s
             value = Decimal(str(declared["value"]))
         except (InvalidOperation, KeyError) as error:
             raise LayoutError("E_LAYOUT_TOKEN_TYPE", "/body/metrics/" + name) from error
-        if not value.is_finite() or value <= 0:
+        if (not value.is_finite() or value < 0
+                or (value == 0 and name not in _NON_NEGATIVE_METRICS)):
             raise LayoutError("E_LAYOUT_TOKEN_TYPE", "/body/metrics/" + name)
         resolved[name] = value
     return resolved
