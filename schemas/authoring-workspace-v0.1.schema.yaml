@@ -1,0 +1,125 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/authoring-workspace-v0.1"
+title: "Chrona guided authoring workspace v0.1"
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {const: chrona/authoring-workspace/v0.1}
+  kind: {const: authoring-workspace}
+  id: {type: string, minLength: 1}
+  body:
+    type: object
+    required: [project, presentation]
+    additionalProperties: false
+    properties:
+      project:
+        type: object
+        required: [id, tasks]
+        additionalProperties: false
+        properties:
+          id: {type: string, minLength: 1}
+          title: {type: string, minLength: 1}
+          tasks:
+            type: array
+            items:
+              type: object
+              required: [id, title, planned]
+              additionalProperties: false
+              properties:
+                id: {type: string, minLength: 1}
+                title: {type: string, minLength: 1}
+                planned: {$ref: "#/$defs/dateRange"}
+      actuals:
+        type: array
+        items:
+          type: object
+          required: [taskId, actual]
+          additionalProperties: false
+          properties:
+            taskId: {type: string, minLength: 1}
+            actual: {$ref: "#/$defs/dateRange"}
+            progress: {type: number, minimum: 0, maximum: 1}
+      presentation:
+        type: object
+        required: [mode, binding]
+        additionalProperties: false
+        properties:
+          mode: {const: guided}
+          binding: {$ref: "#/$defs/binding"}
+$defs:
+  date: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+  dateRange:
+    type: object
+    required: [start, finish]
+    additionalProperties: false
+    properties:
+      start: {$ref: "#/$defs/date"}
+      finish: {$ref: "#/$defs/date"}
+  preset:
+    type: object
+    required: [id, version, path]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      version: {type: string, minLength: 1}
+      path: {type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+  binding:
+    type: object
+    required: [preset]
+    additionalProperties: false
+    properties:
+      preset: {$ref: "#/$defs/preset"}
+      overrides:
+        type: object
+        additionalProperties: false
+        properties:
+          view:
+            type: object
+            additionalProperties: false
+            properties:
+              window:
+                type: object
+                required: [start, end]
+                additionalProperties: false
+                properties:
+                  start: {$ref: "#/$defs/date"}
+                  end: {$ref: "#/$defs/date"}
+              grouping: {enum: [objectType, none]}
+              visibility:
+                type: object
+                additionalProperties: false
+                properties:
+                  labels: {type: boolean}
+                  relations: {enum: [none, semantic]}
+                  annotations: {enum: [none, presentation, all]}
+              annotations:
+                type: array
+                items:
+                  type: object
+                  required: [id, purpose, anchor, placement, text]
+                  additionalProperties: false
+                  properties:
+                    id: {type: string, minLength: 1}
+                    purpose: {enum: [callout, highlight, note, explanatory-arrow]}
+                    anchor:
+                      type: object
+                      required: [kind, id]
+                      additionalProperties: false
+                      properties:
+                        kind: {const: object}
+                        id: {type: string, minLength: 1}
+                    placement:
+                      type: object
+                      required: [side, alignment]
+                      additionalProperties: false
+                      properties:
+                        side: {enum: [above, below, start, end]}
+                        alignment: {enum: [start, center, end]}
+                    text: {type: string}
+          theme:
+            type: object
+            required: [colorScheme]
+            additionalProperties: false
+            properties:
+              colorScheme: {type: string, minLength: 1}
