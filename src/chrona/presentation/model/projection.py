@@ -169,7 +169,19 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
     if view.rows.mode != "explicit":
         return tuple(ReviewRowProjection(
             item.object_id, item.title, item.group_id, item.object_id,
-            (replace(item, item_id=item.object_id, source_kind="combined"),),
+            tuple(member for member in (
+                replace(item, item_id=item.object_id, source_kind="combined",
+                        track=("shared" if view.comparison.baseline == "scenario"
+                               and view.comparison.scenario_id in scenarios
+                               and item.object_id in scenarios[view.comparison.scenario_id]
+                               else item.track)),
+                (replace(scenarios[view.comparison.scenario_id][item.object_id],
+                         item_id=f"scenario:{view.comparison.scenario_id}:{item.object_id}",
+                         source_kind="scenario", scenario_id=view.comparison.scenario_id, track="shared")
+                 if view.comparison.baseline == "scenario"
+                 and view.comparison.scenario_id in scenarios
+                 and item.object_id in scenarios[view.comparison.scenario_id] else None),
+            ) if member is not None),
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
             rollup_presentation=(view.grouping.rollup or "none"
                                  if item.is_rollup else "none"))
