@@ -77,6 +77,7 @@ def test_materialization_ejects_to_a_closed_explicit_bundle_with_identical_bytes
     result = _materialize(workspace)
 
     assert result["status"] == "accepted"
+    assert result["reversible"] is False
     explicit = yaml.safe_load(workspace.read_text())
     assert explicit["body"]["presentation"]["mode"] == "explicit"
     assert "binding" not in explicit["body"]["presentation"]
