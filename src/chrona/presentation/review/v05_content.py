@@ -30,9 +30,16 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         cells = tuple(
             (row.row_id, column.id, cell(next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index))
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
+        table_cell_objects = tuple(
+            (row.row_id, column.id,
+             next(item for item in row.items if item.item_id == row.table_subject_id).object_id,
+             next(item for item in row.items if item.item_id == row.table_subject_id).source_kind == "primary")
+            for row in projection.rows for column in view.table_columns)
     else:
         cells = tuple((item.object_id, column.id, cell(item, column, row_index))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
+        table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
+                                   for item in projection.items for column in view.table_columns)
     visible = view.visibility
     group_presentation = view.grouping.presentation if view.grouping and view.grouping.presentation else "band"
     labels = visible.labels
@@ -41,6 +48,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     label_side = "auto"
     label_fallback: tuple[str, ...] = ()
     annotation_fallback: tuple[str, ...] = ()
+    link_mode = visible.links
+    title_link_columns = tuple(column.id for column in view.table_columns if column.source == "title")
     # Legacy boolean visibility never declared a failure policy.  Preserve its
     # materializability by treating a rejected candidate as optional.
     label_overflow = "suppress" if labels is True else "diagnose"
@@ -102,7 +111,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                milestones=resolved_detail.milestones if resolved_detail else (),
                                observation_columns=resolved_detail.observation_columns if resolved_detail else (),
                                observation_rows=resolved_detail.observation_rows if resolved_detail else (),
-                               label_fallback=label_fallback, annotation_fallback=annotation_fallback)
+                               label_fallback=label_fallback, annotation_fallback=annotation_fallback,
+                               link_mode=link_mode, title_link_columns=title_link_columns,
+                               table_cell_objects=table_cell_objects)
 
 
 def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], shading: Mapping[str, Any],

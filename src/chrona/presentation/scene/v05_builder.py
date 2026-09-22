@@ -115,7 +115,36 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                  placed_surface.scale.origin, placed_surface.scale.unit_ratio)
     primitives: list[ScenePrimitive] = []
     layout_text = {item.placement_id: item for item in placed_surface.text}
-    def emit_layout_text(scene_id: str, purpose: str, role: str) -> None:
+    primary_links = {
+        item.object_id: item.link for item in projection.items
+        if item.link is not None
+    }
+    table_cells = {
+        (row_id, column_id): (object_id, is_primary)
+        for row_id, column_id, object_id, is_primary in value.surface_content.table_cell_objects
+    }
+
+    def link_for_item(item: Any, source_kind: str) -> tuple[str | None, str | None]:
+        """Return row-mode metadata for a selected current item only."""
+        if value.surface_content.link_mode != "row" or source_kind not in {"primary", "combined"}:
+            return None, None
+        link = primary_links.get(item.object_id)
+        return ((link or {}).get("href"), (link or {}).get("title"))
+
+    def link_for_cell(row_id: str, column_id: str) -> tuple[str | None, str | None]:
+        """Return table metadata without inspecting placement or source geometry."""
+        object_id, is_primary = table_cells.get((row_id, column_id), (None, False))
+        if not is_primary:
+            return None, None
+        if value.surface_content.link_mode == "title" and column_id not in value.surface_content.title_link_columns:
+            return None, None
+        if value.surface_content.link_mode not in {"title", "row"}:
+            return None, None
+        link = primary_links.get(object_id)
+        return ((link or {}).get("href"), (link or {}).get("title"))
+
+    def emit_layout_text(scene_id: str, purpose: str, role: str,
+                         href: str | None = None, link_title: str | None = None) -> None:
         placed = layout_text[scene_id]
         layout = TextLayout((float(placed.bounds.inline), float(placed.bounds.block),
                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
@@ -123,17 +152,20 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
                             placed.line_height, placed.font_asset_identity)
         primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
-                                         text=placed.content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives)))
-    def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None) -> None:
+                                         text=placed.content, baseline=layout.baseline, text_layout=layout, z_order=len(primitives),
+                                         href=href, link_title=link_title))
+    def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None,
+                           href: str | None = None, link_title: str | None = None) -> None:
         binding = semantic_binding(semantic_id)
-        emit_layout_text(scene_id, binding.purpose, role or binding.scene_role)
+        emit_layout_text(scene_id, binding.purpose, role or binding.scene_role, href, link_title)
 
     emit_semantic_text("title", "titleText")
     for column_id, label in value.surface_content.table_columns:
         emit_semantic_text(f"column:{column_id}", "tableColumnLabel")
     for object_id, column_id, cell in value.surface_content.table_cells:
         if f"cell:{object_id}:{column_id}" in layout_text:
-            emit_semantic_text(f"cell:{object_id}:{column_id}", "tableCell")
+            href, link_title = link_for_cell(object_id, column_id)
+            emit_semantic_text(f"cell:{object_id}:{column_id}", "tableCell", href=href, link_title=link_title)
     for group in groups:
         group_band = semantic_binding("groupBand")
         primitives.append(ScenePrimitive(f"group:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", group_band.purpose, group_band.scene_role,
@@ -159,6 +191,7 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
         layout_instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
         instance_id = (layout_instance_id if projection.rows else item.object_id)
         source_kind = item.source_kind if projection.rows else "combined"
+        href, link_title = link_for_item(item, source_kind)
         planned = item.planned
         planned_binding = semantic_binding("snapshot" if source_kind == "snapshot" else "planned")
         planned_role = planned_binding.scene_role
@@ -168,10 +201,12 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                       float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
             if item.source_type == "point":
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", planned_binding.purpose, planned_role,
-                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives)))
+                                                 bounds, projection_instance_id=instance_id, shape="diamond", z_order=len(primitives),
+                                                 href=href, link_title=link_title))
             else:
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
-                                                 bounds, projection_instance_id=instance_id, z_order=len(primitives)))
+                                                 bounds, projection_instance_id=instance_id, z_order=len(primitives),
+                                                 href=href, link_title=link_title))
         actual = item.actual or {}
         actual_binding = semantic_binding("actual")
         actual_mark = mark_placements.get(f"actual:{instance_id}")
@@ -193,11 +228,11 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                              bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives)))
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
-            emit_semantic_text(label_id, "memberLabel")
+            emit_semantic_text(label_id, "memberLabel", href=href, link_title=link_title)
         variance_id = f"variance:{instance_id}"
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else semantic_binding("finishDelta").scene_role
-            emit_semantic_text(variance_id, "finishDelta", role)
+            emit_semantic_text(variance_id, "finishDelta", role, href, link_title)
     axis_band_binding = semantic_binding("axisBand")
     for placed in placed_surface.text:
         if placed.placement_id.startswith("axis-band:"):

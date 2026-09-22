@@ -71,6 +71,12 @@ class SurfaceContentInput:
     observation_rows: tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...]
     label_fallback: tuple[str, ...] = ()
     annotation_fallback: tuple[str, ...] = ()
+    link_mode: str = "none"
+    title_link_columns: tuple[str, ...] = ()
+    # (table row id, column id, object id, is selected-current item).  This is
+    # identity only: Scene uses it to attach presentation metadata and never to
+    # infer geometry or re-resolve a View row.
+    table_cell_objects: tuple[tuple[str, str, str, bool], ...] = ()
 
 
 @dataclass(frozen=True)

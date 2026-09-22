@@ -34,6 +34,7 @@ class ReviewItem:
     presentation: dict[str, Any] | None = None
     total_float: int | None = None
     critical: bool = False
+    link: dict[str, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         finish_delta = _finish_delta(planned, actual)
         total_float = analysis.total_float.get(object_id) if analysis is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
+        link = _object_link(project["objects"][object_id].get("link"))
         entry = hierarchy_entries.get(object_id)
         group_id = _group_id(project, object_id, source_type, grouping)
         selected.append(ReviewItem(
@@ -133,7 +135,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             wbs_code=entry.display_wbs_code if entry else "",
             hierarchy_path=entry.path if entry else (),
             is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
-            total_float=total_float, critical=critical))
+            total_float=total_float, critical=critical, link=link))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY")
     if hierarchy and not explicit:
@@ -235,7 +237,7 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, None, None, _roles(style, source_type, None, None, critical), "", "",
             dict(project["objects"][object_id].get("fields", {})), object_id, "snapshot",
-            total_float=total_float, critical=critical)
+            total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")))
     return result
 
 
@@ -253,6 +255,14 @@ def _latest_observations(observations: list[dict[str, Any]], placements: dict[st
 def _actual(observation: dict[str, Any] | None) -> dict[str, date | float] | None:
     raw = (observation or {}).get("actual")
     return {key: _date_or_number(value) for key, value in raw.items()} if raw else None
+
+
+def _object_link(value: Any) -> dict[str, str] | None:
+    if isinstance(value, str):
+        return {"href": value}
+    if isinstance(value, dict) and isinstance(value.get("href"), str):
+        return {key: str(item) for key, item in value.items() if key in {"href", "title"}}
+    return None
 
 
 def _finish_delta(planned: dict[str, date], actual: dict[str, date | float] | None) -> int | None:
