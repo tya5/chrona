@@ -21,4 +21,3 @@ test_point_rows_never_render_a_span_only_state:
 test_every_declared_slot_produces_a_primitive:
   aster-ssd/overview: [legend, notes]
   controller-z/executive: [legend]
-  halcyon-1/programme-board: [summary]

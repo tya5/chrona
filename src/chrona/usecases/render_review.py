@@ -17,11 +17,12 @@ from chrona.core.ports import Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.sources import SourceInput, measure_sources
+from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
 from chrona.presentation.model.closure import RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.review.v05_content import normalize_v05_surface_content
+from chrona.presentation.model.surface_content import SummaryContent
+from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
 
@@ -88,6 +89,9 @@ class ClosureReadLedger:
     def detail(self) -> None:
         self.read.add("review-detail-profile")
 
+    def summary(self) -> None:
+        self.read.add("summary-profile")
+
     def packages(self) -> None:
         self.read.add("profile-package")
 
@@ -114,7 +118,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
 
     environment = render_closure.context.body["environment"]
     font_metrics = _font_metrics(theme, environment, request.snapshot_root / render_closure.context.body["theme"]["revision"]["token"])
-    source_inputs = _source_inputs(project, view, projection)
+    summary = normalize_summary_content(render_closure.summary_profile.document if render_closure.summary_profile else None,
+                                        projection, render_closure.actual_set.document if render_closure.actual_set else None)
+    if render_closure.summary_profile is not None:
+        ledger.summary()
+    source_inputs = _source_inputs(project, view, projection, summary)
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = environment["viewport"]
@@ -129,6 +137,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         projection, project, view,
         actual_set=render_closure.actual_set.document if render_closure.actual_set else None,
         detail=render_closure.detail_profile.document if render_closure.detail_profile else None,
+        summary=summary,
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
@@ -177,7 +186,8 @@ def _font_metrics(theme: dict[str, Any], environment: dict[str, Any], asset_root
     return resolve_font_metrics(family, environment["fontMetrics"], asset_root=asset_root)
 
 
-def _source_inputs(project: dict[str, Any], view: dict[str, Any], projection: Any) -> dict[str, SourceInput]:
+def _source_inputs(project: dict[str, Any], view: dict[str, Any], projection: Any,
+                   summary: SummaryContent) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
@@ -190,7 +200,7 @@ def _source_inputs(project: dict[str, Any], view: dict[str, Any], projection: An
             row_count, len(view.get("body", {}).get("tableColumns", ())) or 1),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
-        "summary": SourceInput(("summary",)),
+        "summary": SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs)),
         "legend": SourceInput(("legend",), typography_role="legend"),
         "group-details": SourceInput(("group details",)),
         "observations": SourceInput(("observations",)),

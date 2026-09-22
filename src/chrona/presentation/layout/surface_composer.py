@@ -428,26 +428,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        collision_region=f"{slot_name}:{source}"))
     summary_slot = by_source.get("summary")
     if summary_slot:
-        line = 1
-        _, _, summary_font_size, summary_line_height = request.theme_tokens.typography("summary")
-        summary_size = float(summary_font_size) * float(summary_line_height)
-        presentations = dict(request.surface_content.summary_presentations)
-        for panel_id, panel_title, metrics in request.surface_content.summary_panels:
-            text.append(place_text(placement_id=f"summary:{panel_id}", source_ref=panel_id, content=panel_title,
-                                   inline=float(summary_slot.bounds.inline), baseline_block=float(summary_slot.bounds.block) + line * summary_size,
-                                   typography_role="summary", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="summary")); line += 1
-            for key, metric_value in metrics:
-                if presentations.get(panel_id) == "figures":
-                    entries = ((f"summary:{panel_id}:{key}:value", str(metric_value), "metric"),
-                               (f"summary:{panel_id}:{key}:caption", key, "summary"))
-                else:
-                    entries = ((f"summary:{panel_id}:{key}", f"{key}: {metric_value}", "summary"),)
-                for placement_id, content, typography in entries:
-                    text.append(place_text(placement_id=placement_id, source_ref=panel_id, content=content,
-                                           inline=float(summary_slot.bounds.inline), baseline_block=float(summary_slot.bounds.block) + line * summary_size,
-                                           typography_role=typography, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                           collision_region="summary")); line += 1
+        cursor = float(summary_slot.bounds.block)
+        for run in request.surface_content.summary.runs:
+            _, _, font_size, line_height = request.theme_tokens.typography(run.typography_role)
+            text.append(place_text(placement_id=run.placement_id, source_ref=run.source_ref, content=run.content,
+                                   inline=float(summary_slot.bounds.inline), baseline_block=cursor + float(font_size),
+                                   typography_role=run.typography_role, theme_tokens=request.theme_tokens,
+                                   font_metrics=request.font_metrics, collision_region="summary"))
+            cursor += float(font_size) * float(line_height)
 
     annotation_slot = by_source.get("annotations")
     if annotation_slot:

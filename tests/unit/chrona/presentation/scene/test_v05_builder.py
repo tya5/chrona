@@ -6,7 +6,7 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
-from chrona.presentation.model.surface_content import SurfaceContentInput
+from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
@@ -18,7 +18,7 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
         label_overflow="diagnose", relation_overflow="diagnose", group_presentation="band",
         axis_level="auto", axis_levels=(), axis_ticks=None, as_of=None, as_of_label="As of",
         annotation_numbered=False, calendar_closed=(), notes=(), legend_entries=(), coverage_text="",
-        summary_panels=(), summary_presentations=(), template_values=(), group_details=(),
+        summary=SummaryContent(()), template_values=(), group_details=(),
         milestones=(), observation_columns=(), observation_rows=(),
     )
     value.update(overrides)

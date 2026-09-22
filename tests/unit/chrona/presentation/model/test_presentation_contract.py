@@ -2,7 +2,7 @@ from datetime import date
 
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import enabled_semantics, semantic_binding
-from chrona.presentation.model.surface_content import SurfaceContentInput
+from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 
 
 def surface_content(**overrides):
@@ -10,8 +10,8 @@ def surface_content(**overrides):
                  label_placement="none", label_content=(), label_side="auto", label_overflow="diagnose",
                  relation_overflow="diagnose", group_presentation="band", axis_level="auto", axis_levels=(),
                  axis_ticks=None, as_of=None, as_of_label="As of", annotation_numbered=False,
-                 calendar_closed=(), notes=(), legend_entries=(), coverage_text="", summary_panels=(),
-                 summary_presentations=(), template_values=(), group_details=(), milestones=(),
+                 calendar_closed=(), notes=(), legend_entries=(), coverage_text="", summary=SummaryContent(()),
+                 template_values=(), group_details=(), milestones=(),
                  observation_columns=(), observation_rows=())
     value.update(overrides)
     return SurfaceContentInput(**value)

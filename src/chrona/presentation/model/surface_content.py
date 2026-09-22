@@ -7,6 +7,36 @@ from typing import Any
 
 from chrona.presentation.model.projection import ReviewItem
 
+
+@dataclass(frozen=True)
+class SummaryTextRun:
+    """One normalized, ordered summary line before Layout gives it geometry."""
+
+    placement_id: str
+    source_ref: str
+    content: str
+    typography_role: str
+
+
+@dataclass(frozen=True)
+class SummaryPanel:
+    """One selected summary panel and its canonical text-run sequence."""
+
+    panel_id: str
+    runs: tuple[SummaryTextRun, ...]
+
+
+@dataclass(frozen=True)
+class SummaryContent:
+    """Immutable semantic summary facts shared by measurement and placement."""
+
+    panels: tuple[SummaryPanel, ...]
+
+    @property
+    def runs(self) -> tuple[SummaryTextRun, ...]:
+        return tuple(run for panel in self.panels for run in panel.runs)
+
+
 @dataclass(frozen=True)
 class SurfaceContentInput:
     """Selected presentation facts normalized once before Scene construction."""
@@ -32,8 +62,7 @@ class SurfaceContentInput:
     notes: tuple[tuple[str, str], ...]
     legend_entries: tuple[tuple[str, str], ...]
     coverage_text: str
-    summary_panels: tuple[tuple[str, str, tuple[tuple[str, str], ...]], ...]
-    summary_presentations: tuple[tuple[str, str], ...]
+    summary: SummaryContent
     template_values: tuple[tuple[str, str], ...]
     group_details: tuple[tuple[str, str, str], ...]
     milestones: tuple[tuple[str, str, date], ...]
