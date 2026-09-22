@@ -5,7 +5,11 @@ the adapters; nothing here knows how a resource is stored.
 """
 from __future__ import annotations
 
-from typing import Any, Protocol
+from dataclasses import dataclass
+from datetime import date
+from typing import Any, Mapping, Protocol, Sequence
+
+from chrona.core.diagnostics import Diagnostic
 
 
 class SnapshotReadError(ValueError):
@@ -20,4 +24,26 @@ class SnapshotReader(Protocol):
     """Read the exact bytes of one immutable, identity-addressed resource."""
 
     def read(self, reference: dict[str, Any]) -> bytes:  # pragma: no cover - protocol
+        ...
+
+
+@dataclass(frozen=True)
+class ScheduleOutcome:
+    """The semantic scheduling result a use case needs, independent of an algorithm."""
+
+    placements: Mapping[str, Mapping[str, date]]
+    diagnostics: Sequence[Diagnostic]
+
+    @property
+    def ok(self) -> bool:
+        return not self.diagnostics
+
+
+class Scheduler(Protocol):
+    def schedule(self, project: Mapping[str, Any], *, extension_diagnostics: Sequence[Diagnostic] = ()) -> ScheduleOutcome:  # pragma: no cover - protocol
+        ...
+
+
+class Renderer(Protocol):
+    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> str:  # pragma: no cover - protocol
         ...

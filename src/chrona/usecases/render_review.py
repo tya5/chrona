@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.ports import Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.profile import resolve_layout_profile
@@ -20,11 +21,9 @@ from chrona.presentation.layout.sources import SourceInput, measure_sources
 from chrona.presentation.model.closure import RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.review.v05_content import normalize_v05_surface_content
 from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
-from chrona.scheduling.scheduler import schedule
 
 # Consumed through ``context["resolvedTheme"]`` rather than through the closure
 # accessor, so they are read by construction.
@@ -56,6 +55,8 @@ class RenderRequest:
 
     closure: RenderClosure
     snapshot_root: Path
+    scheduler: Scheduler
+    renderer: Renderer
     require_all_inputs_read: bool = False
 
 
@@ -105,7 +106,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     manifests = {item.document["packageId"]: item.document for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
-    projection = _project_review(project, view, render_closure, manifests)
+    projection = _project_review(project, view, render_closure, manifests, request.scheduler)
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -144,20 +145,20 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "closure inputs loaded but never read: " + ", ".join(unused), "closure")
 
     surface = compose_review_surface(scene_input)
-    svg = render_v05_svg(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
-                         tokens=scene_input.theme_tokens)
+    svg = request.renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
+                                  tokens=scene_input.theme_tokens)
     return RenderedReview(svg, surface, frozenset(ledger.read))
 
 
 def _project_review(project: dict[str, Any], view: dict[str, Any], closure: RenderClosure,
-                    manifests: dict[str, dict[str, Any]]) -> Any:
+                    manifests: dict[str, dict[str, Any]], scheduler: Scheduler) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
-    result = schedule(project, extension_diagnostics=validate_profiles(project, manifests))
+    result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
     actual = closure.actual_set.document if closure.actual_set is not None else None
     snapshot_project = closure.snapshot_project.facts if closure.snapshot_project is not None else None
-    snapshot_result = schedule(snapshot_project) if snapshot_project is not None else None
+    snapshot_result = scheduler.schedule(snapshot_project) if snapshot_project is not None else None
     if snapshot_result is not None and not snapshot_result.ok:
         raise RenderRejected(snapshot_result.diagnostics)
     return build_review_projection(

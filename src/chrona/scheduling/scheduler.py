@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.ports import ScheduleOutcome
 from chrona.core.temporal import (Calendar, TemporalError, advance, as_date, parse_amount,
                        requires_working_calendar, retreat)
 from chrona.core.validation import validate_project
@@ -83,6 +84,14 @@ def schedule(
     _validate_fixed_targets(project, placements, calendars, diagnostics)
     ordered = {object_id: placements[object_id] for object_id in objects if object_id in placements}
     return ScheduleResult(ordered, diagnostics)
+
+
+class ReferenceScheduler:
+    """Port adapter for the repository's reference scheduling algorithm."""
+
+    def schedule(self, project: dict[str, Any], *, extension_diagnostics=()) -> ScheduleOutcome:
+        result = schedule(project, extension_diagnostics=extension_diagnostics)
+        return ScheduleOutcome(result.placements, tuple(result.diagnostics))
 
 
 def _fixed_placement(raw: dict[str, Any]) -> dict[str, date]:
