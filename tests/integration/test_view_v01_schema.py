@@ -23,7 +23,7 @@ def _json_value(value: Any) -> Any:
 
 
 def _validator() -> jsonschema.Draft202012Validator:
-    schema = yaml.safe_load(schema_resource("view-v0.6.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("view-v0.7.schema.yaml").read_text(encoding="utf-8"))
     foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
     return jsonschema.Draft202012Validator(
         schema, resolver=jsonschema.RefResolver.from_schema(schema, store={foundation["$id"]: foundation})
@@ -33,7 +33,7 @@ def _validator() -> jsonschema.Draft202012Validator:
 @pytest.mark.parametrize("path", sorted(ROOT.glob("examples/**/views/*.yaml")))
 def test_declared_public_v03_view_validates(path: Path):
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if value.get("version") != "chrona/view/v0.6":
+    if value.get("version") != "chrona/view/v0.7":
         pytest.skip("not a v0.3 View")
     assert next(_validator().iter_errors(_json_value(value)), None) is None, path
 

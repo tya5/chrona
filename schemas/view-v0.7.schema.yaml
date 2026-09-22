@@ -1,11 +1,11 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.6"
+$id: "chrona/view-v0.7"
 title: "Chrona View v0.6"
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
-      version: {const: "chrona/view/v0.6"}
+      version: {const: "chrona/view/v0.7"}
       kind: {const: view}
       body:
         type: object
@@ -62,7 +62,8 @@ allOf:
             required: [baseline, actual, observationSelection, deltaUnit, facets]
             additionalProperties: false
             properties:
-              baseline: {enum: [primary, snapshot]}
+              baseline: {enum: [primary, snapshot, scenario]}
+              scenario: {type: string, minLength: 1}
               actual: {enum: [forbidden, optional, required]}
               observationSelection: {const: latest}
               deltaUnit: {const: calendar-days}
@@ -248,8 +249,9 @@ allOf:
                             required: [kind, object]
                             additionalProperties: false
                             properties:
-                              kind: {enum: [primary, snapshot, actual]}
+                              kind: {enum: [primary, snapshot, scenario, actual]}
                               object: {type: string, minLength: 1}
+                              scenario: {type: string, minLength: 1}
             allOf:
               - if: {properties: {mode: {const: automatic}}}
                 then: {not: {required: [items]}}
@@ -258,6 +260,8 @@ allOf:
         allOf:
           - if: {properties: {rows: {properties: {mode: {const: automatic}}, required: [mode]}}}
             then: {required: [selection, grouping, ordering, window]}
+          - if: {properties: {comparison: {properties: {baseline: {const: scenario}}, required: [baseline]}}}
+            then: {properties: {comparison: {required: [scenario]}}}
           - if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
             then: {not: {anyOf: [{required: [selection]}, {required: [grouping]}, {required: [ordering]}]}, required: [window]}
 $defs:

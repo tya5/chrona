@@ -117,6 +117,7 @@ class ViewRowItem:
     source_object: str
     track: str
     presentation: FrozenDict | None = None
+    scenario_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -176,6 +177,7 @@ class ViewComparison:
     observation_selection: str | None
     delta_unit: str | None
     facets: tuple[str, ...]
+    scenario_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -379,7 +381,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
     ("project", "timeline/v0.5"): "project-v0.5.schema.yaml",
-    ("view", "chrona/view/v0.6"): "view-v0.6.schema.yaml",
+    ("view", "chrona/view/v0.7"): "view-v0.7.schema.yaml",
     ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",
@@ -454,7 +456,8 @@ def _view_input(body: FrozenDict) -> ViewInput:
                                 str(raw_comparison["actual"]),
                                 str(raw_comparison["observationSelection"]) if "observationSelection" in raw_comparison else None,
                                 str(raw_comparison["deltaUnit"]) if "deltaUnit" in raw_comparison else None,
-                                tuple(str(item) for item in raw_comparison.get("facets", ())))
+                                tuple(str(item) for item in raw_comparison.get("facets", ())),
+                                str(raw_comparison["scenario"]) if "scenario" in raw_comparison else None)
     raw_visibility = body["visibility"]
     _validate_view_fallback(raw_visibility.get("fallback"))
     visibility = ViewVisibility(raw_visibility["labels"], raw_visibility["relations"], raw_visibility["annotations"],
@@ -465,7 +468,8 @@ def _view_input(body: FrozenDict) -> ViewInput:
                 str(row["group"]) if "group" in row else None,
                 str(row["tableSubject"]) if "tableSubject" in row else None,
                 tuple(ViewRowItem(str(item["id"]), str(item["source"]["kind"]),
-                                  str(item["source"]["object"]), str(item.get("track", "stacked")), item.get("presentation"))
+                                  str(item["source"]["object"]), str(item.get("track", "stacked")), item.get("presentation"),
+                                  str(item["source"]["scenario"]) if "scenario" in item["source"] else None)
                       for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
     return ViewInput(

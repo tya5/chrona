@@ -27,6 +27,7 @@ from chrona.presentation.review.v05_content import normalize_summary_content, no
 from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
 from chrona.presentation.renderers.registry import renderer_for
+from chrona.core.scenarios import resolve_scenario, ScenarioError
 
 # Consumed through ``context["resolvedTheme"]`` rather than through the closure
 # accessor, so they are read by construction.
@@ -182,10 +183,25 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     snapshot_result = scheduler.schedule(snapshot_project) if snapshot_project is not None else None
     if snapshot_result is not None and not snapshot_result.ok:
         raise RenderRejected(snapshot_result.diagnostics)
+    scenario_ids = ({view.comparison.scenario_id} if view.comparison.baseline == "scenario" else set())
+    scenario_ids.update(item.scenario_id for row in view.rows.items for item in row.items if item.source_kind == "scenario")
+    if None in scenario_ids:
+        raise RenderFailed("E_SCENARIO_REQUIRED", "Scenario source requires a scenario id", "view")
+    scenarios = {}
+    for scenario_id in sorted(scenario_ids):
+        try:
+            scenario_project = resolve_scenario(project, scenario_id).project
+        except ScenarioError as error:
+            raise RenderFailed(error.diagnostic.id, error.diagnostic.message, "scenario") from error
+        scenario_result = scheduler.schedule(scenario_project)
+        if not scenario_result.ok:
+            raise RenderRejected(scenario_result.diagnostics)
+        scenarios[scenario_id] = (scenario_project, scenario_result.placements)
     return build_review_projection(
         project, result.placements, view, actual,
         snapshot_project=snapshot_project,
         snapshot_placements=snapshot_result.placements if snapshot_result is not None else None,
+        scenarios=scenarios,
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
     )

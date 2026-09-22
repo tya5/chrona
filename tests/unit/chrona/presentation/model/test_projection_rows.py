@@ -78,6 +78,21 @@ def test_explicit_row_resolves_named_snapshot_item():
         ("snapshot", "Historic", date(2026, 1, 1)), ("primary", "Current", date(2026, 2, 1))]
 
 
+def test_explicit_row_selects_each_named_scenario_by_its_declared_id():
+    project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
+    view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), freeze({}), (), (),
+        ViewRows("explicit", (ViewRow("r", None, 0, None, None, None, (
+            ViewRowItem("early", "scenario", "task", "stacked", scenario_id="early"),
+            ViewRowItem("late", "scenario", "task", "stacked", scenario_id="late"),)),)), None, (), None, None, None)
+    projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}}, view, None,
+        scenarios={
+            "early": ({"objects": {"task": {"title": "Early", "fields": {}}}}, {"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}}),
+            "late": ({"objects": {"task": {"title": "Late", "fields": {}}}}, {"task": {"start": date(2026, 3, 1), "end": date(2026, 3, 2)}}),
+        })
+    assert [(item.scenario_id, item.title) for item in projection.rows[0].items] == [("early", "Early"), ("late", "Late")]
+
+
 def test_projection_carries_current_and_snapshot_analysis_without_crossing_them():
     project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
     historic = {"objects": {"task": {"title": "Historic", "fields": {}}}, "entities": {}}
