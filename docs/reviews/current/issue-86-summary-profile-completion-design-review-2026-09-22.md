@@ -1,6 +1,6 @@
 # Issue 86 — Summary Profile Completion Design Review
 
-**Reviewed baseline:** `569f484abe72b42dd4c79254a06ca6a895007d5b`  
+**Reviewed baseline:** `569f484abe72b42dd4c79254a06ca6a895007d5b`
 **Design-plan authority:** `issue-86-summary-profile-completion-design-plan-2026-09-22.md`
 
 ## Decision
