@@ -278,6 +278,19 @@ def test_cli_draft_render_rejects_invalid_viewport(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_VIEWPORT"
 
 
+def test_cli_materializes_a_guided_workspace_through_the_authoring_use_case(tmp_path, monkeypatch):
+    workspace = tmp_path / "workspace.yaml"
+    called = {}
+    monkeypatch.setattr(cli, "materialize_presentation_preset", lambda path, *, directory: called.update(path=path, directory=directory))
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "materialize-presentation-preset", "--workspace", str(workspace), "--directory", "ejected",
+    ])
+
+    main()
+
+    assert called == {"path": workspace, "directory": "ejected"}
+
+
 @pytest.mark.parametrize(("format_name", "prefix"), [("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")])
 def test_cli_draft_render_writes_declared_binary_format(tmp_path, monkeypatch, format_name, prefix):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
