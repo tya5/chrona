@@ -2,11 +2,13 @@ version: chrona/schema-inventory/v0.1
 schemas:
   - {file: actual-intake-batch-v0.2.schema.yaml, kind: actual-intake-batch, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: actual-set-v0.2.schema.yaml, kind: actual-set, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: authoring-workspace-v0.1.schema.yaml, kind: authoring-workspace, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: color-scheme-v0.1.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: command-request-v0.2.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: layout-profile-v0.3.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: profile-v0.2.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: project-v0.5.schema.yaml, kind: project, state: live, consumers: [src/chrona/core/validation.py]}
   - {file: render-context-v0.8.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

@@ -300,6 +300,24 @@ class LayoutProfileContract(ResourceContract):
 
 
 @dataclass(frozen=True)
+class PresentationPresetContract(ResourceContract):
+    """Validated declarative preset package; resource documents stay external."""
+
+    package_version: str
+    resources: FrozenDict
+    compatible_color_schemes: tuple[FrozenDict, ...]
+
+
+@dataclass(frozen=True)
+class AuthoringWorkspaceContract(ResourceContract):
+    """Closed Stage-1/2 source facade, never exposed to the render pipeline."""
+
+    project: FrozenDict
+    actuals: tuple[FrozenDict, ...]
+    binding: FrozenDict
+
+
+@dataclass(frozen=True)
 class ResourceReference:
     """One immutable Context edge, decoded after Context schema acceptance."""
 
@@ -391,6 +409,8 @@ _SCHEMAS = {
     ("profile-package", "chrona/profile/v0.2"): "profile-v0.2.schema.yaml",
     ("summary-profile", "chrona/summary-profile/v0.1"): "summary-profile-v0.2.schema.yaml",
     ("review-detail-profile", "chrona/review-detail-profile/v0.1"): "review-detail-profile-v0.1.schema.yaml",
+    ("presentation-preset", "chrona/presentation-preset/v0.1"): "presentation-preset-v0.1.schema.yaml",
+    ("authoring-workspace", "chrona/authoring-workspace/v0.1"): "authoring-workspace-v0.1.schema.yaml",
 }
 
 
@@ -583,4 +603,35 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         return SummaryProfileContract(identity, version, _summary_input(body))
     if identity.kind == "review-detail-profile":
         return ReviewDetailProfileContract(identity, version, _review_detail_input(body))
+    if identity.kind == "presentation-preset":
+        package, resources, schemes = body["package"], body["resources"], body["compatibleColorSchemes"]
+        if not isinstance(package, FrozenDict) or not isinstance(resources, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        if not isinstance(schemes, (FrozenList, tuple)) or not all(isinstance(item, FrozenDict) for item in schemes):
+            raise ContractError("E_CLOSURE_KIND")
+        return PresentationPresetContract(identity, version, str(package["version"]), resources, tuple(schemes))
+    if identity.kind == "authoring-workspace":
+        project, presentation = body["project"], body["presentation"]
+        actuals = body.get("actuals", ())
+        if not isinstance(project, FrozenDict) or not isinstance(presentation, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        if not isinstance(actuals, (FrozenList, tuple)) or not all(isinstance(item, FrozenDict) for item in actuals):
+            raise ContractError("E_CLOSURE_KIND")
+        binding = presentation["binding"]
+        if not isinstance(binding, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        _validate_workspace_identifiers(project, actuals)
+        return AuthoringWorkspaceContract(identity, version, project, tuple(actuals), binding)
     raise ContractError("E_CLOSURE_KIND")
+
+
+def _validate_workspace_identifiers(project: FrozenDict, actuals: FrozenList | tuple[Any, ...]) -> None:
+    tasks = project.get("tasks", ())
+    if not isinstance(tasks, (FrozenList, tuple)):
+        raise ContractError("E_CLOSURE_KIND")
+    task_ids = tuple(str(task["id"]) for task in tasks if isinstance(task, FrozenDict))
+    if len(task_ids) != len(tasks) or len(task_ids) != len(set(task_ids)):
+        raise ContractError("E_AUTHORING_TASK_ID")
+    actual_ids = tuple(str(item["taskId"]) for item in actuals)
+    if len(actual_ids) != len(set(actual_ids)) or any(task_id not in task_ids for task_id in actual_ids):
+        raise ContractError("E_AUTHORING_ACTUAL_TASK")
