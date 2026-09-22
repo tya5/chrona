@@ -130,14 +130,27 @@ objects:
     calendar: range
     fields: {owner: launch, team: Launch and range, phase: Campaign}
     schedule: {mode: scheduled, amount: 15wd}
+  mission-closeout:
+    type: group
+    title: Mission closeout
+    wbsCode: '6'
+    plannedProgress: 0
+    schedule: {mode: rollup}
   frr:
     type: gate
     title: Flight readiness review
+    parent: mission-closeout
+    wbsCode: '6.1'
+    plannedProgress: 0
+    link: {href: https://example.test/halcyon-1/reviews/frr, title: Open FRR evidence}
     fields: {owner: launch, team: Programme, phase: Campaign, review: FRR}
     schedule: {mode: fixed, at: '2027-10-15'}
   launch:
     type: gate
     title: Launch window opens
+    parent: mission-closeout
+    wbsCode: '6.2'
+    plannedProgress: 0
     fields: {owner: launch, team: Launch and range, phase: Campaign, review: L0}
     schedule: {mode: fixed, at: '2027-10-22'}
   rehearsals:
@@ -148,11 +161,17 @@ objects:
   leop:
     type: task
     title: LEOP and commissioning
+    parent: mission-closeout
+    wbsCode: '6.3'
+    plannedProgress: 0
     fields: {owner: ops, team: Mission operations, phase: Operate}
     schedule: {mode: scheduled, amount: 21d}
   first-light:
     type: gate
     title: First light
+    parent: mission-closeout
+    wbsCode: '6.4'
+    plannedProgress: 0
     fields: {owner: ops, team: Mission operations, phase: Operate, review: FL}
     schedule: {mode: fixed, at: '2027-11-19'}
 relations:

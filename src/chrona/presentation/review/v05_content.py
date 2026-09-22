@@ -33,7 +33,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         table_cell_objects = tuple(
             (row.row_id, column.id,
              next(item for item in row.items if item.item_id == row.table_subject_id).object_id,
-             next(item for item in row.items if item.item_id == row.table_subject_id).source_kind == "primary")
+             next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"})
             for row in projection.rows for column in view.table_columns)
     else:
         cells = tuple((item.object_id, column.id, cell(item, column, row_index))

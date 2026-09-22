@@ -15,8 +15,8 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
     materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
     materialize(ROOT / "examples/aster-ssd/manifest.yaml", "overview", tmp_path / "aster", write=False)
     manifest = ROOT / "examples/halcyon-1/manifest.yaml"
-    for slide in ("mission-brief", "programme-board", "launch-campaign", "tvac-slip"):
-        materialize(manifest, slide, tmp_path / slide, write=False)
+    for slide in yaml.safe_load(manifest.read_text())["slides"]:
+        materialize(manifest, slide["id"], tmp_path / slide["id"], write=False)
 
 
 def test_materializer_detects_changed_expected_svg(tmp_path):
@@ -57,16 +57,27 @@ def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
 
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"
-    for index, relative in enumerate((
-        "contexts/01-mission-brief.yaml",
-        "contexts/02-programme-board.yaml",
-        "contexts/03-launch-campaign.yaml",
-        "contexts/04-tvac-slip.yaml",
-    )):
+    manifest = yaml.safe_load((example / "manifest.yaml").read_text())
+    for index, slide in enumerate(manifest["slides"]):
+        relative = slide.get("context", manifest["context"])
         snapshot = tmp_path / str(index)
         snapshot.mkdir()
         reference, revision = _copy_context_closure(example, example / relative, snapshot)
         assert reference["id"] == yaml.safe_load((snapshot / revision / relative).read_text())["id"]
+
+
+def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path):
+    example = ROOT / "examples/halcyon-1"
+    materialize(example / "manifest.yaml", "flight-readiness", tmp_path / "flight-readiness", write=False)
+    artifact = (tmp_path / "flight-readiness/review.svg").read_text()
+    evidence = yaml.safe_load((tmp_path / "flight-readiness/closure.yaml").read_text())
+    assert evidence["scenarios"][0]["scenarioId"] == "tvac-slip"
+    assert '<a href="https://example.test/halcyon-1/reviews/frr"' in artifact
+    assert artifact.count('marker-end="url(#marker-dependency-critical-triangle)"') == 12
+    for object_id, wbs in (("mission-closeout", "6"), ("frr", "6.1"), ("launch", "6.2"), ("leop", "6.3"), ("first-light", "6.4")):
+        assert f'data-scene-id="cell:{object_id}:WBS"' in artifact
+        assert f'>{wbs}</text>' in artifact
+    assert artifact.count('data-scene-id="cell:frr:Float"') == 1
 
 
 def test_materializer_rejects_a_supplied_wrong_font_pin_without_writing_svg(tmp_path):

@@ -6,6 +6,10 @@ body:
   rows: {mode: automatic}
   selection:
     include:
+      ids: [pdr, structure, avionics, eps, bus-test, cdr, optics, detector, payload-tvac,
+            payload-delivery, integration, vibration, tvac, emc, psr, mcs, station,
+            comms-test, launch-contract, shipment, campaign, frr, launch, rehearsals,
+            leop, first-light]
       types: [span, point]
   grouping:
     by: field

@@ -1,0 +1,36 @@
+version: chrona/view/v0.8
+kind: view
+id: halcyon-06-flight-readiness
+body:
+  surface: table-timeline
+  rows: {mode: automatic}
+  selection:
+    include:
+      ids: [mission-closeout, frr, launch, leop, first-light]
+      types: [span, point]
+  grouping: {by: hierarchy, depth: 1, rollup: bar, missing: ungrouped}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  window: {mode: explicit, start: '2027-10-01', end: '2027-12-01'}
+  comparison:
+    baseline: scenario
+    scenario: tvac-slip
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+  visibility:
+    labels: {placement: table, content: [title], side: auto, overflow: suppress}
+    relations: {mode: critical, overflow: suppress}
+    annotations: {mode: none, marker: none}
+    links: title
+  axis:
+    levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]
+    ticks: week
+  markers: [{kind: asOf, source: actual, label: as of}]
+  shading: {nonWorking: true, exceptions: true}
+  layoutIntent: {compactness: balanced, itemStacking: stable}
+  tableColumns:
+    - {id: WBS, source: wbsCode, missing: em-dash}
+    - {id: Work package, source: title, missing: em-dash}
+    - {id: Float, source: totalFloat, format: signedDays, missing: em-dash}
+    - {id: Scenario, source: {scenario: title}, missing: em-dash}
