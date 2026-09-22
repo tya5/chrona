@@ -15,7 +15,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_render_context
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
-from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
 from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
@@ -134,18 +134,20 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--detail", help="Review Detail Profile YAML path")
     command.add_argument("--viewport", default="1600x900", help="viewport WIDTHxHEIGHT (default: 1600x900)")
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
+    command.add_argument("--format", choices=("svg", "png", "pdf"), default="svg")
     command.add_argument("--output", "-o", required=True)
 
-    command = sub.add_parser("render-review", help="render an immutable Render Context v0.6", description="render an immutable Render Context v0.6")
+    command = sub.add_parser("render-review", help="render an immutable Render Context v0.7", description="render an immutable Render Context v0.7")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
     command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose Context declares inputs the render never reads")
+    command.add_argument("--format", choices=("svg", "png", "pdf"), help="assert the Context target format")
     command.add_argument("--output", "-o", required=True)
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
-    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.6 resource-reference YAML; repeat for each scheme")
+    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.7 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
@@ -178,7 +180,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
     """Adapt one resolved closure to the render use case and its diagnostics."""
     request = RenderRequest(
         closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
-        scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(),
+        scheduler=ReferenceScheduler(), renderer=renderer_for(closure.context.body["target"], closure.context.body["environment"]),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
         asset_root=asset_root,
     )
@@ -193,8 +195,14 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
 def _run_render_review(args: argparse.Namespace) -> None:
     reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     closure = resolve_render_context(load_yaml(args.context_reference), reader)
+    _assert_context_format(closure, args.format)
     rendered = _render_review(closure, args)
-    Path(args.output).write_text(rendered.svg, encoding="utf-8")
+    Path(args.output).write_bytes(rendered.artifact.content)
+
+
+def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:
+    if format_name and format_name != closure.context.body["target"]["kind"]:
+        raise CliFailure("E_RENDER_FORMAT_CONTEXT", "--format must match the Context target", "cli", "/format", 2)
 
 
 def _run_draft_render(args: argparse.Namespace) -> None:
@@ -204,10 +212,10 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         actual_path=Path(args.actual) if args.actual else None,
         summary_path=Path(args.summary) if args.summary else None,
         detail_path=Path(args.detail) if args.detail else None,
-        viewport=_parse_viewport(args.viewport), locale=args.locale,
+        viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=args.format,
     )
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
-    Path(args.output).write_text(rendered.svg, encoding="utf-8")
+    Path(args.output).write_bytes(rendered.artifact.content)
 
 
 def _parse_viewport(value: str) -> tuple[int, int]:
@@ -246,7 +254,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     outputs = []
     for scheme_id, identity, context_id, _reference, closure in entries:
         output = destination / f"{scheme_id}.svg"
-        output.write_text(_render_review(closure, args).svg, encoding="utf-8")
+        output.write_bytes(_render_review(closure, args).artifact.content)
         outputs.append({"contextId": context_id, "colorScheme": {"id": scheme_id, "contentIdentity": identity}, "output": output.name})
     (destination / "gallery.json").write_text(json.dumps({"results": outputs}, indent=2) + "\n", encoding="utf-8")
 

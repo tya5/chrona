@@ -32,11 +32,11 @@ def _draft_request() -> RenderRequest:
 
 
 def test_draft_render_materializes_the_review_surface():
-    svg = render_review(_draft_request()).svg
+    svg = render_review(_draft_request()).artifact.content.decode()
     assert '<svg ' in svg
     assert 'data-source-ref="firmware"' in svg
     assert 'data-presentation-adapter="legacy-v0.1"' not in svg
 
 
 def test_draft_render_is_deterministic():
-    assert render_review(_draft_request()).svg == render_review(_draft_request()).svg
+    assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content

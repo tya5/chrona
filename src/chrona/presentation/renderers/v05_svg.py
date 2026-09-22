@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from html import escape
 
+from chrona.core.ports import RenderArtifact
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneSurface
 
@@ -63,7 +64,9 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float], toke
 class V05SvgRenderer:
     """Port adapter for serialization of completed v0.5 Scene surfaces."""
 
-    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> str:
+    target_kind = "svg"
+
+    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> RenderArtifact:
         if not isinstance(surface, SceneSurface) or not isinstance(tokens, ThemeTokenView):
             raise ValueError("E_PRESENTATION_RENDER_INPUT")
-        return render_v05_svg(surface, viewport=viewport, tokens=tokens)
+        return RenderArtifact("svg", "image/svg+xml", render_v05_svg(surface, viewport=viewport, tokens=tokens).encode("utf-8"), "chrona-svg-v0.5")

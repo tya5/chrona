@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
@@ -126,7 +127,7 @@ def resolve_draft_render(
     *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
     layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, viewport: tuple[int, int] = (1600, 900),
-    locale: str = "en-US",
+    locale: str = "en-US", target_kind: str = "svg",
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -161,7 +162,7 @@ def resolve_draft_render(
 
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     context_value = {
-        "version": "chrona/render-context/v0.6", "kind": "render-context", "id": "draft-render",
+        "version": "chrona/render-context/v0.7", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -178,8 +179,9 @@ def resolve_draft_render(
                 "locale": locale,
                 "fontMetrics": _packaged_font_metrics(asset_root),
                 "scenePrecision": 3,
+                **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
             },
-            "target": {"kind": "svg", "capabilities": list(_DRAFT_CAPABILITIES)},
+            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else []},
         },
     }
     try:
@@ -236,9 +238,22 @@ def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
     }], "missingFont": "declared-fallback"}
 
 
+def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
+    if target_kind == "png":
+        try:
+            import resvg_py
+            return {"engine": "resvg-py", "version": resvg_py.__version__, "resvgVersion": resvg_py.__resvg_version__, "dpi": 96}
+        except ImportError:
+            return {"engine": "resvg-py", "version": "unavailable", "resvgVersion": "unavailable", "dpi": 96}
+    try:
+        return {"engine": "reportlab", "svglibVersion": version("svglib"), "reportlabVersion": version("reportlab"), "invariant": True}
+    except Exception:
+        return {"engine": "reportlab", "svglibVersion": "unavailable", "reportlabVersion": "unavailable", "invariant": True}
+
+
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.get("version") != "chrona/render-context/v0.6":
+    if context.get("version") != "chrona/render-context/v0.7":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 

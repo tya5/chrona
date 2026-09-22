@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.6
+version: chrona/render-context/v0.7
 kind: render-context
 id: halcyon-1-03-launch-campaign
 body:

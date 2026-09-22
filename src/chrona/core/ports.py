@@ -44,6 +44,18 @@ class Scheduler(Protocol):
         ...
 
 
+@dataclass(frozen=True)
+class RenderArtifact:
+    """Opaque bytes emitted by one declared presentation target."""
+
+    target_kind: str
+    media_type: str
+    content: bytes
+    adapter_identity: str
+
+
 class Renderer(Protocol):
-    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> str:  # pragma: no cover - protocol
+    target_kind: str
+
+    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> RenderArtifact:  # pragma: no cover - protocol
         ...
