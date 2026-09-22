@@ -13,11 +13,9 @@ import yaml
 from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
-from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_render_context
+from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_render_context
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
-from chrona.presentation.renderers.generic import render_svg
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
-from chrona.presentation.scene.schedule import scene_from_schedule
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
 from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
@@ -120,13 +118,23 @@ def _parser() -> JsonArgumentParser:
     commands = {
         "validate": "validate a raw Draft or immutable Project snapshot",
         "schedule": "derive a Date-only schedule from a raw Draft or immutable snapshot",
-        "render": "render the minimal schedule scene",
     }
     for name, help_text in commands.items():
         command = sub.add_parser(name, help=help_text, description=help_text)
         _add_snapshot_arguments(command)
-        if name == "render":
-            command.add_argument("--output", "-o", required=True)
+    command = sub.add_parser("render", help="render a draft review surface (not reproducible evidence)",
+                              description="render a draft review surface (not reproducible evidence)")
+    command.add_argument("project", help="Draft Project YAML path")
+    command.add_argument("--view", required=True, help="View YAML path")
+    command.add_argument("--theme", required=True, help="Theme YAML path")
+    command.add_argument("--scheme", required=True, help="Color Scheme YAML path")
+    command.add_argument("--layout", required=True, help="Layout Profile YAML path")
+    command.add_argument("--actual", help="Actual Set YAML path")
+    command.add_argument("--summary", help="Summary Profile YAML path")
+    command.add_argument("--detail", help="Review Detail Profile YAML path")
+    command.add_argument("--viewport", default="1600x900", help="viewport WIDTHxHEIGHT (default: 1600x900)")
+    command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
+    command.add_argument("--output", "-o", required=True)
 
     command = sub.add_parser("render-review", help="render an immutable Render Context v0.6", description="render an immutable Render Context v0.6")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
@@ -166,12 +174,13 @@ def _parser() -> JsonArgumentParser:
 
 
 
-def _render_review(closure: RenderClosure, args: argparse.Namespace) -> RenderedReview:
+def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_root: Path | None = None) -> RenderedReview:
     """Adapt one resolved closure to the render use case and its diagnostics."""
     request = RenderRequest(
-        closure=closure, snapshot_root=Path(args.snapshot_root),
+        closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
         scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
+        asset_root=asset_root,
     )
     try:
         return render_review(request)
@@ -186,6 +195,32 @@ def _run_render_review(args: argparse.Namespace) -> None:
     closure = resolve_render_context(load_yaml(args.context_reference), reader)
     rendered = _render_review(closure, args)
     Path(args.output).write_text(rendered.svg, encoding="utf-8")
+
+
+def _run_draft_render(args: argparse.Namespace) -> None:
+    closure = resolve_draft_render(
+        project_path=Path(args.project), view_path=Path(args.view), theme_path=Path(args.theme),
+        scheme_path=Path(args.scheme), layout_path=Path(args.layout),
+        actual_path=Path(args.actual) if args.actual else None,
+        summary_path=Path(args.summary) if args.summary else None,
+        detail_path=Path(args.detail) if args.detail else None,
+        viewport=_parse_viewport(args.viewport), locale=args.locale,
+    )
+    rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
+    Path(args.output).write_text(rendered.svg, encoding="utf-8")
+
+
+def _parse_viewport(value: str) -> tuple[int, int]:
+    parts = value.lower().split("x")
+    if len(parts) != 2:
+        raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2)
+    try:
+        width, height = (int(part) for part in parts)
+    except ValueError as error:
+        raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2) from error
+    if width <= 0 or height <= 0:
+        raise CliFailure("E_COMMAND_VIEWPORT", "viewport dimensions must be positive", "cli", "/viewport", 2)
+    return width, height
 
 
 def _run_render_review_gallery(args: argparse.Namespace) -> None:
@@ -248,6 +283,9 @@ def _run(args: argparse.Namespace) -> None:
     if args.command == "render-review":
         _run_render_review(args)
         return
+    if args.command == "render":
+        _run_draft_render(args)
+        return
     if args.command == "render-review-gallery":
         _run_render_review_gallery(args)
         return
@@ -278,11 +316,6 @@ def _run(args: argparse.Namespace) -> None:
     result = schedule(project)
     if not result.ok:
         _reject(result.diagnostics)
-    if args.command == "render":
-        scene = scene_from_schedule(project, result.placements)
-        svg = render_svg(scene, {"marker", "metadata", "text-alternative"})
-        Path(args.output).write_text(svg, encoding="utf-8")
-        return
     print(json.dumps({"placements": result.placements, "diagnostics": []}, indent=2, default=_json_default))
 
 
