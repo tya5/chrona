@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 from chrona.usecases.authoring_commands import apply_authoring_command
-from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
+from chrona.operational.authoring_commands import _bytes_identity, _transaction_marker, _write_marker, cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import content_identity
 
 
@@ -76,3 +76,18 @@ def test_aggregate_writer_switches_workspace_last_and_rejects_stale_or_colliding
     assert result == content_identity(explicit)
     assert yaml.safe_load(path.read_text())["body"]["presentation"]["mode"] == "explicit"
     assert (tmp_path / "presentation/view.yaml").read_bytes() == b"view"
+
+
+def test_aggregate_writer_recovers_an_unreferenced_complete_bundle_before_retry(tmp_path):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    orphan = tmp_path / "presentation"
+    orphan.mkdir()
+    payload = b"orphan"
+    (orphan / "view.yaml").write_bytes(payload)
+    _write_marker(_transaction_marker(path), content_identity(workspace), "presentation", {"presentation/view.yaml": _bytes_identity(payload)})
+    candidates = {"workspace.yaml": yaml.safe_dump(workspace).encode(), "presentation/view.yaml": b"replacement"}
+
+    assert cas_write_authoring_aggregate(path, content_identity(workspace), candidates) == content_identity(workspace)
+    assert (tmp_path / "presentation/view.yaml").read_bytes() == b"replacement"
+    assert not _transaction_marker(path).exists()
