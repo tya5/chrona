@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.hierarchy import children_by_parent, normalize_hierarchy
 from chrona.core.ports import ScheduleOutcome
 from chrona.core.temporal import (Calendar, TemporalError, advance, as_date, parse_amount,
                        requires_working_calendar, retreat)
@@ -25,7 +26,7 @@ def schedule(
     project: dict[str, Any],
     extension_diagnostics: list[Diagnostic] | tuple[Diagnostic, ...] | None = None,
 ) -> ScheduleResult:
-    """Reference scheduler for the acyclic Core v0.1 Date-only subset.
+    """Reference scheduler for the acyclic Core v0.3 Date-only subset.
 
     It intentionally reports unresolved cyclic systems as capability diagnostics;
     a cycle is not thereby declared semantically invalid.
@@ -37,6 +38,7 @@ def schedule(
     objects = project.get("objects", {})
     placements: dict[str, dict[str, date]] = {}
     pending = list(objects)
+    children = children_by_parent(normalize_hierarchy(project))
 
     # Fixed coordinates are authoritative and can always be made available.
     for object_id, item in objects.items():
@@ -50,9 +52,18 @@ def schedule(
         for object_id in tuple(pending):
             item = objects[object_id]
             raw = item["schedule"]
-            if raw["mode"] != "scheduled":
-                diagnostics.append(Diagnostic("E_DERIVATION", "Only fixed and scheduled objects are implemented", f"/objects/{object_id}"))
+            if raw["mode"] == "rollup":
+                direct_children = children[object_id]
+                if any(child not in placements for child in direct_children):
+                    continue
+                placements[object_id] = _rollup_placement(direct_children, placements)
                 pending.remove(object_id)
+                progressed = True
+                continue
+            if raw["mode"] != "scheduled":
+                diagnostics.append(Diagnostic("E_ROLLUP_SCHEDULE", "Unsupported rollup schedule", f"/objects/{object_id}/schedule"))
+                pending.remove(object_id)
+                progressed = True
                 continue
             bound, wait, bound_diagnostics = _lower_bound(object_id, project, placements, calendars)
             if bound_diagnostics:
@@ -98,6 +109,14 @@ def _fixed_placement(raw: dict[str, Any]) -> dict[str, date]:
     if "at" in raw:
         return {"at": as_date(raw["at"])}
     return {"start": as_date(raw["start"]), "end": as_date(raw["end"])}
+
+
+def _rollup_placement(children: tuple[str, ...], placements: dict[str, dict[str, date]]) -> dict[str, date]:
+    """Envelope completed child placements without imposing a constraint on them."""
+    starts = [placement.get("start", placement.get("at")) for child in children if (placement := placements[child])]
+    ends = [placement.get("end", placement.get("at")) for child in children if (placement := placements[child])]
+    return {"start": min(value for value in starts if value is not None),
+            "end": max(value for value in ends if value is not None)}
 
 
 def _lower_bound(target_id: str, project: dict, placements: dict,

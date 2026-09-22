@@ -13,7 +13,7 @@ from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled
 from chrona.resources import schema_resource
 
 
-SCHEMA_PATH = schema_resource("project-v0.1.schema.yaml")
+SCHEMA_PATH = schema_resource("project-v0.3.schema.yaml")
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
@@ -33,6 +33,9 @@ def validate_project(
     package registry or revision-store implementation.
     """
     diagnostics: list[Diagnostic] = []
+    diagnostics.extend(_rollup_syntax_diagnostics(project))
+    if diagnostics:
+        return diagnostics
     schema = yaml.safe_load(schema_path.read_text(encoding="utf-8"))
     # PyYAML resolves unquoted ISO dates to ``date`` objects, while JSON Schema
     # describes the canonical JSON-compatible representation as strings. Keep
@@ -45,6 +48,7 @@ def validate_project(
 
     calendars = project.get("calendars", {})
     objects = project.get("objects", {})
+    children_by_parent = _validate_hierarchy(objects, diagnostics)
     for calendar_id, raw in calendars.items():
         try:
             Calendar.from_mapping(raw)
@@ -73,6 +77,8 @@ def validate_project(
                 diagnostics.append(Diagnostic("E_INVALID_AMOUNT", "Scheduled spans allow only positive d, w, or wd", path + "/schedule/amount"))
             if requires_working_calendar(amount) and not _resolve_calendar_id(item, project):
                 diagnostics.append(Diagnostic("E_CALENDAR_REQUIRED", "WorkPeriod schedule has no calendar", path))
+        if mode == "rollup" and not children_by_parent.get(object_id):
+            diagnostics.append(Diagnostic("E_ROLLUP_EMPTY", "Rollup must have scheduled descendants", path + "/schedule"))
 
     for index, relation in enumerate(project.get("relations", [])):
         path = f"/relations/{index}"
@@ -108,6 +114,72 @@ def validate_project(
         ))
     elif extension_diagnostics:
         diagnostics.extend(extension_diagnostics)
+    return diagnostics
+
+
+def _validate_hierarchy(objects: dict[str, Any], diagnostics: list[Diagnostic]) -> dict[str, list[str]]:
+    """Validate the single Project containment graph and return its ordered children."""
+    children: dict[str, list[str]] = {object_id: [] for object_id in objects}
+    for object_id, item in objects.items():
+        parent = item.get("parent")
+        if parent is None:
+            continue
+        path = f"/objects/{object_id}/parent"
+        if parent not in objects:
+            diagnostics.append(Diagnostic("E_PARENT_NOT_FOUND", "Unknown parent object", path))
+            continue
+        if parent == object_id:
+            diagnostics.append(Diagnostic("E_SELF_PARENT", "Object cannot be its own parent", path))
+            continue
+        children[parent].append(object_id)
+
+    codes: dict[str, str] = {}
+    for object_id, item in objects.items():
+        code = item.get("wbsCode")
+        if code is None:
+            continue
+        if code in codes:
+            diagnostics.append(Diagnostic("E_DUPLICATE_WBS_CODE", "Explicit WBS code must be unique", f"/objects/{object_id}/wbsCode"))
+        else:
+            codes[code] = object_id
+
+    states: dict[str, int] = {}
+    reported: set[str] = set()
+
+    def visit(object_id: str) -> None:
+        state = states.get(object_id, 0)
+        if state == 1:
+            if object_id not in reported:
+                diagnostics.append(Diagnostic("E_PARENT_CYCLE", "Parent references must be acyclic", f"/objects/{object_id}/parent"))
+                reported.add(object_id)
+            return
+        if state == 2:
+            return
+        states[object_id] = 1
+        parent = objects[object_id].get("parent")
+        if parent in objects and parent != object_id:
+            visit(parent)
+        states[object_id] = 2
+
+    for object_id in objects:
+        visit(object_id)
+    return children
+
+
+def _rollup_syntax_diagnostics(project: dict[str, Any]) -> list[Diagnostic]:
+    """Name malformed rollup declarations instead of leaking a generic schema error."""
+    diagnostics: list[Diagnostic] = []
+    objects = project.get("objects", {})
+    if not isinstance(objects, dict):
+        return diagnostics
+    for object_id, item in objects.items():
+        if not isinstance(item, dict):
+            continue
+        schedule = item.get("schedule")
+        if not isinstance(schedule, dict) or schedule.get("mode") != "rollup":
+            continue
+        if set(schedule) != {"mode"}:
+            diagnostics.append(Diagnostic("E_ROLLUP_SCHEDULE", "Rollup schedule only permits mode: rollup", f"/objects/{object_id}/schedule"))
     return diagnostics
 
 

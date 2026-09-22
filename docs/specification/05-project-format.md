@@ -8,7 +8,7 @@
 This document defines the initial human-readable persistent representation of Core
 project semantics.
 
-YAML is the normative interchange syntax for Core v0.1 examples.
+YAML is the normative interchange syntax for Core v0.3 examples.
 
 The semantic models remain authoritative for meaning; this document owns serialization
 and normalization.
@@ -30,7 +30,7 @@ The format SHOULD be:
 Initial canonical structure:
 
 ```yaml
-version: timeline/v0.1
+version: timeline/v0.3
 
 project:
   id: example
@@ -109,20 +109,36 @@ schedule:
   amount: 20d
 ```
 
-### 4.4 Derived span
+### 4.4 Hierarchy and rollup span
 
 ```yaml
 objects:
   development:
     type: phase
     title: Development
-    children: [fw, validation]
-    schedule:
-      mode: derived
-      from: children
+    wbsCode: 1
+    schedule: {mode: rollup}
+  fw:
+    type: task
+    parent: development
+    plannedProgress: 0.5
+    schedule: {mode: fixed, start: 2026-10-01, end: 2026-10-30}
 ```
 
-The exact set of standardized derivation strategies may grow after v0.1.
+`parent` is the sole containment edge.  Parents must resolve to another object,
+must not self-reference, and form an acyclic forest.  YAML mapping order is the
+canonical root and sibling order.  `wbsCode` is an optional, unique author
+label; an omitted display code is derived deterministically from that tree
+order and does not create a second hierarchy edge.
+
+`schedule: {mode: rollup}` is valid only for an object with descendants.  It
+derives the envelope of all completed descendant placements after they are
+scheduled.  A parent with a fixed or scheduled span is an ordinary scheduled
+object and never constrains or moves its children.  The former `children` and
+`derived: {from: children}` syntax is not part of v0.3.
+
+`plannedProgress` is an optional decimal in `[0, 1]` expressing plan intent.
+It does not affect schedule, forecast, or Actual selection.
 
 ## 5. Temporal amount syntax
 
@@ -140,7 +156,7 @@ Core shorthand:
 
 Compound CalendarPeriod values MAY use a space-separated form such as `1mo 3d`.
 
-For `schedule.amount`, Core v0.1 accepts only amount types permitted as scheduled span
+For `schedule.amount`, Core v0.3 accepts only amount types permitted as scheduled span
 amounts by the Temporal Model. In particular, `mo` and `y` remain valid offset syntax
 but are invalid as scheduled task duration.
 
@@ -190,7 +206,7 @@ relations:
 
 If `lag` is omitted, it normalizes to `0d`.
 
-For Core v0.1 Date scheduling, dependency lag accepts signed `d`, `w`, or `wd`.
+For Core v0.3 Date scheduling, dependency lag accepts signed `d`, `w`, or `wd`.
 Month/year lag is not part of required scheduler conformance.
 
 A concise form MAY be accepted:
@@ -210,7 +226,9 @@ project files.
 
 A dependency whose target is `fixed` does not move the target. It is validated against
 the fixed endpoint and produces a schedule inconsistency diagnostic if the lower bound
-is violated. The same dependency moves/constrains a `scheduled` target.
+is violated. The same dependency moves/constrains a `scheduled` target. A
+rollup has `start` and `end` endpoints from its derived envelope and may be a
+dependency endpoint; a parent edge itself is never a dependency.
 
 
 ### 7.1 Explicit lag calendar
@@ -322,7 +340,7 @@ Presentation-specific placement offsets are not part of this Core representation
 
 The semantic model distinguishes precision and uncertainty.
 
-Core v0.1 reserves syntax such as:
+Core v0.3 reserves syntax such as:
 
 ```yaml
 at: 2027-Q1
@@ -339,7 +357,7 @@ at:
 for uncertainty.
 
 These forms are **provisional** until parsing, normalization, and scheduling behavior
-are fully specified. Implementations claiming only Core v0.1 scheduling conformance
+are fully specified. Implementations claiming only Core v0.3 scheduling conformance
 MAY reject unresolved uncertainty.
 
 ## 14. Canonicalization
@@ -371,7 +389,7 @@ MUST NOT pretend to understand its semantics.
 The top-level `version` identifies the project-format contract:
 
 ```yaml
-version: timeline/v0.1
+version: timeline/v0.3
 ```
 
 A breaking change to parsing or semantic interpretation requires a format-version
@@ -392,7 +410,7 @@ styles/
 themes/
 ```
 
-Core v0.1 defines the logical separation but does not yet standardize all include,
+Core v0.3 defines the logical separation but does not yet standardize all include,
 merge, and conflict rules.
 
 A small project MUST be representable in a single file.
@@ -431,9 +449,9 @@ scheduling validation
 This separation SHOULD allow diagnostics to identify whether a failure is structural
 or semantic.
 
-## 20. Core v0.1 required format subset
+## 20. Core v0.3 required format subset
 
-A Core v0.1 conforming scheduler/parser pair MUST support the Date-based subset used by
+A Core v0.3 conforming scheduler/parser pair MUST support the Date-based subset used by
 the canonical examples and schema.
 
 The following remain reserved/provisional and do not block Core scheduler conformance:
@@ -455,7 +473,7 @@ parent Project.
 
 The parent-side syntax is a separately versioned Federation Plan containing typed,
 immutable references to child **timeline exports**, rather than raw child Projects. It
-is not a `timeline/v0.1` top-level field:
+is not a `timeline/v0.3` top-level field:
 
 ```yaml
 version: chrona/federation-plan/v0.1
@@ -480,7 +498,7 @@ schedules, edits, or otherwise reaches into the child Project. Aggregated child
 progress is display information with an explicit aggregation rule and is not a
 scheduling input.
 
-The federation resources are versioned outside Core v0.1. The Git-shaped syntax above
+The federation resources are versioned outside Core v0.3. The Git-shaped syntax above
 is a v0.1 compatibility form; RA-4 defines the successor provider-neutral form. A future
 Render Context minor version will reference the Federation Plan explicitly.
 Implementations must not claim federation support until the resolver contract and fixtures in
@@ -488,7 +506,7 @@ Implementations must not claim federation support until the resolver contract an
 
 ## 22. Resource and capacity successor resources
 
-Resource capacity is not embedded implicitly in a v0.1 Project or Calendar. A
+Resource capacity is not embedded implicitly in a v0.3 Project or Calendar. A
 successor evaluation names a separately versioned `chrona/resource-capacity/v0.2`
 resource, whose structural form is owned by `resource-capacity-v0.2.schema.yaml`.
 It holds stable resource IDs, their dimensioned capacity unit and calendar reference,
@@ -503,7 +521,7 @@ identified resources and are not fields inferred into an assignment or schedule.
 # v0.2 temporal profile note
 
 The v0.2 DateTime successor adds an optional top-level `temporalProfile` only to a
-versioned successor Project format. `timeline/v0.1` rejects it and retains Date-only
+versioned successor Project format. `timeline/v0.3` rejects it and retains Date-only
 syntax. `datetime-v0.2` endpoints use the `temporal-datetime-v0.2` schema and MUST
 carry either an instant plus IANA zone or an explicitly disambiguated local input.
 
@@ -511,12 +529,12 @@ Migration from v0.1 is opt-in: the original document remains valid unchanged. A
 migration tool MAY create a v0.2 copy only when it supplies one explicit zone policy
 with IANA zone, non-midnight local time, and DST disambiguation; it MUST NOT invent any
 of those values. The result records source revision/format and the complete policy in
-migration provenance. The migratable subset is v0.1 fixed points/spans, scheduled
+migration provenance. The migratable subset is v0.3 fixed points/spans, scheduled
 `d`/`w` CalendarPeriod amounts, their date anchors, and `d`/`w` dependency lags.
 WorkPeriod, calendars, extensions, constraints, derived schedules, entities, annotations,
 unrecognized top-level fields, and unsupported amount units reject with a migration diagnostic rather
-than being dropped. A v0.1 scheduled span without its required v0.2 anchor rejects.
-An omitted v0.1 relation lag normalizes to `{kind: calendarPeriod, value: 0d}`; an
+than being dropped. A v0.3 scheduled span without its required v0.2 anchor rejects.
+An omitted v0.3 relation lag normalizes to `{kind: calendarPeriod, value: 0d}`; an
 explicit v0.1 `d`/`w` lag maps to the same CalendarPeriod form. Downgrade to v0.1 is always rejected for a v0.2 Project, since it
 contains DateTime semantics even when its values happen to align to dates.
 Before subset conversion the adapter validates the v0.1 source structurally and
@@ -527,7 +545,7 @@ semantically; any source diagnostic rejects the entire migration.
 `timeline/v0.2` is a distinct, opt-in document format. It requires
 `temporalProfile: datetime-v0.2`; all scheduling endpoints use the DateTime value
 contract (instant plus IANA zone, or explicit local disambiguation). It MUST NOT
-contain Date-only endpoints, and `timeline/v0.1` neither accepts nor converts it.
+contain Date-only endpoints, and `timeline/v0.3` neither accepts nor converts it.
 
 The v0.2 structural contract is `project-v0.2.schema.yaml`. Fixed spans use
 `start`/`end`, fixed points use `at`, and scheduled spans use one explicit anchor with
@@ -545,10 +563,10 @@ specified.
 A recurrence has `mode: recurrence` and declares local start, zone, frequency,
 interval, exactly one terminal bound (`count` or DateTime `until`), and DST
 disambiguation. `until` is an inclusive instant boundary. Its occurrences are derived;
-neither it nor an occurrence may be a dependency endpoint. A v0.1→v0.2 copy records
+neither it nor an occurrence may be a dependency endpoint. A v0.3→v0.2 copy records
 source revision/format and a non-implicit zone policy in migration provenance.
 
-### 23.1 v0.1→v0.2 migration form
+### 23.1 v0.3→v0.2 migration form
 
 `migration.zonePolicy` is an object `{zone, localTime, disambiguation}`. `zone` is an
 IANA identifier, `localTime` is `HH:MM[:SS]` and MUST NOT be `00:00` or `00:00:00`,
@@ -557,4 +575,4 @@ to the local DateTime formed from the Date plus this policy, then resolved under
 declared disambiguation. The migration is all-or-nothing: a rejected input produces no
 v0.2 document. It preserves project/object IDs, titles and types; it does not mutate the
 source document. A successful copy stores `sourceRevision` supplied by the caller and
-`sourceFormat: timeline/v0.1`.
+`sourceFormat: timeline/v0.3`.

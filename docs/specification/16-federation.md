@@ -20,7 +20,7 @@ mount. The provider-neutral persistence boundary is owned by
 
 ## Resources and federation reference
 
-Federation is deliberately outside `timeline/v0.1` Project syntax. That schema rejects
+Federation is deliberately outside `timeline/v0.3` Project syntax. That schema rejects
 unknown top-level fields, and silently relaxing it would break v0.1 validation. The
 first federation capability instead has two explicit resources:
 

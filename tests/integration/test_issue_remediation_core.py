@@ -20,7 +20,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 
 def project(objects, relations=(), *, calendar=True):
     value = {
-        "version": "timeline/v0.1",
+        "version": "timeline/v0.3",
         "project": {"id": "issue-remediation"},
         "objects": objects,
         "relations": list(relations),

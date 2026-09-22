@@ -13,6 +13,7 @@ are migration-only and record their successor and removal slice.
 | command-request | command-request-v0.2.schema.yaml |
 | layout-profile | layout-profile-v0.2.schema.yaml |
 | profile-package | profile-v0.1.schema.yaml |
+| project | project-v0.3.schema.yaml |
 | render-context | render-context-v0.7.schema.yaml |
 | review-detail-profile | review-detail-profile-v0.1.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
@@ -21,7 +22,7 @@ are migration-only and record their successor and removal slice.
 | theme | theme-v0.2.schema.yaml |
 | view | view-v0.2.schema.yaml |
 
-# Historical Project Schema v0.1 Notes
+# Project Schema v0.3 Notes
 
 The structural schema intentionally does not encode every semantic rule.
 
@@ -34,6 +35,8 @@ Rules requiring semantic validation include:
 - scheduled amount must be positive;
 - fixed-target dependency is a validation condition;
 - referenced IDs must exist;
+- parent references form an acyclic forest and explicit WBS codes are unique;
+- a rollup has descendants and derives their completed schedule envelope;
 - calendar exceptions must not contain contradictory duplicate dates.
 
 Schema validation is therefore stage 1, not full Core conformance.
