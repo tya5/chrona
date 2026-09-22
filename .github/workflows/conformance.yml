@@ -12,7 +12,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - run: pip install -e '.[dev]'
+      - run: pip install -e '.[dev,render]'
       - run: python conformance/run_conformance.py
       - run: python tools/check_module_reachability.py
       - run: python tools/check_import_direction.py
