@@ -1,0 +1,23 @@
+version: chrona/color-scheme/v0.1
+kind: color-scheme
+id: drafting-table
+body:
+  colors:
+    surface: '#FAF7F0'
+    surfaceRaised: '#EDE6D8'
+    text: '#2A2520'
+    textMuted: '#6B6154'
+    accent: '#2F5D50'
+    positive: '#3C7A5A'
+    negative: '#A63A21'
+    warning: '#9A6B16'
+    neutral: '#C4B9A5'
+  category: ['#E8E0CE', '#E0E6DE', '#EDE2D6', '#E2E2DC']
+  suitability:
+    background: light
+    colorVision: [none-claimed]
+    print: print-friendly
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, drafting-table
+    license: MIT

@@ -1,0 +1,126 @@
+version: chrona/layout-profile/v0.3
+id: dossier
+writingMode: horizontal-tb
+root:
+  id: sheet
+  kind: overlay
+  inlineSize: fill
+  blockSize: fill
+  padding: {token: spacing.l}
+  guides:
+    margin: {axis: inline, at: '3/4'}
+    body: {axis: block, at: '1/6'}
+  children:
+    - id: page
+      kind: column
+      inlineSize: fill
+      blockSize: fill
+      gap: {token: spacing.m}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: masthead
+          kind: row
+          inlineSize: fill
+          blockSize: content
+          gap: {token: spacing.m}
+          padding: {token: spacing.none}
+          alignItems: start
+          justifyContent: start
+          children:
+            - id: title
+              kind: slot
+              source: title
+              inlineSize: {minmax: {min: content, max: {fr: 2}}}
+              blockSize: content
+              place: {inline: start, block: start, safety: safe}
+              priority: required
+              overflow: diagnose
+        - id: ledger
+          kind: row
+          inlineSize: fill
+          blockSize: fill
+          gap: {token: spacing.m}
+          padding: {token: spacing.none}
+          alignItems: stretch
+          justifyContent: start
+          children:
+            - id: table
+              kind: slot
+              source: table
+              inlineSize: {minmax: {min: content, max: {fr: 2}}}
+              blockSize: fill
+              place: {inline: stretch, block: stretch, safety: strict}
+              priority: required
+              overflow: diagnose
+            - id: chart
+              kind: column
+              inlineSize: {fr: 7}
+              blockSize: fill
+              gap: {token: spacing.none}
+              padding: {token: spacing.none}
+              alignItems: stretch
+              justifyContent: start
+              children:
+                - id: timeline-axis
+                  kind: slot
+                  source: timeline-axis
+                  inlineSize: fill
+                  blockSize: content
+                  place: {inline: stretch, block: start, safety: strict}
+                  priority: required
+                  overflow: diagnose
+                - id: timeline
+                  kind: slot
+                  source: timeline
+                  inlineSize: fill
+                  blockSize: fill
+                  place: {inline: stretch, block: stretch, safety: strict}
+                  priority: required
+                  overflow: diagnose
+        - id: footer
+          kind: row
+          inlineSize: fill
+          blockSize: content
+          gap: {token: spacing.m}
+          padding: {token: spacing.none}
+          alignItems: start
+          justifyContent: start
+          children:
+            - id: legend
+              kind: slot
+              source: legend
+              inlineSize: content
+              blockSize: content
+              place: {inline: start, block: start, safety: safe}
+              priority: preferred
+              overflow: ellipsize-with-source
+            - id: notes
+              kind: slot
+              source: notes
+              inlineSize: fill
+              blockSize: content
+              place: {inline: start, block: start, safety: safe}
+              priority: preferred
+              overflow: ellipsize-with-source
+    - id: rail
+      kind: column
+      inlineSize: content
+      blockSize: content
+      gap: {token: spacing.m}
+      padding: {token: spacing.none}
+      alignItems: start
+      justifyContent: start
+      anchor:
+        self: {inline: start, block: start}
+        target: {inline: {ref: guide:margin, point: start}, block: {ref: guide:body, point: start}}
+      children:
+        - id: summary
+          kind: slot
+          source: summary
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source

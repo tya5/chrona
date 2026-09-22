@@ -1,0 +1,44 @@
+version: chrona/view/v0.8
+kind: view
+id: halcyon-06-slack-board
+body:
+  surface: table-timeline
+  rows: {mode: automatic}
+  selection:
+    include:
+      types: [span, point]
+  grouping:
+    by: field
+    field: phase
+    missing: unphased
+    order: [Design, Build, Qualify, Integrate, Verify, Campaign, Operate]
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+    marginDays: 7
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets: [planned, actual, finishDelta, missingActual]
+  visibility:
+    labels: {placement: table, content: [title], side: auto}
+    relations: critical
+    annotations: {mode: presentation, marker: numbered}
+  axis:
+    levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]
+    ticks: week
+  markers: [{kind: asOf, source: actual, label: as of}]
+  shading: {nonWorking: false, exceptions: true}
+  layoutIntent:
+    compactness: compact
+    itemStacking: stable
+  tableColumns:
+    - {id: Work package, source: title, missing: em-dash}
+    - {id: Float, source: totalFloat, missing: em-dash}
+    - {id: Δ, source: {facet: finishDelta}, missing: em-dash}

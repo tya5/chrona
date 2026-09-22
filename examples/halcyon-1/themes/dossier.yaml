@@ -1,0 +1,105 @@
+version: chrona/theme/v0.3
+kind: theme
+id: dossier
+body:
+  values:
+    editorial: {type: fontFamily, value: 'Nimbus Sans, Helvetica Neue, Arial, sans-serif'}
+    weight.regular: {type: fontWeight, value: '400'}
+    weight.bold: {type: fontWeight, value: '700'}
+    size.heading: {type: number, value: 30}
+    size.subtitle: {type: number, value: 15}
+    size.body: {type: number, value: 13}
+    size.axis: {type: number, value: 12}
+    size.legend: {type: number, value: 12}
+    size.note: {type: number, value: 12}
+    leading.tight: {type: number, value: 1.15}
+    leading.body: {type: number, value: 1.4}
+    arrow: {type: marker, value: triangle}
+    hatch: {type: pattern, value: diagonal-hatch}
+    spacing.none: {type: number, value: 0}
+    spacing.m: {type: number, value: 16}
+    spacing.l: {type: number, value: 28}
+    timeline-day-width: {type: number, value: 3}
+    timeline-row-height: {type: number, value: 22}
+    timeline-group-header-height: {type: number, value: 20}
+    timeline-mark-size: {type: number, value: 7}
+    timeline-axis-height: {type: number, value: 38}
+    network-node-min-inline: {type: number, value: 120}
+    network-node-min-block: {type: number, value: 36}
+    network-rank-gap: {type: number, value: 24}
+    table-column-width: {type: number, value: 74}
+    table-column-gutter: {type: number, value: 12}
+    table-indent: {type: number, value: 16}
+    table-header-height: {type: number, value: 34}
+  roles:
+    text: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.body, lineHeight: leading.body}
+    heading: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.heading, lineHeight: leading.tight}
+    subtitle: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.subtitle, lineHeight: leading.body}
+    axis: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.axis, lineHeight: leading.body}
+    legend: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.legend, lineHeight: leading.body}
+    annotation: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.note, lineHeight: leading.body}
+    summary: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.legend, lineHeight: leading.body}
+    metric: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.subtitle, lineHeight: leading.tight}
+    groupHeader: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.axis, lineHeight: leading.body}
+    dependency: {marker: arrow}
+    missing-actual: {pattern: hatch}
+  colorBindings:
+    background.fill: surface
+    text.fill: text
+    heading.fill: text
+    subtitle.fill: textMuted
+    axis.fill: textMuted
+    legend.fill: textMuted
+    annotation.fill: surfaceRaised
+    annotation.stroke: neutral
+    summary.fill: text
+    table-header.fill: surfaceRaised
+    axis-major.stroke: neutral
+    axis-minor.stroke: surfaceRaised
+    group-band.fill: surfaceRaised
+    groupHeader.fill: surfaceRaised
+    baseline.stroke: neutral
+    metric.fill: text
+    calendar-closed.fill: surfaceRaised
+    calendar-exception.fill: warning
+    range.fill: warning
+    asOf.stroke: warning
+    as-of.stroke: warning
+    note-index.fill: accent
+    'group:bus.fill': category
+    'group:payload.fill': category
+    'group:ait.fill': category
+    'group:ground.fill': category
+    'group:launch.fill': category
+    'group:ops.fill': category
+    planned.fill: accent
+    network-node.fill: surfaceRaised
+    network-edge.stroke: textMuted
+    critical-edge.stroke: negative
+    snapshot.fill: neutral
+    summary-bar.fill: accent
+    actual.fill: positive
+    milestone.fill: accent
+    missing-actual.fill: neutral
+    missing-actual.stroke: neutral
+    variance-ahead.fill: positive
+    variance-on-track.fill: textMuted
+    variance-behind.fill: negative
+    variance-behind.stroke: negative
+    dependency.stroke: neutral
+    dependency-critical.stroke: negative
+  metrics:
+    text.body.size: size.body
+    text.body.lineHeight: leading.body
+    timeline.dayWidth: timeline-day-width
+    timeline.row.minBlockSize: timeline-row-height
+    timeline.groupHeader.blockSize: timeline-group-header-height
+    timeline.mark.blockSize: timeline-mark-size
+    timeline.axis.blockSize: timeline-axis-height
+    network.node.minInlineSize: network-node-min-inline
+    network.node.minBlockSize: network-node-min-block
+    network.rank.gap: network-rank-gap
+    table.column.minInlineSize: table-column-width
+    table.column.gutter.inlineSize: table-column-gutter
+    table.indent.inlineSize: table-indent
+    table.header.blockSize: table-header-height

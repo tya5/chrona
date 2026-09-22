@@ -17,3 +17,6 @@ slides:
   - id: dependency-network
     context: contexts/05-dependency-network.yaml
     expectedSvg: generated/05-dependency-network.svg
+  - id: slack-board
+    context: contexts/06-slack-board.yaml
+    expectedSvg: generated/06-slack-board.svg
