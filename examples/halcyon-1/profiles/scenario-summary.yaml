@@ -1,0 +1,13 @@
+version: chrona/summary-profile/v0.1
+kind: summary-profile
+id: halcyon-scenario-key-figures
+body:
+  panels:
+    - id: scenario
+      title: Scenario review
+      presentation: lines
+      metrics:
+        hypothesis:
+          label: Hypothesis
+          source: {scenario: title}
+          format: text
