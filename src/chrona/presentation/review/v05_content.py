@@ -15,20 +15,24 @@ from chrona.presentation.layout.model import LayoutManifest
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: Mapping[str, Any],
                                   *, actual_set: Mapping[str, Any] | None = None,
                                   detail: Mapping[str, Any] | None = None, summary: SummaryContent,
-                                  layout_manifest: LayoutManifest | None = None) -> SurfaceContentInput:
+                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US") -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     detail_body = _resource_body(detail, "DETAIL_PROFILE")
     body = view.get("body", {})
     columns = tuple((str(column["id"]), str(column["id"])) for column in body.get("tableColumns", ()))
+    as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
+    def cell(item: Any, column: Mapping[str, Any], row_index: int) -> str:
+        value = table_value(item, dict(project), column["source"], row_index)
+        if value is None and column["missing"] == "in-progress" and _is_actual_source(column["source"]):
+            return _missing_actual_display(item, as_of)
+        return display_value(value, column["missing"], column.get("format", "text"), locale=locale)
     if projection.rows:
         cells = tuple(
-            (row.row_id, str(column["id"]),
-             display_value(table_value(next(item for item in row.items if item.item_id == row.table_subject_id),
-                                       dict(project), column["source"], row_index), column["missing"], column.get("format", "text")))
+            (row.row_id, str(column["id"]), cell(next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index))
             for row_index, row in enumerate(projection.rows, 1) for column in body.get("tableColumns", ()))
     else:
-        cells = tuple((item.object_id, str(column["id"]), display_value(table_value(item, dict(project), column["source"], row_index), column["missing"], column.get("format", "text")))
+        cells = tuple((item.object_id, str(column["id"]), cell(item, column, row_index))
                       for row_index, item in enumerate(projection.items, 1) for column in body.get("tableColumns", ()))
     visible = body.get("visibility", {})
     group_presentation = str(body.get("grouping", {}).get("presentation", "band"))
@@ -111,6 +115,20 @@ def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, A
     if not isinstance(body, Mapping):
         raise ValueError(f"E_PRESENTATION_{name}_SHAPE")
     return body
+
+
+def _is_actual_source(source: Any) -> bool:
+    return isinstance(source, Mapping) and source.get("facet") == "actual"
+
+
+def _missing_actual_display(item: Any, as_of: date | None) -> str:
+    """Render absence as progress only for an active planned span at the cutoff."""
+    planned = item.planned if hasattr(item, "planned") else {}
+    start, end = planned.get("start"), planned.get("end")
+    if (getattr(item, "source_type", None) == "span" and isinstance(start, date)
+            and isinstance(end, date) and as_of is not None and start <= as_of < end):
+        return "in progress"
+    return "—"
 
 
 

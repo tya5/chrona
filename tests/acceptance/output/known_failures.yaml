@@ -15,9 +15,6 @@ test_no_text_is_drawn_over_a_mark:
 test_no_text_leaves_the_viewport:
   aster-ssd/overview: [[Production release, 52.0]]
   controller-z/executive: [[General Availability, 97.2]]
-test_point_rows_never_render_a_span_only_state:
-  halcyon-1/mission-brief: [cdr, first-light, frr, launch, payload-delivery, pdr, psr]
-  halcyon-1/launch-campaign: [first-light, frr, launch, psr]
 test_every_declared_slot_produces_a_primitive:
   aster-ssd/overview: [legend, notes]
   controller-z/executive: [legend]
