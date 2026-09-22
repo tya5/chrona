@@ -159,7 +159,7 @@ intentionally closed so renderer adapters cannot silently choose a scale or rout
 algorithm:
 
 ```yaml
-version: chrona/presentation/v0.1
+version: chrona/scene-profile/v0.1
 kind: scene-profile
 id: date-lanes
 body:
