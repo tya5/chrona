@@ -16,6 +16,14 @@ class ContractError(ValueError):
     """A decoded resource cannot become a runtime contract."""
 
 
+class SchemaContractError(ContractError):
+    """A supported resource has a schema-shape error at one JSON pointer."""
+
+    def __init__(self, kind: str, source_ref: str):
+        super().__init__("E_RESOURCE_SCHEMA")
+        self.kind = kind
+        self.source_ref = source_ref
+
 class FrozenDict(dict[str, Any]):
     """A dict-compatible value that rejects all mutation after closure parsing."""
 
@@ -200,9 +208,17 @@ def _validate(kind: str, value: Mapping[str, Any]) -> str:
     if schema_name is None:
         raise ContractError("E_CLOSURE_KIND")
     schema = yaml.safe_load(schema_resource(schema_name).read_text(encoding="utf-8"))
-    if next(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(value)), None) is not None:
-        raise ContractError("E_CLOSURE_KIND")
+    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(value)))
+    if errors:
+        error = min(errors, key=lambda item: (_json_pointer(item.absolute_path), item.message))
+        raise SchemaContractError(kind, _json_pointer(error.absolute_path))
     return version
+
+
+def _json_pointer(path: Iterable[Any]) -> str:
+    """Encode a jsonschema path as an RFC 6901 pointer."""
+    parts = tuple(str(item).replace("~", "~0").replace("/", "~1") for item in path)
+    return "/" + "/".join(parts) if parts else "/"
 
 
 def _schema_value(value: Any) -> Any:

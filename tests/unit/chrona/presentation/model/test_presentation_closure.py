@@ -50,5 +50,6 @@ def test_v05_closure_binds_theme_scheme_and_layout_separately(tmp_path):
         },
     }
     payload = _write(tmp_path, "context-v05.yaml", context)
-    with pytest.raises(ClosureError, match="E_CLOSURE_KIND"):
+    with pytest.raises(ClosureError, match="E_VIEW_SCHEMA") as error:
         resolve_render_context(_ref("render-context", "ctx", "context-v05.yaml", payload), LocalSnapshotReader(tmp_path, "closure-test"))
+    assert error.value.source_ref == "/body"
