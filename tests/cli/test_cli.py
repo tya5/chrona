@@ -2,13 +2,13 @@ import json
 from hashlib import sha256
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import yaml
 import pytest
 
 import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
-from chrona.presentation.model.closure import ClosureResource
 from chrona.scheduling.scheduler import schedule
 
 
@@ -189,8 +189,11 @@ def test_cli_gallery_requires_two_contexts(tmp_path, monkeypatch, capsys):
 
 def test_cli_gallery_rejects_duplicate_scheme_before_rendering(tmp_path, monkeypatch):
     def closure(_reference, _reader):
-        scheme = ClosureResource("color-scheme", "same", "r", "sha256:" + "a" * 64, {})
-        return {"id": "context"}, (scheme,)
+        scheme = SimpleNamespace(id="same", content_identity="sha256:" + "a" * 64)
+        return SimpleNamespace(
+            resource=lambda kind: scheme if kind == "color-scheme" else None,
+            context=SimpleNamespace(identity=SimpleNamespace(id="context")),
+        )
     monkeypatch.setattr(cli, "resolve_render_context", closure)
     monkeypatch.setattr(cli, "load_yaml", lambda path: {"path": str(path)})
     monkeypatch.setattr(cli, "_run_render_review", lambda args: pytest.fail("render must not run"))

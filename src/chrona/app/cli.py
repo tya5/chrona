@@ -13,7 +13,7 @@ import yaml
 from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
-from chrona.presentation.model.closure import ClosureError, ClosureResource, resolve_render_context
+from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_render_context
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.presentation.renderers.generic import render_svg
 from chrona.presentation.scene.schedule import scene_from_schedule
@@ -165,11 +165,10 @@ def _parser() -> JsonArgumentParser:
 
 
 
-def _render_review(context: dict[str, Any], resources: tuple[ClosureResource, ...],
-                   args: argparse.Namespace) -> RenderedReview:
+def _render_review(closure: RenderClosure, args: argparse.Namespace) -> RenderedReview:
     """Adapt one resolved closure to the render use case and its diagnostics."""
     request = RenderRequest(
-        context=context, resources=resources, snapshot_root=Path(args.snapshot_root),
+        closure=closure, snapshot_root=Path(args.snapshot_root),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
     )
     try:
@@ -182,8 +181,8 @@ def _render_review(context: dict[str, Any], resources: tuple[ClosureResource, ..
 
 def _run_render_review(args: argparse.Namespace) -> None:
     reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
-    context, resources = resolve_render_context(load_yaml(args.context_reference), reader)
-    rendered = _render_review(context, resources, args)
+    closure = resolve_render_context(load_yaml(args.context_reference), reader)
+    rendered = _render_review(closure, args)
     Path(args.output).write_text(rendered.svg, encoding="utf-8")
 
 
@@ -196,11 +195,11 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     entries = []
     for reference_path in args.context_reference:
-        context, resources = resolve_render_context(load_yaml(reference_path), reader)
-        scheme = next((item for item in resources if item.kind == "color-scheme"), None)
+        closure = resolve_render_context(load_yaml(reference_path), reader)
+        scheme = closure.resource("color-scheme")
         if scheme is None:
             raise CliFailure("E_CONTEXT_COLOR_SCHEME", "Color Scheme closure is missing", "gallery")
-        entries.append((scheme.id, scheme.content_identity, context["id"], reference_path, context, resources))
+        entries.append((scheme.id, scheme.content_identity, closure.context.identity.id, reference_path, closure))
     if len({entry[1] for entry in entries}) != len(entries):
         raise CliFailure("E_SCHEME_GALLERY_DUPLICATE", "Color Scheme content identity is duplicated", "gallery")
     entries.sort(key=lambda entry: (entry[0], entry[1]))
@@ -208,9 +207,9 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
         raise CliFailure("E_SCHEME_GALLERY_DUPLICATE", "Color Scheme IDs must be unique in one gallery", "gallery")
     destination.mkdir(parents=True, exist_ok=True)
     outputs = []
-    for scheme_id, identity, context_id, _reference, context, resources in entries:
+    for scheme_id, identity, context_id, _reference, closure in entries:
         output = destination / f"{scheme_id}.svg"
-        output.write_text(_render_review(context, resources, args).svg, encoding="utf-8")
+        output.write_text(_render_review(closure, args).svg, encoding="utf-8")
         outputs.append({"contextId": context_id, "colorScheme": {"id": scheme_id, "contentIdentity": identity}, "output": output.name})
     (destination / "gallery.json").write_text(json.dumps({"results": outputs}, indent=2) + "\n", encoding="utf-8")
 

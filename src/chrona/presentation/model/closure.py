@@ -9,6 +9,11 @@ import jsonschema
 import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
+from chrona.presentation.contracts import (
+    ClosureIdentity, ContractError, LayoutProfileContract, ProjectContract,
+    RenderContextContract, ResolvedThemeContract, ResourceContract, ViewContract,
+    freeze, parse_contract,
+)
 from chrona.resources import schema_resource
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
@@ -25,11 +30,47 @@ class ClosureResource:
     id: str
     revision: str
     content_identity: str
-    value: dict[str, Any]
+    contract: ResourceContract
+
+@dataclass(frozen=True)
+class RenderClosure:
+    context: RenderContextContract
+    resources: tuple[ClosureResource, ...]
+    resolved_theme: ResolvedThemeContract
+
+    def resource(self, kind: str) -> ClosureResource | None:
+        return next((item for item in self.resources if item.kind == kind), None)
+
+    @property
+    def project(self) -> ProjectContract:
+        item = self.resource("project")
+        if item is None:
+            raise ClosureError("E_CLOSURE_REQUIRED")
+        if not isinstance(item.contract, ProjectContract):
+            raise ClosureError("E_CLOSURE_KIND")
+        return item.contract
+
+    @property
+    def view(self) -> ViewContract:
+        item = self.resource("view")
+        if item is None:
+            raise ClosureError("E_CLOSURE_REQUIRED")
+        if not isinstance(item.contract, ViewContract):
+            raise ClosureError("E_CLOSURE_KIND")
+        return item.contract
+
+    @property
+    def layout_profile(self) -> LayoutProfileContract:
+        item = self.resource("layout-profile")
+        if item is None:
+            raise ClosureError("E_CLOSURE_REQUIRED")
+        if not isinstance(item.contract, LayoutProfileContract):
+            raise ClosureError("E_CLOSURE_KIND")
+        return item.contract
 
 
-def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
-    context = _load_presentation(reference, reader, "render-context")
+def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
+    context = _load_presentation(reference, reader)
     if context.get("version") != "chrona/render-context/v0.6":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
@@ -37,11 +78,17 @@ def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) ->
 
 def _resolve_layout_context(
     context: dict[str, Any], reader: SnapshotReader
-) -> tuple[dict[str, Any], tuple[ClosureResource, ...]]:
+) -> RenderClosure:
     schema = yaml.safe_load(schema_resource("render-context-v0.6.schema.yaml").read_text(encoding="utf-8"))
     if next(jsonschema.Draft202012Validator(schema).iter_errors(context), None) is not None:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
-    body = context["body"]
+    try:
+        context_contract = parse_contract(
+            ClosureIdentity("render-context", str(context["id"]), "", ""), context
+        )
+    except ContractError as error:
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
+    body = context_contract.body
     ordered = (
         (body["project"], "project"),
         (body["view"], "view"),
@@ -50,11 +97,11 @@ def _resolve_layout_context(
         (body["layout"], "layout-profile"),
     )
     resources = [_load_reference(reference, reader, kind) for reference, kind in ordered]
-    for extension in resources[0].value.get("extensions", []):
+    for extension in resources[0].contract.document.get("extensions", []):
         package_reference = extension.get("resource")
         if package_reference is not None:
             package = _load_reference(package_reference, reader, "profile-package")
-            if package.value.get("packageId") != extension.get("packageId"):
+            if package.contract.document.get("packageId") != extension.get("packageId"):
                 raise ClosureError("E_CLOSURE_ID")
             resources.append(package)
     for name, kind in (("actual", "actual-set"), ("summaryProfile", "summary-profile"), ("detailProfile", "review-detail-profile")):
@@ -62,7 +109,7 @@ def _resolve_layout_context(
             resources.append(_load_reference(body["inputs"][name], reader, kind))
     if "snapshot" in body["inputs"]:
         snapshot = _load_reference(body["inputs"]["snapshot"], reader, "snapshot-ref")
-        project_reference = snapshot.value.get("body", {}).get("project")
+        project_reference = snapshot.contract.document.get("body", {}).get("project")
         if not isinstance(project_reference, dict):
             raise ClosureError("E_CLOSURE_KIND")
         snapshot_project = _load_reference(project_reference, reader, "project")
@@ -70,16 +117,16 @@ def _resolve_layout_context(
             raise ClosureError("E_CLOSURE_ID")
         resources.extend((snapshot, ClosureResource(
             "snapshot-project", snapshot_project.id, snapshot_project.revision,
-            snapshot_project.content_identity, snapshot_project.value)))
+            snapshot_project.content_identity, snapshot_project.contract)))
     if body["target"]["capabilities"] != sorted(body["target"]["capabilities"]):
         raise ClosureError("E_TARGET_CAPABILITY_ORDER")
     theme, scheme = resources[2], resources[3]
     try:
-        context = dict(context)
-        context["resolvedTheme"] = resolve_theme(theme.value, scheme.value, scheme_content_identity=scheme.content_identity)
+        value = resolve_theme(theme.contract.document, scheme.contract.document, scheme_content_identity=scheme.content_identity)
+        resolved_theme = ResolvedThemeContract(theme.id, freeze(value))
     except ColorSchemeError as error:
         raise ClosureError(str(error)) from error
-    return context, tuple(resources)
+    return RenderClosure(context_contract, tuple(resources), resolved_theme)
 
 
 def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str) -> ClosureResource:
@@ -111,9 +158,14 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
             raise ClosureError("E_CLOSURE_KIND")
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
-    return ClosureResource(expected_kind, actual_id, reference["revision"]["token"], reference.get("contentIdentity", computed_identity), value)
+    identity = ClosureIdentity(expected_kind, actual_id, reference["revision"]["token"], reference.get("contentIdentity", computed_identity))
+    try:
+        contract = parse_contract(identity, value)
+    except ContractError as error:
+        raise ClosureError(error.args[0]) from error
+    return ClosureResource(expected_kind, actual_id, identity.revision, identity.content_identity, contract)
 
 
-def _load_presentation(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str) -> dict[str, Any]:
-    item = _load_reference(reference, reader, expected_kind)
-    return item.value
+def _load_presentation(reference: dict[str, Any], reader: SnapshotReader) -> dict[str, Any]:
+    item = _load_reference(reference, reader, "render-context")
+    return item.contract.document

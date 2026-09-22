@@ -1,0 +1,209 @@
+"""Frozen contracts constructed only after exact resource-schema acceptance."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date
+from typing import Any, Iterable, Mapping
+
+import jsonschema
+import yaml
+from referencing import Registry, Resource
+
+from chrona.resources import schema_resource
+
+
+class ContractError(ValueError):
+    """A decoded resource cannot become a runtime contract."""
+
+
+class FrozenDict(dict[str, Any]):
+    """A dict-compatible value that rejects all mutation after closure parsing."""
+
+    @staticmethod
+    def _immutable(*_args: Any, **_kwargs: Any) -> None:
+        raise TypeError("presentation contract values are immutable")
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    clear = _immutable
+    pop = _immutable
+    popitem = _immutable
+    setdefault = _immutable
+    update = _immutable
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> dict[str, Any]:
+        from copy import deepcopy
+        return {key: deepcopy(value, memo) for key, value in self.items()}
+
+
+class FrozenList(list[Any]):
+    """A list-compatible value that rejects all mutation after closure parsing."""
+
+    @staticmethod
+    def _immutable(*_args: Any, **_kwargs: Any) -> None:
+        raise TypeError("presentation contract values are immutable")
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    __iadd__ = _immutable
+    __imul__ = _immutable
+    append = _immutable
+    clear = _immutable
+    extend = _immutable
+    insert = _immutable
+    pop = _immutable
+    remove = _immutable
+    reverse = _immutable
+    sort = _immutable
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> list[Any]:
+        from copy import deepcopy
+        return [deepcopy(value, memo) for value in self]
+
+
+def freeze(value: Any) -> Any:
+    """Recursively detach decoded YAML from its immutable contract representation."""
+    if isinstance(value, Mapping):
+        result = FrozenDict()
+        dict.update(result, {str(key): freeze(item) for key, item in value.items()})
+        return result
+    if isinstance(value, list):
+        result = FrozenList()
+        list.extend(result, (freeze(item) for item in value))
+        return result
+    if isinstance(value, tuple):
+        return tuple(freeze(item) for item in value)
+    return value
+
+
+@dataclass(frozen=True)
+class ClosureIdentity:
+    kind: str
+    id: str
+    revision: str
+    content_identity: str
+
+
+@dataclass(frozen=True)
+class ResourceContract:
+    """Typed resource envelope; subclasses name the owning contract kind."""
+
+    identity: ClosureIdentity
+    version: str
+    body: FrozenDict
+    document: FrozenDict
+
+
+@dataclass(frozen=True)
+class OpaqueResourceContract(ResourceContract):
+    """Frozen legacy optional resource awaiting its C99-4B exact parser."""
+
+
+@dataclass(frozen=True)
+class ProjectContract(ResourceContract):
+    @property
+    def facts(self) -> FrozenDict:
+        return self.document
+
+
+@dataclass(frozen=True)
+class ViewContract(ResourceContract):
+    pass
+
+
+@dataclass(frozen=True)
+class ThemeContract(ResourceContract):
+    pass
+
+
+@dataclass(frozen=True)
+class ColorSchemeContract(ResourceContract):
+    pass
+
+
+@dataclass(frozen=True)
+class LayoutProfileContract(ResourceContract):
+    @property
+    def profile(self) -> FrozenDict:
+        return self.document
+
+
+@dataclass(frozen=True)
+class RenderContextContract(ResourceContract):
+    @property
+    def context(self) -> FrozenDict:
+        return self.document
+
+
+@dataclass(frozen=True)
+class ResolvedThemeContract:
+    """The frozen derived decorative value permitted past closure resolution."""
+
+    source_theme_id: str
+    document: FrozenDict
+
+    @property
+    def body(self) -> FrozenDict:
+        return self.document["body"]
+
+
+_SCHEMAS = {
+    ("render-context", "chrona/render-context/v0.6"): "render-context-v0.6.schema.yaml",
+    ("project", "timeline/v0.1"): "project-v0.1.schema.yaml",
+    ("project", "timeline/v0.2"): "project-v0.2.schema.yaml",
+    ("view", "chrona/view/v0.1"): "view-v0.1.schema.yaml",
+    ("view", "chrona/view/v0.2"): "view-v0.2.schema.yaml",
+    ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
+    ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
+    ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",
+}
+
+
+def _registry() -> Registry:
+    foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
+    return Registry().with_resource("urn:chrona:presentation-resource-v0.1", Resource.from_contents(foundation))
+
+
+def _validate(kind: str, value: Mapping[str, Any]) -> str:
+    version = value.get("version")
+    schema_name = _SCHEMAS.get((kind, version)) if isinstance(version, str) else None
+    if schema_name is None:
+        raise ContractError("E_CLOSURE_KIND")
+    schema = yaml.safe_load(schema_resource(schema_name).read_text(encoding="utf-8"))
+    if next(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(value)), None) is not None:
+        raise ContractError("E_CLOSURE_KIND")
+    return version
+
+
+def _schema_value(value: Any) -> Any:
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {key: _schema_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_schema_value(item) for item in value]
+    return value
+
+
+def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> ResourceContract:
+    """Validate an exact schema then construct its frozen, kind-specific contract."""
+    frozen = freeze(value)
+    body = frozen.get("body", FrozenDict())
+    if not isinstance(body, FrozenDict):
+        raise ContractError("E_CLOSURE_KIND")
+    if (identity.kind, value.get("version")) not in _SCHEMAS:
+        return OpaqueResourceContract(identity, str(value.get("version", "")), body, frozen)
+    version = _validate(identity.kind, value)
+    if identity.kind == "project":
+        return ProjectContract(identity, version, body, frozen)
+    if identity.kind == "view":
+        return ViewContract(identity, version, body, frozen)
+    if identity.kind == "theme":
+        return ThemeContract(identity, version, body, frozen)
+    if identity.kind == "color-scheme":
+        return ColorSchemeContract(identity, version, body, frozen)
+    if identity.kind == "layout-profile":
+        return LayoutProfileContract(identity, version, body, frozen)
+    if identity.kind == "render-context":
+        return RenderContextContract(identity, version, body, frozen)
+    return OpaqueResourceContract(identity, version, body, frozen)
