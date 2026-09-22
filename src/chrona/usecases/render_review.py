@@ -17,7 +17,7 @@ from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, measure_sources
-from chrona.presentation.model.closure import ClosureResource
+from chrona.presentation.model.closure import RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.renderers.v05_svg import render_v05_svg
@@ -54,8 +54,7 @@ class RenderFailed(Exception):
 class RenderRequest:
     """One resolved closure and the store it was read from."""
 
-    context: Mapping[str, Any]
-    resources: tuple[ClosureResource, ...]
+    closure: RenderClosure
     snapshot_root: Path
     require_all_inputs_read: bool = False
 
@@ -72,40 +71,39 @@ class RenderedReview:
 class _Closure:
     """Resource access that records which declared inputs the render reads."""
 
-    def __init__(self, resources: tuple[ClosureResource, ...]):
-        self._resources = resources
+    def __init__(self, closure: RenderClosure):
+        self._closure = closure
         self.read: set[str] = set()
 
     def get(self, kind: str) -> dict[str, Any] | None:
         self.read.add(kind)
-        return next((item.value for item in self._resources if item.kind == kind), None)
+        item = self._closure.resource(kind)
+        return item.contract.document if item is not None else None
 
     def all_of(self, kind: str) -> tuple[dict[str, Any], ...]:
-        values = tuple(item.value for item in self._resources if item.kind == kind)
+        values = tuple(item.contract.document for item in self._closure.resources if item.kind == kind)
         if values:
             self.read.add(kind)
         return values
 
     def unused(self) -> tuple[str, ...]:
-        declared = {item.kind for item in self._resources}
+        declared = {item.kind for item in self._closure.resources}
         return tuple(sorted(declared - self.read - _IMPLICITLY_READ))
 
 
 def render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
-    context, closure = request.context, _Closure(request.resources)
-    project = closure.get("project")
-    view = closure.get("view")
-    layout = closure.get("layout-profile")
-    theme = context.get("resolvedTheme")
-    if project is None or view is None or theme is None or layout is None:
-        raise RenderFailed("E_CLOSURE_REQUIRED", "Render Context closure is incomplete", "closure")
+    render_closure, closure = request.closure, _Closure(request.closure)
+    project, view, layout = (render_closure.project.facts, render_closure.view.document,
+                             render_closure.layout_profile.profile)
+    theme = render_closure.resolved_theme.document
+    closure.read.update({"project", "view", "layout-profile", "theme", "color-scheme"})
 
     manifests = {item["packageId"]: item for item in closure.all_of("profile-package")}
     projection = _project_review(project, view, closure, manifests)
 
-    environment = context["body"]["environment"]
-    font_metrics = _font_metrics(theme, environment, request.snapshot_root / context["body"]["theme"]["revision"]["token"])
+    environment = render_closure.context.body["environment"]
+    font_metrics = _font_metrics(theme, environment, request.snapshot_root / render_closure.context.body["theme"]["revision"]["token"])
     source_inputs = _source_inputs(project, view, projection)
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics)
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
@@ -125,7 +123,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
-        capabilities={name: True for name in context["body"]["target"]["capabilities"]},
+        capabilities={name: True for name in render_closure.context.body["target"]["capabilities"]},
         locale=environment["locale"],
     )
 

@@ -1,4 +1,5 @@
 from hashlib import sha256
+from types import SimpleNamespace
 
 import yaml
 
@@ -38,7 +39,8 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
     context_ref = _write(tmp_path, "current", "context.yaml", context)
     monkeypatch.setattr(closure.jsonschema, "Draft202012Validator", lambda _schema: type("V", (), {"iter_errors": lambda self, _value: iter(())})())
     monkeypatch.setattr(closure, "resolve_theme", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr(closure, "parse_contract", lambda identity, value: SimpleNamespace(identity=identity, body=value.get("body", {}), document=value))
 
-    _, resources = closure.resolve_render_context(context_ref, LocalSnapshotReader(tmp_path, "test"))
+    resources = closure.resolve_render_context(context_ref, LocalSnapshotReader(tmp_path, "test")).resources
 
     assert [(item.kind, item.revision) for item in resources][-2:] == [("snapshot-ref", "current"), ("snapshot-project", "historic")]

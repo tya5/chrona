@@ -50,5 +50,5 @@ def test_v05_closure_binds_theme_scheme_and_layout_separately(tmp_path):
         },
     }
     payload = _write(tmp_path, "context-v05.yaml", context)
-    _, closure = resolve_render_context(_ref("render-context", "ctx", "context-v05.yaml", payload), LocalSnapshotReader(tmp_path, "closure-test"))
-    assert [(item.kind, item.id) for item in closure] == [("project", "p"), ("view", "v"), ("theme", "t"), ("color-scheme", "s"), ("layout-profile", "l")]
+    with pytest.raises(ClosureError, match="E_CLOSURE_KIND"):
+        resolve_render_context(_ref("render-context", "ctx", "context-v05.yaml", payload), LocalSnapshotReader(tmp_path, "closure-test"))
