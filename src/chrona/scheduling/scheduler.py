@@ -7,6 +7,7 @@ from typing import Any
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.hierarchy import children_by_parent, normalize_hierarchy
 from chrona.core.ports import ScheduleOutcome
+from chrona.core.relation_identity import relation_identity
 from chrona.core.temporal import (Calendar, TemporalError, advance, as_date, parse_amount,
                        requires_working_calendar, retreat)
 from chrona.core.validation import validate_project
@@ -32,6 +33,7 @@ class ScheduleAnalysis:
     total_float: dict[str, int]
     critical: frozenset[str]
     component_targets: dict[str, date]
+    driving_relations: frozenset[str] = frozenset()
 
 
 def schedule(
@@ -267,9 +269,31 @@ def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str
     for object_id in eligible:
         early, late = _placement_start(placements[object_id]), _placement_start(latest[object_id])
         total_float[object_id] = _calendar_distance(early, late, _object_calendar(objects[object_id], project, calendars))
+    driving_relations = frozenset(
+        relation_identity(index, relation)
+        for index, relation in enumerate(project.get("relations", ()))
+        if _is_driving_relation(relation, placements, project, calendars)
+    )
     return ScheduleAnalysis(latest, total_float,
                             frozenset(object_id for object_id, value in total_float.items() if value == 0),
-                            component_targets)
+                            component_targets, driving_relations)
+
+
+def _is_driving_relation(relation: dict[str, Any], placements: dict[str, dict[str, date]],
+                         project: dict[str, Any], calendars: dict[str, Calendar]) -> bool:
+    """Whether the scheduled source endpoint plus lag exactly reaches its target."""
+    source, target = relation["from"], relation["to"]
+    source_placement = placements.get(source["object"])
+    target_placement = placements.get(target["object"])
+    if source_placement is None or target_placement is None:
+        return False
+    source_value = source_placement.get(source["endpoint"])
+    target_value = target_placement.get(target["endpoint"])
+    if source_value is None or target_value is None:
+        return False
+    amount = relation.get("lag", "0d")
+    amount_value = amount if isinstance(amount, str) else amount["value"]
+    return advance(source_value, amount_value, _relation_calendar(relation, project, calendars)) == target_value
 
 
 def _dependency_components(project: dict[str, Any], eligible: set[str]) -> tuple[frozenset[str], ...]:

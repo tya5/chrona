@@ -56,6 +56,7 @@ def test_scheduler_derives_total_float_and_critical_chain_per_component():
     assert result.ok and result.analysis is not None
     assert result.analysis.total_float == {"start": 0, "critical": 0, "slack": 2, "finish": 0}
     assert result.analysis.critical == frozenset({"start", "critical", "finish"})
+    assert result.analysis.driving_relations == frozenset({"relation:0", "relation:1", "relation:2"})
 
 
 def test_scheduler_marks_disconnected_singletons_critical():
@@ -65,6 +66,41 @@ def test_scheduler_marks_disconnected_singletons_critical():
     }))
     assert result.ok and result.analysis is not None
     assert result.analysis.critical == frozenset({"a", "b"})
+
+
+def test_scheduler_distinguishes_driving_relations_from_zero_float_endpoints():
+    project = _project(
+        {
+            "a": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-02"}},
+            "b": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
+            "c": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-02", "end": "2026-10-03"}},
+        },
+        [
+            {"id": "drives", "type": "dependency", "from": {"object": "a", "endpoint": "end"}, "to": {"object": "b", "endpoint": "start"}},
+            {"id": "non-driving", "type": "dependency", "from": {"object": "a", "endpoint": "end"}, "to": {"object": "c", "endpoint": "end"}},
+        ],
+    )
+    result = schedule(project)
+    assert result.ok and result.analysis is not None
+    assert result.analysis.driving_relations == frozenset({"relation:0:drives"})
+
+
+def test_scheduler_identifies_a_driving_working_calendar_lag():
+    project = _project(
+        {
+            "a": {"type": "task", "schedule": {"mode": "fixed", "at": "2026-10-02"}},
+            "b": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd"}},
+        },
+        [{"id": "working-lag", "type": "dependency",
+          "from": {"object": "a", "endpoint": "at"}, "to": {"object": "b", "endpoint": "start"},
+          "lag": {"value": "1wd", "calendar": "weekdays"}}],
+    )
+    project["project"]["calendar"] = "weekdays"
+    project["calendars"] = {"weekdays": {"working_days": ["mon", "tue", "wed", "thu", "fri"]}}
+    result = schedule(project)
+    assert result.ok and result.analysis is not None
+    assert result.placements["b"]["start"] == date(2026, 10, 5)
+    assert result.analysis.driving_relations == frozenset({"relation:0:working-lag"})
 
 
 def test_project_object_link_is_typed_and_does_not_affect_scheduling():
