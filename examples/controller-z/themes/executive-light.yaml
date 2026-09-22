@@ -48,6 +48,7 @@ body:
     text.fill: text
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
+    axis-band-decoration.fill: surface
     table-header.fill: surfaceRaised
     group-band.fill: category
     'group:factory-team.fill': category

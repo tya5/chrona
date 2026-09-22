@@ -452,6 +452,10 @@ def test_month_axis_emits_quarter_band_labels():
     surface = compose_review_surface(value)
 
     assert any(node.scene_id.startswith("axis-band:quarter:") for node in surface.primitives)
+    grids = [node for node in surface.primitives if node.scene_id.startswith("axis-grid:")]
+    assert {node.visual_role for node in grids} == {"axis-major", "axis-minor"}
+    assert all(node.points[0][1] == next(slot.bounds[1] for slot in surface.slots if slot.source == "timeline")
+               for node in grids)
 
 
 def test_table_columns_use_measured_non_overlapping_origins():

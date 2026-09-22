@@ -260,12 +260,20 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if placed.placement_id.startswith("axis-band:"):
             emit_semantic_text(placed.placement_id, "axisBand", "text")
     for placed in placed_surface.shapes:
-        if placed.placement_id.startswith("axis:"):
+        if placed.placement_id.startswith("axis-band-rect:"):
+            band = semantic_binding("axisBandDecoration")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "timeline-axis", "axis", band.purpose,
+                                             band.scene_role,
+                                             (float(placed.bounds.inline), float(placed.bounds.block),
+                                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                                             z_order=len(primitives)))
+        if placed.placement_id.startswith("axis-grid:"):
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
-            axis_grid = semantic_binding("axisGrid")
+            axis_grid = semantic_binding("axisGridMinor" if placed.placement_id.startswith("axis-grid:minor:") else "axisGrid")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.PATH, "timeline-axis", "axis", axis_grid.purpose, axis_grid.scene_role,
                                              bounds, points=placed.points, z_order=len(primitives)))
-            label_id = "axis-label:" + placed.placement_id.removeprefix("axis:")
+            _, _, level, index = placed.placement_id.split(":", 3)
+            label_id = f"axis-label:{level}:{index}"
             if label_id in layout_text:
                 emit_semantic_text(label_id, "axisLabel")
     for placed in placed_surface.shapes:

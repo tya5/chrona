@@ -58,6 +58,7 @@ body:
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
+    axis-band-decoration.fill: surface
     group-band.fill: surface
     groupHeader.fill: surfaceRaised
     baseline.stroke: neutral

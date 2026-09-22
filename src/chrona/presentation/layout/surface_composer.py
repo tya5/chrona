@@ -177,18 +177,25 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
     shapes: list[ShapePlacement] = []
     for interval in band_intervals:
-        x = _coordinate(interval.start, scale)
-        text.append(place_text(placement_id=f"axis-band:{interval.level}:{interval.index}", source_ref="timeline-axis",
-                               content=format_axis_label(interval, format_by_level, request.locale), inline=x,
-                               baseline_block=float(axis.bounds.block) + axis_size, typography_role="axis",
-                               theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                               collision_region="timeline-axis-band",
-                               collision_domain=CollisionDomain("timeline-axis", "coarse-band")))
+        x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
+        inline_size = max(0.0, x2 - x)
+        label = format_axis_label(interval, format_by_level, request.locale)
+        shapes.append(ShapePlacement(f"axis-band-rect:{interval.level}:{interval.index}", "timeline-axis", "Rect",
+                                     Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(inline_size)), axis.bounds.block_size)))
+        if axis_label_fits(content=label, available_inline=inline_size, font_size=axis_size, font_metrics=request.font_metrics):
+            width = measure_text_width(label, font_size=axis_size, font_metrics=request.font_metrics)
+            text.append(place_text(placement_id=f"axis-band:{interval.level}:{interval.index}", source_ref="timeline-axis",
+                                   content=label, inline=x + (inline_size - width) / 2,
+                                   baseline_block=float(axis.bounds.block) + axis_size, typography_role="axis",
+                                   theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   collision_region="timeline-axis-band",
+                                   collision_domain=CollisionDomain("timeline-axis", "coarse-band")))
     for interval in intervals:
         x = _coordinate(interval.start, scale)
-        shapes.append(ShapePlacement(f"axis:{interval.level}:{interval.index}", "timeline-axis", "Path",
+        grid_level = "minor" if band_intervals else "major"
+        shapes.append(ShapePlacement(f"axis-grid:{grid_level}:{interval.level}:{interval.index}", "timeline-axis", "Path",
                                      Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
-                                     ((x, float(axis.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
+                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
         label = format_axis_label(interval, format_by_level, request.locale)
         if axis_label_fits(content=label, available_inline=(interval.end - interval.start).days * scale.unit_ratio,
                            font_size=float(metric_values["text.body.size"]), font_metrics=request.font_metrics):
@@ -197,6 +204,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region="timeline-axis-label",
                                    collision_domain=CollisionDomain("timeline-axis", "fine-label")))
+    for interval in band_intervals:
+        x = _coordinate(interval.start, scale)
+        shapes.append(ShapePlacement(f"axis-grid:major:{interval.level}:{interval.index}", "timeline-axis", "Path",
+                                     Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
+                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
     contract = request.presentation_contract
     minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
     closed_days = contract.time.calendar_closed
