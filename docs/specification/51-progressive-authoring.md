@@ -78,7 +78,10 @@ generated resource identities; it is provenance, never a fallback inheritance ed
 
 ## 4. Mutation, closure, and evidence
 
-All CLI, GUI, AI, and automation mutation uses the Command Engine.  The successor
+All CLI, GUI, AI, and automation mutation uses the Command Engine. An Authoring Command
+Use Case applies the closed source intent and normalizes the complete candidate before
+passing canonical byte candidates and the base revision to the Engine; the Engine owns
+CAS/transactions and must not import or interpret authoring or presentation types. The successor
 closed command family is `setWorkspaceTask`, `setWorkspaceActual`,
 `selectPresentationPreset`, `setPresentationOverride`, and
 `materializePresentationPreset`.  It validates the complete normalized candidate,
