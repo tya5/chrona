@@ -22,6 +22,9 @@ body:
     timeline-day-width: {type: number, value: 4}
     timeline-row-height: {type: number, value: 30}
     timeline-mark-size: {type: number, value: 10}
+    timeline-mark-radius: {type: number, value: 4}
+    timeline-point-radius: {type: number, value: 2}
+    timeline-relation-radius: {type: number, value: 3}
     timeline-axis-height: {type: number, value: 42}
     network-node-min-inline: {type: number, value: 120}
     network-node-min-block: {type: number, value: 36}
@@ -94,6 +97,9 @@ body:
     timeline.dayWidth: timeline-day-width
     timeline.row.minBlockSize: timeline-row-height
     timeline.mark.blockSize: timeline-mark-size
+    timeline.mark.cornerRadius: timeline-mark-radius
+    timeline.point.cornerRadius: timeline-point-radius
+    timeline.relation.cornerRadius: timeline-relation-radius
     timeline.axis.blockSize: timeline-axis-height
     network.node.minInlineSize: network-node-min-inline
     network.node.minBlockSize: network-node-min-block

@@ -2,6 +2,7 @@ from datetime import date
 
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.renderers.v05_svg import render_v05_svg
+from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, SurfaceScaleManifest, TextLayout
 
 
@@ -78,3 +79,20 @@ def test_svg_without_links_preserves_the_existing_root_contract():
         ScenePrimitive("plain", "Rect", "a", "object", "planned", "planned", (1, 2, 3, 4)),)),
         viewport=(10, 10), tokens=ThemeTokenView(theme))
     assert "xmlns:xlink" not in output and "<a " not in output
+
+
+def test_svg_serializes_only_the_completed_radius_and_path_commands():
+    theme = {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {"metrics": {},
+        "values": {"surface": {"type": "color", "value": "#ffffff"}, "ink": {"type": "color", "value": "#000000"}},
+        "roles": {"background": {"fill": "surface"}, "planned": {"fill": "ink"}, "dependency": {"stroke": "ink"}}}}
+    scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 10, 0, 10)
+    surface = SceneSurface("s", (), (), (), scale, (
+        ScenePrimitive("bar", "Rect", "a", "object", "planned", "planned", (1, 2, 8, 4), corner_radius=2),
+        ScenePrimitive("route", "Path", "r", "relation", "dependency", "dependency", (0, 0, 0, 0),
+                       points=((1, 1), (9, 9)), path_commands=(
+                           PathCommand("move", ((1, 1),)), PathCommand("line", ((1, 5),)),
+                           PathCommand("quadratic", ((1, 9), (5, 9))), PathCommand("line", ((9, 9),)))),
+    ))
+    output = render_v05_svg(surface, viewport=(10, 10), tokens=ThemeTokenView(theme))
+    assert 'rx="2" ry="2"' in output
+    assert 'd="M1 1L1 5Q1 9 5 9L9 9"' in output
