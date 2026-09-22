@@ -1,0 +1,26 @@
+# Output properties that fail today, pinned so the gate can be enforced before every
+# defect behind it is fixed.
+#
+# A pinned pair that still fails is reported and does not fail the build; a pinned pair
+# that starts passing DOES fail, so a fix removes its pin in the same change. Any pair
+# not listed here fails normally.
+#
+# Delete an entry when its defect is fixed; delete this file with the last entry.
+# Measured at 6c2dafa. Defects are tracked in #85.
+test_no_text_is_drawn_over_a_mark:
+  - aster-ssd/overview          # 2 member labels over a mark
+  - controller-z/executive      # 6 member labels over a mark
+  - halcyon-1/programme-board   # 4 variance labels over a mark
+  - halcyon-1/launch-campaign   # 1 variance label over a mark
+test_no_text_leaves_the_viewport:
+  - aster-ssd/overview          # 'Production release' +52px
+  - controller-z/executive      # 'General Availability' +97px
+test_row_index_cells_render_an_ordinal:
+  - halcyon-1/mission-brief     # '#' column renders '+1d', '+2d', …
+test_point_rows_never_render_a_span_only_state:
+  - halcyon-1/mission-brief     # seven gates labelled 'in progress'
+  - halcyon-1/launch-campaign   # four gates labelled 'in progress'
+test_every_declared_slot_produces_a_primitive:
+  - aster-ssd/overview          # legend, notes
+  - controller-z/executive      # legend
+  - halcyon-1/programme-board   # summary
