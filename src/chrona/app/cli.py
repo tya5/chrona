@@ -23,6 +23,8 @@ from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
 from chrona.operational.command_engine import apply_actual_command, check_command
 from chrona.operational.resources import parse_document
+from chrona.usecases.materialize import materialize
+from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 
 
 @dataclass(frozen=True)
@@ -146,6 +148,16 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--format", choices=("svg", "png", "pdf"), help="assert the Context target format")
     command.add_argument("--output", "-o", required=True)
 
+    command = sub.add_parser("materialize", help="materialize one declared immutable example Context")
+    command.add_argument("manifest", help="example materializer manifest")
+    command.add_argument("--slide", required=True, help="declared slide identifier")
+    command.add_argument("--output", "-o", required=True, help="empty output directory")
+    command.add_argument("--write", action="store_true", help="replace the manifest-declared generated artifact")
+
+    command = sub.add_parser("init", help="create a non-overwriting local Chrona project")
+    command.add_argument("directory", nargs="?", default=".")
+    command.add_argument("--example", default="halcyon-1", choices=("halcyon-1",))
+
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
     command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.7 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
@@ -163,13 +175,13 @@ def _parser() -> JsonArgumentParser:
     command = sub.add_parser("baseline-compare", help="compare a named baseline and immutable candidate")
     command.add_argument("--baseline-reference", required=True)
     command.add_argument("--candidate-reference", required=True)
-    command.add_argument("--store-config", required=True)
+    command.add_argument("--store-config")
     command.add_argument("--result", required=True)
 
     for name in ("command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"):
         command = sub.add_parser(name, help=f"run M26 {name} command")
         command.add_argument("--command", dest="command_path", required=True)
-        command.add_argument("--store-config", required=True)
+        command.add_argument("--store-config")
         command.add_argument("--result", required=True)
 
     return parser
@@ -201,6 +213,19 @@ def _run_render_review(args: argparse.Namespace) -> None:
     _assert_context_format(closure, args.format)
     rendered = _render_review(closure, args)
     Path(args.output).write_bytes(rendered.artifact.content)
+
+
+def _store_reader(args: argparse.Namespace):
+    explicit = Path(args.store_config) if getattr(args, "store_config", None) else None
+    return load_store_config(str(discover_store_configuration(explicit=explicit).path))
+
+
+def _run_materialize(args: argparse.Namespace) -> None:
+    materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write)
+
+
+def _run_init(args: argparse.Namespace) -> None:
+    initialize_project(Path(args.directory), example=args.example)
 
 
 def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:
@@ -266,7 +291,7 @@ def _run(args: argparse.Namespace) -> None:
     if args.command in {"command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"}:
         try:
             command = parse_document(Path(args.command_path).read_text(encoding="utf-8"), "command-request-v0.2.schema.yaml")
-            reader = load_store_config(args.store_config)
+            reader = _store_reader(args)
         except OSError as error:
             raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
         required_type = {"actual-intake": "applyActualIntakeBatch", "actual-resolve": "resolveActualObservation", "baseline-capture": "captureSnapshot"}.get(args.command)
@@ -281,7 +306,7 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "baseline-compare":
         try:
-            reader = load_store_config(args.store_config)
+            reader = _store_reader(args)
             baseline_reference = load_yaml(args.baseline_reference)
             candidate_reference = load_yaml(args.candidate_reference)
         except OSError as error:
@@ -293,6 +318,12 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "render-review":
         _run_render_review(args)
+        return
+    if args.command == "materialize":
+        _run_materialize(args)
+        return
+    if args.command == "init":
+        _run_init(args)
         return
     if args.command == "render":
         _run_draft_render(args)

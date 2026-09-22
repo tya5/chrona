@@ -10,8 +10,8 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any
-
 import yaml
+from chrona.usecases.materialize import copy_context_closure, materialize as _materialize
 
 
 def _inside(root: Path, relative: str) -> Path:
@@ -51,7 +51,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path) ->
         _copy_reference(example, nested, snapshot)
 
 
-def _copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
+def _legacy_copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
     raw = context_path.read_bytes()
     context = yaml.safe_load(raw)
     if context.get("version") != "chrona/render-context/v0.7" or context.get("kind") != "render-context":
@@ -86,7 +86,7 @@ def _copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> 
     return reference, revision
 
 
-def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool) -> None:
+def _legacy_materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool) -> None:
     example = manifest_path.parent.resolve()
     manifest = yaml.safe_load(manifest_path.read_text())
     if manifest.get("version") != "chrona/example-materializer/v0.1":
@@ -102,7 +102,7 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         snapshot = Path(temporary) / "snapshot"
         snapshot.mkdir()
         context_path = _inside(example, str(slide.get("context", manifest["context"])))
-        reference, _ = _copy_context_closure(example, context_path, snapshot)
+        reference, _ = _legacy_copy_context_closure(example, context_path, snapshot)
         ref_path = Path(temporary) / "context-ref.yaml"
         ref_path.write_text(yaml.safe_dump(reference, sort_keys=False))
         derived = output / "review.svg"
@@ -119,6 +119,14 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
             shutil.copy2(derived, expected)
         elif not expected.is_file() or derived.read_bytes() != expected.read_bytes():
             raise ValueError("E_MATERIALIZER_MISMATCH")
+
+
+_copy_context_closure = copy_context_closure
+
+
+def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool) -> None:
+    """Compatibility developer wrapper around the public application service."""
+    _materialize(manifest_path, slide_id, output, write=write)
 
 
 def main() -> None:

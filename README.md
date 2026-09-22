@@ -47,7 +47,7 @@ chrona schedule \
   --store-identity local-workspace
 ```
 
-`chrona render-review` consumes only an immutable Render Context v0.4 reference. Theme,
+`chrona render-review` consumes only an immutable Render Context v0.7 reference. Theme,
 Layout, View, optional detail/summary inputs, viewport and Font Metrics are closed by that
 Context before layout or Scene construction.
 
@@ -78,7 +78,7 @@ chrona render examples/controller-z/project.yaml --output controller-z.svg
 
 ## Presentation slides
 
-A Plan/Actual review surface is rendered from a materialized v0.4 Context:
+A Plan/Actual review surface is rendered from a materialized v0.7 Context:
 
 ```bash
 chrona render-review \
@@ -92,7 +92,7 @@ Reusable authoring files live under `views/`, `themes/`, `layouts/`, and optiona
 `profiles/`. A different Theme changes concrete visual tokens; a different Layout changes
 composition without changing selected facts.
 
-For a deck, generate one v0.4 Context per view while binding the same immutable Project,
+For a deck, generate one v0.7 Context per view while binding the same immutable Project,
 Actual, Theme and Layout resources. `examples/aster-ssd/manifest.yaml` lists that reuse;
 `contexts/01-overview.yaml` shows one generated binding. Render every Context through the
 same `chrona render-review` command so scheduling and presentation facts cannot drift.
@@ -101,6 +101,22 @@ same `chrona render-review` command so scheduling and presentation facts cannot 
 28-dependency program across two work calendars, projected into four 1600x900
 slides plus a tall master view. Drop `--no-raster` to also write PNG previews;
 that path additionally requires node with `sharp`.
+
+## Local authoring
+
+Create a complete non-overwriting project and materialize its declared first
+slide through the public service:
+
+```bash
+chrona init my-chrona-project
+chrona materialize my-chrona-project/manifest.yaml \
+  --slide mission-brief --output my-chrona-project/out
+```
+
+`init` refuses a non-empty target. Commands that use a configured Store prefer
+an explicit `--store-config`; otherwise they discover `.chrona/store.yaml` by
+walking upward from the current project directory. No home-directory or broad
+filesystem fallback is used.
 
 ## Specification
 
