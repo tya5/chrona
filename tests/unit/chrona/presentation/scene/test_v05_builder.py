@@ -18,6 +18,20 @@ def test_scene_delegates_common_surface_geometry_to_layout_composer():
     assert "place_mark_tracks(" not in source
 
 
+def test_scene_projects_completed_layout_geometry_without_measurement_or_routing_imports():
+    source = Path(__import__("chrona.presentation.scene.v05_builder", fromlist=["*"]).__file__).read_text(encoding="utf-8")
+    forbidden = (
+        "from chrona.presentation.layout.text import",
+        "from chrona.presentation.layout.routing import",
+        "from chrona.presentation.layout.annotations import",
+        "place_relation_route(",
+        "route_annotation_leader(",
+        "measure_text_width(",
+        "place_text(",
+    )
+    assert all(fragment not in source for fragment in forbidden)
+
+
 def _manifest(*sources):
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
     return LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
