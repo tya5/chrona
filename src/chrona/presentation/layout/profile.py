@@ -15,7 +15,7 @@ from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
 from chrona.resources import schema_resource
 
 
-LAYOUT_VERSION = "chrona/layout-profile/v0.2"
+LAYOUT_VERSION = "chrona/layout-profile/v0.3"
 
 
 @dataclass(frozen=True)
@@ -26,7 +26,7 @@ class LayoutBase:
 
 
 def _schema() -> dict[str, Any]:
-    return yaml.safe_load(schema_resource("layout-profile-v0.2.schema.yaml").read_text(encoding="utf-8"))
+    return yaml.safe_load(schema_resource("layout-profile-v0.3.schema.yaml").read_text(encoding="utf-8"))
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:

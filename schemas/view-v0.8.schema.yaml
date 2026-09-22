@@ -1,17 +1,18 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.7"
-title: "Chrona View v0.6"
+$id: "chrona/view-v0.8"
+title: "Chrona View v0.8"
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
-      version: {const: "chrona/view/v0.7"}
+      version: {const: "chrona/view/v0.8"}
       kind: {const: view}
       body:
         type: object
-        required: [comparison, visibility, layoutIntent, rows]
+        required: [surface, comparison, visibility, layoutIntent, rows]
         additionalProperties: false
         properties:
+          surface: {enum: [table-timeline, dependency-network]}
           selection:
             type: object
             required: [include]

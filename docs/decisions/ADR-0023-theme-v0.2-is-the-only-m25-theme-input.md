@@ -4,7 +4,7 @@
 
 ## Decision
 
-M25 replaces `chrona/presentation/v0.1` Theme with `chrona/theme/v0.2`. Theme v0.2 has no concrete color token and no inheritance. It carries non-color tokens plus a complete role-property-to-Scheme-intent binding map. Render Context v0.5 is the only M25 entry and requires a Color Scheme reference.
+M25 replaces `chrona/presentation/v0.1` Theme with `chrona/theme/v0.3`. Theme v0.2 has no concrete color token and no inheritance. It carries non-color tokens plus a complete role-property-to-Scheme-intent binding map. Render Context v0.5 is the only M25 entry and requires a Color Scheme reference.
 
 ## Consequences
 

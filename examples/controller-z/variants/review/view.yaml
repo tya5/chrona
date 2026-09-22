@@ -1,7 +1,8 @@
-version: chrona/view/v0.7
+version: chrona/view/v0.8
 kind: view
 id: controller-z-review
 body:
+  surface: table-timeline
   selection: {include: {types: [span, point]}}
   grouping: {by: field, field: owner, missing: ungrouped, presentation: header}
   ordering: {by: plannedStart, direction: ascending, tieBreak: id}

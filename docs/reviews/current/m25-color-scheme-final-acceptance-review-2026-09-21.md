@@ -6,7 +6,7 @@
 
 - `chrona/color-scheme/v0.1` owns concrete semantic and categorical colors with
   provenance metadata.
-- `chrona/theme/v0.2` owns non-color tokens, metrics, and complete paint-intent
+- `chrona/theme/v0.3` owns non-color tokens, metrics, and complete paint-intent
   bindings; it has no concrete color tokens or inheritance.
 - `chrona/presentation/v0.5` requires immutable Theme and Color Scheme references and
   resolves one concrete internal Theme before measurement and Scene construction.

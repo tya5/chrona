@@ -1,4 +1,4 @@
-version: chrona/layout-profile/v0.2
+version: chrona/layout-profile/v0.3
 id: invalid-offset
 writingMode: horizontal-tb
 root:

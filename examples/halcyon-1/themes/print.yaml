@@ -1,4 +1,4 @@
-version: chrona/theme/v0.2
+version: chrona/theme/v0.3
 kind: theme
 id: print
 body:
@@ -72,6 +72,9 @@ body:
     'group:launch.fill': category
     'group:ops.fill': category
     planned.fill: accent
+    network-node.fill: surfaceRaised
+    network-edge.stroke: textMuted
+    critical-edge.stroke: negative
     snapshot.fill: neutral
     summary-bar.fill: accent
     planned.stroke: text

@@ -31,6 +31,7 @@ class Slot(str, Enum):
     TABLE = "table"
     TIMELINE = "timeline"
     TIMELINE_AXIS = "timeline-axis"
+    NETWORK = "network"
     SUMMARY = "summary"
     LEGEND = "legend"
     GROUP_DETAILS = "group-details"

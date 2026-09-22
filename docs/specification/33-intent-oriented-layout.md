@@ -30,7 +30,7 @@ metrics, persist authoritative coordinates, or branch on a profile ID.
 
 ## 2. Resource and reuse model
 
-The canonical resource is `chrona/layout-profile/v0.2` as defined by the replacement
+The canonical resource is `chrona/layout-profile/v0.3` as defined by the replacement
 schema. A resource contains exactly one of:
 
 - `root`: a complete layout tree; or
@@ -224,7 +224,7 @@ bytes and equivalent Scene geometry. Output adapters consume Scene, not the prof
 
 ## 11. Replacement and deletion
 
-Implementation installs `schemas/layout-profile-v0.2.schema.yaml`, deletes the v0.1
+Implementation installs `schemas/layout-profile-v0.3.schema.yaml`, deletes the v0.1
 schema when the v0.2 runtime becomes reachable, and replaces
 `chrona.presentation.layout.solver` rather than adding a legacy branch. The `surface`
 bag, named margin/density lookup tables, header/footer name branches, `repr` hashes,

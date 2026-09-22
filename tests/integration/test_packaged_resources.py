@@ -11,7 +11,7 @@ SCHEMAS = (
     "project-v0.5.schema.yaml",
     "profile-v0.2.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",
-    "layout-profile-v0.2.schema.yaml",
+    "layout-profile-v0.3.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
     "actual-intake-batch-v0.2.schema.yaml",
     "actual-set-v0.2.schema.yaml",
