@@ -31,6 +31,7 @@ class ReviewItem:
     wbs_code: str = ""
     hierarchy_path: tuple[str, ...] = ()
     is_rollup: bool = False
+    presentation: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -183,7 +184,9 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem],
             track = spec.track
             if track not in {"stacked", "shared"}:
                 raise ValueError("E_REVIEW_ITEM_TRACK")
-            members.append(replace(base, item_id=item_id, source_kind=kind, track=track))
+            intent = spec.presentation if spec.presentation is not None else row.presentation
+            members.append(replace(base, item_id=item_id, source_kind=kind, track=track,
+                                   presentation=dict(intent) if intent is not None else None))
         subject = row.table_subject or (members[0].item_id if members else "")
         if subject not in member_ids:
             raise ValueError("E_REVIEW_TABLE_SUBJECT")

@@ -47,7 +47,14 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float], toke
             parts.append(f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" {paint}/>')
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            parts.append(f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}" fill="{color(node.visual_role, "fill")}">{escape(node.text)}</text>')
+            lines = node.text_layout.lines
+            if len(lines) == 1:
+                body = escape(lines[0])
+            else:
+                step = number(node.text_layout.font_size * node.text_layout.line_height)
+                body = "".join(f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else step}">{escape(line)}</tspan>'
+                               for index, line in enumerate(lines))
+            parts.append(f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}" fill="{color(node.visual_role, "fill")}">{body}</text>')
         elif node.kind == "Symbol":
             if node.shape != "diamond": raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             points = ((x+w/2,y),(x+w,y+h/2),(x+w/2,y+h),(x,y+h/2))

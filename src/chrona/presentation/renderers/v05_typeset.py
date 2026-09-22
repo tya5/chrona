@@ -45,7 +45,8 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float], to
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             layout = node.text_layout
             parts.append(f"// font-asset: {_typst_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt, fill: rgb("{_color(tokens, node, "fill")}"))[{_typst_string(node.text)}]]')
+            text = "\\n".join(_typst_string(line) for line in layout.lines)
+            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt, fill: rgb("{_color(tokens, node, "fill")}"))[{text}]]')
         elif node.kind == "Symbol":
             if node.shape != "diamond":
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -77,7 +78,8 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float], tok
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             layout = node.text_layout
             parts.append(f"% font-asset: {_tex_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
-            parts.append(f"\\node[anchor=base west, text={_color(tokens, node, 'fill')}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{\\fontfamily{{{_tex_string(layout.family)}}}\\selectfont {_tex_string(node.text)}}};")
+            text = r"\\".join(_tex_string(line) for line in layout.lines)
+            parts.append(f"\\node[anchor=base west, align=left, text={_color(tokens, node, 'fill')}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{\\fontfamily{{{_tex_string(layout.family)}}}\\selectfont {text}}};")
         elif node.kind == "Symbol":
             if node.shape != "diamond":
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

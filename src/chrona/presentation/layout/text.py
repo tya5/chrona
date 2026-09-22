@@ -26,21 +26,40 @@ def ellipsize_text(content: str, *, available_inline: float, font_size: float, f
     return prefix + marker
 
 
+def wrap_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any) -> tuple[str, ...]:
+    """Greedily wrap words with measured widths; long tokens remain intact."""
+    if available_inline <= 0:
+        raise ValueError("E_PRESENTATION_WRAP_INPUT")
+    lines: list[str] = []
+    current = ""
+    for word in content.split():
+        candidate = word if not current else f"{current} {word}"
+        if current and measure_text_width(candidate, font_size=font_size, font_metrics=font_metrics) > available_inline:
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    if current:
+        lines.append(current)
+    return tuple(lines or [content])
+
+
 def place_text(*, placement_id: str, source_ref: str, content: str,
                inline: float, baseline_block: float, typography_role: str,
                theme_tokens: Any, font_metrics: Any, overflow: str = "fit",
                required: bool = True, collision_region: str = "surface",
-               source_content: str | None = None) -> TextPlacement:
+               source_content: str | None = None, lines: tuple[str, ...] | None = None) -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     family, weight, size, line_height = theme_tokens.typography(typography_role)
     font_size, leading = float(size), float(line_height)
-    width = measure_text_width(content, font_size=font_size, font_metrics=font_metrics)
+    resolved_lines = lines or (content,)
+    width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics) for line in resolved_lines)
     return TextPlacement(
         placement_id, source_ref, content,
         Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),
-             Decimal(str(width)), Decimal(str(font_size * leading))),
+             Decimal(str(width)), Decimal(str(font_size * leading * len(resolved_lines)))),
         typography_role, overflow, required,
-        baseline=(inline, baseline_block), lines=(content,), font_family=family,
+        baseline=(inline, baseline_block), lines=resolved_lines, font_family=family,
         font_weight=int(weight), font_size=font_size, line_height=leading,
         font_asset_identity=str(font_metrics.content_identity), collision_region=collision_region,
         source_content=source_content,

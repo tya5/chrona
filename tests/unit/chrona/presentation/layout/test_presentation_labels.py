@@ -1,6 +1,12 @@
 import pytest
 
 from chrona.presentation.layout.labels import LabelRect, place_label
+from chrona.presentation.layout.text import wrap_text
+
+
+class _Metrics:
+    def width(self, value, size):
+        return len(value) * size
 
 
 def test_labels_use_declared_finite_candidate_order_and_obstacles():
@@ -27,3 +33,7 @@ def test_optional_label_can_be_omitted_only_by_explicit_policy():
 def test_label_candidates_are_bounded_and_unique():
     with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_INPUT"):
         place_label(LabelRect(1, 1, 1, 1), (1, 1), ["above"] * 17, bounds=LabelRect(0, 0, 10, 10))
+
+
+def test_wrap_uses_measured_words_and_never_splits_a_token():
+    assert wrap_text("alpha beta gamma", available_inline=10, font_size=1, font_metrics=_Metrics()) == ("alpha beta", "gamma")

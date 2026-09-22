@@ -116,6 +116,7 @@ class ViewRowItem:
     source_kind: str
     source_object: str
     track: str
+    presentation: FrozenDict | None = None
 
 
 @dataclass(frozen=True)
@@ -127,6 +128,7 @@ class ViewRow:
     group: str | None
     table_subject: str | None
     items: tuple[ViewRowItem, ...]
+    presentation: FrozenDict | None = None
 
 
 @dataclass(frozen=True)
@@ -181,6 +183,7 @@ class ViewVisibility:
     labels: bool | FrozenDict
     relations: str | FrozenDict
     annotations: str | FrozenDict
+    fallback: FrozenDict | None = None
 
 
 @dataclass(frozen=True)
@@ -375,7 +378,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
     ("project", "timeline/v0.3"): "project-v0.3.schema.yaml",
-    ("view", "chrona/view/v0.3"): "view-v0.3.schema.yaml",
+    ("view", "chrona/view/v0.4"): "view-v0.4.schema.yaml",
     ("theme", "chrona/theme/v0.2"): "theme-v0.2.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.2"): "layout-profile-v0.2.schema.yaml",
@@ -452,15 +455,17 @@ def _view_input(body: FrozenDict) -> ViewInput:
                                 str(raw_comparison["deltaUnit"]) if "deltaUnit" in raw_comparison else None,
                                 tuple(str(item) for item in raw_comparison.get("facets", ())))
     raw_visibility = body["visibility"]
-    visibility = ViewVisibility(raw_visibility["labels"], raw_visibility["relations"], raw_visibility["annotations"])
+    _validate_view_fallback(raw_visibility.get("fallback"))
+    visibility = ViewVisibility(raw_visibility["labels"], raw_visibility["relations"], raw_visibility["annotations"],
+                                raw_visibility.get("fallback"))
     row_items = tuple(
         ViewRow(str(row["id"]), str(row["label"]) if "label" in row else None, int(row["depth"]),
                 str(row["parentRow"]) if "parentRow" in row else None,
                 str(row["group"]) if "group" in row else None,
                 str(row["tableSubject"]) if "tableSubject" in row else None,
                 tuple(ViewRowItem(str(item["id"]), str(item["source"]["kind"]),
-                                  str(item["source"]["object"]), str(item.get("track", "stacked")))
-                      for item in row.get("items", ())))
+                                  str(item["source"]["object"]), str(item.get("track", "stacked")), item.get("presentation"))
+                      for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility, body["layoutIntent"],
@@ -469,6 +474,24 @@ def _view_input(body: FrozenDict) -> ViewInput:
         tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None)
+
+
+def _validate_view_fallback(raw_fallback: Any) -> None:
+    """Reject non-operational preference ladders at the typed View boundary."""
+    if not isinstance(raw_fallback, Mapping):
+        return
+    allowed = {
+        "labels": {"above", "below", "start", "end", "suppress"},
+        "annotations": {"above", "below", "start", "end", "rail", "suppress"},
+    }
+    for name, vocabulary in allowed.items():
+        if name not in raw_fallback:
+            continue
+        ladder = tuple(str(item) for item in raw_fallback[name])
+        if (not ladder or len(set(ladder)) != len(ladder) or any(item not in vocabulary for item in ladder)
+                or ("suppress" in ladder and ladder[-1] != "suppress")
+                or all(item == "suppress" for item in ladder)):
+            raise ValueError(f"E_VIEW_FALLBACK_INVALID:{name}")
 
 
 def _summary_input(body: FrozenDict) -> SummaryProfileInput:

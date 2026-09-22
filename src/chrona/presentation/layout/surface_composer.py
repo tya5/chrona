@@ -10,7 +10,7 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
 from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text
+from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     nearest_box_port, place_annotation_rail, project_annotation_box,
     resolve_annotation_anchor, route_annotation_leader,
@@ -19,7 +19,7 @@ from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.surface_quality import (
-    GroupPlacement, MarkPlacement, RelationPlacement, RowPlacement, ScalePlacement,
+    GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
 )
 
@@ -282,6 +282,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      Rect(Decimal(str(x1)), row.bounds.block,
                                           Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))))
     diagnostics: list[str] = []
+    placement_decisions: list[PlacementDecision] = []
     label_requests: list[LabelRequest] = []
     if contract.labels.enabled:
         for review_row in review_rows:
@@ -304,9 +305,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 anchor = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
                     _coordinate(end_at if isinstance(end_at, date) else start_at, scale), track.block,
                     max(1.0, track.block_size), track.block_size)
-                sides = ("above", "below", "start", "end") if contract.labels.side == "auto" else (contract.labels.side,)
+                default_ladder = (request.surface_content.label_fallback or (("above", "below", "start", "end") if contract.labels.side == "auto" else (contract.labels.side,)))
+                intent = getattr(item, "presentation", None) or {}
+                preferred_side = (intent.get("label") or {}).get("side") if isinstance(intent, dict) else None
+                wrap = ((intent.get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid")
+                ladder = ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
+                          if preferred_side else default_ladder)
+                sides = tuple(side for side in ladder if side != "suppress")
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
-                                                   anchor, sides, "text", "plot-label", contract.labels.overflow))
+                                                   anchor, sides, "text", "plot-label", "suppress" if "suppress" in ladder else contract.labels.overflow,
+                                                   wrap))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
     for review_row in review_rows:
@@ -331,27 +339,42 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     timeline_rect = LabelRect(*timeline_bounds)
     for label_request in label_requests:
         _, _, font_size, line_height = request.theme_tokens.typography(label_request.typography_role)
-        label_size = (measure_text_width(label_request.content, font_size=float(font_size), font_metrics=request.font_metrics),
-                      float(font_size) * float(line_height))
+        lines = (wrap_text(label_request.content, available_inline=max(1.0, timeline_rect.width * 0.4),
+                           font_size=float(font_size), font_metrics=request.font_metrics)
+                 if label_request.wrap == "allow" else (label_request.content,))
+        label_size = (max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines),
+                      float(font_size) * float(line_height) * len(lines))
         obstacles = [LabelRect(*_bounds(item.bounds)) for item in marks]
         obstacles.extend(LabelRect(*_bounds(item.bounds)) for item in text
                          if item.required and item.overflow != "suppressed")
-        candidate = place_label(label_request.anchor, label_size, label_request.candidates, bounds=timeline_rect,
-                                obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                required=label_request.overflow == "diagnose", overflow=label_request.overflow)
+        candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=timeline_rect,
+                                 obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                 required=label_request.overflow == "diagnose", overflow=label_request.overflow)
+                     if label_request.candidates else None)
         provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
                                  content=label_request.content, inline=0, baseline_block=float(font_size),
                                  typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
                                  font_metrics=request.font_metrics, collision_region=label_request.collision_region)
         if candidate is None:
-            text.append(replace(provisional, overflow="suppressed", required=False))
+            ladder = label_request.candidates + (("suppress",) if label_request.overflow == "suppress" else ())
+            if not ladder:
+                raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
+            text.append(replace(provisional, overflow="suppressed", required=False,
+                                fallback_ladder=ladder,
+                                selected_rung="suppress"))
+            placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
+                                                         ladder, "suppress", "suppressed"))
             diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
         else:
-            text.append(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
+            text.append(replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
                                    content=provisional.content, inline=candidate.bounds.x,
                                    baseline_block=candidate.bounds.y + float(font_size),
                                    typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
-                                   font_metrics=request.font_metrics, collision_region=provisional.collision_region))
+                                   font_metrics=request.font_metrics, collision_region=provisional.collision_region,
+                                   lines=lines),
+                                fallback_ladder=label_request.candidates, selected_rung=candidate.side))
+            placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
+                                                         label_request.candidates, candidate.side, "placed"))
 
     relations: list[RelationPlacement] = []
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
@@ -476,12 +499,45 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             anchor_bounds = _annotation_anchor_bounds(resolved.mark, resolved.endpoint, matching[0][1], scale)
             size, line_height = (float(item) for item in request.theme_tokens.typography("annotation")[2:])
             width = min(float(annotation_slot.bounds.inline_size), max(size * 4, measure_text_width(content, font_size=size, font_metrics=request.font_metrics)))
+            annotation_lines = (content,)
             try:
                 if annotation.get("purpose") == "callout":
-                    box = place_annotation_rail(annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
-                                                text_size=(width, size * line_height), rail=LabelRect(*_bounds(annotation_slot.bounds)),
-                                                obstacles=placed_boxes, overflow=annotation_slot.overflow,
-                                                required=annotation_slot.priority == "required")
+                    selected_items = [item for item in matching[0][0].items
+                                      if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id)]
+                    intent = selected_items[0].presentation if selected_items else None
+                    preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
+                    wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
+                    annotation_lines = (wrap_text(content, available_inline=width, font_size=size, font_metrics=request.font_metrics)
+                                        if wrap == "allow" else (content,))
+                    annotation_size = (max(measure_text_width(line, font_size=size, font_metrics=request.font_metrics)
+                                           for line in annotation_lines), size * line_height * len(annotation_lines))
+                    default_ladder = request.surface_content.annotation_fallback or ("rail",)
+                    ladder = ((preferred,) + tuple(rung for rung in default_ladder if rung != preferred)
+                              if preferred else default_ladder)
+                    box, selected_rung = None, None
+                    for rung in (rung for rung in ladder if rung != "suppress"):
+                        if rung == "rail":
+                            candidate_box = place_annotation_rail(
+                                annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
+                                text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
+                                obstacles=placed_boxes, overflow="clip-optional", required=False)
+                        else:
+                            candidate_box = project_annotation_box(
+                                annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
+                                candidate_sides=(rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
+                                obstacles=placed_boxes, overflow="clip-optional", required=False)
+                        if candidate_box is not None:
+                            box, selected_rung = candidate_box, rung
+                            break
+                    if box is None:
+                        if "suppress" not in ladder:
+                            raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/annotations/{index}")
+                        placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
+                                                                     tuple(ladder), "suppress", "suppressed"))
+                        diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                        continue
+                    placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
+                                                                 tuple(ladder), selected_rung, "placed"))
                 else:
                     box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, size * line_height),
                                                  candidate_sides=(annotation.get("placement", {}).get("side", ""),),
@@ -498,7 +554,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             text.append(place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                    inline=bounds.x, baseline_block=bounds.y + size, typography_role="annotation",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="annotations"))
+                                   collision_region="annotations", lines=annotation_lines))
             if "number" in annotation:
                 text.append(place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
                                        content=str(annotation["number"]), inline=anchor_bounds.x + anchor_bounds.width,
@@ -517,6 +573,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    f"annotation-box:{annotation_id}", tuple(points)))
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
+                                 decisions=tuple(placement_decisions),
                                  diagnostics=tuple(diagnostics))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)

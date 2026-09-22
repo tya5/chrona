@@ -69,6 +69,8 @@ class SurfaceContentInput:
     milestones: tuple[tuple[str, str, date], ...]
     observation_columns: tuple[tuple[str, str], ...]
     observation_rows: tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...]
+    label_fallback: tuple[str, ...] = ()
+    annotation_fallback: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
