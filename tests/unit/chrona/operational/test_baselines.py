@@ -14,7 +14,7 @@ def _reference(address, kind, identifier, payload):
 
 
 def _project(identifier, objects):
-    return {"version": "timeline/v0.4", "project": {"id": identifier}, "extensions": [], "objects": objects, "relations": []}
+    return {"version": "timeline/v0.5", "project": {"id": identifier}, "extensions": [], "objects": objects, "relations": []}
 
 
 def test_baseline_comparison_verifies_both_closures_and_returns_machine_result():

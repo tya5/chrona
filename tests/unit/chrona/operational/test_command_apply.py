@@ -18,7 +18,7 @@ def test_apply_intake_uses_v02_batch_cas_and_replays(tmp_path: Path):
     store = LocalActualStore(tmp_path, actual); revision, loaded = store.read()
     payload = (tmp_path / revision / "actuals" / "actuals.yaml").read_bytes()
     target = {"id": "actuals", "kind": "actual-set", "store": {"provider": "local", "identity": "test"}, "address": "actuals/actuals.yaml", "revision": {"token": revision}, "contentIdentity": "sha256:" + sha256(payload).hexdigest()}
-    project = {"version": "timeline/v0.4", "project": {"id": "p"}, "extensions": [], "objects": {"firmware": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-01-01"}}}, "relations": []}
+    project = {"version": "timeline/v0.5", "project": {"id": "p"}, "extensions": [], "objects": {"firmware": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-01-01"}}}, "relations": []}
     project_ref = _write(tmp_path, "project-r1", "project.yaml", project, "project", "p")
     batch = {"version": "chrona/actual-intake-batch/v0.2", "kind": "actual-intake-batch", "id": "batch", "body": {"source": {"system": "supplier", "contentIdentity": "sha256:" + "a" * 64}, "records": [{"externalKey": "42", "projectObjectId": "firmware", "actual": {"finish": "2026-01-02"}}]}}
     batch_ref = _write(tmp_path, "batch-r1", "batch.yaml", batch, "actual-intake-batch", "batch")
@@ -31,7 +31,7 @@ def test_apply_intake_uses_v02_batch_cas_and_replays(tmp_path: Path):
 
 
 def test_apply_capture_publishes_named_baseline(tmp_path: Path):
-    project = {"version": "timeline/v0.4", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
+    project = {"version": "timeline/v0.5", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
     target = _write(tmp_path, "project-r1", "project.yaml", project, "project", "p")
     reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "test", "root": str(tmp_path)}]})
     command = {"version": "chrona/command/v0.2", "commandId": "capture-1", "type": "captureSnapshot", "target": target, "baseRevision": "project-r1", "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "test"}}}
@@ -43,7 +43,7 @@ def test_apply_capture_publishes_named_baseline(tmp_path: Path):
 
 
 def test_apply_capture_rejects_different_command_for_existing_baseline(tmp_path: Path):
-    project = {"version": "timeline/v0.4", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
+    project = {"version": "timeline/v0.5", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
     target = _write(tmp_path, "project-r1", "project.yaml", project, "project", "p")
     reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "test", "root": str(tmp_path)}]})
     command = {"version": "chrona/command/v0.2", "commandId": "capture-1", "type": "captureSnapshot", "target": target, "baseRevision": "project-r1", "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "test"}}}

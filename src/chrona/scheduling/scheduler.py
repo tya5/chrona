@@ -10,6 +10,7 @@ from chrona.core.ports import ScheduleOutcome
 from chrona.core.temporal import (Calendar, TemporalError, advance, as_date, parse_amount,
                        requires_working_calendar, retreat)
 from chrona.core.validation import validate_project
+from chrona.core.scenarios import ResolvedScenario, resolve_scenario
 
 
 @dataclass
@@ -107,6 +108,12 @@ def schedule(
     ordered = {object_id: placements[object_id] for object_id in objects if object_id in placements}
     analysis = _analyze_criticality(project, ordered, calendars) if not diagnostics else None
     return ScheduleResult(ordered, diagnostics, analysis)
+
+
+def schedule_scenario(project: dict[str, Any], scenario_id: str) -> tuple[ResolvedScenario, ScheduleResult]:
+    """Resolve a Project-owned hypothesis before invoking the unchanged scheduler."""
+    resolved = resolve_scenario(project, scenario_id)
+    return resolved, schedule(resolved.project)
 
 
 class ReferenceScheduler:
