@@ -5,25 +5,26 @@ from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any
 
-import jsonschema
+import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
 import yaml
+
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.contracts import (
-    ActualSetContract, ClosureIdentity, ContractError, LayoutProfileContract,
+    ActualSetContract, ClosureIdentity, ContractError, SchemaContractError, LayoutProfileContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
     SnapshotRefContract, SummaryProfileContract, ViewContract,
     freeze, parse_contract,
 )
-from chrona.resources import schema_resource
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
 
 class ClosureError(ValueError):
-    def __init__(self, diagnostic_id: str):
+    def __init__(self, diagnostic_id: str, source_ref: str = "/"):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
+        self.source_ref = source_ref
 
 
 @dataclass(frozen=True)
@@ -116,13 +117,12 @@ def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) ->
 def _resolve_layout_context(
     context: dict[str, Any], reader: SnapshotReader
 ) -> RenderClosure:
-    schema = yaml.safe_load(schema_resource("render-context-v0.6.schema.yaml").read_text(encoding="utf-8"))
-    if next(jsonschema.Draft202012Validator(schema).iter_errors(context), None) is not None:
-        raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     try:
         context_contract = parse_contract(
             ClosureIdentity("render-context", str(context["id"]), "", ""), context
         )
+    except SchemaContractError as error:
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA", error.source_ref) from error
     except ContractError as error:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
     body = context_contract.body
@@ -198,6 +198,9 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     identity = ClosureIdentity(expected_kind, actual_id, reference["revision"]["token"], reference.get("contentIdentity", computed_identity))
     try:
         contract = parse_contract(identity, value)
+    except SchemaContractError as error:
+        code = "E_" + expected_kind.upper().replace("-", "_") + "_SCHEMA"
+        raise ClosureError(code, error.source_ref) from error
     except ContractError as error:
         raise ClosureError(error.args[0]) from error
     return ClosureResource(expected_kind, actual_id, identity.revision, identity.content_identity, contract)
