@@ -27,21 +27,35 @@ def _identity(value: Any) -> str:
 
 def apply_authoring_command(
     workspace_path: Path, command: dict[str, Any], *, read_workspace: Any, cas_write: Any,
+    cas_write_aggregate: Any | None = None,
 ) -> dict[str, Any]:
     """Validate source intent; persistence is injected by the outer application adapter."""
     current = read_workspace(workspace_path)
     base = _identity(current)
     if command["target"]["path"] != workspace_path.name or command["baseRevision"] != base:
         return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
-    candidate = deepcopy(current)
     try:
+        if command["type"] == "materializePresentationPreset":
+            if cas_write_aggregate is None:
+                raise ValueError("E_AUTHORING_AGGREGATE_WRITER")
+            from chrona.usecases.authoring_materialization import materialization_candidate
+            candidate, candidates = materialization_candidate(
+                workspace_path, current, directory=command["payload"].get("directory", "presentation"),
+            )
+            result = cas_write_aggregate(workspace_path, base, candidates)
+            if result is None:
+                return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
+            return {"status": "accepted", "commandId": command["commandId"], "baseRevision": base, "resultRevision": result, "diagnostics": []}
+        candidate = deepcopy(current)
         _apply(candidate, command)
         parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", _identity(candidate)), candidate)
+        result = cas_write(workspace_path, base, candidate)
+        if result is None:
+            return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
+    except FileExistsError as error:
+        return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_MATERIALIZE_COLLISION", base)
     except (KeyError, ContractError, ValueError) as error:
         return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_COMMAND", base)
-    result = cas_write(workspace_path, base, candidate)
-    if result is None:
-        return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
     return {"status": "accepted", "commandId": command["commandId"], "baseRevision": base, "resultRevision": result, "diagnostics": []}
 
 

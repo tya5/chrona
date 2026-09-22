@@ -1,11 +1,16 @@
 """Stage-three materialization preserves the reviewed guided surface."""
 from pathlib import Path
+import json
+import sys
 
 import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render, resolve_guided_draft_render
-from chrona.usecases.authoring_materialization import _render_bytes, materialize_presentation_preset
+from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
+from chrona.operational.resources import content_identity
+from chrona.usecases.authoring_commands import apply_authoring_command
+from chrona.usecases.authoring_materialization import _render_bytes
 
 
 def _root() -> Path:
@@ -55,14 +60,26 @@ def _explicit_bytes(root: Path) -> bytes:
     return _render_bytes(draft)
 
 
+def _materialize(path: Path, *, base: str | None = None) -> dict:
+    current = yaml.safe_load(path.read_text())
+    command = {"version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
+               "target": {"kind": "authoring-workspace", "path": path.name},
+               "baseRevision": base or content_identity(current), "payload": {"directory": "presentation"}}
+    return apply_authoring_command(path, command, read_workspace=read_authoring_workspace,
+                                   cas_write=cas_write_authoring_workspace,
+                                   cas_write_aggregate=cas_write_authoring_aggregate)
+
+
 def test_materialization_ejects_to_a_closed_explicit_bundle_with_identical_bytes(tmp_path):
     workspace = _workspace(tmp_path)
     guided_bytes = _render_bytes(resolve_guided_draft_render(workspace_path=workspace))
 
-    result = materialize_presentation_preset(workspace)
+    result = _materialize(workspace)
 
-    assert result["body"]["presentation"]["mode"] == "explicit"
-    assert "binding" not in result["body"]["presentation"]
+    assert result["status"] == "accepted"
+    explicit = yaml.safe_load(workspace.read_text())
+    assert explicit["body"]["presentation"]["mode"] == "explicit"
+    assert "binding" not in explicit["body"]["presentation"]
     assert (tmp_path / "presentation/receipt.yaml").is_file()
     assert _explicit_bytes(tmp_path) == guided_bytes
 
@@ -73,9 +90,9 @@ def test_materialization_rejection_does_not_switch_workspace_or_publish_bundle(t
     calls = iter((b"guided", b"explicit"))
     monkeypatch.setattr("chrona.usecases.authoring_materialization._render_bytes", lambda _draft: next(calls))
 
-    with pytest.raises(ValueError, match="E_AUTHORING_MATERIALIZE_OUTPUT_PROOF"):
-        materialize_presentation_preset(workspace)
+    result = _materialize(workspace)
 
+    assert result["diagnostics"] == [{"code": "E_AUTHORING_MATERIALIZE_OUTPUT_PROOF"}]
     assert workspace.read_bytes() == original
     assert not (tmp_path / "presentation").exists()
 
@@ -85,7 +102,39 @@ def test_materialization_rejects_existing_destination_without_switching_workspac
     original = workspace.read_bytes()
     (tmp_path / "presentation").mkdir()
 
-    with pytest.raises(ValueError, match="E_AUTHORING_MATERIALIZE_COLLISION"):
-        materialize_presentation_preset(workspace)
+    result = _materialize(workspace)
 
+    assert result["diagnostics"] == [{"code": "E_AUTHORING_MATERIALIZE_COLLISION"}]
     assert workspace.read_bytes() == original
+
+
+def test_materialization_rejects_a_stale_base_without_writing(tmp_path):
+    workspace = _workspace(tmp_path)
+    original = workspace.read_bytes()
+
+    result = _materialize(workspace, base="sha256:" + "0" * 64)
+
+    assert result["diagnostics"] == [{"code": "E_AUTHORING_BASE_REVISION"}]
+    assert workspace.read_bytes() == original
+    assert not (tmp_path / "presentation").exists()
+
+
+def test_public_cli_materializes_the_same_closed_bundle(tmp_path, monkeypatch):
+    from chrona.app.cli import main
+
+    workspace = _workspace(tmp_path)
+    command = tmp_path / "materialize.yaml"
+    result = tmp_path / "result.json"
+    command.write_text(yaml.safe_dump({
+        "version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
+        "target": {"kind": "authoring-workspace", "path": workspace.name},
+        "baseRevision": content_identity(yaml.safe_load(workspace.read_text())), "payload": {},
+    }), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "materialize-presentation-preset", "--workspace", str(workspace), "--command", str(command), "--result", str(result),
+    ])
+
+    main()
+
+    assert json.loads(result.read_text())["status"] == "accepted"
+    assert (tmp_path / "presentation/receipt.yaml").is_file()

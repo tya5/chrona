@@ -23,8 +23,7 @@ from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
 from chrona.operational.command_engine import apply_actual_command, check_command
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command
-from chrona.usecases.authoring_materialization import materialize_presentation_preset
-from chrona.operational.authoring_commands import cas_write_authoring_workspace, read_authoring_workspace
+from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
@@ -147,9 +146,10 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--command", dest="authoring_command", required=True)
     command.add_argument("--result", required=True)
 
-    command = sub.add_parser("materialize-presentation-preset", help="eject one guided workspace to explicit presentation resources")
+    command = sub.add_parser("materialize-presentation-preset", help="apply one revision-bound Stage-3 materialization command")
     command.add_argument("--workspace", required=True)
-    command.add_argument("--directory", default="presentation")
+    command.add_argument("--command", dest="authoring_command", required=True)
+    command.add_argument("--result", required=True)
 
     command = sub.add_parser("render-workspace", help="render a guided authoring workspace Draft (not reproducible evidence)")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
@@ -289,14 +289,11 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
 
 def _run_authoring_command(args: argparse.Namespace) -> None:
     result = apply_authoring_command(Path(args.workspace), parse_authoring_command(Path(args.authoring_command)),
-                                     read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace)
+                                     read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace,
+                                     cas_write_aggregate=cas_write_authoring_aggregate)
     _write_result(Path(args.result), result)
     if result["status"] != "accepted":
         raise SystemExit(2)
-
-
-def _run_authoring_materialization(args: argparse.Namespace) -> None:
-    materialize_presentation_preset(Path(args.workspace), directory=args.directory)
 
 
 def _parse_viewport(value: str) -> tuple[int, int]:
@@ -388,7 +385,7 @@ def _run(args: argparse.Namespace) -> None:
         _run_authoring_command(args)
         return
     if args.command == "materialize-presentation-preset":
-        _run_authoring_materialization(args)
+        _run_authoring_command(args)
         return
     if args.command == "render-review-gallery":
         _run_render_review_gallery(args)
