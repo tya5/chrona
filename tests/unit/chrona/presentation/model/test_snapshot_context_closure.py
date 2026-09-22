@@ -19,8 +19,8 @@ def _write(root, token, address, value):
 
 
 def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path, monkeypatch):
-    primary = {"version": "timeline/v0.3", "project": {"id": "p"}, "objects": {}}
-    historic = {"version": "timeline/v0.3", "project": {"id": "p"}, "objects": {}}
+    primary = {"version": "timeline/v0.4", "project": {"id": "p"}, "objects": {}}
+    historic = {"version": "timeline/v0.4", "project": {"id": "p"}, "objects": {}}
     primary_ref = _write(tmp_path, "current", "project.yaml", primary)
     historic_ref = _write(tmp_path, "historic", "project.yaml", historic)
     snapshot = {"version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": "q2", "body": {"project": historic_ref}}

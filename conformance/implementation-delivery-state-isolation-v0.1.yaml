@@ -1,5 +1,5 @@
 project:
-  version: timeline/v0.3
+  version: timeline/v0.4
   project: {id: implementation-delivery-state-isolation}
   objects:
     design:

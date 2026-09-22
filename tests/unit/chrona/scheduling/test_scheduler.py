@@ -5,7 +5,7 @@ from chrona.scheduling.scheduler import schedule
 
 def _project(objects, relations=()):
     return {
-        "version": "timeline/v0.3",
+        "version": "timeline/v0.4",
         "project": {"id": "demo"},
         "objects": objects,
         "relations": list(relations),
@@ -65,6 +65,16 @@ def test_scheduler_marks_disconnected_singletons_critical():
     }))
     assert result.ok and result.analysis is not None
     assert result.analysis.critical == frozenset({"a", "b"})
+
+
+def test_project_object_link_is_typed_and_does_not_affect_scheduling():
+    project = _project({
+        "a": {"type": "task", "link": {"href": "https://tracker.example/items/a", "title": "Open ticket"},
+              "schedule": {"mode": "fixed", "at": "2026-10-01"}},
+    })
+    assert schedule(project).ok
+    project["objects"]["a"]["link"] = "javascript:alert(1)"
+    assert "E_SCHEMA" in {item.id for item in schedule(project).diagnostics}
 
 
 def test_scheduler_counts_float_in_the_objects_working_calendar():

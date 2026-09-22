@@ -14,7 +14,7 @@ FIXTURES = ROOT / "conformance"
 
 
 def _manifest():
-    return {"implementation-delivery": yaml.safe_load((FIXTURES / "implementation-delivery-profile-v0.1.yaml").read_text())}
+    return {"implementation-delivery": yaml.safe_load((FIXTURES / "implementation-delivery-profile-v0.2.yaml").read_text())}
 
 
 def _roadmap():
@@ -31,7 +31,7 @@ def test_resolved_delivery_profile_validates_and_schedules_through_core():
 
 
 def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
-    manifest_bytes = (FIXTURES / "implementation-delivery-profile-v0.1.yaml").read_bytes()
+    manifest_bytes = (FIXTURES / "implementation-delivery-profile-v0.2.yaml").read_bytes()
     snapshot = tmp_path / "snapshot-1" / "packages"
     snapshot.mkdir(parents=True)
     (snapshot / "implementation-delivery.yaml").write_bytes(manifest_bytes)
