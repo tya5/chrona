@@ -8,7 +8,7 @@ they preserve.
 ## Development setup
 
 ```bash
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev,render]'
 pytest
 python conformance/run_conformance.py
 ```
