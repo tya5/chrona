@@ -35,6 +35,7 @@ class ReviewItem:
     total_float: int | None = None
     critical: bool = False
     link: dict[str, str] | None = None
+    scenario_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -95,6 +96,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                             theme: dict[str, Any] | None = None,
                             snapshot_project: dict[str, Any] | None = None,
                             snapshot_placements: dict[str, dict[str, date]] | None = None,
+                            scenarios: dict[str, tuple[dict[str, Any], dict[str, dict[str, date]]]] | None = None,
                             analysis: Any | None = None,
                             snapshot_analysis: Any | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
@@ -143,7 +145,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     elif not explicit:
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, style, snapshot_analysis)
-    rows = _compose_rows(view, selected, snapshots)
+    scenario_items = {scenario_id: _snapshot_items(value[0], value[1], style, None, source_kind="scenario")
+                      for scenario_id, value in (scenarios or {}).items()}
+    rows = _compose_rows(view, selected, snapshots, scenario_items)
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     if view.window.mode == "selected-comparison":
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
@@ -160,8 +164,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         view.comparison.facets, hierarchy)
 
 
-def _compose_rows(view: ViewInput, selected: list[ReviewItem],
-                  snapshots: dict[str, ReviewItem]) -> tuple[ReviewRowProjection, ...]:
+def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
+                  scenarios: dict[str, dict[str, ReviewItem]]) -> tuple[ReviewRowProjection, ...]:
     if view.rows.mode != "explicit":
         return tuple(ReviewRowProjection(
             item.object_id, item.title, item.group_id, item.object_id,
@@ -185,8 +189,10 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem],
                 raise ValueError("E_REVIEW_ITEM_ID_DUPLICATE")
             member_ids.add(item_id)
             object_id, kind = spec.source_object, spec.source_kind
-            base = snapshots.get(object_id) if kind == "snapshot" else available.get(object_id)
-            if kind not in {"primary", "actual", "snapshot"} or base is None:
+            base = (snapshots.get(object_id) if kind == "snapshot" else
+                    scenarios.get(spec.scenario_id or "", {}).get(object_id) if kind == "scenario" else
+                    available.get(object_id))
+            if kind not in {"primary", "actual", "snapshot", "scenario"} or base is None:
                 raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
             if kind == "actual" and base.actual is None:
                 raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
@@ -194,7 +200,7 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem],
             if track not in {"stacked", "shared"}:
                 raise ValueError("E_REVIEW_ITEM_TRACK")
             intent = spec.presentation if spec.presentation is not None else row.presentation
-            members.append(replace(base, item_id=item_id, source_kind=kind, track=track,
+            members.append(replace(base, item_id=item_id, source_kind=kind, track=track, scenario_id=spec.scenario_id,
                                    presentation=dict(intent) if intent is not None else None))
         subject = row.table_subject or (members[0].item_id if members else "")
         if subject not in member_ids:
@@ -225,7 +231,8 @@ def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
 
 
 def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,
-                    style: dict[str, Any] | None, analysis: Any | None = None) -> dict[str, ReviewItem]:
+                    style: dict[str, Any] | None, analysis: Any | None = None,
+                    source_kind: str = "snapshot") -> dict[str, ReviewItem]:
     if project is None or placements is None:
         return {}
     result: dict[str, ReviewItem] = {}
@@ -236,7 +243,7 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
             planned, None, None, _roles(style, source_type, None, None, critical), "", "",
-            dict(project["objects"][object_id].get("fields", {})), object_id, "snapshot",
+            dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
             total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")))
     return result
 

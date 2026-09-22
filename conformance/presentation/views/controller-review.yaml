@@ -1,4 +1,4 @@
-version: chrona/view/v0.6
+version: chrona/view/v0.7
 kind: view
 id: controller-review
 body:
