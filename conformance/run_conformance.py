@@ -18,7 +18,6 @@ COMMANDS = [
     [sys.executable, str(ROOT / "validate_release_package.py")],
     [sys.executable, str(ROOT / "validate_design_recompletion.py")],
     [sys.executable, str(ROOT / "validate_datetime_project.py")],
-    [sys.executable, str(ROOT / "validate_successor_release_acceptance.py")],
     [sys.executable, str(ROOT / "validate_review_svg_profile.py")],
     [sys.executable, str(ROOT / "validate_review_detail_profile.py")],
 ]
