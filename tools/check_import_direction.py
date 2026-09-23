@@ -19,8 +19,8 @@ ALLOWED: dict[str, set[str]] = {
     # Adapters: may reach any use case, and the ports they wire up.
     "app": {"usecases", "core", "operational", "presentation", "scheduling", "storage", "resources"},
     # Use cases: own one pipeline each, across the layers below them.
-    "usecases": {"core", "extensions", "presentation", "scheduling", "storage", "resources"},
-    "operational": {"core", "commands", "usecases", "storage", "resources"},
+    "usecases": {"core", "extensions", "presentation", "scheduling", "storage", "resources", "schema_diagnostics"},
+    "operational": {"core", "commands", "usecases", "storage", "resources", "schema_diagnostics"},
     "release": {"core", "presentation", "resources"},
     "collaboration": {"core", "storage", "resources"},
     "commands": {"core", "extensions", "scheduling", "storage", "resources"},
@@ -30,7 +30,7 @@ ALLOWED: dict[str, set[str]] = {
     "presentation": {"core", "resources", "schema_diagnostics"},
     "scheduling": {"core", "resources"},
     "storage": {"core", "scheduling", "resources"},
-    "extensions": {"core", "resources"},
+    "extensions": {"core", "resources", "schema_diagnostics"},
     # The shared kernel depends on nothing but its own packaged schemas.
     "core": {"resources", "schema_diagnostics"},
     "resources": set(),

@@ -4,7 +4,7 @@
 Project v0.6 schedule discrimination, normative reference validation, and the
 release gates named in the #321 implementation plan.
 
-**Result:** Accepted.
+**Result:** Superseded by the completion-correction acceptance review.
 
 ## Requirement evidence
 
