@@ -33,6 +33,8 @@ def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     assert 'data-scene-id="planned:payload-tvac:payload-tvac"' in svg
     assert 'data-scene-id="legend-swatch:scale:owner:payload"' in svg
     assert 'data-scene-id="legend:scale:owner:payload"' in svg
+    assert 'data-scene-id="progress-fill:planned:campaign:campaign"' in svg
+    assert 'data-purpose="progress-fill"' in svg
 
 
 def test_materializer_detects_changed_expected_svg(tmp_path):

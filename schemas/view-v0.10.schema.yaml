@@ -1,13 +1,13 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.9"
-title: "Chrona View v0.9"
+$id: "chrona/view-v0.10"
+title: "Chrona View v0.10"
 description: "Declarative selection and presentation intent for one review surface."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - description: "View document fields extending the shared presentation resource."
     type: object
     properties:
-      version: {const: "chrona/view/v0.9"}
+      version: {const: "chrona/view/v0.10"}
       kind: {const: view}
       body:
         type: object
@@ -33,6 +33,13 @@ allOf:
                 minItems: 1
                 uniqueItems: true
                 items: {type: string, minLength: 1}
+          progressFill:
+            type: object
+            description: "Optional display-only fraction submark source for completed planned or actual marks."
+            required: [source]
+            additionalProperties: false
+            properties:
+              source: {description: "The authoritative fraction source.", enum: [actual, planned]}
           selection:
             type: object
             required: [include]

@@ -1,4 +1,4 @@
-version: chrona/view/v0.9
+version: chrona/view/v0.10
 kind: view
 id: aster-01-overview
 body:

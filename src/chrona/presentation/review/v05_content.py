@@ -128,7 +128,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                link_mode=link_mode, title_link_columns=title_link_columns,
                                table_cell_objects=table_cell_objects,
                                scale_target_role=color_scale.target_role if color_scale else None,
-                               scale_paints=scale_paints, scale_legend_paints=scale_legend_paints)
+                               scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
+                               progress_fill_source=view.progress_fill)
 
 
 def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], shading: Mapping[str, Any],

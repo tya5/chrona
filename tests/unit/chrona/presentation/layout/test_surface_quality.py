@@ -4,6 +4,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.surface_composer import progress_fill_bounds
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain,
     GroupPlacement,
@@ -77,6 +78,15 @@ def test_surface_placement_validates_completed_mark_and_shape_geometry():
         SurfacePlacement(marks=(MarkPlacement("mark:bad", "a", _rect(0, 0, 0, 1), (0, 0), (0, 0)),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_SHAPE_PLACEMENT_INVALID:path:bad"):
         SurfacePlacement(shapes=(ShapePlacement("path:bad", "a", "Path", bounds, ((1.0, 2.0),)),)).assert_valid()
+
+
+def test_progress_fill_bounds_are_layout_owned_and_fractional():
+    host = _rect(10, 20, 80, 12)
+    assert progress_fill_bounds(host, 0) is None
+    assert progress_fill_bounds(host, 0.5) == _rect(10, 20, 40, 12)
+    assert progress_fill_bounds(host, 1) == host
+    with pytest.raises(ValueError, match="E_PRESENTATION_PROGRESS_INVALID"):
+        progress_fill_bounds(host, 1.1)
 
 
 def test_surface_placement_carries_the_completed_surface_projection_closure():

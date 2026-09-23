@@ -34,6 +34,15 @@ class SurfaceLayoutComposition:
     track_placements: tuple[TrackPlacement, ...]
 
 
+def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
+    """Return the optional completed progress submark bounds for one host mark."""
+    if not 0 <= fraction <= 1:
+        raise LayoutError("E_PRESENTATION_PROGRESS_INVALID", "/progressFill")
+    if fraction == 0:
+        return None
+    return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
+
+
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
     projection = request.projection
@@ -330,6 +339,27 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     port = (x, block + block_size / 2)
                     marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point"))
     mark_by_id = {item.placement_id: item for item in marks}
+    progress_source = request.surface_content.progress_fill_source
+    if progress_source is not None:
+        for review_row in review_rows:
+            for item in review_row.items:
+                if progress_source == "actual":
+                    fraction = (item.actual or {}).get("progress")
+                    host_prefix = "actual"
+                else:
+                    fraction = getattr(item, "planned_progress", None)
+                    host_prefix = "planned"
+                if not isinstance(fraction, (int, float)) or isinstance(fraction, bool) or not 0 <= fraction <= 1:
+                    continue
+                layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+                instance_id = layout_id if projection.rows else item.object_id
+                host = mark_by_id.get(f"{host_prefix}:{instance_id}")
+                if host is None or fraction == 0:
+                    continue
+                bounds = progress_fill_bounds(host.bounds, float(fraction))
+                if bounds is not None and bounds.inline_size > 0:
+                    shapes.append(ShapePlacement(f"progress-fill:{host.placement_id}", item.object_id,
+                                                 "Rect", bounds, required=False))
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
             continue

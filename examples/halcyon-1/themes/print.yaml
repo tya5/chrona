@@ -231,6 +231,7 @@ body:
     variance-behind.fill: negative
     variance-behind.stroke: negative
     dependency.stroke: textMuted
+    progress-fill.fill: warning
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body

@@ -45,6 +45,7 @@ def test_scene_projects_completed_layout_geometry_without_measurement_or_routing
         "route_annotation_leader(",
         "measure_text_width(",
         "place_text(",
+        "progress_fill_bounds(",
     )
     assert all(fragment not in source for fragment in forbidden)
 

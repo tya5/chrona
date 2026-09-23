@@ -128,6 +128,7 @@ objects:
     type: task
     title: Launch campaign
     calendar: range
+    plannedProgress: 0.6
     fields: {owner: launch, team: Launch and range, phase: Campaign}
     schedule: {mode: scheduled, amount: 15wd}
   mission-closeout:

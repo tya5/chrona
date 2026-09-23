@@ -229,6 +229,7 @@ body:
     range.fill: warning
     asOf.stroke: warning
     as-of.stroke: warning
+    progress-fill.fill: warning
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body

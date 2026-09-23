@@ -375,6 +375,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             role = "planned" if placed.source_ref.startswith("scale:") else placed.source_ref
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
                                              legend_binding.purpose, role, bounds))
+        elif placed.placement_id.startswith("progress-fill:"):
+            progress = semantic_binding("progressFill")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "object",
+                                             progress.purpose, progress.scene_role, bounds))
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",

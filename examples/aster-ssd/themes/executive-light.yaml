@@ -197,6 +197,7 @@ body:
     dependency.stroke: textMuted
     annotation.fill: surfaceRaised
     annotation.stroke: neutral
+    progress-fill.fill: warning
   metrics:
     text.body.size: text-size
     text.body.lineHeight: text-line-height

@@ -67,6 +67,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("snapshot", "mark", "snapshot", "snapshot", "snapshot"),
     _binding("missingActual", "mark", "missingActual", "missing-actual", "missing-actual"),
     _binding("summaryBar", "mark", "summary-bar", "summary-bar", "summaryBar"),
+    _binding("progressFill", "mark", "progress-fill", "progress-fill", "progressFill"),
     # Time decorations.
     # Public Scene role remains hyphenated; theme authoring resolves the canonical asOf binding.
     _binding("asOf", "line", "as-of", "as-of", "asOf"),

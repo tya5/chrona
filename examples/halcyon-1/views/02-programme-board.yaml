@@ -1,4 +1,4 @@
-version: chrona/view/v0.9
+version: chrona/view/v0.10
 kind: view
 id: halcyon-02-programme-board
 body:
@@ -49,6 +49,8 @@ body:
     - ground
     - launch
     - ops
+  progressFill:
+    source: planned
   grouping:
     by: field
     field: owner

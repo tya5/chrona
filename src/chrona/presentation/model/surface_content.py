@@ -82,6 +82,7 @@ class SurfaceContentInput:
     scale_target_role: str | None = None
     scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
+    progress_fill_source: str | None = None
 
 
 @dataclass(frozen=True)

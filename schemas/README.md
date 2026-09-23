@@ -20,7 +20,7 @@ are migration-only and record their successor and removal slice.
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
 | theme | theme-v0.4.schema.yaml |
-| view | view-v0.9.schema.yaml |
+| view | view-v0.10.schema.yaml |
 
 # Project Schema v0.3 Notes
 

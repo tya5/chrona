@@ -37,6 +37,7 @@ class ReviewItem:
     critical: bool = False
     link: dict[str, str] | None = None
     scenario_id: str | None = None
+    planned_progress: float | None = None
 
 
 @dataclass(frozen=True)
@@ -187,7 +188,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             wbs_code=entry.display_wbs_code if entry else "",
             hierarchy_path=entry.path if entry else (),
             is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
-            total_float=total_float, critical=critical, link=link))
+            total_float=total_float, critical=critical, link=link,
+            planned_progress=project["objects"][object_id].get("plannedProgress")))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY")
     if hierarchy and not explicit:
