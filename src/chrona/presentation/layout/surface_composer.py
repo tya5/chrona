@@ -385,7 +385,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             group = group_by_id.get(folded.group_id)
             if mark is None or group is None or group.header_bounds is None:
                 continue
-                default_ladder = ("end", "start") if contract.labels.side == "auto" else (contract.labels.side,)
+            default_ladder = ("end", "start") if contract.labels.side == "auto" else (contract.labels.side,)
             label_requests.append(LabelRequest(
                 f"member-label:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
                 folded.item.title, LabelRect(*_bounds(mark.bounds)), default_ladder, "groupHeader", "group-header-point",

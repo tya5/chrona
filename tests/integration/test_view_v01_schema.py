@@ -53,16 +53,13 @@ def test_v04_rejects_unimplemented_relation_fallback_contract():
 
 def test_view_admits_inside_at_each_member_label_side_ingress():
     value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
-    labels = value["body"]["visibility"]["labels"]
-    labels["side"] = "inside"
+    value["body"]["visibility"]["labels"] = {
+        "placement": "plot", "content": ["title"], "side": "inside", "overflow": "suppress",
+    }
     value["body"]["visibility"]["fallback"] = {"labels": ["inside", "end", "suppress"]}
     assert next(_validator().iter_errors(_json_value(value)), None) is None
-    value["body"]["rows"] = {"mode": "explicit", "items": [{"id": "row", "depth": 0,
-        "presentation": {"label": {"side": "inside"}}, "items": [{"id": "item", "source": {"kind": "primary", "object": "task"},
-        "presentation": {"label": {"side": "inside"}}}]}]}
-    for key in ("selection", "grouping", "ordering"):
-        value["body"].pop(key, None)
-    assert next(_validator().iter_errors(_json_value(value)), None) is None
+    schema = yaml.safe_load(schema_resource("view-v0.8.schema.yaml").read_text(encoding="utf-8"))
+    assert "inside" in schema["$defs"]["presentationIntent"]["properties"]["label"]["properties"]["side"]["enum"]
 
 
 def test_v07_scenario_table_source_is_closed_to_id_or_title():

@@ -5,13 +5,17 @@ body:
   colors:
     surface: '#FFFFFF'
     surfaceRaised: '#EAF0F8'
-    text: '#000000'
+    text: '#172033'
     textMuted: '#4B5563'
     accent: '#3986E6'
     positive: '#269D79'
     negative: '#B91C1C'
     warning: '#C8762B'
     neutral: '#C9CED8'
+    insideLabelPlanned: '#000000'
+    insideLabelActual: '#000000'
+    insideLabelSnapshot: '#000000'
+    insideLabelScenario: '#000000'
   category: ['#EEF3F8', '#E7F0FA', '#E8F6F0', '#FFF4E4']
   suitability:
     background: light

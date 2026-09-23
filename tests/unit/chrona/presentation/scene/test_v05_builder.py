@@ -284,6 +284,25 @@ def test_scene_projects_layout_completed_rollup_summary_bar():
     assert summary_bar.bounds[3] == 3
 
 
+def test_scene_projects_selected_inside_label_with_its_host_mark_role():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 11)},
+                      None, None, ("planned",), source_kind="primary")
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 11)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(20)})
+    value = build_scene_input(
+        projection=projection,
+        surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
+                                        label_side="inside", label_overflow="diagnose"),
+        layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
+        font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
+    )
+    surface = compose_review_surface(value)
+    label = next(node for node in surface.primitives if node.scene_id == "member-label:a")
+    assert label.visual_role == "member-label-inside-planned"
+
+
 def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
     projection = ReviewProjection((
         ReviewItem("a", "A very long label", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, ()),

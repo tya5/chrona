@@ -89,10 +89,10 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("tableCell", "label", "table-cell", "text", "text"),
     # Plot labels.
     _binding("memberLabel", "label", "member-label", "text", "text"),
-    _binding("memberLabelInsidePlanned", "label", "member-label", "member-label-inside-planned", "memberLabelInsidePlanned"),
-    _binding("memberLabelInsideActual", "label", "member-label", "member-label-inside-actual", "memberLabelInsideActual"),
-    _binding("memberLabelInsideSnapshot", "label", "member-label", "member-label-inside-snapshot", "memberLabelInsideSnapshot"),
-    _binding("memberLabelInsideScenario", "label", "member-label", "member-label-inside-scenario", "memberLabelInsideScenario"),
+    _binding("memberLabelInsidePlanned", "label", "member-label", "member-label-inside-planned", "member-label-inside-planned"),
+    _binding("memberLabelInsideActual", "label", "member-label", "member-label-inside-actual", "member-label-inside-actual"),
+    _binding("memberLabelInsideSnapshot", "label", "member-label", "member-label-inside-snapshot", "member-label-inside-snapshot"),
+    _binding("memberLabelInsideScenario", "label", "member-label", "member-label-inside-scenario", "member-label-inside-scenario"),
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text"),
     # Relations.
@@ -124,6 +124,17 @@ def semantic_binding(semantic_id: str) -> SemanticBinding:
         return _REGISTRY[semantic_id]
     except KeyError as error:
         raise ValueError(f"E_PRESENTATION_SEMANTIC_UNKNOWN:{semantic_id}") from error
+
+
+def inside_member_label_semantic(source_kind: str) -> str:
+    """Return the host-specific inside-label semantic for a projection source."""
+    return {
+        "primary": "memberLabelInsidePlanned",
+        "combined": "memberLabelInsidePlanned",
+        "actual": "memberLabelInsideActual",
+        "snapshot": "memberLabelInsideSnapshot",
+        "scenario": "memberLabelInsideScenario",
+    }[source_kind]
 
 
 def semantic_ids() -> tuple[str, ...]:

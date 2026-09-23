@@ -12,6 +12,10 @@ body:
     negative: '#B00020'
     warning: '#7A5A00'
     neutral: '#BDBDBD'
+    insideLabelPlanned: '#FFFFFF'
+    insideLabelActual: '#111111'
+    insideLabelSnapshot: '#111111'
+    insideLabelScenario: '#111111'
   category: ['#F4F4F4', '#E9E9E9', '#DEDEDE', '#D3D3D3']
   suitability:
     background: light

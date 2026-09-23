@@ -9,12 +9,19 @@ class ColorSchemeError(ValueError):
     """Stable diagnostic emitted before Scene construction."""
 
 
-_INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral"}
+_INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral",
+            "insideLabelPlanned", "insideLabelActual", "insideLabelSnapshot", "insideLabelScenario"}
 _INSIDE_LABEL_HOSTS = {
     "member-label-inside-planned": "planned",
     "member-label-inside-actual": "actual",
     "member-label-inside-snapshot": "snapshot",
     "member-label-inside-scenario": "snapshot",
+}
+_INSIDE_LABEL_INTENTS = {
+    "member-label-inside-planned": "insideLabelPlanned",
+    "member-label-inside-actual": "insideLabelActual",
+    "member-label-inside-snapshot": "insideLabelSnapshot",
+    "member-label-inside-scenario": "insideLabelScenario",
 }
 
 
@@ -89,7 +96,8 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
             host_token = roles.get(host_role, {}).get("fill")
             label_value = values.get(label_token) if isinstance(label_token, str) else None
             host_value = values.get(host_token) if isinstance(host_token, str) else None
-            if (not isinstance(label_value, Mapping) or label_value.get("type") != "color"
+            if (body["colorBindings"].get(f"{label_role}.fill") != _INSIDE_LABEL_INTENTS[label_role]
+                    or not isinstance(label_value, Mapping) or label_value.get("type") != "color"
                     or not isinstance(host_value, Mapping) or host_value.get("type") != "color"
                     or _contrast(str(label_value.get("value")), str(host_value.get("value"))) < 4.5):
                 raise ColorSchemeError("E_SCHEME_INSIDE_LABEL_CONTRAST")
