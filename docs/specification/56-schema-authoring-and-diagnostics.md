@@ -46,6 +46,12 @@ non-obvious and MUST carry a valid example. A pure `$ref` reuse branch remains
 exempt; a `$ref` combined with a local constraint is not pure reuse. The lint
 validates every example in its enclosing schema context and reports a
 schema-location pointer for defects.
+
+An `allOf` branch that only carries a structural composition into its parent is
+traversed but is not a second author-facing node: its ordinary property prose
+belongs to the owner schema rather than being duplicated under the composition
+carrier. This exemption never suppresses a nested applicator or a local
+reference constraint; those are discovered and checked at their own branch.
 It is run in conformance and before generated reference publication. Generated
 reference may consume this metadata, but tutorials remain independently
 authored.

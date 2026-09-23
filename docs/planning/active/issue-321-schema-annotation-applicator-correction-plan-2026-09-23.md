@@ -12,6 +12,10 @@ Live `view-v0.8` and reference-constrained schemas demonstrate the gap.
 
 - Traverse every dictionary branch of `allOf`, recursively, exactly as for
   `oneOf` and `anyOf`.
+- A structural composition carrier is traversed without duplicating all of its
+  ordinary property annotations.  This narrow exemption applies only to the
+  carrier itself; nested applicators and local reference constraints remain
+  independently discoverable and checked.
 - A branch containing only `$ref`, optional annotation metadata, and no local
   constraint is pure reuse and remains exempt.  Every other reachable branch
   is author-facing when its keywords make an author-selectable, omittable, or
