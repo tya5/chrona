@@ -1,6 +1,8 @@
 # Design Plan: Portable Icon Catalogs and Immutable Visual Assets (#350)
 
-**Status:** Active — design in progress
+**Status:** Superseded for product scope by
+`issue-350-icon-ecosystem-redesign-design-plan-2026-09-23.md`. The narrow
+asset-closure foundation remains delivered evidence.
 **Issue:** #350
 **Depends on:** Specifications 08, 13, 33, 50, 55, 62, and 63
 

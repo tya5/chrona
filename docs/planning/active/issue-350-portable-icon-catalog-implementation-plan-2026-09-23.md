@@ -1,6 +1,7 @@
 # Implementation Plan: Portable Icon Catalogs and Immutable Visual Assets (#350)
 
-**Status:** Complete — release evidence published
+**Status:** Complete for the narrow v0.1 foundation; superseded as #350 product
+completion by `issue-350-icon-ecosystem-redesign-design-plan-2026-09-23.md`.
 **Implements:** Design Plan #350 (including its 2026-09-23 amendment),
 Specification 64, and UC-33
 **Design review:** `docs/reviews/current/issue-350-portable-icon-catalogs-architecture-review-2026-09-23.md`
