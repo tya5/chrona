@@ -46,14 +46,15 @@ Its non-colour `roles` vocabulary gains these bindings:
 
 | Binding | Value token | Validity |
 | --- | --- | --- |
-| `opacity` | `number` | finite `[0, 1]` |
+| `opacity` | optional `number` | finite `[0, 1]`; absence completes to `1.0` in `ScenePaintResolver` |
 | `strokeWidth` | `number` | finite `> 0` |
 | `dash` | `dashPattern` | array of finite `> 0` numbers; empty means solid |
 
 The schema validates the structural value shape; `ThemeTokenView` validates the
-numeric domain and reports the role-property path. No global width, dash, or
-opacity default exists. The semantic paint-channel contract below states when a
-role must declare each channel.
+numeric domain and reports the role-property path. No global width or dash
+default exists. The resolver's closed role contract, rather than an adapter,
+completes absent opacity to explicit `1.0`. The semantic paint-channel contract
+below states when a role must declare each channel.
 
 `ScenePaintResolver` is the only conversion point. It accepts a semantic
 binding, its selected concrete role (including deliberate variants such as

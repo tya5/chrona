@@ -15,7 +15,7 @@ Introduce a dedicated resolver that validates the channel contract before Scene
 construction. Add a closed semantic primitive-family mapping rather than
 spreading role-name checks through builders.
 
-**Acceptance:** Invalid/missing fill, stroke, width, opacity, and dash report
+**Acceptance:** Invalid/missing fill, stroke, width, invalid declared opacity, and dash report
 stable diagnostics; fill-only, stroke-only, and mixed paint resolve exactly;
 no global value is used as a default.
 
