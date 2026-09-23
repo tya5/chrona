@@ -1,6 +1,6 @@
 # Design Plan: Reusable Design Gallery Foundation
 
-**Status:** Design complete — implementation planning next
+**Status:** Design complete — implementation plan active
 **Date:** 2026-09-23  
 **Related:** Specification 55, Specification 58, #338, #343, and conditionally #345
 
@@ -405,6 +405,6 @@ Architecture Review: the first implementation is limited to current portable
 Scene capabilities, so #345 remains a required successor design gate rather
 than an unreviewed gallery feature.
 
-The next authorized work is the separate GDF-5 implementation plan.  It must
-not begin package, lock, resolver, gallery-catalog, or fixture implementation
-until that plan and its acceptance criteria are published.
+The separate GDF-5 implementation plan is published as
+[`reusable-design-gallery-implementation-plan-2026-09-23.md`](reusable-design-gallery-implementation-plan-2026-09-23.md).
+Implementation proceeds only in its I-GDF-1 through I-GDF-7 publication order.
