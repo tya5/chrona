@@ -90,7 +90,8 @@ bounded.
 ## I350R-4 — Complete visual target inventory and Layout composition
 
 Implement every v0.12 label/mark visual target as one side-aware Layout path.
-The published View Visual Target Closure and [selector closure correction](issue-350-view-visual-selector-closure-correction-2026-09-24.md)
+The published View Visual Target Closure, [selector closure correction](issue-350-view-visual-selector-closure-correction-2026-09-24.md),
+and [complete text target inventory correction](issue-350-complete-text-target-inventory-correction-2026-09-24.md)
 are the target/selector authority; no generic selector or `icon_bindings`
 compatibility seam is allowed.
 Add target resolution for title, columns, object labels, groups, annotations,
