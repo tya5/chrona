@@ -109,7 +109,10 @@ materializer copies those verified bytes into the same immutable snapshot as
 other closure inputs.  It never discovers package resources by directory scan
 and it applies the identical raster-asset validation if the catalog declares
 one.  This is a closure ingress adapter only; Context resolution, Layout,
-Scene, and adapters remain unaware of the source provider.
+Scene, and adapters remain unaware of the source provider.  The copied
+materialized Context rewrites that reference to its snapshot-local Store and
+revision before resolution, so `LocalSnapshotReader` remains the sole renderer
+read adapter.
 
 ## Design gates
 
