@@ -14,7 +14,7 @@ schemas:
   - {file: presentation-materialization-receipt-v0.1.schema.yaml, kind: presentation-materialization-receipt, state: live, consumers: [src/chrona/usecases/authoring_materialization.py]}
   - {file: profile-v0.2.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: project-v0.6.schema.yaml, kind: project, state: live, consumers: [src/chrona/core/validation.py]}
-  - {file: render-context-v0.9.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: render-context-v0.9.schema.yaml, kind: render-context, state: transitioning, successor: render-context-v0.10.schema.yaml, removalSlice: I350-4, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: render-context-v0.10.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: review-detail-profile-v0.1.schema.yaml, kind: review-detail-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: revision-store-resource-ref-v0.1.schema.yaml, kind: revision-store-resource-reference, state: live, consumers: [src/chrona/operational/resources.py]}
@@ -22,5 +22,5 @@ schemas:
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: theme-v0.5.schema.yaml, kind: theme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: view-v0.10.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: view-v0.10.schema.yaml, kind: view, state: transitioning, successor: view-v0.11.schema.yaml, removalSlice: I350-4, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: view-v0.11.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

@@ -42,6 +42,7 @@ Its namespaced icon IDs are canonical map keys; duplicate/reordered spellings ar
 structurally impossible and canonical evidence orders entries lexically by ID.
 
 ```yaml
+# chrona-contract: current
 version: chrona/icon-catalog/v0.1
 kind: icon-catalog
 id: acme-review-icons

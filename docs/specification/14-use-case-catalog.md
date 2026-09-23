@@ -63,7 +63,7 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-30 | Materialize and fork a reusable presentation | Should | Designed | Not exposed |
 | UC-31 | Compare reusable presentation directions in the gallery | Should | Designed | Documentation only |
 | UC-32 | Materialize a portable enhanced visual treatment | Should | SVG/PNG/PDF + materializer | Public Controller Z evidence |
-| UC-33 | Materialize a portable semantic icon | Should | Designed | Not exposed |
+| UC-33 | Materialize a portable semantic icon | Should | SVG/PNG materializer evidence | Public Controller Z evidence |
 
 ## 4. Detailed use cases
 
@@ -573,7 +573,7 @@ renderer can read a host asset or choose a fallback. **Owners:** `07`, `08`, `12
 | UC-22–UC-28 | `05`–`10`, `12`, `13`, `21`, `51` | approved source/normalization/materialization design | closed schemas, fixtures, command engine, and product adapters |
 | UC-29–UC-31 | `09`, `12`, `13`, `21`, `51`, `55`, `58`, `62` | reusable package/gallery design | package schemas, acquisition/lock, resolver, catalog tooling, fixtures, and product adapters |
 | UC-32 | `07`, `08`, `12`, `34`, `46`, `55`, `63` | portable visual profile, completed Scene values, SVG derivative adapters, and Controller Z evidence | additional target profiles and deferred visual families |
-| UC-33 | `07`, `08`, `12`, `13`, `33`, `50`, `55`, `62`, `63`, `64` | portable icon catalog design | schema/closure, normalized SVG/PNG, Layout/Scene, adapter, and public evidence |
+| UC-33 | `07`, `08`, `12`, `13`, `33`, `50`, `55`, `62`, `63`, `64` | portable SVG/PNG catalog, completed Scene icon, and Controller Z materializer evidence | PDF/Typst/TikZ profiles and generic image remain intentionally unclaimed |
 
 ## 7. Current gaps and release gate
 

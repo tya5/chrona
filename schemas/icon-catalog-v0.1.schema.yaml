@@ -2,9 +2,12 @@ $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:icon-catalog-v0.1"
 title: "Chrona Icon Catalog v0.1"
 description: "Pinned local SVG and PNG icon declarations; source bytes are separately verified by closure resolution."
+properties:
+  version: {description: "This icon catalog contract version.", const: "chrona/icon-catalog/v0.1"}
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
-  - type: object
+  - description: "Icon catalog fields extending the shared presentation resource envelope."
+    type: object
     properties:
       version: {const: "chrona/icon-catalog/v0.1"}
       kind: {const: icon-catalog}

@@ -19,6 +19,7 @@
 
 - focused icon/profile/materializer/vocabulary batch: `49 passed`;
 - full suite: `505 passed, 11 skipped`;
+- `python conformance/run_conformance.py`: passed (17 areas, 33 use cases, 30 milestones);
 - wheel build: passed; isolated wheel schema-resource smoke: passed;
 - public materializer regenerated `examples/controller-z/generated/icons.svg` and
   materializer/closure acceptance passed.

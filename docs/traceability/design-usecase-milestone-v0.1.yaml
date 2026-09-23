@@ -16,6 +16,7 @@ areas:
   - {id: PROGRESSIVE-AUTHORING, name: Progressive authoring and presentation, specifications: ["51", "55"], productFacing: false, useCases: [UC-22, UC-23, UC-24, UC-25, UC-26, UC-27, UC-28], milestones: [], evidence: [issue-222-design, issue-222-architecture-review, issue-338-design], status: designed}
   - {id: REUSABLE-PRESENTATION, name: Reusable presentation packages and gallery, specifications: ["55", "58", "62"], productFacing: false, useCases: [UC-29, UC-30, UC-31], milestones: [], evidence: [reusable-gallery-p1-review, reusable-gallery-p2-review, reusable-gallery-p3-review, reusable-gallery-p4-review], status: designed}
   - {id: PORTABLE-VISUAL, name: Portable visual capability profile, specifications: ["63"], productFacing: false, useCases: [UC-32], milestones: [], evidence: [issue-345-design, issue-345-completed-scene-review, issue-345-adapter-gate-review], status: delivered}
+  - {id: PORTABLE-ICON, name: Portable icon catalogs and immutable visual assets, specifications: ["64"], productFacing: false, useCases: [UC-33], milestones: [], evidence: [issue-350-design, issue-350-architecture-review, issue-350-release-review], status: delivered}
 findings:
   - {id: T-01, severity: blocker, summary: DateTime/DST lacks use-case and milestone ownership, remediationPhase: TR-1, status: closed, closedBy: UC-16-and-M10}
   - {id: T-02, severity: blocker, summary: Resource capacity leveling and cost lack use-case decomposition and milestone ownership, remediationPhase: TR-1, status: closed, closedBy: UC-17-UC-18-and-M11}
