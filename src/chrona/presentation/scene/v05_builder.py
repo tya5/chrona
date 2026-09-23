@@ -67,7 +67,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView) -> Sc
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     try:
         primitives = tuple(replace(primitive, paint=resolve_scene_paint(
-            tokens, primitive.visual_role, _paint_family(primitive, tokens)))
+            tokens, primitive.visual_role, _paint_family(primitive, tokens)),
+                                   pattern=tokens.optional_pattern(primitive.visual_role))
                            for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS)
     except ScenePaintError as error:

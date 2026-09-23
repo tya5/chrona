@@ -50,6 +50,7 @@ class ScenePrimitive:
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
     shape: str | None = None
+    pattern: str | None = None
     paint: ScenePaint | None = None
     corner_radius: float | None = None
     path_commands: tuple[PathCommand, ...] = ()

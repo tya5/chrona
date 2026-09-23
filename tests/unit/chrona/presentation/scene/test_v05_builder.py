@@ -10,6 +10,7 @@ from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun,
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
+from chrona.presentation.scene.model import ScenePrimitive, SceneSurface
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 
@@ -173,6 +174,19 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     assert next(item for item in surface.primitives if item.scene_id == "title").text_layout.font_size == 24
     assert surface.canvas_paint is not None
     assert all(item.paint is not None for item in surface.primitives)
+
+
+def test_scene_completes_pattern_form_before_adapter_invocation():
+    primitive = ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1))
+    themed = _theme()
+    themed["body"]["values"]["hatch"] = {"type": "pattern", "value": "diagonal-hatch"}
+    themed["body"]["roles"]["planned"]["pattern"] = "hatch"
+    value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+                              surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
+    from chrona.presentation.scene.v05_builder import _complete_surface_paint
+    completed = _complete_surface_paint(SceneSurface("s", (), (), (), None, (primitive,)), value.theme_tokens)
+    assert completed.primitives[0].pattern == "diagonal-hatch"
 
 
 def test_scene_projects_title_links_only_to_selected_current_title_cells():
