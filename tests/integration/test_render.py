@@ -139,6 +139,19 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
         assert f"visual:{placement_id}:leading" in by_id
 
 
+def test_draft_project_note_visual_reaches_its_completed_slot(tmp_path):
+    root = _root(); example = root / "examples/controller-z"
+    view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [{"target": {"kind": "note", "id": "evb-risk"}, "ref": "chrona:risk", "decorative": True}]
+    path = tmp_path / "note-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    rendered = render_review(_draft_request(view_path=path, layout_path=example / "layouts/executive-review.yaml",
+        detail_path=example / "profiles/review-detail.yaml", icon_catalog_paths=(example / "icons.yaml",),
+        visual_profile="chrona-output/visual/v0.7-svg"))
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    assert "visual:note:evb-risk:leading" in by_id
+
+
+
 def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):
     root = _root()
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
