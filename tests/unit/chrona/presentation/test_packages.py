@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from chrona.presentation.packages import PackageError, PackageMember, package_content_identity, verify_presentation_package
+from chrona.presentation.package_acquisition import AcquisitionError, acquire_local_package, verify_locked_package
 
 
 ROOT = Path(__file__).parents[4]
@@ -61,3 +62,24 @@ def test_package_rejects_undeclared_or_executable_authority(tmp_path):
     (root / "plugin.py").write_text("raise SystemExit")
     with pytest.raises(PackageError, match="E_PACKAGE_UNDECLARED_FILE"):
         verify_presentation_package(root)
+
+
+def test_explicit_acquisition_writes_provider_neutral_lock_and_verifies_offline_bytes(tmp_path):
+    source = _package(tmp_path / "source")
+    lock_path = tmp_path / "workspace/chrona.lock.yaml"
+    acquired = acquire_local_package(source_root=source, cache_root=tmp_path / "cache", preset_id="executive-light", lock_path=lock_path)
+    assert lock_path.is_file()
+    assert "cache" not in lock_path.read_text()
+    locked = verify_locked_package(cache_root=tmp_path / "cache", lock=acquired.lock,
+                                   package_id="acme/executive-review", preset_id="executive-light")
+    assert locked.package.content_identity == acquired.package.content_identity
+
+
+def test_locked_package_diagnoses_missing_offline_bytes(tmp_path):
+    source = _package(tmp_path / "source")
+    acquired = acquire_local_package(source_root=source, cache_root=tmp_path / "cache", preset_id="executive-light", lock_path=tmp_path / "chrona.lock.yaml")
+    import shutil
+    shutil.rmtree(tmp_path / "cache")
+    with pytest.raises(AcquisitionError, match="E_PACKAGE_OFFLINE_UNAVAILABLE"):
+        verify_locked_package(cache_root=tmp_path / "cache", lock=acquired.lock,
+                              package_id="acme/executive-review", preset_id="executive-light")

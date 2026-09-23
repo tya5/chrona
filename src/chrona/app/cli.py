@@ -28,6 +28,7 @@ from chrona.operational.authoring_commands import cas_write_authoring_aggregate,
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
+from chrona.presentation.package_acquisition import AcquisitionError, acquire_local_package
 
 
 @dataclass(frozen=True)
@@ -204,6 +205,14 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("directory", nargs="?", default=".")
     command.add_argument("--example", default="halcyon-1", choices=("halcyon-1",))
 
+    package = sub.add_parser("package", help="explicit reusable presentation package operations")
+    package_sub = package.add_subparsers(dest="package_command", required=True, parser_class=JsonArgumentParser)
+    command = package_sub.add_parser("acquire", help="verify a local package and write an immutable lock")
+    command.add_argument("source_root")
+    command.add_argument("--preset", required=True)
+    command.add_argument("--cache-root", required=True)
+    command.add_argument("--lock", default="chrona.lock.yaml")
+
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
     command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.8 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
@@ -272,6 +281,15 @@ def _run_materialize(args: argparse.Namespace) -> None:
 
 def _run_init(args: argparse.Namespace) -> None:
     initialize_project(Path(args.directory), example=args.example)
+
+
+def _run_package_acquire(args: argparse.Namespace) -> None:
+    try:
+        acquired = acquire_local_package(source_root=Path(args.source_root), cache_root=Path(args.cache_root),
+                                         preset_id=args.preset, lock_path=Path(args.lock))
+    except AcquisitionError as error:
+        raise CliFailure(str(error), str(error), "package") from error
+    print(json.dumps(acquired.lock, indent=2))
 
 
 def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:
@@ -402,6 +420,10 @@ def _run(args: argparse.Namespace) -> None:
     if args.command == "init":
         _run_init(args)
         return
+    if args.command == "package":
+        if args.package_command == "acquire":
+            _run_package_acquire(args)
+            return
     if args.command == "render":
         _run_draft_render(args)
         return
