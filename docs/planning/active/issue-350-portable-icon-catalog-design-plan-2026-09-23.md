@@ -38,8 +38,8 @@ asset classes:
 
 | Class | Authoring source | Closed Scene representation | Initial targets |
 | --- | --- | --- | --- |
-| `vector` | local SVG file | normalized bounded vector paths and paint-free viewport | SVG, PNG |
-| `raster` | local PNG file | immutable image identity, intrinsic size, and completed bounds | SVG, PNG |
+| `vector` | local SVG file | normalized bounded vector paths and paint-free viewport | SVG, PNG; PDF only after independent evidence |
+| `raster` | local PNG file | immutable image identity, intrinsic size, and completed bounds | SVG, PNG; PDF only after independent evidence |
 
 The catalog declares stable entry IDs, kind, source address, SHA-256 content
 identity, intrinsic viewport, and accessible alternative. SVG is parsed and
@@ -70,17 +70,20 @@ PDF/Typst/TikZ fallback.
    and reading-order metadata. Layout obtains normalized icon metrics from the
    resolved catalog and reserves the leading icon before measuring/wrapping
    text. Scene cannot choose an icon coordinate or measure text.
-4. **Semantic authority.** Semantic/View policy decides that a role has an
-   icon-leading label or icon mark; Theme binds the semantic role to catalog
-   entry and tokenized treatment. A Theme cannot introduce a filesystem path,
-   SVG syntax, concrete colour literal, or target fallback. A first public
-   fixture must demonstrate both a leading label icon and an icon mark.
+4. **Semantic authority.** Semantic/View policy chooses the namespaced catalog
+   entry and whether an existing role has an icon-leading label or icon mark.
+   Theme binds only its tokenized treatment. A Theme cannot introduce a
+   filesystem path, SVG syntax, concrete colour literal, semantic icon choice,
+   or target fallback. A first public fixture must demonstrate both a leading
+   label icon and an icon mark.
 5. **Accessibility and capability.** Decorative icons are hidden from the
    accessibility tree and cannot be the sole bearer of meaning. Meaningful
    icons have a required catalog alternative and retain an equivalent textual
    semantic source. Required icon use has a named profile capability; an
-   unsupported target diagnoses before serialization. Initial exact profiles
-   are SVG and PNG only, with independent SVG/PNG evidence.
+   unsupported target diagnoses before serialization. SVG and PNG require
+   independent evidence. PDF is admitted only if the current SVG-derived PDF
+   route proves both vector and raster icon fidelity; otherwise its exact
+   profile rejects. Typst and TikZ remain rejection-only in v0.1.
 6. **Architecture alignment.** Amend Specifications 08, 13, 33, 62, and 63
    only at their ownership seams; give the feature a new owning specification,
    use-case/traceability entry, schema contracts, and whole-architecture
@@ -95,7 +98,7 @@ PDF/Typst/TikZ fallback.
 | D350-2 | Layout, semantic/theme, accessibility, and profile ownership | inline and mark placements have a single Layout authority; no target fallback leaks |
 | D350-3 | Whole-architecture review, use-case, and traceability | all affected specifications agree; package and generic-image boundaries remain explicit |
 | I350-1 | Catalog schema, typed closure, asset validation, and materialization | SVG/PNG assets verify/copy deterministically and hostile/mutated inputs reject |
-| I350-2 | Normalized Icon Scene primitive and SVG/PNG profile serialization | adapters receive completed data only; target/profile failures are exact |
+| I350-2 | Normalized Icon Scene primitive and SVG/PNG/PDF profile serialization | adapters receive completed data only; PDF is admitted only by independent vector/raster characterization; target/profile failures are exact |
 | I350-3 | Layout composition and semantic icon bindings | measured leading label and mark fixture project without Scene measurement or placement choice |
 | I350-4 | Public gallery, materializer evidence, focused/full/conformance/wheel/CI gates | reusable fixture demonstrates both asset classes and all release evidence passes |
 
@@ -105,3 +108,20 @@ An added SVG feature, generic image, target adapter, package-acquisition route,
 unclosed asset lookup, renderer-specific fallback, or icon-only required meaning
 returns work to D350-1 through D350-3. No implementation may compensate with
 adapter branches or direct file reads.
+
+## Amendment: Issue feedback alignment (2026-09-23)
+
+The issue was updated after this plan's first publication. The feedback is accepted:
+
+1. Catalog syntax will use a closed `body.icons` map keyed by namespaced stable IDs
+   (for example `acme.risk`), rather than an ordered `entries` list. Canonical ordering
+   is lexical key order; the user-facing reference is the namespaced ID.
+2. A View/semantic binding, not Theme, selects the catalog entry where a domain fact
+   warrants it. Theme owns only resolved size, gap, paint, and decorative treatment.
+3. PDF is a candidate target rather than a presumed exclusion. It receives an exact
+   icon profile only after current PDF adapter evidence proves both normalized vector
+   and immutable PNG serialization without loss. This does not revive #349's invalid
+   rich-paint PDF claim, and a PDF profile may support icons while rejecting v0.6 paint.
+
+The specification and architecture review must incorporate this amendment before an
+implementation plan is published.
