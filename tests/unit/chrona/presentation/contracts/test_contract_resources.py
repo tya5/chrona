@@ -35,8 +35,10 @@ def test_contract_is_schema_accepted_then_detached_and_immutable():
 def test_contract_rejects_schema_invalid_mandatory_resource():
     value = _theme()
     value["body"]["colorBindings"] = {}
-    with pytest.raises(ContractError, match="E_RESOURCE_SCHEMA"):
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA") as error:
         parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
+    assert error.value.violation is not None
+    assert (error.value.violation.resource_kind, error.value.violation.resource_identity) == ("theme", "theme")
 
 
 @pytest.mark.parametrize(

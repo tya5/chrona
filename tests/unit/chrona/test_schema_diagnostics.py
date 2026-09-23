@@ -66,6 +66,17 @@ def test_core_validation_uses_the_shared_explanation_and_pointer():
     assert diagnostics[0].message == "expected exactly 'timeline/v0.6'"
 
 
+def test_violation_retains_explicit_ingress_context():
+    violation = _violation({"type": "string"}, 1)
+    assert violation.resource_kind is None
+    assert violation.resource_identity is None
+    contextual = explain_errors(
+        jsonschema.Draft202012Validator({"type": "string"}).iter_errors(1),
+        resource_kind="project", resource_identity="demo",
+    )
+    assert (contextual.resource_kind, contextual.resource_identity) == ("project", "demo")
+
+
 def test_project_v06_rejects_removed_fixed_mode_without_a_compatibility_path():
     project = {
         "version": "timeline/v0.6",

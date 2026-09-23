@@ -10,7 +10,7 @@ import yaml
 from referencing import Registry, Resource
 
 from chrona.resources import schema_resource
-from chrona.schema_diagnostics import explain_errors
+from chrona.schema_diagnostics import SchemaViolation, explain_errors
 
 
 class ContractError(ValueError):
@@ -20,10 +20,11 @@ class ContractError(ValueError):
 class SchemaContractError(ContractError):
     """A supported resource has a schema-shape error at one JSON pointer."""
 
-    def __init__(self, kind: str, source_ref: str, message: str = "invalid resource schema"):
+    def __init__(self, kind: str, source_ref: str, message: str = "invalid resource schema", violation: SchemaViolation | None = None):
         super().__init__(f"E_RESOURCE_SCHEMA: {message}")
         self.kind = kind
         self.source_ref = source_ref
+        self.violation = violation
 
 class FrozenDict(dict[str, Any]):
     """A dict-compatible value that rejects all mutation after closure parsing."""
@@ -430,7 +431,7 @@ def _registry() -> Registry:
     return registry
 
 
-def _validate(kind: str, value: Mapping[str, Any]) -> str:
+def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) -> str:
     version = value.get("version")
     schema_name = _SCHEMAS.get((kind, version)) if isinstance(version, str) else None
     if schema_name is None:
@@ -438,8 +439,8 @@ def _validate(kind: str, value: Mapping[str, Any]) -> str:
     schema = yaml.safe_load(schema_resource(schema_name).read_text(encoding="utf-8"))
     errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(value)))
     if errors:
-        violation = explain_errors(errors)
-        raise SchemaContractError(kind, violation.pointer, violation.message)
+        violation = explain_errors(errors, resource_kind=kind, resource_identity=identity.id)
+        raise SchemaContractError(kind, violation.pointer, violation.message, violation)
     return version
 
 
@@ -554,7 +555,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
     body = frozen.get("body", FrozenDict())
     if not isinstance(body, FrozenDict):
         raise ContractError("E_CLOSURE_KIND")
-    version = _validate(identity.kind, value)
+    version = _validate(identity.kind, value, identity)
     if identity.kind == "project":
         extensions = frozen.get("extensions", ())
         if not isinstance(extensions, (tuple, FrozenList)) or not all(isinstance(item, FrozenDict) for item in extensions):

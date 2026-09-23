@@ -1,7 +1,7 @@
 """Deterministic author-facing explanations for JSON Schema validation failures."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from difflib import get_close_matches
 import re
 from typing import Any, Iterable, Mapping, Sequence
@@ -18,9 +18,13 @@ class SchemaViolation:
     expected: tuple[str, ...]
     actual_kind: str | None
     message: str
+    resource_kind: str | None = None
+    resource_identity: str | None = None
 
 
-def explain_errors(errors: Iterable[ValidationError]) -> SchemaViolation:
+def explain_errors(
+    errors: Iterable[ValidationError], *, resource_kind: str | None = None, resource_identity: str | None = None,
+) -> SchemaViolation:
     """Select and explain one deterministic JSON Schema error.
 
     JSON Schema deliberately leaves author-facing error wording to consumers.
@@ -31,7 +35,7 @@ def explain_errors(errors: Iterable[ValidationError]) -> SchemaViolation:
     if not candidates:
         raise ValueError("E_SCHEMA_VIOLATION_EMPTY")
     error = min(candidates, key=_error_key)
-    return _explain(error)
+    return replace(_explain(error), resource_kind=resource_kind, resource_identity=resource_identity)
 
 
 def json_pointer(path: Iterable[Any]) -> str:

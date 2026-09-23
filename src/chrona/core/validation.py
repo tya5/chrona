@@ -43,7 +43,8 @@ def validate_project(
     # the semantic value intact for scheduling, but validate its serialization.
     errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(_schema_value(project)))
     if errors:
-        violation = explain_errors(errors)
+        project_id = project.get("project", {}).get("id")
+        violation = explain_errors(errors, resource_kind="project", resource_identity=project_id if isinstance(project_id, str) else None)
         diagnostics.append(Diagnostic("E_SCHEMA", violation.message, violation.pointer))
     if diagnostics:
         return diagnostics
