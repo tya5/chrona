@@ -44,6 +44,18 @@ bytes.  A path locates a member inside a verified release; it is never the
 release identity.  An ID/version pair that resolves to different content is an
 identity conflict and rejects acquisition.
 
+To avoid a self-referential digest, the canonical manifest contribution is its
+decoded JSON value serialized as UTF-8 canonical JSON (sorted keys, compact
+separators), with only `package.contentIdentity` omitted.  The package content
+identity is SHA-256 over a framed sequence consisting of that contribution and
+every evaluation-relevant member's safe relative path plus exact raw bytes,
+ordered by path.  Each declared member `contentIdentity` is SHA-256 over its
+exact raw bytes and is checked independently before the aggregate package
+identity.  YAML formatting therefore affects a member identity as it should;
+the manifest's self-declared aggregate digest does not create a circular
+definition.  Filesystem metadata, absolute paths, symlink targets, cache
+layout, checkout revision, and discovery responses are excluded.
+
 The package manifest is conceptually:
 
 ```yaml

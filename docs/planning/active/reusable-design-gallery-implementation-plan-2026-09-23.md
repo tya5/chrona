@@ -71,7 +71,8 @@ tests, schema/conformance inventory.
 
 Introduce `presentation-package/v0.1` as a closed manifest.  Validate safe
 member paths, permitted kinds only, one member identity/path, exact identities
-for all declared bytes, preset membership, license/publisher/compatibility,
+for all declared bytes, canonical aggregate identity (per Specification 62
+section 2), preset membership, license/publisher/compatibility,
 and reject symlinks/parent traversal/executable/raw-renderer authority.
 
 **Acceptance:** the package root has exactly one canonical source for each
