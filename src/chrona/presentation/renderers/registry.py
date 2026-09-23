@@ -17,9 +17,9 @@ class ResvgPngRenderer:
         self.target_kind = target_kind
         self._descriptor = descriptor
 
-    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> RenderArtifact:
+    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:
         _verify_resvg(self._descriptor)
-        svg = V05SvgRenderer().render(surface, viewport=viewport, tokens=tokens).content
+        svg = V05SvgRenderer().render(surface, viewport=viewport).content
         try:
             import resvg_py
             content = resvg_py.svg_to_bytes(svg_string=svg.decode("utf-8"), dpi=self._descriptor["dpi"])
@@ -36,9 +36,9 @@ class ReportLabPdfRenderer:
     def __init__(self, descriptor: dict[str, Any]):
         self._descriptor = descriptor
 
-    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> RenderArtifact:
+    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:
         _verify_reportlab(self._descriptor)
-        svg = V05SvgRenderer().render(surface, viewport=viewport, tokens=tokens).content
+        svg = V05SvgRenderer().render(surface, viewport=viewport).content
         try:
             from reportlab import rl_config
             from reportlab.graphics import renderPDF

@@ -171,8 +171,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
     )
-    artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
-                               tokens=scene_input.theme_tokens)
+    artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])))
     if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
     return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance)

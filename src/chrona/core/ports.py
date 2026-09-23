@@ -58,5 +58,5 @@ class RenderArtifact:
 class Renderer(Protocol):
     target_kind: str
 
-    def render(self, surface: object, *, viewport: tuple[float, float], tokens: object) -> RenderArtifact:  # pragma: no cover - protocol
+    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:  # pragma: no cover - protocol
         ...
