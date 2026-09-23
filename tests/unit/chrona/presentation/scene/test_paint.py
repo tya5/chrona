@@ -36,7 +36,6 @@ def test_resolver_rejects_a_dash_without_a_stroke():
     assert error.value.diagnostic_id == "E_PRESENTATION_PAINT_INVALID"
 
 
-def test_resolver_requires_declared_opacity_instead_of_defaulting():
-    with pytest.raises(ScenePaintError) as error:
-        resolve_scene_paint(_tokens({"fill": "fill"}), "role", PaintFamily.TEXT)
-    assert (error.value.diagnostic_id, error.value.path) == ("E_THEME_ROLE_REQUIRED", "/body/roles/role/opacity")
+def test_resolver_completes_absent_opacity_before_adapter_invocation():
+    paint = resolve_scene_paint(_tokens({"fill": "fill"}), "role", PaintFamily.TEXT)
+    assert paint.opacity == 1.0

@@ -50,10 +50,9 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily) 
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/strokeWidth")
     if width is not None and width <= 0:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/strokeWidth")
-    if opacity is None:
-        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/opacity")
-    if opacity < 0 or opacity > 1:
+    if opacity is not None and (opacity < 0 or opacity > 1):
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/opacity")
     if fill is None and stroke is None:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
-    return ScenePaint(fill, stroke, float(width) if width is not None else None, dash, float(opacity))
+    return ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
+                      1.0 if opacity is None else float(opacity))
