@@ -40,11 +40,16 @@ only the completed primitive and paint.
 ## 3. Accessibility and relation to other mark work
 
 The submark carries its host object source reference and a stable semantic
-purpose.  Its accessible description names the declared source and percentage;
-colour is not its only representation.  It does not own inside label contrast:
-inside-label eligibility remains the host-mark contract.  It does not use a
-colour scale or conditional-role rule; #314's scale and the progress semantic
-are separate axes.
+purpose, so consumers can identify its declared source without relying on
+colour.  The present Scene primitive contract has no per-mark accessible text
+payload; it therefore does not duplicate the percentage as an adapter-local
+description.  A consumer that needs the numeric value combines the source
+reference with the declared Project or Actual fraction.  Introducing an
+accessible percentage text requires a versioned Scene metadata contract and is
+outside this display-mark slice.  The submark does not own inside label
+contrast: inside-label eligibility remains the host-mark contract.  It does
+not use a colour scale or conditional-role rule; #314's scale and the progress
+semantic are separate axes.
 
 ## 4. Non-goals
 
