@@ -1,6 +1,6 @@
 # C-GDF-3 Paired Gallery Release Review
 
-**Decision:** Accepted pending GitHub CI confirmation
+**Decision:** Accepted
 
 ## Acceptance evidence
 
@@ -23,3 +23,6 @@ The gallery validator remains outside runtime rendering. The paired contexts
 prove semantic control through equal Project/Actual references and presentation
 distinction through a different View reference. No package, lock, guided
 resolver, raw SVG, or unsupported Scene capability was introduced.
+
+GitHub Actions run `35849132711` completed successfully on both
+`ubuntu-latest` and `macos-latest` for commit `b5b6cb4`.

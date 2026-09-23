@@ -1,6 +1,6 @@
 # Implementation Plan: Reusable Design Gallery Foundation
 
-**Status:** Correcting after #348 review — implementation paused
+**Status:** Superseded by completed corpus-first rollout
 **Date:** 2026-09-23  
 **Implements:** [Reusable Design Gallery Foundation Design Plan](reusable-design-gallery-foundation-design-plan-2026-09-23.md), Specifications 55, 58, and 62; UC-29 through UC-31
 
@@ -50,6 +50,14 @@ revised design proves a current consumer. The next implementation order is:
 `PresentationDesignSummary` is deferred: the gallery can validate finite
 catalogue assertions directly against effective resource identities, and no
 second concrete consumer currently justifies a separate inspection format.
+
+## Correction rollout completion
+
+C-GDF-1 through C-GDF-3 completed with the public Controller Z Executive /
+Plan-only pair, reproducible materializer evidence, and GitHub CI. C-GDF-4 is
+intentionally deferred: no actual package acquisition consumer exists yet, so
+reintroducing package machinery would repeat the premature sequencing corrected
+by #348.
 
 The catalogue is documentary only.  A package is a declarative owner of
 ordinary presentation resources, never a renderer/plugin/semantic authority.
