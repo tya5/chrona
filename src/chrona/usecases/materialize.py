@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from importlib.resources import files
 from pathlib import Path
+from pathlib import PurePosixPath
 import shutil
 import tempfile
 from typing import Any
@@ -53,10 +54,39 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path) ->
         _copy_reference(example, nested, snapshot)
 
 
+def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot: Path) -> None:
+    """Copy only declared, identity-pinned catalog bytes into the immutable snapshot."""
+    token, address = catalog_reference.get("revision", {}).get("token"), catalog_reference.get("address")
+    if not isinstance(token, str) or not isinstance(address, str):
+        raise ValueError("E_MATERIALIZER_CONTEXT")
+    catalog = yaml.safe_load(_inside(example, address).read_bytes())
+    icons = catalog.get("body", {}).get("icons") if isinstance(catalog, dict) else None
+    if not isinstance(icons, dict):
+        raise ValueError("E_ICON_CATALOG_SCHEMA")
+    for icon_id, entry in sorted(icons.items()):
+        source = entry.get("source") if isinstance(entry, dict) else None
+        asset_address = source.get("address") if isinstance(source, dict) else None
+        expected = source.get("contentIdentity") if isinstance(source, dict) else None
+        path = PurePosixPath(asset_address) if isinstance(asset_address, str) else None
+        if (not isinstance(asset_address, str) or not asset_address or path is None
+                or path.is_absolute() or asset_address != path.as_posix()
+                or any(part in {"", ".", ".."} for part in path.parts)):
+            raise ValueError("E_ICON_ASSET_PATH")
+        source_path = _inside(example, asset_address)
+        if source_path.is_symlink():
+            raise ValueError("E_ICON_ASSET_PATH")
+        payload = source_path.read_bytes()
+        if expected != _identity(payload):
+            raise ValueError("E_ICON_ASSET_IDENTITY")
+        target = _inside(snapshot / token, asset_address)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(payload)
+
+
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
     raw = context_path.read_bytes()
     context = yaml.safe_load(raw)
-    if context.get("version") != "chrona/render-context/v0.9" or context.get("kind") != "render-context":
+    if context.get("version") not in {"chrona/render-context/v0.9", "chrona/render-context/v0.10"} or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]
@@ -64,6 +94,11 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> t
     references.extend(body.get("inputs", {}).values())
     for item in references:
         _copy_reference(example, item, snapshot)
+    icon_catalog = body.get("inputs", {}).get("iconCatalog")
+    if icon_catalog is not None:
+        if not isinstance(icon_catalog, dict) or icon_catalog.get("kind") != "icon-catalog":
+            raise ValueError("E_MATERIALIZER_CONTEXT")
+        _copy_icon_assets(example, icon_catalog, snapshot)
     destination = snapshot / revision
     target = _inside(destination, context_path.relative_to(example).as_posix())
     target.parent.mkdir(parents=True, exist_ok=True)

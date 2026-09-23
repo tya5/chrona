@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 from importlib.metadata import version
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
 import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
@@ -13,7 +13,7 @@ import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.contracts import (
-    ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, LayoutProfileContract,
+    ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, LayoutProfileContract,
     PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
@@ -40,11 +40,24 @@ class ClosureResource:
     content_identity: str
     contract: ResourceContract
 
+
+@dataclass(frozen=True)
+class IconAsset:
+    """Verified catalog asset bytes; no host path crosses this closure boundary."""
+
+    icon_id: str
+    kind: str
+    content_identity: str
+    viewport: tuple[int, int]
+    alternative: str
+    payload: bytes
+
 @dataclass(frozen=True)
 class RenderClosure:
     context: RenderContextContract
     resources: tuple[ClosureResource, ...]
     resolved_theme: ResolvedThemeContract
+    icon_assets: tuple[IconAsset, ...] = ()
     guided_provenance: "GuidedAuthoringProvenance | None" = None
 
     def resource(self, kind: str) -> ClosureResource | None:
@@ -111,6 +124,10 @@ class RenderClosure:
         if not all(isinstance(item, ProfilePackageContract) for item in values):
             raise ClosureError("E_CLOSURE_KIND")
         return values  # type: ignore[return-value]
+
+    @property
+    def icon_catalog(self) -> IconCatalogContract | None:
+        return self._optional("icon-catalog", IconCatalogContract)  # type: ignore[return-value]
 
 
 @dataclass(frozen=True)
@@ -280,7 +297,7 @@ def _draft_render_from_resources(
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise ClosureError("E_CLOSURE_KIND")
-    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, provenance), asset_root)
+    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, (), provenance), asset_root)
 
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
@@ -354,7 +371,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.version != "chrona/render-context/v0.9":
+    if context.version not in {"chrona/render-context/v0.9", "chrona/render-context/v0.10"}:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 
@@ -377,7 +394,8 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
             resources.append(package)
     for reference, kind in ((context_contract.actual, "actual-set"),
                             (context_contract.summary_profile, "summary-profile"),
-                            (context_contract.detail_profile, "review-detail-profile")):
+                            (context_contract.detail_profile, "review-detail-profile"),
+                            (context_contract.icon_catalog, "icon-catalog")):
         if reference is not None:
             resources.append(_load_reference(reference.as_reader_reference(), reader, kind))
     if context_contract.snapshot is not None:
@@ -396,7 +414,39 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         resolved_theme = ResolvedThemeContract(theme.id, freeze(value))
     except ColorSchemeError as error:
         raise ClosureError(str(error)) from error
-    return RenderClosure(context_contract, tuple(resources), resolved_theme)
+    catalog_resource = next((item for item in resources if item.kind == "icon-catalog"), None)
+    icon_assets = _load_icon_assets(context_contract, catalog_resource, reader)
+    return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
+
+
+def _safe_icon_address(address: str) -> bool:
+    path = PurePosixPath(address)
+    return bool(address and address == path.as_posix() and not path.is_absolute()
+                and all(part not in {"", ".", ".."} for part in path.parts))
+
+
+def _load_icon_assets(context: RenderContextContract, catalog_resource: ClosureResource | None,
+                      reader: SnapshotReader) -> tuple[IconAsset, ...]:
+    if catalog_resource is None:
+        return ()
+    if context.icon_catalog is None or not isinstance(catalog_resource.contract, IconCatalogContract):
+        raise ClosureError("E_CLOSURE_KIND")
+    assets: list[IconAsset] = []
+    for entry in catalog_resource.contract.entries:
+        if not _safe_icon_address(entry.source.address):
+            raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.id}/source/address")
+        reference = {
+            "id": entry.id, "kind": "icon-asset", "store": context.icon_catalog.store,
+            "address": entry.source.address, "revision": {"token": context.icon_catalog.revision_token},
+            "contentIdentity": entry.source.content_identity,
+        }
+        try:
+            payload = reader.read(reference)
+        except SnapshotReadError as error:
+            diagnostic = "E_ICON_ASSET_IDENTITY" if error.diagnostic_id == "E_CONTENT_IDENTITY" else "E_ICON_ASSET_MISSING"
+            raise ClosureError(diagnostic, f"/body/icons/{entry.id}/source") from error
+        assets.append(IconAsset(entry.id, entry.kind, entry.source.content_identity, entry.viewport, entry.alternative, payload))
+    return tuple(assets)
 
 
 def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str) -> ClosureResource:

@@ -57,6 +57,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
             identity, value["version"], reference("project"), reference("view"), reference("theme"),
             reference("colorScheme"), reference("layout"), None,
             ResourceReference.from_value(freeze(body["inputs"]["snapshot"])), None, None,
+            None,
             RenderEnvironment(1, 1, "en-US", freeze({}), 0, None), RenderTarget("svg", ()),
         )
 

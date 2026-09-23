@@ -1,0 +1,43 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:icon-catalog-v0.1"
+title: "Chrona Icon Catalog v0.1"
+description: "Pinned local SVG and PNG icon declarations; source bytes are separately verified by closure resolution."
+allOf:
+  - $ref: "urn:chrona:presentation-resource-v0.1"
+  - type: object
+    properties:
+      version: {const: "chrona/icon-catalog/v0.1"}
+      kind: {const: icon-catalog}
+      body:
+        type: object
+        required: [icons]
+        additionalProperties: false
+        properties:
+          icons:
+            type: object
+            minProperties: 1
+            propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9_-]*(?:\\.[A-Za-z][A-Za-z0-9_-]*)+$"}
+            additionalProperties:
+              type: object
+              required: [kind, source, viewport, alternative]
+              additionalProperties: false
+              properties:
+                kind: {enum: [vector, raster]}
+                source:
+                  type: object
+                  required: [address, contentIdentity]
+                  additionalProperties: false
+                  properties:
+                    address:
+                      type: string
+                      minLength: 1
+                      pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$"
+                    contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+                viewport:
+                  type: object
+                  required: [inlineSize, blockSize]
+                  additionalProperties: false
+                  properties:
+                    inlineSize: {type: integer, minimum: 1, maximum: 4096}
+                    blockSize: {type: integer, minimum: 1, maximum: 4096}
+                alternative: {type: string}

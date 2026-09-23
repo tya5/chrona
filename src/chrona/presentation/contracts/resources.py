@@ -307,6 +307,26 @@ class LayoutProfileContract(ResourceContract):
 
 
 @dataclass(frozen=True)
+class IconSource:
+    address: str
+    content_identity: str
+
+
+@dataclass(frozen=True)
+class IconEntry:
+    id: str
+    kind: str
+    source: IconSource
+    viewport: tuple[int, int]
+    alternative: str
+
+
+@dataclass(frozen=True)
+class IconCatalogContract(ResourceContract):
+    entries: tuple[IconEntry, ...]
+
+
+@dataclass(frozen=True)
 class PresentationPresetContract(ResourceContract):
     """Validated declarative preset package; resource documents stay external."""
 
@@ -396,6 +416,7 @@ class RenderContextContract(ResourceContract):
     snapshot: ResourceReference | None
     summary_profile: ResourceReference | None
     detail_profile: ResourceReference | None
+    icon_catalog: ResourceReference | None
     environment: RenderEnvironment
     target: RenderTarget
 
@@ -410,11 +431,13 @@ class ResolvedThemeContract:
 
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.9"): "render-context-v0.9.schema.yaml",
+    ("render-context", "chrona/render-context/v0.10"): "render-context-v0.10.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
     ("view", "chrona/view/v0.10"): "view-v0.10.schema.yaml",
     ("theme", "chrona/theme/v0.5"): "theme-v0.5.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
+    ("icon-catalog", "chrona/icon-catalog/v0.1"): "icon-catalog-v0.1.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
     ("profile-package", "chrona/profile/v0.2"): "profile-v0.2.schema.yaml",
@@ -573,6 +596,18 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         return ColorSchemeContract(identity, version, frozen)
     if identity.kind == "layout-profile":
         return LayoutProfileContract(identity, version, frozen)
+    if identity.kind == "icon-catalog":
+        raw_icons = body["icons"]
+        if not isinstance(raw_icons, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        entries: list[IconEntry] = []
+        for icon_id, raw in sorted(raw_icons.items()):
+            if not isinstance(raw, FrozenDict) or not isinstance(raw.get("source"), FrozenDict) or not isinstance(raw.get("viewport"), FrozenDict):
+                raise ContractError("E_CLOSURE_KIND")
+            source, viewport = raw["source"], raw["viewport"]
+            entries.append(IconEntry(str(icon_id), str(raw["kind"]), IconSource(str(source["address"]), str(source["contentIdentity"])),
+                                     (int(viewport["inlineSize"]), int(viewport["blockSize"])), str(raw["alternative"])))
+        return IconCatalogContract(identity, version, tuple(entries))
     if identity.kind == "render-context":
         inputs, environment, target = body["inputs"], body["environment"], body["target"]
         if not all(isinstance(item, FrozenDict) for item in (inputs, environment, target)):
@@ -597,6 +632,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             ResourceReference.from_value(inputs["snapshot"]) if "snapshot" in inputs else None,
             ResourceReference.from_value(inputs["summaryProfile"]) if "summaryProfile" in inputs else None,
             ResourceReference.from_value(inputs["detailProfile"]) if "detailProfile" in inputs else None,
+            ResourceReference.from_value(inputs["iconCatalog"]) if "iconCatalog" in inputs else None,
             RenderEnvironment(int(viewport["inlineSize"]), int(viewport["blockSize"]), str(environment["locale"]),
                               environment["fontMetrics"], int(environment["scenePrecision"]), rasterizer, typesetter),
             RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"]), str(target["visualProfile"]),

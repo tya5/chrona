@@ -107,7 +107,30 @@ def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
         snapshot = tmp_path / str(index)
         snapshot.mkdir()
         reference, revision = _copy_context_closure(example, example / relative, snapshot)
-        assert reference["id"] == yaml.safe_load((snapshot / revision / relative).read_text())["id"]
+    assert reference["id"] == yaml.safe_load((snapshot / revision / relative).read_text())["id"]
+
+
+def test_materializer_copies_only_declared_icon_assets(tmp_path):
+    copied = tmp_path / "controller-z"
+    shutil.copytree(ROOT / "examples/controller-z", copied)
+    svg = b'<svg viewBox="0 0 24 24"><path d="M0 0L24 24"/></svg>'
+    asset = copied / "assets/risk.svg"
+    asset.parent.mkdir()
+    asset.write_bytes(svg)
+    catalog = {"version": "chrona/icon-catalog/v0.1", "kind": "icon-catalog", "id": "icons", "body": {"icons": {
+        "acme.risk": {"kind": "vector", "source": {"address": "assets/risk.svg", "contentIdentity": "sha256:" + sha256(svg).hexdigest()},
+                      "viewport": {"inlineSize": 24, "blockSize": 24}, "alternative": "Risk"}}}}
+    (copied / "icons.yaml").write_text(yaml.safe_dump(catalog, sort_keys=False))
+    context_path = copied / "contexts/executive.yaml"
+    context = yaml.safe_load(context_path.read_text())
+    context["version"] = "chrona/render-context/v0.10"
+    context["body"]["inputs"]["iconCatalog"] = {"id": "icons", "kind": "icon-catalog", "store": context["body"]["project"]["store"],
+                                                       "address": "icons.yaml", "revision": context["body"]["project"]["revision"],
+                                                       "contentIdentity": "sha256:" + sha256((copied / "icons.yaml").read_bytes()).hexdigest()}
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False))
+    snapshot = tmp_path / "snapshot"; snapshot.mkdir()
+    _, revision = _copy_context_closure(copied, context_path, snapshot)
+    assert (snapshot / revision / "assets/risk.svg").read_bytes() == svg
 
 
 def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path):
