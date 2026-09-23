@@ -36,6 +36,34 @@ CSS, executable code, renderer plugin, network request, or host default.
 Specification 59 remains decisive: a package selects existing host-owned
 presentation vocabulary; it cannot register a new presentation meaning.
 
+## 1.1 Current implementation status and diagnostics
+
+This specification is a deferred design, not an authorization to introduce a
+package resolver before a public reusable corpus direction and a materializer
+store boundary exist. The first implementation was paused by the independent
+#348 design review; its provisional code must not remain as a parallel public
+authoring path.
+
+Before a package implementation resumes, its design must publish these
+user-facing operations: `chrona package acquire <candidate>@<release>`,
+`chrona package inspect <lock>`, `chrona package propose-update`, and
+`chrona package materialize`. It must also reserve stable diagnostics at least
+for invalid manifest (`E_PACKAGE_MANIFEST`), escaping or symlink member
+(`E_PACKAGE_MEMBER_PATH`/`E_PACKAGE_SYMLINK`), member or aggregate identity
+mismatch (`E_PACKAGE_MEMBER_IDENTITY`/`E_PACKAGE_CONTENT_IDENTITY`), duplicate
+identity (`E_PACKAGE_IDENTITY_CONFLICT`), incompatible target/version
+(`E_PACKAGE_INCOMPATIBLE`), unavailable locked bytes
+(`E_PACKAGE_OFFLINE_UNAVAILABLE`), and forbidden authority
+(`E_PACKAGE_FORBIDDEN_MEMBER`). Final spellings and semantics require a
+separate accepted implementation design.
+
+`profile-v0.2` is a Project semantic-profile package with fields and semantic
+constraints; it is not a generic package envelope. A future Presentation
+Package may not silently duplicate its identity/lifecycle vocabulary. The
+future design must either explicitly specialize common package lifecycle rules
+from Specification 21 with a shared identity model, or document the necessary
+presentation-only distinction and its migration/interop boundary.
+
 ## 2. Package identity and manifest
 
 A release has a stable namespaced package ID, an exact version, and a

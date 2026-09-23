@@ -1,6 +1,6 @@
 # Implementation Plan: Reusable Design Gallery Foundation
 
-**Status:** Active — I-GDF-1 implementation planning accepted
+**Status:** Correcting after #348 review — implementation paused
 **Date:** 2026-09-23  
 **Implements:** [Reusable Design Gallery Foundation Design Plan](reusable-design-gallery-foundation-design-plan-2026-09-23.md), Specifications 55, 58, and 62; UC-29 through UC-31
 
@@ -13,6 +13,43 @@ small, publishable authority changes.  It preserves the existing direction:
 authoring ingress -> effective ordinary resources -> Context -> Layout -> Scene -> adapter
                                       \-> Design Summary -> gallery catalogue
 ```
+
+## #348 correction: evidence before package machinery
+
+The independent #348 tree review found that this plan incorrectly made the
+first reusable gallery asset depend on five package-management slices. An
+ordinary View, Layout, Theme, or Scheme has its own byte identity and can be
+made into a paired corpus slide today; later moving it to a package root does
+not change its content. The repository also contains unreproducible legacy
+`examples/controller-z/variants/` output, has no public preset example, and
+does not yet give the materializer a package-store boundary.
+
+Consequently I-GDF-4 through I-GDF-7 are paused. I-GDF-1 through I-GDF-3 are
+not retained as a parallel product path: their Summary and package
+implementation are removed or replaced in the correction rollout unless a
+revised design proves a current consumer. The next implementation order is:
+
+1. **C-GDF-1 Corpus hygiene and public preset evidence.** Decide legacy
+   `variants/` by reproducibility (delete unreproducible artifacts, or replace
+   them with declared materializer slides), and add one ordinary
+   `presentation-preset` that is committed evidence for an existing Context.
+2. **C-GDF-2 Paired ordinary corpus gallery.** Add two distinct portable
+   presentation directions over the same Project/Actual schedule as independent
+   ordinary Contexts; extend the catalogue successor with provenance, paired
+   semantic-identity, target/accessibility, and narration validation. Do not
+   require packages, locks, caches, or guided authoring.
+3. **C-GDF-3 Release evidence.** Materialize the paired slides, review the
+   generated SVG batch, and run the standard release gates.
+4. **C-GDF-4 Package decision after demonstrated reuse.** Reopen package work
+   only after at least two reusable directions and a concrete acquisition
+   consumer exist. First decide whether to specialize the existing profile
+   package envelope or deliberately use a distinct presentation-only envelope;
+   define materializer/store integration, all diagnostics, and user commands.
+   Publish that design correction before new package code.
+
+`PresentationDesignSummary` is deferred: the gallery can validate finite
+catalogue assertions directly against effective resource identities, and no
+second concrete consumer currently justifies a separate inspection format.
 
 The catalogue is documentary only.  A package is a declarative owner of
 ordinary presentation resources, never a renderer/plugin/semantic authority.
