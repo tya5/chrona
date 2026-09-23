@@ -143,6 +143,29 @@ def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monke
     assert 'data-source-ref="architecture"' in output.read_text(encoding="utf-8")
 
 
+def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    view = yaml.safe_load((root / "examples/controller-z/views/plan-only.yaml").read_text(encoding="utf-8"))
+    view["body"]["visibility"]["relations"] = "invalid"
+    view_path = tmp_path / "invalid-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(view_path), "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "--output", str(tmp_path / "ignored.svg"),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_VIEW_SCHEMA"
+    assert diagnostic["sourceRef"] == "/body/visibility/relations"
+    assert diagnostic["message"] != "E_VIEW_SCHEMA"
+    assert diagnostic["message"].startswith("expected one permitted form")
+
+
 def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "review.typ"

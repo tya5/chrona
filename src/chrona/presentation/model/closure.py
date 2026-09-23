@@ -25,10 +25,11 @@ from chrona.core.ports import SnapshotReadError, SnapshotReader
 
 
 class ClosureError(ValueError):
-    def __init__(self, diagnostic_id: str, source_ref: str = "/"):
+    def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.source_ref = source_ref
+        self.detail = detail
 
 
 @dataclass(frozen=True)
@@ -273,7 +274,7 @@ def _draft_render_from_resources(
             ClosureIdentity("render-context", "draft-render", "draft", "draft"), context_value
         )
     except SchemaContractError as error:
-        raise ClosureError("E_RENDER_CONTEXT_SCHEMA", error.source_ref) from error
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA", error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
@@ -294,7 +295,7 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     try:
         contract = parse_contract(identity, value)
     except SchemaContractError as error:
-        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA", error.source_ref) from error
+        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA", error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
         raise ClosureError(str(error)) from error
     return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
@@ -302,6 +303,10 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
 
 def _resource_id(kind: str, value: dict[str, Any]) -> object:
     return value.get("project", {}).get("id") if kind == "project" and isinstance(value.get("project"), dict) else value.get("id")
+
+
+def _schema_detail(error: SchemaContractError) -> str:
+    return error.violation.message if error.violation is not None else str(error)
 
 
 def _draft_reference(resource: ClosureResource) -> dict[str, Any]:
@@ -427,7 +432,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
         contract = parse_contract(identity, value)
     except SchemaContractError as error:
         code = "E_" + expected_kind.upper().replace("-", "_") + "_SCHEMA"
-        raise ClosureError(code, error.source_ref) from error
+        raise ClosureError(code, error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
         raise ClosureError(error.args[0]) from error
     return ClosureResource(expected_kind, actual_id, identity.revision, identity.content_identity, contract)

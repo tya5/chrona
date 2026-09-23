@@ -67,6 +67,7 @@ allOf:
     type: object
     properties:
       schedule:
+        description: Schedule shape
         type: object
         allOf:
           - if: {properties: {mode: {const: fixed}}}
