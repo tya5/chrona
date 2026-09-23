@@ -7,7 +7,7 @@ import yaml
 from chrona.presentation.contracts import ClosureIdentity, ContractError, ThemeContract, parse_contract
 from chrona.presentation.contracts.resources import (
     ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,
-    ProjectContract, RenderContextContract, ReviewDetailProfileContract, SnapshotRefContract,
+    ProjectContract, RenderContextContract, ReviewDetailProfileContract, SchemaContractError, SnapshotRefContract,
     SummaryProfileContract, ViewContract,
 )
 
@@ -37,6 +37,31 @@ def test_contract_rejects_schema_invalid_mandatory_resource():
     value["body"]["colorBindings"] = {}
     with pytest.raises(ContractError, match="E_RESOURCE_SCHEMA"):
         parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
+
+
+@pytest.mark.parametrize(
+    ("kind", "path", "mutate", "expected_pointer"),
+    (
+        ("view", "examples/aster-ssd/views/01-overview.yaml",
+         lambda value: value["body"]["tableColumns"][0].update({"source": {"comparisonFacet": "invalid"}}),
+         "/body/tableColumns/0/source"),
+        ("theme", "examples/aster-ssd/themes/executive-light.yaml",
+         lambda value: value["body"]["colorBindings"].update({"text.fill": "invalid"}),
+         "/body/colorBindings/text.fill"),
+        ("layout-profile", "examples/halcyon-1/layouts/briefing.yaml",
+         lambda value: value["relationRouting"].update({"maxBends": "invalid"}),
+         "/relationRouting/maxBends"),
+    ),
+)
+def test_contract_schema_errors_report_the_nested_failing_pointer(kind, path, mutate, expected_pointer):
+    value = yaml.safe_load((ROOT / path).read_text())
+    mutate(value)
+
+    with pytest.raises(SchemaContractError) as error:
+        parse_contract(ClosureIdentity(kind, value["id"], "r", "sha256:" + "a" * 64), value)
+
+    assert error.value.kind == kind
+    assert error.value.source_ref == expected_pointer
 
 
 def test_summary_subtree_scope_is_limited_to_a_typed_object_planned_source():
