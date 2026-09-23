@@ -444,6 +444,11 @@ def _run(args: argparse.Namespace) -> None:
     result = schedule(project)
     if not result.ok:
         _reject(result.diagnostics)
+    print(json.dumps(_schedule_payload(project, result), indent=2, default=_json_default))
+
+
+def _schedule_payload(project: dict[str, Any], result: Any) -> dict[str, Any]:
+    """Serialize a completed Scheduler result without deriving analysis again."""
     analysis = result.analysis
     payload = {"placements": result.placements, "diagnostics": []}
     if analysis is not None:
@@ -452,7 +457,7 @@ def _run(args: argparse.Namespace) -> None:
             "criticalObjectIds": [object_id for object_id in object_order if object_id in analysis.critical],
             "totalFloat": analysis.total_float,
         }
-    print(json.dumps(payload, indent=2, default=_json_default))
+    return payload
 
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:

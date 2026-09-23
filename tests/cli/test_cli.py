@@ -58,6 +58,7 @@ def test_cli_render_requires_draft_review_inputs(monkeypatch, capsys):
     ("format_name", "extra", "expected"),
     [
         ("typst", [], "E_RENDER_TYPESETTER_DESCRIPTOR"),
+        ("typst", ["--typesetter-engine", "typst"], "E_RENDER_TYPESETTER_DESCRIPTOR"),
         ("svg", ["--typesetter-engine", "typst", "--typesetter-version", "0.13.1", "--typesetter-adapter-grammar", "chrona-typst/v0.1"], "E_RENDER_TYPESETTER_DESCRIPTOR"),
     ],
 )
@@ -71,6 +72,58 @@ def test_cli_draft_typesetter_descriptor_contract(monkeypatch, capsys, format_na
         main()
     assert exited.value.code == 2
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == expected
+
+
+def _guided_workspace(tmp_path: Path) -> Path:
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    preset_root = tmp_path / "preset"
+    preset_root.mkdir()
+    resources = {
+        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text()),
+        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text()),
+        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text()),
+        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text()),
+    }
+    resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["span"]}}
+    resources["view.yaml"]["body"]["comparison"]["actual"] = "optional"
+    for name, value in resources.items():
+        (preset_root / name).write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
+    preset = {
+        "version": "chrona/presentation-preset/v0.1", "kind": "presentation-preset", "id": "starter",
+        "body": {"package": {"version": "1"}, "resources": {
+            "view": {"id": resources["view.yaml"]["id"], "kind": "view", "path": "view.yaml"},
+            "theme": {"id": resources["theme.yaml"]["id"], "kind": "theme", "path": "theme.yaml"},
+            "colorScheme": {"id": resources["scheme.yaml"]["id"], "kind": "color-scheme", "path": "scheme.yaml"},
+            "layout": {"id": resources["layout.yaml"]["id"], "kind": "layout-profile", "path": "layout.yaml"},
+        }, "compatibleColorSchemes": [{"id": resources["scheme.yaml"]["id"], "kind": "color-scheme", "path": "scheme.yaml"}]},
+    }
+    (preset_root / "starter.yaml").write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
+    workspace = {
+        "version": "chrona/authoring-workspace/v0.1", "kind": "authoring-workspace", "id": "workspace",
+        "body": {"project": {"id": "project", "tasks": [{"id": "task", "title": "Task", "planned": {"start": "2026-04-01", "finish": "2026-04-10"}}]},
+        "presentation": {"mode": "guided", "binding": {"preset": {"id": "starter", "version": "1", "path": "preset/starter.yaml"}}}},
+    }
+    path = tmp_path / "workspace.yaml"
+    path.write_text(yaml.safe_dump(workspace, sort_keys=False), encoding="utf-8")
+    return path
+
+
+def test_cli_guided_draft_typesetter_descriptor_contract(tmp_path, monkeypatch, capsys):
+    workspace = _guided_workspace(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["chrona", "render-workspace", str(workspace), "--format", "tikz", "--output", str(tmp_path / "review.tex")])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 2
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_TYPESETTER_DESCRIPTOR"
+
+    output = tmp_path / "review.tex"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render-workspace", str(workspace), "--format", "tikz",
+        "--typesetter-engine", "tectonic", "--typesetter-version", "0.15.0",
+        "--typesetter-adapter-grammar", "chrona-tikz/v0.1", "--output", str(output),
+    ])
+    main()
+    assert output.read_bytes().startswith(b"% chrona-tikz/v0.1")
 
 
 def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monkeypatch):
@@ -106,6 +159,55 @@ def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypat
     main()
 
     assert output.read_bytes().startswith(b"// chrona-typst/v0.1")
+
+
+def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, monkeypatch, capsys):
+    project = {
+        "version": "timeline/v0.6", "project": {"id": "ordered"}, "extensions": [],
+        "objects": {
+            "second": {"type": "milestone", "title": "Second", "schedule": {"mode": "fixed-point", "at": "2026-10-02"}},
+            "first": {"type": "milestone", "title": "First", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}},
+        }, "relations": [],
+    }
+    path = tmp_path / "ordered.yaml"
+    path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(path)])
+    main()
+    assert json.loads(capsys.readouterr().out)["analysis"]["criticalObjectIds"] == ["second", "first"]
+
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    halcyon = yaml.safe_load((root / "examples/halcyon-1/project.yaml").read_text(encoding="utf-8"))
+    monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(root / "examples/halcyon-1/project.yaml")])
+    main()
+    payload = json.loads(capsys.readouterr().out)
+    expected = schedule(halcyon).analysis
+    assert payload["analysis"] == {
+        "criticalObjectIds": [object_id for object_id in halcyon["objects"] if object_id in expected.critical],
+        "totalFloat": expected.total_float,
+    }
+
+
+def test_cli_schedule_rejection_has_no_analysis_payload(tmp_path, monkeypatch, capsys):
+    project = {
+        "version": "timeline/v0.6", "project": {"id": "invalid"}, "extensions": [],
+        "objects": {
+            "a": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
+            "b": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
+        },
+        "relations": [
+            {"type": "dependency", "from": {"object": "a", "endpoint": "start"}, "to": {"object": "b", "endpoint": "start"}, "lag": "0d"},
+            {"type": "dependency", "from": {"object": "b", "endpoint": "start"}, "to": {"object": "a", "endpoint": "start"}, "lag": "0d"},
+        ],
+    }
+    path = tmp_path / "invalid.yaml"
+    path.write_text(yaml.safe_dump(project), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(path)])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "rejected"
+    assert "analysis" not in payload
 
 
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):
