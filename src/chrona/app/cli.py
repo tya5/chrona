@@ -166,6 +166,8 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--actual", help="Actual Set YAML path")
     command.add_argument("--summary", help="Summary Profile YAML path")
     command.add_argument("--detail", help="Review Detail Profile YAML path")
+    command.add_argument("--icon-catalog", action="append", default=[],
+                         help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--viewport", default="1600x900", help="viewport WIDTHxHEIGHT (default: 1600x900)")
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
     _add_draft_target_arguments(command)
@@ -301,6 +303,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         actual_path=Path(args.actual) if args.actual else None,
         summary_path=Path(args.summary) if args.summary else None,
         detail_path=Path(args.detail) if args.detail else None,
+        icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
         viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=args.format,
         visual_profile=args.visual_profile,
         typesetter=_draft_typesetter_identity(args),

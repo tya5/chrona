@@ -56,6 +56,31 @@ def test_draft_typeset_closure_requires_an_explicit_descriptor():
         resolve_draft_render(**_paths(_root()), target_kind="tikz")
 
 
+def test_draft_closure_closes_only_explicit_catalogs_and_resolves_set_aliases(tmp_path):
+    catalog = tmp_path / "icons.yaml"
+    catalog.write_text(yaml.safe_dump({
+        "version": "chrona/icon-catalog/v0.2", "kind": "icon-catalog", "id": "acme-icons",
+        "body": {
+            "set": "acme", "aliases": ["acme-ui"],
+            "provenance": {"sourceKind": "iconify-json", "sourcePrefix": "acme",
+                           "sourceContentIdentity": "sha256:" + "a" * 64,
+                           "license": {"spdx": "MIT", "notice": "MIT"}},
+            "entryAliases": {"warning": "risk"},
+            "icons": {"risk": {"kind": "vector", "viewport": {"inlineSize": 24, "blockSize": 24},
+                               "alternative": "Risk", "paths": [{"paint": "fill", "commands": [
+                                   {"kind": "move", "points": [0, 0]}, {"kind": "line", "points": [24, 24]},
+                               ]}]}}
+        },
+    }, sort_keys=False), encoding="utf-8")
+
+    draft = resolve_draft_render(**_paths(_root()), icon_catalog_paths=(catalog,))
+
+    assert draft.closure.icon_asset("acme-ui:warning").icon_id == "acme:risk"
+    assert len(draft.closure.context.icon_catalogs) == 1
+    with pytest.raises(ClosureError, match="E_ICON_SET_UNKNOWN"):
+        draft.closure.icon_asset("other:risk")
+
+
 def test_draft_closure_never_probes_a_host_typesetter():
     source = Path(__import__("chrona.presentation.model.closure", fromlist=["*"]).__file__).read_text(encoding="utf-8")
     assert "subprocess" not in source
@@ -104,3 +129,45 @@ def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provena
     assert draft.closure.guided_provenance is not None
     assert draft.closure.guided_provenance.normalizer_version == "chrona/authoring-normalizer/v0.1"
     assert draft.closure.context.environment.typesetter == TypesetterIdentity("tectonic", "0.15.0", "chrona-tikz/v0.1")
+
+
+def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
+    root = _root()
+    preset_root = tmp_path / "preset"
+    preset_root.mkdir()
+    resources = {
+        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text()),
+        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text()),
+        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text()),
+        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text()),
+        "icons.yaml": {"version": "chrona/icon-catalog/v0.2", "kind": "icon-catalog", "id": "preset-icons",
+                       "body": {"set": "preset", "aliases": [], "entryAliases": {},
+                                "provenance": {"sourceKind": "iconify-json", "sourcePrefix": "preset",
+                                               "sourceContentIdentity": "sha256:" + "b" * 64,
+                                               "license": {"spdx": "MIT", "notice": "MIT"}},
+                                "icons": {"check": {"kind": "vector", "viewport": {"inlineSize": 24, "blockSize": 24},
+                                                    "alternative": "Check", "paths": [{"paint": "fill", "commands": [
+                                                        {"kind": "move", "points": [0, 0]}, {"kind": "line", "points": [24, 24]},
+                                                    ]}]}}}},
+    }
+    resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["task"]}}
+    for name, value in resources.items():
+        (preset_root / name).write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
+    preset = {"version": "chrona/presentation-preset/v0.1", "kind": "presentation-preset", "id": "starter",
+              "body": {"package": {"version": "1"}, "resources": {
+                  "view": {"id": resources["view.yaml"]["id"], "kind": "view", "path": "view.yaml"},
+                  "theme": {"id": resources["theme.yaml"]["id"], "kind": "theme", "path": "theme.yaml"},
+                  "colorScheme": {"id": resources["scheme.yaml"]["id"], "kind": "color-scheme", "path": "scheme.yaml"},
+                  "layout": {"id": resources["layout.yaml"]["id"], "kind": "layout-profile", "path": "layout.yaml"},
+                  "iconCatalogs": [{"id": "preset-icons", "kind": "icon-catalog", "path": "icons.yaml"}],
+              }, "compatibleColorSchemes": [{"id": resources["scheme.yaml"]["id"], "kind": "color-scheme", "path": "scheme.yaml"}]}}
+    (preset_root / "starter.yaml").write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
+    workspace = {"version": "chrona/authoring-workspace/v0.1", "kind": "authoring-workspace", "id": "workspace",
+                 "body": {"project": {"id": "project", "tasks": [{"id": "task", "title": "Task", "planned": {"start": "2026-04-01", "finish": "2026-04-10"}}]},
+                          "presentation": {"mode": "guided", "binding": {"preset": {"id": "starter", "version": "1", "path": "preset/starter.yaml"}}}}}
+    workspace_path = tmp_path / "workspace.yaml"
+    workspace_path.write_text(yaml.safe_dump(workspace, sort_keys=False), encoding="utf-8")
+
+    draft = resolve_guided_draft_render(workspace_path=workspace_path)
+
+    assert draft.closure.icon_asset("preset:check").icon_id == "preset:check"

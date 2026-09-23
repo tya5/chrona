@@ -178,7 +178,8 @@ _DRAFT_CAPABILITIES = (
 def resolve_draft_render(
     *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
     layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
-    detail_path: Path | None = None, viewport: tuple[int, int] = (1600, 900),
+    detail_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
+    viewport: tuple[int, int] = (1600, 900),
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
@@ -198,8 +199,12 @@ def resolve_draft_render(
     )
     resources = [_load_draft_resource(kind, path) for kind, path in paths]
     resources.extend(_load_draft_resource(kind, path) for kind, path in optional if path is not None)
+    catalog_resources = tuple(_load_draft_resource("icon-catalog", path) for path in icon_catalog_paths)
+    resources.extend(catalog_resources)
+    _validate_icon_catalog_set(catalog_resources)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
-                                        visual_profile=visual_profile, typesetter=typesetter)
+                                        visual_profile=visual_profile, typesetter=typesetter,
+                                        icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths))
 
 
 def resolve_guided_draft_render(
@@ -215,9 +220,10 @@ def resolve_guided_draft_render(
     preset_resource = _load_draft_resource("presentation-preset", preset_path)
     if not isinstance(preset_resource.contract, PresentationPresetContract):
         raise ClosureError("E_AUTHORING_PRESET_SCHEMA")
+    resource_declarations = (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
     resources_by_path = {
         str(declaration["path"]): yaml.safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
-        for declaration in (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
+        for declaration in resource_declarations if isinstance(declaration, Mapping)
     }
     if not all(isinstance(value, dict) for value in resources_by_path.values()):
         raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
@@ -226,10 +232,20 @@ def resolve_guided_draft_render(
     except (AuthoringError, ContractError) as error:
         raise ClosureError(str(error)) from error
     resources = [_normalized_draft_resource(kind, source) for kind, source in normalized.draft_sources()]
+    catalog_declarations = preset_resource.contract.resources.get("iconCatalogs", ())
+    if not isinstance(catalog_declarations, (tuple, list)):
+        raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
+    catalog_paths = tuple(_declared_child(preset_path.parent, str(item["path"])) for item in catalog_declarations)
+    catalog_resources = tuple(_load_draft_resource("icon-catalog", path) for path in catalog_paths)
+    if any(resource.id != declaration["id"] for resource, declaration in zip(catalog_resources, catalog_declarations)):
+        raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
+    _validate_icon_catalog_set(catalog_resources)
+    resources.extend(catalog_resources)
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
-                                        visual_profile=visual_profile, typesetter=typesetter, provenance=provenance)
+                                        visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
+                                        icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths))
 
 
 def _declared_child(root: Path, relative: str) -> Path:
@@ -266,6 +282,7 @@ def _draft_render_from_resources(
     visual_profile: str = "chrona-output/visual/v0.5-baseline",
     typesetter: TypesetterIdentity | None = None,
     provenance: GuidedAuthoringProvenance | None = None,
+    icon_assets: tuple[IconAsset, ...] = (),
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
 
@@ -295,6 +312,8 @@ def _draft_render_from_resources(
                 **({"actual": _draft_reference(by_kind["actual-set"])} if "actual-set" in by_kind else {}),
                 **({"summaryProfile": _draft_reference(by_kind["summary-profile"])} if "summary-profile" in by_kind else {}),
                 **({"detailProfile": _draft_reference(by_kind["review-detail-profile"])} if "review-detail-profile" in by_kind else {}),
+                **({"iconCatalogs": [_draft_reference(item) for item in resources if item.kind == "icon-catalog"]}
+                   if any(item.kind == "icon-catalog" for item in resources) else {}),
             },
             "environment": {
                 "viewport": {"inlineSize": viewport[0], "blockSize": viewport[1]},
@@ -318,7 +337,7 @@ def _draft_render_from_resources(
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise ClosureError("E_CLOSURE_KIND")
-    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, (), provenance), asset_root)
+    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance), asset_root)
 
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
@@ -502,6 +521,49 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
             except IconNormalizationError as error:
                 raise ClosureError(error.diagnostic_id, f"/body/icons/{entry.name}/source") from error
             assets.append(IconAsset(icon_id, entry.kind, entry.source.content_identity, entry.viewport, entry.alternative, payload))
+    return tuple(assets)
+
+
+def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
+                            catalog_paths: tuple[Path, ...]) -> tuple[IconAsset, ...]:
+    """Close exactly the explicit local Draft catalog files and their raster bytes."""
+    paths_by_identity = {resource.content_identity: path for resource, path in zip(catalog_resources, catalog_paths)}
+    assets: list[IconAsset] = []
+    for resource in catalog_resources:
+        if not isinstance(resource.contract, IconCatalogContract):
+            raise ClosureError("E_CLOSURE_KIND")
+        catalog = resource.contract
+        catalog_path = paths_by_identity[resource.content_identity]
+        root = catalog_path.parent.resolve()
+        for entry in catalog.entries:
+            icon_id = f"{catalog.set_name}:{entry.name}"
+            if entry.kind == "vector":
+                paths = tuple(tuple(IconPathCommand(str(command["kind"]), tuple(
+                    (float(points[index]), float(points[index + 1])) for index in range(0, len(points), 2)
+                )) for command in path.commands for points in (tuple(command.get("points", ())),))
+                              for path in entry.paths)
+                assets.append(IconAsset(icon_id, entry.kind, resource.content_identity, entry.viewport,
+                                        entry.alternative, NormalizedVectorIcon(entry.viewport, paths)))
+                continue
+            if entry.source is None:
+                raise ClosureError("E_ICON_CATALOG_SCHEMA", f"/body/icons/{entry.name}")
+            if not _safe_icon_address(entry.source.address):
+                raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.name}/source/address")
+            path = (root / entry.source.address).resolve()
+            if root not in path.parents:
+                raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.name}/source/address")
+            try:
+                payload = path.read_bytes()
+            except OSError as error:
+                raise ClosureError("E_ICON_ASSET_MISSING", f"/body/icons/{entry.name}/source") from error
+            if "sha256:" + sha256(payload).hexdigest() != entry.source.content_identity:
+                raise ClosureError("E_ICON_ASSET_IDENTITY", f"/body/icons/{entry.name}/source")
+            try:
+                validate_png(payload, entry.viewport)
+            except IconNormalizationError as error:
+                raise ClosureError(error.diagnostic_id, f"/body/icons/{entry.name}/source") from error
+            assets.append(IconAsset(icon_id, entry.kind, entry.source.content_identity, entry.viewport,
+                                    entry.alternative, payload))
     return tuple(assets)
 
 
