@@ -24,6 +24,7 @@ Read `59` when adding or evaluating a per-object placement preference or a propo
 presentation extension boundary.
 Read `60` when changing a field-driven colour encoding, Scheme palette slots, or a
 derived scale legend.
+Read `61` when adding a display-only progress submark to a completed review mark.
 
 ## Application, commands, storage, and extensions
 
