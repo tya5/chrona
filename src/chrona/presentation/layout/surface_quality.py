@@ -207,6 +207,7 @@ class SurfaceLayoutRequest:
 class IconPlacement:
     placement_id: str
     source_ref: str
+    visual_capability_source_ref: str
     icon_id: str
     kind: str
     asset_identity: str

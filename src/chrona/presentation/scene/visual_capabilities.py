@@ -19,6 +19,14 @@ RICH_CAPABILITIES = frozenset((LINEAR_GRADIENT, DROP_SHADOW, LINE_CAP, LINE_JOIN
 ICON_VECTOR = "icon.vector"
 ICON_RASTER = "icon.raster"
 
+_MESSAGES = {
+    "E_VISUAL_CAPABILITY_UNSUPPORTED": "required visual treatment is not supported by the selected visual profile",
+    "E_VISUAL_CAPABILITY_PROFILE": "visual profile is not available for the selected target",
+    "E_VISUAL_CAPABILITY_VALUE": "visual treatment binding is incomplete or malformed",
+    "E_VISUAL_CAPABILITY_FIDELITY": "visual treatment fidelity must be required or decorative-optional",
+    "E_VISUAL_CAPABILITY_LIMIT": "visual treatment value exceeds its declared limit",
+}
+
 
 class VisualCapabilityError(ValueError):
     """Stable failure raised before a renderer serializes an artifact."""
@@ -35,6 +43,13 @@ class VisualProfile:
     identifier: str
     capabilities: frozenset[str]
     optional_omission: bool
+
+
+def visual_capability_message(diagnostic_id: str, capability: str | None = None) -> str:
+    """Return the public explanation for a closed visual-capability diagnostic."""
+    if diagnostic_id == "E_VISUAL_CAPABILITY_UNSUPPORTED" and capability is not None:
+        return f"required {capability} is not supported by the selected visual profile"
+    return _MESSAGES.get(diagnostic_id, diagnostic_id)
 
 
 def resolve_visual_profile(identifier: str, target_kind: str) -> VisualProfile:
@@ -55,20 +70,23 @@ def resolve_visual_profile(identifier: str, target_kind: str) -> VisualProfile:
 
 def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfile) -> None:
     """Reject a required completed treatment before adapter invocation."""
-    paints = (surface.canvas_paint, *(node.paint for node in surface.primitives))
-    for paint in paints:
+    paints = ((surface.canvas_paint, "/body/roles/background"),
+              *((node.paint, node.visual_capability_source_ref) for node in surface.primitives))
+    for paint, path in paints:
         if paint is None:
             continue
-        _require(profile, LINEAR_GRADIENT, paint.gradient.fidelity if paint.gradient else None)
-        _require(profile, DROP_SHADOW, paint.shadow.fidelity if paint.shadow else None)
+        _require(profile, LINEAR_GRADIENT, paint.gradient.fidelity if paint.gradient else None, path)
+        _require(profile, DROP_SHADOW, paint.shadow.fidelity if paint.shadow else None, path)
         if paint.stroke_finish is not None:
-            _require(profile, LINE_CAP, paint.stroke_finish.fidelity)
-            _require(profile, LINE_JOIN, paint.stroke_finish.fidelity)
+            _require(profile, LINE_CAP, paint.stroke_finish.fidelity, path)
+            _require(profile, LINE_JOIN, paint.stroke_finish.fidelity, path)
     for node in surface.primitives:
         if node.kind == "Icon":
-            _require(profile, ICON_VECTOR if node.icon_kind == "vector" else ICON_RASTER, "required")
+            _require(profile, ICON_VECTOR if node.icon_kind == "vector" else ICON_RASTER, "required",
+                     node.visual_capability_source_ref)
 
 
-def _require(profile: VisualProfile, capability: str, fidelity: str | None) -> None:
+def _require(profile: VisualProfile, capability: str, fidelity: str | None, path: str) -> None:
     if fidelity is not None and capability not in profile.capabilities:
-        raise VisualCapabilityError("E_VISUAL_CAPABILITY_UNSUPPORTED")
+        raise VisualCapabilityError("E_VISUAL_CAPABILITY_UNSUPPORTED", path,
+                                    visual_capability_message("E_VISUAL_CAPABILITY_UNSUPPORTED", capability))

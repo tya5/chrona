@@ -166,6 +166,48 @@ def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_pat
     assert diagnostic["message"].startswith("expected one permitted form")
 
 
+def test_cli_baseline_rejection_keeps_visual_capability_pointer_and_message(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/executive.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/elevated-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--visual-profile", "chrona-output/visual/v0.5-baseline", "--output", str(tmp_path / "ignored.svg"),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic == {
+        "code": "E_VISUAL_CAPABILITY_UNSUPPORTED", "severity": "error", "component": "presentation",
+        "sourceRef": "/body/roles/group-band/gradientAngle", "revisionRefs": [],
+        "message": "required visual treatment is not supported by the selected visual profile",
+    }
+
+
+def test_cli_rejects_pdf_rich_profile_before_writing_an_artifact(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    output = tmp_path / "forbidden.pdf"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/executive.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/elevated-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--format", "pdf", "--visual-profile", "chrona-output/visual/v0.6-svg", "--output", str(output),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 1 and not output.exists()
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_VISUAL_CAPABILITY_PROFILE"
+    assert diagnostic["sourceRef"] == "/body/target/visualProfile"
+
+
 def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "review.typ"

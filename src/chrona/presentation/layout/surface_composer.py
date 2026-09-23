@@ -725,7 +725,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     icons: list[IconPlacement] = []
     # Icon occurrence and all geometry are resolved here, after label placement but
     # before Scene projection.  Existing text bounds donate a fixed leading region.
-    for binding in request.icon_bindings:
+    for binding_index, binding in enumerate(request.icon_bindings):
         source = binding.get("source", {}) if isinstance(binding, dict) else {}
         if source.get("kind") != "object" or not isinstance(source.get("id"), str):
             raise LayoutError("E_ICON_BINDING", "/iconBindings")
@@ -744,14 +744,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             text[index] = shifted
             bounds = Rect(item.bounds.inline, item.bounds.block + (item.bounds.block_size - Decimal(str(size))) / 2,
                           Decimal(str(width)), Decimal(str(size)))
-            icons.append(IconPlacement(f"icon:{item.placement_id}", object_id, icon.icon_id, icon.kind, icon.content_identity,
+            icons.append(IconPlacement(f"icon:{item.placement_id}", object_id, f"/body/iconBindings/{binding_index}", icon.icon_id, icon.kind, icon.content_identity,
                                        icon.payload, icon.alternative, bool(binding.get("decorative")), bounds))
         elif placement_kind == "mark":
             mark = next((item for item in marks if item.source_ref == object_id and item.placement_id.startswith("planned:")), None)
             if mark is None: raise LayoutError("E_ICON_BINDING", "/iconBindings")
             height = mark.bounds.block_size; width = min(mark.bounds.inline_size, height * Decimal(str(icon.viewport[0])) / Decimal(str(icon.viewport[1])))
             bounds = Rect(mark.bounds.inline + (mark.bounds.inline_size - width) / 2, mark.bounds.block, width, height)
-            icons.append(IconPlacement(f"icon:{mark.placement_id}", object_id, icon.icon_id, icon.kind, icon.content_identity,
+            icons.append(IconPlacement(f"icon:{mark.placement_id}", object_id, f"/body/iconBindings/{binding_index}", icon.icon_id, icon.kind, icon.content_identity,
                                        icon.payload, icon.alternative, bool(binding.get("decorative")), bounds))
         else: raise LayoutError("E_ICON_BINDING", "/iconBindings")
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,

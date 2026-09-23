@@ -1,12 +1,13 @@
+from io import BytesIO
 from pathlib import Path
-from datetime import date
-from importlib.metadata import version
 
 import pytest
+import yaml
+from PIL import Image, ImageChops
 
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.registry import renderer_for
-from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest
+from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, PNG_PROFILE
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 
@@ -104,24 +105,33 @@ def test_typeset_adapters_are_completed_scene_only():
     assert all(fragment not in source for fragment in forbidden)
 
 
-def test_svg_derivative_adapters_characterize_one_completed_rich_surface():
-    import resvg_py
+def test_public_png_profile_preserves_optional_rich_treatment_in_pixels(tmp_path):
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/elevated-light.yaml").read_text())
+    theme["body"]["values"]["elevated.fidelity"]["value"] = "decorative-optional"
+    theme_path = tmp_path / "optional-elevated.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False))
 
-    paint = ScenePaint("#112233", "#445566", 1, (), 1,
-                       LinearGradient((1, 2), (4, 5), ((0, "#112233"), (1, "#778899")), "required"),
-                       DropShadow("#000000", 1, 2, 3, 0.4, "required"), StrokeFinish("round", "bevel", "required"))
-    scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 1, 0, 1)
-    surface = SceneSurface("s", (), (), (), scale,
-                           (ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (1, 2, 40, 10), paint=paint),),
-                           ScenePaint("#ffffff", None, None, (), 1))
-    environments = {
-        "png": {"rasterizer": {"engine": "resvg-py", "version": resvg_py.__version__, "resvgVersion": resvg_py.__resvg_version__, "dpi": 96}},
-        "pdf": {"rasterizer": {"engine": "reportlab", "svglibVersion": version("svglib"), "reportlabVersion": version("reportlab"), "invariant": True}},
-    }
-    for kind, prefix in (("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")):
-        renderer = renderer_for({"kind": kind, "capabilities": []}, environments[kind])
-        first = renderer.render(surface, viewport=(100, 50)).content
-        assert first.startswith(prefix) and first == renderer.render(surface, viewport=(100, 50)).content
+    def render(profile: str) -> bytes:
+        draft = resolve_draft_render(
+            project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
+            theme_path=theme_path, scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+            target_kind="png", visual_profile=profile,
+        )
+        context = draft.closure.context
+        return render_review(RenderRequest(
+            draft.closure, draft.asset_root, ReferenceScheduler(),
+            renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
+                         {"rasterizer": context.environment.rasterizer}), asset_root=draft.asset_root,
+        )).artifact.content
+
+    baseline, rich = render(BASELINE_PROFILE), render(PNG_PROFILE)
+    assert baseline.startswith(b"\x89PNG\r\n\x1a\n") and rich.startswith(b"\x89PNG\r\n\x1a\n")
+    baseline_pixels = Image.open(BytesIO(baseline)).convert("RGB")
+    rich_pixels = Image.open(BytesIO(rich)).convert("RGB")
+    assert baseline_pixels.size == rich_pixels.size
+    assert ImageChops.difference(baseline_pixels, rich_pixels).getbbox() is not None
 
 
 def test_renderer_adapters_do_not_import_theme_scheme_or_profile_policy():

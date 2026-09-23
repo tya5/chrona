@@ -48,3 +48,17 @@ def test_resolver_completes_bounded_gradient_shadow_and_stroke_finish():
     assert paint.gradient and paint.gradient.start == (0, 0)
     assert paint.shadow and paint.shadow.blur == 3
     assert paint.stroke_finish and paint.stroke_finish.line_cap == "round"
+
+
+def test_baseline_omits_decorative_optional_treatment_during_scene_completion():
+    values = {
+        "fill": {"type": "color", "value": "#112233"}, "start": {"type": "color", "value": "#112233"},
+        "end": {"type": "color", "value": "#445566"}, "angle": {"type": "number", "value": 45},
+        "fidelity": {"type": "fidelity", "value": "decorative-optional"},
+    }
+    role = {"fill": "fill", "gradientStart": "start", "gradientEnd": "end", "gradientAngle": "angle",
+            "gradientFidelity": "fidelity"}
+    paint = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID,
+                                visual_capabilities=frozenset(), optional_omission=True,
+                                gradient_bounds=(0, 0, 10, 10))
+    assert paint.gradient is None

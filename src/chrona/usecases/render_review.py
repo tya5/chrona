@@ -26,11 +26,12 @@ from chrona.presentation.model.surface_content import SummaryContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.scene.model import SceneSurface
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 from chrona.presentation.scene.visual_capabilities import (
     VisualCapabilityError,
     resolve_visual_profile,
     validate_surface_visual_profile,
+    visual_capability_message,
 )
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.core.scenarios import resolve_scenario, ScenarioError
@@ -193,7 +194,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_CLOSURE_INPUT_UNUSED",
                            "closure inputs loaded but never read: " + ", ".join(unused), "closure")
 
-    surface = compose_review_surface(scene_input)
+    try:
+        surface = compose_review_surface(scene_input)
+    except SceneBuildError as error:
+        raise RenderFailed(error.diagnostic_id, visual_capability_message(error.diagnostic_id),
+                           "presentation", error.path) from error
     try:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
