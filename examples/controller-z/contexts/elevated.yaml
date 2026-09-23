@@ -82,7 +82,7 @@ body:
     scenePrecision: 3
   target:
     kind: svg
-    visualProfile: chrona-output/visual/v0.6
+    visualProfile: chrona-output/visual/v0.6-svg
     capabilities:
     - accessibleText
     - hierarchicalAxis

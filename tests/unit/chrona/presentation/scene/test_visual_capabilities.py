@@ -5,7 +5,8 @@ import pytest
 from chrona.presentation.scene.model import LinearGradient, ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest
 from chrona.presentation.scene.visual_capabilities import (
     BASELINE_PROFILE,
-    RICH_PROFILE,
+    PNG_PROFILE,
+    SVG_PROFILE,
     VisualCapabilityError,
     resolve_visual_profile,
     validate_surface_visual_profile,
@@ -18,10 +19,11 @@ def _surface() -> SceneSurface:
     return SceneSurface("s", (), (), (), scale, (ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1), paint=paint),), ScenePaint("#fff", None, None, (), 1))
 
 
-def test_rich_profile_is_limited_to_svg_route_and_svg_derivatives():
-    assert resolve_visual_profile(RICH_PROFILE, "svg").capabilities
+def test_rich_profiles_are_exact_target_contracts():
+    assert resolve_visual_profile(SVG_PROFILE, "svg").capabilities
+    assert resolve_visual_profile(PNG_PROFILE, "png").capabilities
     with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_PROFILE"):
-        resolve_visual_profile(RICH_PROFILE, "typst")
+        resolve_visual_profile(SVG_PROFILE, "pdf")
 
 
 def test_required_completed_treatment_is_rejected_by_baseline_before_adapter():

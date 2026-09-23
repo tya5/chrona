@@ -65,7 +65,9 @@ properties:
             shadowOpacity: {description: "Named shadow opacity token.", type: string, minLength: 1}
             strokeLineCap: {description: "Named stroke-cap token.", type: string, minLength: 1}
             strokeLineJoin: {description: "Named stroke-join token.", type: string, minLength: 1}
-            visualFidelity: {description: "Named required or optional fidelity token.", type: string, minLength: 1}
+            gradientFidelity: {description: "Named gradient fidelity token.", type: string, minLength: 1}
+            shadowFidelity: {description: "Named shadow fidelity token.", type: string, minLength: 1}
+            strokeFinishFidelity: {description: "Named stroke-finish fidelity token.", type: string, minLength: 1}
       colorBindings:
         type: object
         description: "Semantic fill or stroke roles bound to Color Scheme intents."

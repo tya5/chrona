@@ -53,11 +53,12 @@ class RenderRejected(Exception):
 class RenderFailed(Exception):
     """The render cannot proceed, reported as one stable diagnostic code."""
 
-    def __init__(self, code: str, message: str, component: str):
+    def __init__(self, code: str, message: str, component: str, source_ref: str = "/"):
         super().__init__(code)
         self.code = code
         self.message = message
         self.component = component
+        self.source_ref = source_ref
 
 
 @dataclass(frozen=True)
@@ -121,7 +122,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         visual_profile = resolve_visual_profile(render_closure.context.target.visual_profile,
                                                 render_closure.context.target.kind)
     except VisualCapabilityError as error:
-        raise RenderFailed(error.diagnostic_id, error.diagnostic_id, "presentation") from error
+        raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     ledger.required()
 
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
@@ -188,7 +189,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     try:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
-        raise RenderFailed(error.diagnostic_id, error.diagnostic_id, "presentation") from error
+        raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),

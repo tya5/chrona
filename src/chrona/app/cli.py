@@ -103,6 +103,9 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
 
 def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
+    command.add_argument("--visual-profile", default="chrona-output/visual/v0.5-baseline",
+                         choices=("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png"),
+                         help="exact visual capability profile (default: baseline)")
     command.add_argument("--typesetter-engine", help="required with --format typst or tikz")
     command.add_argument("--typesetter-version", help="required exact engine version with --format typst or tikz")
     command.add_argument("--typesetter-adapter-grammar", help="required adapter grammar with --format typst or tikz")
@@ -251,7 +254,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
     except RenderRejected as error:
         _reject(error.diagnostics, error.component)
     except RenderFailed as error:
-        raise CliFailure(error.code, error.message, error.component) from error
+        raise CliFailure(error.code, error.message, error.component, error.source_ref) from error
 
 
 def _run_render_review(args: argparse.Namespace) -> None:
@@ -288,6 +291,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         summary_path=Path(args.summary) if args.summary else None,
         detail_path=Path(args.detail) if args.detail else None,
         viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=args.format,
+        visual_profile=args.visual_profile,
         typesetter=_draft_typesetter_identity(args),
     )
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
@@ -297,7 +301,8 @@ def _run_draft_render(args: argparse.Namespace) -> None:
 def _run_guided_draft_render(args: argparse.Namespace) -> None:
     draft = resolve_guided_draft_render(
         workspace_path=Path(args.workspace), viewport=_parse_viewport(args.viewport),
-        locale=args.locale, target_kind=args.format, typesetter=_draft_typesetter_identity(args),
+        locale=args.locale, target_kind=args.format, visual_profile=args.visual_profile,
+        typesetter=_draft_typesetter_identity(args),
     )
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)

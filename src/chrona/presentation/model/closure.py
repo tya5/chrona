@@ -141,7 +141,7 @@ def resolve_draft_render(
     *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
     layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, viewport: tuple[int, int] = (1600, 900),
-    locale: str = "en-US", target_kind: str = "svg", typesetter: TypesetterIdentity | None = None,
+    locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -161,12 +161,12 @@ def resolve_draft_render(
     resources = [_load_draft_resource(kind, path) for kind, path in paths]
     resources.extend(_load_draft_resource(kind, path) for kind, path in optional if path is not None)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
-                                        typesetter=typesetter)
+                                        visual_profile=visual_profile, typesetter=typesetter)
 
 
 def resolve_guided_draft_render(
     *, workspace_path: Path, viewport: tuple[int, int] = (1600, 900),
-    locale: str = "en-US", target_kind: str = "svg", typesetter: TypesetterIdentity | None = None,
+    locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
@@ -191,7 +191,7 @@ def resolve_guided_draft_render(
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
-                                        typesetter=typesetter, provenance=provenance)
+                                        visual_profile=visual_profile, typesetter=typesetter, provenance=provenance)
 
 
 def _declared_child(root: Path, relative: str) -> Path:
@@ -225,6 +225,7 @@ def _normalized_draft_resource(kind: str, document: Mapping[str, Any]) -> Closur
 
 def _draft_render_from_resources(
     resources: list[ClosureResource], *, viewport: tuple[int, int], locale: str, target_kind: str,
+    visual_profile: str = "chrona-output/visual/v0.5-baseline",
     typesetter: TypesetterIdentity | None = None,
     provenance: GuidedAuthoringProvenance | None = None,
 ) -> DraftRender:
@@ -265,7 +266,7 @@ def _draft_render_from_resources(
                 **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
                 **({"typesetter": typesetter_environment} if typesetter_environment else {}),
             },
-            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else [], "visualProfile": "chrona-output/visual/v0.5-baseline",
+            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else [], "visualProfile": visual_profile,
                        **({"textMode": "positioned"} if target_kind in {"typst", "tikz"} else {})},
         },
     }

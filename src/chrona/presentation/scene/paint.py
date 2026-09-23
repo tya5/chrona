@@ -67,11 +67,14 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                       1.0 if opacity is None else float(opacity), gradient, shadow, finish)
 
 
-def _fidelity(tokens: ThemeTokenView, role: str) -> str:
-    value = tokens.optional_token(role, "visualFidelity", "fidelity")
+def _fidelity(tokens: ThemeTokenView, role: str, property_name: str) -> str:
+    try:
+        value = tokens.optional_token(role, property_name, "fidelity")
+    except ThemeTokenError as error:
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_FIDELITY", error.path) from error
     if value is None: return "required"
     if value not in {"required", "decorative-optional"}:
-        raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/visualFidelity")
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_FIDELITY", f"/body/roles/{role}/{property_name}")
     return str(value)
 
 
@@ -89,9 +92,11 @@ def _gradient(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | 
     start, end = tokens.optional_color(role, "gradientStart"), tokens.optional_color(role, "gradientEnd")
     angle = tokens.optional_number(role, "gradientAngle")
     if start is None and end is None and angle is None: return None
-    if start is None or end is None or angle is None or not 0 <= float(angle) < 360:
-        raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/gradientAngle")
-    fidelity = _fidelity(tokens, role)
+    if start is None or end is None or angle is None:
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle")
+    if not 0 <= float(angle) < 360:
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/gradientAngle")
+    fidelity = _fidelity(tokens, role, "gradientFidelity")
     if not _admit(capabilities, frozenset((LINEAR_GRADIENT,)), fidelity, optional_omission,
                   f"/body/roles/{role}/gradientAngle"):
         return None
@@ -103,9 +108,13 @@ def _shadow(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | No
     color = tokens.optional_color(role, "shadowColor")
     values = tuple(tokens.optional_number(role, name) for name in ("shadowOffsetX", "shadowOffsetY", "shadowBlur", "shadowOpacity"))
     if color is None and not any(value is not None for value in values): return None
-    if color is None or any(value is None for value in values) or float(values[2]) > 64 or not 0 <= float(values[3]) <= 1:
-        raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/shadowBlur")
-    fidelity = _fidelity(tokens, role)
+    if color is None or any(value is None for value in values):
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/shadowBlur")
+    if float(values[2]) > 64:
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/shadowBlur")
+    if not 0 <= float(values[3]) <= 1:
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/shadowOpacity")
+    fidelity = _fidelity(tokens, role, "shadowFidelity")
     if not _admit(capabilities, frozenset((DROP_SHADOW,)), fidelity, optional_omission,
                   f"/body/roles/{role}/shadowBlur"):
         return None
@@ -118,8 +127,8 @@ def _stroke_finish(tokens: ThemeTokenView, role: str, capabilities: frozenset[st
     join = tokens.optional_token(role, "strokeLineJoin", "lineJoin")
     if cap is None and join is None: return None
     if cap not in {"butt", "round", "square"} or join not in {"miter", "round", "bevel"}:
-        raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/strokeLineCap")
-    fidelity = _fidelity(tokens, role)
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/strokeLineCap")
+    fidelity = _fidelity(tokens, role, "strokeFinishFidelity")
     if not _admit(capabilities, frozenset((LINE_CAP, LINE_JOIN)), fidelity, optional_omission,
                   f"/body/roles/{role}/strokeLineCap"):
         return None

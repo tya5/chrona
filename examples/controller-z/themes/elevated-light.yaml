@@ -137,7 +137,8 @@ body:
       shadowOffsetY: elevated.shadow-offset-y
       shadowBlur: elevated.shadow-blur
       shadowOpacity: elevated.shadow-opacity
-      visualFidelity: elevated.fidelity
+      gradientFidelity: elevated.fidelity
+      shadowFidelity: elevated.fidelity
     group-header-band:
       opacity: opacity.group-header-band
     calendar-closed:
