@@ -1,20 +1,22 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/command-request-v0.2"
 title: "Chrona revision-bound command request v0.2"
+description: "One revision-store command with optimistic-concurrency preconditions."
 type: object
 required: [version, commandId, type, target, baseRevision, payload]
 additionalProperties: false
 properties:
-  version: {const: chrona/command/v0.2}
-  commandId: {type: string, minLength: 1}
+  version: {description: "This command-request contract version.", const: chrona/command/v0.2}
+  commandId: {description: "Stable identifier for the requested command.", type: string, minLength: 1}
   type:
+    description: "Revision-store operation requested."
     enum: [applyActualIntakeBatch, editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot, setTypedField]
-  target: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}
-  baseRevision: {type: string, minLength: 1, pattern: "^\\S+$"}
-  expectedContentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-  payload: {type: object, minProperties: 1}
-  actor: {type: object, additionalProperties: true}
-  reason: {type: string}
+  target: {description: "Resource the command modifies or reads.", $ref: "urn:chrona:revision-store-resource-ref-v0.1"}
+  baseRevision: {description: "Revision identity required before applying the command.", type: string, minLength: 1, pattern: "^\\S+$"}
+  expectedContentIdentity: {description: "Optional SHA-256 identity expected for target content.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  payload: {description: "Operation-specific command content.", type: object, minProperties: 1}
+  actor: {description: "Actor information recorded with the command.", type: object, additionalProperties: true}
+  reason: {description: "Human-readable reason for the command.", type: string}
 allOf:
   - if: {properties: {type: {const: applyActualIntakeBatch}}}
     then:

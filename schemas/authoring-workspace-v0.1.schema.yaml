@@ -141,32 +141,36 @@ $defs:
                   annotations: {description: "Visible annotation mode.", enum: [none, presentation, all]}
               annotations:
                 type: array
+                description: "Presentation annotations allowed by the guided View override."
                 items:
                   type: object
+                  description: "One guided annotation anchored to an object."
                   required: [id, purpose, anchor, placement, text]
                   additionalProperties: false
                   properties:
-                    id: {type: string, minLength: 1}
-                    purpose: {enum: [callout, highlight, note, explanatory-arrow]}
+                    id: {description: "Stable annotation identifier.", type: string, minLength: 1}
+                    purpose: {description: "Author intent for the annotation.", enum: [callout, highlight, note, explanatory-arrow]}
                     anchor:
                       type: object
+                      description: "Object receiving the annotation anchor."
                       required: [kind, id]
                       additionalProperties: false
                       properties:
-                        kind: {const: object}
-                        id: {type: string, minLength: 1}
+                        kind: {description: "The only guided anchor kind.", const: object}
+                        id: {description: "Identifier of the anchored object.", type: string, minLength: 1}
                     placement:
                       type: object
+                      description: "Preferred side and alignment around the anchor."
                       required: [side, alignment]
                       additionalProperties: false
                       properties:
-                        side: {enum: [above, below, start, end]}
-                        alignment: {enum: [start, center, end]}
-                    text: {type: string}
+                        side: {description: "Side of the anchor for the annotation.", enum: [above, below, start, end]}
+                        alignment: {description: "Alignment along the chosen side.", enum: [start, center, end]}
+                    text: {description: "Text displayed by the annotation.", type: string}
           theme:
             type: object
             description: "Allowed Theme selection limited to a preset-compatible color scheme."
             required: [colorScheme]
             additionalProperties: false
             properties:
-              colorScheme: {type: string, minLength: 1}
+              colorScheme: {description: "Preset-compatible color scheme identifier.", type: string, minLength: 1}

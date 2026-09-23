@@ -1,18 +1,20 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/presentation-materialization-receipt-v0.1"
+description: "Immutable record connecting a guided binding to materialized resources."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: chrona/presentation-materialization-receipt/v0.1}
-  kind: {const: presentation-materialization-receipt}
-  id: {type: string, minLength: 1}
+  version: {description: "This receipt contract version.", const: chrona/presentation-materialization-receipt/v0.1}
+  kind: {description: "The resource kind for a materialization receipt.", const: presentation-materialization-receipt}
+  id: {description: "Stable receipt identifier.", type: string, minLength: 1}
   body:
     type: object
+    description: "Identities of the source binding and generated presentation resources."
     required: [presetContentIdentity, bindingContentIdentity, normalizerVersion, resources]
     additionalProperties: false
     properties:
-      presetContentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-      bindingContentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-      normalizerVersion: {const: chrona/authoring-normalizer/v0.1}
-      resources: {type: object, minProperties: 1, additionalProperties: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}}
+      presetContentIdentity: {description: "SHA-256 identity of the source preset.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      bindingContentIdentity: {description: "SHA-256 identity of the guided binding.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      normalizerVersion: {description: "Normalizer contract that created the resources.", const: chrona/authoring-normalizer/v0.1}
+      resources: {description: "Map of generated resource names to SHA-256 identities.", type: object, minProperties: 1, additionalProperties: {description: "SHA-256 identity of one generated resource.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}}

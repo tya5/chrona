@@ -1,22 +1,24 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/authoring-command-v0.1"
 title: "Chrona guided authoring command v0.1"
+description: "One optimistic-concurrency command for a guided authoring workspace."
 type: object
 required: [version, commandId, type, target, baseRevision, payload]
 additionalProperties: false
 properties:
-  version: {const: chrona/authoring-command/v0.1}
-  commandId: {type: string, minLength: 1}
-  type: {enum: [setWorkspaceTask, setWorkspaceActual, selectPresentationPreset, setPresentationOverride, materializePresentationPreset]}
+  version: {description: "This authoring-command contract version.", const: chrona/authoring-command/v0.1}
+  commandId: {description: "Stable identifier for this command.", type: string, minLength: 1}
+  type: {description: "Operation to apply to the workspace.", enum: [setWorkspaceTask, setWorkspaceActual, selectPresentationPreset, setPresentationOverride, materializePresentationPreset]}
   target:
     type: object
+    description: "Guided authoring workspace selected by the command."
     required: [kind, path]
     additionalProperties: false
     properties:
-      kind: {const: authoring-workspace}
-      path: {type: string, minLength: 1}
-  baseRevision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-  payload: {type: object}
+      kind: {description: "The only command target resource kind.", const: authoring-workspace}
+      path: {description: "Workspace path relative to the configured store.", type: string, minLength: 1}
+  baseRevision: {description: "SHA-256 identity required for optimistic concurrency.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  payload: {description: "Operation-specific command content.", type: object}
 allOf:
   - if: {properties: {type: {const: setWorkspaceTask}}}
     then:

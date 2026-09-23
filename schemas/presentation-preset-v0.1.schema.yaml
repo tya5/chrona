@@ -1,43 +1,49 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/presentation-preset-v0.1"
 title: "Chrona declarative presentation preset v0.1"
+description: "Pinned package of compatible presentation resource references."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: chrona/presentation-preset/v0.1}
-  kind: {const: presentation-preset}
-  id: {type: string, minLength: 1}
+  version: {description: "This presentation-preset contract version.", const: chrona/presentation-preset/v0.1}
+  kind: {description: "The resource kind for a presentation preset.", const: presentation-preset}
+  id: {description: "Stable preset identifier.", type: string, minLength: 1}
   body:
     type: object
+    description: "Package version, resource references, and compatible color schemes."
     required: [package, resources, compatibleColorSchemes]
     additionalProperties: false
     properties:
       package:
         type: object
+        description: "Versioned preset package metadata."
         required: [version]
         additionalProperties: false
-        properties: {version: {type: string, minLength: 1}}
+        properties: {version: {description: "Preset package version.", type: string, minLength: 1}}
       resources:
         type: object
+        description: "View, Theme, Scheme, and Layout resources supplied by the preset."
         required: [view, theme, colorScheme, layout]
         additionalProperties: false
         properties:
-          view: {$ref: "#/$defs/resource"}
-          theme: {$ref: "#/$defs/resource"}
-          colorScheme: {$ref: "#/$defs/resource"}
-          layout: {$ref: "#/$defs/resource"}
+          view: {description: "Preset View resource.", $ref: "#/$defs/resource"}
+          theme: {description: "Preset Theme resource.", $ref: "#/$defs/resource"}
+          colorScheme: {description: "Preset Color Scheme resource.", $ref: "#/$defs/resource"}
+          layout: {description: "Preset Layout Profile resource.", $ref: "#/$defs/resource"}
       compatibleColorSchemes:
         type: array
+        description: "Color Scheme resources compatible with this preset."
         minItems: 1
         uniqueItems: true
         items: {$ref: "#/$defs/resource"}
 $defs:
   resource:
     type: object
+    description: "Pinned relative reference to one preset resource."
     required: [id, kind, path]
     additionalProperties: false
     properties:
-      id: {type: string, minLength: 1}
-      kind: {enum: [view, theme, color-scheme, layout-profile]}
-      path: {type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+      id: {description: "Stable referenced resource identifier.", type: string, minLength: 1}
+      kind: {description: "Kind of the referenced presentation resource.", enum: [view, theme, color-scheme, layout-profile]}
+      path: {description: "Safe relative path to the referenced resource.", type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}

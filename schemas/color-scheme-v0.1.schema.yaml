@@ -21,19 +21,19 @@ properties:
         required: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario]
         additionalProperties: false
         properties:
-          surface: {$ref: "#/$defs/color"}
-          surfaceRaised: {$ref: "#/$defs/color"}
-          text: {$ref: "#/$defs/color"}
-          textMuted: {$ref: "#/$defs/color"}
-          accent: {$ref: "#/$defs/color"}
-          positive: {$ref: "#/$defs/color"}
-          negative: {$ref: "#/$defs/color"}
-          warning: {$ref: "#/$defs/color"}
-          neutral: {$ref: "#/$defs/color"}
-          insideLabelPlanned: {$ref: "#/$defs/color"}
-          insideLabelActual: {$ref: "#/$defs/color"}
-          insideLabelSnapshot: {$ref: "#/$defs/color"}
-          insideLabelScenario: {$ref: "#/$defs/color"}
+          surface: {description: "Canvas surface color.", $ref: "#/$defs/color"}
+          surfaceRaised: {description: "Raised surface color.", $ref: "#/$defs/color"}
+          text: {description: "Primary text color.", $ref: "#/$defs/color"}
+          textMuted: {description: "Secondary text color.", $ref: "#/$defs/color"}
+          accent: {description: "Accent color.", $ref: "#/$defs/color"}
+          positive: {description: "Positive-state color.", $ref: "#/$defs/color"}
+          negative: {description: "Negative-state color.", $ref: "#/$defs/color"}
+          warning: {description: "Warning-state color.", $ref: "#/$defs/color"}
+          neutral: {description: "Neutral-state color.", $ref: "#/$defs/color"}
+          insideLabelPlanned: {description: "Text color on planned marks.", $ref: "#/$defs/color"}
+          insideLabelActual: {description: "Text color on actual marks.", $ref: "#/$defs/color"}
+          insideLabelSnapshot: {description: "Text color on snapshot marks.", $ref: "#/$defs/color"}
+          insideLabelScenario: {description: "Text color on scenario marks.", $ref: "#/$defs/color"}
       category:
         type: array
         description: "One or more concrete colors available for category roles."
@@ -45,21 +45,22 @@ properties:
         required: [background, colorVision, print]
         additionalProperties: false
         properties:
-          background: {enum: [light, dark]}
+          background: {description: "Background contrast the scheme targets.", enum: [light, dark]}
           colorVision:
             type: array
+            description: "Color-vision conditions considered by the scheme."
             minItems: 1
             uniqueItems: true
-            items: {enum: [none-claimed, deuteranopia, protanopia, tritanopia]}
-          print: {enum: [not-claimed, print-friendly, photocopy-friendly]}
+            items: {description: "One considered color-vision condition.", enum: [none-claimed, deuteranopia, protanopia, tritanopia]}
+          print: {description: "Print suitability claim for the scheme.", enum: [not-claimed, print-friendly, photocopy-friendly]}
       provenance:
         type: object
         description: "Authorship, source, and license for this palette."
         required: [kind, source, license]
         additionalProperties: false
         properties:
-          kind: {enum: [chrona-authored, external]}
-          source: {type: string, minLength: 1}
-          license: {type: string, minLength: 1}
+          kind: {description: "Whether Chrona authored or imported the scheme.", enum: [chrona-authored, external]}
+          source: {description: "Human-readable source of the color scheme.", type: string, minLength: 1}
+          license: {description: "License or usage terms for the source.", type: string, minLength: 1}
 $defs:
-  color: {type: string, pattern: "^#[0-9A-Fa-f]{6}$"}
+  color: {description: "Six-digit hexadecimal RGB color.", type: string, pattern: "^#[0-9A-Fa-f]{6}$"}

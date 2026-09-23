@@ -1,19 +1,22 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/snapshot-ref-v0.2"
 title: "Chrona immutable named baseline v0.2"
+description: "Named immutable baseline that pins one Project resource revision."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: chrona/snapshot-ref/v0.2}
-  kind: {const: snapshot-ref}
-  id: {type: string, minLength: 1}
+  version: {description: "This snapshot-reference contract version.", const: chrona/snapshot-ref/v0.2}
+  kind: {description: "The resource kind for a named baseline.", const: snapshot-ref}
+  id: {description: "Stable baseline identifier.", type: string, minLength: 1}
   body:
     type: object
+    description: "Resource reference captured by this named baseline."
     required: [project]
     additionalProperties: false
     properties:
       project:
+        description: "Pinned Project resource used as the baseline."
         allOf:
           - $ref: "urn:chrona:revision-store-resource-ref-v0.1"
           - properties: {kind: {const: project}}
