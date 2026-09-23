@@ -5,19 +5,16 @@ body:
     - {role: planned, label: Planned}
     - {role: actual, label: Actual}
   groupDetails:
-    - groupId: task
-      label: Work packages
-      description: Design, fabrication, bring-up and ramp activities.
-    - groupId: EVT
-      label: EVT
-      description: Engineering validation on A0 silicon.
-    - groupId: DVT
-      label: DVT
-      description: Design validation on the A1 respin, with customer review.
-    - groupId: PVT
-      label: PVT
-      description: Production validation ahead of ramp.
-  milestones: [tapeout, evt, dvt, pvt]
+    - groupId: design
+      label: Design
+      description: RTL, tape-out and the A1 respin.
+    - groupId: product
+      label: Product engineering
+      description: Fabrication lots, PVT and the production ramp.
+    - groupId: validation
+      label: Validation
+      description: Bring-up, EVT and DVT on each silicon revision.
+  milestones: [tapeout, evt]
   observations:
     columns:
       - {id: area, label: Area}

@@ -9,13 +9,13 @@ body:
       - span
       - point
   grouping:
-    by: objectType
+    by: field
+    field: owner
     missing: other
     order:
-    - task
-    - EVT
-    - DVT
-    - PVT
+    - design
+    - product
+    - validation
     presentation: header
   ordering:
     by: plannedStart
