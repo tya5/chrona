@@ -1,0 +1,33 @@
+# Issue #357 — YAML Loading Performance Implementation Plan
+
+## I357-1 — Codec and packaged-schema boundary
+
+Add `chrona.yaml_codec.safe_load` with C-loader fallback.  Add a single cached
+packaged-schema accessor and migrate the Presentation contract registry and
+per-schema validation path.
+
+**Acceptance:** safe fallback and decoded-value equivalence tests pass; repeated
+contract validation does not re-decode package schemas.
+
+## I357-2 — Runtime ingress migration
+
+Migrate every production `yaml.safe_load` / direct safe loader use in Core,
+Storage, Presentation, Operational, Extensions, Commands, and Usecases to the
+codec.  Cache only package-schema consumers that own immutable resources.
+
+**Acceptance:** repository check proves production YAML ingress uses the codec;
+external snapshot and file reads remain per-read.
+
+## I357-3 — Regression and performance evidence
+
+Add timing-free call-count/cache tests, run focused and full tests, reproduce
+all public materializers byte-for-byte, run conformance and isolated-wheel
+smoke, then record local timing samples and GitHub CI in a release review.
+
+**Acceptance:** D357-1 through D357-5 all pass.
+
+## Publication sequence
+
+1. Publish this design and architecture review.
+2. Publish I357-1 and I357-2 with focused tests.
+3. Publish acceptance/release review only after complete verification.
