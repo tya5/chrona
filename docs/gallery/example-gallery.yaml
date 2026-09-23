@@ -14,3 +14,10 @@ entries:
     comparison: {set: controller-z-review-direction, axis: comparison focus}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
     accessibility: {note: Semantic labels and table structure remain present alongside colour.}
+  - id: controller-z-elevated
+    corpus: controller-z
+    slide: elevated
+    narrative: {title: Elevated status review, audience: programme leadership, purpose: Reuse the executive evidence with bounded portable visual treatment.}
+    comparison: {set: controller-z-review-direction, axis: visual treatment}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    accessibility: {note: Gradient and shadow are decorative; semantic labels, source metadata, and table structure remain present.}

@@ -11,6 +11,9 @@ inputs are organized by authority:
 - `styles/plan-actual.yaml`
 - `profiles/summary.yaml` and `profiles/review-detail.yaml`
 - `contexts/executive.yaml` is the generated immutable binding example
+- `contexts/elevated.yaml` binds the same evidence to the v0.6 portable visual
+  profile through `themes/elevated-light.yaml`; its gradient and shadow remain
+  decorative and do not replace labels or source metadata.
 
 The corpus contains only manifest-declared materializer evidence; historic
 undeclared variants were removed because they were not reproducible. Materialize

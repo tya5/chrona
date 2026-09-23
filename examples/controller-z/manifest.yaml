@@ -10,3 +10,7 @@ slides:
     evidence: "Plan-only control view over the same Controller Z schedule and observations."
     context: contexts/plan-only.yaml
     expectedSvg: generated/plan-only.svg
+  - id: elevated
+    evidence: "Portable gradient, shadow, and stroke-finish treatment over the same Controller Z evidence."
+    context: contexts/elevated.yaml
+    expectedSvg: generated/elevated.svg

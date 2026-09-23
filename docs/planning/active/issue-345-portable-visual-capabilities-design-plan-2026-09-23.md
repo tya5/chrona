@@ -1,6 +1,6 @@
 # Design Plan: Portable Visual Capabilities (#345)
 
-**Status:** Active — design planning
+**Status:** Complete — design and architecture review published
 **Issue:** #345
 **Depends on:** Specifications 07, 08, 12, 34, 46, 55, and 62
 

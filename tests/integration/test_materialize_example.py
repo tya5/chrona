@@ -27,6 +27,14 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
     assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
 
 
+def test_controller_elevated_public_evidence_uses_only_portable_completed_treatments(tmp_path):
+    materialize(ROOT / "examples/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
+    artifact = (tmp_path / "elevated/review.svg").read_text()
+    assert '<linearGradient id="gradient-' in artifact and '<feDropShadow ' in artifact
+    assert 'fill="url(#gradient-' in artifact and 'filter="url(#shadow-' in artifact
+    assert 'data-source-ref="firmware"' in artifact and '>FW Feature Complete</text>' in artifact
+
+
 def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "programme-board", tmp_path / "board", write=False)
     svg = (tmp_path / "board/review.svg").read_text()

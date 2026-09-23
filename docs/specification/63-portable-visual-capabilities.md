@@ -1,6 +1,6 @@
 # Portable Visual Capabilities
 
-**Status:** Proposed  
+**Status:** Delivered (initial v0.6 profile)
 **Owns:** renderer-neutral visual capability profiles, completed Scene visual
 effects, fidelity, limits, and target admission. It does not own geometry,
 semantic selection, Layout, concrete color literals, package acquisition, or
