@@ -4,6 +4,7 @@ import shutil
 
 import pytest
 import yaml
+from PIL import Image
 
 from tools.materialize_example import _copy_context_closure, materialize
 
@@ -122,6 +123,19 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
     _, revision = _copy_context_closure(copied, context_path, snapshot)
     assert (snapshot / revision / "assets/programme-mark.png").read_bytes() == (copied / "assets/programme-mark.png").read_bytes()
     assert not (snapshot / revision / "assets/risk.svg").exists()
+
+
+def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tmp_path):
+    example = ROOT / "examples/controller-z"
+    raster = example / "assets/programme-mark.png"
+    assert raster.stat().st_size <= 1024
+    with Image.open(raster) as image:
+        assert image.size == (24, 24)
+        assert image.getbbox() is not None
+    materialize(example / "manifest.yaml", "icons", tmp_path / "icons", write=False)
+    artifact = (tmp_path / "icons/review.svg").read_bytes()
+    assert len(artifact) <= 64 * 1024
+    assert b'data:image/png;base64,' in artifact
 
 
 def test_successor_view_rejects_removed_icon_bindings(tmp_path):
