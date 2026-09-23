@@ -4,7 +4,7 @@ id: controller-z-material-icons
 body:
   project: {id: controller-z-silicon-bringup, kind: project, store: {provider: local, identity: controller-z-example}, address: project.yaml, revision: {token: example-v1}}
   view: {id: controller-z-material-icons, kind: view, store: {provider: local, identity: controller-z-example}, address: views/material-icons.yaml, revision: {token: example-v1}}
-  theme: {id: executive-light, kind: theme, store: {provider: local, identity: controller-z-example}, address: themes/executive-light.yaml, revision: {token: example-v1}}
+  theme: {id: material-icons-light, kind: theme, store: {provider: local, identity: controller-z-example}, address: themes/material-icons-light.yaml, revision: {token: example-v1}}
   colorScheme: {id: executive-light, kind: color-scheme, store: {provider: local, identity: controller-z-example}, address: schemes/executive-light.yaml, revision: {token: example-v1}}
   layout: {id: executive-review, kind: layout-profile, store: {provider: local, identity: controller-z-example}, address: layouts/executive-review.yaml, revision: {token: example-v1}}
   inputs:

@@ -27,7 +27,7 @@ committed fixture and does not require Node.
 - Schema annotation and View dispatch reachability gates: passed.
 - `conformance/run_conformance.py`: passed.
 - All 12 public materializers reproduced their committed SVG bytes: five
-  Controller Z slides (including bundled Material title/header/14px cell), one
+  Controller Z slides (including bundled Material title/header/exact-13px cell), one
   ASTER slide, and six HALCYON slides.
 - Isolated wheel build/install smoke: passed; the wheel exposes the packaged
   Material catalog through `importlib.resources`.

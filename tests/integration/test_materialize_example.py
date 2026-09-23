@@ -151,7 +151,7 @@ def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_tex
     assert 'data-scene-id="visual:column:Workstream:leading"' in artifact
     assert 'data-scene-id="visual:cell:firmware:Workstream:leading"' in artifact
     assert 'data-asset-identity="sha256:5726d3695593177d7cc9da73cab9a16f0ba4f8af9ff92c487163d8aa87f8628f"' in artifact
-    assert 'font-size="14"' in artifact and 'font-size="24"' in artifact
+    assert 'font-size="13"' in artifact and 'font-size="24"' in artifact
 
 
 def test_successor_view_rejects_removed_icon_bindings(tmp_path):
