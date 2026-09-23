@@ -91,6 +91,25 @@ def test_draft_plot_label_visual_reserves_space_before_candidate_selection(tmp_p
     assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
 
 
+def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [
+        {"target": {"kind": "column", "id": "Workstream"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "cell", "object": "firmware", "column": "Workstream"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "group-header", "id": "fw-team"}, "ref": "chrona:risk", "decorative": True},
+    ]
+    path = tmp_path / "slot-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                            visual_profile="chrona-output/visual/v0.7-svg"))
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    for placement_id in ("column:Workstream", "cell:firmware:Workstream", "group-header:fw-team"):
+        icon = by_id[f"visual:{placement_id}:leading"]
+        label = by_id[placement_id]
+        assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+
+
 def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):
     root = _root()
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
