@@ -69,6 +69,16 @@ def test_view_accepts_only_closed_progress_fill_sources():
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
 
 
+def test_view_visual_target_selectors_and_encoding_eligibility_are_closed():
+    value = yaml.safe_load((ROOT / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    value["body"]["visuals"] = [{"target": {"kind": "as-of-label"}, "ref": "chrona:risk"}]
+    assert next(_validator().iter_errors(_json_value(value)), None) is None
+    value["body"]["visuals"][0]["target"]["id"] = "invented"
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
+    value["body"]["visuals"] = [{"target": {"kind": "title"}, "encoding": {"field": "owner", "domain": {"fw": "chrona:risk"}}}]
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
+
+
 def test_v07_scenario_table_source_is_closed_to_id_or_title():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
     value["body"]["tableColumns"][0]["source"] = {"scenario": "title"}

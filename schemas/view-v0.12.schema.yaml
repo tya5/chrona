@@ -343,18 +343,7 @@ $defs:
     additionalProperties: false
     properties:
       target:
-        type: object
-        required: [kind]
-        additionalProperties: false
-        properties:
-          kind: {enum: [title, column, cell, group-header, plot-label, annotation, note-index, legend, summary, milestone, axis-label, as-of-label, mark]}
-          id: {type: string, minLength: 1}
-          object: {type: string, minLength: 1}
-          column: {type: string, minLength: 1}
-          role: {type: string, minLength: 1}
-          level: {type: string, minLength: 1}
-          index: {type: integer, minimum: 0}
-          facet: {enum: [planned, actual]}
+        $ref: "#/$defs/visualTarget"
       ref: {description: "Direct Context-local set:name icon reference.", type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
       encoding:
         type: object
@@ -371,6 +360,33 @@ $defs:
     oneOf:
       - required: [ref]
       - required: [encoding]
+    allOf:
+      - description: "Field-to-icon encoding is meaningful only for projection-exposed object targets."
+        if:
+          properties:
+            target:
+              properties: {kind: {enum: [cell, plot-label, mark]}}
+              required: [kind]
+          required: [target]
+        then: {}
+        else:
+          not: {required: [encoding]}
+  visualTarget:
+    description: "One closed visual occurrence selector; no kind admits irrelevant selector fields."
+    oneOf:
+      - {type: object, required: [kind], additionalProperties: false, properties: {kind: {const: title}}}
+      - {type: object, required: [kind], additionalProperties: false, properties: {kind: {const: as-of-label}}}
+      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: column}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: group-header}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: plot-label}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: annotation}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: note-index}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: summary}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: milestone}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, role], additionalProperties: false, properties: {kind: {const: legend}, role: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, object, column], additionalProperties: false, properties: {kind: {const: cell}, object: {type: string, minLength: 1}, column: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {const: axis-label}, level: {type: string, minLength: 1}, index: {type: integer, minimum: 0}}}
+      - {type: object, required: [kind, object, facet], additionalProperties: false, properties: {kind: {const: mark}, object: {type: string, minLength: 1}, facet: {enum: [planned, actual]}}}
   presentationIntent:
     type: object
     description: "Optional placement preferences for a row or item."
