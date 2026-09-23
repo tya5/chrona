@@ -97,6 +97,9 @@ compatibility seam is allowed.
 [Candidate-label visual composition](issue-350-candidate-label-visual-composition-correction-2026-09-24.md)
 is additionally binding: candidate labels and annotation boxes receive visual
 advances before their Layout solver commits bounds.
+[Annotation rail target closure](issue-350-annotation-rail-target-correction-2026-09-24.md)
+is additionally binding: the shared reusable Layout exposes a bounded optional
+annotation rail, without making View annotations coordinate-bearing state.
 [Summary visual selector closure](issue-350-summary-visual-selector-correction-2026-09-24.md)
 replaces the ambiguous panel-family selector with exact header/value/caption
 occurrence forms.
