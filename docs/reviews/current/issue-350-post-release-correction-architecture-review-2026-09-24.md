@@ -6,7 +6,7 @@ acceptance is superseded pending C350-1 through C350-5.
 | Boundary | Decision | Review result |
 | --- | --- | --- |
 | Draft CLI -> Context | Exact v0.7 SVG/PNG profile is explicit input; catalog paths never imply a profile. | Preserves capability authority and rejection-only targets. |
-| Iconify -> catalog | Importer resolves selected parents and aliases before serialization; bundle-only naming is manifest policy. | Prevents selection leakage and avoids a generic lossy suffix rule. |
+| Iconify -> catalog | Importer resolves selected parents and aliases before serialization; the bundled variant also admits the terminal parent closure of its declared variant aliases. | Prevents dangling aliases and avoids a generic lossy suffix rule. |
 | Catalog -> closure | Context remains the only resolver. Nearest-name diagnostics are computed from the closed catalog at closure, not Layout/Scene. | Preserves Layout and Scene isolation. |
 | Normalizer -> external format | A pinned offline fixture is test evidence only; Node is not a runtime dependency. | Tests the hand-port without compromising offline Python operation. |
 | SVG subset -> dependency | `picosvg` is deferred until an approved subset expansion. | Avoids expanding security/geometry authority merely to make rejection less inconvenient. |

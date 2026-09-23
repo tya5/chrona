@@ -41,6 +41,17 @@ is present in the selected canonical entries.  It does not use an alias filter
 as an accidental second selection filter.  Transform-bearing aliases remain
 normalized entries; alias-parent chains are resolved before either outcome.
 
+The bundled Material variant has an additional verified closure requirement:
+1,707 upstream `*-outline-rounded` aliases resolve mostly to distinct
+`*-rounded` canonical parents outside the original 2,336-entry selection.
+The generator therefore includes the terminal parent geometry for every
+declared variant alias and records the alias against that included canonical
+entry.  It must not emit an alias that points outside the catalog.  The former
+2,336-entry / 4MB bound is superseded: the generated manifest records canonical
+selection count, alias-parent closure count, exact/gzip byte limits derived from
+the regenerated catalog, and identity.  This is a correctness expansion, not a
+runtime fallback or a compatibility bridge.
+
 The bundled Material generation manifest owns an additional, deterministic
 *bundle alias policy*: remove the exact `-outline-rounded` suffix only when it
 maps to one bundled canonical entry and cannot collide with any canonical name
@@ -96,7 +107,7 @@ evidence of unverified closure.
 | Gate | Required outcome |
 | --- | --- |
 | D350C-1 | CLI/profile and README form one executable public Draft path. |
-| D350C-2 | Material aliases, unambiguous short names, provenance, and bounded loading are generated and identity-tested. |
+| D350C-2 | Material alias-parent closure, unambiguous short names, provenance, and bounded loading are generated and identity-tested. |
 | D350C-3 | Import/unknown-name diagnostics preserve source identity and actionable recovery data. |
 | D350C-4 | Iconify-utils fixture proves importer alias/transform semantics offline in CI. |
 | D350C-5 | Public Material 13px evidence and all release gates are reproducible and green. |

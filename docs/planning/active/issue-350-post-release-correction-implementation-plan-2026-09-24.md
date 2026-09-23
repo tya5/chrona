@@ -25,13 +25,15 @@ catalog/icon/source stage; no lookup responsibility enters Layout or Scene.
 ## I350C-3 — Regenerate Material default and public evidence
 
 Add an explicit bundle generation manifest with source version, canonical
-selection, and collision-checked short-name rules.  Regenerate the packaged
+selection, declared variant-alias parent closure, and collision-checked
+short-name rules.  Regenerate the packaged
 catalog, make source/notice relationship reproducible, add bounded loader and
 Draft-render checks, and materialize real Material small-text/title/header
 evidence.
 
-**Acceptance:** aliases and short names resolve, source version is true,
-Material evidence is committed and byte-reproducible, and performance is bounded
+**Acceptance:** no declared variant alias dangles; aliases and short names
+resolve; source version is true; generated count/size limits are manifest-owned;
+Material evidence is committed and byte-reproducible; and performance is bounded
 without machine-specific assertions.
 
 ## I350C-4 — Third-party semantic conformance
