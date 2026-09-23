@@ -1,6 +1,8 @@
 version: chrona/example-materializer/v0.1
 id: controller-z
+role: regression-corpus
 context: contexts/executive.yaml
 slides:
   - id: executive
+    evidence: "Executive review with actuals, inside labels, and fallback labels."
     expectedSvg: generated/executive.svg

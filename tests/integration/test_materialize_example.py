@@ -41,6 +41,22 @@ def test_materializer_detects_changed_expected_svg(tmp_path):
         expected.write_bytes(original)
 
 
+def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_path):
+    copied_example = tmp_path / "controller-z"
+    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    manifest_path = copied_example / "manifest.yaml"
+    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest.pop("role")
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
+    with pytest.raises(ValueError, match="E_MATERIALIZER_MANIFEST"):
+        materialize(manifest_path, "executive", tmp_path / "missing-role", write=False)
+    manifest["role"] = "regression-corpus"
+    manifest["slides"][0].pop("evidence")
+    manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
+    with pytest.raises(ValueError, match="E_MATERIALIZER_SLIDE"):
+        materialize(manifest_path, "executive", tmp_path / "missing-evidence", write=False)
+
+
 def test_materializer_preserves_authored_context_bytes_and_pins(tmp_path):
     example = ROOT / "examples/aster-ssd"
     context_path = example / "contexts/01-overview.yaml"

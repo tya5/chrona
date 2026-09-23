@@ -1,22 +1,29 @@
 version: chrona/example-materializer/v0.1
 id: halcyon-1
+role: regression-corpus
 context: contexts/01-mission-brief.yaml
 slides:
   - id: mission-brief
+    evidence: "Programme overview with schedule and review evidence."
     context: contexts/01-mission-brief.yaml
     expectedSvg: generated/01-mission-brief.svg
   - id: programme-board
+    evidence: "Dense programme board with typed summary evidence."
     context: contexts/02-programme-board.yaml
     expectedSvg: generated/02-programme-board.svg
   - id: launch-campaign
+    evidence: "Launch campaign with grouped timeline presentation."
     context: contexts/03-launch-campaign.yaml
     expectedSvg: generated/03-launch-campaign.svg
   - id: tvac-slip
+    evidence: "Scenario comparison with provenance evidence."
     context: contexts/04-tvac-slip.yaml
     expectedSvg: generated/04-tvac-slip.svg
   - id: dependency-network
+    evidence: "Dependency-network surface and routed relation evidence."
     context: contexts/05-dependency-network.yaml
     expectedSvg: generated/05-dependency-network.svg
   - id: flight-readiness
+    evidence: "Flight readiness review with advanced contract evidence."
     context: contexts/06-flight-readiness.yaml
     expectedSvg: generated/06-flight-readiness.svg

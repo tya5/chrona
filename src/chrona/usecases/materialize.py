@@ -86,10 +86,10 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> t
 def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool = False) -> MaterializationResult:
     example = manifest_path.parent.resolve()
     manifest = yaml.safe_load(manifest_path.read_text())
-    if manifest.get("version") != "chrona/example-materializer/v0.1":
+    if manifest.get("version") != "chrona/example-materializer/v0.1" or manifest.get("role") != "regression-corpus":
         raise ValueError("E_MATERIALIZER_MANIFEST")
     slide = next((item for item in manifest.get("slides", ()) if item.get("id") == slide_id), None)
-    if slide is None:
+    if slide is None or not isinstance(slide.get("evidence"), str) or not slide["evidence"].strip():
         raise ValueError("E_MATERIALIZER_SLIDE")
     expected = _inside(example, str(slide["expectedSvg"]))
     if output.exists() and any(output.iterdir()):

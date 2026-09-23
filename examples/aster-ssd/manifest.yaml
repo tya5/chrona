@@ -1,6 +1,8 @@
 version: chrona/example-materializer/v0.1
 id: aster-ssd
+role: regression-corpus
 context: contexts/01-overview.yaml
 slides:
   - id: overview
+    evidence: "Plan-only semiconductor schedule with calendar-aware spans."
     expectedSvg: generated/overview.svg
