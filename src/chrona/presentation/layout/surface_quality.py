@@ -235,6 +235,7 @@ class IconPlacement:
     decorative: bool
     bounds: Rect
     semantic_id: str = "iconMark"
+    stroke_scale: float = 1.0
 
 
 @dataclass(frozen=True)

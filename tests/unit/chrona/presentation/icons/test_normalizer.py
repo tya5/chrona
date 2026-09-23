@@ -5,7 +5,7 @@ from chrona.presentation.icons import IconNormalizationError, normalize_icon
 
 def test_normalizes_closed_svg_cubic_and_close():
     icon = normalize_icon("vector", b'<svg viewBox="0 0 24 24"><path d="M0 0 C 1 2 3 4 5 6 Z"/></svg>', (24, 24))
-    assert [command.kind for command in icon.paths[0]] == ["move", "cubic", "close"]
+    assert [command.kind for command in icon.paths[0].commands] == ["move", "cubic", "close"]
 
 
 @pytest.mark.parametrize("payload", (

@@ -414,6 +414,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          icon_vector=placed.payload if placed.kind == "vector" else None,
                                          icon_raster=placed.payload if placed.kind == "raster" else None,
                                          icon_alternative=placed.alternative, icon_decorative=placed.decorative,
+                                         icon_stroke_scale=placed.stroke_scale,
                                          visual_capability_source_ref=placed.visual_capability_source_ref))
     text_roles = tuple(
         (prefix, semantic_binding(semantic_id).purpose, role or semantic_binding(semantic_id).scene_role)

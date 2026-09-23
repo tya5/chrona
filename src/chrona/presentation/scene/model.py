@@ -92,6 +92,7 @@ class ScenePrimitive:
     icon_raster: bytes | None = None
     icon_alternative: str | None = None
     icon_decorative: bool = True
+    icon_stroke_scale: float | None = None
     visual_capability_source_ref: str = "/"
 
 @dataclass(frozen=True)

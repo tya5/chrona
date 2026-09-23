@@ -125,7 +125,7 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
                           Decimal(str(icon_width)), Decimal(str(item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0]))) )
             icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
                                        icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
-                                       visual.decorative, bounds, "labelVisual"))
+                                       visual.decorative, bounds, "labelVisual", icon_width / icon.viewport[0]))
     if requested:
         raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
     return text, icons
@@ -157,7 +157,7 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
                       Decimal(str(width)), host.bounds.block_size)
         icons.append(IconPlacement(f"visual:{host.placement_id}", host.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
-                                   visual.decorative, bounds, "iconMark"))
+                                   visual.decorative, bounds, "iconMark", width / icon.viewport[0]))
     return icons
 
 
@@ -692,7 +692,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     candidate_icons.append(IconPlacement(f"visual:{placed_text.placement_id}:{visual.side}",
                                                          placed_text.source_ref, visual.source_ref, icon.icon_id,
                                                          icon.kind, icon.content_identity, icon.payload,
-                                                         icon.alternative, visual.decorative, bounds, "labelVisual"))
+                                                         icon.alternative, visual.decorative, bounds, "labelVisual",
+                                                         width / icon.viewport[0]))
             placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                                          label_request.candidates, candidate.side, "placed"))
 
@@ -931,7 +932,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     candidate_icons.append(IconPlacement(f"visual:{placed_annotation.placement_id}:{visual.side}",
                                                          annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                          icon.content_identity, icon.payload, icon.alternative,
-                                                         visual.decorative, icon_bounds, "labelVisual"))
+                                                         visual.decorative, icon_bounds, "labelVisual",
+                                                         icon_width / icon.viewport[0]))
             if "number" in annotation:
                 text.append(place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
                                        content=str(annotation["number"]), inline=anchor_bounds.x + anchor_bounds.width,

@@ -82,19 +82,30 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
         if node.href is None: parts.append(content); return
         title = f' xlink:title="{escape(node.link_title, quote=True)}"' if node.link_title is not None else ""
         parts.append(f'<a href="{escape(node.href, quote=True)}" target="_top"{title}>{content}</a>')
-    def icon_path(node: ScenePrimitive) -> str:
+    def icon_path(node: ScenePrimitive, path: object) -> str:
         if node.icon_vector is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         vx, vy = node.icon_vector.viewport
         x, y, w, h = node.bounds
         def point(point: tuple[float, float]) -> str:
             return f"{number(x + point[0] * w / vx)} {number(y + point[1] * h / vy)}"
         values: list[str] = []
-        for path in node.icon_vector.paths:
-            for command in path:
-                glyph = {"move": "M", "line": "L", "quadratic": "Q", "cubic": "C", "close": "Z"}.get(command.kind)
-                if glyph is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-                values.append(glyph if glyph == "Z" else glyph + " ".join(point(item) for item in command.points))
+        for command in path.commands:
+            glyph = {"move": "M", "line": "L", "quadratic": "Q", "cubic": "C", "close": "Z"}.get(command.kind)
+            if glyph is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            values.append(glyph if glyph == "Z" else glyph + " ".join(point(item) for item in command.points))
         return "".join(values)
+
+    def icon_appearance(node: ScenePrimitive, path: object) -> str:
+        paint = completed(node)
+        if path.paint == "fill":
+            return attrs(paint, fill=True, stroke=False)
+        if path.paint != "stroke" or path.stroke_width is None or paint.fill is None or node.icon_stroke_scale is None:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        if path.line_cap not in {"butt", "round", "square"} or path.line_join not in {"miter", "round", "bevel"}:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        return (f'fill="none" opacity="{number(paint.opacity)}" stroke="{escape(paint.fill, quote=True)}" '
+                f'stroke-width="{number(path.stroke_width * node.icon_stroke_scale)}" '
+                f'stroke-linecap="{path.line_cap}" stroke-linejoin="{path.line_join}"')
     for node in surface.primitives:
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
@@ -127,7 +138,10 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             accessible = " aria-hidden=\"true\"" if node.icon_decorative else f' role="img" aria-label="{escape(node.icon_alternative or "", quote=True)}"'
             if not node.icon_decorative and not node.icon_alternative: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             if node.icon_kind == "vector":
-                append(node, f'<path {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}" d="{icon_path(node)}" {attrs(paint, fill=True, stroke=False)}/>')
+                if node.icon_vector is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                paths = "".join(f'<path d="{icon_path(node, path)}" {icon_appearance(node, path)}/>'
+                                for path in node.icon_vector.paths)
+                append(node, f'<g {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}">{paths}</g>')
             else:
                 if node.icon_raster is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
                 encoded = b64encode(node.icon_raster).decode("ascii")

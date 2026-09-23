@@ -20,9 +20,20 @@ class IconPathCommand:
 
 
 @dataclass(frozen=True)
+class NormalizedIconPath:
+    """One normalized icon path with its closed monochrome paint mode."""
+
+    commands: tuple[IconPathCommand, ...]
+    paint: str = "fill"
+    stroke_width: float | None = None
+    line_cap: str | None = None
+    line_join: str | None = None
+
+
+@dataclass(frozen=True)
 class NormalizedVectorIcon:
     viewport: tuple[int, int]
-    paths: tuple[tuple[IconPathCommand, ...], ...]
+    paths: tuple[NormalizedIconPath, ...]
 
 
 _TOKEN = re.compile(r"([MmLlHhVvQqCcZz])|([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)")
@@ -64,7 +75,7 @@ def normalize_svg(payload: bytes, viewport: tuple[int, int]) -> NormalizedVector
         raise IconNormalizationError("E_ICON_SVG_UNSAFE") from error
     if not all(math.isfinite(value) for value in values) or values[:2] != (0.0, 0.0) or values[2:] != tuple(map(float, viewport)):
         raise IconNormalizationError("E_ICON_SVG_UNSAFE")
-    paths: list[tuple[IconPathCommand, ...]] = []
+    paths: list[NormalizedIconPath] = []
     def visit(node: ElementTree.Element, depth: int = 0) -> None:
         if depth > 8 or _local(node.tag) not in {"svg", "g", "path"}:
             raise IconNormalizationError("E_ICON_SVG_UNSAFE")
@@ -72,11 +83,11 @@ def normalize_svg(payload: bytes, viewport: tuple[int, int]) -> NormalizedVector
         if any(key not in permitted for key in node.attrib):
             raise IconNormalizationError("E_ICON_SVG_UNSAFE")
         if _local(node.tag) == "path":
-            paths.append(_path(node.attrib.get("d", "")))
+            paths.append(NormalizedIconPath(_path(node.attrib.get("d", ""))))
         for child in node:
             visit(child, depth + 1)
     visit(root)
-    if not paths or len(paths) > 128 or sum(len(path) for path in paths) > 2048:
+    if not paths or len(paths) > 128 or sum(len(path.commands) for path in paths) > 2048:
         raise IconNormalizationError("E_ICON_SVG_LIMIT")
     return NormalizedVectorIcon(viewport, tuple(paths))
 
