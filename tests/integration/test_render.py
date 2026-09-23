@@ -121,6 +121,7 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
         {"target": {"kind": "axis-band", "level": "quarter", "index": 0}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "axis-label", "level": "month", "index": 0}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "legend", "role": "planned"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "as-of-label"}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "summary", "panel": "key-figures"}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "summary", "panel": "key-figures", "metric": "launch", "part": "value"}, "ref": "chrona:risk", "decorative": True},
         {"target": {"kind": "summary", "panel": "key-figures", "metric": "launch", "part": "caption"}, "ref": "chrona:risk", "decorative": True},
@@ -134,7 +135,7 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
         viewport=(1920, 1080)))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
     for placement_id in ("axis-band:quarter:0", "axis-label:month:0", "legend:planned", "summary:key-figures",
-                          "summary:key-figures:launch:value", "summary:key-figures:launch:caption"):
+                          "summary:key-figures:launch:value", "summary:key-figures:launch:caption", "as-of-label"):
         assert f"visual:{placement_id}:leading" in by_id
 
 
