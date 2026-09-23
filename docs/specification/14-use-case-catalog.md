@@ -63,6 +63,7 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-30 | Materialize and fork a reusable presentation | Should | Designed | Not exposed |
 | UC-31 | Compare reusable presentation directions in the gallery | Should | Designed | Documentation only |
 | UC-32 | Materialize a portable enhanced visual treatment | Should | SVG/PNG/PDF + materializer | Public Controller Z evidence |
+| UC-33 | Materialize a portable semantic icon | Should | Designed | Not exposed |
 
 ## 4. Detailed use cases
 
@@ -520,6 +521,19 @@ fixtures. **Exceptional behavior:** literal color, raw target syntax, excess
 complexity, or unsupported required capability rejects without a fallback.
 **Owners:** `07`, `08`, `12`, `34`, `46`, `55`, `63`.
 
+### UC-33 — Materialize a portable semantic icon
+
+**Trigger:** An author binds an immutable local icon catalog to a named Context and
+selects an existing semantic role that has a leading label icon or icon mark.
+**Outcome:** Layout produces measured icon/text or mark placement, Scene carries a
+completed normalized vector or immutable raster icon, and the exact SVG/PNG profile
+serializes it reproducibly. **Acceptance evidence:** catalog closure/identity fixtures,
+SVG security rejects, Layout/Scene boundary tests, SVG/PNG output, and public
+materializer evidence containing both asset classes. **Exceptional behavior:** unsafe,
+mutated, missing, inaccessible, or unsupported required icon input rejects before a
+renderer can read a host asset or choose a fallback. **Owners:** `07`, `08`, `12`, `13`,
+`33`, `50`, `55`, `62`, `63`, `64`.
+
 ## 5. Cross-cutting quality scenarios
 
 | ID | Scenario | Acceptance criterion |
@@ -559,10 +573,11 @@ complexity, or unsupported required capability rejects without a fallback.
 | UC-22–UC-28 | `05`–`10`, `12`, `13`, `21`, `51` | approved source/normalization/materialization design | closed schemas, fixtures, command engine, and product adapters |
 | UC-29–UC-31 | `09`, `12`, `13`, `21`, `51`, `55`, `58`, `62` | reusable package/gallery design | package schemas, acquisition/lock, resolver, catalog tooling, fixtures, and product adapters |
 | UC-32 | `07`, `08`, `12`, `34`, `46`, `55`, `63` | portable visual profile, completed Scene values, SVG derivative adapters, and Controller Z evidence | additional target profiles and deferred visual families |
+| UC-33 | `07`, `08`, `12`, `13`, `33`, `50`, `55`, `62`, `63`, `64` | portable icon catalog design | schema/closure, normalized SVG/PNG, Layout/Scene, adapter, and public evidence |
 
 ## 7. Current gaps and release gate
 
-Every UC-01–UC-32 row has a normative owner and design/library evidence where the rule
+Every UC-01–UC-33 row has a normative owner and design/library evidence where the rule
 is machine-checkable. That does not make it a user-facing product feature. The current
 alpha product claim is limited to the commands and documented scripts named in the
 Product surface column. UC-16–UC-21 remain opt-in successor libraries rather than

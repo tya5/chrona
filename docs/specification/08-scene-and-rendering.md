@@ -242,8 +242,9 @@ The initial renderer-neutral vocabulary is intentionally small:
 | `Symbol` | Point events, markers, and reusable semantic glyphs |
 | `Path` | Dependency connectors, explanatory arrows, variance marks, and leaders |
 | `Text` | Labels, notes, axis labels, and accessible text alternatives |
+| `Icon` | Completed catalog-backed vector/raster icon for an existing semantic mark or label |
 
-These four kinds are the closed public v0.2 primitive DTO. Grouping and clipping are
+These five kinds are the closed public v0.2 primitive DTO. Grouping and clipping are
 `SceneSurface`, slot, group, bounds, and viewport metadata, not additional primitive
 kinds. `layoutRegion`, `layoutSlot`, `tableHeader`, `tableCell`, `axisBand`,
 `groupSurface`, `summaryPanel`, and `routedConnector` are closed semantic `purpose`
@@ -281,6 +282,10 @@ as equal `rx`/`ry` and never re-reads `theme.bar.radius`.
 identifier and its concrete `bounds`. `Path` carries at least two ordered logical
 `points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
 tick may omit both port identifiers. `Path.bounds` is the exact union of its points,
+and `Icon` carries exactly one completed normalized vector payload or immutable raster
+payload/identity, concrete bounds, resolved paint where applicable, decorative flag, and
+accessible alternative. Icon has no authoring asset path, catalog lookup, Theme, text
+metric, or placement-policy field. Its placement is Layout-owned exactly as Text is.
 including zero width or height. Paint is the completed `ScenePaint` payload defined
 by Specification 46; `visualRole` is retained only as semantic provenance. Adapters
 serialize completed paint but never re-open Theme/Scheme tokens or calculate a paint

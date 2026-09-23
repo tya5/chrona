@@ -30,6 +30,10 @@ The package may contain only already-supported declarative resource kinds:
 - static, immutable assets only when an approved output-capability contract
   admits them.
 
+An approved `icon-catalog` and only the SVG/PNG assets declared by that catalog are such
+static assets under Specification 64. They remain ordinary verified package members;
+the package resolver never parses, selects, or transforms icon bytes.
+
 It cannot introduce a Project/domain field, scheduling rule, semantic registry
 entry, Scene primitive, visual capability, arbitrary expression, raw SVG/XML,
 CSS, executable code, renderer plugin, network request, or host default.

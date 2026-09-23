@@ -57,6 +57,7 @@ The initial kinds are:
 | `scene-profile` | Scene and Rendering | Temporal scale, lane layout, routing, collision, and layout-metric policy |
 | `snapshot-ref` | View Model | Immutable named Project comparison reference |
 | `actual-set` | View/Command Model | Independently observed Actual observations and explicit alignment state |
+| `icon-catalog` | Portable Icon Catalogs | Immutable local SVG/PNG icon entries and verified asset identities |
 | `presentation-preset` / `presentation-binding` / `presentation-materialization-receipt` | Progressive Authoring | Successor declarative preset, guided binding, and non-rendered materialization provenance; exact schemas are owned by `51` |
 
 `kind` is not an extension point by itself. New resource kinds require an owning
@@ -76,6 +77,7 @@ The initial multi-file layout is explicit rather than include-driven:
 
 ```text
 project.yaml
+icons/<catalog-id>.yaml
 views/<view-id>.yaml
 styles/<style-id>.yaml
 themes/<theme-id>.yaml
@@ -134,8 +136,8 @@ evaluation.
 
 An **evaluation closure** is the ordered, immutable set of resources consumed by one
 Render Context: Render Context; primary Project; View; Style; Theme; Scene Profile;
-the selected Snapshot and Actual set, if any; declared extension packages; and the
-layout-metrics artifact. When the evaluation names a Federation Plan, the
+the selected Snapshot, Actual set, and icon catalog (including its verified asset bytes),
+if any; declared extension packages; and the layout-metrics artifact. When the evaluation names a Federation Plan, the
 closure also contains each resolved child `timeline-export` in deterministic parent
 reference order. The normalized closure manifest records each resource's
 `kind`, `id`, canonical `path`, `revision`, and `contentIdentity`, plus the engine and

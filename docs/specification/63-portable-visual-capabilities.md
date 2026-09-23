@@ -22,7 +22,7 @@ The initial v0.6 vocabulary is closed:
   `miter|round|bevel`).
 
 No raw SVG/XML/CSS, transform, arbitrary definition, filter graph, rectangular
-or path clip, mask, blend, image, radial gradient, glow/blur, animation,
+or path clip, mask, blend, generic image, radial gradient, glow/blur, animation,
 script, HTML, or network asset is admitted. A future target cannot make a
 deferred capability available by silently interpreting package data.
 
@@ -87,6 +87,11 @@ cannot load bytes, execute code, create DOM behavior, or alter Commands.
 Finite profile limits and exact resolved parameters make output reproducible.
 
 ## 5. Packages and Design Space
+
+Specification 64 is the sole narrow exception for an immutable, catalog-owned,
+normalized SVG/PNG **icon** asset. It owns its own source validation, closure,
+Scene primitive, and exact target profiles. This specification continues to defer a
+general Image capability, arbitrary raw SVG, and target asset interpretation.
 
 A future Presentation Package may declare a finite required/optional subset of
 this vocabulary only after package acquisition is re-designed. A registry may

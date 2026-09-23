@@ -146,9 +146,9 @@ resolved profile diagnose.
 ### 8.1 Source measurement and composition boundary
 
 Each closed presentation source has one adapter with two pure operations. `measure`
-receives the resolved source value, resolved Theme, declared font metrics, locale, and an
-optional available inline bound, and returns min/preferred/max logical sizes plus available
-baselines. `compose` receives the same closed inputs and exactly one resolved Layout
+receives the resolved source value, resolved Theme, declared font metrics, locale, any
+resolved immutable icon metrics, and an optional available inline bound, and returns
+min/preferred/max logical sizes plus available baselines. `compose` receives the same closed inputs and exactly one resolved Layout
 Manifest rectangle and emits source-linked Scene primitives inside it.
 
 Source adapters may read View-owned semantic modes and Theme `metrics` bindings. They may
@@ -159,9 +159,12 @@ there is no renderer default table. Layout source measurements are collected onc
 and reused by arrangement and Scene composition so the two passes cannot disagree.
 
 The initial metric contract is namespaced by source/component (`text.*`, `table.*`,
-`timeline.*`, `axis.*`, `legend.*`, `notes.*`). The adapter owns the closed key set and
-rejects unknown keys in its namespace. View owns grouping, comparison, visibility, and
-wording choices; Theme metrics own only concrete visual quantities.
+`timeline.*`, `axis.*`, `legend.*`, `notes.*`, `icon.*`). The adapter owns the closed key set and
+rejects unknown keys in its namespace. View owns grouping, comparison, visibility,
+wording, and semantic icon choice; Theme metrics own only concrete visual quantities.
+For an icon-leading label, Layout reserves the resolved icon width and gap before text
+measurement, then records separate icon/text bounds and the text baseline in its completed
+placement. Scene and adapters may not recompute that reservation or placement.
 
 Resolution uses the following ordered passes:
 
