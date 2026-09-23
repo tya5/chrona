@@ -176,14 +176,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
-    visual_requests = tuple(
-        VisualRequest(visual.target_kind,
-                      tuple((str(key), str(value)) for key, value in visual.selector.items() if key != "kind"),
-                      visual.ref, str(visual.encoding["field"]) if visual.encoding else None,
-                      tuple((str(key), str(value)) for key, value in visual.encoding.get("domain", {}).items()) if visual.encoding else (),
-                      visual.side, visual.decorative, f"/body/visuals/{index}")
-        for index, visual in enumerate(render_closure.view.view.visuals)
-    )
+    visual_requests = tuple(_visual_request(visual, projection, index)
+                            for index, visual in enumerate(render_closure.view.view.visuals))
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
@@ -218,6 +212,26 @@ def render_review(request: RenderRequest) -> RenderedReview:
     if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
     return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance)
+
+
+def _visual_request(visual: Any, projection: Any, index: int) -> VisualRequest:
+    """Resolve View-owned direct/field icon selection before Layout geometry."""
+    selector = tuple((str(key), str(value)) for key, value in visual.selector.items() if key != "kind")
+    ref = visual.ref
+    if visual.encoding is not None:
+        object_id = visual.selector.get("id")
+        item = next((candidate for candidate in projection.items if candidate.object_id == object_id), None)
+        field = visual.encoding.get("field")
+        value = item.fields.get(field) if item is not None and item.fields is not None else None
+        domain = visual.encoding.get("domain", {})
+        ref = domain.get(str(value)) if isinstance(domain, Mapping) else None
+        if ref is None:
+            raise RenderFailed("E_ICON_ENCODING_UNKNOWN", "icon encoding has no matching field value", "presentation",
+                               f"/body/visuals/{index}/encoding")
+    return VisualRequest(visual.target_kind, selector, str(ref) if ref is not None else None,
+                         str(visual.encoding["field"]) if visual.encoding else None,
+                         tuple((str(key), str(value)) for key, value in visual.encoding.get("domain", {}).items()) if visual.encoding else (),
+                         visual.side, visual.decorative, f"/body/visuals/{index}")
 
 
 def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
