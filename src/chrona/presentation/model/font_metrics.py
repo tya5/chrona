@@ -20,6 +20,7 @@ class FontMetrics:
     units_per_em: int
     ascent: int
     descent: int
+    cap_height: int
     advances: dict[int, int]
     default_advance: int
 
@@ -29,6 +30,10 @@ class FontMetrics:
     def baseline(self, top: float, size: float, line_height: float) -> float:
         line = size * line_height
         return top + (line - size) / 2 + size * self.ascent / self.units_per_em
+
+    def cap_height_at(self, size: float) -> float:
+        """Return the declared cap height at one completed typography size."""
+        return size * self.cap_height / self.units_per_em
 
 
 def _families(font_stack: str) -> list[str]:
@@ -79,19 +84,21 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
             continue
         try:
             table = json.loads(payload)
-            if (table.get("version") != "chrona/font-metrics/v1"
+            if (table.get("version") != "chrona/font-metrics/v2"
                     or table.get("family", "").casefold() != family.casefold()
                     or table.get("weight") != weight):
                 continue
             units = int(table["unitsPerEm"])
             ascent = int(table["ascent"])
             descent = int(table["descent"])
+            cap_height = int(table["capHeight"])
             default = int(table["defaultAdvance"])
             advances = {int(code): int(value) for code, value in table["advances"].items()}
-            if units <= 0 or default < 0 or any(code < 0 or value < 0 for code, value in advances.items()):
+            if (units <= 0 or cap_height <= 0 or cap_height > units or default < 0
+                    or any(code < 0 or value < 0 for code, value in advances.items())):
                 continue
         except (AttributeError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             continue
-        return FontMetrics(path, identity, units, ascent, descent, advances, default)
+        return FontMetrics(path, identity, units, ascent, descent, cap_height, advances, default)
     else:
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")

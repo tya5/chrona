@@ -22,14 +22,18 @@ def main() -> None:
     cmap = font.getBestCmap() or {}
     hmtx = font["hmtx"].metrics
     units = int(font["head"].unitsPerEm)
+    cap_height = int(getattr(font["OS/2"], "sCapHeight", 0))
+    if cap_height <= 0:
+        raise ValueError("E_FONT_CAP_HEIGHT_REQUIRED")
     table = {
-        "version": "chrona/font-metrics/v1",
+        "version": "chrona/font-metrics/v2",
         "family": args.family,
         "weight": args.weight,
         "sourceContentIdentity": "sha256:" + sha256(payload).hexdigest(),
         "unitsPerEm": units,
         "ascent": int(font["hhea"].ascent),
         "descent": int(font["hhea"].descent),
+        "capHeight": cap_height,
         "defaultAdvance": int(hmtx.get(".notdef", (units, 0))[0]),
         "advances": {str(code): int(hmtx[name][0]) for code, name in sorted(cmap.items()) if name in hmtx},
     }

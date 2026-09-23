@@ -23,6 +23,7 @@ def test_font_metrics_measurement_is_asset_bound_and_deterministic():
     metrics = resolve_font_metrics("Nimbus Sans", value)
     assert metrics.width("Chrona", 20) == metrics.width("Chrona", 20)
     assert metrics.width("Chrona", 20) > 0
+    assert metrics.cap_height_at(20) == 14.58
     assert metrics.path.name == "nimbus-sans-regular-v1.json"
 
 
