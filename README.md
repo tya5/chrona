@@ -113,6 +113,35 @@ that path additionally requires node with `sharp`.
 
 ## Local authoring
 
+### Portable icons
+
+Create a catalog from an explicit local Iconify collection, then pass that
+catalog explicitly to draft rendering. The catalog is normalized before render;
+Chrona never reads raw SVG or contacts a registry at render time.
+
+```bash
+chrona icon-catalog import icons.json --license-spdx MIT --notice-file NOTICE \
+  --output icons.yaml
+chrona render project.yaml --view view.yaml --theme theme.yaml --scheme scheme.yaml \
+  --layout layout.yaml --icon-catalog icons.yaml --output review.svg
+```
+
+In the View, attach a catalog entry to an existing target. `decorative: false`
+requires the catalog alternative and retains the existing text as equivalent
+meaning:
+
+```yaml
+visuals:
+  - target: {kind: title}
+    ref: chrona:risk
+    side: leading
+    decorative: false
+```
+
+See [Specification 64](docs/specification/64-portable-icon-catalogs.md) and
+[Controller Z's icon Context](examples/controller-z/contexts/icons.yaml) for a
+fully pinned materialized example.
+
 Create a complete non-overwriting project and materialize its declared first
 slide through the public service:
 

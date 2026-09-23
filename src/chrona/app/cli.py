@@ -177,7 +177,7 @@ def _parser() -> JsonArgumentParser:
     icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
     command = icon_sub.add_parser("import", help="import one local Iconify JSON collection")
     command.add_argument("source", help="local Iconify JSON collection")
-    command.add_argument("--output", required=True, help="new v0.2 catalog YAML")
+    command.add_argument("--output", required=True, help="new v0.3 catalog YAML")
     command.add_argument("--license-spdx", required=True, help="declared upstream SPDX identifier")
     command.add_argument("--notice-file", required=True, help="local complete upstream license notice")
     command.add_argument("--set", dest="icon_set", help="canonical set name (defaults to collection prefix)")

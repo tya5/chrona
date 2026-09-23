@@ -1,6 +1,6 @@
 # Portable Icon Catalogs and Immutable Visual Assets
 
-**Status:** Proposed — v0.2 successor design
+**Status:** Implemented — v0.3 successor contract
 **Owns:** local Iconify collection ingestion, normalized monochrome icon
 catalogs, catalog-set closure, label/mark visual selection, completed Icon
 primitives, icon accessibility, and SVG/PNG target capability.
@@ -38,7 +38,7 @@ destination atomically only if the complete collection succeeds. Failure
 identifies `prefix`, icon name, source element/attribute/command, and stable
 diagnostic; a partial catalog is never emitted.
 
-The successor `chrona/icon-catalog/v0.2` stores canonical normalized entries,
+The successor `chrona/icon-catalog/v0.3` stores canonical normalized entries,
 not source SVG paths. It records:
 
 - one canonical `prefix`, non-empty aliases, source collection version and
