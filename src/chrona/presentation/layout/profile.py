@@ -13,6 +13,7 @@ import yaml
 
 from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
 from chrona.resources import schema_resource
+from chrona.schema_diagnostics import explain_errors
 
 
 LAYOUT_VERSION = "chrona/layout-profile/v0.3"
@@ -32,10 +33,13 @@ def _schema() -> dict[str, Any]:
 def _validate_schema(profile: Mapping[str, Any]) -> None:
     if profile.get("version") != LAYOUT_VERSION:
         raise LayoutError("E_LAYOUT_SCHEMA", "/version")
-    error = next(jsonschema.Draft202012Validator(_schema()).iter_errors(profile), None)
-    if error is not None:
-        path = "/" + "/".join(str(item) for item in error.absolute_path)
-        raise LayoutError("E_LAYOUT_SCHEMA", path)
+    errors = tuple(jsonschema.Draft202012Validator(_schema()).iter_errors(profile))
+    if errors:
+        identity = profile.get("id")
+        violation = explain_errors(
+            errors, resource_kind="layout-profile", resource_identity=identity if isinstance(identity, str) else None,
+        )
+        raise LayoutError("E_LAYOUT_SCHEMA", violation.pointer, detail=violation.message)
 
 
 def _canonical_hash(value: Mapping[str, Any]) -> str:

@@ -10,8 +10,8 @@ from typing import Any, Mapping
 class LayoutError(ValueError):
     """Stable M24 layout diagnostic."""
 
-    def __init__(self, diagnostic_id: str, path: str = "", node_id: str | None = None):
-        super().__init__(diagnostic_id)
+    def __init__(self, diagnostic_id: str, path: str = "", node_id: str | None = None, detail: str = ""):
+        super().__init__(diagnostic_id + (f": {detail}" if detail else ""))
         self.diagnostic_id = diagnostic_id
         self.path = path
         self.node_id = node_id

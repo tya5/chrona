@@ -8,6 +8,7 @@ from typing import Any, Iterable, Mapping
 import yaml
 
 from chrona.resources import schema_resource
+from chrona.schema_diagnostics import explain_errors
 from chrona.presentation.layout.model import LayoutManifest
 from jsonschema import Draft202012Validator
 
@@ -35,8 +36,13 @@ class ResolvedReviewDetail:
 
 def _validate_shape(profile: Mapping[str, Any]) -> None:
     schema = yaml.safe_load(_SCHEMA.read_text(encoding="utf-8"))
-    if next(Draft202012Validator(schema).iter_errors(dict(profile)), None) is not None:
-        raise ReviewDetailError("E_DETAIL_PROFILE_SCHEMA")
+    errors = tuple(Draft202012Validator(schema).iter_errors(dict(profile)))
+    if errors:
+        identity = profile.get("id")
+        violation = explain_errors(
+            errors, resource_kind="review-detail-profile", resource_identity=identity if isinstance(identity, str) else None,
+        )
+        raise ReviewDetailError(f"E_DETAIL_PROFILE_SCHEMA: {violation.pointer}: {violation.message}")
 
 
 def _unique(values: Iterable[str], diagnostic: str) -> None:

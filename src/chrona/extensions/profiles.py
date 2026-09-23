@@ -8,6 +8,7 @@ import yaml
 
 from chrona.core.diagnostics import Diagnostic
 from chrona.resources import schema_resource
+from chrona.schema_diagnostics import explain_errors
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
 PROFILE_SCHEMA = schema_resource("profile-v0.2.schema.yaml")
@@ -48,8 +49,12 @@ def validate_profiles(project: dict[str, Any], package_manifests: dict[str, dict
     if manifest is None:
         return [Diagnostic("IDP-PROFILE-006", "Implementation-delivery package is unresolved", "/extensions")]
     schema = yaml.safe_load(PROFILE_SCHEMA.read_text())
-    if list(jsonschema.Draft202012Validator(schema).iter_errors(manifest)) or manifest.get("packageId") != PACKAGE_ID:
-        return [Diagnostic("IDP-PROFILE-006", "Implementation-delivery package is invalid", "/extensions")]
+    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(manifest))
+    if errors or manifest.get("packageId") != PACKAGE_ID:
+        detail = "packageId must be 'implementation-delivery'" if not errors else explain_errors(
+            errors, resource_kind="profile", resource_identity=manifest.get("packageId") if isinstance(manifest.get("packageId"), str) else None,
+        ).message
+        return [Diagnostic("IDP-PROFILE-006", f"Implementation-delivery package is invalid: {detail}", "/extensions")]
     diagnostics: list[Diagnostic] = []
     profiles = manifest.get("profiles", {})
     for object_id, item in project.get("objects", {}).items():
@@ -84,8 +89,12 @@ def _validate_value(project: dict[str, Any], name: str, value: Any, spec: dict[s
     if spec.get("type") == "resourceReference":
         schema = yaml.safe_load(RESOURCE_SCHEMA.read_text())
         for reference in values:
-            if list(jsonschema.Draft202012Validator(schema).iter_errors(reference)):
-                return [Diagnostic("IDP-EVIDENCE-001", "Invalid immutable evidence reference", path)]
+            errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(reference))
+            if errors:
+                violation = explain_errors(
+                    errors, resource_kind="revision-store-resource-ref", resource_identity=reference.get("id") if isinstance(reference.get("id"), str) else None,
+                )
+                return [Diagnostic("IDP-EVIDENCE-001", f"Invalid immutable evidence reference: {violation.message}", path + violation.pointer)]
             if reference.get("kind") not in spec.get("resourceKinds", []):
                 return [Diagnostic("IDP-EVIDENCE-002", "Evidence kind is not allowed for this field", path)]
     return []
