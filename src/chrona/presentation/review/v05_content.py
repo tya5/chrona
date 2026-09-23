@@ -90,7 +90,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     raw_annotations = view.annotations if annotation_mode != "none" else ()
     annotations = tuple({**annotation, "number": index + 1} for index, annotation in enumerate(raw_annotations)) if annotation_numbered else raw_annotations
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
-    resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest)
+    resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
+                                                          profile_is_validated=True)
                        if layout_manifest is not None else None)
     legend = tuple((item.role, item.label) for item in detail.legend) if detail is not None else ()
     scale_paints: tuple[tuple[str, str], ...] = ()
@@ -160,11 +161,15 @@ def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], sh
 
 
 def _detail_mapping(detail: ReviewDetailInput | None) -> Mapping[str, Any] | None:
-    """Adapter for the pre-existing detail-layout resolver; it never sees YAML."""
+    """Adapt an accepted typed detail contract to the detail resolver's input shape."""
     if detail is None:
         return None
-    return {"body": {"groupDetails": detail.group_details, "milestones": detail.milestones,
-                      "legend": tuple({"role": item.role, "label": item.label} for item in detail.legend),
+    # Detail contracts have already passed their resource-schema boundary.
+    # Empty sections are absent presentation content, not a request for a
+    # layout source; nonempty sections retain the immutable contract values.
+    return {"body": {"legend": [{"role": item.role, "label": item.label} for item in detail.legend],
+                      **({"groupDetails": detail.group_details} if detail.group_details else {}),
+                      **({"milestones": detail.milestones} if detail.milestones else {}),
                       **({"observations": detail.observations} if detail.observations else {})}}
 
 

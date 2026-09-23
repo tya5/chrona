@@ -5,10 +5,12 @@ authoring inputs enter the same review pipeline as immutable evidence renders.
 """
 from pathlib import Path
 
+import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 
@@ -144,11 +146,45 @@ def test_draft_project_note_visual_reaches_its_completed_slot(tmp_path):
     view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))
     view["body"]["visuals"] = [{"target": {"kind": "note", "id": "evb-risk"}, "ref": "chrona:risk", "decorative": True}]
     path = tmp_path / "note-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
-    rendered = render_review(_draft_request(view_path=path, layout_path=example / "layouts/executive-review.yaml",
-        detail_path=example / "profiles/review-detail.yaml", icon_catalog_paths=(example / "icons.yaml",),
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(example / "icons.yaml",),
         visual_profile="chrona-output/visual/v0.7-svg"))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
     assert "visual:note:evb-risk:leading" in by_id
+
+
+def test_draft_detail_visuals_reach_group_and_milestone_slots(tmp_path):
+    root = _root(); example = root / "examples/controller-z"
+    view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [
+        {"target": {"kind": "group-detail", "id": "fw-team"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "milestone", "id": "evb-arrival"}, "ref": "chrona:risk", "decorative": True},
+    ]
+    view_path = tmp_path / "detail-visual-view.yaml"; view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    rendered = render_review(_draft_request(view_path=view_path, layout_path=example / "layouts/executive-review.yaml",
+        detail_path=example / "profiles/review-detail.yaml", icon_catalog_paths=(example / "icons.yaml",),
+        visual_profile="chrona-output/visual/v0.7-svg"))
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    assert "visual:group-detail:fw-team:leading" in by_id
+    assert "visual:milestone:evb-arrival:leading" in by_id
+
+
+def test_detail_profile_and_layout_sources_close_before_scene(tmp_path):
+    root = _root(); example = root / "examples/controller-z"
+    layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
+    footer = next(node for node in layout["root"]["children"] if node["id"] == "footer")
+    footer["children"] = [node for node in footer["children"] if node.get("source") != "group-details"]
+    missing_source = tmp_path / "missing-detail-source.yaml"
+    missing_source.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ReviewDetailError, match="E_DETAIL_SLOT_REQUIRED"):
+        render_review(_draft_request(layout_path=missing_source, detail_path=example / "profiles/review-detail.yaml"))
+
+    for node in footer["children"]:
+        if node.get("source") in {"milestones", "observations"}:
+            node["priority"] = "required"
+    required_source = tmp_path / "required-detail-source.yaml"
+    required_source.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ReviewDetailError, match="E_LAYOUT_SOURCE_UNAVAILABLE"):
+        render_review(_draft_request(layout_path=required_source))
 
 
 

@@ -73,10 +73,6 @@
 <path data-scene-id="axis-grid:major:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1318.4 116.8L1318.4 820.8" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="relation:architecture-unlocks-firmware:architecture:architecture:firmware:firmware" data-source-ref="architecture-unlocks-firmware" data-purpose="dependency" d="M792 187.467L792 422.133" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-#4B5563-triangle)"/>
 <path data-scene-id="relation:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival" data-source-ref="firmware-to-evb" data-purpose="dependency" d="M1419.2 422.133L1419.2 656.8L1497.6 656.8" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-#4B5563-triangle)"/>
-<rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="24" y="845.858" width="9.6" height="9.6" opacity="1" fill="#3986E6"/>
-<rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="24" y="862.658" width="9.6" height="9.6" opacity="1" fill="#269D79"/>
-<text data-scene-id="legend:planned" data-source-ref="planned" data-purpose="legend-label" x="38.4" y="855.458" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Planned</text>
-<text data-scene-id="legend:actual" data-source-ref="actual" data-purpose="legend-label" x="38.4" y="872.258" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Actual</text>
 <text data-scene-id="note:evb-risk" data-source-ref="evb-risk" data-purpose="project-note" x="1256.198" y="850.8" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Board arrival gates first silicon boot.</text>
 <text data-scene-id="note:pvt-exit" data-source-ref="pvt-exit" data-purpose="project-note" x="1256.198" y="864.8" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Qualification closure precedes the release decision.</text>
 </svg>

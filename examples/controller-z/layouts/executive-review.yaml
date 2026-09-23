@@ -71,13 +71,37 @@ root:
       alignItems: first-baseline
       justifyContent: space-between
       children:
+        - id: group-details
+          kind: slot
+          source: group-details
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: diagnose
+        - id: milestones
+          kind: slot
+          source: milestones
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: diagnose
+        - id: observations
+          kind: slot
+          source: observations
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: diagnose
         - id: legend
           kind: slot
           source: legend
           inlineSize: content
           blockSize: content
           place: {inline: start, block: first-baseline, safety: safe}
-          priority: required
+          priority: optional
           overflow: diagnose
         - id: notes
           kind: slot

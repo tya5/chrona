@@ -55,10 +55,13 @@ def test_dependency_variants_share_the_subject_but_not_the_scene_role():
 
 @pytest.mark.parametrize("svg_path", GENERATED, ids=lambda path: f"{path.parents[1].name}/{path.stem}")
 def test_the_renderer_draws_only_the_registered_primitive_kinds(svg_path):
-    """Every element the renderer produced maps back to one PrimitiveKind."""
+    """Every rendered primitive is a supported SVG element or an icon path group."""
     drawn = {node.tag.removeprefix(SVG) for node in ElementTree.fromstring(svg_path.read_text()).iter()
              if node.get("data-purpose") is not None}
-    assert drawn <= {"rect", "text", "polygon", "path", "image"}
+    # A vector Icon is one Scene primitive projected as a semantic ``g`` that
+    # owns its normalized fill/stroke paths; the paths themselves deliberately
+    # do not duplicate the primitive's provenance attributes.
+    assert drawn <= {"rect", "text", "polygon", "path", "image", "g"}
     assert {kind.value for kind in PrimitiveKind} == {"Rect", "Text", "Symbol", "Path", "Icon"}
 
 

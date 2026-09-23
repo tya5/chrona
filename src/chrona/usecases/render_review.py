@@ -171,6 +171,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         actual_set=render_closure.actual_set.observations_input if render_closure.actual_set else None,
         detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
         summary=summary,
+        layout_manifest=manifest,
         locale=environment.locale,
         color_scale=color_scale,
     )

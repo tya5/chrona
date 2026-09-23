@@ -119,8 +119,12 @@ def resolve_review_detail_profile(profile: Mapping[str, Any] | None, items: Iter
 
 
 def resolve_v05_review_detail_profile(profile: Mapping[str, Any] | None, items: Iterable[object],
-                                      manifest: LayoutManifest) -> ResolvedReviewDetail:
-    """Resolve current Detail Profile against an immutable Layout Manifest only."""
+                                      manifest: LayoutManifest, *, profile_is_validated: bool = False) -> ResolvedReviewDetail:
+    """Resolve current Detail Profile against an immutable Layout Manifest only.
+
+    Resource closures pass an already schema-validated typed profile.  Direct
+    callers may retain the defensive raw-resource validation.
+    """
     sources = {item.source for item in manifest.decisions if item.source}
     required = {item.source for item in manifest.decisions if item.source and item.kind == "slot" and item.priority == "required"}
     body = (profile or {}).get("body", {})
@@ -132,7 +136,8 @@ def resolve_v05_review_detail_profile(profile: Mapping[str, Any] | None, items: 
             raise ReviewDetailError("E_LAYOUT_SOURCE_UNAVAILABLE")
     if profile is None:
         return ResolvedReviewDetail()
-    _validate_shape(profile)
+    if not profile_is_validated:
+        _validate_shape(profile)
     selected = tuple(items)
     items_by_id = {str(getattr(item, "object_id")): item for item in selected}
     group_order = tuple(dict.fromkeys(str(getattr(item, "group_id", "")) for item in selected))
