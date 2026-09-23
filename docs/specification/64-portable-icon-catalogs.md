@@ -28,10 +28,13 @@ one-catalog bridge, raw-SVG fallback, or silently downgraded source is retained.
 
 ## 2. Local collection ingestion and normalized catalog
 
-`chrona icon-catalog import COLLECTION.json --output CATALOG.yaml` reads one
-explicit local Iconify JSON collection. It performs no network access, registry
-lookup, package installation, or rendering. It validates every icon and writes
-the destination atomically only if the complete collection succeeds. Failure
+`chrona icon-catalog import COLLECTION.json --license-spdx SPDX --notice-file
+NOTICE --output CATALOG.yaml` reads explicit local inputs only. The published
+`@iconify-json/*/icons.json` files contain no license metadata, so the importer
+must not infer or omit it: the author supplies the collection's SPDX identifier
+and complete local notice file. It performs no network access, registry lookup,
+package installation, or rendering. It validates every icon and writes the
+destination atomically only if the complete collection succeeds. Failure
 identifies `prefix`, icon name, source element/attribute/command, and stable
 diagnostic; a partial catalog is never emitted.
 

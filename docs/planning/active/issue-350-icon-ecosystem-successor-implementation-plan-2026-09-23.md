@@ -50,7 +50,8 @@ projection together.
 ## I350R-2 — Deterministic local Iconify importer and vector normalization
 
 Build the `chrona icon-catalog import` authoring command. Implement a bounded
-Iconify JSON reader, SVG fragment/parser lowering, fixed transform handling,
+Iconify JSON reader with explicit local SPDX/notice inputs (the published
+collection JSON does not carry licensing metadata), SVG fragment/parser lowering, fixed transform handling,
 shape lowering, arc/cubic-to-quadratic conversion under a pinned tolerance, and
 per-path fill/stroke normalization. Emit a canonical v0.2 YAML catalog with
 source identity/license/notice; write it atomically only after complete success.
