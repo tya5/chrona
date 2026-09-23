@@ -301,7 +301,7 @@ def _draft_render_from_resources(
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
     context_value = {
-        "version": "chrona/render-context/v0.11", "kind": "render-context", "id": "draft-render",
+        "version": "chrona/render-context/v0.12", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -342,7 +342,7 @@ def _draft_render_from_resources(
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     """Read one explicit draft input and freeze it through its resource contract."""
-    value = yaml.safe_load(path.read_bytes())
+    value = yaml.load(path.read_bytes(), Loader=yaml.CSafeLoader)
     if not isinstance(value, dict):
         raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
     identifier = _resource_id(kind, value)
@@ -411,7 +411,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.version != "chrona/render-context/v0.11":
+    if context.version != "chrona/render-context/v0.12":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 
@@ -575,7 +575,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     except SnapshotReadError as error:
         raise ClosureError(error.diagnostic_id) from error
     computed_identity = f"sha256:{sha256(payload).hexdigest()}"
-    value = yaml.safe_load(payload)
+    value = yaml.load(payload, Loader=yaml.CSafeLoader)
     if expected_kind == "project":
         actual_id = value.get("project", {}).get("id") if isinstance(value, dict) else None
     elif expected_kind == "profile-package":

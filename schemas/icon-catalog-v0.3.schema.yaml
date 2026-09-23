@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:icon-catalog-v0.2"
-title: "Chrona Icon Catalog v0.2"
+$id: "urn:chrona:icon-catalog-v0.3"
+title: "Chrona Icon Catalog v0.3"
 description: "A canonical, offline icon set. Vector paths are normalized at import; raw SVG/XML is never a render input."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
-      version: {description: "This canonical catalog contract version.", const: "chrona/icon-catalog/v0.2"}
+      version: {description: "This canonical catalog contract version.", const: "chrona/icon-catalog/v0.3"}
       kind: {const: icon-catalog}
       body:
         type: object
@@ -51,7 +51,7 @@ allOf:
 $defs:
   name:
     type: string
-    pattern: "^[A-Za-z][A-Za-z0-9_-]*$"
+    pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$"
   viewport:
     type: object
     required: [inlineSize, blockSize]
@@ -79,15 +79,15 @@ $defs:
         then: {properties: {points: {minItems: 4, maxItems: 4}}}
   path:
     type: object
-    required: [paint, commands]
+    required: [paint, data]
     additionalProperties: false
     properties:
       paint: {description: "Color-Scheme-owned paint mode.", enum: [fill, stroke]}
-      commands:
-        type: array
-        minItems: 1
-        maxItems: 4096
-        items: {$ref: "#/$defs/command"}
+      data:
+        description: "Canonical normalized primitive stream: only uppercase M, L, Q, Z and finite decimal coordinates."
+        type: string
+        minLength: 1
+        maxLength: 65536
       strokeWidth: {type: number, exclusiveMinimum: 0, maximum: 1024}
       lineCap: {enum: [butt, round, square]}
       lineJoin: {enum: [miter, round, bevel]}

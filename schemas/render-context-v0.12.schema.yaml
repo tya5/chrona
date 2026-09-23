@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:render-context-v0.11"
-title: "Chrona Render Context v0.11"
+$id: "urn:chrona:render-context-v0.12"
+title: "Chrona Render Context v0.12"
 description: "Pinned inputs, execution environment, and output target for one materialization."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {description: "This Render Context contract version.", const: "chrona/render-context/v0.11"}
+  version: {description: "This Render Context contract version.", const: "chrona/render-context/v0.12"}
   kind: {description: "The resource kind for a Render Context.", const: render-context}
   id: {description: "Stable Render Context identifier.", type: string, minLength: 1}
   body:

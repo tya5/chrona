@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import math
+import re
 from typing import Any, Mapping
 
 import jsonschema
@@ -317,6 +319,36 @@ class IconPath:
     line_join: str | None = None
 
 
+_COMPACT_ARITY = {"M": 2, "L": 2, "Q": 4, "Z": 0}
+_COMPACT_NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$")
+
+
+def _compact_commands(value: object) -> tuple[FrozenDict, ...]:
+    """Decode the v0.3 canonical primitive stream at the contract boundary."""
+    if not isinstance(value, str):
+        raise ContractError("E_ICON_CATALOG_GEOMETRY")
+    tokens = value.split()
+    commands: list[FrozenDict] = []
+    index = 0
+    while index < len(tokens):
+        kind = tokens[index]
+        count = _COMPACT_ARITY.get(kind)
+        if count is None or index + count >= len(tokens):
+            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+        raw_points = tokens[index + 1:index + 1 + count]
+        if any(not _COMPACT_NUMBER.fullmatch(token) for token in raw_points):
+            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+        points = tuple(float(token) for token in raw_points)
+        if not all(math.isfinite(point) for point in points):
+            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+        commands.append(freeze({"kind": {"M": "move", "L": "line", "Q": "quadratic", "Z": "close"}[kind],
+                                **({"points": list(points)} if points else {})}))
+        index += count + 1
+    if not commands or commands[0]["kind"] != "move":
+        raise ContractError("E_ICON_CATALOG_GEOMETRY")
+    return tuple(commands)
+
+
 @dataclass(frozen=True)
 class IconRasterSource:
     """Identity-closed PNG payload retained only for a raster catalog entry."""
@@ -450,13 +482,13 @@ class ResolvedThemeContract:
 
 
 _SCHEMAS = {
-    ("render-context", "chrona/render-context/v0.11"): "render-context-v0.11.schema.yaml",
+    ("render-context", "chrona/render-context/v0.12"): "render-context-v0.12.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
     ("view", "chrona/view/v0.12"): "view-v0.12.schema.yaml",
     ("theme", "chrona/theme/v0.5"): "theme-v0.5.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
-    ("icon-catalog", "chrona/icon-catalog/v0.2"): "icon-catalog-v0.2.schema.yaml",
+    ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
     ("profile-package", "chrona/profile/v0.2"): "profile-v0.2.schema.yaml",
@@ -632,11 +664,8 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
                 raise ContractError("E_CLOSURE_KIND")
             normalized_paths: list[IconPath] = []
             for path in paths:
-                commands = path.get("commands")
-                if not isinstance(commands, (FrozenList, tuple)) or not all(isinstance(command, FrozenDict) for command in commands):
-                    raise ContractError("E_CLOSURE_KIND")
                 normalized_paths.append(IconPath(
-                    str(path["paint"]), tuple(commands),
+                    str(path["paint"]), _compact_commands(path.get("data")),
                     float(path["strokeWidth"]) if "strokeWidth" in path else None,
                     str(path["lineCap"]) if "lineCap" in path else None,
                     str(path["lineJoin"]) if "lineJoin" in path else None,

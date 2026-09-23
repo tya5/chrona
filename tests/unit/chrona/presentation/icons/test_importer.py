@@ -3,7 +3,7 @@ import json
 import pytest
 import yaml
 
-from chrona.presentation.icons.importer import IconImportError, import_iconify
+from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 
 
 def _collection(body: str) -> dict:
@@ -43,7 +43,7 @@ def test_importer_applies_iconify_quarter_turn_metadata(tmp_path):
     import_iconify(source, output, license_spdx="MIT", notice_path=notice)
     icon = yaml.safe_load(output.read_text())["body"]["icons"]["sample"]
     assert icon["viewport"] == {"inlineSize": 10, "blockSize": 20}
-    assert icon["paths"][0]["commands"][0]["points"] == [8.0, 1.0]
+    assert icon["paths"][0]["data"].split()[:3] == ["M", "8", "1"]
 
 
 def test_importer_normalizes_transform_bearing_alias_to_its_own_entry(tmp_path):
@@ -53,3 +53,25 @@ def test_importer_normalizes_transform_bearing_alias_to_its_own_entry(tmp_path):
     import_iconify(source, output, license_spdx="MIT", notice_path=notice)
     body = yaml.safe_load(output.read_text())["body"]
     assert "turned" in body["icons"] and "turned" not in body["entryAliases"]
+
+
+def test_importer_selects_only_the_explicit_local_manifest(tmp_path):
+    source, output, notice, include = (tmp_path / "icons.json", tmp_path / "icons.yaml",
+                                       tmp_path / "LICENSE", tmp_path / "include.txt")
+    value = _collection('<path d="M1 2L3 4"/>')
+    value["icons"]["other"] = {"body": '<path d="M2 3L4 5"/>', "width": 24, "height": 24}
+    source.write_text(json.dumps(value)); notice.write_text("MIT notice\n"); include.write_text("sample\n")
+
+    result = import_iconify(source, output, license_spdx="MIT", notice_path=notice, include_path=include)
+
+    assert result["icons"] == 1
+    assert set(yaml.safe_load(output.read_text())["body"]["icons"]) == {"sample"}
+
+
+def test_bundled_default_copies_an_explicit_catalog(tmp_path):
+    output = tmp_path / "material.yaml"
+    result = copy_material_symbols_outline_rounded_catalog(output)
+
+    assert result["set"] == "material"
+    assert result["aliases"] == ["material-symbols"]
+    assert output.read_bytes()

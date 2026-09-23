@@ -88,7 +88,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
     raw = context_path.read_bytes()
     context = yaml.safe_load(raw)
-    if context.get("version") != "chrona/render-context/v0.11" or context.get("kind") != "render-context":
+    if context.get("version") != "chrona/render-context/v0.12" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]

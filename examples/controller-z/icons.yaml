@@ -1,4 +1,4 @@
-version: chrona/icon-catalog/v0.2
+version: chrona/icon-catalog/v0.3
 kind: icon-catalog
 id: controller-z-icons
 body:
@@ -7,6 +7,7 @@ body:
   provenance:
     sourceKind: iconify-json
     sourcePrefix: chrona
+    sourceContentIdentity: sha256:8e141d462251064883e194895e21fa119563e6b7f6a184fe4c80648670a5f2c5
     license: {spdx: CC0-1.0, notice: "Controller Z purpose-built example artwork."}
   icons:
     risk:
@@ -14,22 +15,12 @@ body:
       viewport: {inlineSize: 24, blockSize: 24}
       alternative: Delivery risk
       paths:
-        - paint: fill
-          commands:
-            - {kind: move, points: [12, 1]}
-            - {kind: line, points: [23, 22]}
-            - {kind: line, points: [1, 22]}
-            - {kind: close}
-        - paint: fill
-          commands:
-            - {kind: move, points: [12, 8]}
-            - {kind: line, points: [12, 15]}
-        - paint: fill
-          commands:
-            - {kind: move, points: [12, 18]}
-            - {kind: line, points: [12, 18]}
+        - {paint: fill, data: "M 12 1 L 23 22 L 1 22 Z"}
+        - {paint: fill, data: "M 12 8 L 12 15"}
+        - {paint: fill, data: "M 12 18 L 12 18"}
     programme:
       kind: raster
       source: {address: assets/programme.png, contentIdentity: sha256:fc269fa59c59eace6b23c198d8c94f4b591d2c58b5c8a2db152b150f0b58230d}
       viewport: {inlineSize: 1600, blockSize: 900}
       alternative: Programme overview
+  entryAliases: {}

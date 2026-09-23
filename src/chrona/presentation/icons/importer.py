@@ -9,6 +9,8 @@ import tempfile
 from typing import Any
 from xml.etree import ElementTree
 
+from importlib.resources import files
+
 import yaml
 from fontTools.pens.cu2quPen import Cu2QuPen
 from fontTools.svgLib.path import parse_path
@@ -18,6 +20,28 @@ class IconImportError(ValueError):
     def __init__(self, code: str, icon: str | None = None):
         super().__init__(code)
         self.code, self.icon = code, icon
+
+
+def material_symbols_outline_rounded_catalog() -> bytes:
+    """Return the package-owned, normalized default catalog without discovery."""
+    return files("chrona.resources").joinpath(
+        "icons", "material-symbols-outline-rounded-v2026-09-22.yaml"
+    ).read_bytes()
+
+
+def copy_material_symbols_outline_rounded_catalog(destination: Path) -> dict[str, object]:
+    """Write one explicit Draft-ready copy of the packaged default atomically."""
+    payload = material_symbols_outline_rounded_catalog()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=destination.parent)
+    try:
+        with os.fdopen(fd, "wb") as out:
+            out.write(payload); out.flush(); os.fsync(out.fileno())
+        os.replace(temporary, destination)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+    return {"set": "material", "aliases": ["material-symbols"],
+            "contentIdentity": "sha256:" + sha256(payload).hexdigest()}
 
 
 class _Pen:
@@ -33,6 +57,26 @@ class _Pen:
             self.commands.append({"kind": "quadratic", "points": [*control, *end]})
     def closePath(self) -> None: self.commands.append({"kind": "close"})
     def endPath(self) -> None: pass
+
+
+def _compact_paths(paths: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Serialize importer-owned primitives into the v0.3 compact grammar."""
+    result: list[dict[str, object]] = []
+    tokens = {"move": "M", "line": "L", "quadratic": "Q", "close": "Z"}
+    def number(value: object) -> str:
+        numeric = float(value)
+        if abs(numeric) < 1e-9:
+            numeric = 0.0
+        return format(numeric, ".9f").rstrip("0").rstrip(".") or "0"
+    for path in paths:
+        stream: list[str] = []
+        for command in path["commands"]:
+            stream.append(tokens[str(command["kind"])])
+            stream.extend(number(point) for point in command.get("points", ()))
+        item = {key: value for key, value in path.items() if key != "commands"}
+        item["data"] = " ".join(stream)
+        result.append(item)
+    return result
 
 
 def _paths(body: str, icon: str, width: int = 24, height: int = 24, transform: dict[str, object] | None = None) -> list[dict[str, object]]:
@@ -100,7 +144,7 @@ def _shape_path(tag: str, values: dict[str, str]) -> str:
 
 def import_iconify(source: Path, destination: Path, *, set_name: str | None = None,
                    aliases: tuple[str, ...] = (), license_spdx: str | None = None,
-                   notice_path: Path | None = None) -> dict[str, object]:
+                   notice_path: Path | None = None, include_path: Path | None = None) -> dict[str, object]:
     try:
         source_bytes = source.read_bytes()
         collection = json.loads(source_bytes)
@@ -112,17 +156,30 @@ def import_iconify(source: Path, destination: Path, *, set_name: str | None = No
     try: notice = notice_path.read_text(encoding="utf-8").strip()
     except OSError as error: raise IconImportError("E_ICON_IMPORT_LICENSE") from error
     if not notice: raise IconImportError("E_ICON_IMPORT_LICENSE")
+    selected: set[str] | None = None
+    if include_path is not None:
+        try:
+            selected = {line.strip() for line in include_path.read_text(encoding="utf-8").splitlines()
+                        if line.strip() and not line.lstrip().startswith("#")}
+        except OSError as error:
+            raise IconImportError("E_ICON_IMPORT_INCLUDE") from error
+        if not selected or any(name not in entries for name in selected):
+            raise IconImportError("E_ICON_IMPORT_INCLUDE")
     normalized: dict[str, object] = {}; entry_aliases: dict[str, str] = {}
     for name, entry in sorted(entries.items()):
+        if selected is not None and name not in selected:
+            continue
         if not isinstance(name, str) or not isinstance(entry, dict) or not isinstance(entry.get("body"), str): raise IconImportError("E_ICON_IMPORT_ENTRY", str(name))
         width, height = entry.get("width", collection.get("width", 24)), entry.get("height", collection.get("height", 24))
         if not isinstance(width, int) or not isinstance(height, int) or not (0 < width <= 4096 and 0 < height <= 4096): raise IconImportError("E_ICON_IMPORT_VIEWPORT", name)
         rotate = entry.get("rotate", 0)
         output_width, output_height = (height, width) if rotate in {1, 3} else (width, height)
-        normalized[name] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(entry.get("title", name.replace("-", " "))), "paths": _paths(entry["body"], name, width, height, entry)}
+        normalized[name] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(entry.get("title", name.replace("-", " "))), "paths": _compact_paths(_paths(entry["body"], name, width, height, entry))}
     raw_aliases = collection.get("aliases", {})
     if not isinstance(raw_aliases, dict): raise IconImportError("E_ICON_IMPORT_ALIAS")
     for alias, value in sorted(raw_aliases.items()):
+        if selected is not None and alias not in selected:
+            continue
         if not isinstance(alias, str) or not isinstance(value, dict) or not isinstance(value.get("parent"), str) or value["parent"] not in normalized: raise IconImportError("E_ICON_IMPORT_ALIAS", str(alias))
         if any(key in value for key in ("hFlip", "vFlip", "rotate", "width", "height")):
             parent = entries[value["parent"]]
@@ -130,9 +187,9 @@ def import_iconify(source: Path, destination: Path, *, set_name: str | None = No
             width, height = value.get("width", parent.get("width", collection.get("width", 24))), value.get("height", parent.get("height", collection.get("height", 24)))
             if not isinstance(width, int) or not isinstance(height, int) or not (0 < width <= 4096 and 0 < height <= 4096): raise IconImportError("E_ICON_IMPORT_ALIAS", alias)
             rotate = value.get("rotate", 0); output_width, output_height = (height, width) if rotate in {1, 3} else (width, height)
-            normalized[alias] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(value.get("title", parent.get("title", alias.replace("-", " ")))), "paths": _paths(parent["body"], alias, width, height, value)}
+            normalized[alias] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(value.get("title", parent.get("title", alias.replace("-", " ")))), "paths": _compact_paths(_paths(parent["body"], alias, width, height, value))}
         else: entry_aliases[alias] = value["parent"]
-    catalog = {"version": "chrona/icon-catalog/v0.2", "kind": "icon-catalog", "id": f"{set_name or prefix}-icons", "body": {"set": set_name or prefix, "aliases": list(aliases), "provenance": {"sourceKind": "iconify-json", "sourcePrefix": prefix, "sourceContentIdentity": "sha256:" + sha256(source_bytes).hexdigest(), "sourceVersion": str(collection.get("version", "local")), "license": {"spdx": license_spdx, "notice": notice}}, "icons": normalized, "entryAliases": entry_aliases}}
+    catalog = {"version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": f"{set_name or prefix}-icons", "body": {"set": set_name or prefix, "aliases": list(aliases), "provenance": {"sourceKind": "iconify-json", "sourcePrefix": prefix, "sourceContentIdentity": "sha256:" + sha256(source_bytes).hexdigest(), "sourceVersion": str(collection.get("version", "local")), "license": {"spdx": license_spdx, "notice": notice}}, "icons": normalized, "entryAliases": entry_aliases}}
     encoded = yaml.safe_dump(catalog, sort_keys=False).encode()
     destination.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=destination.parent)

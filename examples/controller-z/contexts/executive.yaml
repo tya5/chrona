@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.11
+version: chrona/render-context/v0.12
 kind: render-context
 id: controller-z-executive
 body:

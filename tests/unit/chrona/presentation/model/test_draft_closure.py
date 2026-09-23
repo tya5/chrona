@@ -59,7 +59,7 @@ def test_draft_typeset_closure_requires_an_explicit_descriptor():
 def test_draft_closure_closes_only_explicit_catalogs_and_resolves_set_aliases(tmp_path):
     catalog = tmp_path / "icons.yaml"
     catalog.write_text(yaml.safe_dump({
-        "version": "chrona/icon-catalog/v0.2", "kind": "icon-catalog", "id": "acme-icons",
+        "version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": "acme-icons",
         "body": {
             "set": "acme", "aliases": ["acme-ui"],
             "provenance": {"sourceKind": "iconify-json", "sourcePrefix": "acme",
@@ -67,9 +67,7 @@ def test_draft_closure_closes_only_explicit_catalogs_and_resolves_set_aliases(tm
                            "license": {"spdx": "MIT", "notice": "MIT"}},
             "entryAliases": {"warning": "risk"},
             "icons": {"risk": {"kind": "vector", "viewport": {"inlineSize": 24, "blockSize": 24},
-                               "alternative": "Risk", "paths": [{"paint": "fill", "commands": [
-                                   {"kind": "move", "points": [0, 0]}, {"kind": "line", "points": [24, 24]},
-                               ]}]}}
+                               "alternative": "Risk", "paths": [{"paint": "fill", "data": "M 0 0 L 24 24"}]}}
         },
     }, sort_keys=False), encoding="utf-8")
 
@@ -140,15 +138,13 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
         "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text()),
         "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text()),
         "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text()),
-        "icons.yaml": {"version": "chrona/icon-catalog/v0.2", "kind": "icon-catalog", "id": "preset-icons",
+        "icons.yaml": {"version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": "preset-icons",
                        "body": {"set": "preset", "aliases": [], "entryAliases": {},
                                 "provenance": {"sourceKind": "iconify-json", "sourcePrefix": "preset",
                                                "sourceContentIdentity": "sha256:" + "b" * 64,
                                                "license": {"spdx": "MIT", "notice": "MIT"}},
                                 "icons": {"check": {"kind": "vector", "viewport": {"inlineSize": 24, "blockSize": 24},
-                                                    "alternative": "Check", "paths": [{"paint": "fill", "commands": [
-                                                        {"kind": "move", "points": [0, 0]}, {"kind": "line", "points": [24, 24]},
-                                                    ]}]}}}},
+                                                    "alternative": "Check", "paths": [{"paint": "fill", "data": "M 0 0 L 24 24"}]}}}},
     }
     resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["task"]}}
     for name, value in resources.items():
