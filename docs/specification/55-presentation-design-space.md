@@ -1,8 +1,8 @@
 # Presentation Design Space
 
 **Status:** Proposed
-**Depends on:** [06 View Model](06-view-model.md), [07 Style/Theme](07-style-theme.md),
-[08 Scene](08-scene.md), [13 Presentation Format](13-presentation-format.md),
+**Depends on:** [06 View Model](06-view-model.md), [07 Style/Theme](07-style-and-theme.md),
+[08 Scene](08-scene-and-rendering.md), [13 Presentation Format](13-presentation-format.md),
 [33 Intent-Oriented Layout](33-intent-oriented-layout.md), and
 [51 Progressive Authoring](51-progressive-authoring.md).
 **Owns:** the taxonomy that connects ordinary presentation resources to preset,
