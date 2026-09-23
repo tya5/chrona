@@ -53,6 +53,23 @@ def test_cli_render_requires_draft_review_inputs(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_SYNTAX"
 
 
+def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monkeypatch):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    output = tmp_path / "plan-only.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/plan-only.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "--output", str(output),
+    ])
+
+    main()
+
+    assert 'data-source-ref="architecture"' in output.read_text(encoding="utf-8")
+
+
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):
     project = {
         "version": "timeline/v0.5", "project": {"id": "snapshot"}, "extensions": [],
