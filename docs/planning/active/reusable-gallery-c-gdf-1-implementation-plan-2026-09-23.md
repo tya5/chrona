@@ -1,6 +1,6 @@
 # C-GDF-1 Implementation Plan: Corpus Hygiene and Preset Evidence
 
-**Status:** Active  
+**Status:** Complete  
 **Implements:** #348 correction, Specification 32 topology correction
 
 ## Design decision

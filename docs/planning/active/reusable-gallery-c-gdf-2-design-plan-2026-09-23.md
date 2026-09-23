@@ -1,6 +1,6 @@
 # C-GDF-2 Design Plan: Paired Ordinary Corpus Gallery
 
-**Status:** Design active  
+**Status:** Complete  
 **Depends on:** C-GDF-1, Specifications 32 and 58
 
 ## Objective
