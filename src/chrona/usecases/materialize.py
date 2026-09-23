@@ -115,6 +115,18 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
     return catalog
 
 
+def _copy_extension_packages(example: Path, project_reference: dict[str, Any], snapshot: Path) -> None:
+    """Copy the pinned profile packages a Project declares, so the closure can read them."""
+    project = safe_load(_inside(example, str(project_reference["address"])).read_bytes())
+    for extension in (project.get("extensions") or []) if isinstance(project, dict) else []:
+        resource = extension.get("resource") if isinstance(extension, dict) else None
+        if not isinstance(resource, dict):
+            continue
+        if resource.get("kind") != "profile-package":
+            raise ValueError("E_MATERIALIZER_CONTEXT")
+        _copy_reference(example, resource, snapshot)
+
+
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          *, decoded_catalogs: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
     context = safe_load(context_path.read_bytes())
@@ -127,6 +139,7 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     references.extend(value for key, value in inputs.items() if key != "iconCatalogs")
     for item in references:
         _copy_reference(example, item, snapshot)
+    _copy_extension_packages(example, body["project"], snapshot)
     for icon_catalog in inputs.get("iconCatalogs", ()):
         if not isinstance(icon_catalog, dict) or icon_catalog.get("kind") != "icon-catalog":
             raise ValueError("E_MATERIALIZER_CONTEXT")

@@ -12,8 +12,11 @@ body:
     - {id: optics-final, sequence: 1, projectObjectId: optics, actual: {start: '2027-03-08', finish: '2027-04-02', progress: 1}}
     - {id: detector-final, sequence: 1, projectObjectId: detector, actual: {start: '2027-04-12', finish: '2027-04-21', progress: 1}}
     - {id: payload-tvac-final, sequence: 1, projectObjectId: payload-tvac, actual: {start: '2027-04-22', finish: '2027-05-07', progress: 1}}
+    - {id: cdr-held, sequence: 1, projectObjectId: cdr, actual: {at: '2027-05-07'}}
+    - {id: payload-delivered, sequence: 1, projectObjectId: payload-delivery, actual: {at: '2027-07-06'}}
     - {id: integration-final, sequence: 1, projectObjectId: integration, actual: {start: '2027-07-06', finish: '2027-07-27', progress: 1}}
     - {id: vibration-final, sequence: 1, projectObjectId: vibration, actual: {start: '2027-07-28', finish: '2027-08-04', progress: 1}}
+    - {id: tvac-in-progress, sequence: 1, projectObjectId: tvac, actual: {start: '2027-08-09', progress: 0.5}}
     - {id: station-final, sequence: 1, projectObjectId: station, actual: {start: '2027-04-19', finish: '2027-05-21', progress: 1}}
     - {id: mcs-final, sequence: 1, projectObjectId: mcs, actual: {start: '2027-03-08', finish: '2027-05-14', progress: 1}}
     - {id: comms-test-final, sequence: 1, projectObjectId: comms-test, actual: {start: '2027-05-24', finish: '2027-05-28', progress: 1}}

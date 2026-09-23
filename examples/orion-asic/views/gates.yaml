@@ -1,0 +1,100 @@
+version: chrona/view/v0.11
+kind: view
+id: orion-asic-gates
+body:
+  surface: table-timeline
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: objectType
+    missing: other
+    order:
+    - task
+    - EVT
+    - DVT
+    - PVT
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-08-24'
+    end: '2027-09-13'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - atDelta
+    - progress
+    - missingActual
+    - unmatchedActual
+  progressFill:
+    source: actual
+  colorEncoding:
+    scale: revision
+    target: planned
+    source:
+      field: revision
+    domain:
+    - A0
+    - A1
+    - B0
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
+  axis:
+    levels:
+    - unit: quarter
+      format: year-quarter
+    - unit: month
+      format: short-month
+    ticks: week
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+  shading:
+    nonWorking: false
+    exceptions: true
+  layoutIntent:
+    compactness: balanced
+    itemStacking: stable
+  tableColumns:
+  - id: Work package
+    source: title
+    missing: em-dash
+  - id: Revision
+    source:
+      field: revision
+    missing: em-dash
+  - id: Approval
+    source:
+      field: approval
+    missing: blank
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash
+  rows:
+    mode: automatic

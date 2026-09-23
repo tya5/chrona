@@ -1,0 +1,49 @@
+# Semiconductor development profile package: gate profiles and typed fields for an ASIC programme.
+# contentIdentity frames this document with the contentIdentity field omitted (Specification 62 correction).
+version: chrona/profile/v0.2
+packageId: semiconductor-development
+contentIdentity: sha256:7265d214e5e8e69015d95a2c7a11fe4c8cde04419a8698d93c55789337b8e9b4
+requires:
+  projectFormat: timeline/v0.6
+profiles:
+  EVT:
+    extends: milestone
+    fields:
+      approval:
+        type: enum
+        enumValues:
+        - pending
+        - approved
+        - rejected
+        required: true
+  DVT:
+    extends: milestone
+    fields:
+      approval:
+        type: enum
+        enumValues:
+        - pending
+        - approved
+        - rejected
+        required: true
+  PVT:
+    extends: milestone
+    fields:
+      approval:
+        type: enum
+        enumValues:
+        - pending
+        - approved
+        - rejected
+        required: true
+fields:
+  revision:
+    type: string
+    required: true
+    cardinality: one
+  customerReview:
+    type: boolean
+    cardinality: one
+  lot:
+    type: string
+    cardinality: many

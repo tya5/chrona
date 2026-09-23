@@ -1,0 +1,9 @@
+version: chrona/example-materializer/v0.1
+id: orion-asic
+role: regression-corpus
+context: contexts/gates.yaml
+slides:
+  - id: gates
+    evidence: "Extension-typed EVT/DVT/PVT gates with package-defined enum and revision fields, a colour scale by silicon revision, and a fast-tracked negative lag."
+    context: contexts/gates.yaml
+    expectedSvg: generated/gates.svg

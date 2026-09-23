@@ -4,6 +4,8 @@ id: aster-observed-2027-06-30
 body:
   asOf: '2027-06-30'
   observations:
+    - {id: board-held, sequence: 1, projectObjectId: board, actual: {at: '2027-02-02'}}
+    - {id: fw-freeze-held, sequence: 1, projectObjectId: fw-freeze, actual: {at: '2027-05-14'}}
     - {id: requirements-final, sequence: 1, projectObjectId: requirements, actual: {start: '2027-01-04', finish: '2027-01-15', progress: 1}}
     - {id: nand-initial, sequence: 1, projectObjectId: nand, actual: {start: '2027-02-02', finish: '2027-03-05', progress: 1}}
     - {id: nand-corrected, sequence: 2, projectObjectId: nand, actual: {start: '2027-02-02', finish: '2027-03-08', progress: 1}}
@@ -18,7 +20,7 @@ body:
     - {id: secure-final, sequence: 1, projectObjectId: secure-boot, actual: {start: '2027-02-19', finish: '2027-03-19', progress: 1}}
     - {id: crypto-final, sequence: 1, projectObjectId: crypto, actual: {start: '2027-03-23', finish: '2027-04-13', progress: 1}}
     - {id: integration-final, sequence: 1, projectObjectId: integration, actual: {start: '2027-05-31', finish: '2027-06-17', progress: 1}}
-    - {id: thermal-final, sequence: 1, projectObjectId: thermal, actual: {start: '2027-06-03', finish: '2027-06-28', progress: 1}}
+    - {id: thermal-in-flight, sequence: 1, projectObjectId: thermal, actual: {start: '2027-06-03', progress: 0.9}}
     - {id: tooling-final, sequence: 1, projectObjectId: tooling, actual: {start: '2027-05-17', finish: '2027-06-14', progress: 1}}
     - {id: supplier-lab-unmapped, sequence: 1, externalIdentity: {system: supplier-lab, key: NAND-R2}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: '2027-03-09'}}
     - {id: external-audit-unmapped, sequence: 1, externalIdentity: {system: audit-lab, key: KEY-17}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: '2027-04-14'}}

@@ -128,37 +128,40 @@ test path. This rule does not require artificial one-test-file-per-data-class sp
 
 ## 8. Example topology
 
-Each user-facing project owns one directory and a README. Shared source facts are stored
-once per project; public presentation evidence is declared as materializer slides:
+Each corpus project owns one directory and a README. Shared source facts are stored
+once per project; public presentation evidence is declared as materializer slides. The
+projects are chosen by the semantic register they exhibit, so that together they cover
+the Project, Actual, Snapshot and Extension contracts:
 
 ```text
-examples/controller-z/
-  project.yaml
-  actual.yaml
-  views/
-  themes/
-  schemes/
-  layouts/
-  contexts/<slide>.yaml
-  generated/<slide>.svg
-  presets/<preset>.yaml
-
-examples/aster-ssd/
-  project.yaml
-  actual.yaml
-  shared/
-  slides/<slide>/{view.yaml, settings.yaml, expected.svg, preview.png?}
+examples/<project>/
+  README.md                       the register this project exhibits, and what it adds
+  manifest.yaml                   role: regression-corpus; one slide per declared Context
+  project.yaml                    the only semantic authority
+  actual.yaml                     observations, including point and in-flight records
+  snapshots/<name>.yaml           optional snapshot-ref pinning a captured plan
+  snapshots/<name>/project.yaml   the captured plan under its own revision token
+  extensions/<package>.yaml       optional profile package declared by project.extensions
+  views/ themes/ schemes/ layouts/ profiles/ presets/
+  contexts/<slide>.yaml           immutable bindings
+  generated/<slide>.svg           materializer evidence
 ```
+
+| Project | Register |
+|---|---|
+| `controller-z` | small and complete: every core feature once |
+| `aster-ssd` | calendars and constraints |
+| `halcyon-1` | programme: hierarchy, scenarios, snapshots, the second surface |
+| `orion-asic` | extension: object types and typed fields from a declared profile package |
 
 Shared source resources are stored once at project scope. A declared slide owns a View
 only when its selection differs from its siblings. Reproducible rendered evidence must
 be declared by the corpus manifest and produced through the public materializer; an
-undeclared `variants/` tree, hand-authored SVG, or preview beside source is not corpus
-evidence.
+undeclared `variants/` or `slides/` tree, hand-authored SVG, or preview beside source is
+not corpus evidence.
 
-Derived artifacts MUST be reproducible and named `expected.svg`, `preview.png`, or
-`gallery.html` so source and output cannot be confused. No sample-specific behavior may
-be added to product Python code.
+Derived artifacts MUST be reproducible and live under `generated/` so source and output
+cannot be confused. No sample-specific behavior may be added to product Python code.
 
 ## 9. Maintainer tools and generated files
 

@@ -24,6 +24,12 @@ def test_typed_table_facets_are_formatted_by_the_view_contract():
     assert display_value(table_value(item, {}, {"facet": "finishDelta"}), "blank", "signedDays") == "+3d"
 
 
+def test_in_flight_actual_renders_as_an_open_date_range():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+                      {"start": date(2026, 1, 2), "progress": 0.5}, None, ())
+    assert display_value(table_value(item, {}, {"facet": "actual"}), "in-progress", "dateRange") == "02 Jan 2026 –"
+
+
 def test_missing_actual_uses_the_declared_in_progress_policy_without_context():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ())
     assert display_value(table_value(item, {}, {"facet": "actual"}), "in-progress", "dateRange") == "in progress"

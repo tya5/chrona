@@ -1,0 +1,40 @@
+version: chrona/review-detail-profile/v0.1
+id: orion-asic-review-detail
+body:
+  legend:
+    - {role: planned, label: Planned}
+    - {role: actual, label: Actual}
+  groupDetails:
+    - groupId: task
+      label: Work packages
+      description: Design, fabrication, bring-up and ramp activities.
+    - groupId: EVT
+      label: EVT
+      description: Engineering validation on A0 silicon.
+    - groupId: DVT
+      label: DVT
+      description: Design validation on the A1 respin, with customer review.
+    - groupId: PVT
+      label: PVT
+      description: Production validation ahead of ramp.
+  milestones: [tapeout, evt, dvt, pvt]
+  observations:
+    columns:
+      - {id: area, label: Area}
+      - {id: observation, label: Observation}
+      - {id: disposition, label: Disposition}
+    rows:
+      - id: a0-yield
+        source: synthetic-example-record-OA-001
+        emphasis: attention
+        cells:
+          area: A0 silicon
+          observation: Lot A0-L3 not yet matched to a work package.
+          disposition: Review
+      - id: dvt-customer
+        source: synthetic-example-record-OA-002
+        emphasis: normal
+        cells:
+          area: DVT
+          observation: Customer review scheduled with the A1 lot.
+          disposition: Recorded

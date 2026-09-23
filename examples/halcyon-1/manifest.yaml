@@ -27,3 +27,7 @@ slides:
     evidence: "Flight readiness review with advanced contract evidence."
     context: contexts/06-flight-readiness.yaml
     expectedSvg: generated/06-flight-readiness.svg
+  - id: replan-baseline
+    evidence: "Captured June baseline compared against the re-planned AIT chain and in-flight observations."
+    context: contexts/07-replan-baseline.yaml
+    expectedSvg: generated/07-replan-baseline.svg

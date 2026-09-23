@@ -2,6 +2,7 @@ version: timeline/v0.6
 project:
   id: halcyon-1
   title: HALCYON-1
+  # Captured baseline: the plan as approved at the June programme review.
   calendar: engineering
 calendars:
   engineering:
@@ -80,7 +81,7 @@ objects:
     type: task
     title: Spacecraft integration
     fields: {owner: ait, team: AIT, phase: Integrate}
-    schedule: {mode: scheduled, amount: 15wd}
+    schedule: {mode: scheduled, amount: 12wd}
   vibration:
     parent: spacecraft-ait
     wbsCode: '4.2'
@@ -94,20 +95,19 @@ objects:
     type: task
     title: System thermal-vacuum
     fields: {owner: ait, team: AIT, phase: Verify}
-    schedule: {mode: scheduled, amount: 14d}
+    schedule: {mode: scheduled, amount: 10d}
   emc:
     parent: spacecraft-ait
     wbsCode: '4.4'
     type: task
     title: EMC and RF compatibility
     fields: {owner: ait, team: AIT, phase: Verify}
-    schedule: {mode: scheduled, amount: 5wd, constraints: {end: {max: '2027-09-08'}}}
+    schedule: {mode: scheduled, amount: 4wd, constraints: {end: {max: '2027-09-08'}}}
   psr:
     parent: spacecraft-ait
     wbsCode: '4.5'
     type: gate
     title: Pre-ship review
-    deadline: '2027-09-17'
     fields: {owner: ait, team: Programme, phase: Verify, review: PSR}
     schedule: {mode: fixed-point, at: '2027-09-10'}
   mcs:
@@ -140,7 +140,7 @@ objects:
     type: task
     title: Ship to range
     fields: {owner: launch, team: Launch and range, phase: Campaign}
-    schedule: {mode: scheduled, amount: 4wd}
+    schedule: {mode: scheduled, amount: 3wd}
   campaign:
     type: task
     title: Launch campaign

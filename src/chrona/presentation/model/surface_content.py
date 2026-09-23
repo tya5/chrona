@@ -137,6 +137,8 @@ def display_value(value: Any, missing: str, formatter: str = "text", *, locale: 
         start, end = value.get("start"), value.get("end", value.get("finish"))
         if isinstance(start, date) and isinstance(end, date):
             return _format_date_range(start, end, locale=locale)
+        if isinstance(start, date) and end is None:
+            return f"{_format_compact_date(start, include_year=True, locale=locale)} –"
         if isinstance(value.get("at"), date):
             return _format_compact_date(value["at"], include_year=True, locale=locale)
     if formatter == "signedDays" and isinstance(value, int) and not isinstance(value, bool):

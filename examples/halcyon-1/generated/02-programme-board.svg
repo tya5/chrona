@@ -120,7 +120,7 @@
 <rect data-scene-id="actual:bus-test:bus-test" data-source-ref="bus-test" data-purpose="actual" x="1201.099" y="254.827" width="37.717" height="10" opacity="1" fill="#35D0A0"/>
 <text data-scene-id="variance:bus-test:bus-test" data-source-ref="bus-test" data-purpose="finish-delta" x="1204.194" y="245.027" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#FF6B6B">+15d</text>
 <polygon data-scene-id="planned:cdr:cdr" data-source-ref="cdr" data-purpose="planned" points="1166.811,274.404 1171.811,279.404 1166.811,284.404 1161.811,279.404" opacity="1" fill="#142642"/>
-<rect data-scene-id="missing-actual:cdr:cdr" data-source-ref="cdr" data-purpose="missingActual" x="1166.811" y="286.904" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" opacity="1" stroke="#2E3F5E" stroke-width="1"/>
+<polygon data-scene-id="actual:cdr:cdr" data-source-ref="cdr" data-purpose="actual" points="1166.811,286.904 1171.811,291.904 1166.811,296.904 1161.811,291.904" opacity="1" fill="#35D0A0"/>
 <rect data-scene-id="planned:optics:optics" data-source-ref="optics" data-purpose="planned" x="961.084" y="326.481" width="82.291" height="10" opacity="1" fill="#12302B"/>
 <rect data-scene-id="actual:optics:optics" data-source-ref="optics" data-purpose="actual" x="961.084" y="338.981" width="85.72" height="10" opacity="1" fill="#35D0A0"/>
 <text data-scene-id="variance:optics:optics" data-source-ref="optics" data-purpose="finish-delta" x="992.072" y="366.481" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#FF6B6B">+1d</text>
@@ -131,7 +131,7 @@
 <rect data-scene-id="actual:payload-tvac:payload-tvac" data-source-ref="payload-tvac" data-purpose="actual" x="1115.379" y="403.135" width="51.432" height="10" opacity="1" fill="#35D0A0"/>
 <text data-scene-id="variance:payload-tvac:payload-tvac" data-source-ref="payload-tvac" data-purpose="finish-delta" x="1125.331" y="430.635" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#FF6B6B">+10d</text>
 <polygon data-scene-id="planned:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="planned" points="1358.824,422.712 1363.824,427.712 1358.824,432.712 1353.824,427.712" opacity="1" fill="#12302B"/>
-<rect data-scene-id="missing-actual:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="missingActual" x="1358.824" y="435.212" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" opacity="1" stroke="#2E3F5E" stroke-width="1"/>
+<polygon data-scene-id="actual:payload-delivery:payload-delivery" data-source-ref="payload-delivery" data-purpose="actual" points="1372.539,435.212 1377.539,440.212 1372.539,445.212 1367.539,440.212" opacity="1" fill="#35D0A0"/>
 <rect data-scene-id="planned:integration:integration" data-source-ref="integration" data-purpose="planned" x="1372.539" y="474.788" width="72.005" height="10" opacity="1" fill="#2C2138"/>
 <rect data-scene-id="actual:integration:integration" data-source-ref="integration" data-purpose="actual" x="1372.539" y="487.288" width="72.005" height="10" opacity="1" fill="#35D0A0"/>
 <text data-scene-id="variance:integration:integration" data-source-ref="integration" data-purpose="finish-delta" x="1396.669" y="514.788" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#8EA0BA">+0d</text>

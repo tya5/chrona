@@ -1,0 +1,102 @@
+version: timeline/v0.6
+
+project:
+  id: orion-asic
+  title: ORION ASIC — Tape-out to Production Ramp
+  calendar: engineering
+
+extensions:
+  - packageId: semiconductor-development
+    resource:
+      id: semiconductor-development
+      kind: profile-package
+      store: {provider: local, identity: orion-asic-example}
+      address: extensions/semiconductor-development.yaml
+      revision: {token: example-v1}
+      contentIdentity: sha256:e8f8a48a520f6849bff4dcd75f05f202607db1601c27405a04eca23a3b821f50
+
+calendars:
+  engineering:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - {date: 2026-09-21, working: false}
+      - {date: 2026-11-23, working: false}
+      - {date: 2026-12-25, working: false}
+      - {date: 2027-01-01, working: false}
+
+entities:
+  design: {type: team, title: Digital Design}
+  validation: {type: team, title: Silicon Validation}
+  product: {type: team, title: Product Engineering}
+
+objects:
+  rtl-freeze:
+    type: task
+    title: RTL freeze and sign-off
+    fields: {owner: design, revision: A0}
+    schedule: {mode: fixed-span, start: 2026-09-01, end: 2026-10-09}
+
+  tapeout:
+    type: gate
+    title: A0 tape-out
+    fields: {owner: design, revision: A0, customerReview: false}
+    schedule: {mode: fixed-point, at: 2026-10-16}
+
+  fab-a0:
+    type: task
+    title: A0 wafer fabrication
+    fields: {owner: product, revision: A0, lot: [A0-L1, A0-L2]}
+    schedule: {mode: scheduled, amount: 12w}
+
+  evt:
+    type: EVT
+    title: EVT — engineering validation
+    fields: {owner: validation, revision: A0, approval: approved, customerReview: false}
+    schedule: {mode: fixed-point, at: 2027-01-22}
+
+  bringup-a0:
+    type: task
+    title: A0 bring-up and characterization
+    fields: {owner: validation, revision: A0}
+    schedule: {mode: scheduled, amount: 20wd}
+
+  respin-a1:
+    type: task
+    title: A1 metal respin
+    fields: {owner: design, revision: A1, lot: [A1-L1]}
+    schedule: {mode: scheduled, amount: 8w}
+
+  dvt:
+    type: DVT
+    title: DVT — design validation
+    fields: {owner: validation, revision: A1, approval: pending, customerReview: true}
+    schedule: {mode: scheduled, amount: 15wd}
+
+  pvt:
+    type: PVT
+    title: PVT — production validation
+    deadline: 2027-07-30
+    fields: {owner: product, revision: A1, approval: pending, customerReview: true}
+    schedule: {mode: scheduled, amount: 10wd}
+
+  ramp:
+    type: task
+    title: Production ramp
+    fields: {owner: product, revision: B0, lot: [B0-L1, B0-L2, B0-L3]}
+    schedule: {mode: scheduled, amount: 6w}
+
+relations:
+  - {id: rtl-tapeout, type: dependency, from: {object: rtl-freeze, endpoint: end}, to: {object: tapeout, endpoint: at}, lag: 5wd}
+  - {id: tapeout-fab, type: dependency, from: {object: tapeout, endpoint: at}, to: {object: fab-a0, endpoint: start}, lag: 0d}
+  - {id: fab-evt, type: dependency, from: {object: fab-a0, endpoint: end}, to: {object: evt, endpoint: at}, lag: 1wd}
+  - {id: evt-bringup, type: dependency, from: {object: evt, endpoint: at}, to: {object: bringup-a0, endpoint: start}, lag: 0d}
+  - {id: bringup-respin, type: dependency, from: {object: bringup-a0, endpoint: start}, to: {object: respin-a1, endpoint: start}, lag: 10wd}
+  - {id: respin-dvt, type: dependency, from: {object: respin-a1, endpoint: end}, to: {object: dvt, endpoint: start}, lag: 2wd}
+  - {id: dvt-pvt, type: dependency, from: {object: dvt, endpoint: end}, to: {object: pvt, endpoint: start}, lag: -3wd}
+  - {id: pvt-ramp, type: dependency, from: {object: pvt, endpoint: end}, to: {object: ramp, endpoint: start}, lag: 0d}
+
+annotations:
+  a1-decision:
+    kind: callout
+    text: A1 respin decision is taken from A0 characterization data, not from EVT alone.
+    anchor: {object: respin-a1}
