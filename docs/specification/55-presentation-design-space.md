@@ -86,7 +86,7 @@ inspection result is conceptually shaped as follows; this is an output contract,
 not another authored resource or schema accepted by render evaluation:
 
 ```yaml
-version: chrona/presentation-design-summary/v0.1
+format: chrona/presentation-design-summary/v0.1
 provenance:
   origin: explicit | guided | materialized
   view: {id: ..., kind: view, contentIdentity: sha256:...}

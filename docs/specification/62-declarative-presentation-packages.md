@@ -47,11 +47,11 @@ identity conflict and rejects acquisition.
 The package manifest is conceptually:
 
 ```yaml
-version: chrona/presentation-package/v0.1
+format: chrona/presentation-package/v0.1
 kind: presentation-package
 id: acme/executive-review
 package:
-  version: 1.2.0
+  release: 1.2.0
   contentIdentity: sha256:...
   license: CC-BY-4.0
   publisher: {id: acme, displayName: Acme Design}
