@@ -16,6 +16,7 @@ class SourceTextRun:
     content: str
     typography_role: str
     source_ref: str | None = None
+    inline_advance: Decimal = Decimal(0)
 
 
 @dataclass(frozen=True)
@@ -129,7 +130,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         measured_runs = []
         for run in runs:
             family, weight, run_size, run_line_height = typography.typography(run.typography_role)
-            width = Decimal(str(font_metrics.width(run.content, float(run_size))))
+            width = Decimal(str(font_metrics.width(run.content, float(run_size)))) + run.inline_advance
             baseline = Decimal(str(font_metrics.baseline(0, float(run_size), float(run_line_height))))
             measured_runs.append(MeasuredTextRun(
                 run.source_ref, run.content, run.typography_role, width,
