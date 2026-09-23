@@ -54,6 +54,25 @@ def test_cli_render_requires_draft_review_inputs(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_SYNTAX"
 
 
+@pytest.mark.parametrize(
+    ("format_name", "extra", "expected"),
+    [
+        ("typst", [], "E_RENDER_TYPESETTER_DESCRIPTOR"),
+        ("svg", ["--typesetter-engine", "typst", "--typesetter-version", "0.13.1", "--typesetter-adapter-grammar", "chrona-typst/v0.1"], "E_RENDER_TYPESETTER_DESCRIPTOR"),
+    ],
+)
+def test_cli_draft_typesetter_descriptor_contract(monkeypatch, capsys, format_name, extra, expected):
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", "project.yaml", "--view", "view.yaml", "--theme", "theme.yaml",
+        "--scheme", "scheme.yaml", "--layout", "layout.yaml", "--format", format_name,
+        "--output", "output", *extra,
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 2
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == expected
+
+
 def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     output = tmp_path / "plan-only.svg"
@@ -69,6 +88,24 @@ def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monke
     main()
 
     assert 'data-source-ref="architecture"' in output.read_text(encoding="utf-8")
+
+
+def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypatch):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    output = tmp_path / "review.typ"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/plan-only.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "--format", "typst", "--typesetter-engine", "typst", "--typesetter-version", "0.13.1",
+        "--typesetter-adapter-grammar", "chrona-typst/v0.1", "--output", str(output),
+    ])
+
+    main()
+
+    assert output.read_bytes().startswith(b"// chrona-typst/v0.1")
 
 
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):

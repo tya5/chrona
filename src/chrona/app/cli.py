@@ -14,6 +14,7 @@ from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
+from chrona.presentation.contracts import TypesetterIdentity
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
@@ -100,6 +101,31 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--require-content-identity", action="store_true", help="reject snapshot references without an exact content identity")
 
 
+def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
+    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
+    command.add_argument("--typesetter-engine", help="required with --format typst or tikz")
+    command.add_argument("--typesetter-version", help="required exact engine version with --format typst or tikz")
+    command.add_argument("--typesetter-adapter-grammar", help="required adapter grammar with --format typst or tikz")
+
+
+def _draft_typesetter_identity(args: argparse.Namespace) -> TypesetterIdentity | None:
+    values = (args.typesetter_engine, args.typesetter_version, args.typesetter_adapter_grammar)
+    is_typeset = args.format in {"typst", "tikz"}
+    if is_typeset and not all(values):
+        raise CliFailure(
+            "E_RENDER_TYPESETTER_DESCRIPTOR",
+            "typeset Draft targets require --typesetter-engine, --typesetter-version, and --typesetter-adapter-grammar",
+            "cli", "/typesetter", 2,
+        )
+    if not is_typeset and any(values):
+        raise CliFailure(
+            "E_RENDER_TYPESETTER_DESCRIPTOR",
+            "typesetter descriptor is valid only with --format typst or tikz",
+            "cli", "/typesetter", 2,
+        )
+    return TypesetterIdentity(*values) if is_typeset else None
+
+
 def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
     snapshot_values = (args.snapshot_reference, args.snapshot_root, args.store_identity)
     if any(snapshot_values):
@@ -138,7 +164,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--detail", help="Review Detail Profile YAML path")
     command.add_argument("--viewport", default="1600x900", help="viewport WIDTHxHEIGHT (default: 1600x900)")
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
-    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
+    _add_draft_target_arguments(command)
     command.add_argument("--output", "-o", required=True)
 
     command = sub.add_parser("authoring-command-apply", help="apply one revision-bound guided workspace command")
@@ -155,7 +181,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("workspace", help="guided authoring workspace YAML path")
     command.add_argument("--viewport", default="1600x900", help="viewport WIDTHxHEIGHT (default: 1600x900)")
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
-    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
+    _add_draft_target_arguments(command)
     command.add_argument("--provenance", help="write non-Scene guided closure provenance JSON")
     command.add_argument("--output", "-o", required=True)
 
@@ -261,6 +287,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         summary_path=Path(args.summary) if args.summary else None,
         detail_path=Path(args.detail) if args.detail else None,
         viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=args.format,
+        typesetter=_draft_typesetter_identity(args),
     )
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)
@@ -269,7 +296,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
 def _run_guided_draft_render(args: argparse.Namespace) -> None:
     draft = resolve_guided_draft_render(
         workspace_path=Path(args.workspace), viewport=_parse_viewport(args.viewport),
-        locale=args.locale, target_kind=args.format,
+        locale=args.locale, target_kind=args.format, typesetter=_draft_typesetter_identity(args),
     )
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)

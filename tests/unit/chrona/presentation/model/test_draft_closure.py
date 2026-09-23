@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_guided_draft_render
+from chrona.presentation.contracts import TypesetterIdentity
 
 
 def _root() -> Path:
@@ -42,6 +43,25 @@ def test_draft_closure_reports_the_invalid_resource_schema_pointer(tmp_path):
     assert error.value.source_ref.startswith("/body")
 
 
+def test_draft_typeset_closure_uses_an_explicit_descriptor_without_host_discovery():
+    draft = resolve_draft_render(
+        **_paths(_root()), target_kind="typst",
+        typesetter=TypesetterIdentity("typst", "0.13.1", "chrona-typst/v0.1"),
+    )
+    assert draft.closure.context.environment.typesetter == TypesetterIdentity("typst", "0.13.1", "chrona-typst/v0.1")
+
+
+def test_draft_typeset_closure_requires_an_explicit_descriptor():
+    with pytest.raises(ClosureError, match="E_RENDER_TYPESETTER_DESCRIPTOR"):
+        resolve_draft_render(**_paths(_root()), target_kind="tikz")
+
+
+def test_draft_closure_never_probes_a_host_typesetter():
+    source = Path(__import__("chrona.presentation.model.closure", fromlist=["*"]).__file__).read_text(encoding="utf-8")
+    assert "subprocess" not in source
+    assert '"--version"' not in source
+
+
 def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provenance(tmp_path):
     root = _root()
     preset_root = tmp_path / "preset"
@@ -74,9 +94,13 @@ def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provena
     workspace_path = tmp_path / "workspace.yaml"
     workspace_path.write_text(yaml.safe_dump(workspace, sort_keys=False), encoding="utf-8")
 
-    draft = resolve_guided_draft_render(workspace_path=workspace_path)
+    draft = resolve_guided_draft_render(
+        workspace_path=workspace_path, target_kind="tikz",
+        typesetter=TypesetterIdentity("tectonic", "0.15.0", "chrona-tikz/v0.1"),
+    )
 
     assert draft.closure.project.scheduler_input["project"]["id"] == "project"
     assert draft.closure.actual_set is not None
     assert draft.closure.guided_provenance is not None
     assert draft.closure.guided_provenance.normalizer_version == "chrona/authoring-normalizer/v0.1"
+    assert draft.closure.context.environment.typesetter == TypesetterIdentity("tectonic", "0.15.0", "chrona-tikz/v0.1")

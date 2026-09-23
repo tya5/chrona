@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from hashlib import sha256
 from importlib.metadata import version
 from pathlib import Path
-import re
-import subprocess
 from typing import Any, Mapping
 
 import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
@@ -19,7 +17,7 @@ from chrona.presentation.contracts import (
     PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
-    SnapshotRefContract, SummaryProfileContract, ViewContract,
+    SnapshotRefContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
     freeze, parse_contract,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
@@ -142,7 +140,7 @@ def resolve_draft_render(
     *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
     layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, viewport: tuple[int, int] = (1600, 900),
-    locale: str = "en-US", target_kind: str = "svg",
+    locale: str = "en-US", target_kind: str = "svg", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -161,12 +159,13 @@ def resolve_draft_render(
     )
     resources = [_load_draft_resource(kind, path) for kind, path in paths]
     resources.extend(_load_draft_resource(kind, path) for kind, path in optional if path is not None)
-    return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind)
+    return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
+                                        typesetter=typesetter)
 
 
 def resolve_guided_draft_render(
     *, workspace_path: Path, viewport: tuple[int, int] = (1600, 900),
-    locale: str = "en-US", target_kind: str = "svg",
+    locale: str = "en-US", target_kind: str = "svg", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
@@ -191,7 +190,7 @@ def resolve_guided_draft_render(
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
-                                        provenance=provenance)
+                                        typesetter=typesetter, provenance=provenance)
 
 
 def _declared_child(root: Path, relative: str) -> Path:
@@ -225,6 +224,7 @@ def _normalized_draft_resource(kind: str, document: Mapping[str, Any]) -> Closur
 
 def _draft_render_from_resources(
     resources: list[ClosureResource], *, viewport: tuple[int, int], locale: str, target_kind: str,
+    typesetter: TypesetterIdentity | None = None,
     provenance: GuidedAuthoringProvenance | None = None,
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
@@ -242,6 +242,7 @@ def _draft_render_from_resources(
         raise ClosureError(str(error)) from error
 
     asset_root = Path(__file__).resolve().parents[2] / "resources"
+    typesetter_environment = _draft_typesetter(target_kind, typesetter)
     context_value = {
         "version": "chrona/render-context/v0.8", "kind": "render-context", "id": "draft-render",
         "body": {
@@ -261,7 +262,7 @@ def _draft_render_from_resources(
                 "fontMetrics": _packaged_font_metrics(asset_root),
                 "scenePrecision": 3,
                 **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
-                **({"typesetter": _draft_typesetter(target_kind)} if target_kind in {"typst", "tikz"} else {}),
+                **({"typesetter": typesetter_environment} if typesetter_environment else {}),
             },
             "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else [],
                        **({"textMode": "positioned"} if target_kind in {"typst", "tikz"} else {})},
@@ -334,16 +335,15 @@ def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
         return {"engine": "reportlab", "svglibVersion": "unavailable", "reportlabVersion": "unavailable", "invariant": True}
 
 
-def _draft_typesetter(target_kind: str) -> dict[str, Any]:
-    engine, grammar = ("typst", "chrona-typst/v0.1") if target_kind == "typst" else ("tectonic", "chrona-tikz/v0.1")
-    try:
-        result = subprocess.run((engine, "--version"), check=True, capture_output=True, text=True)
-    except (FileNotFoundError, subprocess.SubprocessError) as error:
-        raise ClosureError("E_RENDER_TYPESETTER_UNAVAILABLE") from error
-    found = re.search(r"\b\d+(?:\.\d+){1,3}(?:[+-][0-9A-Za-z.-]+)?\b", result.stdout + result.stderr)
-    if found is None:
-        raise ClosureError("E_RENDER_TYPESETTER_UNAVAILABLE")
-    return {"engine": engine, "version": found.group(0), "adapterGrammar": grammar}
+def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -> dict[str, Any] | None:
+    if target_kind not in {"typst", "tikz"}:
+        if typesetter is not None:
+            raise ClosureError("E_RENDER_TYPESETTER_DESCRIPTOR")
+        return None
+    if typesetter is None:
+        raise ClosureError("E_RENDER_TYPESETTER_DESCRIPTOR")
+    return {"engine": typesetter.engine, "version": typesetter.version,
+            "adapterGrammar": typesetter.adapter_grammar}
 
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
