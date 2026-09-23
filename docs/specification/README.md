@@ -20,6 +20,8 @@ Format, `33` Intent-Oriented Layout, `30` Shared Foundation, and `08` Scene. Doc
 `27` and `29` provide historical M19–M23 context but their layout-authoring contracts
 are superseded by `33`. Documents `24`–`26` and `28` are focused normative surface/detail contracts whose
 historical milestone names do not change their ownership.
+Read `59` when adding or evaluating a per-object placement preference or a proposed
+presentation extension boundary.
 
 ## Application, commands, storage, and extensions
 
