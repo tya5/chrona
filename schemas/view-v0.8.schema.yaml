@@ -292,20 +292,24 @@ allOf:
 $defs:
   presentationIntent:
     type: object
+    description: "Optional placement preferences for a row or item."
     additionalProperties: false
     properties:
       label:
         type: object
+        description: "Preferred placement for an item label."
         required: [side]
         additionalProperties: false
-        properties: {side: {enum: [above, below, start, end, inside]}}
+        properties: {side: {description: "Preferred side for the label.", enum: [above, below, start, end, inside]}}
       callout:
         type: object
+        description: "Preferred placement for an item callout."
         required: [placement]
         additionalProperties: false
-        properties: {placement: {enum: [above, below, start, end, rail]}}
+        properties: {placement: {description: "Preferred region for the callout.", enum: [above, below, start, end, rail]}}
       text:
         type: object
+        description: "Text wrapping preference for the item."
         required: [wrap]
         additionalProperties: false
-        properties: {wrap: {enum: [allow, forbid]}}
+        properties: {wrap: {description: "Whether the text may wrap.", enum: [allow, forbid]}}

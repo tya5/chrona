@@ -20,10 +20,11 @@ properties:
         description: "Named non-color tokens such as typography, marker, and paint values."
         additionalProperties:
           type: object
+          description: "One named non-color token with its declared value type."
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative]}
+            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative]}
             value: {}
           allOf:
             - if:
@@ -42,18 +43,19 @@ properties:
         description: "Semantic role bindings to named non-color tokens."
         additionalProperties:
           type: object
+          description: "One semantic role bound to named token values."
           additionalProperties: false
           properties:
-            marker: {type: string, minLength: 1}
-            pattern: {type: string, minLength: 1}
-            fontFamily: {type: string, minLength: 1}
-            fontWeight: {type: string, minLength: 1}
-            fontSize: {type: string, minLength: 1}
-            lineHeight: {type: string, minLength: 1}
-            opacity: {type: string, minLength: 1}
-            strokeWidth: {type: string, minLength: 1}
-            dash: {type: string, minLength: 1}
-            textAlternative: {type: string, minLength: 1}
+            marker: {description: "Named marker token for the role.", type: string, minLength: 1}
+            pattern: {description: "Named pattern token for the role.", type: string, minLength: 1}
+            fontFamily: {description: "Named font-family token for the role.", type: string, minLength: 1}
+            fontWeight: {description: "Named font-weight token for the role.", type: string, minLength: 1}
+            fontSize: {description: "Named font-size token for the role.", type: string, minLength: 1}
+            lineHeight: {description: "Named line-height token for the role.", type: string, minLength: 1}
+            opacity: {description: "Named opacity token for the role.", type: string, minLength: 1}
+            strokeWidth: {description: "Named stroke-width token for the role.", type: string, minLength: 1}
+            dash: {description: "Named dash-pattern token for the role.", type: string, minLength: 1}
+            textAlternative: {description: "Named text-alternative token for the role.", type: string, minLength: 1}
       colorBindings:
         type: object
         description: "Semantic fill or stroke roles bound to Color Scheme intents."
@@ -61,9 +63,10 @@ properties:
         additionalProperties: false
         patternProperties:
           "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke)$":
+            description: "Color Scheme intent selected for one fill or stroke role."
             enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario, category]
       metrics:
         type: object
         description: "Named source-measurement metric bindings used by Layout."
         propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
-        additionalProperties: {type: string, minLength: 1}
+        additionalProperties: {description: "Named source-measurement metric.", type: string, minLength: 1}

@@ -1,20 +1,23 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/store-config-v0.1"
 title: "Chrona local Store configuration v0.1"
+description: "Configuration of one or more local revision Stores."
 type: object
 required: [version, stores]
 additionalProperties: false
 properties:
-  version: {const: chrona/store-config/v0.1}
+  version: {description: "This Store configuration contract version.", const: chrona/store-config/v0.1}
   stores:
     type: array
+    description: "Named local Stores available to the command environment."
     minItems: 1
     items:
       type: object
+      description: "One configured local Store."
       required: [provider, identity, root]
       additionalProperties: false
       properties:
-        provider: {const: local}
-        identity: {type: string, minLength: 1}
-        root: {type: string, minLength: 1}
-        integrity: {enum: [optional, required]}
+        provider: {description: "The only provider supported by this configuration.", const: local}
+        identity: {description: "Stable Store identity.", type: string, minLength: 1}
+        root: {description: "Filesystem root of the local Store.", type: string, minLength: 1}
+        integrity: {description: "Whether content-identity checking is mandatory.", enum: [optional, required]}

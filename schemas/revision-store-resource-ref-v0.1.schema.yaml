@@ -9,40 +9,51 @@ required: [id, kind, store, address, revision]
 additionalProperties: false
 properties:
   id:
+    description: "Stable identifier of the referenced resource."
     type: string
     minLength: 1
   kind:
+    description: "Kind of the referenced resource."
     type: string
     minLength: 1
   projectId:
+    description: "Project identifier that owns the referenced resource when applicable."
     type: string
     minLength: 1
   store:
     type: object
+    description: "Named Store that resolves the resource revision."
     required: [provider, identity]
     additionalProperties: false
     properties:
       provider:
+        description: "Store provider implementation."
         enum: [git, local, content]
       identity:
+        description: "Stable identity of the named Store."
         type: string
         minLength: 1
       locator:
+        description: "Optional provider-specific Store locator."
         type: string
         minLength: 1
   address:
+    description: "Safe Store-relative address of the resource."
     type: string
     minLength: 1
     pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"
   revision:
     type: object
+    description: "Opaque revision identity within the named Store."
     required: [token]
     additionalProperties: false
     properties:
       token:
+        description: "Nonempty opaque revision token."
         type: string
         minLength: 1
         pattern: "^\\S+$"
   contentIdentity:
+    description: "Optional SHA-256 identity of the exact resource content."
     type: string
     pattern: "^sha256:[0-9a-f]{64}$"

@@ -1,61 +1,72 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:profile-v0.2"
+description: "Package of typed field definitions and named profiles for a Project format."
 type: object
 required: [version, packageId, contentIdentity, requires, profiles]
 additionalProperties: false
 properties:
-  version: {const: chrona/profile/v0.2}
-  packageId: {type: string, minLength: 1}
-  contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  version: {description: "This profile-package contract version.", const: chrona/profile/v0.2}
+  packageId: {description: "Stable identifier for this profile package.", type: string, minLength: 1}
+  contentIdentity: {description: "SHA-256 identity of the package content.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   requires:
     type: object
+    description: "Authoring format prerequisites for this package."
     required: [projectFormat]
     additionalProperties: false
-    properties: {projectFormat: {const: timeline/v0.6}}
+    properties: {projectFormat: {description: "Only supported Project source format.", const: timeline/v0.6}}
   profiles:
     type: object
+    description: "Named profiles supplied by this package."
     minProperties: 1
     additionalProperties:
       $ref: "#/$defs/profile"
   fields:
     type: object
+    description: "Package-wide named field definitions."
     additionalProperties:
       $ref: "#/$defs/fieldDefinition"
 
 $defs:
   profile:
     type: object
+    description: "One profile that inherits fields and adds constraints."
     required: [extends]
     additionalProperties: false
     properties:
-      extends: {type: string, minLength: 1}
+      extends: {description: "Identifier of the parent profile.", type: string, minLength: 1}
       fields:
         type: object
+        description: "Field definitions local to this profile."
         additionalProperties:
           $ref: "#/$defs/fieldDefinition"
-      constraints: {type: array}
-      relations: {type: array}
-      derivedFields: {type: object}
+      constraints: {description: "Profile-specific semantic constraints.", type: array}
+      relations: {description: "Profile-specific relation declarations.", type: array}
+      derivedFields: {description: "Fields derived from other profile data.", type: object}
   fieldDefinition:
     type: object
+    description: "Type and cardinality definition for one authorable field."
     required: [type]
     additionalProperties: false
     properties:
       type:
+        description: "Value type accepted by the field."
         enum: [string, boolean, integer, number, date, enum, objectReference, resourceReference]
-      cardinality: {enum: [one, many]}
-      required: {type: boolean}
+      cardinality: {description: "Whether the field accepts one value or many.", enum: [one, many]}
+      required: {description: "Whether each object must supply this field.", type: boolean}
       enumValues:
         type: array
+        description: "Allowed literals when the field type is enum."
         uniqueItems: true
-        items: {type: string, minLength: 1}
+        items: {description: "One allowed enum literal.", type: string, minLength: 1}
       targetProfiles:
         type: array
+        description: "Profiles that may be targeted by an object reference."
         uniqueItems: true
         minItems: 1
-        items: {type: string, minLength: 1}
+        items: {description: "One target profile identifier.", type: string, minLength: 1}
       resourceKinds:
         type: array
+        description: "Resource kinds that may be targeted by a resource reference."
         uniqueItems: true
         minItems: 1
-        items: {type: string, minLength: 1}
+        items: {description: "One allowed resource kind.", type: string, minLength: 1}
