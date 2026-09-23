@@ -134,6 +134,13 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
         return family, weight, size, line_height
 
+    def icon_ratios(self, role: str) -> tuple[Decimal, Decimal]:
+        """Return the closed typography-relative icon scale and gap for one role."""
+        scale, gap = self.number(role, "iconScale"), self.number(role, "iconGap")
+        if scale < 0 or gap < 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
+        return scale, gap
+
     def number(self, role: str, property_name: str) -> Decimal:
         value = self.token(role, property_name, "number")
         try:

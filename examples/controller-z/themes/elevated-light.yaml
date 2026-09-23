@@ -30,6 +30,12 @@ body:
     text-line-height:
       type: number
       value: 1.4
+    icon-scale:
+      type: number
+      value: 1
+    icon-gap:
+      type: number
+      value: 0.25
     heading-size:
       type: number
       value: 24
@@ -148,31 +154,43 @@ body:
       fontWeight: text-weight
       fontSize: text-size
       lineHeight: text-line-height
+      iconScale: icon-scale
+      iconGap: icon-gap
     heading:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: heading-size
       lineHeight: heading-line-height
+      iconScale: icon-scale
+      iconGap: icon-gap
     axis:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: axis-size
       lineHeight: axis-line-height
+      iconScale: icon-scale
+      iconGap: icon-gap
     legend:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: legend-size
       lineHeight: legend-line-height
+      iconScale: icon-scale
+      iconGap: icon-gap
     summary:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: summary-size
       lineHeight: summary-line-height
+      iconScale: icon-scale
+      iconGap: icon-gap
     annotation:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: annotation-size
       lineHeight: annotation-line-height
+      iconScale: icon-scale
+      iconGap: icon-gap
       strokeWidth: stroke-width
     axis-major:
       strokeWidth: stroke-width

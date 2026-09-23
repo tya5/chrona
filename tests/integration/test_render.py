@@ -61,6 +61,37 @@ def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
     assert 'aria-label="Delivery risk"' in svg
 
 
+def test_draft_mark_visual_reaches_the_selected_completed_mark(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [{"target": {"kind": "mark", "object": "firmware", "facet": "planned"},
+                                "ref": "chrona:risk", "decorative": False}]
+    path = tmp_path / "mark-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    svg = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                       visual_profile="chrona-output/visual/v0.7-svg")).artifact.content.decode()
+
+    assert 'data-scene-id="visual:planned:firmware:firmware"' in svg
+    assert 'data-purpose="icon-mark"' in svg
+
+
+def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [
+        {"target": {"kind": "title"}, "ref": "chrona:risk", "side": "trailing", "decorative": True},
+        {"target": {"kind": "mark", "object": "firmware", "facet": "planned"}, "ref": "chrona:risk", "decorative": True},
+    ]
+    path = tmp_path / "paint-role-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    surface = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                           visual_profile="chrona-output/visual/v0.7-svg")).surface
+    by_id = {primitive.scene_id: primitive for primitive in surface.primitives}
+    label, mark = by_id["visual:title:trailing"], by_id["visual:planned:firmware:firmware"]
+    assert (label.visual_role, label.paint.fill) == ("text", "#172033")
+    assert (mark.visual_role, mark.paint.fill) == ("planned", "#3986E6")
+
+
 def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp_path):
     root = _root()
     actual_view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))

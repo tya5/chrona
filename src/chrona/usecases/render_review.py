@@ -187,7 +187,6 @@ def render_review(request: RenderRequest) -> RenderedReview:
         locale=environment.locale,
         visual_profile=visual_profile,
         viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
-        icon_bindings=(),
         icon_assets={item.icon_id: item for item in render_closure.icon_assets},
         visual_requests=visual_requests,
     )

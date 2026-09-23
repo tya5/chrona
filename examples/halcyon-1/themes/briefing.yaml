@@ -36,6 +36,12 @@ body:
     leading.body:
       type: number
       value: 1.4
+    icon-scale:
+      type: number
+      value: 1
+    icon-gap:
+      type: number
+      value: 0.25
     arrow:
       type: marker
       value: triangle
@@ -117,47 +123,65 @@ body:
       fontWeight: weight.regular
       fontSize: size.body
       lineHeight: leading.body
+      iconScale: icon-scale
+      iconGap: icon-gap
     heading:
       fontFamily: editorial
       fontWeight: weight.bold
       fontSize: size.heading
       lineHeight: leading.tight
+      iconScale: icon-scale
+      iconGap: icon-gap
     subtitle:
       fontFamily: editorial
       fontWeight: weight.regular
       fontSize: size.subtitle
       lineHeight: leading.body
+      iconScale: icon-scale
+      iconGap: icon-gap
     axis:
       fontFamily: editorial
       fontWeight: weight.bold
       fontSize: size.axis
       lineHeight: leading.body
+      iconScale: icon-scale
+      iconGap: icon-gap
     legend:
       fontFamily: editorial
       fontWeight: weight.regular
       fontSize: size.legend
       lineHeight: leading.body
+      iconScale: icon-scale
+      iconGap: icon-gap
     annotation:
       fontFamily: editorial
       fontWeight: weight.regular
       fontSize: size.note
       lineHeight: leading.body
+      iconScale: icon-scale
+      iconGap: icon-gap
       strokeWidth: stroke-width
     summary:
       fontFamily: editorial
       fontWeight: weight.regular
       fontSize: size.legend
       lineHeight: leading.body
+      iconScale: icon-scale
+      iconGap: icon-gap
     metric:
       fontFamily: editorial
       fontWeight: weight.bold
       fontSize: size.heading
       lineHeight: leading.tight
+      iconScale: icon-scale
+      iconGap: icon-gap
     groupHeader:
       fontFamily: editorial
       fontWeight: weight.bold
       fontSize: size.axis
       lineHeight: leading.body
+      iconScale: icon-scale
+      iconGap: icon-gap
     dependency:
       marker: arrow
       strokeWidth: stroke-width

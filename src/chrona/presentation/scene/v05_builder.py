@@ -45,7 +45,6 @@ class SceneBuildInput:
     visual_profile: VisualProfile | None = None
     locale: str = "en-US"
     viewport: tuple[float, float] = (0.0, 0.0)
-    icon_bindings: tuple[Any, ...] = ()
     icon_assets: dict[str, Any] | None = None
     visual_requests: tuple[Any, ...] = ()
 
@@ -109,7 +108,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       capabilities: Mapping[str, bool], locale: str = "en-US",
                       visual_profile: VisualProfile | None = None,
                       viewport: tuple[float, float] = (0.0, 0.0),
-                      icon_bindings: tuple[Any, ...] = (), icon_assets: dict[str, Any] | None = None,
+                      icon_assets: dict[str, Any] | None = None,
                       visual_requests: tuple[Any, ...] = ()) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
@@ -132,7 +131,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), visual_profile, locale, viewport, icon_bindings, icon_assets, visual_requests)
+                           dict(capabilities), visual_profile, locale, viewport, icon_assets, visual_requests)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -163,8 +162,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             surface_content=value.surface_content, layout_manifest=value.layout_manifest,
             measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
             font_metrics=value.font_metrics, locale=value.locale,
-            capabilities=dict(value.capabilities),
-            icon_bindings=value.icon_bindings, icon_assets=value.icon_assets or {},
+            capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
             visual_requests=value.visual_requests,
         ))
     except LayoutError as error:

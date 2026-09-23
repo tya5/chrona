@@ -54,6 +54,8 @@ properties:
             fontWeight: {description: "Named font-weight token for the role.", type: string, minLength: 1}
             fontSize: {description: "Named font-size token for the role.", type: string, minLength: 1}
             lineHeight: {description: "Named line-height token for the role.", type: string, minLength: 1}
+            iconScale: {description: "Named typography-relative icon block-size ratio for the role.", type: string, minLength: 1}
+            iconGap: {description: "Named typography-relative icon inline-gap ratio for the role.", type: string, minLength: 1}
             opacity: {description: "Named opacity token for the role.", type: string, minLength: 1}
             strokeWidth: {description: "Named stroke-width token for the role.", type: string, minLength: 1}
             dash: {description: "Named dash-pattern token for the role.", type: string, minLength: 1}

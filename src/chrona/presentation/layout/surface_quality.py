@@ -70,6 +70,7 @@ class TextPlacement:
     collision_region: str = "surface"
     collision_domain: CollisionDomain = CollisionDomain("surface", "content")
     source_content: str | None = None
+    available_inline_size: float | None = None
     fallback_ladder: tuple[str, ...] = ()
     selected_rung: str | None = None
 
@@ -217,7 +218,6 @@ class SurfaceLayoutRequest:
     font_metrics: Any = None
     locale: str = "en-US"
     capabilities: dict[str, bool] = field(default_factory=dict)
-    icon_bindings: tuple[Any, ...] = ()
     icon_assets: dict[str, Any] = field(default_factory=dict)
     visual_requests: tuple[VisualRequest, ...] = ()
 

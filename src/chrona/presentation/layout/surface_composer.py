@@ -50,46 +50,107 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest)
     remains at the typed View boundary.  This helper deliberately has no Scene,
     Theme lookup, or catalog lookup dependency.
     """
-    icons: list[IconPlacement] = []
+    requested: dict[str, dict[str, Any]] = {}
     occupied: set[tuple[str, str]] = set()
     for visual in request.visual_requests:
+        if visual.target_kind == "mark":
+            continue
         selector = dict(visual.selector)
         placement_id = selector.get("placementId") or visual_target_placement_id(visual.target_kind, selector)
         key = (placement_id, visual.side)
         if key in occupied:
             raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
         occupied.add(key)
-        matches = [index for index, item in enumerate(text) if item.placement_id == placement_id and item.overflow != "suppressed"]
-        if len(matches) != 1 or visual.ref is None:
+        if visual.ref is None:
             raise LayoutError("E_LAYOUT_VISUAL_TARGET", visual.source_ref)
-        icon = request.icon_assets.get(visual.ref)
-        if icon is None:
-            raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
-        index = matches[0]; item = text[index]
-        height = min(float(item.bounds.block_size), item.font_size)
-        width = height * icon.viewport[0] / icon.viewport[1]
-        gap = max(1.0, item.font_size * 0.25)
-        if float(item.bounds.inline_size) <= width + gap:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
-        if visual.side == "leading":
-            text[index] = replace(item, bounds=Rect(item.bounds.inline + Decimal(str(width + gap)), item.bounds.block,
-                                                     item.bounds.inline_size - Decimal(str(width + gap)), item.bounds.block_size),
-                                  baseline=(item.baseline[0] + width + gap, item.baseline[1]) if item.baseline else None)
-            inline = item.bounds.inline
+        requested.setdefault(placement_id, {})[visual.side] = visual
+    icons: list[IconPlacement] = []
+    for index, item in enumerate(text):
+        by_side = requested.pop(item.placement_id, None)
+        if not by_side or item.overflow == "suppressed":
+            continue
+        resolved: dict[str, tuple[Any, float, float]] = {}
+        for side, visual in by_side.items():
+            icon = request.icon_assets.get(visual.ref)
+            if icon is None:
+                raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
+            try:
+                scale, gap_ratio = request.theme_tokens.icon_ratios(item.typography_role)
+            except Exception as error:
+                raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
+            height = item.font_size * float(scale)
+            if height <= 0 or icon.viewport[1] <= 0:
+                raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+            resolved[side] = (icon, height * icon.viewport[0] / icon.viewport[1], item.font_size * float(gap_ratio))
+        leading = sum(width + gap for side, (_, width, gap) in resolved.items() if side == "leading")
+        trailing = sum(width + gap for side, (_, width, gap) in resolved.items() if side == "trailing")
+        available = (item.available_inline_size if item.available_inline_size is not None
+                     else float(item.bounds.inline_size)) - leading - trailing
+        if available <= 0:
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
+        source = item.source_content if item.source_content is not None else item.content
+        if len(item.lines) > 1:
+            lines = wrap_text(source, available_inline=available, font_size=item.font_size, font_metrics=request.font_metrics)
+            content, overflow = "\n".join(lines), item.overflow
+        elif item.source_content is not None:
+            content = ellipsize_text(source, available_inline=available, font_size=item.font_size, font_metrics=request.font_metrics)
+            lines, overflow = (content,), "ellipsized" if content != source else "fit"
+        elif measure_text_width(source, font_size=item.font_size, font_metrics=request.font_metrics) <= available:
+            content, lines, overflow = source, (source,), item.overflow
         else:
-            text[index] = replace(item, bounds=Rect(item.bounds.inline, item.bounds.block,
-                                                     item.bounds.inline_size - Decimal(str(width + gap)), item.bounds.block_size))
-            inline = item.bounds.inline + item.bounds.inline_size - Decimal(str(width))
-        if item.baseline is None or not hasattr(request.font_metrics, "cap_height_at"):
-            raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", visual.source_ref)
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
+        width = max(measure_text_width(line, font_size=item.font_size, font_metrics=request.font_metrics) for line in lines)
+        baseline = item.baseline
+        if baseline is None or not hasattr(request.font_metrics, "cap_height_at"):
+            raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(iter(by_side.values())).source_ref)
+        shifted_baseline = (baseline[0] + leading, baseline[1])
+        text[index] = replace(item, content=content, lines=lines, overflow=overflow,
+                              bounds=Rect(Decimal(str(shifted_baseline[0])), item.bounds.block,
+                                          Decimal(str(width)), Decimal(str(item.font_size * item.line_height * len(lines)))),
+                              baseline=shifted_baseline)
         cap_height = float(request.font_metrics.cap_height_at(item.font_size))
-        cap_top = item.baseline[1] - cap_height
-        bounds = Rect(inline, Decimal(str(cap_top + (cap_height - height) / 2)),
-                      Decimal(str(width)), Decimal(str(height)))
-        icons.append(IconPlacement(f"visual:{item.placement_id}:{visual.side}", item.source_ref, visual.source_ref,
-                                   icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
-                                   visual.decorative, bounds, "labelVisual"))
+        for side, visual in by_side.items():
+            icon, icon_width, gap = resolved[side]
+            inline = (float(item.bounds.inline) if side == "leading"
+                      else float(item.bounds.inline) + leading + available + trailing - gap - icon_width)
+            bounds = Rect(Decimal(str(inline)), Decimal(str(baseline[1] - cap_height + (cap_height - item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0])) / 2)),
+                          Decimal(str(icon_width)), Decimal(str(item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0]))) )
+            icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
+                                       icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
+                                       visual.decorative, bounds, "labelVisual"))
+    if requested:
+        raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
     return text, icons
+
+
+def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLayoutRequest) -> list[IconPlacement]:
+    """Project the closed View mark target onto one completed planned/actual mark."""
+    icons: list[IconPlacement] = []
+    occupied: set[str] = set()
+    for visual in request.visual_requests:
+        if visual.target_kind != "mark":
+            continue
+        placement_id = visual_target_placement_id("mark", dict(visual.selector))
+        if placement_id in occupied:
+            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
+        occupied.add(placement_id)
+        # Row-instance identifiers extend the closed object/facet family after
+        # the stable View selector; the selector itself never guesses an
+        # instance suffix.
+        mark = [item for item in marks if item.placement_id == placement_id
+                or item.placement_id.startswith(placement_id + ":")]
+        icon = request.icon_assets.get(visual.ref or "")
+        if len(mark) != 1 or icon is None:
+            raise LayoutError("E_LAYOUT_VISUAL_TARGET" if len(mark) != 1 else "E_ICON_NAME_UNKNOWN", visual.source_ref)
+        host = mark[0]
+        height = float(host.bounds.block_size)
+        width = min(float(host.bounds.inline_size), height * icon.viewport[0] / icon.viewport[1])
+        bounds = Rect(host.bounds.inline + (host.bounds.inline_size - Decimal(str(width))) / 2, host.bounds.block,
+                      Decimal(str(width)), host.bounds.block_size)
+        icons.append(IconPlacement(f"visual:{host.placement_id}", host.source_ref, visual.source_ref,
+                                   icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
+                                   visual.decorative, bounds, "iconMark"))
+    return icons
 
 
 def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
@@ -186,7 +247,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        inline=float(by_source["title"].bounds.inline),
                        baseline_block=float(by_source["title"].bounds.block) + float(title_measurement.first_baseline or 0),
                        typography_role="heading", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                       collision_region="title", collision_domain=CollisionDomain("title", "content"))]
+                       collision_region="title", collision_domain=CollisionDomain("title", "content"),
+                       source_content=title, available_inline_size=float(by_source["title"].bounds.inline_size))]
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
@@ -207,7 +269,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                inline=positions[column_id][0], baseline_block=table_bounds[1] + body_size,
                                typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
-                               source_content=label))
+                               source_content=label, available_inline_size=column_widths[column_id]))
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for object_id, column_id, content in table_cells:
         row = row_by_subject.get(object_id)
@@ -225,7 +287,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
                                    typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    overflow=overflow, collision_region="table",
-                                   collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content))
+                                   collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
+                                   available_inline_size=max(0.0, column_widths[column_id] - indent)))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:
@@ -790,37 +853,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))
     text, icons = resolve_text_visual_requests(text, request)
-    # Icon occurrence and all geometry are resolved here, after label placement but
-    # before Scene projection.  Existing text bounds donate a fixed leading region.
-    for binding_index, binding in enumerate(request.icon_bindings):
-        source = binding.get("source", {}) if isinstance(binding, dict) else {}
-        if source.get("kind") != "object" or not isinstance(source.get("id"), str):
-            raise LayoutError("E_ICON_BINDING", "/iconBindings")
-        icon = request.icon_assets.get(binding.get("icon"))
-        if icon is None:
-            raise LayoutError("E_ICON_BINDING", "/iconBindings")
-        placement_kind, object_id = binding.get("placement"), source["id"]
-        if placement_kind == "leading-label":
-            index = next((i for i, item in enumerate(text) if item.source_ref == object_id and item.placement_id.startswith("member-label:") and item.overflow != "suppressed"), None)
-            if index is None: raise LayoutError("E_ICON_BINDING", "/iconBindings")
-            item = text[index]; size = min(float(item.bounds.block_size), item.font_size); width = size * icon.viewport[0] / icon.viewport[1]; gap = max(1.0, size * 0.25)
-            if item.bounds.inline_size <= width + gap: raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/iconBindings")
-            shifted = replace(item, bounds=Rect(item.bounds.inline + Decimal(str(width + gap)), item.bounds.block,
-                                                item.bounds.inline_size - Decimal(str(width + gap)), item.bounds.block_size),
-                              baseline=(item.baseline[0] + width + gap, item.baseline[1]) if item.baseline else None)
-            text[index] = shifted
-            bounds = Rect(item.bounds.inline, item.bounds.block + (item.bounds.block_size - Decimal(str(size))) / 2,
-                          Decimal(str(width)), Decimal(str(size)))
-            icons.append(IconPlacement(f"icon:{item.placement_id}", object_id, f"/body/iconBindings/{binding_index}", icon.icon_id, icon.kind, icon.content_identity,
-                                       icon.payload, icon.alternative, bool(binding.get("decorative")), bounds))
-        elif placement_kind == "mark":
-            mark = next((item for item in marks if item.source_ref == object_id and item.placement_id.startswith("planned:")), None)
-            if mark is None: raise LayoutError("E_ICON_BINDING", "/iconBindings")
-            height = mark.bounds.block_size; width = min(mark.bounds.inline_size, height * Decimal(str(icon.viewport[0])) / Decimal(str(icon.viewport[1])))
-            bounds = Rect(mark.bounds.inline + (mark.bounds.inline_size - width) / 2, mark.bounds.block, width, height)
-            icons.append(IconPlacement(f"icon:{mark.placement_id}", object_id, f"/body/iconBindings/{binding_index}", icon.icon_id, icon.kind, icon.content_identity,
-                                       icon.payload, icon.alternative, bool(binding.get("decorative")), bounds))
-        else: raise LayoutError("E_ICON_BINDING", "/iconBindings")
+    icons.extend(resolve_mark_visual_requests(marks, request))
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
