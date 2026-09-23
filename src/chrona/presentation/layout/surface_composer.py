@@ -80,7 +80,11 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest)
             text[index] = replace(item, bounds=Rect(item.bounds.inline, item.bounds.block,
                                                      item.bounds.inline_size - Decimal(str(width + gap)), item.bounds.block_size))
             inline = item.bounds.inline + item.bounds.inline_size - Decimal(str(width))
-        bounds = Rect(inline, item.bounds.block + (item.bounds.block_size - Decimal(str(height))) / 2,
+        if item.baseline is None or not hasattr(request.font_metrics, "cap_height_at"):
+            raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", visual.source_ref)
+        cap_height = float(request.font_metrics.cap_height_at(item.font_size))
+        cap_top = item.baseline[1] - cap_height
+        bounds = Rect(inline, Decimal(str(cap_top + (cap_height - height) / 2)),
                       Decimal(str(width)), Decimal(str(height)))
         icons.append(IconPlacement(f"visual:{item.placement_id}:{visual.side}", item.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
