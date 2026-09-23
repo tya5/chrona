@@ -4,7 +4,6 @@ import pytest
 
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.registry import renderer_for
-from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 
@@ -29,7 +28,7 @@ def _render(kind: str):
     )).artifact
 
 
-def _completed_surface_and_tokens():
+def _completed_surface():
     root = _root()
     draft = resolve_draft_render(
         project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
@@ -42,7 +41,7 @@ def _completed_surface_and_tokens():
         renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)}, context.environment.renderer_environment()),
         asset_root=draft.asset_root,
     ))
-    return rendered.surface, ThemeTokenView(draft.closure.resolved_theme.resolved_input)
+    return rendered.surface
 
 
 @pytest.mark.parametrize(("kind", "media_type", "prefix"), [("png", "image/png", b"\x89PNG\r\n\x1a\n"), ("pdf", "application/pdf", b"%PDF-")])
@@ -59,12 +58,12 @@ def test_raster_target_rejects_semantic_capability_requirement():
 
 def test_rasterizer_identity_mismatch_is_rejected():
     with pytest.raises(ValueError, match="E_RENDER_RASTERIZER_IDENTITY"):
-        renderer_for({"kind": "png", "capabilities": []}, {"rasterizer": {"engine": "resvg-py", "version": "wrong", "resvgVersion": "wrong", "dpi": 96}}).render(None, viewport=(1, 1), tokens=None)
+        renderer_for({"kind": "png", "capabilities": []}, {"rasterizer": {"engine": "resvg-py", "version": "wrong", "resvgVersion": "wrong", "dpi": 96}}).render(None, viewport=(1, 1))
 
 
 def test_pdf_rasterizer_identity_mismatch_is_rejected():
     with pytest.raises(ValueError, match="E_RENDER_RASTERIZER_IDENTITY"):
-        renderer_for({"kind": "pdf", "capabilities": []}, {"rasterizer": {"engine": "reportlab", "svglibVersion": "wrong", "reportlabVersion": "wrong", "invariant": True}}).render(None, viewport=(1, 1), tokens=None)
+        renderer_for({"kind": "pdf", "capabilities": []}, {"rasterizer": {"engine": "reportlab", "svglibVersion": "wrong", "reportlabVersion": "wrong", "invariant": True}}).render(None, viewport=(1, 1))
 
 
 @pytest.mark.parametrize(("kind", "media_type", "signature", "identity"), [
@@ -72,12 +71,12 @@ def test_pdf_rasterizer_identity_mismatch_is_rejected():
     ("tikz", "application/x-tex", b"% chrona-tikz/v0.1", "chrona-tikz/v0.1"),
 ])
 def test_typeset_sources_preserve_completed_placement_order(kind, media_type, signature, identity):
-    surface, tokens = _completed_surface_and_tokens()
+    surface = _completed_surface()
     descriptor = ({"engine": "typst", "version": "0.13.1", "adapterGrammar": identity}
                   if kind == "typst" else {"engine": "tectonic", "version": "0.15.0", "adapterGrammar": identity})
     renderer = renderer_for({"kind": kind, "capabilities": []}, {"typesetter": descriptor})
-    first = renderer.render(surface, viewport=(1600, 900), tokens=tokens)
-    second = renderer.render(surface, viewport=(1600, 900), tokens=tokens)
+    first = renderer.render(surface, viewport=(1600, 900))
+    second = renderer.render(surface, viewport=(1600, 900))
     source = first.content.decode("utf-8")
     assert (first.target_kind, first.media_type, first.content[:len(signature)], first.adapter_identity) == (kind, media_type, signature, identity)
     assert first.content == second.content

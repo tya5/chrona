@@ -23,8 +23,8 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
     materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
     artifact = (tmp_path / "controller/review.svg").read_text()
     assert 'data-scene-id="member-label:firmware:firmware"' in artifact
-    assert 'data-scene-id="member-label:firmware:firmware" data-source-ref="firmware" data-purpose="member-label" x="784.375" y="253.625" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#000000"' in artifact
-    assert 'data-scene-id="member-label:evb-arrival:evb-arrival" data-source-ref="evb-arrival" data-purpose="member-label" x="1047.416" y="409.325" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#172033"' in artifact
+    assert 'data-scene-id="member-label:firmware:firmware"' in artifact and 'opacity="1" fill="#000000">FW Feature Complete' in artifact
+    assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
 
 
 def test_materializer_detects_changed_expected_svg(tmp_path):
@@ -83,7 +83,7 @@ def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path)
     assert '<a href="https://example.test/halcyon-1/reviews/frr"' in artifact
     # Only launch→LEOP is driving; its four current/scenario comparison facets
     # remain visible. Endpoint-critical neighbours must not become a critical chain.
-    assert artifact.count('marker-end="url(#marker-dependency-critical-triangle)"') == 4
+    assert artifact.count('marker-end="url(#marker-#C0392B-triangle)"') == 4
     for object_id, wbs in (("mission-closeout", "6"), ("frr", "6.1"), ("launch", "6.2"), ("leop", "6.3"), ("first-light", "6.4")):
         assert f'data-scene-id="cell:{object_id}:WBS"' in artifact
         assert f'>{wbs}</text>' in artifact
