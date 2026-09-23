@@ -1,6 +1,6 @@
 # Design Plan: Icon Ecosystem Redesign (#350)
 
-**Status:** Active — feedback reconciliation before implementation
+**Status:** Complete — successor design and architecture review published
 **Issue:** #350 (reopened after post-hoc review)
 **Supersedes as product scope:** the narrow local-asset assumptions of the
 previous #350 plan and v0.1 delivery. The delivered closure/security foundation
@@ -130,4 +130,3 @@ fetch, renderer fallback/substitution, icon-only required meaning, literal
 asset colours, PDF rich-paint claim, or unpinned package acquisition is
 introduced. Multicolour logos/artwork stay outside this icon family and require
 their own Image/asset design.
-

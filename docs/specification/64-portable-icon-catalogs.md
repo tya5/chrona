@@ -1,175 +1,168 @@
 # Portable Icon Catalogs and Immutable Visual Assets
 
-**Status:** Proposed
-**Depends on:** [07 Style and Theme](07-style-and-theme.md),
-[08 Scene and Rendering](08-scene-and-rendering.md),
-[12 Quality and Invariants](12-quality-and-invariants.md),
-[13 Presentation Format](13-presentation-format.md),
-[33 Intent-Oriented Layout](33-intent-oriented-layout.md),
-[50 Constraint-Driven Gantt Surface Quality](50-constraint-driven-gantt-surface-quality.md),
-[55 Presentation Design Space](55-presentation-design-space.md),
-[62 Declarative Presentation Packages](62-declarative-presentation-packages.md), and
-[63 Portable Visual Capabilities](63-portable-visual-capabilities.md).
-**Owns:** closed icon-catalog resources, SVG/PNG icon ingestion and asset closure,
-renderer-neutral icon primitive data, icon accessibility, and icon target capability.
-It does not own generic images, arbitrary SVG/CSS/XML, semantic facts, text
-measurement, concrete colour literals, package acquisition, or target fallback.
+**Status:** Proposed — v0.2 successor design
+**Owns:** local Iconify collection ingestion, normalized monochrome icon
+catalogs, catalog-set closure, label/mark visual selection, completed Icon
+primitives, icon accessibility, and SVG/PNG target capability.
+**Does not own:** Project facts, arbitrary images/artwork, raw SVG at render
+time, concrete colours, Layout coordinates, package acquisition, network
+fetching, target fallback, or PDF rich-paint fidelity.
 
-## 1. Contract
-
-An icon is a bounded visual representation of an existing semantic role. It can be a
-leading element of a text label or a semantic mark; it never creates a new Project
-meaning and must not be the only representation of required meaning.
+## 1. Contract and authority
 
 ```text
-icon-catalog + Context closure + View/semantic icon binding + Theme treatment
-  -> Layout measured icon/text or icon mark placement
-  -> completed Scene Icon primitive
-  -> exact target-profile serialization
+local Iconify JSON -> normalized catalog -> pinned Context catalog set
+  + View visual request + Theme/Colour Scheme + Font metrics
+  -> Layout visual/text placement -> completed Scene Icon -> adapter
 ```
 
-The only accepted asset classes in v0.1 are local `vector` SVG and local `raster` PNG.
-Both are acquired from the already selected immutable Store snapshot, verified by SHA-256,
-and copied into a materialized closure. A host path is a locator only. A renderer receives
-neither a path nor raw source SVG; it cannot reopen, substitute, recolour, resize, or
-choose an asset.
+An icon is a visual companion to an existing textual or semantic source. It
+cannot be the only carrier of required meaning. View owns occurrence, catalog
+reference, side, and field-to-icon mapping; Theme owns size ratio, gap ratio,
+and visual paint; Layout owns all sizing, cap-height alignment, measurement,
+wrapping, overflow, and reading order; Scene owns completed primitives; an
+adapter serializes only completed data.
 
-## 2. Catalog resource and asset closure
+The former v0.1 local-file catalog is superseded. No compatibility alias,
+one-catalog bridge, raw-SVG fallback, or silently downgraded source is retained.
 
-`chrona/icon-catalog/v0.1` is an ordinary typed resource with stable resource ID and
-closed entries. A Context has at most one optional `inputs.iconCatalog` typed reference.
-Its namespaced icon IDs are canonical map keys; duplicate/reordered spellings are
-structurally impossible and canonical evidence orders entries lexically by ID.
+## 2. Local collection ingestion and normalized catalog
 
-```yaml
-# chrona-contract: current
-version: chrona/icon-catalog/v0.1
-kind: icon-catalog
-id: acme-review-icons
-body:
-  icons:
-    acme.risk:
-      kind: vector
-      source: {address: assets/risk.svg, contentIdentity: sha256:...}
-      viewport: {inlineSize: 24, blockSize: 24}
-      alternative: Risk requires attention
-    acme.approved-logo:
-      kind: raster
-      source: {address: assets/approved.png, contentIdentity: sha256:...}
-      viewport: {inlineSize: 96, blockSize: 96}
-      alternative: Approved programme mark
+`chrona icon-catalog import COLLECTION.json --output CATALOG.yaml` reads one
+explicit local Iconify JSON collection. It performs no network access, registry
+lookup, package installation, or rendering. It validates every icon and writes
+the destination atomically only if the complete collection succeeds. Failure
+identifies `prefix`, icon name, source element/attribute/command, and stable
+diagnostic; a partial catalog is never emitted.
+
+The successor `chrona/icon-catalog/v0.2` stores canonical normalized entries,
+not source SVG paths. It records:
+
+- one canonical `prefix`, non-empty aliases, source collection version and
+  SHA-256 identity;
+- declared license identifier and notice text/provenance;
+- lexically ordered entry names, aliases, viewport, alternative, and normalized
+  monochrome vector payload; and
+- optional identity-closed purpose-built PNG entry bytes addressed relative to
+  the catalog revision.
+
+`set:name` is the only authored vector/raster reference form. A Context catalog
+set resolves the set against its catalog prefix and aliases. Duplicate prefix or
+alias across the pinned set, duplicate name/alias in one catalog, unknown set,
+unknown name, or ambiguous reference rejects before Layout. Catalog order is
+canonical lexical prefix order after validation, not Context input order.
+
+The packaged default is an importer-generated Material Symbols Outline Rounded
+catalog. It is shipped under package resources with its source identity and
+Apache-2.0 notice, and exposes both `material:` and `material-symbols:`. Its
+exact subset, generated identity, names, count, bytes, and 13px visual evidence
+are release-gated rather than assumed by this specification. No Context means
+no catalog and therefore no icon use.
+
+## 3. Closed vector normalization
+
+The importer accepts only Iconify collection data and only monochrome artwork.
+It parses a bounded SVG fragment once, then discards XML. It admits `svg`, `g`,
+`path`, `circle`, `rect`, `ellipse`, `line`, `polyline`, and `polygon`; fixed
+Iconify flip/rotation metadata; and inherited `fill`, `stroke`, `stroke-width`,
+`stroke-linecap`, and `stroke-linejoin` values restricted to `currentColor` or
+`none`. It lowers groups, basic shapes, arcs, cubic/smooth commands, and
+relative coordinates into finite absolute `move`, `line`, `quadratic`, and
+`close` commands using a pinned, versioned geometric tolerance.
+
+Every normalized path has exactly one paint mode:
+
+- `fill`; or
+- `stroke`, with finite positive source-unit width and closed
+  `butt|round|square` cap plus `miter|round|bevel` join.
+
+At Layout/Scene completion a uniform viewport scale transforms stroke width to
+target-independent completed geometry. The owning Theme/Colour Scheme supplies
+the resolved paint colour; asset source never supplies a literal colour.
+
+The importer rejects `style`, class, transform in SVG body, opacity, literal
+colour, gradient, filter, mask, clip, image, text, `use`, `defs`, URL, external
+reference, script/event/foreign content, unsupported element, non-finite value,
+or any configured depth/path/command/coordinate/tolerance limit. A future
+multicolour logo or image belongs to a separately designed asset family.
+
+## 4. Context closure and public authoring
+
+`chrona/render-context/v0.11` replaces one `inputs.iconCatalog` with
+`inputs.iconCatalogs`: a non-empty set of independently pinned catalog
+references. Closure resolution verifies every catalog identity and every
+declared raster asset before View/Theme/Layout. Materialization copies exactly
+those catalog documents and assets under their immutable revisions; no directory
+scan or source collection read occurs.
+
+Draft `chrona render` and guided draft resolution accept repeatable explicit
+`--icon-catalog PATH` input. Draft derives identities from exactly those files;
+the public command never discovers a catalog. Schema descriptions, command help,
+examples, and diagnostics document every user-authored catalog and visual field.
+
+## 5. Visual request and Layout composition
+
+`chrona/view/v0.12` contains closed `visuals` requests. Each request targets an
+existing presentation label or mark and has either a direct `ref: set:name` or
+a field encoding `{field, domain: {value: set:name}, unknown: reject}`. It has
+`side: leading|trailing` (default leading) and `decorative: boolean`. A target
+allows at most one visual per side. Theme never names an icon.
+
+The successor vocabulary admits all current text placements: document title,
+table column header, member/plot label, group header/detail, annotation text,
+project note/note index, legend label, summary header/metric/caption, milestone
+digest entry, axis label, and as-of label. Existing mark targets admit one icon
+per declared object/semantic mark. Each target form has a typed selector and
+source-existence validation; a form is not present in the schema until its
+Layout projection exists. This prohibits valid-but-unreachable declarations.
+
+Layout receives resolved visual requests and normalized assets. For a text
+placement it computes each visual's block size as:
+
+```text
+typography.fontSize × Theme iconScale(role)
 ```
 
-An asset address is a non-empty Store-relative POSIX address with no `.` or `..` segment,
-symlink traversal, URL scheme, fragment, query, data URI, or ambient directory search.
-The loader reads exact bytes from the Context resource's immutable revision, verifies the
-declared SHA-256 before interpretation, and records the catalog identity plus every
-referenced asset identity in ordered closure evidence. Materialization copies the catalog
-document and each verified asset under that immutable revision. Mutation, absence,
-identity mismatch, unsafe path, duplicate ID, or unsupported source class fails before
-Layout.
+and its gap as `fontSize × Theme iconGap(role)`. Scale and gap are finite,
+non-negative ratio tokens, not pixels. A successor font-metrics resource must
+supply exact cap height; Layout centres the visual on the label cap-height, not
+the line box. A mark uses its named mark block metric and the same aspect-ratio
+rule. Layout reserves leading and trailing advances before text measurement,
+wrapping, ellipsizing, and overflow. It records visual bounds, completed stroke
+scale, text bounds/baseline/lines, and logical reading order.
 
-Package members may include an already-approved catalog and its static assets only after
-the package acquisition contract of Specification 62 exists. A package cannot add an
-icon vocabulary, source kind, or dynamic resolver.
+Leading label visuals inherit the completed label paint. Mark visuals use their
+own semantic mark role. These are distinct semantic bindings, so Theme can
+change appearance without selecting asset or occurrence.
 
-## 3. Bounded normalization
+## 6. Scene, accessibility, and targets
 
-### 3.1 Vector SVG
+`Icon` remains a dedicated Scene primitive. It carries one normalized vector
+path list or one verified PNG payload, complete bounds, complete paint/strokes,
+asset identity, alternative, decorative state, visual order, source reference,
+and binding pointer. It carries no catalog lookup, raw XML, Theme object, font
+metric, text measurement, or coordinate policy.
 
-The loader parses vector SVG once and normalizes it to an immutable, renderer-neutral
-payload. It accepts a root `svg`, nested `g`, and paint-free `path` elements only. It
-accepts finite numeric viewbox values and the path commands `M`, `L`, `H`, `V`, `Q`, `C`,
-and `Z` (absolute or relative, normalized to absolute coordinates). It rejects arcs,
-transform, style/class, inherited presentation attributes, stroke, fill, opacity, IDs,
-`use`, external references, image, text, script, event attributes, `foreignObject`,
-filter, mask, clip, animation, CSS, URL-valued attributes, and every element or attribute
-outside this closed set. The normalizer bounds command count, nesting, coordinate magnitude,
-and viewport dimensions with named diagnostics.
+Decorative visuals beside present text are hidden from the accessibility tree.
+Meaningful visual use requires a non-empty catalog alternative and an equivalent
+existing textual semantic source. Meaningful icon contrast is validated against
+its resolved adjacent surface; no icon-only distinction is accepted.
 
-The normalized payload consists of one finite positive viewport and ordered fill paths.
-Its colours are not asset authority: Theme/Color Scheme resolves the completed icon paint.
-The raw SVG never crosses the loader boundary and is retained only as immutable closure
-evidence for audit/re-materialization.
+Exact `v0.7-svg` and `v0.7-png` profiles admit normalized vector and verified
+raster icons. SVG serializes completed paths/data payloads; PNG is derived from
+that complete SVG through the pinned resvg route. PDF, Typst, and TikZ remain
+rejection-only until independently designed and evidenced. Neither adapter
+selects a fallback, imports a catalog, reopens a path, or decides omission.
 
-### 3.2 Raster PNG
+## 7. Acceptance and evolution
 
-The loader accepts only PNG signature/IHDR-valid bytes with a finite positive intrinsic
-width and height within declared limits. It verifies that the catalog viewport matches the
-intrinsic dimensions (or an explicitly specified deterministic normalization rule), and
-does not decode metadata as policy. The original verified PNG bytes are preserved as the
-raster payload, carried by content identity, and encoded by the SVG/PNG route without a
-filesystem reference. No EXIF, URL, animation, embedded profile, or alternate image
-format is admitted in v0.1.
+Release evidence must include real Material Symbols, Lucide, and Tabler import
+fixtures; a packaged Material default; user-owned import; direct and encoded
+selection; every label target; leading/trailing wrapping and overflow; fill and
+stroke serialization; cap-height placement; label/mark paint separation;
+decorative/meaningful accessibility; exact rejection diagnostics; PNG decoded
+pixel checks; bounded raster artifact size; materialized closure; full tests,
+conformance, wheel smoke, and Ubuntu/macOS CI.
 
-## 4. Layout, semantic, and Scene boundary
-
-The semantic/View layer chooses an existing source's namespaced catalog ID and whether it
-emits `leading-label-icon`, `mark-icon`, or no icon. The first closed View syntax is
-`body.iconBindings`, whose entries uniquely name `{source: {kind, id}, placement:
-leading-label|mark, icon: acme.risk, decorative: boolean}`. `source` identifies an
-already selected semantic object, View annotation, group, or existing semantic mark; it
-does not introduce a coordinate, match by title, or mutate semantic truth. A binding to an
-absent source or an unavailable label/mark placement diagnoses. Theme maps that role only
-to tokenized size, gap, paint, and finish treatment. The binding is validated against the
-resolved catalog before measurement. Theme cannot name an asset source, raw geometry,
-concrete colour literal, semantic icon selection, target profile, or fallback.
-
-For a leading label, Layout consumes the normalized intrinsic viewport, resolved icon size,
-gap, typography, text, and available inline width. It emits a single placement containing
-icon bounds, text bounds, text baseline/lines/font identity, gap, visual order, source
-identity, alternative, and overflow result. The icon occupies inline space before text;
-wrapping and ellipsizing operate on the remaining measured text interval. For a mark,
-Layout emits icon bounds, scale, and completed anchor/port relation. Scene only projects
-those placements.
-
-`Icon` is a new Scene primitive kind. It is not `Symbol`, because Symbols retain their
-closed geometric semantic vocabulary; it is not `Path`, because a Path is general surface
-geometry and carries no asset identity/alternative. An Icon primitive has exactly one
-normalized vector payload or one immutable raster identity/payload, complete bounds,
-resolved paint where applicable, `decorative` flag, alternative, visual role, source
-reference, and stable Scene identity. It has no catalog ID lookup, authored Theme, file
-path, text measurement, or placement policy. Vector coordinates are transformed by Scene
-only from already completed bounds; adapters serialize them verbatim.
-
-## 5. Accessibility, profiles, and diagnostics
-
-A decorative icon has an empty alternative and is hidden from the target accessibility
-tree. A non-decorative icon has a non-empty catalog alternative and an equivalent existing
-textual role/source; a required semantic distinction cannot be icon-only. Leading icons are
-normally decorative because the label remains present. The SVG adapter emits an accessible
-name only for non-decorative icons; PNG preserves the same Scene/accessibility evidence in
-the manifest. Adapters never invent alternative text.
-
-The v0.1 required capability IDs are `icon.vector` and `icon.raster`. A Context names one
-complete target profile, not independently combinable visual and icon profiles. The
-successor profiles are `chrona-output/visual/v0.7-svg` and
-`chrona-output/visual/v0.7-png`, each extending the matching v0.6 target profile with
-both icon IDs. `chrona-output/visual/v0.7-pdf` is admitted only if characterization proves
-that the existing SVG-derived PDF path preserves both normalized vectors and immutable PNG
-payloads; it may deliberately admit the icon IDs while continuing to reject #349's
-drop-shadow capability. Until that evidence exists, PDF has no v0.7 profile. Typst and
-TikZ remain baseline-only. Unsupported required use fails before rendering; decorative
-omission is a Scene-resolution policy only when the exact profile explicitly permits it.
-The adapter does not silently omit, rasterize, or substitute an icon.
-
-Stable diagnostics include `E_ICON_CATALOG_SCHEMA`, `E_ICON_ASSET_PATH`,
-`E_ICON_ASSET_IDENTITY`, `E_ICON_ASSET_MISSING`, `E_ICON_SVG_UNSAFE`,
-`E_ICON_SVG_LIMIT`, `E_ICON_PNG_INVALID`, `E_ICON_PNG_LIMIT`,
-`E_ICON_BINDING`, `E_ICON_ACCESSIBILITY`, and `E_ICON_CAPABILITY_UNSUPPORTED`.
-Each identifies the resource/entry/property pointer. A malformed or hostile asset is
-rejected at closure ingress, never passed to a renderer.
-
-## 6. Deliberate exclusions and evolution
-
-This specification is a narrow closed-asset exception to Specification 63's generic image
-deferral. It does not admit a general Image primitive, arbitrary artwork, bitmap/photo
-placement, SVG styling, gradients in assets, external icon packages, custom fonts, network
-fetches, or profile claims for PDF/Typst/TikZ. A later asset class, SVG element/attribute,
-Scene payload, icon-only semantic, generic image, package route, or target requires a new
-versioned profile plus evidence and this specification's architecture review.
-
-Design Space may expose a named icon treatment only when it resolves to the existing
-View/semantic icon binding and Theme treatment above. It may not expose a raw asset
-picker, coordinate, or renderer feature. The resulting catalog remains an ordinary
-explicit resource, so a user can fork/edit it under the same immutable closure rules.
+Any omission, rejected requirement, or future icon/image capability is recorded
+against R350-01 through R350-12 in the issue and release review before closure.
