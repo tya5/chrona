@@ -28,6 +28,7 @@ from chrona.operational.authoring_commands import cas_write_authoring_aggregate,
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
+from chrona.presentation.icons.importer import IconImportError, import_iconify
 
 
 @dataclass(frozen=True)
@@ -169,6 +170,16 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
     _add_draft_target_arguments(command)
     command.add_argument("--output", "-o", required=True)
+
+    icon = sub.add_parser("icon-catalog", help="create a normalized local icon catalog")
+    icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
+    command = icon_sub.add_parser("import", help="import one local Iconify JSON collection")
+    command.add_argument("source", help="local Iconify JSON collection")
+    command.add_argument("--output", required=True, help="new v0.2 catalog YAML")
+    command.add_argument("--license-spdx", required=True, help="declared upstream SPDX identifier")
+    command.add_argument("--notice-file", required=True, help="local complete upstream license notice")
+    command.add_argument("--set", dest="icon_set", help="canonical set name (defaults to collection prefix)")
+    command.add_argument("--alias", action="append", default=[], help="additional set alias; repeatable")
 
     command = sub.add_parser("authoring-command-apply", help="apply one revision-bound guided workspace command")
     command.add_argument("--workspace", required=True)
@@ -335,6 +346,8 @@ def _parse_viewport(value: str) -> tuple[int, int]:
         raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2)
     try:
         width, height = (int(part) for part in parts)
+    except IconImportError as error:
+        _emit_failure(CliFailure(error.code, error.code, "icon-import"))
     except ValueError as error:
         raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2) from error
     if width <= 0 or height <= 0:
@@ -371,6 +384,11 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
 
 
 def _run(args: argparse.Namespace) -> None:
+    if args.command == "icon-catalog":
+        result = import_iconify(Path(args.source), Path(args.output), set_name=args.icon_set, aliases=tuple(args.alias),
+                                license_spdx=args.license_spdx, notice_path=Path(args.notice_file))
+        print(json.dumps(result, sort_keys=True))
+        return
     if args.command in {"command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"}:
         try:
             command = parse_document(Path(args.command_path).read_text(encoding="utf-8"), "command-request-v0.2.schema.yaml")

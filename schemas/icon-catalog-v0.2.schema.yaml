@@ -10,7 +10,7 @@ allOf:
       kind: {const: icon-catalog}
       body:
         type: object
-        required: [set, aliases, provenance, icons]
+        required: [set, aliases, provenance, icons, entryAliases]
         additionalProperties: false
         properties:
           set:
@@ -24,11 +24,12 @@ allOf:
           provenance:
             type: object
             description: "Importer-recorded local collection identity and complete licensing notice."
-            required: [sourceKind, sourcePrefix, license]
+            required: [sourceKind, sourcePrefix, sourceContentIdentity, license]
             additionalProperties: false
             properties:
               sourceKind: {description: "Authoring ingress that created this normalized catalog.", const: iconify-json}
               sourcePrefix: {$ref: "#/$defs/name"}
+              sourceContentIdentity: {description: "SHA-256 of the exact supplied local collection bytes.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
               sourceVersion: {description: "Optional upstream collection version supplied by the local source.", type: string, minLength: 1}
               lastModified: {description: "Optional upstream collection modification marker.", type: string, minLength: 1}
               license:
@@ -43,6 +44,10 @@ allOf:
             minProperties: 1
             propertyNames: {$ref: "#/$defs/name"}
             additionalProperties: {$ref: "#/$defs/icon"}
+          entryAliases:
+            description: "Alias name to canonical entry name; geometry-bearing aliases are normalized as entries instead."
+            type: object
+            additionalProperties: {$ref: "#/$defs/name"}
 $defs:
   name:
     type: string

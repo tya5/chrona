@@ -9,8 +9,8 @@ def _catalog(source: str = "assets/risk.png"):
     return {
         "version": "chrona/icon-catalog/v0.2", "kind": "icon-catalog", "id": "acme-icons",
         "body": {"set": "acme", "aliases": ["acme-ui"],
-                 "provenance": {"sourceKind": "iconify-json", "sourcePrefix": "acme", "license": {"spdx": "MIT", "notice": "MIT"}},
-                 "icons": {"risk": {
+                 "provenance": {"sourceKind": "iconify-json", "sourcePrefix": "acme", "sourceContentIdentity": "sha256:" + "b" * 64, "license": {"spdx": "MIT", "notice": "MIT"}},
+                 "entryAliases": {}, "icons": {"risk": {
             "kind": "raster", "source": {"address": source, "contentIdentity": "sha256:" + "a" * 64},
             "viewport": {"inlineSize": 24, "blockSize": 24}, "alternative": "Risk",
         }}},
