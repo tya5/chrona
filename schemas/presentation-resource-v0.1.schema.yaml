@@ -1,62 +1,78 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:presentation-resource-v0.1"
 title: "Chrona Presentation Resource v0.1"
+description: "Common envelope for a versioned, immutable presentation resource."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 
 properties:
   version:
+    description: "Presentation resource contract identifier."
     pattern: "^chrona/[a-z-]+/v0\\.[0-9]+$"
   kind:
+    description: "Presentation resource kind."
     type: string
     minLength: 1
   id:
+    description: "Stable presentation resource identifier."
     type: string
     minLength: 1
-  body: {}
+  body: {description: "Kind-specific presentation resource content."}
 
 $defs:
   resourceRef:
     type: object
+    description: "Pinned reference to any versioned presentation resource."
     required: [id, kind, path, revision, contentIdentity]
     additionalProperties: false
     properties:
       id:
+        description: "Referenced resource identifier."
         type: string
         minLength: 1
       kind:
+        description: "Referenced resource kind."
         type: string
         minLength: 1
       path:
+        description: "Safe relative path to the resource."
         type: string
         minLength: 1
         pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
       revision:
+        description: "Pinned Git revision of the resource."
         type: string
         pattern: "^git:[0-9A-Fa-f]{40,64}$"
       contentIdentity:
+        description: "SHA-256 identity of the referenced bytes."
         type: string
         pattern: "^sha256:[0-9a-f]{64}$"
 
   projectRef:
     type: object
+    description: "Pinned reference to a Project resource."
     required: [id, kind, path, revision, contentIdentity]
     additionalProperties: false
     properties:
       id:
+        description: "Referenced Project identifier."
         type: string
         minLength: 1
       kind:
+        description: "The only allowed referenced resource kind."
         const: project
       path:
+        description: "Safe relative Project path."
         type: string
         minLength: 1
         pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
       revision:
+        description: "Pinned Git revision of the Project."
         type: string
         pattern: "^git:[0-9A-Fa-f]{40,64}$"
       contentIdentity:
+        description: "SHA-256 identity of the referenced Project bytes."
         type: string
         pattern: "^sha256:[0-9a-f]{64}$"
 

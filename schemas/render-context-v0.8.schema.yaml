@@ -1,83 +1,95 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:render-context-v0.8"
 title: "Chrona Render Context v0.8"
+description: "Pinned inputs, execution environment, and output target for one materialization."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: "chrona/render-context/v0.8"}
-  kind: {const: render-context}
-  id: {type: string, minLength: 1}
+  version: {description: "This Render Context contract version.", const: "chrona/render-context/v0.8"}
+  kind: {description: "The resource kind for a Render Context.", const: render-context}
+  id: {description: "Stable Render Context identifier.", type: string, minLength: 1}
   body:
     type: object
+    description: "Pinned source resources, environment capabilities, and output target."
     required: [project, view, theme, colorScheme, layout, inputs, environment, target]
     additionalProperties: false
     properties:
-      project: {$ref: "#/$defs/projectRef"}
-      view: {$ref: "#/$defs/viewRef"}
-      theme: {$ref: "#/$defs/themeRef"}
-      colorScheme: {$ref: "#/$defs/colorSchemeRef"}
-      layout: {$ref: "#/$defs/layoutRef"}
+      project: {description: "Pinned Project input.", $ref: "#/$defs/projectRef"}
+      view: {description: "Pinned View input.", $ref: "#/$defs/viewRef"}
+      theme: {description: "Pinned Theme input.", $ref: "#/$defs/themeRef"}
+      colorScheme: {description: "Pinned Color Scheme input.", $ref: "#/$defs/colorSchemeRef"}
+      layout: {description: "Pinned Layout Profile input.", $ref: "#/$defs/layoutRef"}
       inputs:
         type: object
+        description: "Optional comparison and profile resources used by materialization."
         additionalProperties: false
         properties:
-          actual: {$ref: "#/$defs/actualRef"}
-          snapshot: {$ref: "#/$defs/snapshotRef"}
-          summaryProfile: {$ref: "#/$defs/reference"}
-          detailProfile: {$ref: "#/$defs/reference"}
+          actual: {description: "Optional pinned Actual Set input.", $ref: "#/$defs/actualRef"}
+          snapshot: {description: "Optional pinned Snapshot input.", $ref: "#/$defs/snapshotRef"}
+          summaryProfile: {description: "Optional pinned summary profile.", $ref: "#/$defs/reference"}
+          detailProfile: {description: "Optional pinned detail profile.", $ref: "#/$defs/reference"}
       environment:
         type: object
+        description: "Deterministic execution environment for Layout and materialization."
         required: [viewport, locale, fontMetrics, scenePrecision]
         additionalProperties: false
         properties:
           viewport:
             type: object
+            description: "Available physical viewport dimensions."
             required: [inlineSize, blockSize]
             additionalProperties: false
             properties:
-              inlineSize: {type: integer, minimum: 1}
-              blockSize: {type: integer, minimum: 1}
-          locale: {type: string, minLength: 1}
-          fontMetrics: {type: object}
-          scenePrecision: {type: integer, minimum: 0}
+              inlineSize: {description: "Positive available inline size.", type: integer, minimum: 1}
+              blockSize: {description: "Positive available block size.", type: integer, minimum: 1}
+          locale: {description: "Locale used for author-selected localized output.", type: string, minLength: 1}
+          fontMetrics: {description: "Immutable font-metric source selected for Layout.", type: object}
+          scenePrecision: {description: "Nonnegative Scene numeric precision.", type: integer, minimum: 0}
           rasterizer:
+            description: "Raster output engine and version evidence."
+            examples: [{engine: resvg-py, version: "0.45.1", resvgVersion: "0.45.1", dpi: 96}, {engine: reportlab, svglibVersion: "1.5.1", reportlabVersion: "4.2.0", invariant: true}]
             oneOf:
               - type: object
+                description: "resvg-py rasterizer evidence."
                 required: [engine, version, resvgVersion, dpi]
                 additionalProperties: false
                 properties:
-                  engine: {const: resvg-py}
-                  version: {type: string, minLength: 1}
-                  resvgVersion: {type: string, minLength: 1}
-                  dpi: {type: number, exclusiveMinimum: 0}
+                  engine: {description: "Selects the resvg-py engine.", const: resvg-py}
+                  version: {description: "Installed Python adapter version.", type: string, minLength: 1}
+                  resvgVersion: {description: "Underlying resvg version.", type: string, minLength: 1}
+                  dpi: {description: "Positive raster dots per inch.", type: number, exclusiveMinimum: 0}
               - type: object
+                description: "ReportLab rasterizer evidence."
                 required: [engine, svglibVersion, reportlabVersion, invariant]
                 additionalProperties: false
                 properties:
-                  engine: {const: reportlab}
-                  svglibVersion: {type: string, minLength: 1}
-                  reportlabVersion: {type: string, minLength: 1}
-                  invariant: {const: true}
+                  engine: {description: "Selects the ReportLab engine.", const: reportlab}
+                  svglibVersion: {description: "Installed svglib version.", type: string, minLength: 1}
+                  reportlabVersion: {description: "Installed ReportLab version.", type: string, minLength: 1}
+                  invariant: {description: "Requires deterministic ReportLab output mode.", const: true}
           typesetter:
             type: object
+            description: "Text typesetting engine and adapter grammar evidence."
             required: [engine, version, adapterGrammar]
             additionalProperties: false
             properties:
-              engine: {enum: [typst, tectonic]}
-              version: {type: string, pattern: "^[0-9]+(\\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?$"}
-              adapterGrammar: {enum: [chrona-typst/v0.1, chrona-tikz/v0.1]}
+              engine: {description: "Installed typesetting engine.", enum: [typst, tectonic]}
+              version: {description: "Installed typesetting engine version.", type: string, pattern: "^[0-9]+(\\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?$"}
+              adapterGrammar: {description: "Chrona adapter grammar selected for the engine.", enum: [chrona-typst/v0.1, chrona-tikz/v0.1]}
       target:
         type: object
+        description: "Requested public output format and capabilities."
         required: [kind, capabilities]
         additionalProperties: false
         properties:
-          kind: {enum: [svg, png, pdf, typst, tikz]}
+          kind: {description: "Public output format.", enum: [svg, png, pdf, typst, tikz]}
           capabilities:
             type: array
-            items: {type: string, minLength: 1}
+            description: "Unique capabilities required by the chosen output target."
+            items: {description: "One required target capability.", type: string, minLength: 1}
             uniqueItems: true
-          textMode: {const: positioned}
+          textMode: {description: "Text placement mode required for typeset targets.", const: positioned}
     allOf:
       - if: {properties: {target: {properties: {kind: {const: svg}}}}}
         then: {properties: {environment: {not: {anyOf: [{required: [rasterizer]}, {required: [typesetter]}]}}}}
@@ -96,15 +108,16 @@ properties:
 $defs:
   reference:
     type: object
+    description: "Pinned Store reference to one materialization input resource."
     required: [id, kind, store, address, revision]
     additionalProperties: false
     properties:
-      id: {type: string, minLength: 1}
-      kind: {type: string, minLength: 1}
-      store: {type: object}
-      address: {type: string, minLength: 1}
-      revision: {type: object}
-      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      id: {description: "Referenced resource identifier.", type: string, minLength: 1}
+      kind: {description: "Referenced resource kind.", type: string, minLength: 1}
+      store: {description: "Provider-specific Store identity.", type: object}
+      address: {description: "Store-relative resource address.", type: string, minLength: 1}
+      revision: {description: "Provider-specific immutable revision.", type: object}
+      contentIdentity: {description: "Optional SHA-256 identity of the resource bytes.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   projectRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: project}}}]}
   viewRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: view}}}]}
   themeRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: theme}}}]}
