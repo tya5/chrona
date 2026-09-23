@@ -23,6 +23,7 @@ body:
     annotation-size: {type: number, value: 14}
     annotation-line-height: {type: number, value: 1.4}
     dependency-marker: {type: marker, value: triangle}
+    stroke-width: {type: number, value: 1}
     timeline-day-width: {type: number, value: 12}
     timeline-row-height: {type: number, value: 40}
     timeline-mark-size: {type: number, value: 8}
@@ -47,8 +48,14 @@ body:
     axis: {fontFamily: editorial, fontWeight: text-weight, fontSize: axis-size, lineHeight: axis-line-height}
     legend: {fontFamily: editorial, fontWeight: text-weight, fontSize: legend-size, lineHeight: legend-line-height}
     summary: {fontFamily: editorial, fontWeight: text-weight, fontSize: summary-size, lineHeight: summary-line-height}
-    annotation: {fontFamily: editorial, fontWeight: text-weight, fontSize: annotation-size, lineHeight: annotation-line-height}
-    dependency: {marker: dependency-marker}
+    annotation: {fontFamily: editorial, fontWeight: text-weight, fontSize: annotation-size, lineHeight: annotation-line-height, strokeWidth: stroke-width}
+    axis-major: {strokeWidth: stroke-width}
+    axis-minor: {strokeWidth: stroke-width}
+    network-edge: {strokeWidth: stroke-width}
+    critical-edge: {strokeWidth: stroke-width}
+    as-of: {strokeWidth: stroke-width}
+    variance-behind: {strokeWidth: stroke-width}
+    dependency: {marker: dependency-marker, strokeWidth: stroke-width}
   colorBindings:
     background.fill: surface
     text.fill: text
