@@ -23,24 +23,26 @@ removed in the first completed migration slice.
 | R350-11 draft ingress/docs | I350R-3, I350R-6 | repeatable CLI catalog input, help/schema annotation checks |
 | R350-12 accountable closure | I350R-6, I350R-7 | published matrix, release review, issue disposition |
 
-## I350R-1 — Successor contracts and migration removal
+## I350R-1 — Compact successor contracts and migration removal
 
-Create `icon-catalog/v0.2`, `render-context/v0.11`, a successor `view/v0.12`
-envelope, and font-metrics v0.2 contracts. Replace one catalog reference with a
+Create `icon-catalog/v0.3` with canonical compact primitive streams,
+`render-context/v0.12`, a successor `view/v0.12` envelope, and font-metrics
+v0.2 contracts. Replace one catalog reference with a
 catalog set, replace dotted icon IDs with `set:name`, remove the v0.1
 `iconBindings` door, and require exact cap height. The typed `visuals` target,
 direct reference, and field encoding grammar is deliberately introduced only
 with its complete Layout projection in I350R-4: Specification 64 forbids a
 schema-valid target that has no projection. Update typed resource models, schema
 inventory, Context closure model, all examples/conformance, and package
-resources in one atomic migration. Remove v0.1 catalog, v0.10 Context, v0.11
-View, and v0.1 font metric readers/schemas/fixtures rather than retaining
+resources in one atomic migration. Remove v0.1/v0.2 catalog, v0.10/v0.11
+Context, v0.11 View, and v0.1 font metric readers/schemas/fixtures rather than retaining
 bridges.
 
 **Files:** schemas/resources inventory, contracts, closure, font metrics,
 example contexts/views/themes, conformance and schema tests.
 
-**Acceptance:** no live predecessor parses; each introduced successor field has
+**Acceptance:** no live predecessor parses; only finite, arity-correct `M L Q Z`
+compact streams parse to typed primitive paths; each introduced successor field has
 a schema description; catalog-set ambiguity rejects; every former source kind
 is absent until its typed projected target arrives in I350R-4; cap height is
 validated/identity-closed. I350R-4 owns the direct/encoded visual rejection
@@ -53,10 +55,10 @@ Build the `chrona icon-catalog import` authoring command. Implement a bounded
 Iconify JSON reader with explicit local SPDX/notice inputs (the published
 collection JSON does not carry licensing metadata), SVG fragment/parser lowering, fixed transform handling,
 shape lowering, arc/cubic-to-quadratic conversion under a pinned tolerance, and
-per-path fill/stroke normalization. Emit a canonical v0.2 YAML catalog with
+per-path fill/stroke normalization. Emit a canonical v0.3 YAML catalog with
 source identity/license/notice; write it atomically only after complete success.
 
-**Files:** icon ingestion package, command parser/application adapter, catalog
+**Files:** icon ingestion package, command parser/application adapter, compact geometry codec, catalog
 serializer, source/corpus fixtures, normalizer/import tests.
 
 **Acceptance:** actual Material Symbols, Lucide, and Tabler sample fixtures
