@@ -70,3 +70,11 @@ Material Symbols Outline Rounded selection.  Its explicit YAML and compressed
 bounds preserve the normalized, renderer-neutral closure boundary; a compact
 binary representation would require a future contract rather than an
 unreviewed package-only exception.
+
+## Compact geometry correction
+
+Measured v0.2 command-object closure time invalidated that representation for
+the required complete default.  The [compact geometry correction](../../planning/active/issue-350-compact-icon-geometry-correction-2026-09-23.md)
+therefore replaces it with a versioned canonical primitive stream.  This keeps
+all parsing at ingress/contract closure and does not move any geometry decision
+into Layout, Scene, or an adapter.

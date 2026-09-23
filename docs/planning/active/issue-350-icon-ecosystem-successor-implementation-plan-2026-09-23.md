@@ -66,11 +66,12 @@ adapter; no importer performs network I/O.
 
 ## I350R-3 — Catalog-set closure, bundled default, raster, and Draft ingress
 
-Resolve catalog sets into an immutable lookup, validate prefixes/aliases and
+Replace v0.2's object-per-command payload with the reviewed v0.3 compact
+normalized primitive grammar, then resolve catalog sets into an immutable lookup, validate prefixes/aliases and
 catalog/raster identities, close only verified bytes, and materialize exact
 documents/assets. Generate and package the complete 2,336-entry Material Symbols
 Outline Rounded default through I350R-2, with required licence notice, aliases,
-fixed subset manifest, and the published 18 MB / 1.5 MB gzip size limits.
+fixed subset manifest, and the published 3 MB / 500 KB gzip / 10-second parse limits.
 Replace the screenshot raster fixture with a small
 purpose-built asset. Add repeatable draft catalog arguments and guided-workspace
 equivalent explicit declaration.
