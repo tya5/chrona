@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:render-context-v0.8"
+$id: "urn:chrona:render-context-v0.9"
 title: "Chrona Render Context v0.8"
 description: "Pinned inputs, execution environment, and output target for one materialization."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {description: "This Render Context contract version.", const: "chrona/render-context/v0.8"}
+  version: {description: "This Render Context contract version.", const: "chrona/render-context/v0.9"}
   kind: {description: "The resource kind for a Render Context.", const: render-context}
   id: {description: "Stable Render Context identifier.", type: string, minLength: 1}
   body:
@@ -80,7 +80,7 @@ properties:
       target:
         type: object
         description: "Requested public output format and capabilities."
-        required: [kind, capabilities]
+        required: [kind, capabilities, visualProfile]
         additionalProperties: false
         properties:
           kind: {description: "Public output format.", enum: [svg, png, pdf, typst, tikz]}
@@ -89,6 +89,9 @@ properties:
             description: "Unique capabilities required by the chosen output target."
             items: {description: "One required target capability.", type: string, minLength: 1}
             uniqueItems: true
+          visualProfile:
+            description: "Exact renderer-neutral visual capability profile."
+            enum: [chrona-output/visual/v0.5-baseline, chrona-output/visual/v0.6]
           textMode: {description: "Text placement mode required for typeset targets.", const: positioned}
     allOf:
       - description: "SVG targets do not select a rasterizer or typesetter."

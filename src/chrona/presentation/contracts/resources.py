@@ -356,6 +356,7 @@ class ResourceReference:
 class RenderTarget:
     kind: str
     capabilities: tuple[str, ...]
+    visual_profile: str = "chrona-output/visual/v0.5-baseline"
     text_mode: str | None = None
 
 
@@ -408,10 +409,10 @@ class ResolvedThemeContract:
 
 
 _SCHEMAS = {
-    ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
+    ("render-context", "chrona/render-context/v0.9"): "render-context-v0.9.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
     ("view", "chrona/view/v0.10"): "view-v0.10.schema.yaml",
-    ("theme", "chrona/theme/v0.4"): "theme-v0.4.schema.yaml",
+    ("theme", "chrona/theme/v0.5"): "theme-v0.5.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
@@ -598,7 +599,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             ResourceReference.from_value(inputs["detailProfile"]) if "detailProfile" in inputs else None,
             RenderEnvironment(int(viewport["inlineSize"]), int(viewport["blockSize"]), str(environment["locale"]),
                               environment["fontMetrics"], int(environment["scenePrecision"]), rasterizer, typesetter),
-            RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"]),
+            RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"]), str(target["visualProfile"]),
                          str(target["textMode"]) if "textMode" in target else None),
         )
     if identity.kind == "actual-set":

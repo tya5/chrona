@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:theme-v0.4"
+$id: "urn:chrona:theme-v0.5"
 title: "Chrona Theme v0.4"
 description: "Semantic appearance tokens and bindings; concrete colors remain in a Color Scheme."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {description: "This Theme contract version.", const: "chrona/theme/v0.4"}
+  version: {description: "This Theme contract version.", const: "chrona/theme/v0.5"}
   kind: {description: "The resource kind for semantic appearance bindings.", const: theme}
   id: {description: "Stable Theme identifier.", type: string, minLength: 1}
   body:
@@ -24,7 +24,7 @@ properties:
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative]}
+            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative, lineCap, lineJoin, fidelity]}
             value: {}
           allOf:
             - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
@@ -58,13 +58,21 @@ properties:
             strokeWidth: {description: "Named stroke-width token for the role.", type: string, minLength: 1}
             dash: {description: "Named dash-pattern token for the role.", type: string, minLength: 1}
             textAlternative: {description: "Named text-alternative token for the role.", type: string, minLength: 1}
+            gradientAngle: {description: "Named linear-gradient angle token.", type: string, minLength: 1}
+            shadowOffsetX: {description: "Named shadow horizontal-offset token.", type: string, minLength: 1}
+            shadowOffsetY: {description: "Named shadow vertical-offset token.", type: string, minLength: 1}
+            shadowBlur: {description: "Named shadow blur token.", type: string, minLength: 1}
+            shadowOpacity: {description: "Named shadow opacity token.", type: string, minLength: 1}
+            strokeLineCap: {description: "Named stroke-cap token.", type: string, minLength: 1}
+            strokeLineJoin: {description: "Named stroke-join token.", type: string, minLength: 1}
+            visualFidelity: {description: "Named required or optional fidelity token.", type: string, minLength: 1}
       colorBindings:
         type: object
         description: "Semantic fill or stroke roles bound to Color Scheme intents."
         minProperties: 1
         additionalProperties: false
         patternProperties:
-          "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke)$":
+          "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke|gradientStart|gradientEnd|shadowColor)$":
             description: "Color Scheme intent selected for one fill or stroke role."
             examples: [accent, "category:bus"]
             anyOf:

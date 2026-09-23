@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.8
+version: chrona/render-context/v0.9
 kind: render-context
 id: halcyon-1-02-programme-board
 body:
@@ -97,6 +97,7 @@ body:
     scenePrecision: 3
   target:
     kind: svg
+    visualProfile: chrona-output/visual/v0.5-baseline
     capabilities:
     - accessibleText
     - hierarchicalAxis

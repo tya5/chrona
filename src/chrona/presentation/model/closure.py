@@ -245,7 +245,7 @@ def _draft_render_from_resources(
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
     context_value = {
-        "version": "chrona/render-context/v0.8", "kind": "render-context", "id": "draft-render",
+        "version": "chrona/render-context/v0.9", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -265,7 +265,7 @@ def _draft_render_from_resources(
                 **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
                 **({"typesetter": typesetter_environment} if typesetter_environment else {}),
             },
-            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else [],
+            "target": {"kind": target_kind, "capabilities": list(_DRAFT_CAPABILITIES) if target_kind == "svg" else [], "visualProfile": "chrona-output/visual/v0.5-baseline",
                        **({"textMode": "positioned"} if target_kind in {"typst", "tikz"} else {})},
         },
     }
@@ -353,7 +353,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.version != "chrona/render-context/v0.8":
+    if context.version != "chrona/render-context/v0.9":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 

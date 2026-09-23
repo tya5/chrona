@@ -415,12 +415,12 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     font_path = tmp_path / token / "font_metrics/nimbus-sans-regular-v1.json"
     font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
     context = {
-        "version": "chrona/render-context/v0.8", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/render-context/v0.9", "kind": "render-context", "id": "controller-z-current",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},
             "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v1", "assets": [{"family": "Nimbus Sans", "weight": 400, "revision": "font-v1", "contentIdentity": "sha256:" + sha256(font_payload).hexdigest(), "path": "font_metrics/nimbus-sans-regular-v1.json"}], "missingFont": "diagnose"}, "scenePrecision": 3},
-            "target": {"kind": "svg", "capabilities": sorted([
+            "target": {"kind": "svg", "visualProfile": "chrona-output/visual/v0.5-baseline", "capabilities": sorted([
                 "sourceMetadata", "accessibleText", "semanticRoles", "marker",
                 "tableSemantics", "hierarchicalAxis",
             ])},
