@@ -1,6 +1,6 @@
 # Schema Authoring and Diagnostics
 
-**Status:** Accepted (amended 2026-09-23)
+**Status:** Accepted (amended 2026-09-23; annotation-applicator correction)
 **Depends on:** [05 Project Format](05-project-format.md), [09 Application
 Architecture](09-application-architecture.md), [13 Presentation Format](13-presentation-format.md),
 and [32 Repository Layout](32-repository-layout-and-packaging.md).
@@ -39,11 +39,13 @@ not promise semantic behavior owned by a later validation stage.
 
 The repository supplies a schema-annotation lint over all `live` entries in the
 schema inventory. It traverses every reachable schema applicator, including
-`allOf`, `if`, `then`, `else`, and `not`; it never treats an implementation
-container such as `properties` as a schema node. A pattern, format, conditional
-form, or local reference assertion is non-obvious and MUST carry a valid
-example. Pure `$ref` reuse remains exempt. The lint validates every example in
-its enclosing schema context and reports a schema-location pointer for defects.
+every `allOf` branch and nested `if`, `then`, `else`, and `not`; it never treats
+an implementation container such as `properties` as a schema node. A pattern,
+format, conditional form, or `allOf` wrapper with a local assertion is
+non-obvious and MUST carry a valid example. A pure `$ref` reuse branch remains
+exempt; a `$ref` combined with a local constraint is not pure reuse. The lint
+validates every example in its enclosing schema context and reports a
+schema-location pointer for defects.
 It is run in conformance and before generated reference publication. Generated
 reference may consume this metadata, but tutorials remain independently
 authored.
