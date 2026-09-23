@@ -15,9 +15,9 @@ fallback.
 
 A detail source slot expresses where a bound Detail Profile section can be
 placed; it does not require every View using that layout to bind a Detail
-Profile.  Controller Z's `group-details`, `milestones`, and `observations`
-slots are therefore optional source regions with diagnostic overflow when they
-are populated.  When a Detail Profile is bound, every section it declares
+Profile.  Controller Z's `legend`, `group-details`, `milestones`, and
+`observations` slots are therefore optional source regions with diagnostic
+overflow when they are populated.  When a Detail Profile is bound, every section it declares
 still requires a matching layout source.  When a layout declares a required
 detail source, the profile must provide that section.  These two rules retain
 strict closure without treating absent optional presentation content as an
