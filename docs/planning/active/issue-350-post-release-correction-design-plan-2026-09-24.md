@@ -67,7 +67,10 @@ Import failure reports contain stable code plus source prefix, icon name, and
 the offending XML element, attribute, or path stage.  Unknown icon references
 contain the requested reference, searched catalog set, and deterministic nearest
 canonical/alias candidates.  This extends the established diagnostic contract;
-it does not make Layout perform catalog search.
+it does not make Layout perform catalog search.  The View-to-Layout ingress
+resolves each direct or encoded `set:name` through the closed Context before
+constructing a `VisualRequest`; Layout receives only canonical `IconAsset`
+identity.  This keeps catalog lookup out of Layout, Scene, and adapters.
 
 Whole-collection atomicity remains the default and the CLI must name the first
 failing icon.  An `--exclude` recovery mechanism changes the declaration of a

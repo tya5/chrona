@@ -16,7 +16,8 @@ non-admitting profiles reject; annotation and dispatch tools pass.
 
 Resolve alias parent chains under selection, retain aliases of selected parents,
 emit structured importer locations, and add deterministic closed-catalog nearest
-names.  Add adversarial alias-chain, transform, unknown-reference, and failing
+names. Canonicalize every direct/encoded View reference at the closure ingress
+before Layout. Add adversarial alias-chain, transform, unknown-reference, and failing
 element tests.
 
 **Acceptance:** no alias is silently lost by selection; diagnostics identify
