@@ -1,6 +1,6 @@
 # Design Correction: Detail Profile and Layout Closure (#350)
 
-**Status:** Complete — blocks detail visual target acceptance until shipped.
+**Status:** Superseded in part — see Optional Detail Regions and Context Closure correction.
 
 ## Finding
 
@@ -19,9 +19,10 @@ profile section. The render use case always passes the solved manifest to the
 normalizer. It never silently drops detail facts.
 
 The Controller Z executive layout is extended atomically with the three detail
-slots and its generated public evidence is regenerated. Other profiles are
-unchanged unless they declare a missing detail source. This is not a
-compatibility bridge: malformed profile/layout pairs reject before Scene.
+slots and its generated public evidence is regenerated. The follow-up
+correction defines their optionality for contexts that do not bind Detail.
+This is not a compatibility bridge: malformed bound profile/layout pairs
+reject before Scene.
 
 ## Architecture review
 

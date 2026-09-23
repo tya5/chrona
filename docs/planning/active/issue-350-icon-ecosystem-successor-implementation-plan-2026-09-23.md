@@ -102,7 +102,11 @@ replaces the ambiguous panel-family selector with exact header/value/caption
 occurrence forms.
 [Detail profile/Layout closure](issue-350-detail-layout-closure-correction-2026-09-24.md)
 requires every selected detail section to have a Layout region before an
-authorable visual target can reference it.
+authorable visual target can reference it. Its [optional-region and context
+closure correction](issue-350-detail-profile-optional-layout-correction-2026-09-24.md)
+is binding: a shared Layout may expose optional detail regions, while a bound
+Detail Profile remains strictly validated against View selection and its
+available sources.
 Add target resolution for title, columns, object labels, groups, annotations,
 notes, legends, summaries, milestones, axis/as-of labels, and planned/actual
 marks; implement direct references and field encodings where declared. The
@@ -120,7 +124,9 @@ class and planned/actual mark; changing width/side/typography/Theme ratio
 changes only Layout placement; reserved text remeasures under fit, ellipsize,
 and wrap policy; unknown encoding, missing source, duplicate side, no cap
 height, and insufficient space diagnose; no `icon_bindings` runtime seam
-remains; Scene never measures, looks up, or chooses icon placement.
+remains; a public context without Detail materializes through optional detail
+regions while an invalid bound profile/layout pair rejects; Scene never
+measures, looks up, or chooses icon placement.
 
 ## I350R-5 — Completed Scene Icon and exact SVG/PNG serialization
 
