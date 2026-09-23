@@ -57,6 +57,87 @@ Presentation Package contract.
    #345 admits and specifies another one.  No gallery asset may establish an
    SVG-specific escape hatch.
 
+## Reusable source-tree topology
+
+The package design must decide the repository topology before reusable gallery
+designs are authored.  The current `examples/<project>/` tree remains a
+project-owned regression corpus: it owns Project facts, scenario/Actual inputs,
+immutable Contexts, and materializer evidence.  `docs/gallery/` remains a
+documentation index and must never become a second source-resource tree.
+
+GDF-3 must compare and choose a package-root topology, with a likely shape such
+as:
+
+```text
+presentation-packages/
+  <publisher-namespace>/<package-id>/
+    package.yaml
+    presets/
+    views/
+    layouts/
+    themes/
+    schemes/
+    assets/
+    examples/              # package-owned demonstration inputs only
+```
+
+The illustrative layout is not a decision to add that directory now.  The
+package design must decide the canonical names, package root identity, allowed
+relative addresses, whether a package may contain optional sample Projects,
+and how an example Context pins acquired package members.  It must also specify
+how a Stage-3 materialization copies a complete ordinary resource bundle out of
+that tree without retaining an inheritance edge.
+
+The selected topology must satisfy all of the following:
+
+- a reusable View/Layout/Theme/Scheme/Preset has exactly one canonical source;
+- corpus projects may consume a package through explicit immutable references,
+  but do not copy package-owned source files merely to make a gallery slide;
+- a package can have tests and representative fixtures without turning its
+  fixtures into public materializer evidence by discovery convention;
+- generated output remains under the corpus/materializer evidence boundary and
+  is never committed beside package source as an alternative authority;
+- `docs/gallery/` references corpus slides and package provenance, but does not
+  own package resources, rendered files, or registry cache state;
+- packaged runtime resources under `src/chrona/resources/`, repository
+  conformance fixtures, and user-facing packages remain distinct ownership
+  roots;
+- no symlink, `..` traversal, ambient repository-root lookup, or mutable
+  checkout path becomes part of package identity or runtime resolution; and
+- package extraction, local/private distribution, and a future registry use the
+  same manifest/resource layout rather than separate formats.
+
+The architecture review must reject a topology that conflates Project data with
+reusable presentation data, duplicates a resource to satisfy both gallery and
+corpus needs, or makes documentation path layout an evaluation input.
+
+## User reference and acquisition model
+
+Folder layout is an implementation concern; users also need a stable way to
+select a reusable design.  GDF-3 must define this separately from package
+member paths.  The current guided workspace can name a preset by `id`, exact
+package `version`, and safe relative `path`, but that local spelling alone is
+not sufficient for a reusable/distributed package: it neither identifies the
+publisher/package root nor pins the acquired bytes.
+
+The package design must define these distinct operations and representations:
+
+| User need | Required design decision | Prohibited shortcut |
+| --- | --- | --- |
+| Discover/select a design | A human-readable package and preset selector, usable by CLI, GUI, YAML, and AI proposals | Treating a display name or catalog search result as an evaluation input |
+| Acquire the selection | An explicit acquisition step that resolves the selector once to a package manifest and exact content identity, with provenance/license/trust result | Implicit network lookup during render or `latest` resolution |
+| Use it in guided authoring | A pinned binding/reference whose package identity, preset identity, version, manifest/content identity, and resolved resource closure are sufficient to reproduce evaluation | Bare filesystem paths, URLs, tags, or unpinned version strings as the immutable closure edge |
+| Work offline | A local acquired-package/cache representation with verified bytes and deterministic lookup rules | Falling back to a registry or host-default resource when local bytes are absent |
+| Make it the user's own | The existing Stage-3 materialization transition to one complete local ordinary resource bundle and receipt | A long-lived mix of local overrides and live package inheritance |
+| Share/fork it | A new package identity plus explicit `derivedFrom` provenance after local ownership | Mutating or silently replacing the source package |
+
+The first implementation may limit acquisition to a local package root, but it
+must use the same resolved package/reference contract intended for private and
+registry distribution.  It must not make a repository-relative development
+path the public user model.  The design must state the concise user-facing
+forms for selection, pin inspection, update proposal, materialization, and
+offline failure, together with stable diagnostics.
+
 ## Ordered design work
 
 ### GDF-1 — Design Space consumer and specification correction
@@ -119,6 +200,12 @@ making the registry a runtime authority.  A Registry/catalog implementation,
 publication service, executable plugins, and remote discovery are out of this
 phase.
 
+It must also select the reusable source-tree topology above and publish a
+migration plan for the existing `examples/*` variants/slides.  The plan must
+state which existing resources remain project-owned corpus evidence, which are
+eligible to become package members, how contexts will pin the latter, and how
+the migration avoids a period with duplicated canonical sources.
+
 Acceptance: a future gallery design can be packaged or materialized without
 rewriting its View/Layout/Theme/Scheme resources or introducing a live registry
 edge into its render closure.
@@ -149,7 +236,9 @@ reviewable slices:
 1. Design Summary projection and focused identity/no-authority tests.
 2. Gallery catalog schema/tooling and provenance/evidence tests.
 3. Package manifest/closure contracts and materialization tests, if #343
-   design authorizes a minimal local package implementation.
+   design authorizes a minimal local package implementation, including the
+   selected source-tree topology, user reference/acquisition model, and
+   no-duplicate-source migration.
 4. Paired corpus fixtures, public materializer evidence, gallery narration,
    and generated-artifact review.
 5. Any approved visual-capability slice, independently from gallery curation.
