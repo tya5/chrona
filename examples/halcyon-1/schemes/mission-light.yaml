@@ -5,7 +5,7 @@ body:
   colors:
     surface: '#FFFFFF'
     surfaceRaised: '#EEF2F7'
-    text: '#101828'
+    text: '#000000'
     textMuted: '#5B6B7F'
     accent: '#1D5FD1'
     positive: '#0E8A6C'

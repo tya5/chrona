@@ -254,7 +254,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives), corner_radius=missing_mark.corner_radius))
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
-            semantic_id = "memberLabelInside" if layout_text[label_id].selected_rung == "inside" else "memberLabel"
+            inside_semantics = {"primary": "memberLabelInsidePlanned", "combined": "memberLabelInsidePlanned",
+                                "actual": "memberLabelInsideActual", "snapshot": "memberLabelInsideSnapshot",
+                                "scenario": "memberLabelInsideScenario"}
+            semantic_id = inside_semantics[source_kind] if layout_text[label_id].selected_rung == "inside" else "memberLabel"
             emit_semantic_text(label_id, semantic_id, href=href, link_title=link_title)
         variance_id = f"variance:{instance_id}"
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:

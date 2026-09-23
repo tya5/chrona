@@ -54,6 +54,10 @@ body:
   colorBindings:
     background.fill: surface
     text.fill: text
+    member-label-inside-planned.fill: surface
+    member-label-inside-actual.fill: text
+    member-label-inside-snapshot.fill: text
+    member-label-inside-scenario.fill: text
     heading.fill: text
     subtitle.fill: textMuted
     axis.fill: textMuted

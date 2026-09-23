@@ -1,6 +1,6 @@
 import pytest
 
-from chrona.presentation.color_scheme import ColorSchemeError, category_index, resolve_color_scheme
+from chrona.presentation.color_scheme import ColorSchemeError, category_index, resolve_color_scheme, resolve_theme
 
 
 def scheme():
@@ -24,3 +24,20 @@ def test_scheme_rejects_insufficient_text_contrast():
     bad = scheme(); bad["body"]["colors"]["text"] = "#F5F7FA"
     with pytest.raises(ColorSchemeError, match="E_SCHEME_CONTRAST"):
         resolve_color_scheme(bad, content_identity="sha256:" + "a" * 64)
+
+
+def test_theme_validates_each_inside_label_role_against_its_host_mark():
+    theme = {"version": "chrona/theme/v0.3", "kind": "theme", "id": "inside", "body": {
+        "values": {}, "roles": {}, "colorBindings": {
+            "planned.fill": "accent", "actual.fill": "positive", "snapshot.fill": "neutral",
+            "member-label-inside-planned.fill": "surface",
+            "member-label-inside-actual.fill": "surface",
+            "member-label-inside-snapshot.fill": "surface",
+            "member-label-inside-scenario.fill": "surface",
+        }, "metrics": {},
+    }}
+    resolved = resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert "member-label-inside-planned" in resolved["body"]["roles"]
+    theme["body"]["colorBindings"]["member-label-inside-planned.fill"] = "accent"
+    with pytest.raises(ColorSchemeError, match="E_SCHEME_INSIDE_LABEL_CONTRAST"):
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
