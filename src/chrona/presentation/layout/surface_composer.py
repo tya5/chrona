@@ -111,7 +111,9 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
         baseline = item.baseline
         if baseline is None or not hasattr(request.font_metrics, "cap_height_at"):
             raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(iter(by_side.values())).source_ref)
-        shifted_baseline = (baseline[0] + leading, baseline[1])
+        available_start = (item.available_inline_start if item.available_inline_start is not None
+                           else float(item.bounds.inline))
+        shifted_baseline = (available_start + leading, baseline[1])
         text[index] = replace(item, content=content, lines=lines, overflow=overflow,
                               bounds=Rect(Decimal(str(shifted_baseline[0])), item.bounds.block,
                                           Decimal(str(width)), Decimal(str(item.font_size * item.line_height * len(lines)))),
@@ -119,8 +121,8 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
         cap_height = float(request.font_metrics.cap_height_at(item.font_size))
         for side, visual in by_side.items():
             icon, icon_width, gap = resolved[side]
-            inline = (float(item.bounds.inline) if side == "leading"
-                      else float(item.bounds.inline) + leading + available + trailing - gap - icon_width)
+            inline = (available_start if side == "leading"
+                      else available_start + leading + available + trailing - gap - icon_width)
             bounds = Rect(Decimal(str(inline)), Decimal(str(baseline[1] - cap_height + (cap_height - item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0])) / 2)),
                           Decimal(str(icon_width)), Decimal(str(item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0]))) )
             icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
@@ -291,7 +293,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        baseline_block=float(by_source["title"].bounds.block) + float(title_measurement.first_baseline or 0),
                        typography_role="heading", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                        collision_region="title", collision_domain=CollisionDomain("title", "content"),
-                       source_content=title, available_inline_size=float(by_source["title"].bounds.inline_size))]
+                       source_content=title, available_inline_start=float(by_source["title"].bounds.inline),
+                       available_inline_size=float(by_source["title"].bounds.inline_size))]
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
@@ -312,7 +315,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                inline=positions[column_id][0], baseline_block=table_bounds[1] + body_size,
                                typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
-                               source_content=label, available_inline_size=column_widths[column_id]))
+                               source_content=label, available_inline_start=positions[column_id][0],
+                               available_inline_size=column_widths[column_id]))
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for object_id, column_id, content in table_cells:
         row = row_by_subject.get(object_id)
@@ -331,6 +335,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    overflow=overflow, collision_region="table",
                                    collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
+                                   available_inline_start=position[0] + indent,
                                    available_inline_size=max(0.0, column_widths[column_id] - indent)))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
@@ -343,6 +348,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    collision_region=f"group:{group.group_id}",
                                    collision_domain=CollisionDomain("group-header", group.group_id),
                                    source_content=labels[group.group_id],
+                                   available_inline_start=float(group.header_bounds.inline),
                                    available_inline_size=float(group.header_bounds.inline_size)))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
@@ -375,6 +381,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region="timeline-axis-band",
                                    collision_domain=CollisionDomain("timeline-axis", "coarse-band"), source_content=label,
+                                   available_inline_start=x,
                                    available_inline_size=inline_size))
     for interval in intervals:
         x = _coordinate(interval.start, scale)
@@ -390,6 +397,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region="timeline-axis-label",
                                    collision_domain=CollisionDomain("timeline-axis", "fine-label"), source_content=label,
+                                   available_inline_start=x,
                                    available_inline_size=(interval.end - interval.start).days * scale.unit_ratio))
     for interval in band_intervals:
         x = _coordinate(interval.start, scale)
@@ -419,6 +427,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                collision_region="timeline-as-of",
                                collision_domain=CollisionDomain("timeline", "overlay"),
                                source_content=f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}",
+                               available_inline_start=x,
                                available_inline_size=max(0.0, timeline_bounds[0] + timeline_bounds[2] - x)))
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]))
@@ -782,6 +791,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    typography_role="legend", theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region="legend",
                                    collision_domain=CollisionDomain("legend", "content"), source_content=label,
+                                   available_inline_start=float(legend.bounds.inline) + swatch_size * 1.5,
                                    available_inline_size=max(0.0, float(legend.bounds.inline_size) - swatch_size * 1.5)))
     for slot_name, values, prefix, purpose, typography in (
         ("notes", request.surface_content.notes, "note", "project-note", "text"),
@@ -804,6 +814,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        font_metrics=request.font_metrics,
                                        collision_region=f"{slot_name}:{source}",
                                        collision_domain=CollisionDomain(slot_name, f"line:{index}"), source_content=content,
+                                       available_inline_start=float(slot.bounds.inline),
                                        available_inline_size=float(slot.bounds.inline_size)))
     summary_slot = by_source.get("summary")
     if summary_slot:
@@ -815,6 +826,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    typography_role=run.typography_role, theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region="summary",
                                    collision_domain=CollisionDomain("summary", "content"), source_content=run.content,
+                                   available_inline_start=float(summary_slot.bounds.inline),
                                    available_inline_size=float(summary_slot.bounds.inline_size)))
             cursor += float(font_size) * float(line_height)
 

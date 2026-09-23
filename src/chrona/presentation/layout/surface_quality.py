@@ -70,6 +70,7 @@ class TextPlacement:
     collision_region: str = "surface"
     collision_domain: CollisionDomain = CollisionDomain("surface", "content")
     source_content: str | None = None
+    available_inline_start: float | None = None
     available_inline_size: float | None = None
     fallback_ladder: tuple[str, ...] = ()
     selected_rung: str | None = None
