@@ -25,12 +25,14 @@ ALLOWED: dict[str, set[str]] = {
     "collaboration": {"core", "storage", "resources"},
     "commands": {"core", "extensions", "scheduling", "storage", "resources"},
     # Domain services and adapters.
-    "presentation": {"core", "resources"},
+    # Structural ingress explanations are shared only by the two validation
+    # boundaries; successful presentation layers never receive them.
+    "presentation": {"core", "resources", "schema_diagnostics"},
     "scheduling": {"core", "resources"},
     "storage": {"core", "scheduling", "resources"},
     "extensions": {"core", "resources"},
     # The shared kernel depends on nothing but its own packaged schemas.
-    "core": {"resources"},
+    "core": {"resources", "schema_diagnostics"},
     "resources": set(),
 }
 

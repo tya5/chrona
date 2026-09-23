@@ -64,3 +64,19 @@ def test_core_validation_uses_the_shared_explanation_and_pointer():
     assert diagnostics[0].id == "E_SCHEMA"
     assert diagnostics[0].path == "/version"
     assert diagnostics[0].message == "expected exactly 'timeline/v0.6'"
+
+
+def test_project_v06_rejects_removed_fixed_mode_without_a_compatibility_path():
+    project = {
+        "version": "timeline/v0.6",
+        "project": {"id": "demo"},
+        "objects": {"task": {"type": "task", "schedule": {"mode": "fixed", "at": "2026-09-23"}}},
+    }
+
+    diagnostics = validate_project(project)
+
+    assert len(diagnostics) == 1
+    assert diagnostics[0].id == "E_SCHEMA"
+    assert diagnostics[0].path == "/objects/task/schedule"
+    assert "fixed-point" in diagnostics[0].message
+    assert "fixed-span" in diagnostics[0].message

@@ -116,6 +116,14 @@ def _union_forms(error: ValidationError) -> tuple[str, ...]:
                 continue
         if isinstance(required, Sequence) and not isinstance(required, str):
             forms.append("properties " + ", ".join(str(item) for item in required))
+    # ``jsonschema`` resolves a `$ref` branch before exposing child errors, so
+    # the parent oneOf retains only the reference wrapper. Recover real tagged
+    # forms from its deterministic const child errors in that case.
+    for child in error.context:
+        if child.validator != "const" or not child.absolute_path:
+            continue
+        member = str(tuple(child.absolute_path)[-1])
+        forms.append(f"{member}={_literal(child.validator_value)}")
     return tuple(dict.fromkeys(forms))
 
 
