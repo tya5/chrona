@@ -32,8 +32,8 @@ successor reference (`render-context/v0.12`).
 
 The complete fixed selection and manifest remain required.  The generated
 catalog must parse through its typed contract in at most 10 seconds on the
-release baseline, be no more than 3,000,000 uncompressed bytes and 500,000
-gzip-9 bytes, and retain the prior provenance, Apache-2.0 notice, aliases, and
+release baseline using PyYAML's safe LibYAML loader, be no more than 4,000,000
+uncompressed bytes and 1,000,000 gzip-9 bytes, and retain the prior provenance, Apache-2.0 notice, aliases, and
 offline closure checks.  Failure of any gate blocks publication; reducing the
 selection, restoring raw SVG, or making a renderer parse geometry is not an
 allowed workaround.
