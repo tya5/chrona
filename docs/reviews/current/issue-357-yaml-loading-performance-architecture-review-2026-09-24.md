@@ -2,6 +2,11 @@
 
 **Decision:** accepted for implementation.
 
+**Correction:** accepted after I357-1/2 profiling.  The bundled Material
+catalog receives an identity-bound generated projection; all other catalogs
+retain generic validation.  See
+`issue-357-packaged-icon-projection-design-correction-2026-09-24.md`.
+
 | Boundary | Decision | Review result |
 | --- | --- | --- |
 | Runtime layers -> YAML | A dependency-neutral codec is the sole production decoder. | Avoids Storage-to-Core/Presentation dependency inversion. |
