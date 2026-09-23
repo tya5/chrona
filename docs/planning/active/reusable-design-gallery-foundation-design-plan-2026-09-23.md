@@ -326,6 +326,34 @@ Each slice must be independently publishable.  A gallery entry never lands
 before its source closure and materializer evidence; a package migration never
 lands while an existing gallery entry becomes non-materializable.
 
+### Planned implementation sequence after design acceptance
+
+The separate implementation plan must preserve the following publication order;
+it may refine file names and acceptance fixtures but may not merge these
+authority changes into one unreviewable rollout.
+
+| Slice | Scope | Acceptance boundary |
+| --- | --- | --- |
+| I-GDF-1 | Implement the read-only Design Space summary and gallery catalog inspection/validation tooling. | Summary values are traceable to existing effective resources; catalog data cannot affect rendering; focused identity and no-authority tests pass. |
+| I-GDF-2 | Introduce the package-aware contract version, declarative package manifest, selected package-root topology, and package/resource validation. | A package has one canonical source tree and stable manifest/content identity; no package contains executable or raw-renderer authority. |
+| I-GDF-3 | Implement explicit local acquisition and immutable `chrona.lock.yaml` generation/verification. | A local package selected by a user produces a complete pin; tampered/missing/unpinned bytes diagnose; render performs no implicit network or mutable lookup. |
+| I-GDF-4 | Implement guided workspace consumption of the locked preset and package-aware closure provenance. | A short selector resolves only through its exact lock; identical pins reproduce effective resources and output; selector, cache path, and registry display state do not become render policy. |
+| I-GDF-5 | Implement Stage-3 ejection from a locked package to an ordinary explicit bundle and receipt. | The result has no live package inheritance edge, records `derivedFrom`, is atomically written, and is byte-equivalent in the same target/environment. |
+| I-GDF-6 | Migrate eligible existing presentation directions into paired reusable package fixtures, then add gallery entries. | The paired variants reuse one Project/schedule while differing only in presentation resources; every entry is materializable, provenance-checked, and narratively distinct. |
+| I-GDF-7 | Run release review and publish acceptance evidence. | Focused tests, full parallel pytest, conformance/structural gates, public materializer byte checks, generated-SVG diff, wheel smoke, and GitHub CI pass. |
+
+There is deliberately no compatibility slice.  Once the approved package-aware
+authoring contract is introduced, legacy guided `id/version/path` spelling does
+not remain as a parallel public reference model.  Existing corpus fixtures are
+migrated atomically with the consuming slice, or remain on ordinary explicit
+resources until they are migrated; no fixture is left materializable only via a
+deprecated resolver.
+
+Registry discovery, remote acquisition, publisher verification, and visual
+capabilities beyond the approved current Scene vocabulary remain successor
+plans.  They do not block I-GDF-1 through I-GDF-7, and must not be smuggled into
+the local-package rollout.
+
 ## Required design reviews
 
 - Review GDF-1 against Specifications 51, 55, and the View → Layout → Scene
