@@ -89,6 +89,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("tableCell", "label", "table-cell", "text", "text"),
     # Plot labels.
     _binding("memberLabel", "label", "member-label", "text", "text"),
+    _binding("memberLabelInside", "label", "member-label", "member-label-inside", "memberLabelInside"),
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text"),
     # Relations.
