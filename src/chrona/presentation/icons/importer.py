@@ -17,9 +17,14 @@ from fontTools.svgLib.path import parse_path
 
 
 class IconImportError(ValueError):
-    def __init__(self, code: str, icon: str | None = None):
+    def __init__(self, code: str, icon: str | None = None, source_ref: str = "/"):
         super().__init__(code)
-        self.code, self.icon = code, icon
+        self.code, self.icon, self.source_ref = code, icon, source_ref
+
+    @property
+    def detail(self) -> str:
+        identity = f" icon={self.icon}" if self.icon else ""
+        return f"{self.code}{identity} source={self.source_ref}"
 
 
 def material_symbols_outline_rounded_catalog() -> bytes:
@@ -79,15 +84,17 @@ def _compact_paths(paths: list[dict[str, object]]) -> list[dict[str, object]]:
     return result
 
 
-def _paths(body: str, icon: str, width: int = 24, height: int = 24, transform: dict[str, object] | None = None) -> list[dict[str, object]]:
+def _paths(body: str, icon: str, width: int = 24, height: int = 24,
+           transforms: tuple[dict[str, object], ...] = ()) -> list[dict[str, object]]:
     """Parse Iconify's monochrome path body; arcs/cubics become quadratics."""
     try: root = ElementTree.fromstring(f"<svg>{body}</svg>")
     except ElementTree.ParseError as error: raise IconImportError("E_ICON_IMPORT_XML", icon) from error
     result: list[dict[str, object]] = []
     def visit(node: ElementTree.Element, inherited: dict[str, str]) -> None:
         tag = node.tag.rsplit("}", 1)[-1]
-        if tag not in {"svg", "g", "path", "line", "polyline", "polygon", "rect", "circle", "ellipse"}: raise IconImportError("E_ICON_IMPORT_ELEMENT", icon)
-        if any(key in {"style", "class", "transform", "opacity"} or key.startswith("on") for key in node.attrib): raise IconImportError("E_ICON_IMPORT_UNSAFE", icon)
+        if tag not in {"svg", "g", "path", "line", "polyline", "polygon", "rect", "circle", "ellipse"}: raise IconImportError("E_ICON_IMPORT_ELEMENT", icon, f"/{tag}")
+        unsafe = next((key for key in node.attrib if key in {"style", "class", "transform", "opacity"} or key.startswith("on")), None)
+        if unsafe is not None: raise IconImportError("E_ICON_IMPORT_UNSAFE", icon, f"/{tag}/@{unsafe}")
         paint = dict(inherited); paint.update({key: value for key, value in node.attrib.items() if key in {"fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin"}})
         if tag not in {"svg", "g"}:
             data = _shape_path(tag, node.attrib)
@@ -98,7 +105,7 @@ def _paths(body: str, icon: str, width: int = 24, height: int = 24, transform: d
             except Exception as error: raise IconImportError("E_ICON_IMPORT_PATH", icon) from error
             for mode in ("fill", "stroke"):
                 value = paint.get(mode, "currentColor" if mode == "fill" else "none")
-                if value not in {"none", "currentColor"}: raise IconImportError("E_ICON_IMPORT_PAINT", icon)
+                if value not in {"none", "currentColor"}: raise IconImportError("E_ICON_IMPORT_PAINT", icon, f"/{tag}/@{mode}")
                 if value == "currentColor":
                     item: dict[str, object] = {"paint": mode, "commands": pen.commands}
                     if mode == "stroke": item.update({"strokeWidth": float(paint.get("stroke-width", "1")), "lineCap": paint.get("stroke-linecap", "butt"), "lineJoin": paint.get("stroke-linejoin", "miter")})
@@ -106,20 +113,45 @@ def _paths(body: str, icon: str, width: int = 24, height: int = 24, transform: d
         for child in node: visit(child, paint)
     visit(root, {})
     if not result: raise IconImportError("E_ICON_IMPORT_PAINT", icon)
-    transform = transform or {}
-    rotate = transform.get("rotate", 0)
-    if not isinstance(rotate, int) or rotate not in {0, 1, 2, 3}: raise IconImportError("E_ICON_IMPORT_TRANSFORM", icon)
-    horizontal, vertical = bool(transform.get("hFlip", False)), bool(transform.get("vFlip", False))
-    def point(x: float, y: float) -> tuple[float, float]:
-        if horizontal: x = width - x
-        if vertical: y = height - y
-        for _ in range(rotate): x, y = height - y, x
-        return x, y
-    for path in result:
-        for command in path["commands"]:
-            values = command.get("points", [])
-            command["points"] = [value for index in range(0, len(values), 2) for value in point(float(values[index]), float(values[index + 1]))]
+    current_width, current_height = width, height
+    for transform in transforms:
+        declared_width, declared_height = transform.get("width", current_width), transform.get("height", current_height)
+        if (not isinstance(declared_width, int) or not isinstance(declared_height, int)
+                or not (0 < declared_width <= 4096 and 0 < declared_height <= 4096)):
+            raise IconImportError("E_ICON_IMPORT_VIEWPORT", icon, "/metadata")
+        current_width, current_height = declared_width, declared_height
+        rotate = transform.get("rotate", 0)
+        if not isinstance(rotate, int) or rotate not in {0, 1, 2, 3}:
+            raise IconImportError("E_ICON_IMPORT_TRANSFORM", icon, "/metadata/rotate")
+        horizontal, vertical = bool(transform.get("hFlip", False)), bool(transform.get("vFlip", False))
+        def point(x: float, y: float) -> tuple[float, float]:
+            if horizontal: x = current_width - x
+            if vertical: y = current_height - y
+            local_width, local_height = current_width, current_height
+            for _ in range(rotate):
+                x, y = local_height - y, x
+                local_width, local_height = local_height, local_width
+            return x, y
+        for path in result:
+            for command in path["commands"]:
+                values = command.get("points", [])
+                command["points"] = [value for index in range(0, len(values), 2) for value in point(float(values[index]), float(values[index + 1]))]
+        if rotate % 2:
+            current_width, current_height = current_height, current_width
     return result
+
+
+def _transformed_dimensions(width: int, height: int, transforms: tuple[dict[str, object], ...], icon: str) -> tuple[int, int]:
+    for transform in transforms:
+        width, height = transform.get("width", width), transform.get("height", height)
+        if not isinstance(width, int) or not isinstance(height, int) or not (0 < width <= 4096 and 0 < height <= 4096):
+            raise IconImportError("E_ICON_IMPORT_VIEWPORT", icon, "/metadata")
+        rotate = transform.get("rotate", 0)
+        if not isinstance(rotate, int) or rotate not in {0, 1, 2, 3}:
+            raise IconImportError("E_ICON_IMPORT_TRANSFORM", icon, "/metadata/rotate")
+        if rotate % 2:
+            width, height = height, width
+    return width, height
 
 
 def _shape_path(tag: str, values: dict[str, str]) -> str:
@@ -172,23 +204,47 @@ def import_iconify(source: Path, destination: Path, *, set_name: str | None = No
         if not isinstance(name, str) or not isinstance(entry, dict) or not isinstance(entry.get("body"), str): raise IconImportError("E_ICON_IMPORT_ENTRY", str(name))
         width, height = entry.get("width", collection.get("width", 24)), entry.get("height", collection.get("height", 24))
         if not isinstance(width, int) or not isinstance(height, int) or not (0 < width <= 4096 and 0 < height <= 4096): raise IconImportError("E_ICON_IMPORT_VIEWPORT", name)
-        rotate = entry.get("rotate", 0)
-        output_width, output_height = (height, width) if rotate in {1, 3} else (width, height)
-        normalized[name] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(entry.get("title", name.replace("-", " "))), "paths": _compact_paths(_paths(entry["body"], name, width, height, entry))}
+        identity = f"{prefix}:{name}"
+        output_width, output_height = _transformed_dimensions(width, height, (entry,), identity)
+        normalized[name] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(entry.get("title", name.replace("-", " "))), "paths": _compact_paths(_paths(entry["body"], identity, width, height, (entry,)))}
     raw_aliases = collection.get("aliases", {})
     if not isinstance(raw_aliases, dict): raise IconImportError("E_ICON_IMPORT_ALIAS")
-    for alias, value in sorted(raw_aliases.items()):
-        if selected is not None and alias not in selected:
+    def resolve_alias(alias: str) -> tuple[str, tuple[dict[str, object], ...]]:
+        chain: list[dict[str, object]] = []
+        current = alias
+        seen: set[str] = set()
+        while current in raw_aliases:
+            if current in seen:
+                raise IconImportError("E_ICON_IMPORT_ALIAS", f"{prefix}:{alias}", "/aliases/parent")
+            seen.add(current)
+            value = raw_aliases[current]
+            if not isinstance(value, dict) or not isinstance(value.get("parent"), str):
+                raise IconImportError("E_ICON_IMPORT_ALIAS", f"{prefix}:{alias}", "/aliases/parent")
+            chain.append(value)
+            current = value["parent"]
+        if current not in entries:
+            raise IconImportError("E_ICON_IMPORT_ALIAS", f"{prefix}:{alias}", "/aliases/parent")
+        return current, tuple(reversed(chain))
+
+    for alias in sorted(raw_aliases):
+        if not isinstance(alias, str):
+            raise IconImportError("E_ICON_IMPORT_ALIAS", str(alias), "/aliases")
+        canonical, chain = resolve_alias(alias)
+        if selected is not None and canonical not in selected:
             continue
-        if not isinstance(alias, str) or not isinstance(value, dict) or not isinstance(value.get("parent"), str) or value["parent"] not in normalized: raise IconImportError("E_ICON_IMPORT_ALIAS", str(alias))
-        if any(key in value for key in ("hFlip", "vFlip", "rotate", "width", "height")):
-            parent = entries[value["parent"]]
-            if not isinstance(parent, dict) or not isinstance(parent.get("body"), str): raise IconImportError("E_ICON_IMPORT_ALIAS", alias)
-            width, height = value.get("width", parent.get("width", collection.get("width", 24))), value.get("height", parent.get("height", collection.get("height", 24)))
-            if not isinstance(width, int) or not isinstance(height, int) or not (0 < width <= 4096 and 0 < height <= 4096): raise IconImportError("E_ICON_IMPORT_ALIAS", alias)
-            rotate = value.get("rotate", 0); output_width, output_height = (height, width) if rotate in {1, 3} else (width, height)
-            normalized[alias] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(value.get("title", parent.get("title", alias.replace("-", " ")))), "paths": _compact_paths(_paths(parent["body"], alias, width, height, value))}
-        else: entry_aliases[alias] = value["parent"]
+        if not any(any(key in value for key in ("hFlip", "vFlip", "rotate", "width", "height")) for value in chain):
+            entry_aliases[alias] = canonical
+            continue
+        parent = entries[canonical]
+        if not isinstance(parent, dict) or not isinstance(parent.get("body"), str):
+            raise IconImportError("E_ICON_IMPORT_ALIAS", f"{prefix}:{alias}", "/aliases/parent")
+        width, height = parent.get("width", collection.get("width", 24)), parent.get("height", collection.get("height", 24))
+        if not isinstance(width, int) or not isinstance(height, int) or not (0 < width <= 4096 and 0 < height <= 4096):
+            raise IconImportError("E_ICON_IMPORT_ALIAS", f"{prefix}:{alias}", "/aliases")
+        transforms = (parent, *chain)
+        identity = f"{prefix}:{alias}"
+        output_width, output_height = _transformed_dimensions(width, height, transforms, identity)
+        normalized[alias] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(chain[-1].get("title", parent.get("title", alias.replace("-", " ")))), "paths": _compact_paths(_paths(parent["body"], identity, width, height, transforms))}
     catalog = {"version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": f"{set_name or prefix}-icons", "body": {"set": set_name or prefix, "aliases": list(aliases), "provenance": {"sourceKind": "iconify-json", "sourcePrefix": prefix, "sourceContentIdentity": "sha256:" + sha256(source_bytes).hexdigest(), "sourceVersion": str(collection.get("version", "local")), "license": {"spdx": license_spdx, "notice": notice}}, "icons": normalized, "entryAliases": entry_aliases}}
     encoded = yaml.safe_dump(catalog, sort_keys=False).encode()
     destination.parent.mkdir(parents=True, exist_ok=True)

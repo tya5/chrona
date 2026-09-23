@@ -34,6 +34,8 @@ def test_importer_never_replaces_output_after_a_collection_error(tmp_path):
     with pytest.raises(IconImportError) as error:
         import_iconify(source, output, license_spdx="MIT", notice_path=notice)
     assert error.value.code == "E_ICON_IMPORT_ELEMENT"
+    assert error.value.icon == "sample:sample"
+    assert error.value.source_ref == "/mask"
     assert output.read_text() == "preserved\n"
 
 
@@ -67,6 +69,35 @@ def test_importer_selects_only_the_explicit_local_manifest(tmp_path):
 
     assert result["icons"] == 1
     assert set(yaml.safe_load(output.read_text())["body"]["icons"]) == {"sample"}
+
+
+def test_importer_retains_aliases_of_selected_canonical_entries_and_resolves_chains(tmp_path):
+    source, output, notice, include = (tmp_path / "icons.json", tmp_path / "icons.yaml",
+                                       tmp_path / "LICENSE", tmp_path / "include.txt")
+    value = _collection('<path d="M1 2L3 4"/>')
+    value["icons"]["other"] = {"body": '<path d="M2 3L4 5"/>', "width": 24, "height": 24}
+    value["aliases"] = {
+        "warning": {"parent": "sample"}, "warning-copy": {"parent": "warning"},
+        "turned": {"parent": "warning-copy", "rotate": 1}, "other-copy": {"parent": "other"},
+    }
+    source.write_text(json.dumps(value)); notice.write_text("MIT notice\n"); include.write_text("sample\n")
+
+    import_iconify(source, output, license_spdx="MIT", notice_path=notice, include_path=include)
+
+    body = yaml.safe_load(output.read_text())["body"]
+    assert body["entryAliases"] == {"warning": "sample", "warning-copy": "sample"}
+    assert "turned" in body["icons"] and "other-copy" not in body["entryAliases"]
+
+
+def test_importer_diagnostic_includes_prefix_icon_and_attribute(tmp_path):
+    source, output, notice = tmp_path / "icons.json", tmp_path / "icons.yaml", tmp_path / "LICENSE"
+    source.write_text(json.dumps(_collection('<path style="fill:red" d="M1 2L3 4"/>')))
+    notice.write_text("MIT notice\n")
+
+    with pytest.raises(IconImportError) as error:
+        import_iconify(source, output, license_spdx="MIT", notice_path=notice)
+
+    assert error.value.detail == "E_ICON_IMPORT_UNSAFE icon=sample:sample source=/path/@style"
 
 
 def test_bundled_default_copies_an_explicit_catalog(tmp_path):

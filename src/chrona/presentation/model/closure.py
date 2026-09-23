@@ -1,6 +1,7 @@
 """Immutable Render Context closure resolution before any rendering adapter runs."""
 from __future__ import annotations
 
+from difflib import get_close_matches
 from dataclasses import dataclass
 from hashlib import sha256
 from importlib.metadata import version
@@ -147,7 +148,9 @@ class RenderClosure:
         asset_id = f"{catalog.set_name}:{canonical}"
         asset = next((item for item in self.icon_assets if item.icon_id == asset_id), None)
         if asset is None:
-            raise ClosureError("E_ICON_NAME_UNKNOWN")
+            candidates = get_close_matches(name, sorted({entry.name for entry in catalog.entries} | set(catalog.entry_aliases)), n=3, cutoff=0.45)
+            detail = f"reference={reference}; catalog={catalog.set_name}; candidates={','.join(candidates) or 'none'}"
+            raise ClosureError("E_ICON_NAME_UNKNOWN", detail=detail)
         return asset
 
 

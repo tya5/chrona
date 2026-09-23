@@ -169,6 +169,27 @@ def test_cli_renders_a_bundled_catalog_icon_with_the_explicit_v07_profile(tmp_pa
     assert '<path ' in output.read_text(encoding="utf-8")
 
 
+def test_cli_icon_import_diagnostic_identifies_the_rejected_icon_source(tmp_path, monkeypatch, capsys):
+    source, notice, output = tmp_path / "icons.json", tmp_path / "NOTICE", tmp_path / "icons.yaml"
+    source.write_text(json.dumps({"prefix": "demo", "icons": {"bad": {"body": "<defs/>"}}}), encoding="utf-8")
+    notice.write_text("MIT\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "icon-catalog", "import", str(source), "--license-spdx", "MIT",
+        "--notice-file", str(notice), "--output", str(output),
+    ])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic == {
+        "code": "E_ICON_IMPORT_ELEMENT", "severity": "error", "component": "icon-import",
+        "sourceRef": "/defs", "revisionRefs": [],
+        "message": "E_ICON_IMPORT_ELEMENT icon=demo:bad source=/defs",
+    }
+
+
 def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     view = yaml.safe_load((root / "examples/controller-z/views/plan-only.yaml").read_text(encoding="utf-8"))

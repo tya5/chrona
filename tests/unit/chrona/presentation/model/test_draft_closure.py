@@ -77,6 +77,10 @@ def test_draft_closure_closes_only_explicit_catalogs_and_resolves_set_aliases(tm
     assert len(draft.closure.context.icon_catalogs) == 1
     with pytest.raises(ClosureError, match="E_ICON_SET_UNKNOWN"):
         draft.closure.icon_asset("other:risk")
+    with pytest.raises(ClosureError) as error:
+        draft.closure.icon_asset("acme-ui:rsk")
+    assert error.value.diagnostic_id == "E_ICON_NAME_UNKNOWN"
+    assert error.value.detail == "reference=acme-ui:rsk; catalog=acme; candidates=risk"
 
 
 def test_draft_closure_never_probes_a_host_typesetter():

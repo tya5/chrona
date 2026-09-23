@@ -523,6 +523,8 @@ def main() -> None:
         message = error.detail if isinstance(error, ClosureError) and error.detail else str(error)
         source_ref = error.source_ref if isinstance(error, ClosureError) else "/"
         _emit_failure(CliFailure(error.diagnostic_id, message, "closure", source_ref))
+    except IconImportError as error:
+        _emit_failure(CliFailure(error.code, error.detail, "icon-import", error.source_ref))
     except json.JSONDecodeError as error:
         _emit_failure(CliFailure("E_INPUT_JSON", str(error), exit_code=2))
     except yaml.YAMLError as error:
