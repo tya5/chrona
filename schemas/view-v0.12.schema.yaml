@@ -190,7 +190,7 @@ allOf:
           visuals:
             description: "Closed icon requests resolved by Layout against Context-local catalogs."
             type: array
-            items: {$ref: "#/$defs/visual"}
+            items: {$ref: "chrona/view-v0.12#/$defs/visual"}
           layoutIntent:
             type: object
             required: [compactness, itemStacking]
