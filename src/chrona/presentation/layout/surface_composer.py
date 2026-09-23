@@ -341,7 +341,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region=f"group:{group.group_id}",
-                                   collision_domain=CollisionDomain("group-header", group.group_id)))
+                                   collision_domain=CollisionDomain("group-header", group.group_id),
+                                   source_content=labels[group.group_id],
+                                   available_inline_size=float(group.header_bounds.inline_size)))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
@@ -372,7 +374,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    baseline_block=float(axis.bounds.block) + axis_size, typography_role="axis",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region="timeline-axis-band",
-                                   collision_domain=CollisionDomain("timeline-axis", "coarse-band")))
+                                   collision_domain=CollisionDomain("timeline-axis", "coarse-band"), source_content=label,
+                                   available_inline_size=inline_size))
     for interval in intervals:
         x = _coordinate(interval.start, scale)
         grid_level = "minor" if band_intervals else "major"
@@ -386,7 +389,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    content=label, inline=x, baseline_block=float(axis.bounds.block) + axis_size * (2 if band_intervals else 1),
                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region="timeline-axis-label",
-                                   collision_domain=CollisionDomain("timeline-axis", "fine-label")))
+                                   collision_domain=CollisionDomain("timeline-axis", "fine-label"), source_content=label,
+                                   available_inline_size=(interval.end - interval.start).days * scale.unit_ratio))
     for interval in band_intervals:
         x = _coordinate(interval.start, scale)
         shapes.append(ShapePlacement(f"axis-grid:major:{interval.level}:{interval.index}", "timeline-axis", "Path",
@@ -413,7 +417,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                baseline_block=float(timeline.bounds.block) + body_size, typography_role="text",
                                theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                collision_region="timeline-as-of",
-                               collision_domain=CollisionDomain("timeline", "overlay")))
+                               collision_domain=CollisionDomain("timeline", "overlay"),
+                               source_content=f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}",
+                               available_inline_size=max(0.0, timeline_bounds[0] + timeline_bounds[2] - x)))
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]))
     track_by_id = {item.instance_id: item for item in tracks}
@@ -774,7 +780,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    inline=float(legend.bounds.inline) + swatch_size * 1.5, baseline_block=baseline,
                                    typography_role="legend", theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region="legend",
-                                   collision_domain=CollisionDomain("legend", "content")))
+                                   collision_domain=CollisionDomain("legend", "content"), source_content=label,
+                                   available_inline_size=max(0.0, float(legend.bounds.inline_size) - swatch_size * 1.5)))
     for slot_name, values, prefix, purpose, typography in (
         ("notes", request.surface_content.notes, "note", "project-note", "text"),
         ("group-details", request.surface_content.group_details, "group-detail", "group-detail", "text"),
@@ -795,7 +802,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        typography_role=typography, theme_tokens=request.theme_tokens,
                                        font_metrics=request.font_metrics,
                                        collision_region=f"{slot_name}:{source}",
-                                       collision_domain=CollisionDomain(slot_name, f"line:{index}")))
+                                       collision_domain=CollisionDomain(slot_name, f"line:{index}"), source_content=content,
+                                       available_inline_size=float(slot.bounds.inline_size)))
     summary_slot = by_source.get("summary")
     if summary_slot:
         cursor = float(summary_slot.bounds.block)
@@ -805,7 +813,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    inline=float(summary_slot.bounds.inline), baseline_block=cursor + float(font_size),
                                    typography_role=run.typography_role, theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region="summary",
-                                   collision_domain=CollisionDomain("summary", "content")))
+                                   collision_domain=CollisionDomain("summary", "content"), source_content=run.content,
+                                   available_inline_size=float(summary_slot.bounds.inline_size)))
             cursor += float(font_size) * float(line_height)
 
     annotation_slot = by_source.get("annotations")
