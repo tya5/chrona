@@ -7,6 +7,7 @@ from chrona.presentation.scene.visual_capabilities import (
     BASELINE_PROFILE,
     PNG_PROFILE,
     SVG_PROFILE,
+    SVG_ICON_PROFILE,
     VisualCapabilityError,
     resolve_visual_profile,
     validate_surface_visual_profile,
@@ -29,3 +30,13 @@ def test_rich_profiles_are_exact_target_contracts():
 def test_required_completed_treatment_is_rejected_by_baseline_before_adapter():
     with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
         validate_surface_visual_profile(_surface(), resolve_visual_profile(BASELINE_PROFILE, "svg"))
+
+
+def test_icon_requires_exact_v07_profile_before_adapter():
+    icon = ScenePrimitive("i", "Icon", "risk", "object", "icon-mark", "planned", (0, 0, 1, 1),
+                          paint=ScenePaint("#111111", None, None, (), 1), icon_kind="vector",
+                          icon_asset_identity="sha256:" + "a" * 64)
+    surface = SceneSurface("s", (), (), (), None, (icon,), ScenePaint("#fff", None, None, (), 1))
+    with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
+        validate_surface_visual_profile(surface, resolve_visual_profile(BASELINE_PROFILE, "svg"))
+    validate_surface_visual_profile(surface, resolve_visual_profile(SVG_ICON_PROFILE, "svg"))

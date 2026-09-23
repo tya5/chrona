@@ -1,6 +1,6 @@
 # Implementation Plan: Portable Icon Catalogs and Immutable Visual Assets (#350)
 
-**Status:** Active — implementation not started
+**Status:** Complete — release evidence published
 **Implements:** Design Plan #350 (including its 2026-09-23 amendment),
 Specification 64, and UC-33
 **Design review:** `docs/reviews/current/issue-350-portable-icon-catalogs-architecture-review-2026-09-23.md`
@@ -122,3 +122,20 @@ Publish each completed slice serially after inspecting remote `main`, diff, comm
 fast-forward status: I350-1 closure; I350-2 primitive/profile; I350-3 Layout/View;
 I350-4 evidence/release review. Any design deviation returns to the design plan,
 Specification 64, and architecture review before code resumes.
+
+## Completion evidence (2026-09-23)
+
+- I350-1: `0137780` — catalog/context schemas, typed closure asset normalization,
+  identity/path checks, and materializer copying.
+- I350-2: `7a8eebf` — bounded SVG/PNG normalizer, `Icon` primitive, SVG serialization,
+  and exact v0.7 SVG/PNG profile admission.
+- I350-3: `5879d41` — View v0.11 semantic icon bindings and Layout-owned completed
+  leading-label/mark placements.
+- I350-4: this release-evidence commit — public Controller Z vector/raster fixture,
+  generated SVG, vocabulary/accessibility/profile gates, and release review.
+
+Focused icon/release tests: `49 passed`.
+Full suite: `505 passed, 11 skipped`.
+Wheel build and isolated resource smoke: passed. PDF has no v0.7 profile because it was
+not independently admitted; baseline/PDF/Typst/TikZ reject required icons before adapter
+output. This is an explicit fidelity boundary, not a degraded fallback.

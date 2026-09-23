@@ -115,7 +115,7 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
     shutil.copytree(ROOT / "examples/controller-z", copied)
     svg = b'<svg viewBox="0 0 24 24"><path d="M0 0L24 24"/></svg>'
     asset = copied / "assets/risk.svg"
-    asset.parent.mkdir()
+    asset.parent.mkdir(exist_ok=True)
     asset.write_bytes(svg)
     catalog = {"version": "chrona/icon-catalog/v0.1", "kind": "icon-catalog", "id": "icons", "body": {"icons": {
         "acme.risk": {"kind": "vector", "source": {"address": "assets/risk.svg", "contentIdentity": "sha256:" + sha256(svg).hexdigest()},
@@ -136,7 +136,7 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
 def test_icon_binding_is_measured_by_layout_and_projected_by_scene(tmp_path):
     copied = tmp_path / "controller-z"; shutil.copytree(ROOT / "examples/controller-z", copied)
     svg = b'<svg viewBox="0 0 24 24"><path d="M0 0L24 24Z"/></svg>'
-    (copied / "assets").mkdir(); (copied / "assets/risk.svg").write_bytes(svg)
+    (copied / "assets").mkdir(exist_ok=True); (copied / "assets/risk.svg").write_bytes(svg)
     catalog_path = copied / "icons.yaml"
     catalog = {"version": "chrona/icon-catalog/v0.1", "kind": "icon-catalog", "id": "icons", "body": {"icons": {
         "acme.risk": {"kind": "vector", "source": {"address": "assets/risk.svg", "contentIdentity": "sha256:" + sha256(svg).hexdigest()},

@@ -108,6 +108,9 @@ class ClosureReadLedger:
     def packages(self) -> None:
         self.read.add("profile-package")
 
+    def icons(self) -> None:
+        self.read.add("icon-catalog")
+
     def unused(self) -> tuple[str, ...]:
         return tuple(sorted(self._declared - self.read - _IMPLICITLY_READ))
 
@@ -124,6 +127,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     ledger.required()
+    if view.icon_bindings:
+        ledger.icons()
 
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:

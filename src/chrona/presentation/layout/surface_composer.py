@@ -736,21 +736,23 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if placement_kind == "leading-label":
             index = next((i for i, item in enumerate(text) if item.source_ref == object_id and item.placement_id.startswith("member-label:") and item.overflow != "suppressed"), None)
             if index is None: raise LayoutError("E_ICON_BINDING", "/iconBindings")
-            item = text[index]; size = min(float(item.bounds.block_size), item.font_size); gap = max(1.0, size * 0.25)
-            if item.bounds.inline_size <= size + gap: raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/iconBindings")
-            shifted = replace(item, bounds=Rect(item.bounds.inline + Decimal(str(size + gap)), item.bounds.block,
-                                                item.bounds.inline_size - Decimal(str(size + gap)), item.bounds.block_size),
-                              baseline=(item.baseline[0] + size + gap, item.baseline[1]) if item.baseline else None)
+            item = text[index]; size = min(float(item.bounds.block_size), item.font_size); width = size * icon.viewport[0] / icon.viewport[1]; gap = max(1.0, size * 0.25)
+            if item.bounds.inline_size <= width + gap: raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/iconBindings")
+            shifted = replace(item, bounds=Rect(item.bounds.inline + Decimal(str(width + gap)), item.bounds.block,
+                                                item.bounds.inline_size - Decimal(str(width + gap)), item.bounds.block_size),
+                              baseline=(item.baseline[0] + width + gap, item.baseline[1]) if item.baseline else None)
             text[index] = shifted
             bounds = Rect(item.bounds.inline, item.bounds.block + (item.bounds.block_size - Decimal(str(size))) / 2,
-                          Decimal(str(size)), Decimal(str(size)))
+                          Decimal(str(width)), Decimal(str(size)))
             icons.append(IconPlacement(f"icon:{item.placement_id}", object_id, icon.icon_id, icon.kind, icon.content_identity,
                                        icon.payload, icon.alternative, bool(binding.get("decorative")), bounds))
         elif placement_kind == "mark":
             mark = next((item for item in marks if item.source_ref == object_id and item.placement_id.startswith("planned:")), None)
             if mark is None: raise LayoutError("E_ICON_BINDING", "/iconBindings")
+            height = mark.bounds.block_size; width = min(mark.bounds.inline_size, height * Decimal(str(icon.viewport[0])) / Decimal(str(icon.viewport[1])))
+            bounds = Rect(mark.bounds.inline + (mark.bounds.inline_size - width) / 2, mark.bounds.block, width, height)
             icons.append(IconPlacement(f"icon:{mark.placement_id}", object_id, icon.icon_id, icon.kind, icon.content_identity,
-                                       icon.payload, icon.alternative, bool(binding.get("decorative")), mark.bounds))
+                                       icon.payload, icon.alternative, bool(binding.get("decorative")), bounds))
         else: raise LayoutError("E_ICON_BINDING", "/iconBindings")
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),

@@ -1,0 +1,15 @@
+version: chrona/icon-catalog/v0.1
+kind: icon-catalog
+id: controller-z-icons
+body:
+  icons:
+    chrona.risk:
+      kind: vector
+      source: {address: assets/risk.svg, contentIdentity: sha256:431bed861b8c7a2318699b71fa68c83a1a5f3f628dee8d46761370a0542de7bc}
+      viewport: {inlineSize: 24, blockSize: 24}
+      alternative: Delivery risk
+    chrona.programme:
+      kind: raster
+      source: {address: assets/programme.png, contentIdentity: sha256:fc269fa59c59eace6b23c198d8c94f4b591d2c58b5c8a2db152b150f0b58230d}
+      viewport: {inlineSize: 1600, blockSize: 900}
+      alternative: Programme overview

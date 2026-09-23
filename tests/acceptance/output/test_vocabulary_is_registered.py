@@ -58,8 +58,8 @@ def test_the_renderer_draws_only_the_registered_primitive_kinds(svg_path):
     """Every element the renderer produced maps back to one PrimitiveKind."""
     drawn = {node.tag.removeprefix(SVG) for node in ElementTree.fromstring(svg_path.read_text()).iter()
              if node.get("data-purpose") is not None}
-    assert drawn <= {"rect", "text", "polygon", "path"}
-    assert {kind.value for kind in PrimitiveKind} == {"Rect", "Text", "Symbol", "Path"}
+    assert drawn <= {"rect", "text", "polygon", "path", "image"}
+    assert {kind.value for kind in PrimitiveKind} == {"Rect", "Text", "Symbol", "Path", "Icon"}
 
 
 def _slot_enum(node):

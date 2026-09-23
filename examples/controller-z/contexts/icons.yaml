@@ -1,0 +1,99 @@
+version: chrona/render-context/v0.10
+kind: render-context
+id: controller-z-executive
+body:
+  project:
+    id: controller-z-silicon-bringup
+    kind: project
+    store:
+      provider: local
+      identity: controller-z-example
+    address: project.yaml
+    revision:
+      token: example-v1
+  view:
+    id: controller-z-executive
+    kind: view
+    store:
+      provider: local
+      identity: controller-z-example
+    address: views/icons.yaml
+    revision:
+      token: example-v1
+  theme:
+    id: executive-light
+    kind: theme
+    store:
+      provider: local
+      identity: controller-z-example
+    address: themes/executive-light.yaml
+    revision:
+      token: example-v1
+  colorScheme:
+    id: executive-light
+    kind: color-scheme
+    store:
+      provider: local
+      identity: controller-z-example
+    address: schemes/executive-light.yaml
+    revision:
+      token: example-v1
+  layout:
+    id: executive-review
+    kind: layout-profile
+    store:
+      provider: local
+      identity: controller-z-example
+    address: layouts/executive-review.yaml
+    revision:
+      token: example-v1
+  inputs:
+    iconCatalog:
+      id: controller-z-icons
+      kind: icon-catalog
+      store: {provider: local, identity: controller-z-example}
+      address: icons.yaml
+      revision: {token: example-v1}
+      contentIdentity: sha256:d542fe3dd3fefaa5d8b892591644d402c5d65eb2c94c3628940e58d28cac8a70
+    actual:
+      id: controller-z-observed
+      kind: actual-set
+      store:
+        provider: local
+        identity: controller-z-example
+      address: actual.yaml
+      revision:
+        token: example-v1
+    detailProfile:
+      id: controller-z-review-detail
+      kind: review-detail-profile
+      store:
+        provider: local
+        identity: controller-z-example
+      address: profiles/review-detail.yaml
+      revision:
+        token: example-v1
+  environment:
+    viewport:
+      inlineSize: 1600
+      blockSize: 900
+    locale: en-US
+    fontMetrics:
+      algorithm: declared-metrics-v1
+      assets:
+      - family: Nimbus Sans
+        weight: 400
+        revision: nimbus-sans-regular-v1
+        path: font_metrics/nimbus-sans-regular-v1.json
+      missingFont: declared-fallback
+    scenePrecision: 3
+  target:
+    kind: svg
+    visualProfile: chrona-output/visual/v0.7-svg
+    capabilities:
+    - accessibleText
+    - hierarchicalAxis
+    - marker
+    - semanticRoles
+    - sourceMetadata
+    - tableSemantics

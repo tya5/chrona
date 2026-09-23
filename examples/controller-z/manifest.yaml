@@ -14,3 +14,7 @@ slides:
     evidence: "Portable gradient, shadow, and stroke-finish treatment over the same Controller Z evidence."
     context: contexts/elevated.yaml
     expectedSvg: generated/elevated.svg
+  - id: icons
+    evidence: "Immutable vector and raster catalog icons as a measured label prefix and semantic mark."
+    context: contexts/icons.yaml
+    expectedSvg: generated/icons.svg
