@@ -31,7 +31,7 @@ committed fixture and does not require Node.
   ASTER slide, and six HALCYON slides.
 - Isolated wheel build/install smoke: passed; the wheel exposes the packaged
   Material catalog through `importlib.resources`.
-- GitHub conformance CI: passed on commit `4a1ff83`
-  (run `35932276143`, macOS).
+- GitHub conformance CI: passed on commit `9745b04`
+  (run `35933544630`, macOS).
 
 The requirement matrix records direct evidence for R350-01 through R350-12.
