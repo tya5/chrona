@@ -1,6 +1,6 @@
 # Implementation Plan: Visual Capability Feedback Correction (#349)
 
-**Status:** Active
+**Status:** Complete — I349F-1 through I349F-3 accepted
 **Implements:** Specification 63 diagnostic amendment and architecture review
 
 ## I349F-1 — Structured capability diagnostic transport
@@ -54,4 +54,3 @@ records that #349 feedback is closed without expanding visual capability scope.
 2. Publish I349F-1 and I349F-2 together because a public diagnostic must be
    structurally complete across both Theme and icon paths.
 3. Publish I349F-3 evidence and the release review after the full gate.
-

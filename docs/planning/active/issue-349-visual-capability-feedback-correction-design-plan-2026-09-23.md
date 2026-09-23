@@ -1,6 +1,6 @@
 # Design Plan: Visual Capability Feedback Correction (#349)
 
-**Status:** Active
+**Status:** Complete — design amendment and architecture review published
 **Issue:** #349 post-hoc review feedback
 **Corrects:** Specification 63 and the #349 release evidence
 
@@ -61,4 +61,3 @@ render route.
 | D349F-1 | Diagnostic ownership, pointer provenance, and message contract reviewed against Theme → Scene → use case → CLI. |
 | D349F-2 | Optional/required target policy and SVG/PNG evidence boundaries reviewed against Specification 63 and icon profiles. |
 | D349F-3 | English design amendment and architecture review published before implementation planning. |
-
