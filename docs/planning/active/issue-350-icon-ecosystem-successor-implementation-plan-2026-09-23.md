@@ -100,6 +100,9 @@ advances before their Layout solver commits bounds.
 [Annotation rail target closure](issue-350-annotation-rail-target-correction-2026-09-24.md)
 is additionally binding: the shared reusable Layout exposes a bounded optional
 annotation rail, without making View annotations coordinate-bearing state.
+[Measured annotation rail allocation](issue-350-annotation-rail-measurement-correction-2026-09-24.md)
+supersedes its placeholder measurement: visible annotation text and completed
+visual advances must participate in source measurement before Layout solving.
 [Summary visual selector closure](issue-350-summary-visual-selector-correction-2026-09-24.md)
 replaces the ambiguous panel-family selector with exact header/value/caption
 occurrence forms.
