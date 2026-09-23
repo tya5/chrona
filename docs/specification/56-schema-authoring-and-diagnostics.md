@@ -1,6 +1,6 @@
 # Schema Authoring and Diagnostics
 
-**Status:** Proposed
+**Status:** Accepted (amended 2026-09-23)
 **Depends on:** [05 Project Format](05-project-format.md), [09 Application
 Architecture](09-application-architecture.md), [13 Presentation Format](13-presentation-format.md),
 and [32 Repository Layout](32-repository-layout-and-packaging.md).
@@ -38,20 +38,26 @@ value.  Descriptions do not restate JSON Schema keywords mechanically and do
 not promise semantic behavior owned by a later validation stage.
 
 The repository supplies a schema-annotation lint over all `live` entries in the
-schema inventory.  It traverses only reachable author-facing nodes, validates
-that the profile is present, validates examples against the enclosing schema,
-and reports a schema-location pointer for annotation defects.  It is run in
-conformance and before generated reference publication.  Generated reference
-may consume this metadata, but tutorials remain independently authored.
+schema inventory. It traverses every reachable schema applicator, including
+`allOf`, `if`, `then`, `else`, and `not`; it never treats an implementation
+container such as `properties` as a schema node. A pattern, format, conditional
+form, or local reference assertion is non-obvious and MUST carry a valid
+example. Pure `$ref` reuse remains exempt. The lint validates every example in
+its enclosing schema context and reports a schema-location pointer for defects.
+It is run in conformance and before generated reference publication. Generated
+reference may consume this metadata, but tutorials remain independently
+authored.
 
 ## 3. Structured validation explanation
 
 All schema ingress boundaries use the same immutable internal value before
-mapping to their existing public error types:
+mapping to their existing public error types. An ingress supplies its known
+resource kind and identity; identity is absent when malformed input cannot
+safely establish one:
 
 ```text
 SchemaViolation {
-  resourceKind: string
+  resourceKind: string | absent
   resourceIdentity: ClosureIdentity | absent
   instancePointer: RFC6901 pointer
   rule: enum | const | required | additionalProperties | type | range | pattern | union
@@ -89,6 +95,10 @@ validation maps it to `Diagnostic("E_SCHEMA", message, pointer)`.  Both retain
 their existing semantic validation phase; this shared helper performs no
 semantic normalization and is not imported by View, Layout, Scene, or renderer
 code.
+
+Operational resource, command, and authoring ingress boundaries use the same
+reducer before mapping to their stable existing error codes. They may retain a
+smaller public error record, but must not expose raw `jsonschema` wording.
 
 ## 4. Union policy and Project v0.6
 
