@@ -6,3 +6,7 @@ slides:
   - id: executive
     evidence: "Executive review with actuals, inside labels, and fallback labels."
     expectedSvg: generated/executive.svg
+  - id: plan-only
+    evidence: "Plan-only control view over the same Controller Z schedule and observations."
+    context: contexts/plan-only.yaml
+    expectedSvg: generated/plan-only.svg

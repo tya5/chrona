@@ -32,7 +32,12 @@ def corpus(root: Path) -> dict[tuple[str, str], dict[str, Any]]:
             key = (identifier, slide["id"])
             if key in entries:
                 raise ExampleInventoryError(f"E_EXAMPLE_SLIDE_DUPLICATE:{identifier}:{slide['id']}")
-            entries[key] = {"manifest": manifest_path.relative_to(root).as_posix(), "evidence": slide["evidence"]}
+            context = slide.get("context", manifest.get("context"))
+            expected = slide.get("expectedSvg")
+            if not isinstance(context, str) or not isinstance(expected, str):
+                raise ExampleInventoryError(f"E_EXAMPLE_SLIDE:{manifest_path.relative_to(root)}")
+            entries[key] = {"manifest": manifest_path.relative_to(root).as_posix(), "evidence": slide["evidence"],
+                            "context": context, "expectedSvg": expected}
     return entries
 
 
@@ -48,10 +53,55 @@ def validate_catalog(path: Path, corpus_entries: dict[tuple[str, str], dict[str,
     return len(value["entries"])
 
 
+def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[str, str], dict[str, Any]]) -> int:
+    value = _load(path)
+    if not isinstance(value, dict) or value.get("version") != "chrona/design-gallery/v0.1" or not isinstance(value.get("entries"), list):
+        raise ExampleInventoryError(f"E_DESIGN_GALLERY_FORMAT:{path}")
+    seen: set[str] = set(); pairs: dict[str, list[dict[str, Any]]] = {}
+    for entry in value["entries"]:
+        if not isinstance(entry, dict) or not all(isinstance(entry.get(key), str) and entry[key] for key in ("id", "corpus", "slide")):
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_ENTRY:{path}")
+        if entry["id"] in seen: raise ExampleInventoryError(f"E_DESIGN_GALLERY_DUPLICATE:{entry['id']}")
+        seen.add(entry["id"]); key = (entry["corpus"], entry["slide"])
+        if key not in corpus_entries: raise ExampleInventoryError(f"E_DESIGN_GALLERY_REFERENCE:{entry['id']}")
+        narrative, comparison, target, accessibility = (entry.get(name) for name in ("narrative", "comparison", "target", "accessibility"))
+        if not isinstance(narrative, dict) or not all(isinstance(narrative.get(k), str) and narrative[k] for k in ("title", "audience", "purpose")):
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_NARRATIVE:{entry['id']}")
+        if not isinstance(comparison, dict) or not all(isinstance(comparison.get(k), str) and comparison[k] for k in ("set", "axis")):
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_PAIR:{entry['id']}")
+        if not isinstance(accessibility, dict) or not isinstance(accessibility.get("note"), str) or not accessibility["note"]:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_ACCESSIBILITY:{entry['id']}")
+        context = _context(root, corpus_entries[key])
+        actual_target = context["body"]["target"]
+        if not isinstance(target, dict) or target.get("kind") != actual_target.get("kind") or not set(target.get("capabilities", [])).issubset(set(actual_target.get("capabilities", []))):
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_TARGET:{entry['id']}")
+        pairs.setdefault(comparison["set"], []).append(context)
+    for pair, contexts in pairs.items():
+        if len(contexts) < 2: raise ExampleInventoryError(f"E_DESIGN_GALLERY_UNPAIRED:{pair}")
+        bodies = [item["body"] for item in contexts]
+        if len({_identity(body["project"]) for body in bodies}) != 1 or len({_identity(body.get("inputs", {}).get("actual")) for body in bodies}) != 1:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_SEMANTIC_MISMATCH:{pair}")
+        presentation = [tuple(_identity(body[key]) for key in ("view", "theme", "colorScheme", "layout")) for body in bodies]
+        if len(set(presentation)) == 1: raise ExampleInventoryError(f"E_DESIGN_GALLERY_PRESENTATION_EQUAL:{pair}")
+    return len(seen)
+
+
+def _context(root: Path, entry: dict[str, Any]) -> dict[str, Any]:
+    corpus = Path(entry["manifest"]).parent
+    value = _load(root / corpus / entry["context"])
+    if not isinstance(value, dict) or value.get("kind") != "render-context" or not isinstance(value.get("body"), dict):
+        raise ExampleInventoryError("E_DESIGN_GALLERY_CONTEXT")
+    return value
+
+
+def _identity(value: Any) -> str:
+    return yaml.safe_dump(value, sort_keys=True)
+
+
 def validate(root: Path) -> tuple[int, int, int]:
     entries = corpus(root)
     curriculum = validate_catalog(root / "docs/guides/example-curriculum.yaml", entries)
-    gallery = validate_catalog(root / "docs/gallery/example-gallery.yaml", entries)
+    gallery = validate_design_gallery(root / "docs/gallery/example-gallery.yaml", root, entries)
     return len(entries), curriculum, gallery
 
 

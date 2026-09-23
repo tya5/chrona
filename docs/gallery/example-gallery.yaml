@@ -1,6 +1,16 @@
-version: chrona/example-catalog/v0.1
+version: chrona/design-gallery/v0.1
 entries:
-  - {corpus: controller-z, slide: executive}
-  - {corpus: aster-ssd, slide: overview}
-  - {corpus: halcyon-1, slide: programme-board}
-  - {corpus: halcyon-1, slide: dependency-network}
+  - id: controller-z-executive
+    corpus: controller-z
+    slide: executive
+    narrative: {title: Executive review, audience: programme leadership, purpose: Compare plan, actual, and label exceptions.}
+    comparison: {set: controller-z-review-direction, axis: comparison focus}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present alongside colour.}
+  - id: controller-z-plan-only
+    corpus: controller-z
+    slide: plan-only
+    narrative: {title: Plan-only control, audience: delivery leads, purpose: Focus the same schedule on planned commitments.}
+    comparison: {set: controller-z-review-direction, axis: comparison focus}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present alongside colour.}
