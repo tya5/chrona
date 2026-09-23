@@ -41,3 +41,13 @@ The change does not add a Context version, persisted descriptor resource,
 typesetter compilation, native reflow, target-local geometry, fallback target,
 or compatibility branch.  It preserves the existing Layout → Scene → adapter
 boundary and makes help-advertised Draft reachability honest.
+
+## Acceptance-evidence correction
+
+The post-completion audit reopened #258 to cover the partial descriptor and
+guided CLI paths.  CLI tests now prove partial Typst input rejects with
+`E_RENDER_TYPESETTER_DESCRIPTOR`, guided Draft rejects a missing descriptor
+before workspace resolution, and guided Draft emits TikZ source with a complete
+declared descriptor.  The correction full gate passed with `463 passed, 7
+skipped`; conformance, all eight public materializer byte checks, and
+installed-wheel smoke also passed.

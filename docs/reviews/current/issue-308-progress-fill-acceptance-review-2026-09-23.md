@@ -39,3 +39,13 @@ the Layout geometry helper, guarding the intended projection-only boundary.
 This closes only the remaining #308 display fill.  #310 inside labels and #314
 declared colour scales remain independent completed contracts; no compatibility
 layer, schedule behavior, Actual selection, or colour-scale policy was added.
+
+## Acceptance-evidence correction
+
+The post-completion audit reopened #308 to add ordinary Draft-pipeline
+regressions for `actual.progress`, absent actual host omission, absent planned
+progress omission, and zero planned progress omission.  The tests prove that
+Actual Set v0.2's `actual.progress` is the source authority and that optional
+submarks never acquire a fallback host.  The correction full gate passed with
+`463 passed, 7 skipped`; conformance, all eight public materializer byte checks,
+and installed-wheel smoke also passed.
