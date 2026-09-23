@@ -83,28 +83,28 @@
 <text data-scene-id="cell:first-light:Work package" data-source-ref="first-light" data-purpose="table-cell" x="515" y="1031.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">First light</text>
 <text data-scene-id="cell:first-light:Phase" data-source-ref="first-light" data-purpose="table-cell" x="716.545" y="1031.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Operate</text>
 <text data-scene-id="cell:first-light:Δ" data-source-ref="first-light" data-purpose="table-cell" x="813.9" y="1031.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">—</text>
-<rect data-scene-id="group:bus" data-source-ref="bus" data-purpose="group-decoration" x="937.082" y="106" width="942.918" height="192.462" fill="#12302B"/>
-<rect data-scene-id="group-header-band:bus" data-source-ref="bus" data-purpose="group-header-band" x="500" y="86" width="1380" height="20" fill="#12302B"/>
+<rect data-scene-id="group:bus" data-source-ref="bus" data-purpose="group-decoration" x="937.082" y="106" width="942.918" height="192.462" opacity="0.12" fill="#12302B"/>
+<rect data-scene-id="group-header-band:bus" data-source-ref="bus" data-purpose="group-header-band" x="500" y="86" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:bus" data-source-ref="bus" data-purpose="group-header" x="500" y="101" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Spacecraft bus</text>
-<rect data-scene-id="group:payload" data-source-ref="payload" data-purpose="group-decoration" x="937.082" y="318.462" width="942.918" height="128.308" fill="#12302B"/>
-<rect data-scene-id="group-header-band:payload" data-source-ref="payload" data-purpose="group-header-band" x="500" y="298.462" width="1380" height="20" fill="#12302B"/>
+<rect data-scene-id="group:payload" data-source-ref="payload" data-purpose="group-decoration" x="937.082" y="318.462" width="942.918" height="128.308" opacity="0.12" fill="#12302B"/>
+<rect data-scene-id="group-header-band:payload" data-source-ref="payload" data-purpose="group-header-band" x="500" y="298.462" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:payload" data-source-ref="payload" data-purpose="group-header" x="500" y="313.462" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Imaging payload</text>
-<rect data-scene-id="group:ait" data-source-ref="ait" data-purpose="group-decoration" x="937.082" y="466.769" width="942.918" height="160.385" fill="#12302B"/>
-<rect data-scene-id="group-header-band:ait" data-source-ref="ait" data-purpose="group-header-band" x="500" y="446.769" width="1380" height="20" fill="#12302B"/>
+<rect data-scene-id="group:ait" data-source-ref="ait" data-purpose="group-decoration" x="937.082" y="466.769" width="942.918" height="160.385" opacity="0.12" fill="#12302B"/>
+<rect data-scene-id="group-header-band:ait" data-source-ref="ait" data-purpose="group-header-band" x="500" y="446.769" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:ait" data-source-ref="ait" data-purpose="group-header" x="500" y="461.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Assembly, integration and test</text>
-<rect data-scene-id="group:ground" data-source-ref="ground" data-purpose="group-decoration" x="937.082" y="647.154" width="942.918" height="96.231" fill="#12302B"/>
-<rect data-scene-id="group-header-band:ground" data-source-ref="ground" data-purpose="group-header-band" x="500" y="627.154" width="1380" height="20" fill="#12302B"/>
+<rect data-scene-id="group:ground" data-source-ref="ground" data-purpose="group-decoration" x="937.082" y="647.154" width="942.918" height="96.231" opacity="0.12" fill="#12302B"/>
+<rect data-scene-id="group-header-band:ground" data-source-ref="ground" data-purpose="group-header-band" x="500" y="627.154" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:ground" data-source-ref="ground" data-purpose="group-header" x="500" y="642.154" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Ground segment</text>
-<rect data-scene-id="group:launch" data-source-ref="launch" data-purpose="group-decoration" x="937.082" y="763.385" width="942.918" height="160.385" fill="#12302B"/>
-<rect data-scene-id="group-header-band:launch" data-source-ref="launch" data-purpose="group-header-band" x="500" y="743.385" width="1380" height="20" fill="#12302B"/>
+<rect data-scene-id="group:launch" data-source-ref="launch" data-purpose="group-decoration" x="937.082" y="763.385" width="942.918" height="160.385" opacity="0.12" fill="#12302B"/>
+<rect data-scene-id="group-header-band:launch" data-source-ref="launch" data-purpose="group-header-band" x="500" y="743.385" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:launch" data-source-ref="launch" data-purpose="group-header" x="500" y="758.385" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Launch and range</text>
-<rect data-scene-id="group:ops" data-source-ref="ops" data-purpose="group-decoration" x="937.082" y="943.769" width="942.918" height="96.231" fill="#12302B"/>
-<rect data-scene-id="group-header-band:ops" data-source-ref="ops" data-purpose="group-header-band" x="500" y="923.769" width="1380" height="20" fill="#12302B"/>
+<rect data-scene-id="group:ops" data-source-ref="ops" data-purpose="group-decoration" x="937.082" y="943.769" width="942.918" height="96.231" opacity="0.12" fill="#12302B"/>
+<rect data-scene-id="group-header-band:ops" data-source-ref="ops" data-purpose="group-header-band" x="500" y="923.769" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:ops" data-source-ref="ops" data-purpose="group-header" x="500" y="938.769" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#EAF0FA">Mission operations</text>
-<rect data-scene-id="calendar-closed:2027-04-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1046.804" y="86" width="3.429" height="954" fill="#16213A"/>
-<rect data-scene-id="calendar-closed:2027-05-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1249.102" y="86" width="3.429" height="954" fill="#16213A"/>
-<rect data-scene-id="calendar-closed:2027-07-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1369.11" y="86" width="3.429" height="954" fill="#16213A"/>
-<rect data-scene-id="calendar-closed:2027-09-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1585.124" y="86" width="3.429" height="954" fill="#16213A"/>
+<rect data-scene-id="calendar-closed:2027-04-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1046.804" y="86" width="3.429" height="954" opacity="0.12" fill="#16213A"/>
+<rect data-scene-id="calendar-closed:2027-05-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1249.102" y="86" width="3.429" height="954" opacity="0.12" fill="#16213A"/>
+<rect data-scene-id="calendar-closed:2027-07-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1369.11" y="86" width="3.429" height="954" opacity="0.12" fill="#16213A"/>
+<rect data-scene-id="calendar-closed:2027-09-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1585.124" y="86" width="3.429" height="954" opacity="0.12" fill="#16213A"/>
 <polygon data-scene-id="planned:pdr:pdr" data-source-ref="pdr" data-purpose="planned" points="950.797,114.019 955.797,119.019 950.797,124.019 945.797,119.019" fill="#5FA8FF"/>
 <rect data-scene-id="missing-actual:pdr:pdr" data-source-ref="pdr" data-purpose="missingActual" x="950.797" y="126.519" width="15" height="10" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#2E3F5E"/>
 <rect data-scene-id="planned:structure:structure" data-source-ref="structure" data-purpose="planned" x="961.084" y="146.096" width="99.435" height="10" fill="#5FA8FF"/>

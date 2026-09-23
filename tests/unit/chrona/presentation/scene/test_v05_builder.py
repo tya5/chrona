@@ -61,10 +61,16 @@ def _theme():
                    "body-size": {"type": "number", "value": 14},
                    "heading-size": {"type": "number", "value": 24},
                    "axis-size": {"type": "number", "value": 12},
+                   "group-opacity": {"type": "number", "value": "0.12"},
+                   "group-header-opacity": {"type": "number", "value": "0.2"},
+                   "calendar-opacity": {"type": "number", "value": "0.12"},
                    "line": {"type": "number", "value": "1.4"}},
         "roles": {**{name: {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"}
                      for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size"}.items()},
-                  "text": {"fill": "ink", "fontFamily": "body", "fontWeight": "regular", "fontSize": "body-size", "lineHeight": "line"}}, "metrics": {}}}
+                  "text": {"fill": "ink", "fontFamily": "body", "fontWeight": "regular", "fontSize": "body-size", "lineHeight": "line"},
+                  "group-band": {"opacity": "group-opacity"},
+                  "group-header-band": {"opacity": "group-header-opacity"},
+                  "calendar-closed": {"opacity": "calendar-opacity"}}, "metrics": {}}}
 
 
 def _measurements():

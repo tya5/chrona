@@ -87,89 +87,89 @@
 <text data-scene-id="cell:first-light:Plan" data-source-ref="first-light" data-purpose="table-cell" x="294.225" y="772.447" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">19 Nov 2027</text>
 <text data-scene-id="cell:first-light:Actual" data-source-ref="first-light" data-purpose="table-cell" x="432.975" y="772.447" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">—</text>
 <text data-scene-id="cell:first-light:Δ" data-source-ref="first-light" data-purpose="table-cell" x="575.025" y="772.447" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">—</text>
-<rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="852.479" y="137.1" width="711.521" height="648.1" fill="#FFFFFF"/>
-<rect data-scene-id="calendar-closed:2027-03-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="865.416" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-03-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="868.003" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-03-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="883.527" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-03-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="886.115" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-03-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="901.639" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-03-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="904.226" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-03-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="919.75" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-03-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="922.338" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="935.274" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="937.862" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-04" data-source-ref="project-calendar" data-purpose="calendar-closed" x="940.449" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="955.973" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-11" data-source-ref="project-calendar" data-purpose="calendar-closed" x="958.56" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="974.084" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-18" data-source-ref="project-calendar" data-purpose="calendar-closed" x="976.672" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="992.196" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-04-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="994.783" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1010.307" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1012.895" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-08" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1028.419" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-09" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1031.006" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-15" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1046.53" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-16" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1049.118" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-22" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1064.642" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1067.229" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-29" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1082.753" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-30" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1085.34" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-05-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1087.928" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1100.865" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1103.452" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-12" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1118.976" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1121.563" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-19" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1137.087" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1139.675" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-26" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1155.199" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-06-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1157.786" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1173.31" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-04" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1175.898" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1178.485" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1191.422" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-11" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1194.009" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1209.533" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-18" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1212.121" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1227.645" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1230.232" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-07-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1245.756" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1248.343" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1263.868" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-08" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1266.455" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1281.979" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-15" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1284.566" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1300.09" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-22" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1302.678" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1318.202" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-08-29" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1320.789" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-04" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1336.313" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1338.901" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1341.488" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-11" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1354.425" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-12" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1357.012" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-18" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1372.536" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-19" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1375.124" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1390.648" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-09-26" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1393.235" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1408.759" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1411.346" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-09" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1426.871" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1429.458" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-16" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1444.982" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1447.569" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1463.093" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1465.681" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-30" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1481.205" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1483.792" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1499.316" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1501.904" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1517.428" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1520.015" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1535.539" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1538.127" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1553.651" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1556.238" y="137.1" width="2.587" height="648.1" fill="#EEF2F7"/>
+<rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="852.479" y="137.1" width="711.521" height="648.1" opacity="0.12" fill="#FFFFFF"/>
+<rect data-scene-id="calendar-closed:2027-03-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="865.416" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-03-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="868.003" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-03-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="883.527" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-03-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="886.115" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-03-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="901.639" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-03-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="904.226" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-03-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="919.75" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-03-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="922.338" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="935.274" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="937.862" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-04" data-source-ref="project-calendar" data-purpose="calendar-closed" x="940.449" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="955.973" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-11" data-source-ref="project-calendar" data-purpose="calendar-closed" x="958.56" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="974.084" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-18" data-source-ref="project-calendar" data-purpose="calendar-closed" x="976.672" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="992.196" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-04-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="994.783" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1010.307" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1012.895" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-08" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1028.419" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-09" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1031.006" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-15" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1046.53" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-16" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1049.118" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-22" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1064.642" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1067.229" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-29" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1082.753" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-30" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1085.34" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-05-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1087.928" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1100.865" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1103.452" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-12" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1118.976" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1121.563" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-19" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1137.087" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1139.675" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-26" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1155.199" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-06-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1157.786" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1173.31" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-04" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1175.898" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1178.485" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1191.422" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-11" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1194.009" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1209.533" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-18" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1212.121" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1227.645" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1230.232" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-07-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1245.756" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1248.343" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1263.868" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-08" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1266.455" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1281.979" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-15" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1284.566" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1300.09" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-22" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1302.678" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1318.202" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-08-29" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1320.789" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-04" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1336.313" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1338.901" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1341.488" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-11" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1354.425" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-12" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1357.012" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-18" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1372.536" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-19" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1375.124" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1390.648" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-09-26" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1393.235" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1408.759" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1411.346" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-09" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1426.871" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1429.458" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-16" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1444.982" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1447.569" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1463.093" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1465.681" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-30" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1481.205" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1483.792" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1499.316" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1501.904" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1517.428" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1520.015" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1535.539" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1538.127" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1553.651" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1556.238" y="137.1" width="2.587" height="648.1" opacity="0.12" fill="#EEF2F7"/>
 <path data-scene-id="planned:pdr:pdr" data-source-ref="pdr" data-purpose="planned" d="M861.828 148.227Q862.828 147.227 863.828 148.227L866.828 151.227Q867.828 152.227 866.828 153.227L863.828 156.227Q862.828 157.227 861.828 156.227L858.828 153.227Q857.828 152.227 858.828 151.227L861.828 148.227" fill="#1D5FD1"/>
 <rect data-scene-id="planned:optics:optics" data-source-ref="optics" data-purpose="planned" x="870.591" y="187.733" width="62.096" height="10" rx="4" ry="4" fill="#1D5FD1"/>
 <rect data-scene-id="actual:optics:optics" data-source-ref="optics" data-purpose="actual" x="870.591" y="200.233" width="64.684" height="10" rx="4" ry="4" fill="#0E8A6C"/>

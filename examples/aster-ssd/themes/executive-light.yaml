@@ -35,7 +35,13 @@ body:
     table-column-gutter: {type: number, value: 10}
     table-indent: {type: number, value: 16}
     table-header-height: {type: number, value: 44}
+    opacity.group-band: {type: number, value: 0.12}
+    opacity.group-header-band: {type: number, value: 0.2}
+    opacity.calendar-closed: {type: number, value: 0.12}
   roles:
+    group-band: {opacity: opacity.group-band}
+    group-header-band: {opacity: opacity.group-header-band}
+    calendar-closed: {opacity: opacity.calendar-closed}
     text: {fontFamily: editorial, fontWeight: text-weight, fontSize: text-size, lineHeight: text-line-height}
     heading: {fontFamily: editorial, fontWeight: text-weight, fontSize: heading-size, lineHeight: heading-line-height}
     axis: {fontFamily: editorial, fontWeight: text-weight, fontSize: axis-size, lineHeight: axis-line-height}
@@ -51,6 +57,7 @@ body:
     axis-band-decoration.fill: surface
     table-header.fill: surfaceRaised
     group-band.fill: category
+    group-header-band.fill: surfaceRaised
     'group:factory-team.fill': category
     'group:fw-team.fill': category
     'group:validation-team.fill': category

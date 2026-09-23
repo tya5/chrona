@@ -80,7 +80,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("axisGridMinor", "line", "axis-grid", "axis-minor", "axis-minor"),
     # Grouping.
     _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band"),
-    _binding("groupHeaderBand", "decoration", "group-header-band", "group-band", "group-band"),
+    _binding("groupHeaderBand", "decoration", "group-header-band", "group-header-band", "group-header-band"),
     _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader"),
     _binding("groupDetail", "label", "group-detail", "text", "text"),
     # Table.

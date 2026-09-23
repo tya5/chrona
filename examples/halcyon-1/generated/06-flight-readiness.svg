@@ -26,25 +26,25 @@
 <text data-scene-id="cell:first-light:Work package" data-source-ref="first-light" data-purpose="table-cell" x="97.17" y="889.89" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">First light</text>
 <text data-scene-id="cell:first-light:Float" data-source-ref="first-light" data-purpose="table-cell" x="296.73" y="889.89" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">+0d</text>
 <text data-scene-id="cell:first-light:Scenario" data-source-ref="first-light" data-purpose="table-cell" x="357.075" y="889.89" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" fill="#101828">—</text>
-<rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="989.76" y="137.1" width="894.24" height="828.1" fill="#FFFFFF"/>
-<rect data-scene-id="calendar-closed:2027-10-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1004.42" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1019.079" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-09" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1107.037" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1121.697" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-16" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1209.655" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1224.315" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1312.273" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1326.932" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-30" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1414.89" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-10-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1429.55" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1517.508" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1532.168" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1620.126" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1634.786" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1722.744" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1737.403" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1825.361" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
-<rect data-scene-id="calendar-closed:2027-11-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1840.021" y="137.1" width="14.66" height="828.1" fill="#EEF2F7"/>
+<rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="989.76" y="137.1" width="894.24" height="828.1" opacity="0.12" fill="#FFFFFF"/>
+<rect data-scene-id="calendar-closed:2027-10-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1004.42" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1019.079" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-09" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1107.037" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-10" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1121.697" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-16" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1209.655" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-17" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1224.315" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1312.273" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-24" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1326.932" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-30" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1414.89" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-10-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1429.55" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1517.508" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1532.168" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1620.126" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1634.786" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-20" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1722.744" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1737.403" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1825.361" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
+<rect data-scene-id="calendar-closed:2027-11-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1840.021" y="137.1" width="14.66" height="828.1" opacity="0.12" fill="#EEF2F7"/>
 <rect data-scene-id="planned:mission-closeout:scenario:tvac-slip:mission-closeout" data-source-ref="mission-closeout" data-purpose="snapshot" x="1194.995" y="214.91" width="513.089" height="10" rx="4" ry="4" fill="#C6CFDA"/>
 <rect data-scene-id="planned:mission-closeout:mission-closeout" data-source-ref="mission-closeout" data-purpose="planned" x="1194.995" y="214.91" width="513.089" height="10" rx="4" ry="4" fill="#1D5FD1"/>
 <rect data-scene-id="missing-actual:mission-closeout:mission-closeout" data-source-ref="mission-closeout" data-purpose="missingActual" x="1708.084" y="227.41" width="15" height="10" rx="4" ry="4" fill="url(#pattern-missing-actual-diagonal-hatch)" stroke="#C6CFDA"/>

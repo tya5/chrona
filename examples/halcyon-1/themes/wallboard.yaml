@@ -33,7 +33,13 @@ body:
     table-indent: {type: number, value: 16}
     table-header-height: {type: number, value: 46}
     timeline-group-header-size: {type: number, value: 20}
+    opacity.group-band: {type: number, value: 0.12}
+    opacity.group-header-band: {type: number, value: 0.2}
+    opacity.calendar-closed: {type: number, value: 0.12}
   roles:
+    group-band: {opacity: opacity.group-band}
+    group-header-band: {opacity: opacity.group-header-band}
+    calendar-closed: {opacity: opacity.calendar-closed}
     text: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.body, lineHeight: leading.body}
     heading: {fontFamily: editorial, fontWeight: weight.bold, fontSize: size.heading, lineHeight: leading.tight}
     subtitle: {fontFamily: editorial, fontWeight: weight.regular, fontSize: size.subtitle, lineHeight: leading.body}
@@ -61,6 +67,7 @@ body:
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: surface
     group-band.fill: category
+    group-header-band.fill: surfaceRaised
     'group:bus.fill': category
     'group:payload.fill': category
     'group:ait.fill': category
