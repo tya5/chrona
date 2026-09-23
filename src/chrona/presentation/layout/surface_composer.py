@@ -43,17 +43,19 @@ def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
     return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
 
 
-def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest) -> tuple[list[Any], list[IconPlacement]]:
+def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest, *,
+                                 handled_sources: set[str] | None = None) -> tuple[list[Any], list[IconPlacement]]:
     """Turn already-resolved View visual intents into completed Layout geometry.
 
     The caller supplies only placement identities; target vocabulary translation
     remains at the typed View boundary.  This helper deliberately has no Scene,
     Theme lookup, or catalog lookup dependency.
     """
+    handled_sources = handled_sources or set()
     requested: dict[str, dict[str, Any]] = {}
     occupied: set[tuple[str, str]] = set()
     for visual in request.visual_requests:
-        if visual.target_kind == "mark":
+        if visual.target_kind == "mark" or visual.source_ref in handled_sources:
             continue
         selector = dict(visual.selector)
         placement_id = selector.get("placementId") or visual_target_placement_id(visual.target_kind, selector)
@@ -65,6 +67,12 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest)
             raise LayoutError("E_LAYOUT_VISUAL_TARGET", visual.source_ref)
         requested.setdefault(placement_id, {})[visual.side] = visual
     icons: list[IconPlacement] = []
+    for placement_id, by_side in requested.items():
+        matches = [item for item in text if (item.placement_id == placement_id
+                                             or item.placement_id.startswith(placement_id + ":"))
+                   and item.overflow != "suppressed"]
+        if len(matches) != 1:
+            raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(by_side.values())).source_ref)
     for index, item in enumerate(text):
         by_side = requested.pop(item.placement_id, None)
         if not by_side or item.overflow == "suppressed":
@@ -153,6 +161,37 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
     return icons
 
 
+def candidate_label_visuals(placement_id: str, typography_role: str,
+                            request: SurfaceLayoutRequest) -> tuple[tuple[Any, Any, float, float], ...]:
+    """Resolve visual advances before a candidate-label solver chooses bounds."""
+    matching = []
+    for visual in request.visual_requests:
+        if visual.target_kind == "mark":
+            continue
+        target = visual_target_placement_id(visual.target_kind, dict(visual.selector))
+        if placement_id == target or placement_id.startswith(target + ":"):
+            matching.append(visual)
+    if not matching:
+        return ()
+    found: dict[str, tuple[Any, Any, float, float]] = {}
+    _, _, size, _ = request.theme_tokens.typography(typography_role)
+    try:
+        scale, gap_ratio = request.theme_tokens.icon_ratios(typography_role)
+    except Exception as error:
+        raise LayoutError("E_THEME_ICON_RATIO", "/body/visuals") from error
+    for visual in matching:
+        if visual.side in found:
+            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
+        icon = request.icon_assets.get(visual.ref or "")
+        if icon is None or icon.viewport[1] <= 0:
+            raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
+        height = float(size * scale)
+        if height <= 0:
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+        found[visual.side] = (visual, icon, height * icon.viewport[0] / icon.viewport[1], float(size * gap_ratio))
+    return tuple(found[side] for side in ("leading", "trailing") if side in found)
+
+
 def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
     """Map the closed View target vocabulary to one Layout placement identity."""
     if kind == "title": return "title"
@@ -161,12 +200,16 @@ def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
     if kind == "group-header" and "id" in selector: return f"group-header:{selector['id']}"
     if kind == "plot-label" and "id" in selector: return f"member-label:{selector['id']}"
     if kind == "annotation" and "id" in selector: return f"annotation-text:{selector['id']}"
+    if kind == "note" and "id" in selector: return f"note:{selector['id']}"
     if kind == "note-index" and "id" in selector: return f"note-index:{selector['id']}"
+    if kind == "group-detail" and "id" in selector: return f"group-detail:{selector['id']}"
     if kind == "legend" and "role" in selector: return f"legend:{selector['role']}"
     if kind == "summary" and "id" in selector: return f"summary:{selector['id']}"
     if kind == "milestone" and "id" in selector: return f"milestone:{selector['id']}"
     if kind == "axis-label" and {"level", "index"} <= selector.keys(): return f"axis-label:{selector['level']}:{selector['index']}"
+    if kind == "axis-band" and {"level", "index"} <= selector.keys(): return f"axis-band:{selector['level']}:{selector['index']}"
     if kind == "as-of-label": return "as-of-label"
+    if kind == "variance-label" and "object" in selector: return f"variance:{selector['object']}"
     if kind == "mark" and {"object", "facet"} <= selector.keys(): return f"{selector['facet']}:{selector['object']}"
     raise LayoutError("E_LAYOUT_VISUAL_TARGET", "/body/visuals")
 
@@ -508,6 +551,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     diagnostics: list[str] = []
     placement_decisions: list[PlacementDecision] = []
     label_requests: list[LabelRequest] = []
+    candidate_icons: list[IconPlacement] = []
+    handled_candidate_visuals: set[str] = set()
     if contract.labels.enabled:
         for review_row in review_rows:
             for item in review_row.items:
@@ -584,11 +629,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     timeline_rect = LabelRect(*timeline_bounds)
     for label_request in label_requests:
         _, _, font_size, line_height = request.theme_tokens.typography(label_request.typography_role)
-        lines = (wrap_text(label_request.content, available_inline=max(1.0, timeline_rect.width * 0.4),
+        visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
+        handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
+        leading = sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
+        trailing = sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
+        available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
+        lines = (wrap_text(label_request.content, available_inline=available,
                            font_size=float(font_size), font_metrics=request.font_metrics)
                  if label_request.wrap == "allow" else (label_request.content,))
         placement_bounds = label_request.bounds or timeline_rect
-        label_size = (max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines),
+        text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines)
+        label_size = (leading + text_width + trailing,
                       float(font_size) * float(line_height) * len(lines))
         obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
         obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
@@ -614,14 +665,28 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          ladder, "suppress", "suppressed"))
             diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
         else:
-            text.append(replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
-                                   content=provisional.content, inline=candidate.bounds.x,
+            placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
+                                   content=provisional.content, inline=candidate.bounds.x + leading,
                                    baseline_block=candidate.bounds.y + float(font_size),
                                    typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region=provisional.collision_region,
                                    collision_domain=provisional.collision_domain,
-                                   lines=lines),
-                                fallback_ladder=label_request.candidates, selected_rung=candidate.side))
+                                   lines=lines), fallback_ladder=label_request.candidates, selected_rung=candidate.side)
+            text.append(placed_text)
+            if visuals:
+                if not hasattr(request.font_metrics, "cap_height_at"):
+                    raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
+                cap_height = float(request.font_metrics.cap_height_at(float(font_size)))
+                for visual, icon, width, gap in visuals:
+                    inline = (candidate.bounds.x if visual.side == "leading"
+                              else candidate.bounds.x + leading + text_width + trailing - gap - width)
+                    bounds = Rect(Decimal(str(inline)), Decimal(str(placed_text.baseline[1] - cap_height
+                                                                       + (cap_height - float(font_size)) / 2)),
+                                  Decimal(str(width)), Decimal(str(float(font_size))))
+                    candidate_icons.append(IconPlacement(f"visual:{placed_text.placement_id}:{visual.side}",
+                                                         placed_text.source_ref, visual.source_ref, icon.icon_id,
+                                                         icon.kind, icon.content_identity, icon.payload,
+                                                         icon.alternative, visual.decorative, bounds, "labelVisual"))
             placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                                          label_request.candidates, candidate.side, "placed"))
 
@@ -750,6 +815,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for index, annotation in enumerate(request.surface_content.annotations):
             annotation_id, content = str(annotation.get("id", index)), str(annotation.get("text", ""))
             content = f"{annotation['number']}. {content}" if "number" in annotation else content
+            annotation_visuals = candidate_label_visuals(f"annotation-text:{annotation_id}", "annotation", request)
+            handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in annotation_visuals)
+            annotation_leading = sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "leading")
+            annotation_trailing = sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "trailing")
             resolved = resolve_annotation_anchor(annotation, annotation_marks)
             matching = [(review_row, row) for review_row, row in zip(review_rows, rows, strict=True)
                         if any(item.object_id == resolved.object_id for item in review_row.items)]
@@ -779,17 +848,21 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             else:
                 raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
             size, line_height = (float(item) for item in request.theme_tokens.typography("annotation")[2:])
-            width = min(float(annotation_slot.bounds.inline_size), max(size * 4, measure_text_width(content, font_size=size, font_metrics=request.font_metrics)))
+            text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
+            text_width = min(text_available, max(size * 4, measure_text_width(content, font_size=size, font_metrics=request.font_metrics)))
+            width = annotation_leading + text_width + annotation_trailing
             annotation_lines = (content,)
             try:
                 if annotation.get("purpose") == "callout":
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
-                    annotation_lines = (wrap_text(content, available_inline=width, font_size=size, font_metrics=request.font_metrics)
+                    annotation_lines = (wrap_text(content, available_inline=text_available, font_size=size, font_metrics=request.font_metrics)
                                         if wrap == "allow" else (content,))
-                    annotation_size = (max(measure_text_width(line, font_size=size, font_metrics=request.font_metrics)
-                                           for line in annotation_lines), size * line_height * len(annotation_lines))
+                    text_width = max(measure_text_width(line, font_size=size, font_metrics=request.font_metrics)
+                                     for line in annotation_lines)
+                    annotation_size = (annotation_leading + text_width + annotation_trailing,
+                                       size * line_height * len(annotation_lines))
                     default_ladder = request.surface_content.annotation_fallback or ("rail",)
                     ladder = ((preferred,) + tuple(rung for rung in default_ladder if rung != preferred)
                               if preferred else default_ladder)
@@ -830,11 +903,26 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             bounds = box.placement.bounds
             shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
                                          Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)), Decimal(str(bounds.width)), Decimal(str(bounds.height)))))
-            text.append(place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
-                                   inline=bounds.x, baseline_block=bounds.y + size, typography_role="annotation",
-                                   theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="annotations", collision_domain=CollisionDomain("annotations", "content"),
-                                   lines=annotation_lines))
+            placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
+                                           inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role="annotation",
+                                           theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                           collision_region="annotations", collision_domain=CollisionDomain("annotations", "content"),
+                                           lines=annotation_lines)
+            text.append(placed_annotation)
+            if annotation_visuals:
+                if not hasattr(request.font_metrics, "cap_height_at"):
+                    raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in annotation_visuals))
+                cap_height = float(request.font_metrics.cap_height_at(size))
+                for visual, icon, icon_width, gap in annotation_visuals:
+                    inline = (bounds.x if visual.side == "leading"
+                              else bounds.x + annotation_leading + text_width + annotation_trailing - gap - icon_width)
+                    icon_bounds = Rect(Decimal(str(inline)), Decimal(str(placed_annotation.baseline[1] - cap_height
+                                                                          + (cap_height - size) / 2)),
+                                       Decimal(str(icon_width)), Decimal(str(size)))
+                    candidate_icons.append(IconPlacement(f"visual:{placed_annotation.placement_id}:{visual.side}",
+                                                         annotation_id, visual.source_ref, icon.icon_id, icon.kind,
+                                                         icon.content_identity, icon.payload, icon.alternative,
+                                                         visual.decorative, icon_bounds, "labelVisual"))
             if "number" in annotation:
                 text.append(place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
                                        content=str(annotation["number"]), inline=anchor_bounds.x + anchor_bounds.width,
@@ -852,7 +940,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))
-    text, icons = resolve_text_visual_requests(text, request)
+    text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals)
+    icons.extend(candidate_icons)
     icons.extend(resolve_mark_visual_requests(marks, request))
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),

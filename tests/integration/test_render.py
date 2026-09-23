@@ -75,6 +75,22 @@ def test_draft_mark_visual_reaches_the_selected_completed_mark(tmp_path):
     assert 'data-purpose="icon-mark"' in svg
 
 
+def test_draft_plot_label_visual_reserves_space_before_candidate_selection(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [{"target": {"kind": "plot-label", "id": "firmware"},
+                                "ref": "chrona:risk", "side": "leading", "decorative": True}]
+    path = tmp_path / "plot-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                            visual_profile="chrona-output/visual/v0.7-svg"))
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    icon = by_id["visual:member-label:firmware:firmware:leading"]
+    label = by_id["member-label:firmware:firmware"]
+    assert icon.bounds[0] < label.bounds[0]
+    assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+
+
 def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):
     root = _root()
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
