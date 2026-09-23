@@ -130,7 +130,7 @@ allOf:
                   additionalProperties: false
                   properties:
                     unit: {enum: [day, week, month, quarter, year]}
-                    format: {enum: [localized-date, short-month, year-quarter]}
+                    format: {enum: [localized-date, short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month, quarter, year-quarter, quarter-year]}
               ticks: {enum: [day, week, month, quarter, year]}
           markers:
             type: array

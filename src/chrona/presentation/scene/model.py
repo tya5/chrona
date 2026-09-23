@@ -31,34 +31,19 @@ class ScenePrimitive:
     kind: str
     source_ref: str
     source_kind: str
-    semantic_facet: str
+    purpose: str
     visual_role: str
     bounds: tuple[float, float, float, float]
-    projection_instance_id: str = ""
-    surface_id: str = ""
-    purpose: str = ""
     text: str | None = None
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
     shape: str | None = None
     opacity: float | None = None
-    optional: bool = False
     corner_radius: float | None = None
     path_commands: tuple[PathCommand, ...] = ()
-    lane_group_id: str | None = None
-    stack_index: int | None = None
     points: tuple[tuple[float, float], ...] = ()
-    from_port_id: str | None = None
-    to_port_id: str | None = None
-    z_order: int = 0
     href: str | None = None
     link_title: str | None = None
-
-    def __post_init__(self) -> None:
-        """Preserve a non-empty completed purpose for existing positional builders."""
-        if not self.purpose:
-            object.__setattr__(self, "purpose", self.semantic_facet)
-
 
 @dataclass(frozen=True)
 class SceneSlot:

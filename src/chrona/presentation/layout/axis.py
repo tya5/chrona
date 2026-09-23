@@ -113,9 +113,11 @@ def format_axis_label(interval: AxisInterval, formatting: dict, locale: str) -> 
         style = formatting["quarter"]
         if style == "quarter":
             return quarter
-        if language == "ja":
-            return f"{value.year}年{quarter}" if style == "year-quarter" else f"{quarter} {value.year}年"
-        return f"{value.year} {quarter}" if style == "year-quarter" else f"{quarter} {value.year}"
+        if style == "year-quarter":
+            return f"{value.year}年{quarter}" if language == "ja" else f"{value.year} {quarter}"
+        if style == "quarter-year":
+            return f"{quarter} {value.year}年" if language == "ja" else f"{quarter} {value.year}"
+        raise ValueError("E_PRESENTATION_AXIS_FORMAT")
     if level == "month":
         style = formatting["month"]
         if language == "ja":
