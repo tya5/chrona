@@ -3,7 +3,7 @@
 **Authority:** Specification 56, the completion-correction plan, and its
 architecture review.
 
-**Result:** Accepted.
+**Result:** Superseded by the schema-annotation applicator correction acceptance review.
 
 ## Corrected requirements
 
