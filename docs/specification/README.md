@@ -24,8 +24,9 @@ Read `09` Application Architecture, `10` Command Model, `11` Extension Model, `1
 Revision Store Adapters, `16` Federation, and `32` Repository Layout. Supplemental
 runtime reactivity and adapter-output documents refine these boundaries. Read `35`
 Operational Review Workflows for the UC-10/UC-11/UC-12 successor operational surface.
-Read `51` Progressive Authoring when compact guided source, preset binding, or explicit
-presentation materialization is in scope.
+Read `51` Progressive Authoring and `55` Presentation Design Space when compact guided
+source, preset binding, guided capability, or explicit presentation materialization is in
+scope.
 
 ## Opt-in successor capabilities
 
