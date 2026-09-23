@@ -13,7 +13,7 @@ stable region through which a View-local callout can be materialized.
 ## Corrected contract
 
 Controller Z's shared executive Layout gains one optional `annotations` source
-in its footer flow.  This is an annotation rail, not a View coordinate system:
+with a declared rail extent in its footer flow.  This is an annotation rail, not a View coordinate system:
 the slot supplies only a bounded Layout region.  A View annotation continues
 to own its stable ID, typed selected-object anchor, purpose, and logical
 placement/fallback.  Layout computes the callout box, pre-reserves any visual
