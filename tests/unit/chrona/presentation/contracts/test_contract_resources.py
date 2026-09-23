@@ -62,6 +62,8 @@ def test_contract_schema_errors_report_the_nested_failing_pointer(kind, path, mu
 
     assert error.value.kind == kind
     assert error.value.source_ref == expected_pointer
+    if kind == "theme":
+        assert "expected one of" in str(error.value)
 
 
 def test_summary_subtree_scope_is_limited_to_a_typed_object_planned_source():

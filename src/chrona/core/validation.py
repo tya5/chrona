@@ -11,6 +11,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
                        parse_amount, requires_working_calendar)
 from chrona.resources import schema_resource
+from chrona.schema_diagnostics import explain_errors
 
 
 SCHEMA_PATH = schema_resource("project-v0.5.schema.yaml")
@@ -40,9 +41,10 @@ def validate_project(
     # PyYAML resolves unquoted ISO dates to ``date`` objects, while JSON Schema
     # describes the canonical JSON-compatible representation as strings. Keep
     # the semantic value intact for scheduling, but validate its serialization.
-    for error in jsonschema.Draft202012Validator(schema).iter_errors(_schema_value(project)):
-        path = "/" + "/".join(str(part) for part in error.absolute_path)
-        diagnostics.append(Diagnostic("E_SCHEMA", error.message, path or "/"))
+    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(_schema_value(project)))
+    if errors:
+        violation = explain_errors(errors)
+        diagnostics.append(Diagnostic("E_SCHEMA", violation.message, violation.pointer))
     if diagnostics:
         return diagnostics
 

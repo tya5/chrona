@@ -3,13 +3,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
 import jsonschema
 import yaml
 from referencing import Registry, Resource
 
 from chrona.resources import schema_resource
+from chrona.schema_diagnostics import explain_errors
 
 
 class ContractError(ValueError):
@@ -19,8 +20,8 @@ class ContractError(ValueError):
 class SchemaContractError(ContractError):
     """A supported resource has a schema-shape error at one JSON pointer."""
 
-    def __init__(self, kind: str, source_ref: str):
-        super().__init__("E_RESOURCE_SCHEMA")
+    def __init__(self, kind: str, source_ref: str, message: str = "invalid resource schema"):
+        super().__init__(f"E_RESOURCE_SCHEMA: {message}")
         self.kind = kind
         self.source_ref = source_ref
 
@@ -437,15 +438,9 @@ def _validate(kind: str, value: Mapping[str, Any]) -> str:
     schema = yaml.safe_load(schema_resource(schema_name).read_text(encoding="utf-8"))
     errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(value)))
     if errors:
-        error = min(errors, key=lambda item: (_json_pointer(item.absolute_path), item.message))
-        raise SchemaContractError(kind, _json_pointer(error.absolute_path))
+        violation = explain_errors(errors)
+        raise SchemaContractError(kind, violation.pointer, violation.message)
     return version
-
-
-def _json_pointer(path: Iterable[Any]) -> str:
-    """Encode a jsonschema path as an RFC 6901 pointer."""
-    parts = tuple(str(item).replace("~", "~0").replace("/", "~1") for item in path)
-    return "/" + "/".join(parts) if parts else "/"
 
 
 def _schema_value(value: Any) -> Any:
