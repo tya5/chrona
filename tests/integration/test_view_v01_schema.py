@@ -77,6 +77,8 @@ def test_view_visual_target_selectors_and_encoding_eligibility_are_closed():
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
     value["body"]["visuals"] = [{"target": {"kind": "title"}, "encoding": {"field": "owner", "domain": {"fw": "chrona:risk"}}}]
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
+    value["body"]["visuals"] = [{"target": {"kind": "summary", "id": "key-figures"}, "ref": "chrona:risk"}]
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
 
 
 def test_v07_scenario_table_source_is_closed_to_id_or_title():

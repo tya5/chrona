@@ -68,8 +68,7 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
         requested.setdefault(placement_id, {})[visual.side] = visual
     icons: list[IconPlacement] = []
     for placement_id, by_side in requested.items():
-        matches = [item for item in text if (item.placement_id == placement_id
-                                             or item.placement_id.startswith(placement_id + ":"))
+        matches = [item for item in text if item.placement_id == placement_id
                    and item.overflow != "suppressed"]
         if len(matches) != 1:
             raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(by_side.values())).source_ref)
@@ -206,7 +205,8 @@ def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
     if kind == "note-index" and "id" in selector: return f"note-index:{selector['id']}"
     if kind == "group-detail" and "id" in selector: return f"group-detail:{selector['id']}"
     if kind == "legend" and "role" in selector: return f"legend:{selector['role']}"
-    if kind == "summary" and "id" in selector: return f"summary:{selector['id']}"
+    if kind == "summary" and "panel" in selector and "metric" not in selector: return f"summary:{selector['panel']}"
+    if kind == "summary" and {"panel", "metric", "part"} <= selector.keys(): return f"summary:{selector['panel']}:{selector['metric']}:{selector['part']}"
     if kind == "milestone" and "id" in selector: return f"milestone:{selector['id']}"
     if kind == "axis-label" and {"level", "index"} <= selector.keys(): return f"axis-label:{selector['level']}:{selector['index']}"
     if kind == "axis-band" and {"level", "index"} <= selector.keys(): return f"axis-band:{selector['level']}:{selector['index']}"

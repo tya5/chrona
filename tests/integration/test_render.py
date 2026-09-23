@@ -19,15 +19,19 @@ def _root() -> Path:
 
 def _draft_request(*, project_path: Path | None = None, view_path: Path | None = None,
                    actual_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
-                   visual_profile: str = "chrona-output/visual/v0.5-baseline") -> RenderRequest:
+                   visual_profile: str = "chrona-output/visual/v0.5-baseline", theme_path: Path | None = None,
+                   scheme_path: Path | None = None, layout_path: Path | None = None,
+                   summary_path: Path | None = None, detail_path: Path | None = None,
+                   viewport: tuple[int, int] = (1600, 900)) -> RenderRequest:
     root = _root()
     draft = resolve_draft_render(
         project_path=project_path or root / "examples/controller-z/project.yaml",
         view_path=view_path or root / "examples/controller-z/views/executive.yaml",
-        theme_path=root / "examples/controller-z/themes/executive-light.yaml",
-        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
+        theme_path=theme_path or root / "examples/controller-z/themes/executive-light.yaml",
+        scheme_path=scheme_path or root / "examples/controller-z/schemes/executive-light.yaml",
+        layout_path=layout_path or root / "conformance/layout-profile-intent-v0.2.yaml",
         actual_path=actual_path or root / "examples/controller-z/actual.yaml",
+        summary_path=summary_path, detail_path=detail_path, viewport=viewport,
         icon_catalog_paths=icon_catalog_paths,
         visual_profile=visual_profile,
     )
@@ -108,6 +112,30 @@ def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
         icon = by_id[f"visual:{placement_id}:leading"]
         label = by_id[placement_id]
         assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+
+
+def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
+    root = _root(); example = root / "examples/halcyon-1"
+    view = yaml.safe_load((example / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [
+        {"target": {"kind": "axis-band", "level": "quarter", "index": 0}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "axis-label", "level": "month", "index": 0}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "legend", "role": "planned"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "summary", "panel": "key-figures"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "summary", "panel": "key-figures", "metric": "launch", "part": "value"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "summary", "panel": "key-figures", "metric": "launch", "part": "caption"}, "ref": "chrona:risk", "decorative": True},
+    ]
+    path = tmp_path / "wallboard-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    rendered = render_review(_draft_request(project_path=example / "project.yaml", view_path=path,
+        actual_path=example / "actual.yaml", theme_path=example / "themes/wallboard.yaml",
+        scheme_path=example / "schemes/control-room-dark.yaml", layout_path=example / "layouts/wallboard.yaml",
+        summary_path=example / "profiles/summary.yaml", detail_path=example / "profiles/detail.yaml",
+        icon_catalog_paths=(root / "examples/controller-z/icons.yaml",), visual_profile="chrona-output/visual/v0.7-svg",
+        viewport=(1920, 1080)))
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    for placement_id in ("axis-band:quarter:0", "axis-label:month:0", "legend:planned", "summary:key-figures",
+                          "summary:key-figures:launch:value", "summary:key-figures:launch:caption"):
+        assert f"visual:{placement_id}:leading" in by_id
 
 
 def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):

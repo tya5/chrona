@@ -383,7 +383,8 @@ $defs:
       - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: note}, id: {type: string, minLength: 1}}}
       - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: note-index}, id: {type: string, minLength: 1}}}
       - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: group-detail}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: summary}, id: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, panel], additionalProperties: false, properties: {kind: {const: summary}, panel: {type: string, minLength: 1}}}
+      - {type: object, required: [kind, panel, metric, part], additionalProperties: false, properties: {kind: {const: summary}, panel: {type: string, minLength: 1}, metric: {type: string, minLength: 1}, part: {enum: [value, caption]}}}
       - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: milestone}, id: {type: string, minLength: 1}}}
       - {type: object, required: [kind, role], additionalProperties: false, properties: {kind: {const: legend}, role: {type: string, minLength: 1}}}
       - {type: object, required: [kind, object, column], additionalProperties: false, properties: {kind: {const: cell}, object: {type: string, minLength: 1}, column: {type: string, minLength: 1}}}

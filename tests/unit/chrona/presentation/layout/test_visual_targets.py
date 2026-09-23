@@ -10,6 +10,7 @@ from chrona.presentation.layout.surface_composer import visual_target_placement_
     ("annotation", {"id": "callout"}, "annotation-text:callout"),
     ("note", {"id": "scope"}, "note:scope"),
     ("group-detail", {"id": "firmware"}, "group-detail:firmware"),
+    ("summary", {"panel": "key", "metric": "launch", "part": "value"}, "summary:key:launch:value"),
     ("axis-label", {"level": "month", "index": "2"}, "axis-label:month:2"),
     ("axis-band", {"level": "quarter", "index": "0"}, "axis-band:quarter:0"),
     ("variance-label", {"object": "risk"}, "variance:risk"),
