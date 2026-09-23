@@ -66,6 +66,11 @@ def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
     assert 'data-asset-identity=' in svg
     assert 'aria-label="Delivery risk"' in svg
 
+    surface = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                           visual_profile="chrona-output/visual/v0.7-svg")).surface
+    icon = next(item for item in surface.primitives if item.kind == "Icon")
+    assert icon.icon_vector is None and icon.icon_stroke_scale is None and icon.icon_paths
+
 
 def test_draft_mark_visual_reaches_the_selected_completed_mark(tmp_path):
     root = _root()

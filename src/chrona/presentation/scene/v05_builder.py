@@ -17,7 +17,7 @@ from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.model import SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
 
@@ -98,8 +98,39 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                 if primitive.visual_role == scale_target_role else None)
     if primitive.source_kind == "legend":
         override = scale_legend_paints.get(primitive.source_ref, override)
-    return replace(primitive, paint=replace(paint, fill=override) if override is not None else paint,
-                   pattern=tokens.optional_pattern(primitive.visual_role))
+    completed = replace(paint, fill=override) if override is not None else paint
+    result = replace(primitive, paint=completed, pattern=tokens.optional_pattern(primitive.visual_role))
+    if result.kind == "Icon" and result.icon_kind == "vector":
+        return replace(result, icon_paths=_complete_icon_paths(result, completed),
+                       icon_vector=None, icon_stroke_scale=None)
+    return result
+
+
+def _complete_icon_paths(primitive: ScenePrimitive, paint: Any) -> tuple[SceneIconPath, ...]:
+    """Close normalized icon geometry and appearance before adapter projection."""
+    vector = primitive.icon_vector
+    if vector is None or primitive.icon_stroke_scale is None:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", primitive.scene_id)
+    vx, vy = vector.viewport
+    x, y, width, height = primitive.bounds
+    if vx <= 0 or vy <= 0 or paint.fill is None:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", primitive.scene_id)
+    paths = []
+    for path in vector.paths:
+        commands = tuple((command.kind, tuple((x + px * width / vx, y + py * height / vy)
+                                               for px, py in command.points))
+                         for command in path.commands)
+        if path.paint == "fill":
+            paths.append(SceneIconPath(commands, paint.fill, None, None, opacity=paint.opacity))
+        elif (path.paint == "stroke" and path.stroke_width is not None
+              and path.line_cap in {"butt", "round", "square"}
+              and path.line_join in {"miter", "round", "bevel"}):
+            paths.append(SceneIconPath(commands, None, paint.fill,
+                                       path.stroke_width * primitive.icon_stroke_scale,
+                                       path.line_cap, path.line_join, paint.opacity))
+        else:
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", primitive.scene_id)
+    return tuple(paths)
 
 
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,

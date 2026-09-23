@@ -65,6 +65,19 @@ class TextLayout:
 
 
 @dataclass(frozen=True)
+class SceneIconPath:
+    """One adapter-ready icon path in final surface coordinates and paint."""
+
+    commands: tuple[tuple[str, tuple[tuple[float, float], ...]], ...]
+    fill: str | None
+    stroke: str | None
+    stroke_width: float | None
+    line_cap: str | None = None
+    line_join: str | None = None
+    opacity: float = 1.0
+
+
+@dataclass(frozen=True)
 class ScenePrimitive:
     """A measured renderer-neutral primitive; adapters serialize but never reinterpret it."""
 
@@ -89,6 +102,7 @@ class ScenePrimitive:
     icon_kind: str | None = None
     icon_asset_identity: str | None = None
     icon_vector: NormalizedVectorIcon | None = None
+    icon_paths: tuple[SceneIconPath, ...] = ()
     icon_raster: bytes | None = None
     icon_alternative: str | None = None
     icon_decorative: bool = True
