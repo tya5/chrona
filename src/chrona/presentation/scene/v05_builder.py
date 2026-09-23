@@ -410,7 +410,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for placed in placed_surface.icons:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
-        icon_binding = semantic_binding("iconMark")
+        icon_binding = semantic_binding(placed.semantic_id)
         primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.ICON, placed.source_ref, "object", icon_binding.purpose, icon_binding.scene_role, bounds,
                                          icon_kind=placed.kind, icon_asset_identity=placed.asset_identity,
                                          icon_vector=placed.payload if placed.kind == "vector" else None,

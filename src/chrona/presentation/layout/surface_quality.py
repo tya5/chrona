@@ -234,6 +234,7 @@ class IconPlacement:
     alternative: str
     decorative: bool
     bounds: Rect
+    semantic_id: str = "iconMark"
 
 
 @dataclass(frozen=True)

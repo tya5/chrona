@@ -84,7 +84,7 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest)
                       Decimal(str(width)), Decimal(str(height)))
         icons.append(IconPlacement(f"visual:{item.placement_id}:{visual.side}", item.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
-                                   visual.decorative, bounds))
+                                   visual.decorative, bounds, "labelVisual"))
     return text, icons
 
 
