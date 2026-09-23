@@ -13,6 +13,7 @@ SCHEMAS = (
     "revision-store-resource-ref-v0.1.schema.yaml",
     "icon-catalog-v0.1.schema.yaml",
     "render-context-v0.10.schema.yaml",
+    "view-v0.11.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
     "actual-intake-batch-v0.2.schema.yaml",

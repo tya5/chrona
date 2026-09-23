@@ -199,6 +199,21 @@ class SurfaceLayoutRequest:
     font_metrics: Any = None
     locale: str = "en-US"
     capabilities: dict[str, bool] = field(default_factory=dict)
+    icon_bindings: tuple[Any, ...] = ()
+    icon_assets: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class IconPlacement:
+    placement_id: str
+    source_ref: str
+    icon_id: str
+    kind: str
+    asset_identity: str
+    payload: Any
+    alternative: str
+    decorative: bool
+    bounds: Rect
 
 
 @dataclass(frozen=True)
@@ -216,6 +231,7 @@ class SurfacePlacement:
     relations: tuple[RelationPlacement, ...] = ()
     decisions: tuple[PlacementDecision, ...] = ()
     diagnostics: tuple[str, ...] = ()
+    icons: tuple[IconPlacement, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""

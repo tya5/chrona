@@ -23,3 +23,4 @@ schemas:
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: theme-v0.5.schema.yaml, kind: theme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: view-v0.10.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: view-v0.11.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

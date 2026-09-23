@@ -216,6 +216,7 @@ class ViewInput:
     surface: str = "table-timeline"
     color_encoding: FrozenDict | None = None
     progress_fill: str | None = None
+    icon_bindings: tuple[FrozenDict, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -434,6 +435,7 @@ _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.10"): "render-context-v0.10.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
     ("view", "chrona/view/v0.10"): "view-v0.10.schema.yaml",
+    ("view", "chrona/view/v0.11"): "view-v0.11.schema.yaml",
     ("theme", "chrona/theme/v0.5"): "theme-v0.5.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
@@ -532,7 +534,8 @@ def _view_input(body: FrozenDict) -> ViewInput:
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]), body.get("colorEncoding"),
-        str(body["progressFill"]["source"]) if "progressFill" in body else None)
+        str(body["progressFill"]["source"]) if "progressFill" in body else None,
+        tuple(body.get("iconBindings", ())) )
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:

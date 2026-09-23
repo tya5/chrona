@@ -21,7 +21,7 @@ from chrona.presentation.layout.routing import place_relation_route, relation_ro
 from chrona.presentation.layout.path_geometry import rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
+    IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
 )
 
 
@@ -722,10 +722,40 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))
+    icons: list[IconPlacement] = []
+    # Icon occurrence and all geometry are resolved here, after label placement but
+    # before Scene projection.  Existing text bounds donate a fixed leading region.
+    for binding in request.icon_bindings:
+        source = binding.get("source", {}) if isinstance(binding, dict) else {}
+        if source.get("kind") != "object" or not isinstance(source.get("id"), str):
+            raise LayoutError("E_ICON_BINDING", "/iconBindings")
+        icon = request.icon_assets.get(binding.get("icon"))
+        if icon is None:
+            raise LayoutError("E_ICON_BINDING", "/iconBindings")
+        placement_kind, object_id = binding.get("placement"), source["id"]
+        if placement_kind == "leading-label":
+            index = next((i for i, item in enumerate(text) if item.source_ref == object_id and item.placement_id.startswith("member-label:") and item.overflow != "suppressed"), None)
+            if index is None: raise LayoutError("E_ICON_BINDING", "/iconBindings")
+            item = text[index]; size = min(float(item.bounds.block_size), item.font_size); gap = max(1.0, size * 0.25)
+            if item.bounds.inline_size <= size + gap: raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/iconBindings")
+            shifted = replace(item, bounds=Rect(item.bounds.inline + Decimal(str(size + gap)), item.bounds.block,
+                                                item.bounds.inline_size - Decimal(str(size + gap)), item.bounds.block_size),
+                              baseline=(item.baseline[0] + size + gap, item.baseline[1]) if item.baseline else None)
+            text[index] = shifted
+            bounds = Rect(item.bounds.inline, item.bounds.block + (item.bounds.block_size - Decimal(str(size))) / 2,
+                          Decimal(str(size)), Decimal(str(size)))
+            icons.append(IconPlacement(f"icon:{item.placement_id}", object_id, icon.icon_id, icon.kind, icon.content_identity,
+                                       icon.payload, icon.alternative, bool(binding.get("decorative")), bounds))
+        elif placement_kind == "mark":
+            mark = next((item for item in marks if item.source_ref == object_id and item.placement_id.startswith("planned:")), None)
+            if mark is None: raise LayoutError("E_ICON_BINDING", "/iconBindings")
+            icons.append(IconPlacement(f"icon:{mark.placement_id}", object_id, icon.icon_id, icon.kind, icon.content_identity,
+                                       icon.payload, icon.alternative, bool(binding.get("decorative")), mark.bounds))
+        else: raise LayoutError("E_ICON_BINDING", "/iconBindings")
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
-                                 diagnostics=tuple(diagnostics))
+                                 diagnostics=tuple(diagnostics), icons=tuple(icons))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 

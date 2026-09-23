@@ -45,6 +45,8 @@ class SceneBuildInput:
     visual_profile: VisualProfile | None = None
     locale: str = "en-US"
     viewport: tuple[float, float] = (0.0, 0.0)
+    icon_bindings: tuple[Any, ...] = ()
+    icon_assets: dict[str, Any] | None = None
 
 
 _REQUIRED_SOURCES = {
@@ -105,7 +107,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       font_metrics: Any, measured_sources: MeasuredSources,
                       capabilities: Mapping[str, bool], locale: str = "en-US",
                       visual_profile: VisualProfile | None = None,
-                      viewport: tuple[float, float] = (0.0, 0.0)) -> SceneBuildInput:
+                      viewport: tuple[float, float] = (0.0, 0.0),
+                      icon_bindings: tuple[Any, ...] = (), icon_assets: dict[str, Any] | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -127,7 +130,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), visual_profile, locale, viewport)
+                           dict(capabilities), visual_profile, locale, viewport, icon_bindings, icon_assets)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -159,6 +162,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
             font_metrics=value.font_metrics, locale=value.locale,
             capabilities=dict(value.capabilities),
+            icon_bindings=value.icon_bindings, icon_assets=value.icon_assets or {},
         ))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
@@ -400,6 +404,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
                                              annotation_box.purpose, annotation_box.scene_role,
                                              bounds))
+    for placed in placed_surface.icons:
+        bounds = (float(placed.bounds.inline), float(placed.bounds.block),
+                  float(placed.bounds.inline_size), float(placed.bounds.block_size))
+        primitives.append(ScenePrimitive(placed.placement_id, "Icon", placed.source_ref, "object", "icon-mark", "planned", bounds,
+                                         icon_kind=placed.kind, icon_asset_identity=placed.asset_identity,
+                                         icon_vector=placed.payload if placed.kind == "vector" else None,
+                                         icon_raster=placed.payload if placed.kind == "raster" else None,
+                                         icon_alternative=placed.alternative, icon_decorative=placed.decorative))
     text_roles = tuple(
         (prefix, semantic_binding(semantic_id).purpose, role or semantic_binding(semantic_id).scene_role)
         for prefix, semantic_id, role in (

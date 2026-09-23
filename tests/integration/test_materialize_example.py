@@ -133,6 +133,35 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
     assert (snapshot / revision / "assets/risk.svg").read_bytes() == svg
 
 
+def test_icon_binding_is_measured_by_layout_and_projected_by_scene(tmp_path):
+    copied = tmp_path / "controller-z"; shutil.copytree(ROOT / "examples/controller-z", copied)
+    svg = b'<svg viewBox="0 0 24 24"><path d="M0 0L24 24Z"/></svg>'
+    (copied / "assets").mkdir(); (copied / "assets/risk.svg").write_bytes(svg)
+    catalog_path = copied / "icons.yaml"
+    catalog = {"version": "chrona/icon-catalog/v0.1", "kind": "icon-catalog", "id": "icons", "body": {"icons": {
+        "acme.risk": {"kind": "vector", "source": {"address": "assets/risk.svg", "contentIdentity": "sha256:" + sha256(svg).hexdigest()},
+                      "viewport": {"inlineSize": 24, "blockSize": 24}, "alternative": "Risk"}}}}
+    catalog_path.write_text(yaml.safe_dump(catalog, sort_keys=False))
+    view_path = copied / "views/executive.yaml"; view = yaml.safe_load(view_path.read_text())
+    view["version"] = "chrona/view/v0.11"
+    view["body"]["iconBindings"] = [
+        {"source": {"kind": "object", "id": "firmware"}, "placement": "leading-label", "icon": "acme.risk", "decorative": True},
+        {"source": {"kind": "object", "id": "firmware"}, "placement": "mark", "icon": "acme.risk", "decorative": False},
+    ]
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False))
+    context_path = copied / "contexts/executive.yaml"; context = yaml.safe_load(context_path.read_text())
+    context["version"] = "chrona/render-context/v0.10"; context["body"]["target"]["visualProfile"] = "chrona-output/visual/v0.7-svg"
+    context["body"]["view"]["contentIdentity"] = "sha256:" + sha256(view_path.read_bytes()).hexdigest()
+    context["body"]["inputs"]["iconCatalog"] = {"id": "icons", "kind": "icon-catalog", "store": context["body"]["project"]["store"],
+                                                       "address": "icons.yaml", "revision": context["body"]["project"]["revision"],
+                                                       "contentIdentity": "sha256:" + sha256(catalog_path.read_bytes()).hexdigest()}
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False))
+    output = tmp_path / "out"; materialize(copied / "manifest.yaml", "executive", output, write=True)
+    artifact = (output / "review.svg").read_text()
+    assert 'data-scene-id="icon:member-label:firmware:firmware"' in artifact
+    assert 'data-scene-id="icon:planned:firmware:firmware"' in artifact and 'aria-label="Risk"' in artifact
+
+
 def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path):
     example = ROOT / "examples/halcyon-1"
     materialize(example / "manifest.yaml", "flight-readiness", tmp_path / "flight-readiness", write=False)
