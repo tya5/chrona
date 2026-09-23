@@ -100,6 +100,9 @@ advances before their Layout solver commits bounds.
 [Summary visual selector closure](issue-350-summary-visual-selector-correction-2026-09-24.md)
 replaces the ambiguous panel-family selector with exact header/value/caption
 occurrence forms.
+[Detail profile/Layout closure](issue-350-detail-layout-closure-correction-2026-09-24.md)
+requires every selected detail section to have a Layout region before an
+authorable visual target can reference it.
 Add target resolution for title, columns, object labels, groups, annotations,
 notes, legends, summaries, milestones, axis/as-of labels, and planned/actual
 marks; implement direct references and field encodings where declared. The
