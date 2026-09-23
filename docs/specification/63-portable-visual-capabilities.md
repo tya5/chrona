@@ -69,7 +69,8 @@ Each requested gradient, shadow, and stroke finish independently declares either
 profile permits deterministic omission only for an unsupported
 `decorative-optional` treatment.
 Required unsupported capability fails before serialization with
-`E_VISUAL_CAPABILITY_UNSUPPORTED`. Optional omission is performed by the Scene
+`E_VISUAL_CAPABILITY_UNSUPPORTED`, its exact Theme role property or View icon
+binding pointer, and a capability-specific message. Optional omission is performed by the Scene
 resolver only when the target profile declares omission allowed; the adapter
 never decides. Invalid profile/value/fidelity/limit uses diagnose as
 `E_VISUAL_CAPABILITY_PROFILE`, `E_VISUAL_CAPABILITY_VALUE`,
