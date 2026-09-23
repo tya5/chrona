@@ -9,7 +9,20 @@ class ColorSchemeError(ValueError):
     """Stable diagnostic emitted before Scene construction."""
 
 
-_INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral"}
+_INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral",
+            "insideLabelPlanned", "insideLabelActual", "insideLabelSnapshot", "insideLabelScenario"}
+_INSIDE_LABEL_HOSTS = {
+    "member-label-inside-planned": "planned",
+    "member-label-inside-actual": "actual",
+    "member-label-inside-snapshot": "snapshot",
+    "member-label-inside-scenario": "snapshot",
+}
+_INSIDE_LABEL_INTENTS = {
+    "member-label-inside-planned": "insideLabelPlanned",
+    "member-label-inside-actual": "insideLabelActual",
+    "member-label-inside-snapshot": "insideLabelSnapshot",
+    "member-label-inside-scenario": "insideLabelScenario",
+}
 
 
 def _luminance(color: str) -> float:
@@ -76,4 +89,16 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         color = colors[intent] if intent != "category" else resolve_color_scheme(scheme, content_identity=scheme_content_identity, category_key=target)["category"]
         values[token] = {"type": "color", "value": color}
         roles.setdefault(role, {})[property_name] = token
+    inside_roles = set(_INSIDE_LABEL_HOSTS)
+    if inside_roles & set(roles):
+        for label_role, host_role in _INSIDE_LABEL_HOSTS.items():
+            label_token = roles.get(label_role, {}).get("fill")
+            host_token = roles.get(host_role, {}).get("fill")
+            label_value = values.get(label_token) if isinstance(label_token, str) else None
+            host_value = values.get(host_token) if isinstance(host_token, str) else None
+            if (body["colorBindings"].get(f"{label_role}.fill") != _INSIDE_LABEL_INTENTS[label_role]
+                    or not isinstance(label_value, Mapping) or label_value.get("type") != "color"
+                    or not isinstance(host_value, Mapping) or host_value.get("type") != "color"
+                    or _contrast(str(label_value.get("value")), str(host_value.get("value"))) < 4.5):
+                raise ColorSchemeError("E_SCHEME_INSIDE_LABEL_CONTRAST")
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {}))}}

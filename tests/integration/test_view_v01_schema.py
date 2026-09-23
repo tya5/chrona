@@ -51,6 +51,17 @@ def test_v04_rejects_unimplemented_relation_fallback_contract():
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
 
 
+def test_view_admits_inside_at_each_member_label_side_ingress():
+    value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    value["body"]["visibility"]["labels"] = {
+        "placement": "plot", "content": ["title"], "side": "inside", "overflow": "suppress",
+    }
+    value["body"]["visibility"]["fallback"] = {"labels": ["inside", "end", "suppress"]}
+    assert next(_validator().iter_errors(_json_value(value)), None) is None
+    schema = yaml.safe_load(schema_resource("view-v0.8.schema.yaml").read_text(encoding="utf-8"))
+    assert "inside" in schema["$defs"]["presentationIntent"]["properties"]["label"]["properties"]["side"]["enum"]
+
+
 def test_v07_scenario_table_source_is_closed_to_id_or_title():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
     value["body"]["tableColumns"][0]["source"] = {"scenario": "title"}

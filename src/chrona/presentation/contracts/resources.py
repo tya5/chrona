@@ -517,7 +517,7 @@ def _validate_view_fallback(raw_fallback: Any) -> None:
     if not isinstance(raw_fallback, Mapping):
         return
     allowed = {
-        "labels": {"above", "below", "start", "end", "suppress"},
+        "labels": {"above", "below", "start", "end", "inside", "suppress"},
         "annotations": {"above", "below", "start", "end", "rail", "suppress"},
     }
     for name, vocabulary in allowed.items():

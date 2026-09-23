@@ -19,6 +19,14 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
         materialize(manifest, slide["id"], tmp_path / slide["id"], write=False)
 
 
+def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
+    materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
+    artifact = (tmp_path / "controller/review.svg").read_text()
+    assert 'data-scene-id="member-label:firmware:firmware"' in artifact
+    assert 'data-scene-id="member-label:firmware:firmware" data-source-ref="firmware" data-purpose="member-label" x="784.375" y="253.625" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#000000"' in artifact
+    assert 'data-scene-id="member-label:evb-arrival:evb-arrival" data-source-ref="evb-arrival" data-purpose="member-label" x="1047.416" y="409.325" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" fill="#172033"' in artifact
+
+
 def test_materializer_detects_changed_expected_svg(tmp_path):
     manifest = ROOT / "examples/controller-z/manifest.yaml"
     expected = ROOT / "examples/controller-z/generated/executive.svg"

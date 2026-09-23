@@ -92,7 +92,7 @@ def _marks(tree):
     for node in tree.iter(SVG + "rect"):
         if node.get("data-purpose") in MARK_PURPOSES:
             x, y = float(node.get("x")), float(node.get("y"))
-            yield x, y, x + float(node.get("width")), y + float(node.get("height"))
+            yield node.get("data-scene-id"), node.get("fill"), (x, y, x + float(node.get("width")), y + float(node.get("height")))
 
 
 def _declared_slots(layout: dict) -> set[str]:
@@ -124,14 +124,40 @@ def _overlaps(a, b):
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 
+def _contrast(first: str, second: str) -> float:
+    def luminance(value: str) -> float:
+        channels = tuple(int(value[index:index + 2], 16) / 255 for index in (1, 3, 5))
+        linear = tuple(channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+                       for channel in channels)
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+    return (max(luminance(first), luminance(second)) + 0.05) / (min(luminance(first), luminance(second)) + 0.05)
+
+
 @CASES
 def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
-    """A label that sits on its own bar is unreadable, however stable the bytes are."""
+    """Text clears every mark unless it is a contrast-safe inside label on its own host."""
     tree, _, metrics = _load(svg_path, context_path)
     marks = list(_marks(tree))
-    collisions = [(purpose, content) for purpose, content, box in _texts(tree, metrics)
-                  if purpose in PLOT_TEXT_PURPOSES and any(_overlaps(box, mark) for mark in marks)]
-    check(slide, request, [list(item) for item in collisions], f"{len(collisions)} labels drawn over a mark: {collisions[:5]}")
+    collisions = []
+    for node in tree.iter(SVG + "text"):
+        purpose, scene_id = node.get("data-purpose"), node.get("data-scene-id") or ""
+        if purpose not in PLOT_TEXT_PURPOSES:
+            continue
+        size = float(node.get("font-size"))
+        font = metrics.get(int(node.get("font-weight", 400))) or next(iter(metrics.values()))
+        content, x, baseline = node.text or "", float(node.get("x")), float(node.get("y"))
+        box = (x, baseline - size, x + font.width(content, size), baseline)
+        host_ids = {prefix + scene_id.removeprefix("member-label:") for prefix in ("planned:", "actual:")}
+        for mark_id, mark_fill, mark_bounds in marks:
+            if not _overlaps(box, mark_bounds):
+                continue
+            allowed = (purpose == "member-label" and mark_id in host_ids and isinstance(mark_fill, str)
+                       and isinstance(node.get("fill"), str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", mark_fill)
+                       and re.fullmatch(r"#[0-9A-Fa-f]{6}", node.get("fill") or "")
+                       and _contrast(node.get("fill") or "", mark_fill) >= 4.5)
+            if not allowed:
+                collisions.append((purpose, content, mark_id))
+    check(slide, request, [list(item) for item in collisions], f"{len(collisions)} unsafe text/mark overlaps: {collisions[:5]}")
 
 
 @CASES

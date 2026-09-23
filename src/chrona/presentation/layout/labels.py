@@ -30,6 +30,14 @@ class LabelPlacement:
 
 
 @dataclass(frozen=True)
+class LabelObstacle:
+    """A completed Layout obstacle, retaining the placement that owns it."""
+
+    placement_id: str
+    bounds: LabelRect
+
+
+@dataclass(frozen=True)
 class LabelRequest:
     """One semantic plot-text request awaiting deterministic Layout placement."""
 
@@ -44,6 +52,7 @@ class LabelRequest:
     overflow: str
     wrap: str = "forbid"
     bounds: LabelRect | None = None
+    inside_host_obstacle_id: str | None = None
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:
@@ -70,7 +79,8 @@ def _candidate(anchor: LabelRect, size: tuple[float, float], side: str, gap: flo
 
 
 def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterable[str], *,
-                bounds: LabelRect, obstacles: Iterable[LabelRect] = (), gap: float = 0,
+                bounds: LabelRect, obstacles: Iterable[LabelObstacle | LabelRect] = (), gap: float = 0,
+                inside_host_obstacle_id: str | None = None,
                 required: bool = True, overflow: str = "diagnose") -> LabelPlacement | None:
     """Choose the first legal candidate in declared order; never search indefinitely."""
     sides = tuple(candidates)
@@ -86,7 +96,11 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             raise
         if candidate.x < bounds.x or candidate.y < bounds.y or candidate.right > bounds.right or candidate.bottom > bounds.bottom:
             continue
-        if not any(_intersects(candidate, obstacle) for obstacle in blocked):
+        active_obstacles = (obstacle for obstacle in blocked
+                            if not (side == "inside" and isinstance(obstacle, LabelObstacle)
+                                    and obstacle.placement_id == inside_host_obstacle_id))
+        if not any(_intersects(candidate, obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle)
+                   for obstacle in active_obstacles):
             return LabelPlacement(side, candidate)
     if required or overflow == "diagnose":
         raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")

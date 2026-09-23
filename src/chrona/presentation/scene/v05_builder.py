@@ -15,7 +15,7 @@ from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.semantic_registry import PrimitiveKind, semantic_binding
+from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 
@@ -254,7 +254,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              bounds, projection_instance_id=instance_id, optional=True, z_order=len(primitives), corner_radius=missing_mark.corner_radius))
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
-            emit_semantic_text(label_id, "memberLabel", href=href, link_title=link_title)
+            semantic_id = inside_member_label_semantic(source_kind) if layout_text[label_id].selected_rung == "inside" else "memberLabel"
+            emit_semantic_text(label_id, semantic_id, href=href, link_title=link_title)
         variance_id = f"variance:{instance_id}"
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
             role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else semantic_binding("finishDelta").scene_role
@@ -287,7 +288,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                  path_commands=actual_mark.path_commands, z_order=len(primitives)))
         label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"
         if label_id in layout_text:
-            emit_semantic_text(label_id, "memberLabel")
+            semantic_id = (inside_member_label_semantic(folded.item.source_kind)
+                           if layout_text[label_id].selected_rung == "inside" else "memberLabel")
+            emit_semantic_text(label_id, semantic_id)
     axis_band_binding = semantic_binding("axisBand")
     for placed in placed_surface.text:
         if placed.placement_id.startswith("axis-band:"):

@@ -52,6 +52,10 @@ body:
   colorBindings:
     background.fill: surface
     text.fill: text
+    member-label-inside-planned.fill: insideLabelPlanned
+    member-label-inside-actual.fill: insideLabelActual
+    member-label-inside-snapshot.fill: insideLabelSnapshot
+    member-label-inside-scenario.fill: insideLabelScenario
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: surface
