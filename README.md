@@ -123,7 +123,8 @@ Chrona never reads raw SVG or contacts a registry at render time.
 chrona icon-catalog import icons.json --license-spdx MIT --notice-file NOTICE \
   --output icons.yaml
 chrona render project.yaml --view view.yaml --theme theme.yaml --scheme scheme.yaml \
-  --layout layout.yaml --icon-catalog icons.yaml --output review.svg
+  --layout layout.yaml --icon-catalog icons.yaml \
+  --visual-profile chrona-output/visual/v0.7-svg --output review.svg
 ```
 
 In the View, attach a catalog entry to an existing target. `decorative: false`

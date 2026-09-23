@@ -7,32 +7,35 @@ allOf:
   - description: "View document fields extending the shared presentation resource."
     type: object
     properties:
-      version: {const: "chrona/view/v0.12"}
-      kind: {const: view}
+      version: {description: "This View document contract version.", const: "chrona/view/v0.12"}
+      kind: {description: "Resource kind identifying this document as a View.", const: view}
       body:
+        description: "Surface selection, presentation, and Layout intent."
         type: object
         required: [surface, comparison, visibility, layoutIntent, rows]
         additionalProperties: false
         properties:
-          surface: {enum: [table-timeline, dependency-network]}
+          surface: {description: "Review surface family.", enum: [table-timeline, dependency-network]}
           colorEncoding:
             type: object
             description: "One closed field-to-colour encoding for eligible planned marks."
             required: [scale, target, source, domain]
             additionalProperties: false
             properties:
-              scale: {type: string, minLength: 1}
-              target: {const: planned}
+              scale: {description: "Named colour scale to apply.", type: string, minLength: 1}
+              target: {description: "Only planned marks are colour-encoded.", const: planned}
               source:
+                description: "Project field supplying the encoded value."
                 type: object
                 required: [field]
                 additionalProperties: false
-                properties: {field: {type: string, minLength: 1}}
+                properties: {field: {description: "Project field name.", type: string, minLength: 1}}
               domain:
+                description: "Closed set of values admitted by the scale."
                 type: array
                 minItems: 1
                 uniqueItems: true
-                items: {type: string, minLength: 1}
+                items: {description: "One admitted source value.", type: string, minLength: 1}
           progressFill:
             type: object
             description: "Optional display-only fraction submark source for completed planned or actual marks."
@@ -41,34 +44,38 @@ allOf:
             properties:
               source: {description: "The authoritative fraction source.", enum: [actual, planned]}
           selection:
+            description: "Objects included in or excluded from automatic rows."
             type: object
             required: [include]
             additionalProperties: false
             properties:
               include:
+                description: "Positive selection predicates."
                 type: object
                 additionalProperties: false
                 properties:
-                  ids: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
-                  types: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
-                  objectTypes: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+                  ids: {description: "Explicit object identifiers.", type: array, uniqueItems: true, items: {description: "One object identifier.", type: string, minLength: 1}}
+                  types: {description: "Included scheduling types.", type: array, uniqueItems: true, items: {description: "One scheduling type.", type: string, minLength: 1}}
+                  objectTypes: {description: "Included domain object types.", type: array, uniqueItems: true, items: {description: "One domain object type.", type: string, minLength: 1}}
               exclude:
+                description: "Negative selection predicates applied after inclusion."
                 type: object
                 additionalProperties: false
                 properties:
-                  objectTypes: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
+                  objectTypes: {description: "Excluded domain object types.", type: array, uniqueItems: true, items: {description: "One excluded domain object type.", type: string, minLength: 1}}
           grouping:
+            description: "Automatic-row grouping policy."
             type: object
             required: [by]
             additionalProperties: false
             properties:
-              by: {enum: [objectType, field, hierarchy, none]}
-              field: {type: string, minLength: 1}
-              order: {type: array, uniqueItems: true, items: {type: string, minLength: 1}}
-              missing: {type: string, minLength: 1}
-              presentation: {enum: [band, header]}
-              depth: {type: integer, minimum: 0}
-              rollup: {enum: [bar, header, none]}
+              by: {description: "Grouping dimension.", enum: [objectType, field, hierarchy, none]}
+              field: {description: "Project field used when grouping by field.", type: string, minLength: 1}
+              order: {description: "Preferred order of group values.", type: array, uniqueItems: true, items: {description: "One group value.", type: string, minLength: 1}}
+              missing: {description: "Label for missing field values.", type: string, minLength: 1}
+              presentation: {description: "Visual treatment for groups.", enum: [band, header]}
+              depth: {description: "Maximum hierarchy depth.", type: integer, minimum: 0}
+              rollup: {description: "Hierarchy rollup presentation.", enum: [bar, header, none]}
             allOf:
               - description: "Field grouping requires its field name and missing-value label."
                 examples: [{by: field, field: status, missing: Unset}]
@@ -79,34 +86,38 @@ allOf:
                 if: {properties: {by: {const: hierarchy}}, required: [by]}
                 then: {required: [depth, rollup]}
           ordering:
+            description: "Deterministic automatic-row ordering."
             type: object
             required: [by, direction, tieBreak]
             additionalProperties: false
             properties:
-              by: {enum: [id, title, plannedStart, plannedEnd]}
-              direction: {enum: [ascending, descending]}
-              tieBreak: {enum: [id, title, plannedStart, plannedFinish]}
+              by: {description: "Primary ordering key.", enum: [id, title, plannedStart, plannedEnd]}
+              direction: {description: "Ordering direction.", enum: [ascending, descending]}
+              tieBreak: {description: "Stable ordering tie-breaker.", enum: [id, title, plannedStart, plannedFinish]}
           window:
+            description: "Temporal window selected for the surface."
             type: object
             required: [mode]
             additionalProperties: false
             properties:
-              mode: {enum: [explicit, selected-planned, selected-comparison]}
-              start: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-              end: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-              marginDays: {type: integer, minimum: 0}
+              mode: {description: "Window derivation mode.", enum: [explicit, selected-planned, selected-comparison]}
+              start: {description: "Inclusive explicit ISO calendar start.", examples: ["2026-01-01"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+              end: {description: "Exclusive explicit ISO calendar end.", examples: ["2026-02-01"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+              marginDays: {description: "Non-negative expansion around a derived window.", type: integer, minimum: 0}
           comparison:
+            description: "Baseline, actual, and comparison-facet policy."
             type: object
             required: [baseline, actual, observationSelection, deltaUnit, facets]
             additionalProperties: false
             properties:
-              baseline: {enum: [primary, snapshot, scenario]}
-              scenario: {type: string, minLength: 1}
-              actual: {enum: [forbidden, optional, required]}
-              observationSelection: {const: latest}
-              deltaUnit: {const: calendar-days}
-              facets: {type: array, uniqueItems: true, items: {enum: [planned, actual, startDelta, finishDelta, atDelta, progress, missingActual, unmatchedActual]}}
+              baseline: {description: "Comparison baseline source.", enum: [primary, snapshot, scenario]}
+              scenario: {description: "Scenario identifier when scenario is the baseline.", type: string, minLength: 1}
+              actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
+              observationSelection: {description: "Only the latest observation is selected.", const: latest}
+              deltaUnit: {description: "Comparison delta unit.", const: calendar-days}
+              facets: {description: "Comparison facets exposed to the surface.", type: array, uniqueItems: true, items: {description: "One comparison facet.", enum: [planned, actual, startDelta, finishDelta, atDelta, progress, missingActual, unmatchedActual]}}
           visibility:
+            description: "Visibility and fallback policy for surface content."
             type: object
             required: [labels, relations, annotations]
             additionalProperties: false
@@ -338,30 +349,41 @@ allOf:
                   - {required: [annotationPresentation]}
 $defs:
   visual:
+    description: "One direct or data-encoded icon request for an admitted occurrence."
+    examples:
+      - {target: {kind: title}, ref: material:flag-outline-rounded, decorative: true}
     type: object
     required: [target]
     additionalProperties: false
     properties:
       target:
+        description: "Exact label or mark occurrence receiving the icon."
         $ref: "#/$defs/visualTarget"
-      ref: {description: "Direct Context-local set:name icon reference.", type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      ref: {description: "Direct Context-local set:name icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
       encoding:
+        description: "Closed source-field to icon-reference mapping."
         type: object
         required: [field, domain]
         additionalProperties: false
         properties:
-          field: {type: string, minLength: 1}
+          field: {description: "Projection-exposed source field name.", type: string, minLength: 1}
           domain:
+            description: "Mapping from source value to Context-local icon reference."
             type: object
             minProperties: 1
-            additionalProperties: {type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
-      side: {enum: [leading, trailing], default: leading}
-      decorative: {type: boolean, default: true}
+            additionalProperties: {description: "Mapped Context-local icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      side: {description: "Logical slot beside the target text.", enum: [leading, trailing], default: leading}
+      decorative: {description: "Whether the adjacent text already supplies the icon's meaning.", type: boolean, default: true}
     oneOf:
-      - required: [ref]
-      - required: [encoding]
+      - description: "A direct request names one catalog asset."
+        examples: [{target: {kind: title}, ref: material:flag-outline-rounded}]
+        required: [ref]
+      - description: "An encoded request derives an asset from a source field."
+        examples: [{target: {kind: cell, object: firmware, column: Workstream}, encoding: {field: owner, domain: {fw-team: material:flag-outline-rounded}}}]
+        required: [encoding]
     allOf:
       - description: "Field-to-icon encoding is meaningful only for projection-exposed object targets."
+        examples: [{target: {kind: cell, object: firmware, column: Workstream}, encoding: {field: owner, domain: {fw-team: material:flag-outline-rounded}}}]
         if:
           properties:
             target:
@@ -373,25 +395,26 @@ $defs:
           not: {required: [encoding]}
   visualTarget:
     description: "One closed visual occurrence selector; no kind admits irrelevant selector fields."
+    examples: [{kind: title}]
     oneOf:
-      - {type: object, required: [kind], additionalProperties: false, properties: {kind: {const: title}}}
-      - {type: object, required: [kind], additionalProperties: false, properties: {kind: {const: as-of-label}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: column}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: group-header}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: plot-label}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: annotation}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: note}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: note-index}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: group-detail}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, panel], additionalProperties: false, properties: {kind: {const: summary}, panel: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, panel, metric, part], additionalProperties: false, properties: {kind: {const: summary}, panel: {type: string, minLength: 1}, metric: {type: string, minLength: 1}, part: {enum: [value, caption]}}}
-      - {type: object, required: [kind, id], additionalProperties: false, properties: {kind: {const: milestone}, id: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, role], additionalProperties: false, properties: {kind: {const: legend}, role: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, object, column], additionalProperties: false, properties: {kind: {const: cell}, object: {type: string, minLength: 1}, column: {type: string, minLength: 1}}}
-      - {type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {const: axis-label}, level: {type: string, minLength: 1}, index: {type: integer, minimum: 0}}}
-      - {type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {const: axis-band}, level: {type: string, minLength: 1}, index: {type: integer, minimum: 0}}}
-      - {type: object, required: [kind, object, facet], additionalProperties: false, properties: {kind: {const: mark}, object: {type: string, minLength: 1}, facet: {enum: [planned, actual]}}}
-      - {type: object, required: [kind, object], additionalProperties: false, properties: {kind: {const: variance-label}, object: {type: string, minLength: 1}}}
+      - {description: "Document title.", examples: [{kind: title}], type: object, required: [kind], additionalProperties: false, properties: {kind: {description: "Target kind.", const: title}}}
+      - {description: "As-of label.", examples: [{kind: as-of-label}], type: object, required: [kind], additionalProperties: false, properties: {kind: {description: "Target kind.", const: as-of-label}}}
+      - {description: "Table column header.", examples: [{kind: column, id: Workstream}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: column}, id: {description: "Column identifier.", type: string, minLength: 1}}}
+      - {description: "Group header.", examples: [{kind: group-header, id: firmware}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: group-header}, id: {description: "Group identifier.", type: string, minLength: 1}}}
+      - {description: "Plot label.", examples: [{kind: plot-label, id: firmware}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: plot-label}, id: {description: "Object identifier.", type: string, minLength: 1}}}
+      - {description: "Annotation text.", examples: [{kind: annotation, id: note-1}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: annotation}, id: {description: "Annotation identifier.", type: string, minLength: 1}}}
+      - {description: "Project note.", examples: [{kind: note, id: note-1}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: note}, id: {description: "Note identifier.", type: string, minLength: 1}}}
+      - {description: "Project note index.", examples: [{kind: note-index, id: note-1}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: note-index}, id: {description: "Note identifier.", type: string, minLength: 1}}}
+      - {description: "Group detail label.", examples: [{kind: group-detail, id: firmware}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: group-detail}, id: {description: "Group identifier.", type: string, minLength: 1}}}
+      - {description: "Summary panel header.", examples: [{kind: summary, panel: readiness}], type: object, required: [kind, panel], additionalProperties: false, properties: {kind: {description: "Target kind.", const: summary}, panel: {description: "Summary panel identifier.", type: string, minLength: 1}}}
+      - {description: "Summary metric value or caption.", examples: [{kind: summary, panel: readiness, metric: blockers, part: value}], type: object, required: [kind, panel, metric, part], additionalProperties: false, properties: {kind: {description: "Target kind.", const: summary}, panel: {description: "Summary panel identifier.", type: string, minLength: 1}, metric: {description: "Metric identifier.", type: string, minLength: 1}, part: {description: "Metric text occurrence.", enum: [value, caption]}}}
+      - {description: "Milestone digest entry.", examples: [{kind: milestone, id: launch}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: milestone}, id: {description: "Milestone identifier.", type: string, minLength: 1}}}
+      - {description: "Legend label.", examples: [{kind: legend, role: planned}], type: object, required: [kind, role], additionalProperties: false, properties: {kind: {description: "Target kind.", const: legend}, role: {description: "Legend role.", type: string, minLength: 1}}}
+      - {description: "Table cell label.", examples: [{kind: cell, object: firmware, column: Workstream}], type: object, required: [kind, object, column], additionalProperties: false, properties: {kind: {description: "Target kind.", const: cell}, object: {description: "Object identifier.", type: string, minLength: 1}, column: {description: "Column identifier.", type: string, minLength: 1}}}
+      - {description: "Axis label.", examples: [{kind: axis-label, level: month, index: 0}], type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {description: "Target kind.", const: axis-label}, level: {description: "Axis level identifier.", type: string, minLength: 1}, index: {description: "Zero-based axis occurrence.", type: integer, minimum: 0}}}
+      - {description: "Axis band label.", examples: [{kind: axis-band, level: month, index: 0}], type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {description: "Target kind.", const: axis-band}, level: {description: "Axis level identifier.", type: string, minLength: 1}, index: {description: "Zero-based band occurrence.", type: integer, minimum: 0}}}
+      - {description: "Planned or actual semantic mark.", examples: [{kind: mark, object: firmware, facet: planned}], type: object, required: [kind, object, facet], additionalProperties: false, properties: {kind: {description: "Target kind.", const: mark}, object: {description: "Object identifier.", type: string, minLength: 1}, facet: {description: "Mark facet.", enum: [planned, actual]}}}
+      - {description: "Variance label.", examples: [{kind: variance-label, object: firmware}], type: object, required: [kind, object], additionalProperties: false, properties: {kind: {description: "Target kind.", const: variance-label}, object: {description: "Object identifier.", type: string, minLength: 1}}}
   presentationIntent:
     type: object
     description: "Optional placement preferences for a row or item."

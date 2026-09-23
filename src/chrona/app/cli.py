@@ -105,7 +105,7 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
 def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
     command.add_argument("--visual-profile", default="chrona-output/visual/v0.5-baseline",
-                         choices=("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png"),
+                         choices=("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png", "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png"),
                          help="exact visual capability profile (default: baseline)")
     command.add_argument("--typesetter-engine", help="required with --format typst or tikz")
     command.add_argument("--typesetter-version", help="required exact engine version with --format typst or tikz")
