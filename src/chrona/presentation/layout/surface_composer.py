@@ -16,7 +16,7 @@ from chrona.presentation.layout.annotations import (
     resolve_annotation_anchor, route_annotation_leader,
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
+from chrona.presentation.layout.labels import LabelObstacle, LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
@@ -379,7 +379,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
-                                                   wrap))
+                                                   wrap, inside_host_obstacle_id=f"planned:{instance_id}"))
         for folded in getattr(projection, "folded_points", ()):
             mark = mark_by_id.get(f"planned:{_folded_instance_id(folded, folded.item)}")
             group = group_by_id.get(folded.group_id)
@@ -389,7 +389,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             label_requests.append(LabelRequest(
                 f"member-label:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
                 folded.item.title, LabelRect(*_bounds(mark.bounds)), default_ladder, "groupHeader", "group-header-point",
-                CollisionDomain("group-header", folded.group_id), "diagnose", bounds=LabelRect(*_bounds(group.header_bounds))))
+                CollisionDomain("group-header", folded.group_id), "diagnose", bounds=LabelRect(*_bounds(group.header_bounds)),
+                inside_host_obstacle_id=mark.placement_id))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
     for review_row in review_rows:
@@ -421,11 +422,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         placement_bounds = label_request.bounds or timeline_rect
         label_size = (max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines),
                       float(font_size) * float(line_height) * len(lines))
-        obstacles = [LabelRect(*_bounds(item.bounds)) for item in marks]
-        obstacles.extend(LabelRect(*_bounds(item.bounds)) for item in text
+        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
+        obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
                          if item.required and item.overflow != "suppressed")
         candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
                                  obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                 inside_host_obstacle_id=label_request.inside_host_obstacle_id,
                                  required=label_request.overflow == "diagnose", overflow=label_request.overflow)
                      if label_request.candidates else None)
         provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,

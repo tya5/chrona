@@ -1,6 +1,6 @@
 import pytest
 
-from chrona.presentation.layout.labels import LabelRect, place_label
+from chrona.presentation.layout.labels import LabelObstacle, LabelRect, place_label
 from chrona.presentation.layout.text import wrap_text
 
 
@@ -20,6 +20,17 @@ def test_labels_use_declared_finite_candidate_order_and_obstacles():
 def test_inside_requires_measured_text_to_fit_the_mark():
     with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
         place_label(LabelRect(10, 10, 10, 8), (12, 6), ["inside"], bounds=LabelRect(0, 0, 100, 100))
+
+
+def test_inside_exempts_only_its_identified_host_mark_obstacle():
+    anchor = LabelRect(10, 10, 20, 10)
+    host = LabelObstacle("planned:a", anchor)
+    assert place_label(anchor, (10, 8), ["inside"], bounds=LabelRect(0, 0, 100, 100),
+                       obstacles=[host], inside_host_obstacle_id="planned:a").side == "inside"
+    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
+        place_label(anchor, (10, 8), ["inside"], bounds=LabelRect(0, 0, 100, 100),
+                    obstacles=[host, LabelObstacle("planned:b", anchor)],
+                    inside_host_obstacle_id="planned:a")
 
 
 def test_optional_label_can_be_omitted_only_by_explicit_policy():
