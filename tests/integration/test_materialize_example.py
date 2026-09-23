@@ -120,7 +120,7 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
     context_path.write_text(yaml.safe_dump(context, sort_keys=False))
     snapshot = tmp_path / "snapshot"; snapshot.mkdir()
     _, revision = _copy_context_closure(copied, context_path, snapshot)
-    assert (snapshot / revision / "assets/programme.png").read_bytes() == (copied / "assets/programme.png").read_bytes()
+    assert (snapshot / revision / "assets/programme-mark.png").read_bytes() == (copied / "assets/programme-mark.png").read_bytes()
     assert not (snapshot / revision / "assets/risk.svg").exists()
 
 

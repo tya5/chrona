@@ -7,20 +7,30 @@ body:
   provenance:
     sourceKind: iconify-json
     sourcePrefix: chrona
-    sourceContentIdentity: sha256:8e141d462251064883e194895e21fa119563e6b7f6a184fe4c80648670a5f2c5
-    license: {spdx: CC0-1.0, notice: "Controller Z purpose-built example artwork."}
+    sourceContentIdentity: sha256:055ab1ad66c5793ad53efc862cb9b35daeff9c1f081acc9d62bbe0c5b4306da2
+    sourceVersion: controller-z-v1
+    license:
+      spdx: CC0-1.0
+      notice: 'Controller Z purpose-built icon source.
+
+        Released under CC0-1.0.'
   icons:
     risk:
       kind: vector
-      viewport: {inlineSize: 24, blockSize: 24}
+      viewport:
+        inlineSize: 24
+        blockSize: 24
       alternative: Delivery risk
       paths:
-        - {paint: fill, data: "M 12 1 L 23 22 L 1 22 Z"}
-        - {paint: fill, data: "M 12 8 L 12 15"}
-        - {paint: fill, data: "M 12 18 L 12 18"}
+      - paint: fill
+        data: M 12 1 L 23 22 L 1 22 L 12 1 Z M 12 8 L 12 15 M 12 18 L 12 18
     programme:
       kind: raster
-      source: {address: assets/programme.png, contentIdentity: sha256:fc269fa59c59eace6b23c198d8c94f4b591d2c58b5c8a2db152b150f0b58230d}
-      viewport: {inlineSize: 1600, blockSize: 900}
+      source:
+        address: assets/programme-mark.png
+        contentIdentity: sha256:83dba74097d943bbc3f95f99457ca50f8750c90e217866e9ddc68c839a8871d4
+      viewport:
+        inlineSize: 24
+        blockSize: 24
       alternative: Programme overview
   entryAliases: {}
