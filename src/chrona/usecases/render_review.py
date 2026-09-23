@@ -219,7 +219,7 @@ def _visual_request(visual: Any, projection: Any, index: int) -> VisualRequest:
     selector = tuple((str(key), str(value)) for key, value in visual.selector.items() if key != "kind")
     ref = visual.ref
     if visual.encoding is not None:
-        object_id = visual.selector.get("id")
+        object_id = visual.selector.get("id", visual.selector.get("object"))
         item = next((candidate for candidate in projection.items if candidate.object_id == object_id), None)
         field = visual.encoding.get("field")
         value = item.fields.get(field) if item is not None and item.fields is not None else None

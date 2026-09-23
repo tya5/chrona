@@ -102,6 +102,7 @@ def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
     if kind == "milestone" and "id" in selector: return f"milestone:{selector['id']}"
     if kind == "axis-label" and {"level", "index"} <= selector.keys(): return f"axis-label:{selector['level']}:{selector['index']}"
     if kind == "as-of-label" and "id" in selector: return f"as-of:{selector['id']}"
+    if kind == "mark" and {"object", "facet"} <= selector.keys(): return f"{selector['facet']}:{selector['object']}"
     raise LayoutError("E_LAYOUT_VISUAL_TARGET", "/body/visuals")
 
 

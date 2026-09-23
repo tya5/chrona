@@ -187,6 +187,10 @@ allOf:
               asOf: {enum: [hidden, line]}
               calendarClosed: {type: boolean}
           annotationPresentation: {enum: [plain, numbered]}
+          visuals:
+            description: "Closed icon requests resolved by Layout against Context-local catalogs."
+            type: array
+            items: {$ref: "#/$defs/visual"}
           layoutIntent:
             type: object
             required: [compactness, itemStacking]
@@ -333,6 +337,40 @@ allOf:
                   - {required: [annotations]}
                   - {required: [annotationPresentation]}
 $defs:
+  visual:
+    type: object
+    required: [target]
+    additionalProperties: false
+    properties:
+      target:
+        type: object
+        required: [kind]
+        additionalProperties: false
+        properties:
+          kind: {enum: [title, column, cell, group-header, plot-label, annotation, note-index, legend, summary, milestone, axis-label, as-of-label, mark]}
+          id: {type: string, minLength: 1}
+          object: {type: string, minLength: 1}
+          column: {type: string, minLength: 1}
+          role: {type: string, minLength: 1}
+          level: {type: string, minLength: 1}
+          index: {type: integer, minimum: 0}
+          facet: {enum: [planned, actual]}
+      ref: {description: "Direct Context-local set:name icon reference.", type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      encoding:
+        type: object
+        required: [field, domain]
+        additionalProperties: false
+        properties:
+          field: {type: string, minLength: 1}
+          domain:
+            type: object
+            minProperties: 1
+            additionalProperties: {type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      side: {enum: [leading, trailing], default: leading}
+      decorative: {type: boolean, default: true}
+    oneOf:
+      - required: [ref]
+      - required: [encoding]
   presentationIntent:
     type: object
     description: "Optional placement preferences for a row or item."
