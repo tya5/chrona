@@ -22,6 +22,8 @@ are superseded by `33`. Documents `24`–`26` and `28` are focused normative sur
 historical milestone names do not change their ownership.
 Read `59` when adding or evaluating a per-object placement preference or a proposed
 presentation extension boundary.
+Read `60` when changing a field-driven colour encoding, Scheme palette slots, or a
+derived scale legend.
 
 ## Application, commands, storage, and extensions
 
