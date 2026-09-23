@@ -48,14 +48,14 @@ its coordinate is Layout output.
 
 The current resource schemas cover these owners without duplication:
 
-* View v0.8 supplies the Content vocabulary and the author-facing parts of
+* View v0.10 supplies the Content vocabulary and the author-facing parts of
   Visual grammar: `surface`, selection/grouping/ordering/window/comparison,
   visibility and fallbacks, axis/time presentation, rows, columns, annotations,
   and `layoutIntent`.
 * Layout Profile v0.3 supplies Composition through named slots and containers,
   flow/grid/overlay structure, writing mode, intent tokens, overflow, and
   relation-routing bounds.
-* Theme v0.3 and Color Scheme supply Appearance through semantic role bindings,
+* Theme v0.4 and Color Scheme v0.2 supply Appearance through semantic role bindings,
   typed values, and color choices.  Completed paint remains Scene-derived.
 * The semantic presentation contract selects the closed semantic primitive
   families; Scene completes them to renderer-neutral forms and paint.
@@ -74,10 +74,56 @@ human name; its authoritative meaning is the exact acquired resource identities
 and package version.  A preset does not need a duplicate flat dimension map.
 
 An implementation may expose a derived, immutable `PresentationDesignSummary`
-for inspection, GUI, or AI proposals.  It must be calculated only from the
-validated effective ordinary resources, use the taxonomy in section 2, and
-retain the resource identities from which every value arose.  It is not an
-authoritative closure input and cannot introduce a second resolver.
+for inspection, gallery curation, GUI, or AI proposals.  It must be calculated
+only from the validated effective ordinary resources, use the taxonomy in
+section 2, and retain the resource identities from which every value arose.  It
+is not an authoritative closure input and cannot introduce a second resolver.
+
+### 3.1 Inspection summary
+
+The first bounded consumer of this taxonomy is the public design gallery.  Its
+inspection result is conceptually shaped as follows; this is an output contract,
+not another authored resource or schema accepted by render evaluation:
+
+```yaml
+version: chrona/presentation-design-summary/v0.1
+provenance:
+  origin: explicit | guided | materialized
+  view: {id: ..., kind: view, contentIdentity: sha256:...}
+  layout: {id: ..., kind: layout-profile, contentIdentity: sha256:...}
+  theme: {id: ..., kind: theme, contentIdentity: sha256:...}
+  colorScheme: {id: ..., kind: color-scheme, contentIdentity: sha256:...}
+dimensions:
+  content: {...}
+  composition: {...}
+  visualGrammar: {...}
+  appearance: {...}
+```
+
+Each dimension contains only finite, authored intent that can be read directly
+from one of the effective View, Layout Profile, Theme, or Color Scheme
+contracts.  Content may report surface, selection/grouping/ordering/window,
+comparison, visibility, table and annotation intent.  Composition may report
+writing mode, declared container/slot vocabulary, overflow and routing intent.
+Visual Grammar may report the selected closed semantic presentation families.
+Appearance may report the Theme, Scheme, and declared role/token vocabulary.
+
+The summary reports a value together with the identity of its owning resource;
+it never flattens those values into a second editable configuration bag.  A
+dimension or member that has no stable finite interpretation is omitted rather
+than inferred.  In particular, it MUST NOT contain Project or Actual facts,
+resolved dates, measurements, font metrics, row sizes, collision decisions,
+coordinates, routes, Scene primitives, renderer capability fallback, cache
+location, package selector, or arbitrary resource paths.
+
+Summary construction accepts only a complete validated effective resource
+bundle.  It is pure: it neither reads a registry/directory nor causes
+normalization, materialization, scheduling, Layout, Scene construction, or
+rendering.  A failed inspection returns a stable diagnostic such as
+`E_DESIGN_SUMMARY_INPUT`, `E_DESIGN_SUMMARY_IDENTITY`, or
+`E_DESIGN_SUMMARY_UNREPRESENTABLE`; it cannot make an otherwise valid render
+fail.  The summary is recomputed from the closure supplied to the inspection
+caller and is never persisted as a replacement for its provenance.
 
 The current schemas are sufficient for this design: they can express every
 effective choice through its owner and the preset already pins the complete
