@@ -1,20 +1,23 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:color-scheme-v0.1"
 title: "Chrona Color Scheme v0.1"
+description: "Concrete immutable palette, suitability claims, and palette provenance."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: "chrona/color-scheme/v0.1"}
-  kind: {const: color-scheme}
-  id: {type: string, minLength: 1}
+  version: {description: "This Color Scheme contract version.", const: "chrona/color-scheme/v0.1"}
+  kind: {description: "The resource kind for a concrete color palette.", const: color-scheme}
+  id: {description: "Stable Color Scheme identifier.", type: string, minLength: 1}
   body:
     type: object
+    description: "Concrete colors, category colors, suitability claims, and provenance."
     required: [colors, category, suitability, provenance]
     additionalProperties: false
     properties:
       colors:
         type: object
+        description: "Named concrete colors selected by Theme color bindings."
         required: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario]
         additionalProperties: false
         properties:
@@ -33,10 +36,12 @@ properties:
           insideLabelScenario: {$ref: "#/$defs/color"}
       category:
         type: array
+        description: "One or more concrete colors available for category roles."
         minItems: 1
         items: {$ref: "#/$defs/color"}
       suitability:
         type: object
+        description: "Declared palette suitability; these claims do not change color resolution."
         required: [background, colorVision, print]
         additionalProperties: false
         properties:
@@ -49,6 +54,7 @@ properties:
           print: {enum: [not-claimed, print-friendly, photocopy-friendly]}
       provenance:
         type: object
+        description: "Authorship, source, and license for this palette."
         required: [kind, source, license]
         additionalProperties: false
         properties:

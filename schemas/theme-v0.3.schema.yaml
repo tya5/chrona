@@ -1,20 +1,23 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:theme-v0.3"
 title: "Chrona Theme v0.3"
+description: "Semantic appearance tokens and bindings; concrete colors remain in a Color Scheme."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: "chrona/theme/v0.3"}
-  kind: {const: theme}
-  id: {type: string, minLength: 1}
+  version: {description: "This Theme contract version.", const: "chrona/theme/v0.3"}
+  kind: {description: "The resource kind for semantic appearance bindings.", const: theme}
+  id: {description: "Stable Theme identifier.", type: string, minLength: 1}
   body:
     type: object
+    description: "Non-color values, semantic role bindings, and Color Scheme intents."
     required: [values, roles, colorBindings]
     additionalProperties: false
     properties:
       values:
         type: object
+        description: "Named non-color tokens such as typography, marker, and paint values."
         additionalProperties:
           type: object
           required: [type, value]
@@ -36,6 +39,7 @@ properties:
                   value: {type: [string, number]}
       roles:
         type: object
+        description: "Semantic role bindings to named non-color tokens."
         additionalProperties:
           type: object
           additionalProperties: false
@@ -52,6 +56,7 @@ properties:
             textAlternative: {type: string, minLength: 1}
       colorBindings:
         type: object
+        description: "Semantic fill or stroke roles bound to Color Scheme intents."
         minProperties: 1
         additionalProperties: false
         patternProperties:
@@ -59,5 +64,6 @@ properties:
             enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario, category]
       metrics:
         type: object
+        description: "Named source-measurement metric bindings used by Layout."
         propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
         additionalProperties: {type: string, minLength: 1}
