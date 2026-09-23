@@ -9,6 +9,18 @@ from chrona.presentation.layout.lanes import LaneAssignment, LaneTrack
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.surface_quality import PathCommand
 
+
+@dataclass(frozen=True)
+class ScenePaint:
+    """Completed renderer-neutral appearance selected before adapter invocation."""
+
+    fill: str | None
+    stroke: str | None
+    stroke_width: float | None
+    dash: tuple[float, ...]
+    opacity: float
+
+
 @dataclass(frozen=True)
 class TextLayout:
     """One measured text result shared by Scene geometry and renderer serialization."""

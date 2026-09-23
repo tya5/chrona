@@ -74,6 +74,36 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/pattern")
         return value
 
+    def optional_color(self, role: str, property_name: str) -> str | None:
+        """Resolve an optional concrete colour without introducing a fallback."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or property_name not in binding:
+            return None
+        return self.color(role, property_name)
+
+    def optional_number(self, role: str, property_name: str) -> Decimal | None:
+        """Resolve an optional finite number without introducing a fallback."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or property_name not in binding:
+            return None
+        return self.number(role, property_name)
+
+    def dash(self, role: str) -> tuple[float, ...]:
+        """Resolve one closed dash pattern; absence is diagnosed by the caller."""
+        value = self.token(role, "dash", "dashPattern")
+        if not isinstance(value, list):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash")
+        result: list[float] = []
+        for index, segment in enumerate(value):
+            try:
+                number = Decimal(str(segment))
+            except (InvalidOperation, ValueError) as error:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash/{index}") from error
+            if not number.is_finite() or number <= 0:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash/{index}")
+            result.append(float(number))
+        return tuple(result)
+
     def font_family(self, role: str = "text", property_name: str = "fontFamily") -> str:
         value = self.token(role, property_name, "fontFamily")
         if not isinstance(value, str):

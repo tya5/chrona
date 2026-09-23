@@ -21,7 +21,19 @@ properties:
           additionalProperties: false
           properties:
             type: {enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative]}
-            value: {type: [string, number]}
+            value: {}
+          allOf:
+            - if:
+                properties: {type: {const: dashPattern}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    type: array
+                    items: {type: number, exclusiveMinimum: 0}
+              else:
+                properties:
+                  value: {type: [string, number]}
       roles:
         type: object
         additionalProperties:
@@ -35,6 +47,8 @@ properties:
             fontSize: {type: string, minLength: 1}
             lineHeight: {type: string, minLength: 1}
             opacity: {type: string, minLength: 1}
+            strokeWidth: {type: string, minLength: 1}
+            dash: {type: string, minLength: 1}
             textAlternative: {type: string, minLength: 1}
       colorBindings:
         type: object
