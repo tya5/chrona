@@ -138,6 +138,85 @@ path the public user model.  The design must state the concise user-facing
 forms for selection, pin inspection, update proposal, materialization, and
 offline failure, together with stable diagnostics.
 
+### Illustrative user journey (design candidate, not current syntax)
+
+The intended normal authoring experience is a short selector in the workspace
+and an exact lock record written by an explicit acquisition command.  A render
+must never resolve the selector over the network.  For example, an author may
+write the following in `chrona.yaml`:
+
+```yaml
+version: chrona/authoring-workspace/vNext
+kind: authoring-workspace
+id: orbit-review
+body:
+  project: {id: orbit, title: Orbit review, tasks: []}
+  presentation:
+    mode: guided
+    binding:
+      preset:
+        package: acme/executive-review
+        id: executive-light
+```
+
+They acquire and pin it explicitly, for example with a future command shaped
+like `chrona package acquire acme/executive-review@1.2.0`.  The command writes
+a machine-managed `chrona.lock.yaml`; its exact schema is a design decision,
+but it must carry the immutable package manifest reference and resolved preset
+closure rather than merely a version string:
+
+```yaml
+version: chrona/package-lock/vNext
+packages:
+  - id: acme/executive-review
+    version: 1.2.0
+    contentIdentity: sha256:9c8d...e41a
+    manifest:
+      store: {provider: package-cache, identity: local-user-cache}
+      address: acme/executive-review/1.2.0/package.yaml
+      revision: {token: sha256:9c8d...e41a}
+      contentIdentity: sha256:9c8d...e41a
+    presets:
+      executive-light:
+        contentIdentity: sha256:4a31...c920
+        resources:
+          view: {id: executive-roadmap, kind: view, contentIdentity: sha256:...}
+          theme: {id: executive-light, kind: theme, contentIdentity: sha256:...}
+          colorScheme: {id: daylight, kind: color-scheme, contentIdentity: sha256:...}
+          layout: {id: executive-grid, kind: layout-profile, contentIdentity: sha256:...}
+```
+
+The lock is part of the guided authoring closure/provenance; the cache location
+is only a verified way to obtain its pinned bytes.  A missing cache entry fails
+offline with a stable acquisition diagnostic rather than consulting a registry.
+An update is a proposal that writes a different pin and requires review; it is
+never a silent package upgrade.
+
+When the author wants to own and edit the design, Stage 3 materialization
+remains intentionally ordinary and explicit:
+
+```yaml
+presentation:
+  mode: explicit
+  resources:
+    view: {id: orbit-executive, kind: view, path: presentation/view.yaml, contentIdentity: sha256:...}
+    theme: {id: orbit-theme, kind: theme, path: presentation/theme.yaml, contentIdentity: sha256:...}
+    colorScheme: {id: orbit-scheme, kind: color-scheme, path: presentation/scheme.yaml, contentIdentity: sha256:...}
+    layout: {id: orbit-layout, kind: layout-profile, path: presentation/layout.yaml, contentIdentity: sha256:...}
+    renderContext: {id: orbit-context, kind: render-context, path: presentation/context.yaml, contentIdentity: sha256:...}
+  receipt:
+    id: orbit-presentation-receipt
+    kind: presentation-materialization-receipt
+    path: presentation/receipt.yaml
+    contentIdentity: sha256:...
+```
+
+The receipt records the original package/preset pin as `derivedFrom`
+provenance.  The explicit workspace has no remaining package lookup or
+inheritance edge.  These examples deliberately do not authorize a schema
+change: GDF-3 must validate the final spelling against existing closure,
+materialization, trust, and offline rules before any implementation begins.
+
 ## Ordered design work
 
 ### GDF-1 — Design Space consumer and specification correction
