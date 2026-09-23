@@ -93,19 +93,23 @@ Implement every v0.12 label/mark visual target as one side-aware Layout path.
 The published View Visual Target Closure correction is the target/selector
 authority; no generic selector or `icon_bindings` compatibility seam is allowed.
 Add target resolution for title, columns, object labels, groups, annotations,
-notes, legends, summaries, milestones, axis/as-of labels, and marks; implement
-direct references and field encodings where declared. Compute leading/trailing
-advance from typography ratios and cap-height. Re-measure all affected text,
-preserve overflow policy, and record visual reading order/provenance. Separate
-label-inherited and semantic-mark roles.
+notes, legends, summaries, milestones, axis/as-of labels, and planned/actual
+marks; implement direct references and field encodings where declared. The
+[visual composition completion correction](issue-350-visual-composition-completion-correction-2026-09-24.md)
+is binding: remove `icon_bindings` atomically, require Theme-owned
+typography-relative `iconScale`/`iconGap` bindings, reserve both sides before
+text measurement, and reapply the target overflow policy. Record visual
+reading order/provenance and separate label-inherited and semantic-mark roles.
 
 **Files:** View projection/content, Layout request/placements/text composition,
 semantic registry, Theme token resolution, Scene input structural tests.
 
 **Acceptance:** one target-inventory fixture exercises every admitted label
-class and mark; changing width/side/typography changes only Layout placement;
-unknown encoding, missing source, duplicate side, no cap height, and insufficient
-space diagnose; Scene never measures, looks up, or chooses icon placement.
+class and planned/actual mark; changing width/side/typography/Theme ratio
+changes only Layout placement; reserved text remeasures under fit, ellipsize,
+and wrap policy; unknown encoding, missing source, duplicate side, no cap
+height, and insufficient space diagnose; no `icon_bindings` runtime seam
+remains; Scene never measures, looks up, or chooses icon placement.
 
 ## I350R-5 — Completed Scene Icon and exact SVG/PNG serialization
 
