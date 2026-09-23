@@ -49,14 +49,19 @@ def test_bundled_material_catalog_is_complete_and_size_bounded():
     manifest = RESOURCES.joinpath("icons", "material-symbols-outline-rounded-v2026-09-22.manifest").read_text()
     notice = RESOURCES.joinpath("icons", "material-symbols-outline-rounded.NOTICE").read_text()
     names = [line for line in manifest.splitlines() if line and not line.startswith("#")]
-    assert len(names) == 2336
-    assert len(catalog) <= 4_000_000
-    assert len(gzip.compress(catalog, compresslevel=9)) <= 1_000_000
+    assert "canonicalSelection=2336 aliasParentClosure=1679" in manifest
+    assert "maxCatalogBytes=7000000 maxGzipBytes=1600000" in manifest
+    assert len(names) == 4015
+    assert len(catalog) <= 7_000_000
+    assert len(gzip.compress(catalog, compresslevel=9)) <= 1_600_000
     assert b"set: material\n" in catalog and b"- material-symbols\n" in catalog
     assert "Apache License" in notice
     started = perf_counter()
     value = yaml.load(catalog, Loader=yaml.CSafeLoader)
     contract = parse_contract(ClosureIdentity("icon-catalog", value["id"], "packaged", "sha256:" + sha256(catalog).hexdigest()), value)
     assert isinstance(contract, IconCatalogContract)
-    assert len(contract.entries) == 2336
+    assert len(contract.entries) == 4015
+    assert contract.provenance["sourceVersion"] == "1.2.93"
+    assert contract.entry_aliases["flag"] == "flag-outline-rounded"
+    assert contract.entry_aliases["check-outline-rounded"] == "check-rounded"
     assert perf_counter() - started < 10

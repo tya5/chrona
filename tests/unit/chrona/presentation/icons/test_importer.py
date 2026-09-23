@@ -109,6 +109,15 @@ def test_bundled_default_copies_an_explicit_catalog(tmp_path):
     assert output.read_bytes()
 
 
+def test_importer_records_an_explicit_source_version(tmp_path):
+    source, output, notice = tmp_path / "icons.json", tmp_path / "icons.yaml", tmp_path / "LICENSE"
+    source.write_text(json.dumps(_collection('<path d="M1 2L3 4"/>'))); notice.write_text("MIT notice\n")
+
+    import_iconify(source, output, license_spdx="MIT", notice_path=notice, source_version="9.9.9")
+
+    assert yaml.safe_load(output.read_text())["body"]["provenance"]["sourceVersion"] == "9.9.9"
+
+
 def test_public_lucide_tabler_fixture_is_reproducible_from_the_cli_inputs(tmp_path):
     root = Path(__file__).resolve().parents[5]
     source = root / "examples/controller-z/assets/lucide-tabler-icons.json"

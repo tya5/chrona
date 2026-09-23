@@ -183,6 +183,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--set", dest="icon_set", help="canonical set name (defaults to collection prefix)")
     command.add_argument("--alias", action="append", default=[], help="additional set alias; repeatable")
     command.add_argument("--include", help="optional local newline-delimited canonical icon-name manifest")
+    command.add_argument("--source-version", help="explicit upstream collection/package version for catalog provenance")
     command = icon_sub.add_parser("material-default", help="copy the bundled Material Symbols Outline Rounded catalog")
     command.add_argument("--output", required=True, help="new explicit local catalog YAML")
 
@@ -393,7 +394,8 @@ def _run(args: argparse.Namespace) -> None:
     if args.command == "icon-catalog":
         result = (import_iconify(Path(args.source), Path(args.output), set_name=args.icon_set, aliases=tuple(args.alias),
                                  license_spdx=args.license_spdx, notice_path=Path(args.notice_file),
-                                 include_path=Path(args.include) if args.include else None)
+                                 include_path=Path(args.include) if args.include else None,
+                                 source_version=args.source_version)
                   if args.icon_command == "import" else
                   copy_material_symbols_outline_rounded_catalog(Path(args.output)))
         print(json.dumps(result, sort_keys=True))

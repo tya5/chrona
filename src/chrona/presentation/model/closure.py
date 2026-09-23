@@ -497,9 +497,8 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
         for entry in catalog_resource.contract.entries:
             icon_id = f"{catalog_resource.contract.set_name}:{entry.name}"
             if entry.kind == "vector":
-                paths = tuple(NormalizedIconPath(tuple(IconPathCommand(str(command["kind"]), tuple(
-                    (float(points[index]), float(points[index + 1])) for index in range(0, len(points), 2)
-                )) for command in path.commands for points in (tuple(command.get("points", ())),)), path.paint,
+                paths = tuple(NormalizedIconPath(tuple(IconPathCommand(command.kind, command.points)
+                                                        for command in path.commands), path.paint,
                                            path.stroke_width, path.line_cap, path.line_join)
                               for path in entry.paths)
                 assets.append(IconAsset(icon_id, entry.kind, catalog_resource.content_identity,
@@ -542,9 +541,8 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
         for entry in catalog.entries:
             icon_id = f"{catalog.set_name}:{entry.name}"
             if entry.kind == "vector":
-                paths = tuple(NormalizedIconPath(tuple(IconPathCommand(str(command["kind"]), tuple(
-                    (float(points[index]), float(points[index + 1])) for index in range(0, len(points), 2)
-                )) for command in path.commands for points in (tuple(command.get("points", ())),)), path.paint,
+                paths = tuple(NormalizedIconPath(tuple(IconPathCommand(command.kind, command.points)
+                                                        for command in path.commands), path.paint,
                                            path.stroke_width, path.line_cap, path.line_join)
                               for path in entry.paths)
                 assets.append(IconAsset(icon_id, entry.kind, resource.content_identity, entry.viewport,

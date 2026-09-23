@@ -176,7 +176,8 @@ def _shape_path(tag: str, values: dict[str, str]) -> str:
 
 def import_iconify(source: Path, destination: Path, *, set_name: str | None = None,
                    aliases: tuple[str, ...] = (), license_spdx: str | None = None,
-                   notice_path: Path | None = None, include_path: Path | None = None) -> dict[str, object]:
+                   notice_path: Path | None = None, include_path: Path | None = None,
+                   source_version: str | None = None) -> dict[str, object]:
     try:
         source_bytes = source.read_bytes()
         collection = json.loads(source_bytes)
@@ -245,7 +246,7 @@ def import_iconify(source: Path, destination: Path, *, set_name: str | None = No
         identity = f"{prefix}:{alias}"
         output_width, output_height = _transformed_dimensions(width, height, transforms, identity)
         normalized[alias] = {"kind": "vector", "viewport": {"inlineSize": output_width, "blockSize": output_height}, "alternative": str(chain[-1].get("title", parent.get("title", alias.replace("-", " ")))), "paths": _compact_paths(_paths(parent["body"], identity, width, height, transforms))}
-    catalog = {"version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": f"{set_name or prefix}-icons", "body": {"set": set_name or prefix, "aliases": list(aliases), "provenance": {"sourceKind": "iconify-json", "sourcePrefix": prefix, "sourceContentIdentity": "sha256:" + sha256(source_bytes).hexdigest(), "sourceVersion": str(collection.get("version", "local")), "license": {"spdx": license_spdx, "notice": notice}}, "icons": normalized, "entryAliases": entry_aliases}}
+    catalog = {"version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": f"{set_name or prefix}-icons", "body": {"set": set_name or prefix, "aliases": list(aliases), "provenance": {"sourceKind": "iconify-json", "sourcePrefix": prefix, "sourceContentIdentity": "sha256:" + sha256(source_bytes).hexdigest(), "sourceVersion": source_version or str(collection.get("version", "local")), "license": {"spdx": license_spdx, "notice": notice}}, "icons": normalized, "entryAliases": entry_aliases}}
     encoded = yaml.safe_dump(catalog, sort_keys=False).encode()
     destination.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=destination.parent)

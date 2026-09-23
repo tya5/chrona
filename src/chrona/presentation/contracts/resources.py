@@ -326,7 +326,7 @@ class IconPath:
     """Renderer-neutral, importer-normalized path in a catalog entry."""
 
     paint: str
-    commands: tuple[FrozenDict, ...]
+    commands: tuple["CompactIconCommand", ...]
     stroke_width: float | None = None
     line_cap: str | None = None
     line_join: str | None = None
@@ -336,12 +336,20 @@ _COMPACT_ARITY = {"M": 2, "L": 2, "Q": 4, "Z": 0}
 _COMPACT_NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$")
 
 
-def _compact_commands(value: object) -> tuple[FrozenDict, ...]:
+@dataclass(frozen=True)
+class CompactIconCommand:
+    """Typed compact path command; avoids retaining frozen document maps at runtime."""
+
+    kind: str
+    points: tuple[tuple[float, float], ...] = ()
+
+
+def _compact_commands(value: object) -> tuple[CompactIconCommand, ...]:
     """Decode the v0.3 canonical primitive stream at the contract boundary."""
     if not isinstance(value, str):
         raise ContractError("E_ICON_CATALOG_GEOMETRY")
     tokens = value.split()
-    commands: list[FrozenDict] = []
+    commands: list[CompactIconCommand] = []
     index = 0
     while index < len(tokens):
         kind = tokens[index]
@@ -354,10 +362,11 @@ def _compact_commands(value: object) -> tuple[FrozenDict, ...]:
         points = tuple(float(token) for token in raw_points)
         if not all(math.isfinite(point) for point in points):
             raise ContractError("E_ICON_CATALOG_GEOMETRY")
-        commands.append(freeze({"kind": {"M": "move", "L": "line", "Q": "quadratic", "Z": "close"}[kind],
-                                **({"points": list(points)} if points else {})}))
+        commands.append(CompactIconCommand({"M": "move", "L": "line", "Q": "quadratic", "Z": "close"}[kind],
+                                           tuple((points[offset], points[offset + 1])
+                                                 for offset in range(0, len(points), 2))))
         index += count + 1
-    if not commands or commands[0]["kind"] != "move":
+    if not commands or commands[0].kind != "move":
         raise ContractError("E_ICON_CATALOG_GEOMETRY")
     return tuple(commands)
 

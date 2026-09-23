@@ -28,7 +28,7 @@ properties:
     properties:
       provider:
         description: "Store provider implementation."
-        enum: [git, local, content]
+        enum: [git, local, content, package]
       identity:
         description: "Stable identity of the named Store."
         type: string

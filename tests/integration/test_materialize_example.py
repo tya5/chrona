@@ -138,6 +138,22 @@ def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tm
     assert b'data:image/png;base64,' in artifact
 
 
+def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_text_slots(tmp_path):
+    example = ROOT / "examples/controller-z"
+    context = yaml.safe_load((example / "contexts/material-icons.yaml").read_text())
+    reference = context["body"]["inputs"]["iconCatalogs"][0]
+    assert reference["store"] == {"provider": "package", "identity": "chrona.resources"}
+    assert reference["contentIdentity"] == "sha256:5726d3695593177d7cc9da73cab9a16f0ba4f8af9ff92c487163d8aa87f8628f"
+    materialize(example / "manifest.yaml", "material-icons", tmp_path / "material-icons", write=False)
+    artifact = (tmp_path / "material-icons/review.svg").read_text(encoding="utf-8")
+    assert artifact == (example / "generated/material-icons.svg").read_text(encoding="utf-8")
+    assert artifact.count('data-purpose="label-visual"') == 4
+    assert 'data-scene-id="visual:column:Workstream:leading"' in artifact
+    assert 'data-scene-id="visual:cell:firmware:Workstream:leading"' in artifact
+    assert 'data-asset-identity="sha256:5726d3695593177d7cc9da73cab9a16f0ba4f8af9ff92c487163d8aa87f8628f"' in artifact
+    assert 'font-size="14"' in artifact and 'font-size="24"' in artifact
+
+
 def test_successor_view_rejects_removed_icon_bindings(tmp_path):
     copied = tmp_path / "controller-z"; shutil.copytree(ROOT / "examples/controller-z", copied)
     view_path = copied / "views/executive.yaml"; view = yaml.safe_load(view_path.read_text())

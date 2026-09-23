@@ -21,7 +21,7 @@ from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
 from chrona.presentation.layout.surface_composer import resolve_label_visual_advances
 from chrona.presentation.layout.surface_quality import VisualRequest
-from chrona.presentation.model.closure import RenderClosure
+from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
@@ -154,9 +154,9 @@ def render_review(request: RenderRequest) -> RenderedReview:
                                         project)
     if render_closure.summary_profile is not None:
         ledger.summary()
-    visual_requests = tuple(_visual_request(visual, projection, index)
-                            for index, visual in enumerate(render_closure.view.view.visuals))
     icon_assets = {item.icon_id: item for item in render_closure.icon_assets}
+    visual_requests = tuple(_visual_request(visual, projection, index, render_closure)
+                            for index, visual in enumerate(render_closure.view.view.visuals))
     if visual_requests:
         ledger.icons()
     source_inputs = _source_inputs(project, view, projection, summary,
@@ -222,7 +222,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance)
 
 
-def _visual_request(visual: Any, projection: Any, index: int) -> VisualRequest:
+def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:
     """Resolve View-owned direct/field icon selection before Layout geometry."""
     selector = tuple((str(key), str(value)) for key, value in visual.selector.items() if key != "kind")
     ref = visual.ref
@@ -236,7 +236,12 @@ def _visual_request(visual: Any, projection: Any, index: int) -> VisualRequest:
         if ref is None:
             raise RenderFailed("E_ICON_ENCODING_UNKNOWN", "icon encoding has no matching field value", "presentation",
                                f"/body/visuals/{index}/encoding")
-    return VisualRequest(visual.target_kind, selector, str(ref) if ref is not None else None,
+    try:
+        canonical_ref = closure.icon_asset(str(ref)).icon_id if ref is not None else None
+    except ClosureError as error:
+        raise RenderFailed(error.diagnostic_id, error.detail or error.diagnostic_id, "closure",
+                           f"/body/visuals/{index}") from error
+    return VisualRequest(visual.target_kind, selector, canonical_ref,
                          str(visual.encoding["field"]) if visual.encoding else None,
                          tuple((str(key), str(value)) for key, value in visual.encoding.get("domain", {}).items()) if visual.encoding else (),
                          visual.side, visual.decorative, f"/body/visuals/{index}")

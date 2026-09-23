@@ -18,3 +18,7 @@ slides:
     evidence: "Immutable vector and raster catalog icons as a measured label prefix and semantic mark."
     context: contexts/icons.yaml
     expectedSvg: generated/icons.svg
+  - id: material-icons
+    evidence: "Bundled Material Symbols aliases and short names at table, header, and title text sizes."
+    context: contexts/material-icons.yaml
+    expectedSvg: generated/material-icons.svg
