@@ -1,0 +1,12 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: controller-z-executive-light
+body:
+  package: {version: "1"}
+  resources:
+    view: {id: controller-z-executive, kind: view, path: views/executive.yaml}
+    theme: {id: executive-light, kind: theme, path: themes/executive-light.yaml}
+    colorScheme: {id: executive-light, kind: color-scheme, path: schemes/executive-light.yaml}
+    layout: {id: executive-review, kind: layout-profile, path: layouts/executive-review.yaml}
+  compatibleColorSchemes:
+    - {id: executive-light, kind: color-scheme, path: schemes/executive-light.yaml}

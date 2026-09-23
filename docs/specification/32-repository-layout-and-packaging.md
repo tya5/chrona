@@ -129,14 +129,19 @@ test path. This rule does not require artificial one-test-file-per-data-class sp
 ## 8. Example topology
 
 Each user-facing project owns one directory and a README. Shared source facts are stored
-once per project; presentations are nested by variant or slide:
+once per project; public presentation evidence is declared as materializer slides:
 
 ```text
 examples/controller-z/
   project.yaml
   actual.yaml
-  shared/
-  variants/<variant>/{settings.yaml, expected.svg, preview.png?}
+  views/
+  themes/
+  schemes/
+  layouts/
+  contexts/<slide>.yaml
+  generated/<slide>.svg
+  presets/<preset>.yaml
 
 examples/aster-ssd/
   project.yaml
@@ -145,9 +150,11 @@ examples/aster-ssd/
   slides/<slide>/{view.yaml, settings.yaml, expected.svg, preview.png?}
 ```
 
-Shared source resources are stored once at project scope. A variant or slide owns a
-`view.yaml` only when its selection differs from its siblings. Controller Z therefore
-uses its shared project view, while the ASTER slides own distinct per-slide views.
+Shared source resources are stored once at project scope. A declared slide owns a View
+only when its selection differs from its siblings. Reproducible rendered evidence must
+be declared by the corpus manifest and produced through the public materializer; an
+undeclared `variants/` tree, hand-authored SVG, or preview beside source is not corpus
+evidence.
 
 Derived artifacts MUST be reproducible and named `expected.svg`, `preview.png`, or
 `gallery.html` so source and output cannot be confused. No sample-specific behavior may
