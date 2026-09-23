@@ -25,22 +25,27 @@ removed in the first completed migration slice.
 
 ## I350R-1 — Successor contracts and migration removal
 
-Create `icon-catalog/v0.2`, `render-context/v0.11`, `view/v0.12`, and
-font-metrics v0.2 contracts. Replace one catalog reference with a catalog set,
-replace dotted icon IDs with `set:name`, introduce typed visual targets/direct
-reference/field encoding, and require exact cap height. Update typed resource
-models, schema inventory, Context closure model, all examples/conformance, and
-package resources in one atomic migration. Remove v0.1 catalog, v0.10 Context,
-v0.11 View, and v0.1 font metric readers/schemas/fixtures rather than retaining
+Create `icon-catalog/v0.2`, `render-context/v0.11`, a successor `view/v0.12`
+envelope, and font-metrics v0.2 contracts. Replace one catalog reference with a
+catalog set, replace dotted icon IDs with `set:name`, remove the v0.1
+`iconBindings` door, and require exact cap height. The typed `visuals` target,
+direct reference, and field encoding grammar is deliberately introduced only
+with its complete Layout projection in I350R-4: Specification 64 forbids a
+schema-valid target that has no projection. Update typed resource models, schema
+inventory, Context closure model, all examples/conformance, and package
+resources in one atomic migration. Remove v0.1 catalog, v0.10 Context, v0.11
+View, and v0.1 font metric readers/schemas/fixtures rather than retaining
 bridges.
 
 **Files:** schemas/resources inventory, contracts, closure, font metrics,
 example contexts/views/themes, conformance and schema tests.
 
-**Acceptance:** no live predecessor parses; each successor field has a schema
-description; catalog set ambiguity and every invalid target/encoding reject;
-every former source kind is either a typed projected target or absent; cap
-height is validated/identity-closed.
+**Acceptance:** no live predecessor parses; each introduced successor field has
+a schema description; catalog-set ambiguity rejects; every former source kind
+is absent until its typed projected target arrives in I350R-4; cap height is
+validated/identity-closed. I350R-4 owns the direct/encoded visual rejection
+matrix because it introduces the only admissible visual targets and their
+projection together.
 
 ## I350R-2 — Deterministic local Iconify importer and vector normalization
 
@@ -139,4 +144,3 @@ fast-forward verification. A discovered missing target, ownership violation,
 unproven corpus normalization, profile mismatch, or fixture-quality defect
 returns to Specification 64 and architecture review before implementation
 continues.
-

@@ -35,9 +35,10 @@ do not resume the v0.1 implementation path.
   close like other Context inputs. The importer is explicitly outside render and
   package acquisition; Design Space can expose only validated View requests.
 - **Schema evolution:** render-context v0.11, view v0.12, icon-catalog v0.2,
-  and font-metrics v0.2 replace predecessors. Schema inventory must name each
-  predecessor as transitioning with a removal slice; no compatibility parser is
-  retained after corpus migration.
+  and font-metrics v0.2 replace predecessors. The inventory names only live
+  successor schemas; predecessor files/readers are removed with the migration,
+  rather than being misleadingly retained as ``transitioning`` without a
+  compatibility parser.
 
 ## Requirement audit
 
@@ -60,4 +61,3 @@ R350 row to independently reviewable slices and names:
 5. public bundled catalog/notice generation and artifact-size limits; and
 6. focused, full, materializer, conformance, wheel, generated-output, and CI
    acceptance evidence.
-
