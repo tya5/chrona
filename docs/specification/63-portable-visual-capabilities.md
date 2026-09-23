@@ -18,14 +18,13 @@ The initial `chrona-output/visual/v0.6` vocabulary is closed:
 
 - `paint.linear-gradient` (two to eight ordered stops);
 - `effect.drop-shadow` (one layer, finite offsets, blur `0..64`, opacity `0..1`);
-- `clip.rect` (one completed finite rectangle); and
 - `stroke.line-cap` / `stroke.line-join` (closed values `butt|round|square` and
   `miter|round|bevel`).
 
-No raw SVG/XML/CSS, transform, arbitrary definition, filter graph, path clip,
-mask, blend, image, radial gradient, glow/blur, animation, script, HTML, or
-network asset is admitted. A future target cannot make a deferred capability
-available by silently interpreting package data.
+No raw SVG/XML/CSS, transform, arbitrary definition, filter graph, rectangular
+or path clip, mask, blend, image, radial gradient, glow/blur, animation,
+script, HTML, or network asset is admitted. A future target cannot make a
+deferred capability available by silently interpreting package data.
 
 ## 2. Ownership and completed Scene data
 
@@ -33,17 +32,15 @@ Theme declares semantic role bindings. Color Scheme resolves every gradient
 stop and shadow color through existing Scheme intents; literals are forbidden.
 Theme may bind finite number tokens for gradient angle and shadow offset/blur,
 and finite enum tokens for stroke cap/join. Scene resolves these into immutable
-`LinearGradient`, `DropShadow`, `RectClip`, and `StrokeFinish` values. Layout
-continues to supply every bound and must not select treatment. An adapter
-receives only completed values and cannot read Theme/Scheme or choose a
-fallback.
+`LinearGradient`, `DropShadow`, and `StrokeFinish` values. Layout continues to
+supply every bound and must not select treatment. An adapter receives only
+completed values and cannot read Theme/Scheme or choose a fallback.
 
 `LinearGradient` has normalized positions, resolved colors, and an angle;
 `DropShadow` has resolved color, offset, blur, opacity, and one declared
-fidelity; `RectClip` has completed bounds; `StrokeFinish` has cap/join. Every
-number is finite. A primitive may have at most one gradient, one shadow, and
-one clip. Effects never alter source identity, semantic purpose, accessible
-alternative, or Layout geometry.
+fidelity; `StrokeFinish` has cap/join. Every number is finite. A primitive may
+have at most one gradient and one shadow. Effects never alter source identity,
+semantic purpose, accessible alternative, or Layout geometry.
 
 ## 3. Profile and fidelity
 

@@ -34,15 +34,15 @@ gallery use case and an implementable current SVG/PNG/PDF path:
 | --- | --- | --- |
 | Paint | `paint.linear-gradient` | expressive surface differentiation using existing Scheme-bound colors |
 | Effect | `effect.drop-shadow` | bounded elevation without geometry or semantics changes |
-| Composition | `clip.rect` | deterministic viewport/card containment |
 | Stroke | `stroke.line-cap`, `stroke.line-join` | portable finishing of existing Paths |
 | Metadata | existing link/source/accessibility metadata | retain existing contract; no new interaction behavior |
 
 The profile explicitly defers radial gradient, arbitrary pattern, Image,
-Ellipse, transform, path clip, mask, blend mode, glow, blur, arbitrary filter
-graph, text-on-path, animation, scripting, foreignObject, raw CSS/XML, and
-network assets. An ellipse can currently be represented by a completed Path;
-Image awaits a closed asset/store contract; remaining effects lack a target
+Ellipse, transform, rectangular/path clip, mask, blend mode, glow, blur,
+arbitrary filter graph, text-on-path, animation, scripting, foreignObject, raw
+CSS/XML, and network assets. An ellipse can currently be represented by a
+completed Path; Image awaits a closed asset/store contract; clipping awaits a
+Layout-owned containment/group contract; remaining effects lack a target
 fidelity contract. No deferred item may be emulated with SVG escape hatches.
 
 ## Required design work
@@ -70,7 +70,7 @@ fidelity contract. No deferred item may be emulated with SVG escape hatches.
 | D345-2 | Scene compositional contract and Theme/Scheme binding design | layout/Scene/renderer seam and limits are closed |
 | D345-3 | Whole-architecture review and traceability | current/future target distinction and deferred families are explicit |
 | I345-1 | Schema/typed capability profile and Scene data closure | invalid literals, limits, and unsupported requirements fail before rendering |
-| I345-2 | Theme resolution and Scene projection | gradients/shadows/clips/stroke finish are completed Scene data only |
+| I345-2 | Theme resolution and Scene projection | gradients/shadows/stroke finish are completed Scene data only |
 | I345-3 | SVG adapter plus PNG/PDF characterization | adapters serialize or reject; no Theme/geometry/policy imports |
 | I345-4 | Gallery fixture and release gates | public materializer, full suite, conformance, SVG diff, wheel, CI |
 

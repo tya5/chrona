@@ -6,7 +6,7 @@
 ## I345-1 — Profile and resource contract closure
 
 Add a versioned visual profile field to Render Context and closed Theme v0.5
-bindings for gradient, shadow, clip, cap, and join. Validate all finite ranges,
+bindings for gradient, shadow, cap, and join. Validate all finite ranges,
 role/Scheme color bindings, capability IDs, fidelity, and target/profile
 compatibility before Scene construction. Migrate all current contexts atomically
 to the baseline profile; no v0.4 Theme or unprofiled Context reader remains.
@@ -16,8 +16,8 @@ stable diagnostics before artifact write; ordinary existing output is unchanged.
 
 ## I345-2 — Completed compositional Scene values
 
-Extend `ScenePaint`/primitive metadata with immutable completed linear gradient,
-drop shadow, rectangular clip, and stroke finish values. Extend the sole
+Extend `ScenePaint` with immutable completed linear gradient, drop shadow, and
+stroke finish values. Extend the sole
 Theme/Scheme resolver and Scene projection; Layout remains geometry-only.
 
 **Acceptance:** source identity and geometry are unchanged by treatment;
