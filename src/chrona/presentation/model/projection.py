@@ -141,8 +141,6 @@ def federated_scene_input(plan: dict[str, Any], resolved_exports: dict[str, dict
 
 def build_review_projection(project: dict[str, Any], placements: dict[str, dict[str, date]],
                             view: ViewInput, actual_set: dict[str, Any] | None,
-                            style: dict[str, Any] | None = None,
-                            theme: dict[str, Any] | None = None,
                             snapshot_project: dict[str, Any] | None = None,
                             snapshot_placements: dict[str, dict[str, date]] | None = None,
                             scenarios: dict[str, tuple[dict[str, Any], dict[str, dict[str, date]]]] | None = None,
@@ -151,8 +149,6 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     """Derive review facts; composition belongs to View, never Project."""
     if view.comparison.actual == "required" and actual_set is None:
         raise ValueError("E_ACTUAL_REQUIRED")
-    if theme is not None and not theme.get("body", {}).get("roles"):
-        raise ValueError("E_THEME_ROLES")
     latest, unmatched = _latest_observations(
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
     explicit = view.rows.mode == "explicit"
@@ -183,7 +179,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         group_id = _group_id(project, object_id, source_type, grouping)
         selected.append(ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, actual, finish_delta, _roles(style, source_type, actual, finish_delta, critical),
+            planned, actual, finish_delta, _roles(actual, finish_delta, critical),
             group_id, str(project.get("entities", {}).get(group_id, {}).get("title", group_id)),
             dict(project["objects"][object_id].get("fields", {})), object_id, "primary",
             parent_id=entry.parent_id if entry else None,
@@ -198,8 +194,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view)
     elif not explicit:
         _order(selected, view)
-    snapshots = _snapshot_items(snapshot_project, snapshot_placements, style, snapshot_analysis)
-    scenario_items = {scenario_id: _snapshot_items(value[0], value[1], style, None, source_kind="scenario")
+    snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
+    scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
@@ -381,7 +377,7 @@ def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
 
 
 def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,
-                    style: dict[str, Any] | None, analysis: Any | None = None,
+                    analysis: Any | None = None,
                     source_kind: str = "snapshot") -> dict[str, ReviewItem]:
     if project is None or placements is None:
         return {}
@@ -392,7 +388,7 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
         critical = object_id in analysis.critical if analysis is not None else False
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, None, None, _roles(style, source_type, None, None, critical), "", "",
+            planned, None, None, _roles(None, None, critical), "", "",
             dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
             total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")))
     return result
@@ -491,21 +487,12 @@ def _date_or_number(value: Any) -> date | float:
     return value if isinstance(value, date) else date.fromisoformat(value) if isinstance(value, str) else float(value)
 
 
-def _roles(style: dict[str, Any] | None, source_type: str, actual: dict[str, Any] | None,
-           finish_delta: int | None, critical: bool = False) -> tuple[str, ...]:
-    facets = {"planned"} | ({"actual"} if actual else {"missingActual"}) | ({"finishDelta"} if finish_delta is not None else set())
-    if style is None:
-        roles = ["planned", "actual" if actual else "missing-actual"]
-        if finish_delta is not None:
-            roles.append("variance-behind" if finish_delta > 0 else "variance-ahead" if finish_delta < 0 else "variance-on-plan")
-        if critical:
-            roles.append("critical")
-        return tuple(roles)
-    roles: list[str] = []
-    for rule in style.get("body", {}).get("rules", []):
-        when, category = rule["when"], "behind" if (finish_delta or 0) > 0 else "on-track"
-        if when.get("facet") in facets and ("sourceType" not in when or when["sourceType"] == source_type) and ("comparisonCategory" not in when or when["comparisonCategory"] == category):
-            roles.extend(rule["addRoles"])
+def _roles(actual: dict[str, Any] | None, finish_delta: int | None,
+           critical: bool = False) -> tuple[str, ...]:
+    """Map selected facts to the closed semantic-role vocabulary."""
+    roles = ["planned", "actual" if actual else "missing-actual"]
+    if finish_delta is not None:
+        roles.append("variance-behind" if finish_delta > 0 else "variance-ahead" if finish_delta < 0 else "variance-on-plan")
     if critical:
         roles.append("critical")
-    return tuple(dict.fromkeys(roles))
+    return tuple(roles)

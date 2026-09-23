@@ -1,8 +1,9 @@
 from datetime import date
 from dataclasses import replace
+import inspect
 import pytest
 
-from chrona.presentation.model.projection import build_review_projection
+from chrona.presentation.model.projection import _roles, build_review_projection
 from chrona.presentation.model.surface_content import table_value
 from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGrouping, ViewInput, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
@@ -19,7 +20,7 @@ def typed_view(value):
         items = tuple(
             ViewRowItem(item["id"], item["source"]["kind"], item["source"]["object"], item.get("track", "stacked"))
             for item in row.get("items", ())
-        )
+    )
         parsed_rows.append(ViewRow(str(row["id"]), row.get("label"), int(row["depth"]), row.get("parentRow"),
                                    row.get("group"), row.get("tableSubject"), items))
     selection = body.get("selection", {}).get("include", {})
@@ -33,6 +34,16 @@ def typed_view(value):
         ViewComparison(None, body["comparison"]["actual"], None, None, tuple(body["comparison"].get("facets", ()))),
         ViewVisibility(False, "none", "none"), freeze({}), (), (),
         ViewRows(rows["mode"], tuple(parsed_rows)), None, (), None, None, None)
+
+
+def test_projection_exposes_only_fact_derived_role_inputs() -> None:
+    assert set(inspect.signature(build_review_projection).parameters).isdisjoint({"style", "theme"})
+    assert _roles(None, None) == ("planned", "missing-actual")
+    assert _roles({"start": date(2026, 1, 1)}, 3, critical=True) == (
+        "planned", "actual", "variance-behind", "critical",
+    )
+    assert _roles({"at": date(2026, 1, 1)}, -2) == ("planned", "actual", "variance-ahead")
+    assert _roles({"at": date(2026, 1, 1)}, 0) == ("planned", "actual", "variance-on-plan")
 
 
 def test_explicit_row_composes_serial_task_and_milestone_under_one_owner():
