@@ -28,8 +28,10 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 
 
 def test_materializer_detects_changed_expected_svg(tmp_path):
-    manifest = ROOT / "examples/controller-z/manifest.yaml"
-    expected = ROOT / "examples/controller-z/generated/executive.svg"
+    copied_example = tmp_path / "controller-z"
+    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    manifest = copied_example / "manifest.yaml"
+    expected = copied_example / "generated/executive.svg"
     original = expected.read_bytes()
     try:
         expected.write_bytes(original + b"changed")
