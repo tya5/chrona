@@ -18,6 +18,7 @@ from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
+from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
@@ -175,6 +176,14 @@ def render_review(request: RenderRequest) -> RenderedReview:
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
+    visual_requests = tuple(
+        VisualRequest(visual.target_kind,
+                      tuple((str(key), str(value)) for key, value in visual.selector.items() if key != "kind"),
+                      visual.ref, str(visual.encoding["field"]) if visual.encoding else None,
+                      tuple((str(key), str(value)) for key, value in visual.encoding.get("domain", {}).items()) if visual.encoding else (),
+                      visual.side, visual.decorative, f"/body/visuals/{index}")
+        for index, visual in enumerate(render_closure.view.view.visuals)
+    )
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
@@ -184,6 +193,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
         icon_bindings=(),
         icon_assets={item.icon_id: item for item in render_closure.icon_assets},
+        visual_requests=visual_requests,
     )
 
     unused = ledger.unused()

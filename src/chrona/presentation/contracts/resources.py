@@ -197,6 +197,18 @@ class ViewVisibility:
 
 
 @dataclass(frozen=True)
+class ViewVisual:
+    """Schema-accepted visual intent, without any geometry or catalog payload."""
+
+    target_kind: str
+    selector: FrozenDict
+    ref: str | None
+    encoding: FrozenDict | None
+    side: str
+    decorative: bool
+
+
+@dataclass(frozen=True)
 class ViewInput:
     """Closed View v0.3 vocabulary after schema acceptance."""
 
@@ -218,6 +230,7 @@ class ViewInput:
     surface: str = "table-timeline"
     color_encoding: FrozenDict | None = None
     progress_fill: str | None = None
+    visuals: tuple[ViewVisual, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -583,7 +596,10 @@ def _view_input(body: FrozenDict) -> ViewInput:
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]), body.get("colorEncoding"),
-        str(body["progressFill"]["source"]) if "progressFill" in body else None)
+        str(body["progressFill"]["source"]) if "progressFill" in body else None,
+        tuple(ViewVisual(str(item["target"]["kind"]), item["target"], str(item["ref"]) if "ref" in item else None,
+                         item.get("encoding"), str(item.get("side", "leading")), bool(item.get("decorative", True)))
+              for item in body.get("visuals", ())) )
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:
