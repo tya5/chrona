@@ -93,7 +93,7 @@ def _explain(error: ValidationError) -> SchemaViolation:
         raw = error.validator_value
         expected = tuple(str(item) for item in raw) if isinstance(raw, (tuple, list)) else (str(raw),)
         return SchemaViolation(pointer, rule, expected, actual_kind, f"expected type {' or '.join(expected)}, got {actual_kind}")
-    if rule in {"minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems"}:
+    if rule in {"minimum", "maximum", "minLength", "maxLength", "minItems", "maxItems", "minProperties", "maxProperties"}:
         bound = _literal(error.validator_value)
         return SchemaViolation(pointer, rule, (bound,), actual_kind, f"expected {rule} {bound}")
     if rule == "pattern":

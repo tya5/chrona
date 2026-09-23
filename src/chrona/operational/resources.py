@@ -10,6 +10,7 @@ import jsonschema
 import yaml
 
 from chrona.resources import schema_resource
+from chrona.schema_diagnostics import explain_errors
 
 
 class OperationalResourceError(ValueError):
@@ -52,10 +53,13 @@ def parse_document(payload: str | bytes, schema_name: str) -> dict[str, Any]:
     schema = yaml.safe_load(schema_resource(schema_name).read_text(encoding="utf-8"))
     store = _schema_store()
     validator = jsonschema.Draft202012Validator(schema, resolver=jsonschema.RefResolver.from_schema(schema, store=store))
-    error = next(validator.iter_errors(value), None)
-    if error is not None:
-        location = "/" + "/".join(str(part) for part in error.absolute_path)
-        raise OperationalResourceError("E_OPERATIONAL_SCHEMA", f"{location}: {error.message}")
+    errors = tuple(validator.iter_errors(value))
+    if errors:
+        identity = value.get("id")
+        violation = explain_errors(
+            errors, resource_kind=schema_name.removesuffix(".schema.yaml"), resource_identity=identity if isinstance(identity, str) else None,
+        )
+        raise OperationalResourceError("E_OPERATIONAL_SCHEMA", f"{violation.pointer}: {violation.message}")
     return value
 
 

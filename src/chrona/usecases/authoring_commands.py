@@ -13,11 +13,18 @@ from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_
 def parse_authoring_command(path: Path) -> dict[str, Any]:
     import yaml
     from chrona.resources import schema_resource
+    from chrona.schema_diagnostics import explain_errors
     import jsonschema
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
     schema = yaml.safe_load(schema_resource("authoring-command-v0.1.schema.yaml").read_text())
-    if not isinstance(value, dict) or next(jsonschema.Draft202012Validator(schema).iter_errors(value), None):
-        raise ValueError("E_AUTHORING_COMMAND_SCHEMA")
+    if not isinstance(value, dict):
+        raise ValueError("E_AUTHORING_COMMAND_SCHEMA: expected object")
+    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(value))
+    if errors:
+        violation = explain_errors(
+            errors, resource_kind="authoring-command", resource_identity=value.get("commandId") if isinstance(value.get("commandId"), str) else None,
+        )
+        raise ValueError(f"E_AUTHORING_COMMAND_SCHEMA: {violation.pointer}: {violation.message}")
     return value
 
 

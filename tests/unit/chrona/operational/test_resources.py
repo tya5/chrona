@@ -36,6 +36,17 @@ payload: {snapshotId: baseline, registry: {id: r}}
         raise AssertionError("expected schema rejection")
 
 
+def test_operational_schema_error_uses_a_stable_pointer_and_explanation():
+    try:
+        parse_document("version: chrona/command/v0.2\ncommandId: bad\ntype: unknown\ntarget: {}\nbaseRevision: r\npayload: {}\n", "command-request-v0.2.schema.yaml")
+    except OperationalResourceError as error:
+        assert error.code == "E_OPERATIONAL_SCHEMA"
+        assert "expected minProperties 1" in str(error)
+        assert "should be non-empty" not in str(error)
+    else:
+        raise AssertionError("expected schema rejection")
+
+
 def test_actual_set_v02_requires_provenance_for_external_facts():
     payload = """version: chrona/actual-set/v0.2
 kind: actual-set
