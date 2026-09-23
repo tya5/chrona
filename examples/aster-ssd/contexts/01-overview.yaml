@@ -5,58 +5,87 @@ body:
   project:
     id: aster-enterprise-ssd
     kind: project
-    store: {provider: local, identity: aster-ssd-example}
+    store:
+      provider: local
+      identity: aster-ssd-example
     address: project.yaml
-    revision: {token: example-v1}
+    revision:
+      token: example-v1
   view:
     id: aster-01-overview
     kind: view
-    store: {provider: local, identity: aster-ssd-example}
+    store:
+      provider: local
+      identity: aster-ssd-example
     address: views/01-overview.yaml
-    revision: {token: example-v1}
+    revision:
+      token: example-v1
   theme:
     id: executive-light
     kind: theme
-    store: {provider: local, identity: aster-ssd-example}
+    store:
+      provider: local
+      identity: aster-ssd-example
     address: themes/executive-light.yaml
-    revision: {token: example-v1}
+    revision:
+      token: example-v1
   colorScheme:
     id: executive-light
     kind: color-scheme
-    store: {provider: local, identity: aster-ssd-example}
+    store:
+      provider: local
+      identity: aster-ssd-example
     address: schemes/executive-light.yaml
-    revision: {token: example-v1}
+    revision:
+      token: example-v1
   layout:
     id: executive-review
     kind: layout-profile
-    store: {provider: local, identity: aster-ssd-example}
+    store:
+      provider: local
+      identity: aster-ssd-example
     address: layouts/executive-review.yaml
-    revision: {token: example-v1}
+    revision:
+      token: example-v1
   inputs:
     actual:
       id: aster-observed-2027-06-30
       kind: actual-set
-      store: {provider: local, identity: aster-ssd-example}
+      store:
+        provider: local
+        identity: aster-ssd-example
       address: actual.yaml
-      revision: {token: example-v1}
+      revision:
+        token: example-v1
     detailProfile:
       id: aster-ssd-review-detail
       kind: review-detail-profile
-      store: {provider: local, identity: aster-ssd-example}
+      store:
+        provider: local
+        identity: aster-ssd-example
       address: profiles/review-detail.yaml
-      revision: {token: example-v1}
+      revision:
+        token: example-v1
   environment:
-    viewport: {inlineSize: 1600, blockSize: 900}
+    viewport:
+      inlineSize: 1600
+      blockSize: 900
     locale: en-US
     fontMetrics:
       algorithm: declared-metrics-v1
       assets:
-        - family: Nimbus Sans
-          weight: 400
-          revision: nimbus-sans-regular-v1
-          path: font_metrics/nimbus-sans-regular-v1.json
+      - family: Nimbus Sans
+        weight: 400
+        revision: nimbus-sans-regular-v1
+        path: font_metrics/nimbus-sans-regular-v1.json
       missingFont: declared-fallback
     scenePrecision: 3
   target:
     kind: svg
-    capabilities: [accessibleText, hierarchicalAxis, marker, semanticRoles, sourceMetadata, tableSemantics]
+    capabilities:
+    - accessibleText
+    - hierarchicalAxis
+    - marker
+    - semanticRoles
+    - sourceMetadata
+    - tableSemantics

@@ -1,13 +1,13 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.8"
-title: "Chrona View v0.8"
+$id: "chrona/view-v0.9"
+title: "Chrona View v0.9"
 description: "Declarative selection and presentation intent for one review surface."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - description: "View document fields extending the shared presentation resource."
     type: object
     properties:
-      version: {const: "chrona/view/v0.8"}
+      version: {const: "chrona/view/v0.9"}
       kind: {const: view}
       body:
         type: object
@@ -15,6 +15,24 @@ allOf:
         additionalProperties: false
         properties:
           surface: {enum: [table-timeline, dependency-network]}
+          colorEncoding:
+            type: object
+            description: "One closed field-to-colour encoding for eligible planned marks."
+            required: [scale, target, source, domain]
+            additionalProperties: false
+            properties:
+              scale: {type: string, minLength: 1}
+              target: {const: planned}
+              source:
+                type: object
+                required: [field]
+                additionalProperties: false
+                properties: {field: {type: string, minLength: 1}}
+              domain:
+                type: array
+                minItems: 1
+                uniqueItems: true
+                items: {type: string, minLength: 1}
           selection:
             type: object
             required: [include]

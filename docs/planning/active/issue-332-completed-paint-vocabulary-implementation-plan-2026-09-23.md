@@ -7,7 +7,7 @@ contract without a compatibility path.
 ## P332-1 — Typed contract and Theme validation
 
 **Files:** `scene/model.py`, `model/theme_tokens.py`,
-`schemas/theme-v0.3.schema.yaml`, Theme/Scene unit tests.
+`schemas/theme-v0.4.schema.yaml`, Theme/Scene unit tests.
 
 **Change:** Add immutable `ScenePaint` and surface canvas paint. Extend Theme
 role bindings with validated `strokeWidth` and `dashPattern` token access.

@@ -214,6 +214,7 @@ class ViewInput:
     time_presentation: FrozenDict | None
     annotation_presentation: str | None
     surface: str = "table-timeline"
+    color_encoding: FrozenDict | None = None
 
 
 @dataclass(frozen=True)
@@ -408,9 +409,9 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.8"): "render-context-v0.8.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
-    ("view", "chrona/view/v0.8"): "view-v0.8.schema.yaml",
-    ("theme", "chrona/theme/v0.3"): "theme-v0.3.schema.yaml",
-    ("color-scheme", "chrona/color-scheme/v0.1"): "color-scheme-v0.1.schema.yaml",
+    ("view", "chrona/view/v0.9"): "view-v0.9.schema.yaml",
+    ("theme", "chrona/theme/v0.4"): "theme-v0.4.schema.yaml",
+    ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
@@ -505,7 +506,7 @@ def _view_input(body: FrozenDict) -> ViewInput:
         tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row"))), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
-        str(body["surface"]))
+        str(body["surface"]), body.get("colorEncoding"))
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:

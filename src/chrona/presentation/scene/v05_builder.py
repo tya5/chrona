@@ -63,17 +63,31 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
     return PaintFamily.SOLID
 
 
-def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView) -> SceneSurface:
+def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView,
+                            *, scale_target_role: str | None = None,
+                            scale_paints: Mapping[str, str] | None = None,
+                            scale_legend_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     try:
-        primitives = tuple(replace(primitive, paint=resolve_scene_paint(
-            tokens, primitive.visual_role, _paint_family(primitive, tokens)),
-                                   pattern=tokens.optional_pattern(primitive.visual_role))
+        primitives = tuple(_complete_primitive_paint(
+            primitive, tokens, scale_target_role, scale_paints or {}, scale_legend_paints or {})
                            for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS)
     except ScenePaintError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     return replace(surface, primitives=primitives, canvas_paint=canvas)
+
+
+def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
+                              scale_target_role: str | None, scale_paints: Mapping[str, str],
+                              scale_legend_paints: Mapping[str, str]) -> ScenePrimitive:
+    paint = resolve_scene_paint(tokens, primitive.visual_role, _paint_family(primitive, tokens))
+    override = (scale_paints.get(primitive.source_ref)
+                if primitive.visual_role == scale_target_role else None)
+    if primitive.source_kind == "legend":
+        override = scale_legend_paints.get(primitive.source_ref, override)
+    return replace(primitive, paint=replace(paint, fill=override) if override is not None else paint,
+                   pattern=tokens.optional_pattern(primitive.visual_role))
 
 
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
@@ -108,7 +122,10 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
-        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens)
+        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens,
+                                       scale_target_role=value.surface_content.scale_target_role,
+                                       scale_paints=dict(value.surface_content.scale_paints),
+                                       scale_legend_paints=dict(value.surface_content.scale_legend_paints))
     if surface == "dependency-network":
         return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
@@ -355,8 +372,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
         if placed.placement_id.startswith("legend-swatch:"):
+            role = "planned" if placed.source_ref.startswith("scale:") else placed.source_ref
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
-                                             legend_binding.purpose, placed.source_ref, bounds))
+                                             legend_binding.purpose, role, bounds))
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",

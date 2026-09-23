@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:theme-v0.3"
-title: "Chrona Theme v0.3"
+$id: "urn:chrona:theme-v0.4"
+title: "Chrona Theme v0.4"
 description: "Semantic appearance tokens and bindings; concrete colors remain in a Color Scheme."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {description: "This Theme contract version.", const: "chrona/theme/v0.3"}
+  version: {description: "This Theme contract version.", const: "chrona/theme/v0.4"}
   kind: {description: "The resource kind for semantic appearance bindings.", const: theme}
   id: {description: "Stable Theme identifier.", type: string, minLength: 1}
   body:
@@ -66,7 +66,31 @@ properties:
         patternProperties:
           "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke)$":
             description: "Color Scheme intent selected for one fill or stroke role."
-            enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario, category]
+            examples: [accent, "category:bus"]
+            anyOf:
+              - description: "One closed non-category Scheme intent."
+                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario]
+              - description: "One explicit named category slot."
+                pattern: "^category:[A-Za-z][A-Za-z0-9_-]*$"
+                examples: ["category:bus"]
+      colorScales:
+        type: object
+        description: "Named explicit value-to-Scheme-slot maps consumed by View colour encodings."
+        additionalProperties:
+          type: object
+          description: "One scale's declared slot map."
+          required: [slots]
+          additionalProperties: false
+          properties:
+            slots:
+              type: object
+              description: "Exact domain-value to named Scheme category slot mapping."
+              minProperties: 1
+              additionalProperties:
+                description: "One named Scheme category slot identifier."
+                type: string
+                pattern: "^[A-Za-z][A-Za-z0-9_-]*$"
+                examples: [bus]
       metrics:
         type: object
         description: "Named source-measurement metric bindings used by Layout."

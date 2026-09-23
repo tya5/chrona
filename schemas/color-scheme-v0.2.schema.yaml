@@ -1,18 +1,18 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:color-scheme-v0.1"
-title: "Chrona Color Scheme v0.1"
+$id: "urn:chrona:color-scheme-v0.2"
+title: "Chrona Color Scheme v0.2"
 description: "Concrete immutable palette, suitability claims, and palette provenance."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {description: "This Color Scheme contract version.", const: "chrona/color-scheme/v0.1"}
+  version: {description: "This Color Scheme contract version.", const: "chrona/color-scheme/v0.2"}
   kind: {description: "The resource kind for a concrete color palette.", const: color-scheme}
   id: {description: "Stable Color Scheme identifier.", type: string, minLength: 1}
   body:
     type: object
     description: "Concrete colors, category colors, suitability claims, and provenance."
-    required: [colors, category, suitability, provenance]
+    required: [colors, categories, suitability, provenance]
     additionalProperties: false
     properties:
       colors:
@@ -34,11 +34,12 @@ properties:
           insideLabelActual: {description: "Text color on actual marks.", $ref: "#/$defs/color"}
           insideLabelSnapshot: {description: "Text color on snapshot marks.", $ref: "#/$defs/color"}
           insideLabelScenario: {description: "Text color on scenario marks.", $ref: "#/$defs/color"}
-      category:
-        type: array
-        description: "One or more concrete colors available for category roles."
-        minItems: 1
-        items: {$ref: "#/$defs/color"}
+      categories:
+        type: object
+        description: "Explicit named concrete colors available for category roles and scales."
+        minProperties: 1
+        propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9_-]*$"}
+        additionalProperties: {$ref: "#/$defs/color"}
       suitability:
         type: object
         description: "Declared palette suitability; these claims do not change color resolution."

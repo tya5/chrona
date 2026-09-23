@@ -12,12 +12,14 @@ from chrona.presentation.model.surface_content import (
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
+from chrona.presentation.model.color_scale import ResolvedColorScale
 
 
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
                                   *, actual_set: Mapping[str, Any] | None = None,
                                   detail: ReviewDetailInput | None = None, summary: SummaryContent,
-                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US") -> SurfaceContentInput:
+                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
+                                  color_scale: ResolvedColorScale | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     columns = tuple((column.id, column.id) for column in view.table_columns)
@@ -91,6 +93,18 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest)
                        if layout_manifest is not None else None)
     legend = tuple((item.role, item.label) for item in detail.legend) if detail is not None else ()
+    scale_paints: tuple[tuple[str, str], ...] = ()
+    scale_legend_paints: tuple[tuple[str, str], ...] = ()
+    if color_scale is not None:
+        scale_paints = tuple((item.object_id, color_scale.color_for(item.object_id, item.fields))
+                             for item in projection.items if item.source_kind in {"primary", "combined"})
+        used = {item.fields.get(color_scale.source_field) for item in projection.items
+                if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
+        scale_entries = tuple((f"scale:{color_scale.scale_id}:{value}", value)
+                              for value in color_scale.domain if value in used)
+        legend += scale_entries
+        scale_legend_paints = tuple((f"scale:{color_scale.scale_id}:{value}", dict(color_scale.colors)[value])
+                                    for value in color_scale.domain if value in used)
     calendar_closed, calendar_exceptions = _calendar_closures(project, projection.window, view.shading or {}, temporal)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
@@ -112,7 +126,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                observation_rows=resolved_detail.observation_rows if resolved_detail else (),
                                label_fallback=label_fallback, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
-                               table_cell_objects=table_cell_objects)
+                               table_cell_objects=table_cell_objects,
+                               scale_target_role=color_scale.target_role if color_scale else None,
+                               scale_paints=scale_paints, scale_legend_paints=scale_legend_paints)
 
 
 def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], shading: Mapping[str, Any],

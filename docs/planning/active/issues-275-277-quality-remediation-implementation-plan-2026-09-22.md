@@ -43,7 +43,7 @@ consumed by Layout; only actual allocated-capacity failure reports a Layout over
 
 ## P276b — Project object-type selection
 
-1. Extend `schemas/view-v0.8.schema.yaml` and the typed View contract so geometry
+1. Extend `schemas/view-v0.9.schema.yaml` and the typed View contract so geometry
    kind (`span`/`point`) remains its current selector while Project object-type
    include/exclude is expressed independently.
 2. Normalize and apply the predicates once in `projection.py`, before hierarchy

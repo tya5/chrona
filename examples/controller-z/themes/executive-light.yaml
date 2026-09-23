@@ -1,61 +1,169 @@
-version: chrona/theme/v0.3
+version: chrona/theme/v0.4
 kind: theme
 id: executive-light
 body:
   values:
-    editorial: {type: fontFamily, value: 'Nimbus Sans, Arial, sans-serif'}
-    text-weight: {type: fontWeight, value: 400}
-    spacing.none: {type: number, value: 0}
-    spacing.s: {type: number, value: 8}
-    spacing.m: {type: number, value: 16}
-    spacing.l: {type: number, value: 24}
-    panel.minimum: {type: number, value: 180}
-    text-size: {type: number, value: 14}
-    text-line-height: {type: number, value: 1.4}
-    heading-size: {type: number, value: 24}
-    heading-line-height: {type: number, value: 1.2}
-    axis-size: {type: number, value: 12}
-    axis-line-height: {type: number, value: 1.2}
-    legend-size: {type: number, value: 12}
-    legend-line-height: {type: number, value: 1.4}
-    summary-size: {type: number, value: 14}
-    summary-line-height: {type: number, value: 1.4}
-    annotation-size: {type: number, value: 14}
-    annotation-line-height: {type: number, value: 1.4}
-    dependency-marker: {type: marker, value: triangle}
-    stroke-width: {type: number, value: 1}
-    timeline-day-width: {type: number, value: 12}
-    timeline-row-height: {type: number, value: 72}
-    timeline-mark-size: {type: number, value: 24}
-    timeline-group-header-size: {type: number, value: 20}
-    timeline-axis-height: {type: number, value: 48}
-    network-node-min-inline: {type: number, value: 120}
-    network-node-min-block: {type: number, value: 36}
-    network-rank-gap: {type: number, value: 24}
-    table-column-width: {type: number, value: 120}
-    table-column-gutter: {type: number, value: 10}
-    table-indent: {type: number, value: 16}
-    table-header-height: {type: number, value: 44}
-    opacity.group-band: {type: number, value: 0.12}
-    opacity.group-header-band: {type: number, value: 0.2}
-    opacity.calendar-closed: {type: number, value: 0.12}
+    editorial:
+      type: fontFamily
+      value: Nimbus Sans, Arial, sans-serif
+    text-weight:
+      type: fontWeight
+      value: 400
+    spacing.none:
+      type: number
+      value: 0
+    spacing.s:
+      type: number
+      value: 8
+    spacing.m:
+      type: number
+      value: 16
+    spacing.l:
+      type: number
+      value: 24
+    panel.minimum:
+      type: number
+      value: 180
+    text-size:
+      type: number
+      value: 14
+    text-line-height:
+      type: number
+      value: 1.4
+    heading-size:
+      type: number
+      value: 24
+    heading-line-height:
+      type: number
+      value: 1.2
+    axis-size:
+      type: number
+      value: 12
+    axis-line-height:
+      type: number
+      value: 1.2
+    legend-size:
+      type: number
+      value: 12
+    legend-line-height:
+      type: number
+      value: 1.4
+    summary-size:
+      type: number
+      value: 14
+    summary-line-height:
+      type: number
+      value: 1.4
+    annotation-size:
+      type: number
+      value: 14
+    annotation-line-height:
+      type: number
+      value: 1.4
+    dependency-marker:
+      type: marker
+      value: triangle
+    stroke-width:
+      type: number
+      value: 1
+    timeline-day-width:
+      type: number
+      value: 12
+    timeline-row-height:
+      type: number
+      value: 72
+    timeline-mark-size:
+      type: number
+      value: 24
+    timeline-group-header-size:
+      type: number
+      value: 20
+    timeline-axis-height:
+      type: number
+      value: 48
+    network-node-min-inline:
+      type: number
+      value: 120
+    network-node-min-block:
+      type: number
+      value: 36
+    network-rank-gap:
+      type: number
+      value: 24
+    table-column-width:
+      type: number
+      value: 120
+    table-column-gutter:
+      type: number
+      value: 10
+    table-indent:
+      type: number
+      value: 16
+    table-header-height:
+      type: number
+      value: 44
+    opacity.group-band:
+      type: number
+      value: 0.12
+    opacity.group-header-band:
+      type: number
+      value: 0.2
+    opacity.calendar-closed:
+      type: number
+      value: 0.12
   roles:
-    group-band: {opacity: opacity.group-band}
-    group-header-band: {opacity: opacity.group-header-band}
-    calendar-closed: {opacity: opacity.calendar-closed}
-    text: {fontFamily: editorial, fontWeight: text-weight, fontSize: text-size, lineHeight: text-line-height}
-    heading: {fontFamily: editorial, fontWeight: text-weight, fontSize: heading-size, lineHeight: heading-line-height}
-    axis: {fontFamily: editorial, fontWeight: text-weight, fontSize: axis-size, lineHeight: axis-line-height}
-    legend: {fontFamily: editorial, fontWeight: text-weight, fontSize: legend-size, lineHeight: legend-line-height}
-    summary: {fontFamily: editorial, fontWeight: text-weight, fontSize: summary-size, lineHeight: summary-line-height}
-    annotation: {fontFamily: editorial, fontWeight: text-weight, fontSize: annotation-size, lineHeight: annotation-line-height, strokeWidth: stroke-width}
-    axis-major: {strokeWidth: stroke-width}
-    axis-minor: {strokeWidth: stroke-width}
-    network-edge: {strokeWidth: stroke-width}
-    critical-edge: {strokeWidth: stroke-width}
-    as-of: {strokeWidth: stroke-width}
-    variance-behind: {strokeWidth: stroke-width}
-    dependency: {marker: dependency-marker, strokeWidth: stroke-width}
+    group-band:
+      opacity: opacity.group-band
+    group-header-band:
+      opacity: opacity.group-header-band
+    calendar-closed:
+      opacity: opacity.calendar-closed
+    text:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+    heading:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: heading-size
+      lineHeight: heading-line-height
+    axis:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: axis-size
+      lineHeight: axis-line-height
+    legend:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: legend-size
+      lineHeight: legend-line-height
+    summary:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: summary-size
+      lineHeight: summary-line-height
+    annotation:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: annotation-size
+      lineHeight: annotation-line-height
+      strokeWidth: stroke-width
+    axis-major:
+      strokeWidth: stroke-width
+    axis-minor:
+      strokeWidth: stroke-width
+    network-edge:
+      strokeWidth: stroke-width
+    critical-edge:
+      strokeWidth: stroke-width
+    as-of:
+      strokeWidth: stroke-width
+    variance-behind:
+      strokeWidth: stroke-width
+    dependency:
+      marker: dependency-marker
+      strokeWidth: stroke-width
   colorBindings:
     background.fill: surface
     text.fill: text
@@ -67,11 +175,11 @@ body:
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: surface
     table-header.fill: surfaceRaised
-    group-band.fill: category
+    group-band.fill: category:default
     group-header-band.fill: surfaceRaised
-    'group:factory-team.fill': category
-    'group:fw-team.fill': category
-    'group:validation-team.fill': category
+    group:factory-team.fill: category:factory-team
+    group:fw-team.fill: category:fw-team
+    group:validation-team.fill: category:validation-team
     planned.fill: accent
     network-node.fill: surfaceRaised
     network-edge.stroke: textMuted

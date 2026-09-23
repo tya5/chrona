@@ -1,27 +1,40 @@
-version: chrona/color-scheme/v0.1
+version: chrona/color-scheme/v0.2
 kind: color-scheme
 id: print-mono
 body:
   colors:
-    surface: '#FFFFFF'
-    surfaceRaised: '#F1F1F1'
-    text: '#111111'
-    textMuted: '#555555'
-    accent: '#1F1F1F'
-    positive: '#8C8C8C'
-    negative: '#B00020'
-    warning: '#7A5A00'
-    neutral: '#BDBDBD'
-    insideLabelPlanned: '#FFFFFF'
-    insideLabelActual: '#111111'
-    insideLabelSnapshot: '#111111'
-    insideLabelScenario: '#111111'
-  category: ['#F4F4F4', '#E9E9E9', '#DEDEDE', '#D3D3D3']
+    surface: "#FFFFFF"
+    surfaceRaised: "#F1F1F1"
+    text: "#111111"
+    textMuted: "#555555"
+    accent: "#1F1F1F"
+    positive: "#8C8C8C"
+    negative: "#B00020"
+    warning: "#7A5A00"
+    neutral: "#BDBDBD"
+    insideLabelPlanned: "#FFFFFF"
+    insideLabelActual: "#111111"
+    insideLabelSnapshot: "#111111"
+    insideLabelScenario: "#111111"
   suitability:
     background: light
-    colorVision: [deuteranopia, protanopia, tritanopia]
+    colorVision:
+    - deuteranopia
+    - protanopia
+    - tritanopia
     print: photocopy-friendly
   provenance:
     kind: chrona-authored
     source: Chrona HALCYON-1 example, print-mono
     license: MIT
+  categories:
+    default: "#F4F4F4"
+    bus: "#F4F4F4"
+    payload: "#E9E9E9"
+    ait: "#DEDEDE"
+    ground: "#D3D3D3"
+    launch: "#F4F4F4"
+    ops: "#E9E9E9"
+    factory-team: "#F4F4F4"
+    fw-team: "#E9E9E9"
+    validation-team: "#DEDEDE"

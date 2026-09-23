@@ -1,18 +1,46 @@
-version: chrona/view/v0.8
+version: chrona/view/v0.9
 kind: view
 id: controller-z-plan-only
 body:
   surface: table-timeline
   selection:
     include:
-      ids: [architecture, firmware, evb-arrival]
-      types: [span, point]
-  grouping: {by: none, missing: ungrouped}
-  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
-  window: {mode: selected-planned, marginDays: 7}
-  comparison: {baseline: primary, actual: optional, observationSelection: latest, deltaUnit: calendar-days, facets: [planned]}
-  visibility: {labels: true, relations: {mode: semantic, overflow: suppress}, annotations: none}
-  layoutIntent: {compactness: balanced, itemStacking: stable}
+      ids:
+      - architecture
+      - firmware
+      - evb-arrival
+      types:
+      - span
+      - point
+  grouping:
+    by: none
+    missing: ungrouped
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+    marginDays: 7
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+  visibility:
+    labels: true
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  layoutIntent:
+    compactness: balanced
+    itemStacking: stable
   tableColumns:
-    - {id: Work item, source: title, missing: em-dash}
-  rows: {mode: automatic}
+  - id: Work item
+    source: title
+    missing: em-dash
+  rows:
+    mode: automatic

@@ -1,17 +1,56 @@
-version: chrona/view/v0.8
+version: chrona/view/v0.9
 kind: view
 id: controller-z-review
 body:
   surface: table-timeline
-  selection: {include: {types: [span, point]}}
-  grouping: {by: field, field: owner, missing: ungrouped, presentation: header}
-  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
-  window: {mode: selected-comparison, marginDays: 7}
-  comparison: {baseline: primary, actual: required, observationSelection: latest, deltaUnit: calendar-days, facets: [planned, actual, finishDelta, missingActual, unmatchedActual]}
-  visibility: {labels: true, relations: {mode: semantic, overflow: suppress}, annotations: all}
-  layoutIntent: {compactness: balanced, itemStacking: stable}
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-comparison
+    marginDays: 7
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels: true
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: all
+  layoutIntent:
+    compactness: balanced
+    itemStacking: stable
   tableColumns:
-    - {id: Workstream, source: {field: workstream}, missing: em-dash}
-    - {id: Schedule, source: {comparisonFacet: finishDelta}, missing: em-dash}
-    - {id: Activity, source: title, missing: em-dash}
-  rows: {mode: automatic}
+  - id: Workstream
+    source:
+      field: workstream
+    missing: em-dash
+  - id: Schedule
+    source:
+      comparisonFacet: finishDelta
+    missing: em-dash
+  - id: Activity
+    source: title
+    missing: em-dash
+  rows:
+    mode: automatic

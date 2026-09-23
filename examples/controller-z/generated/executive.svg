@@ -11,13 +11,13 @@
 <text data-scene-id="cell:dvt:Workstream" data-source-ref="dvt" data-purpose="table-cell" x="38" y="606.55" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">DVT Qualification</text>
 <text data-scene-id="cell:pvt:Workstream" data-source-ref="pvt" data-purpose="table-cell" x="38" y="707.05" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">PVT and Factory Validation</text>
 <text data-scene-id="cell:ga:Workstream" data-source-ref="ga" data-purpose="table-cell" x="38" y="787.55" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">General Availability</text>
-<rect data-scene-id="group:fw-team" data-source-ref="fw-team" data-purpose="group-decoration" x="590.4" y="136.8" width="985.6" height="241.5" opacity="0.12" fill="#FFF4E4"/>
+<rect data-scene-id="group:fw-team" data-source-ref="fw-team" data-purpose="group-decoration" x="590.4" y="136.8" width="985.6" height="241.5" opacity="0.12" fill="#EEF3F8"/>
 <rect data-scene-id="group-header-band:fw-team" data-source-ref="fw-team" data-purpose="group-header-band" x="24" y="116.8" width="1552" height="20" opacity="0.2" fill="#EAF0F8"/>
 <text data-scene-id="group-header:fw-team" data-source-ref="fw-team" data-purpose="group-header" x="24" y="130.8" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Firmware</text>
-<rect data-scene-id="group:validation-team" data-source-ref="validation-team" data-purpose="group-decoration" x="590.4" y="398.3" width="985.6" height="241.5" opacity="0.12" fill="#FFF4E4"/>
+<rect data-scene-id="group:validation-team" data-source-ref="validation-team" data-purpose="group-decoration" x="590.4" y="398.3" width="985.6" height="241.5" opacity="0.12" fill="#EEF3F8"/>
 <rect data-scene-id="group-header-band:validation-team" data-source-ref="validation-team" data-purpose="group-header-band" x="24" y="378.3" width="1552" height="20" opacity="0.2" fill="#EAF0F8"/>
 <text data-scene-id="group-header:validation-team" data-source-ref="validation-team" data-purpose="group-header" x="24" y="392.3" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">System Validation</text>
-<rect data-scene-id="group:factory-team" data-source-ref="factory-team" data-purpose="group-decoration" x="590.4" y="659.8" width="985.6" height="161" opacity="0.12" fill="#FFF4E4"/>
+<rect data-scene-id="group:factory-team" data-source-ref="factory-team" data-purpose="group-decoration" x="590.4" y="659.8" width="985.6" height="161" opacity="0.12" fill="#EEF3F8"/>
 <rect data-scene-id="group-header-band:factory-team" data-source-ref="factory-team" data-purpose="group-header-band" x="24" y="639.8" width="1552" height="20" opacity="0.2" fill="#EAF0F8"/>
 <text data-scene-id="group-header:factory-team" data-source-ref="factory-team" data-purpose="group-header" x="24" y="653.8" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Product Engineering</text>
 <rect data-scene-id="calendar-closed:2026-02-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="590.4" y="116.8" width="6.571" height="704" opacity="0.12" fill="#EAF0F8"/>

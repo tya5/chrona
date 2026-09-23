@@ -1,6 +1,6 @@
 # Color Scheme Authoring
 
-**Status:** Design complete; implementation not started.  
+**Status:** Accepted and implemented.
 **Owns:** Versioned Color Scheme resources, Theme color-intent bindings, color resolution, and accessibility validation.
 
 ## 1. Authority
@@ -11,15 +11,15 @@ A Color Scheme MUST NOT select facts, roles, geometry, output capabilities, or a
 
 ## 2. Resource
 
-The resource is `chrona/color-scheme/v0.1`, validated by `schemas/color-scheme-v0.1.schema.yaml`. It has no inheritance, aliases, expressions, or implicit base scheme. Its canonical identity is the SHA-256 of canonical JSON of the whole resource (sorted keys, UTF-8, no insignificant whitespace).
+The resource is `chrona/color-scheme/v0.2`, validated by `schemas/color-scheme-v0.2.schema.yaml`. It has no inheritance, aliases, expressions, or implicit base scheme. Its canonical identity is the SHA-256 of canonical JSON of the whole resource (sorted keys, UTF-8, no insignificant whitespace).
 
-`body.colors` is a closed map of concrete CSS `#RRGGBB` values: `surface`, `surfaceRaised`, `text`, `textMuted`, `accent`, `positive`, `negative`, `warning`, and `neutral`. `body.category` is a non-empty ordered sequence of concrete colors. `body.suitability` declares intended `background`, `colorVision`, and `print` use. `body.provenance` records `kind`, `source`, and `license`; a built-in scheme lacking all three is invalid.
+`body.colors` is a closed map of concrete CSS `#RRGGBB` values: `surface`, `surfaceRaised`, `text`, `textMuted`, `accent`, `positive`, `negative`, `warning`, and `neutral`. `body.categories` is a non-empty map from explicit stable slot ID to concrete color. `body.suitability` declares intended `background`, `colorVision`, and `print` use. `body.provenance` records `kind`, `source`, and `license`; a built-in scheme lacking all three is invalid.
 
 The initial resource contains no external palette bytes. A future external built-in requires exact source and redistribution terms in `provenance`; a familiar palette name is insufficient evidence.
 
 ## 3. Theme v0.2 binding and literal removal
 
-M25 replaces the legacy `chrona/presentation/v0.1` Theme resource with `chrona/theme/v0.3`, defined by `schemas/theme-v0.3.schema.yaml`. Its `body.values` may contain only non-color typed values; its `body.roles` binds non-color properties; its existing `body.metrics` retains source-measurement token bindings; and its required `body.colorBindings` maps every color-bearing role property to one closed Scheme intent. A Role name may use the existing `group:<stable-key>` form. No Theme inheritance, alias, or partial overlay survives the replacement.
+M25 replaces the legacy `chrona/presentation/v0.1` Theme resource with `chrona/theme/v0.4`, defined by `schemas/theme-v0.4.schema.yaml`. Its `body.values` may contain only non-color typed values; its `body.roles` binds non-color properties; its existing `body.metrics` retains source-measurement token bindings; and its required `body.colorBindings` maps every color-bearing role property to one closed Scheme intent or explicit `category:<slot>` binding. A Role name may use the existing `group:<stable-key>` form. No Theme inheritance, alias, or partial overlay survives the replacement.
 
 There is no literal-color escape hatch in the shipped M25 authoring path. An earlier proposal to retain one would create a second concrete-color authority and prevent a Context from guaranteeing a coherent scheme. Existing literal-color Theme examples are migrated atomically when M25 becomes reachable; no compatibility loader remains.
 
@@ -46,7 +46,7 @@ identities plus output filenames.
 
 ## 5. Categories and variants
 
-For category key `k`, the palette index is the unsigned first eight bytes of `SHA-256(scheme-content-identity + "\\0" + k)` modulo `len(category)`. It is independent of View order, source iteration, and renderer state. A finite palette may repeat a color for distinct keys; category color is never the sole differentiator.
+Category paint is selected only by an explicit named Scheme slot. A scale supplies an exact Theme value-to-slot mapping and a View supplies its ordered domain; no hash, position, recycling, or implicit default is allowed. Category colour is never the sole differentiator.
 
 Light/dark and print/high-contrast alternatives are separate immutable Scheme resources, not mutable variants or automatic host inference. A user selects the resource explicitly in Context. `suitability` is a declaration, not a license to remove markers, patterns, or text alternatives.
 
@@ -58,12 +58,12 @@ Required stable diagnostics are `E_SCHEME_SCHEMA`, `E_SCHEME_PROVENANCE`, `E_SCH
 
 ## 7. Acceptance invariants
 
-1. The same closed Context produces identical concrete colors and category indices.
-2. Reordering groups does not change a category key's index.
+1. The same closed Context produces identical concrete colours and named-slot resolution.
+2. Reordering groups does not change an explicit category slot mapping.
 3. Switching Scheme does not change facts, selected roles, geometry, metrics, Scene structure, or target capability requirements.
 4. Missing provenance, unknown intent, missing binding, and insufficient contrast fail before Scene emission.
 5. Markers, patterns, and text alternatives remain available after every scheme change.
 
 ## 8. Replacement boundary
 
-The M25 `render-review` runtime accepts only Theme v0.2 and Context v0.5. Theme v0.1 and Context v0.4 are deleted from that presentation entry point in one migration. The separate core `chrona render` diagnostic SVG is outside M25 and is not a Scheme-capable presentation path. This is intentionally not a compatibility release: a stale review resource diagnoses rather than being upgraded or rendered with fallback colors.
+The M25 `render-review` runtime accepts only Theme v0.4, Color Scheme v0.2, and Context v0.8. Earlier Theme and Scheme revisions are deleted from that presentation entry point in one migration. The separate core `chrona render` diagnostic SVG is outside M25 and is not a Scheme-capable presentation path. This is intentionally not a compatibility release: a stale review resource diagnoses rather than being upgraded or rendered with fallback colors.

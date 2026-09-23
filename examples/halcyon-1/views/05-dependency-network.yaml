@@ -1,22 +1,57 @@
-version: chrona/view/v0.8
+version: chrona/view/v0.9
 kind: view
 id: halcyon-05-dependency-network
 body:
   surface: dependency-network
-  rows: {mode: automatic}
+  rows:
+    mode: automatic
   selection:
     include:
-      ids: [pdr, structure, avionics, bus-test, cdr, optics, payload-tvac, payload-delivery,
-            integration, tvac, psr, campaign, frr, launch, leop, first-light]
-      types: [span, point]
-  grouping: {by: none, missing: ungrouped}
-  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
-  window: {mode: explicit, start: '2027-03-01', end: '2027-12-01'}
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - bus-test
+      - cdr
+      - optics
+      - payload-tvac
+      - payload-delivery
+      - integration
+      - tvac
+      - psr
+      - campaign
+      - frr
+      - launch
+      - leop
+      - first-light
+      types:
+      - span
+      - point
+  grouping:
+    by: none
+    missing: ungrouped
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2027-03-01'
+    end: '2027-12-01'
   comparison:
     baseline: primary
     actual: required
     observationSelection: latest
     deltaUnit: calendar-days
-    facets: [planned, actual, finishDelta, unmatchedActual]
-  visibility: {labels: false, relations: semantic, annotations: none}
-  layoutIntent: {compactness: balanced, itemStacking: stable}
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - unmatchedActual
+  visibility:
+    labels: false
+    relations: semantic
+    annotations: none
+  layoutIntent:
+    compactness: balanced
+    itemStacking: stable

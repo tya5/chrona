@@ -1,14 +1,32 @@
-version: chrona/view/v0.8
+version: chrona/view/v0.9
 kind: view
 id: halcyon-01-mission-brief
 body:
   surface: table-timeline
-  rows: {mode: automatic}
+  rows:
+    mode: automatic
   selection:
     include:
-      ids: [pdr, structure, avionics, bus-test, cdr, optics, payload-tvac, payload-delivery,
-            integration, tvac, psr, campaign, frr, launch, leop, first-light]
-      types: [span, point]
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - bus-test
+      - cdr
+      - optics
+      - payload-tvac
+      - payload-delivery
+      - integration
+      - tvac
+      - psr
+      - campaign
+      - frr
+      - launch
+      - leop
+      - first-light
+      types:
+      - span
+      - point
   grouping:
     by: none
     missing: ungrouped
@@ -25,22 +43,73 @@ body:
     actual: required
     observationSelection: latest
     deltaUnit: calendar-days
-    facets: [planned, actual, finishDelta, unmatchedActual]
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - unmatchedActual
   visibility:
-    labels: {placement: plot, content: [title, finishDelta], side: auto, overflow: suppress}
-    relations: {mode: semantic, overflow: suppress}
-    annotations: {mode: presentation, marker: numbered}
+    labels:
+      placement: plot
+      content:
+      - title
+      - finishDelta
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
   axis:
-    levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]
+    levels:
+    - unit: quarter
+      format: year-quarter
+    - unit: month
+      format: short-month
     ticks: week
-  markers: [{kind: asOf, source: actual, label: as of}]
-  shading: {nonWorking: true, exceptions: true}
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+  shading:
+    nonWorking: true
+    exceptions: true
   layoutIntent:
     compactness: balanced
     itemStacking: stable
   tableColumns:
-    - {id: '#', source: rowIndex, missing: em-dash}
-    - {id: Milestone or work package, source: title, missing: em-dash}
-    - {id: Plan, source: {facet: planned}, format: dateRange, missing: em-dash}
-    - {id: Actual, source: {facet: actual}, format: dateRange, missing: in-progress}
-    - {id: Δ, source: {facet: finishDelta}, format: signedDays, missing: em-dash}
+  - id: "#"
+    source: rowIndex
+    missing: em-dash
+  - id: Milestone or work package
+    source: title
+    missing: em-dash
+  - id: Plan
+    source:
+      facet: planned
+    format: dateRange
+    missing: em-dash
+  - id: Actual
+    source:
+      facet: actual
+    format: dateRange
+    missing: in-progress
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash
+  colorEncoding:
+    scale: owner
+    target: planned
+    source:
+      field: owner
+    domain:
+    - bus
+    - payload
+    - ait
+    - ground
+    - launch
+    - ops

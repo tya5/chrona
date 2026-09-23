@@ -1,18 +1,29 @@
-version: chrona/view/v0.8
+version: chrona/view/v0.9
 kind: view
 id: halcyon-04-tvac-slip
 body:
   surface: table-timeline
-  rows: {mode: automatic, points: group-header}
+  rows:
+    mode: automatic
+    points: group-header
   selection:
     include:
-      ids: [tvac, emc, psr, shipment, campaign]
-      types: [span, point]
+      ids:
+      - tvac
+      - emc
+      - psr
+      - shipment
+      - campaign
+      types:
+      - span
+      - point
   grouping:
     by: field
     field: owner
     missing: ungrouped
-    order: [ait, launch]
+    order:
+    - ait
+    - launch
     presentation: header
   ordering:
     by: plannedStart
@@ -28,20 +39,52 @@ body:
     actual: required
     observationSelection: latest
     deltaUnit: calendar-days
-    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
   visibility:
-    labels: {placement: plot, content: [title], side: auto, overflow: suppress}
-    relations: {mode: semantic, overflow: suppress}
-    annotations: {mode: presentation, marker: numbered}
+    labels:
+      placement: plot
+      content:
+      - title
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
   axis:
-    levels: [{unit: quarter, format: year-quarter}, {unit: month, format: short-month}]
+    levels:
+    - unit: quarter
+      format: year-quarter
+    - unit: month
+      format: short-month
     ticks: week
-  markers: [{kind: asOf, source: actual, label: as of}]
-  shading: {nonWorking: true, exceptions: true}
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+  shading:
+    nonWorking: true
+    exceptions: true
   layoutIntent:
     compactness: compact
     itemStacking: stable
   tableColumns:
-    - {id: Work package, source: title, missing: em-dash}
-    - {id: Scenario, source: {scenario: title}, missing: em-dash}
-    - {id: Δ, source: {facet: finishDelta}, format: signedDays, missing: em-dash}
+  - id: Work package
+    source: title
+    missing: em-dash
+  - id: Scenario
+    source:
+      scenario: title
+    missing: em-dash
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash

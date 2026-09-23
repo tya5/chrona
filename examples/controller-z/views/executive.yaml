@@ -1,19 +1,63 @@
-version: chrona/view/v0.8
+version: chrona/view/v0.9
 kind: view
 id: controller-z-executive
 body:
   surface: table-timeline
-  selection: {include: {types: [span, point]}}
-  grouping: {by: field, field: owner, missing: ungrouped, order: [fw-team, validation-team, factory-team], presentation: header}
-  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
-  window: {mode: explicit, start: '2026-02-01', end: '2026-07-01'}
-  comparison: {baseline: primary, actual: required, observationSelection: latest, deltaUnit: calendar-days, facets: [planned, actual, finishDelta, missingActual, unmatchedActual]}
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - fw-team
+    - validation-team
+    - factory-team
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-02-01'
+    end: '2026-07-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
   visibility:
-    labels: {placement: plot, content: [title], side: inside, overflow: suppress}
-    fallback: {labels: [inside, above, suppress]}
-    relations: {mode: semantic, overflow: suppress}
+    labels:
+      placement: plot
+      content:
+      - title
+      side: inside
+      overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
     annotations: none
-  layoutIntent: {compactness: balanced, itemStacking: stable}
+  layoutIntent:
+    compactness: balanced
+    itemStacking: stable
   tableColumns:
-    - {id: Workstream, source: title, missing: em-dash}
-  rows: {mode: automatic}
+  - id: Workstream
+    source: title
+    missing: em-dash
+  rows:
+    mode: automatic

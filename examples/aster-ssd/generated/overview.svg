@@ -11,7 +11,7 @@
 <text data-scene-id="cell:qual-exit:Work package / gate" data-source-ref="qual-exit" data-purpose="table-cell" x="24" y="611.65" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Qualification exit</text>
 <text data-scene-id="cell:pilot:Work package / gate" data-source-ref="pilot" data-purpose="table-cell" x="24" y="700.35" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Pilot build</text>
 <text data-scene-id="cell:release:Work package / gate" data-source-ref="release" data-purpose="table-cell" x="24" y="789.05" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Production release</text>
-<rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="590.4" y="116.8" width="985.6" height="709.6" opacity="0.12" fill="#FFF4E4"/>
+<rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="590.4" y="116.8" width="985.6" height="709.6" opacity="0.12" fill="#EEF3F8"/>
 <rect data-scene-id="calendar-closed:2027-01-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="594.456" y="116.8" width="4.056" height="709.6" opacity="0.12" fill="#EAF0F8"/>
 <rect data-scene-id="calendar-closed:2027-01-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="598.512" y="116.8" width="4.056" height="709.6" opacity="0.12" fill="#EAF0F8"/>
 <rect data-scene-id="calendar-closed:2027-01-09" data-source-ref="project-calendar" data-purpose="calendar-closed" x="622.848" y="116.8" width="4.056" height="709.6" opacity="0.12" fill="#EAF0F8"/>

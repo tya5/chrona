@@ -1,4 +1,4 @@
-version: chrona/view/v0.8
+version: chrona/view/v0.9
 kind: view
 id: aster-05-master
 body:
@@ -65,7 +65,9 @@ body:
     - unmatchedActual
   visibility:
     labels: true
-    relations: {mode: semantic, overflow: suppress}
+    relations:
+      mode: semantic
+      overflow: suppress
     annotations: none
   layoutIntent:
     compactness: balanced
@@ -74,4 +76,5 @@ body:
   - id: Work package / gate
     source: title
     missing: em-dash
-  rows: {mode: automatic}
+  rows:
+    mode: automatic

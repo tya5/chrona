@@ -17,10 +17,10 @@
 <text data-scene-id="cell:campaign:Work package" data-source-ref="campaign" data-purpose="table-cell" x="515" y="933.25" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" opacity="1" fill="#EAF0FA">Launch campaign</text>
 <text data-scene-id="cell:campaign:Scenario" data-source-ref="campaign" data-purpose="table-cell" x="702.37" y="933.25" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" opacity="1" fill="#EAF0FA">—</text>
 <text data-scene-id="cell:campaign:Δ" data-source-ref="campaign" data-purpose="table-cell" x="790.56" y="933.25" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" opacity="1" fill="#EAF0FA">—</text>
-<rect data-scene-id="group:ait" data-source-ref="ait" data-purpose="group-decoration" x="925.485" y="106" width="954.515" height="457" opacity="0.12" fill="#2C2138"/>
+<rect data-scene-id="group:ait" data-source-ref="ait" data-purpose="group-decoration" x="925.485" y="106" width="954.515" height="457" opacity="0.12" fill="#142642"/>
 <rect data-scene-id="group-header-band:ait" data-source-ref="ait" data-purpose="group-header-band" x="500" y="86" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:ait" data-source-ref="ait" data-purpose="group-header" x="500" y="101" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" opacity="1" fill="#EAF0FA">Assembly, integration and test</text>
-<rect data-scene-id="group:launch" data-source-ref="launch" data-purpose="group-decoration" x="925.485" y="583" width="954.515" height="457" opacity="0.12" fill="#2C2138"/>
+<rect data-scene-id="group:launch" data-source-ref="launch" data-purpose="group-decoration" x="925.485" y="583" width="954.515" height="457" opacity="0.12" fill="#142642"/>
 <rect data-scene-id="group-header-band:launch" data-source-ref="launch" data-purpose="group-header-band" x="500" y="563" width="1380" height="20" opacity="0.2" fill="#16213A"/>
 <text data-scene-id="group-header:launch" data-source-ref="launch" data-purpose="group-header" x="500" y="578" font-family="Nimbus Sans, Helvetica Neue, Arial, sans-serif" font-weight="400" font-size="15" opacity="1" fill="#EAF0FA">Launch and range</text>
 <rect data-scene-id="calendar-closed:2027-07-03" data-source-ref="project-calendar" data-purpose="calendar-closed" x="937.962" y="86" width="6.239" height="954" opacity="0.12" fill="#16213A"/>

@@ -54,7 +54,7 @@ focused and full tests pass.
 
 ## I278-A — automatic policy and projection
 
-**Files:** `schemas/view-v0.8.schema.yaml`, contract resource parsing,
+**Files:** `schemas/view-v0.9.schema.yaml`, contract resource parsing,
 `model/projection.py`, View/projection tests.
 
 **Change:** add automatic `points` policy, default `own-row`, typed

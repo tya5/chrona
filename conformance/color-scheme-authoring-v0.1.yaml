@@ -2,10 +2,10 @@ version: chrona/conformance/v0.1
 kind: color-scheme-authoring
 cases:
   - id: chrona-authored-light
-    schema: ../schemas/color-scheme-v0.1.schema.yaml
+    schema: ../schemas/color-scheme-v0.2.schema.yaml
     resource: color-schemes/chrona-authored-light.yaml
     expectSchemaError: false
   - id: missing-provenance-license
-    schema: ../schemas/color-scheme-v0.1.schema.yaml
+    schema: ../schemas/color-scheme-v0.2.schema.yaml
     resource: color-schemes/invalid-missing-license.yaml
     expectSchemaError: true

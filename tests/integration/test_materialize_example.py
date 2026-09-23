@@ -27,6 +27,14 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
     assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
 
 
+def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
+    materialize(ROOT / "examples/halcyon-1/manifest.yaml", "programme-board", tmp_path / "board", write=False)
+    svg = (tmp_path / "board/review.svg").read_text()
+    assert 'data-scene-id="planned:payload-tvac:payload-tvac"' in svg
+    assert 'data-scene-id="legend-swatch:scale:owner:payload"' in svg
+    assert 'data-scene-id="legend:scale:owner:payload"' in svg
+
+
 def test_materializer_detects_changed_expected_svg(tmp_path):
     copied_example = tmp_path / "controller-z"
     shutil.copytree(ROOT / "examples/controller-z", copied_example)

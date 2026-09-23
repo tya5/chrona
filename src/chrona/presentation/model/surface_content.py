@@ -77,6 +77,11 @@ class SurfaceContentInput:
     # identity only: Scene uses it to attach presentation metadata and never to
     # infer geometry or re-resolve a View row.
     table_cell_objects: tuple[tuple[str, str, str, bool], ...] = ()
+    # Completed data-dependent paint selected before Scene construction.  The
+    # value is keyed by semantic source object, never by geometry or renderer.
+    scale_target_role: str | None = None
+    scale_paints: tuple[tuple[str, str], ...] = ()
+    scale_legend_paints: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)

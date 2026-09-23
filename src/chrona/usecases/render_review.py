@@ -20,6 +20,7 @@ from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
 from chrona.presentation.model.closure import RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
+from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
@@ -117,6 +118,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
     if manifests:
         ledger.packages()
     projection, scenario_provenance = _project_review(project, view, render_closure, manifests, request.scheduler)
+    try:
+        color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
+                                          theme["body"].get("categorySlots"))
+    except ColorScaleError as error:
+        raise RenderFailed(str(error), str(error), "presentation") from error
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -151,6 +157,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
         summary=summary,
         locale=environment.locale,
+        color_scale=color_scale,
     )
     if render_closure.detail_profile is not None:
         ledger.detail()

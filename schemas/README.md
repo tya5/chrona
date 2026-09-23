@@ -9,7 +9,7 @@ are migration-only and record their successor and removal slice.
 | actual-intake-batch | actual-intake-batch-v0.2.schema.yaml |
 | actual-set | actual-set-v0.2.schema.yaml |
 | automation-result | automation-result-v0.1.schema.yaml |
-| color-scheme | color-scheme-v0.1.schema.yaml |
+| color-scheme | color-scheme-v0.2.schema.yaml |
 | command-request | command-request-v0.2.schema.yaml |
 | layout-profile | layout-profile-v0.3.schema.yaml |
 | profile-package | profile-v0.2.schema.yaml |
@@ -19,8 +19,8 @@ are migration-only and record their successor and removal slice.
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
-| theme | theme-v0.3.schema.yaml |
-| view | view-v0.8.schema.yaml |
+| theme | theme-v0.4.schema.yaml |
+| view | view-v0.9.schema.yaml |
 
 # Project Schema v0.3 Notes
 

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[5]
 
 def _theme():
     return {
-        "version": "chrona/theme/v0.3", "kind": "theme", "id": "theme",
+        "version": "chrona/theme/v0.4", "kind": "theme", "id": "theme",
         "body": {"values": {}, "roles": {}, "colorBindings": {"text.fill": "text"}},
     }
 
@@ -65,7 +65,7 @@ def test_contract_schema_errors_report_the_nested_failing_pointer(kind, path, mu
     assert error.value.kind == kind
     assert error.value.source_ref == expected_pointer
     if kind == "theme":
-        assert "expected one of" in str(error.value)
+        assert "expected one permitted form" in str(error.value)
 
 
 def test_summary_subtree_scope_is_limited_to_a_typed_object_planned_source():
