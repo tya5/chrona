@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 project:
   id: halcyon-1
   title: HALCYON-1
@@ -28,7 +28,7 @@ objects:
     type: gate
     title: Preliminary design review
     fields: {owner: bus, team: Programme, phase: Design, review: PDR}
-    schedule: {mode: fixed, at: '2027-03-05'}
+    schedule: {mode: fixed-point, at: '2027-03-05'}
   structure:
     type: task
     title: Primary structure fabrication
@@ -53,7 +53,7 @@ objects:
     type: gate
     title: Critical design review
     fields: {owner: bus, team: Programme, phase: Design, review: CDR}
-    schedule: {mode: fixed, at: '2027-05-07'}
+    schedule: {mode: fixed-point, at: '2027-05-07'}
   optics:
     type: task
     title: Imager optics alignment
@@ -73,7 +73,7 @@ objects:
     type: gate
     title: Payload delivered
     fields: {owner: payload, team: Imaging payload, phase: Qualify, review: PDD}
-    schedule: {mode: fixed, at: '2027-07-02'}
+    schedule: {mode: fixed-point, at: '2027-07-02'}
   integration:
     type: task
     title: Spacecraft integration
@@ -98,7 +98,7 @@ objects:
     type: gate
     title: Pre-ship review
     fields: {owner: ait, team: Programme, phase: Verify, review: PSR}
-    schedule: {mode: fixed, at: '2027-09-10'}
+    schedule: {mode: fixed-point, at: '2027-09-10'}
   mcs:
     type: task
     title: Mission control software
@@ -118,7 +118,7 @@ objects:
     type: gate
     title: Launch services confirmed
     fields: {owner: launch, team: Launch and range, phase: Design, review: LSA}
-    schedule: {mode: fixed, at: '2027-04-16'}
+    schedule: {mode: fixed-point, at: '2027-04-16'}
   shipment:
     type: task
     title: Ship to range
@@ -144,7 +144,7 @@ objects:
     plannedProgress: 0
     link: {href: https://example.test/halcyon-1/reviews/frr, title: Open FRR evidence}
     fields: {owner: launch, team: Programme, phase: Campaign, review: FRR}
-    schedule: {mode: fixed, at: '2027-10-15'}
+    schedule: {mode: fixed-point, at: '2027-10-15'}
   launch:
     type: gate
     title: Launch window opens
@@ -152,7 +152,7 @@ objects:
     wbsCode: '6.2'
     plannedProgress: 0
     fields: {owner: launch, team: Launch and range, phase: Campaign, review: L0}
-    schedule: {mode: fixed, at: '2027-10-22'}
+    schedule: {mode: fixed-point, at: '2027-10-22'}
   rehearsals:
     type: task
     title: Operations rehearsals
@@ -173,7 +173,7 @@ objects:
     wbsCode: '6.4'
     plannedProgress: 0
     fields: {owner: ops, team: Mission operations, phase: Operate, review: FL}
-    schedule: {mode: fixed, at: '2027-11-19'}
+    schedule: {mode: fixed-point, at: '2027-11-19'}
 relations:
   - {id: pdr-structure, type: dependency, from: {object: pdr, endpoint: at}, to: {object: structure, endpoint: start}, lag: 1wd}
   - {id: structure-avionics, type: dependency, from: {object: structure, endpoint: end}, to: {object: avionics, endpoint: start}, lag: 0d}

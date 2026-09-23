@@ -14,7 +14,7 @@ from chrona.resources import schema_resource
 from chrona.schema_diagnostics import explain_errors
 
 
-SCHEMA_PATH = schema_resource("project-v0.5.schema.yaml")
+SCHEMA_PATH = schema_resource("project-v0.6.schema.yaml")
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
@@ -67,7 +67,7 @@ def validate_project(
             diagnostics.append(Diagnostic("E_REFERENCE", "Unknown object calendar", path + "/calendar"))
         schedule = item["schedule"]
         mode = schedule["mode"]
-        if mode == "fixed" and "start" in schedule:
+        if mode == "fixed-span":
             try:
                 if as_date(schedule["start"]) >= as_date(schedule["end"]):
                     diagnostics.append(Diagnostic("E_INVALID_SPAN", "Fixed span must satisfy start < end", path + "/schedule"))
@@ -190,7 +190,7 @@ def _resolve_calendar_id(item: dict[str, Any], project: dict[str, Any]) -> str |
 
 
 def _schedule_endpoints(schedule: dict[str, Any]) -> frozenset[str]:
-    if schedule.get("mode") == "fixed" and "at" in schedule:
+    if schedule.get("mode") == "fixed-point":
         return frozenset({"at"})
     return frozenset({"start", "end"})
 

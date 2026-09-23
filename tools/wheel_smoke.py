@@ -11,14 +11,14 @@ from chrona.scheduling.scheduler import schedule
 
 
 PROJECT = {
-    "version": "timeline/v0.5",
+    "version": "timeline/v0.6",
     "project": {"id": "wheel-smoke", "title": "Wheel smoke"},
     "objects": {
         "task": {
             "type": "task",
             "title": "Task",
             "schedule": {
-                "mode": "fixed",
+                "mode": "fixed-span",
                 "start": "2026-01-01",
                 "end": "2026-01-02",
             },

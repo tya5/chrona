@@ -20,7 +20,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 
 def project(objects, relations=(), *, calendar=True):
     value = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "issue-remediation"},
         "objects": objects,
         "relations": list(relations),
@@ -32,7 +32,7 @@ def project(objects, relations=(), *, calendar=True):
 
 
 def fixed(start="2026-01-01", end="2026-01-02"):
-    return {"type": "task", "schedule": {"mode": "fixed", "start": start, "end": end}}
+    return {"type": "task", "schedule": {"mode": "fixed-span", "start": start, "end": end}}
 
 
 def scheduled(amount="1d", **extra):

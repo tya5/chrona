@@ -27,10 +27,10 @@ def _snapshot_resource(root, token, address, value, kind, identifier, identity="
 
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     project = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "demo", "title": "Demo"},
         "extensions": [],
-        "objects": {"gate": {"type": "milestone", "title": "Gate", "schedule": {"mode": "fixed", "at": "2026-10-01"}}},
+        "objects": {"gate": {"type": "milestone", "title": "Gate", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}},
         "relations": [],
     }
     path = tmp_path / "project.yaml"
@@ -72,8 +72,8 @@ def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monke
 
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):
     project = {
-        "version": "timeline/v0.5", "project": {"id": "snapshot"}, "extensions": [],
-        "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}},
+        "version": "timeline/v0.6", "project": {"id": "snapshot"}, "extensions": [],
+        "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}},
         "relations": [],
     }
     payload = yaml.safe_dump(project).encode()
@@ -110,8 +110,8 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
 
 
 def test_cli_review_reports_stable_semantic_ids(tmp_path, monkeypatch, capsys):
-    before = {"version": "timeline/v0.5", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
-    after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}}
+    before = {"version": "timeline/v0.6", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
+    after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}}}
     token = "snapshot-review"
     references = [
         _snapshot_resource(tmp_path, token, f"{name}.yaml", project, "project", "demo")
@@ -126,8 +126,8 @@ def test_cli_review_reports_stable_semantic_ids(tmp_path, monkeypatch, capsys):
 
 
 def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkeypatch):
-    before = {"version": "timeline/v0.5", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
-    after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}}}
+    before = {"version": "timeline/v0.6", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
+    after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}}}
     token = "snapshot"
     before_ref = _snapshot_resource(tmp_path, token, "before.yaml", before, "project", "demo")
     candidate_ref = _snapshot_resource(tmp_path, token, "after.yaml", after, "project", "demo")
@@ -148,7 +148,7 @@ def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkey
 
 
 def test_cli_command_check_writes_non_mutating_result(tmp_path, monkeypatch):
-    project = {"version": "timeline/v0.5", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
+    project = {"version": "timeline/v0.6", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
     target = _snapshot_resource(tmp_path, "p-r1", "project.yaml", project, "project", "p")
     command = {"version": "chrona/command/v0.2", "commandId": "check-1", "type": "captureSnapshot", "target": target, "baseRevision": target["revision"]["token"], "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "cli-test"}}}
     command_path, config_path, result = tmp_path / "command.yaml", tmp_path / "stores.yaml", tmp_path / "result.json"

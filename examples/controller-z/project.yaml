@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 
 project:
   id: controller-z-silicon-bringup
@@ -25,19 +25,19 @@ objects:
     type: task
     title: Architecture Freeze
     fields: {owner: fw-team, workstream: architecture}
-    schedule: {mode: fixed, start: 2026-02-02, end: 2026-02-13}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
 
   firmware:
     type: task
     title: FW Feature Complete
     fields: {owner: fw-team, workstream: firmware}
-    schedule: {mode: fixed, start: 2026-02-13, end: 2026-04-10}
+    schedule: {mode: fixed-span, start: 2026-02-13, end: 2026-04-10}
 
   evb-arrival:
     type: gate
     title: EVB Arrival
     fields: {owner: validation-team, review: hardware-readiness}
-    schedule: {mode: fixed, at: 2026-04-17}
+    schedule: {mode: fixed-point, at: 2026-04-17}
 
   silicon-bringup:
     type: task
@@ -71,7 +71,7 @@ objects:
     type: gate
     title: General Availability
     fields: {owner: factory-team, review: release}
-    schedule: {mode: fixed, at: 2026-06-30}
+    schedule: {mode: fixed-point, at: 2026-06-30}
 
 relations:
   - id: architecture-unlocks-firmware

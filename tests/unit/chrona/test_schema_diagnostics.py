@@ -63,4 +63,4 @@ def test_core_validation_uses_the_shared_explanation_and_pointer():
     assert len(diagnostics) == 1
     assert diagnostics[0].id == "E_SCHEMA"
     assert diagnostics[0].path == "/version"
-    assert diagnostics[0].message == "expected exactly 'timeline/v0.5'"
+    assert diagnostics[0].message == "expected exactly 'timeline/v0.6'"

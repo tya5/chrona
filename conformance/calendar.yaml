@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 
 project:
   id: calendar-example
@@ -15,7 +15,7 @@ objects:
   predecessor:
     type: task
     schedule:
-      mode: fixed
+      mode: fixed-span
       start: 2026-10-05
       end: 2026-10-09
 

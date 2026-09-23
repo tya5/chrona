@@ -5,7 +5,7 @@ from chrona.scheduling.scheduler import schedule
 
 def _project(objects, relations=()):
     return {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "demo"},
         "objects": objects,
         "relations": list(relations),
@@ -15,7 +15,7 @@ def _project(objects, relations=()):
 def test_fs_zero_lag_places_successor_at_predecessor_end():
     project = _project(
         {
-            "A": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-10"}},
+            "A": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-10"}},
             "B": {"type": "task", "schedule": {"mode": "scheduled", "amount": "5d"}},
         },
         [{"type": "dependency", "from": {"object": "A", "endpoint": "end"}, "to": {"object": "B", "endpoint": "start"}, "lag": "0d"}],
@@ -28,8 +28,8 @@ def test_fs_zero_lag_places_successor_at_predecessor_end():
 def test_fixed_target_violation_is_not_repaired_by_moving_target():
     project = _project(
         {
-            "A": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-10"}},
-            "B": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-10", "end": "2026-10-11"}},
+            "A": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-10"}},
+            "B": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-10", "end": "2026-10-11"}},
         },
         [{"type": "dependency", "from": {"object": "A", "endpoint": "end"}, "to": {"object": "B", "endpoint": "start"}, "lag": "2d"}],
     )
@@ -40,7 +40,7 @@ def test_fixed_target_violation_is_not_repaired_by_moving_target():
 def test_scheduler_derives_total_float_and_critical_chain_per_component():
     project = _project(
         {
-            "start": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-02"}},
+            "start": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-02"}},
             "critical": {"type": "task", "schedule": {"mode": "scheduled", "amount": "4d"}},
             "slack": {"type": "task", "schedule": {"mode": "scheduled", "amount": "2d"}},
             "finish": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
@@ -61,8 +61,8 @@ def test_scheduler_derives_total_float_and_critical_chain_per_component():
 
 def test_scheduler_marks_disconnected_singletons_critical():
     result = schedule(_project({
-        "a": {"type": "task", "schedule": {"mode": "fixed", "at": "2026-10-01"}},
-        "b": {"type": "task", "schedule": {"mode": "fixed", "at": "2026-10-10"}},
+        "a": {"type": "task", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}},
+        "b": {"type": "task", "schedule": {"mode": "fixed-point", "at": "2026-10-10"}},
     }))
     assert result.ok and result.analysis is not None
     assert result.analysis.critical == frozenset({"a", "b"})
@@ -71,9 +71,9 @@ def test_scheduler_marks_disconnected_singletons_critical():
 def test_scheduler_distinguishes_driving_relations_from_zero_float_endpoints():
     project = _project(
         {
-            "a": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-02"}},
+            "a": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-02"}},
             "b": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
-            "c": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-02", "end": "2026-10-03"}},
+            "c": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-02", "end": "2026-10-03"}},
         },
         [
             {"id": "drives", "type": "dependency", "from": {"object": "a", "endpoint": "end"}, "to": {"object": "b", "endpoint": "start"}},
@@ -88,7 +88,7 @@ def test_scheduler_distinguishes_driving_relations_from_zero_float_endpoints():
 def test_scheduler_identifies_a_driving_working_calendar_lag():
     project = _project(
         {
-            "a": {"type": "task", "schedule": {"mode": "fixed", "at": "2026-10-02"}},
+            "a": {"type": "task", "schedule": {"mode": "fixed-point", "at": "2026-10-02"}},
             "b": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd"}},
         },
         [{"id": "working-lag", "type": "dependency",
@@ -106,7 +106,7 @@ def test_scheduler_identifies_a_driving_working_calendar_lag():
 def test_project_object_link_is_typed_and_does_not_affect_scheduling():
     project = _project({
         "a": {"type": "task", "link": {"href": "https://tracker.example/items/a", "title": "Open ticket"},
-              "schedule": {"mode": "fixed", "at": "2026-10-01"}},
+              "schedule": {"mode": "fixed-point", "at": "2026-10-01"}},
     })
     assert schedule(project).ok
     project["objects"]["a"]["link"] = "javascript:alert(1)"
@@ -116,7 +116,7 @@ def test_project_object_link_is_typed_and_does_not_affect_scheduling():
 def test_scheduler_counts_float_in_the_objects_working_calendar():
     project = _project(
         {
-            "start": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-02", "end": "2026-10-03"}},
+            "start": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-02", "end": "2026-10-03"}},
             "critical": {"type": "task", "schedule": {"mode": "scheduled", "amount": "4wd"}},
             "slack": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd"}},
             "finish": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd"}},

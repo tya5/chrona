@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 
 project:
   id: dependencies
@@ -14,7 +14,7 @@ objects:
     type: task
     title: Design
     schedule:
-      mode: fixed
+      mode: fixed-span
       start: 2026-10-01
       end: 2026-10-09
 
@@ -29,7 +29,7 @@ objects:
     type: milestone
     title: EVT
     schedule:
-      mode: fixed
+      mode: fixed-point
       at: 2026-10-23
 
 relations:

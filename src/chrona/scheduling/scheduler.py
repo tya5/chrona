@@ -57,7 +57,7 @@ def schedule(
     # Fixed coordinates are authoritative and can always be made available.
     for object_id, item in objects.items():
         raw = item["schedule"]
-        if raw["mode"] == "fixed":
+        if raw["mode"] in {"fixed-point", "fixed-span"}:
             placements[object_id] = _fixed_placement(raw)
             pending.remove(object_id)
 
@@ -219,7 +219,7 @@ def _validate_fixed_targets(project: dict, placements: dict, calendars: dict[str
         if target_id not in placements or source_id not in placements:
             continue
         target_raw = project["objects"][target_id]["schedule"]
-        if target_raw["mode"] != "fixed":
+        if target_raw["mode"] not in {"fixed-point", "fixed-span"}:
             continue
         lag = relation.get("lag", "0d")
         amount = lag if isinstance(lag, str) else lag["value"]
@@ -341,7 +341,7 @@ def _relation_calendar(relation: dict[str, Any], project: dict[str, Any], calend
 def _latest_at_target(object_id: str, item: dict[str, Any], early: dict[str, date], target: date,
                       project: dict[str, Any], calendars: dict[str, Calendar]) -> dict[str, date]:
     raw = item["schedule"]
-    if raw["mode"] == "fixed" or raw.get("anchor"):
+    if raw["mode"] in {"fixed-point", "fixed-span"} or raw.get("anchor"):
         return dict(early)
     if "at" in early:
         return {"at": target}
@@ -356,7 +356,7 @@ def _cap_latest_endpoint(object_id: str, endpoint: str, bound: date,
                          project: dict[str, Any], calendars: dict[str, Calendar]) -> bool:
     item, value = objects[object_id], latest[object_id]
     raw = item["schedule"]
-    if raw["mode"] == "fixed" or raw.get("anchor"):
+    if raw["mode"] in {"fixed-point", "fixed-span"} or raw.get("anchor"):
         return False
     if endpoint == "at":
         if bound >= value["at"]:

@@ -9,7 +9,7 @@ from chrona.scheduling.scheduler import schedule
 
 def _project(objects, relations=()):
     return {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "hierarchy"},
         "objects": objects,
         "relations": list(relations),
@@ -17,7 +17,7 @@ def _project(objects, relations=()):
 
 
 def _fixed(start="2026-01-01", end="2026-01-02"):
-    return {"type": "task", "schedule": {"mode": "fixed", "start": start, "end": end}}
+    return {"type": "task", "schedule": {"mode": "fixed-span", "start": start, "end": end}}
 
 
 @pytest.mark.parametrize(("objects", "diagnostic"), [

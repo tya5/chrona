@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "timeline/project-v0.5"
-title: "Timeline Project v0.4"
+$id: "timeline/project-v0.6"
+title: "Timeline Project v0.6"
 type: object
 required: [version, project]
 additionalProperties: false
 
 properties:
-  version: {const: "timeline/v0.5"}
+  version: {const: "timeline/v0.6"}
   project:
     type: object
     required: [id]
@@ -152,14 +152,14 @@ $defs:
     additionalProperties: false
     required: [mode, at]
     properties:
-      mode: {const: fixed}
+      mode: {const: fixed-point}
       at: {$ref: "#/$defs/date"}
   fixedSpan:
     type: object
     additionalProperties: false
     required: [mode, start, end]
     properties:
-      mode: {const: fixed}
+      mode: {const: fixed-span}
       start: {$ref: "#/$defs/date"}
       end: {$ref: "#/$defs/date"}
   scheduled:

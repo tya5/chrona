@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 
 project:
   id: minimal
@@ -9,7 +9,7 @@ objects:
     type: task
     title: Design
     schedule:
-      mode: fixed
+      mode: fixed-span
       start: 2026-10-01
       end: 2026-10-10
 
@@ -17,5 +17,5 @@ objects:
     type: milestone
     title: Review
     schedule:
-      mode: fixed
+      mode: fixed-point
       at: 2026-10-10

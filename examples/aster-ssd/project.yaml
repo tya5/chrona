@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 project:
   id: aster-enterprise-ssd
   title: ASTER Enterprise SSD Development
@@ -26,12 +26,12 @@ objects:
     type: task
     title: Interface and power budget
     fields: {owner: platform, risk: medium}
-    schedule: {mode: fixed, start: '2027-01-04', end: '2027-01-15'}
+    schedule: {mode: fixed-span, start: '2027-01-04', end: '2027-01-15'}
   board:
     type: gate
     title: Prototype boards ready
     fields: {owner: platform, risk: high}
-    schedule: {mode: fixed, at: '2027-02-01'}
+    schedule: {mode: fixed-point, at: '2027-02-01'}
   nand:
     type: task
     title: NAND characterization
@@ -61,7 +61,7 @@ objects:
     type: gate
     title: Firmware feature freeze
     fields: {owner: firmware, risk: medium}
-    schedule: {mode: fixed, at: '2027-05-14'}
+    schedule: {mode: fixed-point, at: '2027-05-14'}
   benchmark:
     type: task
     title: Throughput baseline
@@ -81,7 +81,7 @@ objects:
     type: gate
     title: Performance acceptance
     fields: {owner: performance, risk: medium}
-    schedule: {mode: fixed, at: '2027-05-28'}
+    schedule: {mode: fixed-point, at: '2027-05-28'}
   threat:
     type: task
     title: Threat model review
@@ -101,7 +101,7 @@ objects:
     type: gate
     title: Security sign-off
     fields: {owner: security, risk: medium}
-    schedule: {mode: fixed, at: '2027-05-21'}
+    schedule: {mode: fixed-point, at: '2027-05-21'}
   integration:
     type: task
     title: System integration
@@ -121,7 +121,7 @@ objects:
     type: gate
     title: Qualification exit
     fields: {owner: qualification, risk: high}
-    schedule: {mode: fixed, at: '2027-07-09'}
+    schedule: {mode: fixed-point, at: '2027-07-09'}
   tooling:
     type: task
     title: Factory test tooling
@@ -144,7 +144,7 @@ objects:
     type: gate
     title: Production release
     fields: {owner: production, risk: high}
-    schedule: {mode: fixed, at: '2027-08-20'}
+    schedule: {mode: fixed-point, at: '2027-08-20'}
 relations:
   - {id: req-board, type: dependency, from: {object: requirements, endpoint: end}, to: {object: board, endpoint: at}, lag: 5wd}
   - {id: board-nand, type: dependency, from: {object: board, endpoint: at}, to: {object: nand, endpoint: start}, lag: 1wd}

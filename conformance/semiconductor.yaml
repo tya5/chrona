@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 
 project:
   id: controller-x
@@ -28,7 +28,7 @@ objects:
       team: fw-team
       component: controller
     schedule:
-      mode: fixed
+      mode: fixed-span
       start: 2026-10-01
       end: 2026-11-10
 
@@ -38,7 +38,7 @@ objects:
     fields:
       approval: pending
     schedule:
-      mode: fixed
+      mode: fixed-point
       at: 2026-11-20
 annotations:
   evt-approval:

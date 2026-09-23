@@ -14,12 +14,12 @@ def _reference(address, kind, identifier, payload):
 
 
 def _project(identifier, objects):
-    return {"version": "timeline/v0.5", "project": {"id": identifier}, "extensions": [], "objects": objects, "relations": []}
+    return {"version": "timeline/v0.6", "project": {"id": identifier}, "extensions": [], "objects": objects, "relations": []}
 
 
 def test_baseline_comparison_verifies_both_closures_and_returns_machine_result():
     before = _project("p", {})
-    after = _project("p", {"gate": {"type": "milestone", "schedule": {"mode": "fixed", "at": "2026-10-01"}}})
+    after = _project("p", {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}})
     before_bytes, after_bytes = yaml.safe_dump(before).encode(), yaml.safe_dump(after).encode()
     before_ref = _reference("before.yaml", "project", "p", before_bytes)
     candidate_ref = _reference("after.yaml", "project", "p", after_bytes)

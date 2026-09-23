@@ -1,7 +1,7 @@
 version: chrona/profile/v0.2
 packageId: implementation-delivery
 contentIdentity: sha256:2222222222222222222222222222222222222222222222222222222222222222
-requires: {projectFormat: timeline/v0.5}
+requires: {projectFormat: timeline/v0.6}
 profiles:
   implementation-delivery.work-item:
     extends: task

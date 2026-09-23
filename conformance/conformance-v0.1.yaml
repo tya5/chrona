@@ -195,7 +195,7 @@ scheduling:
   authority:
   - name: fixed-span-authority
     input:
-      mode: fixed
+      mode: fixed-span
       start: 2026-10-01
       end: 2026-10-10
     derived:

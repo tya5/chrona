@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 
 project:
   id: controller-x
@@ -14,14 +14,14 @@ objects:
     type: task
     title: Firmware Development
     schedule:
-      mode: fixed
+      mode: fixed-span
       start: 2026-10-01
       end: 2026-11-10
   evt:
     type: gate
     title: EVT
     schedule:
-      mode: fixed
+      mode: fixed-point
       at: 2026-11-20
   dvt:
     type: task
@@ -39,7 +39,7 @@ objects:
     type: gate
     title: General Availability
     schedule:
-      mode: fixed
+      mode: fixed-point
       at: 2027-01-01
 
 relations:

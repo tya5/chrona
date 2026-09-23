@@ -44,12 +44,12 @@ def test_scheduled_amount_fixture():
 
 def test_yaml_date_scalars_validate_against_json_compatible_schema():
     project = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "dates"},
         "objects": {
             "task": {
                 "type": "task",
-                "schedule": {"mode": "fixed", "start": date(2026, 10, 1), "end": date(2026, 10, 2)},
+                "schedule": {"mode": "fixed-span", "start": date(2026, 10, 1), "end": date(2026, 10, 2)},
             }
         },
     }
@@ -70,14 +70,14 @@ def test_dependency_bound_cases_execute_through_scheduler():
         source_endpoint = case["source"]["endpoint"]
         source_value = _date(case["source"]["value"])
         if source_endpoint == "at":
-            source_schedule = {"mode": "fixed", "at": source_value}
+            source_schedule = {"mode": "fixed-point", "at": source_value}
         elif source_endpoint == "start":
-            source_schedule = {"mode": "fixed", "start": source_value, "end": advance(source_value, "1d")}
+            source_schedule = {"mode": "fixed-span", "start": source_value, "end": advance(source_value, "1d")}
         else:
-            source_schedule = {"mode": "fixed", "start": retreat(source_value, "1d"), "end": source_value}
+            source_schedule = {"mode": "fixed-span", "start": retreat(source_value, "1d"), "end": source_value}
         target_endpoint = case["target"]["endpoint"]
         project = {
-            "version": "timeline/v0.5",
+            "version": "timeline/v0.6",
             "project": {"id": case["name"]},
             "objects": {
                 "source": {"type": "task", "schedule": source_schedule},
@@ -100,7 +100,7 @@ def test_multiple_bound_cases_execute_through_scheduler():
     for case in fixture["scheduling"]["multiple_bounds"]:
         if case.get("expected") == "schedule_error":
             project = {
-                "version": "timeline/v0.5",
+                "version": "timeline/v0.6",
                 "project": {"id": case["name"]},
                 "objects": {"target": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d", "anchor": {"start": "2026-10-20"}, "constraints": {"start": {"min": "2026-10-20", "max": "2026-10-15"}}}}},
             }
@@ -112,9 +112,9 @@ def test_multiple_bound_cases_execute_through_scheduler():
         for index, bound in enumerate(bounds):
             source_id = f"source-{index}"
             value = _date(bound["min"])
-            objects[source_id] = {"type": "task", "schedule": {"mode": "fixed", "start": retreat(value, "1d"), "end": value}}
+            objects[source_id] = {"type": "task", "schedule": {"mode": "fixed-span", "start": retreat(value, "1d"), "end": value}}
             relations.append({"type": "dependency", "from": {"object": source_id, "endpoint": "end"}, "to": {"object": "target", "endpoint": bound["endpoint"]}, "lag": "0d"})
-        result = schedule({"version": "timeline/v0.5", "project": {"id": case["name"]}, "objects": objects, "relations": relations})
+        result = schedule({"version": "timeline/v0.6", "project": {"id": case["name"]}, "objects": objects, "relations": relations})
         assert result.ok, case["name"]
         assert result.placements["target"]["start"] == _date(case["expected_min"]), case["name"]
 
@@ -122,11 +122,11 @@ def test_multiple_bound_cases_execute_through_scheduler():
 def test_calendar_placement_cases_execute_through_scheduler():
     calendar = {"working_days": ["mon", "tue", "wed", "thu", "fri"], "exceptions": [{"date": "2026-10-12", "working": False}]}
     project = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "calendar-placement", "calendar": "standard"},
         "calendars": {"standard": calendar},
         "objects": {
-            "source": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-09", "end": "2026-10-10"}},
+            "source": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-09", "end": "2026-10-10"}},
             "target": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd"}},
         },
         "relations": [{"type": "dependency", "from": {"object": "source", "endpoint": "end"}, "to": {"object": "target", "endpoint": "start"}, "lag": "0d"}],
@@ -139,7 +139,7 @@ def test_calendar_placement_cases_execute_through_scheduler():
 def test_cycle_fixture_cases_report_the_required_distinction():
     def cycle(lag):
         return {
-            "version": "timeline/v0.5",
+            "version": "timeline/v0.6",
             "project": {"id": f"cycle-{lag}"},
             "objects": {
                 "A": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
@@ -157,20 +157,20 @@ def test_cycle_fixture_cases_report_the_required_distinction():
 
 def test_diagnostic_fixture_cases_have_stable_ids():
     missing_calendar = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "missing-calendar"},
         "objects": {"task": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd", "anchor": {"start": "2026-10-01"}}}},
     }
     unknown_reference = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "unknown-reference"},
-        "objects": {"task": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-02"}}},
+        "objects": {"task": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-02"}}},
         "relations": [{"type": "dependency", "from": {"object": "missing", "endpoint": "end"}, "to": {"object": "task", "endpoint": "start"}}],
     }
     empty_span = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "empty-span"},
-        "objects": {"task": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-01"}}},
+        "objects": {"task": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-01"}}},
     }
     assert {item.id for item in validate_project(missing_calendar)} == {"E_CALENDAR_REQUIRED"}
     assert {item.id for item in validate_project(unknown_reference)} == {"E_REFERENCE"}
@@ -179,19 +179,19 @@ def test_diagnostic_fixture_cases_have_stable_ids():
 
 def test_authority_fixture_cases_execute_through_scheduler():
     fixed_target = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "fixed-target"},
         "objects": {
-            "source": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-10"}},
-            "target": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-10", "end": "2026-10-11"}},
+            "source": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-10"}},
+            "target": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-10", "end": "2026-10-11"}},
         },
         "relations": [{"type": "dependency", "from": {"object": "source", "endpoint": "end"}, "to": {"object": "target", "endpoint": "start"}, "lag": "2d"}],
     }
     anchored_target = {
-        "version": "timeline/v0.5",
+        "version": "timeline/v0.6",
         "project": {"id": "anchored-target"},
         "objects": {
-            "source": {"type": "task", "schedule": {"mode": "fixed", "start": "2026-10-01", "end": "2026-10-12"}},
+            "source": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": "2026-10-12"}},
             "target": {"type": "task", "schedule": {"mode": "scheduled", "amount": "5d", "anchor": {"start": "2026-10-10"}}},
         },
         "relations": [{"type": "dependency", "from": {"object": "source", "endpoint": "end"}, "to": {"object": "target", "endpoint": "start"}, "lag": "0d"}],

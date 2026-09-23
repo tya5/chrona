@@ -1,4 +1,4 @@
-version: timeline/v0.5
+version: timeline/v0.6
 project: {id: chrona-delivery-roadmap, title: Chrona delivery roadmap}
 extensions:
   - packageId: implementation-delivery
@@ -9,7 +9,7 @@ objects:
   idp-1:
     type: implementation-delivery.work-item
     fields: {assignees: [chrona-team], workflowState: completed, artifacts: [], acceptanceEvidence: [], reuseClassification: core}
-    schedule: {mode: fixed, start: 2026-10-01, end: 2026-10-03}
+    schedule: {mode: fixed-span, start: 2026-10-01, end: 2026-10-03}
   idp-2:
     type: implementation-delivery.work-item
     fields: {assignees: [chrona-team], workflowState: completed, artifacts: [], acceptanceEvidence: [], reuseClassification: core}
@@ -32,7 +32,7 @@ objects:
           revision: {token: immutable-idp-3-result}
           contentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       reuseClassification: shared-service
-    schedule: {mode: fixed, at: 2026-10-10}
+    schedule: {mode: fixed-point, at: 2026-10-10}
 entities:
   chrona-team: {type: implementation-delivery.team, title: Chrona Team}
 relations:

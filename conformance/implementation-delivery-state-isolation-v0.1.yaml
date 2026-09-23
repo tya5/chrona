@@ -1,10 +1,10 @@
 project:
-  version: timeline/v0.5
+  version: timeline/v0.6
   project: {id: implementation-delivery-state-isolation}
   objects:
     design:
       type: task
-      schedule: {mode: fixed, start: 2026-10-01, end: 2026-10-08}
+      schedule: {mode: fixed-span, start: 2026-10-01, end: 2026-10-08}
     build:
       type: task
       schedule: {mode: scheduled, amount: 5d}
