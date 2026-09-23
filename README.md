@@ -34,11 +34,10 @@ python -m pip install -e '.[dev,render]'
 pytest
 chrona validate path/to/project.yaml
 chrona schedule path/to/project.yaml
-chrona render path/to/project.yaml --output timeline.svg
 ```
 
-`validate`, `schedule`, and `render` also accept an immutable local snapshot instead of
-a raw Draft path:
+`validate` and `schedule` also accept an immutable local snapshot instead of a
+raw Draft path:
 
 ```bash
 chrona schedule \
@@ -59,21 +58,31 @@ cycles as semantic errors.
 resolved placements into a deterministic SVG timeline. SVG coordinates are not
 project data and are never used to schedule or validate a project.
 
-Try the included controller example:
+Try the included plan-only controller example. `render` deliberately requires
+every presentation input explicitly; omit `--actual` because this View declares
+it optional:
 
 ```bash
-chrona render conformance/controller-x.yaml --output controller-x.svg
+chrona render examples/controller-z/project.yaml \
+  --view examples/controller-z/views/plan-only.yaml \
+  --theme examples/controller-z/themes/executive-light.yaml \
+  --scheme examples/controller-z/schemes/executive-light.yaml \
+  --layout examples/controller-z/layouts/executive-review.yaml \
+  --output controller-z-plan.svg
 ```
 
-The checked-in [controller timeline SVG](conformance/controller-x.svg)
-is generated from [`controller-x.yaml`](conformance/controller-x.yaml).
-
 For a broader semiconductor bring-up example with fixed and scheduled spans, working-day
-exceptions, endpoint dependencies, parallel qualification work, gates, entities, and
-annotations, render:
+exceptions, endpoint dependencies, parallel qualification work, gates, entities,
+annotations, and observations, add the executive View and Actual Set:
 
 ```bash
-chrona render examples/controller-z/project.yaml --output controller-z.svg
+chrona render examples/controller-z/project.yaml \
+  --view examples/controller-z/views/executive.yaml \
+  --theme examples/controller-z/themes/executive-light.yaml \
+  --scheme examples/controller-z/schemes/executive-light.yaml \
+  --layout examples/controller-z/layouts/executive-review.yaml \
+  --actual examples/controller-z/actual.yaml \
+  --output controller-z.svg
 ```
 
 ## Presentation slides
