@@ -33,7 +33,7 @@ Draft-render checks, and materialize real Material small-text/title/header
 evidence.
 
 Extend materialization with an explicit identity-pinned package-catalog
-reference, then use it for public Material small-text/title/header evidence.
+reference, then use it for public Material exact-13px table-text/title/header evidence.
 
 **Acceptance:** no declared variant alias dangles; aliases and short names
 resolve; source version is true; generated count/size limits are manifest-owned;

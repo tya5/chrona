@@ -93,8 +93,10 @@ diagnostics, preserving the declared all-or-nothing import semantics.
 
 ### C350-5 — Evidence and release accountability
 
-The public Controller Z corpus receives a bundled `material:` example at
-small table text (13–14 px), header, and title sizes.  Reproducible materializer
+The public Controller Z corpus receives a bundled `material:` example at an
+exact 13px table-text target, header, and title sizes.  A dedicated evidence
+Theme changes only that text token, preserving the ordinary corpus themes and
+proving that icon geometry follows the label typography ratio. Reproducible materializer
 and semantic SVG assertions prove name resolution, visible geometry, label
 paint, and sizing.  Catalog load and Draft render performance receive bounded
 tests using the C loader; no performance assertion relies on a reviewer’s
