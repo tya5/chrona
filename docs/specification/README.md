@@ -37,6 +37,8 @@ source, preset binding, guided capability, or explicit presentation materializat
 scope.
 Read `62` when reusable declarative presentation packages, package acquisition,
 locks, package source topology, or package-to-local materialization are in scope.
+Read `63` when admitting renderer-neutral visual capabilities, target fidelity,
+or richer portable presentation appearance.
 Read `56` Schema Authoring and Diagnostics when changing an authorable schema, a
 structural-validation diagnostic, or a normative schema reference.
 

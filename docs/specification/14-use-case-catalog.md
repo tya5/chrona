@@ -62,6 +62,7 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-29 | Acquire and use a reusable presentation package | Should | Designed | Not exposed |
 | UC-30 | Materialize and fork a reusable presentation | Should | Designed | Not exposed |
 | UC-31 | Compare reusable presentation directions in the gallery | Should | Designed | Documentation only |
+| UC-32 | Materialize a portable enhanced visual treatment | Should | Proposed | Not exposed |
 
 ## 4. Detailed use cases
 
@@ -507,6 +508,17 @@ peer-group fixtures and independently reproducible materializer bytes.
 **Exceptional behavior:** a dangling slide, false design assertion, unpaired
 semantic provenance, or hand-authored rendering evidence rejects publication;
 it does not alter rendering. **Owners:** `55`, `58`, `62`.
+
+### UC-32 — Materialize a portable enhanced visual treatment
+
+**Trigger:** An author selects an ordinary Theme/Context whose resolved visual
+treatment requires an admitted portable capability. **Outcome:** Scene carries
+bounded completed treatment data and the exact target profile serializes it, or
+rejects before output when required fidelity cannot be met. **Acceptance
+evidence:** profile, Scene, adapter, accessibility, and public materializer
+fixtures. **Exceptional behavior:** literal color, raw target syntax, excess
+complexity, or unsupported required capability rejects without a fallback.
+**Owners:** `07`, `08`, `12`, `34`, `46`, `55`, `63`.
 
 ## 5. Cross-cutting quality scenarios
 
