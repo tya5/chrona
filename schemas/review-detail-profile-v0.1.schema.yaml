@@ -1,69 +1,82 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:review-detail-profile-v0.1"
+description: "Optional detail surfaces shown with a review presentation."
 type: object
 additionalProperties: false
 required: [version, id, body]
 properties:
-  version: {const: "chrona/review-detail-profile/v0.1"}
-  id: {type: string, minLength: 1, maxLength: 4096}
+  version: {description: "This Review Detail Profile contract version.", const: "chrona/review-detail-profile/v0.1"}
+  id: {description: "Stable detail profile identifier.", type: string, minLength: 1, maxLength: 4096}
   body:
     type: object
+    description: "Selected group, milestone, legend, and observation detail surfaces."
     additionalProperties: false
     minProperties: 1
     properties:
       groupDetails:
         type: array
+        description: "Human-readable details for selected presentation groups."
         minItems: 1
         items:
           type: object
+          description: "One named group detail entry."
           additionalProperties: false
           required: [groupId, label, description]
           properties:
-            groupId: {type: string, minLength: 1, maxLength: 4096}
-            label: {type: string, minLength: 1, maxLength: 4096}
-            description: {type: string, minLength: 1, maxLength: 16384}
+            groupId: {description: "Identifier of the detailed group.", type: string, minLength: 1, maxLength: 4096}
+            label: {description: "Short group detail heading.", type: string, minLength: 1, maxLength: 4096}
+            description: {description: "Long group detail text.", type: string, minLength: 1, maxLength: 16384}
       milestones:
         type: array
+        description: "Unique milestone identifiers selected for the detail surface."
         minItems: 1
         uniqueItems: true
-        items: {type: string, minLength: 1, maxLength: 4096}
+        items: {description: "One milestone identifier.", type: string, minLength: 1, maxLength: 4096}
       legend:
         type: array
+        description: "Legend entries explaining semantic presentation roles."
         minItems: 1
         items:
           type: object
+          description: "One semantic role and its display label."
           additionalProperties: false
           required: [role, label]
           properties:
-            role: {type: string, minLength: 1, maxLength: 4096}
-            label: {type: string, minLength: 1, maxLength: 4096}
+            role: {description: "Semantic presentation role.", type: string, minLength: 1, maxLength: 4096}
+            label: {description: "Human-readable role label.", type: string, minLength: 1, maxLength: 4096}
       observations:
         type: object
+        description: "Tabular observation detail with declared columns and rows."
         additionalProperties: false
         required: [columns, rows]
         properties:
           columns:
             type: array
+            description: "Ordered observation-table column definitions."
             minItems: 1
             items:
               type: object
+              description: "One observation-table column."
               additionalProperties: false
               required: [id, label]
               properties:
-                id: {type: string, minLength: 1, maxLength: 4096}
-                label: {type: string, minLength: 1, maxLength: 4096}
+                id: {description: "Stable column identifier.", type: string, minLength: 1, maxLength: 4096}
+                label: {description: "Human-readable column label.", type: string, minLength: 1, maxLength: 4096}
           rows:
             type: array
+            description: "Ordered observation-table rows."
             minItems: 1
             items:
               type: object
+              description: "One observation-table row."
               additionalProperties: false
               required: [id, source, cells]
               properties:
-                id: {type: string, minLength: 1, maxLength: 4096}
-                source: {type: string, minLength: 1, maxLength: 4096}
-                emphasis: {enum: [normal, attention, critical]}
+                id: {description: "Stable row identifier.", type: string, minLength: 1, maxLength: 4096}
+                source: {description: "Semantic source identifier for the row.", type: string, minLength: 1, maxLength: 4096}
+                emphasis: {description: "Visual emphasis for the row.", enum: [normal, attention, critical]}
                 cells:
                   type: object
+                  description: "Map of column identifiers to displayed cell text."
                   minProperties: 1
-                  additionalProperties: {type: string, maxLength: 16384}
+                  additionalProperties: {description: "Displayed text in one named column.", type: string, maxLength: 16384}

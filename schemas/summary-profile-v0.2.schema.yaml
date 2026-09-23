@@ -1,37 +1,47 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/summary-profile-v0.2"
 title: "Chrona Summary Profile v0.2"
+description: "Declarative summary panels and typed metrics for a presentation resource."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object
     properties:
-      version: {const: chrona/summary-profile/v0.1}
-      kind: {const: summary-profile}
+      version: {description: "This Summary Profile contract version.", const: chrona/summary-profile/v0.1}
+      kind: {description: "The resource kind for a Summary Profile.", const: summary-profile}
       body:
         type: object
+        description: "Ordered summary panels supplied by this profile."
         required: [panels]
         additionalProperties: false
         properties:
           panels:
             type: array
+            description: "One or more summary panels."
             minItems: 1
             items:
               type: object
+              description: "One named summary panel and its metrics."
               required: [id, metrics]
               additionalProperties: false
               properties:
-                id: {type: string, minLength: 1}
-                title: {type: string}
-                presentation: {enum: [lines, figures]}
+                id: {description: "Stable panel identifier.", type: string, minLength: 1}
+                title: {description: "Optional human-readable panel title.", type: string}
+                presentation: {description: "Preferred panel presentation style.", enum: [lines, figures]}
                 metrics:
+                  description: "Named metric map or ordered metric list."
+                  examples: [{finishVariance: "count.knownFinishVariance"}, [{id: as-of, source: actual.asOf, format: date}]]
                   oneOf:
                     - type: object
+                      description: "Map of metric identifiers to shorthand or typed metrics."
                       minProperties: 1
                       additionalProperties:
+                        description: "A shorthand metric source or a fully typed metric."
+                        examples: ["count.selected", {source: actual.asOf, format: date}]
                         oneOf:
-                          - {type: string}
-                          - {$ref: "#/$defs/typedMetric"}
+                          - {description: "Named shorthand metric source.", type: string}
+                          - {description: "Fully declared metric.", $ref: "#/$defs/typedMetric"}
                     - type: array
+                      description: "Ordered fully typed metric declarations."
                       minItems: 1
                       items:
                         allOf:
@@ -41,34 +51,41 @@ allOf:
 $defs:
   typedMetric:
     type: object
+    description: "One source metric with a declared public format."
     required: [source, format]
     additionalProperties: false
     properties:
-      id: {type: string, minLength: 1}
-      label: {type: string}
-      scope: {enum: [subtree]}
+      id: {description: "Optional stable metric identifier.", type: string, minLength: 1}
+      label: {description: "Optional human-readable metric label.", type: string}
+      scope: {description: "Optional aggregation scope.", enum: [subtree]}
       source:
+        description: "Built-in, actual, count, scenario, or object-facet metric source."
+        examples: [actual.asOf, {actual: asOf}, {counts: finishDelta}, {scenario: title}, {object: task-1, facet: planned}]
         oneOf:
-          - {enum: [actual.asOf, planned.nextPoint, count.selected, count.missingActual, count.knownFinishVariance]}
+          - {description: "Built-in scalar metric.", enum: [actual.asOf, planned.nextPoint, count.selected, count.missingActual, count.knownFinishVariance]}
           - type: object
+            description: "Actual observation metric."
             required: [actual]
             additionalProperties: false
-            properties: {actual: {const: asOf}}
+            properties: {actual: {description: "Selects the actual as-of metric.", const: asOf}}
           - type: object
+            description: "Count-derived metric."
             required: [counts]
             additionalProperties: false
-            properties: {counts: {const: finishDelta}}
+            properties: {counts: {description: "Selects the finish-delta count.", const: finishDelta}}
           - type: object
+            description: "Scenario metadata metric."
             required: [scenario]
             additionalProperties: false
-            properties: {scenario: {enum: [id, title]}}
+            properties: {scenario: {description: "Scenario metadata field to expose.", enum: [id, title]}}
           - type: object
+            description: "Planned facet of one selected object."
             required: [object, facet]
             additionalProperties: false
             properties:
-              object: {type: string, minLength: 1}
-              facet: {const: planned}
-      format: {enum: [text, date, count, signedDays]}
+              object: {description: "Selected Project object identifier.", type: string, minLength: 1}
+              facet: {description: "The only supported object metric facet.", const: planned}
+      format: {description: "Public formatting applied to the metric value.", enum: [text, date, count, signedDays]}
     allOf:
       - if:
           required: [scope]
