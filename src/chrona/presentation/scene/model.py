@@ -26,7 +26,8 @@ class ScenePaint:
 
 @dataclass(frozen=True)
 class LinearGradient:
-    angle: float
+    start: tuple[float, float]
+    end: tuple[float, float]
     stops: tuple[tuple[float, str], ...]
     fidelity: str
 

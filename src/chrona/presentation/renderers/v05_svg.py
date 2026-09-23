@@ -45,7 +45,7 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
         return " ".join(result)
     def gradient_id(paint: ScenePaint) -> str:
         assert paint.gradient is not None
-        payload = repr((paint.gradient.angle, paint.gradient.stops)).encode()
+        payload = repr((paint.gradient.start, paint.gradient.end, paint.gradient.stops)).encode()
         return "gradient-" + sha256(payload).hexdigest()[:12]
     def shadow_id(paint: ScenePaint) -> str:
         assert paint.shadow is not None
@@ -71,7 +71,7 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             elif pattern != "outline": raise ValueError("E_PRESENTATION_PATTERN_UNSUPPORTED")
         for identifier, gradient in sorted(gradients.items()):
             assert gradient is not None
-            definitions.append(f'<linearGradient id="{identifier}" gradientUnits="objectBoundingBox" gradientTransform="rotate({number(gradient.angle)})">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"/>' for position, color in gradient.stops) + '</linearGradient>')
+            definitions.append(f'<linearGradient id="{identifier}" gradientUnits="userSpaceOnUse" x1="{number(gradient.start[0])}" y1="{number(gradient.start[1])}" x2="{number(gradient.end[0])}" y2="{number(gradient.end[1])}">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"/>' for position, color in gradient.stops) + '</linearGradient>')
         for identifier, shadow in sorted(shadows.items()):
             assert shadow is not None
             definitions.append(f'<filter id="{identifier}"><feDropShadow dx="{number(shadow.offset_x)}" dy="{number(shadow.offset_y)}" stdDeviation="{number(shadow.blur)}" flood-color="{escape(shadow.color, quote=True)}" flood-opacity="{number(shadow.opacity)}"/></filter>')

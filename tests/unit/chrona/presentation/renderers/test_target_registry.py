@@ -108,7 +108,7 @@ def test_svg_derivative_adapters_characterize_one_completed_rich_surface():
     import resvg_py
 
     paint = ScenePaint("#112233", "#445566", 1, (), 1,
-                       LinearGradient(45, ((0, "#112233"), (1, "#778899")), "required"),
+                       LinearGradient((1, 2), (4, 5), ((0, "#112233"), (1, "#778899")), "required"),
                        DropShadow("#000000", 1, 2, 3, 0.4, "required"), StrokeFinish("round", "bevel", "required"))
     scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 1, 0, 1)
     surface = SceneSurface("s", (), (), (), scale,

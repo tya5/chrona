@@ -44,7 +44,7 @@ def test_resolver_completes_absent_opacity_before_adapter_invocation():
 def test_resolver_completes_bounded_gradient_shadow_and_stroke_finish():
     values = {"fill": {"type": "color", "value": "#112233"}, "start": {"type": "color", "value": "#112233"}, "end": {"type": "color", "value": "#445566"}, "shadow": {"type": "color", "value": "#000000"}, "angle": {"type": "number", "value": 45}, "x": {"type": "number", "value": 1}, "y": {"type": "number", "value": 2}, "blur": {"type": "number", "value": 3}, "alpha": {"type": "number", "value": 0.4}, "cap": {"type": "lineCap", "value": "round"}, "join": {"type": "lineJoin", "value": "bevel"}}
     role = {"fill": "fill", "gradientStart": "start", "gradientEnd": "end", "shadowColor": "shadow", "gradientAngle": "angle", "shadowOffsetX": "x", "shadowOffsetY": "y", "shadowBlur": "blur", "shadowOpacity": "alpha", "strokeLineCap": "cap", "strokeLineJoin": "join"}
-    paint = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID)
-    assert paint.gradient and paint.gradient.angle == 45
+    paint = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID, gradient_bounds=(0, 0, 10, 10))
+    assert paint.gradient and paint.gradient.start == (0, 0)
     assert paint.shadow and paint.shadow.blur == 3
     assert paint.stroke_finish and paint.stroke_finish.line_cap == "round"

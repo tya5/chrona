@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from math import cos, radians, sin
 from typing import Mapping
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
@@ -29,7 +30,8 @@ class ScenePaintError(ValueError):
 
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_capabilities: frozenset[str] | None = None,
-                        optional_omission: bool = False) -> ScenePaint:
+                        optional_omission: bool = False,
+                        gradient_bounds: tuple[float, float, float, float] | None = None) -> ScenePaint:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
     fill_required = family in {PaintFamily.TEXT, PaintFamily.SOLID, PaintFamily.CANVAS}
     stroke_required = family in {PaintFamily.OUTLINE, PaintFamily.HATCH, PaintFamily.PATH}
@@ -58,7 +60,7 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
     if fill is None and stroke is None:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
     try:
-        gradient = _gradient(tokens, role, visual_capabilities, optional_omission)
+        gradient = _gradient(tokens, role, visual_capabilities, optional_omission, gradient_bounds)
         shadow = _shadow(tokens, role, visual_capabilities, optional_omission)
         finish = _stroke_finish(tokens, role, visual_capabilities, optional_omission)
     except ThemeTokenError as error:
@@ -88,7 +90,7 @@ def _admit(capabilities: frozenset[str] | None, required: frozenset[str], fideli
 
 
 def _gradient(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | None,
-              optional_omission: bool) -> LinearGradient | None:
+              optional_omission: bool, bounds: tuple[float, float, float, float] | None) -> LinearGradient | None:
     start, end = tokens.optional_color(role, "gradientStart"), tokens.optional_color(role, "gradientEnd")
     angle = tokens.optional_number(role, "gradientAngle")
     if start is None and end is None and angle is None: return None
@@ -100,7 +102,16 @@ def _gradient(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | 
     if not _admit(capabilities, frozenset((LINEAR_GRADIENT,)), fidelity, optional_omission,
                   f"/body/roles/{role}/gradientAngle"):
         return None
-    return LinearGradient(float(angle), ((0.0, start), (1.0, end)), fidelity)
+    if bounds is None:
+        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle")
+    inline, block, inline_size, block_size = bounds
+    centre = (inline + inline_size / 2, block + block_size / 2)
+    direction = (cos(radians(float(angle))), sin(radians(float(angle))))
+    extent = abs(inline_size / 2 * direction[0]) + abs(block_size / 2 * direction[1])
+    coordinate = lambda value: 0.0 if abs(value) < 1e-12 else value
+    endpoints = ((coordinate(centre[0] - direction[0] * extent), coordinate(centre[1] - direction[1] * extent)),
+                 (coordinate(centre[0] + direction[0] * extent), coordinate(centre[1] + direction[1] * extent)))
+    return LinearGradient(*endpoints, ((0.0, start), (1.0, end)), fidelity)
 
 
 def _shadow(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | None,

@@ -44,6 +44,7 @@ class SceneBuildInput:
     capabilities: Mapping[str, bool]
     visual_profile: VisualProfile | None = None
     locale: str = "en-US"
+    viewport: tuple[float, float] = (0.0, 0.0)
 
 
 _REQUIRED_SOURCES = {
@@ -66,6 +67,7 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
 
 
 def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
+                            viewport: tuple[float, float] = (0.0, 0.0),
                             *, scale_target_role: str | None = None,
                             scale_paints: Mapping[str, str] | None = None,
                             scale_legend_paints: Mapping[str, str] | None = None) -> SceneSurface:
@@ -76,7 +78,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                            for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_capabilities=visual_profile.capabilities if visual_profile else None,
-                                     optional_omission=visual_profile.optional_omission if visual_profile else False)
+                                     optional_omission=visual_profile.optional_omission if visual_profile else False,
+                                     gradient_bounds=(0.0, 0.0, *viewport))
     except ScenePaintError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     return replace(surface, primitives=primitives, canvas_paint=canvas)
@@ -87,7 +90,8 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                               scale_legend_paints: Mapping[str, str]) -> ScenePrimitive:
     paint = resolve_scene_paint(tokens, primitive.visual_role, _paint_family(primitive, tokens),
                                 visual_capabilities=visual_profile.capabilities if visual_profile else None,
-                                optional_omission=visual_profile.optional_omission if visual_profile else False)
+                                optional_omission=visual_profile.optional_omission if visual_profile else False,
+                                gradient_bounds=primitive.bounds)
     override = (scale_paints.get(primitive.source_ref)
                 if primitive.visual_role == scale_target_role else None)
     if primitive.source_kind == "legend":
@@ -100,7 +104,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       layout_manifest: LayoutManifest, resolved_theme: Mapping[str, Any],
                       font_metrics: Any, measured_sources: MeasuredSources,
                       capabilities: Mapping[str, bool], locale: str = "en-US",
-                      visual_profile: VisualProfile | None = None) -> SceneBuildInput:
+                      visual_profile: VisualProfile | None = None,
+                      viewport: tuple[float, float] = (0.0, 0.0)) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -122,19 +127,19 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), visual_profile, locale)
+                           dict(capabilities), visual_profile, locale, viewport)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
-        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens, value.visual_profile,
+        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens, value.visual_profile, value.viewport,
                                        scale_target_role=value.surface_content.scale_target_role,
                                        scale_paints=dict(value.surface_content.scale_paints),
                                        scale_legend_paints=dict(value.surface_content.scale_legend_paints))
     if surface == "dependency-network":
-        return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile)
+        return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile, value.viewport)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
 
 

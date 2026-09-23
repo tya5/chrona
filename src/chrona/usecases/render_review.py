@@ -178,6 +178,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         capabilities={name: True for name in render_closure.context.target.capabilities},
         locale=environment.locale,
         visual_profile=visual_profile,
+        viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
     )
 
     unused = ledger.unused()

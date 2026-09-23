@@ -15,7 +15,7 @@ from chrona.presentation.scene.visual_capabilities import (
 
 def _surface() -> SceneSurface:
     scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 1, 0, 1)
-    paint = ScenePaint("#111111", None, None, (), 1, LinearGradient(0, ((0, "#111111"), (1, "#222222")), "required"))
+    paint = ScenePaint("#111111", None, None, (), 1, LinearGradient((0, 0), (1, 0), ((0, "#111111"), (1, "#222222")), "required"))
     return SceneSurface("s", (), (), (), scale, (ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1), paint=paint),), ScenePaint("#fff", None, None, (), 1))
 
 
