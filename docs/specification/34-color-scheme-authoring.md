@@ -5,7 +5,7 @@
 
 ## 1. Authority
 
-Color Scheme owns concrete colors only. Theme retains typography, spacing, stroke, marker, pattern, opacity, text alternatives, and the mapping from a visual role to a closed color intent. Style continues to select roles from facts; Layout continues to own geometry; Scene and adapters consume concrete paint only.
+Color Scheme owns concrete colors only. Theme retains typography, spacing, stroke, marker, pattern, opacity, text alternatives, and the mapping from a visual role to a closed color intent. Style continues to select roles from facts; Layout continues to own geometry; Scene converts resolved policy to completed concrete paint and adapters consume only that completed value.
 
 A Color Scheme MUST NOT select facts, roles, geometry, output capabilities, or a renderer fallback. A scheme choice therefore changes color values only.
 
@@ -33,7 +33,7 @@ There is no literal-color escape hatch in the shipped M25 authoring path. An ear
 4. resolve each Theme color binding from the Scheme and retain all non-color Theme values unchanged, producing an internal concrete Theme;
 5. measure sources, resolve Layout, compose Scene, and serialize Output.
 
-No renderer, Layout adapter, or Scene constructor may read a Scheme resource or supply a color default. A gallery is multiple independent Context evaluations with one distinct `colorScheme` reference per result.
+No renderer or Layout adapter may read a Scheme resource or supply a color default. The Scene paint resolver is the sole derived consumer of the resolved Scheme value. A gallery is multiple independent Context evaluations with one distinct `colorScheme` reference per result.
 
 `chrona render-review-gallery` receives two or more immutable Context references plus
 the same snapshot-root and Store identity inputs as `render-review`. It resolves every

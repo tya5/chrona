@@ -280,9 +280,11 @@ as equal `rx`/`ry` and never re-reads `theme.bar.radius`.
 identifier and its concrete `bounds`. `Path` carries at least two ordered logical
 `points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
 tick may omit both port identifiers. `Path.bounds` is the exact union of its points,
-including zero width or height. Paint remains a resolved `visualRole`; adapters map
-that role to target tokens but never calculate payload geometry. A kind/payload
-mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an adapter must not repair it.
+including zero width or height. Paint is the completed `ScenePaint` payload defined
+by Specification 46; `visualRole` is retained only as semantic provenance. Adapters
+serialize completed paint but never re-open Theme/Scheme tokens or calculate a paint
+property. A kind/payload mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an
+adapter must not repair it.
 
 `optional` defaults to false. It is true only for a label or annotation family whose
 applicable Detail rule has `required=false`; generated children of that optional
