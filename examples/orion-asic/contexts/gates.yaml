@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.10
+version: chrona/render-context/v0.11
 kind: render-context
 id: orion-asic-gates
 body:
