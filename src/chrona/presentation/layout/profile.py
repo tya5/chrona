@@ -9,10 +9,8 @@ import json
 from typing import Any, Mapping
 
 import jsonschema
-import yaml
-
 from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
-from chrona.resources import schema_resource
+from chrona.resources import schema_document
 from chrona.schema_diagnostics import explain_errors
 
 
@@ -27,7 +25,7 @@ class LayoutBase:
 
 
 def _schema() -> dict[str, Any]:
-    return yaml.safe_load(schema_resource("layout-profile-v0.3.schema.yaml").read_text(encoding="utf-8"))
+    return dict(schema_document("layout-profile-v0.3.schema.yaml"))
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:

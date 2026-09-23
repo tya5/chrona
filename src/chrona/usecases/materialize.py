@@ -17,6 +17,7 @@ from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
+from chrona.yaml_codec import safe_load
 
 
 @dataclass(frozen=True)
@@ -73,7 +74,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(payload)
     if reference.get("kind") == "snapshot-ref":
-        nested = yaml.safe_load(payload).get("body", {}).get("project")
+        nested = safe_load(payload).get("body", {}).get("project")
         if not isinstance(nested, dict):
             raise ValueError("E_MATERIALIZER_CONTEXT")
         _copy_reference(example, nested, snapshot)
@@ -84,7 +85,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
     token, address = catalog_reference.get("revision", {}).get("token"), catalog_reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
         raise ValueError("E_MATERIALIZER_CONTEXT")
-    catalog = yaml.safe_load(_reference_payload(example, catalog_reference))
+    catalog = safe_load(_reference_payload(example, catalog_reference))
     icons = catalog.get("body", {}).get("icons") if isinstance(catalog, dict) else None
     if not isinstance(icons, dict):
         raise ValueError("E_ICON_CATALOG_SCHEMA")
@@ -114,7 +115,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
 
 
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
-    context = yaml.safe_load(context_path.read_bytes())
+    context = safe_load(context_path.read_bytes())
     if context.get("version") != "chrona/render-context/v0.12" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
@@ -155,7 +156,7 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> t
 
 def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool = False) -> MaterializationResult:
     example = manifest_path.parent.resolve()
-    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest = safe_load(manifest_path.read_text())
     if manifest.get("version") != "chrona/example-materializer/v0.1" or manifest.get("role") != "regression-corpus":
         raise ValueError("E_MATERIALIZER_MANIFEST")
     slide = next((item for item in manifest.get("slides", ()) if item.get("id") == slide_id), None)

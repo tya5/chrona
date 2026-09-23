@@ -5,16 +5,13 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Iterable, Mapping
 
-import yaml
-
-from chrona.resources import schema_resource
+from chrona.resources import schema_document
 from chrona.schema_diagnostics import explain_errors
 from chrona.presentation.layout.model import LayoutManifest
 from jsonschema import Draft202012Validator
 
 
 PROFILE_VERSION = "chrona/review-detail-profile/v0.1"
-_SCHEMA = schema_resource("review-detail-profile-v0.1.schema.yaml")
 _PANEL_SOURCES = {
     "groupDetails": "group-details",
     "milestones": "milestones",
@@ -35,7 +32,7 @@ class ResolvedReviewDetail:
 
 
 def _validate_shape(profile: Mapping[str, Any]) -> None:
-    schema = yaml.safe_load(_SCHEMA.read_text(encoding="utf-8"))
+    schema = schema_document("review-detail-profile-v0.1.schema.yaml")
     errors = tuple(Draft202012Validator(schema).iter_errors(dict(profile)))
     if errors:
         identity = profile.get("id")

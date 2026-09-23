@@ -24,6 +24,7 @@ from chrona.presentation.contracts import (
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
 from chrona.core.ports import SnapshotReadError, SnapshotReader
+from chrona.yaml_codec import safe_load
 
 
 class ClosureError(ValueError):
@@ -225,7 +226,7 @@ def resolve_guided_draft_render(
         raise ClosureError("E_AUTHORING_PRESET_SCHEMA")
     resource_declarations = (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
     resources_by_path = {
-        str(declaration["path"]): yaml.safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
+        str(declaration["path"]): safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
         for declaration in resource_declarations if isinstance(declaration, Mapping)
     }
     if not all(isinstance(value, dict) for value in resources_by_path.values()):
@@ -345,7 +346,7 @@ def _draft_render_from_resources(
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     """Read one explicit draft input and freeze it through its resource contract."""
-    value = yaml.load(path.read_bytes(), Loader=yaml.CSafeLoader)
+    value = safe_load(path.read_bytes())
     if not isinstance(value, dict):
         raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
     identifier = _resource_id(kind, value)
@@ -578,7 +579,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     except SnapshotReadError as error:
         raise ClosureError(error.diagnostic_id) from error
     computed_identity = f"sha256:{sha256(payload).hexdigest()}"
-    value = yaml.load(payload, Loader=yaml.CSafeLoader)
+    value = safe_load(payload)
     if expected_kind == "project":
         actual_id = value.get("project", {}).get("id") if isinstance(value, dict) else None
     elif expected_kind == "profile-package":

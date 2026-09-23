@@ -14,6 +14,7 @@ from typing import Any, Mapping
 import yaml
 
 from chrona.operational.resources import OperationalResourceError, content_identity
+from chrona.yaml_codec import safe_load
 
 
 def read_authoring_workspace(path: Path) -> dict[str, Any]:
@@ -79,7 +80,7 @@ def cas_write_authoring_aggregate(path: Path, expected_identity: str, candidates
 
 
 def _load_workspace(path: Path) -> dict[str, Any]:
-    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    value = safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise OperationalResourceError("E_AUTHORING_WORKSPACE_SCHEMA")
     return value

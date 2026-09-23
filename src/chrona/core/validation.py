@@ -10,8 +10,9 @@ import yaml
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
                        parse_amount, requires_working_calendar)
-from chrona.resources import schema_resource
+from chrona.resources import schema_document, schema_resource
 from chrona.schema_diagnostics import explain_errors
+from chrona.yaml_codec import safe_load
 
 
 SCHEMA_PATH = schema_resource("project-v0.6.schema.yaml")
@@ -19,7 +20,7 @@ SCHEMA_PATH = schema_resource("project-v0.6.schema.yaml")
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
     with Path(path).open(encoding="utf-8") as stream:
-        return yaml.safe_load(stream)
+        return safe_load(stream)
 
 
 def validate_project(
@@ -37,7 +38,11 @@ def validate_project(
     diagnostics.extend(_rollup_syntax_diagnostics(project))
     if diagnostics:
         return diagnostics
-    schema = yaml.safe_load(schema_path.read_text(encoding="utf-8"))
+    schema = (
+        schema_document("project-v0.6.schema.yaml")
+        if schema_path == SCHEMA_PATH
+        else safe_load(schema_path.read_text(encoding="utf-8"))
+    )
     # PyYAML resolves unquoted ISO dates to ``date`` objects, while JSON Schema
     # describes the canonical JSON-compatible representation as strings. Keep
     # the semantic value intact for scheduling, but validate its serialization.

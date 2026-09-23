@@ -15,6 +15,7 @@ from chrona.presentation.model.closure import _packaged_font_metrics, resolve_dr
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.yaml_codec import safe_load
 
 
 def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *, directory: str) -> tuple[dict[str, Any], dict[str, bytes]]:
@@ -26,11 +27,11 @@ def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *
     _relative(directory)
     guided_bytes = _render_bytes(resolve_guided_draft_render(workspace_path=workspace_path))
     preset_path = _child(root, str(workspace_contract.binding["preset"]["path"]))
-    preset = yaml.safe_load(preset_path.read_text())
+    preset = safe_load(preset_path.read_text())
     preset_contract = parse_contract(_identity("presentation-preset", preset), preset)
     if not isinstance(preset_contract, PresentationPresetContract):
         raise ValueError("E_AUTHORING_PRESET_SCHEMA")
-    acquired = {str(item["path"]): yaml.safe_load(_child(preset_path.parent, str(item["path"])).read_text())
+    acquired = {str(item["path"]): safe_load(_child(preset_path.parent, str(item["path"])).read_text())
                 for item in (*preset_contract.resources.values(), *preset_contract.compatible_color_schemes)}
     normalized = normalize_authoring_workspace(workspace_contract, preset_contract, acquired)
     sources = dict(normalized.draft_sources())

@@ -11,12 +11,12 @@ from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_
 
 
 def parse_authoring_command(path: Path) -> dict[str, Any]:
-    import yaml
-    from chrona.resources import schema_resource
+    from chrona.resources import schema_document
     from chrona.schema_diagnostics import explain_errors
+    from chrona.yaml_codec import safe_load
     import jsonschema
-    value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    schema = yaml.safe_load(schema_resource("authoring-command-v0.1.schema.yaml").read_text())
+    value = safe_load(path.read_text(encoding="utf-8"))
+    schema = schema_document("authoring-command-v0.1.schema.yaml")
     if not isinstance(value, dict):
         raise ValueError("E_AUTHORING_COMMAND_SCHEMA: expected object")
     errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(value))

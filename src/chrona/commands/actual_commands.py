@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any, Protocol
 import yaml
 
+from chrona.yaml_codec import safe_load
+
 
 class ActualStore(Protocol):
     def read(self) -> tuple[str, dict[str, Any]]: ...
@@ -124,7 +126,7 @@ class LocalActualStore:
     def _load_tip(self) -> tuple[str, dict[str, Any]]:
         pointer = json.loads(self.tip.read_text(encoding="utf-8"))
         token = pointer["token"]
-        value = yaml.safe_load((self.root / token / "actuals" / f"{self.actual_set_id}.yaml").read_text(encoding="utf-8"))
+        value = safe_load((self.root / token / "actuals" / f"{self.actual_set_id}.yaml").read_text(encoding="utf-8"))
         return token, value
 
 

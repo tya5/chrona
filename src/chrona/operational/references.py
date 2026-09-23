@@ -9,6 +9,7 @@ from typing import Any, Protocol
 import yaml
 
 from chrona.operational.resources import canonical_bytes, content_identity, json_value
+from chrona.yaml_codec import safe_load
 
 
 class ImmutableReader(Protocol):
@@ -30,7 +31,7 @@ def verify_reference(reader: ImmutableReader, reference: dict[str, Any], *, kind
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
     try:
         payload = reader.read(reference)
-        value = json_value(yaml.safe_load(payload))
+        value = json_value(safe_load(payload))
     except (OSError, KeyError, ValueError, yaml.YAMLError) as error:
         raise ValueError("E_AUTOMATION_TARGET_CLOSURE") from error
     if not isinstance(value, dict):

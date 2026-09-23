@@ -3,15 +3,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from functools import cache
 import math
 import re
 from typing import Any, Mapping
 
 import jsonschema
-import yaml
 from referencing import Registry, Resource
 
-from chrona.resources import schema_resource
+from chrona.resources import schema_document
 from chrona.schema_diagnostics import SchemaViolation, explain_errors
 
 
@@ -521,11 +521,12 @@ _SCHEMAS = {
 }
 
 
+@cache
 def _registry() -> Registry:
     names = ("presentation-resource-v0.1.schema.yaml", "revision-store-resource-ref-v0.1.schema.yaml")
     registry = Registry()
     for name in names:
-        schema = yaml.safe_load(schema_resource(name).read_text(encoding="utf-8"))
+        schema = schema_document(name)
         registry = registry.with_resource(schema["$id"], Resource.from_contents(schema))
     return registry
 
@@ -535,7 +536,7 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
     schema_name = _SCHEMAS.get((kind, version)) if isinstance(version, str) else None
     if schema_name is None:
         raise ContractError("E_CLOSURE_KIND")
-    schema = yaml.safe_load(schema_resource(schema_name).read_text(encoding="utf-8"))
+    schema = schema_document(schema_name)
     errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(value)))
     if errors:
         violation = explain_errors(errors, resource_kind=kind, resource_identity=identity.id)

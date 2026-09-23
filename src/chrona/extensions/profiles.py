@@ -4,15 +4,13 @@ from __future__ import annotations
 from typing import Any
 
 import jsonschema
-import yaml
-
 from chrona.core.diagnostics import Diagnostic
-from chrona.resources import schema_resource
+from chrona.resources import schema_document
 from chrona.schema_diagnostics import explain_errors
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
-PROFILE_SCHEMA = schema_resource("profile-v0.2.schema.yaml")
-RESOURCE_SCHEMA = schema_resource("revision-store-resource-ref-v0.1.schema.yaml")
+from chrona.yaml_codec import safe_load
+
 PACKAGE_ID = "implementation-delivery"
 DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}
 ACTOR_PROFILES = {"implementation-delivery.person", "implementation-delivery.team"}
@@ -26,7 +24,7 @@ def resolve_package_manifests(project: dict[str, Any], reader: SnapshotReader) -
         if not reference:
             continue
         try:
-            manifests[extension["packageId"]] = yaml.safe_load(reader.read(reference))
+            manifests[extension["packageId"]] = safe_load(reader.read(reference))
         except SnapshotReadError as error:
             diagnostics.append(Diagnostic(error.diagnostic_id, "Package reference did not resolve to an immutable snapshot", f"/extensions/{index}/resource"))
     return manifests, diagnostics
@@ -48,7 +46,7 @@ def validate_profiles(project: dict[str, Any], package_manifests: dict[str, dict
     manifest = package_manifests.get(PACKAGE_ID)
     if manifest is None:
         return [Diagnostic("IDP-PROFILE-006", "Implementation-delivery package is unresolved", "/extensions")]
-    schema = yaml.safe_load(PROFILE_SCHEMA.read_text())
+    schema = schema_document("profile-v0.2.schema.yaml")
     errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(manifest))
     if errors or manifest.get("packageId") != PACKAGE_ID:
         detail = "packageId must be 'implementation-delivery'" if not errors else explain_errors(
@@ -87,7 +85,7 @@ def _validate_value(project: dict[str, Any], name: str, value: Any, spec: dict[s
         if any(entity_id not in entities or entities[entity_id].get("type") not in ACTOR_PROFILES for entity_id in values):
             return [Diagnostic("IDP-PROFILE-003", "Invalid delivery assignee", path)]
     if spec.get("type") == "resourceReference":
-        schema = yaml.safe_load(RESOURCE_SCHEMA.read_text())
+        schema = schema_document("revision-store-resource-ref-v0.1.schema.yaml")
         for reference in values:
             errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(reference))
             if errors:
