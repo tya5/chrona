@@ -33,6 +33,63 @@ or gallery entry without provenance.  It reports coverage as evidence, never as
 a requirement that a tutorial or one aesthetic gallery exercise every schema
 value.
 
+### Gallery design-catalog successor
+
+The current `chrona/example-catalog/v0.1` is a flat provenance index.  A
+gallery that compares reusable presentation designs requires a successor
+catalogue contract, not additional fields whose meaning is inferred by the
+renderer.  Its entries are documentary claims over one declared corpus slide
+and its derived `PresentationDesignSummary`.
+
+The successor entry has these finite categories:
+
+| Category | Purpose | Authority |
+| --- | --- | --- |
+| Stable gallery identity and source | Names the entry and one `(corpus, slide)` pair. | Corpus manifest and slide identity |
+| Editorial narrative | Gives title, intended audience, and the communication problem solved. | Gallery author; never evaluation input |
+| Comparison declaration | Identifies a named paired-design set and the declared comparison axis. | Gallery author, verified against summaries where representable |
+| Design assertions | States selected finite Design Space values expected from the derived summary. | Derived summary is authoritative; catalog claims must match it |
+| Target/capability assertion | States the intended output target and only explicitly declared target capabilities. | Resolved immutable Context |
+| Accessibility review note | Records human-readable rationale and any non-colour semantic distinction. | Gallery author, reviewed alongside rendered evidence |
+
+The catalogue cannot contain Project facts, Actual observations, resolved
+geometry, CSS/SVG snippets, renderer options, resource paths, package cache
+locations, or a resource selector.  In particular, an accessibility note is
+evidence narration; it cannot suppress an accessibility diagnostic or request
+a renderer fallback.
+
+Catalog validation proceeds in this order:
+
+```text
+corpus slide identity
+  -> materializer/Context provenance
+  -> derived Design Space summary
+  -> finite catalog assertion comparison
+  -> documentary narration/link integrity
+```
+
+The validator diagnoses duplicate gallery identities, dangling corpus slides,
+missing materializer provenance, a summary-identity mismatch, unsupported
+assertion vocabulary, an unpaired comparison declaration, and an assertion
+that disagrees with the derived summary.  A validation failure affects gallery
+publication only.  It cannot alter rendering or make a corpus render consult
+the catalogue.
+
+### Paired design evidence
+
+A gallery comparison is meaningful only when its peers declare the same
+semantic Project/scheduling fixture and differ solely in ordinary presentation
+resources and the resulting immutable Context.  The materializer evidence for
+each peer remains independent and byte-pinned.  The gallery may explain the
+visual difference, but it must not infer a semantic equivalence from matching
+titles or Project IDs alone; the pair declaration is validated from the pinned
+project/scheduling provenance.
+
+Visual review images are derived inspection artifacts.  They may aid human
+review but neither replace SVG byte evidence nor become package source.  A
+gallery entry must explicitly state any target/capability and accessibility
+limitation that matters to its claimed communication purpose.
+
 ## Boundaries
 
 Examples do not select product policy by project, manifest, or slide identity.
