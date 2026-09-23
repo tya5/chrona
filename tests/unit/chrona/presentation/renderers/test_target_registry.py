@@ -1,9 +1,12 @@
 from pathlib import Path
+from datetime import date
+from importlib.metadata import version
 
 import pytest
 
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.registry import renderer_for
+from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 
@@ -99,3 +102,31 @@ def test_typeset_adapters_are_completed_scene_only():
     source = Path(__import__("chrona.presentation.renderers.v05_typeset", fromlist=["*"]).__file__).read_text(encoding="utf-8")
     forbidden = ("chrona.presentation.layout", "chrona.presentation.contracts", "chrona.scheduling", "font_metrics", "route_", "resolve_draft")
     assert all(fragment not in source for fragment in forbidden)
+
+
+def test_svg_derivative_adapters_characterize_one_completed_rich_surface():
+    import resvg_py
+
+    paint = ScenePaint("#112233", "#445566", 1, (), 1,
+                       LinearGradient(45, ((0, "#112233"), (1, "#778899")), "required"),
+                       DropShadow("#000000", 1, 2, 3, 0.4, "required"), StrokeFinish("round", "bevel", "required"))
+    scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 1, 0, 1)
+    surface = SceneSurface("s", (), (), (), scale,
+                           (ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (1, 2, 40, 10), paint=paint),),
+                           ScenePaint("#ffffff", None, None, (), 1))
+    environments = {
+        "png": {"rasterizer": {"engine": "resvg-py", "version": resvg_py.__version__, "resvgVersion": resvg_py.__resvg_version__, "dpi": 96}},
+        "pdf": {"rasterizer": {"engine": "reportlab", "svglibVersion": version("svglib"), "reportlabVersion": version("reportlab"), "invariant": True}},
+    }
+    for kind, prefix in (("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")):
+        renderer = renderer_for({"kind": kind, "capabilities": []}, environments[kind])
+        first = renderer.render(surface, viewport=(100, 50)).content
+        assert first.startswith(prefix) and first == renderer.render(surface, viewport=(100, 50)).content
+
+
+def test_renderer_adapters_do_not_import_theme_scheme_or_profile_policy():
+    paths = ("chrona.presentation.renderers.v05_svg", "chrona.presentation.renderers.v05_typeset", "chrona.presentation.renderers.registry")
+    forbidden = ("color_scheme", "theme_tokens", "visual_capabilities", "resolve_scene_paint", "resolve_theme")
+    for module_name in paths:
+        source = Path(__import__(module_name, fromlist=["*"]).__file__).read_text(encoding="utf-8")
+        assert all(fragment not in source for fragment in forbidden)

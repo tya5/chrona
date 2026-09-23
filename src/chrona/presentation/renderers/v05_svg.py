@@ -1,7 +1,8 @@
-"""SVG formatting for a completed v0.5 SceneSurface."""
+"""SVG formatting for a completed portable visual SceneSurface."""
 from __future__ import annotations
 
 from html import escape
+from hashlib import sha256
 
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface
@@ -29,19 +30,36 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
         result = [f'opacity="{number(paint.opacity)}"']
         if fill:
             if paint.fill is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
-            result.append(f'fill="{escape(paint.fill, quote=True)}"')
+            value = paint.fill
+            if paint.gradient is not None:
+                value = f"url(#{gradient_id(paint)})"
+            result.append(f'fill="{escape(value, quote=True)}"')
         if stroke:
             if paint.stroke is None or paint.stroke_width is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
             result.extend((f'stroke="{escape(paint.stroke, quote=True)}"', f'stroke-width="{number(paint.stroke_width)}"'))
             if paint.dash: result.append(f'stroke-dasharray="{" ".join(number(value) for value in paint.dash)}"')
+            if paint.stroke_finish is not None:
+                result.extend((f'stroke-linecap="{paint.stroke_finish.line_cap}"', f'stroke-linejoin="{paint.stroke_finish.line_join}"'))
+        if paint.shadow is not None:
+            result.append(f'filter="url(#{shadow_id(paint)})"')
         return " ".join(result)
+    def gradient_id(paint: ScenePaint) -> str:
+        assert paint.gradient is not None
+        payload = repr((paint.gradient.angle, paint.gradient.stops)).encode()
+        return "gradient-" + sha256(payload).hexdigest()[:12]
+    def shadow_id(paint: ScenePaint) -> str:
+        assert paint.shadow is not None
+        return "shadow-" + sha256(repr(paint.shadow).encode()).hexdigest()[:12]
     marker_pairs = {(completed(node).stroke, node.shape) for node in surface.primitives if node.kind == "Path" and node.shape}
     patterns = {(node.visual_role, node.pattern, completed(node)) for node in surface.primitives if node.pattern}
     has_links = any(node.href is not None for node in surface.primitives)
     ns = ' xmlns:xlink="http://www.w3.org/1999/xlink"' if has_links else ""
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg"{ns} width="{number(width)}" height="{number(height)}" viewBox="0 0 {number(width)} {number(height)}" role="img">',
              f'<rect width="{number(width)}" height="{number(height)}" {attrs(surface.canvas_paint, fill=True, stroke=False)}/>']
-    if marker_pairs or patterns:
+    paints = (surface.canvas_paint, *(completed(node) for node in surface.primitives))
+    gradients = {gradient_id(paint): paint.gradient for paint in paints if paint.gradient}
+    shadows = {shadow_id(paint): paint.shadow for paint in paints if paint.shadow}
+    if marker_pairs or patterns or gradients or shadows:
         definitions: list[str] = []
         for color, marker in sorted(marker_pairs):
             if marker != "triangle" or color is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -51,8 +69,15 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             if pattern == "diagonal-hatch":
                 definitions.append(f'<pattern id="pattern-{role}-{pattern}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" {attrs(paint, fill=False, stroke=True)}/></pattern>')
             elif pattern != "outline": raise ValueError("E_PRESENTATION_PATTERN_UNSUPPORTED")
+        for identifier, gradient in sorted(gradients.items()):
+            assert gradient is not None
+            definitions.append(f'<linearGradient id="{identifier}" gradientUnits="objectBoundingBox" gradientTransform="rotate({number(gradient.angle)})">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"/>' for position, color in gradient.stops) + '</linearGradient>')
+        for identifier, shadow in sorted(shadows.items()):
+            assert shadow is not None
+            definitions.append(f'<filter id="{identifier}"><feDropShadow dx="{number(shadow.offset_x)}" dy="{number(shadow.offset_y)}" stdDeviation="{number(shadow.blur)}" flood-color="{escape(shadow.color, quote=True)}" flood-opacity="{number(shadow.opacity)}"/></filter>')
         parts.append("<defs>" + "".join(definitions) + "</defs>")
     def append(node: ScenePrimitive, content: str) -> None:
+        paint = completed(node)
         if node.href is None: parts.append(content); return
         title = f' xlink:title="{escape(node.link_title, quote=True)}"' if node.link_title is not None else ""
         parts.append(f'<a href="{escape(node.href, quote=True)}" target="_top"{title}>{content}</a>')

@@ -27,6 +27,11 @@ from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.scene.model import SceneSurface
 from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.scene.visual_capabilities import (
+    VisualCapabilityError,
+    resolve_visual_profile,
+    validate_surface_visual_profile,
+)
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.core.scenarios import resolve_scenario, ScenarioError
 from chrona.core.scenarios import ScenarioProvenance
@@ -112,6 +117,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
                              render_closure.layout_profile.layout_input)
     theme = render_closure.resolved_theme.resolved_input
+    try:
+        visual_profile = resolve_visual_profile(render_closure.context.target.visual_profile,
+                                                render_closure.context.target.kind)
+    except VisualCapabilityError as error:
+        raise RenderFailed(error.diagnostic_id, error.diagnostic_id, "presentation") from error
     ledger.required()
 
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
@@ -166,6 +176,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
         capabilities={name: True for name in render_closure.context.target.capabilities},
         locale=environment.locale,
+        visual_profile=visual_profile,
     )
 
     unused = ledger.unused()
@@ -174,6 +185,10 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "closure inputs loaded but never read: " + ", ".join(unused), "closure")
 
     surface = compose_review_surface(scene_input)
+    try:
+        validate_surface_visual_profile(surface, visual_profile)
+    except VisualCapabilityError as error:
+        raise RenderFailed(error.diagnostic_id, error.diagnostic_id, "presentation") from error
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),

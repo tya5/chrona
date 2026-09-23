@@ -2,7 +2,7 @@ from datetime import date
 
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.renderers.v05_svg import render_v05_svg
-from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, TextLayout
 
 
 def _surface(*primitives):
@@ -32,3 +32,15 @@ def test_svg_rejects_primitive_without_completed_paint():
         assert str(error) == "E_PRESENTATION_PAINT_INVALID"
     else:
         raise AssertionError("expected completed-paint rejection")
+
+
+def test_svg_serializes_only_completed_rich_visual_values_with_stable_ids():
+    paint = ScenePaint("#112233", "#445566", 1, (), 1,
+                       LinearGradient(45, ((0, "#112233"), (1, "#778899")), "required"),
+                       DropShadow("#000000", 1, 2, 3, 0.4, "required"),
+                       StrokeFinish("round", "bevel", "required"))
+    output = render_v05_svg(_surface(ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (1, 2, 3, 4), paint=paint)), viewport=(10, 10))
+    assert '<linearGradient id="gradient-' in output and 'gradientUnits="objectBoundingBox" gradientTransform="rotate(45)"' in output
+    assert '<feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.4"/>' in output
+    assert 'fill="url(#gradient-' in output and 'filter="url(#shadow-' in output
+    assert 'stroke-linecap="round" stroke-linejoin="bevel"' in output
