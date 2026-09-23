@@ -1,4 +1,5 @@
 import json
+from hashlib import sha256
 
 import pytest
 import yaml
@@ -125,3 +126,24 @@ def test_public_lucide_tabler_fixture_is_reproducible_from_the_cli_inputs(tmp_pa
     output = tmp_path / "imported-icons.yaml"
     import_iconify(source, output, set_name="public-icons", license_spdx="MIT", notice_path=notice)
     assert output.read_bytes() == (root / "examples/controller-z/imported-icons.yaml").read_bytes()
+
+
+def test_bundled_material_catalog_matches_the_offline_iconify_utils_conformance_fixture():
+    root = Path(__file__).resolve().parents[5]
+    fixture = json.loads((root / "tests/fixtures/icons/material-symbols-iconify-utils-v3.1.7.json").read_text())
+    catalog = yaml.load((root / "src/chrona/resources/icons/material-symbols-outline-rounded-v2026-09-22.yaml").read_bytes(), Loader=yaml.CSafeLoader)
+    body = catalog["body"]
+    assert fixture["format"] == "chrona/iconify-utils-conformance/v0.1"
+    assert fixture["utilsPackage"] == "@iconify/utils@3.1.7"
+    assert fixture["sourcePackage"] == "@iconify-json/material-symbols@1.2.93"
+    assert fixture["sourceContentIdentity"] == body["provenance"]["sourceContentIdentity"]
+    assert set(fixture["entries"]) == set(body["icons"]) | set(body["entryAliases"])
+    for name, expected in fixture["entries"].items():
+        canonical = body["entryAliases"].get(name, name)
+        entry = body["icons"][canonical]
+        expected_width, expected_height = expected["width"], expected["height"]
+        if expected["rotate"] % 2:
+            expected_width, expected_height = expected_height, expected_width
+        assert canonical == expected["canonical"]
+        assert entry["viewport"] == {"inlineSize": expected_width, "blockSize": expected_height}
+        assert sha256(json.dumps(entry, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == expected["catalogGeometrySha256"]
