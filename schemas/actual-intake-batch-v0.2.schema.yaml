@@ -1,42 +1,48 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/actual-intake-batch-v0.2"
 title: "Chrona immutable external Actual intake batch v0.2"
+description: "Immutable observations collected from one external Actual source."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: chrona/actual-intake-batch/v0.2}
-  kind: {const: actual-intake-batch}
-  id: {type: string, minLength: 1}
+  version: {description: "This intake-batch contract version.", const: chrona/actual-intake-batch/v0.2}
+  kind: {description: "The resource kind for an external Actual intake batch.", const: actual-intake-batch}
+  id: {description: "Stable identifier for this immutable batch.", type: string, minLength: 1}
   body:
     type: object
+    description: "The source provenance and externally observed records."
     required: [source, records]
     additionalProperties: false
     properties:
       source:
         type: object
+        description: "Identity of the system that supplied this batch."
         required: [system, contentIdentity]
         additionalProperties: false
         properties:
-          system: {type: string, minLength: 1}
-          contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-          locator: {type: string, minLength: 1}
+          system: {description: "Stable source-system name.", type: string, minLength: 1}
+          contentIdentity: {description: "SHA-256 identity of the acquired source content.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+          locator: {description: "Optional source-local locator used for audit.", type: string, minLength: 1}
       records:
         type: array
+        description: "At least one externally observed Actual record."
         minItems: 1
         items:
           type: object
+          description: "One external record and its observed dates or progress."
           required: [externalKey, actual]
           additionalProperties: false
           properties:
-            externalKey: {type: [string, integer]}
-            projectObjectId: {type: string, minLength: 1}
+            externalKey: {description: "Source-system key for this observation.", type: [string, integer]}
+            projectObjectId: {description: "Optional Chrona Project object matched by intake.", type: string, minLength: 1}
             actual:
               type: object
+              description: "Observed start, finish, point, or progress values."
               minProperties: 1
               additionalProperties: false
               properties:
-                start: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-                finish: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-                at: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-                progress: {type: number, minimum: 0, maximum: 1}
+                start: {description: "Observed ISO date on which work started.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                finish: {description: "Observed ISO date on which work finished.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                at: {description: "Observed ISO date for a point event.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                progress: {description: "Observed completion fraction from zero through one.", type: number, minimum: 0, maximum: 1}

@@ -1,52 +1,65 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/authoring-workspace-v0.1"
 title: "Chrona guided authoring workspace v0.1"
+description: "Compact Project and Actual source with either guided or explicit presentation ownership."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: chrona/authoring-workspace/v0.1}
-  kind: {const: authoring-workspace}
-  id: {type: string, minLength: 1}
+  version: {description: "This authoring-workspace contract version.", const: chrona/authoring-workspace/v0.1}
+  kind: {description: "The resource kind for compact progressive authoring.", const: authoring-workspace}
+  id: {description: "Stable workspace identifier.", type: string, minLength: 1}
   body:
     type: object
+    description: "Compact semantic source and one presentation-ownership mode."
     required: [project, presentation]
     additionalProperties: false
     properties:
       project:
         type: object
+        description: "Compact task source normalized to the ordinary Project contract."
         required: [id, tasks]
         additionalProperties: false
         properties:
-          id: {type: string, minLength: 1}
-          title: {type: string, minLength: 1}
+          id: {description: "Stable compact Project identifier.", type: string, minLength: 1}
+          title: {description: "Optional human-readable Project title.", type: string, minLength: 1}
           tasks:
             type: array
+            description: "Compact tasks normalized to fixed planned Project objects."
             items:
               type: object
+              description: "One compact task with a planned date range."
               required: [id, title, planned]
               additionalProperties: false
               properties:
-                id: {type: string, minLength: 1}
-                title: {type: string, minLength: 1}
+                id: {description: "Stable task identifier.", type: string, minLength: 1}
+                title: {description: "Human-readable task title.", type: string, minLength: 1}
                 planned: {$ref: "#/$defs/dateRange"}
       actuals:
         type: array
+        description: "Optional observed Actual values for compact tasks."
         items:
           type: object
+          description: "One Actual observation associated with a compact task."
           required: [taskId, actual]
           additionalProperties: false
           properties:
-            taskId: {type: string, minLength: 1}
+            taskId: {description: "Identifier of the compact task receiving this observation.", type: string, minLength: 1}
             actual: {$ref: "#/$defs/dateRange"}
-            progress: {type: number, minimum: 0, maximum: 1}
+            progress: {description: "Observed completion fraction from zero through one.", type: number, minimum: 0, maximum: 1}
       presentation:
+        description: "Choose guided preset binding or a complete explicit resource bundle, never both."
+        examples:
+          - {mode: guided, binding: {preset: {id: starter, version: '1', path: presets/starter.yaml}}}
+          - {mode: explicit, resources: {view: {id: view, kind: view, path: view.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, theme: {id: theme, kind: theme, path: theme.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, colorScheme: {id: scheme, kind: color-scheme, path: scheme.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, layout: {id: layout, kind: layout-profile, path: layout.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, renderContext: {id: context, kind: render-context, path: context.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}, receipt: {id: receipt, kind: presentation-materialization-receipt, path: receipt.yaml, contentIdentity: 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}
         oneOf:
           - type: object
+            description: "A pinned preset with the closed guided customization vocabulary."
             required: [mode, binding]
             additionalProperties: false
             properties: {mode: {const: guided}, binding: {$ref: "#/$defs/binding"}}
           - type: object
+            description: "A locally owned complete presentation bundle after materialization."
             required: [mode, resources, receipt]
             additionalProperties: false
             properties:
@@ -63,43 +76,49 @@ properties:
                   renderContext: {$ref: "#/$defs/localReference"}
               receipt: {$ref: "#/$defs/localReference"}
 $defs:
-  date: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+  date: {description: "Date-only ISO 8601 calendar value.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
   dateRange:
     type: object
+    description: "A planned or observed ISO start and finish date range."
     required: [start, finish]
     additionalProperties: false
     properties:
-      start: {$ref: "#/$defs/date"}
-      finish: {$ref: "#/$defs/date"}
+      start: {description: "Inclusive ISO start date.", $ref: "#/$defs/date"}
+      finish: {description: "ISO finish date.", $ref: "#/$defs/date"}
   preset:
     type: object
+    description: "Exact pinned presentation preset reference for guided authoring."
     required: [id, version, path]
     additionalProperties: false
     properties:
-      id: {type: string, minLength: 1}
-      version: {type: string, minLength: 1}
-      path: {type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+      id: {description: "Preset identifier declared by its package.", type: string, minLength: 1}
+      version: {description: "Exact preset package version.", type: string, minLength: 1}
+      path: {description: "Safe relative path to the pinned preset document.", type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
   localReference:
     type: object
+    description: "Locally owned explicit resource reference with immutable content identity."
     required: [id, kind, path, contentIdentity]
     additionalProperties: false
     properties:
-      id: {type: string, minLength: 1}
-      kind: {type: string, minLength: 1}
-      path: {type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
-      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      id: {description: "Stable identifier of the referenced local resource.", type: string, minLength: 1}
+      kind: {description: "Resource kind expected at the local path.", type: string, minLength: 1}
+      path: {description: "Safe relative path to the local resource.", type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+      contentIdentity: {description: "SHA-256 identity of the exact local resource bytes.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   binding:
     type: object
+    description: "Pinned preset and the closed Stage-2 presentation override vocabulary."
     required: [preset]
     additionalProperties: false
     properties:
       preset: {$ref: "#/$defs/preset"}
       overrides:
         type: object
+        description: "Optional guided changes that cannot alter Project, schedule, Layout, or renderer state."
         additionalProperties: false
         properties:
           view:
             type: object
+            description: "Allowed View-local window, grouping, visibility, and annotation intent."
             additionalProperties: false
             properties:
               window:
@@ -143,6 +162,7 @@ $defs:
                     text: {type: string}
           theme:
             type: object
+            description: "Allowed Theme selection limited to a preset-compatible color scheme."
             required: [colorScheme]
             additionalProperties: false
             properties:
