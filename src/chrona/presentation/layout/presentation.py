@@ -94,7 +94,19 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
 
 def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[RowPlacement, ...],
                       mark_block_size: float) -> tuple[TrackPlacement, ...]:
-    """Allocate member tracks before Scene emits planned or actual marks."""
+    """Allocate member tracks whose completed marks are contained by their row."""
+    def require_contained(row: RowPlacement, block: float, *, instance_id: str) -> None:
+        row_start, row_size = row.bounds[1], row.bounds[3]
+        if (mark_block_size <= 0 or block < row_start
+                or block + mark_block_size > row_start + row_size):
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize",
+                              instance_id)
+
+    def has_actual(item: Any) -> bool:
+        actual = getattr(item, "actual", None) or {}
+        return bool((actual.get("start") is not None and actual.get("finish") is not None)
+                    or actual.get("at") is not None)
+
     placements: list[TrackPlacement] = []
     for review_row, row in zip(review_rows, row_placements, strict=True):
         stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
@@ -116,5 +128,11 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                 actual_block = block + mark_block_size * 1.25
                 stacked_index += 1
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+            source_kind = getattr(item, "source_kind", "primary")
+            if source_kind != "actual":
+                require_contained(row, block, instance_id=instance_id)
+            if source_kind in {"primary", "combined", "actual"}:
+                companion_block = actual_block if has_actual(item) else block + mark_block_size * 1.25
+                require_contained(row, companion_block, instance_id=instance_id)
             placements.append(TrackPlacement(instance_id, block, actual_block, mark_block_size))
     return tuple(placements)

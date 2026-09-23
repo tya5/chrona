@@ -104,3 +104,33 @@ def test_track_placements_keep_shared_members_on_one_track() -> None:
 
     assert tracks[0].block == tracks[1].block
     assert tracks[0].actual_block == tracks[1].actual_block
+
+
+@pytest.mark.parametrize("track, source_kind, actual", [
+    ("shared", "primary", None),
+    ("stacked", "combined", {"start": "2026-01-01", "finish": "2026-01-02"}),
+    ("stacked", "combined", None),
+])
+def test_track_placements_reject_completed_mark_extent_outside_its_row(track, source_kind, actual) -> None:
+    item = SimpleNamespace
+    rows = (item(row_id="row", group_id=None, items=(item(
+        item_id="member", object_id="member", track=track, source_kind=source_kind, actual=actual,
+    ),)),)
+    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 20.0), group_header_size=0.0)
+
+    with pytest.raises(LayoutError, match="E_LAYOUT_MARK_OVERFLOW") as error:
+        place_mark_tracks(review_rows=rows, row_placements=row_placements, mark_block_size=10.0)
+
+    assert error.value.path == "/measuredSources/metricValues/timeline.mark.blockSize"
+
+
+def test_track_placements_accept_mark_extents_at_the_row_boundary() -> None:
+    item = SimpleNamespace
+    rows = (item(row_id="row", group_id=None, items=(item(
+        item_id="member", object_id="member", track="stacked", source_kind="combined", actual=None,
+    ),)),)
+    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 30.0), group_header_size=0.0)
+
+    tracks = place_mark_tracks(review_rows=rows, row_placements=row_placements, mark_block_size=10.0)
+
+    assert tracks[0].block == 7.5
