@@ -1,6 +1,6 @@
 # Design Plan: Reusable Design Gallery Foundation
 
-**Status:** Active  
+**Status:** Design complete — implementation planning next
 **Date:** 2026-09-23  
 **Related:** Specification 55, Specification 58, #338, #343, and conditionally #345
 
@@ -393,3 +393,18 @@ This plan is complete when the GDF-1 through GDF-4 design decisions and their
 architecture reviews are published, followed by a separately accepted,
 atomic implementation plan.  Gallery assets are not created under this plan
 alone.
+
+## Design-phase completion record
+
+GDF-1 is accepted by Specification 55 section 3.1 and the P1 Design Space
+Summary Review.  GDF-2 is accepted by the Specification 58 catalogue successor
+and the P2 Curation and Evidence Review.  GDF-3 is accepted by Specification
+62 and the P3 Presentation Package Architecture Review, including the discovery
+and publication-gate correction.  GDF-4 is accepted by the P4 Whole
+Architecture Review: the first implementation is limited to current portable
+Scene capabilities, so #345 remains a required successor design gate rather
+than an unreviewed gallery feature.
+
+The next authorized work is the separate GDF-5 implementation plan.  It must
+not begin package, lock, resolver, gallery-catalog, or fixture implementation
+until that plan and its acceptance criteria are published.
