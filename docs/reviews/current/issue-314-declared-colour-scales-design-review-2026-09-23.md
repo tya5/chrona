@@ -28,14 +28,16 @@ then known; it remains data-free in the sense that it receives a typed resolved
 lookup rather than raw View/Theme/Scheme syntax.  The adapter sees only a
 concrete `ScenePaint`.
 
-The derived legend removes the present hand-authored role/label drift path.
-Its content is resolved before Layout, so text measurement and placement remain
-Layout-owned.  A `planned` scale does not imply an `actual`, snapshot, scenario,
-or progress encoding; each future target needs a separate eligibility review.
+The derived scale legend removes drift for data-driven paint while preserving
+the separate semantic role/label legend contract.  Its content is resolved
+before Layout, so text measurement and placement remain Layout-owned.  A
+`planned` scale does not imply an `actual`, snapshot, scenario, or progress
+encoding; each future target needs a separate eligibility review.
 
 ## Atomicity requirement
 
-The old Scheme array, Theme `category` bindings, free-form legend profile
-entries, all Context references, fixtures, tests, and generated SVGs change in
-one materializable release.  A compatibility parser would leave two paint
-authorities and is prohibited.
+The old Scheme array and generic Theme `category` bindings, plus all Context
+references, fixtures, tests, and generated SVGs, change in one materializable
+release.  Semantic legend profile entries remain; scale entries are derived
+and non-overridable.  A compatibility parser would leave two paint authorities
+and is prohibited.

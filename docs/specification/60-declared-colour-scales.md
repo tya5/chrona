@@ -15,7 +15,7 @@ The three owners remain separate:
 | --- | --- |
 | View | eligible mark semantic role, tagged field source, scale ID, and ordered domain |
 | Theme | exact mapping from each scale-domain value to a named Scheme category slot |
-| Color Scheme | named slot to `#RRGGBB` literal |
+| Color Scheme | named category slot to `#RRGGBB` literal |
 
 The View's tagged source is `{field: <declared Project field>}`; strings are
 never interpreted as either fields or colours.  An encoding may target only a
@@ -33,6 +33,10 @@ have a scalar source value in that domain.  Missing, non-scalar, or undeclared
 values reject the presentation closure with `E_PRESENTATION_SCALE_VALUE`,
 including the object ID, field, and value state.  Missing Theme mappings or
 Scheme slots reject closure with `E_PRESENTATION_SCALE_MAPPING`.
+
+An ordinary Theme colour binding may also explicitly name one category slot for
+a static role (for example a group band).  That is a direct role-to-slot
+binding, not a scale: it has no field source, domain, or derived legend.
 
 There is no hash selection, positional range matching, palette recycling,
 default grey, inherited role colour, or renderer fallback.  Changing a Scheme
@@ -55,17 +59,20 @@ A scale legend is derived from the selected values that actually occur on
 eligible marks, in declared domain order.  Each entry has the domain value as
 its label, the corresponding completed colour, and stable scale/value
 provenance.  Layout places the resulting entries; Scene emits their completed
-swatches and text.  A manually authored legend entry cannot coexist with a
-scale legend because it could drift from the mapping.
+swatches and text.  A manually authored entry cannot duplicate or override a
+scale-derived entry for the same scale.  Existing semantic legends retain their
+separate role/label ownership and may coexist; they do not claim to enumerate
+the scale domain.
 
 ## 5. Migration boundary
 
 This is an atomic replacement of the current category mechanism.  The next
 resource revisions replace the Scheme `category` array with a named category
-slot map, remove `category` from ordinary Theme `colorBindings`, and remove
-free-string Review Detail legend entries.  All shipped Contexts and generated
-evidence migrate in the same change.  No v0.1/v0.3 compatibility reader,
-hash-category fallback, or partially materializable resource set is retained.
+slot map, replace generic `category` Theme bindings with explicit named-slot
+bindings, and add scale-derived entries alongside existing semantic legend
+entries.  All shipped Contexts and generated evidence migrate in the same
+change.  No v0.1/v0.3 compatibility reader, hash-category fallback, or
+partially materializable resource set is retained.
 
 ## 6. Non-goals
 

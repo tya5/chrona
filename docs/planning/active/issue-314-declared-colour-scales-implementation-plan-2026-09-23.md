@@ -11,7 +11,7 @@ legend, or the removed rule engine.
 1. **Typed resource migration.** Introduce the successor View, Theme, and
    Color Scheme schemas and immutable runtime contracts.  Validate tagged field
    sources, unique View domains, exact Theme domain mappings, named Scheme
-   slots, and stable diagnostics.  Replace current resources and Context
+   slots, direct static role-to-slot bindings, and stable diagnostics.  Replace current resources and Context
    closure references together so every public Context remains materializable.
 2. **Resolved encoding closure.** Replace `category_index` and the `category`
    binding with a typed resolved scale table.  Build it from pinned View,
@@ -21,8 +21,9 @@ legend, or the removed rule engine.
 3. **Appearance completion and derived legend.** Carry only typed resolved
    scale values to the Scene paint-completion boundary.  Apply a value-specific
    fill to eligible planned member marks; derive present-domain legend entries
-   before Layout.  Delete the hand-written legend path and prove Layout receives
-   content, while Scene receives completed geometry and concrete paint.
+   before Layout.  Retain the hand-written semantic legend path, prohibit it
+   from overriding scale entries, and prove Layout receives content while Scene
+   receives completed geometry and concrete paint.
 4. **HALCYON evidence and release gate.** Migrate HALCYON’s category bands to
    named scale slots and add a public non-default field-encoding example.
    Regenerate public SVGs, run focused tests, full pytest, conformance,
@@ -43,5 +44,6 @@ renderer adapters are not scale evaluators.
 * Each used value maps by explicit key to exactly one named Scheme slot.
 * An absent/unknown value or incomplete mapping rejects rather than repainting.
 * Scene/adapters cannot hash, parse, or fallback a scale.
-* Scale legend entries exactly match used values and completed swatches.
+* Scale legend entries exactly match used values and completed swatches, while
+  independent semantic legend entries remain available.
 * All public contexts materialize after the one-step migration.
