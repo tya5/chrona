@@ -2,6 +2,7 @@ import json
 
 import pytest
 import yaml
+from pathlib import Path
 
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 
@@ -75,3 +76,12 @@ def test_bundled_default_copies_an_explicit_catalog(tmp_path):
     assert result["set"] == "material"
     assert result["aliases"] == ["material-symbols"]
     assert output.read_bytes()
+
+
+def test_public_lucide_tabler_fixture_is_reproducible_from_the_cli_inputs(tmp_path):
+    root = Path(__file__).resolve().parents[5]
+    source = root / "examples/controller-z/assets/lucide-tabler-icons.json"
+    notice = root / "examples/controller-z/assets/lucide-tabler.NOTICE"
+    output = tmp_path / "imported-icons.yaml"
+    import_iconify(source, output, set_name="public-icons", license_spdx="MIT", notice_path=notice)
+    assert output.read_bytes() == (root / "examples/controller-z/imported-icons.yaml").read_bytes()
