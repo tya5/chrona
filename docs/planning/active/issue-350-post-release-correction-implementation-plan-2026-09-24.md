@@ -31,9 +31,12 @@ catalog, make source/notice relationship reproducible, add bounded loader and
 Draft-render checks, and materialize real Material small-text/title/header
 evidence.
 
+Extend materialization with an explicit identity-pinned package-catalog
+reference, then use it for public Material small-text/title/header evidence.
+
 **Acceptance:** no declared variant alias dangles; aliases and short names
 resolve; source version is true; generated count/size limits are manifest-owned;
-Material evidence is committed and byte-reproducible; and performance is bounded
+Material evidence is package-closed, committed and byte-reproducible; and performance is bounded
 without machine-specific assertions.
 
 ## I350C-4 — Third-party semantic conformance

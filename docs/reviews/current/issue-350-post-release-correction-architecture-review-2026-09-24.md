@@ -11,6 +11,7 @@ acceptance is superseded pending C350-1 through C350-5.
 | Normalizer -> external format | A pinned offline fixture is test evidence only; Node is not a runtime dependency. | Tests the hand-port without compromising offline Python operation. |
 | SVG subset -> dependency | `picosvg` is deferred until an approved subset expansion. | Avoids expanding security/geometry authority merely to make rejection less inconvenient. |
 | Public corpus -> release | Material evidence is a real closed catalog/materializer route. | Removes the synthetic-fixture substitution from the claimed default evidence. |
+| Package catalog -> materializer | Explicit package resource references are identity-verified and copied into the immutable snapshot. | Avoids duplicating a bundled catalog while preserving reproducibility. |
 
 The correction introduces no compatibility bridge and no adapter policy.  It is
 consistent with Specification 64’s ownership: importer normalizes, closure

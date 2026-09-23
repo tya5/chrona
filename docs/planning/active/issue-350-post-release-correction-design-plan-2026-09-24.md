@@ -102,6 +102,15 @@ suite, conformance, public materializers, wheel smoke, and CI.  The requirement
 matrix gains correction rows rather than treating the previous R350 rows as
 evidence of unverified closure.
 
+The public materializer may close a package-owned catalog without duplicating
+its bytes into an example.  Such a reference is explicit, has provider
+`package`, a package resource address, and an exact content identity.  The
+materializer copies those verified bytes into the same immutable snapshot as
+other closure inputs.  It never discovers package resources by directory scan
+and it applies the identical raster-asset validation if the catalog declares
+one.  This is a closure ingress adapter only; Context resolution, Layout,
+Scene, and adapters remain unaware of the source provider.
+
 ## Design gates
 
 | Gate | Required outcome |
@@ -110,7 +119,7 @@ evidence of unverified closure.
 | D350C-2 | Material alias-parent closure, unambiguous short names, provenance, and bounded loading are generated and identity-tested. |
 | D350C-3 | Import/unknown-name diagnostics preserve source identity and actionable recovery data. |
 | D350C-4 | Iconify-utils fixture proves importer alias/transform semantics offline in CI. |
-| D350C-5 | Public Material 13px evidence and all release gates are reproducible and green. |
+| D350C-5 | Public Material 13px evidence, package-resource closure, and all release gates are reproducible and green. |
 
 ## Publication sequence
 
