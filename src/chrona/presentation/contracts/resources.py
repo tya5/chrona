@@ -342,6 +342,7 @@ class IconCatalogContract(ResourceContract):
     set_name: str
     aliases: tuple[str, ...]
     provenance: FrozenDict
+    entry_aliases: FrozenDict
     entries: tuple[IconEntry, ...]
 
 
@@ -649,7 +650,10 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         provenance = body["provenance"]
         if not isinstance(aliases, (FrozenList, tuple)) or not isinstance(provenance, FrozenDict):
             raise ContractError("E_CLOSURE_KIND")
-        return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance, tuple(entries))
+        entry_aliases = body["entryAliases"]
+        if not isinstance(entry_aliases, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance, entry_aliases, tuple(entries))
     if identity.kind == "render-context":
         inputs, environment, target = body["inputs"], body["environment"], body["target"]
         if not all(isinstance(item, FrozenDict) for item in (inputs, environment, target)):

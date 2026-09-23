@@ -134,6 +134,22 @@ class RenderClosure:
             raise ClosureError("E_CLOSURE_KIND")
         return values  # type: ignore[return-value]
 
+    def icon_asset(self, reference: str) -> IconAsset:
+        """Resolve one authored ``set:name`` only against this closed Context."""
+        if reference.count(":") != 1:
+            raise ClosureError("E_ICON_REFERENCE")
+        set_name, name = reference.split(":", 1)
+        catalogs = [catalog for catalog in self.icon_catalogs if set_name in {catalog.set_name, *catalog.aliases}]
+        if len(catalogs) != 1:
+            raise ClosureError("E_ICON_SET_UNKNOWN" if not catalogs else "E_ICON_SET_AMBIGUOUS")
+        catalog = catalogs[0]
+        canonical = str(catalog.entry_aliases.get(name, name))
+        asset_id = f"{catalog.set_name}:{canonical}"
+        asset = next((item for item in self.icon_assets if item.icon_id == asset_id), None)
+        if asset is None:
+            raise ClosureError("E_ICON_NAME_UNKNOWN")
+        return asset
+
 
 @dataclass(frozen=True)
 class DraftRender:
@@ -420,8 +436,22 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
     except ColorSchemeError as error:
         raise ClosureError(str(error)) from error
     catalog_resources = tuple(item for item in resources if item.kind == "icon-catalog")
+    _validate_icon_catalog_set(catalog_resources)
     icon_assets = _load_icon_assets(context_contract, catalog_resources, reader)
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
+
+
+def _validate_icon_catalog_set(resources: tuple[ClosureResource, ...]) -> None:
+    """Reject ambiguity before any View can select an icon reference."""
+    namespaces: set[str] = set()
+    for resource in resources:
+        if not isinstance(resource.contract, IconCatalogContract):
+            raise ClosureError("E_CLOSURE_KIND")
+        catalog = resource.contract
+        names = (catalog.set_name, *catalog.aliases)
+        if len(names) != len(set(names)) or any(name in namespaces for name in names):
+            raise ClosureError("E_ICON_SET_AMBIGUOUS")
+        namespaces.update(names)
 
 
 def _safe_icon_address(address: str) -> bool:
