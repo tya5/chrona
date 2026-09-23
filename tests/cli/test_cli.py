@@ -12,8 +12,8 @@ from chrona.app.cli import CliFailure, main
 from chrona.scheduling.scheduler import schedule
 
 
-def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test"):
-    payload = yaml.safe_dump(value, sort_keys=True).encode()
+def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
+    payload = payload if payload is not None else yaml.safe_dump(value, sort_keys=True).encode()
     path = root / token / address
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(payload)
@@ -233,14 +233,18 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text())
     actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text())
     theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
-    scheme = yaml.safe_load((root / "examples/controller-z/schemes/executive-light.yaml").read_text())
+    scheme_path = root / "examples/controller-z/schemes/executive-light.yaml"
+    scheme_payload = scheme_path.read_bytes()
+    scheme = yaml.safe_load(scheme_payload)
     layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text())
     refs = {
         "project": _snapshot_resource(tmp_path, token, "project.yaml", project, "project", project["project"]["id"]),
         "view": _snapshot_resource(tmp_path, token, "view.yaml", view, "view", view["id"]),
         "actual": _snapshot_resource(tmp_path, token, "actual.yaml", actual, "actual-set", actual["id"]),
         "theme": _snapshot_resource(tmp_path, token, "theme.yaml", theme, "theme", theme["id"]),
-        "colorScheme": _snapshot_resource(tmp_path, token, "scheme.yaml", scheme, "color-scheme", scheme["id"]),
+        # The materializer preserves authored resource bytes.  Category bindings
+        # are content-identity keyed, so parity must use the same Scheme bytes.
+        "colorScheme": _snapshot_resource(tmp_path, token, "scheme.yaml", scheme, "color-scheme", scheme["id"], payload=scheme_payload),
         "layout": _snapshot_resource(tmp_path, token, "layout.yaml", layout, "layout-profile", layout["id"]),
     }
     font_source = root / "src/chrona/resources/font_metrics/nimbus-sans-regular-v1.json"
