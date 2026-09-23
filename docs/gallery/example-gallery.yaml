@@ -1,0 +1,6 @@
+version: chrona/example-catalog/v0.1
+entries:
+  - {corpus: controller-z, slide: executive}
+  - {corpus: aster-ssd, slide: overview}
+  - {corpus: halcyon-1, slide: programme-board}
+  - {corpus: halcyon-1, slide: dependency-network}
