@@ -178,6 +178,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
         ledger.detail()
     visual_requests = tuple(_visual_request(visual, projection, index)
                             for index, visual in enumerate(render_closure.view.view.visuals))
+    if visual_requests:
+        ledger.icons()
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,

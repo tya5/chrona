@@ -55,6 +55,10 @@ body:
   layoutIntent:
     compactness: balanced
     itemStacking: stable
+  visuals:
+  - target: {kind: title}
+    ref: chrona:risk
+    decorative: false
   tableColumns:
   - id: Workstream
     source: title
