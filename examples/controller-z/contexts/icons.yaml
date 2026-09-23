@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.10
+version: chrona/render-context/v0.11
 kind: render-context
 id: controller-z-executive
 body:
@@ -48,13 +48,12 @@ body:
     revision:
       token: example-v1
   inputs:
-    iconCatalog:
-      id: controller-z-icons
-      kind: icon-catalog
-      store: {provider: local, identity: controller-z-example}
-      address: icons.yaml
-      revision: {token: example-v1}
-      contentIdentity: sha256:d542fe3dd3fefaa5d8b892591644d402c5d65eb2c94c3628940e58d28cac8a70
+    iconCatalogs:
+      - id: controller-z-icons
+        kind: icon-catalog
+        store: {provider: local, identity: controller-z-example}
+        address: icons.yaml
+        revision: {token: example-v1}
     actual:
       id: controller-z-observed
       kind: actual-set

@@ -128,9 +128,6 @@ def render_review(request: RenderRequest) -> RenderedReview:
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     ledger.required()
-    if view.icon_bindings:
-        ledger.icons()
-
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
@@ -185,7 +182,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         locale=environment.locale,
         visual_profile=visual_profile,
         viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
-        icon_bindings=view.icon_bindings,
+        icon_bindings=(),
         icon_assets={item.icon_id: item for item in render_closure.icon_assets},
     )
 

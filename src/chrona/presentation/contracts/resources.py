@@ -216,7 +216,6 @@ class ViewInput:
     surface: str = "table-timeline"
     color_encoding: FrozenDict | None = None
     progress_fill: str | None = None
-    icon_bindings: tuple[FrozenDict, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -308,22 +307,41 @@ class LayoutProfileContract(ResourceContract):
 
 
 @dataclass(frozen=True)
-class IconSource:
+class IconPath:
+    """Renderer-neutral, importer-normalized path in a catalog entry."""
+
+    paint: str
+    commands: tuple[FrozenDict, ...]
+    stroke_width: float | None = None
+    line_cap: str | None = None
+    line_join: str | None = None
+
+
+@dataclass(frozen=True)
+class IconRasterSource:
+    """Identity-closed PNG payload retained only for a raster catalog entry."""
+
     address: str
     content_identity: str
 
 
 @dataclass(frozen=True)
 class IconEntry:
-    id: str
+    """One canonical ``set:name`` entry, without raw SVG/XML payloads."""
+
+    name: str
     kind: str
-    source: IconSource
     viewport: tuple[int, int]
     alternative: str
+    paths: tuple[IconPath, ...] = ()
+    source: IconRasterSource | None = None
 
 
 @dataclass(frozen=True)
 class IconCatalogContract(ResourceContract):
+    set_name: str
+    aliases: tuple[str, ...]
+    provenance: FrozenDict
     entries: tuple[IconEntry, ...]
 
 
@@ -417,7 +435,7 @@ class RenderContextContract(ResourceContract):
     snapshot: ResourceReference | None
     summary_profile: ResourceReference | None
     detail_profile: ResourceReference | None
-    icon_catalog: ResourceReference | None
+    icon_catalogs: tuple[ResourceReference, ...]
     environment: RenderEnvironment
     target: RenderTarget
 
@@ -431,15 +449,13 @@ class ResolvedThemeContract:
 
 
 _SCHEMAS = {
-    ("render-context", "chrona/render-context/v0.9"): "render-context-v0.9.schema.yaml",
-    ("render-context", "chrona/render-context/v0.10"): "render-context-v0.10.schema.yaml",
+    ("render-context", "chrona/render-context/v0.11"): "render-context-v0.11.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
-    ("view", "chrona/view/v0.10"): "view-v0.10.schema.yaml",
-    ("view", "chrona/view/v0.11"): "view-v0.11.schema.yaml",
+    ("view", "chrona/view/v0.12"): "view-v0.12.schema.yaml",
     ("theme", "chrona/theme/v0.5"): "theme-v0.5.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
-    ("icon-catalog", "chrona/icon-catalog/v0.1"): "icon-catalog-v0.1.schema.yaml",
+    ("icon-catalog", "chrona/icon-catalog/v0.2"): "icon-catalog-v0.2.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
     ("profile-package", "chrona/profile/v0.2"): "profile-v0.2.schema.yaml",
@@ -534,8 +550,7 @@ def _view_input(body: FrozenDict) -> ViewInput:
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]), body.get("colorEncoding"),
-        str(body["progressFill"]["source"]) if "progressFill" in body else None,
-        tuple(body.get("iconBindings", ())) )
+        str(body["progressFill"]["source"]) if "progressFill" in body else None)
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:
@@ -604,13 +619,37 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         if not isinstance(raw_icons, FrozenDict):
             raise ContractError("E_CLOSURE_KIND")
         entries: list[IconEntry] = []
-        for icon_id, raw in sorted(raw_icons.items()):
-            if not isinstance(raw, FrozenDict) or not isinstance(raw.get("source"), FrozenDict) or not isinstance(raw.get("viewport"), FrozenDict):
+        for name, raw in sorted(raw_icons.items()):
+            if not isinstance(raw, FrozenDict) or not isinstance(raw.get("viewport"), FrozenDict):
                 raise ContractError("E_CLOSURE_KIND")
-            source, viewport = raw["source"], raw["viewport"]
-            entries.append(IconEntry(str(icon_id), str(raw["kind"]), IconSource(str(source["address"]), str(source["contentIdentity"])),
-                                     (int(viewport["inlineSize"]), int(viewport["blockSize"])), str(raw["alternative"])))
-        return IconCatalogContract(identity, version, tuple(entries))
+            viewport = raw["viewport"]
+            source = raw.get("source")
+            paths = raw.get("paths", ())
+            if source is not None and not isinstance(source, FrozenDict):
+                raise ContractError("E_CLOSURE_KIND")
+            if not isinstance(paths, (FrozenList, tuple)) or not all(isinstance(path, FrozenDict) for path in paths):
+                raise ContractError("E_CLOSURE_KIND")
+            normalized_paths: list[IconPath] = []
+            for path in paths:
+                commands = path.get("commands")
+                if not isinstance(commands, (FrozenList, tuple)) or not all(isinstance(command, FrozenDict) for command in commands):
+                    raise ContractError("E_CLOSURE_KIND")
+                normalized_paths.append(IconPath(
+                    str(path["paint"]), tuple(commands),
+                    float(path["strokeWidth"]) if "strokeWidth" in path else None,
+                    str(path["lineCap"]) if "lineCap" in path else None,
+                    str(path["lineJoin"]) if "lineJoin" in path else None,
+                ))
+            raster_source = (IconRasterSource(str(source["address"]), str(source["contentIdentity"]))
+                             if source is not None else None)
+            entries.append(IconEntry(str(name), str(raw["kind"]),
+                                     (int(viewport["inlineSize"]), int(viewport["blockSize"])), str(raw["alternative"]),
+                                     tuple(normalized_paths), raster_source))
+        aliases = body["aliases"]
+        provenance = body["provenance"]
+        if not isinstance(aliases, (FrozenList, tuple)) or not isinstance(provenance, FrozenDict):
+            raise ContractError("E_CLOSURE_KIND")
+        return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance, tuple(entries))
     if identity.kind == "render-context":
         inputs, environment, target = body["inputs"], body["environment"], body["target"]
         if not all(isinstance(item, FrozenDict) for item in (inputs, environment, target)):
@@ -635,7 +674,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             ResourceReference.from_value(inputs["snapshot"]) if "snapshot" in inputs else None,
             ResourceReference.from_value(inputs["summaryProfile"]) if "summaryProfile" in inputs else None,
             ResourceReference.from_value(inputs["detailProfile"]) if "detailProfile" in inputs else None,
-            ResourceReference.from_value(inputs["iconCatalog"]) if "iconCatalog" in inputs else None,
+            tuple(ResourceReference.from_value(item) for item in inputs.get("iconCatalogs", ())),
             RenderEnvironment(int(viewport["inlineSize"]), int(viewport["blockSize"]), str(environment["locale"]),
                               environment["fontMetrics"], int(environment["scenePrecision"]), rasterizer, typesetter),
             RenderTarget(str(target["kind"]), tuple(str(item) for item in target["capabilities"]), str(target["visualProfile"]),

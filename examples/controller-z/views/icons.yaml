@@ -1,10 +1,7 @@
-version: chrona/view/v0.11
+version: chrona/view/v0.12
 kind: view
 id: controller-z-executive
 body:
-  iconBindings:
-    - {source: {kind: object, id: firmware}, placement: leading-label, icon: chrona.risk, decorative: true}
-    - {source: {kind: object, id: evb-arrival}, placement: mark, icon: chrona.programme, decorative: false}
   surface: table-timeline
   selection:
     include:

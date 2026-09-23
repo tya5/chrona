@@ -64,6 +64,8 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
     if not isinstance(icons, dict):
         raise ValueError("E_ICON_CATALOG_SCHEMA")
     for icon_id, entry in sorted(icons.items()):
+        if not isinstance(entry, dict) or entry.get("kind") == "vector":
+            continue
         source = entry.get("source") if isinstance(entry, dict) else None
         asset_address = source.get("address") if isinstance(source, dict) else None
         expected = source.get("contentIdentity") if isinstance(source, dict) else None
@@ -86,18 +88,19 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
     raw = context_path.read_bytes()
     context = yaml.safe_load(raw)
-    if context.get("version") not in {"chrona/render-context/v0.9", "chrona/render-context/v0.10"} or context.get("kind") != "render-context":
+    if context.get("version") != "chrona/render-context/v0.11" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
-    references.extend(body.get("inputs", {}).values())
+    inputs = body.get("inputs", {})
+    references.extend(value for key, value in inputs.items() if key != "iconCatalogs")
     for item in references:
         _copy_reference(example, item, snapshot)
-    icon_catalog = body.get("inputs", {}).get("iconCatalog")
-    if icon_catalog is not None:
+    for icon_catalog in inputs.get("iconCatalogs", ()):
         if not isinstance(icon_catalog, dict) or icon_catalog.get("kind") != "icon-catalog":
             raise ValueError("E_MATERIALIZER_CONTEXT")
+        _copy_reference(example, icon_catalog, snapshot)
         _copy_icon_assets(example, icon_catalog, snapshot)
     destination = snapshot / revision
     target = _inside(destination, context_path.relative_to(example).as_posix())

@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.9
+version: chrona/render-context/v0.11
 kind: render-context
 id: halcyon-1-04-tvac-slip
 body:
@@ -77,12 +77,12 @@ body:
       - family: Nimbus Sans
         weight: 400
         revision: nimbus-sans-regular-v1
-        contentIdentity: sha256:0d6b0500eb77e9b64b2cfb9916ead13e41759840a893ee3bae7e58e86fbfb779
+        contentIdentity: sha256:281d55f9010a82fca254c06fb38e2dc0cdb6a5ee18de21fff711993e3963c2a1
         path: font_metrics/nimbus-sans-regular-v1.json
       - family: Nimbus Sans
         weight: 700
         revision: nimbus-sans-bold-v1
-        contentIdentity: sha256:7754bf903246d324eb09b4147136db0a35f2355604edd3731ecf3f8a9d171c23
+        contentIdentity: sha256:fe60a1edd18fd58c8f7603a2edc8b39834e3d92c864308414d7ff025e28e89a9
         path: font_metrics/nimbus-sans-bold-v1.json
       missingFont: diagnose
     scenePrecision: 3

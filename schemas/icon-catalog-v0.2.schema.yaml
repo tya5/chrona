@@ -1,0 +1,118 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:icon-catalog-v0.2"
+title: "Chrona Icon Catalog v0.2"
+description: "A canonical, offline icon set. Vector paths are normalized at import; raw SVG/XML is never a render input."
+allOf:
+  - $ref: "urn:chrona:presentation-resource-v0.1"
+  - type: object
+    properties:
+      version: {description: "This canonical catalog contract version.", const: "chrona/icon-catalog/v0.2"}
+      kind: {const: icon-catalog}
+      body:
+        type: object
+        required: [set, aliases, provenance, icons]
+        additionalProperties: false
+        properties:
+          set:
+            description: "Canonical namespace used by `set:name` references."
+            $ref: "#/$defs/name"
+          aliases:
+            description: "Additional Context-local namespaces resolving to this same catalog set."
+            type: array
+            uniqueItems: true
+            items: {$ref: "#/$defs/name"}
+          provenance:
+            type: object
+            description: "Importer-recorded local collection identity and complete licensing notice."
+            required: [sourceKind, sourcePrefix, license]
+            additionalProperties: false
+            properties:
+              sourceKind: {description: "Authoring ingress that created this normalized catalog.", const: iconify-json}
+              sourcePrefix: {$ref: "#/$defs/name"}
+              sourceVersion: {description: "Optional upstream collection version supplied by the local source.", type: string, minLength: 1}
+              lastModified: {description: "Optional upstream collection modification marker.", type: string, minLength: 1}
+              license:
+                type: object
+                required: [spdx, notice]
+                additionalProperties: false
+                properties:
+                  spdx: {description: "Declared SPDX identifier; policy remains the author's decision.", type: string, minLength: 1}
+                  notice: {description: "Complete notice that must travel with this catalog.", type: string, minLength: 1}
+          icons:
+            type: object
+            minProperties: 1
+            propertyNames: {$ref: "#/$defs/name"}
+            additionalProperties: {$ref: "#/$defs/icon"}
+$defs:
+  name:
+    type: string
+    pattern: "^[A-Za-z][A-Za-z0-9_-]*$"
+  viewport:
+    type: object
+    required: [inlineSize, blockSize]
+    additionalProperties: false
+    properties:
+      inlineSize: {type: integer, minimum: 1, maximum: 4096}
+      blockSize: {type: integer, minimum: 1, maximum: 4096}
+  command:
+    type: object
+    required: [kind]
+    additionalProperties: false
+    properties:
+      kind: {enum: [move, line, quadratic, close]}
+      points:
+        type: array
+        minItems: 0
+        maxItems: 4
+        items: {type: number}
+    allOf:
+      - if: {properties: {kind: {const: close}}, required: [kind]}
+        then: {properties: {points: {maxItems: 0}}}
+      - if: {properties: {kind: {enum: [move, line]}}, required: [kind]}
+        then: {properties: {points: {minItems: 2, maxItems: 2}}}
+      - if: {properties: {kind: {const: quadratic}}, required: [kind]}
+        then: {properties: {points: {minItems: 4, maxItems: 4}}}
+  path:
+    type: object
+    required: [paint, commands]
+    additionalProperties: false
+    properties:
+      paint: {description: "Color-Scheme-owned paint mode.", enum: [fill, stroke]}
+      commands:
+        type: array
+        minItems: 1
+        maxItems: 4096
+        items: {$ref: "#/$defs/command"}
+      strokeWidth: {type: number, exclusiveMinimum: 0, maximum: 1024}
+      lineCap: {enum: [butt, round, square]}
+      lineJoin: {enum: [miter, round, bevel]}
+    allOf:
+      - if: {properties: {paint: {const: stroke}}, required: [paint]}
+        then: {required: [strokeWidth, lineCap, lineJoin]}
+      - if: {properties: {paint: {const: fill}}, required: [paint]}
+        then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+  rasterSource:
+    type: object
+    required: [address, contentIdentity]
+    additionalProperties: false
+    properties:
+      address:
+        type: string
+        minLength: 1
+        pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$"
+      contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  icon:
+    type: object
+    required: [kind, viewport, alternative]
+    additionalProperties: false
+    properties:
+      kind: {enum: [vector, raster]}
+      viewport: {$ref: "#/$defs/viewport"}
+      alternative: {description: "Textual equivalent required when this entry is used meaningfully.", type: string}
+      paths: {type: array, minItems: 1, maxItems: 1024, items: {$ref: "#/$defs/path"}}
+      source: {$ref: "#/$defs/rasterSource"}
+    allOf:
+      - if: {properties: {kind: {const: vector}}, required: [kind]}
+        then: {required: [paths], not: {required: [source]}}
+      - if: {properties: {kind: {const: raster}}, required: [kind]}
+        then: {required: [source], not: {required: [paths]}}

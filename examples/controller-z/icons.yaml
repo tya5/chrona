@@ -1,14 +1,34 @@
-version: chrona/icon-catalog/v0.1
+version: chrona/icon-catalog/v0.2
 kind: icon-catalog
 id: controller-z-icons
 body:
+  set: chrona
+  aliases: []
+  provenance:
+    sourceKind: iconify-json
+    sourcePrefix: chrona
+    license: {spdx: CC0-1.0, notice: "Controller Z purpose-built example artwork."}
   icons:
-    chrona.risk:
+    risk:
       kind: vector
-      source: {address: assets/risk.svg, contentIdentity: sha256:431bed861b8c7a2318699b71fa68c83a1a5f3f628dee8d46761370a0542de7bc}
       viewport: {inlineSize: 24, blockSize: 24}
       alternative: Delivery risk
-    chrona.programme:
+      paths:
+        - paint: fill
+          commands:
+            - {kind: move, points: [12, 1]}
+            - {kind: line, points: [23, 22]}
+            - {kind: line, points: [1, 22]}
+            - {kind: close}
+        - paint: fill
+          commands:
+            - {kind: move, points: [12, 8]}
+            - {kind: line, points: [12, 15]}
+        - paint: fill
+          commands:
+            - {kind: move, points: [12, 18]}
+            - {kind: line, points: [12, 18]}
+    programme:
       kind: raster
       source: {address: assets/programme.png, contentIdentity: sha256:fc269fa59c59eace6b23c198d8c94f4b591d2c58b5c8a2db152b150f0b58230d}
       viewport: {inlineSize: 1600, blockSize: 900}

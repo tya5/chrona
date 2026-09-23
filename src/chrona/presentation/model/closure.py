@@ -12,7 +12,7 @@ import yaml
 
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
-from chrona.presentation.icons import IconNormalizationError, NormalizedVectorIcon, normalize_icon
+from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedVectorIcon, validate_png
 from chrona.presentation.contracts import (
     ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, LayoutProfileContract,
     PresentationPresetContract,
@@ -127,8 +127,12 @@ class RenderClosure:
         return values  # type: ignore[return-value]
 
     @property
-    def icon_catalog(self) -> IconCatalogContract | None:
-        return self._optional("icon-catalog", IconCatalogContract)  # type: ignore[return-value]
+    def icon_catalogs(self) -> tuple[IconCatalogContract, ...]:
+        """Ordered catalog set closed by the Context, never a global registry."""
+        values = tuple(item.contract for item in self.resources if item.kind == "icon-catalog")
+        if not all(isinstance(item, IconCatalogContract) for item in values):
+            raise ClosureError("E_CLOSURE_KIND")
+        return values  # type: ignore[return-value]
 
 
 @dataclass(frozen=True)
@@ -264,7 +268,7 @@ def _draft_render_from_resources(
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
     context_value = {
-        "version": "chrona/render-context/v0.9", "kind": "render-context", "id": "draft-render",
+        "version": "chrona/render-context/v0.11", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -372,7 +376,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
     context = _load_presentation(reference, reader)
-    if context.version not in {"chrona/render-context/v0.9", "chrona/render-context/v0.10"}:
+    if context.version != "chrona/render-context/v0.11":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader)
 
@@ -396,7 +400,7 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
     for reference, kind in ((context_contract.actual, "actual-set"),
                             (context_contract.summary_profile, "summary-profile"),
                             (context_contract.detail_profile, "review-detail-profile"),
-                            (context_contract.icon_catalog, "icon-catalog")):
+                            *((reference, "icon-catalog") for reference in (context_contract.icon_catalogs or ()))):
         if reference is not None:
             resources.append(_load_reference(reference.as_reader_reference(), reader, kind))
     if context_contract.snapshot is not None:
@@ -415,8 +419,8 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         resolved_theme = ResolvedThemeContract(theme.id, freeze(value))
     except ColorSchemeError as error:
         raise ClosureError(str(error)) from error
-    catalog_resource = next((item for item in resources if item.kind == "icon-catalog"), None)
-    icon_assets = _load_icon_assets(context_contract, catalog_resource, reader)
+    catalog_resources = tuple(item for item in resources if item.kind == "icon-catalog")
+    icon_assets = _load_icon_assets(context_contract, catalog_resources, reader)
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
 
 
@@ -426,31 +430,48 @@ def _safe_icon_address(address: str) -> bool:
                 and all(part not in {"", ".", ".."} for part in path.parts))
 
 
-def _load_icon_assets(context: RenderContextContract, catalog_resource: ClosureResource | None,
+def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[ClosureResource, ...],
                       reader: SnapshotReader) -> tuple[IconAsset, ...]:
-    if catalog_resource is None:
+    if not catalog_resources:
         return ()
-    if context.icon_catalog is None or not isinstance(catalog_resource.contract, IconCatalogContract):
-        raise ClosureError("E_CLOSURE_KIND")
     assets: list[IconAsset] = []
-    for entry in catalog_resource.contract.entries:
-        if not _safe_icon_address(entry.source.address):
-            raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.id}/source/address")
-        reference = {
-            "id": entry.id, "kind": "icon-asset", "store": context.icon_catalog.store,
-            "address": entry.source.address, "revision": {"token": context.icon_catalog.revision_token},
-            "contentIdentity": entry.source.content_identity,
-        }
-        try:
-            payload = reader.read(reference)
-        except SnapshotReadError as error:
-            diagnostic = "E_ICON_ASSET_IDENTITY" if error.diagnostic_id == "E_CONTENT_IDENTITY" else "E_ICON_ASSET_MISSING"
-            raise ClosureError(diagnostic, f"/body/icons/{entry.id}/source") from error
-        try:
-            normalized = normalize_icon(entry.kind, payload, entry.viewport)
-        except IconNormalizationError as error:
-            raise ClosureError(error.diagnostic_id, f"/body/icons/{entry.id}/source") from error
-        assets.append(IconAsset(entry.id, entry.kind, entry.source.content_identity, entry.viewport, entry.alternative, normalized))
+    by_id = {reference.id: reference for reference in context.icon_catalogs}
+    for catalog_resource in catalog_resources:
+        if not isinstance(catalog_resource.contract, IconCatalogContract):
+            raise ClosureError("E_CLOSURE_KIND")
+        reference = by_id.get(catalog_resource.id)
+        if reference is None:
+            raise ClosureError("E_CLOSURE_KIND")
+        for entry in catalog_resource.contract.entries:
+            icon_id = f"{catalog_resource.contract.set_name}:{entry.name}"
+            if entry.kind == "vector":
+                paths = tuple(tuple(IconPathCommand(str(command["kind"]), tuple(
+                    (float(points[index]), float(points[index + 1])) for index in range(0, len(points), 2)
+                )) for command in path.commands for points in (tuple(command.get("points", ())),))
+                              for path in entry.paths)
+                assets.append(IconAsset(icon_id, entry.kind, catalog_resource.content_identity,
+                                        entry.viewport, entry.alternative,
+                                        NormalizedVectorIcon(entry.viewport, paths)))
+                continue
+            if entry.source is None:
+                raise ClosureError("E_ICON_CATALOG_SCHEMA", f"/body/icons/{entry.name}")
+            if not _safe_icon_address(entry.source.address):
+                raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.name}/source/address")
+            asset_reference = {
+                "id": entry.name, "kind": "icon-asset", "store": reference.store,
+                "address": entry.source.address, "revision": {"token": reference.revision_token},
+                "contentIdentity": entry.source.content_identity,
+            }
+            try:
+                payload = reader.read(asset_reference)
+            except SnapshotReadError as error:
+                diagnostic = "E_ICON_ASSET_IDENTITY" if error.diagnostic_id == "E_CONTENT_IDENTITY" else "E_ICON_ASSET_MISSING"
+                raise ClosureError(diagnostic, f"/body/icons/{entry.name}/source") from error
+            try:
+                validate_png(payload, entry.viewport)
+            except IconNormalizationError as error:
+                raise ClosureError(error.diagnostic_id, f"/body/icons/{entry.name}/source") from error
+            assets.append(IconAsset(icon_id, entry.kind, entry.source.content_identity, entry.viewport, entry.alternative, payload))
     return tuple(assets)
 
 

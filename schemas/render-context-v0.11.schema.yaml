@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:render-context-v0.10"
-title: "Chrona Render Context v0.10"
+$id: "urn:chrona:render-context-v0.11"
+title: "Chrona Render Context v0.11"
 description: "Pinned inputs, execution environment, and output target for one materialization."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {description: "This Render Context contract version.", const: "chrona/render-context/v0.10"}
+  version: {description: "This Render Context contract version.", const: "chrona/render-context/v0.11"}
   kind: {description: "The resource kind for a Render Context.", const: render-context}
   id: {description: "Stable Render Context identifier.", type: string, minLength: 1}
   body:
@@ -29,7 +29,12 @@ properties:
           snapshot: {description: "Optional pinned Snapshot input.", $ref: "#/$defs/snapshotRef"}
           summaryProfile: {description: "Optional pinned summary profile.", $ref: "#/$defs/reference"}
           detailProfile: {description: "Optional pinned detail profile.", $ref: "#/$defs/reference"}
-          iconCatalog: {description: "Optional pinned immutable icon catalog.", $ref: "#/$defs/iconCatalogRef"}
+          iconCatalogs:
+            type: array
+            description: "Optional independently pinned immutable icon catalogs."
+            minItems: 1
+            uniqueItems: true
+            items: {description: "One pinned icon catalog.", $ref: "#/$defs/iconCatalogRef"}
       environment:
         type: object
         description: "Deterministic execution environment for Layout and materialization."
