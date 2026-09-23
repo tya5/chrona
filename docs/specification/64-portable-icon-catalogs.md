@@ -44,7 +44,8 @@ not source SVG paths. It records:
 - one canonical `prefix`, non-empty aliases, source collection version and
   SHA-256 identity;
 - declared license identifier and notice text/provenance;
-- lexically ordered entry names, aliases, viewport, alternative, and normalized
+- lexically ordered canonical entry names, an identity-closed alias-to-canonical
+  mapping, viewport, alternative, and normalized
   monochrome vector payload; and
 - optional identity-closed purpose-built PNG entry bytes addressed relative to
   the catalog revision.
@@ -61,6 +62,12 @@ Apache-2.0 notice, and exposes both `material:` and `material-symbols:`. Its
 exact subset, generated identity, names, count, bytes, and 13px visual evidence
 are release-gated rather than assumed by this specification. No Context means
 no catalog and therefore no icon use.
+
+An Iconify alias without geometry overrides is recorded as an alias mapping and
+resolves to its canonical entry before Layout. An alias with flip, rotation, or
+viewport overrides is normalized into its own canonical entry at import time;
+no transform or alias lookup reaches Layout, Scene, or an adapter. Duplicate,
+cyclic, or unknown alias targets reject the complete collection.
 
 ## 3. Closed vector normalization
 
