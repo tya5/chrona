@@ -35,6 +35,8 @@ Operational Review Workflows for the UC-10/UC-11/UC-12 successor operational sur
 Read `51` Progressive Authoring and `55` Presentation Design Space when compact guided
 source, preset binding, guided capability, or explicit presentation materialization is in
 scope.
+Read `62` when reusable declarative presentation packages, package acquisition,
+locks, package source topology, or package-to-local materialization are in scope.
 Read `56` Schema Authoring and Diagnostics when changing an authorable schema, a
 structural-validation diagnostic, or a normative schema reference.
 
