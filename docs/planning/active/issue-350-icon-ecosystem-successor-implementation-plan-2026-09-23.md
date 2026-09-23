@@ -97,6 +97,9 @@ compatibility seam is allowed.
 [Candidate-label visual composition](issue-350-candidate-label-visual-composition-correction-2026-09-24.md)
 is additionally binding: candidate labels and annotation boxes receive visual
 advances before their Layout solver commits bounds.
+[Summary visual selector closure](issue-350-summary-visual-selector-correction-2026-09-24.md)
+replaces the ambiguous panel-family selector with exact header/value/caption
+occurrence forms.
 Add target resolution for title, columns, object labels, groups, annotations,
 notes, legends, summaries, milestones, axis/as-of labels, and planned/actual
 marks; implement direct references and field encodings where declared. The
