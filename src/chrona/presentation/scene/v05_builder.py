@@ -5,7 +5,7 @@ in I27-R2; this seam ensures that it can only receive completed current inputs.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
@@ -18,6 +18,7 @@ from chrona.presentation.model.presentation_contract import normalize_presentati
 from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 
 
 class SceneBuildError(ValueError):
@@ -47,6 +48,31 @@ _REQUIRED_SOURCES = {
     "table-timeline": frozenset(("title", "table", "timeline", "timeline-axis")),
     "dependency-network": frozenset(("title", "network")),
 }
+
+
+def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFamily:
+    if primitive.kind == PrimitiveKind.TEXT:
+        return PaintFamily.TEXT
+    if primitive.kind == PrimitiveKind.PATH:
+        return PaintFamily.PATH
+    pattern = tokens.optional_pattern(primitive.visual_role)
+    if pattern == "outline":
+        return PaintFamily.OUTLINE
+    if pattern == "diagonal-hatch":
+        return PaintFamily.HATCH
+    return PaintFamily.SOLID
+
+
+def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView) -> SceneSurface:
+    """Attach the sole adapter-ready paint payload to every completed primitive."""
+    try:
+        primitives = tuple(replace(primitive, paint=resolve_scene_paint(
+            tokens, primitive.visual_role, _paint_family(primitive, tokens)))
+                           for primitive in surface.primitives)
+        canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS)
+    except ScenePaintError as error:
+        raise SceneBuildError(error.diagnostic_id, error.path) from error
+    return replace(surface, primitives=primitives, canvas_paint=canvas)
 
 
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
@@ -81,9 +107,9 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
-        return _compose_table_timeline_surface(value)
+        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens)
     if surface == "dependency-network":
-        return _compose_dependency_network_surface(value)
+        return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
 
 
@@ -191,19 +217,18 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for group in groups:
         group_band = semantic_binding("groupBand")
         primitives.append(ScenePrimitive(f"group:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", group_band.purpose, group_band.scene_role,
-                                         group.content_bounds, opacity=value.theme_tokens.opacity(group_band.scene_role)))
+                                         group.content_bounds))
         if group.header_bounds is not None:
             header_band = semantic_binding("groupHeaderBand")
             primitives.append(ScenePrimitive(f"group-header-band:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", header_band.purpose, header_band.scene_role,
-                                             group.header_bounds, opacity=value.theme_tokens.opacity(header_band.scene_role)))
+                                             group.header_bounds))
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
     calendar_binding = semantic_binding("calendarClosed")
     for placed in placed_surface.shapes:
         if placed.placement_id.startswith("calendar-closed:"):
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "project-calendar", "calendar",
-                                             calendar_binding.purpose, calendar_binding.scene_role, bounds,
-                                             opacity=value.theme_tokens.opacity(calendar_binding.scene_role)))
+                                             calendar_binding.purpose, calendar_binding.scene_role, bounds))
     mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
     for review_row, row in zip(review_rows, rows, strict=True):
       members = sorted(enumerate(review_row.items),

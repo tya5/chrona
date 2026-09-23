@@ -9,6 +9,7 @@ from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Mea
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 
@@ -54,6 +55,14 @@ def _manifest(*sources):
 
 
 def _theme():
+    roles = {semantic_binding(semantic_id).scene_role: {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
+             for semantic_id in semantic_ids()}
+    roles.update({name: {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
+                  for name in ("background", "variance-ahead", "variance-behind", "variance-on-track", "table-header")})
+    for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size"}.items():
+        roles.setdefault(name, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
+            {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"})
+    roles["dependency"]["marker"] = "dependency-marker"
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {
         "values": {"ink": {"type": "color", "value": "#102030"},
                    "body": {"type": "fontFamily", "value": "Test Sans"},
@@ -64,13 +73,13 @@ def _theme():
                    "group-opacity": {"type": "number", "value": "0.12"},
                    "group-header-opacity": {"type": "number", "value": "0.2"},
                    "calendar-opacity": {"type": "number", "value": "0.12"},
+                   "stroke-width": {"type": "number", "value": 1},
+                   "dependency-marker": {"type": "marker", "value": "triangle"},
                    "line": {"type": "number", "value": "1.4"}},
-        "roles": {**{name: {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"}
-                     for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size"}.items()},
-                  "text": {"fill": "ink", "fontFamily": "body", "fontWeight": "regular", "fontSize": "body-size", "lineHeight": "line"},
-                  "group-band": {"opacity": "group-opacity"},
-                  "group-header-band": {"opacity": "group-header-opacity"},
-                  "calendar-closed": {"opacity": "calendar-opacity"}}, "metrics": {}}}
+        "roles": {**roles,
+                  "group-band": {**roles["group-band"], "opacity": "group-opacity"},
+                  "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity"},
+                  "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity"}}, "metrics": {}}}
 
 
 def _measurements():
@@ -162,6 +171,8 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     assert any(item.scene_id == "planned:a" for item in surface.primitives)
     assert any(item.scene_id == "missing-actual:a" for item in surface.primitives)
     assert next(item for item in surface.primitives if item.scene_id == "title").text_layout.font_size == 24
+    assert surface.canvas_paint is not None
+    assert all(item.paint is not None for item in surface.primitives)
 
 
 def test_scene_projects_title_links_only_to_selected_current_title_cells():
@@ -218,7 +229,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     ))
     theme = _theme()
     theme["body"]["values"].update({"marker": {"type": "marker", "value": "triangle"}})
-    theme["body"]["roles"]["dependency"] = {"marker": "marker"}
+    theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
     value = build_scene_input(projection=projection, surface_content=surface_content(
         relations=({"id": "r", "from": {"object": "a"}, "to": {"object": "b"}},),
         annotations=({"id": "note", "purpose": "callout", "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "finish"},
@@ -384,7 +395,7 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     theme = _theme()
     theme["body"]["values"]["marker"] = {"type": "marker", "value": "triangle"}
-    theme["body"]["roles"]["dependency"] = {"marker": "marker"}
+    theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
     value = build_scene_input(projection=projection,
                               surface_content=surface_content(relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
@@ -482,7 +493,7 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
     ))
     theme = _theme()
     theme["body"]["values"]["marker"] = {"type": "marker", "value": "triangle"}
-    theme["body"]["roles"]["dependency"] = {"marker": "marker"}
+    theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
     value = build_scene_input(projection=projection, surface_content=surface_content(
         table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),
         group_presentation="header", label_placement="plot", label_content=("title",), label_overflow="diagnose",

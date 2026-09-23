@@ -50,7 +50,7 @@ class ScenePrimitive:
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
     shape: str | None = None
-    opacity: float | None = None
+    paint: ScenePaint | None = None
     corner_radius: float | None = None
     path_commands: tuple[PathCommand, ...] = ()
     points: tuple[tuple[float, float], ...] = ()
@@ -133,6 +133,7 @@ class SceneSurface:
     groups: tuple[SceneGroup, ...]
     scale_manifest: SurfaceScaleManifest | None
     primitives: tuple[ScenePrimitive, ...] = ()
+    canvas_paint: ScenePaint | None = None
 
 
 @dataclass(frozen=True)
