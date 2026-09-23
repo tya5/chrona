@@ -292,6 +292,11 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
     legend = tuple(item.label for item in detail.legend) if detail is not None else ()
+    annotation_visible = view.visibility.annotations
+    annotation_mode = annotation_visible.get("mode", "none") if isinstance(annotation_visible, Mapping) else annotation_visible
+    annotation_numbered = (isinstance(annotation_visible, Mapping) and annotation_visible.get("marker") == "numbered") or view.annotation_presentation == "numbered"
+    annotations = tuple((f"{index + 1}. " if annotation_numbered else "") + str(item.get("text", ""))
+                        for index, item in enumerate(view.annotations)) if annotation_mode != "none" else ()
     return {
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
@@ -308,7 +313,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
         "group-details": SourceInput(("group details",)),
         "observations": SourceInput(("observations",)),
         "milestones": SourceInput(("milestones",)),
-        "annotations": SourceInput(("annotations",), typography_role="annotation"),
+        "annotations": SourceInput(annotations or ("annotations",), typography_role="annotation"),
         "notes": SourceInput(notes or ("notes",), typography_role="annotation"),
     }
 
