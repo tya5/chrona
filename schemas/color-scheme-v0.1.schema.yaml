@@ -63,4 +63,4 @@ properties:
           source: {description: "Human-readable source of the color scheme.", type: string, minLength: 1}
           license: {description: "License or usage terms for the source.", type: string, minLength: 1}
 $defs:
-  color: {description: "Six-digit hexadecimal RGB color.", type: string, pattern: "^#[0-9A-Fa-f]{6}$"}
+  color: {description: "Six-digit hexadecimal RGB color.", examples: ["#336699"], type: string, pattern: "^#[0-9A-Fa-f]{6}$"}

@@ -1,6 +1,7 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/view-v0.8"
 title: "Chrona View v0.8"
+description: "Declarative selection and presentation intent for one review surface."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - type: object

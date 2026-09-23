@@ -17,10 +17,12 @@ properties:
     properties:
       kind: {description: "The only command target resource kind.", const: authoring-workspace}
       path: {description: "Workspace path relative to the configured store.", type: string, minLength: 1}
-  baseRevision: {description: "SHA-256 identity required for optimistic concurrency.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  baseRevision: {description: "SHA-256 identity required for optimistic concurrency.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   payload: {description: "Operation-specific command content.", type: object}
 allOf:
-  - if: {properties: {type: {const: setWorkspaceTask}}}
+  - description: "Task-edit commands require one complete compact task payload."
+    examples: [{}]
+    if: {properties: {type: {const: setWorkspaceTask}}}
     then:
       properties:
         payload:
@@ -42,7 +44,9 @@ allOf:
                   properties:
                     start: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
                     finish: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-  - if: {properties: {type: {const: setWorkspaceActual}}}
+  - description: "Actual-edit commands require one complete compact observation payload."
+    examples: [{}]
+    if: {properties: {type: {const: setWorkspaceActual}}}
     then:
       properties:
         payload:
@@ -64,7 +68,9 @@ allOf:
                     start: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
                     finish: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
                 progress: {type: number, minimum: 0, maximum: 1}
-  - if: {properties: {type: {const: selectPresentationPreset}}}
+  - description: "Preset-selection commands require a pinned preset payload."
+    examples: [{}]
+    if: {properties: {type: {const: selectPresentationPreset}}}
     then:
       properties:
         payload:
@@ -80,7 +86,9 @@ allOf:
                 id: {type: string, minLength: 1}
                 version: {type: string, minLength: 1}
                 path: {type: string, minLength: 1}
-  - if: {properties: {type: {const: setPresentationOverride}}}
+  - description: "Override commands require an override payload."
+    examples: [{}]
+    if: {properties: {type: {const: setPresentationOverride}}}
     then:
       properties:
         payload:
@@ -88,7 +96,9 @@ allOf:
           required: [overrides]
           additionalProperties: false
           properties: {overrides: {type: object}}
-  - if: {properties: {type: {const: materializePresentationPreset}}}
+  - description: "Materialization commands accept only the optional output directory."
+    examples: [{}]
+    if: {properties: {type: {const: materializePresentationPreset}}}
     then:
       properties:
         payload:

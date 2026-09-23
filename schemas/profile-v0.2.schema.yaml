@@ -7,7 +7,7 @@ additionalProperties: false
 properties:
   version: {description: "This profile-package contract version.", const: chrona/profile/v0.2}
   packageId: {description: "Stable identifier for this profile package.", type: string, minLength: 1}
-  contentIdentity: {description: "SHA-256 identity of the package content.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  contentIdentity: {description: "SHA-256 identity of the package content.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   requires:
     type: object
     description: "Authoring format prerequisites for this package."

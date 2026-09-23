@@ -14,7 +14,7 @@ properties:
     required: [presetContentIdentity, bindingContentIdentity, normalizerVersion, resources]
     additionalProperties: false
     properties:
-      presetContentIdentity: {description: "SHA-256 identity of the source preset.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-      bindingContentIdentity: {description: "SHA-256 identity of the guided binding.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      presetContentIdentity: {description: "SHA-256 identity of the source preset.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      bindingContentIdentity: {description: "SHA-256 identity of the guided binding.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
       normalizerVersion: {description: "Normalizer contract that created the resources.", const: chrona/authoring-normalizer/v0.1}
-      resources: {description: "Map of generated resource names to SHA-256 identities.", type: object, minProperties: 1, additionalProperties: {description: "SHA-256 identity of one generated resource.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}}
+      resources: {description: "Map of generated resource names to SHA-256 identities.", type: object, minProperties: 1, additionalProperties: {description: "SHA-256 identity of one generated resource.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}}

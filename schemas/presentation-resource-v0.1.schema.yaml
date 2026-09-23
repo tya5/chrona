@@ -9,6 +9,7 @@ additionalProperties: false
 properties:
   version:
     description: "Presentation resource contract identifier."
+    examples: ["chrona/view/v0.8"]
     pattern: "^chrona/[a-z-]+/v0\\.[0-9]+$"
   kind:
     description: "Presentation resource kind."
@@ -37,15 +38,18 @@ $defs:
         minLength: 1
       path:
         description: "Safe relative path to the resource."
+        examples: ["views/overview.yaml"]
         type: string
         minLength: 1
         pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
       revision:
         description: "Pinned Git revision of the resource."
+        examples: ["git:0123456789abcdef0123456789abcdef01234567"]
         type: string
         pattern: "^git:[0-9A-Fa-f]{40,64}$"
       contentIdentity:
         description: "SHA-256 identity of the referenced bytes."
+        examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
         type: string
         pattern: "^sha256:[0-9a-f]{64}$"
 
@@ -64,39 +68,54 @@ $defs:
         const: project
       path:
         description: "Safe relative Project path."
+        examples: ["project.yaml"]
         type: string
         minLength: 1
         pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
       revision:
         description: "Pinned Git revision of the Project."
+        examples: ["git:0123456789abcdef0123456789abcdef01234567"]
         type: string
         pattern: "^git:[0-9A-Fa-f]{40,64}$"
       contentIdentity:
         description: "SHA-256 identity of the referenced Project bytes."
+        examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
         type: string
         pattern: "^sha256:[0-9a-f]{64}$"
 
   viewRef:
+    description: "Pinned reference constrained to a View resource."
+    examples: [{id: view, kind: view, path: views/overview.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
       - properties: {kind: {const: view}}
   styleRef:
+    description: "Pinned reference constrained to a Style resource."
+    examples: [{id: style, kind: style, path: styles/default.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
       - properties: {kind: {const: style}}
   themeRef:
+    description: "Pinned reference constrained to a Theme resource."
+    examples: [{id: theme, kind: theme, path: themes/default.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
       - properties: {kind: {const: theme}}
   sceneProfileRef:
+    description: "Pinned reference constrained to a Scene Profile resource."
+    examples: [{id: scene, kind: scene-profile, path: scenes/default.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
       - properties: {kind: {const: scene-profile}}
   snapshotRef:
+    description: "Pinned reference constrained to a Snapshot reference resource."
+    examples: [{id: baseline, kind: snapshot-ref, path: snapshots/baseline.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
       - properties: {kind: {const: snapshot-ref}}
   actualSetRef:
+    description: "Pinned reference constrained to an Actual Set resource."
+    examples: [{id: actuals, kind: actual-set, path: actuals/current.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
       - properties: {kind: {const: actual-set}}

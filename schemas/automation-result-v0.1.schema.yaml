@@ -10,7 +10,7 @@ properties:
   operation: {description: "Automation operation that produced this result.", enum: [command-check, command-apply, actual-intake, actual-resolve, baseline-capture, baseline-compare]}
   status: {description: "Whether the operation was accepted or rejected.", enum: [accepted, rejected]}
   replayed: {description: "Whether this result was reproduced from a prior request.", type: boolean}
-  requestContentIdentity: {description: "SHA-256 identity of the originating request.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  requestContentIdentity: {description: "SHA-256 identity of the originating request.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   inputs: {description: "Immutable resources consumed by the operation.", type: array, minItems: 1, items: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}}
   resultTarget: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}
   diagnostics: {description: "Diagnostics emitted while processing the request.", type: array, items: {description: "One diagnostic record with a stable code.", type: object, required: [code], additionalProperties: true, properties: {code: {description: "Stable diagnostic code.", type: string, minLength: 1}}}}
@@ -18,7 +18,11 @@ properties:
   actualIntake: {description: "Operation-specific Actual intake result data.", type: object, additionalProperties: true}
   comparison: {description: "Operation-specific baseline comparison result data.", type: object, additionalProperties: true}
 allOf:
-  - if: {properties: {status: {const: accepted}}}
+  - description: "Accepted results contain no diagnostics."
+    examples: [{}]
+    if: {properties: {status: {const: accepted}}}
     then: {properties: {diagnostics: {maxItems: 0}}}
-  - if: {properties: {status: {const: rejected}}}
+  - description: "Rejected results do not name a result target."
+    examples: [{}]
+    if: {properties: {status: {const: rejected}}}
     then: {not: {required: [resultTarget]}}

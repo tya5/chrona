@@ -75,7 +75,7 @@ properties:
             additionalProperties: false
             properties:
               engine: {description: "Installed typesetting engine.", enum: [typst, tectonic]}
-              version: {description: "Installed typesetting engine version.", type: string, pattern: "^[0-9]+(\\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?$"}
+              version: {description: "Installed typesetting engine version.", examples: ["0.12.0"], type: string, pattern: "^[0-9]+(\\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?$"}
               adapterGrammar: {description: "Chrona adapter grammar selected for the engine.", enum: [chrona-typst/v0.1, chrona-tikz/v0.1]}
       target:
         type: object
@@ -91,16 +91,24 @@ properties:
             uniqueItems: true
           textMode: {description: "Text placement mode required for typeset targets.", const: positioned}
     allOf:
-      - if: {properties: {target: {properties: {kind: {const: svg}}}}}
+      - description: "SVG targets do not select a rasterizer or typesetter."
+        examples: [{}]
+        if: {properties: {target: {properties: {kind: {const: svg}}}}}
         then: {properties: {environment: {not: {anyOf: [{required: [rasterizer]}, {required: [typesetter]}]}}}}
-      - if: {properties: {target: {properties: {kind: {enum: [png, pdf]}}}}}
+      - description: "PNG and PDF targets require a rasterizer and no typesetter."
+        examples: [{}]
+        if: {properties: {target: {properties: {kind: {enum: [png, pdf]}}}}}
         then: {properties: {environment: {allOf: [{required: [rasterizer]}, {not: {required: [typesetter]}}]}}}
-      - if: {properties: {target: {properties: {kind: {const: typst}}}}}
+      - description: "Typst targets require the matching Typst typesetter grammar."
+        examples: [{}]
+        if: {properties: {target: {properties: {kind: {const: typst}}}}}
         then:
           properties:
             environment: {allOf: [{required: [typesetter]}, {not: {required: [rasterizer]}}, {properties: {typesetter: {properties: {engine: {const: typst}, adapterGrammar: {const: chrona-typst/v0.1}}}}}]}
             target: {required: [textMode]}
-      - if: {properties: {target: {properties: {kind: {const: tikz}}}}}
+      - description: "TikZ targets require the matching Tectonic typesetter grammar."
+        examples: [{}]
+        if: {properties: {target: {properties: {kind: {const: tikz}}}}}
         then:
           properties:
             environment: {allOf: [{required: [typesetter]}, {not: {required: [rasterizer]}}, {properties: {typesetter: {properties: {engine: {const: tectonic}, adapterGrammar: {const: chrona-tikz/v0.1}}}}}]}
@@ -117,11 +125,11 @@ $defs:
       store: {description: "Provider-specific Store identity.", type: object}
       address: {description: "Store-relative resource address.", type: string, minLength: 1}
       revision: {description: "Provider-specific immutable revision.", type: object}
-      contentIdentity: {description: "Optional SHA-256 identity of the resource bytes.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-  projectRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: project}}}]}
-  viewRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: view}}}]}
-  themeRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: theme}}}]}
-  colorSchemeRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: color-scheme}}}]}
-  layoutRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: layout-profile}}}]}
-  actualRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: actual-set}}}]}
-  snapshotRef: {allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: snapshot-ref}}}]}
+      contentIdentity: {description: "Optional SHA-256 identity of the resource bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  projectRef: {description: "Pinned reference constrained to a Project resource.", allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: project}}}]}
+  viewRef: {description: "Pinned reference constrained to a View resource.", allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: view}}}]}
+  themeRef: {description: "Pinned reference constrained to a Theme resource.", allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: theme}}}]}
+  colorSchemeRef: {description: "Pinned reference constrained to a Color Scheme resource.", allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: color-scheme}}}]}
+  layoutRef: {description: "Pinned reference constrained to a Layout Profile resource.", allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: layout-profile}}}]}
+  actualRef: {description: "Pinned reference constrained to an Actual Set resource.", allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: actual-set}}}]}
+  snapshotRef: {description: "Pinned reference constrained to a Snapshot reference resource.", allOf: [{$ref: "#/$defs/reference"}, {properties: {kind: {const: snapshot-ref}}}]}

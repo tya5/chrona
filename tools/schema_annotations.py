@@ -19,7 +19,7 @@ def annotation_paths(value: Any, path: tuple[str, ...] = ()) -> Iterator[tuple[t
     """Yield authorable schema nodes, never schema-map container dictionaries."""
     if not isinstance(value, dict):
         return
-    authored = any(key in value for key in ("type", "properties", "required", "enum", "const", "oneOf", "anyOf", "pattern", "items"))
+    authored = any(key in value for key in ("type", "properties", "required", "enum", "const", "oneOf", "anyOf", "pattern", "format", "items", "allOf", "if", "then", "else", "not"))
     if authored and not (set(value) <= {"$ref", "description"}):
         yield path, value
 
@@ -43,6 +43,14 @@ def annotation_paths(value: Any, path: tuple[str, ...] = ()) -> Iterator[tuple[t
             for index, child in enumerate(children):
                 yield from annotation_paths(child, (*path, key, str(index)))
 
+    # A conditional is documented by its immediate allOf branch. Its predicate
+    # and consequence are not independently authorable object shapes.
+    all_of = value.get("allOf")
+    if isinstance(all_of, list):
+        for index, child in enumerate(all_of):
+            if isinstance(child, dict) and "if" in child:
+                yield from annotation_paths(child, (*path, "allOf", str(index)))
+
 
 def pointer(path: tuple[str, ...]) -> str:
     return "/" + "/".join(part.replace("~", "~0").replace("/", "~1") for part in path) if path else "/"
@@ -58,7 +66,8 @@ def validate_annotations(schema_root: Path, inventory_path: Path) -> None:
             description = node.get("description")
             if not isinstance(description, str) or not description.strip():
                 raise SchemaAnnotationError(f"E_SCHEMA_ANNOTATION_DESCRIPTION:{entry['file']}:{pointer(path)}")
-            if any(key in node for key in ("oneOf", "anyOf")):
+            needs_examples = any(key in node for key in ("oneOf", "anyOf", "pattern", "format", "if", "then", "else", "not"))
+            if needs_examples:
                 examples = node.get("examples")
                 if not isinstance(examples, list) or not examples:
                     raise SchemaAnnotationError(f"E_SCHEMA_ANNOTATION_EXAMPLE:{entry['file']}:{pointer(path)}")

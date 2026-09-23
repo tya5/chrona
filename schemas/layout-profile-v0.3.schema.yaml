@@ -31,14 +31,16 @@ examples:
   - {version: "chrona/layout-profile/v0.3", id: example, writingMode: horizontal-tb, extends: {id: base, kind: layout-profile, store: {provider: local, identity: local}, address: layouts/base.yaml, revision: {token: main}, contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, overrides: {root: {padding: 0}}}
 oneOf:
   - description: "Standalone profile with a complete root container."
+    examples: [{root: {id: root, kind: overlay, inlineSize: fill, blockSize: fill, padding: 0, children: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]}}]
     required: [root]
     not: {anyOf: [{required: [extends]}, {required: [overrides]}]}
   - description: "Derived profile with a pinned base and named overrides."
+    examples: [{extends: {id: base, kind: layout-profile, store: {provider: local, identity: local}, address: layouts/base.yaml, revision: {token: main}, contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, overrides: {root: {padding: 0}}}]
     required: [extends, overrides]
     not: {required: [root]}
 
 $defs:
-  id: {description: "Identifier beginning with a letter and safe for node references.", type: string, minLength: 1, maxLength: 256, pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
+  id: {description: "Identifier beginning with a letter and safe for node references.", examples: ["main-panel"], type: string, minLength: 1, maxLength: 256, pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
   reference:
     type: object
     description: "Pinned reference to an immutable Layout Profile resource."
@@ -56,14 +58,14 @@ $defs:
           provider: {description: "Store provider implementation.", enum: [git, local, content]}
           identity: {description: "Stable Store identity.", type: string, minLength: 1}
           locator: {description: "Optional provider-specific Store locator.", type: string, minLength: 1}
-      address: {description: "Safe Store-relative profile address.", type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      address: {description: "Safe Store-relative profile address.", examples: ["layouts/briefing.yaml"], type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
       revision:
         type: object
         description: "Opaque revision identity in the named Store."
         additionalProperties: false
         required: [token]
-        properties: {token: {description: "Nonempty opaque revision token.", type: string, minLength: 1, pattern: "^\\S+$"}}
-      contentIdentity: {description: "SHA-256 identity of the referenced profile bytes.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        properties: {token: {description: "Nonempty opaque revision token.", examples: ["main"], type: string, minLength: 1, pattern: "^\\S+$"}}
+      contentIdentity: {description: "SHA-256 identity of the referenced profile bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   distance:
     description: "Nonnegative physical distance or named distance token."
     examples: [12, {token: gutter}]
@@ -170,7 +172,7 @@ $defs:
     additionalProperties: false
     required: [ref, point]
     properties:
-      ref: {description: "Parent, node, guide, or barrier reference.", type: string, pattern: "^(parent|node:[A-Za-z][A-Za-z0-9._-]*|guide:[A-Za-z][A-Za-z0-9._-]*|barrier:[A-Za-z][A-Za-z0-9._-]*)$"}
+      ref: {description: "Parent, node, guide, or barrier reference.", examples: ["node:main-panel"], type: string, pattern: "^(parent|node:[A-Za-z][A-Za-z0-9._-]*|guide:[A-Za-z][A-Za-z0-9._-]*|barrier:[A-Za-z][A-Za-z0-9._-]*)$"}
       point: {description: "Reference point on the target.", $ref: "#/$defs/point"}
   anchorPoint:
     type: object
@@ -296,7 +298,7 @@ $defs:
         examples: [center, "1/2"]
         oneOf:
           - {description: "Named guide position.", enum: [start, center, end]}
-          - {description: "Positive numerator/denominator position.", type: string, pattern: "^[1-9][0-9]*/[1-9][0-9]*$"}
+          - {description: "Positive numerator/denominator position.", examples: ["1/2"], type: string, pattern: "^[1-9][0-9]*/[1-9][0-9]*$"}
   barrier:
     type: object
     description: "Named edge formed from a set of member nodes."

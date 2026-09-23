@@ -87,7 +87,9 @@ $defs:
               facet: {description: "The only supported object metric facet.", const: planned}
       format: {description: "Public formatting applied to the metric value.", enum: [text, date, count, signedDays]}
     allOf:
-      - if:
+      - description: "Subtree scope is available only for a planned facet of one object."
+        examples: [{}]
+        if:
           required: [scope]
         then:
           properties:

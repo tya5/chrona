@@ -22,7 +22,7 @@ properties:
         additionalProperties: false
         properties:
           system: {description: "Stable source-system name.", type: string, minLength: 1}
-          contentIdentity: {description: "SHA-256 identity of the acquired source content.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+          contentIdentity: {description: "SHA-256 identity of the acquired source content.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
           locator: {description: "Optional source-local locator used for audit.", type: string, minLength: 1}
       records:
         type: array
@@ -42,7 +42,7 @@ properties:
               minProperties: 1
               additionalProperties: false
               properties:
-                start: {description: "Observed ISO date on which work started.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-                finish: {description: "Observed ISO date on which work finished.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-                at: {description: "Observed ISO date for a point event.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                start: {description: "Observed ISO date on which work started.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                finish: {description: "Observed ISO date on which work finished.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                at: {description: "Observed ISO date for a point event.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
                 progress: {description: "Observed completion fraction from zero through one.", type: number, minimum: 0, maximum: 1}

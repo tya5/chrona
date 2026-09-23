@@ -60,9 +60,9 @@ properties:
           additionalProperties: false
           properties:
             packageId: {description: "Extension package identifier.", type: string, minLength: 1}
-            path: {description: "Safe relative path to the extension resource.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
-            revision: {description: "Pinned Git revision of the extension resource.", type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
-            contentIdentity: {description: "SHA-256 identity of the extension resource.", type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+            path: {description: "Safe relative path to the extension resource.", examples: ["extensions/example.yaml"], type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+            revision: {description: "Pinned Git revision of the extension resource.", examples: ["git:0123456789abcdef0123456789abcdef01234567"], type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
+            contentIdentity: {description: "SHA-256 identity of the extension resource.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
         - type: object
           description: "Inline extension package and resource declaration."
           required: [packageId, resource]
@@ -113,11 +113,11 @@ $defs:
       deadline: {description: "Replacement deadline, or null to clear it.", examples: ["2026-09-23", null], oneOf: [{$ref: "#/$defs/date"}, {description: "Clear the deadline.", type: 'null'}]}
       link: {description: "Replacement link form, or null to clear it.", examples: ["https://example.test", {}, null], oneOf: [{$ref: "#/$defs/linkHref"}, {description: "Package-defined link object.", type: object}, {description: "Clear the link.", type: 'null'}]}
       schedule: {description: "Replacement schedule data interpreted by an extension.", type: object}
-  date: {description: "ISO 8601 calendar date.", type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-  temporalAmount: {description: "Signed duration with an explicit supported unit.", type: string, pattern: "^-?(?:\\d+(?:h|min|s|d|w|mo|y|wd))(?: \\d+(?:d|w|mo|y))*$"}
-  linkHref: {description: "Absolute web or mail link, or safe relative link.", type: string, pattern: "^(?:https?://[^\\s]+|mailto:[^\\s]+|\\./[^\\s]+|/(?!/)[^\\s]+)$"}
-  scheduledAmount: {description: "Positive scheduled duration in working or calendar days.", type: string, pattern: "^[1-9]\\d*(?:d|w|wd)$"}
-  wbsCode: {description: "Dot-separated work-breakdown identifier.", type: string, pattern: "^[^.\\s]+(?:\\.[^.\\s]+)*$"}
+  date: {description: "ISO 8601 calendar date.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+  temporalAmount: {description: "Signed duration with an explicit supported unit.", examples: ["2d"], type: string, pattern: "^-?(?:\\d+(?:h|min|s|d|w|mo|y|wd))(?: \\d+(?:d|w|mo|y))*$"}
+  linkHref: {description: "Absolute web or mail link, or safe relative link.", examples: ["https://example.test"], type: string, pattern: "^(?:https?://[^\\s]+|mailto:[^\\s]+|\\./[^\\s]+|/(?!/)[^\\s]+)$"}
+  scheduledAmount: {description: "Positive scheduled duration in working or calendar days.", examples: ["5d"], type: string, pattern: "^[1-9]\\d*(?:d|w|wd)$"}
+  wbsCode: {description: "Dot-separated work-breakdown identifier.", examples: ["1.2"], type: string, pattern: "^[^.\\s]+(?:\\.[^.\\s]+)*$"}
   calendar:
     type: object
     description: "Working-day calendar with optional date exceptions."

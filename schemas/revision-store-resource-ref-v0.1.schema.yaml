@@ -39,6 +39,7 @@ properties:
         minLength: 1
   address:
     description: "Safe Store-relative address of the resource."
+    examples: ["resources/project.yaml"]
     type: string
     minLength: 1
     pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"
@@ -50,10 +51,12 @@ properties:
     properties:
       token:
         description: "Nonempty opaque revision token."
+        examples: ["main"]
         type: string
         minLength: 1
         pattern: "^\\S+$"
   contentIdentity:
     description: "Optional SHA-256 identity of the exact resource content."
+    examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
     type: string
     pattern: "^sha256:[0-9a-f]{64}$"

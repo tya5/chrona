@@ -50,3 +50,21 @@ def test_annotation_lint_rejects_invalid_union_example(tmp_path):
 
     with pytest.raises(SchemaAnnotationError, match="E_SCHEMA_ANNOTATION_INVALID_EXAMPLE:project-v0.1.schema.yaml:/examples/0"):
         validate_annotations(schemas, inventory)
+
+
+def test_annotation_lint_requires_a_conditional_form_example(tmp_path):
+    schema = "description: Project document\ntype: object\nallOf:\n  - if: {properties: {mode: {const: fixed}}}\n    then: {required: [at]}\n"
+    schemas, inventory = _files(tmp_path, schema)
+
+    with pytest.raises(SchemaAnnotationError, match="E_SCHEMA_ANNOTATION_DESCRIPTION:project-v0.1.schema.yaml:/allOf/0"):
+        validate_annotations(schemas, inventory)
+
+
+def test_annotation_lint_requires_a_pattern_example(tmp_path):
+    schemas, inventory = _files(
+        tmp_path,
+        "description: Project document\ntype: object\nproperties:\n  id: {description: Stable identifier, type: string, pattern: '^[a-z]+$'}\n",
+    )
+
+    with pytest.raises(SchemaAnnotationError, match="E_SCHEMA_ANNOTATION_EXAMPLE:project-v0.1.schema.yaml:/properties/id"):
+        validate_annotations(schemas, inventory)

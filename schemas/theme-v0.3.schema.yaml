@@ -27,7 +27,9 @@ properties:
             type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative]}
             value: {}
           allOf:
-            - if:
+            - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
+              examples: [{type: dashPattern, value: [1]}]
+              if:
                 properties: {type: {const: dashPattern}}
               required: [type]
               then:
