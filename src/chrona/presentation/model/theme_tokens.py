@@ -57,6 +57,13 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
         return value
 
+    def opacity(self, role: str) -> float:
+        """Resolve one finite, closed role opacity."""
+        value = self.number(role, "opacity")
+        if value < 0 or value > 1:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/opacity")
+        return float(value)
+
     def optional_pattern(self, role: str) -> str | None:
         """Return explicitly declared renderer form intent, if the role has one."""
         binding = self._body["roles"].get(role)

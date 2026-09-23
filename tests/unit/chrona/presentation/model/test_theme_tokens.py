@@ -20,6 +20,23 @@ def test_typed_view_reads_current_resolved_theme_roles_only():
     assert tokens.typography("text") == ("Test Sans", 400, Decimal(14), Decimal("1.4"))
 
 
+@pytest.mark.parametrize("value", [0, 1, "0.12"])
+def test_typed_view_resolves_finite_role_opacity(value):
+    theme = _theme()
+    theme["body"]["values"]["alpha"] = {"type": "number", "value": value}
+    theme["body"]["roles"]["decoration"] = {"opacity": "alpha"}
+    assert ThemeTokenView(theme).opacity("decoration") == float(value)
+
+
+@pytest.mark.parametrize("value", [-0.1, 1.1, "NaN", "Infinity"])
+def test_typed_view_rejects_out_of_range_or_non_finite_role_opacity(value):
+    theme = _theme()
+    theme["body"]["values"]["alpha"] = {"type": "number", "value": value}
+    theme["body"]["roles"]["decoration"] = {"opacity": "alpha"}
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+        ThemeTokenView(theme).opacity("decoration")
+
+
 def test_missing_role_property_is_a_stable_diagnostic():
     with pytest.raises(ThemeTokenError, match="E_THEME_ROLE_REQUIRED") as error:
         ThemeTokenView(_theme()).color("planned")

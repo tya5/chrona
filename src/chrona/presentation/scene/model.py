@@ -41,7 +41,6 @@ class ScenePrimitive:
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
     shape: str | None = None
-    color: str | None = None
     opacity: float | None = None
     optional: bool = False
     corner_radius: float | None = None

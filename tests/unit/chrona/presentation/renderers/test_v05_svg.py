@@ -15,6 +15,20 @@ def test_svg_formats_completed_surface_with_declared_role_only():
     assert 'data-scene-id="p"' in render_v05_svg(surface, viewport=(10, 10), tokens=ThemeTokenView(theme))
 
 
+def test_svg_serializes_completed_primitive_opacity_without_reopening_theme_policy():
+    theme = {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {"metrics": {},
+        "values": {"surface": {"type": "color", "value": "#ffffff"}, "ink": {"type": "color", "value": "#000000"}},
+        "roles": {"background": {"fill": "surface"}, "planned": {"fill": "ink"}}}}
+    scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 10, 0, 10)
+    surface = SceneSurface("s", (), (), (), scale, (
+        ScenePrimitive("transparent", "Rect", "a", "object", "planned", "planned", (1, 2, 3, 4), opacity=0.12),
+        ScenePrimitive("opaque", "Rect", "b", "object", "planned", "planned", (5, 2, 3, 4), opacity=1),
+    ))
+    output = render_v05_svg(surface, viewport=(10, 10), tokens=ThemeTokenView(theme))
+    assert 'data-scene-id="transparent"' in output and 'opacity="0.12"' in output
+    assert 'data-scene-id="opaque"' in output and 'opacity="1"' in output
+
+
 def test_svg_emits_only_the_declared_dependency_marker_used_by_a_completed_path():
     theme = {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {"metrics": {},
         "values": {"surface": {"type": "color", "value": "#ffffff"}, "ink": {"type": "color", "value": "#000000"}},

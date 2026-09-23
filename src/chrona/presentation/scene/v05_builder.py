@@ -191,11 +191,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for group in groups:
         group_band = semantic_binding("groupBand")
         primitives.append(ScenePrimitive(f"group:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", group_band.purpose, group_band.scene_role,
-                                         group.content_bounds, opacity=0.12, z_order=len(primitives)))
+                                         group.content_bounds, opacity=value.theme_tokens.opacity(group_band.scene_role), z_order=len(primitives)))
         if group.header_bounds is not None:
             header_band = semantic_binding("groupHeaderBand")
             primitives.append(ScenePrimitive(f"group-header-band:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", header_band.purpose, header_band.scene_role,
-                                             group.header_bounds, opacity=0.2, z_order=len(primitives)))
+                                             group.header_bounds, opacity=value.theme_tokens.opacity(header_band.scene_role), z_order=len(primitives)))
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
     calendar_binding = semantic_binding("calendarClosed")
     for placed in placed_surface.shapes:
@@ -203,7 +203,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "project-calendar", "calendar",
                                              calendar_binding.purpose, calendar_binding.scene_role, bounds,
-                                             opacity=0.12, z_order=len(primitives)))
+                                             opacity=value.theme_tokens.opacity(calendar_binding.scene_role), z_order=len(primitives)))
     mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
     for review_row, row in zip(review_rows, rows, strict=True):
       members = sorted(enumerate(review_row.items),
