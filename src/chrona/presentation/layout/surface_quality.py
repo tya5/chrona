@@ -90,7 +90,7 @@ class VisualRequest:
     source_ref: str = "/body/visuals"
 
     def __post_init__(self) -> None:
-        if self.side not in {"leading", "trailing"} or bool(self.ref) == bool(self.encoding_field):
+        if self.side not in {"leading", "trailing"} or not self.ref:
             raise ValueError("E_VIEW_VISUAL_REQUEST")
 
 

@@ -59,6 +59,15 @@ body:
   - target: {kind: title}
     ref: chrona:risk
     decorative: false
+  - target: {kind: title}
+    ref: chrona:programme
+    side: trailing
+    decorative: true
+  - target: {kind: cell, object: firmware, column: Workstream}
+    encoding:
+      field: owner
+      domain: {fw-team: chrona:risk}
+    decorative: true
   tableColumns:
   - id: Workstream
     source: title
