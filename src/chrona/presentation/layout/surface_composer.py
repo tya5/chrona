@@ -43,6 +43,63 @@ def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
     return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
 
 
+def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest) -> tuple[list[Any], list[IconPlacement]]:
+    """Turn already-resolved View visual intents into completed Layout geometry.
+
+    The caller supplies only placement identities; target vocabulary translation
+    remains at the typed View boundary.  This helper deliberately has no Scene,
+    Theme lookup, or catalog lookup dependency.
+    """
+    icons: list[IconPlacement] = []
+    for visual in request.visual_requests:
+        selector = dict(visual.selector)
+        placement_id = selector.get("placementId") or visual_target_placement_id(visual.target_kind, selector)
+        matches = [index for index, item in enumerate(text) if item.placement_id == placement_id and item.overflow != "suppressed"]
+        if len(matches) != 1 or visual.ref is None:
+            raise LayoutError("E_LAYOUT_VISUAL_TARGET", visual.source_ref)
+        icon = request.icon_assets.get(visual.ref)
+        if icon is None:
+            raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
+        index = matches[0]; item = text[index]
+        height = min(float(item.bounds.block_size), item.font_size)
+        width = height * icon.viewport[0] / icon.viewport[1]
+        gap = max(1.0, item.font_size * 0.25)
+        if float(item.bounds.inline_size) <= width + gap:
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+        if visual.side == "leading":
+            text[index] = replace(item, bounds=Rect(item.bounds.inline + Decimal(str(width + gap)), item.bounds.block,
+                                                     item.bounds.inline_size - Decimal(str(width + gap)), item.bounds.block_size),
+                                  baseline=(item.baseline[0] + width + gap, item.baseline[1]) if item.baseline else None)
+            inline = item.bounds.inline
+        else:
+            text[index] = replace(item, bounds=Rect(item.bounds.inline, item.bounds.block,
+                                                     item.bounds.inline_size - Decimal(str(width + gap)), item.bounds.block_size))
+            inline = item.bounds.inline + item.bounds.inline_size - Decimal(str(width))
+        bounds = Rect(inline, item.bounds.block + (item.bounds.block_size - Decimal(str(height))) / 2,
+                      Decimal(str(width)), Decimal(str(height)))
+        icons.append(IconPlacement(f"visual:{item.placement_id}:{visual.side}", item.source_ref, visual.source_ref,
+                                   icon.icon_id, icon.kind, icon.content_identity, icon.payload, icon.alternative,
+                                   visual.decorative, bounds))
+    return text, icons
+
+
+def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
+    """Map the closed View target vocabulary to one Layout placement identity."""
+    if kind == "title": return "title"
+    if kind == "column" and "id" in selector: return f"column:{selector['id']}"
+    if kind == "cell" and {"object", "column"} <= selector.keys(): return f"cell:{selector['object']}:{selector['column']}"
+    if kind == "group-header" and "id" in selector: return f"group-header:{selector['id']}"
+    if kind == "plot-label" and "id" in selector: return f"member-label:{selector['id']}"
+    if kind == "annotation" and "id" in selector: return f"annotation-text:{selector['id']}"
+    if kind == "note-index" and "id" in selector: return f"note-index:{selector['id']}"
+    if kind == "legend" and "role" in selector: return f"legend:{selector['role']}"
+    if kind == "summary" and "id" in selector: return f"summary:{selector['id']}"
+    if kind == "milestone" and "id" in selector: return f"milestone:{selector['id']}"
+    if kind == "axis-label" and {"level", "index"} <= selector.keys(): return f"axis-label:{selector['level']}:{selector['index']}"
+    if kind == "as-of-label" and "id" in selector: return f"as-of:{selector['id']}"
+    raise LayoutError("E_LAYOUT_VISUAL_TARGET", "/body/visuals")
+
+
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
     projection = request.projection
@@ -722,7 +779,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))
-    icons: list[IconPlacement] = []
+    text, icons = resolve_text_visual_requests(text, request)
     # Icon occurrence and all geometry are resolved here, after label placement but
     # before Scene projection.  Existing text bounds donate a fixed leading region.
     for binding_index, binding in enumerate(request.icon_bindings):

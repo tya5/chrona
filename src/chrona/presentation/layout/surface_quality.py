@@ -75,6 +75,24 @@ class TextPlacement:
 
 
 @dataclass(frozen=True)
+class VisualRequest:
+    """A closed View visual intent; only Layout resolves it to an icon placement."""
+
+    target_kind: str
+    selector: tuple[tuple[str, str], ...]
+    ref: str | None = None
+    encoding_field: str | None = None
+    encoding_domain: tuple[tuple[str, str], ...] = ()
+    side: str = "leading"
+    decorative: bool = True
+    source_ref: str = "/body/visuals"
+
+    def __post_init__(self) -> None:
+        if self.side not in {"leading", "trailing"} or bool(self.ref) == bool(self.encoding_field):
+            raise ValueError("E_VIEW_VISUAL_REQUEST")
+
+
+@dataclass(frozen=True)
 class MarkPlacement:
     """Completed mark geometry and ports, independent of Scene primitives."""
 
@@ -201,6 +219,7 @@ class SurfaceLayoutRequest:
     capabilities: dict[str, bool] = field(default_factory=dict)
     icon_bindings: tuple[Any, ...] = ()
     icon_assets: dict[str, Any] = field(default_factory=dict)
+    visual_requests: tuple[VisualRequest, ...] = ()
 
 
 @dataclass(frozen=True)
