@@ -1,6 +1,10 @@
 # #350 Icon Ecosystem Release Review
 
-**Decision:** accepted.
+**Decision:** superseded — post-release review found red CI and unmet public
+authoring/catalog requirements.  See the [post-release correction design
+plan](../../planning/active/issue-350-post-release-correction-design-plan-2026-09-24.md)
+and its architecture review.  This document is historical evidence only and
+does not close #350.
 
 The successor catalog, View-to-Layout composition, completed Scene path
 boundary, public authoring path, and evidence matrix satisfy R350-01 through

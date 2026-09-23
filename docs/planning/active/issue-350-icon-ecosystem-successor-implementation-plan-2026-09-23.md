@@ -1,6 +1,9 @@
 # Implementation Plan: Icon Ecosystem Successor (#350)
 
-**Status:** Active — implements Specification 64 v0.2
+**Status:** Superseded for release closure by the post-release correction
+implementation plan dated 2026-09-24.  Its completed slices remain design and
+implementation evidence; its unfulfilled acceptance items are owned by that
+successor correction.
 **Design authority:** Specification 64, corpus evidence, and the #350 icon
 ecosystem architecture review dated 2026-09-23.
 **Compatibility:** not retained. The v0.1 icon contracts and fixtures are
