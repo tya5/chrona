@@ -43,6 +43,7 @@ selection, geometry, Scene, or target output.
 | Registry/package security does not leak code or network into rendering | Specifications 21/62 and P3 review | Pass — declarative static members only; acquisition precedes evaluation. |
 | New visual richness cannot bypass portability | Specification 62 §8 and P2/P3 reviews | Pass — initial gallery is limited to current closed Scene capability; #345 is a mandatory gate for any additional capability. |
 | Existing corpus remains materializable during migration | Specifications 58/62 and P2/P3 reviews | Pass — atomically migrate or retain explicit source; never leave a deprecated resolver dependency. |
+| Package and gallery use cases are traceable | UC-29–UC-31 in Specification 14 | Pass — acquisition/use, ejection/fork, and design comparison have explicit outcomes and evidence. |
 
 ## Source-tree and reference consistency
 

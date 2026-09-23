@@ -246,3 +246,4 @@ lock bytes, attempted implicit update, forbidden executable/raw SVG content,
 and a clean Stage-3 ejection/fork provenance path.  It also requires paired
 corpus materializer evidence, gallery catalog integrity, full conformance and
 structural gates, full pytest, generated-SVG diff review, and wheel smoke.
+These requirements trace to UC-29 through UC-31 in the Use Case Catalog.

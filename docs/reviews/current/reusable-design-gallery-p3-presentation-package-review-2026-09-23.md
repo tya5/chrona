@@ -25,6 +25,10 @@ acquisition can turn it into a verified lock.  Publication similarly validates
 member identities, provenance, capability, and representative ordinary renders
 without treating a preview as evidence authority.
 
+UC-29 through UC-31 now trace acquisition/use, materialization/fork, and
+gallery comparison respectively.  They make the package lifecycle testable as
+user outcomes rather than only a manifest-format proposal.
+
 ## Whole-architecture review
 
 | Concern | Decision |

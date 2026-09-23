@@ -59,6 +59,9 @@ acceptance evidence can be reproduced from explicit inputs.
 | UC-26 | Inspect effective guided provenance | Must | Designed | Not exposed |
 | UC-27 | Materialize a guided preset | Must | Designed | Not exposed |
 | UC-28 | Retain an explicit project | Must | Designed | Existing explicit route |
+| UC-29 | Acquire and use a reusable presentation package | Should | Designed | Not exposed |
+| UC-30 | Materialize and fork a reusable presentation | Should | Designed | Not exposed |
+| UC-31 | Compare reusable presentation directions in the gallery | Should | Designed | Documentation only |
 
 ## 4. Detailed use cases
 
@@ -469,6 +472,42 @@ existing closure route and has no workspace or preset edge. **Acceptance evidenc
 explicit fixture bypassing the Authoring Normalizer. **Exceptional behavior:** no
 compatibility migration is inferred. **Owners:** `05`, `09`, `12`, `13`, `51`.
 
+### UC-29 — Acquire and use a reusable presentation package
+
+**Trigger:** An author selects a named reusable presentation preset for a new
+or existing guided workspace. **Outcome:** explicit acquisition verifies a
+declarative package manifest and writes an immutable lock; the existing
+Authoring Normalizer receives already-acquired ordinary resources.
+**Acceptance evidence:** local acquisition, identity/tamper/offline fixtures,
+provider-neutral lock provenance, deterministic guided closure, and no-network
+render test. **Exceptional behavior:** `latest`, an unpinned path, missing cache
+bytes, an incompatible target, executable member, or identity conflict rejects
+without changing the prior workspace. **Owners:** `09`, `12`, `13`, `21`, `51`,
+`55`, `62`.
+
+### UC-30 — Materialize and fork a reusable presentation
+
+**Trigger:** An author wants to edit a selected package design or share a
+variant. **Outcome:** Stage 3 atomically ejects a complete ordinary explicit
+bundle, records package/preset `derivedFrom` provenance, and proves
+byte-equivalent output; a later fork receives a new package identity.
+**Acceptance evidence:** materialization rollback/collision/stale fixtures,
+byte-equivalence, no live package edge in explicit closure, and fork provenance
+fixture. **Exceptional behavior:** partial inheritance, silent package upgrade,
+or mutation of the source release rejects. **Owners:** `09`, `10`, `12`, `13`,
+`21`, `51`, `62`.
+
+### UC-31 — Compare reusable presentation directions in the gallery
+
+**Trigger:** A reader compares designs for the same communication problem.
+**Outcome:** a gallery entry traces to one corpus slide, public materializer
+evidence, a derived Design Space summary, and a paired semantic fixture where a
+comparison is claimed. **Acceptance evidence:** catalogue provenance/summary/
+peer-group fixtures and independently reproducible materializer bytes.
+**Exceptional behavior:** a dangling slide, false design assertion, unpaired
+semantic provenance, or hand-authored rendering evidence rejects publication;
+it does not alter rendering. **Owners:** `55`, `58`, `62`.
+
 ## 5. Cross-cutting quality scenarios
 
 | ID | Scenario | Acceptance criterion |
@@ -506,10 +545,11 @@ compatibility migration is inferred. **Owners:** `05`, `09`, `12`, `13`, `51`.
 | UC-20 | `09`, `10`, `12`, `15`, `20` | approval/denial plus append-only audit tests and M13 acceptance closure | None for the declared M12/M13 scope |
 | UC-21 | `09`, `12`, `15`, `20` | causally-behind replica fixture, offline/stale boundary, and M13 acceptance closure | None for the declared M12/M13 scope |
 | UC-22–UC-28 | `05`–`10`, `12`, `13`, `21`, `51` | approved source/normalization/materialization design | closed schemas, fixtures, command engine, and product adapters |
+| UC-29–UC-31 | `09`, `12`, `13`, `21`, `51`, `55`, `58`, `62` | reusable package/gallery design | package schemas, acquisition/lock, resolver, catalog tooling, fixtures, and product adapters |
 
 ## 7. Current gaps and release gate
 
-Every UC-01–UC-28 row has a normative owner and design/library evidence where the rule
+Every UC-01–UC-31 row has a normative owner and design/library evidence where the rule
 is machine-checkable. That does not make it a user-facing product feature. The current
 alpha product claim is limited to the commands and documented scripts named in the
 Product surface column. UC-16–UC-21 remain opt-in successor libraries rather than
