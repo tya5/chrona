@@ -70,6 +70,7 @@ objects:
   ga:
     type: gate
     title: General Availability
+    deadline: 2026-07-03
     fields: {owner: factory-team, review: release}
     schedule: {mode: fixed-point, at: 2026-06-30}
 
@@ -103,7 +104,8 @@ relations:
     type: dependency
     from: {object: dvt, endpoint: end}
     to: {object: pvt, endpoint: start}
-    lag: {value: 3wd, calendar: engineering-jp}
+    # Fast-tracked: factory validation starts one working week before DVT closes.
+    lag: {value: -5wd, calendar: engineering-jp}
   - id: pvt-to-ga
     type: dependency
     from: {object: pvt, endpoint: end}

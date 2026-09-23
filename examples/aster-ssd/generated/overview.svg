@@ -86,13 +86,13 @@
 <rect data-scene-id="calendar-closed:2027-08-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1559.776" y="116.8" width="4.056" height="709.6" opacity="0.12" fill="#EAF0F8"/>
 <rect data-scene-id="calendar-closed:2027-08-29" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1563.832" y="116.8" width="4.056" height="709.6" opacity="0.12" fill="#EAF0F8"/>
 <polygon data-scene-id="planned:board:board" data-source-ref="board" data-purpose="planned" points="716.135,138.975 720.135,142.975 716.135,146.975 712.135,142.975" opacity="1" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:board:board" data-source-ref="board" data-purpose="missingActual" x="716.135" y="148.975" width="12" height="8" opacity="1" fill="#4B5563"/>
+<polygon data-scene-id="actual:board:board" data-source-ref="board" data-purpose="actual" points="720.191,148.975 724.191,152.975 720.191,156.975 716.191,152.975" opacity="1" fill="#269D79"/>
 <rect data-scene-id="planned:ftl:ftl" data-source-ref="ftl" data-purpose="planned" x="732.359" y="227.675" width="182.519" height="8" opacity="1" fill="#3986E6"/>
 <rect data-scene-id="actual:ftl:ftl" data-source-ref="ftl" data-purpose="actual" x="732.359" y="237.675" width="210.91" height="8" opacity="1" fill="#269D79"/>
 <text data-scene-id="member-label:ftl:ftl" data-source-ref="ftl" data-purpose="member-label" x="733.745" y="218.575" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">FTL and media management</text>
 <text data-scene-id="variance:ftl:ftl" data-source-ref="ftl" data-purpose="finish-delta" x="825.942" y="263.175" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#C8762B">+7d</text>
 <polygon data-scene-id="planned:fw-freeze:fw-freeze" data-source-ref="fw-freeze" data-purpose="planned" points="1129.844,316.375 1133.844,320.375 1129.844,324.375 1125.844,320.375" opacity="1" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:fw-freeze:fw-freeze" data-source-ref="fw-freeze" data-purpose="missingActual" x="1129.844" y="326.375" width="12" height="8" opacity="1" fill="#4B5563"/>
+<polygon data-scene-id="actual:fw-freeze:fw-freeze" data-source-ref="fw-freeze" data-purpose="actual" points="1129.844,326.375 1133.844,330.375 1129.844,334.375 1125.844,330.375" opacity="1" fill="#269D79"/>
 <text data-scene-id="member-label:fw-freeze:fw-freeze" data-source-ref="fw-freeze" data-purpose="member-label" x="1055.546" y="307.275" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Firmware feature freeze</text>
 <polygon data-scene-id="planned:security-exit:security-exit" data-source-ref="security-exit" data-purpose="planned" points="1158.235,405.075 1162.235,409.075 1158.235,413.075 1154.235,409.075" opacity="1" fill="#3986E6"/>
 <rect data-scene-id="missing-actual:security-exit:security-exit" data-source-ref="security-exit" data-purpose="missingActual" x="1158.235" y="415.075" width="12" height="8" opacity="1" fill="#4B5563"/>
@@ -103,9 +103,9 @@
 <polygon data-scene-id="planned:qual-exit:qual-exit" data-source-ref="qual-exit" data-purpose="planned" points="1356.978,582.475 1360.978,586.475 1356.978,590.475 1352.978,586.475" opacity="1" fill="#3986E6"/>
 <rect data-scene-id="missing-actual:qual-exit:qual-exit" data-source-ref="qual-exit" data-purpose="missingActual" x="1356.978" y="592.475" width="12" height="8" opacity="1" fill="#4B5563"/>
 <text data-scene-id="member-label:qual-exit:qual-exit" data-source-ref="qual-exit" data-purpose="member-label" x="1305.626" y="573.375" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Qualification exit</text>
-<rect data-scene-id="planned:pilot:pilot" data-source-ref="pilot" data-purpose="planned" x="1369.146" y="671.175" width="44.616" height="8" opacity="1" fill="#3986E6"/>
-<rect data-scene-id="missing-actual:pilot:pilot" data-source-ref="pilot" data-purpose="missingActual" x="1413.761" y="681.175" width="12" height="8" opacity="1" fill="#4B5563"/>
-<text data-scene-id="member-label:pilot:pilot" data-source-ref="pilot" data-purpose="member-label" x="1361.108" y="662.075" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Pilot build</text>
+<rect data-scene-id="planned:pilot:pilot" data-source-ref="pilot" data-purpose="planned" x="1397.537" y="671.175" width="40.56" height="8" opacity="1" fill="#3986E6"/>
+<rect data-scene-id="missing-actual:pilot:pilot" data-source-ref="pilot" data-purpose="missingActual" x="1438.097" y="681.175" width="12" height="8" opacity="1" fill="#4B5563"/>
+<text data-scene-id="member-label:pilot:pilot" data-source-ref="pilot" data-purpose="member-label" x="1387.472" y="662.075" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Pilot build</text>
 <polygon data-scene-id="planned:release:release" data-source-ref="release" data-purpose="planned" points="1527.328,759.875 1531.328,763.875 1527.328,767.875 1523.328,763.875" opacity="1" fill="#3986E6"/>
 <rect data-scene-id="missing-actual:release:release" data-source-ref="release" data-purpose="missingActual" x="1527.328" y="769.875" width="12" height="8" opacity="1" fill="#4B5563"/>
 <text data-scene-id="member-label:release:release" data-source-ref="release" data-purpose="member-label" x="1403.11" y="768.075" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Production release</text>
@@ -136,7 +136,7 @@
 <path data-scene-id="axis-grid:major:quarter:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1324.53 116.8L1324.53 826.4" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1320.474 116.8L1320.474 826.4" fill="none" opacity="1" stroke="#C8762B" stroke-width="1"/>
 <text data-scene-id="as-of-label" data-source-ref="actual-set" data-purpose="as-of-label" x="1320.474" y="130.8" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">As of 2027-06-30</text>
-<path data-scene-id="relation:qual-pilot:qual-exit:qual-exit:pilot:pilot" data-source-ref="qual-pilot" data-purpose="dependency" d="M1356.978 586.475L1356.978 675.175L1369.146 675.175" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-#4B5563-triangle)"/>
+<path data-scene-id="relation:qual-pilot:qual-exit:qual-exit:pilot:pilot" data-source-ref="qual-pilot" data-purpose="dependency" d="M1356.978 586.475L1356.978 675.175L1397.537 675.175" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-#4B5563-triangle)"/>
 <rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="24" y="851.458" width="9.6" height="9.6" opacity="1" fill="#3986E6"/>
 <rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="24" y="868.258" width="9.6" height="9.6" opacity="1" fill="#269D79"/>
 <text data-scene-id="legend:planned" data-source-ref="planned" data-purpose="legend-label" x="38.4" y="861.058" font-family="Nimbus Sans, Arial, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Planned</text>

@@ -4,5 +4,7 @@ id: controller-z-observed
 body:
   observations:
     - {id: fw-observed, sequence: 1, projectObjectId: firmware, actual: {start: 2026-02-13, finish: 2026-04-14, progress: 1.0}}
+    - {id: evb-observed, sequence: 1, projectObjectId: evb-arrival, actual: {at: 2026-04-20}}
     - {id: bringup-observed, sequence: 1, projectObjectId: silicon-bringup, actual: {start: 2026-04-21, finish: 2026-05-12, progress: 1.0}}
+    - {id: performance-in-flight, sequence: 1, projectObjectId: performance, actual: {start: 2026-04-27, progress: 0.4}}
     - {id: supplier-unmatched, sequence: 1, externalIdentity: {system: supplier, key: EVT-9}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: 2026-05-20}}

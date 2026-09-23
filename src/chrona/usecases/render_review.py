@@ -162,7 +162,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     source_inputs = _source_inputs(project, view, projection, summary,
                                    render_closure.detail_profile.detail if render_closure.detail_profile else None,
                                    annotation_input=_annotation_source_input(
-                                       view, visual_requests, icon_assets, theme))
+                                       view, visual_requests, icon_assets, theme),
+                                   color_scale=color_scale)
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics,
@@ -296,7 +297,7 @@ def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_roo
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, detail: ReviewDetailInput | None = None,
-                   annotation_input: SourceInput | None = None) -> dict[str, SourceInput]:
+                   annotation_input: SourceInput | None = None, *, color_scale: Any = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
@@ -304,6 +305,11 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
     legend = tuple(item.label for item in detail.legend) if detail is not None else ()
+    if color_scale is not None:
+        # The colour-scale legend rows are drawn after the fixed legend; measure them too.
+        used = {item.fields.get(color_scale.source_field) for item in projection.items
+                if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
+        legend += tuple(str(value) for value in color_scale.domain if value in used)
     sources = {
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(

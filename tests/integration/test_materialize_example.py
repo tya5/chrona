@@ -1,5 +1,6 @@
 from hashlib import sha256
 from pathlib import Path
+import re
 import shutil
 
 import pytest
@@ -13,11 +14,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_declared_examples_reproduce_by_public_cli(tmp_path):
-    materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
-    materialize(ROOT / "examples/aster-ssd/manifest.yaml", "overview", tmp_path / "aster", write=False)
-    manifest = ROOT / "examples/halcyon-1/manifest.yaml"
-    for slide in yaml.safe_load(manifest.read_text())["slides"]:
-        materialize(manifest, slide["id"], tmp_path / slide["id"], write=False)
+    """Every slide of every declared corpus manifest reproduces its committed evidence."""
+    manifests = sorted(ROOT.glob("examples/*/manifest.yaml"))
+    assert manifests, "no corpus manifests found"
+    for manifest in manifests:
+        for slide in yaml.safe_load(manifest.read_text())["slides"]:
+            materialize(manifest, slide["id"], tmp_path / manifest.parent.name / slide["id"], write=False)
 
 
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
@@ -43,6 +45,18 @@ def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     assert 'data-scene-id="legend-swatch:scale:owner:payload"' in svg
     assert 'data-scene-id="legend:scale:owner:payload"' in svg
     assert 'data-scene-id="progress-fill:planned:campaign:campaign"' in svg
+    assert 'data-purpose="progress-fill"' in svg
+
+
+def test_orion_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
+    """Scale legend rows are part of the legend slot's measured size, so they stay on the canvas."""
+    materialize(ROOT / "examples/orion-asic/manifest.yaml", "gates", tmp_path / "gates", write=False)
+    svg = (tmp_path / "gates/review.svg").read_text()
+    context = yaml.safe_load((ROOT / "examples/orion-asic/contexts/gates.yaml").read_text())
+    block = float(context["body"]["environment"]["viewport"]["blockSize"])
+    baselines = [float(match) for match in re.findall(r'data-purpose="legend-label"[^>]* y="([0-9.]+)"', svg)]
+    assert len(baselines) == 5 and max(baselines) < block
+    assert 'data-scene-id="legend:scale:revision:B0"' in svg
     assert 'data-purpose="progress-fill"' in svg
 
 

@@ -34,8 +34,12 @@ body:
     - planned
     - actual
     - finishDelta
+    - atDelta
+    - progress
     - missingActual
     - unmatchedActual
+  progressFill:
+    source: actual
   visibility:
     labels:
       placement: plot

@@ -1,0 +1,98 @@
+version: chrona/render-context/v0.9
+kind: render-context
+id: halcyon-1-07-replan-baseline
+body:
+  project:
+    id: halcyon-1
+    kind: project
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: project.yaml
+    revision:
+      token: example-v1
+  view:
+    id: halcyon-07-replan-baseline
+    kind: view
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: views/07-replan-baseline.yaml
+    revision:
+      token: example-v1
+  theme:
+    id: wallboard
+    kind: theme
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: themes/wallboard.yaml
+    revision:
+      token: example-v1
+  colorScheme:
+    id: control-room-dark
+    kind: color-scheme
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: schemes/control-room-dark.yaml
+    revision:
+      token: example-v1
+  layout:
+    id: wallboard
+    kind: layout-profile
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: layouts/wallboard.yaml
+    revision:
+      token: example-v1
+  inputs:
+    actual:
+      id: halcyon-1-observed-2027-08-20
+      kind: actual-set
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: actual.yaml
+      revision:
+        token: example-v1
+    snapshot:
+      id: halcyon-1-baseline-2027-06
+      kind: snapshot-ref
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: snapshots/baseline-2027-06.yaml
+      revision:
+        token: example-v1
+  environment:
+    viewport:
+      inlineSize: 1920
+      blockSize: 1080
+    locale: en-US
+    fontMetrics:
+      algorithm: declared-metrics-v1
+      assets:
+      - family: Nimbus Sans
+        weight: 400
+        revision: nimbus-sans-regular-v1
+        contentIdentity: sha256:281d55f9010a82fca254c06fb38e2dc0cdb6a5ee18de21fff711993e3963c2a1
+        path: font_metrics/nimbus-sans-regular-v1.json
+      - family: Nimbus Sans
+        weight: 700
+        revision: nimbus-sans-bold-v1
+        contentIdentity: sha256:fe60a1edd18fd58c8f7603a2edc8b39834e3d92c864308414d7ff025e28e89a9
+        path: font_metrics/nimbus-sans-bold-v1.json
+      missingFont: diagnose
+    scenePrecision: 3
+  target:
+    kind: svg
+    visualProfile: chrona-output/visual/v0.5-baseline
+    capabilities:
+    - accessibleText
+    - hierarchicalAxis
+    - marker
+    - semanticRoles
+    - sourceMetadata
+    - tableSemantics

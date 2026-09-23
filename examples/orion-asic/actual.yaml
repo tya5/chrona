@@ -1,0 +1,12 @@
+version: chrona/actual-set/v0.2
+kind: actual-set
+id: orion-asic-observed
+body:
+  asOf: '2027-02-12'
+  observations:
+    - {id: rtl-freeze-final, sequence: 1, projectObjectId: rtl-freeze, actual: {start: 2026-09-01, finish: 2026-10-13, progress: 1.0}}
+    - {id: tapeout-held, sequence: 1, projectObjectId: tapeout, actual: {at: 2026-10-19}}
+    - {id: fab-a0-final, sequence: 1, projectObjectId: fab-a0, actual: {start: 2026-10-19, finish: 2027-01-15, progress: 1.0}}
+    - {id: evt-held, sequence: 1, projectObjectId: evt, actual: {at: 2027-01-22}}
+    - {id: bringup-in-flight, sequence: 1, projectObjectId: bringup-a0, actual: {start: 2027-01-25, progress: 0.35}}
+    - {id: fab-portal-unmapped, sequence: 1, externalIdentity: {system: fab-portal, key: LOT-A0-L3}, sourceContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, alignment: unmatched, actual: {finish: 2027-01-29}}

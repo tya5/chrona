@@ -1,0 +1,89 @@
+version: chrona/view/v0.10
+kind: view
+id: halcyon-07-replan-baseline
+body:
+  surface: table-timeline
+  rows:
+    mode: automatic
+  selection:
+    include:
+      ids:
+      - spacecraft-ait
+      - integration
+      - vibration
+      - tvac
+      - emc
+      - psr
+      - shipment
+      - campaign
+      types:
+      - span
+      - point
+  grouping:
+    by: hierarchy
+    depth: 1
+    rollup: bar
+    missing: ungrouped
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2027-06-28'
+    end: '2027-11-15'
+  comparison:
+    baseline: snapshot
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
+  axis:
+    levels:
+    - unit: quarter
+      format: year-quarter
+    - unit: month
+      format: short-month
+    ticks: week
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+  shading:
+    nonWorking: true
+    exceptions: true
+  layoutIntent:
+    compactness: compact
+    itemStacking: stable
+  tableColumns:
+  - id: Work package
+    source: title
+    missing: em-dash
+  - id: Baseline finish
+    source:
+      comparisonFacet: finishDelta
+    format: signedDays
+    missing: em-dash
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash

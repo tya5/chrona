@@ -11,7 +11,8 @@ calendars:
       - {date: '2027-05-03', working: false}
       - {date: '2027-05-04', working: false}
   factory:
-    working_days: [mon, tue, wed, thu, fri, sat]
+    # The fab runs seven days a week; only the annual shutdown is closed.
+    working_days: [mon, tue, wed, thu, fri, sat, sun]
     exceptions:
       - {date: '2027-07-10', working: false}
 entities:
@@ -133,16 +134,18 @@ objects:
     title: Pilot build
     calendar: factory
     fields: {owner: production, risk: high}
-    schedule: {mode: scheduled, amount: 10wd}
+    # Wafer lot allocation: the pilot cannot start before the July lot lands.
+    schedule: {mode: scheduled, amount: 10wd, constraints: {start: {min: '2027-07-19'}}}
   yield:
     type: task
     title: Yield and traceability
     calendar: factory
     fields: {owner: production, risk: high}
-    schedule: {mode: scheduled, amount: 12wd}
+    schedule: {mode: scheduled, amount: 12wd, constraints: {end: {max: '2027-08-13'}}}
   release:
     type: gate
     title: Production release
+    deadline: '2027-08-31'
     fields: {owner: production, risk: high}
     schedule: {mode: fixed-point, at: '2027-08-20'}
 relations:
