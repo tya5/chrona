@@ -9,6 +9,7 @@ command-line arguments, writes files, or prints.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -18,9 +19,11 @@ from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
+from chrona.presentation.layout.surface_composer import resolve_label_visual_advances
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import RenderClosure
 from chrona.presentation.model.font_metrics import resolve_font_metrics
+from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent
@@ -151,8 +154,15 @@ def render_review(request: RenderRequest) -> RenderedReview:
                                         project)
     if render_closure.summary_profile is not None:
         ledger.summary()
+    visual_requests = tuple(_visual_request(visual, projection, index)
+                            for index, visual in enumerate(render_closure.view.view.visuals))
+    icon_assets = {item.icon_id: item for item in render_closure.icon_assets}
+    if visual_requests:
+        ledger.icons()
     source_inputs = _source_inputs(project, view, projection, summary,
-                                   render_closure.detail_profile.detail if render_closure.detail_profile else None)
+                                   render_closure.detail_profile.detail if render_closure.detail_profile else None,
+                                   annotation_input=_annotation_source_input(
+                                       view, visual_requests, icon_assets, theme))
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
     measured = measure_sources(source_inputs, theme, font_metrics=font_metrics,
@@ -177,10 +187,6 @@ def render_review(request: RenderRequest) -> RenderedReview:
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
-    visual_requests = tuple(_visual_request(visual, projection, index)
-                            for index, visual in enumerate(render_closure.view.view.visuals))
-    if visual_requests:
-        ledger.icons()
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
@@ -188,7 +194,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         locale=environment.locale,
         visual_profile=visual_profile,
         viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
-        icon_assets={item.icon_id: item for item in render_closure.icon_assets},
+        icon_assets=icon_assets,
         visual_requests=visual_requests,
     )
 
@@ -284,7 +290,8 @@ def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_roo
 
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
-                   summary: SummaryContent, detail: ReviewDetailInput | None = None) -> dict[str, SourceInput]:
+                   summary: SummaryContent, detail: ReviewDetailInput | None = None,
+                   annotation_input: SourceInput | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
@@ -292,12 +299,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
     legend = tuple(item.label for item in detail.legend) if detail is not None else ()
-    annotation_visible = view.visibility.annotations
-    annotation_mode = annotation_visible.get("mode", "none") if isinstance(annotation_visible, Mapping) else annotation_visible
-    annotation_numbered = (isinstance(annotation_visible, Mapping) and annotation_visible.get("marker") == "numbered") or view.annotation_presentation == "numbered"
-    annotations = tuple((f"{index + 1}. " if annotation_numbered else "") + str(item.get("text", ""))
-                        for index, item in enumerate(view.annotations)) if annotation_mode != "none" else ()
-    return {
+    sources = {
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
             tuple(row.label for row in rows) or tuple(item.title for item in projection.items),
@@ -313,9 +315,35 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
         "group-details": SourceInput(("group details",)),
         "observations": SourceInput(("observations",)),
         "milestones": SourceInput(("milestones",)),
-        "annotations": SourceInput(annotations or ("annotations",), typography_role="annotation"),
         "notes": SourceInput(notes or ("notes",), typography_role="annotation"),
     }
+    if annotation_input is not None:
+        sources["annotations"] = annotation_input
+    return sources
+
+
+def _annotation_source_input(view: ViewInput, visual_requests: tuple[VisualRequest, ...],
+                             icon_assets: dict[str, Any], theme: Mapping[str, Any]) -> SourceInput | None:
+    """Build annotation measurements from the same closed visuals Layout composes."""
+    visible = view.visibility.annotations
+    mode = visible.get("mode", "none") if isinstance(visible, Mapping) else visible
+    if mode == "none":
+        return None
+    numbered = ((isinstance(visible, Mapping) and visible.get("marker") == "numbered")
+                or view.annotation_presentation == "numbered")
+    tokens = ThemeTokenView(theme)
+    runs = []
+    for index, annotation in enumerate(view.annotations):
+        annotation_id = str(annotation.get("id", ""))
+        prefix = f"{index + 1}. " if numbered else ""
+        advances = resolve_label_visual_advances(
+            f"annotation-text:{annotation_id}", "annotation", visual_requests=visual_requests,
+            icon_assets=icon_assets, theme_tokens=tokens,
+        )
+        inline_advance = sum((Decimal(str(width + gap)) for _, _, width, gap in advances), Decimal(0))
+        runs.append(SourceTextRun(prefix + str(annotation.get("text", "")), "annotation",
+                                  f"annotation-text:{annotation_id}", inline_advance))
+    return SourceInput(runs=tuple(runs), typography_role="annotation")
 
 
 def _slot_measurements(root: Mapping[str, Any], measured: Any) -> dict[str, Any]:
@@ -323,7 +351,9 @@ def _slot_measurements(root: Mapping[str, Any], measured: Any) -> dict[str, Any]
 
     def bind(node: Mapping[str, Any]) -> None:
         if node["kind"] == "slot":
-            measurements[node["id"]] = measured.measurements[node["source"]]
+            source = node["source"]
+            if source in measured.measurements:
+                measurements[node["id"]] = measured.measurements[source]
         for child in node.get("children", ()):
             bind(child)
 

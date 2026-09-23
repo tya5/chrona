@@ -216,6 +216,7 @@ body:
     axis.fill: textMuted
     legend.fill: textMuted
     annotation.fill: surfaceRaised
+    annotation-text.fill: text
     annotation.stroke: neutral
     summary.fill: text
     table-header.fill: surfaceRaised

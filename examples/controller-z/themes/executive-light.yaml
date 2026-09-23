@@ -215,6 +215,8 @@ body:
     dependency.stroke: textMuted
     annotation.fill: surfaceRaised
     annotation.stroke: neutral
+    annotation-text.fill: text
+    note-index.fill: accent
     progress-fill.fill: warning
   metrics:
     text.body.size: text-size

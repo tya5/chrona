@@ -63,6 +63,27 @@ def test_missing_measurement_and_required_overflow_diagnose():
         solve_layout(profile(),viewport_inline=300,viewport_block=100,measurements=MEASUREMENTS)
 
 
+def test_unavailable_optional_source_does_not_participate_in_layout():
+    raw = {
+        "version": "chrona/layout-profile/v0.3", "id": "optional-source", "writingMode": "horizontal-tb",
+        "root": {"id": "root", "kind": "column", "inlineSize": "fill", "blockSize": "fill",
+                 "gap": {"token": "spacing.m"}, "padding": {"token": "spacing.none"},
+                 "alignItems": "stretch", "justifyContent": "start", "children": [
+                     {"id": "title", "kind": "slot", "source": "title", "inlineSize": "content", "blockSize": "content",
+                      "place": {"inline": "start", "block": "start", "safety": "strict"}, "priority": "required", "overflow": "diagnose"},
+                     {"id": "annotations", "kind": "slot", "source": "annotations", "inlineSize": "content", "blockSize": "content",
+                      "place": {"inline": "start", "block": "start", "safety": "strict"}, "priority": "optional", "overflow": "diagnose"},
+                 ]},
+    }
+    theme = {"body": {"values": {"spacing.m": {"type": "number", "value": 16},
+                                    "spacing.none": {"type": "number", "value": 0}}}}
+    resolved = resolve_layout_profile(raw, available_sources={"title"}, theme=theme)
+    result = decisions(solve_layout(resolved, viewport_inline=800, viewport_block=300,
+                                    measurements={"title": MEASUREMENTS["title"]}))
+    assert "annotations" not in result
+    assert result["title"].block == 0
+
+
 def test_grid_and_distribution_are_deterministic():
     raw={
       "version":"chrona/layout-profile/v0.3","id":"grid","writingMode":"horizontal-tb",

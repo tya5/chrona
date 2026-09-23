@@ -216,6 +216,8 @@ body:
     axis.fill: textMuted
     legend.fill: textMuted
     annotation.fill: surfaceRaised
+    annotation-text.fill: text
+    note-index.fill: accent
     annotation.stroke: neutral
     summary.fill: text
     metric.fill: text

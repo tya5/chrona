@@ -43,6 +43,13 @@ def _slot_measurement(node: Mapping[str, Any], measurements: Mapping[str, Measur
         raise LayoutError("E_LAYOUT_MEASUREMENT_REQUIRED", path, str(node["id"])) from error
 
 
+def _active_children(node: Mapping[str, Any], measurements: Mapping[str, Measurement]) -> tuple[tuple[int, Mapping[str, Any]], ...]:
+    """Keep original profile indices while omitting absent optional sources."""
+    return tuple((index, child) for index, child in enumerate(node["children"])
+                 if not (child["kind"] == "slot" and child.get("priority") == "optional"
+                         and str(child["id"]) not in measurements))
+
+
 def _spec_base(spec: Any, *, axis: str, measurement: Measurement | None, profile: ResolvedLayoutProfile, path: str) -> tuple[Decimal, Decimal | None, Decimal]:
     """Return minimum, preferred/fixed target, and flex weight."""
     if spec == "fill":
@@ -96,7 +103,8 @@ def _allocate(specs: list[Any], available: Decimal, measurements: list[Measureme
 def _measure_node(node: Mapping[str, Any], path: str, measurements: Mapping[str, Measurement], profile: ResolvedLayoutProfile) -> Measurement:
     if node["kind"] == "slot":
         return _slot_measurement(node, measurements, path)
-    children = [_measure_node(child, f"{path}/children/{index}", measurements, profile) for index, child in enumerate(node["children"])]
+    children = [_measure_node(child, f"{path}/children/{index}", measurements, profile)
+                for index, child in _active_children(node, measurements)]
     i0, i1, b0, b1 = _padding(profile, node, path)
     gap = _gap(profile, node, path)
     count_gap = gap * max(0, len(children) - 1)
@@ -178,15 +186,15 @@ class _Arranger:
         inline, block, inline_size, block_size = self._content(node, path, rect)
         row = node["kind"] == "row"; main = inline_size if row else block_size
         cross = block_size if row else inline_size; gap = _gap(self.profile, node, path)
-        children = list(node["children"])
-        measured = [_measure_node(child, f"{path}/children/{i}", self.measurements, self.profile) for i, child in enumerate(children)]
-        specs = [child["inlineSize" if row else "blockSize"] for child in children]
+        children = _active_children(node, self.measurements)
+        measured = [_measure_node(child, f"{path}/children/{i}", self.measurements, self.profile) for i, child in children]
+        specs = [child["inlineSize" if row else "blockSize"] for _, child in children]
         specs = [
             {"fixed": cross * _d(spec["aspectRatio"]) if row else cross / _d(spec["aspectRatio"])}
             if isinstance(spec, dict) and "aspectRatio" in spec else spec
             for spec in specs
         ]
-        paths = [f"{path}/children/{i}/{'inlineSize' if row else 'blockSize'}" for i in range(len(children))]
+        paths = [f"{path}/children/{i}/{'inlineSize' if row else 'blockSize'}" for i, _ in children]
         sizes = _allocate(specs, main - gap * max(0, len(children)-1), measured, axis="inline" if row else "block", profile=self.profile, paths=paths)
         used = sum(sizes, ZERO) + gap * max(0, len(children)-1)
         cursor_delta, actual_gap = _distributed_start(node["justifyContent"], main-used, len(children), gap)
@@ -196,7 +204,7 @@ class _Arranger:
             values = [m.first_baseline if node["alignItems"] == "first-baseline" else m.last_baseline for m in measured]
             if any(value is None for value in values): raise LayoutError("E_LAYOUT_BASELINE_UNAVAILABLE", path, node["id"])
             baseline = max(value for value in values if value is not None)
-        for index, (child, child_measure, main_size) in enumerate(zip(children, measured, sizes)):
+        for (index, child), child_measure, main_size in zip(children, measured, sizes):
             child_path = f"{path}/children/{index}"
             cross_spec = child["blockSize" if row else "inlineSize"]
             cross_path = child_path + ("/blockSize" if row else "/inlineSize")
@@ -218,7 +226,7 @@ class _Arranger:
         inline, block, inline_size, block_size = self._content(node, path, rect); gap = _gap(self.profile, node, path)
         cols, rows = node["columnTracks"], node["rowTracks"]
         col_measures: list[Measurement | None] = [None] * len(cols); row_measures: list[Measurement | None] = [None] * len(rows)
-        for i, child in enumerate(node["children"]):
+        for i, child in _active_children(node, self.measurements):
             measure = _measure_node(child, f"{path}/children/{i}", self.measurements, self.profile); cell=child["cell"]
             if cell.get("columnSpan",1)==1: col_measures[cell["column"]-1]=measure
             if cell.get("rowSpan",1)==1: row_measures[cell["row"]-1]=measure
@@ -228,7 +236,7 @@ class _Arranger:
         for size in col_sizes: col_starts.append(cursor); cursor+=size+gap
         row_starts=[]; cursor=block
         for size in row_sizes: row_starts.append(cursor); cursor+=size+gap
-        for i,child in enumerate(node["children"]):
+        for i,child in _active_children(node, self.measurements):
             cell=child["cell"]; c=cell["column"]-1; r=cell["row"]-1; cs=cell.get("columnSpan",1); rs=cell.get("rowSpan",1)
             self.arrange(child,f"{path}/children/{i}",Rect(col_starts[c],row_starts[r],sum(col_sizes[c:c+cs],ZERO)+gap*(cs-1),sum(row_sizes[r:r+rs],ZERO)+gap*(rs-1)))
 
@@ -236,7 +244,7 @@ class _Arranger:
         inline, block, inline_size, block_size = self._content(node,path,rect); gap=_gap(self.profile,node,path); minimum=_distance(self.profile,path+"/itemMinInlineSize")
         lines: list[list[tuple[int, Mapping[str, Any], Measurement, Decimal, Decimal]]] = [[]]
         used=ZERO
-        for i,child in enumerate(node["children"]):
+        for i,child in _active_children(node, self.measurements):
             child_path=f"{path}/children/{i}"; measure=_measure_node(child,child_path,self.measurements,self.profile)
             inline_spec, block_spec = child["inlineSize"], child["blockSize"]
             width=max(minimum,measure.preferred_inline); height=measure.preferred_block
@@ -268,8 +276,8 @@ class _Arranger:
     def _overlay(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
         inline, block, inline_size, block_size = self._content(node, path, rect)
         content = Rect(inline, block, inline_size, block_size)
-        children = list(node["children"])
-        indexed = {str(child["id"]): (index, child) for index, child in enumerate(children)}
+        children = _active_children(node, self.measurements)
+        indexed = {str(child["id"]): (index, child) for index, child in children}
         bounds: dict[str, Rect] = {}
 
         def child_size(child: Mapping[str, Any], child_path: str) -> tuple[Decimal, Decimal]:

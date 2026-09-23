@@ -242,6 +242,8 @@ body:
     variance-behind.stroke: warning
     dependency.stroke: textMuted
     annotation.fill: surfaceRaised
+    annotation-text.fill: text
+    note-index.fill: accent
     annotation.stroke: neutral
     progress-fill.fill: warning
   metrics:

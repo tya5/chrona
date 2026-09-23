@@ -168,6 +168,35 @@ def test_draft_detail_visuals_reach_group_and_milestone_slots(tmp_path):
     assert "visual:milestone:evb-arrival:leading" in by_id
 
 
+def test_draft_annotation_visual_is_measured_before_its_rail_is_allocated(tmp_path):
+    root = _root(); example = root / "examples/controller-z"
+    view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visibility"]["annotations"] = {"mode": "presentation", "marker": "numbered"}
+    view["body"]["annotations"] = [{
+        "id": "firmware-callout", "purpose": "callout",
+        "anchor": {"kind": "object", "id": "firmware", "facet": "planned", "endpoint": "finish"},
+        "placement": {"side": "end", "alignment": "center"},
+        "text": "Confirm supplier evidence.",
+    }]
+    view["body"]["visuals"] = [
+        {"target": {"kind": "annotation", "id": "firmware-callout"}, "ref": "chrona:risk", "decorative": True},
+        {"target": {"kind": "note-index", "id": "firmware-callout"}, "ref": "chrona:risk", "decorative": True},
+    ]
+    view_path = tmp_path / "annotation-visual-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    rendered = render_review(_draft_request(view_path=view_path, layout_path=example / "layouts/executive-review.yaml",
+        icon_catalog_paths=(example / "icons.yaml",), visual_profile="chrona-output/visual/v0.7-svg"))
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    icon = by_id["visual:annotation-text:firmware-callout:leading"]
+    label = by_id["annotation-text:firmware-callout"]
+    assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+    note_icon = by_id["visual:note-index:firmware-callout:leading"]
+    note_index = by_id["note-index:firmware-callout"]
+    assert note_icon.bounds[0] + note_icon.bounds[2] <= note_index.bounds[0]
+    assert "annotation-leader:firmware-callout" in by_id
+
+
 def test_detail_profile_and_layout_sources_close_before_scene(tmp_path):
     root = _root(); example = root / "examples/controller-z"
     layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))

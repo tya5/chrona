@@ -111,3 +111,11 @@ root:
           place: {inline: end, block: first-baseline, safety: safe}
           priority: optional
           overflow: clip-optional
+    - id: annotations
+      kind: slot
+      source: annotations
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: first-baseline, safety: safe}
+      priority: optional
+      overflow: diagnose

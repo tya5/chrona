@@ -165,8 +165,24 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
 def candidate_label_visuals(placement_id: str, typography_role: str,
                             request: SurfaceLayoutRequest) -> tuple[tuple[Any, Any, float, float], ...]:
     """Resolve visual advances before a candidate-label solver chooses bounds."""
+    return resolve_label_visual_advances(
+        placement_id, typography_role, visual_requests=request.visual_requests,
+        icon_assets=request.icon_assets, theme_tokens=request.theme_tokens,
+    )
+
+
+def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
+                                  visual_requests: tuple[Any, ...], icon_assets: dict[str, Any],
+                                  theme_tokens: Any) -> tuple[tuple[Any, Any, float, float], ...]:
+    """Resolve the closed inline advance of label visuals in Layout.
+
+    Source measurement and final placement call this same resolver. That keeps
+    an icon's aspect ratio, role scale, and role gap out of the render use case
+    and prevents a solver from allocating text bounds that final composition
+    cannot honor.
+    """
     matching = []
-    for visual in request.visual_requests:
+    for visual in visual_requests:
         if visual.target_kind == "mark":
             continue
         target = visual_target_placement_id(visual.target_kind, dict(visual.selector))
@@ -175,15 +191,15 @@ def candidate_label_visuals(placement_id: str, typography_role: str,
     if not matching:
         return ()
     found: dict[str, tuple[Any, Any, float, float]] = {}
-    _, _, size, _ = request.theme_tokens.typography(typography_role)
+    _, _, size, _ = theme_tokens.typography(typography_role)
     try:
-        scale, gap_ratio = request.theme_tokens.icon_ratios(typography_role)
+        scale, gap_ratio = theme_tokens.icon_ratios(typography_role)
     except Exception as error:
         raise LayoutError("E_THEME_ICON_RATIO", "/body/visuals") from error
     for visual in matching:
         if visual.side in found:
             raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
-        icon = request.icon_assets.get(visual.ref or "")
+        icon = icon_assets.get(visual.ref or "")
         if icon is None or icon.viewport[1] <= 0:
             raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
         height = float(size * scale)
@@ -947,12 +963,36 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          visual.decorative, icon_bounds, "labelVisual",
                                                          icon_width / icon.viewport[0]))
             if "number" in annotation:
+                note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
+                handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
+                note_index_leading = sum(width + gap for visual, _, width, gap in note_index_visuals
+                                         if visual.side == "leading")
+                note_index_trailing = sum(width + gap for visual, _, width, gap in note_index_visuals
+                                          if visual.side == "trailing")
+                note_index_content = str(annotation["number"])
+                note_index_width = measure_text_width(note_index_content, font_size=size, font_metrics=request.font_metrics)
+                note_index_inline = anchor_bounds.x + anchor_bounds.width
                 text.append(place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
-                                       content=str(annotation["number"]), inline=anchor_bounds.x + anchor_bounds.width,
+                                       content=note_index_content, inline=note_index_inline + note_index_leading,
                                        baseline_block=anchor_bounds.y + body_size, typography_role="annotation",
                                        theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                        collision_region="annotations",
                                        collision_domain=CollisionDomain("timeline", "overlay")))
+                if note_index_visuals:
+                    if not hasattr(request.font_metrics, "cap_height_at"):
+                        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in note_index_visuals))
+                    cap_height = float(request.font_metrics.cap_height_at(size))
+                    for visual, icon, icon_width, gap in note_index_visuals:
+                        inline = (note_index_inline if visual.side == "leading"
+                                  else note_index_inline + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
+                        icon_bounds = Rect(Decimal(str(inline)), Decimal(str(anchor_bounds.y + body_size - cap_height
+                                                                              + (cap_height - size) / 2)),
+                                           Decimal(str(icon_width)), Decimal(str(size)))
+                        candidate_icons.append(IconPlacement(f"visual:note-index:{annotation_id}:{visual.side}",
+                                                             annotation_id, visual.source_ref, icon.icon_id, icon.kind,
+                                                             icon.content_identity, icon.payload, icon.alternative,
+                                                             visual.decorative, icon_bounds, "labelVisual",
+                                                             icon_width / icon.viewport[0]))
             if box.leader_required:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
                 try:
