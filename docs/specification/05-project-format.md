@@ -30,6 +30,7 @@ The format SHOULD be:
 Initial canonical structure:
 
 ```yaml
+# chrona-contract: historical
 version: timeline/v0.3
 
 project:
@@ -389,6 +390,7 @@ MUST NOT pretend to understand its semantics.
 The top-level `version` identifies the project-format contract:
 
 ```yaml
+# chrona-contract: historical
 version: timeline/v0.3
 ```
 
@@ -476,6 +478,7 @@ immutable references to child **timeline exports**, rather than raw child Projec
 is not a `timeline/v0.3` top-level field:
 
 ```yaml
+# chrona-contract: historical
 version: chrona/federation-plan/v0.1
 id: program-federation
 primaryProject: {id: program, kind: project, path: project.yaml, revision: git:<40-or-64-hex>, contentIdentity: sha256:<64-hex>}

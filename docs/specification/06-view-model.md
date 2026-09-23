@@ -83,6 +83,7 @@ The v0.1 View resource uses a deliberately small, closed selector language. It e
 reviewable plan-versus-actual views without embedding code or renderer geometry:
 
 ```yaml
+# chrona-contract: historical
 version: chrona/view/v0.1
 kind: view
 id: controller-review

@@ -39,6 +39,7 @@ Every resource uses a common YAML envelope. The resource-specific body is valida
 the schema for its `kind`.
 
 ```yaml
+# chrona-contract: historical
 version: chrona/view/v0.1
 kind: view
 id: controller-review
@@ -207,6 +208,7 @@ The View owns whether a Snapshot or Actual input is meaningful or required; the 
 Context owns which explicitly named instance is used for this evaluation.
 
 ```yaml
+# chrona-contract: historical
 version: chrona/render-context/v0.1
 kind: render-context
 id: controller-plan-vs-actual

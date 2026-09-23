@@ -60,6 +60,7 @@ resource graph. Their YAML/JSON form is deliberately separate from the resource
 envelope:
 
 ```yaml
+# chrona-contract: historical
 version: chrona/command/v0.1
 commandId: 0195b5d1-actual-edit
 type: editActualObservation

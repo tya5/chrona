@@ -37,6 +37,7 @@ is the SHA-256 identity of the resolved manifest payload; retrieval may remain
 implementation-defined, but a loaded manifest is canonical and schema-valid:
 
 ```yaml
+# chrona-contract: historical
 version: chrona/profile/v0.1
 packageId: semiconductor-development
 contentIdentity: sha256:<64-hex>

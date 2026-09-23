@@ -43,6 +43,7 @@ make this rule executable: they expose both child revisions, assert that the old
 selects only the old export, then assert that a repinned Plan selects the new export.
 
 ```yaml
+# chrona-contract: historical
 version: chrona/federation-plan/v0.1
 id: program-federation
 primaryProject: {id: program, kind: project, path: project.yaml, revision: git:<40-or-64-hex>, contentIdentity: sha256:<64-hex>}
@@ -60,6 +61,7 @@ Address, store-owned revision token, and content identity. The child export addi
 declares its `projectId`.
 
 ```yaml
+# chrona-contract: historical
 version: chrona/federation-plan/v0.2
 id: program-federation
 primaryProject:
