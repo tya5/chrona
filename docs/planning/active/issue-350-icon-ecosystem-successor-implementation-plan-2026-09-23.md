@@ -68,9 +68,10 @@ adapter; no importer performs network I/O.
 
 Resolve catalog sets into an immutable lookup, validate prefixes/aliases and
 catalog/raster identities, close only verified bytes, and materialize exact
-documents/assets. Generate and package the Material Symbols Outline Rounded
-default through I350R-2, with required licence notice, aliases, fixed subset
-manifest, and size limit. Replace the screenshot raster fixture with a small
+documents/assets. Generate and package the complete 2,336-entry Material Symbols
+Outline Rounded default through I350R-2, with required licence notice, aliases,
+fixed subset manifest, and the published 18 MB / 1.5 MB gzip size limits.
+Replace the screenshot raster fixture with a small
 purpose-built asset. Add repeatable draft catalog arguments and guided-workspace
 equivalent explicit declaration.
 

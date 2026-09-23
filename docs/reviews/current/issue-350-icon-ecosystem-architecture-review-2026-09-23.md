@@ -61,3 +61,12 @@ R350 row to independently reviewable slices and names:
 5. public bundled catalog/notice generation and artifact-size limits; and
 6. focused, full, materializer, conformance, wheel, generated-output, and CI
    acceptance evidence.
+
+## Bundled-default size correction
+
+The published [bundled catalog size correction](../../planning/active/issue-350-bundled-catalog-size-correction-2026-09-23.md)
+records measured v0.2 command-payload cost for the complete 2,336-entry
+Material Symbols Outline Rounded selection.  Its explicit YAML and compressed
+bounds preserve the normalized, renderer-neutral closure boundary; a compact
+binary representation would require a future contract rather than an
+unreviewed package-only exception.
