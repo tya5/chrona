@@ -9,6 +9,7 @@ line and explicit successor statements, never from the highest number alone.
 Read `00` Vision, `01` Concepts, `02` Domain Model, `03` Temporal Model, `04`
 Scheduling Model, `05` Project Format, and `12` Quality/Invariants. The Core diagnostics
 and semantic supplements refine this path.
+Read `57` for the public CLI serialization of completed schedule analysis.
 
 ## Presentation and review output
 
