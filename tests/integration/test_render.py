@@ -97,6 +97,21 @@ def test_draft_plot_label_visual_reserves_space_before_candidate_selection(tmp_p
     assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
 
 
+def test_draft_variance_label_visual_reserves_space_before_candidate_selection(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [{"target": {"kind": "variance-label", "object": "firmware"},
+                                "ref": "chrona:risk", "side": "leading", "decorative": True}]
+    path = tmp_path / "variance-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                            visual_profile="chrona-output/visual/v0.7-svg"))
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    icon = by_id["visual:variance:firmware:firmware:leading"]
+    label = by_id["variance:firmware:firmware"]
+    assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+
+
 def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
     root = _root()
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
