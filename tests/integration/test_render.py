@@ -18,7 +18,8 @@ def _root() -> Path:
 
 
 def _draft_request(*, project_path: Path | None = None, view_path: Path | None = None,
-                   actual_path: Path | None = None) -> RenderRequest:
+                   actual_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
+                   visual_profile: str = "chrona-output/visual/v0.5-baseline") -> RenderRequest:
     root = _root()
     draft = resolve_draft_render(
         project_path=project_path or root / "examples/controller-z/project.yaml",
@@ -27,6 +28,8 @@ def _draft_request(*, project_path: Path | None = None, view_path: Path | None =
         scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
         layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
         actual_path=actual_path or root / "examples/controller-z/actual.yaml",
+        icon_catalog_paths=icon_catalog_paths,
+        visual_profile=visual_profile,
     )
     return RenderRequest(
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
@@ -43,6 +46,19 @@ def test_draft_render_materializes_the_review_surface():
 
 def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
+
+
+def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visuals"] = [{"target": {"kind": "title"}, "ref": "chrona:risk", "decorative": False}]
+    path = tmp_path / "visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    svg = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                       visual_profile="chrona-output/visual/v0.7-svg")).artifact.content.decode()
+
+    assert 'data-asset-identity=' in svg
+    assert 'aria-label="Delivery risk"' in svg
 
 
 def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp_path):
