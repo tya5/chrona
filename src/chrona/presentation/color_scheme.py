@@ -76,7 +76,7 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
                 or (intent not in _INTENTS and intent not in colors)):
             raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN")
         role, property_name = target.rsplit(".", 1)
-        if property_name not in {"fill", "stroke"}:
+        if property_name not in {"fill", "stroke", "gradientStart", "gradientEnd", "shadowColor"}:
             raise ColorSchemeError("E_SCHEME_THEME_BINDING")
         token = f"__scheme.{intent}.{target}"
         color = colors[intent]

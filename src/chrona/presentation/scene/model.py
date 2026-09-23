@@ -19,6 +19,33 @@ class ScenePaint:
     stroke_width: float | None
     dash: tuple[float, ...]
     opacity: float
+    gradient: "LinearGradient | None" = None
+    shadow: "DropShadow | None" = None
+    stroke_finish: "StrokeFinish | None" = None
+
+
+@dataclass(frozen=True)
+class LinearGradient:
+    angle: float
+    stops: tuple[tuple[float, str], ...]
+    fidelity: str
+
+
+@dataclass(frozen=True)
+class DropShadow:
+    color: str
+    offset_x: float
+    offset_y: float
+    blur: float
+    opacity: float
+    fidelity: str
+
+
+@dataclass(frozen=True)
+class StrokeFinish:
+    line_cap: str
+    line_join: str
+    fidelity: str
 
 
 @dataclass(frozen=True)

@@ -19,6 +19,7 @@ from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_me
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
+from chrona.presentation.scene.visual_capabilities import VisualProfile
 
 
 class SceneBuildError(ValueError):
@@ -41,6 +42,7 @@ class SceneBuildInput:
     font_metrics: Any
     measured_sources: MeasuredSources
     capabilities: Mapping[str, bool]
+    visual_profile: VisualProfile | None = None
     locale: str = "en-US"
 
 
@@ -63,25 +65,29 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
     return PaintFamily.SOLID
 
 
-def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView,
+def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
                             *, scale_target_role: str | None = None,
                             scale_paints: Mapping[str, str] | None = None,
                             scale_legend_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     try:
         primitives = tuple(_complete_primitive_paint(
-            primitive, tokens, scale_target_role, scale_paints or {}, scale_legend_paints or {})
+            primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {})
                            for primitive in surface.primitives)
-        canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS)
+        canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
+                                     visual_capabilities=visual_profile.capabilities if visual_profile else None,
+                                     optional_omission=visual_profile.optional_omission if visual_profile else False)
     except ScenePaintError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     return replace(surface, primitives=primitives, canvas_paint=canvas)
 
 
-def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
+def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
                               scale_target_role: str | None, scale_paints: Mapping[str, str],
                               scale_legend_paints: Mapping[str, str]) -> ScenePrimitive:
-    paint = resolve_scene_paint(tokens, primitive.visual_role, _paint_family(primitive, tokens))
+    paint = resolve_scene_paint(tokens, primitive.visual_role, _paint_family(primitive, tokens),
+                                visual_capabilities=visual_profile.capabilities if visual_profile else None,
+                                optional_omission=visual_profile.optional_omission if visual_profile else False)
     override = (scale_paints.get(primitive.source_ref)
                 if primitive.visual_role == scale_target_role else None)
     if primitive.source_kind == "legend":
@@ -93,7 +99,8 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       layout_manifest: LayoutManifest, resolved_theme: Mapping[str, Any],
                       font_metrics: Any, measured_sources: MeasuredSources,
-                      capabilities: Mapping[str, bool], locale: str = "en-US") -> SceneBuildInput:
+                      capabilities: Mapping[str, bool], locale: str = "en-US",
+                      visual_profile: VisualProfile | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -115,19 +122,19 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), locale)
+                           dict(capabilities), visual_profile, locale)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
     """Dispatch a typed surface intent to an adapter of completed Layout output."""
     surface = getattr(value.projection, "surface", "table-timeline")
     if surface == "table-timeline":
-        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens,
+        return _complete_surface_paint(_compose_table_timeline_surface(value), value.theme_tokens, value.visual_profile,
                                        scale_target_role=value.surface_content.scale_target_role,
                                        scale_paints=dict(value.surface_content.scale_paints),
                                        scale_legend_paints=dict(value.surface_content.scale_legend_paints))
     if surface == "dependency-network":
-        return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens)
+        return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")
 
 
