@@ -72,7 +72,7 @@ explicitly rejected; hostile source reaches no adapter.
 
 ## I350-3 — View selection and Layout composition
 
-**Files:** successor `view-v0.11` and `theme-v0.6` schemas/contracts; normalized content,
+**Files:** successor `view-v0.11` schema/contract; existing Theme v0.5 `metrics` bindings; normalized content,
 surface composer/placements, scene projection, and focused architecture tests.
 
 1. Add closed `View.iconBindings` entries keyed by source, placement, catalog ID, and
@@ -89,6 +89,12 @@ surface composer/placements, scene projection, and focused architecture tests.
 **Acceptance:** a View-bound object has a leading label icon and a mark in the same closed
 render; changing available width changes Layout output only; Scene does not reflow or
 select icons.
+
+**Correction:** Theme v0.5 already owns an open, namespaced `metrics` map whose values
+are validated named number tokens. `icon.size` and `icon.gap` therefore require no Theme
+v0.6 syntax or compatibility layer. View v0.11 is still necessary because icon identity
+and occurrence are semantic/View authority; the implementation uses current Theme metrics
+for concrete treatment and records no new Theme authority.
 
 ## I350-4 — Reusable public evidence and release gate
 
