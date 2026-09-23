@@ -417,7 +417,15 @@ def _run(args: argparse.Namespace) -> None:
     result = schedule(project)
     if not result.ok:
         _reject(result.diagnostics)
-    print(json.dumps({"placements": result.placements, "diagnostics": []}, indent=2, default=_json_default))
+    analysis = result.analysis
+    payload = {"placements": result.placements, "diagnostics": []}
+    if analysis is not None:
+        object_order = tuple(project.get("objects", {}))
+        payload["analysis"] = {
+            "criticalObjectIds": [object_id for object_id in object_order if object_id in analysis.critical],
+            "totalFloat": analysis.total_float,
+        }
+    print(json.dumps(payload, indent=2, default=_json_default))
 
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:

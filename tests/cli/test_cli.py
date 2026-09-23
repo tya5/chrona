@@ -43,6 +43,7 @@ def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     output = json.loads(capsys.readouterr().out)
     assert output["placements"] == {"gate": {"at": "2026-10-01"}}
     assert output["placements"] == json.loads(json.dumps(schedule(project).placements, default=str))
+    assert output["analysis"] == {"criticalObjectIds": ["gate"], "totalFloat": {"gate": 0}}
 
 
 def test_cli_render_requires_draft_review_inputs(monkeypatch, capsys):
