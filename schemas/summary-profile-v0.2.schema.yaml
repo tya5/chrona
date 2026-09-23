@@ -4,7 +4,8 @@ title: "Chrona Summary Profile v0.2"
 description: "Declarative summary panels and typed metrics for a presentation resource."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
-  - type: object
+  - description: "Summary Profile document fields extending the shared presentation resource."
+    type: object
     properties:
       version: {description: "This Summary Profile contract version.", const: chrona/summary-profile/v0.1}
       kind: {description: "The resource kind for a Summary Profile.", const: summary-profile}
@@ -46,7 +47,8 @@ allOf:
                       items:
                         allOf:
                           - {$ref: "#/$defs/typedMetric"}
-                          - required: [id]
+                          - description: "Requires an identifier for an ordered typed metric."
+                            required: [id]
                             properties: {id: {type: string, minLength: 1}}
 $defs:
   typedMetric:

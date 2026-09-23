@@ -60,6 +60,39 @@ def test_annotation_lint_requires_a_conditional_form_example(tmp_path):
         validate_annotations(schemas, inventory)
 
 
+def test_annotation_lint_reaches_a_conditional_behind_a_structural_allof(tmp_path):
+    schema = """description: Project document
+allOf:
+  - description: Structural document shape
+    type: object
+    properties:
+      schedule:
+        type: object
+        allOf:
+          - if: {properties: {mode: {const: fixed}}}
+            then: {required: [at]}
+"""
+    schemas, inventory = _files(tmp_path, schema)
+
+    with pytest.raises(SchemaAnnotationError, match="E_SCHEMA_ANNOTATION_DESCRIPTION:project-v0.1.schema.yaml:/allOf/0/properties/schedule/allOf/0"):
+        validate_annotations(schemas, inventory)
+
+
+def test_annotation_lint_reaches_a_local_allof_assertion(tmp_path):
+    schema = """description: Project document
+allOf:
+  - $ref: '#/$defs/reference'
+  - properties:
+      kind: {const: project}
+$defs:
+  reference: {description: Reference, type: object}
+"""
+    schemas, inventory = _files(tmp_path, schema)
+
+    with pytest.raises(SchemaAnnotationError, match="E_SCHEMA_ANNOTATION_DESCRIPTION:project-v0.1.schema.yaml:/allOf/1"):
+        validate_annotations(schemas, inventory)
+
+
 def test_annotation_lint_requires_a_pattern_example(tmp_path):
     schemas, inventory = _files(
         tmp_path,

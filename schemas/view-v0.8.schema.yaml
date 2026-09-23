@@ -4,7 +4,8 @@ title: "Chrona View v0.8"
 description: "Declarative selection and presentation intent for one review surface."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
-  - type: object
+  - description: "View document fields extending the shared presentation resource."
+    type: object
     properties:
       version: {const: "chrona/view/v0.8"}
       kind: {const: view}
@@ -44,9 +45,13 @@ allOf:
               depth: {type: integer, minimum: 0}
               rollup: {enum: [bar, header, none]}
             allOf:
-              - if: {properties: {by: {const: field}}, required: [by]}
+              - description: "Field grouping requires its field name and missing-value label."
+                examples: [{by: field, field: status, missing: Unset}]
+                if: {properties: {by: {const: field}}, required: [by]}
                 then: {required: [field, missing]}
-              - if: {properties: {by: {const: hierarchy}}, required: [by]}
+              - description: "Hierarchy grouping requires a depth and rollup presentation."
+                examples: [{by: hierarchy, depth: 1, rollup: header}]
+                if: {properties: {by: {const: hierarchy}}, required: [by]}
                 then: {required: [depth, rollup]}
           ordering:
             type: object
@@ -266,20 +271,32 @@ allOf:
                               object: {type: string, minLength: 1}
                               scenario: {type: string, minLength: 1}
             allOf:
-              - if: {properties: {mode: {const: automatic}}}
+              - description: "Automatic rows derive rows and cannot declare explicit items."
+                examples: [{mode: automatic}]
+                if: {properties: {mode: {const: automatic}}}
                 then: {not: {required: [items]}}
-              - if: {properties: {mode: {const: explicit}}}
+              - description: "Explicit rows require items and cannot use automatic point policy."
+                examples: [{mode: explicit, items: []}]
+                if: {properties: {mode: {const: explicit}}}
                 then:
                   required: [items]
                   not: {required: [points]}
         allOf:
-          - if: {properties: {rows: {properties: {mode: {const: automatic}}, required: [mode]}}}
+          - description: "Automatic rows require selection, grouping, ordering, and a window."
+            examples: [{rows: {mode: automatic}, selection: {}, grouping: {}, ordering: {}, window: {}}]
+            if: {properties: {rows: {properties: {mode: {const: automatic}}, required: [mode]}}}
             then: {required: [selection, grouping, ordering, window]}
-          - if: {properties: {comparison: {properties: {baseline: {const: scenario}}, required: [baseline]}}}
+          - description: "Scenario comparison requires a scenario identifier."
+            examples: [{comparison: {baseline: scenario, scenario: baseline}}]
+            if: {properties: {comparison: {properties: {baseline: {const: scenario}}, required: [baseline]}}}
             then: {properties: {comparison: {required: [scenario]}}}
-          - if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
+          - description: "Explicit rows prohibit automatic selection, grouping, and ordering."
+            examples: [{rows: {mode: explicit}, window: {}}]
+            if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
             then: {not: {anyOf: [{required: [selection]}, {required: [grouping]}, {required: [ordering]}]}, required: [window]}
-          - if: {properties: {surface: {const: dependency-network}}, required: [surface]}
+          - description: "A dependency network omits table-timeline-only presentation fields."
+            examples: [{surface: dependency-network}]
+            if: {properties: {surface: {const: dependency-network}}, required: [surface]}
             then:
               not:
                 anyOf:

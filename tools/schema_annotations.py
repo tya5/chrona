@@ -15,41 +15,56 @@ class SchemaAnnotationError(ValueError):
     """A live schema lacks a required author-facing annotation."""
 
 
-def annotation_paths(value: Any, path: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], dict[str, Any]]]:
+def annotation_paths(value: Any, path: tuple[str, ...] = (), *, emit: bool = True) -> Iterator[tuple[tuple[str, ...], dict[str, Any]]]:
     """Yield authorable schema nodes, never schema-map container dictionaries."""
     if not isinstance(value, dict):
         return
     authored = any(key in value for key in ("type", "properties", "required", "enum", "const", "oneOf", "anyOf", "pattern", "format", "items", "allOf", "if", "then", "else", "not"))
-    if authored and not (set(value) <= {"$ref", "description"}):
+    if emit and authored and not (set(value) <= {"$ref", "description"}):
         yield path, value
 
     for key in ("properties", "patternProperties", "$defs", "definitions", "dependentSchemas"):
         children = value.get(key)
         if isinstance(children, dict):
             for name, child in children.items():
-                yield from annotation_paths(child, (*path, key, str(name)))
+                yield from annotation_paths(child, (*path, key, str(name)), emit=emit)
 
     for key in ("items", "additionalProperties", "contains"):
         child = value.get(key)
         if isinstance(child, dict):
-            yield from annotation_paths(child, (*path, key))
+            yield from annotation_paths(child, (*path, key), emit=emit)
         elif isinstance(child, list):
             for index, item in enumerate(child):
-                yield from annotation_paths(item, (*path, key, str(index)))
+                yield from annotation_paths(item, (*path, key, str(index)), emit=emit)
 
     for key in ("oneOf", "anyOf"):
         children = value.get(key)
         if isinstance(children, list):
             for index, child in enumerate(children):
-                yield from annotation_paths(child, (*path, key, str(index)))
+                yield from annotation_paths(child, (*path, key, str(index)), emit=emit)
 
-    # A conditional is documented by its immediate allOf branch. Its predicate
-    # and consequence are not independently authorable object shapes.
+    # `allOf` is an applicator, not an implementation container.  Descend into
+    # every branch so a structural wrapper cannot hide a nested conditional or
+    # a local assertion.  A pure `$ref` branch naturally remains exempt: it is
+    # not yielded above and has no children to traverse.
     all_of = value.get("allOf")
     if isinstance(all_of, list):
+        has_reference_branch = any(isinstance(child, dict) and "$ref" in child for child in all_of)
         for index, child in enumerate(all_of):
-            if isinstance(child, dict) and "if" in child:
-                yield from annotation_paths(child, (*path, "allOf", str(index)))
+            if not isinstance(child, dict):
+                continue
+            local = set(child) - {"$ref", "description", "examples"}
+            is_pure_reuse = "$ref" in child and not local
+            is_local_reference_constraint = "$ref" in child and bool(local)
+            is_conditional = bool({"if", "then", "else", "not"} & set(child))
+            child_emit = is_local_reference_constraint or is_conditional or (has_reference_branch and bool(local))
+            if is_pure_reuse:
+                continue
+            if child_emit:
+                yield (*path, "allOf", str(index)), child
+                yield from annotation_paths(child, (*path, "allOf", str(index)), emit=False)
+                continue
+            yield from annotation_paths(child, (*path, "allOf", str(index)), emit=child_emit)
 
 
 def pointer(path: tuple[str, ...]) -> str:

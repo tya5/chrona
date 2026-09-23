@@ -17,6 +17,8 @@ properties:
     properties:
       project:
         description: "Pinned Project resource used as the baseline."
+        examples: [{id: project, kind: project, store: {}, address: projects/main.yaml, revision: {}}]
         allOf:
           - $ref: "urn:chrona:revision-store-resource-ref-v0.1"
-          - properties: {kind: {const: project}}
+          - description: "Requires the referenced resource kind to be Project."
+            properties: {kind: {const: project}}

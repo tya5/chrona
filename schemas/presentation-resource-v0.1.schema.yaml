@@ -88,34 +88,40 @@ $defs:
     examples: [{id: view, kind: view, path: views/overview.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
-      - properties: {kind: {const: view}}
+      - description: "Requires the referenced resource kind to be View."
+        properties: {kind: {const: view}}
   styleRef:
     description: "Pinned reference constrained to a Style resource."
     examples: [{id: style, kind: style, path: styles/default.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
-      - properties: {kind: {const: style}}
+      - description: "Requires the referenced resource kind to be Style."
+        properties: {kind: {const: style}}
   themeRef:
     description: "Pinned reference constrained to a Theme resource."
     examples: [{id: theme, kind: theme, path: themes/default.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
-      - properties: {kind: {const: theme}}
+      - description: "Requires the referenced resource kind to be Theme."
+        properties: {kind: {const: theme}}
   sceneProfileRef:
     description: "Pinned reference constrained to a Scene Profile resource."
     examples: [{id: scene, kind: scene-profile, path: scenes/default.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
-      - properties: {kind: {const: scene-profile}}
+      - description: "Requires the referenced resource kind to be Scene Profile."
+        properties: {kind: {const: scene-profile}}
   snapshotRef:
     description: "Pinned reference constrained to a Snapshot reference resource."
     examples: [{id: baseline, kind: snapshot-ref, path: snapshots/baseline.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
-      - properties: {kind: {const: snapshot-ref}}
+      - description: "Requires the referenced resource kind to be Snapshot reference."
+        properties: {kind: {const: snapshot-ref}}
   actualSetRef:
     description: "Pinned reference constrained to an Actual Set resource."
     examples: [{id: actuals, kind: actual-set, path: actuals/current.yaml, revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}]
     allOf:
       - $ref: "#/$defs/resourceRef"
-      - properties: {kind: {const: actual-set}}
+      - description: "Requires the referenced resource kind to be Actual Set."
+        properties: {kind: {const: actual-set}}
