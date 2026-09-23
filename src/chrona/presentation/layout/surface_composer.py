@@ -51,9 +51,14 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest)
     Theme lookup, or catalog lookup dependency.
     """
     icons: list[IconPlacement] = []
+    occupied: set[tuple[str, str]] = set()
     for visual in request.visual_requests:
         selector = dict(visual.selector)
         placement_id = selector.get("placementId") or visual_target_placement_id(visual.target_kind, selector)
+        key = (placement_id, visual.side)
+        if key in occupied:
+            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
+        occupied.add(key)
         matches = [index for index, item in enumerate(text) if item.placement_id == placement_id and item.overflow != "suppressed"]
         if len(matches) != 1 or visual.ref is None:
             raise LayoutError("E_LAYOUT_VISUAL_TARGET", visual.source_ref)
