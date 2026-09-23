@@ -126,15 +126,25 @@ def semantic_binding(semantic_id: str) -> SemanticBinding:
         raise ValueError(f"E_PRESENTATION_SEMANTIC_UNKNOWN:{semantic_id}") from error
 
 
+def label_host_semantic(source_kind: str) -> str:
+    """Return the closed visual host semantic for a projection source."""
+    return {
+        "primary": "planned",
+        "combined": "planned",
+        "actual": "actual",
+        "snapshot": "snapshot",
+        "scenario": "scenario",
+    }[source_kind]
+
+
 def inside_member_label_semantic(source_kind: str) -> str:
     """Return the host-specific inside-label semantic for a projection source."""
     return {
-        "primary": "memberLabelInsidePlanned",
-        "combined": "memberLabelInsidePlanned",
+        "planned": "memberLabelInsidePlanned",
         "actual": "memberLabelInsideActual",
         "snapshot": "memberLabelInsideSnapshot",
         "scenario": "memberLabelInsideScenario",
-    }[source_kind]
+    }[label_host_semantic(source_kind)]
 
 
 def semantic_ids() -> tuple[str, ...]:

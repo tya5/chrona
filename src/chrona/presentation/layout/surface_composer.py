@@ -364,7 +364,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     parts.append(f"{item.finish_delta:+d}d")
                 if not parts:
                     continue
-                mark = mark_by_id.get(f"planned:{instance_id}")
+                host_kind = "actual" if item.source_kind == "actual" else "planned"
+                host_mark_id = f"{host_kind}:{instance_id}"
+                mark = mark_by_id.get(host_mark_id)
+                if item.source_kind == "actual" and mark is None:
+                    raise LayoutError("E_LAYOUT_LABEL_HOST_UNAVAILABLE", f"/placement/member-label:{instance_id}")
                 track = track_by_id[layout_id]
                 anchor = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
                     _coordinate(end_at if isinstance(end_at, date) else start_at, scale), track.block,
@@ -379,10 +383,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
-                                                   wrap, inside_host_obstacle_id=f"planned:{instance_id}"))
+                                                   wrap, inside_host_obstacle_id=host_mark_id if mark is not None else None))
         for folded in getattr(projection, "folded_points", ()):
-            mark = mark_by_id.get(f"planned:{_folded_instance_id(folded, folded.item)}")
+            instance_id = _folded_instance_id(folded, folded.item)
+            host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
+            mark = mark_by_id.get(f"{host_kind}:{instance_id}")
             group = group_by_id.get(folded.group_id)
+            if folded.item.source_kind == "actual" and mark is None:
+                raise LayoutError("E_LAYOUT_LABEL_HOST_UNAVAILABLE", f"/placement/member-label:group-header:{folded.group_id}:{folded.item.object_id}")
             if mark is None or group is None or group.header_bounds is None:
                 continue
             default_ladder = ("end", "start") if contract.labels.side == "auto" else (contract.labels.side,)

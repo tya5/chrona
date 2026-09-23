@@ -147,11 +147,11 @@ def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
         font = metrics.get(int(node.get("font-weight", 400))) or next(iter(metrics.values()))
         content, x, baseline = node.text or "", float(node.get("x")), float(node.get("y"))
         box = (x, baseline - size, x + font.width(content, size), baseline)
-        host_id = "planned:" + scene_id.removeprefix("member-label:")
+        host_ids = {prefix + scene_id.removeprefix("member-label:") for prefix in ("planned:", "actual:")}
         for mark_id, mark_fill, mark_bounds in marks:
             if not _overlaps(box, mark_bounds):
                 continue
-            allowed = (purpose == "member-label" and mark_id == host_id and isinstance(mark_fill, str)
+            allowed = (purpose == "member-label" and mark_id in host_ids and isinstance(mark_fill, str)
                        and isinstance(node.get("fill"), str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", mark_fill)
                        and re.fullmatch(r"#[0-9A-Fa-f]{6}", node.get("fill") or "")
                        and _contrast(node.get("fill") or "", mark_fill) >= 4.5)
