@@ -8,6 +8,7 @@ from chrona.presentation.layout.axis import AxisInterval
 from chrona.presentation.layout.lanes import LaneAssignment, LaneTrack
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.icons import NormalizedVectorIcon
 
 
 @dataclass(frozen=True)
@@ -85,6 +86,12 @@ class ScenePrimitive:
     points: tuple[tuple[float, float], ...] = ()
     href: str | None = None
     link_title: str | None = None
+    icon_kind: str | None = None
+    icon_asset_identity: str | None = None
+    icon_vector: NormalizedVectorIcon | None = None
+    icon_raster: bytes | None = None
+    icon_alternative: str | None = None
+    icon_decorative: bool = True
 
 @dataclass(frozen=True)
 class SceneSlot:

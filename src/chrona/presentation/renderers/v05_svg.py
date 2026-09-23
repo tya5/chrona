@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from html import escape
 from hashlib import sha256
+from base64 import b64encode
 
 from chrona.core.ports import RenderArtifact
 from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface
@@ -81,6 +82,19 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
         if node.href is None: parts.append(content); return
         title = f' xlink:title="{escape(node.link_title, quote=True)}"' if node.link_title is not None else ""
         parts.append(f'<a href="{escape(node.href, quote=True)}" target="_top"{title}>{content}</a>')
+    def icon_path(node: ScenePrimitive) -> str:
+        if node.icon_vector is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        vx, vy = node.icon_vector.viewport
+        x, y, w, h = node.bounds
+        def point(point: tuple[float, float]) -> str:
+            return f"{number(x + point[0] * w / vx)} {number(y + point[1] * h / vy)}"
+        values: list[str] = []
+        for path in node.icon_vector.paths:
+            for command in path:
+                glyph = {"move": "M", "line": "L", "quadratic": "Q", "cubic": "C", "close": "Z"}.get(command.kind)
+                if glyph is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                values.append(glyph if glyph == "Z" else glyph + " ".join(point(item) for item in command.points))
+        return "".join(values)
     for node in surface.primitives:
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
@@ -107,6 +121,17 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             if len(node.points) < 2 or paint.stroke is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             marker = f' marker-end="url(#marker-{escape(paint.stroke, quote=True)}-{escape(node.shape, quote=True)})"' if node.shape else ""
             append(node, f'<path {common} d="{path_data(node)}" fill="none" {attrs(paint, fill=False, stroke=True)}{marker}/>')
+        elif node.kind == "Icon":
+            if node.icon_kind not in {"vector", "raster"} or node.icon_asset_identity is None:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            accessible = " aria-hidden=\"true\"" if node.icon_decorative else f' role="img" aria-label="{escape(node.icon_alternative or "", quote=True)}"'
+            if not node.icon_decorative and not node.icon_alternative: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if node.icon_kind == "vector":
+                append(node, f'<path {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}" d="{icon_path(node)}" {attrs(paint, fill=True, stroke=False)}/>')
+            else:
+                if node.icon_raster is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                encoded = b64encode(node.icon_raster).decode("ascii")
+                append(node, f'<image {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}" x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" href="data:image/png;base64,{encoded}"/>')
         else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
     return "\n".join((*parts, "</svg>")) + "\n"
 

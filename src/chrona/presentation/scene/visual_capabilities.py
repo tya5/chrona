@@ -9,11 +9,15 @@ from chrona.presentation.scene.model import SceneSurface
 BASELINE_PROFILE = "chrona-output/visual/v0.5-baseline"
 SVG_PROFILE = "chrona-output/visual/v0.6-svg"
 PNG_PROFILE = "chrona-output/visual/v0.6-png"
+SVG_ICON_PROFILE = "chrona-output/visual/v0.7-svg"
+PNG_ICON_PROFILE = "chrona-output/visual/v0.7-png"
 LINEAR_GRADIENT = "paint.linear-gradient"
 DROP_SHADOW = "effect.drop-shadow"
 LINE_CAP = "stroke.line-cap"
 LINE_JOIN = "stroke.line-join"
 RICH_CAPABILITIES = frozenset((LINEAR_GRADIENT, DROP_SHADOW, LINE_CAP, LINE_JOIN))
+ICON_VECTOR = "icon.vector"
+ICON_RASTER = "icon.raster"
 
 
 class VisualCapabilityError(ValueError):
@@ -41,6 +45,10 @@ def resolve_visual_profile(identifier: str, target_kind: str) -> VisualProfile:
         return VisualProfile(identifier, RICH_CAPABILITIES, False)
     if identifier == PNG_PROFILE and target_kind == "png":
         return VisualProfile(identifier, RICH_CAPABILITIES, False)
+    if identifier == SVG_ICON_PROFILE and target_kind == "svg":
+        return VisualProfile(identifier, RICH_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
+    if identifier == PNG_ICON_PROFILE and target_kind == "png":
+        return VisualProfile(identifier, RICH_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
     raise VisualCapabilityError("E_VISUAL_CAPABILITY_PROFILE", "/body/target/visualProfile",
                                 f"{identifier} is not available for {target_kind}")
 
@@ -56,6 +64,9 @@ def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfil
         if paint.stroke_finish is not None:
             _require(profile, LINE_CAP, paint.stroke_finish.fidelity)
             _require(profile, LINE_JOIN, paint.stroke_finish.fidelity)
+    for node in surface.primitives:
+        if node.kind == "Icon":
+            _require(profile, ICON_VECTOR if node.icon_kind == "vector" else ICON_RASTER, "required")
 
 
 def _require(profile: VisualProfile, capability: str, fidelity: str | None) -> None:

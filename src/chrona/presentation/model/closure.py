@@ -12,6 +12,7 @@ import yaml
 
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
+from chrona.presentation.icons import IconNormalizationError, NormalizedVectorIcon, normalize_icon
 from chrona.presentation.contracts import (
     ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, LayoutProfileContract,
     PresentationPresetContract,
@@ -50,7 +51,7 @@ class IconAsset:
     content_identity: str
     viewport: tuple[int, int]
     alternative: str
-    payload: bytes
+    payload: NormalizedVectorIcon | bytes
 
 @dataclass(frozen=True)
 class RenderClosure:
@@ -445,7 +446,11 @@ def _load_icon_assets(context: RenderContextContract, catalog_resource: ClosureR
         except SnapshotReadError as error:
             diagnostic = "E_ICON_ASSET_IDENTITY" if error.diagnostic_id == "E_CONTENT_IDENTITY" else "E_ICON_ASSET_MISSING"
             raise ClosureError(diagnostic, f"/body/icons/{entry.id}/source") from error
-        assets.append(IconAsset(entry.id, entry.kind, entry.source.content_identity, entry.viewport, entry.alternative, payload))
+        try:
+            normalized = normalize_icon(entry.kind, payload, entry.viewport)
+        except IconNormalizationError as error:
+            raise ClosureError(error.diagnostic_id, f"/body/icons/{entry.id}/source") from error
+        assets.append(IconAsset(entry.id, entry.kind, entry.source.content_identity, entry.viewport, entry.alternative, normalized))
     return tuple(assets)
 
 
