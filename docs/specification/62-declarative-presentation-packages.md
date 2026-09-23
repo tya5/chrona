@@ -82,6 +82,28 @@ They add a second resolver and lifecycle surface without a demonstrated
 reusable-design use case.  A later profile may admit them only under
 Specification 21's exact, acyclic, deterministic dependency rules.
 
+### 2.1 Discovery classification and candidate result
+
+A package may declare a finite Design Space classification for discovery, such
+as intended audience, supported surface, declared composition family, and
+appearance/target suitability.  This classification is metadata: it must reuse
+the vocabulary of Specification 55, cannot name coordinates or renderer syntax,
+and cannot change the package's effective resources.
+
+A future local, private, or public registry receives a discovery query and
+returns **candidates**, never an active package.  A candidate contains at least
+the package ID, exact available version, manifest content identity/reference,
+publisher/license/trust status, compatible Chrona/target profile, declared
+classification, and the stable IDs of offered presets.  A result may be sorted
+or filtered for presentation, but it cannot return a mutable default, `latest`,
+or a resource closure selected by name alone.
+
+Selection of a candidate always proceeds through the explicit acquisition step
+in section 4.  The registry response is not recorded as render input; the
+verified acquired manifest and lock are.  A private catalogue and a local
+directory use the same candidate/result and acquisition semantics, differing
+only in their configured trusted source.
+
 ## 3. Canonical source-tree topology
 
 The canonical package source is distinct from project-owned corpus and from
@@ -143,6 +165,23 @@ corrupt, untrusted, incompatible, duplicate-identity, or unsupported packages
 diagnose before normalization.  They leave the preceding workspace/closure
 unchanged.  An update is an explicit proposal producing a different reviewed
 lock; deprecation is information, never an implicit migration.
+
+## 4.1 Publication quality gate
+
+Before a package is offered as a discoverable candidate, its publisher validates
+the manifest, every declared member identity, license/provenance, supported
+Chrona and target profiles, and the absence of forbidden executable/raw
+members.  It must be exercised against representative semantic fixtures
+appropriate to its declared design direction: a small schedule, dense rows,
+long labels/date range, groups, Plan/Actual comparison, and any declared
+accessibility/target boundary.  The package may publish derived preview
+artifacts for inspection, but a preview cannot establish correctness.
+
+The normative evidence is deterministic resource/closure validation and public
+materialization through the ordinary render path.  A package that is only
+visually attractive on one hand-authored SVG is not publishable.  A later
+registry service may verify and expose these results, but it must not replace
+the package's exact identity or re-render a package with unstated host policy.
 
 ## 5. Guided use and evaluation closure
 

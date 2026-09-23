@@ -18,6 +18,13 @@ remote registry, or executable member type.  This is a structural boundary,
 not a temporary fallback: a later dependency or plugin capability needs an
 independent accepted design under Specification 21.
 
+The P3 correction also defines discovery without making registry output an
+evaluation input.  A catalog result supplies an exact candidate manifest
+identity, classification, compatibility, and offered preset IDs; only explicit
+acquisition can turn it into a verified lock.  Publication similarly validates
+member identities, provenance, capability, and representative ordinary renders
+without treating a preview as evidence authority.
+
 ## Whole-architecture review
 
 | Concern | Decision |
@@ -29,6 +36,7 @@ independent accepted design under Specification 21.
 | Materialization | Stage 3 copies ordinary resources and records `derivedFrom`; it removes, rather than masks, the package inheritance edge. |
 | Offline/security | Acquisition verifies declarative bytes before use. Offline absence fails explicitly; raw SVG, code, network fetch, and host defaults are excluded. |
 | Capability scope | A package may use only already-supported host visual capabilities. #345 precedes any richer treatment. |
+| Discovery/publication | Design Space classification filters candidate releases only; verified manifest/lock identity, not a catalog response or preview, enters guided evaluation. |
 
 ## Consistency with existing specifications
 
