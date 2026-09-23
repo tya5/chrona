@@ -1,6 +1,6 @@
 # Portable Visual Capabilities
 
-**Status:** Delivered (initial v0.6 profile)
+**Status:** Correcting v0.6 target-fidelity contract (#349)
 **Owns:** renderer-neutral visual capability profiles, completed Scene visual
 effects, fidelity, limits, and target admission. It does not own geometry,
 semantic selection, Layout, concrete color literals, package acquisition, or
@@ -14,9 +14,9 @@ Visual capabilities compose over completed Scene geometry:
 Theme + Color Scheme -> completed visual treatment -> Scene primitive -> target profile -> adapter
 ```
 
-The initial `chrona-output/visual/v0.6` vocabulary is closed:
+The initial v0.6 vocabulary is closed:
 
-- `paint.linear-gradient` (two to eight ordered stops);
+- `paint.linear-gradient` (exactly two ordered stops);
 - `effect.drop-shadow` (one layer, finite offsets, blur `0..64`, opacity `0..1`);
 - `stroke.line-cap` / `stroke.line-join` (closed values `butt|round|square` and
   `miter|round|bevel`).
@@ -36,26 +36,47 @@ and finite enum tokens for stroke cap/join. Scene resolves these into immutable
 supply every bound and must not select treatment. An adapter receives only
 completed values and cannot read Theme/Scheme or choose a fallback.
 
-`LinearGradient` has normalized positions, resolved colors, and an angle;
-`DropShadow` has resolved color, offset, blur, opacity, and one declared
-fidelity; `StrokeFinish` has cap/join. Every number is finite. A primitive may
+An author declares one angle in degrees clockwise from the positive Layout
+inline axis. Scene converts that angle and the completed primitive (or canvas)
+bounds into finite start/end points in the Layout coordinate plane. The line
+through the bounds centre reaches the furthest projected bound corner in each
+direction, so its visible direction is invariant to aspect ratio. `LinearGradient`
+therefore carries those completed endpoints and two normalized stops, not an
+adapter-interpreted angle. `DropShadow` has resolved color, offset, blur,
+opacity, and one declared fidelity; `StrokeFinish` has cap/join. Every number
+is finite. A primitive may
 have at most one gradient and one shadow. Effects never alter source identity,
 semantic purpose, accessible alternative, or Layout geometry.
 
 ## 3. Profile and fidelity
 
-A Render Context names one exact visual profile. A profile declares supported
-IDs and limits; it is an immutable evaluation input. SVG v0.6, and PNG/PDF
-through the pinned SVG route, support the initial profile. Current Typst/TikZ
-profiles support none of it.
+A Render Context names one exact target profile. A profile declares supported
+IDs and limits; it is an immutable evaluation input. The valid identifiers are:
 
-Each requested treatment is either `required` or `decorative-optional`.
+| Profile | Target | Supported capability IDs |
+| --- | --- | --- |
+| `chrona-output/visual/v0.5-baseline` | SVG, PNG, PDF, Typst, TikZ | none |
+| `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs |
+| `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs |
+
+PDF, Typst, and TikZ have no v0.6 profile. PDF's current svglib/ReportLab route
+does not preserve the required drop-shadow; it must reject a rich profile before
+serialization rather than silently dropping treatment. A future PDF profile
+requires independent per-capability evidence and a new profile identifier.
+
+Each requested gradient, shadow, and stroke finish independently declares either
+`required` or `decorative-optional`; it is not one role-wide value. A baseline
+profile permits deterministic omission only for an unsupported
+`decorative-optional` treatment.
 Required unsupported capability fails before serialization with
 `E_VISUAL_CAPABILITY_UNSUPPORTED`. Optional omission is performed by the Scene
 resolver only when the target profile declares omission allowed; the adapter
 never decides. Invalid profile/value/fidelity/limit uses diagnose as
 `E_VISUAL_CAPABILITY_PROFILE`, `E_VISUAL_CAPABILITY_VALUE`,
-`E_VISUAL_CAPABILITY_FIDELITY`, or `E_VISUAL_CAPABILITY_LIMIT`.
+`E_VISUAL_CAPABILITY_FIDELITY`, or `E_VISUAL_CAPABILITY_LIMIT`, with the exact
+role property pointer. `VALUE` identifies incomplete or malformed treatment
+binding; `FIDELITY` identifies an invalid treatment fidelity; `LIMIT` identifies
+a finite out-of-range angle, blur, opacity, or declared stop count.
 
 ## 4. Accessibility, security, and determinism
 

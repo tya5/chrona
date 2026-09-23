@@ -1,6 +1,6 @@
 # Design Plan: Visual Profile Fidelity Correction (#349)
 
-**Status:** Active — design planning
+**Status:** Complete — correction design published
 **Issue:** #349
 **Corrects:** Specification 63 / I345 initial v0.6 delivery
 **Blocks:** #350 portable icon catalogs
