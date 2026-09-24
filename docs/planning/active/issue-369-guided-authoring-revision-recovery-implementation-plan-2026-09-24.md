@@ -15,7 +15,8 @@ is unambiguous, and generic Store command behavior is unchanged.
 
 ## I369-2 — Store scaffold and materializer recovery
 
-- Make `init` emit the copied Context Store identity exactly.
+- Make `init` emit the copied Context Store identity exactly and initialize the
+  referenced immutable snapshot closure.
 - Add an initialized-project Store-reference resolution test.
 - Introduce a typed materializer mismatch failure and map it at the CLI boundary
   to guidance that preserves the explicit `--write` gate.

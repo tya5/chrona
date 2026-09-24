@@ -10,8 +10,8 @@ not create a new persistence abstraction.
 
 The result correction removes an ambiguous field rather than retaining a
 misleading compatibility alias. The diagnostic includes both values at the
-authoring boundary. `init` aligns the generated Store selector with the copied
-Contexts, and materializer guidance preserves the explicit `--write` evidence
+authoring boundary. `init` aligns the generated Store selector and emits the
+immutable snapshot closure referenced by copied Contexts; materializer guidance preserves the explicit `--write` evidence
 publication gate. No presentation, Layout, Scene, renderer, or scheduling
 responsibility changes.
 

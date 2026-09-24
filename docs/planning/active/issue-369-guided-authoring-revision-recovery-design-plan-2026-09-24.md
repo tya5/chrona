@@ -20,8 +20,9 @@ caller-facing recovery guidance.
 3. Define the mismatch diagnostic, its expected/received identities, and the
    exact distinction between a workspace content identity and a Revision Store
    token. Amend the relevant specifications and user guide.
-4. Define one initialization invariant: every Store identity emitted by `init`
-   resolves every copied Context that names its local Store. Define the
+4. Define one initialization invariant: `init` emits the immutable snapshot
+   closure referenced by every copied Context and a Store identity that resolves
+   it. Define the
    materializer mismatch remediation without weakening byte verification.
 5. Review the design against the command, operational-store, progressive
    authoring, materialization, and application-boundary architecture. Publish
