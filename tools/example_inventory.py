@@ -55,9 +55,9 @@ def validate_catalog(path: Path, corpus_entries: dict[tuple[str, str], dict[str,
 
 def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[str, str], dict[str, Any]]) -> int:
     value = _load(path)
-    if not isinstance(value, dict) or value.get("version") != "chrona/design-gallery/v0.1" or not isinstance(value.get("entries"), list):
+    if not isinstance(value, dict) or value.get("version") != "chrona/design-gallery/v0.2" or not isinstance(value.get("entries"), list):
         raise ExampleInventoryError(f"E_DESIGN_GALLERY_FORMAT:{path}")
-    seen: set[str] = set(); pairs: dict[str, list[dict[str, Any]]] = {}
+    seen: set[str] = set(); pairs: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
     for entry in value["entries"]:
         if not isinstance(entry, dict) or not all(isinstance(entry.get(key), str) and entry[key] for key in ("id", "corpus", "slide")):
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_ENTRY:{path}")
@@ -67,17 +67,29 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
         narrative, comparison, target, accessibility = (entry.get(name) for name in ("narrative", "comparison", "target", "accessibility"))
         if not isinstance(narrative, dict) or not all(isinstance(narrative.get(k), str) and narrative[k] for k in ("title", "audience", "purpose")):
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_NARRATIVE:{entry['id']}")
-        if not isinstance(comparison, dict) or not all(isinstance(comparison.get(k), str) and comparison[k] for k in ("set", "axis")):
+        if not isinstance(comparison, dict) or not isinstance(comparison.get("set"), str) or not comparison["set"]:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_PAIR:{entry['id']}")
+        if not isinstance(comparison.get("axis"), str) or not comparison["axis"]:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_AXIS:{entry['id']}")
+        if comparison.get("dimension") not in {"content", "composition", "visual-grammar", "appearance"}:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_DIMENSION:{entry['id']}")
         if not isinstance(accessibility, dict) or not isinstance(accessibility.get("note"), str) or not accessibility["note"]:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_ACCESSIBILITY:{entry['id']}")
         context = _context(root, corpus_entries[key])
+        evidence = root / Path(corpus_entries[key]["manifest"]).parent / corpus_entries[key]["expectedSvg"]
+        if not evidence.is_file():
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_EVIDENCE:{entry['id']}")
         actual_target = context["body"]["target"]
         if not isinstance(target, dict) or target.get("kind") != actual_target.get("kind") or not set(target.get("capabilities", [])).issubset(set(actual_target.get("capabilities", []))):
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_TARGET:{entry['id']}")
-        pairs.setdefault(comparison["set"], []).append(context)
-    for pair, contexts in pairs.items():
+        pairs.setdefault(comparison["set"], []).append((context, comparison))
+    for pair, entries in pairs.items():
+        contexts = [item[0] for item in entries]
         if len(contexts) < 2: raise ExampleInventoryError(f"E_DESIGN_GALLERY_UNPAIRED:{pair}")
+        if len({item[1]["dimension"] for item in entries}) != 1:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_DIMENSION:{pair}")
+        if len({item[1]["axis"] for item in entries}) != 1:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_AXIS:{pair}")
         bodies = [item["body"] for item in contexts]
         if len({_identity(body["project"]) for body in bodies}) != 1 or len({_identity(body.get("inputs", {}).get("actual")) for body in bodies}) != 1:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_SEMANTIC_MISMATCH:{pair}")

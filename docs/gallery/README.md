@@ -1,15 +1,15 @@
-# Public Example Gallery
+# Public Design Gallery
 
-This gallery indexes paired rendered evidence from the declared regression
-corpus. It does not own a renderer, a source closure, or hand-authored SVG.
+Generated from declared corpus evidence; it is not a renderer or an authoring input.
 
-- Controller Z / executive and plan-only: the same Project and Actual evidence,
-  compared through distinct ordinary Views for executive review versus planned
-  commitment control.
-- Controller Z / elevated: the Executive View and the same evidence, with a
-  profile-bound, renderer-neutral gradient/shadow treatment whose accessibility
-  information remains in ordinary labels and structure.
+## Comparison sets
 
-Each entry is validated by `example-gallery.yaml` against corpus manifests and
-Context pair identity. Reproduce either artifact through
-`tools/materialize_example.py` using the linked manifest and slide identity.
+| Question | Dimension | Peers |
+| --- | --- | --- |
+| [comparison focus](sets/controller-z-executive-status.md) | `content` | 2 |
+| [visual treatment](sets/controller-z-treatment-ladder.md) | `visual-grammar` | 2 |
+| [surface](sets/halcyon-two-surfaces.md) | `content` | 2 |
+
+## Coverage backlog
+
+See [corpus coverage](../examples/corpus-coverage.md). Missing vocabulary is curation backlog, not a render gate.

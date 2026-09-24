@@ -1,23 +1,44 @@
-version: chrona/design-gallery/v0.1
+version: chrona/design-gallery/v0.2
 entries:
-  - id: controller-z-executive
+  - id: controller-z-executive-status
     corpus: controller-z
     slide: executive
-    narrative: {title: Executive review, audience: programme leadership, purpose: Compare plan, actual, and label exceptions.}
-    comparison: {set: controller-z-review-direction, axis: comparison focus}
-    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    narrative: {title: Executive status, audience: programme leadership, purpose: Compare plan, actual, and label exceptions.}
+    comparison: {set: controller-z-executive-status, dimension: content, axis: comparison focus}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles]}
     accessibility: {note: Semantic labels and table structure remain present alongside colour.}
-  - id: controller-z-plan-only
+  - id: controller-z-plan-only-status
     corpus: controller-z
     slide: plan-only
     narrative: {title: Plan-only control, audience: delivery leads, purpose: Focus the same schedule on planned commitments.}
-    comparison: {set: controller-z-review-direction, axis: comparison focus}
+    comparison: {set: controller-z-executive-status, dimension: content, axis: comparison focus}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
     accessibility: {note: Semantic labels and table structure remain present alongside colour.}
-  - id: controller-z-elevated
+  - id: controller-z-treatment-baseline
+    corpus: controller-z
+    slide: executive
+    narrative: {title: Baseline treatment, audience: programme leadership, purpose: Establish the ordinary status-review treatment.}
+    comparison: {set: controller-z-treatment-ladder, dimension: visual-grammar, axis: visual treatment}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present alongside colour.}
+  - id: controller-z-elevated-treatment
     corpus: controller-z
     slide: elevated
-    narrative: {title: Elevated status review, audience: programme leadership, purpose: Reuse the executive evidence with bounded portable visual treatment.}
-    comparison: {set: controller-z-review-direction, axis: visual treatment}
+    narrative: {title: Elevated status review, audience: programme leadership, purpose: Compare bounded portable visual treatment on the same review.}
+    comparison: {set: controller-z-treatment-ladder, dimension: visual-grammar, axis: visual treatment}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
     accessibility: {note: Gradient and shadow are decorative; semantic labels, source metadata, and table structure remain present.}
+  - id: halcyon-programme-board-surface
+    corpus: halcyon-1
+    slide: programme-board
+    narrative: {title: Programme board, audience: programme office, purpose: Read the programme as a table timeline.}
+    comparison: {set: halcyon-two-surfaces, dimension: content, axis: surface}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    accessibility: {note: Structured labels and semantic roles remain available in the table timeline.}
+  - id: halcyon-dependency-network-surface
+    corpus: halcyon-1
+    slide: dependency-network
+    narrative: {title: Dependency network, audience: programme office, purpose: Read the same programme through its dependency structure.}
+    comparison: {set: halcyon-two-surfaces, dimension: content, axis: surface}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles]}
+    accessibility: {note: Semantic labels and relation roles remain present alongside the network marks.}
