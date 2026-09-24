@@ -7,7 +7,6 @@ from typing import Any
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
 from chrona.core.identity import content_identity
-from chrona.operational.resources import OperationalResourceError
 
 
 def parse_authoring_command(path: Path) -> dict[str, Any]:
@@ -61,10 +60,10 @@ def apply_authoring_command(
             return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
     except FileExistsError as error:
         return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_MATERIALIZE_COLLISION", base)
-    except OperationalResourceError as error:
-        return _rejected(command, error.code, base, detail=error.detail)
     except (KeyError, ContractError, ValueError) as error:
-        return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_COMMAND", base)
+        code = getattr(error, "code", str(error))
+        detail = getattr(error, "detail", "")
+        return _rejected(command, code if code.startswith("E_") else "E_AUTHORING_COMMAND", base, detail=detail)
     return _accepted(command, base, result)
 
 

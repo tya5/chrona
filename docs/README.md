@@ -24,6 +24,9 @@ normative specification.
 For the current immutable review entry and its reusable resource split, see the
 [render-review YAML layout guide](guides/render-review-yaml-layout.md).
 
+For the intentional portable-layout break in pre-2026-09-24 local immutable
+stores, see the [local-store compatibility guide](guides/local-store-compatibility.md).
+
 Repository topology and packaging are owned by
 [Specification 32](specification/32-repository-layout-and-packaging.md). Its migration
 is governed by the
