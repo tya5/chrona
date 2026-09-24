@@ -3,7 +3,8 @@
 ## W359-1 — Source-byte and entry-point foundation
 
 Add `.gitattributes`, contributor guidance, `python -m chrona`, explicit UTF-8
-text I/O, and an AST gate. Add unit tests for the gate and module entry point.
+text I/O (including corpus-reading tests), and an AST gate. Add unit tests for
+the gate and module entry point.
 
 **Acceptance:** a CRLF-configured clone preserves every identity-pinned source
 byte, and no production/tool/conformance text call has an implicit encoding.

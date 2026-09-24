@@ -26,11 +26,12 @@ as a filesystem requirement while retaining no-overwrite behavior.
 
 ### Text and checkout bytes
 
-All runtime, tool, and conformance text I/O declares UTF-8. A structural AST
-gate rejects future implicit `read_text`/`write_text` calls in those roots.
-Repository text is LF-normalized through `.gitattributes`; binary assets are
-marked binary. Content identities continue to identify exact checked-out bytes,
-not a normalization performed by Chrona.
+All runtime, test, tool, and conformance text I/O declares UTF-8. A structural
+AST gate rejects future implicit `read_text`/`write_text` calls in the
+production/tool/conformance roots; tests use the same rule when inspecting
+corpus bytes. Repository text is LF-normalized through `.gitattributes`; binary
+assets are marked binary. Content identities continue to identify exact
+checked-out bytes, not a normalization performed by Chrona.
 
 ### Boundaries
 

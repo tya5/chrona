@@ -14,8 +14,8 @@ semantic opacity of revision tokens.
 2. Preserve exclusive result and baseline publication without POSIX hard links.
 3. Define cross-platform advisory aggregate locking without an unconditional
    platform import.
-4. Make all production/tool/conformance text I/O explicitly UTF-8 and enforce
-   that rule structurally.
+4. Make all production, test, tool, and conformance text I/O explicitly UTF-8
+   and enforce the production/tool/conformance rule structurally.
 5. Prevent Git line-ending conversion from changing identity-pinned repository
    resources, and continuously prove the result on Windows.
 
