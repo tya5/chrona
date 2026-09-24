@@ -30,8 +30,8 @@ Add `controller-z/views/annotations.yaml`, a dedicated
 `layouts/annotations-review.yaml`, a matching declared Context, and a manifest
 slide.  It retains the existing Project, Actual set, Theme, and Scheme.  The
 existing executive Layout is a no-annotation control; the evidence Layout
-reserves a required measured annotation rail beside the table/timeline review
-row.
+reserves a required measured, full-width annotation rail below the feasible
+table/timeline review row.
 
 The View enables presentation annotations and declares two annotations:
 
