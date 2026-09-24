@@ -1,12 +1,14 @@
 """Deterministic declared font closure for Layout and output adapters."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from hashlib import sha256
+from importlib.resources import files
 import json
 from pathlib import Path
 
 from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
+from chrona.resources import safe_load
 
 
 class FontMetricsError(ValueError):
@@ -19,16 +21,30 @@ class FontMetricsError(ValueError):
 
 
 @dataclass(frozen=True)
+class FontGlyphSubstitution:
+    """One observable draft-only measurement substitution."""
+
+    requested_family: str
+    fallback_family: str
+    weight: int
+    codepoint: int
+    text: str
+
+
+@dataclass(frozen=True)
 class FontMetrics:
     metrics_path: Path
     metrics_content_identity: str
     source_content_identity: str
     family: str
+    weight: int
     units_per_em: int
     ascent: int
     descent: int
     cap_height: int
     advances: dict[int, int]
+    substitute_metrics: "FontMetrics | None" = None
+    substitutions: set[FontGlyphSubstitution] = field(default_factory=set, compare=False, repr=False)
 
     @property
     def content_identity(self) -> str:
@@ -43,6 +59,15 @@ class FontMetrics:
             if advance is None:
                 if codepoint <= 0x1F or codepoint == 0x7F:
                     continue
+                if self.substitute_metrics is not None:
+                    fallback_advance = self.substitute_metrics.advances.get(codepoint)
+                    if fallback_advance is not None:
+                        self.substitutions.add(FontGlyphSubstitution(
+                            self.family, self.substitute_metrics.family, self.weight,
+                            codepoint, value,
+                        ))
+                        total += fallback_advance * self.units_per_em / self.substitute_metrics.units_per_em
+                        continue
                 raise FontMetricsError(
                     "E_FONT_GLYPH_UNAVAILABLE",
                     f"{self.family} has no metric for U+{codepoint:04X} in {value!r}",
@@ -56,6 +81,12 @@ class FontMetrics:
 
     def cap_height_at(self, size: float) -> float:
         return size * self.cap_height / self.units_per_em
+
+    @property
+    def warnings(self) -> tuple[FontGlyphSubstitution, ...]:
+        return tuple(sorted(self.substitutions, key=lambda item: (
+            item.requested_family.casefold(), item.weight, item.codepoint, item.text,
+        )))
 
 
 @dataclass(frozen=True)
@@ -77,7 +108,7 @@ def _identity(path: Path) -> str:
 
 
 def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400,
-                         asset_root: Path | None = None) -> FontMetrics:
+                         asset_root: Path | None = None, _allow_substitute: bool = True) -> FontMetrics:
     """Resolve one exact metrics/font pair from a declared Context closure."""
     if descriptor.get("algorithm") != "declared-metrics-v2":
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
@@ -114,9 +145,20 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
                 continue
         except (KeyError, TypeError, ValueError, json.JSONDecodeError, FontResourceError):
             continue
-        return FontMetrics(metrics_path, metrics_identity, str(table["sourceContentIdentity"]), family,
-                           units, ascent, descent, cap_height, advances)
+        fallback = None
+        if descriptor.get("missingFont") == "substitute" and _allow_substitute:
+            fallback = resolve_font_metrics("Noto Color Emoji Check", _packaged_substitute_descriptor(),
+                                            _allow_substitute=False)
+        return FontMetrics(metrics_path, metrics_identity, str(table["sourceContentIdentity"]), family, weight,
+                           units, ascent, descent, cap_height, advances, fallback)
     raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+
+
+def _packaged_substitute_descriptor() -> dict:
+    value = safe_load(files("chrona.resources").joinpath("fonts", "draft-substitute-font-metrics.yaml").read_bytes())
+    if not isinstance(value, dict):
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+    return value
 
 
 def resolve_font_files(descriptor: dict, *, asset_root: Path | None) -> tuple[tuple[FontFile, ...], tuple[str, ...]]:
@@ -135,9 +177,11 @@ def resolve_font_files(descriptor: dict, *, asset_root: Path | None) -> tuple[tu
         try:
             path = resolve_font_resource(font.get("locator"), asset_root=asset_root)
         except FontResourceError as error:
-            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE") from error
+            locator = font.get("locator")
+            address = locator.get("address") if isinstance(locator, dict) else None
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE", str(address or "declared font bytes")) from error
         if not isinstance(family, str) or not family or font.get("contentIdentity") != _identity(path):
-            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE", str(font.get("locator", {}).get("address", "declared font bytes")))
         identity = str(font["contentIdentity"])
         declared = FontFile(path, identity, family, int(asset["weight"]))
         previous = files_by_identity.setdefault(identity, declared)

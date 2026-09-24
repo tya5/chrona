@@ -56,5 +56,16 @@ def test_metrics_resolution_does_not_read_font_bytes_but_raster_resolution_does(
     value = descriptor()
     value["assets"][0]["font"]["locator"]["address"] = "fonts/missing.ttf"
     assert resolve_font_metrics("Noto Sans", value).width("Chrona", 12) > 0
-    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
         resolve_font_files(value, asset_root=None)
+    assert error.value.detail == "fonts/missing.ttf"
+
+
+def test_draft_substitute_measures_packaged_checkmark_and_records_one_warning():
+    value = descriptor()
+    value["missingFont"] = "substitute"
+    metrics = resolve_font_metrics("Noto Sans", value)
+    assert metrics.width("General Availability ✅", 12) > 0
+    assert metrics.warnings[0].requested_family == "Noto Sans"
+    assert metrics.warnings[0].fallback_family == "Noto Color Emoji Check"
+    assert metrics.warnings[0].codepoint == 0x2705

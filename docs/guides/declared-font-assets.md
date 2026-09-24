@@ -33,6 +33,24 @@ and copies font bytes only for PNG/PDF, rewriting copied records to Context
 locators. A missing glyph is rejected as `E_FONT_GLYPH_UNAVAILABLE`; it is
 never measured as `.notdef`.
 
+## Target and draft policy
+
+SVG needs only pinned metrics, so a metrics-only descriptor can produce a
+deterministic SVG layout without redistributing a licensed font. PNG and PDF
+need every declared font byte; an absent byte path is rejected as
+`E_FONT_METRICS_UNAVAILABLE` and names that path.
+
+Draft-only descriptors may set `missingFont: substitute`. Chrona then measures
+the explicitly packaged fallback for a missing supported glyph and emits a
+`W_FONT_GLYPH_SUBSTITUTED` JSON warning to stderr. Immutable Render Contexts
+and the public materializer reject `substitute`; it is never corpus evidence.
+
+Use OFL or another redistribution-permitting license for anything committed to
+a corpus or distributed in a package. A licensed font may be used for a
+private user's PNG/PDF, or its metrics may be shared for SVG layout, but a
+materialized raster snapshot copies its bytes and must not be redistributed
+unless its license permits that use.
+
 ## Bring your own pair
 
 Generate the metrics from the exact font bytes that will ship with the Context.

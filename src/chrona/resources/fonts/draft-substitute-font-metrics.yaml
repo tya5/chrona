@@ -1,0 +1,8 @@
+algorithm: declared-metrics-v2
+missingFont: diagnose
+assets:
+  - family: Noto Color Emoji Check
+    weight: 400
+    metrics:
+      locator: {provider: package, identity: chrona.resources, address: font_metrics/noto-color-emoji-check-v1.json}
+      contentIdentity: sha256:563e0509a435ed8e349b34fdb0673ed0722d31e1d60ebed10ee244e1c11c4398

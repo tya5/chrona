@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -70,6 +71,15 @@ def _emit_failure(failure: CliFailure) -> NoReturn:
     }
     print(json.dumps(payload, ensure_ascii=False))
     raise SystemExit(failure.exit_code)
+
+
+def _emit_font_warnings(rendered: RenderedReview) -> None:
+    for warning in rendered.font_warnings:
+        print(json.dumps({
+            "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
+            "requestedFamily": warning.requested_family, "fallbackFamily": warning.fallback_family,
+            "weight": warning.weight, "codepoint": f"U+{warning.codepoint:04X}", "text": warning.text,
+        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
@@ -316,6 +326,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
     )
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)
+    _emit_font_warnings(rendered)
 
 
 def _run_guided_draft_render(args: argparse.Namespace) -> None:
@@ -326,6 +337,7 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
     )
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)
+    _emit_font_warnings(rendered)
     if args.provenance:
         provenance = draft.closure.guided_provenance
         if provenance is None:  # defensive: this route must never become an explicit Draft alias

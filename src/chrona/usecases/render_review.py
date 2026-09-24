@@ -22,7 +22,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measu
 from chrona.presentation.layout.surface_composer import resolve_label_visual_advances
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
-from chrona.presentation.model.font_metrics import FontMetricsError, resolve_font_metrics
+from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, resolve_font_metrics
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
@@ -87,6 +87,7 @@ class RenderedReview:
     surface: SceneSurface
     read_inputs: frozenset[str] = field(default_factory=frozenset)
     scenario_provenance: tuple[ScenarioProvenance, ...] = ()
+    font_warnings: tuple[FontGlyphSubstitution, ...] = ()
 
 
 class ClosureReadLedger:
@@ -222,10 +223,14 @@ def render_review(request: RenderRequest) -> RenderedReview:
         environment.renderer_environment(),
         asset_root=request.asset_root,
     )
-    artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])))
+    try:
+        artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])))
+    except FontMetricsError as error:
+        raise _font_failure(error) from error
     if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
-    return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance)
+    return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance,
+                          font_metrics.warnings)
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:

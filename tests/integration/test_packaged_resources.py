@@ -45,6 +45,9 @@ def test_package_owned_runtime_resources_exist():
         "fonts/noto-sans-regular-v1.ttf",
         "fonts/noto-sans-bold-v1.ttf",
         "fonts/NotoSans.LICENSE",
+        "font_metrics/noto-color-emoji-check-v1.json",
+        "fonts/draft-substitute-font-metrics.yaml",
+        "fonts/NotoColorEmoji.LICENSE",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 

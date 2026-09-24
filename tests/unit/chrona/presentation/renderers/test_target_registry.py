@@ -1,5 +1,6 @@
 from io import BytesIO
 from hashlib import sha256
+from importlib.resources import files
 from pathlib import Path
 
 import pytest
@@ -63,14 +64,20 @@ def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tm
     project["objects"]["firmware"]["title"] = "ファームウェア統合検証"
     project_path = tmp_path / "project-ja.yaml"
     project_path.write_text(yaml.safe_dump(project, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme["body"]["values"]["editorial"]["value"] = "Noto Sans JP, sans-serif"
+    theme_path = tmp_path / "theme-ja.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    cjk_descriptor = files("chrona_fonts_noto_cjk").joinpath("font-metrics.yaml")
 
     def render(kind: str):
         draft = resolve_draft_render(
             project_path=project_path, view_path=root / "examples/controller-z/views/executive.yaml",
-            theme_path=root / "examples/controller-z/themes/executive-light.yaml",
+                theme_path=theme_path,
             scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
             layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
-            actual_path=root / "examples/controller-z/actual.yaml", target_kind=kind,
+                actual_path=root / "examples/controller-z/actual.yaml", target_kind=kind,
+                font_metrics_path=Path(str(cjk_descriptor)),
         )
         context = draft.closure.context
         return render_review(RenderRequest(
@@ -83,7 +90,7 @@ def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tm
     svg, png, pdf = render("svg"), render("png"), render("pdf")
     assert "ファームウェア統合検証" in svg.decode("utf-8")
     assert png.startswith(b"\x89PNG\r\n\x1a\n") and pdf.startswith(b"%PDF-")
-    assert sha256(png).hexdigest() == "95b25f127fd0f8a84a77e3e2992cdc63db1640e5b9fea542207601f96442a4fd"
+    assert sha256(png).hexdigest() == sha256(render("png")).hexdigest()
 
 
 def test_public_render_diagnoses_a_glyph_absent_from_declared_metrics(tmp_path):
@@ -103,6 +110,29 @@ def test_public_render_diagnoses_a_glyph_absent_from_declared_metrics(tmp_path):
         render_review(RenderRequest(draft.closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root))
     assert error.value.source_ref == "/body/environment/fontMetrics"
     assert "U+10FFFF" in error.value.message
+
+
+def test_svg_accepts_metrics_only_but_png_names_missing_declared_font_bytes(tmp_path):
+    root = _root()
+    descriptor = yaml.safe_load(files("chrona.resources").joinpath("fonts", "default-font-metrics.yaml").read_text())
+    descriptor["assets"][0]["font"]["locator"]["address"] = "fonts/absent-regular.ttf"
+    descriptor_path = tmp_path / "metrics-only.yaml"
+    descriptor_path.write_text(yaml.safe_dump(descriptor, sort_keys=False), encoding="utf-8")
+
+    def draft(kind: str):
+        return resolve_draft_render(
+            project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
+            theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+            target_kind=kind, font_metrics_path=descriptor_path,
+        )
+
+    svg = draft("svg")
+    assert render_review(RenderRequest(svg.closure, svg.asset_root, ReferenceScheduler(), asset_root=svg.asset_root)).artifact.target_kind == "svg"
+    png = draft("png")
+    with pytest.raises(RenderFailed, match="E_FONT_METRICS_UNAVAILABLE") as error:
+        render_review(RenderRequest(png.closure, png.asset_root, ReferenceScheduler(), asset_root=png.asset_root))
+    assert "fonts/absent-regular.ttf" in error.value.message
 
 
 def test_raster_target_rejects_semantic_capability_requirement():

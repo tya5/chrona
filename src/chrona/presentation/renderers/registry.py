@@ -107,10 +107,7 @@ def renderer_for(target: dict[str, Any], environment: dict[str, Any], *, asset_r
 def _font_files(descriptor: dict[str, Any] | None, asset_root: Path | None):
     if not isinstance(descriptor, dict):
         raise ValueError("E_RENDER_FONT_CLOSURE")
-    try:
-        return resolve_font_files(descriptor, asset_root=asset_root)
-    except FontMetricsError as error:
-        raise ValueError(error.diagnostic_id) from error
+    return resolve_font_files(descriptor, asset_root=asset_root)
 
 
 def _reportlab_font_name(family: str, weight: int) -> str:

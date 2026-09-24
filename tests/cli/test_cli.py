@@ -10,6 +10,7 @@ import pytest
 
 import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
+from chrona.presentation.model.font_metrics import FontGlyphSubstitution
 from chrona.scheduling.scheduler import schedule
 from chrona.storage.snapshot_paths import snapshot_directory
 
@@ -31,6 +32,17 @@ def test_python_module_entry_point_exposes_the_cli():
     completed = subprocess.run([sys.executable, "-m", "chrona", "--help"], text=True, capture_output=True, check=False)
     assert completed.returncode == 0
     assert "chrona" in completed.stdout
+
+
+def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
+    cli._emit_font_warnings(SimpleNamespace(font_warnings=(FontGlyphSubstitution(
+        "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
+    ),)))
+    assert json.loads(capsys.readouterr().err) == {
+        "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
+        "requestedFamily": "Noto Sans", "fallbackFamily": "Noto Color Emoji Check",
+        "weight": 400, "codepoint": "U+2705", "text": "General Availability ✅",
+    }
 
 
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):

@@ -7,7 +7,7 @@ import pytest
 import yaml
 from PIL import Image
 
-from chrona.presentation.model.closure import resolve_render_context
+from chrona.presentation.model.closure import ClosureError, resolve_render_context
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -256,6 +256,17 @@ def test_svg_materializer_does_not_read_an_unused_font_byte_pin(tmp_path):
     original = expected.read_bytes()
     materialize(copied_example / "manifest.yaml", "programme-board", tmp_path / "out-font", write=True)
     assert expected.read_bytes() == original
+
+
+def test_materializer_rejects_draft_substitution_before_evidence_emission(tmp_path):
+    copied_example = tmp_path / "halcyon-substitute"
+    shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
+    context_path = copied_example / "contexts/02-programme-board.yaml"
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    context["body"]["environment"]["fontMetrics"]["missingFont"] = "substitute"
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ClosureError, match="E_FONT_SUBSTITUTE_CONTEXT"):
+        materialize(copied_example / "manifest.yaml", "programme-board", tmp_path / "out-substitute", write=False)
 
 
 def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_font_bytes(tmp_path):

@@ -438,6 +438,8 @@ def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader,
 
 def _resolve_layout_context(context_contract: RenderContextContract, reader: SnapshotReader,
                             decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
+    if context_contract.environment.font_metrics.get("missingFont") != "diagnose":
+        raise ClosureError("E_FONT_SUBSTITUTE_CONTEXT")
     ordered = (
         (context_contract.project.as_reader_reference(), "project"),
         (context_contract.view.as_reader_reference(), "view"),
