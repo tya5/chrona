@@ -82,11 +82,11 @@ variables, or network access are consulted.
 
 `declared-metrics-v2` has required `metrics` records and optional `font`
 records.  Each record is a locator plus SHA-256 identity.  A metrics table
-continues to record the font identity from which it was generated when a font
-record exists; it may instead record a stable `sourceFaceIdentity` when the
-byte asset is deliberately unavailable to a metrics-only sharer.  Duplicate
-family/weight pairs and inconsistent metric/byte source identities are schema
-or closure errors.
+always retains its existing `sourceContentIdentity`: the identity of the exact
+font bytes from which it was generated, whether or not those bytes travel in
+the Context.  When a byte record is present its identity must equal that value.
+Duplicate family/weight pairs and inconsistent metric/byte source identities
+are schema or closure errors.
 
 The resolver returns two distinct values:
 
@@ -209,4 +209,3 @@ tests, importer fixture tests including TTC/axis paths, CJK Japanese materialize
 evidence, full corpus reproduction, all structural/conformance tests, full
 pytest, and Ubuntu/macOS/Windows CI with the optional provider installed for
 the CJK matrix.
-
