@@ -47,7 +47,7 @@ evidence and new contexts over existing resources:
 | --- | --- | --- |
 | Executive status | content | split from existing Controller Z pair |
 | Treatment ladder | visual-grammar | split from elevated Controller Z direction |
-| Two surfaces | composition | Halcyon existing evidence |
+| Two surfaces | content | Halcyon existing evidence; `surface` is View-owned Content per Specification 55 |
 | Four appearances | appearance | needs two scheme-pinned Contexts |
 | Programme at scale | composition | needs normalized Context pairs; overlay waits for #272 |
 | Investigating a slip | content | needs normalized Context pairs |
