@@ -9,6 +9,7 @@ enforced before every defect behind it is fixed; see ``check`` for the rules.
 from __future__ import annotations
 
 import re
+from importlib.util import find_spec
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -46,7 +47,10 @@ def _slides():
             if not svg.is_file():
                 continue
             identity = f"{example.name}/{slide['id']}"
-            yield pytest.param(identity, example / str(slide.get("context", manifest["context"])), svg, id=identity)
+            marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
+                     if example.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
+            yield pytest.param(identity, example / str(slide.get("context", manifest["context"])), svg,
+                               id=identity, marks=marks)
 
 
 SLIDES = list(_slides())

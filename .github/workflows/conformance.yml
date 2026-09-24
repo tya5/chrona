@@ -30,6 +30,9 @@ jobs:
       - run: python tools/check_text_encoding.py
       - run: pytest -n 4
       - run: python -m pip wheel . --no-deps -w dist
+      - name: Enforce primary wheel budget
+        shell: bash
+        run: python tools/check_wheel_size.py dist/chrona-*.whl
       - name: Install the built wheel
         shell: bash
         run: python -m pip install --force-reinstall --no-deps dist/*.whl

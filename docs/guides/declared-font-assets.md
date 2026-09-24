@@ -3,8 +3,10 @@
 Chrona measures text from the exact metrics declared by a Render Context.
 PNG/PDF additionally use identity-pinned font bytes; SVG does not load them.
 It never uses a host-installed font at render time. The bundled default is the
-small OFL `Noto Sans` Regular/Bold pair. Install `chrona[fonts-cjk]` to use the
-separately distributed OFL `Noto Sans JP` pair for Japanese text.
+small OFL `Noto Sans` Regular/Bold pair. The separately distributed OFL
+`Noto Sans JP` provider is installed explicitly for repository development:
+`pip install -e packages/chrona-fonts-noto-cjk`. It is not advertised as a
+primary-package extra until that provider is published to an installable index.
 
 ## Context closure
 

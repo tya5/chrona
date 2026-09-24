@@ -10,6 +10,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import tempfile
+from importlib.util import find_spec
 from pathlib import Path
 
 import pytest
@@ -27,7 +28,10 @@ def _slides():
         example = manifest_path.parent
         for slide in manifest.get("slides", ()):
             identity = f"{example.name}/{slide['id']}"
-            yield pytest.param(identity, example, example / str(slide.get("context", manifest["context"])), id=identity)
+            marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
+                     if example.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
+            yield pytest.param(identity, example, example / str(slide.get("context", manifest["context"])),
+                               id=identity, marks=marks)
 
 
 @pytest.mark.parametrize("slide,example,context_path", list(_slides()))

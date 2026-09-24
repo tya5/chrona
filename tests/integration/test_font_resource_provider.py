@@ -3,12 +3,15 @@ from __future__ import annotations
 
 from importlib.resources import files
 
+import pytest
+
 from chrona.presentation.model.font_metrics import resolve_font_metrics
 from chrona.presentation.model.font_resources import resolve_font_resource
 from chrona.resources import safe_load
 
 
 def test_optional_cjk_provider_resolves_its_descriptor_and_metrics():
+    pytest.importorskip("chrona_fonts_noto_cjk", reason="requires the optional local CJK font provider")
     descriptor_path = resolve_font_resource(
         {"provider": "package", "identity": "chrona-fonts-noto-cjk", "address": "font-metrics.yaml"},
         asset_root=None,

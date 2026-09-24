@@ -1,4 +1,5 @@
 from hashlib import sha256
+from importlib.util import find_spec
 from pathlib import Path
 import re
 import shutil
@@ -21,6 +22,10 @@ from tools.materialize_example import _copy_context_closure, materialize
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _require_cjk_provider() -> None:
+    pytest.importorskip("chrona_fonts_noto_cjk", reason="requires the optional local CJK font provider")
+
+
 class _FixedProjectStore:
     def __init__(self, snapshot: ProjectSnapshot):
         self.snapshot = snapshot
@@ -31,7 +36,8 @@ class _FixedProjectStore:
 
 def test_declared_examples_reproduce_by_public_cli(tmp_path):
     """Every slide of every declared corpus manifest reproduces its committed evidence."""
-    manifests = sorted(ROOT.glob("examples/*/manifest.yaml"))
+    manifests = [manifest for manifest in sorted(ROOT.glob("examples/*/manifest.yaml"))
+                 if manifest.parent.name != "controller-z-ja" or find_spec("chrona_fonts_noto_cjk") is not None]
     assert manifests, "no corpus manifests found"
     for manifest in manifests:
         for slide in yaml.safe_load(manifest.read_text(encoding="utf-8"))["slides"]:
@@ -47,6 +53,7 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 
 
 def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_path):
+    _require_cjk_provider()
     materialize(ROOT / "examples/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
     artifact = (tmp_path / "controller-z-ja/review.svg").read_text(encoding="utf-8")
     assert "コントローラZ — シリコン立ち上げから量産まで" in artifact

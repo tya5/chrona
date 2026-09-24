@@ -60,7 +60,10 @@ def test_export_targets_are_pinned_and_repeatable(kind, media_type, prefix):
 def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tmp_path):
     root = _root()
     example = root / "examples/controller-z-ja"
-    cjk_descriptor = files("chrona_fonts_noto_cjk").joinpath("font-metrics.yaml")
+    cjk_provider = pytest.importorskip(
+        "chrona_fonts_noto_cjk", reason="requires the optional local CJK font provider",
+    )
+    cjk_descriptor = files(cjk_provider).joinpath("font-metrics.yaml")
 
     def render(kind: str):
         draft = resolve_draft_render(
