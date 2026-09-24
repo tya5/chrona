@@ -18,6 +18,10 @@ LINE_JOIN = "stroke.line-join"
 RICH_CAPABILITIES = frozenset((LINEAR_GRADIENT, DROP_SHADOW, LINE_CAP, LINE_JOIN))
 ICON_VECTOR = "icon.vector"
 ICON_RASTER = "icon.raster"
+MARKER_GEOMETRY = "mark.marker-geometry"
+PATTERN_GEOMETRY = "paint.pattern-geometry"
+SYMBOL_OUTLINE = "mark.symbol-outline"
+MARK_GEOMETRY_CAPABILITIES = frozenset((MARKER_GEOMETRY, PATTERN_GEOMETRY, SYMBOL_OUTLINE))
 
 _MESSAGES = {
     "E_VISUAL_CAPABILITY_UNSUPPORTED": "required visual treatment is not supported by the selected visual profile",
@@ -55,15 +59,15 @@ def visual_capability_message(diagnostic_id: str, capability: str | None = None)
 def resolve_visual_profile(identifier: str, target_kind: str) -> VisualProfile:
     """Resolve one Context-selected profile and verify its target route."""
     if identifier == BASELINE_PROFILE:
-        return VisualProfile(identifier, frozenset(), True)
+        return VisualProfile(identifier, MARK_GEOMETRY_CAPABILITIES, True)
     if identifier == SVG_PROFILE and target_kind == "svg":
-        return VisualProfile(identifier, RICH_CAPABILITIES, False)
+        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES, False)
     if identifier == PNG_PROFILE and target_kind == "png":
-        return VisualProfile(identifier, RICH_CAPABILITIES, False)
+        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES, False)
     if identifier == SVG_ICON_PROFILE and target_kind == "svg":
-        return VisualProfile(identifier, RICH_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
+        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
     if identifier == PNG_ICON_PROFILE and target_kind == "png":
-        return VisualProfile(identifier, RICH_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
+        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
     raise VisualCapabilityError("E_VISUAL_CAPABILITY_PROFILE", "/body/target/visualProfile",
                                 f"{identifier} is not available for {target_kind}")
 
@@ -81,6 +85,12 @@ def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfil
             _require(profile, LINE_CAP, paint.stroke_finish.fidelity, path)
             _require(profile, LINE_JOIN, paint.stroke_finish.fidelity, path)
     for node in surface.primitives:
+        _require(profile, MARKER_GEOMETRY, "required" if node.marker is not None else None,
+                 node.visual_capability_source_ref)
+        _require(profile, PATTERN_GEOMETRY, "required" if node.pattern is not None else None,
+                 node.visual_capability_source_ref)
+        _require(profile, SYMBOL_OUTLINE, "required" if node.symbol is not None else None,
+                 node.visual_capability_source_ref)
         if node.kind == "Icon":
             _require(profile, ICON_VECTOR if node.icon_kind == "vector" else ICON_RASTER, "required",
                      node.visual_capability_source_ref)

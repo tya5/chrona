@@ -318,7 +318,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                       float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
             if item.source_type == "point":
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", planned_binding.purpose, planned_role,
-                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds),
+                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, planned_mark.path_commands),
                                                  corner_radius=planned_mark.corner_radius,
                                                  path_commands=planned_mark.path_commands,
                                                  href=href, link_title=link_title))
@@ -338,7 +338,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                  bounds, corner_radius=actual_mark.corner_radius))
             else:
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds), corner_radius=actual_mark.corner_radius,
+                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands), corner_radius=actual_mark.corner_radius,
                                                  path_commands=actual_mark.path_commands))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
@@ -366,7 +366,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
-                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds),
+                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, planned_mark.path_commands),
                                                  corner_radius=planned_mark.corner_radius,
                                                  path_commands=planned_mark.path_commands, href=href, link_title=link_title))
             actual_mark = mark_placements.get(f"actual:{instance_id}")
@@ -375,7 +375,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                           float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
-                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds),
+                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands),
                                                  corner_radius=actual_mark.corner_radius,
                                                  path_commands=actual_mark.path_commands))
         label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"

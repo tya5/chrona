@@ -145,27 +145,12 @@ def test_pdf_rasterizer_identity_mismatch_is_rejected():
         renderer_for({"kind": "pdf", "capabilities": []}, {"rasterizer": {"engine": "reportlab", "svglibVersion": "wrong", "reportlabVersion": "wrong", "invariant": True}}).render(None, viewport=(1, 1))
 
 
-@pytest.mark.parametrize(("kind", "media_type", "signature", "identity"), [
-    ("tikz", "application/x-tex", b"% chrona-tikz/v0.1", "chrona-tikz/v0.1"),
+@pytest.mark.parametrize(("kind", "descriptor"), [
+    ("typst", {"engine": "typst", "version": "0.13.1", "adapterGrammar": "chrona-typst/v0.1"}),
+    ("tikz", {"engine": "tectonic", "version": "0.15.0", "adapterGrammar": "chrona-tikz/v0.1"}),
 ])
-def test_typeset_sources_preserve_completed_placement_order(kind, media_type, signature, identity):
-    surface = _completed_surface()
-    descriptor = ({"engine": "typst", "version": "0.13.1", "adapterGrammar": identity}
-                  if kind == "typst" else {"engine": "tectonic", "version": "0.15.0", "adapterGrammar": identity})
+def test_typeset_rejects_completed_geometry_it_cannot_serialize(kind, descriptor):
     renderer = renderer_for({"kind": kind, "capabilities": []}, {"typesetter": descriptor})
-    first = renderer.render(surface, viewport=(1600, 900))
-    second = renderer.render(surface, viewport=(1600, 900))
-    source = first.content.decode("utf-8")
-    assert (first.target_kind, first.media_type, first.content[:len(signature)], first.adapter_identity) == (kind, media_type, signature, identity)
-    assert first.content == second.content
-    identifiers = [f"scene-id: {node.scene_id}" for node in surface.primitives]
-    assert [source.index(identifier) for identifier in identifiers] == sorted(source.index(identifier) for identifier in identifiers)
-    assert "font-asset:" in source and "baseline:" in source
-
-
-def test_typst_rejects_completed_symbol_geometry_it_cannot_serialize():
-    renderer = renderer_for({"kind": "typst", "capabilities": []}, {"typesetter": {
-        "engine": "typst", "version": "0.13.1", "adapterGrammar": "chrona-typst/v0.1"}})
     with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
         renderer.render(_completed_surface(), viewport=(1600, 900))
 

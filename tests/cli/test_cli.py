@@ -402,9 +402,9 @@ def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypat
         "--typesetter-adapter-grammar", "chrona-typst/v0.1", "--output", str(output),
     ])
 
-    main()
-
-    assert output.read_bytes().startswith(b"// chrona-typst/v0.1")
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 1
 
 
 def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, monkeypatch, capsys):

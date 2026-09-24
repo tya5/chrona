@@ -53,6 +53,8 @@ def _validate(surface: object) -> SceneSurface:
 
 
 def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) -> str:
+    if any(node.marker is not None or node.pattern is not None or node.symbol is not None for node in surface.primitives):
+        raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
     width, height = viewport
     background = surface.canvas_paint.fill
     if background is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
@@ -88,6 +90,8 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) ->
 
 
 def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> str:
+    if any(node.marker is not None or node.pattern is not None for node in surface.primitives):
+        raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
     width, height = viewport
     parts = ["% chrona-tikz/v0.1", r"\documentclass{article}",
              f"\\usepackage[paperwidth={_number(width)}pt,paperheight={_number(height)}pt,margin=0pt]{{geometry}}",

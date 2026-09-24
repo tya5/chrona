@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img">
 <rect width="1600" height="900" opacity="1" fill="#FFFFFF"/>
-<defs><marker id="marker-#4B5563-triangle" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4B5563"/></marker></defs>
+<defs><marker id="marker-0529b66119d9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0L10 5L0 10L0 0" fill="#4B5563"/></marker></defs>
 <text data-scene-id="title" data-source-ref="title" data-purpose="title-text" x="547.028" y="52.056" font-family="Noto Sans, sans-serif" font-weight="400" font-size="24" opacity="1" fill="#172033">ORION ASIC — Tape-out to Production Ramp</text>
 <text data-scene-id="column:Work package" data-source-ref="view:tableColumns" data-purpose="table-column-label" x="24" y="82.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Work package</text>
 <text data-scene-id="column:Revision" data-source-ref="view:tableColumns" data-purpose="table-column-label" x="264.174" y="82.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">Revision</text>
@@ -58,8 +58,8 @@
 <rect data-scene-id="planned:rtl-freeze:rtl-freeze" data-source-ref="rtl-freeze" data-purpose="planned" x="676.803" y="153.278" width="90.635" height="20" opacity="1" fill="#3B6FB6"/>
 <rect data-scene-id="actual:rtl-freeze:rtl-freeze" data-source-ref="rtl-freeze" data-purpose="actual" x="676.803" y="178.278" width="100.176" height="20" opacity="1" fill="#269D79"/>
 <text data-scene-id="variance:rtl-freeze:rtl-freeze" data-source-ref="rtl-freeze" data-purpose="finish-delta" x="714.578" y="215.778" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#C8762B">+4d</text>
-<polygon data-scene-id="planned:tapeout:tapeout" data-source-ref="tapeout" data-purpose="planned" points="784.134,219.189 794.134,229.189 784.134,239.189 774.134,229.189" opacity="1" fill="#3B6FB6"/>
-<polygon data-scene-id="actual:tapeout:tapeout" data-source-ref="tapeout" data-purpose="actual" points="791.29,244.189 801.29,254.189 791.29,264.189 781.29,254.189" opacity="1" fill="#269D79"/>
+<path data-scene-id="planned:tapeout:tapeout" data-source-ref="tapeout" data-purpose="planned" d="M784.134 219.189L794.134 229.189L784.134 239.189L774.134 229.189L784.134 219.189" opacity="1" fill="#3B6FB6"/>
+<path data-scene-id="actual:tapeout:tapeout" data-source-ref="tapeout" data-purpose="actual" d="M791.29 244.189L801.29 254.189L791.29 264.189L781.29 254.189L791.29 244.189" opacity="1" fill="#269D79"/>
 <rect data-scene-id="planned:respin-a1:respin-a1" data-source-ref="respin-a1" data-purpose="planned" x="1051.27" y="285.1" width="133.568" height="20" opacity="1" fill="#2E8B6E"/>
 <rect data-scene-id="missing-actual:respin-a1:respin-a1" data-source-ref="respin-a1" data-purpose="missingActual" x="1184.837" y="310.1" width="30" height="20" opacity="1" fill="#4B5563"/>
 <rect data-scene-id="planned:fab-a0:fab-a0" data-source-ref="fab-a0" data-purpose="planned" x="784.134" y="371.011" width="200.352" height="20" opacity="1" fill="#3B6FB6"/>
@@ -71,8 +71,8 @@
 <rect data-scene-id="missing-actual:ramp:ramp" data-source-ref="ramp" data-purpose="missingActual" x="1366.108" y="527.833" width="30" height="20" opacity="1" fill="#4B5563"/>
 <rect data-scene-id="planned:bringup-a0:bringup-a0" data-source-ref="bringup-a0" data-purpose="planned" x="1017.878" y="588.744" width="66.784" height="20" opacity="1" fill="#3B6FB6"/>
 <rect data-scene-id="missing-actual:bringup-a0:bringup-a0" data-source-ref="bringup-a0" data-purpose="missingActual" x="1084.662" y="613.744" width="30" height="20" opacity="1" fill="#4B5563"/>
-<polygon data-scene-id="planned:evt:evt" data-source-ref="evt" data-purpose="planned" points="1017.878,654.656 1027.878,664.656 1017.878,674.656 1007.878,664.656" opacity="1" fill="#3B6FB6"/>
-<polygon data-scene-id="actual:evt:evt" data-source-ref="evt" data-purpose="actual" points="1017.878,679.656 1027.878,689.656 1017.878,699.656 1007.878,689.656" opacity="1" fill="#269D79"/>
+<path data-scene-id="planned:evt:evt" data-source-ref="evt" data-purpose="planned" d="M1017.878 654.656L1027.878 664.656L1017.878 674.656L1007.878 664.656L1017.878 654.656" opacity="1" fill="#3B6FB6"/>
+<path data-scene-id="actual:evt:evt" data-source-ref="evt" data-purpose="actual" d="M1017.878 679.656L1027.878 689.656L1017.878 699.656L1007.878 689.656L1017.878 679.656" opacity="1" fill="#269D79"/>
 <rect data-scene-id="planned:dvt:dvt" data-source-ref="dvt" data-purpose="planned" x="1194.378" y="720.567" width="50.088" height="20" opacity="1" fill="#2E8B6E"/>
 <rect data-scene-id="missing-actual:dvt:dvt" data-source-ref="dvt" data-purpose="missingActual" x="1244.466" y="745.567" width="30" height="20" opacity="1" fill="#4B5563"/>
 <text data-scene-id="axis-band:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="679.633" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2026 Q3</text>
@@ -119,9 +119,9 @@
 <path data-scene-id="axis-grid:major:quarter:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1399.5 116.8L1399.5 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1067.966 116.8L1067.966 770" fill="none" opacity="1" stroke="#C8762B" stroke-width="1"/>
 <text data-scene-id="as-of-label" data-source-ref="actual-set" data-purpose="as-of-label" x="1067.966" y="130.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">as of 2027-02-12</text>
-<path data-scene-id="relation:rtl-tapeout:rtl-freeze:rtl-freeze:tapeout:tapeout" data-source-ref="rtl-tapeout" data-purpose="dependency" d="M767.438 163.278L767.438 229.189L784.134 229.189" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-#4B5563-triangle)"/>
-<path data-scene-id="relation:evt-bringup:evt:evt:bringup-a0:bringup-a0" data-source-ref="evt-bringup" data-purpose="dependency" d="M1017.878 664.656L1017.878 598.744" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-#4B5563-triangle)"/>
-<path data-scene-id="relation:pvt-ramp:pvt:pvt:ramp:ramp" data-source-ref="pvt-ramp" data-purpose="dependency" d="M1265.932 446.922L1265.932 512.833" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-#4B5563-triangle)"/>
+<path data-scene-id="relation:rtl-tapeout:rtl-freeze:rtl-freeze:tapeout:tapeout" data-source-ref="rtl-tapeout" data-purpose="dependency" d="M767.438 163.278L767.438 229.189L784.134 229.189" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-0529b66119d9)"/>
+<path data-scene-id="relation:evt-bringup:evt:evt:bringup-a0:bringup-a0" data-source-ref="evt-bringup" data-purpose="dependency" d="M1017.878 664.656L1017.878 598.744" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-0529b66119d9)"/>
+<path data-scene-id="relation:pvt-ramp:pvt:pvt:ramp:ramp" data-source-ref="pvt-ramp" data-purpose="dependency" d="M1265.932 446.922L1265.932 512.833" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-0529b66119d9)"/>
 <rect data-scene-id="progress-fill:actual:rtl-freeze:rtl-freeze" data-source-ref="rtl-freeze" data-purpose="progress-fill" x="676.803" y="178.278" width="100.176" height="20" opacity="1" fill="#C8762B"/>
 <rect data-scene-id="progress-fill:actual:fab-a0:fab-a0" data-source-ref="fab-a0" data-purpose="progress-fill" x="791.29" y="396.011" width="209.892" height="20" opacity="1" fill="#C8762B"/>
 <rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="805.243" y="796.338" width="9.6" height="9.6" opacity="1" fill="#3986E6"/>
