@@ -21,14 +21,17 @@ actionable, without turning repository-quality tooling into product policy.
 - The declared-value inventory labels authoring `baseRevision` as
   `product-bookkeeping`, although `chrona workspace revision` produces the
   user's asserted optimistic-concurrency value.
+- A first import-graph prototype shows that the legacy 53-code policy is an
+  incomplete subset: every bare construction imported by the public CLI is a
+  candidate, not only `E_ACTUAL_REQUIRED`.
 
 ## Design questions
 
 1. Define a policy vocabulary that separates `sufficient` bare diagnostics
    from an ordered `backlog` without allowing a generic reason to hide work.
-2. Derive user-facing reachability from the same static import graph as the
-   module-reachability gate, while keeping tool scripts and test-only paths out
-   of the public CLI population.
+2. Derive the full user-facing candidate population from the same static import
+   graph as the module-reachability gate, while keeping tool scripts and
+   test-only paths out of the public CLI population.
 3. Define structured details for the three selected codes at their owning
    boundaries, without moving closure/store/materializer policy into CLI or
    creating code-specific formatting in a renderer.
@@ -46,6 +49,8 @@ report must render backlog entries with code, site count, and owner-oriented
 next action.  CLI reachability is derived from `chrona.app.cli` and
 `chrona.__main__` imports, not directory prefixes; non-CLI reachable modules
 remain separately reported rather than silently reclassified.
+The policy must classify that full derived population rather than retaining a
+legacy 53-code ceiling.
 
 ### D371-2 — Owning diagnostic-detail contracts
 
@@ -67,7 +72,7 @@ prefixes as a substitute for public reachability.
 
 The implementation plan must publish independently reviewable slices for:
 
-1. policy migration, generator/report/backlog validation, and focused negative
+1. full-population policy migration, generator/report/backlog validation, and focused negative
    tests;
 2. static CLI-reachability classification with a regression proving
    `E_ACTUAL_REQUIRED` is gated or explicitly backlog-dispositioned;

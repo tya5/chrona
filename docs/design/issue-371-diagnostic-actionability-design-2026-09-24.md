@@ -33,6 +33,8 @@ surfaces, not public product CLI ingress.
 
 `presentation.model.projection` is therefore reachable through
 `usecases.render_review`, and `E_ACTUAL_REQUIRED` enters the policy population.
+The same rule deliberately expands the population beyond #370's 53
+prefix-based codes: every CLI-reachable bare construction must be classified.
 It is initially dispositioned explicitly unless its owning projection change
 ships in the same slice.
 
