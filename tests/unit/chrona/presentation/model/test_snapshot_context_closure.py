@@ -37,7 +37,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
     context = {"version": "chrona/render-context/v0.14", "kind": "render-context", "id": "ctx", "body": {
         "project": primary_ref, "view": resources["view"], "theme": resources["theme"],
         "colorScheme": resources["scheme"], "layout": resources["layout"],
-        "inputs": {"snapshot": snapshot_ref}, "environment": {}, "target": {"capabilities": []}}}
+        "inputs": {"snapshot": snapshot_ref}, "environment": {"fontMetrics": {"missingFont": "diagnose"}}, "target": {"capabilities": []}}}
     context_ref = _write(tmp_path, "current", "context.yaml", context)
     monkeypatch.setattr(closure.jsonschema, "Draft202012Validator", lambda _schema: type("V", (), {"iter_errors": lambda self, _value: iter(())})())
     monkeypatch.setattr(closure, "resolve_theme", lambda *_args, **_kwargs: {})
@@ -59,7 +59,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
             reference("colorScheme"), reference("layout"), None,
             ResourceReference.from_value(freeze(body["inputs"]["snapshot"])), None, None,
             None,
-            RenderEnvironment(1, 1, "en-US", freeze({}), 0, None), RenderTarget("svg", ()),
+            RenderEnvironment(1, 1, "en-US", freeze({"missingFont": "diagnose"}), 0, None), RenderTarget("svg", ()),
         )
 
     monkeypatch.setattr(closure, "parse_contract", fake_parse)
