@@ -4,6 +4,19 @@
 
 **Correction:** `issues-354-355-posthoc-correction-design-2026-09-24.md`
 
+**Environment correction:** `issue-354-environment-coverage-label-correction-design-2026-09-24.md`
+
+## G354-C2 — Environment closure and honest coverage label
+
+Require byte-identical Context environments across gallery peers, re-pin and
+regenerate the network evidence at the board viewport, and relabel the
+gallery's link to #355 as semantic corpus coverage.  Do not add viewport as a
+support or broaden #355 into a presentation-schema scanner.
+
+**Acceptance:** a focused mismatch fixture raises the stable diagnostic; all
+published pairs share their declared environments; the regenerated network SVG
+materializes; generated pages remain byte-current.
+
 ## G354-C1 — One-axis closure correction
 
 Extend the inventory validator with the closed dimension-to-reference map,
