@@ -1,0 +1,39 @@
+# colour scheme
+
+Design Space dimension: `appearance`.
+
+## Peers
+
+### Mission light
+
+Establish the light appearance for the same mission brief.
+
+![Mission light](../../../examples/halcyon-1/generated/01-mission-brief.svg)
+
+Corpus: `halcyon-1` · slide: `mission-brief` · [Context](../../../examples/halcyon-1/contexts/01-mission-brief.yaml)
+
+### Control room dark
+
+Compare the same mission brief in a dark operational scheme.
+
+![Control room dark](../../../examples/halcyon-1/generated/08-gallery-dark.svg)
+
+Corpus: `halcyon-1` · slide: `gallery-dark` · [Context](../../../examples/halcyon-1/contexts/08-gallery-dark.yaml)
+
+### Print mono
+
+Compare the same mission brief in a monochrome scheme.
+
+![Print mono](../../../examples/halcyon-1/generated/09-gallery-mono.svg)
+
+Corpus: `halcyon-1` · slide: `gallery-mono` · [Context](../../../examples/halcyon-1/contexts/09-gallery-mono.yaml)
+
+## Presentation-reference diff
+
+- `colorScheme`: `mission-light` → `control-room-dark` → `print-mono`
+
+## Accessibility
+
+- Mission light: Semantic labels and table structure remain present in the light scheme.
+- Control room dark: Semantic labels and table structure remain present in the dark scheme.
+- Print mono: Semantic labels and table structure remain present without colour distinction.

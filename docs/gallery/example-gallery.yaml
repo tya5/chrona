@@ -42,3 +42,24 @@ entries:
     comparison: {set: halcyon-two-surfaces, dimension: content, axis: surface, supports: [layout]}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles]}
     accessibility: {note: Semantic labels and relation roles remain present alongside the network marks.}
+  - id: halcyon-mission-light-appearance
+    corpus: halcyon-1
+    slide: mission-brief
+    narrative: {title: Mission light, audience: programme office, purpose: Establish the light appearance for the same mission brief.}
+    comparison: {set: halcyon-mission-brief-appearance, dimension: appearance, axis: colour scheme}
+    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present in the light scheme.}
+  - id: halcyon-dark-appearance
+    corpus: halcyon-1
+    slide: gallery-dark
+    narrative: {title: Control room dark, audience: programme office, purpose: Compare the same mission brief in a dark operational scheme.}
+    comparison: {set: halcyon-mission-brief-appearance, dimension: appearance, axis: colour scheme}
+    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present in the dark scheme.}
+  - id: halcyon-mono-appearance
+    corpus: halcyon-1
+    slide: gallery-mono
+    narrative: {title: Print mono, audience: programme office, purpose: Compare the same mission brief in a monochrome scheme.}
+    comparison: {set: halcyon-mission-brief-appearance, dimension: appearance, axis: colour scheme}
+    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present without colour distinction.}

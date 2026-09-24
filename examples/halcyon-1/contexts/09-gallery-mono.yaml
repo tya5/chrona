@@ -1,0 +1,18 @@
+version: chrona/render-context/v0.12
+kind: render-context
+id: halcyon-1-09-gallery-mono
+body:
+  project: {id: halcyon-1, kind: project, store: {provider: local, identity: halcyon-1-example}, address: project.yaml, revision: {token: example-v1}}
+  view: {id: halcyon-01-mission-brief, kind: view, store: {provider: local, identity: halcyon-1-example}, address: views/01-mission-brief.yaml, revision: {token: example-v1}}
+  theme: {id: briefing, kind: theme, store: {provider: local, identity: halcyon-1-example}, address: themes/briefing.yaml, revision: {token: example-v1}}
+  colorScheme: {id: print-mono, kind: color-scheme, store: {provider: local, identity: halcyon-1-example}, address: schemes/print-mono.yaml, revision: {token: example-v1}}
+  layout: {id: briefing, kind: layout-profile, store: {provider: local, identity: halcyon-1-example}, address: layouts/briefing.yaml, revision: {token: example-v1}}
+  inputs:
+    actual: {id: halcyon-1-observed-2027-08-20, kind: actual-set, store: {provider: local, identity: halcyon-1-example}, address: actual.yaml, revision: {token: example-v1}}
+    summaryProfile: {id: halcyon-key-figures, kind: summary-profile, store: {provider: local, identity: halcyon-1-example}, address: profiles/summary.yaml, revision: {token: example-v1}}
+  environment:
+    viewport: {inlineSize: 1600, blockSize: 900}
+    locale: en-US
+    fontMetrics: {algorithm: declared-metrics-v1, assets: [{family: Nimbus Sans, weight: 400, revision: nimbus-sans-regular-v1, contentIdentity: sha256:281d55f9010a82fca254c06fb38e2dc0cdb6a5ee18de21fff711993e3963c2a1, path: font_metrics/nimbus-sans-regular-v1.json}, {family: Nimbus Sans, weight: 700, revision: nimbus-sans-bold-v1, contentIdentity: sha256:fe60a1edd18fd58c8f7603a2edc8b39834e3d92c864308414d7ff025e28e89a9, path: font_metrics/nimbus-sans-bold-v1.json}], missingFont: diagnose}
+    scenePrecision: 3
+  target: {kind: svg, visualProfile: chrona-output/visual/v0.5-baseline, capabilities: [accessibleText, hierarchicalAxis, marker, semanticRoles, sourceMetadata, tableSemantics]}

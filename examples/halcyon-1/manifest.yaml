@@ -31,3 +31,11 @@ slides:
     evidence: "Captured June baseline compared against the re-planned AIT chain and in-flight observations."
     context: contexts/07-replan-baseline.yaml
     expectedSvg: generated/07-replan-baseline.svg
+  - id: gallery-dark
+    evidence: "Mission brief under the existing control-room-dark colour scheme."
+    context: contexts/08-gallery-dark.yaml
+    expectedSvg: generated/08-gallery-dark.svg
+  - id: gallery-mono
+    evidence: "Mission brief under the existing print-mono colour scheme."
+    context: contexts/09-gallery-mono.yaml
+    expectedSvg: generated/09-gallery-mono.svg
