@@ -45,7 +45,7 @@ def test_local_transactional_store_restart_uses_codec_for_opaque_tip_tokens(tmp_
 
 def test_local_transactional_store_does_not_fallback_to_pre_codec_raw_directory(tmp_path):
     root = tmp_path / "store"
-    token = "baseline:" + "b" * 64
+    token = "local-legacy-safe-token"
     raw = root / token
     raw.mkdir(parents=True)
     (raw / "project.json").write_bytes(b'{"project":{"id":"demo"}}')
