@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.presentation import place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.presentation import RowPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.text import ellipsize_text
 
 
@@ -134,3 +134,16 @@ def test_track_placements_accept_mark_extents_at_the_row_boundary() -> None:
     tracks = place_mark_tracks(review_rows=rows, row_placements=row_placements, mark_block_size=10.0)
 
     assert tracks[0].block == 7.5
+
+
+def test_track_minimum_uses_the_completed_multi_lane_milestone_placement() -> None:
+    item = SimpleNamespace
+    row = item(row_id="milestone-lanes", group_id=None, items=(
+        item(item_id="gate-a", object_id="gate-a", track="stacked", source_kind="combined", actual=None),
+        item(item_id="gate-b", object_id="gate-b", track="stacked", source_kind="combined", actual=None),
+    ))
+    assert minimum_track_block_extent(review_row=row, mark_block_size=10.0) == 60.0
+    with pytest.raises(LayoutError, match="E_LAYOUT_MARK_OVERFLOW"):
+        place_mark_tracks(review_rows=(row,), row_placements=(
+            RowPlacement("milestone-lanes", None, (0.0, 0.0, 100.0, 59.0)),
+        ), mark_block_size=10.0)

@@ -8,7 +8,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
-from chrona.presentation.layout.presentation import TrackPlacement, place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.presentation import TrackPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
@@ -41,19 +41,17 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
     )
-    # A stacked member reserves one mark plus its planned/actual companion.
-    # ``place_mark_tracks`` positions the pair at 25%/125% mark offsets, so a
-    # track needs three mark blocks even when the Theme row minimum is smaller.
-    row_minimum = max(metric_values["timeline.row.minBlockSize"],
-                      metric_values["timeline.mark.blockSize"] * Decimal(3))
-    tracks = sum(max(1, sum(item.track != "shared" for item in row.items)) for row in rows)
+    track_minimum = max((minimum_track_block_extent(
+        review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]))
+        for row in rows), default=0.0)
+    row_minimum = max(metric_values["timeline.row.minBlockSize"], Decimal(str(track_minimum)))
     headers = 0
     previous = object()
     for row in rows:
         if row.group_id != previous:
             headers += 1 if row.group_id and group_presentation == "header" else 0
             previous = row.group_id
-    return Decimal(tracks) * row_minimum + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
+    return Decimal(len(rows)) * row_minimum + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
 def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
@@ -292,10 +290,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size)
     row_height = raw_rows[0].bounds[3] if raw_rows else timeline_bounds[3]
-    minimum = float(max(metric_values["timeline.row.minBlockSize"],
-                        metric_values["timeline.mark.blockSize"] * Decimal(3)))
-    if any(row_height < minimum * max(1, sum(item.track != "shared" for item in row.items))
-           for row in review_rows):
+    track_minimum = max((
+        minimum_track_block_extent(review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]))
+        for row in review_rows
+    ), default=0.0)
+    minimum = float(max(metric_values["timeline.row.minBlockSize"], Decimal(str(track_minimum))))
+    if row_height < minimum:
         required = timeline_content_block_requirement(
             projection=projection, group_presentation=request.surface_content.group_presentation,
             metric_values=metric_values,

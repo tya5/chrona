@@ -136,3 +136,38 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                 require_contained(row, companion_block, instance_id=instance_id)
             placements.append(TrackPlacement(instance_id, block, actual_block, mark_block_size))
     return tuple(placements)
+
+
+def minimum_track_block_extent(*, review_row: Any, mark_block_size: float) -> float:
+    """Find the smallest integral row block accepted by the track planner.
+
+    This deliberately invokes ``place_mark_tracks`` rather than re-encoding
+    planned/actual, milestone, shared, or stacked containment arithmetic.
+    """
+    def fits(block_size: float) -> bool:
+        try:
+            place_mark_tracks(review_rows=(review_row,), row_placements=(
+                RowPlacement(str(review_row.row_id), getattr(review_row, "group_id", None),
+                             (0.0, 0.0, 1.0, block_size)),
+            ), mark_block_size=mark_block_size)
+        except LayoutError as error:
+            if error.diagnostic_id != "E_LAYOUT_MARK_OVERFLOW":
+                raise
+            return False
+        return True
+
+    if mark_block_size <= 0:
+        raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize")
+    upper = mark_block_size
+    while not fits(upper):
+        upper *= 2
+    lower = 0.0
+    for _ in range(48):
+        middle = (lower + upper) / 2
+        if fits(middle):
+            upper = middle
+        else:
+            lower = middle
+    # Render viewport dimensions are integral; round upward so the final
+    # placement never loses a fractional containment boundary.
+    return float(int(upper) if upper.is_integer() else int(upper) + 1)
