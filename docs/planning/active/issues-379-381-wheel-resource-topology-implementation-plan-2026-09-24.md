@@ -1,6 +1,6 @@
 # Implementation Plan: Wheel Resource Topology and Evidence (#379, #381)
 
-**Status:** Proposed
+**Status:** Complete
 
 **Implements:** [Wheel resource topology design](../../design/issues-379-381-wheel-resource-topology-design-2026-09-24.md)
 
@@ -43,3 +43,10 @@ and three-platform CI.  Publish a release review before closing both issues.
 
 **Acceptance:** the explicit resource matrix, source/wheel separation, and
 all architecture-review boundaries have direct test or release evidence.
+
+**Completion evidence (2026-09-25):** I379-1 and I381-1 were published in
+`11a0598` and `a336ba7`.  Source-mode init, a built wheel installed and
+executed outside the checkout, the public wheel smoke matrix, conformance,
+structural checks, generated-output cleanliness, focused tests, and the full
+parallel suite passed.  The release review records the exact commands and
+outcomes; the three-platform CI run is the final remote publication gate.
