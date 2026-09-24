@@ -12,6 +12,12 @@ def test_safe_load_preserves_safe_loader_values() -> None:
     assert safe_load(payload) == yaml.safe_load(payload)
 
 
+def test_safe_load_falls_back_for_a_yaml_flow_mapping() -> None:
+    payload = "{version: timeline/v0.6, kind: project}"
+
+    assert safe_load(payload) == {"version": "timeline/v0.6", "kind": "project"}
+
+
 def test_packaged_schema_document_is_decoded_once_per_name() -> None:
     schema_document.cache_clear()
 

@@ -549,6 +549,14 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
     schema_name = _SCHEMAS.get((kind, version)) if isinstance(version, str) else None
     if schema_name is None:
         raise ContractError("E_CLOSURE_KIND")
+    if kind == "icon-catalog":
+        body = value.get("body")
+        icons = body.get("icons") if isinstance(body, Mapping) else None
+        aliases = body.get("entryAliases") if isinstance(body, Mapping) else None
+        if isinstance(icons, Mapping) and isinstance(aliases, Mapping):
+            missing = next((name for name, target in aliases.items() if target not in icons), None)
+            if missing is not None:
+                raise SchemaContractError(kind, f"/body/entryAliases/{missing}", "alias target must name a canonical icon")
     schema = schema_document(schema_name)
     candidate = _icon_catalog_envelope(value) if kind == "icon-catalog" else _schema_value(value)
     errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))

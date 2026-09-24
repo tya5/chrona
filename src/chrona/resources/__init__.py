@@ -17,10 +17,20 @@ def safe_load(source: Any) -> Any:
     """Safely decode YAML, using JSON's fast path for JSON-subset resources."""
     if isinstance(source, bytes):
         stripped = source.lstrip()
-        return json.loads(stripped) if stripped.startswith(b"{") else yaml.load(source, Loader=_SAFE_LOADER)
+        if stripped.startswith(b"{"):
+            try:
+                return json.loads(stripped)
+            except json.JSONDecodeError:
+                pass
+        return yaml.load(source, Loader=_SAFE_LOADER)
     elif isinstance(source, str):
         stripped = source.lstrip()
-        return json.loads(stripped) if stripped.startswith("{") else yaml.load(source, Loader=_SAFE_LOADER)
+        if stripped.startswith("{"):
+            try:
+                return json.loads(stripped)
+            except json.JSONDecodeError:
+                pass
+        return yaml.load(source, Loader=_SAFE_LOADER)
     else:
         return yaml.load(source, Loader=_SAFE_LOADER)
 

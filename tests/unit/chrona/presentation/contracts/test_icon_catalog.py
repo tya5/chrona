@@ -1,9 +1,11 @@
 from hashlib import sha256
+from types import SimpleNamespace
 
 import pytest
 
 from chrona.presentation.contracts import ClosureIdentity, SchemaContractError, parse_contract, validate_icon_catalog_entry
 from chrona.presentation.contracts.resources import _compact_commands
+from chrona.presentation.model.closure import ClosureError, _selected_catalog_entries
 
 
 def _catalog(source: str = "assets/risk.png"):
@@ -49,3 +51,28 @@ def test_icon_catalog_rejects_noncanonical_compact_geometry(data):
 def test_icon_catalog_rejects_unsafe_asset_address(source):
     with pytest.raises(SchemaContractError):
         parse_contract(ClosureIdentity("icon-catalog", "acme-icons", "r1", "sha256:" + "a" * 64), _catalog(source))
+
+
+def test_icon_catalog_rejects_an_alias_without_a_canonical_target():
+    value = _catalog()
+    value["body"]["entryAliases"] = {"warning": "absent"}
+
+    with pytest.raises(SchemaContractError):
+        parse_contract(ClosureIdentity("icon-catalog", "acme-icons", "r1", "sha256:" + "a" * 64), value)
+
+
+def test_catalog_expands_only_selected_entries_and_reports_selected_schema_errors():
+    value = _catalog()
+    value["body"]["icons"] = {
+        "good": {"kind": "vector", "viewport": {"inlineSize": 24, "blockSize": 24},
+                 "alternative": "Good", "paths": [{"paint": "fill", "data": "M 0 0 L 24 24 Z"}]},
+        "bad": {"kind": "vector"},
+    }
+    catalog = parse_contract(ClosureIdentity("icon-catalog", "acme-icons", "r1", "sha256:" + "c" * 64), value)
+    selected_good = SimpleNamespace(view=SimpleNamespace(visuals=(SimpleNamespace(ref="acme:good", encoding=None),)))
+    assert _selected_catalog_entries(catalog, selected_good)[0].name == "good"
+
+    selected_bad = SimpleNamespace(view=SimpleNamespace(visuals=(SimpleNamespace(ref="acme:bad", encoding=None),)))
+    with pytest.raises(ClosureError, match="E_ICON_CATALOG_SCHEMA") as error:
+        _selected_catalog_entries(catalog, selected_bad)
+    assert error.value.source_ref == "/body/icons/bad"
