@@ -30,7 +30,7 @@ def test_icon_catalog_decodes_only_canonical_compact_geometry():
     value["body"]["icons"] = {"check": {"kind": "vector", "viewport": {"inlineSize": 24, "blockSize": 24},
                                            "alternative": "Check", "paths": [{"paint": "fill", "data": "M 0 0 L 24 24 Z"}]}}
     contract = parse_contract(ClosureIdentity("icon-catalog", "acme-icons", "r1", "sha256:" + "c" * 64), value)
-    assert [command.kind for command in contract.entries[0].paths[0].commands] == ["move", "line", "close"]
+    assert contract.entries[0].paths[0].data == "M 0 0 L 24 24 Z"
 
 
 @pytest.mark.parametrize("data", ("m 0 0", "M 0 0 C 1 2 3 4 5 6", "M 0 0 L 1e3 2", "L 0 0"))

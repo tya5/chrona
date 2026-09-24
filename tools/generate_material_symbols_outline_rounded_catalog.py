@@ -25,6 +25,7 @@ RESOURCES = ROOT / "src/chrona/resources/icons"
 MANIFEST = RESOURCES / "material-symbols-outline-rounded-v2026-09-22.manifest"
 CATALOG = RESOURCES / "material-symbols-outline-rounded-v2026-09-22.yaml"
 NOTICE = RESOURCES / "material-symbols-outline-rounded.NOTICE"
+PROJECTION = RESOURCES / "material-symbols-outline-rounded-v2026-09-22.projection.json"
 MAX_CATALOG_BYTES = 7_000_000
 MAX_GZIP_BYTES = 1_600_000
 
@@ -78,11 +79,18 @@ def main() -> None:
         for short, candidates in sorted(short_candidates.items()):
             if len(candidates) == 1 and short not in body["icons"] and short not in aliases:
                 aliases[short] = candidates[0]
-        CATALOG.write_bytes(yaml.safe_dump(catalog, sort_keys=False).encode())
-        if len(CATALOG.read_bytes()) > MAX_CATALOG_BYTES:
+        catalog_bytes = yaml.safe_dump(catalog, sort_keys=False).encode()
+        CATALOG.write_bytes(catalog_bytes)
+        projection = {
+            "format": "chrona/icon-catalog-projection/v0.1",
+            "catalogIdentity": "sha256:" + sha256(catalog_bytes).hexdigest(),
+            "id": catalog["id"], "version": catalog["version"], "body": catalog["body"],
+        }
+        PROJECTION.write_text(json.dumps(projection, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        if len(catalog_bytes) > MAX_CATALOG_BYTES:
             raise SystemExit("Material Symbols catalog exceeded declared byte limit")
         import gzip
-        if len(gzip.compress(CATALOG.read_bytes(), compresslevel=9)) > MAX_GZIP_BYTES:
+        if len(gzip.compress(catalog_bytes, compresslevel=9)) > MAX_GZIP_BYTES:
             raise SystemExit("Material Symbols catalog exceeded declared gzip byte limit")
         print(json.dumps({"sourceContentIdentity": "sha256:" + sha256(collection.read_bytes()).hexdigest(),
                           "selectionCount": len(selected), "aliasParentClosureCount": len(closure),

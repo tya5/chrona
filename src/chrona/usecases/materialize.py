@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 
 from chrona.presentation.model.closure import resolve_render_context
+from chrona.presentation.contracts.resources import is_packaged_icon_projection
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
@@ -85,7 +86,10 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
     token, address = catalog_reference.get("revision", {}).get("token"), catalog_reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
         raise ValueError("E_MATERIALIZER_CONTEXT")
-    catalog = safe_load(_reference_payload(example, catalog_reference))
+    payload = _reference_payload(example, catalog_reference)
+    if is_packaged_icon_projection(payload):
+        return
+    catalog = safe_load(payload)
     icons = catalog.get("body", {}).get("icons") if isinstance(catalog, dict) else None
     if not isinstance(icons, dict):
         raise ValueError("E_ICON_CATALOG_SCHEMA")

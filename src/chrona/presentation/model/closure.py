@@ -15,7 +15,7 @@ import yaml
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedIconPath, NormalizedVectorIcon, validate_png
 from chrona.presentation.contracts import (
-    ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, LayoutProfileContract,
+    ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, IconEntry, IconPath, LayoutProfileContract,
     PresentationPresetContract,
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
@@ -23,6 +23,7 @@ from chrona.presentation.contracts import (
     freeze, parse_contract,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
+from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands, packaged_icon_catalog_contract
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.yaml_codec import safe_load
 
@@ -149,7 +150,7 @@ class RenderClosure:
         asset_id = f"{catalog.set_name}:{canonical}"
         asset = next((item for item in self.icon_assets if item.icon_id == asset_id), None)
         if asset is None:
-            candidates = get_close_matches(name, sorted({entry.name for entry in catalog.entries} | set(catalog.entry_aliases)), n=3, cutoff=0.45)
+            candidates = get_close_matches(name, sorted(({entry.name for entry in catalog.entries} | set(catalog.entry_names)) | set(catalog.entry_aliases)), n=3, cutoff=0.45)
             detail = f"reference={reference}; catalog={catalog.set_name}; candidates={','.join(candidates) or 'none'}"
             raise ClosureError("E_ICON_NAME_UNKNOWN", detail=detail)
         return asset
@@ -460,7 +461,10 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         raise ClosureError(str(error)) from error
     catalog_resources = tuple(item for item in resources if item.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
-    icon_assets = _load_icon_assets(context_contract, catalog_resources, reader)
+    view_contract = resources[1].contract
+    if not isinstance(view_contract, ViewContract):
+        raise ClosureError("E_CLOSURE_KIND")
+    icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract)
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
 
 
@@ -483,8 +487,33 @@ def _safe_icon_address(address: str) -> bool:
                 and all(part not in {"", ".", ".."} for part in path.parts))
 
 
+def _selected_icon_references(view: ViewContract) -> set[str]:
+    selected: set[str] = set()
+    for visual in view.view.visuals:
+        if visual.ref is not None:
+            selected.add(visual.ref)
+        if visual.encoding is not None:
+            selected.update(str(item) for item in visual.encoding.get("domain", {}).values())
+    return selected
+
+
+def _projected_entry(name: str, raw: FrozenDict) -> IconEntry:
+    viewport, paths, source = raw["viewport"], raw.get("paths", ()), raw.get("source")
+    if not isinstance(viewport, FrozenDict) or not isinstance(paths, (FrozenList, tuple)):
+        raise ClosureError("E_ICON_CATALOG_SCHEMA")
+    normalized = tuple(IconPath(str(path["paint"]), str(path["data"]),
+                                float(path["strokeWidth"]) if "strokeWidth" in path else None,
+                                str(path["lineCap"]) if "lineCap" in path else None,
+                                str(path["lineJoin"]) if "lineJoin" in path else None)
+                       for path in paths if isinstance(path, FrozenDict))
+    if len(normalized) != len(paths):
+        raise ClosureError("E_ICON_CATALOG_SCHEMA")
+    return IconEntry(name, str(raw["kind"]), (int(viewport["inlineSize"]), int(viewport["blockSize"])),
+                     str(raw["alternative"]), normalized, None)
+
+
 def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[ClosureResource, ...],
-                      reader: SnapshotReader) -> tuple[IconAsset, ...]:
+                      reader: SnapshotReader, view: ViewContract) -> tuple[IconAsset, ...]:
     if not catalog_resources:
         return ()
     assets: list[IconAsset] = []
@@ -495,11 +524,21 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
         reference = by_id.get(catalog_resource.id)
         if reference is None:
             raise ClosureError("E_CLOSURE_KIND")
-        for entry in catalog_resource.contract.entries:
+        catalog = catalog_resource.contract
+        if catalog.projected_icons is None:
+            entries = catalog.entries
+        else:
+            selected = _selected_icon_references(view)
+            names = {reference.split(":", 1)[1] for reference in selected
+                     if reference.count(":") == 1 and reference.split(":", 1)[0] in {catalog.set_name, *catalog.aliases}}
+            canonical = {str(catalog.entry_aliases.get(name, name)) for name in names}
+            entries = tuple(_projected_entry(name, catalog.projected_icons[name]) for name in sorted(canonical)
+                            if name in catalog.projected_icons)
+        for entry in entries:
             icon_id = f"{catalog_resource.contract.set_name}:{entry.name}"
             if entry.kind == "vector":
                 paths = tuple(NormalizedIconPath(tuple(IconPathCommand(command.kind, command.points)
-                                                        for command in path.commands), path.paint,
+                                                        for command in _compact_commands(path.data)), path.paint,
                                            path.stroke_width, path.line_cap, path.line_join)
                               for path in entry.paths)
                 assets.append(IconAsset(icon_id, entry.kind, catalog_resource.content_identity,
@@ -543,7 +582,7 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
             icon_id = f"{catalog.set_name}:{entry.name}"
             if entry.kind == "vector":
                 paths = tuple(NormalizedIconPath(tuple(IconPathCommand(command.kind, command.points)
-                                                        for command in path.commands), path.paint,
+                                                        for command in _compact_commands(path.data)), path.paint,
                                            path.stroke_width, path.line_cap, path.line_join)
                               for path in entry.paths)
                 assets.append(IconAsset(icon_id, entry.kind, resource.content_identity, entry.viewport,
@@ -579,6 +618,14 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     except SnapshotReadError as error:
         raise ClosureError(error.diagnostic_id) from error
     computed_identity = f"sha256:{sha256(payload).hexdigest()}"
+    if expected_kind == "icon-catalog":
+        try:
+            projected = packaged_icon_catalog_contract(reference, payload)
+        except ContractError as error:
+            raise ClosureError(error.args[0]) from error
+        if projected is not None:
+            return ClosureResource(expected_kind, projected.identity.id, projected.identity.revision,
+                                   projected.identity.content_identity, projected)
     value = safe_load(payload)
     if expected_kind == "project":
         actual_id = value.get("project", {}).get("id") if isinstance(value, dict) else None

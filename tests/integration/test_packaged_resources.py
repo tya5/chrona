@@ -8,6 +8,7 @@ import yaml
 
 from chrona.resources import schema_resource
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
+from chrona.presentation.contracts.resources import is_packaged_icon_projection, packaged_icon_catalog_contract
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -65,3 +66,19 @@ def test_bundled_material_catalog_is_complete_and_size_bounded():
     assert contract.entry_aliases["flag"] == "flag-outline-rounded"
     assert contract.entry_aliases["check-outline-rounded"] == "check-rounded"
     assert perf_counter() - started < 10
+
+
+def test_bundled_material_projection_is_identity_bound_and_complete():
+    catalog = RESOURCES.joinpath("icons", "material-symbols-outline-rounded-v2026-09-22.yaml").read_bytes()
+    reference = {
+        "id": "material-icons", "kind": "icon-catalog", "revision": {"token": "packaged"},
+        "contentIdentity": "sha256:" + sha256(catalog).hexdigest(),
+    }
+
+    projected = packaged_icon_catalog_contract(reference, catalog)
+
+    assert projected is not None
+    assert len(projected.entry_names) == 4015
+    assert projected.entries == ()
+    assert is_packaged_icon_projection(catalog)
+    assert packaged_icon_catalog_contract(reference, catalog + b"\n") is None
