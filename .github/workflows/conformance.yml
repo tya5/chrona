@@ -29,7 +29,9 @@ jobs:
       - run: python tools/check_text_encoding.py
       - run: pytest -n 4
       - run: python -m pip wheel . --no-deps -w dist
-      - run: python -m pip install --force-reinstall --no-deps dist/*.whl
+      - name: Install the built wheel
+        shell: bash
+        run: python -m pip install --force-reinstall --no-deps dist/*.whl
       - name: Smoke-test installed wheel outside the checkout
         shell: bash
         run: |
