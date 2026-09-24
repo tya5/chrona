@@ -104,6 +104,25 @@ override rejection, deterministic guided render/provenance fixtures, atomicity a
 stale/collision cases, Stage-2-to-3 byte equivalence, closure validation, and public
 materializer coverage.  A screenshot or hand-authored SVG is not sufficient evidence.
 
+### 4.1 Workspace revision recovery
+
+Before the first `authoring-command/v0.1` mutation, a caller obtains the
+workspace-local compare-and-set precondition through:
+
+```text
+chrona workspace revision WORKSPACE
+```
+
+The command validates the workspace and prints its canonical workspace content
+identity. That value is the command's `baseRevision`; it is not a Revision
+Store token. An authoring command result has the separate
+`authoring-command-result/v0.1` contract: `commandBaseRevision` records the
+supplied value, `workspaceRevision` records the value observed by the writer,
+and `resultRevision` is the accepted next value. A stale result carries
+`E_AUTHORING_BASE_REVISION` with both expected and received identities. This
+file-local rule is the equivalent precondition allowed by Specification 10 and
+does not modify the Store-command rules in Specification 35.
+
 ## 5. Successor boundaries
 
 This document does not add a compatibility parser, GUI workflow, external-sync

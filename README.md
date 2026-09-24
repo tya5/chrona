@@ -169,6 +169,11 @@ an explicit `--store-config`; otherwise they discover `.chrona/store.yaml` by
 walking upward from the current project directory. No home-directory or broad
 filesystem fallback is used.
 
+Materialization verifies declared generated evidence. If a reviewed source
+change intentionally changes that artifact, rerun the same `chrona materialize`
+command with `--write` to refresh it; without that explicit flag, a mismatch is
+rejected.
+
 ## Specification
 
 The current specification set is maintained in [`docs/specification/`](docs/specification/).

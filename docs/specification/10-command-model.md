@@ -53,6 +53,13 @@ equivalent compare-and-set condition. A Command Engine passes it unchanged to th
 it must not parse, fabricate, or assume Git syntax. A command must not silently apply to
 an arbitrary working-tree tip.
 
+The closed `authoring-command/v0.1` family is a target-specific equivalent
+condition, not a Revision Store command: its `baseRevision` is the canonical
+content identity of the validated local authoring workspace. Specification 51
+owns that file-local rule and its public revision-read operation. It does not
+alter the opaque Store-token rule for this Command Model or the
+`command/v0.2` operational profile in Specification 35.
+
 ### 3.1 v0.1 serialized request document
 
 Command documents are transport or review inputs, never members of the Presentation
@@ -225,6 +232,12 @@ A command result is explicit about success or rejection.
 | `invalidated` | Derived artifacts no longer valid | Empty |
 
 The change set is structured by stable IDs and owning fields so it can be rendered as a meaningful Git diff. It is not required to preserve incidental YAML formatting or a renderer's internal operation history.
+
+The table above describes Store command results. The authoring-workspace
+equivalent precondition uses the separate `authoring-command-result/v0.1`
+contract: it reports `commandBaseRevision`, the observed
+`workspaceRevision`, and `resultRevision`, so a rejected workspace command
+never mislabels the observed revision as an echoed input.
 
 ## 7. Transactions, batches, and concurrency
 
