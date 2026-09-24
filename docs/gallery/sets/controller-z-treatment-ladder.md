@@ -58,7 +58,7 @@ The pair changes only `theme`.
      group-header-band:
        opacity: opacity.group-header-band
      heading:
-@@ -134,6 +144,24 @@
+@@ -140,6 +150,24 @@
      editorial:
        type: fontFamily
        value: Noto Sans, sans-serif
@@ -83,14 +83,14 @@ The pair changes only `theme`.
      heading-line-height:
        type: number
        value: 1.2
-@@ -230,6 +258,6 @@
+@@ -240,6 +268,6 @@
      timeline-row-height:
        type: number
        value: 72
 -id: executive-light
 +id: elevated-light
  kind: theme
- version: chrona/theme/v0.5
+ version: chrona/theme/v0.7
 
 
 ## Accessibility

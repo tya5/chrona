@@ -60,7 +60,10 @@ The pair changes only `view`.
 -    - launch
 -    presentation: header
 +    rollup: bar
-@@ -39,10 +35,12 @@
+   markers:
+   - kind: asOf
+     label: as of
+@@ -36,10 +32,12 @@
      tieBreak: id
    rows:
      mode: automatic
@@ -74,7 +77,7 @@ The pair changes only `view`.
        - tvac
        - emc
        - psr
-@@ -59,10 +57,11 @@
+@@ -56,10 +54,11 @@
    - id: Work package
      missing: em-dash
      source: title
@@ -88,7 +91,7 @@ The pair changes only `view`.
    - format: signedDays
      id: "\u0394"
      missing: em-dash
-@@ -82,9 +81,9 @@
+@@ -79,9 +78,9 @@
        mode: semantic
        overflow: suppress
    window:
@@ -100,7 +103,7 @@ The pair changes only `view`.
 +    start: '2027-06-28'
 +id: halcyon-07-replan-baseline
  kind: view
- version: chrona/view/v0.12
+ version: chrona/view/v0.13
 
 
 ## Accessibility

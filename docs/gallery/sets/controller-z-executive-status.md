@@ -33,7 +33,7 @@ The pair changes only `view`.
 ```diff
 --- executive.yaml
 +++ plan-only.yaml
-@@ -1,26 +1,14 @@
+@@ -1,64 +1,43 @@
  body:
    comparison:
 -    actual: required
@@ -59,7 +59,7 @@ The pair changes only `view`.
 -    - validation-team
 -    - factory-team
 -    presentation: header
-@@ -28,40 +16,31 @@
+   ordering:
      by: plannedStart
      direction: ascending
      tieBreak: id
@@ -108,7 +108,7 @@ The pair changes only `view`.
 +    mode: selected-planned
 +id: controller-z-plan-only
  kind: view
- version: chrona/view/v0.12
+ version: chrona/view/v0.13
 
 
 ## Accessibility
