@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import yaml
 
-from chrona.resources import schema_document
+from chrona.resources import safe_load, schema_document
 from chrona.presentation.contracts.resources import _registry
-from chrona.yaml_codec import safe_load
 
 
 def test_safe_load_preserves_safe_loader_values() -> None:

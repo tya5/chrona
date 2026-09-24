@@ -4,9 +4,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from functools import cache
-from hashlib import sha256
-from importlib.resources import files
-import json
 import math
 import re
 from typing import Any, Mapping
@@ -401,75 +398,19 @@ class IconCatalogContract(ResourceContract):
     provenance: FrozenDict
     entry_aliases: FrozenDict
     entries: tuple[IconEntry, ...]
-    entry_names: tuple[str, ...] = ()
-    projected_icons: FrozenDict | None = None
+    entry_names: tuple[str, ...]
+    raw_icons: FrozenDict
 
 
-_MATERIAL_PROJECTION = "icons/material-symbols-outline-rounded-v2026-09-22.projection.json"
-
-
-def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: FrozenDict, *, validate_geometry: bool) -> IconCatalogContract:
+def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: FrozenDict) -> IconCatalogContract:
     raw_icons = body["icons"]
     if not isinstance(raw_icons, FrozenDict):
         raise ContractError("E_CLOSURE_KIND")
-    entries: list[IconEntry] = []
-    for name, raw in sorted(raw_icons.items()):
-        if not isinstance(raw, FrozenDict) or not isinstance(raw.get("viewport"), FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
-        viewport, source, paths = raw["viewport"], raw.get("source"), raw.get("paths", ())
-        if source is not None and not isinstance(source, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
-        if not isinstance(paths, (FrozenList, tuple)) or not all(isinstance(path, FrozenDict) for path in paths):
-            raise ContractError("E_CLOSURE_KIND")
-        normalized: list[IconPath] = []
-        for path in paths:
-            data = path.get("data")
-            if validate_geometry:
-                _compact_commands(data)
-            if not isinstance(data, str):
-                raise ContractError("E_ICON_CATALOG_GEOMETRY")
-            normalized.append(IconPath(str(path["paint"]), data,
-                                       float(path["strokeWidth"]) if "strokeWidth" in path else None,
-                                       str(path["lineCap"]) if "lineCap" in path else None,
-                                       str(path["lineJoin"]) if "lineJoin" in path else None))
-        raster = IconRasterSource(str(source["address"]), str(source["contentIdentity"])) if source is not None else None
-        entries.append(IconEntry(str(name), str(raw["kind"]), (int(viewport["inlineSize"]), int(viewport["blockSize"])),
-                                 str(raw["alternative"]), tuple(normalized), raster))
     aliases, provenance, entry_aliases = body["aliases"], body["provenance"], body["entryAliases"]
     if not isinstance(aliases, (FrozenList, tuple)) or not isinstance(provenance, FrozenDict) or not isinstance(entry_aliases, FrozenDict):
         raise ContractError("E_CLOSURE_KIND")
-    return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance, entry_aliases, tuple(entries))
-
-
-@cache
-def _material_projection() -> FrozenDict:
-    value = json.loads(files("chrona.resources").joinpath(_MATERIAL_PROJECTION).read_text(encoding="utf-8"))
-    if not isinstance(value, Mapping):
-        raise ContractError("E_ICON_CATALOG_SCHEMA")
-    return freeze(value)
-
-
-def packaged_icon_catalog_contract(reference: Mapping[str, Any], payload: bytes) -> IconCatalogContract | None:
-    projection = _material_projection(); identity = "sha256:" + sha256(payload).hexdigest()
-    if (reference.get("contentIdentity") != identity or projection.get("catalogIdentity") != identity
-            or reference.get("id") != projection.get("id") or projection.get("version") != "chrona/icon-catalog/v0.3"):
-        return None
-    body = projection.get("body")
-    if not isinstance(body, FrozenDict):
-        raise ContractError("E_ICON_CATALOG_SCHEMA")
-    raw_icons = body.get("icons")
-    if not isinstance(raw_icons, FrozenDict):
-        raise ContractError("E_ICON_CATALOG_SCHEMA")
-    aliases, provenance, entry_aliases = body["aliases"], body["provenance"], body["entryAliases"]
-    if not isinstance(aliases, (FrozenList, tuple)) or not isinstance(provenance, FrozenDict) or not isinstance(entry_aliases, FrozenDict):
-        raise ContractError("E_ICON_CATALOG_SCHEMA")
-    closure_identity = ClosureIdentity("icon-catalog", str(projection["id"]), str(reference["revision"]["token"]), identity)
-    return IconCatalogContract(closure_identity, str(projection["version"]), str(body["set"]), tuple(str(item) for item in aliases),
-                               provenance, entry_aliases, (), tuple(sorted(str(name) for name in raw_icons)), raw_icons)
-
-
-def is_packaged_icon_projection(payload: bytes) -> bool:
-    return _material_projection().get("catalogIdentity") == "sha256:" + sha256(payload).hexdigest()
+    return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance,
+                               entry_aliases, (), tuple(sorted(str(name) for name in raw_icons)), raw_icons)
 
 
 @dataclass(frozen=True)
@@ -609,11 +550,56 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
     if schema_name is None:
         raise ContractError("E_CLOSURE_KIND")
     schema = schema_document(schema_name)
-    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(value)))
+    candidate = _icon_catalog_envelope(value) if kind == "icon-catalog" else _schema_value(value)
+    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))
     if errors:
         violation = explain_errors(errors, resource_kind=kind, resource_identity=identity.id)
         raise SchemaContractError(kind, violation.pointer, violation.message, violation)
     return version
+
+
+def _icon_catalog_envelope(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate catalog framing without paying to decode every unselected icon."""
+    body = value.get("body")
+    icons = body.get("icons") if isinstance(body, dict) else None
+    if not isinstance(icons, dict) or not icons:
+        return _schema_value(value)
+    entry_aliases = body.get("entryAliases")
+    name = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
+    if (not all(isinstance(key, str) and name.fullmatch(key) and isinstance(entry, Mapping)
+                for key, entry in icons.items())
+            or not isinstance(entry_aliases, dict)
+            or not all(isinstance(key, str) and name.fullmatch(key)
+                       and isinstance(target, str) and name.fullmatch(target)
+                       for key, target in entry_aliases.items())):
+        # Keep the malformed map intact so normal schema diagnostics describe it.
+        return _schema_value(value)
+    # The schema validates the map's entry shape through one representative;
+    # every selected entry is validated independently before it reaches Scene.
+    name, entry = next(iter(icons.items()))
+    envelope = dict(value)
+    envelope_body = dict(body)
+    envelope_body["icons"] = {name: entry}
+    envelope["body"] = envelope_body
+    return _schema_value(envelope)
+
+
+def validate_icon_catalog_entry(catalog: IconCatalogContract, name: str) -> None:
+    """Schema-check one selected raw entry, then let closure expand its commands."""
+    raw = catalog.raw_icons.get(name)
+    if raw is None:
+        raise ContractError("E_ICON_CATALOG_SCHEMA")
+    source = {
+        "version": catalog.version, "kind": "icon-catalog", "id": catalog.identity.id,
+        "body": {"set": catalog.set_name, "aliases": list(catalog.aliases),
+                 "provenance": dict(catalog.provenance), "entryAliases": dict(catalog.entry_aliases),
+                 "icons": {name: raw}},
+    }
+    schema = schema_document(_SCHEMAS[("icon-catalog", catalog.version)])
+    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(source)))
+    if errors:
+        violation = explain_errors(errors, resource_kind="icon-catalog", resource_identity=catalog.identity.id)
+        raise SchemaContractError("icon-catalog", violation.pointer, violation.message, violation)
 
 
 def _schema_value(value: Any) -> Any:
@@ -746,7 +732,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
     if identity.kind == "layout-profile":
         return LayoutProfileContract(identity, version, frozen)
     if identity.kind == "icon-catalog":
-        return _icon_catalog_contract(identity, version, body, validate_geometry=True)
+        return _icon_catalog_contract(identity, version, body)
     if identity.kind == "render-context":
         inputs, environment, target = body["inputs"], body["environment"], body["target"]
         if not all(isinstance(item, FrozenDict) for item in (inputs, environment, target)):

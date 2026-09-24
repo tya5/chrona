@@ -5,11 +5,10 @@ from typing import Any
 
 import jsonschema
 from chrona.core.diagnostics import Diagnostic
-from chrona.resources import schema_document
+from chrona.resources import safe_load, schema_document
 from chrona.schema_diagnostics import explain_errors
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
-from chrona.yaml_codec import safe_load
 
 PACKAGE_ID = "implementation-delivery"
 DELIVERY_PROFILES = {"implementation-delivery.work-item", "implementation-delivery.delivery-gate"}

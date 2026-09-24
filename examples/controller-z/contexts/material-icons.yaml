@@ -14,7 +14,7 @@ body:
       store: {provider: package, identity: chrona.resources}
       address: icons/material-symbols-outline-rounded-v2026-09-22.yaml
       revision: {token: v2026-09-22}
-      contentIdentity: sha256:5726d3695593177d7cc9da73cab9a16f0ba4f8af9ff92c487163d8aa87f8628f
+      contentIdentity: sha256:c9550b8542dcc586757cee41e4d9ce90a3e12f2b8613056e4fabbc680b271b17
     actual: {id: controller-z-observed, kind: actual-set, store: {provider: local, identity: controller-z-example}, address: actual.yaml, revision: {token: example-v1}}
     detailProfile: {id: controller-z-review-detail, kind: review-detail-profile, store: {provider: local, identity: controller-z-example}, address: profiles/review-detail.yaml, revision: {token: example-v1}}
   environment:

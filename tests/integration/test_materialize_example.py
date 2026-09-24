@@ -143,14 +143,14 @@ def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_tex
     context = yaml.safe_load((example / "contexts/material-icons.yaml").read_text())
     reference = context["body"]["inputs"]["iconCatalogs"][0]
     assert reference["store"] == {"provider": "package", "identity": "chrona.resources"}
-    assert reference["contentIdentity"] == "sha256:5726d3695593177d7cc9da73cab9a16f0ba4f8af9ff92c487163d8aa87f8628f"
+    assert reference["contentIdentity"] == "sha256:c9550b8542dcc586757cee41e4d9ce90a3e12f2b8613056e4fabbc680b271b17"
     materialize(example / "manifest.yaml", "material-icons", tmp_path / "material-icons", write=False)
     artifact = (tmp_path / "material-icons/review.svg").read_text(encoding="utf-8")
     assert artifact == (example / "generated/material-icons.svg").read_text(encoding="utf-8")
     assert artifact.count('data-purpose="label-visual"') == 4
     assert 'data-scene-id="visual:column:Workstream:leading"' in artifact
     assert 'data-scene-id="visual:cell:firmware:Workstream:leading"' in artifact
-    assert 'data-asset-identity="sha256:5726d3695593177d7cc9da73cab9a16f0ba4f8af9ff92c487163d8aa87f8628f"' in artifact
+    assert 'data-asset-identity="sha256:c9550b8542dcc586757cee41e4d9ce90a3e12f2b8613056e4fabbc680b271b17"' in artifact
     assert 'font-size="13"' in artifact and 'font-size="24"' in artifact
 
 

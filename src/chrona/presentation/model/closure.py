@@ -20,12 +20,12 @@ from chrona.presentation.contracts import (
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
     SnapshotRefContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
-    freeze, parse_contract,
+    freeze, parse_contract, validate_icon_catalog_entry, IconRasterSource,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
-from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands, packaged_icon_catalog_contract
+from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
 from chrona.core.ports import SnapshotReadError, SnapshotReader
-from chrona.yaml_codec import safe_load
+from chrona.resources import safe_load
 
 
 class ClosureError(ValueError):
@@ -209,7 +209,8 @@ def resolve_draft_render(
     _validate_icon_catalog_set(catalog_resources)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter,
-                                        icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths))
+                                        icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths,
+                                                                            _draft_view(resources)))
 
 
 def resolve_guided_draft_render(
@@ -250,7 +251,8 @@ def resolve_guided_draft_render(
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
-                                        icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths))
+                                        icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths,
+                                                                            _draft_view(resources)))
 
 
 def _declared_child(root: Path, relative: str) -> Path:
@@ -258,6 +260,13 @@ def _declared_child(root: Path, relative: str) -> Path:
     if root.resolve() not in candidate.parents:
         raise ClosureError("E_AUTHORING_PRESET_PATH")
     return candidate
+
+
+def _draft_view(resources: list[ClosureResource]) -> ViewContract:
+    view = next((resource.contract for resource in resources if resource.kind == "view"), None)
+    if not isinstance(view, ViewContract):
+        raise ClosureError("E_CLOSURE_KIND")
+    return view
 
 
 def _plain_value(value: Any) -> Any:
@@ -414,14 +423,16 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
             "adapterGrammar": typesetter.adapter_grammar}
 
 
-def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader) -> RenderClosure:
-    context = _load_presentation(reference, reader)
+def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader,
+                           *, decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
+    context = _load_presentation(reference, reader, decoded_resources)
     if context.version != "chrona/render-context/v0.12":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
-    return _resolve_layout_context(context, reader)
+    return _resolve_layout_context(context, reader, decoded_resources)
 
 
-def _resolve_layout_context(context_contract: RenderContextContract, reader: SnapshotReader) -> RenderClosure:
+def _resolve_layout_context(context_contract: RenderContextContract, reader: SnapshotReader,
+                            decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
     ordered = (
         (context_contract.project.as_reader_reference(), "project"),
         (context_contract.view.as_reader_reference(), "view"),
@@ -429,11 +440,11 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         (context_contract.color_scheme.as_reader_reference(), "color-scheme"),
         (context_contract.layout.as_reader_reference(), "layout-profile"),
     )
-    resources = [_load_reference(reference, reader, kind) for reference, kind in ordered]
+    resources = [_load_reference(reference, reader, kind, decoded_resources) for reference, kind in ordered]
     for extension in resources[0].contract.extensions:
         package_reference = extension.get("resource")
         if package_reference is not None:
-            package = _load_reference(package_reference, reader, "profile-package")
+            package = _load_reference(package_reference, reader, "profile-package", decoded_resources)
             if package.contract.package_id != extension.get("packageId"):
                 raise ClosureError("E_CLOSURE_ID")
             resources.append(package)
@@ -442,10 +453,10 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
                             (context_contract.detail_profile, "review-detail-profile"),
                             *((reference, "icon-catalog") for reference in (context_contract.icon_catalogs or ()))):
         if reference is not None:
-            resources.append(_load_reference(reference.as_reader_reference(), reader, kind))
+            resources.append(_load_reference(reference.as_reader_reference(), reader, kind, decoded_resources))
     if context_contract.snapshot is not None:
-        snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref")
-        snapshot_project = _load_reference(snapshot.contract.project.as_reader_reference(), reader, "project")
+        snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref", decoded_resources)
+        snapshot_project = _load_reference(snapshot.contract.project.as_reader_reference(), reader, "project", decoded_resources)
         if snapshot_project.id != resources[0].id:
             raise ClosureError("E_CLOSURE_ID")
         resources.extend((snapshot, ClosureResource(
@@ -500,7 +511,12 @@ def _selected_icon_references(view: ViewContract) -> set[str]:
     return selected
 
 
-def _projected_entry(name: str, raw: FrozenDict) -> IconEntry:
+def _selected_icon_entry(catalog: IconCatalogContract, name: str) -> IconEntry:
+    try:
+        validate_icon_catalog_entry(catalog, name)
+    except ContractError as error:
+        raise ClosureError("E_ICON_CATALOG_SCHEMA", f"/body/icons/{name}") from error
+    raw = catalog.raw_icons[name]
     viewport, paths, source = raw["viewport"], raw.get("paths", ()), raw.get("source")
     if not isinstance(viewport, FrozenDict) or not isinstance(paths, (FrozenList, tuple)):
         raise ClosureError("E_ICON_CATALOG_SCHEMA")
@@ -511,8 +527,27 @@ def _projected_entry(name: str, raw: FrozenDict) -> IconEntry:
                        for path in paths if isinstance(path, FrozenDict))
     if len(normalized) != len(paths):
         raise ClosureError("E_ICON_CATALOG_SCHEMA")
+    source_value = raw.get("source")
+    source = None
+    if source_value is not None:
+        if not isinstance(source_value, FrozenDict):
+            raise ClosureError("E_ICON_CATALOG_SCHEMA")
+        source = IconRasterSource(str(source_value["address"]), str(source_value["contentIdentity"]))
     return IconEntry(name, str(raw["kind"]), (int(viewport["inlineSize"]), int(viewport["blockSize"])),
-                     str(raw["alternative"]), normalized, None)
+                     str(raw["alternative"]), normalized, source)
+
+
+def _selected_catalog_entries(catalog: IconCatalogContract, view: ViewContract) -> tuple[IconEntry, ...]:
+    names: set[str] = set()
+    for reference in _selected_icon_references(view):
+        if reference.count(":") != 1:
+            continue
+        set_name, name = reference.split(":", 1)
+        if set_name in {catalog.set_name, *catalog.aliases}:
+            canonical = str(catalog.entry_aliases.get(name, name))
+            if canonical in catalog.raw_icons:
+                names.add(canonical)
+    return tuple(_selected_icon_entry(catalog, name) for name in sorted(names))
 
 
 def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[ClosureResource, ...],
@@ -528,15 +563,7 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
         if reference is None:
             raise ClosureError("E_CLOSURE_KIND")
         catalog = catalog_resource.contract
-        if catalog.projected_icons is None:
-            entries = catalog.entries
-        else:
-            selected = _selected_icon_references(view)
-            names = {reference.split(":", 1)[1] for reference in selected
-                     if reference.count(":") == 1 and reference.split(":", 1)[0] in {catalog.set_name, *catalog.aliases}}
-            canonical = {str(catalog.entry_aliases.get(name, name)) for name in names}
-            entries = tuple(_projected_entry(name, catalog.projected_icons[name]) for name in sorted(canonical)
-                            if name in catalog.projected_icons)
+        entries = _selected_catalog_entries(catalog, view)
         for entry in entries:
             icon_id = f"{catalog_resource.contract.set_name}:{entry.name}"
             if entry.kind == "vector":
@@ -571,7 +598,7 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
 
 
 def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
-                            catalog_paths: tuple[Path, ...]) -> tuple[IconAsset, ...]:
+                            catalog_paths: tuple[Path, ...], view: ViewContract) -> tuple[IconAsset, ...]:
     """Close exactly the explicit local Draft catalog files and their raster bytes."""
     paths_by_identity = {resource.content_identity: path for resource, path in zip(catalog_resources, catalog_paths)}
     assets: list[IconAsset] = []
@@ -581,7 +608,7 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
         catalog = resource.contract
         catalog_path = paths_by_identity[resource.content_identity]
         root = catalog_path.parent.resolve()
-        for entry in catalog.entries:
+        for entry in _selected_catalog_entries(catalog, view):
             icon_id = f"{catalog.set_name}:{entry.name}"
             if entry.kind == "vector":
                 paths = tuple(NormalizedIconPath(tuple(IconPathCommand(command.kind, command.points)
@@ -613,7 +640,8 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
     return tuple(assets)
 
 
-def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str) -> ClosureResource:
+def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str,
+                    decoded_resources: Mapping[str, Any] | None = None) -> ClosureResource:
     if reference.get("kind") != expected_kind:
         raise ClosureError("E_CLOSURE_KIND")
     try:
@@ -621,15 +649,9 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     except SnapshotReadError as error:
         raise ClosureError(error.diagnostic_id) from error
     computed_identity = f"sha256:{sha256(payload).hexdigest()}"
-    if expected_kind == "icon-catalog":
-        try:
-            projected = packaged_icon_catalog_contract(reference, payload)
-        except ContractError as error:
-            raise ClosureError(error.args[0]) from error
-        if projected is not None:
-            return ClosureResource(expected_kind, projected.identity.id, projected.identity.revision,
-                                   projected.identity.content_identity, projected)
-    value = safe_load(payload)
+    value = (decoded_resources or {}).get(computed_identity)
+    if value is None:
+        value = safe_load(payload)
     if expected_kind == "project":
         actual_id = value.get("project", {}).get("id") if isinstance(value, dict) else None
     elif expected_kind == "profile-package":
@@ -661,8 +683,9 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     return ClosureResource(expected_kind, actual_id, identity.revision, identity.content_identity, contract)
 
 
-def _load_presentation(reference: dict[str, Any], reader: SnapshotReader) -> RenderContextContract:
-    item = _load_reference(reference, reader, "render-context")
+def _load_presentation(reference: dict[str, Any], reader: SnapshotReader,
+                       decoded_resources: Mapping[str, Any] | None = None) -> RenderContextContract:
+    item = _load_reference(reference, reader, "render-context", decoded_resources)
     if not isinstance(item.contract, RenderContextContract):
         raise ClosureError("E_CLOSURE_KIND")
     return item.contract

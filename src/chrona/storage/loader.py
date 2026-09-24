@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from chrona.core.ports import SnapshotReadError, SnapshotReader
-from chrona.yaml_codec import safe_load
+from chrona.resources import safe_load
 
 
 def load_project(reference: dict[str, Any], reader: SnapshotReader) -> dict[str, Any]:

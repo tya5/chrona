@@ -10,9 +10,8 @@ import yaml
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
                        parse_amount, requires_working_calendar)
-from chrona.resources import schema_document, schema_resource
+from chrona.resources import safe_load, schema_document, schema_resource
 from chrona.schema_diagnostics import explain_errors
-from chrona.yaml_codec import safe_load
 
 
 SCHEMA_PATH = schema_resource("project-v0.6.schema.yaml")

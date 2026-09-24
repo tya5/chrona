@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Protocol
 import yaml
 
-from chrona.yaml_codec import safe_load
+from chrona.resources import safe_load
 
 
 class ActualStore(Protocol):

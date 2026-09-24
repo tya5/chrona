@@ -14,9 +14,8 @@ import subprocess
 import tarfile
 import tempfile
 
-import yaml
-
 from chrona.presentation.icons.importer import import_iconify
+from chrona.resources import safe_load
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +24,6 @@ RESOURCES = ROOT / "src/chrona/resources/icons"
 MANIFEST = RESOURCES / "material-symbols-outline-rounded-v2026-09-22.manifest"
 CATALOG = RESOURCES / "material-symbols-outline-rounded-v2026-09-22.yaml"
 NOTICE = RESOURCES / "material-symbols-outline-rounded.NOTICE"
-PROJECTION = RESOURCES / "material-symbols-outline-rounded-v2026-09-22.projection.json"
 MAX_CATALOG_BYTES = 7_000_000
 MAX_GZIP_BYTES = 1_600_000
 
@@ -68,7 +66,7 @@ def main() -> None:
         import_iconify(collection, CATALOG, set_name="material", aliases=("material-symbols",),
                        license_spdx="Apache-2.0", notice_path=NOTICE, include_path=MANIFEST,
                        source_version=PACKAGE.rsplit("@", 1)[1])
-        catalog = yaml.load(CATALOG.read_bytes(), Loader=yaml.CSafeLoader)
+        catalog = safe_load(CATALOG.read_bytes())
         body = catalog["body"]
         aliases = body["entryAliases"]
         suffix = "-outline-rounded"
@@ -79,14 +77,8 @@ def main() -> None:
         for short, candidates in sorted(short_candidates.items()):
             if len(candidates) == 1 and short not in body["icons"] and short not in aliases:
                 aliases[short] = candidates[0]
-        catalog_bytes = yaml.safe_dump(catalog, sort_keys=False).encode()
+        catalog_bytes = json.dumps(catalog, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
         CATALOG.write_bytes(catalog_bytes)
-        projection = {
-            "format": "chrona/icon-catalog-projection/v0.1",
-            "catalogIdentity": "sha256:" + sha256(catalog_bytes).hexdigest(),
-            "id": catalog["id"], "version": catalog["version"], "body": catalog["body"],
-        }
-        PROJECTION.write_text(json.dumps(projection, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         if len(catalog_bytes) > MAX_CATALOG_BYTES:
             raise SystemExit("Material Symbols catalog exceeded declared byte limit")
         import gzip

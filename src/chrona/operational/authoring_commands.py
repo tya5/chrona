@@ -14,7 +14,7 @@ from typing import Any, Mapping
 import yaml
 
 from chrona.operational.resources import OperationalResourceError, content_identity
-from chrona.yaml_codec import safe_load
+from chrona.resources import safe_load
 
 
 def read_authoring_workspace(path: Path) -> dict[str, Any]:

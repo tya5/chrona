@@ -73,8 +73,9 @@ def test_draft_closure_closes_only_explicit_catalogs_and_resolves_set_aliases(tm
 
     draft = resolve_draft_render(**_paths(_root()), icon_catalog_paths=(catalog,))
 
-    assert draft.closure.icon_asset("acme-ui:warning").icon_id == "acme:risk"
     assert len(draft.closure.context.icon_catalogs) == 1
+    assert draft.closure.icon_catalogs[0].aliases == ("acme-ui",)
+    assert draft.closure.icon_catalogs[0].entry_aliases["warning"] == "risk"
     with pytest.raises(ClosureError, match="E_ICON_SET_UNKNOWN"):
         draft.closure.icon_asset("other:risk")
     with pytest.raises(ClosureError) as error:
@@ -170,4 +171,5 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
 
     draft = resolve_guided_draft_render(workspace_path=workspace_path)
 
-    assert draft.closure.icon_asset("preset:check").icon_id == "preset:check"
+    assert draft.closure.icon_catalogs[0].set_name == "preset"
+    assert draft.closure.icon_catalogs[0].entry_names == ("check",)

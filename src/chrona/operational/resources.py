@@ -9,9 +9,8 @@ from typing import Any, Mapping
 import jsonschema
 import yaml
 
-from chrona.resources import schema_document
+from chrona.resources import safe_load, schema_document
 from chrona.schema_diagnostics import explain_errors
-from chrona.yaml_codec import safe_load
 
 
 class OperationalResourceError(ValueError):

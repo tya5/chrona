@@ -13,12 +13,11 @@ from typing import Any
 import yaml
 
 from chrona.presentation.model.closure import resolve_render_context
-from chrona.presentation.contracts.resources import is_packaged_icon_projection
+from chrona.resources import safe_load
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
-from chrona.yaml_codec import safe_load
 
 
 @dataclass(frozen=True)
@@ -81,15 +80,12 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
         _copy_reference(example, nested, snapshot)
 
 
-def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot: Path) -> None:
+def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot: Path) -> dict[str, Any]:
     """Copy only declared, identity-pinned catalog bytes into the immutable snapshot."""
     token, address = catalog_reference.get("revision", {}).get("token"), catalog_reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
         raise ValueError("E_MATERIALIZER_CONTEXT")
-    payload = _reference_payload(example, catalog_reference)
-    if is_packaged_icon_projection(payload):
-        return
-    catalog = safe_load(payload)
+    catalog = safe_load(_reference_payload(example, catalog_reference))
     icons = catalog.get("body", {}).get("icons") if isinstance(catalog, dict) else None
     if not isinstance(icons, dict):
         raise ValueError("E_ICON_CATALOG_SCHEMA")
@@ -116,9 +112,11 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
         target = _inside(snapshot / token, asset_address)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(payload)
+    return catalog
 
 
-def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
+def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
+                         *, decoded_catalogs: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
     context = safe_load(context_path.read_bytes())
     if context.get("version") != "chrona/render-context/v0.12" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
@@ -134,7 +132,9 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> t
             raise ValueError("E_MATERIALIZER_CONTEXT")
         _copy_reference(example, icon_catalog, snapshot,
                         target_token=revision if icon_catalog.get("store", {}).get("provider") == "package" else None)
-        _copy_icon_assets(example, icon_catalog, snapshot)
+        catalog = _copy_icon_assets(example, icon_catalog, snapshot)
+        if decoded_catalogs is not None:
+            decoded_catalogs[_identity(_reference_payload(example, icon_catalog))] = catalog
         if icon_catalog.get("store", {}).get("provider") == "package":
             icon_catalog["store"] = body["project"]["store"]
             icon_catalog["revision"] = body["project"]["revision"]
@@ -173,8 +173,10 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"; snapshot.mkdir()
         context_path = _inside(example, str(slide.get("context", manifest["context"])))
-        reference, _ = copy_context_closure(example, context_path, snapshot)
-        closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, reference["store"]["identity"]))
+        decoded_catalogs: dict[str, Any] = {}
+        reference, _ = copy_context_closure(example, context_path, snapshot, decoded_catalogs=decoded_catalogs)
+        closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, reference["store"]["identity"]),
+                                         decoded_resources=decoded_catalogs)
         rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler(), renderer_for(
             {"kind": closure.context.target.kind, "capabilities": list(closure.context.target.capabilities)},
             closure.context.environment.renderer_environment(),

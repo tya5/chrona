@@ -15,7 +15,7 @@ from chrona.presentation.model.closure import _packaged_font_metrics, resolve_dr
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
-from chrona.yaml_codec import safe_load
+from chrona.resources import safe_load
 
 
 def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *, directory: str) -> tuple[dict[str, Any], dict[str, bytes]]:

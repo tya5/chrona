@@ -9,7 +9,7 @@ from typing import Any, Protocol
 import yaml
 
 from chrona.operational.resources import canonical_bytes, content_identity, json_value
-from chrona.yaml_codec import safe_load
+from chrona.resources import safe_load
 
 
 class ImmutableReader(Protocol):
