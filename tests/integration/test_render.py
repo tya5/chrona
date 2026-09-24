@@ -5,6 +5,7 @@ authoring inputs enter the same review pipeline as immutable evidence renders.
 """
 from pathlib import Path
 from copy import deepcopy
+from dataclasses import replace
 import re
 
 import pytest
@@ -82,6 +83,20 @@ def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count
     rendered = render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, None)))
     height = int(re.search(r'height="(\d+)"', rendered.artifact.content.decode()).group(1))
     assert height >= row_count * 72
+
+
+def test_immutable_context_overflow_names_its_context_viewport(tmp_path):
+    """Context diagnostics never advertise Draft-only command-line repair."""
+    root = _root()
+    request = _draft_request(project_path=root / "examples/controller-z/curriculum/scale-30.yaml",
+                             viewport=(1600, 900))
+    context = replace(request.closure.context,
+                      identity=replace(request.closure.context.identity, revision="snapshot"))
+    request = replace(request, closure=replace(request.closure, context=context))
+    with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW") as error:
+        render_review(request)
+    assert "environment.viewport.blockSize" in error.value.message
+    assert "--viewport" not in error.value.message
 
 
 def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):

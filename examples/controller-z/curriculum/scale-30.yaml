@@ -1,0 +1,193 @@
+version: timeline/v0.6
+
+project:
+  id: controller-z-scale-30
+  title: Controller Z — 30-row Draft curriculum
+
+entities:
+  fw-team: {type: team, title: Firmware}
+
+objects:
+  scale-01:
+    type: task
+    title: Scale curriculum item 01
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-02:
+    type: task
+    title: Scale curriculum item 02
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-03:
+    type: task
+    title: Scale curriculum item 03
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-04:
+    type: task
+    title: Scale curriculum item 04
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-05:
+    type: task
+    title: Scale curriculum item 05
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-06:
+    type: task
+    title: Scale curriculum item 06
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-07:
+    type: task
+    title: Scale curriculum item 07
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-08:
+    type: task
+    title: Scale curriculum item 08
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-09:
+    type: task
+    title: Scale curriculum item 09
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-10:
+    type: task
+    title: Scale curriculum item 10
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-11:
+    type: task
+    title: Scale curriculum item 11
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-12:
+    type: task
+    title: Scale curriculum item 12
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-13:
+    type: task
+    title: Scale curriculum item 13
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-14:
+    type: task
+    title: Scale curriculum item 14
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-15:
+    type: task
+    title: Scale curriculum item 15
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-16:
+    type: task
+    title: Scale curriculum item 16
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-17:
+    type: task
+    title: Scale curriculum item 17
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-18:
+    type: task
+    title: Scale curriculum item 18
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-19:
+    type: task
+    title: Scale curriculum item 19
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-20:
+    type: task
+    title: Scale curriculum item 20
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-21:
+    type: task
+    title: Scale curriculum item 21
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-22:
+    type: task
+    title: Scale curriculum item 22
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-23:
+    type: task
+    title: Scale curriculum item 23
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-24:
+    type: task
+    title: Scale curriculum item 24
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-25:
+    type: task
+    title: Scale curriculum item 25
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-26:
+    type: task
+    title: Scale curriculum item 26
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-27:
+    type: task
+    title: Scale curriculum item 27
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-28:
+    type: task
+    title: Scale curriculum item 28
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-29:
+    type: task
+    title: Scale curriculum item 29
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+  scale-30:
+    type: task
+    title: Scale curriculum item 30
+    fields: {owner: fw-team, workstream: scale}
+    schedule: {mode: fixed-span, start: 2026-02-02, end: 2026-02-13}
+
+relations: []
+annotations: {}
+

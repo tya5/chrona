@@ -25,3 +25,18 @@ inputs are organized by authority:
 The corpus contains only manifest-declared materializer evidence; historic
 undeclared variants were removed because they were not reproducible. Materialize
 the Executive slide through `tools/materialize_example.py`.
+
+## Draft scale curriculum
+
+The directly runnable 30-row Draft input demonstrates content-sized Draft
+output without adding undeclared corpus evidence:
+
+```sh
+chrona render examples/controller-z/curriculum/scale-30.yaml \
+  --view examples/controller-z/views/executive.yaml \
+  --theme examples/controller-z/themes/executive-light.yaml \
+  --scheme examples/controller-z/schemes/executive-light.yaml \
+  --layout examples/controller-z/layouts/executive-review.yaml \
+  --actual examples/controller-z/actual.yaml \
+  --viewport 1600xauto --output scale-30.svg
+```

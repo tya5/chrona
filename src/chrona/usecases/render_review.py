@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Mapping
+import re
 
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
@@ -193,7 +194,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
             )
         if request.draft_auto_block:
             if required_block is None:
-                raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface")
+                raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
+                                  detail=f"surface={view.surface}")
             viewport["blockSize"] = required_block
         elif (render_closure.context.identity.revision == "draft" and required_block is not None
               and viewport["blockSize"] < required_block):
@@ -241,7 +243,12 @@ def render_review(request: RenderRequest) -> RenderedReview:
     try:
         surface = compose_review_surface(scene_input)
     except SceneBuildError as error:
-        raise RenderFailed(error.diagnostic_id, error.detail or visual_capability_message(error.diagnostic_id),
+        detail = error.detail or visual_capability_message(error.diagnostic_id)
+        if (error.diagnostic_id == "E_LAYOUT_REQUIRED_OVERFLOW"
+                and render_closure.context.identity.revision != "draft"):
+            detail = re.sub(r"use --viewport \d+x(\d+)",
+                            r"set environment.viewport.blockSize to \1 and rematerialize the Context", detail)
+        raise RenderFailed(error.diagnostic_id, detail,
                            "presentation", error.path) from error
     try:
         validate_surface_visual_profile(surface, visual_profile)

@@ -8,10 +8,10 @@ a finite content extent before Scene composition or output adaptation.  The
 resolved value is not written back to a Context and is not evidence suitable
 for materialization.
 
-`layoutIntent.compactness` is removed.  It has no operational consumer and
-therefore cannot truthfully express a fit policy.  A future density policy
-must be a separately designed, measured Layout policy; it must not silently
-reuse this inert View field.
+The complete `layoutIntent` object is removed: neither `compactness` nor
+`itemStacking` has an operational consumer. A future density or stacking
+policy must be separately designed and measured; it must not silently reuse
+this inert View field.
 
 ## Draft viewport contract
 

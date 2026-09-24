@@ -17,9 +17,10 @@ reproduction and public evidence, use the manifest and public materializer,
 not this guide.
 ## Scale curriculum
 
-The render integration curriculum includes deterministic 30-row and 100-row
-table-timeline inputs.  They exercise the documented Draft command
-`chrona render --viewport 1600xauto`: Layout resolves a finite viewport from
-the measured rows before Scene and output generation.  For reproducible
-published evidence, select an explicit height returned by that command and
-materialize a fixed Context; immutable Contexts never accept `auto`.
+The curriculum includes a committed 30-row Draft Project at
+`examples/controller-z/curriculum/scale-30.yaml` and integration coverage for
+the corresponding 100-row case. They exercise `chrona render --viewport
+1600xauto`: Layout resolves a finite viewport from measured rows before Scene
+and output generation. For reproducible published evidence, select an explicit
+height returned by that command and materialize a fixed Context; immutable
+Contexts never accept `auto`.

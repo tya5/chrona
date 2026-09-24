@@ -7,8 +7,8 @@
 - Fixed Draft overflow reports row count, row minimum, required/available
   extent, and a deterministic explicit `--viewport` value.
 - Context validation and immutable fixed viewport behavior remain unchanged.
-- `layoutIntent.compactness` and its unused typed field have been removed from
-  schema, examples, conformance resources, gallery source snippets, and
+- The complete inert `layoutIntent` object (`compactness` and `itemStacking`)
+  has been removed from schema, examples, conformance resources, gallery source snippets, and
   normative documentation.
 - Integration curriculum exercises 30 and 100 generated rows for both fixed
   overflow and auto success; focused CLI, Layout, render, and closure-input
