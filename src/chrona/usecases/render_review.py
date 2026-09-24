@@ -207,7 +207,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     try:
         surface = compose_review_surface(scene_input)
     except SceneBuildError as error:
-        raise RenderFailed(error.diagnostic_id, visual_capability_message(error.diagnostic_id),
+        raise RenderFailed(error.diagnostic_id, error.detail or visual_capability_message(error.diagnostic_id),
                            "presentation", error.path) from error
     try:
         validate_surface_visual_profile(surface, visual_profile)

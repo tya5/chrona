@@ -22,10 +22,11 @@ class PaintFamily(StrEnum):
 class ScenePaintError(ValueError):
     """Stable pre-render failure for an incomplete completed paint."""
 
-    def __init__(self, diagnostic_id: str, path: str):
+    def __init__(self, diagnostic_id: str, path: str, detail: str | None = None):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.path = path
+        self.detail = detail
 
 
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
@@ -76,7 +77,8 @@ def _fidelity(tokens: ThemeTokenView, role: str, property_name: str) -> str:
         raise ThemeTokenError("E_VISUAL_CAPABILITY_FIDELITY", error.path) from error
     if value is None: return "required"
     if value not in {"required", "decorative-optional"}:
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_FIDELITY", f"/body/roles/{role}/{property_name}")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_FIDELITY", f"/body/roles/{role}/{property_name}",
+                              f"{property_name} {value!r} must be required or decorative-optional")
     return str(value)
 
 
@@ -95,15 +97,18 @@ def _gradient(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | 
     angle = tokens.optional_number(role, "gradientAngle")
     if start is None and end is None and angle is None: return None
     if start is None or end is None or angle is None:
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle",
+                              "gradientStart, gradientEnd, and gradientAngle must be declared together")
     if not 0 <= float(angle) < 360:
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/gradientAngle")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/gradientAngle",
+                              f"gradientAngle {float(angle):g} must be in [0, 360)")
     fidelity = _fidelity(tokens, role, "gradientFidelity")
     if not _admit(capabilities, frozenset((LINEAR_GRADIENT,)), fidelity, optional_omission,
                   f"/body/roles/{role}/gradientAngle"):
         return None
     if bounds is None:
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle",
+                              "gradient bounds are required for a declared gradient")
     inline, block, inline_size, block_size = bounds
     centre = (inline + inline_size / 2, block + block_size / 2)
     direction = (cos(radians(float(angle))), sin(radians(float(angle))))
@@ -120,11 +125,14 @@ def _shadow(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | No
     values = tuple(tokens.optional_number(role, name) for name in ("shadowOffsetX", "shadowOffsetY", "shadowBlur", "shadowOpacity"))
     if color is None and not any(value is not None for value in values): return None
     if color is None or any(value is None for value in values):
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/shadowBlur")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/shadowBlur",
+                              "shadowColor, shadowOffsetX, shadowOffsetY, shadowBlur, and shadowOpacity must be declared together")
     if float(values[2]) > 64:
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/shadowBlur")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/shadowBlur",
+                              f"shadowBlur {float(values[2]):g} exceeds 64")
     if not 0 <= float(values[3]) <= 1:
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/shadowOpacity")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/shadowOpacity",
+                              f"shadowOpacity {float(values[3]):g} must be in [0, 1]")
     fidelity = _fidelity(tokens, role, "shadowFidelity")
     if not _admit(capabilities, frozenset((DROP_SHADOW,)), fidelity, optional_omission,
                   f"/body/roles/{role}/shadowBlur"):
@@ -138,7 +146,8 @@ def _stroke_finish(tokens: ThemeTokenView, role: str, capabilities: frozenset[st
     join = tokens.optional_token(role, "strokeLineJoin", "lineJoin")
     if cap is None and join is None: return None
     if cap not in {"butt", "round", "square"} or join not in {"miter", "round", "bevel"}:
-        raise ThemeTokenError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/strokeLineCap")
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/strokeLineCap",
+                              f"strokeLineCap {cap!r} and strokeLineJoin {join!r} must be declared values")
     fidelity = _fidelity(tokens, role, "strokeFinishFidelity")
     if not _admit(capabilities, frozenset((LINE_CAP, LINE_JOIN)), fidelity, optional_omission,
                   f"/body/roles/{role}/strokeLineCap"):
