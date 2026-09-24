@@ -3,7 +3,7 @@ from hashlib import sha256
 from importlib.resources import files
 import pytest
 
-from chrona.presentation.model.font_metrics import resolve_font_metrics
+from chrona.presentation.model.font_metrics import resolve_font_files, resolve_font_metrics
 from chrona.presentation.model.font_metrics import FontMetricsError
 
 
@@ -13,8 +13,8 @@ def descriptor():
         payload = files("chrona.resources").joinpath("font_metrics", name).read_bytes()
         font = files("chrona.resources").joinpath("fonts", f"noto-sans-cjk-jp-{face}-v1.ttf")
         assets.append({"family": "Noto Sans CJK JP", "weight": weight,
-                       "metrics": {"path": f"font_metrics/{name}", "contentIdentity": "sha256:" + sha256(payload).hexdigest()},
-                       "font": {"path": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf", "contentIdentity": "sha256:" + sha256(font.read_bytes()).hexdigest()}})
+                       "metrics": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"font_metrics/{name}"}, "contentIdentity": "sha256:" + sha256(payload).hexdigest()},
+                       "font": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font.read_bytes()).hexdigest()}})
     return {"algorithm": "declared-metrics-v2", "assets": assets, "missingFont": "diagnose"}
 
 
@@ -39,7 +39,7 @@ def test_font_metrics_rejects_a_different_declared_weight():
 
 
 def test_font_metrics_rejects_path_traversal():
-    value = descriptor(); value["assets"][0]["metrics"]["path"] = "../outside.json"
+    value = descriptor(); value["assets"][0]["metrics"]["locator"]["address"] = "../outside.json"
     with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
         resolve_font_metrics("Noto Sans CJK JP", value)
 
@@ -49,3 +49,11 @@ def test_font_metrics_rejects_an_unmeasured_glyph_instead_of_using_notdef_width(
     with pytest.raises(FontMetricsError, match="E_FONT_GLYPH_UNAVAILABLE") as error:
         metrics.width("\U0010ffff", 12)
     assert "U+10FFFF" in error.value.detail
+
+
+def test_metrics_resolution_does_not_read_font_bytes_but_raster_resolution_does():
+    value = descriptor()
+    value["assets"][0]["font"]["locator"]["address"] = "fonts/missing.ttf"
+    assert resolve_font_metrics("Noto Sans CJK JP", value).width("Chrona", 12) > 0
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+        resolve_font_files(value, asset_root=None)

@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 
 from chrona.presentation.model.closure import resolve_render_context
+from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
 from chrona.resources import safe_load
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -131,7 +132,7 @@ def _copy_extension_packages(example: Path, project_reference: dict[str, Any], s
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          *, decoded_catalogs: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
     context = safe_load(context_path.read_bytes())
-    if context.get("version") != "chrona/render-context/v0.13" or context.get("kind") != "render-context":
+    if context.get("version") != "chrona/render-context/v0.14" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]
@@ -152,25 +153,31 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
         if icon_catalog.get("store", {}).get("provider") == "package":
             icon_catalog["store"] = body["project"]["store"]
             icon_catalog["revision"] = body["project"]["revision"]
-    raw = yaml.safe_dump(context, sort_keys=False).encode()
     destination = snapshot_directory(snapshot, revision)
-    target = _inside(destination, context_path.relative_to(example).as_posix())
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(raw)
     for asset in body["environment"]["fontMetrics"]["assets"]:
-        for key in ("metrics", "font"):
+        keys = ("metrics",) if body["target"]["kind"] == "svg" else ("metrics", "font")
+        for key in keys:
             record = asset.get(key, {})
-            address = str(record.get("path", ""))
-            local = _inside(example, address)
-            source = local if local.is_file() else files("chrona.resources").joinpath(address)
-            if not source.is_file():
+            if not isinstance(record, dict) or not isinstance(record.get("locator"), dict):
                 raise ValueError("E_MATERIALIZER_FONT")
+            try:
+                source = resolve_font_resource(record["locator"], asset_root=example)
+            except FontResourceError as error:
+                raise ValueError("E_MATERIALIZER_FONT") from error
             payload = source.read_bytes()
             if record.get("contentIdentity") != _identity(payload):
                 raise ValueError("E_MATERIALIZER_FONT_IDENTITY")
-            asset_target = _inside(destination, str(record["path"]))
+            address = record["locator"].get("address")
+            if not isinstance(address, str):
+                raise ValueError("E_MATERIALIZER_FONT")
+            asset_target = _inside(destination, address)
             asset_target.parent.mkdir(parents=True, exist_ok=True)
             asset_target.write_bytes(payload)
+            record["locator"] = {"provider": "context", "address": address}
+    raw = yaml.safe_dump(context, sort_keys=False).encode()
+    target = _inside(destination, context_path.relative_to(example).as_posix())
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(raw)
     return {"id": context["id"], "kind": "render-context", "store": body["project"]["store"],
             "address": context_path.relative_to(example).as_posix(), "revision": {"token": revision},
             "contentIdentity": _identity(raw)}, revision

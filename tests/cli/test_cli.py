@@ -160,8 +160,8 @@ def test_cli_render_accepts_a_declared_local_font_closure(tmp_path, monkeypatch)
     descriptor = {
         "algorithm": "declared-metrics-v2", "missingFont": "diagnose",
         "assets": [{"family": "Noto Sans CJK JP", "weight": 400,
-                    "metrics": {"path": "assets/metrics.json", "contentIdentity": "sha256:" + sha256(local_metrics.read_bytes()).hexdigest()},
-                    "font": {"path": "assets/font.ttf", "contentIdentity": "sha256:" + sha256(local_font.read_bytes()).hexdigest()}}],
+                    "metrics": {"locator": {"provider": "context", "address": "assets/metrics.json"}, "contentIdentity": "sha256:" + sha256(local_metrics.read_bytes()).hexdigest()},
+                    "font": {"locator": {"provider": "context", "address": "assets/font.ttf"}, "contentIdentity": "sha256:" + sha256(local_font.read_bytes()).hexdigest()}}],
     }
     descriptor_path, output = tmp_path / "fonts.yaml", tmp_path / "review.svg"
     descriptor_path.write_text(yaml.safe_dump(descriptor, sort_keys=False), encoding="utf-8")
@@ -551,10 +551,10 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
         font_path = snapshot_directory(tmp_path, token) / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
         font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
         font_assets.append({"family": "Noto Sans CJK JP", "weight": weight,
-                            "metrics": {"path": f"font_metrics/{name}", "contentIdentity": "sha256:" + sha256(metrics_payload).hexdigest()},
-                            "font": {"path": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf", "contentIdentity": "sha256:" + sha256(font_payload).hexdigest()}})
+                            "metrics": {"locator": {"provider": "context", "address": f"font_metrics/{name}"}, "contentIdentity": "sha256:" + sha256(metrics_payload).hexdigest()},
+                            "font": {"locator": {"provider": "context", "address": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font_payload).hexdigest()}})
     context = {
-        "version": "chrona/render-context/v0.13", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/render-context/v0.14", "kind": "render-context", "id": "controller-z-current",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},

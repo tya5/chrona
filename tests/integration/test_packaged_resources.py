@@ -19,7 +19,7 @@ SCHEMAS = (
     "revision-store-resource-ref-v0.1.schema.yaml",
     "icon-catalog-v0.3.schema.yaml",
     "render-context-v0.12.schema.yaml",
-    "render-context-v0.13.schema.yaml",
+    "render-context-v0.14.schema.yaml",
     "view-v0.12.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",

@@ -104,7 +104,7 @@ def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_p
         materialize(manifest_path, "executive", tmp_path / "missing-evidence", write=False)
 
 
-def test_materializer_preserves_authored_context_bytes_and_pins(tmp_path):
+def test_materializer_rewrites_provider_font_locators_to_a_self_contained_snapshot(tmp_path):
     example = ROOT / "examples/aster-ssd"
     context_path = example / "contexts/01-overview.yaml"
     snapshot = tmp_path / "snapshot"
@@ -113,9 +113,11 @@ def test_materializer_preserves_authored_context_bytes_and_pins(tmp_path):
     reference, revision = _copy_context_closure(example, context_path, snapshot)
 
     copied = snapshot_directory(snapshot, revision) / "contexts/01-overview.yaml"
-    assert copied.read_bytes() == context_path.read_bytes()
-    assert reference["contentIdentity"] == "sha256:" + sha256(context_path.read_bytes()).hexdigest()
-    assert yaml.safe_load(copied.read_text(encoding="utf-8")) == yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    copied_context = yaml.safe_load(copied.read_text(encoding="utf-8"))
+    source_context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    assert reference["contentIdentity"] == "sha256:" + sha256(copied.read_bytes()).hexdigest()
+    assert copied_context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]["locator"]["provider"] == "context"
+    assert source_context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]["locator"]["provider"] == "package"
 
 
 def test_baseline_capture_materializes_a_context_through_its_windows_safe_token(tmp_path):
@@ -243,7 +245,7 @@ def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path)
     assert artifact.count('data-scene-id="cell:frr:Float"') == 1
 
 
-def test_materializer_rejects_a_supplied_wrong_font_pin_without_writing_svg(tmp_path):
+def test_svg_materializer_does_not_read_an_unused_font_byte_pin(tmp_path):
     copied_example = tmp_path / "halcyon-font"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
     context = copied_example / "contexts/02-programme-board.yaml"
@@ -252,12 +254,11 @@ def test_materializer_rejects_a_supplied_wrong_font_pin_without_writing_svg(tmp_
     context.write_text(yaml.safe_dump(value, sort_keys=False))
     expected = copied_example / "generated/02-programme-board.svg"
     original = expected.read_bytes()
-    with pytest.raises(ValueError, match="E_MATERIALIZER_FONT_IDENTITY"):
-        materialize(copied_example / "manifest.yaml", "programme-board", tmp_path / "out-font", write=True)
+    materialize(copied_example / "manifest.yaml", "programme-board", tmp_path / "out-font", write=True)
     assert expected.read_bytes() == original
 
 
-def test_materializer_closes_a_declared_local_font_pair_before_packaged_assets(tmp_path):
+def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_font_bytes(tmp_path):
     copied_example = tmp_path / "local-font"
     shutil.copytree(ROOT / "examples/controller-z", copied_example)
     source = ROOT / "src/chrona/resources"
@@ -269,11 +270,12 @@ def test_materializer_closes_a_declared_local_font_pair_before_packaged_assets(t
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     asset = context["body"]["environment"]["fontMetrics"]["assets"]
     asset[:] = [{"family": "Noto Sans CJK JP", "weight": 400,
-                 "metrics": {"path": "assets/metrics.json", "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
-                 "font": {"path": "assets/font.ttf", "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()}}]
+                 "metrics": {"locator": {"provider": "context", "address": "assets/metrics.json"}, "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
+                 "font": {"locator": {"provider": "context", "address": "assets/font.ttf"}, "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()}}]
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
     reference, revision = _copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
-    assert (snapshot_directory(tmp_path / "snapshot", revision) / "assets/font.ttf").read_bytes() == font_target.read_bytes()
+    assert (snapshot_directory(tmp_path / "snapshot", revision) / "assets/metrics.json").read_bytes() == metrics_target.read_bytes()
+    assert not (snapshot_directory(tmp_path / "snapshot", revision) / "assets/font.ttf").exists()
     assert reference["id"] == "controller-z-executive"
 
 

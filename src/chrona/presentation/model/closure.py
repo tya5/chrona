@@ -320,7 +320,7 @@ def _draft_render_from_resources(
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
     context_value = {
-        "version": "chrona/render-context/v0.13", "kind": "render-context", "id": "draft-render",
+            "version": "chrona/render-context/v0.14", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -403,8 +403,8 @@ def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
         metrics_path = asset_root / "font_metrics" / name
         font_path = asset_root / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
         assets.append({"family": "Noto Sans CJK JP", "weight": weight,
-                       "metrics": {"path": f"font_metrics/{name}", "contentIdentity": "sha256:" + sha256(metrics_path.read_bytes()).hexdigest()},
-                       "font": {"path": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf", "contentIdentity": "sha256:" + sha256(font_path.read_bytes()).hexdigest()}})
+                       "metrics": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"font_metrics/{name}"}, "contentIdentity": "sha256:" + sha256(metrics_path.read_bytes()).hexdigest()},
+                       "font": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font_path.read_bytes()).hexdigest()}})
     return {"algorithm": "declared-metrics-v2", "assets": assets, "missingFont": "diagnose"}
 
 
@@ -435,7 +435,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader,
                            *, decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
     context = _load_presentation(reference, reader, decoded_resources)
-    if context.version != "chrona/render-context/v0.13":
+    if context.version != "chrona/render-context/v0.14":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader, decoded_resources)
 

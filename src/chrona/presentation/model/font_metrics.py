@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
-from importlib.resources import files
 import json
 from pathlib import Path
+
+from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
 
 
 class FontMetricsError(ValueError):
@@ -21,14 +22,18 @@ class FontMetricsError(ValueError):
 class FontMetrics:
     metrics_path: Path
     metrics_content_identity: str
-    font_path: Path
-    content_identity: str
+    source_content_identity: str
     family: str
     units_per_em: int
     ascent: int
     descent: int
     cap_height: int
     advances: dict[int, int]
+
+    @property
+    def content_identity(self) -> str:
+        """The exact source face identity carried into measured placements."""
+        return self.source_content_identity
 
     def width(self, value: str, size: float, letter_spacing: float = 0) -> float:
         total = 0
@@ -67,23 +72,6 @@ def _families(font_stack: str) -> list[str]:
     return [family.strip().strip("'\"") for family in font_stack.split(",") if family.strip()]
 
 
-def _safe_path(root: Path | None, relative: object) -> Path | None:
-    if not isinstance(relative, str):
-        return None
-    candidate = Path(relative)
-    if candidate.is_absolute() or ".." in candidate.parts:
-        return None
-    if root is not None:
-        path = (root.resolve() / candidate).resolve()
-        try:
-            path.relative_to(root.resolve())
-        except ValueError:
-            return None
-        return path if path.is_file() else None
-    resource = files("chrona.resources").joinpath(*candidate.parts)
-    return Path(str(resource)) if resource.is_file() else None
-
-
 def _identity(path: Path) -> str:
     return "sha256:" + sha256(path.read_bytes()).hexdigest()
 
@@ -91,7 +79,7 @@ def _identity(path: Path) -> str:
 def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400,
                          asset_root: Path | None = None) -> FontMetrics:
     """Resolve one exact metrics/font pair from a declared Context closure."""
-    if descriptor.get("algorithm") != "declared-metrics-v2" or descriptor.get("missingFont") != "diagnose":
+    if descriptor.get("algorithm") != "declared-metrics-v2":
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
     assets = descriptor.get("assets")
     families = _families(font_stack)
@@ -103,30 +91,30 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
                       and item.get("weight") == weight), None)
         if asset is None:
             continue
-        metrics, font = asset.get("metrics"), asset.get("font")
-        if not isinstance(metrics, dict) or not isinstance(font, dict):
+        metrics = asset.get("metrics")
+        if not isinstance(metrics, dict):
             continue
-        metrics_path = _safe_path(asset_root, metrics.get("path"))
-        font_path = _safe_path(asset_root, font.get("path"))
-        if metrics_path is None or font_path is None:
+        try:
+            metrics_path = resolve_font_resource(metrics.get("locator"), asset_root=asset_root)
+        except FontResourceError:
             continue
-        metrics_identity, font_identity = _identity(metrics_path), _identity(font_path)
-        if metrics.get("contentIdentity") != metrics_identity or font.get("contentIdentity") != font_identity:
+        metrics_identity = _identity(metrics_path)
+        if metrics.get("contentIdentity") != metrics_identity:
             continue
         try:
             table = json.loads(metrics_path.read_bytes())
             if (table.get("version") != "chrona/font-metrics/v2"
                     or table.get("family", "").casefold() != family.casefold()
                     or table.get("weight") != weight
-                    or table.get("sourceContentIdentity") != font_identity):
+                    or not isinstance(table.get("sourceContentIdentity"), str)):
                 continue
             units, ascent, descent, cap_height = (int(table[key]) for key in ("unitsPerEm", "ascent", "descent", "capHeight"))
             advances = {int(code): int(value) for code, value in table["advances"].items()}
             if units <= 0 or cap_height <= 0 or cap_height > units or any(code < 0 or value < 0 for code, value in advances.items()):
                 continue
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError, FontResourceError):
             continue
-        return FontMetrics(metrics_path, metrics_identity, font_path, font_identity, family,
+        return FontMetrics(metrics_path, metrics_identity, str(table["sourceContentIdentity"]), family,
                            units, ascent, descent, cap_height, advances)
     raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
 
@@ -144,8 +132,11 @@ def resolve_font_files(descriptor: dict, *, asset_root: Path | None) -> tuple[tu
         if not isinstance(font, dict):
             raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
         family = asset.get("family") if isinstance(asset, dict) else None
-        path = _safe_path(asset_root, font.get("path"))
-        if not isinstance(family, str) or not family or path is None or font.get("contentIdentity") != _identity(path):
+        try:
+            path = resolve_font_resource(font.get("locator"), asset_root=asset_root)
+        except FontResourceError as error:
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE") from error
+        if not isinstance(family, str) or not family or font.get("contentIdentity") != _identity(path):
             raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
         identity = str(font["contentIdentity"])
         declared = FontFile(path, identity, family, int(asset["weight"]))

@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.13
+version: chrona/render-context/v0.14
 kind: render-context
 id: aster-01-overview
 body:
@@ -77,18 +77,30 @@ body:
       - family: Noto Sans CJK JP
         weight: 400
         metrics:
-          path: font_metrics/noto-sans-cjk-jp-regular-v1.json
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: font_metrics/noto-sans-cjk-jp-regular-v1.json
           contentIdentity: sha256:c8bd29f9ce742fde7e54de380dd2484b3dcdd4641ef8dccb1e866d40d7e9f8c3
         font:
-          path: fonts/noto-sans-cjk-jp-regular-v1.ttf
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: fonts/noto-sans-cjk-jp-regular-v1.ttf
           contentIdentity: sha256:70f0ae1666b5152ee51966648eb769895f8b5b6b30f9667f4fdc67646c0b91d1
       - family: Noto Sans CJK JP
         weight: 700
         metrics:
-          path: font_metrics/noto-sans-cjk-jp-bold-v1.json
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: font_metrics/noto-sans-cjk-jp-bold-v1.json
           contentIdentity: sha256:a66b18b64e2f228147493b885017788a8e4f86f238fa09c5f5c9d0de6ad91146
         font:
-          path: fonts/noto-sans-cjk-jp-bold-v1.ttf
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: fonts/noto-sans-cjk-jp-bold-v1.ttf
           contentIdentity: sha256:1da9e588ac21d8910fc82e9964ce515db06ceef204a944066476648a08d79c77
       missingFont: diagnose
     scenePrecision: 3
