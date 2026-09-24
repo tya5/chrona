@@ -39,3 +39,21 @@ def test_inventory_rejects_a_missing_gallery_dimension(tmp_path):
 
     with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_DIMENSION"):
         validate(root)
+
+
+def test_inventory_rejects_an_undisclosed_presentation_axis_leak(tmp_path):
+    root = _root(tmp_path)
+    context = root / "examples/demo/contexts/two.yaml"
+    context.write_text(context.read_text().replace("theme: {id: theme}", "theme: {id: alternate-theme}"))
+
+    with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_AXIS_LEAK:pair:theme"):
+        validate(root)
+
+
+def test_inventory_requires_a_dimension_owner_to_change(tmp_path):
+    root = _root(tmp_path)
+    context = root / "examples/demo/contexts/two.yaml"
+    context.write_text(context.read_text().replace("view: {id: alternate}", "view: {id: view}").replace("layout: {id: layout}", "layout: {id: alternate-layout}"))
+
+    with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_OWNER_UNCHANGED:pair"):
+        validate(root)

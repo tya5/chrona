@@ -4,7 +4,7 @@ deferred:
   - {id: milestones-notes-margins, dimension: composition, blocker: "Requires a new View/Layout design for the undrawn detail slots."}
   - {id: bar-encodings, dimension: visual-grammar, blocker: "Requires the remaining per-object encoding design."}
   - {id: japanese-board, dimension: appearance, blocker: "Blocked on #351 CJK font metrics and target support."}
-  - {id: print-and-typeset, dimension: content, blocker: "Requires a multi-target materializer evidence contract; target is not a Design Space dimension."}
+  - {id: print-and-typeset, blocker: "Requires a multi-target materializer evidence contract; target is not a Design Space dimension."}
 entries:
   - id: controller-z-executive-status
     corpus: controller-z
@@ -43,7 +43,7 @@ entries:
     accessibility: {note: Structured labels and semantic roles remain available in the table timeline.}
   - id: halcyon-dependency-network-surface
     corpus: halcyon-1
-    slide: dependency-network
+    slide: gallery-network-wallboard
     narrative: {title: Dependency network, audience: programme office, purpose: Read the same programme through its dependency structure.}
     comparison: {set: halcyon-two-surfaces, dimension: content, axis: surface, supports: [layout]}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles]}

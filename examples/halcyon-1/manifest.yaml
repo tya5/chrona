@@ -39,3 +39,7 @@ slides:
     evidence: "Mission brief under the existing print-mono colour scheme."
     context: contexts/09-gallery-mono.yaml
     expectedSvg: generated/09-gallery-mono.svg
+  - id: gallery-network-wallboard
+    evidence: "Dependency network under the programme board appearance, isolating View and Layout surface changes."
+    context: contexts/10-gallery-network-wallboard.yaml
+    expectedSvg: generated/10-gallery-network-wallboard.svg

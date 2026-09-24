@@ -8,6 +8,16 @@ from typing import Any
 import yaml
 
 
+DIMENSION_OWNERS = {
+    "content": frozenset({"view"}),
+    "composition": frozenset({"layout"}),
+    "visual-grammar": frozenset({"view"}),
+    "appearance": frozenset({"theme", "colorScheme"}),
+}
+SUPPORT_OWNERS = frozenset({"layout", "theme"})
+PRESENTATION_REFERENCES = ("view", "theme", "colorScheme", "layout")
+
+
 class ExampleInventoryError(ValueError):
     """A corpus declaration or documentation reference is invalid."""
 
@@ -59,14 +69,17 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
         raise ExampleInventoryError(f"E_DESIGN_GALLERY_FORMAT:{path}")
     deferred = value.get("deferred", [])
     if (not isinstance(deferred, list) or any(not isinstance(item, dict) or not isinstance(item.get("id"), str)
-            or item.get("dimension") not in {"content", "composition", "visual-grammar", "appearance"}
+            or ("dimension" in item and item["dimension"] not in DIMENSION_OWNERS)
             or not isinstance(item.get("blocker"), str) or not item["blocker"] for item in deferred)):
+        raise ExampleInventoryError(f"E_DESIGN_GALLERY_DEFERRED:{path}")
+    deferred_ids = [item["id"] for item in deferred]
+    if len(deferred_ids) != len(set(deferred_ids)):
         raise ExampleInventoryError(f"E_DESIGN_GALLERY_DEFERRED:{path}")
     seen: set[str] = set(); pairs: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
     for entry in value["entries"]:
         if not isinstance(entry, dict) or not all(isinstance(entry.get(key), str) and entry[key] for key in ("id", "corpus", "slide")):
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_ENTRY:{path}")
-        if entry["id"] in seen: raise ExampleInventoryError(f"E_DESIGN_GALLERY_DUPLICATE:{entry['id']}")
+        if entry["id"] in seen or entry["id"] in deferred_ids: raise ExampleInventoryError(f"E_DESIGN_GALLERY_DUPLICATE:{entry['id']}")
         seen.add(entry["id"]); key = (entry["corpus"], entry["slide"])
         if key not in corpus_entries: raise ExampleInventoryError(f"E_DESIGN_GALLERY_REFERENCE:{entry['id']}")
         narrative, comparison, target, accessibility = (entry.get(name) for name in ("narrative", "comparison", "target", "accessibility"))
@@ -76,11 +89,11 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_PAIR:{entry['id']}")
         if not isinstance(comparison.get("axis"), str) or not comparison["axis"]:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_AXIS:{entry['id']}")
-        if comparison.get("dimension") not in {"content", "composition", "visual-grammar", "appearance"}:
+        if comparison.get("dimension") not in DIMENSION_OWNERS:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_DIMENSION:{entry['id']}")
         supports = comparison.get("supports", [])
         if (not isinstance(supports, list) or supports != sorted(set(supports))
-                or any(item != "layout" for item in supports)
+                or any(item not in SUPPORT_OWNERS for item in supports)
                 or (supports and comparison["dimension"] != "content")):
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_SUPPORT:{entry['id']}")
         if not isinstance(accessibility, dict) or not isinstance(accessibility.get("note"), str) or not accessibility["note"]:
@@ -105,8 +118,17 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
         bodies = [item["body"] for item in contexts]
         if len({_identity(body["project"]) for body in bodies}) != 1 or len({_identity(body.get("inputs", {}).get("actual")) for body in bodies}) != 1:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_SEMANTIC_MISMATCH:{pair}")
-        presentation = [tuple(_identity(body[key]) for key in ("view", "theme", "colorScheme", "layout")) for body in bodies]
-        if len(set(presentation)) == 1: raise ExampleInventoryError(f"E_DESIGN_GALLERY_PRESENTATION_EQUAL:{pair}")
+        presentation = [{key: _identity(body[key]) for key in PRESENTATION_REFERENCES} for body in bodies]
+        dimension = entries[0][1]["dimension"]
+        owners = DIMENSION_OWNERS[dimension]
+        supports = frozenset(entries[0][1].get("supports", []))
+        changed = {key for key in PRESENTATION_REFERENCES if len({item[key] for item in presentation}) > 1}
+        if not changed:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_PRESENTATION_EQUAL:{pair}")
+        if not changed & owners:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_OWNER_UNCHANGED:{pair}")
+        for reference in sorted(changed - owners - supports):
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_AXIS_LEAK:{pair}:{reference}")
     return len(seen)
 
 
