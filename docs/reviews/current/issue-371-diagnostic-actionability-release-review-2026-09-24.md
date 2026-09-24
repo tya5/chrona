@@ -1,6 +1,6 @@
 # Issue #371 — Diagnostic Actionability Release Review
 
-**Decision:** Accept locally; GitHub Actions verification pending
+**Decision:** Accept and close
 
 ## Requirement audit
 
@@ -28,6 +28,10 @@
 - Built wheel: `chrona-0.1.0a0-py3-none-any.whl`, **2,373,928 bytes**;
   forced installed-wheel smoke outside the checkout: **passed**.  The editable
   development installation was restored afterwards.
+- GitHub Actions [run 36010318552](https://github.com/tya5/chrona/actions/runs/36010318552)
+  passed Ubuntu, macOS, and Windows on release commit `c43dd65`, including
+  conformance, structural checks, parallel pytest, wheel build/install, and
+  isolated installed-wheel smoke.
 
 ## Review conclusion
 
@@ -38,5 +42,5 @@ public-interface authority.  No presentation, Layout, Scene, scheduling, or
 identity behavior changed; the materializer byte gate confirms that this
 diagnostic and reporting work has no rendered-output side effect.
 
-GitHub Actions on this exact release-review commit remains the final release
-gate before closing Issue #371.
+The three-platform release gate accepted the exact functional release commit;
+the follow-up record update is documentation-only.  Issue #371 can close.

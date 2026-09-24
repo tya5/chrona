@@ -1,6 +1,6 @@
 # Implementation Plan: Diagnostic Actionability (#371)
 
-**Status:** Implemented; release verification pending GitHub Actions
+**Status:** Complete
 
 **Implements:** [Issue #371 design](../../design/issue-371-diagnostic-actionability-design-2026-09-24.md)
 
