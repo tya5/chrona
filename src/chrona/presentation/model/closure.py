@@ -36,6 +36,10 @@ class ClosureError(ValueError):
         self.detail = detail
 
 
+def _closure_kind_error(scope: str, expected: str, found: object) -> ClosureError:
+    return ClosureError("E_CLOSURE_KIND", detail=f"{scope}; expected {expected}; found {type(found).__name__}")
+
+
 @dataclass(frozen=True)
 class ClosureResource:
     kind: str
@@ -279,7 +283,7 @@ def _declared_child(root: Path, relative: str) -> Path:
 def _draft_view(resources: list[ClosureResource]) -> ViewContract:
     view = next((resource.contract for resource in resources if resource.kind == "view"), None)
     if not isinstance(view, ViewContract):
-        raise ClosureError("E_CLOSURE_KIND")
+        raise _closure_kind_error("draft resources", "ViewContract", view)
     return view
 
 
@@ -366,7 +370,7 @@ def _draft_render_from_resources(
     except ContractError as error:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA", detail=error.detail) from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
-        raise ClosureError("E_CLOSURE_KIND")
+        raise _closure_kind_error("draft render context", "RenderContextContract", context)
     return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance),
                        font_asset_root or asset_root, auto_block=viewport[1] is None)
 
@@ -493,7 +497,7 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
     if catalog_resources:
         view_contract = resources[1].contract
         if not isinstance(view_contract, ViewContract):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise _closure_kind_error("resolved View resource", "ViewContract", view_contract)
         icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract)
     else:
         icon_assets = ()
@@ -505,7 +509,7 @@ def _validate_icon_catalog_set(resources: tuple[ClosureResource, ...]) -> None:
     namespaces: set[str] = set()
     for resource in resources:
         if not isinstance(resource.contract, IconCatalogContract):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise _closure_kind_error(f"icon catalog resource id={resource.id}", "IconCatalogContract", resource.contract)
         catalog = resource.contract
         names = (catalog.set_name, *catalog.aliases)
         if len(names) != len(set(names)) or any(name in namespaces for name in names):
@@ -576,10 +580,10 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
     by_id = {reference.id: reference for reference in context.icon_catalogs}
     for catalog_resource in catalog_resources:
         if not isinstance(catalog_resource.contract, IconCatalogContract):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise _closure_kind_error(f"icon catalog resource id={catalog_resource.id}", "IconCatalogContract", catalog_resource.contract)
         reference = by_id.get(catalog_resource.id)
         if reference is None:
-            raise ClosureError("E_CLOSURE_KIND")
+            raise _closure_kind_error(f"icon catalog resource id={catalog_resource.id}", "declared Context icon catalog reference", reference)
         catalog = catalog_resource.contract
         entries = _selected_catalog_entries(catalog, view)
         for entry in entries:
@@ -622,7 +626,7 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
     assets: list[IconAsset] = []
     for resource in catalog_resources:
         if not isinstance(resource.contract, IconCatalogContract):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise _closure_kind_error(f"draft icon catalog resource id={resource.id}", "IconCatalogContract", resource.contract)
         catalog = resource.contract
         catalog_path = paths_by_identity[resource.content_identity]
         root = catalog_path.parent.resolve()
@@ -661,7 +665,7 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
 def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str,
                     decoded_resources: Mapping[str, Any] | None = None) -> ClosureResource:
     if reference.get("kind") != expected_kind:
-        raise ClosureError("E_CLOSURE_KIND")
+        raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind}; found kind={reference.get('kind')!r}")
     try:
         payload = reader.read(reference)
     except SnapshotReadError as error:
@@ -676,18 +680,18 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
         actual_id = value.get("packageId") if isinstance(value, dict) else None
     elif expected_kind == "review-detail-profile":
         if not isinstance(value, dict) or value.get("version") != "chrona/review-detail-profile/v0.1":
-            raise ClosureError("E_CLOSURE_KIND")
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/review-detail-profile/v0.1 object; found {value!r}")
         actual_id = value.get("id")
     elif expected_kind == "layout-profile":
         if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.4":
-            raise ClosureError("E_CLOSURE_KIND")
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/layout-profile/v0.4 object; found {value!r}")
         actual_id = value.get("id")
     else:
         actual_id = value.get("id") if isinstance(value, dict) else None
         expected_version_prefix = f"chrona/{expected_kind}/v"
         if (not isinstance(value, dict) or value.get("kind") != expected_kind
                 or not str(value.get("version", "")).startswith(expected_version_prefix)):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind} version prefix={expected_version_prefix}; found {value!r}")
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
     identity = ClosureIdentity(expected_kind, actual_id, reference["revision"]["token"], reference.get("contentIdentity", computed_identity))
@@ -705,5 +709,5 @@ def _load_presentation(reference: dict[str, Any], reader: SnapshotReader,
                        decoded_resources: Mapping[str, Any] | None = None) -> RenderContextContract:
     item = _load_reference(reference, reader, "render-context", decoded_resources)
     if not isinstance(item.contract, RenderContextContract):
-        raise ClosureError("E_CLOSURE_KIND")
+        raise _closure_kind_error(f"presentation resource id={item.id}", "RenderContextContract", item.contract)
     return item.contract
