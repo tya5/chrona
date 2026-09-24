@@ -12,7 +12,7 @@ def modules() -> dict[str, Path]:
     """Every chrona module. Package ``__init__`` files are structure, not code."""
     found = {}
     for path in (SOURCE / "chrona").rglob("*.py"):
-        name = str(path.relative_to(SOURCE)).replace("/", ".")[:-3]
+        name = path.relative_to(SOURCE).as_posix().replace("/", ".")[:-3]
         found[name.removesuffix(".__init__")] = path
     return found
 

@@ -62,7 +62,7 @@ def main() -> int:
     violations: list[str] = []
     edges: dict[str, set[str]] = {}
     for path in sorted((SOURCE / "chrona").rglob("*.py")):
-        module = str(path.relative_to(SOURCE)).replace("/", ".")[:-3].removesuffix(".__init__")
+        module = path.relative_to(SOURCE).as_posix().replace("/", ".")[:-3].removesuffix(".__init__")
         package = package_of(module)
         if package == "chrona":
             continue
