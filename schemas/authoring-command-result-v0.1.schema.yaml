@@ -6,26 +6,32 @@ type: object
 required: [version, status, commandId, commandBaseRevision, workspaceRevision, resultRevision, diagnostics]
 additionalProperties: false
 properties:
-  version: {const: chrona/authoring-command-result/v0.1}
-  status: {enum: [accepted, rejected]}
-  commandId: {type: string, minLength: 1}
-  commandBaseRevision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-  workspaceRevision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-  resultRevision: {type: [string, 'null'], pattern: "^sha256:[0-9a-f]{64}$"}
-  reversible: {type: boolean}
+  version: {description: "This authoring result format version.", const: chrona/authoring-command-result/v0.1}
+  status: {description: "Whether the command was accepted or rejected.", enum: [accepted, rejected]}
+  commandId: {description: "The command identity supplied by the caller.", type: string, minLength: 1}
+  commandBaseRevision: {description: "The workspace revision declared by the command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  workspaceRevision: {description: "The validated workspace revision observed before writing.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  resultRevision: {description: "The revision after an accepted write, or null after rejection.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], type: [string, 'null'], pattern: "^sha256:[0-9a-f]{64}$"}
+  reversible: {description: "Whether the accepted operation is reversible.", type: boolean}
   diagnostics:
+    description: "Diagnostics emitted by the authoring command boundary."
     type: array
     items:
+      description: "One authoring-command diagnostic."
       type: object
       required: [code]
       additionalProperties: false
       properties:
-        code: {type: string, minLength: 1}
-        detail: {type: string, minLength: 1}
-        expectedRevision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-        receivedRevision: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        code: {description: "Stable diagnostic identifier.", type: string, minLength: 1}
+        detail: {description: "Actionable diagnostic explanation.", type: string, minLength: 1}
+        expectedRevision: {description: "Workspace revision required by the command writer.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        receivedRevision: {description: "Revision supplied by the rejected command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
 allOf:
-  - if: {properties: {status: {const: accepted}}, required: [status]}
+  - description: "Accepted results carry a result revision and no diagnostics."
+    examples: [{}]
+    if: {properties: {status: {const: accepted}}, required: [status]}
     then: {properties: {resultRevision: {type: string}}, allOf: [{properties: {diagnostics: {maxItems: 0}}}]}
-  - if: {properties: {status: {const: rejected}}, required: [status]}
+  - description: "Rejected results have no result revision and at least one diagnostic."
+    examples: [{}]
+    if: {properties: {status: {const: rejected}}, required: [status]}
     then: {properties: {resultRevision: {type: 'null'}}, allOf: [{properties: {diagnostics: {minItems: 1}}}]}
