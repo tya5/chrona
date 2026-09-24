@@ -1,0 +1,116 @@
+version: chrona/render-context/v0.14
+kind: render-context
+id: halcyon-1-01-mission-brief
+body:
+  project:
+    id: halcyon-1
+    kind: project
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: project.yaml
+    revision:
+      token: example-v1
+  view:
+    id: halcyon-01-mission-brief
+    kind: view
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: views/01-mission-brief.yaml
+    revision:
+      token: example-v1
+  theme:
+    id: briefing
+    kind: theme
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: themes/briefing.yaml
+    revision:
+      token: example-v1
+  colorScheme:
+    id: mission-light
+    kind: color-scheme
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: schemes/mission-light.yaml
+    revision:
+      token: example-v1
+  layout:
+    id: briefing
+    kind: layout-profile
+    store:
+      provider: local
+      identity: halcyon-1-example
+    address: layouts/briefing.yaml
+    revision:
+      token: example-v1
+  inputs:
+    actual:
+      id: halcyon-1-observed-2027-08-20
+      kind: actual-set
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: actual.yaml
+      revision:
+        token: example-v1
+    summaryProfile:
+      id: halcyon-key-figures
+      kind: summary-profile
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: profiles/summary.yaml
+      revision:
+        token: example-v1
+  environment:
+    viewport:
+      inlineSize: 1600
+      blockSize: 900
+    locale: en-US
+    fontMetrics:
+      algorithm: declared-metrics-v2
+      assets:
+      - family: Noto Sans
+        weight: 400
+        metrics:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: font_metrics/noto-sans-regular-v1.json
+          contentIdentity: sha256:c13838425f95f85ee0d42bdbeb7f9941bba763e4fcf2904096a7dbfaffbb86da
+        font:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: fonts/noto-sans-regular-v1.ttf
+          contentIdentity: sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3
+      - family: Noto Sans
+        weight: 700
+        metrics:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: font_metrics/noto-sans-bold-v1.json
+          contentIdentity: sha256:dbf62a6dc7d4ac2418b58d946c40e16cde6100216dd1496eb9daa2bcb7b9ec5d
+        font:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: fonts/noto-sans-bold-v1.ttf
+          contentIdentity: sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f
+      missingFont: diagnose
+    scenePrecision: 3
+  target:
+    kind: svg
+    visualProfile: chrona-output/visual/v0.5-baseline
+    capabilities:
+    - accessibleText
+    - hierarchicalAxis
+    - marker
+    - semanticRoles
+    - sourceMetadata
+    - tableSemantics

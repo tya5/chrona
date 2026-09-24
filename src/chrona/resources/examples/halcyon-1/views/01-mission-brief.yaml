@@ -1,0 +1,112 @@
+version: chrona/view/v0.12
+kind: view
+id: halcyon-01-mission-brief
+body:
+  surface: table-timeline
+  rows:
+    mode: automatic
+  selection:
+    include:
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - bus-test
+      - cdr
+      - optics
+      - payload-tvac
+      - payload-delivery
+      - integration
+      - tvac
+      - psr
+      - campaign
+      - frr
+      - launch
+      - leop
+      - first-light
+      types:
+      - span
+      - point
+  grouping:
+    by: none
+    missing: ungrouped
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2027-03-01'
+    end: '2027-12-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      - finishDelta
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
+  axis:
+    levels:
+    - unit: quarter
+      format: year-quarter
+    - unit: month
+      format: short-month
+    ticks: week
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+  shading:
+    nonWorking: true
+    exceptions: true
+  tableColumns:
+  - id: "#"
+    source: rowIndex
+    missing: em-dash
+  - id: Milestone or work package
+    source: title
+    missing: em-dash
+  - id: Plan
+    source:
+      facet: planned
+    format: dateRange
+    missing: em-dash
+  - id: Actual
+    source:
+      facet: actual
+    format: dateRange
+    missing: in-progress
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash
+  colorEncoding:
+    scale: owner
+    target: planned
+    source:
+      field: owner
+    domain:
+    - bus
+    - payload
+    - ait
+    - ground
+    - launch
+    - ops

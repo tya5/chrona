@@ -1,0 +1,31 @@
+version: chrona/layout-profile/v0.4
+id: dependency-network
+writingMode: horizontal-tb
+requiredThemeTokens: [spacing.l, spacing.m]
+relationRouting: {maxBends: 4, maxDetourRatio: 2}
+root:
+  id: page
+  kind: column
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.m}
+  padding: {token: spacing.l}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: start, safety: safe}
+      priority: required
+      overflow: diagnose
+    - id: network
+      kind: slot
+      source: network
+      inlineSize: fill
+      blockSize: fill
+      place: {inline: stretch, block: stretch, safety: strict}
+      priority: required
+      overflow: diagnose

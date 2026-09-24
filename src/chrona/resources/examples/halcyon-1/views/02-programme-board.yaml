@@ -1,0 +1,124 @@
+version: chrona/view/v0.12
+kind: view
+id: halcyon-02-programme-board
+body:
+  surface: table-timeline
+  rows:
+    mode: automatic
+  selection:
+    include:
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - eps
+      - bus-test
+      - cdr
+      - optics
+      - detector
+      - payload-tvac
+      - payload-delivery
+      - integration
+      - vibration
+      - tvac
+      - emc
+      - psr
+      - mcs
+      - station
+      - comms-test
+      - launch-contract
+      - shipment
+      - campaign
+      - frr
+      - launch
+      - rehearsals
+      - leop
+      - first-light
+      types:
+      - span
+      - point
+  colorEncoding:
+    scale: owner
+    target: planned
+    source:
+      field: owner
+    domain:
+    - bus
+    - payload
+    - ait
+    - ground
+    - launch
+    - ops
+  progressFill:
+    source: planned
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - bus
+    - payload
+    - ait
+    - ground
+    - launch
+    - ops
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2027-03-01'
+    end: '2027-12-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
+  axis:
+    levels:
+    - unit: quarter
+      format: year-quarter
+    - unit: month
+      format: short-month
+    ticks: week
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+  shading:
+    nonWorking: true
+    exceptions: true
+  tableColumns:
+  - id: Work package
+    source: title
+    missing: em-dash
+  - id: Phase
+    source:
+      field: phase
+    missing: em-dash
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash

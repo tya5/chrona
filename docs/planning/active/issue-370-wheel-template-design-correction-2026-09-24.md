@@ -12,9 +12,9 @@ installed wheel rejects its only supported template with `E_INIT_EXAMPLE`.
 ## Decision
 
 The initialized `halcyon-1` template is a packaged, immutable application
-resource at `chrona.resources/examples/halcyon-1`.  Hatch force-includes the
-source-authoritative `examples/halcyon-1` tree at that wheel address.  The
-initialization use case reads it through `importlib.resources`, recursively
+resource at `chrona.resources/examples/halcyon-1`; the package resource tree
+is the exact runtime copy of the corpus template.  The initialization use case
+reads it through `importlib.resources`, recursively
 copies its bytes into the destination, then performs its existing local
 immutable closure construction.  It does not retain a source-checkout path,
 add a fallback search path, or make the installed template a mutable Store
@@ -34,5 +34,4 @@ snapshots and the generated Store configuration as before.
 | Wheel smoke | Runs the real installed script outside checkout and proves the public README flow. |
 
 No compatibility path is retained for an arbitrary adjacent source `examples/`
-directory.  The source tree remains the authoring source only because the wheel
-force-include maps its bytes to the one runtime resource address.
+directory.  The package resource tree is the one runtime resource address.

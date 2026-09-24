@@ -1,0 +1,89 @@
+version: chrona/layout-profile/v0.4
+id: wallboard
+writingMode: horizontal-tb
+requiredThemeTokens: [panel.side, spacing.l, spacing.m, spacing.none]
+relationRouting: {maxBends: 4, maxDetourRatio: 2}
+root:
+  id: page
+  kind: row
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.l}
+  padding: {token: spacing.l}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: sidebar
+      kind: column
+      inlineSize: {fixed: {token: panel.side}}
+      blockSize: fill
+      gap: {token: spacing.m}
+      padding: {token: spacing.none}
+      alignItems: start
+      justifyContent: start
+      children:
+        - id: title
+          kind: slot
+          source: title
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: required
+          overflow: diagnose
+        - id: summary
+          kind: slot
+          source: summary
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source
+        - id: notes
+          kind: slot
+          source: notes
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source
+        - id: legend
+          kind: slot
+          source: legend
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: preferred
+          overflow: ellipsize-with-source
+    - id: table
+      kind: slot
+      source: table
+      inlineSize: {minmax: {min: content, max: {fr: 2}}}
+      blockSize: fill
+      place: {inline: stretch, block: stretch, safety: strict}
+      priority: required
+      overflow: diagnose
+    - id: timeline-stack
+      kind: column
+      inlineSize: {fr: 9}
+      blockSize: fill
+      gap: {token: spacing.none}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: timeline-axis
+          kind: slot
+          source: timeline-axis
+          inlineSize: fill
+          blockSize: content
+          place: {inline: stretch, block: start, safety: strict}
+          priority: required
+          overflow: diagnose
+        - id: timeline
+          kind: slot
+          source: timeline
+          inlineSize: fill
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: required
+          overflow: diagnose
