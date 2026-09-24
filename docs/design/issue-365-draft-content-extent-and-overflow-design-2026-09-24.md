@@ -49,12 +49,12 @@ Layout -> Scene -> render-use-case -> CLI conversion unchanged.
 
 ## Public scale evidence
 
-The public curriculum gains deterministic 30-row and 100-row Draft fixtures.
-The 30-row fixture is rendered under a fixed adequate viewport as a
-materializable evidence case.  The 100-row fixture exercises `WIDTHxauto` and
-asserts its resolved height and successful output.  These samples make the
-default draft capacity, explicit viewport choice, and auto policy discoverable
-without imposing a giant checked-in gallery artifact.
+The public curriculum documents deterministic 30-row and 100-row Draft cases,
+and the integration curriculum constructs and renders those cases from
+declared Project/View inputs.  The 30-row case is rendered under a fixed
+adequate viewport; the 100-row case exercises `WIDTHxauto` and asserts its
+resolved height and successful output.  This makes the draft policy
+discoverable without imposing a giant checked-in gallery artifact.
 
 ## Non-goals
 

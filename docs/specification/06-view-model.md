@@ -73,7 +73,6 @@ owns the View-body meaning and v0.1 field language below.
 | Temporal window | Select the presented time interval |
 | Comparison | Declare which named comparison inputs and facets the View accepts or requires; the concrete Project, Snapshot, and Actual references come from the Render Context |
 | Visibility | Select labels, relations, annotations, and comparison facets |
-| Layout intent | Choose lanes, hierarchy expansion, compactness, and annotation anchoring |
 
 Selection expressions MUST be declarative predicates over semantic data and MUST NOT execute arbitrary host-language code.
 
@@ -97,7 +96,6 @@ body:
     actual: required
     facets: [planned, actual, startDelta, finishDelta, progress, missingActual, unmatchedActual]
   visibility: { labels: true, relations: semantic, annotations: all }
-  layoutIntent: { compactness: balanced }
 ```
 
 `selection.include` is an intersection of its declared filters. v0.1 permits only
@@ -233,7 +231,7 @@ projected with source kind `explanatory-arrow` and can never satisfy, replace, o
 a semantic dependency. A missing anchor produces a View diagnostic; no title or
 geometry-based recovery is allowed.
 
-Layout intent includes lane assignment, collapsed groups, hierarchy expansion, preferred compactness, and annotation anchoring. It is not renderer geometry. For v0.1, `layoutIntent.itemStacking` is always `stable`: items receive the lowest non-overlapping lane-local stack index in deterministic View order; equal positions use stable object ID. Annotation placement tries requested side, then `above`, `below`, `end`, `start`; failure emits a diagnostic. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
+View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. Annotation placement tries requested side, then `above`, `below`, `end`, `start`; failure emits a diagnostic. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
 ## 10. Diagnostics
 

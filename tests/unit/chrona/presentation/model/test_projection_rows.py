@@ -32,7 +32,7 @@ def typed_view(value):
         ViewOrdering(ordering["by"], ordering["direction"], ordering["tieBreak"]) if ordering else None,
         ViewWindow(body["window"]["mode"], body["window"].get("start"), body["window"].get("end"), body["window"].get("marginDays", 0)),
         ViewComparison(None, body["comparison"]["actual"], None, None, tuple(body["comparison"].get("facets", ()))),
-        ViewVisibility(False, "none", "none"), freeze({}), (), (),
+        ViewVisibility(False, "none", "none"), (), (),
         ViewRows(rows["mode"], tuple(parsed_rows)), None, (), None, None, None)
 
 
@@ -94,7 +94,7 @@ def test_explicit_row_resolves_named_snapshot_item():
 def test_explicit_row_selects_each_named_scenario_by_its_declared_id():
     project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
     view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
-        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), freeze({}), (), (),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
         ViewRows("explicit", (ViewRow("r", None, 0, None, None, None, (
             ViewRowItem("early", "scenario", "task", "stacked", scenario_id="early"),
             ViewRowItem("late", "scenario", "task", "stacked", scenario_id="late"),)),)), None, (), None, None, None)
@@ -110,7 +110,7 @@ def test_automatic_rows_overlay_the_selected_scenario_on_the_shared_track():
     project = {"objects": {"task": {"title": "Current", "fields": {}}}, "entities": {}}
     view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
         ViewComparison("scenario", "optional", None, None, (), scenario_id="recovery"),
-        ViewVisibility(False, "none", "none"), freeze({}), (), (), ViewRows("automatic", ()), None, (), None, None, None)
+        ViewVisibility(False, "none", "none"), (), (), ViewRows("automatic", ()), None, (), None, None, None)
     projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}}, view, None,
         scenarios={"recovery": (
             {"objects": {"task": {"title": "Recovery", "fields": {}}}},
@@ -127,7 +127,7 @@ def test_automatic_predecessor_policy_folds_a_point_with_one_selected_span_prede
     project = {"objects": {"task": {"title": "Task", "fields": {}}, "gate": {"title": "Gate", "fields": {}}},
                "entities": {}, "relations": [{"id": "task-gate", "from": {"object": "task"}, "to": {"object": "gate"}}]}
     view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
-        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), freeze({}), (), (),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
         ViewRows("automatic", (), "predecessor"), None, (), None, None, None)
     projection = build_review_projection(project, {"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
                                                    "gate": {"at": date(2026, 1, 2)}}, view, None)
@@ -145,7 +145,7 @@ def test_automatic_group_header_policy_keeps_point_out_of_table_rows_with_a_head
         ViewWindow("selected-planned", None, None, 0),
         ViewComparison(None, "optional", None, None, ()),
         ViewVisibility(freeze({"placement": "plot", "content": ("title",), "side": "auto"}), "none", "none"),
-        freeze({}), (), (), ViewRows("automatic", (), "group-header"), None, (), None, None, None)
+        (), (), ViewRows("automatic", (), "group-header"), None, (), None, None, None)
     projection = build_review_projection(project, {
         "task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
         "gate": {"at": date(2026, 1, 2)},
@@ -163,7 +163,7 @@ def test_automatic_group_header_policy_requires_a_visible_plot_title():
         ViewWindow("selected-planned", None, None, 0),
         ViewComparison(None, "optional", None, None, ()),
         ViewVisibility(freeze({"placement": "table", "content": ("title",), "side": "auto"}), "none", "none"),
-        freeze({}), (), (), ViewRows("automatic", (), "group-header"), None, (), None, None, None)
+        (), (), ViewRows("automatic", (), "group-header"), None, (), None, None, None)
 
     with pytest.raises(ValueError, match="E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED"):
         build_review_projection(project, {"gate": {"at": date(2026, 1, 2)}}, view, None)

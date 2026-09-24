@@ -16,10 +16,11 @@ from typing import Any, Mapping
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
-from chrona.presentation.layout.engine import solve_layout
+from chrona.presentation.layout.engine import resolve_draft_block_extent, solve_layout
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
-from chrona.presentation.layout.surface_composer import resolve_label_visual_advances
+from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, timeline_content_block_requirement
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, resolve_font_metrics
@@ -77,6 +78,7 @@ class RenderRequest:
     renderer: Renderer | None = None
     require_all_inputs_read: bool = False
     asset_root: Path | None = None
+    draft_auto_block: bool = False
 
 
 @dataclass(frozen=True)
@@ -175,12 +177,39 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise _font_failure(error) from error
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
-    manifest = solve_layout(
-        resolved_layout,
-        viewport_inline=viewport["inlineSize"],
-        viewport_block=viewport["blockSize"],
-        measurements=_slot_measurements(resolved_layout.profile["root"], measured),
-    )
+    measurements = _slot_measurements(resolved_layout.profile["root"], measured)
+    try:
+        required_block = None
+        if view.surface == "table-timeline":
+            timeline_requirement = timeline_content_block_requirement(
+                projection=projection,
+                group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
+                metric_values=measured.metric_values,
+            )
+            required_block = resolve_draft_block_extent(
+                resolved_layout, viewport_inline=viewport["inlineSize"],
+                seed_block=viewport["blockSize"], measurements=measurements,
+                required_blocks={"timeline": timeline_requirement},
+            )
+        if request.draft_auto_block:
+            if required_block is None:
+                raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface")
+            viewport["blockSize"] = required_block
+        elif (render_closure.context.identity.revision == "draft" and required_block is not None
+              and viewport["blockSize"] < required_block):
+            rows_count = len(projection.rows or projection.items)
+            minimum = int(measured.metric_values["timeline.row.minBlockSize"])
+            detail = (f"timeline requires {required_block}px for {rows_count} rows at {minimum}px per row; "
+                      f"available {viewport['blockSize']}px; use --viewport {viewport['inlineSize']}x{required_block} "
+                      "or select fewer rows")
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline", detail=detail)
+        manifest = solve_layout(
+            resolved_layout, viewport_inline=viewport["inlineSize"],
+            viewport_block=viewport["blockSize"], measurements=measurements,
+        )
+    except LayoutError as error:
+        raise RenderFailed(error.diagnostic_id, error.detail or error.diagnostic_id,
+                           "presentation", error.path) from error
 
     surface_content = normalize_v05_surface_content(
         projection, project, view,

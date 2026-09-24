@@ -76,9 +76,6 @@ body:
   shading:
     nonWorking: true
     exceptions: true
-  layoutIntent:
-    compactness: balanced
-    itemStacking: stable
   tableColumns:
   - id: "#"
     source: rowIndex

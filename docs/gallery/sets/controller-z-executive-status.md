@@ -59,9 +59,6 @@ The pair changes only `view`.
 -    - validation-team
 -    - factory-team
 -    presentation: header
-   layoutIntent:
-     compactness: balanced
-     itemStacking: stable
 @@ -28,40 +16,31 @@
      by: plannedStart
      direction: ascending

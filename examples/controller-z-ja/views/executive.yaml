@@ -56,9 +56,6 @@ body:
       mode: semantic
       overflow: suppress
     annotations: none
-  layoutIntent:
-    compactness: balanced
-    itemStacking: stable
   tableColumns:
   - id: 作業ストリーム
     source: title

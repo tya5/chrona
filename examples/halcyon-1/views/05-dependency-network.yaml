@@ -52,6 +52,3 @@ body:
     labels: false
     relations: semantic
     annotations: none
-  layoutIntent:
-    compactness: balanced
-    itemStacking: stable

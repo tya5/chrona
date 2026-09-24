@@ -60,9 +60,6 @@ The pair changes only `view`.
 -    - launch
 -    presentation: header
 +    rollup: bar
-   layoutIntent:
-     compactness: compact
-     itemStacking: stable
 @@ -39,10 +35,12 @@
      tieBreak: id
    rows:

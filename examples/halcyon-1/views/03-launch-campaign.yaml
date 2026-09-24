@@ -70,9 +70,6 @@ body:
   shading:
     nonWorking: true
     exceptions: true
-  layoutIntent:
-    compactness: expanded
-    itemStacking: stable
   tableColumns:
   - id: Activity
     source: title

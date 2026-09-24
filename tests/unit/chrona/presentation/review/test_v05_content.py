@@ -24,7 +24,7 @@ def typed_view(value):
         None,
         ViewWindow(body.get("window", {}).get("mode", "selected-planned"), None, None, 0),
         ViewComparison(None, body.get("comparison", {}).get("actual", "optional"), None, None, ()),
-        ViewVisibility(visibility.get("labels", False), visibility.get("relations", "none"), visibility.get("annotations", "none")), freeze(body.get("layoutIntent", {})),
+        ViewVisibility(visibility.get("labels", False), visibility.get("relations", "none"), visibility.get("annotations", "none")),
         tuple(TableColumn(item["id"], item["source"], item.get("format", "text"), item["missing"])
               for item in body.get("tableColumns", ())),
         tuple(freeze(item) for item in body.get("annotations", ())), ViewRows(body.get("rows", {}).get("mode", "automatic"), ()),

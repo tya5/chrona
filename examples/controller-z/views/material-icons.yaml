@@ -25,7 +25,6 @@ body:
     fallback: {labels: [inside, above, suppress]}
     relations: {mode: semantic, overflow: suppress}
     annotations: none
-  layoutIntent: {compactness: balanced, itemStacking: stable}
   visuals:
   - target: {kind: title}
     ref: material:flag

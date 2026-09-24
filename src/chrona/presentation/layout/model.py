@@ -15,6 +15,7 @@ class LayoutError(ValueError):
         self.diagnostic_id = diagnostic_id
         self.path = path
         self.node_id = node_id
+        self.detail = detail
 
 
 @dataclass(frozen=True)

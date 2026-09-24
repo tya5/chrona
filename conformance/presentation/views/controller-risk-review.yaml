@@ -8,7 +8,6 @@ body:
   window: {mode: selected-planned, marginDays: 7}
   comparison: {baseline: primary, actual: optional, observationSelection: latest, deltaUnit: calendar-days, facets: [planned, actual, missingActual]}
   visibility: {labels: true, relations: semantic, annotations: all}
-  layoutIntent: {compactness: balanced, itemStacking: stable}
   annotations:
     - id: supplier-risk
       purpose: callout

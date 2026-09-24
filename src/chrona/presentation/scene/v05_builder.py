@@ -198,7 +198,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             visual_requests=value.visual_requests,
         ))
     except LayoutError as error:
-        raise SceneBuildError(error.diagnostic_id, error.path) from error
+        raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
     placed_surface = composition.placement
     slots = tuple(SceneSlot(item.slot_id, item.source_ref, item.scale_id,
                             (float(item.bounds.inline), float(item.bounds.block),

@@ -13,5 +13,4 @@ body:
     deltaUnit: calendar-days
     facets: [planned, actual, startDelta, finishDelta, progress, missingActual, unmatchedActual]
   visibility: {labels: true, relations: semantic, annotations: all}
-  layoutIntent: {compactness: balanced, itemStacking: stable}
   rows: {mode: automatic}

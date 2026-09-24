@@ -162,6 +162,7 @@ class DraftRender:
 
     closure: RenderClosure
     asset_root: Path
+    auto_block: bool = False
 
 
 @dataclass(frozen=True)
@@ -185,7 +186,7 @@ def resolve_draft_render(
     layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
     font_metrics_path: Path | None = None,
-    viewport: tuple[int, int] = (1600, 900),
+    viewport: tuple[int, int | None] = (1600, 900),
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
@@ -217,7 +218,7 @@ def resolve_draft_render(
 
 
 def resolve_guided_draft_render(
-    *, workspace_path: Path, viewport: tuple[int, int] = (1600, 900),
+    *, workspace_path: Path, viewport: tuple[int, int | None] = (1600, 900),
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
@@ -295,7 +296,7 @@ def _normalized_draft_resource(kind: str, document: Mapping[str, Any]) -> Closur
 
 
 def _draft_render_from_resources(
-    resources: list[ClosureResource], *, viewport: tuple[int, int], locale: str, target_kind: str,
+    resources: list[ClosureResource], *, viewport: tuple[int, int | None], locale: str, target_kind: str,
     visual_profile: str = "chrona-output/visual/v0.5-baseline",
     typesetter: TypesetterIdentity | None = None,
     provenance: GuidedAuthoringProvenance | None = None,
@@ -335,7 +336,7 @@ def _draft_render_from_resources(
                    if any(item.kind == "icon-catalog" for item in resources) else {}),
             },
             "environment": {
-                "viewport": {"inlineSize": viewport[0], "blockSize": viewport[1]},
+                "viewport": {"inlineSize": viewport[0], "blockSize": viewport[1] or 900},
                 "locale": locale,
                 "fontMetrics": font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
                 "scenePrecision": 3,
@@ -357,7 +358,7 @@ def _draft_render_from_resources(
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise ClosureError("E_CLOSURE_KIND")
     return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance),
-                       font_asset_root or asset_root)
+                       font_asset_root or asset_root, auto_block=viewport[1] is None)
 
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:

@@ -285,8 +285,7 @@ Exceeding state `limit` yields `E_PRESENTATION_ROUTE_LIMIT`; exhaustive no-path 
 
 ## 8. Migration and duplicate declaration
 
-Move v0.1 View annotations unchanged as logical anchor/text; migrate
-`layoutIntent.itemStacking: stable` one-way to `layout.lanes.stacking`; move Scene
+Move v0.1 View annotations unchanged as logical anchor/text; move Scene
 Profile routing/collision to v0.2 Layout. Reject old/new duplicate annotation candidates,
 scale, routing, or lane policies with `E_PRESENTATION_DUPLICATE_AUTHORITY`.
 

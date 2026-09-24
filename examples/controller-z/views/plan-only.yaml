@@ -35,9 +35,6 @@ body:
       mode: semantic
       overflow: suppress
     annotations: none
-  layoutIntent:
-    compactness: balanced
-    itemStacking: stable
   tableColumns:
   - id: Work item
     source: title

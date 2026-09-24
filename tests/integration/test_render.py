@@ -4,6 +4,8 @@ The former minimal schedule-SVG adapter is intentionally absent: this proves
 authoring inputs enter the same review pipeline as immutable evidence renders.
 """
 from pathlib import Path
+from copy import deepcopy
+import re
 
 import pytest
 import yaml
@@ -12,7 +14,7 @@ from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
-from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 
 
 def _root() -> Path:
@@ -24,7 +26,7 @@ def _draft_request(*, project_path: Path | None = None, view_path: Path | None =
                    visual_profile: str = "chrona-output/visual/v0.5-baseline", theme_path: Path | None = None,
                    scheme_path: Path | None = None, layout_path: Path | None = None,
                    summary_path: Path | None = None, detail_path: Path | None = None,
-                   viewport: tuple[int, int] = (1600, 900)) -> RenderRequest:
+                   viewport: tuple[int, int | None] = (1600, 900)) -> RenderRequest:
     root = _root()
     draft = resolve_draft_render(
         project_path=project_path or root / "examples/controller-z/project.yaml",
@@ -39,7 +41,7 @@ def _draft_request(*, project_path: Path | None = None, view_path: Path | None =
     )
     return RenderRequest(
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
-        scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(),
+        scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(), draft_auto_block=draft.auto_block,
     )
 
 
@@ -52,6 +54,34 @@ def test_draft_render_materializes_the_review_surface():
 
 def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
+
+
+@pytest.mark.parametrize("row_count", (30, 100))
+def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count):
+    """Curriculum-scale rows use finite Layout output rather than renderer sizing."""
+    root = _root()
+    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
+    exemplar = project["objects"]["architecture"]
+    project["objects"] = {
+        f"scale-{index:03}": {**deepcopy(exemplar), "title": f"Scale curriculum item {index:03}"}
+        for index in range(1, row_count + 1)
+    }
+    project["relations"] = []
+    project["annotations"] = {}
+    project_path = tmp_path / f"scale-{row_count}.yaml"
+    project_path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["visibility"] = {"labels": False, "relations": "none", "annotations": "none"}
+    view_path = tmp_path / "scale-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW") as error:
+        render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, 900)))
+    assert f"for {row_count} rows" in error.value.message
+    assert "use --viewport 1600x" in error.value.message
+    rendered = render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, None)))
+    height = int(re.search(r'height="(\d+)"', rendered.artifact.content.decode()).group(1))
+    assert height >= row_count * 72
 
 
 def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):

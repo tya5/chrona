@@ -76,9 +76,6 @@ body:
   shading:
     nonWorking: false
     exceptions: true
-  layoutIntent:
-    compactness: balanced
-    itemStacking: stable
   tableColumns:
   - id: Work package
     source: title

@@ -34,6 +34,24 @@ class SurfaceLayoutComposition:
     track_placements: tuple[TrackPlacement, ...]
 
 
+def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
+                                       metric_values: dict[str, Decimal]) -> Decimal:
+    """Return the minimum timeline block extent for explicit review rows."""
+    rows = projection.rows or tuple(
+        type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
+        for item in projection.items
+    )
+    row_minimum = metric_values["timeline.row.minBlockSize"]
+    tracks = sum(max(1, sum(item.track != "shared" for item in row.items)) for row in rows)
+    headers = 0
+    previous = object()
+    for row in rows:
+        if row.group_id != previous:
+            headers += 1 if row.group_id and group_presentation == "header" else 0
+            previous = row.group_id
+    return Decimal(tracks) * row_minimum + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
+
+
 def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
     """Return the optional completed progress submark bounds for one host mark."""
     if not 0 <= fraction <= 1:
@@ -273,7 +291,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     minimum = float(metric_values["timeline.row.minBlockSize"])
     if any(row_height < minimum * max(1, sum(item.track != "shared" for item in row.items))
            for row in review_rows):
-        raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline")
+        required = timeline_content_block_requirement(
+            projection=projection, group_presentation=request.surface_content.group_presentation,
+            metric_values=metric_values,
+        )
+        rows_count = len(review_rows)
+        hint = int(timeline.bounds.block + required + (layout_manifest.viewport.block_size - timeline.bounds.block - timeline.bounds.block_size))
+        detail = (f"timeline requires {int(required)}px for {rows_count} rows at {int(minimum)}px per row; "
+                  f"available {int(timeline.bounds.block_size)}px; use --viewport "
+                  f"{int(layout_manifest.viewport.inline_size)}x{hint} or select fewer rows")
+        raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline", detail=detail)
     rows = tuple(
         RowPlacement(item.row_id, item.table_subject_id, placement.group_id or "", _rect(placement.bounds),
                      depth=int(getattr(item, "depth", 0)))

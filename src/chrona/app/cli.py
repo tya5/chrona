@@ -283,6 +283,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
         scheduler=ReferenceScheduler(),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
         asset_root=asset_root,
+        draft_auto_block=getattr(args, "draft_auto_block", False),
     )
     try:
         return render_review(request)
@@ -331,6 +332,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         visual_profile=args.visual_profile,
         typesetter=_draft_typesetter_identity(args),
     )
+    args.draft_auto_block = closure.auto_block
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)
     _emit_font_warnings(rendered)
@@ -342,6 +344,7 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
         locale=args.locale, target_kind=args.format, visual_profile=args.visual_profile,
         typesetter=_draft_typesetter_identity(args),
     )
+    args.draft_auto_block = draft.auto_block
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)
     _emit_font_warnings(rendered)
@@ -368,18 +371,19 @@ def _run_authoring_command(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
-def _parse_viewport(value: str) -> tuple[int, int]:
+def _parse_viewport(value: str) -> tuple[int, int | None]:
     parts = value.lower().split("x")
     if len(parts) != 2:
         raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2)
     try:
-        width, height = (int(part) for part in parts)
+        width = int(parts[0])
+        height = None if parts[1] == "auto" else int(parts[1])
     except IconImportError as error:
         _emit_failure(CliFailure(error.code, error.code, "icon-import"))
     except ValueError as error:
         raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2) from error
-    if width <= 0 or height <= 0:
-        raise CliFailure("E_COMMAND_VIEWPORT", "viewport dimensions must be positive", "cli", "/viewport", 2)
+    if width <= 0 or (height is not None and height <= 0):
+        raise CliFailure("E_COMMAND_VIEWPORT", "viewport dimensions must be positive or block size may be auto", "cli", "/viewport", 2)
     return width, height
 
 

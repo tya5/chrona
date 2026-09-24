@@ -10,9 +10,9 @@ allOf:
       version: {description: "This View document contract version.", const: "chrona/view/v0.12"}
       kind: {description: "Resource kind identifying this document as a View.", const: view}
       body:
-        description: "Surface selection, presentation, and Layout intent."
+        description: "Surface selection and presentation semantics."
         type: object
-        required: [surface, comparison, visibility, layoutIntent, rows]
+        required: [surface, comparison, visibility, rows]
         additionalProperties: false
         properties:
           surface: {description: "Review surface family.", enum: [table-timeline, dependency-network]}
@@ -202,13 +202,6 @@ allOf:
             description: "Closed icon requests resolved by Layout against Context-local catalogs."
             type: array
             items: {$ref: "chrona/view-v0.12#/$defs/visual"}
-          layoutIntent:
-            type: object
-            required: [compactness, itemStacking]
-            additionalProperties: false
-            properties:
-              compactness: {enum: [compact, balanced, expanded]}
-              itemStacking: {const: stable}
           tableColumns:
             type: array
             minItems: 1

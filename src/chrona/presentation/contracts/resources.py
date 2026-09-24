@@ -218,7 +218,6 @@ class ViewInput:
     window: ViewWindow
     comparison: ViewComparison
     visibility: ViewVisibility
-    layout_intent: FrozenDict
     table_columns: tuple[TableColumn, ...]
     annotations: tuple[FrozenDict, ...]
     rows: ViewRows
@@ -666,7 +665,7 @@ def _view_input(body: FrozenDict) -> ViewInput:
                       for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
     return ViewInput(
-        selection, grouping, ordering, window, comparison, visibility, body["layoutIntent"],
+        selection, grouping, ordering, window, comparison, visibility,
         tuple(TableColumn(str(column["id"]), column["source"], str(column.get("format", "text")),
                           str(column["missing"])) for column in body.get("tableColumns", ())),
         tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row"))), body.get("axis"),
