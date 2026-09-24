@@ -21,15 +21,16 @@ ignored as an obstacle.
 
 ## I386-2 — Declared Controller Z evidence slide
 
-Add the View, Context, manifest entry, and generated SVG for the two-arrow
-Controller Z slide.  The new Context preserves the executive Project, Actual,
-Theme, Scheme, Layout, and target closure, changing only its View reference.
+Add the View, dedicated annotation-rail Layout, Context, manifest entry, and
+generated SVG for the two-arrow Controller Z slide.  The new Context preserves
+the executive Project, Actual, Theme, Scheme, and target closure while
+selecting the annotation Layout and View.
 Generate the SVG exclusively through the public materializer and inspect the
 diff.
 
-**Files:** `examples/controller-z/views/annotations.yaml`, a matching Context,
-`manifest.yaml`, generated SVG, and any identity/closure evidence required by
-the materializer.
+**Files:** `examples/controller-z/views/annotations.yaml`,
+`layouts/annotations-review.yaml`, a matching Context, `manifest.yaml`,
+generated SVG, and any identity/closure evidence required by the materializer.
 
 **Acceptance:** both annotation purposes, box/text/leader primitives, and
 object/facet/endpoint provenance occur in the output; the second route avoids

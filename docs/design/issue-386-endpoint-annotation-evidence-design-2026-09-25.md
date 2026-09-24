@@ -26,10 +26,12 @@ content.
 
 ## 2. Corpus evidence
 
-Add `controller-z/views/annotations.yaml` and a matching declared Context and
-manifest slide.  It retains the existing Project, Actual set, Theme, Scheme,
-and executive Layout; only the View and Context differ from the executive
-control.
+Add `controller-z/views/annotations.yaml`, a dedicated
+`layouts/annotations-review.yaml`, a matching declared Context, and a manifest
+slide.  It retains the existing Project, Actual set, Theme, and Scheme.  The
+existing executive Layout is a no-annotation control; the evidence Layout
+reserves a required measured annotation rail beside the table/timeline review
+row.
 
 The View enables presentation annotations and declares two annotations:
 
@@ -41,7 +43,8 @@ The View enables presentation annotations and declares two annotations:
 The chosen ordering and long enough texts require the second box/leader to
 avoid the first box.  The committed SVG proves the resolved route rather than
 asserting router behavior in prose.  The View-level source references remain
-object/facet/endpoint identities, so no coordinate is authored.
+object/facet/endpoint identities, so no coordinate is authored.  Layout owns
+the rail allocation before either box is measured.
 
 ## 3. Ownership flow
 
