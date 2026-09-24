@@ -75,6 +75,9 @@ body:
     panel.side:
       type: number
       value: 420
+    panel.review.block:
+      type: number
+      value: 960
     timeline-day-width:
       type: number
       value: 4

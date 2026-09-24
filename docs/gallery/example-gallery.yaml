@@ -1,7 +1,7 @@
 version: chrona/design-gallery/v0.2
 deferred:
   - {id: japanese-board, dimension: content, blocker: "controller-z-ja is a translated project with a ja-JP environment and CJK metrics; the current one-axis gallery contract requires identical project and environment references, so it remains standalone corpus evidence until localized semantic pairing is designed."}
-  - {id: programme-at-scale, dimension: composition, blocker: "Requires a responsive View/Layout design; existing Halcyon peer resources are not composable."}
+  - {id: programme-at-scale, dimension: composition, blocker: "Overlay grammar now has corpus evidence, but this gallery set still requires a responsive View/Layout comparison with deliberately composable Halcyon peers."}
   - {id: milestones-notes-margins, dimension: composition, blocker: "Requires a new View/Layout design for the undrawn detail slots."}
   - {id: bar-encodings, dimension: visual-grammar, blocker: "Requires the remaining per-object encoding design."}
   - {id: print-and-typeset, blocker: "Requires a multi-target materializer evidence contract; target is not a Design Space dimension."}

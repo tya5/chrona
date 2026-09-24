@@ -1,0 +1,84 @@
+version: chrona/layout-profile/v0.4
+id: overlay-briefing
+writingMode: horizontal-tb
+requiredThemeTokens: [panel.review.block, panel.side, spacing.l, spacing.m, spacing.none]
+relationRouting: {maxBends: 4, maxDetourRatio: 2}
+root:
+  id: overlay-page
+  kind: overlay
+  inlineSize: fill
+  blockSize: fill
+  padding: {token: spacing.l}
+  guides:
+    review-top: {axis: block, at: "1/8"}
+  barriers:
+    sidebar-end: {axis: inline, edge: end, members: [sidebar]}
+    table-end: {axis: inline, edge: end, members: [table]}
+  children:
+    - id: sidebar
+      kind: column
+      inlineSize: {fixed: {token: panel.side}}
+      blockSize: max-content
+      gap: {token: spacing.m}
+      padding: {token: spacing.none}
+      alignItems: start
+      justifyContent: start
+      anchor:
+        self: {inline: start, block: start}
+        target:
+          inline: {ref: parent, point: start}
+          block: {ref: guide:review-top, point: start}
+      children:
+        - id: title
+          kind: slot
+          source: title
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: start, safety: safe}
+          priority: required
+          overflow: diagnose
+    - id: table
+      kind: slot
+      source: table
+      inlineSize: content
+      blockSize: {fixed: {token: panel.review.block}}
+      place: {inline: start, block: start, safety: strict}
+      anchor:
+        self: {inline: start, block: start}
+        target:
+          inline: {ref: barrier:sidebar-end, point: end}
+          block: {ref: guide:review-top, point: start}
+        gap: {inline: {token: spacing.m}}
+      priority: required
+      overflow: diagnose
+    - id: timeline-stack
+      kind: column
+      inlineSize: content
+      blockSize: {fixed: {token: panel.review.block}}
+      gap: {token: spacing.none}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      anchor:
+        self: {inline: start, block: start}
+        target:
+          inline: {ref: barrier:table-end, point: end}
+          block: {ref: guide:review-top, point: start}
+        gap: {inline: {token: spacing.m}}
+      children:
+        - id: timeline-axis
+          kind: slot
+          source: timeline-axis
+          inlineSize: content
+          blockSize: content
+          place: {inline: stretch, block: start, safety: strict}
+          priority: required
+          overflow: diagnose
+        - id: timeline
+          kind: slot
+          source: timeline
+          inlineSize: content
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: required
+          overflow: diagnose

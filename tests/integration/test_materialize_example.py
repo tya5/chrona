@@ -1,5 +1,6 @@
 from hashlib import sha256
 from importlib.util import find_spec
+import json
 from pathlib import Path
 import re
 import shutil
@@ -92,6 +93,17 @@ def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     assert 'data-scene-id="legend:scale:owner:payload"' in svg
     assert 'data-scene-id="progress-fill:planned:campaign:campaign"' in svg
     assert 'data-purpose="progress-fill"' in svg
+
+
+def test_halcyon_overlay_briefing_materializes_guide_and_barrier_anchored_slots(tmp_path):
+    materialize(ROOT / "examples/halcyon-1/manifest.yaml", "overlay-briefing", tmp_path / "overlay", write=False)
+    scene = json.loads((tmp_path / "overlay/review.scene.json").read_text(encoding="utf-8"))
+    slots = {item["source"]: item["bounds"] for item in scene["surfaces"][0]["slots"]}
+    assert slots["title"]["block"] == slots["table"]["block"] == slots["timeline-axis"]["block"] == 225.0
+    assert slots["table"]["inline"] == 484.0
+    assert slots["timeline-axis"]["inline"] == slots["table"]["inline"] + slots["table"]["inlineSize"] + 24.0
+    assert slots["timeline"]["block"] == slots["timeline-axis"]["block"] + slots["timeline-axis"]["blockSize"]
+    assert slots["timeline"]["blockSize"] >= 900.0
 
 
 def test_orion_gates_measures_the_colour_scale_legend_before_layout(tmp_path):

@@ -11,12 +11,13 @@ def _root() -> Path:
 
 def test_presentation_coverage_is_deterministic_and_complete():
     root = _root()
-    assert len(discover(root)) == 20
+    assert len(discover(root)) == 21
     report = render(root)
     assert report == render(root)
     assert "## Layout slot evidence" in report
     assert "`observations`" in report
     assert "## Declared but never realized slot sources" in report
+    assert "halcyon-1/overlay-briefing" in report
 
 
 def test_presentation_vocabulary_uses_live_contracts_only():

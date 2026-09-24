@@ -53,3 +53,8 @@ slides:
     context: contexts/10-gallery-network-wallboard.yaml
     expectedSvg: generated/10-gallery-network-wallboard.svg
     expectedScene: generated/10-gallery-network-wallboard.scene.json
+  - id: overlay-briefing
+    evidence: "Programme board with a bounded overlay guide, barriers, and anchored review slots."
+    context: contexts/11-overlay-briefing.yaml
+    expectedSvg: generated/11-overlay-briefing.svg
+    expectedScene: generated/11-overlay-briefing.scene.json
