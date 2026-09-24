@@ -1,9 +1,6 @@
 """Canonical codecs for M26 operational workflow documents."""
 from __future__ import annotations
 
-from datetime import date
-from hashlib import sha256
-import json
 from typing import Any, Mapping
 
 import jsonschema
@@ -11,6 +8,7 @@ import yaml
 
 from chrona.resources import safe_load, schema_document
 from chrona.schema_diagnostics import explain_errors
+from chrona.core.identity import canonical_bytes, content_identity, json_value
 
 
 class OperationalResourceError(ValueError):
@@ -19,26 +17,6 @@ class OperationalResourceError(ValueError):
     def __init__(self, code: str, detail: str = "") -> None:
         super().__init__(f"{code}: {detail}" if detail else code)
         self.code = code
-
-
-def json_value(value: Any) -> Any:
-    """Convert YAML-native scalars to the JSON values described by the schemas."""
-    if isinstance(value, date):
-        return value.isoformat()
-    if isinstance(value, Mapping):
-        return {str(key): json_value(item) for key, item in value.items()}
-    if isinstance(value, list):
-        return [json_value(item) for item in value]
-    return value
-
-
-def canonical_bytes(value: Mapping[str, Any]) -> bytes:
-    """Return the sole canonical JSON form used for operational identities."""
-    return json.dumps(json_value(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-
-
-def content_identity(value: Mapping[str, Any]) -> str:
-    return "sha256:" + sha256(canonical_bytes(value)).hexdigest()
 
 
 def parse_document(payload: str | bytes, schema_name: str) -> dict[str, Any]:

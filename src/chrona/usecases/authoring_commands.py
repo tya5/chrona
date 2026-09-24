@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
-from chrona.operational.resources import content_identity
+from chrona.core.identity import content_identity
 
 
 def parse_authoring_command(path: Path) -> dict[str, Any]:
