@@ -2,10 +2,10 @@
 
 **Decision:** accepted for implementation.
 
-**Correction:** accepted after I357-1/2 profiling.  The bundled Material
-catalog receives an identity-bound generated projection; all other catalogs
-retain generic validation.  See
-`issue-357-packaged-icon-projection-design-correction-2026-09-24.md`.
+**Correction:** the bundled-only projection is rejected after review.  All
+catalogs use one envelope/selected-entry closure path and JSON-YAML-subset
+ingress; the shared safe codec belongs under Resources to preserve the import
+graph.  See `issue-357-catalog-neutral-performance-design-correction-2026-09-24.md`.
 
 | Boundary | Decision | Review result |
 | --- | --- | --- |

@@ -1,4 +1,9 @@
-# Issue #357 — Packaged Icon Projection Design Correction
+# Issue #357 — Packaged Icon Projection Design Correction (Superseded)
+
+**Superseded:** the 2026-09-24 review correctly found that a bundled-only
+projection violates the catalog-neutral #350 model.  It is retained solely as
+an audit record and replaced by
+`issue-357-catalog-neutral-performance-design-correction-2026-09-24.md`.
 
 ## Discovery
 
