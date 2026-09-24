@@ -67,13 +67,21 @@ class RenderClosure:
     def resource(self, kind: str) -> ClosureResource | None:
         return next((item for item in self.resources if item.kind == kind), None)
 
+    @staticmethod
+    def _kind_error(item: ClosureResource, expected: type[ResourceContract]) -> ClosureError:
+        return ClosureError(
+            "E_CLOSURE_KIND",
+            detail=(f"resource kind={item.kind} id={item.id}; expected contract={expected.__name__}; "
+                    f"found contract={type(item.contract).__name__}"),
+        )
+
     @property
     def project(self) -> ProjectContract:
         item = self.resource("project")
         if item is None:
             raise ClosureError("E_CLOSURE_REQUIRED")
         if not isinstance(item.contract, ProjectContract):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise self._kind_error(item, ProjectContract)
         return item.contract
 
     @property
@@ -82,7 +90,7 @@ class RenderClosure:
         if item is None:
             raise ClosureError("E_CLOSURE_REQUIRED")
         if not isinstance(item.contract, ViewContract):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise self._kind_error(item, ViewContract)
         return item.contract
 
     @property
@@ -91,7 +99,7 @@ class RenderClosure:
         if item is None:
             raise ClosureError("E_CLOSURE_REQUIRED")
         if not isinstance(item.contract, LayoutProfileContract):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise self._kind_error(item, LayoutProfileContract)
         return item.contract
 
     def _optional(self, kind: str, expected: type[ResourceContract]) -> ResourceContract | None:
@@ -99,7 +107,7 @@ class RenderClosure:
         if item is None:
             return None
         if not isinstance(item.contract, expected):
-            raise ClosureError("E_CLOSURE_KIND")
+            raise self._kind_error(item, expected)
         return item.contract
 
     @property
@@ -126,7 +134,8 @@ class RenderClosure:
     def profile_packages(self) -> tuple[ProfilePackageContract, ...]:
         values = tuple(item.contract for item in self.resources if item.kind == "profile-package")
         if not all(isinstance(item, ProfilePackageContract) for item in values):
-            raise ClosureError("E_CLOSURE_KIND")
+            item = next(item for item in self.resources if item.kind == "profile-package" and not isinstance(item.contract, ProfilePackageContract))
+            raise self._kind_error(item, ProfilePackageContract)
         return values  # type: ignore[return-value]
 
     @property
@@ -134,7 +143,8 @@ class RenderClosure:
         """Ordered catalog set closed by the Context, never a global registry."""
         values = tuple(item.contract for item in self.resources if item.kind == "icon-catalog")
         if not all(isinstance(item, IconCatalogContract) for item in values):
-            raise ClosureError("E_CLOSURE_KIND")
+            item = next(item for item in self.resources if item.kind == "icon-catalog" and not isinstance(item.contract, IconCatalogContract))
+            raise self._kind_error(item, IconCatalogContract)
         return values  # type: ignore[return-value]
 
     def icon_asset(self, reference: str) -> IconAsset:
