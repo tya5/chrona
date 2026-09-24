@@ -58,6 +58,14 @@ locations, or a resource selector.  In particular, an accessibility note is
 evidence narration; it cannot suppress an accessibility diagnostic or request
 a renderer fallback.
 
+Every paired set declares exactly one Design Space `dimension` from `content`,
+`composition`, `visual-grammar`, or `appearance`, plus one shared human-readable
+axis. All peers in that set use the same dimension and axis. Output target is
+evidence metadata rather than a fifth Design Space dimension. A gallery page is
+generated only from validated catalogue provenance, committed materializer SVG
+evidence, and normalized presentation-reference diffs; it is documentation and
+never a render input.
+
 Catalog validation proceeds in this order:
 
 ```text
