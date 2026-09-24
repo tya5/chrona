@@ -11,7 +11,7 @@ body:
   annotations:
     - id: supplier-risk
       purpose: callout
-      anchor: {kind: object, id: firmware, endpoint: body}
+      anchor: {kind: object, id: firmware, facet: planned, endpoint: body}
       placement: {side: above, alignment: end}
       text: Supplier confirmation pending
   rows: {mode: automatic}

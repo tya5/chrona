@@ -155,6 +155,9 @@ def _format_date_range(start: date, end: date, *, locale: str) -> str:
 
 
 def _format_compact_date(value: date, *, include_year: bool, locale: str) -> str:
+    if locale == "ja-JP":
+        rendered = f"{value.month}月{value.day}日"
+        return f"{value.year}年{rendered}" if include_year else rendered
     if locale != "en-US":
         raise ValueError("E_PRESENTATION_LOCALE_UNSUPPORTED")
     months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")

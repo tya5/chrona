@@ -1,0 +1,32 @@
+version: chrona/declared-vocabulary-policy/v0.1
+vocabularies:
+  - schema: schemas/theme-v0.6.schema.yaml
+    pointer: /properties/body/properties/values/additionalProperties/allOf/1/then/properties/value
+    owner: chrona.presentation.model.theme_tokens.ThemeTokenView
+    disposition: finite
+    accepted: [triangle]
+  - schema: schemas/theme-v0.6.schema.yaml
+    pointer: /properties/body/properties/values/additionalProperties/allOf/2/then/properties/value
+    owner: chrona.presentation.model.theme_tokens.ThemeTokenView
+    disposition: finite
+    accepted: [outline, diagonal-hatch]
+  - schema: schemas/render-context-v0.15.schema.yaml
+    pointer: /properties/body/properties/environment/properties/locale
+    owner: chrona.presentation.model.surface_content.display_value
+    disposition: finite
+    accepted: [en-US, ja-JP]
+  - schema: schemas/view-v0.13.schema.yaml
+    pointer: /allOf/1/properties/body/properties/annotations/items/properties/anchor/properties/kind
+    owner: chrona.presentation.layout.annotations.resolve_annotation_anchor
+    disposition: finite
+    accepted: [object]
+  - schema: schemas/view-v0.13.schema.yaml
+    pointer: /allOf/1/properties/body/properties/annotations/items/properties/anchor/properties/facet
+    owner: chrona.presentation.layout.annotations.resolve_annotation_anchor
+    disposition: finite
+    accepted: [planned, actual]
+  - schema: schemas/view-v0.13.schema.yaml
+    pointer: /allOf/1/properties/body/properties/annotations/items/properties/anchor/properties/endpoint
+    owner: chrona.presentation.layout.annotations.resolve_annotation_anchor
+    disposition: finite
+    accepted: [start, finish, at, body]

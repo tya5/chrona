@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[5]
 
 def _theme():
     return {
-        "version": "chrona/theme/v0.5", "kind": "theme", "id": "theme",
+        "version": "chrona/theme/v0.6", "kind": "theme", "id": "theme",
         "body": {"values": {}, "roles": {}, "colorBindings": {"text.fill": "text"}},
     }
 
@@ -39,6 +39,25 @@ def test_contract_rejects_schema_invalid_mandatory_resource():
         parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
     assert error.value.violation is not None
     assert (error.value.violation.resource_kind, error.value.violation.resource_identity) == ("theme", "theme")
+
+
+@pytest.mark.parametrize(
+    ("kind", "path", "mutate"),
+    (
+        ("theme", "examples/halcyon-1/themes/briefing.yaml",
+         lambda value: value["body"]["values"]["arrow"].update({"value": "circle"})),
+        ("render-context", "examples/halcyon-1/contexts/01-mission-brief.yaml",
+         lambda value: value["body"]["environment"].update({"locale": "en-GB"})),
+        ("view", "examples/aster-ssd/views/01-overview.yaml",
+         lambda value: value["body"].update({"annotations": [{"id": "note", "purpose": "note", "anchor": {"kind": "object", "id": "firmware", "endpoint": "body"}, "placement": {"side": "above", "alignment": "center"}, "text": "missing facet"}]})),
+    ),
+)
+def test_declared_vocabulary_is_rejected_at_its_resource_boundary(kind, path, mutate):
+    value = yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
+    mutate(value)
+
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        parse_contract(ClosureIdentity(kind, value["id"], "r", "sha256:" + "a" * 64), value)
 
 
 @pytest.mark.parametrize(

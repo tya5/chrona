@@ -1,4 +1,4 @@
-version: chrona/view/v0.12
+version: chrona/view/v0.13
 kind: view
 id: halcyon-01-mission-brief
 body:

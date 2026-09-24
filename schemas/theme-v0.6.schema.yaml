@@ -1,0 +1,126 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:theme-v0.6"
+title: "Chrona Theme v0.6"
+description: "Semantic appearance tokens and bindings; concrete colors remain in a Color Scheme."
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {description: "This Theme contract version.", const: "chrona/theme/v0.6"}
+  kind: {description: "The resource kind for semantic appearance bindings.", const: theme}
+  id: {description: "Stable Theme identifier.", type: string, minLength: 1}
+  body:
+    type: object
+    description: "Non-color values, semantic role bindings, and Color Scheme intents."
+    required: [values, roles, colorBindings]
+    additionalProperties: false
+    properties:
+      values:
+        type: object
+        description: "Named non-color tokens such as typography, marker, and paint values."
+        additionalProperties:
+          type: object
+          description: "One named non-color token with its declared value type."
+          required: [type, value]
+          additionalProperties: false
+          properties:
+            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, textAlternative, lineCap, lineJoin, fidelity]}
+            value: {}
+          allOf:
+            - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
+              examples: [{type: dashPattern, value: [1]}]
+              if:
+                properties: {type: {const: dashPattern}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    type: array
+                    items: {type: number, exclusiveMinimum: 0}
+              else:
+                properties:
+                  value: {type: [string, number]}
+            - description: "Marker names are closed until the resolved-geometry contract succeeds this scalar form."
+              examples: [{type: marker, value: triangle}]
+              if:
+                properties: {type: {const: marker}}
+                required: [type]
+              then:
+                properties:
+                  value: {enum: [triangle]}
+            - description: "Pattern names are closed until the resolved-geometry contract succeeds this scalar form."
+              examples: [{type: pattern, value: diagonal-hatch}]
+              if:
+                properties: {type: {const: pattern}}
+                required: [type]
+              then:
+                properties:
+                  value: {enum: [outline, diagonal-hatch]}
+      roles:
+        type: object
+        description: "Semantic role bindings to named non-color tokens."
+        additionalProperties:
+          type: object
+          description: "One semantic role bound to named token values."
+          additionalProperties: false
+          properties:
+            marker: {description: "Named marker token for the role.", type: string, minLength: 1}
+            pattern: {description: "Named pattern token for the role.", type: string, minLength: 1}
+            fontFamily: {description: "Named font-family token for the role.", type: string, minLength: 1}
+            fontWeight: {description: "Named font-weight token for the role.", type: string, minLength: 1}
+            fontSize: {description: "Named font-size token for the role.", type: string, minLength: 1}
+            lineHeight: {description: "Named line-height token for the role.", type: string, minLength: 1}
+            iconScale: {description: "Named typography-relative icon block-size ratio for the role.", type: string, minLength: 1}
+            iconGap: {description: "Named typography-relative icon inline-gap ratio for the role.", type: string, minLength: 1}
+            opacity: {description: "Named opacity token for the role.", type: string, minLength: 1}
+            strokeWidth: {description: "Named stroke-width token for the role.", type: string, minLength: 1}
+            dash: {description: "Named dash-pattern token for the role.", type: string, minLength: 1}
+            textAlternative: {description: "Named text-alternative token for the role.", type: string, minLength: 1}
+            gradientAngle: {description: "Named linear-gradient angle token.", type: string, minLength: 1}
+            shadowOffsetX: {description: "Named shadow horizontal-offset token.", type: string, minLength: 1}
+            shadowOffsetY: {description: "Named shadow vertical-offset token.", type: string, minLength: 1}
+            shadowBlur: {description: "Named shadow blur token.", type: string, minLength: 1}
+            shadowOpacity: {description: "Named shadow opacity token.", type: string, minLength: 1}
+            strokeLineCap: {description: "Named stroke-cap token.", type: string, minLength: 1}
+            strokeLineJoin: {description: "Named stroke-join token.", type: string, minLength: 1}
+            gradientFidelity: {description: "Named gradient fidelity token.", type: string, minLength: 1}
+            shadowFidelity: {description: "Named shadow fidelity token.", type: string, minLength: 1}
+            strokeFinishFidelity: {description: "Named stroke-finish fidelity token.", type: string, minLength: 1}
+      colorBindings:
+        type: object
+        description: "Semantic fill or stroke roles bound to Color Scheme intents."
+        minProperties: 1
+        additionalProperties: false
+        patternProperties:
+          "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke|gradientStart|gradientEnd|shadowColor)$":
+            description: "Color Scheme intent selected for one fill or stroke role."
+            examples: [accent, "category:bus"]
+            anyOf:
+              - description: "One closed non-category Scheme intent."
+                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario]
+              - description: "One explicit named category slot."
+                pattern: "^category:[A-Za-z][A-Za-z0-9_-]*$"
+                examples: ["category:bus"]
+      colorScales:
+        type: object
+        description: "Named explicit value-to-Scheme-slot maps consumed by View colour encodings."
+        additionalProperties:
+          type: object
+          description: "One scale's declared slot map."
+          required: [slots]
+          additionalProperties: false
+          properties:
+            slots:
+              type: object
+              description: "Exact domain-value to named Scheme category slot mapping."
+              minProperties: 1
+              additionalProperties:
+                description: "One named Scheme category slot identifier."
+                type: string
+                pattern: "^[A-Za-z][A-Za-z0-9_-]*$"
+                examples: [bus]
+      metrics:
+        type: object
+        description: "Named source-measurement metric bindings used by Layout."
+        propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
+        additionalProperties: {description: "Named source-measurement metric.", type: string, minLength: 1}

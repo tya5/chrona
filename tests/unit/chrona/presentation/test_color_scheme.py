@@ -23,7 +23,7 @@ def test_scheme_rejects_insufficient_text_contrast():
 
 
 def test_theme_validates_each_inside_label_role_against_its_host_mark():
-    theme = {"version": "chrona/theme/v0.5", "kind": "theme", "id": "inside", "body": {
+    theme = {"version": "chrona/theme/v0.6", "kind": "theme", "id": "inside", "body": {
         "values": {}, "roles": {}, "colorBindings": {
             "planned.fill": "accent", "actual.fill": "positive", "snapshot.fill": "neutral",
             "member-label-inside-planned.fill": "insideLabelPlanned",

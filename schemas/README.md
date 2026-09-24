@@ -20,8 +20,8 @@ are migration-only and record their successor and removal slice.
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
-| theme | theme-v0.5.schema.yaml |
-| view | view-v0.12.schema.yaml |
+| theme | theme-v0.6.schema.yaml |
+| view | view-v0.13.schema.yaml |
 
 # Project Schema v0.3 Notes
 

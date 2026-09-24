@@ -74,9 +74,12 @@ def _pointer(document: Mapping[str, Any], pointer: str) -> Mapping[str, Any]:
     value: Any = document
     for part in pointer[1:].split("/"):
         key = part.replace("~1", "/").replace("~0", "~")
-        if not isinstance(value, Mapping) or key not in value:
+        if isinstance(value, Mapping) and key in value:
+            value = value[key]
+        elif isinstance(value, list) and key.isdigit() and int(key) < len(value):
+            value = value[int(key)]
+        else:
             raise VocabularyInventoryError(f"E_VOCABULARY_POINTER:{pointer}")
-        value = value[key]
     return _mapping(value, f"E_VOCABULARY_POINTER:{pointer}")
 
 

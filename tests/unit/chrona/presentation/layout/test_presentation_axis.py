@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.layout.axis import axis_intervals, format_axis_label
+from chrona.presentation.model.surface_content import display_value
 
 
 def interval_values(intervals):
@@ -36,6 +37,12 @@ def test_year_intervals_keep_the_natural_bucket_at_clipped_edges():
 def test_month_format_catalog_is_closed_and_process_locale_independent(style, expected):
     interval = axis_intervals(date(2027, 1, 15), date(2027, 2, 1), "month")[0]
     assert format_axis_label(interval, {"month": style, "quarter": "quarter-year", "date": "iso-date"}, "en-US") == expected
+
+
+def test_compact_date_range_is_deterministic_for_each_declared_context_locale():
+    value = {"start": date(2027, 2, 3), "finish": date(2027, 2, 7)}
+    assert display_value(value, "blank", "dateRange", locale="en-US") == "03 Feb – 07 Feb"
+    assert display_value(value, "blank", "dateRange", locale="ja-JP") == "2月3日 – 2月7日"
 
 
 @pytest.mark.parametrize("style,expected", [

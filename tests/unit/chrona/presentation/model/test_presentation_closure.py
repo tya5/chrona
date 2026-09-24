@@ -29,8 +29,8 @@ def test_closure_rejects_path_escape_before_reading_snapshot(tmp_path):
 
 def test_v05_closure_binds_theme_scheme_and_layout_separately(tmp_path):
     project = {"version": "timeline/v0.6", "project": {"id": "p"}, "objects": {}}
-    view = {"version": "chrona/view/v0.12", "kind": "view", "id": "v", "body": {}}
-    theme = {"version": "chrona/theme/v0.5", "kind": "theme", "id": "t", "body": {"values": {}, "roles": {}, "colorBindings": {"text.fill": "text"}}}
+    view = {"version": "chrona/view/v0.13", "kind": "view", "id": "v", "body": {}}
+    theme = {"version": "chrona/theme/v0.6", "kind": "theme", "id": "t", "body": {"values": {}, "roles": {}, "colorBindings": {"text.fill": "text"}}}
     scheme = {"version": "chrona/color-scheme/v0.2", "kind": "color-scheme", "id": "s", "body": {"colors": {"surface": "#FFFFFF", "surfaceRaised": "#F5F7FA", "text": "#172033", "textMuted": "#4B5563", "accent": "#1D4ED8", "positive": "#047857", "negative": "#B91C1C", "warning": "#A16207", "neutral": "#475569", "insideLabelPlanned": "#FFFFFF", "insideLabelActual": "#FFFFFF", "insideLabelSnapshot": "#FFFFFF", "insideLabelScenario": "#FFFFFF"}, "categories": {"default": "#112233"}, "suitability": {"background": "light", "colorVision": ["none-claimed"], "print": "not-claimed"}, "provenance": {"kind": "chrona-authored", "source": "test", "license": "pending"}}}
     layout = {"version": "chrona/layout-profile/v0.4", "id": "l", "writingMode": "horizontal-tb", "requiredThemeTokens": [], "root": {}}
     refs = {}
@@ -42,7 +42,7 @@ def test_v05_closure_binds_theme_scheme_and_layout_separately(tmp_path):
         refs[name] = _ref(kind, identifier, f"{name}.yaml", payload)
     identity = "sha256:" + "a" * 64
     context = {
-            "version": "chrona/render-context/v0.14", "kind": "render-context", "id": "ctx",
+            "version": "chrona/render-context/v0.15", "kind": "render-context", "id": "ctx",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"],
             "colorScheme": refs["scheme"], "layout": refs["layout"], "inputs": {},
