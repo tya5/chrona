@@ -165,7 +165,7 @@ class LocalTransactionalStore:
         digest = sha256(payload).hexdigest()
         self._sequence += 1
         token = f"local-{self._sequence}-{digest[:12]}"
-        path = self.root / token
+        path = snapshot_directory(self.root, token)
         path.mkdir(parents=True, exist_ok=False)
         (path / "project.json").write_bytes(payload)
         (path / "parents.json").write_text(json.dumps(list(parents)), encoding="utf-8")
@@ -174,10 +174,11 @@ class LocalTransactionalStore:
 
     def _read_tip(self) -> ProjectSnapshot:
         token = json.loads(self._tip.read_text(encoding="utf-8"))["token"]
-        payload = (self.root / token / "project.json").read_bytes()
+        path = snapshot_directory(self.root, token)
+        payload = (path / "project.json").read_bytes()
         project = json.loads(payload)
         digest = sha256(payload).hexdigest()
-        parents_path = self.root / token / "parents.json"
+        parents_path = path / "parents.json"
         parents = tuple(json.loads(parents_path.read_text(encoding="utf-8"))) if parents_path.is_file() else ()
         return ProjectSnapshot(f"local:{token}", f"sha256:{digest}", project, parents)
 
