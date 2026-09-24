@@ -586,7 +586,7 @@ def main() -> None:
     except CliFailure as error:
         _emit_failure(error)
     except (SnapshotReadError, ClosureError) as error:
-        message = error.detail if isinstance(error, ClosureError) and error.detail else str(error)
+        message = error.detail if error.detail else str(error)
         source_ref = error.source_ref if isinstance(error, ClosureError) else "/"
         _emit_failure(CliFailure(error.diagnostic_id, message, "closure", source_ref))
     except IconImportError as error:

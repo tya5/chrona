@@ -15,9 +15,10 @@ from chrona.core.diagnostics import Diagnostic
 class SnapshotReadError(ValueError):
     """A pinned resource could not be read as declared."""
 
-    def __init__(self, diagnostic_id: str):
+    def __init__(self, diagnostic_id: str, detail: str = ""):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
+        self.detail = detail
 
 
 class SnapshotReader(Protocol):

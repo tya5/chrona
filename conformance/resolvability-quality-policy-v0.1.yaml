@@ -56,7 +56,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_RENDER_TYPESETTER_DESCRIPTOR}
     - {<<: *backlog, code: E_STORE_CONFIG}
     - {<<: *backlog, code: E_STORE_CONFIG_REQUIRED}
-    - {<<: *backlog, code: E_STORE_REFERENCE}
     - {<<: *backlog, code: E_TARGET_CAPABILITY_ORDER}
 declaredComputedValues:
   - path: src/chrona/operational/references.py

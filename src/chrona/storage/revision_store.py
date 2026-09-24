@@ -194,7 +194,7 @@ class LocalSnapshotReader:
     def read(self, reference: dict[str, Any]) -> bytes:
         store = reference.get("store", {})
         if store.get("provider") != "local" or store.get("identity") != self.identity:
-            raise SnapshotReadError("E_STORE_REFERENCE")
+            raise SnapshotReadError("E_STORE_REFERENCE", f"expected local store identity={self.identity}; received store={store}")
         token = reference.get("revision", {}).get("token", "")
         address = reference.get("address", "")
         if (
@@ -210,7 +210,7 @@ class LocalSnapshotReader:
         except ValueError as error:
             raise SnapshotReadError(str(error)) from error
         if not path.is_file():
-            raise SnapshotReadError("E_STORE_REFERENCE")
+            raise SnapshotReadError("E_STORE_REFERENCE", f"reference address={address}; expected immutable file under revision={token}; found no file")
         payload = path.read_bytes()
         actual_identity = f"sha256:{sha256(payload).hexdigest()}"
         expected_identity = reference.get("contentIdentity")

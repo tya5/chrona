@@ -28,3 +28,18 @@ def test_reader_computes_identity_when_reference_omits_it_and_strict_mode_reject
     assert LocalSnapshotReader(tmp_path, "test").read(reference) == payload
     with pytest.raises(SnapshotReadError, match="E_CONTENT_IDENTITY_REQUIRED"):
         LocalSnapshotReader(tmp_path, "test", require_content_identity=True).read(reference)
+
+
+def test_reader_store_reference_detail_names_expectation_and_missing_resource(tmp_path):
+    reference = _reference(b"project")
+    with pytest.raises(SnapshotReadError) as wrong_store:
+        LocalSnapshotReader(tmp_path, "expected").read(reference)
+    assert wrong_store.value.diagnostic_id == "E_STORE_REFERENCE"
+    assert "expected local store identity=expected" in wrong_store.value.detail
+    assert "received store=" in wrong_store.value.detail
+
+    with pytest.raises(SnapshotReadError) as missing:
+        LocalSnapshotReader(tmp_path, "test").read(reference)
+    assert missing.value.diagnostic_id == "E_STORE_REFERENCE"
+    assert "reference address=project.yaml" in missing.value.detail
+    assert "found no file" in missing.value.detail
