@@ -34,6 +34,21 @@ def test_python_module_entry_point_exposes_the_cli():
     assert "chrona" in completed.stdout
 
 
+def test_cli_imports_a_declared_local_font_pair(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    output = tmp_path / "fonts"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "font", "import", str(root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf"),
+        "--family", "CLI Private Sans", "--weight", "400", "--output", str(output),
+    ])
+
+    main()
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["family"] == "CLI Private Sans"
+    assert (output / "font-metrics.yaml").is_file()
+
+
 def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
     cli._emit_font_warnings(SimpleNamespace(font_warnings=(FontGlyphSubstitution(
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",

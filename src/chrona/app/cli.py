@@ -30,6 +30,7 @@ from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
+from chrona.presentation.fonts.importer import FontImportError, import_font
 
 
 @dataclass(frozen=True)
@@ -197,6 +198,16 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--source-version", help="explicit upstream collection/package version for catalog provenance")
     command = icon_sub.add_parser("material-default", help="copy the bundled Material Symbols Outline Rounded catalog")
     command.add_argument("--output", required=True, help="new explicit local catalog YAML")
+
+    font = sub.add_parser("font", help="create a declared local font closure")
+    font_sub = font.add_subparsers(dest="font_command", required=True, parser_class=JsonArgumentParser)
+    command = font_sub.add_parser("import", help="import one static, TTC, or instantiated variable font")
+    command.add_argument("source", help="local TTF, OTF, or TTC font")
+    command.add_argument("--family", required=True, help="declared font family")
+    command.add_argument("--weight", required=True, type=int, help="declared CSS-like numeric weight")
+    command.add_argument("--output", required=True, help="new or existing local font asset directory")
+    command.add_argument("--index", type=int, default=0, help="TTC face index (default: 0)")
+    command.add_argument("--axis", action="append", default=[], metavar="TAG=VALUE", help="instantiate one variable-font axis; repeatable")
 
     command = sub.add_parser("authoring-command-apply", help="apply one revision-bound guided workspace command")
     command.add_argument("--workspace", required=True)
@@ -405,6 +416,11 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
 
 
 def _run(args: argparse.Namespace) -> None:
+    if args.command == "font":
+        result = import_font(Path(args.source), Path(args.output), family=args.family,
+                             weight=args.weight, index=args.index, axis=tuple(args.axis))
+        print(json.dumps(result, sort_keys=True))
+        return
     if args.command == "icon-catalog":
         result = (import_iconify(Path(args.source), Path(args.output), set_name=args.icon_set, aliases=tuple(args.alias),
                                  license_spdx=args.license_spdx, notice_path=Path(args.notice_file),
@@ -548,6 +564,8 @@ def main() -> None:
         _emit_failure(CliFailure(error.diagnostic_id, message, "closure", source_ref))
     except IconImportError as error:
         _emit_failure(CliFailure(error.code, error.detail, "icon-import", error.source_ref))
+    except FontImportError as error:
+        _emit_failure(CliFailure(error.code, error.detail, "font-import", error.source_ref))
     except json.JSONDecodeError as error:
         _emit_failure(CliFailure("E_INPUT_JSON", str(error), exit_code=2))
     except yaml.YAMLError as error:

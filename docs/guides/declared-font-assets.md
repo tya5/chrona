@@ -53,8 +53,32 @@ unless its license permits that use.
 
 ## Bring your own pair
 
-Generate the metrics from the exact font bytes that will ship with the Context.
-For variable fonts, instantiate the selected weight before measurement:
+Create a local, explicit font closure with the authoring-only importer. It
+validates the selected face, writes metrics from the exact persisted font bytes,
+and creates/updates `font-metrics.yaml` in the output directory. The generated
+names use a portable slug, and an existing family/weight is refused rather than
+replaced.
+
+```sh
+chrona font import fonts/acme-vf.ttf --family "Acme Sans" --weight 400 \
+  --axis wght=400 --output fonts
+```
+
+For a TrueType Collection, select its zero-based face explicitly:
+
+```sh
+chrona font import fonts/acme.ttc --index 2 --family "Acme Sans" --weight 700 \
+  --output fonts
+```
+
+The command is local-only: it neither installs a provider nor modifies an
+existing corpus/package. It accepts TTF, OTF, and TTC input that fontTools can
+validate; a variable selection is serialized as a static face. Use the output
+descriptor directly for draft rendering, or copy its three declared files into
+an explicitly owned Context closure.
+
+The low-level metrics tool remains useful for controlled build pipelines. For
+variable fonts, instantiate the selected weight before measurement:
 
 ```sh
 python tools/generate_font_metrics.py fonts/acme-vf.ttf fonts/acme-regular.metrics.json \

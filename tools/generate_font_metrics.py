@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import argparse
-from hashlib import sha256
-import json
 from pathlib import Path
 
+from chrona.presentation.fonts.importer import _axes, _metrics
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
@@ -22,35 +21,11 @@ def main() -> None:
 
     payload = args.font.read_bytes()
     font = TTFont(args.font)
-    axes: dict[str, float] = {}
-    for assignment in args.axis:
-        try:
-            tag, raw_value = assignment.split("=", 1)
-            axes[tag] = float(raw_value)
-        except ValueError as error:
-            raise ValueError("E_FONT_AXIS") from error
+    axes = _axes(tuple(args.axis))
     if axes:
         font = instantiateVariableFont(font, axes, inplace=False)
-    cmap = font.getBestCmap() or {}
-    hmtx = font["hmtx"].metrics
-    units = int(font["head"].unitsPerEm)
-    cap_height = int(getattr(font["OS/2"], "sCapHeight", 0))
-    if cap_height <= 0:
-        raise ValueError("E_FONT_CAP_HEIGHT_REQUIRED")
-    table = {
-        "version": "chrona/font-metrics/v2",
-        "family": args.family,
-        "weight": args.weight,
-        "sourceContentIdentity": "sha256:" + sha256(payload).hexdigest(),
-        "unitsPerEm": units,
-        "ascent": int(font["hhea"].ascent),
-        "descent": int(font["hhea"].descent),
-        "capHeight": cap_height,
-        "defaultAdvance": int(hmtx.get(".notdef", (units, 0))[0]),
-        "advances": {str(code): int(hmtx[name][0]) for code, name in sorted(cmap.items()) if name in hmtx},
-    }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(table, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+    args.output.write_bytes(_metrics(font, payload, args.family, args.weight))
 
 
 if __name__ == "__main__":
