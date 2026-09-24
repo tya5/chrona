@@ -1,7 +1,0 @@
-version: chrona/review-detail-profile/v0.1
-id: halcyon-board-legend
-body:
-  legend:
-    - {role: planned, label: Planned}
-    - {role: actual, label: Actual}
-    - {role: milestone, label: Milestone}

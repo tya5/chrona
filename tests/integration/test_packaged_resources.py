@@ -6,7 +6,7 @@ from time import perf_counter
 
 import yaml
 
-from chrona.resources import schema_resource
+from chrona.resources import schema_resource, template_resource
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
 
@@ -37,6 +37,12 @@ SCHEMAS = (
 def test_schema_resources_resolve_to_the_source_authority():
     for name in SCHEMAS:
         assert schema_resource(name).read_bytes() == (ROOT / "schemas" / name).read_bytes()
+
+
+def test_init_template_resolves_to_the_single_source_authority():
+    template = template_resource("halcyon-1")
+
+    assert template.joinpath("manifest.yaml").read_bytes() == (ROOT / "examples" / "halcyon-1" / "manifest.yaml").read_bytes()
 
 
 def test_package_owned_runtime_resources_exist():

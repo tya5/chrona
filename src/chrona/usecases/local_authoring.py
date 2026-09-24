@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from importlib.resources import files
 from pathlib import Path
 
 import yaml
 
+from chrona.resources import template_resource
 from chrona.usecases.materialize import copy_context_closure
 
 
@@ -37,9 +37,7 @@ def initialize_project(destination: Path, *, example: str = "halcyon-1") -> Path
         raise ValueError("E_INIT_EXAMPLE")
     if destination.exists() and any(destination.iterdir()):
         raise ValueError("E_INIT_OUTPUT_EXISTS")
-    source = files("chrona.resources").joinpath("examples", example)
-    if not source.is_dir():
-        raise ValueError("E_INIT_EXAMPLE")
+    source = template_resource(example)
     _copy_template(source, destination)
     # Contexts are immutable references.  A freshly initialized project must
     # therefore contain their snapshot closure before its Store config is

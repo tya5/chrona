@@ -43,6 +43,17 @@ def schema_resource(name: str) -> Traversable:
     return files("schemas").joinpath(name)
 
 
+def template_resource(name: str) -> Traversable:
+    """Return one supported init template from the wheel or development authority."""
+    packaged = files(__package__).joinpath("examples", name)
+    if packaged.is_dir() and packaged.joinpath("manifest.yaml").is_file():
+        return packaged
+    source = files("examples").joinpath(name)
+    if source.is_dir() and source.joinpath("manifest.yaml").is_file():
+        return source
+    raise ValueError("E_INIT_EXAMPLE")
+
+
 @cache
 def schema_document(name: str) -> Mapping[str, Any]:
     """Decode one immutable schema resource once per process."""

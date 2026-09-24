@@ -29,3 +29,4 @@ packages = ["src/chrona"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "schemas" = "chrona/resources/schemas"
+"examples/halcyon-1" = "chrona/resources/examples/halcyon-1"
