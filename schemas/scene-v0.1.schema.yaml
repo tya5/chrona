@@ -1,0 +1,190 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/scene/v0.1"
+title: "Chrona inspection Scene v0.1"
+description: "Derived, non-authoritative inspection and adapter evidence for one completed render."
+type: object
+required: [version, kind, provenance, viewport, requiredCapabilities, surfaces, manifest, diagnostics]
+additionalProperties: false
+properties:
+  version: {const: chrona/scene/v0.1}
+  kind: {const: scene}
+  provenance:
+    type: object
+    required: [mode, chronaVersion, resources]
+    additionalProperties: false
+    properties:
+      mode: {enum: [draft, immutable]}
+      chronaVersion: {type: string, minLength: 1}
+      resources:
+        type: array
+        items: {$ref: "#/$defs/resource"}
+  viewport: {$ref: "#/$defs/viewport"}
+  requiredCapabilities:
+    type: array
+    uniqueItems: true
+    items: {enum: [mark.marker-geometry, paint.pattern-geometry, mark.symbol-outline, icon.vector, icon.raster]}
+  surfaces:
+    type: array
+    minItems: 1
+    items: {$ref: "#/$defs/surface"}
+  manifest:
+    type: object
+    required: [version, settingsVersion, viewport, selectedObjectIds, fontAssetIdentities, contentFamilyCounts, surfaceScales, visualRoleCounts]
+    additionalProperties: false
+    properties:
+      version: {const: chrona/scene-manifest/v0.1}
+      settingsVersion: {type: string, minLength: 1}
+      viewport: {$ref: "#/$defs/viewport"}
+      selectedObjectIds: {type: array, items: {type: string}}
+      fontAssetIdentities: {type: array, items: {$ref: "#/$defs/identity"}}
+      contentFamilyCounts: {$ref: "#/$defs/contentCounts"}
+      surfaceScales: {type: array, items: {$ref: "#/$defs/scale"}}
+      visualRoleCounts:
+        type: object
+        additionalProperties: {type: integer, minimum: 0}
+  diagnostics: {type: array, items: {type: string, minLength: 1}}
+$defs:
+  number: {type: number}
+  positive: {type: number, exclusiveMinimum: 0}
+  identity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  point:
+    type: array
+    minItems: 2
+    maxItems: 2
+    items: {$ref: "#/$defs/number"}
+  bounds:
+    type: object
+    required: [inline, block, inlineSize, blockSize]
+    additionalProperties: false
+    properties:
+      inline: {$ref: "#/$defs/number"}
+      block: {$ref: "#/$defs/number"}
+      inlineSize: {type: number, minimum: 0}
+      blockSize: {type: number, minimum: 0}
+  viewport:
+    type: object
+    required: [inlineSize, blockSize]
+    additionalProperties: false
+    properties:
+      inlineSize: {$ref: "#/$defs/positive"}
+      blockSize: {$ref: "#/$defs/positive"}
+  resource:
+    type: object
+    required: [kind, id, revision, contentIdentity]
+    additionalProperties: false
+    properties:
+      kind: {type: string, minLength: 1}
+      id: {type: string, minLength: 1}
+      revision: {type: string, minLength: 1}
+      contentIdentity: {$ref: "#/$defs/identity"}
+  pathCommand:
+    type: object
+    required: [kind, points]
+    additionalProperties: false
+    properties:
+      kind: {enum: [move, line, quadratic, cubic, close]}
+      points: {type: array, items: {$ref: "#/$defs/point"}}
+  paint:
+    type: object
+    required: [opacity]
+    additionalProperties: false
+    properties:
+      fill: {type: string}
+      stroke: {type: string}
+      strokeWidth: {$ref: "#/$defs/positive"}
+      dash: {type: array, items: {$ref: "#/$defs/positive"}}
+      opacity: {type: number, minimum: 0, maximum: 1}
+      gradient:
+        type: object
+        required: [start, end, stops, fidelity]
+        additionalProperties: false
+        properties:
+          start: {$ref: "#/$defs/point"}
+          end: {$ref: "#/$defs/point"}
+          stops: {type: array, minItems: 2, items: {type: object, required: [offset, color], additionalProperties: false, properties: {offset: {type: number, minimum: 0, maximum: 1}, color: {type: string}}}}
+          fidelity: {enum: [required, decorative-optional]}
+      shadow:
+        type: object
+        required: [color, offsetInline, offsetBlock, blur, opacity, fidelity]
+        additionalProperties: false
+        properties:
+          color: {type: string}
+          offsetInline: {$ref: "#/$defs/number"}
+          offsetBlock: {$ref: "#/$defs/number"}
+          blur: {type: number, minimum: 0}
+          opacity: {type: number, minimum: 0, maximum: 1}
+          fidelity: {enum: [required, decorative-optional]}
+      strokeFinish:
+        type: object
+        required: [lineCap, lineJoin, fidelity]
+        additionalProperties: false
+        properties:
+          lineCap: {enum: [butt, round, square]}
+          lineJoin: {enum: [miter, round, bevel]}
+          fidelity: {enum: [required, decorative-optional]}
+  scale:
+    type: object
+    required: [surfaceId, scaleId, domainStart, domainEnd, rangeStart, rangeEnd, origin, unitRatio]
+    additionalProperties: false
+    properties:
+      surfaceId: {type: string, minLength: 1}
+      scaleId: {type: string, minLength: 1}
+      domainStart: {type: string, format: date}
+      domainEnd: {type: string, format: date}
+      rangeStart: {$ref: "#/$defs/number"}
+      rangeEnd: {$ref: "#/$defs/number"}
+      origin: {$ref: "#/$defs/number"}
+      unitRatio: {$ref: "#/$defs/positive"}
+  contentCounts:
+    type: object
+    required: [relations, annotations, notes, legendEntries, summaryPanels, groupDetails, milestones, observationRows]
+    additionalProperties: false
+    properties:
+      relations: {type: integer, minimum: 0}
+      annotations: {type: integer, minimum: 0}
+      notes: {type: integer, minimum: 0}
+      legendEntries: {type: integer, minimum: 0}
+      summaryPanels: {type: integer, minimum: 0}
+      groupDetails: {type: integer, minimum: 0}
+      milestones: {type: integer, minimum: 0}
+      observationRows: {type: integer, minimum: 0}
+  surface:
+    type: object
+    required: [id, slots, rows, columns, groups, primitives]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      slots: {type: array, items: {type: object, required: [id, source, bounds, priority, overflow], additionalProperties: false, properties: {id: {type: string}, source: {type: string}, scaleId: {type: string}, bounds: {$ref: "#/$defs/bounds"}, priority: {type: string}, overflow: {type: string}}}}
+      rows: {type: array, items: {type: object, required: [id, objectId, groupId, bounds], additionalProperties: false, properties: {id: {type: string}, objectId: {type: string}, groupId: {type: string}, bounds: {$ref: "#/$defs/bounds"}}}}
+      columns: {type: array, items: {type: object, required: [id, label, bounds], additionalProperties: false, properties: {id: {type: string}, label: {type: string}, bounds: {$ref: "#/$defs/bounds"}}}}
+      groups: {type: array, items: {type: object, required: [id, contentBounds], additionalProperties: false, properties: {id: {type: string}, headerBounds: {$ref: "#/$defs/bounds"}, contentBounds: {$ref: "#/$defs/bounds"}}}}
+      scale: {$ref: "#/$defs/scale"}
+      canvasPaint: {$ref: "#/$defs/paint"}
+      primitives: {type: array, items: {$ref: "#/$defs/primitive"}}
+  primitive:
+    type: object
+    required: [id, kind, sourceRef, sourceKind, purpose, visualRole, bounds]
+    additionalProperties: false
+    properties:
+      id: {type: string, minLength: 1}
+      kind: {enum: [Rect, Text, Symbol, Path, Icon]}
+      sourceRef: {type: string, minLength: 1}
+      sourceKind: {type: string, minLength: 1}
+      purpose: {type: string, minLength: 1}
+      visualRole: {type: string, minLength: 1}
+      bounds: {$ref: "#/$defs/bounds"}
+      text: {type: string}
+      baseline: {$ref: "#/$defs/point"}
+      textLayout: {type: object, required: [bounds, baseline, lines, family, weight, fontSize, lineHeight, assetIdentity], additionalProperties: false, properties: {bounds: {$ref: "#/$defs/bounds"}, baseline: {$ref: "#/$defs/point"}, lines: {type: array, minItems: 1, items: {type: string}}, family: {type: string}, weight: {type: integer, minimum: 1}, fontSize: {$ref: "#/$defs/positive"}, lineHeight: {$ref: "#/$defs/positive"}, assetIdentity: {$ref: "#/$defs/identity"}}}
+      paint: {$ref: "#/$defs/paint"}
+      cornerRadius: {type: number, minimum: 0}
+      pathCommands: {type: array, items: {$ref: "#/$defs/pathCommand"}}
+      points: {type: array, items: {$ref: "#/$defs/point"}}
+      href: {type: string}
+      linkTitle: {type: string}
+      tableRowId: {type: string}
+      tableColumnId: {type: string}
+      marker: {type: object, required: [outline, headLength, headWidth, attachmentOffset, paintMode], additionalProperties: false, properties: {outline: {type: array, minItems: 1, items: {$ref: "#/$defs/pathCommand"}}, headLength: {$ref: "#/$defs/positive"}, headWidth: {$ref: "#/$defs/positive"}, attachmentOffset: {type: number, minimum: 0}, paintMode: {enum: [fill, stroke]}}}
+      pattern: {type: object, required: [tileInlineSize, tileBlockSize, angleDegrees, strokes], additionalProperties: false, properties: {tileInlineSize: {$ref: "#/$defs/positive"}, tileBlockSize: {$ref: "#/$defs/positive"}, angleDegrees: {type: number, minimum: 0, exclusiveMaximum: 360}, strokes: {type: array, minItems: 1, items: {type: object, required: [start, end, width], additionalProperties: false, properties: {start: {$ref: "#/$defs/point"}, end: {$ref: "#/$defs/point"}, width: {$ref: "#/$defs/positive"}}}}}}
+      symbol: {type: object, required: [outline], additionalProperties: false, properties: {outline: {type: array, minItems: 1, items: {$ref: "#/$defs/pathCommand"}}}}
+      icon: {type: object, required: [kind, assetIdentity, viewport, alternative, decorative], additionalProperties: false, properties: {kind: {enum: [vector, raster]}, assetIdentity: {$ref: "#/$defs/identity"}, viewport: {type: object, required: [inlineSize, blockSize], additionalProperties: false, properties: {inlineSize: {type: integer, minimum: 1}, blockSize: {type: integer, minimum: 1}}}, alternative: {type: string}, decorative: {type: boolean}, encoding: {const: png}, paths: {type: array, items: {type: object, required: [commands, opacity], additionalProperties: false, properties: {commands: {type: array, minItems: 1, items: {$ref: "#/$defs/pathCommand"}}, fill: {type: string}, stroke: {type: string}, strokeWidth: {$ref: "#/$defs/positive"}, lineCap: {enum: [butt, round, square]}, lineJoin: {enum: [miter, round, bevel]}, opacity: {type: number, minimum: 0, maximum: 1}}}}}}

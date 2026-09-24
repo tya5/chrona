@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import tempfile
+import json
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ from chrona.usecases.render_review import (
     RenderRequest, _font_warnings, render_review,
 )
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
+from chrona.presentation.scene.serialization import SceneSerializationError, scene_document, serialize_scene, validate_scene_document
 
 
 def test_font_substitution_warning_only_claims_raster_draw_result():
@@ -51,6 +53,28 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert rendered.scene.provenance.mode == "immutable"
     assert rendered.scene.manifest.visual_role_counts
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
+
+
+def test_completed_scene_serializes_deterministically_with_typed_table_links():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        scene = render_review(_request(closure, snapshot)).scene
+    first, second = serialize_scene(scene), serialize_scene(scene)
+    assert first == second
+    document = json.loads(first)
+    cells = [item for item in document["surfaces"][0]["primitives"] if item["purpose"] == "table-cell"]
+    assert cells and all("tableRowId" in item and "tableColumnId" in item for item in cells)
+    assert document["manifest"]["visualRoleCounts"]
+
+
+def test_scene_validation_rejects_a_table_reference_not_owned_by_its_surface():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        document = scene_document(render_review(_request(closure, snapshot)).scene)
+    cell = next(item for item in document["surfaces"][0]["primitives"] if item["purpose"] == "table-cell")
+    cell["tableColumnId"] = "not-a-column"
+    with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
+        validate_scene_document(document)
 
 
 def test_render_review_reads_a_bound_summary_profile():

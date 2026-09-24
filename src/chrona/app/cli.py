@@ -31,6 +31,7 @@ from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 from chrona.presentation.fonts.importer import FontImportError, import_font
+from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
 from chrona.resources import safe_load
 
 
@@ -186,6 +187,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
     _add_draft_target_arguments(command)
     command.add_argument("--output", "-o", required=True)
+    command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
 
     icon = sub.add_parser("icon-catalog", help="create a normalized local icon catalog")
     icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
@@ -249,6 +251,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose Context declares inputs the render never reads")
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), help="assert the Context target format")
     command.add_argument("--output", "-o", required=True)
+    command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
 
     command = sub.add_parser("materialize", help="materialize one declared immutable example Context")
     command.add_argument("manifest", help="example materializer manifest")
@@ -313,7 +316,7 @@ def _run_render_review(args: argparse.Namespace) -> None:
     closure = resolve_render_context(load_yaml(args.context_reference), reader)
     _assert_context_format(closure, args.format)
     rendered = _render_review(closure, args)
-    Path(args.output).write_bytes(rendered.artifact.content)
+    _write_render_outputs(rendered, args)
 
 
 def _store_reader(args: argparse.Namespace):
@@ -355,8 +358,30 @@ def _run_draft_render(args: argparse.Namespace) -> None:
     )
     args.draft_auto_block = closure.auto_block
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
-    Path(args.output).write_bytes(rendered.artifact.content)
+    _write_render_outputs(rendered, args)
     _emit_font_warnings(rendered)
+
+
+def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) -> None:
+    """Write the unchanged target artifact and an optional prevalidated Scene sibling."""
+    destination = getattr(args, "emit_scene", None)
+    scene_path: Path | None = None
+    scene_bytes: bytes | None = None
+    if destination:
+        scene_path = Path(destination)
+        if scene_path.exists():
+            raise CliFailure("E_SCENE_OUTPUT_EXISTS", "scene output destination already exists", "scene", exit_code=2)
+        try:
+            scene_bytes = serialize_scene(rendered.scene)
+        except SceneSerializationError as error:
+            raise CliFailure(str(error), "completed Scene cannot be serialized", "scene") from error
+    Path(args.output).write_bytes(rendered.artifact.content)
+    if scene_path is not None and scene_bytes is not None:
+        from chrona.storage.publication import publish_exclusive
+        try:
+            publish_exclusive(scene_path, scene_bytes)
+        except (FileExistsError, OSError) as error:
+            raise CliFailure("E_SCENE_OUTPUT", str(error), "scene", exit_code=2) from error
 
 
 def _run_guided_draft_render(args: argparse.Namespace) -> None:

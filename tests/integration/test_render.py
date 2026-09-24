@@ -6,6 +6,7 @@ authoring inputs enter the same review pipeline as immutable evidence renders.
 from pathlib import Path
 from copy import deepcopy
 from dataclasses import replace
+import json
 import re
 
 import pytest
@@ -16,6 +17,7 @@ from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
+from chrona.presentation.scene.serialization import serialize_scene
 
 
 def _root() -> Path:
@@ -55,6 +57,13 @@ def test_draft_render_materializes_the_review_surface():
 
 def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
+
+
+def test_draft_scene_records_only_real_draft_resource_identities():
+    scene = render_review(_draft_request()).scene
+    document = json.loads(serialize_scene(scene))
+    assert document["provenance"]["mode"] == "draft"
+    assert all(item["kind"] != "render-context" for item in document["provenance"]["resources"])
 
 
 @pytest.mark.parametrize("row_count", (30, 100))

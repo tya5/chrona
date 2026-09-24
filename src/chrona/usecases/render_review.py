@@ -316,10 +316,11 @@ def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection:
         scales, tuple(sorted(primitive_roles.items())),
     )
     context_identity = closure.context.identity
-    resources = (("render-context", context_identity.id, context_identity.revision,
-                  context_identity.content_identity), *(
-        (item.kind, item.id, item.revision, item.content_identity) for item in closure.resources
-    ))
+    resources = tuple((item.kind, item.id, item.revision, item.content_identity)
+                      for item in closure.resources)
+    if context_identity.revision != "draft":
+        resources = (("render-context", context_identity.id, context_identity.revision,
+                      context_identity.content_identity), *resources)
     provenance = SceneProvenance(
         "draft" if context_identity.revision == "draft" else "immutable",
         version("chrona"), tuple(sorted(resources)),

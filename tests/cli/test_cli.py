@@ -102,6 +102,19 @@ def test_cli_omits_draw_result_for_svg_font_substitution_warning(capsys):
     assert "drawn" not in json.loads(capsys.readouterr().err)
 
 
+def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_routes():
+    parser = cli._parser()
+    draft = parser.parse_args(["render", "project.yaml", "--view", "view.yaml", "--theme", "theme.yaml",
+                               "--scheme", "scheme.yaml", "--layout", "layout.yaml", "--output", "out.svg",
+                               "--emit-scene", "out.scene.json"])
+    immutable = parser.parse_args(["render-review", "--context-reference", "context.yaml", "--snapshot-root", "snap",
+                                   "--store-identity", "sha256:" + "a" * 64, "--output", "out.svg",
+                                   "--emit-scene", "out.scene.json"])
+    workspace = parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"])
+    assert draft.emit_scene == immutable.emit_scene == "out.scene.json"
+    assert not hasattr(workspace, "emit_scene")
+
+
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     project = {
         "version": "timeline/v0.6",
