@@ -12,6 +12,7 @@ COMMANDS = [
     [sys.executable, str(ROOT.parent / "tools" / "validate_schema_references.py")],
     [sys.executable, str(ROOT.parent / "tools" / "example_inventory.py")],
     [sys.executable, str(ROOT.parent / "tools" / "diagnostic_inventory.py"), "--check"],
+    [sys.executable, str(ROOT.parent / "tools" / "declared_value_inventory.py"), "--check"],
     [sys.executable, str(ROOT / "validate_conformance.py")],
     [sys.executable, str(ROOT / "revision-store" / "validate_conformance.py")],
     [sys.executable, str(ROOT / "validate_implementation_delivery_profile.py")],

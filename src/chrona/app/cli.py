@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 import json
 import os
 import sys
@@ -13,6 +14,7 @@ import yaml
 
 from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
@@ -30,6 +32,7 @@ from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 from chrona.presentation.fonts.importer import FontImportError, import_font
+from chrona.resources import safe_load
 
 
 @dataclass(frozen=True)
@@ -213,6 +216,13 @@ def _parser() -> JsonArgumentParser:
     command = workspace_sub.add_parser("revision", help="print the current guided workspace revision")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
 
+    identity = sub.add_parser("identity", help="inspect an immutable identity without changing input")
+    identity_sub = identity.add_subparsers(dest="identity_kind", required=True, parser_class=JsonArgumentParser)
+    command = identity_sub.add_parser("bytes", help="print the SHA-256 identity of exact file bytes")
+    command.add_argument("path", help="local file path")
+    command = identity_sub.add_parser("document", help="print the canonical identity of one YAML or JSON document")
+    command.add_argument("path", help="local YAML or JSON document path")
+
     command = sub.add_parser("authoring-command-apply", help="apply one revision-bound guided workspace command")
     command.add_argument("--workspace", required=True)
     command.add_argument("--command", dest="authoring_command", required=True)
@@ -386,6 +396,17 @@ def _run_workspace_revision(args: argparse.Namespace) -> None:
     print(workspace_revision(Path(args.workspace), read_workspace=read_authoring_workspace))
 
 
+def _run_identity(args: argparse.Namespace) -> None:
+    path = Path(args.path)
+    if args.identity_kind == "bytes":
+        print("sha256:" + sha256(path.read_bytes()).hexdigest())
+        return
+    value = json_value(safe_load(path.read_bytes()))
+    if not isinstance(value, dict):
+        raise CliFailure("E_IDENTITY_DOCUMENT", "document identity requires a YAML or JSON object", "identity", "/", 2)
+    print(content_identity(value))
+
+
 def _parse_viewport(value: str) -> tuple[int, int | None]:
     parts = value.lower().split("x")
     if len(parts) != 2:
@@ -490,6 +511,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "workspace":
         _run_workspace_revision(args)
+        return
+    if args.command == "identity":
+        _run_identity(args)
         return
     if args.command == "authoring-command-apply":
         _run_authoring_command(args)

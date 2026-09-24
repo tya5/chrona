@@ -57,3 +57,49 @@ diagnosticActionability:
     - {code: E_STORE_CONFIG_REQUIRED, reason: "Existing store configuration requirement identifier."}
     - {code: E_STORE_REFERENCE, reason: "Existing immutable store-reference identifier."}
     - {code: E_TARGET_CAPABILITY_ORDER, reason: "Existing target-capability ordering identifier."}
+declaredComputedValues:
+  - path: src/chrona/operational/references.py
+    function: lookup
+    field: requestIdentity
+    classification: pinned-deliberately
+    producer: chrona identity document
+  - path: src/chrona/operational/references.py
+    function: lookup
+    field: targetIdentity
+    classification: pinned-deliberately
+    producer: chrona identity document
+  - path: src/chrona/operational/references.py
+    function: verify_reference
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/presentation/model/closure.py
+    function: _load_draft_icon_assets
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/presentation/model/font_metrics.py
+    function: resolve_font_files
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/presentation/model/font_metrics.py
+    function: resolve_font_metrics
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/usecases/authoring_commands.py
+    function: apply_authoring_command
+    field: baseRevision
+    classification: product-bookkeeping
+    resolver: chrona workspace revision
+  - path: src/chrona/usecases/materialize.py
+    function: _reference_payload
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes
+  - path: src/chrona/usecases/materialize.py
+    function: copy_context_closure
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity bytes

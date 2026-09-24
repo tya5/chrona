@@ -39,3 +39,18 @@ the current value rather than retrying a stale command.
 
 This workflow is specific to local `authoring-workspace/v0.1` files. Immutable
 Store commands use their Store-issued opaque revision tokens instead.
+
+## Inspecting other declared identities
+
+Use the identity form that matches the declaration.  Immutable resource
+`contentIdentity` values pin exact bytes, while replay records use Chrona's
+canonical document identity:
+
+```console
+chrona identity bytes assets/catalog.yaml
+chrona identity document command-request.yaml
+```
+
+These commands are read-only.  They do not replace `chrona workspace
+revision`, which first validates a guided workspace and is the only correct
+producer for an authoring command's `baseRevision`.

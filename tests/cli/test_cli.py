@@ -15,6 +15,7 @@ from chrona.presentation.model.font_metrics import FontGlyphSubstitution
 from chrona.scheduling.scheduler import schedule
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.materialize import MaterializationError
+from chrona.core.identity import content_identity
 
 
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
@@ -49,6 +50,37 @@ def test_cli_imports_a_declared_local_font_pair(tmp_path, monkeypatch, capsys):
     result = json.loads(capsys.readouterr().out)
     assert result["family"] == "CLI Private Sans"
     assert (output / "font-metrics.yaml").is_file()
+
+
+def test_cli_identity_distinguishes_exact_bytes_from_canonical_document(tmp_path, monkeypatch, capsys):
+    first, second = tmp_path / "first.yaml", tmp_path / "second.yaml"
+    first.write_text("title: Chrona\nitems: [one, two]\n", encoding="utf-8")
+    second.write_text("items:\n  - one\n  - two\ntitle: Chrona\n", encoding="utf-8")
+
+    monkeypatch.setattr(sys, "argv", ["chrona", "identity", "bytes", str(first)])
+    main()
+    bytes_identity = capsys.readouterr().out.strip()
+
+    monkeypatch.setattr(sys, "argv", ["chrona", "identity", "document", str(first)])
+    main()
+    first_document_identity = capsys.readouterr().out.strip()
+    monkeypatch.setattr(sys, "argv", ["chrona", "identity", "document", str(second)])
+    main()
+    second_document_identity = capsys.readouterr().out.strip()
+
+    assert bytes_identity == "sha256:" + sha256(first.read_bytes()).hexdigest()
+    assert first_document_identity == second_document_identity == content_identity({"title": "Chrona", "items": ["one", "two"]})
+
+
+def test_cli_identity_document_rejects_a_scalar(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "scalar.yaml"; path.write_text("42\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["chrona", "identity", "document", str(path)])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 2
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_IDENTITY_DOCUMENT"
 
 
 def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
