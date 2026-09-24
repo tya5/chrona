@@ -2,6 +2,20 @@
 
 **Implements:** `issue-354-gallery-collection-design-2026-09-24.md`
 
+**Correction:** `issues-354-355-posthoc-correction-design-2026-09-24.md`
+
+## G354-C1 — One-axis closure correction
+
+Extend the inventory validator with the closed dimension-to-reference map,
+owner-change requirement, permitted typed supports, and stable axis-leak
+diagnostic.  Re-pin the network peer with fixed Appearance, or defer it if its
+public materialization fails.  Make deferred dimensions optional and generate
+single-resource YAML exhibits plus generator provenance.
+
+**Acceptance:** focused fixtures reject an owner-less comparison, an
+undisclosed reference leak, invalid support, and invalid deferred metadata;
+every published set passes the strict contract and materializes.
+
 ## G354-1 — Catalogue v0.2 and evidence validator
 
 Replace v0.1 parsing in `tools/example_inventory.py` with the closed v0.2

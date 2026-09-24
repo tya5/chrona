@@ -2,6 +2,19 @@
 
 **Implements:** `issue-355-corpus-coverage-design-2026-09-24.md`
 
+**Correction:** `issues-354-355-posthoc-correction-design-2026-09-24.md`
+
+## C355-C1 — Vocabulary inventory completion
+
+Complete C355-1's omitted finite-schema inventory for the explicit four
+corpus-owning schemas.  Render path/value/evidence rows and explicit uncovered
+rows deterministically; test positive and uncovered values, direct-path
+boundaries, and byte stability.  Simplify the negative-lag probe to a single
+definition.
+
+**Acceptance:** the committed report contains both register and vocabulary
+matrices, documents the bounded scope, and `--check` passes.
+
 ## C355-1 — Pure inventory model
 
 Create `tools/corpus_coverage.py` with pure loaders/discovery, explicit
