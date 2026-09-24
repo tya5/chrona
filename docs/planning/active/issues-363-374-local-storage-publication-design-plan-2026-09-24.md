@@ -53,10 +53,11 @@ layout and migration boundary explicit.
    unsupported and must be re-captured/re-created.  Identify the user-facing
    guidance location and ensure no compatibility reader or fallback lookup is
    introduced.
-3. Decide the publication protocol that simultaneously preserves exclusive
-   destination ownership and prevents a reader from observing a completed-name
-   empty artifact.  The decision must cover both baseline and CLI result
-   writers, not only one call site.
+3. Decide the publication contract for an exclusively reserved destination.
+   It must either use a portable no-replace publication primitive that prevents
+   an observer from seeing an empty final name, or explicitly document the
+   bounded reservation window.  The decision must cover both baseline and CLI
+   result writers, not only one call site.
 4. Define a platform-neutral operational lock result.  A Windows contention
    timeout must become a stable diagnostic carrying the workspace and lock
    location, while POSIX retains its declared wait behavior.  It must not leak
@@ -82,11 +83,15 @@ the actionable detail for a resulting `E_STORE_REFERENCE`.
 
 ### D374-1 — Atomic visibility and advisory lock contract
 
-Publish a shared publication helper design for exclusive output paths.  It
-must reserve ownership under a non-public temporary name, write and fsync the
-candidate, then publish with one rename/replace operation such that the final
-destination is never observable as the reservation file.  The design must
-preserve the existing no-overwrite race result and cleanup guarantees.
+Publish a shared publication helper design for exclusive output paths.  A
+portable no-replace rename primitive is not available through the supported
+Python/filesystem baseline: a hidden reservation followed by ordinary rename
+would reopen the no-overwrite race, while replacing a final-name reservation
+retains a bounded empty-file window.  Therefore this programme chooses the
+existing reservation-and-replace algorithm and makes that narrow visibility
+window explicit in its public writer contract.  It preserves the existing
+no-overwrite race result and cleanup guarantees without pretending that an
+OS-specific primitive is portable.
 
 Define an operational `E_AUTHORING_LOCK_TIMEOUT` diagnostic (or an accepted
 single canonical successor) with structured workspace and lock-path detail.
@@ -117,8 +122,9 @@ slices:
    `baseline:<sha256>`-style, reserved-device-name, and restart round trips;
 2. document the intentional pre-codec break and prove the raw layout is not
    read as a fallback;
-3. replace both reservation-and-replace call sites with the accepted invisible
-   publication protocol and test exclusive races plus reader-visible states;
+3. consolidate the two reservation-and-replace call sites behind the accepted
+   documented publication contract and test exclusive races plus the stated
+   reader-visible condition;
 4. add the named Windows contention diagnostic, simulated adapter tests, CLI
    / authoring result propagation, and the platform-semantics documentation;
 5. run focused tests, full pytest, structural/diagnostic gates, public
@@ -135,8 +141,8 @@ directory.
   its opaque externally visible revision token.
 - Safe-token round trips cover baseline-style, percent-escaped, and
   Windows-reserved inputs; raw pre-codec directories are rejected as designed.
-- Baseline and CLI result artifacts are never observable at their final name
-  before completed bytes are ready, and duplicate publication remains rejected.
+- Baseline and CLI result writers document their bounded final-name
+  reservation window and duplicate publication remains rejected.
 - Windows aggregate-lock contention produces a stable, actionable diagnostic
   naming the workspace and lock; POSIX behavior is documented.
 - Migration impact is documented where local-store users look.
