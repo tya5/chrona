@@ -1,6 +1,6 @@
 # surface
 
-Design Space dimension: `content`.
+Design Space dimension: `content`. Coupled support: `layout`.
 
 ## Peers
 

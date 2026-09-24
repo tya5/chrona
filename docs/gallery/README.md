@@ -7,7 +7,7 @@ Generated from declared corpus evidence; it is not a renderer or an authoring in
 | Question | Dimension | Peers |
 | --- | --- | --- |
 | [comparison focus](sets/controller-z-executive-status.md) | `content` | 2 |
-| [visual treatment](sets/controller-z-treatment-ladder.md) | `visual-grammar` | 2 |
+| [visual treatment](sets/controller-z-treatment-ladder.md) | `appearance` | 2 |
 | [surface](sets/halcyon-two-surfaces.md) | `content` | 2 |
 
 ## Coverage backlog

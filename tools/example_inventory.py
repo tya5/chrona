@@ -73,6 +73,11 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_AXIS:{entry['id']}")
         if comparison.get("dimension") not in {"content", "composition", "visual-grammar", "appearance"}:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_DIMENSION:{entry['id']}")
+        supports = comparison.get("supports", [])
+        if (not isinstance(supports, list) or supports != sorted(set(supports))
+                or any(item != "layout" for item in supports)
+                or (supports and comparison["dimension"] != "content")):
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_SUPPORT:{entry['id']}")
         if not isinstance(accessibility, dict) or not isinstance(accessibility.get("note"), str) or not accessibility["note"]:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_ACCESSIBILITY:{entry['id']}")
         context = _context(root, corpus_entries[key])
@@ -90,6 +95,8 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_DIMENSION:{pair}")
         if len({item[1]["axis"] for item in entries}) != 1:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_AXIS:{pair}")
+        if len({tuple(item[1].get("supports", [])) for item in entries}) != 1:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_SUPPORT:{pair}")
         bodies = [item["body"] for item in contexts]
         if len({_identity(body["project"]) for body in bodies}) != 1 or len({_identity(body.get("inputs", {}).get("actual")) for body in bodies}) != 1:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_SEMANTIC_MISMATCH:{pair}")

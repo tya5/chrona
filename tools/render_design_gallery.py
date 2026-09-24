@@ -46,7 +46,9 @@ def render(root: Path) -> dict[Path, str]:
         index.append(f"| [{comparison['axis']}](sets/{page.name}) | `{comparison['dimension']}` | {len(set_entries)} |")
         contexts = [_load(root / Path(entries[(entry["corpus"], entry["slide"])]["manifest"]).parent /
                           entries[(entry["corpus"], entry["slide"])]["context"]) for entry in set_entries]
-        lines = [f"# {comparison['axis']}", "", f"Design Space dimension: `{comparison['dimension']}`.",
+        supports = comparison.get("supports", [])
+        support_note = f" Coupled support: {', '.join(f'`{item}`' for item in supports)}." if supports else ""
+        lines = [f"# {comparison['axis']}", "", f"Design Space dimension: `{comparison['dimension']}`.{support_note}",
                  "", "## Peers", ""]
         for entry in set_entries:
             source = entries[(entry["corpus"], entry["slide"])]

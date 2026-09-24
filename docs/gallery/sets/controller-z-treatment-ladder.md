@@ -1,6 +1,6 @@
 # visual treatment
 
-Design Space dimension: `visual-grammar`.
+Design Space dimension: `appearance`.
 
 ## Peers
 
