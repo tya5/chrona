@@ -84,6 +84,12 @@ producer that does not exist in the live argparse tree fails the gate.  This
 preserves immutable closure and snapshot assertions while exposing the places
 where product bookkeeping needs a public resolution path.
 
+The public producer is format-specific.  `chrona identity bytes PATH` emits
+the raw-byte SHA-256 used by immutable `contentIdentity` pins;
+`chrona identity document PATH` emits Core canonical document identity for
+replay records; `chrona workspace revision PATH` remains the validated guided
+workspace producer.  No command aliases those distinct semantics.
+
 ## 3. Documentation is executable CLI evidence
 
 `tools/check_documented_commands.py` has two distinct inputs.

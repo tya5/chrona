@@ -36,21 +36,19 @@ user-facing message; conformance invokes the check.
 
 **Files/areas:** `tools/declared_value_inventory.py` (new), shared policy
 loader/extraction helpers if justified, policy classifications, generated
-`docs/diagnostics/declared-value-inventory.md`, focused tests, public CLI/use
-case/specification and guide files only if a missing producer is discovered.
+`docs/diagnostics/declared-value-inventory.md`, focused tests,
+`chrona identity bytes|document` CLI adapter/tests, and user guide.
 
 **Work:** Implement conservative intra-function comparison extraction and
 exact site classification.  Verify each `pinned-deliberately` producer against
 the live argparse tree.  Classify product bookkeeping only with a concrete
 resolver/refresh route.
 
-**Stop condition:** if any deliberately pinned value lacks a public producer,
-or a product-bookkeeping value has no honest resolution route, stop before
-papering it over.  Publish a design correction defining the minimum public
-command/use-case and its identity semantics, review it against Core identity
-and Store/closure boundaries, then resume this slice.  Do not claim a generic
-hash command is equivalent to canonical workspace identity without that
-decision.
+**Resolved correction:** existing producer coverage was incomplete.  The
+published identity-producer correction adds exact raw-byte and canonical-
+document inspection commands while retaining the separate validated workspace
+revision command.  Do not claim a generic hash command is equivalent to
+canonical workspace identity.
 
 **Acceptance:** every derived site is exactly once classified; stale/missing
 records and nonexistent producer commands fail; report is current; public
