@@ -923,7 +923,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             width = annotation_leading + text_width + annotation_trailing
             annotation_lines = (content,)
             try:
-                if annotation.get("purpose") == "callout":
+                if annotation.get("purpose") in {"callout", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"

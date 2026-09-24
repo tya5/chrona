@@ -6,6 +6,10 @@ slides:
   - id: executive
     evidence: "Executive review with actuals, inside labels, and fallback labels."
     expectedSvg: generated/executive.svg
+  - id: annotations
+    evidence: "Two endpoint-anchored explanatory arrows in the annotation slot, including an obstacle-avoiding leader."
+    context: contexts/annotations.yaml
+    expectedSvg: generated/annotations.svg
   - id: plan-only
     evidence: "Plan-only control view over the same Controller Z schedule and observations."
     context: contexts/plan-only.yaml
