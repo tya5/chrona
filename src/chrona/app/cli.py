@@ -26,7 +26,7 @@ from chrona.operational.command_engine import apply_actual_command, check_comman
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import parse_document
-from chrona.usecases.materialize import materialize
+from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 from chrona.presentation.fonts.importer import FontImportError, import_font
@@ -312,7 +312,13 @@ def _store_reader(args: argparse.Namespace):
 
 
 def _run_materialize(args: argparse.Namespace) -> None:
-    materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write)
+    try:
+        materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write)
+    except MaterializationError as error:
+        if error.code != "E_MATERIALIZER_MISMATCH":
+            raise
+        command = f"chrona materialize {args.manifest} --slide {args.slide} --output {args.output} --write"
+        raise CliFailure(error.code, f"{error.detail}; review the generated diff, then run `{command}` to refresh intended evidence", "materializer") from error
 
 
 def _run_init(args: argparse.Namespace) -> None:

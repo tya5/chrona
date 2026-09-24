@@ -14,6 +14,7 @@ from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
 from chrona.scheduling.scheduler import schedule
 from chrona.storage.snapshot_paths import snapshot_directory
+from chrona.usecases.materialize import MaterializationError
 
 
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
@@ -710,6 +711,21 @@ def test_cli_workspace_revision_is_read_only_and_supports_the_first_authoring_co
     accepted = json.loads(result.read_text(encoding="utf-8"))
     assert accepted["commandBaseRevision"] == accepted["workspaceRevision"] == revision
     assert accepted["resultRevision"] != revision
+
+
+def test_cli_materializer_mismatch_preserves_the_write_gate_and_explains_recovery(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cli, "materialize", lambda *_args, **_kwargs: (_ for _ in ()).throw(
+        MaterializationError("E_MATERIALIZER_MISMATCH", "generated artifact differs from declared evidence"),
+    ))
+    monkeypatch.setattr(sys, "argv", ["chrona", "materialize", "manifest.yaml", "--slide", "executive", "--output", str(tmp_path / "out")])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_MATERIALIZER_MISMATCH"
+    assert "--write" in diagnostic["message"]
 
 
 @pytest.mark.parametrize(("format_name", "prefix"), [("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")])

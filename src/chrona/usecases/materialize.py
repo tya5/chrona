@@ -29,6 +29,14 @@ class MaterializationResult:
     rendered: RenderedReview
 
 
+class MaterializationError(ValueError):
+    """A materializer failure with a stable code and boundary-neutral detail."""
+
+    def __init__(self, code: str, detail: str = "") -> None:
+        super().__init__(f"{code}: {detail}" if detail else code)
+        self.code, self.detail = code, detail
+
+
 def _inside(root: Path, relative: str) -> Path:
     path = (root / relative).resolve()
     if path != root.resolve() and root.resolve() not in path.parents:
@@ -219,5 +227,5 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         if write:
             expected.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(derived, expected)
         elif not expected.is_file() or derived.read_bytes() != expected.read_bytes():
-            raise ValueError("E_MATERIALIZER_MISMATCH")
+            raise MaterializationError("E_MATERIALIZER_MISMATCH", "generated artifact differs from declared evidence")
         return MaterializationResult(derived, reference, rendered)

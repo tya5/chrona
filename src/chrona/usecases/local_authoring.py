@@ -7,6 +7,8 @@ import shutil
 
 import yaml
 
+from chrona.usecases.materialize import copy_context_closure
+
 
 @dataclass(frozen=True)
 class StoreConfiguration:
@@ -40,9 +42,14 @@ def initialize_project(destination: Path, *, example: str = "halcyon-1") -> Path
     if not source.is_dir():
         raise ValueError("E_INIT_EXAMPLE")
     shutil.copytree(source, destination, dirs_exist_ok=True)
+    # Contexts are immutable references.  A freshly initialized project must
+    # therefore contain their snapshot closure before its Store config is
+    # advertised to commands; mutable source paths are never a reader fallback.
+    for context in sorted((destination / "contexts").glob("*.yaml")):
+        copy_context_closure(destination, context, destination)
     config = destination / ".chrona" / "store.yaml"
     config.parent.mkdir(parents=True, exist_ok=True)
     config.write_text(yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{
-        "provider": "local", "identity": f"{example}-local", "root": str(destination.resolve()), "integrity": "optional",
+        "provider": "local", "identity": f"{example}-example", "root": str(destination.resolve()), "integrity": "optional",
     }]}, sort_keys=False), encoding="utf-8")
     return destination

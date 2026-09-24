@@ -3,6 +3,9 @@ from pathlib import Path
 import pytest
 
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
+from chrona.operational.store_config import load_store_config
+from chrona.presentation.model.closure import resolve_render_context
+from chrona.resources import safe_load
 
 
 def test_explicit_store_config_wins_over_discovered_project_config(tmp_path: Path):
@@ -37,5 +40,14 @@ def test_init_is_non_overwriting_and_creates_a_materializable_example(tmp_path: 
     assert initialized == destination
     assert (destination / ".chrona" / "store.yaml").is_file()
     assert (destination / "manifest.yaml").is_file()
+    config = load_store_config(str(destination / ".chrona" / "store.yaml"))
+    context = safe_load((destination / "contexts/01-mission-brief.yaml").read_bytes())
+    context_reference = {
+        "id": context["id"], "kind": "render-context",
+        "store": context["body"]["project"]["store"], "address": "contexts/01-mission-brief.yaml",
+        "revision": context["body"]["project"]["revision"],
+    }
+    closure = resolve_render_context(context_reference, config)
+    assert closure.context.identity.id == "halcyon-1-01-mission-brief"
     with pytest.raises(ValueError, match="E_INIT_OUTPUT_EXISTS"):
         initialize_project(destination)
