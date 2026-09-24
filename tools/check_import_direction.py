@@ -39,6 +39,8 @@ ALLOWED: dict[str, set[str]] = {
 
 def package_of(module: str) -> str:
     parts = module.split(".")
+    if len(parts) == 2 and parts[1] == "__main__":
+        return "chrona"
     return parts[1] if len(parts) > 1 else parts[0]
 
 
