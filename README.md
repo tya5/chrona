@@ -118,6 +118,8 @@ that path additionally requires node with `sharp`.
 Create a catalog from an explicit local Iconify collection, then pass that
 catalog explicitly to draft rendering. The catalog is normalized before render;
 Chrona never reads raw SVG or contacts a registry at render time.
+The importer writes deterministic JSON (a YAML subset) to the requested
+`.yaml` path, so it remains valid YAML while large catalogs load quickly.
 
 ```bash
 chrona icon-catalog import icons.json --license-spdx MIT --notice-file NOTICE \

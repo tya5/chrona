@@ -36,6 +36,17 @@ Move the shared codec to Resources so the import graph remains inward.
 provider-dependent reader exists; the Material path satisfies the recorded
 performance target.
 
+## I357-5 — Post-hoc codec and selection invariants
+
+Make the JSON prefix fast path fall back to safe YAML on JSON decoding failure.
+Validate alias targets during envelope closure. Add selected/unselected
+malformed-entry characterization tests and document canonical JSON catalog
+output.
+
+**Acceptance:** all invariants in
+`issue-357-posthoc-closure-correction-2026-09-24.md` pass without a
+package-specific path or timing-sensitive assertion.
+
 ## Publication sequence
 
 1. Publish this design and architecture review.

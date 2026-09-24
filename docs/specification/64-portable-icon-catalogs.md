@@ -38,6 +38,10 @@ destination atomically only if the complete collection succeeds. Failure
 identifies `prefix`, icon name, source element/attribute/command, and stable
 diagnostic; a partial catalog is never emitted.
 
+The destination conventionally uses a `.yaml` suffix, but the importer writes
+canonical JSON: JSON is a YAML subset and therefore remains a valid catalog
+document while allowing the shared safe decoder's JSON fast path.
+
 The successor `chrona/icon-catalog/v0.3` stores canonical normalized entries,
 not source SVG paths. It records:
 
