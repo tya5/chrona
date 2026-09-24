@@ -21,6 +21,7 @@ See [semantic corpus coverage](../examples/corpus-coverage.md). It is one curati
 
 | Set | Dimension | Blocker |
 | --- | --- | --- |
+| `japanese-board` | `content` | controller-z-ja is a translated project with a ja-JP environment and CJK metrics; the current one-axis gallery contract requires identical project and environment references, so it remains standalone corpus evidence until localized semantic pairing is designed. |
 | `programme-at-scale` | `composition` | Requires a responsive View/Layout design; existing Halcyon peer resources are not composable. |
 | `milestones-notes-margins` | `composition` | Requires a new View/Layout design for the undrawn detail slots. |
 | `bar-encodings` | `visual-grammar` | Requires the remaining per-object encoding design. |

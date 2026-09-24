@@ -1,0 +1,40 @@
+version: chrona/render-context/v0.14
+kind: render-context
+id: controller-z-ja-executive
+body:
+  project: {id: controller-z-ja-silicon-bringup, kind: project, store: {provider: local, identity: controller-z-ja-example}, address: project.yaml, revision: {token: example-v1}}
+  view: {id: controller-z-ja-executive, kind: view, store: {provider: local, identity: controller-z-ja-example}, address: views/executive.yaml, revision: {token: example-v1}}
+  theme: {id: executive-light-ja, kind: theme, store: {provider: local, identity: controller-z-ja-example}, address: themes/executive-light.yaml, revision: {token: example-v1}}
+  colorScheme: {id: executive-light, kind: color-scheme, store: {provider: local, identity: controller-z-ja-example}, address: schemes/executive-light.yaml, revision: {token: example-v1}}
+  layout: {id: executive-review, kind: layout-profile, store: {provider: local, identity: controller-z-ja-example}, address: layouts/executive-review.yaml, revision: {token: example-v1}}
+  inputs:
+    actual: {id: controller-z-ja-observed, kind: actual-set, store: {provider: local, identity: controller-z-ja-example}, address: actual.yaml, revision: {token: example-v1}}
+    detailProfile: {id: controller-z-ja-review-detail, kind: review-detail-profile, store: {provider: local, identity: controller-z-ja-example}, address: profiles/review-detail.yaml, revision: {token: example-v1}}
+  environment:
+    viewport: {inlineSize: 1600, blockSize: 900}
+    locale: ja-JP
+    fontMetrics:
+      algorithm: declared-metrics-v2
+      missingFont: diagnose
+      assets:
+        - family: Noto Sans JP
+          weight: 400
+          metrics:
+            locator: {provider: package, identity: chrona-fonts-noto-cjk, address: font_metrics/noto-sans-jp-regular-v1.json}
+            contentIdentity: sha256:4a89b99129f4d97b222be59dcec2affdb44640db3fe0901d94b0d9bf22ddd75b
+          font:
+            locator: {provider: package, identity: chrona-fonts-noto-cjk, address: fonts/noto-sans-jp-regular-v1.ttf}
+            contentIdentity: sha256:6f78eeee7d1b287040f03b7619863b070736fe8144caf7d75c3a3bf5feadf4d4
+        - family: Noto Sans JP
+          weight: 700
+          metrics:
+            locator: {provider: package, identity: chrona-fonts-noto-cjk, address: font_metrics/noto-sans-jp-bold-v1.json}
+            contentIdentity: sha256:f304c445f21e96e9590bb066419063dca660755a20ef75d044bef857d1f9d833
+          font:
+            locator: {provider: package, identity: chrona-fonts-noto-cjk, address: fonts/noto-sans-jp-bold-v1.ttf}
+            contentIdentity: sha256:6a51ba2ec057d850be364489b4055cfb6b0449b652ad9ef4b2ab1bbc565fcad7
+    scenePrecision: 3
+  target:
+    kind: svg
+    visualProfile: chrona-output/visual/v0.5-baseline
+    capabilities: [accessibleText, hierarchicalAxis, marker, semanticRoles, sourceMetadata, tableSemantics]

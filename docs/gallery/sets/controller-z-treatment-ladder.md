@@ -61,7 +61,7 @@ The pair changes only `theme`.
 @@ -134,6 +144,24 @@
      editorial:
        type: fontFamily
-       value: Noto Sans CJK JP
+       value: Noto Sans, sans-serif
 +    elevated.fidelity:
 +      type: fidelity
 +      value: required

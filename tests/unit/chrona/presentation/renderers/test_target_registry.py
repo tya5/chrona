@@ -59,24 +59,16 @@ def test_export_targets_are_pinned_and_repeatable(kind, media_type, prefix):
 
 def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tmp_path):
     root = _root()
-    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
-    project["project"]["title"] = "コントローラーZ 量産立上げ"
-    project["objects"]["firmware"]["title"] = "ファームウェア統合検証"
-    project_path = tmp_path / "project-ja.yaml"
-    project_path.write_text(yaml.safe_dump(project, allow_unicode=True, sort_keys=False), encoding="utf-8")
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
-    theme["body"]["values"]["editorial"]["value"] = "Noto Sans JP, sans-serif"
-    theme_path = tmp_path / "theme-ja.yaml"
-    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    example = root / "examples/controller-z-ja"
     cjk_descriptor = files("chrona_fonts_noto_cjk").joinpath("font-metrics.yaml")
 
     def render(kind: str):
         draft = resolve_draft_render(
-            project_path=project_path, view_path=root / "examples/controller-z/views/executive.yaml",
-                theme_path=theme_path,
-            scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
-                actual_path=root / "examples/controller-z/actual.yaml", target_kind=kind,
+            project_path=example / "project.yaml", view_path=example / "views/executive.yaml",
+            theme_path=example / "themes/executive-light.yaml",
+            scheme_path=example / "schemes/executive-light.yaml",
+            layout_path=example / "layouts/executive-review.yaml",
+            actual_path=example / "actual.yaml", target_kind=kind, locale="ja-JP",
                 font_metrics_path=Path(str(cjk_descriptor)),
         )
         context = draft.closure.context
@@ -88,7 +80,7 @@ def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tm
         )).artifact.content
 
     svg, png, pdf = render("svg"), render("png"), render("pdf")
-    assert "ファームウェア統合検証" in svg.decode("utf-8")
+    assert "シリコン立ち上げおよび初期機能確認" in svg.decode("utf-8")
     assert png.startswith(b"\x89PNG\r\n\x1a\n") and pdf.startswith(b"%PDF-")
     assert sha256(png).hexdigest() == sha256(render("png")).hexdigest()
 

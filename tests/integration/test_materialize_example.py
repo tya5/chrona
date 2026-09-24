@@ -44,6 +44,13 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
     assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
 
 
+def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_path):
+    materialize(ROOT / "examples/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    artifact = (tmp_path / "controller-z-ja/review.svg").read_text(encoding="utf-8")
+    assert "コントローラZ — シリコン立ち上げから量産まで" in artifact
+    assert "量産検証（PVT）および工場工程バリデーション" in artifact
+
+
 def test_controller_elevated_public_evidence_uses_only_portable_completed_treatments(tmp_path):
     materialize(ROOT / "examples/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
     artifact = (tmp_path / "elevated/review.svg").read_text(encoding="utf-8")

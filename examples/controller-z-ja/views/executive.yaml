@@ -1,0 +1,67 @@
+version: chrona/view/v0.12
+kind: view
+id: controller-z-ja-executive
+body:
+  surface: table-timeline
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - fw-team
+    - validation-team
+    - factory-team
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-02-01'
+    end: '2026-07-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - atDelta
+    - progress
+    - missingActual
+    - unmatchedActual
+  progressFill:
+    source: actual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      side: inside
+      overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  layoutIntent:
+    compactness: balanced
+    itemStacking: stable
+  tableColumns:
+  - id: 作業ストリーム
+    source: title
+    missing: em-dash
+  rows:
+    mode: automatic
