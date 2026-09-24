@@ -118,6 +118,8 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
         bodies = [item["body"] for item in contexts]
         if len({_identity(body["project"]) for body in bodies}) != 1 or len({_identity(body.get("inputs", {}).get("actual")) for body in bodies}) != 1:
             raise ExampleInventoryError(f"E_DESIGN_GALLERY_SEMANTIC_MISMATCH:{pair}")
+        if len({_identity(body.get("environment")) for body in bodies}) != 1:
+            raise ExampleInventoryError(f"E_DESIGN_GALLERY_ENVIRONMENT_MISMATCH:{pair}")
         presentation = [{key: _identity(body[key]) for key in PRESENTATION_REFERENCES} for body in bodies]
         dimension = entries[0][1]["dimension"]
         owners = DIMENSION_OWNERS[dimension]

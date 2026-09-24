@@ -57,3 +57,12 @@ def test_inventory_requires_a_dimension_owner_to_change(tmp_path):
 
     with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_OWNER_UNCHANGED:pair"):
         validate(root)
+
+
+def test_inventory_rejects_a_mismatched_comparison_environment(tmp_path):
+    root = _root(tmp_path)
+    context = root / "examples/demo/contexts/two.yaml"
+    context.write_text(context.read_text().replace("inputs: {}", "environment: {viewport: {inlineSize: 800, blockSize: 600}}\n  inputs: {}"))
+
+    with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_ENVIRONMENT_MISMATCH:pair"):
+        validate(root)

@@ -40,7 +40,7 @@ body:
       address: actual.yaml
       revision: {token: example-v1}
   environment:
-    viewport: {inlineSize: 1600, blockSize: 900}
+    viewport: {inlineSize: 1920, blockSize: 1080}
     locale: en-US
     fontMetrics:
       algorithm: declared-metrics-v1
