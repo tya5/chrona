@@ -66,14 +66,18 @@ atomic commit; never commit a hand-edited binary or identity.
 
 ## I380-2 — Japanese corpus closure regeneration
 
-Regenerate the provider-dependent `controller-z-ja` Context and SVG only
-through the public materializer using the corrected provider.  Review all
-identity and SVG differences, then prove SVG/PNG/PDF with the local provider.
+Synchronize the provider descriptor into the provider-dependent
+`controller-z-ja` Context with the deterministic font-closure synchronizer,
+then regenerate SVG only through the public materializer using the corrected
+provider.  Review all identity and SVG differences, then prove SVG/PNG/PDF
+with the local provider.
 
-**Files:** `examples/controller-z-ja/` Context/resources/generated evidence,
+**Files:** deterministic font-closure synchronizer and tests,
+`examples/controller-z-ja/` Context/resources/generated evidence,
 corpus/inventory checks, CJK target tests, generated documentation if changed.
 
-**Acceptance:** the Context pins corrected provider identities; committed SVG
+**Acceptance:** the synchronizer changes only the Context font closure and
+pins corrected provider identities; committed SVG
 matches public materialization byte-for-byte; Japanese SVG/PNG/PDF still
 render from declared bytes; no unrelated corpus SVG changes occur.
 

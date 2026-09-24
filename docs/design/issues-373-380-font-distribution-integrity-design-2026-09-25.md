@@ -109,12 +109,17 @@ the faces are unmodified upstream Noto assets.
 ## 6. Japanese corpus migration
 
 The provider descriptor identities are input to the Japanese Context.  Once
-the provider build changes the two font and metric identities, regenerate the
-affected `controller-z-ja` Context and committed SVG through the public
-materializer in one atomic reviewed slice.  No hand edit of the SVG or Context
-identity is allowed.  The result must reproduce byte-identically from the
-new declared closure and continue to render SVG, PNG, and PDF with the local
-provider installed.
+the provider build changes the two font and metric identities, a dedicated
+offline **font-closure synchronizer** copies the typed `fontMetrics` value from
+the provider descriptor into the declared Context environment.  It accepts one
+descriptor and one Context, validates their declared-metrics-v2 shape, refuses
+an unexpected existing family/provider, and changes no other Context field.
+It writes deterministically and is the only source-Context writer in this
+migration.  The public materializer then regenerates the affected
+`controller-z-ja` SVG through that corrected closure in one atomic reviewed
+slice.  No hand edit of the SVG or Context identity is allowed.  The result
+must reproduce byte-identically from the new declared closure and continue to
+render SVG, PNG, and PDF with the local provider installed.
 
 ## Rejected alternatives
 
