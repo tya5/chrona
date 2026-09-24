@@ -125,40 +125,46 @@ properties:
 $defs:
   sha256:
     description: "SHA-256 identity of one immutable declared byte payload."
+    examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
     type: string
     pattern: "^sha256:[0-9a-f]{64}$"
   fontMetrics:
+    description: "Complete identity-pinned metrics and raster font assets for one Render Context."
     type: object
     required: [algorithm, assets, missingFont]
     additionalProperties: false
     properties:
-      algorithm: {const: declared-metrics-v2}
-      missingFont: {const: diagnose}
+      algorithm: {description: "Metrics algorithm required for exact font-pair resolution.", const: declared-metrics-v2}
+      missingFont: {description: "Missing declared faces and glyphs must diagnose rather than fall back.", const: diagnose}
       assets:
+        description: "One exact metrics/font pair for every selectable family and weight."
         type: array
         minItems: 1
         uniqueItems: true
         items:
+          description: "A declared font face and the metric payload generated from it."
           type: object
           required: [family, weight, metrics, font]
           additionalProperties: false
           properties:
-            family: {type: string, minLength: 1}
-            weight: {type: integer, minimum: 1, maximum: 1000}
+            family: {description: "CSS family name selected by the Theme.", type: string, minLength: 1}
+            weight: {description: "Numeric font weight selected by the Theme.", type: integer, minimum: 1, maximum: 1000}
             metrics:
+              description: "Measured glyph advances generated from this exact font face."
               type: object
               required: [path, contentIdentity]
               additionalProperties: false
               properties:
-                path: {type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$"}
-                contentIdentity: {$ref: "#/$defs/sha256"}
+                path: {description: "Safe relative JSON metrics asset path.", examples: ["font_metrics/acme-regular.json"], type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$"}
+                contentIdentity: {description: "Exact identity of the metrics JSON bytes.", $ref: "#/$defs/sha256"}
             font:
+              description: "Rasterizable static TrueType font face used by every output adapter."
               type: object
               required: [path, contentIdentity]
               additionalProperties: false
               properties:
-                path: {type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.ttf$"}
-                contentIdentity: {$ref: "#/$defs/sha256"}
+                path: {description: "Safe relative static TrueType font asset path.", examples: ["fonts/acme-regular.ttf"], type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.ttf$"}
+                contentIdentity: {description: "Exact identity of the font bytes.", $ref: "#/$defs/sha256"}
   reference:
     type: object
     description: "Pinned Store reference to one materialization input resource."
