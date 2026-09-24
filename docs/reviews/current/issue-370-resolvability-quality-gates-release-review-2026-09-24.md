@@ -1,6 +1,6 @@
 # Issue 370 resolvability quality gates release review
 
-## Result: accepted pending GitHub CI
+## Result: accepted
 
 | Issue 370 acceptance requirement | Direct evidence |
 | --- | --- |
@@ -31,4 +31,6 @@ evaluation input, or add a presentation-layer dependency.  The fresh-wheel
 failure discovered during the gate was corrected through packaged application
 resources, not a source-path fallback.
 
-GitHub CI is the final three-operating-system acceptance evidence.
+GitHub CI run [35995770510](https://github.com/tya5/chrona/actions/runs/35995770510)
+passed on Ubuntu, macOS, and Windows, including the installed-wheel fresh
+sequence.
