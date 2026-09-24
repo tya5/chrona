@@ -9,6 +9,8 @@ from pathlib import Path
 import tempfile
 from typing import Any, Callable, Iterable, Mapping
 
+import yaml
+
 from chrona.resources import safe_load
 
 
@@ -35,6 +37,14 @@ class VocabularyValue:
     contract: str
     path: tuple[str, ...]
     value: str
+
+
+@dataclass(frozen=True)
+class CorpusMagnitude:
+    objects: int
+    rows: int
+    relations: int
+    segments: int
 
 
 SCHEMA_SOURCES = (
@@ -138,6 +148,45 @@ def _project_objects(project: CorpusProject) -> Iterable[Mapping[str, Any]]:
     for kind, _path, value in project.resources:
         if kind == "project" and isinstance(value.get("objects"), Mapping):
             yield from (item for item in value["objects"].values() if isinstance(item, Mapping))
+
+
+def magnitude(project: CorpusProject) -> CorpusMagnitude:
+    objects = tuple(_project_objects(project))
+    document = next(value for kind, _path, value in project.resources if kind == "project")
+    relations = document.get("relations", [])
+    return CorpusMagnitude(
+        objects=len(objects), rows=len(objects),
+        relations=len(relations) if isinstance(relations, list) else 0,
+        segments=sum(1 for item in objects if isinstance(item.get("schedule"), Mapping)),
+    )
+
+
+def _magnitude_thresholds(root: Path) -> tuple[tuple[str, CorpusMagnitude], ...]:
+    policy_path = root / "conformance" / "resolvability-quality-policy-v0.1.yaml"
+    try:
+        policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as error:
+        raise CorpusCoverageError("E_CORPUS_MAGNITUDE_POLICY") from error
+    entries = policy.get("corpusMagnitude") if isinstance(policy, Mapping) else None
+    if not isinstance(entries, list):
+        raise CorpusCoverageError("E_CORPUS_MAGNITUDE_POLICY")
+    result = []
+    for entry in entries:
+        minimum = entry.get("minimum") if isinstance(entry, Mapping) else None
+        if not isinstance(entry, Mapping) or not isinstance(entry.get("contract"), str) or not isinstance(minimum, Mapping):
+            raise CorpusCoverageError("E_CORPUS_MAGNITUDE_POLICY")
+        try:
+            result.append((entry["contract"], CorpusMagnitude(*(int(minimum[key]) for key in ("objects", "rows", "relations", "segments")))))
+        except (KeyError, TypeError, ValueError) as error:
+            raise CorpusCoverageError("E_CORPUS_MAGNITUDE_POLICY") from error
+    return tuple(result)
+
+
+def validate_magnitude(root: Path) -> None:
+    projects = discover(root)
+    for contract, minimum in _magnitude_thresholds(root):
+        if not any(all(getattr(magnitude(project), key) >= getattr(minimum, key) for key in ("objects", "rows", "relations", "segments")) for project in projects):
+            raise CorpusCoverageError(f"E_CORPUS_MAGNITUDE:{contract}")
 
 
 def _project_probe(project: CorpusProject, condition: Callable[[Mapping[str, Any]], bool]) -> tuple[Path, ...]:
@@ -247,6 +296,16 @@ def render(root: Path) -> str:
     for probe in PROBES:
         cells = [", ".join(path.relative_to(root).as_posix() for path in probe.predicate(project)) or "—" for project in projects]
         lines.append(f"| {probe.contract} | `{probe.identifier}` | " + " | ".join(cells) + " |")
+    magnitudes = {project.identifier: magnitude(project) for project in projects}
+    lines.extend(["", "## Semantic corpus magnitude", "", "Counts derive from declared Project resources: rows are declared objects before View/Layout, and segments are objects with declared schedule input.", "",
+                  "| Project | Objects | Rows | Relations | Segments |", "| --- | --- | --- | --- | --- |"])
+    for project in projects:
+        item = magnitudes[project.identifier]
+        lines.append(f"| {project.identifier} | {item.objects} | {item.rows} | {item.relations} | {item.segments} |")
+    lines.extend(["", "## Declared magnitude thresholds", "", "| Contract limit | Objects | Rows | Relations | Segments | Qualifying corpus project |", "| --- | --- | --- | --- | --- |"])
+    for contract, minimum in _magnitude_thresholds(root):
+        qualified = next((project.identifier for project in projects if all(getattr(magnitude(project), key) >= getattr(minimum, key) for key in ("objects", "rows", "relations", "segments"))), "—")
+        lines.append(f"| `{contract}` | {minimum.objects} | {minimum.rows} | {minimum.relations} | {minimum.segments} | {qualified} |")
     uncovered = [probe.identifier for probe in PROBES if not any(probe.predicate(project) for project in projects)]
     lines.extend(["", "## Uncovered register probes", "", ", ".join(f"`{item}`" for item in uncovered) if uncovered else "None.", "",
                   "## Finite-schema vocabulary", "", "Direct `enum` and `const` values from the Project, Actual Set, Snapshot Reference, and Profile Package source schemas. Open maps and non-direct conditional inference are intentionally excluded.", "",
@@ -279,6 +338,7 @@ def main() -> None:
     args = parser.parse_args(); root = args.root.resolve(); output = args.output if args.output.is_absolute() else root / args.output
     content = render(root)
     if args.check:
+        validate_magnitude(root)
         if not output.is_file() or output.read_text(encoding="utf-8") != content: raise SystemExit("E_CORPUS_COVERAGE_STALE")
         return
     write(output, content)

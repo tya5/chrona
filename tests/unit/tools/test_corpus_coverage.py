@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tools.corpus_coverage import CorpusProject, PROBES, _values_at, render, vocabulary
+from tools.corpus_coverage import CorpusMagnitude, CorpusProject, PROBES, _values_at, magnitude, render, vocabulary
 
 
 def _root() -> Path:
@@ -18,6 +18,8 @@ def test_repository_coverage_is_deterministic_and_lists_all_registers():
     assert "examples/orion-asic/extensions/semiconductor-development.yaml" in first
     assert "## Finite-schema vocabulary" in first
     assert "## Uncovered schema vocabulary" in first
+    assert "## Semantic corpus magnitude" in first
+    assert "| halcyon-1 | 29 | 29 | 24 | 29 |" in first
     assert '`objects.*.schedule.mode` | `"rollup"`' in first
 
 
@@ -35,3 +37,11 @@ def test_register_predicates_do_not_count_undeclared_resource_kinds(tmp_path):
     project = CorpusProject("empty", tmp_path, (("project", tmp_path / "project.yaml", {"objects": {}}),))
 
     assert all(not probe.predicate(project) for probe in PROBES)
+
+
+def test_magnitude_counts_declared_semantic_facts_only(tmp_path):
+    project = CorpusProject("scale", tmp_path, (("project", tmp_path / "project.yaml", {
+        "objects": {"a": {"schedule": {}}, "b": {}}, "relations": [{"id": "r"}],
+    }),))
+
+    assert magnitude(project) == CorpusMagnitude(objects=2, rows=2, relations=1, segments=1)
