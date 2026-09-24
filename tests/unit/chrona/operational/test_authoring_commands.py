@@ -39,6 +39,21 @@ def test_authoring_command_updates_one_task_with_a_new_content_revision(tmp_path
     assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["project"]["tasks"][0]["title"] == "Renamed"
 
 
+def test_authoring_command_updates_a_japanese_workspace_at_its_current_revision(tmp_path):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    workspace["body"]["project"]["tasks"][0]["title"] = "設計レビュー"
+    _write(path, workspace)
+    command = _command(workspace, "setWorkspaceTask", {
+        "task": {"id": "one", "title": "実装レビュー", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
+    })
+
+    result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace,
+                                     cas_write=cas_write_authoring_workspace)
+
+    assert result["status"] == "accepted"
+    assert result["baseRevision"] == content_identity(workspace)
+
+
 def test_aggregate_lock_uses_lazy_windows_adapter_without_fcntl(tmp_path, monkeypatch):
     calls = []
     fake = SimpleNamespace(LK_LOCK=1, LK_UNLCK=2,

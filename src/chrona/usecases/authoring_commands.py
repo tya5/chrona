@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from hashlib import sha256
-import json
 from pathlib import Path
 from typing import Any
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
+from chrona.operational.resources import content_identity
 
 
 def parse_authoring_command(path: Path) -> dict[str, Any]:
@@ -27,17 +26,13 @@ def parse_authoring_command(path: Path) -> dict[str, Any]:
     return value
 
 
-def _identity(value: Any) -> str:
-    return "sha256:" + sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
-
-
 def apply_authoring_command(
     workspace_path: Path, command: dict[str, Any], *, read_workspace: Any, cas_write: Any,
     cas_write_aggregate: Any | None = None,
 ) -> dict[str, Any]:
     """Validate source intent; persistence is injected by the outer application adapter."""
     current = read_workspace(workspace_path)
-    base = _identity(current)
+    base = content_identity(current)
     if command["target"]["path"] != workspace_path.name or command["baseRevision"] != base:
         return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
     try:
@@ -54,7 +49,7 @@ def apply_authoring_command(
             return {"status": "accepted", "commandId": command["commandId"], "baseRevision": base, "resultRevision": result, "reversible": False, "diagnostics": []}
         candidate = deepcopy(current)
         _apply(candidate, command)
-        parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", _identity(candidate)), candidate)
+        parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate)), candidate)
         result = cas_write(workspace_path, base, candidate)
         if result is None:
             return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
