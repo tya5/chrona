@@ -8,6 +8,7 @@ from chrona.presentation.layout.surface_composer import progress_fill_bounds
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain,
     GroupPlacement,
+    IconPlacement,
     MarkPlacement,
     PlacementDecision,
     PrimitivePlacement,
@@ -78,6 +79,15 @@ def test_surface_placement_validates_completed_mark_and_shape_geometry():
         SurfacePlacement(marks=(MarkPlacement("mark:bad", "a", _rect(0, 0, 0, 1), (0, 0), (0, 0)),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_SHAPE_PLACEMENT_INVALID:path:bad"):
         SurfacePlacement(shapes=(ShapePlacement("path:bad", "a", "Path", bounds, ((1.0, 2.0),)),)).assert_valid()
+
+
+def test_surface_placement_rejects_icon_without_a_declared_slot_owner():
+    bounds = _rect(1, 2, 3, 4)
+    icon = IconPlacement("visual:title:leading", "title", "/body/visuals/0", "risk", "svg", "sha256:x",
+                         (24, 24), (), "Risk", True, bounds)
+    surface = SurfacePlacement(slots=(SlotPlacement("title", "title", bounds),), icons=(icon,))
+    with pytest.raises(ValueError, match="E_LAYOUT_SLOT_OWNERSHIP_INVALID:icon:visual:title:leading"):
+        surface.assert_valid()
 
 
 def test_progress_fill_bounds_are_layout_owned_and_fractional():

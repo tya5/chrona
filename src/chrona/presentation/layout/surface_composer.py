@@ -278,6 +278,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for source, item in sorted(decisions.items())
     )
     by_source = {slot.source_ref: slot for slot in slots}
+    table = by_source["table"]
+    slot_ids = {slot.slot_id for slot in slots}
+
+    def text_slot(item: Any) -> str:
+        """Resolve a text host's Layout-owned slot before any visual uses it."""
+        if item.slot_id in slot_ids:
+            return item.slot_id
+        if item.collision_domain.slot == "group-header":
+            return table.slot_id
+        raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
+
     timeline = by_source["timeline"]
     review_rows = projection.rows or tuple(
         type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
@@ -312,7 +323,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for item, placement in zip(review_rows, raw_rows, strict=True)
     )
     groups: list[GroupPlacement] = []
-    table = by_source["table"]
     table_bounds = _bounds(table.bounds)
     for row in rows:
         if groups and groups[-1].group_id == row.group_id:
@@ -751,7 +761,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          placed_text.source_ref, visual.source_ref, icon.icon_id,
                                                          icon.kind, icon.content_identity, icon.viewport, icon.payload,
                                                          icon.alternative, visual.decorative, bounds, "labelVisual",
-                                                         width / icon.viewport[0]))
+                                                         width / icon.viewport[0], text_slot(placed_text)))
             placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                                          label_request.candidates, candidate.side, "placed"))
 
@@ -994,7 +1004,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                          icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                          visual.decorative, icon_bounds, "labelVisual",
-                                                         icon_width / icon.viewport[0]))
+                                                         icon_width / icon.viewport[0], annotation_slot.slot_id))
             if "number" in annotation:
                 note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
                 handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
@@ -1025,7 +1035,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                              annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                              icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                              visual.decorative, icon_bounds, "labelVisual",
-                                                             icon_width / icon.viewport[0]))
+                                                             icon_width / icon.viewport[0], annotation_slot.slot_id))
             if box.leader_required:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
                 try:
@@ -1036,6 +1046,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))
+    text = [replace(item, slot_id=text_slot(item)) for item in text]
     text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals)
     icons.extend(candidate_icons)
     icons.extend(resolve_mark_visual_requests(marks, request))
@@ -1043,14 +1054,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     # Slot ownership is completed here with the rest of Layout geometry.  Scene
     # projection receives the relation verbatim and must never reconstruct it
     # from primitive purpose, identity, or containment.
-    slot_ids = {slot.slot_id for slot in slots}
-    def text_slot(item: Any) -> str:
-        if item.slot_id in slot_ids:
-            return item.slot_id
-        if item.collision_domain.slot == "group-header":
-            return table.slot_id
-        raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
-    text = [replace(item, slot_id=text_slot(item)) for item in text]
     def shape_slot(item: Any) -> str:
         if item.placement_id.startswith("legend-swatch:"):
             return by_source["legend"].slot_id
@@ -1065,7 +1068,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     relations = [replace(item, slot_id=(by_source["annotations"].slot_id
                                         if item.relation_id.startswith("annotation-leader:")
                                         else timeline.slot_id)) for item in relations]
-    icons = [replace(item, slot_id=(item.slot_id or by_source["annotations"].slot_id)) for item in icons]
     column_placements = tuple(
         ColumnPlacement(item.column_id, label,
                         Rect(Decimal(str(item.inline)), Decimal(str(table_bounds[1])),

@@ -153,11 +153,14 @@ def test_draft_mark_visual_reaches_the_selected_completed_mark(tmp_path):
                                 "ref": "chrona:risk", "decorative": False}]
     path = tmp_path / "mark-visual-view.yaml"; path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    svg = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
-                                       visual_profile="chrona-output/visual/v0.7-svg")).artifact.content.decode()
+    rendered = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
+                                            visual_profile="chrona-output/visual/v0.7-svg"))
+    svg = rendered.artifact.content.decode()
 
     assert 'data-scene-id="visual:planned:firmware:firmware"' in svg
     assert 'data-purpose="icon-mark"' in svg
+    by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
+    assert by_id["visual:planned:firmware:firmware"].slot_id == by_id["planned:firmware:firmware"].slot_id
 
 
 def test_draft_plot_label_visual_reserves_space_before_candidate_selection(tmp_path):
@@ -174,6 +177,7 @@ def test_draft_plot_label_visual_reserves_space_before_candidate_selection(tmp_p
     label = by_id["member-label:firmware:firmware"]
     assert icon.bounds[0] < label.bounds[0]
     assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+    assert icon.slot_id == label.slot_id
 
 
 def test_draft_variance_label_visual_reserves_space_before_candidate_selection(tmp_path):
@@ -189,6 +193,7 @@ def test_draft_variance_label_visual_reserves_space_before_candidate_selection(t
     icon = by_id["visual:variance:firmware:firmware:leading"]
     label = by_id["variance:firmware:firmware"]
     assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+    assert icon.slot_id == label.slot_id
 
 
 def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
@@ -208,6 +213,7 @@ def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
         icon = by_id[f"visual:{placement_id}:leading"]
         label = by_id[placement_id]
         assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+        assert icon.slot_id == label.slot_id
 
 
 def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
@@ -285,9 +291,11 @@ def test_draft_annotation_visual_is_measured_before_its_rail_is_allocated(tmp_pa
     icon = by_id["visual:annotation-text:firmware-callout:leading"]
     label = by_id["annotation-text:firmware-callout"]
     assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
+    assert icon.slot_id == label.slot_id == "annotations"
     note_icon = by_id["visual:note-index:firmware-callout:leading"]
     note_index = by_id["note-index:firmware-callout"]
     assert note_icon.bounds[0] + note_icon.bounds[2] <= note_index.bounds[0]
+    assert note_icon.slot_id == "annotations"
     assert "annotation-leader:firmware-callout" in by_id
 
 
