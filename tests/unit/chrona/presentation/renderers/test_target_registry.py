@@ -157,7 +157,7 @@ def test_typeset_adapters_are_completed_scene_only():
 
 def test_public_png_profile_preserves_optional_rich_treatment_in_pixels(tmp_path):
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/elevated-light.yaml").read_text())
+    theme = yaml.safe_load((root / "examples/controller-z/themes/elevated-light.yaml").read_text(encoding="utf-8"))
     theme["body"]["values"]["elevated.fidelity"]["value"] = "decorative-optional"
     theme_path = tmp_path / "optional-elevated.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False))

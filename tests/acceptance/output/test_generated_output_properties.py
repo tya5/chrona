@@ -19,7 +19,7 @@ from chrona.presentation.model.font_metrics import resolve_font_metrics
 
 ROOT = Path(__file__).resolve().parents[3]
 RESOURCES = ROOT / "src/chrona/resources"
-KNOWN = yaml.safe_load((Path(__file__).parent / "known_failures.yaml").read_text()) or {}
+KNOWN = yaml.safe_load((Path(__file__).parent / "known_failures.yaml").read_text(encoding="utf-8")) or {}
 SVG = "{http://www.w3.org/2000/svg}"
 
 MARK_PURPOSES = frozenset({"planned", "actual", "missingActual", "baseline", "milestone"})
@@ -39,7 +39,7 @@ SLOT_PURPOSES = {
 
 def _slides():
     for manifest_path in sorted(ROOT.glob("examples/*/manifest.yaml")):
-        manifest = yaml.safe_load(manifest_path.read_text())
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
         example = manifest_path.parent
         for slide in manifest.get("slides", ()):
             svg = example / str(slide["expectedSvg"])
@@ -72,8 +72,8 @@ def check(slide: str, request, actual: list | set, message: str) -> None:
 
 
 def _load(svg_path: Path, context_path: Path):
-    tree = ElementTree.fromstring(svg_path.read_text())
-    body = yaml.safe_load(context_path.read_text())["body"]
+    tree = ElementTree.fromstring(svg_path.read_text(encoding="utf-8"))
+    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
     viewport = (float(body["environment"]["viewport"]["inlineSize"]),
                 float(body["environment"]["viewport"]["blockSize"]))
     theme = _bound(context_path, body, "theme")
@@ -85,7 +85,7 @@ def _load(svg_path: Path, context_path: Path):
 
 
 def _bound(context_path: Path, body: dict, name: str) -> dict:
-    return yaml.safe_load((context_path.parents[1] / body[name]["address"]).read_text())
+    return yaml.safe_load((context_path.parents[1] / body[name]["address"]).read_text(encoding="utf-8"))
 
 
 def _marks(tree):
@@ -172,7 +172,7 @@ def test_no_text_leaves_the_viewport(slide, context_path, svg_path, request):
 def test_row_index_cells_render_an_ordinal(slide, context_path, svg_path, request):
     """A row number is not a duration; the default formatter must not sign it."""
     tree, _, _ = _load(svg_path, context_path)
-    body = yaml.safe_load(context_path.read_text())["body"]
+    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
     columns = {column["id"] for column in _bound(context_path, body, "view")["body"].get("tableColumns", ())
                if column.get("source") == "rowIndex"}
     if not columns:
@@ -188,7 +188,7 @@ def test_row_index_cells_render_an_ordinal(slide, context_path, svg_path, reques
 def test_point_rows_never_render_a_span_only_state(slide, context_path, svg_path, request):
     """A gate is reached or it is not; it is never "in progress"."""
     tree, _, _ = _load(svg_path, context_path)
-    body = yaml.safe_load(context_path.read_text())["body"]
+    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
     points = {key for key, value in _bound(context_path, body, "project")["objects"].items()
               if value.get("schedule", {}).get("mode") == "fixed"}
     offenders = set()
@@ -204,7 +204,7 @@ def test_point_rows_never_render_a_span_only_state(slide, context_path, svg_path
 def test_every_declared_slot_produces_a_primitive(slide, context_path, svg_path, request):
     """A slot that draws nothing is an authored intent the render silently dropped."""
     tree, _, _ = _load(svg_path, context_path)
-    body = yaml.safe_load(context_path.read_text())["body"]
+    body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
     declared = _declared_slots(_bound(context_path, body, "layout"))
     produced = {node.get("data-purpose") for node in tree.iter()}
     empty = sorted(slot for slot in declared & set(SLOT_PURPOSES) if not SLOT_PURPOSES[slot] & produced)

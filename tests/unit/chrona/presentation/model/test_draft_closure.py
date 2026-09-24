@@ -95,10 +95,10 @@ def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provena
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text()),
-        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text()),
-        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text()),
-        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text()),
+        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
     }
     resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["task"]}}
     for name, value in resources.items():
@@ -139,10 +139,10 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text()),
-        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text()),
-        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text()),
-        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text()),
+        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
         "icons.yaml": {"version": "chrona/icon-catalog/v0.3", "kind": "icon-catalog", "id": "preset-icons",
                        "body": {"set": "preset", "aliases": [], "entryAliases": {},
                                 "provenance": {"sourceKind": "iconify-json", "sourcePrefix": "preset",

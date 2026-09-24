@@ -34,7 +34,7 @@ def test_inventory_rejects_dangling_catalog_reference(tmp_path):
 
 def test_inventory_rejects_a_missing_gallery_dimension(tmp_path):
     root = _root(tmp_path)
-    text = (root / "docs/gallery/example-gallery.yaml").read_text().replace("dimension: content, ", "")
+    text = (root / "docs/gallery/example-gallery.yaml").read_text(encoding="utf-8").replace("dimension: content, ", "")
     (root / "docs/gallery/example-gallery.yaml").write_text(text)
 
     with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_DIMENSION"):
@@ -44,7 +44,7 @@ def test_inventory_rejects_a_missing_gallery_dimension(tmp_path):
 def test_inventory_rejects_an_undisclosed_presentation_axis_leak(tmp_path):
     root = _root(tmp_path)
     context = root / "examples/demo/contexts/two.yaml"
-    context.write_text(context.read_text().replace("theme: {id: theme}", "theme: {id: alternate-theme}"))
+    context.write_text(context.read_text(encoding="utf-8").replace("theme: {id: theme}", "theme: {id: alternate-theme}"))
 
     with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_AXIS_LEAK:pair:theme"):
         validate(root)
@@ -53,7 +53,7 @@ def test_inventory_rejects_an_undisclosed_presentation_axis_leak(tmp_path):
 def test_inventory_requires_a_dimension_owner_to_change(tmp_path):
     root = _root(tmp_path)
     context = root / "examples/demo/contexts/two.yaml"
-    context.write_text(context.read_text().replace("view: {id: alternate}", "view: {id: view}").replace("layout: {id: layout}", "layout: {id: alternate-layout}"))
+    context.write_text(context.read_text(encoding="utf-8").replace("view: {id: alternate}", "view: {id: view}").replace("layout: {id: layout}", "layout: {id: alternate-layout}"))
 
     with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_OWNER_UNCHANGED:pair"):
         validate(root)
@@ -62,7 +62,7 @@ def test_inventory_requires_a_dimension_owner_to_change(tmp_path):
 def test_inventory_rejects_a_mismatched_comparison_environment(tmp_path):
     root = _root(tmp_path)
     context = root / "examples/demo/contexts/two.yaml"
-    context.write_text(context.read_text().replace("inputs: {}", "environment: {viewport: {inlineSize: 800, blockSize: 600}}\n  inputs: {}"))
+    context.write_text(context.read_text(encoding="utf-8").replace("inputs: {}", "environment: {viewport: {inlineSize: 800, blockSize: 600}}\n  inputs: {}"))
 
     with pytest.raises(ExampleInventoryError, match="E_DESIGN_GALLERY_ENVIRONMENT_MISMATCH:pair"):
         validate(root)

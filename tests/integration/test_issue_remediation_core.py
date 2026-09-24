@@ -109,8 +109,8 @@ def test_non_working_explicit_workperiod_anchor_is_rejected():
 
 def test_placement_order_is_project_order_and_hash_seed_independent():
     example = ROOT / "examples" / "controller-z" / "project.yaml"
-    direct = schedule(yaml.safe_load(example.read_text()))
-    expected_order = list(yaml.safe_load(example.read_text())["objects"])
+    direct = schedule(yaml.safe_load(example.read_text(encoding="utf-8")))
+    expected_order = list(yaml.safe_load(example.read_text(encoding="utf-8"))["objects"])
     assert list(direct.placements) == expected_order
 
     command = [sys.executable, "-c", (
@@ -128,6 +128,6 @@ def test_placement_order_is_project_order_and_hash_seed_independent():
 def test_legacy_v01_extension_string_remains_schema_readable_but_not_evaluable():
     value = project({"a": fixed()}, calendar=False)
     value["extensions"] = ["legacy-package"]
-    schema = yaml.safe_load(SCHEMA_PATH.read_text())
+    schema = yaml.safe_load(SCHEMA_PATH.read_text(encoding="utf-8"))
     jsonschema.Draft202012Validator(schema).validate(value)
     assert [item.id for item in validate_project(value)] == ["E_PACKAGE_RESOLUTION_REQUIRED"]

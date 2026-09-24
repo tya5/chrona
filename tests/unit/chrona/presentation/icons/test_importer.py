@@ -22,7 +22,7 @@ def test_importer_normalizes_monochrome_iconify_artwork(tmp_path, body, paint):
     source.write_text(json.dumps(_collection(body)))
     notice.write_text("MIT notice\n")
     result = import_iconify(source, output, license_spdx="MIT", notice_path=notice)
-    catalog = yaml.safe_load(output.read_text())
+    catalog = yaml.safe_load(output.read_text(encoding="utf-8"))
     assert result["set"] == "sample"
     assert catalog["body"]["icons"]["sample"]["paths"][0]["paint"] == paint
 
@@ -37,7 +37,7 @@ def test_importer_never_replaces_output_after_a_collection_error(tmp_path):
     assert error.value.code == "E_ICON_IMPORT_ELEMENT"
     assert error.value.icon == "sample:sample"
     assert error.value.source_ref == "/mask"
-    assert output.read_text() == "preserved\n"
+    assert output.read_text(encoding="utf-8") == "preserved\n"
 
 
 def test_importer_applies_iconify_quarter_turn_metadata(tmp_path):
@@ -45,7 +45,7 @@ def test_importer_applies_iconify_quarter_turn_metadata(tmp_path):
     value = _collection('<path d="M1 2L3 4"/>'); value["icons"]["sample"].update({"width": 20, "height": 10, "rotate": 1})
     source.write_text(json.dumps(value)); notice.write_text("MIT notice\n")
     import_iconify(source, output, license_spdx="MIT", notice_path=notice)
-    icon = yaml.safe_load(output.read_text())["body"]["icons"]["sample"]
+    icon = yaml.safe_load(output.read_text(encoding="utf-8"))["body"]["icons"]["sample"]
     assert icon["viewport"] == {"inlineSize": 10, "blockSize": 20}
     assert icon["paths"][0]["data"].split()[:3] == ["M", "8", "1"]
 
@@ -55,7 +55,7 @@ def test_importer_normalizes_transform_bearing_alias_to_its_own_entry(tmp_path):
     value = _collection('<path d="M1 2L3 4"/>'); value["aliases"] = {"turned": {"parent": "sample", "rotate": 1}}
     source.write_text(json.dumps(value)); notice.write_text("MIT notice\n")
     import_iconify(source, output, license_spdx="MIT", notice_path=notice)
-    body = yaml.safe_load(output.read_text())["body"]
+    body = yaml.safe_load(output.read_text(encoding="utf-8"))["body"]
     assert "turned" in body["icons"] and "turned" not in body["entryAliases"]
 
 
@@ -69,7 +69,7 @@ def test_importer_selects_only_the_explicit_local_manifest(tmp_path):
     result = import_iconify(source, output, license_spdx="MIT", notice_path=notice, include_path=include)
 
     assert result["icons"] == 1
-    assert set(yaml.safe_load(output.read_text())["body"]["icons"]) == {"sample"}
+    assert set(yaml.safe_load(output.read_text(encoding="utf-8"))["body"]["icons"]) == {"sample"}
 
 
 def test_importer_retains_aliases_of_selected_canonical_entries_and_resolves_chains(tmp_path):
@@ -85,7 +85,7 @@ def test_importer_retains_aliases_of_selected_canonical_entries_and_resolves_cha
 
     import_iconify(source, output, license_spdx="MIT", notice_path=notice, include_path=include)
 
-    body = yaml.safe_load(output.read_text())["body"]
+    body = yaml.safe_load(output.read_text(encoding="utf-8"))["body"]
     assert body["entryAliases"] == {"warning": "sample", "warning-copy": "sample"}
     assert "turned" in body["icons"] and "other-copy" not in body["entryAliases"]
 
@@ -116,7 +116,7 @@ def test_importer_records_an_explicit_source_version(tmp_path):
 
     import_iconify(source, output, license_spdx="MIT", notice_path=notice, source_version="9.9.9")
 
-    assert yaml.safe_load(output.read_text())["body"]["provenance"]["sourceVersion"] == "9.9.9"
+    assert yaml.safe_load(output.read_text(encoding="utf-8"))["body"]["provenance"]["sourceVersion"] == "9.9.9"
 
 
 def test_public_lucide_tabler_fixture_is_reproducible_from_the_cli_inputs(tmp_path):
@@ -130,7 +130,7 @@ def test_public_lucide_tabler_fixture_is_reproducible_from_the_cli_inputs(tmp_pa
 
 def test_bundled_material_catalog_matches_the_offline_iconify_utils_conformance_fixture():
     root = Path(__file__).resolve().parents[5]
-    fixture = json.loads((root / "tests/fixtures/icons/material-symbols-iconify-utils-v3.1.7.json").read_text())
+    fixture = json.loads((root / "tests/fixtures/icons/material-symbols-iconify-utils-v3.1.7.json").read_text(encoding="utf-8"))
     catalog = yaml.load((root / "src/chrona/resources/icons/material-symbols-outline-rounded-v2026-09-22.yaml").read_bytes(), Loader=yaml.CSafeLoader)
     body = catalog["body"]
     assert fixture["format"] == "chrona/iconify-utils-conformance/v0.1"

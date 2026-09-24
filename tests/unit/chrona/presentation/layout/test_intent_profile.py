@@ -12,7 +12,7 @@ ROOT = Path(__file__).parents[5]
 
 
 def fixture(name):
-    return yaml.safe_load((ROOT / "conformance" / name).read_text())
+    return yaml.safe_load((ROOT / "conformance" / name).read_text(encoding="utf-8"))
 
 
 def theme(*, bad=False):

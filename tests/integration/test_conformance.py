@@ -25,7 +25,7 @@ def _assert_temporal_case(case, calendar=None):
 
 
 def test_temporal_reference_fixture():
-    fixture = yaml.safe_load(FIXTURE.read_text())
+    fixture = yaml.safe_load(FIXTURE.read_text(encoding="utf-8"))
     for case in fixture["temporal"]["calendar_period"]:
         _assert_temporal_case(case)
 
@@ -36,7 +36,7 @@ def test_temporal_reference_fixture():
 
 
 def test_scheduled_amount_fixture():
-    fixture = yaml.safe_load(FIXTURE.read_text())
+    fixture = yaml.safe_load(FIXTURE.read_text(encoding="utf-8"))
     checks = fixture["validation"]
     assert all(is_scheduled_amount(value) for value in checks["valid_scheduled_amounts"])
     assert not any(is_scheduled_amount(value) for value in checks["invalid_scheduled_amounts"])
@@ -57,7 +57,7 @@ def test_yaml_date_scalars_validate_against_json_compatible_schema():
 
 
 def test_m26_operational_release_acceptance_manifest_has_complete_evidence():
-    manifest = yaml.safe_load((ROOT / "conformance" / "operational-workflows-release-acceptance-v0.1.yaml").read_text())
+    manifest = yaml.safe_load((ROOT / "conformance" / "operational-workflows-release-acceptance-v0.1.yaml").read_text(encoding="utf-8"))
     assert manifest["immutableInputsOnly"] is True
     assert manifest["useCases"] == ["UC-10", "UC-11", "UC-12"]
     assert [item["id"] for item in manifest["acceptance"]] == [f"A26-{index:02d}" for index in range(1, 11)]
@@ -65,7 +65,7 @@ def test_m26_operational_release_acceptance_manifest_has_complete_evidence():
 
 
 def test_dependency_bound_cases_execute_through_scheduler():
-    fixture = yaml.safe_load(FIXTURE.read_text())
+    fixture = yaml.safe_load(FIXTURE.read_text(encoding="utf-8"))
     for case in fixture["scheduling"]["dependency_bounds"]:
         source_endpoint = case["source"]["endpoint"]
         source_value = _date(case["source"]["value"])
@@ -96,7 +96,7 @@ def test_dependency_bound_cases_execute_through_scheduler():
 
 
 def test_multiple_bound_cases_execute_through_scheduler():
-    fixture = yaml.safe_load(FIXTURE.read_text())
+    fixture = yaml.safe_load(FIXTURE.read_text(encoding="utf-8"))
     for case in fixture["scheduling"]["multiple_bounds"]:
         if case.get("expected") == "schedule_error":
             project = {

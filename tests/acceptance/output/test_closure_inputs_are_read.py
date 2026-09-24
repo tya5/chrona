@@ -18,12 +18,12 @@ import yaml
 from tools.materialize_example import _copy_context_closure
 
 ROOT = Path(__file__).resolve().parents[3]
-KNOWN = yaml.safe_load((Path(__file__).parent / "known_unused.yaml").read_text()) or {}
+KNOWN = yaml.safe_load((Path(__file__).parent / "known_unused.yaml").read_text(encoding="utf-8")) or {}
 
 
 def _slides():
     for manifest_path in sorted(ROOT.glob("examples/*/manifest.yaml")):
-        manifest = yaml.safe_load(manifest_path.read_text())
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
         example = manifest_path.parent
         for slide in manifest.get("slides", ()):
             identity = f"{example.name}/{slide['id']}"

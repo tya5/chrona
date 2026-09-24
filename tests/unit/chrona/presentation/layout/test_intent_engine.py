@@ -15,7 +15,7 @@ SOURCES = {"title", "table", "timeline", "timeline-axis", "legend", "notes"}
 
 
 def profile():
-    value = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text())
+    value = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
     values = {name: {"type": "number", "value": value} for name, value in {
         "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24, "panel.minimum": 180,
     }.items()}
@@ -64,7 +64,7 @@ def test_missing_measurement_and_required_overflow_diagnose():
 
 
 def test_layout_token_requirement_contract_is_exact_and_theme_checked():
-    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text())
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
     theme = {"body": {"values": {"spacing.none": {"type": "number", "value": 0},
                                   "spacing.m": {"type": "number", "value": 16},
                                   "spacing.l": {"type": "number", "value": 24},
@@ -122,7 +122,7 @@ def test_grid_and_distribution_are_deterministic():
 
 
 def relative_profile():
-    raw = yaml.safe_load((ROOT / "conformance/layout-profile-relative-v0.2.yaml").read_text())
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-relative-v0.2.yaml").read_text(encoding="utf-8"))
     theme = {"body": {"values": {
         "spacing.l": {"type": "number", "value": 24},
         "spacing.m": {"type": "number", "value": 16},

@@ -22,10 +22,10 @@ def _workspace(tmp_path: Path) -> Path:
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text()),
-        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text()),
-        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text()),
-        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text()),
+        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
     }
     resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["span"]}}
     for name, document in resources.items():
@@ -61,7 +61,7 @@ def _explicit_bytes(root: Path) -> bytes:
 
 
 def _materialize(path: Path, *, base: str | None = None) -> dict:
-    current = yaml.safe_load(path.read_text())
+    current = yaml.safe_load(path.read_text(encoding="utf-8"))
     command = {"version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
                "target": {"kind": "authoring-workspace", "path": path.name},
                "baseRevision": base or content_identity(current), "payload": {"directory": "presentation"}}
@@ -78,7 +78,7 @@ def test_materialization_ejects_to_a_closed_explicit_bundle_with_identical_bytes
 
     assert result["status"] == "accepted"
     assert result["reversible"] is False
-    explicit = yaml.safe_load(workspace.read_text())
+    explicit = yaml.safe_load(workspace.read_text(encoding="utf-8"))
     assert explicit["body"]["presentation"]["mode"] == "explicit"
     assert "binding" not in explicit["body"]["presentation"]
     assert (tmp_path / "presentation/receipt.yaml").is_file()
@@ -129,7 +129,7 @@ def test_public_cli_materializes_the_same_closed_bundle(tmp_path, monkeypatch):
     command.write_text(yaml.safe_dump({
         "version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
         "target": {"kind": "authoring-workspace", "path": workspace.name},
-        "baseRevision": content_identity(yaml.safe_load(workspace.read_text())), "payload": {},
+        "baseRevision": content_identity(yaml.safe_load(workspace.read_text(encoding="utf-8"))), "payload": {},
     }), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", [
         "chrona", "materialize-presentation-preset", "--workspace", str(workspace), "--command", str(command), "--result", str(result),
@@ -137,5 +137,5 @@ def test_public_cli_materializes_the_same_closed_bundle(tmp_path, monkeypatch):
 
     main()
 
-    assert json.loads(result.read_text())["status"] == "accepted"
+    assert json.loads(result.read_text(encoding="utf-8"))["status"] == "accepted"
     assert (tmp_path / "presentation/receipt.yaml").is_file()

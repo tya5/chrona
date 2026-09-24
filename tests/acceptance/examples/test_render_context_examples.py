@@ -20,9 +20,9 @@ def test_current_example_contexts_bind_exact_source_bytes():
         "examples/halcyon-1/contexts/03-launch-campaign.yaml",
     ):
         path = ROOT / relative
-        context = yaml.safe_load(path.read_text())
+        context = yaml.safe_load(path.read_text(encoding="utf-8"))
         version = context["version"].rsplit("/", 1)[-1]
-        schema = yaml.safe_load(schema_resource(f"render-context-{version}.schema.yaml").read_text())
+        schema = yaml.safe_load(schema_resource(f"render-context-{version}.schema.yaml").read_text(encoding="utf-8"))
         jsonschema.Draft202012Validator(schema).validate(context)
         body = context["body"]
         references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]

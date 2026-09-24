@@ -51,8 +51,8 @@ def test_package_owned_runtime_resources_exist():
 
 def test_bundled_material_catalog_is_complete_and_size_bounded():
     catalog = RESOURCES.joinpath("icons", "material-symbols-outline-rounded-v2026-09-22.yaml").read_bytes()
-    manifest = RESOURCES.joinpath("icons", "material-symbols-outline-rounded-v2026-09-22.manifest").read_text()
-    notice = RESOURCES.joinpath("icons", "material-symbols-outline-rounded.NOTICE").read_text()
+    manifest = RESOURCES.joinpath("icons", "material-symbols-outline-rounded-v2026-09-22.manifest").read_text(encoding="utf-8")
+    notice = RESOURCES.joinpath("icons", "material-symbols-outline-rounded.NOTICE").read_text(encoding="utf-8")
     names = [line for line in manifest.splitlines() if line and not line.startswith("#")]
     assert "canonicalSelection=2336 aliasParentClosure=1679" in manifest
     assert "maxCatalogBytes=7000000 maxGzipBytes=1600000" in manifest

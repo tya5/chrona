@@ -32,13 +32,13 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
     manifests = sorted(ROOT.glob("examples/*/manifest.yaml"))
     assert manifests, "no corpus manifests found"
     for manifest in manifests:
-        for slide in yaml.safe_load(manifest.read_text())["slides"]:
+        for slide in yaml.safe_load(manifest.read_text(encoding="utf-8"))["slides"]:
             materialize(manifest, slide["id"], tmp_path / manifest.parent.name / slide["id"], write=False)
 
 
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
     materialize(ROOT / "examples/controller-z/manifest.yaml", "executive", tmp_path / "controller", write=False)
-    artifact = (tmp_path / "controller/review.svg").read_text()
+    artifact = (tmp_path / "controller/review.svg").read_text(encoding="utf-8")
     assert 'data-scene-id="member-label:firmware:firmware"' in artifact
     assert 'data-scene-id="member-label:firmware:firmware"' in artifact and 'opacity="1" fill="#000000">FW Feature Complete' in artifact
     assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
@@ -46,7 +46,7 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
 
 def test_controller_elevated_public_evidence_uses_only_portable_completed_treatments(tmp_path):
     materialize(ROOT / "examples/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
-    artifact = (tmp_path / "elevated/review.svg").read_text()
+    artifact = (tmp_path / "elevated/review.svg").read_text(encoding="utf-8")
     assert '<linearGradient id="gradient-' in artifact and '<feDropShadow ' in artifact
     assert 'fill="url(#gradient-' in artifact and 'filter="url(#shadow-' in artifact
     assert 'data-source-ref="firmware"' in artifact and '>FW Feature Complete</text>' in artifact
@@ -54,7 +54,7 @@ def test_controller_elevated_public_evidence_uses_only_portable_completed_treatm
 
 def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "programme-board", tmp_path / "board", write=False)
-    svg = (tmp_path / "board/review.svg").read_text()
+    svg = (tmp_path / "board/review.svg").read_text(encoding="utf-8")
     assert 'data-scene-id="planned:payload-tvac:payload-tvac"' in svg
     assert 'data-scene-id="legend-swatch:scale:owner:payload"' in svg
     assert 'data-scene-id="legend:scale:owner:payload"' in svg
@@ -65,8 +65,8 @@ def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
 def test_orion_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     """Scale legend rows are part of the legend slot's measured size, so they stay on the canvas."""
     materialize(ROOT / "examples/orion-asic/manifest.yaml", "gates", tmp_path / "gates", write=False)
-    svg = (tmp_path / "gates/review.svg").read_text()
-    context = yaml.safe_load((ROOT / "examples/orion-asic/contexts/gates.yaml").read_text())
+    svg = (tmp_path / "gates/review.svg").read_text(encoding="utf-8")
+    context = yaml.safe_load((ROOT / "examples/orion-asic/contexts/gates.yaml").read_text(encoding="utf-8"))
     block = float(context["body"]["environment"]["viewport"]["blockSize"])
     baselines = [float(match) for match in re.findall(r'data-purpose="legend-label"[^>]* y="([0-9.]+)"', svg)]
     assert len(baselines) == 5 and max(baselines) < block
@@ -92,7 +92,7 @@ def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_p
     copied_example = tmp_path / "controller-z"
     shutil.copytree(ROOT / "examples/controller-z", copied_example)
     manifest_path = copied_example / "manifest.yaml"
-    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
     manifest.pop("role")
     manifest_path.write_text(yaml.safe_dump(manifest, sort_keys=False))
     with pytest.raises(ValueError, match="E_MATERIALIZER_MANIFEST"):
@@ -115,7 +115,7 @@ def test_materializer_preserves_authored_context_bytes_and_pins(tmp_path):
     copied = snapshot_directory(snapshot, revision) / "contexts/01-overview.yaml"
     assert copied.read_bytes() == context_path.read_bytes()
     assert reference["contentIdentity"] == "sha256:" + sha256(context_path.read_bytes()).hexdigest()
-    assert yaml.safe_load(copied.read_text()) == yaml.safe_load(context_path.read_text())
+    assert yaml.safe_load(copied.read_text(encoding="utf-8")) == yaml.safe_load(context_path.read_text(encoding="utf-8"))
 
 
 def test_baseline_capture_materializes_a_context_through_its_windows_safe_token(tmp_path):
@@ -155,7 +155,7 @@ def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
     copied_example = tmp_path / "halcyon"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
     context = copied_example / "contexts/01-mission-brief.yaml"
-    value = yaml.safe_load(context.read_text())
+    value = yaml.safe_load(context.read_text(encoding="utf-8"))
     value["body"]["inputs"]["actual"]["contentIdentity"] = "sha256:" + "0" * 64
     context.write_text(yaml.safe_dump(value, sort_keys=False))
     with pytest.raises(ValueError, match="E_CONTENT_IDENTITY"):
@@ -163,20 +163,20 @@ def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
 
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"
-    manifest = yaml.safe_load((example / "manifest.yaml").read_text())
+    manifest = yaml.safe_load((example / "manifest.yaml").read_text(encoding="utf-8"))
     for index, slide in enumerate(manifest["slides"]):
         relative = slide.get("context", manifest["context"])
         snapshot = tmp_path / str(index)
         snapshot.mkdir()
         reference, revision = _copy_context_closure(example, example / relative, snapshot)
-    assert reference["id"] == yaml.safe_load((snapshot_directory(snapshot, revision) / relative).read_text())["id"]
+    assert reference["id"] == yaml.safe_load((snapshot_directory(snapshot, revision) / relative).read_text(encoding="utf-8"))["id"]
 
 
 def test_materializer_copies_only_declared_icon_assets(tmp_path):
     copied = tmp_path / "controller-z"
     shutil.copytree(ROOT / "examples/controller-z", copied)
     context_path = copied / "contexts/executive.yaml"
-    context = yaml.safe_load(context_path.read_text())
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     context["body"]["inputs"]["iconCatalogs"] = [{"id": "controller-z-icons", "kind": "icon-catalog", "store": context["body"]["project"]["store"],
                                                          "address": "icons.yaml", "revision": context["body"]["project"]["revision"]}]
     context_path.write_text(yaml.safe_dump(context, sort_keys=False))
@@ -201,7 +201,7 @@ def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tm
 
 def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_text_slots(tmp_path):
     example = ROOT / "examples/controller-z"
-    context = yaml.safe_load((example / "contexts/material-icons.yaml").read_text())
+    context = yaml.safe_load((example / "contexts/material-icons.yaml").read_text(encoding="utf-8"))
     reference = context["body"]["inputs"]["iconCatalogs"][0]
     assert reference["store"] == {"provider": "package", "identity": "chrona.resources"}
     assert reference["contentIdentity"] == "sha256:c9550b8542dcc586757cee41e4d9ce90a3e12f2b8613056e4fabbc680b271b17"
@@ -217,10 +217,10 @@ def test_public_material_icon_evidence_closes_the_packaged_catalog_and_small_tex
 
 def test_successor_view_rejects_removed_icon_bindings(tmp_path):
     copied = tmp_path / "controller-z"; shutil.copytree(ROOT / "examples/controller-z", copied)
-    view_path = copied / "views/executive.yaml"; view = yaml.safe_load(view_path.read_text())
+    view_path = copied / "views/executive.yaml"; view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
     view["body"]["iconBindings"] = []
     view_path.write_text(yaml.safe_dump(view, sort_keys=False))
-    context_path = copied / "contexts/executive.yaml"; context = yaml.safe_load(context_path.read_text())
+    context_path = copied / "contexts/executive.yaml"; context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     context["body"]["view"]["contentIdentity"] = "sha256:" + sha256(view_path.read_bytes()).hexdigest()
     context_path.write_text(yaml.safe_dump(context, sort_keys=False))
     with pytest.raises(Exception):
@@ -230,8 +230,8 @@ def test_successor_view_rejects_removed_icon_bindings(tmp_path):
 def test_flight_readiness_public_artifact_exercises_advanced_contracts(tmp_path):
     example = ROOT / "examples/halcyon-1"
     materialize(example / "manifest.yaml", "flight-readiness", tmp_path / "flight-readiness", write=False)
-    artifact = (tmp_path / "flight-readiness/review.svg").read_text()
-    evidence = yaml.safe_load((tmp_path / "flight-readiness/closure.yaml").read_text())
+    artifact = (tmp_path / "flight-readiness/review.svg").read_text(encoding="utf-8")
+    evidence = yaml.safe_load((tmp_path / "flight-readiness/closure.yaml").read_text(encoding="utf-8"))
     assert evidence["scenarios"][0]["scenarioId"] == "tvac-slip"
     assert '<a href="https://example.test/halcyon-1/reviews/frr"' in artifact
     # Only launch→LEOP is driving; its four current/scenario comparison facets
@@ -247,7 +247,7 @@ def test_materializer_rejects_a_supplied_wrong_font_pin_without_writing_svg(tmp_
     copied_example = tmp_path / "halcyon-font"
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
     context = copied_example / "contexts/02-programme-board.yaml"
-    value = yaml.safe_load(context.read_text())
+    value = yaml.safe_load(context.read_text(encoding="utf-8"))
     value["body"]["environment"]["fontMetrics"]["assets"][0]["font"]["contentIdentity"] = "sha256:" + "0" * 64
     context.write_text(yaml.safe_dump(value, sort_keys=False))
     expected = copied_example / "generated/02-programme-board.svg"
@@ -266,7 +266,7 @@ def test_materializer_closes_a_declared_local_font_pair_before_packaged_assets(t
     font_target.parent.mkdir(exist_ok=True); font_target.write_bytes((source / "fonts/noto-sans-cjk-jp-regular-v1.ttf").read_bytes())
     metrics_target.write_bytes((source / "font_metrics/noto-sans-cjk-jp-regular-v1.json").read_bytes())
     context_path = copied_example / "contexts/executive.yaml"
-    context = yaml.safe_load(context_path.read_text())
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     asset = context["body"]["environment"]["fontMetrics"]["assets"]
     asset[:] = [{"family": "Noto Sans CJK JP", "weight": 400,
                  "metrics": {"path": "assets/metrics.json", "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
@@ -281,22 +281,22 @@ def test_materializer_records_selected_scenario_evidence_and_omits_unselected_sc
     example = ROOT / "examples/halcyon-1"
     manifest = example / "manifest.yaml"
     materialize(manifest, "tvac-slip", tmp_path / "scenario", write=False)
-    evidence = yaml.safe_load((tmp_path / "scenario/closure.yaml").read_text())
+    evidence = yaml.safe_load((tmp_path / "scenario/closure.yaml").read_text(encoding="utf-8"))
     assert evidence["scenarios"][0]["scenarioId"] == "tvac-slip"
     assert evidence["scenarios"][0]["title"] == "System TVAC slips one week"
     assert evidence["scenarios"][0]["contentIdentity"].startswith("sha256:")
-    assert "data-purpose=\"snapshot\"" in (tmp_path / "scenario/review.svg").read_text()
-    assert "System TVAC slips one week" in (tmp_path / "scenario/review.svg").read_text()
+    assert "data-purpose=\"snapshot\"" in (tmp_path / "scenario/review.svg").read_text(encoding="utf-8")
+    assert "System TVAC slips one week" in (tmp_path / "scenario/review.svg").read_text(encoding="utf-8")
 
     materialize(manifest, "programme-board", tmp_path / "primary", write=False)
-    assert "scenarios" not in yaml.safe_load((tmp_path / "primary/closure.yaml").read_text())
+    assert "scenarios" not in yaml.safe_load((tmp_path / "primary/closure.yaml").read_text(encoding="utf-8"))
 
     copied = tmp_path / "changed"
     shutil.copytree(example, copied)
     project = copied / "project.yaml"
-    changed = yaml.safe_load(project.read_text())
+    changed = yaml.safe_load(project.read_text(encoding="utf-8"))
     changed["scenarios"]["tvac-slip"]["objects"]["tvac"]["schedule"]["amount"] = "20d"
     project.write_text(yaml.safe_dump(changed, sort_keys=False))
     materialize(copied / "manifest.yaml", "tvac-slip", tmp_path / "changed-output", write=True)
-    changed_evidence = yaml.safe_load((tmp_path / "changed-output/closure.yaml").read_text())
+    changed_evidence = yaml.safe_load((tmp_path / "changed-output/closure.yaml").read_text(encoding="utf-8"))
     assert changed_evidence["scenarios"][0]["contentIdentity"] != evidence["scenarios"][0]["contentIdentity"]

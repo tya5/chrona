@@ -56,7 +56,7 @@ def test_contract_rejects_schema_invalid_mandatory_resource():
     ),
 )
 def test_contract_schema_errors_report_the_nested_failing_pointer(kind, path, mutate, expected_pointer):
-    value = yaml.safe_load((ROOT / path).read_text())
+    value = yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
     mutate(value)
 
     with pytest.raises(SchemaContractError) as error:
@@ -107,8 +107,8 @@ def test_resource_contracts_have_no_generic_document_or_body_escape_hatch():
 
 
 def test_live_closed_resources_become_named_presentation_records():
-    view = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text())
-    summary = yaml.safe_load((ROOT / "examples/halcyon-1/profiles/summary.yaml").read_text())
+    view = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    summary = yaml.safe_load((ROOT / "examples/halcyon-1/profiles/summary.yaml").read_text(encoding="utf-8"))
     view_contract = parse_contract(ClosureIdentity("view", view["id"], "r", "sha256:" + "a" * 64), view)
     summary_contract = parse_contract(ClosureIdentity("summary-profile", summary["id"], "r", "sha256:" + "a" * 64), summary)
 
@@ -122,7 +122,7 @@ def test_live_closed_resources_become_named_presentation_records():
 
 def test_downstream_presentation_code_has_no_raw_contract_input_escape_hatch():
     source_root = ROOT / "src/chrona"
-    source = "\n".join(path.read_text() for path in (
+    source = "\n".join(path.read_text(encoding="utf-8") for path in (
         source_root / "usecases/render_review.py",
         source_root / "presentation/model/projection.py",
         source_root / "presentation/review/v05_content.py",

@@ -15,11 +15,11 @@ FIXTURES = ROOT / "conformance"
 
 
 def _manifest():
-    return {"implementation-delivery": yaml.safe_load((FIXTURES / "implementation-delivery-profile-v0.2.yaml").read_text())}
+    return {"implementation-delivery": yaml.safe_load((FIXTURES / "implementation-delivery-profile-v0.2.yaml").read_text(encoding="utf-8"))}
 
 
 def _roadmap():
-    project = yaml.safe_load((FIXTURES / "implementation-delivery-roadmap-v0.1.yaml").read_text())
+    project = yaml.safe_load((FIXTURES / "implementation-delivery-roadmap-v0.1.yaml").read_text(encoding="utf-8"))
     project.pop("expectedPlacements")
     return project
 

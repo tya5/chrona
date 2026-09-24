@@ -25,7 +25,7 @@ GENERATED = sorted(ROOT.glob("examples/*/generated/*.svg"))
 
 @pytest.mark.parametrize("svg_path", GENERATED, ids=lambda path: f"{path.parents[1].name}/{path.stem}")
 def test_every_emitted_purpose_is_a_registered_semantic(svg_path):
-    emitted = {node.get("data-purpose") for node in ElementTree.fromstring(svg_path.read_text()).iter()}
+    emitted = {node.get("data-purpose") for node in ElementTree.fromstring(svg_path.read_text(encoding="utf-8")).iter()}
     unregistered = sorted(purpose for purpose in emitted - purposes() if purpose)
     assert not unregistered, f"purposes emitted but not declared in semantic_registry: {unregistered}"
 
@@ -56,7 +56,7 @@ def test_dependency_variants_share_the_subject_but_not_the_scene_role():
 @pytest.mark.parametrize("svg_path", GENERATED, ids=lambda path: f"{path.parents[1].name}/{path.stem}")
 def test_the_renderer_draws_only_the_registered_primitive_kinds(svg_path):
     """Every rendered primitive is a supported SVG element or an icon path group."""
-    drawn = {node.tag.removeprefix(SVG) for node in ElementTree.fromstring(svg_path.read_text()).iter()
+    drawn = {node.tag.removeprefix(SVG) for node in ElementTree.fromstring(svg_path.read_text(encoding="utf-8")).iter()
              if node.get("data-purpose") is not None}
     # A vector Icon is one Scene primitive projected as a semantic ``g`` that
     # owns its normalized fill/stroke paths; the paths themselves deliberately

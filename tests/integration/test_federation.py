@@ -10,7 +10,7 @@ FIXTURES = ROOT / "conformance" / "federation"
 
 
 def _load(name):
-    return yaml.safe_load((FIXTURES / name).read_text())
+    return yaml.safe_load((FIXTURES / name).read_text(encoding="utf-8"))
 
 
 def test_federated_scene_input_namespaces_display_only_export_objects():

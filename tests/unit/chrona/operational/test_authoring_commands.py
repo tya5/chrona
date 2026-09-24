@@ -36,7 +36,7 @@ def test_authoring_command_updates_one_task_with_a_new_content_revision(tmp_path
 
     assert result["status"] == "accepted"
     assert result["resultRevision"] != result["baseRevision"]
-    assert yaml.safe_load(path.read_text())["body"]["project"]["tasks"][0]["title"] == "Renamed"
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["project"]["tasks"][0]["title"] == "Renamed"
 
 
 def test_aggregate_lock_uses_lazy_windows_adapter_without_fcntl(tmp_path, monkeypatch):
@@ -89,7 +89,7 @@ def test_aggregate_writer_switches_workspace_last_and_rejects_stale_or_colliding
     assert not (tmp_path / "presentation").exists()
     result = cas_write_authoring_aggregate(path, content_identity(workspace), candidates)
     assert result == content_identity(explicit)
-    assert yaml.safe_load(path.read_text())["body"]["presentation"]["mode"] == "explicit"
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["presentation"]["mode"] == "explicit"
     assert (tmp_path / "presentation/view.yaml").read_bytes() == b"view"
 
 

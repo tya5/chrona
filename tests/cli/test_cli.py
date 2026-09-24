@@ -87,10 +87,10 @@ def _guided_workspace(tmp_path: Path) -> Path:
     preset_root = tmp_path / "preset"
     preset_root.mkdir()
     resources = {
-        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text()),
-        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text()),
-        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text()),
-        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text()),
+        "view.yaml": yaml.safe_load((root / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8")),
+        "theme.yaml": yaml.safe_load((root / "examples/aster-ssd/themes/executive-light.yaml").read_text(encoding="utf-8")),
+        "scheme.yaml": yaml.safe_load((root / "examples/aster-ssd/schemes/executive-light.yaml").read_text(encoding="utf-8")),
+        "layout.yaml": yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8")),
     }
     resources["view.yaml"]["body"]["selection"] = {"include": {"types": ["span"]}}
     resources["view.yaml"]["body"]["comparison"]["actual"] = "optional"
@@ -428,7 +428,7 @@ def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkey
     result = tmp_path / "result.json"
     monkeypatch.setattr(sys, "argv", ["chrona", "baseline-compare", "--baseline-reference", str(tmp_path / "baseline-ref.yaml"), "--candidate-reference", str(tmp_path / "candidate-ref.yaml"), "--store-config", str(tmp_path / "stores.yaml"), "--result", str(result)])
     main()
-    assert json.loads(result.read_text())["comparison"]["changes"][0]["id"] == "gate"
+    assert json.loads(result.read_text(encoding="utf-8"))["comparison"]["changes"][0]["id"] == "gate"
     with pytest.raises(SystemExit) as exited:
         main()
     assert exited.value.code == 2
@@ -449,7 +449,7 @@ def test_cli_command_check_writes_non_mutating_result(tmp_path, monkeypatch):
     command_path.write_text(yaml.safe_dump(command)); config_path.write_text(yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{"provider": "local", "identity": "cli-test", "root": str(tmp_path)}]}))
     monkeypatch.setattr(sys, "argv", ["chrona", "command-check", "--command", str(command_path), "--store-config", str(config_path), "--result", str(result)])
     main()
-    assert json.loads(result.read_text())["status"] == "accepted"
+    assert json.loads(result.read_text(encoding="utf-8"))["status"] == "accepted"
 
 
 def test_cli_operational_request_read_failure_is_exit_three(tmp_path, monkeypatch, capsys):
@@ -523,14 +523,14 @@ def test_cli_does_not_expose_the_legacy_raw_path_propose_set_command(monkeypatch
 def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     token = "snapshot-render"
-    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text())
-    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text())
-    actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text())
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
+    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     scheme_path = root / "examples/controller-z/schemes/executive-light.yaml"
     scheme_payload = scheme_path.read_bytes()
     scheme = yaml.safe_load(scheme_payload)
-    layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text())
+    layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
     refs = {
         "project": _snapshot_resource(tmp_path, token, "project.yaml", project, "project", project["project"]["id"]),
         "view": _snapshot_resource(tmp_path, token, "view.yaml", view, "view", view["id"]),
@@ -623,7 +623,7 @@ def test_cli_materializes_through_the_authoring_command_use_case(tmp_path, monke
     assert called["args"][0] == workspace
     assert called["args"][1]["type"] == "materializePresentationPreset"
     assert called["kwargs"]["cas_write_aggregate"] is cli.cas_write_authoring_aggregate
-    assert json.loads(result.read_text())["status"] == "accepted"
+    assert json.loads(result.read_text(encoding="utf-8"))["status"] == "accepted"
 
 
 @pytest.mark.parametrize(("format_name", "prefix"), [("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")])
