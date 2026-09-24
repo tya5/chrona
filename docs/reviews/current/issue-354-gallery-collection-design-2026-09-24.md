@@ -52,6 +52,17 @@ evidence and new contexts over existing resources:
 | Programme at scale | composition | needs normalized Context pairs; overlay waits for #272 |
 | Investigating a slip | content | needs normalized Context pairs |
 
+### Corpus-resource correction
+
+The initial issue text assumed Controller Z already contained dark and
+print-mono Schemes. It does not. Halcyon-1 is the existing corpus with the
+three compatible appearance resources (`mission-light`, `control-room-dark`,
+and `print-mono`). The first appearance set therefore uses one fixed Halcyon
+View/Theme/Layout under those three Schemes. A fourth appearance is not
+invented by copying a screenshot: it remains a later, separately designed
+Theme/Scheme resource slice. This correction preserves the one-axis rule and
+does not make a nonexistent Controller Z resource part of the gallery contract.
+
 Slot-focused set 8 and encoding set 7 require their own View/Layout or
 encoding prerequisites and remain subsequent slices. CJK set 9 is blocked by
 #351. Multi-target set 10 requires a new evidence contract and is not a Design
