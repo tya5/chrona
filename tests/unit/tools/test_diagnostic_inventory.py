@@ -51,6 +51,22 @@ def test_discovery_requires_a_complete_diagnostic_identifier(tmp_path):
     assert [site.code for site in sites] == ["E_COMPLETE"]
 
 
+def test_discovery_marks_transitively_imported_cli_module_as_user_facing(tmp_path):
+    source = tmp_path / "src" / "chrona"
+    (source / "app").mkdir(parents=True)
+    (source / "presentation" / "model").mkdir(parents=True)
+    (source / "app" / "cli.py").write_text(
+        "import chrona.presentation.model.projection\n", encoding="utf-8"
+    )
+    (source / "presentation" / "model" / "projection.py").write_text(
+        'raise ValueError("E_ACTUAL_REQUIRED")\n', encoding="utf-8"
+    )
+
+    sites = discover(tmp_path)
+
+    assert [(site.code, site.layer) for site in sites] == [("E_ACTUAL_REQUIRED", "user-facing-ingress")]
+
+
 def test_report_retains_detail_and_source_provenance():
     policy = ({"code": "E_SAMPLE", "disposition": "backlog", "nextAction": "add detail"}, _default())
     report = render((_site(anchor_line=10, detail=True), _site(anchor_line=11)), policy)

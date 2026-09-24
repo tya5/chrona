@@ -792,38 +792,45 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
         return ReviewDetailProfileContract(identity, version, _review_detail_input(body))
     if identity.kind == "presentation-preset":
         package, resources, schemes = body["package"], body["resources"], body["compatibleColorSchemes"]
-        if not isinstance(package, FrozenDict) or not isinstance(resources, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
+        if not isinstance(package, FrozenDict):
+            raise _closure_kind_error(identity, "preset package object", package)
+        if not isinstance(resources, FrozenDict):
+            raise _closure_kind_error(identity, "preset resources object", resources)
         if not isinstance(schemes, (FrozenList, tuple)) or not all(isinstance(item, FrozenDict) for item in schemes):
-            raise ContractError("E_CLOSURE_KIND")
+            raise _closure_kind_error(identity, "preset compatible color-scheme object list", schemes)
         return PresentationPresetContract(identity, version, str(package["version"]), resources, tuple(schemes))
     if identity.kind == "authoring-workspace":
         project, presentation = body["project"], body["presentation"]
         actuals = body.get("actuals", ())
-        if not isinstance(project, FrozenDict) or not isinstance(presentation, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
+        if not isinstance(project, FrozenDict):
+            raise _closure_kind_error(identity, "workspace project object", project)
+        if not isinstance(presentation, FrozenDict):
+            raise _closure_kind_error(identity, "workspace presentation object", presentation)
         if not isinstance(actuals, (FrozenList, tuple)) or not all(isinstance(item, FrozenDict) for item in actuals):
-            raise ContractError("E_CLOSURE_KIND")
+            raise _closure_kind_error(identity, "workspace actual object list", actuals)
         mode = str(presentation["mode"])
         binding = presentation.get("binding")
         resources = presentation.get("resources")
         receipt = presentation.get("receipt")
         if mode == "guided" and not isinstance(binding, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
-        if mode == "explicit" and (not isinstance(resources, FrozenDict) or not isinstance(receipt, FrozenDict)):
-            raise ContractError("E_CLOSURE_KIND")
-        _validate_workspace_identifiers(project, actuals)
+            raise _closure_kind_error(identity, "guided workspace binding object", binding)
+        if mode == "explicit" and not isinstance(resources, FrozenDict):
+            raise _closure_kind_error(identity, "explicit workspace resources object", resources)
+        if mode == "explicit" and not isinstance(receipt, FrozenDict):
+            raise _closure_kind_error(identity, "explicit workspace receipt object", receipt)
+        _validate_workspace_identifiers(identity, project, actuals)
         return AuthoringWorkspaceContract(identity, version, project, tuple(actuals), mode,
                                          binding if isinstance(binding, FrozenDict) else None,
                                          resources if isinstance(resources, FrozenDict) else None,
                                          receipt if isinstance(receipt, FrozenDict) else None)
-    raise ContractError("E_CLOSURE_KIND")
+    raise ContractError("E_CLOSURE_KIND", f"resource kind={identity.kind} id={identity.id}; expected supported resource contract kind; found unsupported kind={identity.kind}")
 
 
-def _validate_workspace_identifiers(project: FrozenDict, actuals: FrozenList | tuple[Any, ...]) -> None:
+def _validate_workspace_identifiers(identity: ClosureIdentity, project: FrozenDict,
+                                    actuals: FrozenList | tuple[Any, ...]) -> None:
     tasks = project.get("tasks", ())
     if not isinstance(tasks, (FrozenList, tuple)):
-        raise ContractError("E_CLOSURE_KIND")
+        raise _closure_kind_error(identity, "workspace task object list", tasks)
     task_ids = tuple(str(task["id"]) for task in tasks if isinstance(task, FrozenDict))
     if len(task_ids) != len(tasks) or len(task_ids) != len(set(task_ids)):
         raise ContractError("E_AUTHORING_TASK_ID")

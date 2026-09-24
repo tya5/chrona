@@ -27,7 +27,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_AUTOMATION_TARGET_CLOSURE}
     - {<<: *backlog, code: E_BASELINE_REFERENCE}
     - {<<: *backlog, code: E_CLOSURE_ID}
-    - {<<: *backlog, code: E_CLOSURE_KIND}
     - {<<: *backlog, code: E_CLOSURE_REQUIRED}
     - {<<: *backlog, code: E_COMMAND_ID_REUSE}
     - {<<: *backlog, code: E_CONTENT_IDENTITY}
