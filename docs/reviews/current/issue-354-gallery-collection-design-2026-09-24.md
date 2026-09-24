@@ -21,6 +21,11 @@ comparison:
 references, and at least one different View/Theme/Scheme/Layout reference.
 The target is evidence metadata, not a fifth Design Space dimension.
 
+The catalogue may additionally contain a documentary `deferred` list. Each
+item has an `id`, a proposed `dimension`, and a non-empty `blocker`. Deferred
+items have no corpus slide or SVG and cannot appear in a comparison set. This
+makes known collection work visible without fabricating evidence.
+
 Some Content choices require a typed Layout companion before Scene can form
 the selected primitive family. `comparison.supports` is therefore an optional,
 lexically ordered documentary list of coupled owner names. It never adds a
@@ -75,6 +80,17 @@ The existing Controller Z elevated direction changes a Theme-owned
 gradient/shadow treatment. It is therefore an `appearance` set, not a
 `visual-grammar` set: visual grammar remains the View/semantic-presentation
 owner. This distinction is enforced rather than narrated around.
+
+### Layout-composition correction
+
+The existing Halcyon `briefing` View/Theme cannot be re-pinned under the
+existing `wallboard` Layout: it first rejects unknown layout tokens, and with
+the wallboard Theme/Scheme rejects table overflow. The present resources are
+therefore not composable peers. `Programme at scale` remains deferred pending a
+dedicated responsive View/Layout design that proves all peer contexts valid;
+it must not be satisfied by changing Theme, Scheme, View, and Layout together.
+The gallery index records this as a design backlog alongside #272 rather than
+claiming a one-axis Composition comparison that does not exist.
 
 Slot-focused set 8 and encoding set 7 require their own View/Layout or
 encoding prerequisites and remain subsequent slices. CJK set 9 is blocked by
