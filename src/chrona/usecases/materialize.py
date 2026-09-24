@@ -37,6 +37,10 @@ class MaterializationError(ValueError):
         self.code, self.detail = code, detail
 
 
+def _context_error(scope: str, expected: str, actual: object) -> MaterializationError:
+    return MaterializationError("E_MATERIALIZER_CONTEXT", f"{scope}; expected {expected}; found {actual!r}")
+
+
 def _inside(root: Path, relative: str) -> Path:
     path = (root / relative).resolve()
     if path != root.resolve() and root.resolve() not in path.parents:
@@ -62,7 +66,7 @@ def _package_resource(address: str):
 def _reference_payload(example: Path, reference: dict[str, Any]) -> bytes:
     address = reference.get("address")
     if not isinstance(address, str):
-        raise ValueError("E_MATERIALIZER_CONTEXT")
+        raise _context_error("reference", "string address", address)
     if reference.get("store", {}).get("provider") == "package":
         if reference.get("store", {}).get("identity") != "chrona.resources":
             raise ValueError("E_MATERIALIZER_PACKAGE_RESOURCE")
@@ -76,7 +80,7 @@ def _reference_payload(example: Path, reference: dict[str, Any]) -> bytes:
 def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *, target_token: str | None = None) -> None:
     token, address = reference.get("revision", {}).get("token"), reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
-        raise ValueError("E_MATERIALIZER_CONTEXT")
+        raise _context_error("reference", "string revision token and address", {"token": token, "address": address})
     payload = _reference_payload(example, reference)
     if reference.get("contentIdentity") not in (None, _identity(payload)):
         raise ValueError("E_CONTENT_IDENTITY")
@@ -86,7 +90,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
     if reference.get("kind") == "snapshot-ref":
         nested = safe_load(payload).get("body", {}).get("project")
         if not isinstance(nested, dict):
-            raise ValueError("E_MATERIALIZER_CONTEXT")
+            raise _context_error("snapshot reference", "embedded Project reference object", nested)
         _copy_reference(example, nested, snapshot)
 
 
@@ -94,7 +98,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
     """Copy only declared, identity-pinned catalog bytes into the immutable snapshot."""
     token, address = catalog_reference.get("revision", {}).get("token"), catalog_reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
-        raise ValueError("E_MATERIALIZER_CONTEXT")
+        raise _context_error("icon catalog reference", "string revision token and address", {"token": token, "address": address})
     catalog = safe_load(_reference_payload(example, catalog_reference))
     icons = catalog.get("body", {}).get("icons") if isinstance(catalog, dict) else None
     if not isinstance(icons, dict):
@@ -133,7 +137,7 @@ def _copy_extension_packages(example: Path, project_reference: dict[str, Any], s
         if not isinstance(resource, dict):
             continue
         if resource.get("kind") != "profile-package":
-            raise ValueError("E_MATERIALIZER_CONTEXT")
+            raise _context_error("Project extension resource", "profile-package reference", resource.get("kind"))
         _copy_reference(example, resource, snapshot)
 
 
@@ -141,7 +145,7 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          *, decoded_catalogs: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
     context = safe_load(context_path.read_bytes())
     if context.get("version") != "chrona/render-context/v0.14" or context.get("kind") != "render-context":
-        raise ValueError("E_MATERIALIZER_CONTEXT")
+        raise _context_error("context", "chrona/render-context/v0.14 render-context", {"version": context.get("version"), "kind": context.get("kind")})
     body = context["body"]
     revision = body["project"]["revision"]["token"]
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
@@ -152,7 +156,7 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     _copy_extension_packages(example, body["project"], snapshot)
     for icon_catalog in inputs.get("iconCatalogs", ()):
         if not isinstance(icon_catalog, dict) or icon_catalog.get("kind") != "icon-catalog":
-            raise ValueError("E_MATERIALIZER_CONTEXT")
+            raise _context_error("context inputs.iconCatalogs", "icon-catalog reference object", icon_catalog)
         _copy_reference(example, icon_catalog, snapshot,
                         target_token=revision if icon_catalog.get("store", {}).get("provider") == "package" else None)
         catalog = _copy_icon_assets(example, icon_catalog, snapshot)

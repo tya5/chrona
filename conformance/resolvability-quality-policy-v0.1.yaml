@@ -43,7 +43,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_IMMUTABLE_SNAPSHOT_REQUIRED}
     - {<<: *backlog, code: E_INIT_EXAMPLE}
     - {<<: *backlog, code: E_INIT_OUTPUT_EXISTS}
-    - {<<: *backlog, code: E_MATERIALIZER_CONTEXT}
     - {<<: *backlog, code: E_MATERIALIZER_FONT}
     - {<<: *backlog, code: E_MATERIALIZER_FONT_IDENTITY}
     - {<<: *backlog, code: E_MATERIALIZER_MANIFEST}
