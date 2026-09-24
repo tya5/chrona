@@ -24,12 +24,14 @@ template_resource("halcyon-1")
   → examples/halcyon-1 through importlib.resources in source development
 ```
 
-The helper checks that the selected item is a directory and returns a
-`Traversable`.  It does not derive paths from `__file__`, current working
-directory, environment variables, or an arbitrary checkout.  The source
-alternative is available only because editable development deliberately exposes
-the repository root (`dev-mode-dirs = ["src", "."]`), the same declared model
-already used by `schema_resource()`.  An unsupported template keeps
+The helper recognizes a template only when its directory contains the required
+`manifest.yaml` sentinel, then returns that `Traversable`.  This avoids
+mistaking an empty source-package directory left after a duplicate-tree removal
+for a wheel resource.  It does not derive paths from `__file__`, current
+working directory, environment variables, or an arbitrary checkout.  The
+source alternative is available only because editable development deliberately
+exposes the repository root (`dev-mode-dirs = ["src", "."]`), the same
+declared model already used by `schema_resource()`.  An unsupported template keeps
 `E_INIT_EXAMPLE`; no search or compatibility reader is introduced.
 
 `initialize_project()` retains non-overwrite behavior and its post-copy

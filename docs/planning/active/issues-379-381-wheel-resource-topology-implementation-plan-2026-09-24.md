@@ -18,8 +18,9 @@ materializable project without direct path coupling.
 `tools/check_init_template.py` (delete), `conformance/run_conformance.py`,
 and focused tests.
 
-**Acceptance:** one source template remains; source init works; unsupported
-templates and non-overwrite behavior retain their current diagnostics.
+**Acceptance:** one source template remains; resolver selection requires its
+`manifest.yaml` sentinel; source init works; unsupported templates and
+non-overwrite behavior retain their current diagnostics.
 
 ## I381-1 — Installed-wheel smoke matrix
 
