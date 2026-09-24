@@ -25,10 +25,11 @@ from chrona.presentation.scene.visual_capabilities import VisualProfile
 class SceneBuildError(ValueError):
     """Stable diagnostic emitted before v0.5 primitive construction."""
 
-    def __init__(self, diagnostic_id: str, path: str):
+    def __init__(self, diagnostic_id: str, path: str, detail: str | None = None):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.path = path
+        self.detail = detail
 
 
 @dataclass(frozen=True)
@@ -83,7 +84,7 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                                      optional_omission=visual_profile.optional_omission if visual_profile else False,
                                      gradient_bounds=(0.0, 0.0, *viewport))
     except ScenePaintError as error:
-        raise SceneBuildError(error.diagnostic_id, error.path) from error
+        raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
     return replace(surface, primitives=primitives, canvas_paint=canvas)
 
 

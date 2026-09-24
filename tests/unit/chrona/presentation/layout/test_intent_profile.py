@@ -62,10 +62,10 @@ def test_semantic_failures_have_stable_ids(mutate, diagnostic):
 
 def test_wrong_type_and_missing_tokens_are_rejected():
     value = fixture("layout-profile-intent-v0.2.yaml")
-    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_TYPE"):
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_REQUIREMENT_TYPE"):
         resolve_layout_profile(value, available_sources=SOURCES, theme=theme(bad=True))
     value["root"]["children"][2]["itemMinInlineSize"] = {"token": "unknown"}
-    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_UNKNOWN"):
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_REQUIREMENT_MISSING"):
         resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
 
 
@@ -113,5 +113,7 @@ def test_center_to_center_axis_gap_is_rejected():
     anchor["self"]["block"] = "center"
     anchor["target"]["block"] = {"ref": "parent", "point": "center"}
     anchor["gap"]["block"] = {"token": "spacing.s"}
+    value["requiredThemeTokens"].append("spacing.s")
+    value["requiredThemeTokens"].sort()
     with pytest.raises(LayoutError, match="E_LAYOUT_CONSTRAINT_CONTRADICTORY"):
         resolve_layout_profile(value, available_sources=SOURCES, theme=theme())

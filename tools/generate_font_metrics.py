@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from fontTools.ttLib import TTFont
+from fontTools.varLib.instancer import instantiateVariableFont
 
 
 def main() -> None:
@@ -15,10 +16,21 @@ def main() -> None:
     parser.add_argument("output", type=Path)
     parser.add_argument("--family", required=True)
     parser.add_argument("--weight", required=True, type=int)
+    parser.add_argument("--axis", action="append", default=[], metavar="TAG=VALUE",
+                        help="Instantiate one variable-font axis before measuring.")
     args = parser.parse_args()
 
     payload = args.font.read_bytes()
     font = TTFont(args.font)
+    axes: dict[str, float] = {}
+    for assignment in args.axis:
+        try:
+            tag, raw_value = assignment.split("=", 1)
+            axes[tag] = float(raw_value)
+        except ValueError as error:
+            raise ValueError("E_FONT_AXIS") from error
+    if axes:
+        font = instantiateVariableFont(font, axes, inplace=False)
     cmap = font.getBestCmap() or {}
     hmtx = font["hmtx"].metrics
     units = int(font["head"].unitsPerEm)

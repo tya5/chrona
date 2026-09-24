@@ -14,7 +14,7 @@ from chrona.resources import schema_document
 from chrona.schema_diagnostics import explain_errors
 
 
-LAYOUT_VERSION = "chrona/layout-profile/v0.3"
+LAYOUT_VERSION = "chrona/layout-profile/v0.4"
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class LayoutBase:
 
 
 def _schema() -> dict[str, Any]:
-    return dict(schema_document("layout-profile-v0.3.schema.yaml"))
+    return dict(schema_document("layout-profile-v0.4.schema.yaml"))
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:
@@ -84,10 +84,11 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
         target.update(deepcopy(override))
     resolved["id"] = profile["id"]
     resolved["writingMode"] = profile["writingMode"]
+    resolved["requiredThemeTokens"] = deepcopy(profile["requiredThemeTokens"])
     return resolved
 
 
-def _distance(value: Any, theme_values: Mapping[str, Any], path: str, literals: list[str]) -> Decimal:
+def _distance(value: Any, theme_values: Mapping[str, Any], path: str, literals: list[str], used_tokens: set[str]) -> Decimal:
     if isinstance(value, bool):
         raise LayoutError("E_LAYOUT_TOKEN_TYPE", path)
     if isinstance(value, (int, float)):
@@ -100,17 +101,18 @@ def _distance(value: Any, theme_values: Mapping[str, Any], path: str, literals: 
             raise LayoutError("E_LAYOUT_TOKEN_TYPE", path)
         return result
     token = str(value["token"])
+    used_tokens.add(token)
     declared = theme_values.get(token)
     if declared is None:
-        raise LayoutError("E_LAYOUT_TOKEN_UNKNOWN", path)
+        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE", path, token)
     if declared.get("type") != "number" or isinstance(declared.get("value"), bool):
-        raise LayoutError("E_LAYOUT_TOKEN_TYPE", path)
+        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_TYPE", path, token)
     try:
         result = Decimal(str(declared["value"]))
     except (InvalidOperation, KeyError) as error:
-        raise LayoutError("E_LAYOUT_TOKEN_TYPE", path) from error
+        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_TYPE", path, token) from error
     if not result.is_finite() or result < 0:
-        raise LayoutError("E_LAYOUT_TOKEN_TYPE", path)
+        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_TYPE", path, token)
     return result
 
 
@@ -119,14 +121,36 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
     theme_values = theme.get("body", {}).get("values", {})
     distances: dict[str, Decimal] = {}
     literals: list[str] = []
+    used_tokens: set[str] = set()
+
+    def collect_tokens(value: Any) -> None:
+        if isinstance(value, dict):
+            if set(value) == {"token"} and isinstance(value["token"], str):
+                used_tokens.add(value["token"])
+            for child in value.values():
+                collect_tokens(child)
+        elif isinstance(value, (list, tuple)):
+            for child in value:
+                collect_tokens(child)
+
+    collect_tokens(profile["root"])
+    declared = tuple(profile["requiredThemeTokens"])
+    if tuple(sorted(declared)) != declared:
+        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENTS", "/requiredThemeTokens")
+    missing = sorted(used_tokens - set(declared))
+    if missing:
+        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_MISSING", "/requiredThemeTokens", missing[0])
+    extraneous = sorted(set(declared) - used_tokens)
+    if extraneous:
+        raise LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS", "/requiredThemeTokens", extraneous[0])
 
     def size_distances(spec: Any, path: str) -> None:
         if not isinstance(spec, dict):
             return
         if "fixed" in spec:
-            distances[path + "/fixed"] = _distance(spec["fixed"], theme_values, path + "/fixed", literals)
+            distances[path + "/fixed"] = _distance(spec["fixed"], theme_values, path + "/fixed", literals, used_tokens)
         elif "fitContent" in spec:
-            distances[path + "/fitContent"] = _distance(spec["fitContent"], theme_values, path + "/fitContent", literals)
+            distances[path + "/fitContent"] = _distance(spec["fitContent"], theme_values, path + "/fitContent", literals, used_tokens)
         elif "minmax" in spec:
             size_distances(spec["minmax"]["min"], path + "/minmax/min")
             size_distances(spec["minmax"]["max"], path + "/minmax/max")
@@ -152,14 +176,14 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
             value = node[name]
             if name == "padding" and isinstance(value, dict) and "token" not in value:
                 for side, side_value in value.items():
-                    key = f"{path}/{name}/{side}"; distances[key] = _distance(side_value, theme_values, key, literals)
+                    key = f"{path}/{name}/{side}"; distances[key] = _distance(side_value, theme_values, key, literals, used_tokens)
             else:
-                key = f"{path}/{name}"; distances[key] = _distance(value, theme_values, key, literals)
+                key = f"{path}/{name}"; distances[key] = _distance(value, theme_values, key, literals, used_tokens)
         if "anchor" in node and "gap" in node["anchor"]:
             anchor = node["anchor"]
             for axis, value in anchor["gap"].items():
                 key = f"{path}/anchor/gap/{axis}"
-                distances[key] = _distance(value, theme_values, key, literals)
+                distances[key] = _distance(value, theme_values, key, literals, used_tokens)
                 if anchor["self"][axis] == "center" and anchor["target"][axis]["point"] == "center":
                     raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", key, node_id)
         if kind == "grid":

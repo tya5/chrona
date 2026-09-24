@@ -1,0 +1,122 @@
+version: chrona/layout-profile/v0.4
+id: executive-review-compact
+writingMode: horizontal-tb
+requiredThemeTokens: [panel.minimum, spacing.m, spacing.none, spacing.s]
+root:
+  id: page
+  kind: column
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.s}
+  padding: {token: spacing.m}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: content
+      blockSize: content
+      place: {inline: center, block: start, safety: safe}
+      priority: required
+      overflow: diagnose
+    - id: review
+      kind: row
+      inlineSize: fill
+      blockSize: fill
+      gap: {token: spacing.m}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: table
+          kind: slot
+          source: table
+          inlineSize: {minmax: {min: content, max: {fr: 3}}}
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: required
+          overflow: diagnose
+        - id: timeline-stack
+          kind: column
+          inlineSize: {fr: 7}
+          blockSize: fill
+          gap: {token: spacing.none}
+          padding: {token: spacing.none}
+          alignItems: stretch
+          justifyContent: start
+          children:
+            - id: timeline-axis
+              kind: slot
+              source: timeline-axis
+              inlineSize: fill
+              blockSize: content
+              place: {inline: stretch, block: start, safety: strict}
+              priority: required
+              overflow: diagnose
+            - id: timeline
+              kind: slot
+              source: timeline
+              inlineSize: fill
+              blockSize: fill
+              place: {inline: stretch, block: stretch, safety: strict}
+              priority: required
+              overflow: diagnose
+    - id: footer
+      kind: flow
+      inlineSize: fill
+      blockSize: content
+      itemMinInlineSize: {token: panel.minimum}
+      gap: {token: spacing.m}
+      padding: {token: spacing.none}
+      alignItems: first-baseline
+      justifyContent: space-between
+      children:
+        - id: group-details
+          kind: slot
+          source: group-details
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: diagnose
+        - id: milestones
+          kind: slot
+          source: milestones
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: diagnose
+        - id: observations
+          kind: slot
+          source: observations
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: diagnose
+        - id: legend
+          kind: slot
+          source: legend
+          inlineSize: content
+          blockSize: content
+          place: {inline: start, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: diagnose
+        - id: notes
+          kind: slot
+          source: notes
+          inlineSize: content
+          blockSize: content
+          place: {inline: end, block: first-baseline, safety: safe}
+          priority: optional
+          overflow: clip-optional
+    - id: annotations
+      kind: slot
+      source: annotations
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: first-baseline, safety: safe}
+      priority: optional
+      overflow: diagnose

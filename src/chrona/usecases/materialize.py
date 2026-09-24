@@ -130,7 +130,7 @@ def _copy_extension_packages(example: Path, project_reference: dict[str, Any], s
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          *, decoded_catalogs: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
     context = safe_load(context_path.read_bytes())
-    if context.get("version") != "chrona/render-context/v0.12" or context.get("kind") != "render-context":
+    if context.get("version") != "chrona/render-context/v0.13" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
     revision = body["project"]["revision"]["token"]
@@ -157,15 +157,19 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(raw)
     for asset in body["environment"]["fontMetrics"]["assets"]:
-        source = files("chrona.resources").joinpath(str(asset["path"]))
-        if not source.is_file():
-            raise ValueError("E_MATERIALIZER_FONT")
-        payload = source.read_bytes()
-        if asset.get("contentIdentity") not in (None, _identity(payload)):
-            raise ValueError("E_MATERIALIZER_FONT_IDENTITY")
-        asset_target = _inside(destination, str(asset["path"]))
-        asset_target.parent.mkdir(parents=True, exist_ok=True)
-        asset_target.write_bytes(payload)
+        for key in ("metrics", "font"):
+            record = asset.get(key, {})
+            address = str(record.get("path", ""))
+            local = _inside(example, address)
+            source = local if local.is_file() else files("chrona.resources").joinpath(address)
+            if not source.is_file():
+                raise ValueError("E_MATERIALIZER_FONT")
+            payload = source.read_bytes()
+            if record.get("contentIdentity") != _identity(payload):
+                raise ValueError("E_MATERIALIZER_FONT_IDENTITY")
+            asset_target = _inside(destination, str(record["path"]))
+            asset_target.parent.mkdir(parents=True, exist_ok=True)
+            asset_target.write_bytes(payload)
     return {"id": context["id"], "kind": "render-context", "store": body["project"]["store"],
             "address": context_path.relative_to(example).as_posix(), "revision": {"token": revision},
             "contentIdentity": _identity(raw)}, revision
@@ -190,10 +194,7 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         reference, _ = copy_context_closure(example, context_path, snapshot, decoded_catalogs=decoded_catalogs)
         closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, reference["store"]["identity"]),
                                          decoded_resources=decoded_catalogs)
-        rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler(), renderer_for(
-            {"kind": closure.context.target.kind, "capabilities": list(closure.context.target.capabilities)},
-            closure.context.environment.renderer_environment(),
-        )))
+        rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
         derived = output / "review.svg"
         derived.write_bytes(rendered.artifact.content)
         evidence: dict[str, Any] = reference

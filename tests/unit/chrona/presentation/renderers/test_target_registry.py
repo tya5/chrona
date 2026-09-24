@@ -1,4 +1,5 @@
 from io import BytesIO
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,7 @@ from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, PNG_PROFILE
 from chrona.scheduling.scheduler import ReferenceScheduler
-from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 
 
 def _root() -> Path:
@@ -27,7 +28,7 @@ def _render(kind: str):
     return render_review(RenderRequest(
         draft.closure, draft.asset_root, ReferenceScheduler(),
         renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
-                     {"rasterizer": context.environment.rasterizer} if context.environment.rasterizer else {}),
+                     context.environment.renderer_environment(), asset_root=draft.asset_root),
         asset_root=draft.asset_root,
     )).artifact
 
@@ -42,7 +43,7 @@ def _completed_surface():
     context = draft.closure.context
     rendered = render_review(RenderRequest(
         draft.closure, draft.asset_root, ReferenceScheduler(),
-        renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)}, context.environment.renderer_environment()),
+        renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)}, context.environment.renderer_environment(), asset_root=draft.asset_root),
         asset_root=draft.asset_root,
     ))
     return rendered.surface
@@ -53,6 +54,55 @@ def test_export_targets_are_pinned_and_repeatable(kind, media_type, prefix):
     first, second = _render(kind), _render(kind)
     assert (first.target_kind, first.media_type, first.content[:len(prefix)]) == (kind, media_type, prefix)
     assert first.content == second.content
+
+
+def test_declared_cjk_font_closure_reaches_svg_png_and_pdf_without_host_fonts(tmp_path):
+    root = _root()
+    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
+    project["project"]["title"] = "コントローラーZ 量産立上げ"
+    project["objects"]["firmware"]["title"] = "ファームウェア統合検証"
+    project_path = tmp_path / "project-ja.yaml"
+    project_path.write_text(yaml.safe_dump(project, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+    def render(kind: str):
+        draft = resolve_draft_render(
+            project_path=project_path, view_path=root / "examples/controller-z/views/executive.yaml",
+            theme_path=root / "examples/controller-z/themes/executive-light.yaml",
+            scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+            layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
+            actual_path=root / "examples/controller-z/actual.yaml", target_kind=kind,
+        )
+        context = draft.closure.context
+        return render_review(RenderRequest(
+            draft.closure, draft.asset_root, ReferenceScheduler(),
+            renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
+                         context.environment.renderer_environment(), asset_root=draft.asset_root),
+            asset_root=draft.asset_root,
+        )).artifact.content
+
+    svg, png, pdf = render("svg"), render("png"), render("pdf")
+    assert "ファームウェア統合検証" in svg.decode("utf-8")
+    assert png.startswith(b"\x89PNG\r\n\x1a\n") and pdf.startswith(b"%PDF-")
+    assert sha256(png).hexdigest() == "95b25f127fd0f8a84a77e3e2992cdc63db1640e5b9fea542207601f96442a4fd"
+
+
+def test_public_render_diagnoses_a_glyph_absent_from_declared_metrics(tmp_path):
+    root = _root()
+    project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
+    project["project"]["title"] = "Known \U0010ffff"
+    project_path = tmp_path / "project-missing-glyph.yaml"
+    project_path.write_text(yaml.safe_dump(project, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    draft = resolve_draft_render(
+        project_path=project_path, view_path=root / "examples/controller-z/views/executive.yaml",
+        theme_path=root / "examples/controller-z/themes/executive-light.yaml",
+        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
+        actual_path=root / "examples/controller-z/actual.yaml",
+    )
+    with pytest.raises(RenderFailed, match="E_FONT_GLYPH_UNAVAILABLE") as error:
+        render_review(RenderRequest(draft.closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root))
+    assert error.value.source_ref == "/body/environment/fontMetrics"
+    assert "U+10FFFF" in error.value.message
 
 
 def test_raster_target_rejects_semantic_capability_requirement():
@@ -123,7 +173,7 @@ def test_public_png_profile_preserves_optional_rich_treatment_in_pixels(tmp_path
         return render_review(RenderRequest(
             draft.closure, draft.asset_root, ReferenceScheduler(),
             renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
-                         {"rasterizer": context.environment.rasterizer}), asset_root=draft.asset_root,
+                         context.environment.renderer_environment(), asset_root=draft.asset_root), asset_root=draft.asset_root,
         )).artifact.content
 
     baseline, rich = render(BASELINE_PROFILE), render(PNG_PROFILE)

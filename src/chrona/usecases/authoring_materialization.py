@@ -78,12 +78,12 @@ def _context(written: dict[str, dict[str, Any]]) -> dict[str, Any]:
     asset_root = Path(__file__).resolve().parents[1] / "resources"
     def ref(key: str) -> dict[str, Any]:
         return {**written[key], "store": {"provider": "draft", "identity": "draft"}, "address": written[key]["path"], "revision": {"token": "draft"}}
-    return {"version": "chrona/render-context/v0.12", "kind": "render-context", "id": "materialized-context", "body": {"project": ref("project"), "view": ref("view"), "theme": ref("theme"), "colorScheme": ref("color-scheme"), "layout": ref("layout-profile"), "inputs": ({"actual": ref("actual-set")} if "actual-set" in written else {}), "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": _packaged_font_metrics(asset_root), "scenePrecision": 3}, "target": {"kind": "svg", "capabilities": ["accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"], "visualProfile": "chrona-output/visual/v0.5-baseline"}}}
+    return {"version": "chrona/render-context/v0.13", "kind": "render-context", "id": "materialized-context", "body": {"project": ref("project"), "view": ref("view"), "theme": ref("theme"), "colorScheme": ref("color-scheme"), "layout": ref("layout-profile"), "inputs": ({"actual": ref("actual-set")} if "actual-set" in written else {}), "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": _packaged_font_metrics(asset_root), "scenePrecision": 3}, "target": {"kind": "svg", "capabilities": ["accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"], "visualProfile": "chrona-output/visual/v0.5-baseline"}}}
 
 
 def _render_bytes(draft: Any) -> bytes:
     closure = draft.closure
-    rendered = render_review(RenderRequest(closure, draft.asset_root, ReferenceScheduler(), renderer_for({"kind": closure.context.target.kind, "capabilities": list(closure.context.target.capabilities)}, closure.context.environment.renderer_environment()), asset_root=draft.asset_root))
+    rendered = render_review(RenderRequest(closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root))
     return rendered.artifact.content
 
 

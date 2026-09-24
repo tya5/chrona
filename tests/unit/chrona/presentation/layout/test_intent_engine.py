@@ -63,9 +63,32 @@ def test_missing_measurement_and_required_overflow_diagnose():
         solve_layout(profile(),viewport_inline=300,viewport_block=100,measurements=MEASUREMENTS)
 
 
+def test_layout_token_requirement_contract_is_exact_and_theme_checked():
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text())
+    theme = {"body": {"values": {"spacing.none": {"type": "number", "value": 0},
+                                  "spacing.m": {"type": "number", "value": 16},
+                                  "spacing.l": {"type": "number", "value": 24},
+                                  "panel.minimum": {"type": "number", "value": 180}}}}
+    raw["requiredThemeTokens"].remove("spacing.m")
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_REQUIREMENT_MISSING"):
+        resolve_layout_profile(raw, available_sources=SOURCES, theme=theme)
+    raw["requiredThemeTokens"].append("spacing.m")
+    raw["requiredThemeTokens"].append("spacing.xl")
+    raw["requiredThemeTokens"].sort()
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_REQUIREMENT_EXTRANEOUS"):
+        resolve_layout_profile(raw, available_sources=SOURCES, theme=theme)
+    raw["requiredThemeTokens"].remove("spacing.xl")
+    del theme["body"]["values"]["panel.minimum"]
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE"):
+        resolve_layout_profile(raw, available_sources=SOURCES, theme=theme)
+    theme["body"]["values"]["panel.minimum"] = {"type": "color", "value": "#000000"}
+    with pytest.raises(LayoutError, match="E_LAYOUT_TOKEN_REQUIREMENT_TYPE"):
+        resolve_layout_profile(raw, available_sources=SOURCES, theme=theme)
+
+
 def test_unavailable_optional_source_does_not_participate_in_layout():
     raw = {
-        "version": "chrona/layout-profile/v0.3", "id": "optional-source", "writingMode": "horizontal-tb",
+        "version": "chrona/layout-profile/v0.4", "id": "optional-source", "writingMode": "horizontal-tb", "requiredThemeTokens": ["spacing.m", "spacing.none"],
         "root": {"id": "root", "kind": "column", "inlineSize": "fill", "blockSize": "fill",
                  "gap": {"token": "spacing.m"}, "padding": {"token": "spacing.none"},
                  "alignItems": "stretch", "justifyContent": "start", "children": [
@@ -86,7 +109,7 @@ def test_unavailable_optional_source_does_not_participate_in_layout():
 
 def test_grid_and_distribution_are_deterministic():
     raw={
-      "version":"chrona/layout-profile/v0.3","id":"grid","writingMode":"horizontal-tb",
+      "version":"chrona/layout-profile/v0.4","id":"grid","writingMode":"horizontal-tb","requiredThemeTokens":["spacing.m","spacing.none"],
       "root":{"id":"root","kind":"grid","inlineSize":"fill","blockSize":"fill","columnTracks":[{"fr":1},{"fr":1}],"rowTracks":["content"],"gap":{"token":"spacing.m"},"padding":{"token":"spacing.none"},"alignItems":"stretch","justifyContent":"start","children":[
         {"id":"legend","kind":"slot","source":"legend","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":1,"row":1}},
         {"id":"notes","kind":"slot","source":"notes","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":2,"row":1}}

@@ -17,7 +17,7 @@ authority.
 
 ## Decision
 
-Replace both authoring paths with the single `chrona/layout-profile/v0.3` grammar owned
+Replace both authoring paths with the single `chrona/layout-profile/v0.4` grammar owned
 by Specification 33. It uses a stable-ID composition tree, intrinsic/fractional/bounded
 sizing, logical two-axis alignment and distribution, Theme number-token distances, and
 a bounded overlay anchor/guide/barrier model.

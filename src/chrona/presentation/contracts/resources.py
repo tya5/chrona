@@ -486,6 +486,7 @@ class RenderEnvironment:
 
     def renderer_environment(self) -> dict[str, object]:
         return {
+            "fontMetrics": self.font_metrics,
             **({"rasterizer": self.rasterizer} if self.rasterizer else {}),
             **({"typesetter": {"engine": self.typesetter.engine, "version": self.typesetter.version,
                                 "adapterGrammar": self.typesetter.adapter_grammar}} if self.typesetter else {}),
@@ -517,12 +518,12 @@ class ResolvedThemeContract:
 
 
 _SCHEMAS = {
-    ("render-context", "chrona/render-context/v0.12"): "render-context-v0.12.schema.yaml",
+    ("render-context", "chrona/render-context/v0.13"): "render-context-v0.13.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
     ("view", "chrona/view/v0.12"): "view-v0.12.schema.yaml",
     ("theme", "chrona/theme/v0.5"): "theme-v0.5.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
-    ("layout-profile", "chrona/layout-profile/v0.3"): "layout-profile-v0.3.schema.yaml",
+    ("layout-profile", "chrona/layout-profile/v0.4"): "layout-profile-v0.4.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.2"): "actual-set-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",

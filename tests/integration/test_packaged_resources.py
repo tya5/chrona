@@ -19,8 +19,10 @@ SCHEMAS = (
     "revision-store-resource-ref-v0.1.schema.yaml",
     "icon-catalog-v0.3.schema.yaml",
     "render-context-v0.12.schema.yaml",
+    "render-context-v0.13.schema.yaml",
     "view-v0.12.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
+    "layout-profile-v0.4.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
     "actual-intake-batch-v0.2.schema.yaml",
     "actual-set-v0.2.schema.yaml",
@@ -38,8 +40,11 @@ def test_schema_resources_resolve_to_the_source_authority():
 
 def test_package_owned_runtime_resources_exist():
     for resource_path in (
-        "font_metrics/nimbus-sans-regular-v1.json",
-        "font_metrics/nimbus-sans-bold-v1.json",
+        "font_metrics/noto-sans-cjk-jp-regular-v1.json",
+        "font_metrics/noto-sans-cjk-jp-bold-v1.json",
+        "fonts/noto-sans-cjk-jp-regular-v1.ttf",
+        "fonts/noto-sans-cjk-jp-bold-v1.ttf",
+        "fonts/NotoSansCJKJP.LICENSE",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 

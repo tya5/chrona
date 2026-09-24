@@ -1,6 +1,7 @@
-version: chrona/layout-profile/v0.3
+version: chrona/layout-profile/v0.4
 id: relative-review-detail
 writingMode: horizontal-tb
+requiredThemeTokens: [spacing.l, spacing.m]
 root:
   id: detail-overlay
   kind: overlay

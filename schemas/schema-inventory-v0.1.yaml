@@ -7,14 +7,16 @@ schemas:
   - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: color-scheme-v0.2.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: command-request-v0.2.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
-  - {file: layout-profile-v0.3.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: layout-profile-v0.3.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.4.schema.yaml, removalSlice: P358-1}
+  - {file: layout-profile-v0.4.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-materialization-receipt-v0.1.schema.yaml, kind: presentation-materialization-receipt, state: live, consumers: [src/chrona/usecases/authoring_materialization.py]}
   - {file: profile-v0.2.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: project-v0.6.schema.yaml, kind: project, state: live, consumers: [src/chrona/core/validation.py]}
-  - {file: render-context-v0.12.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: render-context-v0.12.schema.yaml, kind: render-context, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: render-context-v0.13.schema.yaml, removalSlice: P351-1}
+  - {file: render-context-v0.13.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: review-detail-profile-v0.1.schema.yaml, kind: review-detail-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: revision-store-resource-ref-v0.1.schema.yaml, kind: revision-store-resource-reference, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

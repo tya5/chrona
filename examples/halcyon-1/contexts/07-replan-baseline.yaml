@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.12
+version: chrona/render-context/v0.13
 kind: render-context
 id: halcyon-1-07-replan-baseline
 body:
@@ -72,18 +72,24 @@ body:
       blockSize: 1080
     locale: en-US
     fontMetrics:
-      algorithm: declared-metrics-v1
+      algorithm: declared-metrics-v2
       assets:
-      - family: Nimbus Sans
+      - family: Noto Sans CJK JP
         weight: 400
-        revision: nimbus-sans-regular-v1
-        contentIdentity: sha256:281d55f9010a82fca254c06fb38e2dc0cdb6a5ee18de21fff711993e3963c2a1
-        path: font_metrics/nimbus-sans-regular-v1.json
-      - family: Nimbus Sans
+        metrics:
+          path: font_metrics/noto-sans-cjk-jp-regular-v1.json
+          contentIdentity: sha256:c8bd29f9ce742fde7e54de380dd2484b3dcdd4641ef8dccb1e866d40d7e9f8c3
+        font:
+          path: fonts/noto-sans-cjk-jp-regular-v1.ttf
+          contentIdentity: sha256:70f0ae1666b5152ee51966648eb769895f8b5b6b30f9667f4fdc67646c0b91d1
+      - family: Noto Sans CJK JP
         weight: 700
-        revision: nimbus-sans-bold-v1
-        contentIdentity: sha256:fe60a1edd18fd58c8f7603a2edc8b39834e3d92c864308414d7ff025e28e89a9
-        path: font_metrics/nimbus-sans-bold-v1.json
+        metrics:
+          path: font_metrics/noto-sans-cjk-jp-bold-v1.json
+          contentIdentity: sha256:a66b18b64e2f228147493b885017788a8e4f86f238fa09c5f5c9d0de6ad91146
+        font:
+          path: fonts/noto-sans-cjk-jp-bold-v1.ttf
+          contentIdentity: sha256:1da9e588ac21d8910fc82e9964ce515db06ceef204a944066476648a08d79c77
       missingFont: diagnose
     scenePrecision: 3
   target:

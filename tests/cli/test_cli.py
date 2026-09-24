@@ -143,6 +143,33 @@ def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monke
     assert 'data-source-ref="architecture"' in output.read_text(encoding="utf-8")
 
 
+def test_cli_render_accepts_a_declared_local_font_closure(tmp_path, monkeypatch):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    source = root / "src/chrona/resources"
+    font, metrics = source / "fonts/noto-sans-cjk-jp-regular-v1.ttf", source / "font_metrics/noto-sans-cjk-jp-regular-v1.json"
+    local_font, local_metrics = tmp_path / "assets/font.ttf", tmp_path / "assets/metrics.json"
+    local_font.parent.mkdir(); local_font.write_bytes(font.read_bytes()); local_metrics.write_bytes(metrics.read_bytes())
+    descriptor = {
+        "algorithm": "declared-metrics-v2", "missingFont": "diagnose",
+        "assets": [{"family": "Noto Sans CJK JP", "weight": 400,
+                    "metrics": {"path": "assets/metrics.json", "contentIdentity": "sha256:" + sha256(local_metrics.read_bytes()).hexdigest()},
+                    "font": {"path": "assets/font.ttf", "contentIdentity": "sha256:" + sha256(local_font.read_bytes()).hexdigest()}}],
+    }
+    descriptor_path, output = tmp_path / "fonts.yaml", tmp_path / "review.svg"
+    descriptor_path.write_text(yaml.safe_dump(descriptor, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/executive.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--font-metrics", str(descriptor_path), "--output", str(output),
+    ])
+    main()
+    assert output.read_bytes().startswith(b"<svg")
+
+
 def test_cli_renders_a_bundled_catalog_icon_with_the_explicit_v07_profile(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     view = yaml.safe_load((root / "examples/controller-z/views/icons.yaml").read_text(encoding="utf-8"))
@@ -499,16 +526,24 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
         "colorScheme": _snapshot_resource(tmp_path, token, "scheme.yaml", scheme, "color-scheme", scheme["id"], payload=scheme_payload),
         "layout": _snapshot_resource(tmp_path, token, "layout.yaml", layout, "layout-profile", layout["id"]),
     }
-    font_source = root / "src/chrona/resources/font_metrics/nimbus-sans-regular-v1.json"
-    font_payload = font_source.read_bytes()
-    font_path = tmp_path / token / "font_metrics/nimbus-sans-regular-v1.json"
-    font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
+    font_root = root / "src/chrona/resources"
+    font_assets = []
+    for weight, name, face in ((400, "noto-sans-cjk-jp-regular-v1.json", "regular"), (700, "noto-sans-cjk-jp-bold-v1.json", "bold")):
+        metrics_payload = (font_root / "font_metrics" / name).read_bytes()
+        metrics_path = tmp_path / token / "font_metrics" / name
+        metrics_path.parent.mkdir(parents=True, exist_ok=True); metrics_path.write_bytes(metrics_payload)
+        font_payload = (font_root / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf").read_bytes()
+        font_path = tmp_path / token / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
+        font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
+        font_assets.append({"family": "Noto Sans CJK JP", "weight": weight,
+                            "metrics": {"path": f"font_metrics/{name}", "contentIdentity": "sha256:" + sha256(metrics_payload).hexdigest()},
+                            "font": {"path": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf", "contentIdentity": "sha256:" + sha256(font_payload).hexdigest()}})
     context = {
-        "version": "chrona/render-context/v0.12", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/render-context/v0.13", "kind": "render-context", "id": "controller-z-current",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},
-            "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v1", "assets": [{"family": "Nimbus Sans", "weight": 400, "revision": "font-v1", "contentIdentity": "sha256:" + sha256(font_payload).hexdigest(), "path": "font_metrics/nimbus-sans-regular-v1.json"}], "missingFont": "diagnose"}, "scenePrecision": 3},
+            "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v2", "assets": font_assets, "missingFont": "diagnose"}, "scenePrecision": 3},
             "target": {"kind": "svg", "visualProfile": "chrona-output/visual/v0.5-baseline", "capabilities": sorted([
                 "sourceMetadata", "accessibleText", "semanticRoles", "marker",
                 "tableSemantics", "hierarchicalAxis",

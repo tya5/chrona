@@ -201,13 +201,33 @@ def test_materializer_rejects_a_supplied_wrong_font_pin_without_writing_svg(tmp_
     shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
     context = copied_example / "contexts/02-programme-board.yaml"
     value = yaml.safe_load(context.read_text())
-    value["body"]["environment"]["fontMetrics"]["assets"][0]["contentIdentity"] = "sha256:" + "0" * 64
+    value["body"]["environment"]["fontMetrics"]["assets"][0]["font"]["contentIdentity"] = "sha256:" + "0" * 64
     context.write_text(yaml.safe_dump(value, sort_keys=False))
     expected = copied_example / "generated/02-programme-board.svg"
     original = expected.read_bytes()
     with pytest.raises(ValueError, match="E_MATERIALIZER_FONT_IDENTITY"):
         materialize(copied_example / "manifest.yaml", "programme-board", tmp_path / "out-font", write=True)
     assert expected.read_bytes() == original
+
+
+def test_materializer_closes_a_declared_local_font_pair_before_packaged_assets(tmp_path):
+    copied_example = tmp_path / "local-font"
+    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    source = ROOT / "src/chrona/resources"
+    font_target = copied_example / "assets/font.ttf"
+    metrics_target = copied_example / "assets/metrics.json"
+    font_target.parent.mkdir(exist_ok=True); font_target.write_bytes((source / "fonts/noto-sans-cjk-jp-regular-v1.ttf").read_bytes())
+    metrics_target.write_bytes((source / "font_metrics/noto-sans-cjk-jp-regular-v1.json").read_bytes())
+    context_path = copied_example / "contexts/executive.yaml"
+    context = yaml.safe_load(context_path.read_text())
+    asset = context["body"]["environment"]["fontMetrics"]["assets"]
+    asset[:] = [{"family": "Noto Sans CJK JP", "weight": 400,
+                 "metrics": {"path": "assets/metrics.json", "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
+                 "font": {"path": "assets/font.ttf", "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()}}]
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+    reference, revision = _copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
+    assert (tmp_path / "snapshot" / revision / "assets/font.ttf").read_bytes() == font_target.read_bytes()
+    assert reference["id"] == "controller-z-executive"
 
 
 def test_materializer_records_selected_scenario_evidence_and_omits_unselected_scenarios(tmp_path):

@@ -5,7 +5,7 @@ body:
   values:
     editorial:
       type: fontFamily
-      value: Nimbus Sans, Helvetica Neue, Arial, sans-serif
+      value: Noto Sans CJK JP
     weight.regular:
       type: fontWeight
       value: '400'

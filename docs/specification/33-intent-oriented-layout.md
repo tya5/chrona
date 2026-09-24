@@ -30,7 +30,7 @@ metrics, persist authoritative coordinates, or branch on a profile ID.
 
 ## 2. Resource and reuse model
 
-The canonical resource is `chrona/layout-profile/v0.3` as defined by the replacement
+The canonical resource is `chrona/layout-profile/v0.4` as defined by the replacement
 schema. A resource contains exactly one of:
 
 - `root`: a complete layout tree; or

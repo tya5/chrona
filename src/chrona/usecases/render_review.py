@@ -22,7 +22,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measu
 from chrona.presentation.layout.surface_composer import resolve_label_visual_advances
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
-from chrona.presentation.model.font_metrics import resolve_font_metrics
+from chrona.presentation.model.font_metrics import FontMetricsError, resolve_font_metrics
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
@@ -73,7 +73,7 @@ class RenderRequest:
     closure: RenderClosure
     snapshot_root: Path
     scheduler: Scheduler
-    renderer: Renderer
+    renderer: Renderer | None = None
     require_all_inputs_read: bool = False
     asset_root: Path | None = None
 
@@ -166,8 +166,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
                                    color_scale=color_scale)
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
-    measured = measure_sources(source_inputs, theme, font_metrics=font_metrics,
-                               required_metrics=required_metrics)
+    try:
+        measured = measure_sources(source_inputs, theme, font_metrics=font_metrics,
+                                   required_metrics=required_metrics)
+    except FontMetricsError as error:
+        raise _font_failure(error) from error
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     manifest = solve_layout(
@@ -216,6 +219,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
+        asset_root=request.asset_root,
     )
     artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])))
     if artifact.target_kind != render_closure.context.target.kind:
@@ -292,7 +296,15 @@ def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_roo
     family = body.get("values", {}).get(family_token, {}).get("value")
     if not isinstance(family, str):
         raise RenderFailed("E_THEME_ROLE_REQUIRED", "text.fontFamily is required", "theme")
-    return resolve_font_metrics(family, font_metrics, asset_root=asset_root)
+    try:
+        return resolve_font_metrics(family, font_metrics, asset_root=asset_root)
+    except FontMetricsError as error:
+        raise _font_failure(error) from error
+
+
+def _font_failure(error: FontMetricsError) -> RenderFailed:
+    return RenderFailed(error.diagnostic_id, error.detail or "declared font metrics are unavailable",
+                        "presentation", "/body/environment/fontMetrics")
 
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,

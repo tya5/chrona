@@ -48,3 +48,7 @@ def test_label_candidates_are_bounded_and_unique():
 
 def test_wrap_uses_measured_words_and_never_splits_a_token():
     assert wrap_text("alpha beta gamma", available_inline=10, font_size=1, font_metrics=_Metrics()) == ("alpha beta", "gamma")
+
+
+def test_wrap_breaks_cjk_at_declared_character_boundaries_without_orphaning_closers():
+    assert wrap_text("日本語、計画", available_inline=2, font_size=1, font_metrics=_Metrics()) == ("日本", "語、", "計画")

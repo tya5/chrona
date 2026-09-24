@@ -52,7 +52,7 @@ The current resource schemas cover these owners without duplication:
   Visual grammar: `surface`, selection/grouping/ordering/window/comparison,
   visibility and fallbacks, axis/time presentation, rows, columns, annotations,
   and `layoutIntent`.
-* Layout Profile v0.3 supplies Composition through named slots and containers,
+* Layout Profile v0.4 supplies Composition through named slots and containers,
   flow/grid/overlay structure, writing mode, intent tokens, overflow, and
   relation-routing bounds.
 * Theme v0.4 and Color Scheme v0.2 supply Appearance through semantic role bindings,

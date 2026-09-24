@@ -5,7 +5,7 @@ body:
   values:
     editorial:
       type: fontFamily
-      value: Nimbus Sans, Helvetica Neue, Arial, sans-serif
+      value: Noto Sans CJK JP
     weight.regular:
       type: fontWeight
       value: '400'
@@ -60,6 +60,15 @@ body:
     spacing.l:
       type: number
       value: 36
+    spacing.xl:
+      type: number
+      value: 48
+    panel.side:
+      type: number
+      value: 360
+    panel.timeline:
+      type: number
+      value: 520
     timeline-day-width:
       type: number
       value: 4

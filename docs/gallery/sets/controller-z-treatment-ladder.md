@@ -61,7 +61,7 @@ The pair changes only `theme`.
 @@ -134,6 +144,24 @@
      editorial:
        type: fontFamily
-       value: Nimbus Sans, Arial, sans-serif
+       value: Noto Sans CJK JP
 +    elevated.fidelity:
 +      type: fidelity
 +      value: required

@@ -3,7 +3,6 @@ deferred:
   - {id: programme-at-scale, dimension: composition, blocker: "Requires a responsive View/Layout design; existing Halcyon peer resources are not composable."}
   - {id: milestones-notes-margins, dimension: composition, blocker: "Requires a new View/Layout design for the undrawn detail slots."}
   - {id: bar-encodings, dimension: visual-grammar, blocker: "Requires the remaining per-object encoding design."}
-  - {id: japanese-board, dimension: appearance, blocker: "Blocked on #351 CJK font metrics and target support."}
   - {id: print-and-typeset, blocker: "Requires a multi-target materializer evidence contract; target is not a Design Space dimension."}
 entries:
   - id: controller-z-executive-status
@@ -34,6 +33,20 @@ entries:
     comparison: {set: controller-z-treatment-ladder, dimension: appearance, axis: visual treatment}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
     accessibility: {note: Gradient and shadow are decorative; semantic labels, source metadata, and table structure remain present.}
+  - id: controller-z-executive-composition
+    corpus: controller-z
+    slide: executive
+    narrative: {title: Executive review, audience: programme leadership, purpose: Establish the spacious table-timeline composition.}
+    comparison: {set: controller-z-executive-composition, dimension: composition, axis: Layout profile}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present as only Layout geometry changes.}
+  - id: controller-z-compact-composition
+    corpus: controller-z
+    slide: composition-compact
+    narrative: {title: Compact executive review, audience: programme leadership, purpose: Compare denser Layout spacing over the identical review.}
+    comparison: {set: controller-z-executive-composition, dimension: composition, axis: Layout profile}
+    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
+    accessibility: {note: Semantic labels and table structure remain present as only Layout geometry changes.}
   - id: halcyon-programme-board-surface
     corpus: halcyon-1
     slide: programme-board

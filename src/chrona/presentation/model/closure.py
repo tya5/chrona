@@ -184,6 +184,7 @@ def resolve_draft_render(
     *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
     layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
+    font_metrics_path: Path | None = None,
     viewport: tuple[int, int] = (1600, 900),
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
@@ -210,7 +211,9 @@ def resolve_draft_render(
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths,
-                                                                            _draft_view(resources)))
+                                                                            _draft_view(resources)),
+                                        font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
+                                        font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None))
 
 
 def resolve_guided_draft_render(
@@ -297,6 +300,8 @@ def _draft_render_from_resources(
     typesetter: TypesetterIdentity | None = None,
     provenance: GuidedAuthoringProvenance | None = None,
     icon_assets: tuple[IconAsset, ...] = (),
+    font_metrics: dict[str, Any] | None = None,
+    font_asset_root: Path | None = None,
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
 
@@ -315,7 +320,7 @@ def _draft_render_from_resources(
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
     context_value = {
-        "version": "chrona/render-context/v0.12", "kind": "render-context", "id": "draft-render",
+        "version": "chrona/render-context/v0.13", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -332,7 +337,7 @@ def _draft_render_from_resources(
             "environment": {
                 "viewport": {"inlineSize": viewport[0], "blockSize": viewport[1]},
                 "locale": locale,
-                "fontMetrics": _packaged_font_metrics(asset_root),
+                "fontMetrics": font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
                 "scenePrecision": 3,
                 **({"rasterizer": _draft_rasterizer(target_kind)} if target_kind in {"png", "pdf"} else {}),
                 **({"typesetter": typesetter_environment} if typesetter_environment else {}),
@@ -351,7 +356,8 @@ def _draft_render_from_resources(
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise ClosureError("E_CLOSURE_KIND")
-    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance), asset_root)
+    return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance),
+                       font_asset_root or asset_root)
 
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
@@ -391,12 +397,15 @@ def _draft_reference(resource: ClosureResource) -> dict[str, Any]:
 
 
 def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
-    path = asset_root / "font_metrics" / "nimbus-sans-regular-v1.json"
-    return {"algorithm": "declared-metrics-v1", "assets": [{
-        "family": "Nimbus Sans", "weight": 400, "revision": "nimbus-sans-regular-v1",
-        "contentIdentity": "sha256:" + sha256(path.read_bytes()).hexdigest(),
-        "path": "font_metrics/nimbus-sans-regular-v1.json",
-    }], "missingFont": "declared-fallback"}
+    assets = []
+    for weight, name, face in ((400, "noto-sans-cjk-jp-regular-v1.json", "regular"),
+                               (700, "noto-sans-cjk-jp-bold-v1.json", "bold")):
+        metrics_path = asset_root / "font_metrics" / name
+        font_path = asset_root / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
+        assets.append({"family": "Noto Sans CJK JP", "weight": weight,
+                       "metrics": {"path": f"font_metrics/{name}", "contentIdentity": "sha256:" + sha256(metrics_path.read_bytes()).hexdigest()},
+                       "font": {"path": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf", "contentIdentity": "sha256:" + sha256(font_path.read_bytes()).hexdigest()}})
+    return {"algorithm": "declared-metrics-v2", "assets": assets, "missingFont": "diagnose"}
 
 
 def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
@@ -426,7 +435,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader,
                            *, decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
     context = _load_presentation(reference, reader, decoded_resources)
-    if context.version != "chrona/render-context/v0.12":
+    if context.version != "chrona/render-context/v0.13":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader, decoded_resources)
 
@@ -661,7 +670,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
             raise ClosureError("E_CLOSURE_KIND")
         actual_id = value.get("id")
     elif expected_kind == "layout-profile":
-        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.3":
+        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.4":
             raise ClosureError("E_CLOSURE_KIND")
         actual_id = value.get("id")
     else:
