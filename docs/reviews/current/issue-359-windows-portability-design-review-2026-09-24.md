@@ -7,11 +7,13 @@ Accept a portability foundation that preserves existing semantic contracts.
 ### Opaque revision tokens
 
 Revision tokens remain opaque external identities. A new storage-only codec maps
-each token to a single safe directory component using percent encoding with
-`-._` as its only unescaped characters. This mapping is injective: `:` becomes
-`%3A`, while an authored `%3A` becomes `%253A`. No schema restriction or
-semantic token migration is introduced. Local snapshot readers and all
-materializers use the same codec.
+each token to a single safe directory component using a fixed `revision-`
+prefix and percent encoding with `-_` as its only unescaped characters. The
+prefix prevents Windows device-name collisions; encoding every period also
+prevents trailing-dot aliases. This mapping is injective: `:` becomes `%3A`,
+while an authored `%3A` becomes `%253A`. No schema restriction or semantic
+token migration is introduced. Local snapshot readers and all materializers
+use the same codec.
 
 ### Publication and locking
 

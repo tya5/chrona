@@ -8,7 +8,9 @@ semantic opacity of revision tokens.
 
 ## Design questions
 
-1. Define one filesystem representation for opaque local snapshot tokens.
+1. Define one injective, Windows-safe filesystem representation for opaque
+   local snapshot tokens, including reserved device names and trailing-dot
+   cases.
 2. Preserve exclusive result and baseline publication without POSIX hard links.
 3. Define cross-platform advisory aggregate locking without an unconditional
    platform import.
