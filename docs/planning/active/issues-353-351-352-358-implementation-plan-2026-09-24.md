@@ -13,7 +13,9 @@ is asserted; a clean render-extra test collection imports Pillow explicitly.
 ## P351-1 — Font asset contract and packaged default
 
 Add v0.13 Context schema/contract parsing, font-pair resolver, generator axis
-support, Noto font/NOTICE/metrics assets, and package-data inventory checks.
+support, per-weight static Noto font/NOTICE/metrics assets, and package-data
+inventory checks. A variable source may be used only to generate static faces;
+each face's metrics identity must bind to that face's exact bytes.
 Migrate every public Theme and Context atomically.
 
 **Acceptance:** metrics identity is bound to the actual font, packaged and

@@ -25,7 +25,7 @@ fontMetrics:
     - family: Noto Sans CJK JP
       weight: 400
       metrics: {path: font_metrics/noto-sans-cjk-jp-regular-v1.json, contentIdentity: sha256:...}
-      font: {path: fonts/noto-sans-cjk-jp-v1.ttf, contentIdentity: sha256:...}
+      font: {path: fonts/noto-sans-cjk-jp-regular-v1.ttf, contentIdentity: sha256:...}
 ```
 
 The metrics table's `sourceContentIdentity` must equal the declared font
@@ -59,6 +59,9 @@ artifact emission rather than claiming `accessibleText`.  SVG remains a
 completed-scene serializer and does not load font bytes.  Draft render,
 materialization, example materialization, and snapshot closures all copy or
 resolve both metrics and font bytes under the same Context identity.
+
+Each declared weight is an independent static TTF/metrics pair; variable source
+fonts are instantiated before both their font and metrics identities are pinned.
 
 The release includes Japanese SVG/PNG/PDF evidence, a missing-glyph negative
 case, a cross-host PNG byte pin, and documentation for generating and using a
