@@ -1,6 +1,6 @@
 # Implementation Plan: Executable Guides (#372)
 
-**Status:** Proposed
+**Status:** Complete
 
 **Implements:** [Issue #372 design](../../design/issue-372-executable-guides-design-2026-09-24.md)
 
