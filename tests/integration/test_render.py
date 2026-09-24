@@ -85,6 +85,26 @@ def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count
     assert height >= row_count * 72
 
 
+def test_draft_auto_block_closes_the_public_multi_lane_milestone_fixture():
+    """Auto sizing derives the completed stacked-mark requirement, not a count heuristic."""
+    root = _root() / "tests/fixtures/multi-lane-milestones"
+    automatic = render_review(_draft_request(
+        project_path=root / "project.yaml", view_path=root / "view.yaml",
+        actual_path=root / "actual.yaml", viewport=(1600, None),
+    ))
+    assert automatic.artifact.content.count(b'data-purpose="planned"') == 3
+
+    with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW"):
+        render_review(_draft_request(
+            project_path=root / "project.yaml", view_path=root / "view.yaml",
+            actual_path=root / "actual.yaml", viewport=(1600, 392),
+        ))
+    render_review(_draft_request(
+        project_path=root / "project.yaml", view_path=root / "view.yaml",
+        actual_path=root / "actual.yaml", viewport=(1600, 393),
+    ))
+
+
 def test_immutable_context_overflow_names_its_context_viewport(tmp_path):
     """Context diagnostics never advertise Draft-only command-line repair."""
     root = _root()

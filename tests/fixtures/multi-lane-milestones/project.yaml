@@ -1,0 +1,22 @@
+version: timeline/v0.6
+
+project:
+  id: multi-lane-milestones
+  title: Multi-lane milestone boundary fixture
+
+objects:
+  gate-a:
+    type: gate
+    title: Gate A
+    schedule: {mode: fixed-point, at: 2026-04-17}
+  gate-b:
+    type: gate
+    title: Gate B
+    schedule: {mode: fixed-point, at: 2026-04-20}
+  gate-c:
+    type: gate
+    title: Gate C
+    schedule: {mode: fixed-point, at: 2026-04-23}
+
+relations: []
+annotations: {}
