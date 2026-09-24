@@ -10,6 +10,7 @@ from unittest.mock import patch
 from chrona.app.cli import main
 from chrona.core.validation import validate_project
 from chrona.resources import schema_resource
+from chrona.resources import safe_load
 from chrona.scheduling.scheduler import schedule
 
 
@@ -44,15 +45,32 @@ def run() -> None:
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         project, output = root / "my-chrona-project", root / "my-chrona-project" / "out"
+        catalog, raster = root / "material.yaml", root / "smoke.png"
         for command in (
             ["chrona", "init", str(project)],
             ["chrona", "materialize", str(project / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
+            ["chrona", "icon-catalog", "material-default", "--output", str(catalog)],
+            ["chrona", "render", str(project / "project.yaml"),
+             "--view", str(project / "views/01-mission-brief.yaml"),
+             "--theme", str(project / "themes/briefing.yaml"),
+             "--scheme", str(project / "schemes/mission-light.yaml"),
+             "--layout", str(project / "layouts/briefing.yaml"),
+             "--actual", str(project / "actual.yaml"), "--format", "png",
+             "--visual-profile", "chrona-output/visual/v0.6-png", "--output", str(raster)],
         ):
             completed = subprocess.run(command, cwd=root, text=True, capture_output=True, check=False)
             if completed.returncode:
                 raise AssertionError(f"documented fresh-project command failed: {' '.join(command)}\n{completed.stdout}\n{completed.stderr}")
         if not (output / "review.svg").is_file():
             raise AssertionError("documented materialize command did not create its artifact")
+        catalog_value = safe_load(catalog.read_bytes())
+        catalog_body = catalog_value.get("body") if isinstance(catalog_value, dict) else None
+        if (not isinstance(catalog_value, dict) or catalog_value.get("version") != "chrona/icon-catalog/v0.3"
+                or catalog_value.get("kind") != "icon-catalog" or not isinstance(catalog_body, dict)
+                or not catalog_body.get("icons")):
+            raise AssertionError("bundled Material Symbols catalog was not copied")
+        if not raster.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
+            raise AssertionError("Draft PNG render did not open bundled font bytes")
     print("Chrona installed-wheel smoke: PASS")
 
 
