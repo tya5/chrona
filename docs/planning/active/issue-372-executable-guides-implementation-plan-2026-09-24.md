@@ -8,15 +8,16 @@
 
 Refactor `tools/check_documented_commands.py` to parse fenced blocks, logical
 Chrona invocations, and adjacent skip markers into typed document records.
-Keep argparse validation and generated CLI-reference rendering on this one
-record population.  Reject malformed, unattached, and reasonless skips.
+Validate each authored command against argparse and retain the separately
+argparse-generated CLI-reference freshness check.  Reject malformed,
+unattached, and reasonless skips.
 
 **Files:** `tools/check_documented_commands.py`,
 `tests/unit/tools/test_documented_commands.py`.
 
 **Acceptance:** inline/prose text is excluded; prompts and continuations are
 preserved; invalid marker attachment and stale syntax fail with anchored tool
-diagnostics; the existing reverse surface test remains true.
+diagnostics; the generated reverse CLI report remains fresh.
 
 ## I372-2 — Isolated executable-document runner
 

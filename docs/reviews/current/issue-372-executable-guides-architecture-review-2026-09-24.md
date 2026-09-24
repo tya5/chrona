@@ -11,7 +11,7 @@
 | CLI → product use cases | No command grammar, error semantics, or implementation ownership changes. | Preserved |
 | Fixture → corpus | `examples/` is copied into a temporary directory; documented runs cannot mutate committed corpus evidence. | Preserved |
 | Static grammar → runtime execution | Both consume one fenced-command discovery result; argparse remains the only grammar authority. | Preserved |
-| Generated reference → authored guides | `cli-reference.md` remains generated from argparse, while authored guide examples are inputs to the reverse coverage check. | Preserved |
+| Generated reference → authored guides | `cli-reference.md` is an argparse-derived reverse report; authored fenced examples are independently validated/executed rather than recursively covering that generated report. | Preserved |
 
 ## Whole-system consistency
 
@@ -42,5 +42,5 @@ paths.
 - Treating every illustrative example as runnable by synthesizing resources:
   would hide its required author-owned inputs and bypass the immutable
   reference boundary.
-- Removing reverse CLI coverage once runtime checking exists: runtime success
-  cannot reveal a newly shipped, undocumented command or option.
+- Removing the generated reverse CLI report once runtime checking exists:
+  runtime success cannot reveal a newly shipped command or option.

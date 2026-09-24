@@ -65,13 +65,14 @@ why it needs an author-owned input or state.
 
 ## Static grammar and generated reference
 
-The fence parser is the sole discoverer for both static and execution paths.
-Each discovered command is validated against the live argparse parser before
-execution.  `cli-reference.md` remains generated exclusively from that parser;
-the reverse surface check treats a skipped command as documented, but does not
-let a skip hide an unknown command or option.  The runtime executor is invoked
-explicitly in CI, rather than making a report-generation command have side
-effects by default.
+The fence parser is the sole discoverer for authored command examples.  Each
+discovered command is validated against the live argparse parser before
+execution.  `cli-reference.md` is a separate reverse report generated
+exclusively from that parser; its byte freshness proves every live command and
+option is named, without making the generated report recursively satisfy an
+authored-example coverage gate.  A skipped authored command still cannot hide
+stale syntax.  The runtime executor is invoked explicitly in CI, rather than
+making a report-generation command have side effects by default.
 
 ## Error vocabulary
 
