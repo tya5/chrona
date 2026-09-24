@@ -3,6 +3,7 @@ from hashlib import sha256
 import pytest
 
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _reference(payload: bytes) -> dict:
@@ -18,7 +19,7 @@ def _reference(payload: bytes) -> dict:
 
 def test_reader_computes_identity_when_reference_omits_it_and_strict_mode_rejects(tmp_path):
     payload = b'{"project":{"id":"project"}}'
-    location = tmp_path / "rev-1"
+    location = snapshot_directory(tmp_path, "rev-1")
     location.mkdir()
     (location / "project.yaml").write_bytes(payload)
     reference = _reference(payload)

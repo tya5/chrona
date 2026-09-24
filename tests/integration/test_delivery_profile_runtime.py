@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.scheduling.scheduler import schedule
 from chrona.core.validation import validate_project
 from chrona.extensions.profiles import resolve_profile_diagnostics, validate_profiles
@@ -32,7 +33,7 @@ def test_resolved_delivery_profile_validates_and_schedules_through_core():
 
 def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
     manifest_bytes = (FIXTURES / "implementation-delivery-profile-v0.2.yaml").read_bytes()
-    snapshot = tmp_path / "snapshot-1" / "packages"
+    snapshot = snapshot_directory(tmp_path, "snapshot-1") / "packages"
     snapshot.mkdir(parents=True)
     (snapshot / "implementation-delivery.yaml").write_bytes(manifest_bytes)
     project = _roadmap()
@@ -49,4 +50,3 @@ def test_local_snapshot_reader_resolves_pinned_package_reference(tmp_path):
     project["extensions"][0]["resource"]["contentIdentity"] = "sha256:" + "0" * 64
     diagnostics = resolve_profile_diagnostics(project, reader)
     assert {item.id for item in validate_project(project, extension_diagnostics=diagnostics)} == {"E_CONTENT_IDENTITY", "IDP-PROFILE-006"}
-
