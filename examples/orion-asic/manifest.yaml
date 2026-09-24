@@ -7,3 +7,4 @@ slides:
     evidence: "Extension-typed EVT/DVT/PVT gates with package-defined enum and revision fields, a colour scale by silicon revision, and a fast-tracked negative lag."
     context: contexts/gates.yaml
     expectedSvg: generated/gates.svg
+    expectedScene: generated/gates.scene.json

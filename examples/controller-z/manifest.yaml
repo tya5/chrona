@@ -6,22 +6,27 @@ slides:
   - id: executive
     evidence: "Executive review with actuals, inside labels, and fallback labels."
     expectedSvg: generated/executive.svg
+    expectedScene: generated/executive.scene.json
   - id: annotations
     evidence: "Two endpoint-anchored explanatory arrows in the annotation slot, including an obstacle-avoiding leader."
     context: contexts/annotations.yaml
     expectedSvg: generated/annotations.svg
+    expectedScene: generated/annotations.scene.json
   - id: plan-only
     evidence: "Plan-only control view over the same Controller Z schedule and observations."
     context: contexts/plan-only.yaml
     expectedSvg: generated/plan-only.svg
+    expectedScene: generated/plan-only.scene.json
   - id: elevated
     evidence: "Portable gradient, shadow, and stroke-finish treatment over the same Controller Z evidence."
     context: contexts/elevated.yaml
     expectedSvg: generated/elevated.svg
+    expectedScene: generated/elevated.scene.json
   - id: composition-compact
     evidence: "Same executive review under the compact Layout composition, with View, Theme, Scheme, and data fixed."
     context: contexts/composition-compact.yaml
     expectedSvg: generated/composition-compact.svg
+    expectedScene: generated/composition-compact.scene.json
   - id: icons
     evidence: "Immutable vector and raster catalog icons as a measured label prefix and semantic mark."
     context: contexts/icons.yaml
@@ -31,3 +36,4 @@ slides:
     evidence: "Bundled Material Symbols aliases and short names at table, header, and title text sizes."
     context: contexts/material-icons.yaml
     expectedSvg: generated/material-icons.svg
+    expectedScene: generated/material-icons.scene.json

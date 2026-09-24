@@ -6,3 +6,4 @@ slides:
   - id: executive
     evidence: "Japanese translation register with long title, table labels, plot labels, and ja-JP axis evidence measured by the optional CJK provider."
     expectedSvg: generated/executive.svg
+    expectedScene: generated/executive.scene.json

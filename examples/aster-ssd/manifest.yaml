@@ -6,3 +6,4 @@ slides:
   - id: overview
     evidence: "Plan-only semiconductor schedule with calendar-aware spans."
     expectedSvg: generated/overview.svg
+    expectedScene: generated/overview.scene.json

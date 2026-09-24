@@ -7,6 +7,7 @@ slides:
     evidence: "Programme overview with schedule and review evidence."
     context: contexts/01-mission-brief.yaml
     expectedSvg: generated/01-mission-brief.svg
+    expectedScene: generated/01-mission-brief.scene.json
   - id: programme-board
     evidence: "Dense programme board with typed summary evidence."
     context: contexts/02-programme-board.yaml
@@ -16,10 +17,12 @@ slides:
     evidence: "Launch campaign with grouped timeline presentation."
     context: contexts/03-launch-campaign.yaml
     expectedSvg: generated/03-launch-campaign.svg
+    expectedScene: generated/03-launch-campaign.scene.json
   - id: tvac-slip
     evidence: "Scenario comparison with provenance evidence."
     context: contexts/04-tvac-slip.yaml
     expectedSvg: generated/04-tvac-slip.svg
+    expectedScene: generated/04-tvac-slip.scene.json
   - id: dependency-network
     evidence: "Dependency-network surface and routed relation evidence."
     context: contexts/05-dependency-network.yaml
@@ -29,19 +32,24 @@ slides:
     evidence: "Flight readiness review with advanced contract evidence."
     context: contexts/06-flight-readiness.yaml
     expectedSvg: generated/06-flight-readiness.svg
+    expectedScene: generated/06-flight-readiness.scene.json
   - id: replan-baseline
     evidence: "Captured June baseline compared against the re-planned AIT chain and in-flight observations."
     context: contexts/07-replan-baseline.yaml
     expectedSvg: generated/07-replan-baseline.svg
+    expectedScene: generated/07-replan-baseline.scene.json
   - id: gallery-dark
     evidence: "Mission brief under the existing control-room-dark colour scheme."
     context: contexts/08-gallery-dark.yaml
     expectedSvg: generated/08-gallery-dark.svg
+    expectedScene: generated/08-gallery-dark.scene.json
   - id: gallery-mono
     evidence: "Mission brief under the existing print-mono colour scheme."
     context: contexts/09-gallery-mono.yaml
     expectedSvg: generated/09-gallery-mono.svg
+    expectedScene: generated/09-gallery-mono.scene.json
   - id: gallery-network-wallboard
     evidence: "Dependency network under the programme board appearance, isolating View and Layout surface changes."
     context: contexts/10-gallery-network-wallboard.yaml
     expectedSvg: generated/10-gallery-network-wallboard.svg
+    expectedScene: generated/10-gallery-network-wallboard.scene.json
