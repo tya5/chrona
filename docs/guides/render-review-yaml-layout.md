@@ -22,6 +22,7 @@ The only review context is `chrona/presentation/v0.5`. It references Theme, Colo
 independently and declares viewport, locale, Font Metrics, Scene precision and output
 capabilities. `chrona render-review` accepts its immutable resource reference:
 
+<!-- chrona:doc-check skip: requires an author-created immutable Render Context reference and local store -->
 ```sh
 chrona render-review \
   --context-reference context-reference.yaml \

@@ -59,6 +59,7 @@ and creates/updates `font-metrics.yaml` in the output directory. The generated
 names use a portable slug, and an existing family/weight is refused rather than
 replaced.
 
+<!-- chrona:doc-check skip: requires an author-provided licensed variable font -->
 ```sh
 chrona font import fonts/acme-vf.ttf --family "Acme Sans" --weight 400 \
   --axis wght=400 --output fonts
@@ -66,6 +67,7 @@ chrona font import fonts/acme-vf.ttf --family "Acme Sans" --weight 400 \
 
 For a TrueType Collection, select its zero-based face explicitly:
 
+<!-- chrona:doc-check skip: requires an author-provided licensed TrueType Collection -->
 ```sh
 chrona font import fonts/acme.ttc --index 2 --family "Acme Sans" --weight 700 \
   --output fonts
@@ -88,6 +90,7 @@ python tools/generate_font_metrics.py fonts/acme-vf.ttf fonts/acme-regular.metri
 For a non-evidence draft render, put the descriptor above in `fonts.yaml` and
 pass it explicitly. Asset paths resolve relative to that descriptor:
 
+<!-- chrona:doc-check skip: requires author-provided draft Project and presentation resources -->
 ```sh
 chrona render project.yaml --view view.yaml --theme theme.yaml --scheme scheme.yaml \
   --layout layout.yaml --font-metrics fonts.yaml --output review.svg

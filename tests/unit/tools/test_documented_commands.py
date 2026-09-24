@@ -4,9 +4,8 @@ import sys
 
 import pytest
 
-from tools.check_documented_commands import (
-    DocumentedCommand, DocumentedCommandError, discover, execute, render_reference, validate, validate_surface,
-)
+from tools import check_documented_commands
+from tools.check_documented_commands import DocumentedCommand, DocumentedCommandError, discover, execute, render_reference, validate, validate_surface
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -87,3 +86,12 @@ def test_executor_reports_document_anchor_and_output_on_failure(tmp_path):
         execute(commands, root, executable=(sys.executable, "-c", program))
 
     assert "problem" in str(error.value)
+
+
+def test_default_executor_uses_the_current_interpreter_scripts_directory(tmp_path, monkeypatch):
+    scripts = tmp_path / "scripts"; scripts.mkdir()
+    executable = scripts / ("chrona.exe" if check_documented_commands.os.name == "nt" else "chrona")
+    executable.write_text("", encoding="utf-8")
+    monkeypatch.setattr(check_documented_commands.sysconfig, "get_path", lambda _name: str(scripts))
+
+    assert check_documented_commands._installed_chrona() == (str(executable),)

@@ -10,6 +10,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sysconfig
 import tempfile
 from typing import Iterable
 
@@ -173,14 +174,19 @@ def validate(command: DocumentedCommand, parser: argparse.ArgumentParser) -> Non
         index += 1
 
 
+def _installed_chrona() -> tuple[str, ...]:
+    scripts = sysconfig.get_path("scripts")
+    executable = Path(scripts or ".") / ("chrona.exe" if os.name == "nt" else "chrona")
+    if not executable.is_file():
+        raise DocumentedCommandError("E_DOCUMENTED_COMMAND_EXECUTABLE")
+    return (str(executable),)
+
+
 def execute(commands: tuple[DocumentedCommand, ...], root: Path, *, timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
             executable: tuple[str, ...] | None = None) -> None:
     """Run non-skipped documented commands in a disposable fixture workspace."""
     if executable is None:
-        resolved = shutil.which("chrona")
-        if resolved is None:
-            raise DocumentedCommandError("E_DOCUMENTED_COMMAND_EXECUTABLE")
-        executable = (resolved,)
+        executable = _installed_chrona()
     with tempfile.TemporaryDirectory(prefix="chrona-doc-check-") as temporary:
         workspace = Path(temporary)
         examples = root / "examples"

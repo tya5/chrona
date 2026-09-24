@@ -29,6 +29,7 @@ edit the project, re-run, and the slide follows.</sup>
 
 ## Quick start
 
+<!-- chrona:doc-check skip: requires an author-provided Project path -->
 ```bash
 python -m pip install -e '.[dev,render]'
 pytest
@@ -49,6 +50,7 @@ LF checkout bytes for identity-bound YAML, JSON, SVG, and schema resources.
 `validate` and `schedule` also accept an immutable local snapshot instead of a
 raw Draft path:
 
+<!-- chrona:doc-check skip: requires an author-created immutable snapshot reference and local store -->
 ```bash
 chrona schedule \
   --snapshot-reference project-reference.yaml \
@@ -99,6 +101,7 @@ chrona render examples/controller-z/project.yaml \
 
 A Plan/Actual review surface is rendered from a materialized v0.8 Context:
 
+<!-- chrona:doc-check skip: requires an author-created immutable Render Context reference and local store -->
 ```bash
 chrona render-review \
   --context-reference context-reference.yaml \
@@ -131,6 +134,7 @@ Chrona never reads raw SVG or contacts a registry at render time.
 The importer writes deterministic JSON (a YAML subset) to the requested
 `.yaml` path, so it remains valid YAML while large catalogs load quickly.
 
+<!-- chrona:doc-check skip: requires an author-provided Iconify collection, notice file, and matching draft resources -->
 ```bash
 chrona icon-catalog import icons.json --license-spdx MIT --notice-file NOTICE \
   --output icons.yaml

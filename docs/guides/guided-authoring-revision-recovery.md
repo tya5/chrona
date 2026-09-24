@@ -4,6 +4,7 @@ Guided authoring commands use an optimistic-concurrency precondition. Read the
 current workspace revision before creating the first command; do not hash the
 YAML file yourself.
 
+<!-- chrona:doc-check skip: requires an author-created guided workspace -->
 ```console
 $ chrona workspace revision workspace.yaml
 sha256:9cc81954eeb06b4fd7cc90c7383bf28bc204f76e0a81ae79ee805c0c2774f715
@@ -26,6 +27,7 @@ payload:
 
 Apply it with a new result destination:
 
+<!-- chrona:doc-check skip: requires the guided workspace and command document created in the preceding example -->
 ```console
 chrona authoring-command-apply --workspace workspace.yaml \
   --command rename.yaml --result rename-result.json
@@ -46,6 +48,7 @@ Use the identity form that matches the declaration.  Immutable resource
 `contentIdentity` values pin exact bytes, while replay records use Chrona's
 canonical document identity:
 
+<!-- chrona:doc-check skip: requires author-provided identity input files -->
 ```console
 chrona identity bytes assets/catalog.yaml
 chrona identity document command-request.yaml

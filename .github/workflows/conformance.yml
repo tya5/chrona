@@ -22,6 +22,7 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
       - run: python conformance/run_conformance.py
+      - run: python tools/check_documented_commands.py --check --execute
       - run: python tools/check_module_reachability.py
       - run: python tools/check_scene_primitive_delivery.py
       - run: python tools/check_view_dispatch_reachability.py

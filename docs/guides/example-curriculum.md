@@ -24,3 +24,19 @@ the corresponding 100-row case. They exercise `chrona render --viewport
 and output generation. For reproducible published evidence, select an explicit
 height returned by that command and materialize a fixed Context; immutable
 Contexts never accept `auto`.
+
+Run the 30-row Draft with the Controller Z executive presentation inputs and
+its required Actual Set:
+
+```sh
+chrona render examples/controller-z/curriculum/scale-30.yaml \
+  --view examples/controller-z/views/executive.yaml \
+  --theme examples/controller-z/themes/executive-light.yaml \
+  --scheme examples/controller-z/schemes/executive-light.yaml \
+  --layout examples/controller-z/layouts/executive-review.yaml \
+  --actual examples/controller-z/actual.yaml \
+  --viewport 1600xauto --output curriculum-scale-30.svg
+```
+
+The output has 30 rows and a measured `2357`-pixel block extent.  The generated
+Draft SVG is a local learning artifact, not immutable public evidence.
