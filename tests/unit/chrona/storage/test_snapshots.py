@@ -1,6 +1,6 @@
 from chrona.storage.revision_store import MemoryRevisionStore
 from chrona.storage.snapshots import LocalBaselineRegistry, MemorySnapshotStore, capture_baseline_v02, capture_snapshot
-import chrona.storage.snapshots as snapshots
+import chrona.storage.publication as publication
 
 
 def _project():
@@ -44,7 +44,7 @@ def test_v02_capture_is_append_only_and_registry_reference_is_verifiable(tmp_pat
 
 
 def test_v02_capture_does_not_require_hard_link_support(tmp_path, monkeypatch):
-    monkeypatch.setattr(snapshots.os, "link", lambda *_args: (_ for _ in ()).throw(OSError("unsupported")))
+    monkeypatch.setattr(publication.os, "link", lambda *_args: (_ for _ in ()).throw(OSError("unsupported")))
     project_store = MemoryRevisionStore(_project())
     result = capture_baseline_v02(project_store, project_store.read().revision, _reference(project_store.read()), "q2", LocalBaselineRegistry(tmp_path, "baselines"))
     assert result.status == "accepted"

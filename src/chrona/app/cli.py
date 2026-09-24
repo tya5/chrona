@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 from hashlib import sha256
 import json
-import os
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -569,29 +568,15 @@ def _schedule_payload(project: dict[str, Any], result: Any) -> dict[str, Any]:
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:
     """Create one result artifact without replacing an existing result."""
+    from chrona.storage.publication import publish_exclusive
     if destination.exists():
         raise CliFailure("E_AUTOMATION_OUTPUT_EXISTS", "result destination already exists", "automation", exit_code=2)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
-    reserved_destination = False
     try:
-        with temporary.open("xb") as handle:
-            handle.write(json.dumps(result, sort_keys=True, default=_json_default).encode("utf-8"))
-            handle.flush()
-            os.fsync(handle.fileno())
-        with destination.open("xb"):
-            pass
-        reserved_destination = True
-        temporary.replace(destination)
-        reserved_destination = False
+        publish_exclusive(destination, json.dumps(result, sort_keys=True, default=_json_default).encode("utf-8"))
     except FileExistsError as error:
         raise CliFailure("E_AUTOMATION_OUTPUT_EXISTS", "result destination already exists", "automation", exit_code=2) from error
     except OSError as error:
         raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
-    finally:
-        temporary.unlink(missing_ok=True)
-        if reserved_destination:
-            destination.unlink(missing_ok=True)
 
 
 def main() -> None:

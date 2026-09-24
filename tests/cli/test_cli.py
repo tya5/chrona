@@ -13,6 +13,7 @@ from chrona.app.cli import CliFailure, main
 from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
 from chrona.scheduling.scheduler import schedule
+import chrona.storage.publication as publication
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.materialize import MaterializationError
 from chrona.core.identity import content_identity
@@ -526,7 +527,7 @@ def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkey
 
 
 def test_cli_result_write_does_not_require_hard_link_support(tmp_path, monkeypatch):
-    monkeypatch.setattr(cli.os, "link", lambda *_args: (_ for _ in ()).throw(OSError("unsupported")))
+    monkeypatch.setattr(publication.os, "link", lambda *_args: (_ for _ in ()).throw(OSError("unsupported")))
     destination = tmp_path / "result.json"
     cli._write_result(destination, {"status": "accepted"})
     assert json.loads(destination.read_text(encoding="utf-8")) == {"status": "accepted"}
