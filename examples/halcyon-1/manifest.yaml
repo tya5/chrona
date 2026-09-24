@@ -11,6 +11,7 @@ slides:
     evidence: "Dense programme board with typed summary evidence."
     context: contexts/02-programme-board.yaml
     expectedSvg: generated/02-programme-board.svg
+    expectedScene: generated/02-programme-board.scene.json
   - id: launch-campaign
     evidence: "Launch campaign with grouped timeline presentation."
     context: contexts/03-launch-campaign.yaml
@@ -23,6 +24,7 @@ slides:
     evidence: "Dependency-network surface and routed relation evidence."
     context: contexts/05-dependency-network.yaml
     expectedSvg: generated/05-dependency-network.svg
+    expectedScene: generated/05-dependency-network.scene.json
   - id: flight-readiness
     evidence: "Flight readiness review with advanced contract evidence."
     context: contexts/06-flight-readiness.yaml

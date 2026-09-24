@@ -20,6 +20,7 @@ from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
+from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
 
 
 @dataclass(frozen=True)
@@ -217,6 +218,22 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
         rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
         derived = output / "review.svg"
         derived.write_bytes(rendered.artifact.content)
+        expected_scene = slide.get("expectedScene")
+        if expected_scene is not None:
+            if not isinstance(expected_scene, str) or not expected_scene:
+                raise MaterializationError("E_MATERIALIZER_SCENE", "expectedScene must be a non-empty relative path")
+            try:
+                scene_bytes = serialize_scene(rendered.scene)
+            except SceneSerializationError as error:
+                raise MaterializationError("E_MATERIALIZER_SCENE", str(error)) from error
+            scene_output = output / "review.scene.json"
+            scene_output.write_bytes(scene_bytes)
+            expected_scene_path = _inside(example, expected_scene)
+            if write:
+                expected_scene_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(scene_output, expected_scene_path)
+            elif not expected_scene_path.is_file() or scene_output.read_bytes() != expected_scene_path.read_bytes():
+                raise MaterializationError("E_MATERIALIZER_MISMATCH", "generated Scene differs from declared evidence")
         evidence: dict[str, Any] = reference
         if rendered.scenario_provenance:
             evidence = {
