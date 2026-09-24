@@ -18,7 +18,7 @@ from chrona.presentation.model.presentation_contract import normalize_presentati
 from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.mark_geometry import marker_geometry, pattern_geometry, pattern_kind, symbol_geometry
-from chrona.presentation.scene.model import SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.model import SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
 
@@ -217,6 +217,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                   float(placement.bounds.inline_size), float(placement.bounds.block_size)), placement.row_id)
         for placement in placed_surface.rows
     )
+    columns = tuple(
+        SceneColumn(placement.column_id, placement.label,
+                    (float(placement.bounds.inline), float(placement.bounds.block),
+                     float(placement.bounds.inline_size), float(placement.bounds.block_size)))
+        for placement in placed_surface.columns
+    )
     groups = tuple(
         SceneGroup(item.group_id,
                    None if item.header_bounds is None else (float(item.header_bounds.inline), float(item.header_bounds.block),
@@ -262,7 +268,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         return ((link or {}).get("href"), (link or {}).get("title"))
 
     def emit_layout_text(scene_id: str, purpose: str, role: str,
-                         href: str | None = None, link_title: str | None = None) -> None:
+                         href: str | None = None, link_title: str | None = None,
+                         table_row_id: str | None = None, table_column_id: str | None = None) -> None:
         placed = layout_text[scene_id]
         layout = TextLayout((float(placed.bounds.inline), float(placed.bounds.block),
                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
@@ -271,19 +278,27 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.line_height, placed.font_asset_identity)
         primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
                                          text=placed.content, baseline=layout.baseline, text_layout=layout,
-                                         href=href, link_title=link_title))
+                                         href=href, link_title=link_title, table_row_id=table_row_id,
+                                         table_column_id=table_column_id))
     def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None,
-                           href: str | None = None, link_title: str | None = None) -> None:
+                           href: str | None = None, link_title: str | None = None,
+                           table_row_id: str | None = None, table_column_id: str | None = None) -> None:
         binding = semantic_binding(semantic_id)
-        emit_layout_text(scene_id, binding.purpose, role or binding.scene_role, href, link_title)
+        emit_layout_text(scene_id, binding.purpose, role or binding.scene_role, href, link_title,
+                         table_row_id, table_column_id)
 
     emit_semantic_text("title", "titleText")
     for column_id, label in value.surface_content.table_columns:
-        emit_semantic_text(f"column:{column_id}", "tableColumnLabel")
+        emit_semantic_text(f"column:{column_id}", "tableColumnLabel", table_column_id=column_id)
+    row_ids = {row.object_id: row.row_id for row in rows} | {row.row_id: row.row_id for row in rows}
     for object_id, column_id, cell in value.surface_content.table_cells:
         if f"cell:{object_id}:{column_id}" in layout_text:
             href, link_title = link_for_cell(object_id, column_id)
-            emit_semantic_text(f"cell:{object_id}:{column_id}", "tableCell", href=href, link_title=link_title)
+            row_id = row_ids.get(object_id)
+            if row_id is None:
+                raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", f"cell:{object_id}:{column_id}")
+            emit_semantic_text(f"cell:{object_id}:{column_id}", "tableCell", href=href, link_title=link_title,
+                               table_row_id=row_id, table_column_id=column_id)
     for group in groups:
         group_band = semantic_binding("groupBand")
         primitives.append(ScenePrimitive(f"group:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", group_band.purpose, group_band.scene_role,
@@ -353,7 +368,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             emit_semantic_text(label_id, semantic_id, href=href, link_title=link_title)
         variance_id = f"variance:{instance_id}"
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
-            role = "variance-behind" if item.finish_delta > 0 else "variance-ahead" if item.finish_delta < 0 else semantic_binding("finishDelta").scene_role
+            role = (semantic_binding("varianceBehind").scene_role if item.finish_delta > 0
+                    else semantic_binding("varianceAhead").scene_role if item.finish_delta < 0
+                    else semantic_binding("finishDelta").scene_role)
             emit_semantic_text(variance_id, "finishDelta", role, href, link_title)
     for folded in getattr(projection, "folded_points", ()):
         for item in folded.all_items:
@@ -424,7 +441,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
         if placed.placement_id.startswith("legend-swatch:"):
-            role = "planned" if placed.source_ref.startswith("scale:") else placed.source_ref
+            role = (semantic_binding("scaleLegendEntry").scene_role
+                    if placed.source_ref.startswith("scale:") else placed.source_ref)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
                                              legend_binding.purpose, role, bounds))
         elif placed.placement_id.startswith("progress-fill:"):
@@ -480,7 +498,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
                                          points=relation.points))
-    return SceneSurface("table-timeline", slots, rows, groups, scale, tuple(primitives))
+    return SceneSurface("table-timeline", slots, rows, groups, scale, tuple(primitives), columns=columns)
 
 
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:

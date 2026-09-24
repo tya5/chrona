@@ -8,8 +8,10 @@ command-line arguments, writes files, or prints.
 """
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass, field
 from decimal import Decimal
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Mapping
 import re
@@ -31,7 +33,10 @@ from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
-from chrona.presentation.scene.model import SceneSurface
+from chrona.presentation.scene.model import (
+    ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
+    SceneSurface,
+)
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 from chrona.presentation.scene.visual_capabilities import (
     VisualCapabilityError,
@@ -88,6 +93,7 @@ class RenderedReview:
 
     artifact: RenderArtifact
     surface: SceneSurface
+    scene: InspectionScene
     read_inputs: frozenset[str] = field(default_factory=frozenset)
     scenario_provenance: tuple[ScenarioProvenance, ...] = ()
     font_warnings: tuple["FontGlyphWarning", ...] = ()
@@ -277,8 +283,48 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise _font_failure(error) from error
     if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
-    return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance,
+    scene = _inspection_scene(render_closure, surface, projection, surface_content,
+                              (float(viewport["inlineSize"]), float(viewport["blockSize"])))
+    return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           _font_warnings(font_metrics.warnings, artifact.target_kind))
+
+
+def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
+                      content: Any, viewport: tuple[float, float]) -> InspectionScene:
+    """Build inspection evidence from completed runtime values without reopening policy."""
+    primitive_roles = Counter(item.visual_role for item in surface.primitives)
+    capabilities: set[str] = set()
+    for primitive in surface.primitives:
+        if primitive.marker is not None:
+            capabilities.add("mark.marker-geometry")
+        if primitive.pattern is not None:
+            capabilities.add("paint.pattern-geometry")
+        if primitive.symbol is not None:
+            capabilities.add("mark.symbol-outline")
+        if primitive.kind == "Icon":
+            capabilities.add("icon.vector" if primitive.icon_kind == "vector" else "icon.raster")
+    scales = (surface.scale_manifest,) if surface.scale_manifest is not None else ()
+    manifest = SceneManifest(
+        "chrona/scene-manifest/v0.1", closure.context.version, viewport,
+        tuple(item.object_id for item in projection.items),
+        tuple(sorted({item.text_layout.asset_identity for item in surface.primitives
+                      if item.text_layout is not None})),
+        ContentFamilyCounts(len(content.relations), len(content.annotations), len(content.notes),
+                            len(content.legend_entries), len(content.summary.panels),
+                            len(content.group_details), len(content.milestones),
+                            len(content.observation_rows)),
+        scales, tuple(sorted(primitive_roles.items())),
+    )
+    context_identity = closure.context.identity
+    resources = (("render-context", context_identity.id, context_identity.revision,
+                  context_identity.content_identity), *(
+        (item.kind, item.id, item.revision, item.content_identity) for item in closure.resources
+    ))
+    provenance = SceneProvenance(
+        "draft" if context_identity.revision == "draft" else "immutable",
+        version("chrona"), tuple(sorted(resources)),
+    )
+    return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest, ())
 
 
 def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind: str) -> tuple[FontGlyphWarning, ...]:

@@ -47,6 +47,9 @@ def test_render_review_renders_a_closure_without_the_cli():
         rendered = render_review(_request(closure, snapshot))
     assert rendered.artifact.content == (EXAMPLE / "generated/02-programme-board.svg").read_bytes()
     assert rendered.surface.primitives
+    assert rendered.scene.surfaces == (rendered.surface,)
+    assert rendered.scene.provenance.mode == "immutable"
+    assert rendered.scene.manifest.visual_role_counts
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
 
 

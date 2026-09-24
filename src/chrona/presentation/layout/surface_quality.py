@@ -145,6 +145,15 @@ class RowPlacement:
 
 
 @dataclass(frozen=True)
+class ColumnPlacement:
+    """One completed table-column extent from Layout to Scene."""
+
+    column_id: str
+    label: str
+    bounds: Rect
+
+
+@dataclass(frozen=True)
 class GroupPlacement:
     """Completed group content and optional header extents."""
 
@@ -246,6 +255,7 @@ class SurfacePlacement:
     text: tuple[TextPlacement, ...] = ()
     slots: tuple[SlotPlacement, ...] = ()
     rows: tuple[RowPlacement, ...] = ()
+    columns: tuple[ColumnPlacement, ...] = ()
     groups: tuple[GroupPlacement, ...] = ()
     scale: ScalePlacement | None = None
     marks: tuple[MarkPlacement, ...] = ()

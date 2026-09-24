@@ -20,7 +20,7 @@ from chrona.presentation.layout.labels import LabelObstacle, LabelRect, LabelReq
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    CollisionDomain, ColumnPlacement, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
 )
 
@@ -1038,7 +1038,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals)
     icons.extend(candidate_icons)
     icons.extend(resolve_mark_visual_requests(marks, request))
-    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, groups=tuple(groups), scale=scale,
+    column_placements = tuple(
+        ColumnPlacement(item.column_id, label,
+                        Rect(Decimal(str(item.inline)), Decimal(str(table_bounds[1])),
+                             Decimal(str(item.inline_size)), Decimal(str(table_bounds[3]))))
+        for item, (_, label) in zip(columns, table_columns, strict=True)
+    )
+    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
+                                 groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
                                  diagnostics=tuple(diagnostics), icons=tuple(icons))

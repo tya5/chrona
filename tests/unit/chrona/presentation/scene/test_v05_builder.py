@@ -50,6 +50,13 @@ def test_scene_projects_completed_layout_geometry_without_measurement_or_routing
     assert all(fragment not in source for fragment in forbidden)
 
 
+def test_scene_roles_are_registry_owned_without_direct_variance_or_scale_role_literals():
+    source = Path(__import__("chrona.presentation.scene.v05_builder", fromlist=["*"]).__file__).read_text(encoding="utf-8")
+    assert '"variance-ahead"' not in source
+    assert '"variance-behind"' not in source
+    assert 'role = "planned"' not in source
+
+
 def _manifest(*sources):
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
     return LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
@@ -615,3 +622,6 @@ def test_table_columns_use_measured_non_overlapping_origins():
                               capabilities={"svg": True})
     surface = compose_review_surface(value)
     assert next(item for item in surface.primitives if item.scene_id == "column:short").bounds[0] > next(item for item in surface.primitives if item.scene_id == "column:long").bounds[0]
+    assert [column.column_id for column in surface.columns] == ["long", "short"]
+    cell = next(item for item in surface.primitives if item.scene_id == "cell:a:long")
+    assert (cell.table_row_id, cell.table_column_id) == ("a", "long")

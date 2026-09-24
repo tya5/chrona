@@ -4,9 +4,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from chrona.presentation.layout.axis import AxisInterval
-from chrona.presentation.layout.lanes import LaneAssignment, LaneTrack
-from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.icons import NormalizedVectorIcon
 
@@ -163,12 +160,19 @@ class ScenePrimitive:
     icon_decorative: bool = True
     icon_stroke_scale: float | None = None
     visual_capability_source_ref: str = "/"
+    table_row_id: str | None = None
+    table_column_id: str | None = None
 
     def __post_init__(self) -> None:
         if ((self.marker is not None and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
                 or (self.symbol is not None and self.kind != "Symbol")
-                or (self.kind == "Symbol" and self.symbol is None)):
+                or (self.kind == "Symbol" and self.symbol is None)
+                or (self.purpose == "table-cell" and self.table_row_id is None)
+                or (self.purpose == "table-cell" and self.table_column_id is None)
+                or (self.purpose != "table-cell" and self.table_row_id is not None)
+                or (self.purpose not in {"table-cell", "table-column-label"}
+                    and self.table_column_id is not None)):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 @dataclass(frozen=True)
@@ -189,6 +193,15 @@ class SceneRow:
     group_id: str
     bounds: tuple[float, float, float, float]
     row_id: str = ""
+
+
+@dataclass(frozen=True)
+class SceneColumn:
+    """One typed table column completed by Layout; never inferred from a text ID."""
+
+    column_id: str
+    label: str
+    bounds: tuple[float, float, float, float]
 
 
 @dataclass(frozen=True)
@@ -235,6 +248,7 @@ class SceneManifest:
     font_asset_identities: tuple[str, ...]
     content_family_counts: ContentFamilyCounts
     surface_scales: tuple[SurfaceScaleManifest, ...]
+    visual_role_counts: tuple[tuple[str, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -248,21 +262,25 @@ class SceneSurface:
     scale_manifest: SurfaceScaleManifest | None
     primitives: tuple[ScenePrimitive, ...] = ()
     canvas_paint: ScenePaint | None = None
+    columns: tuple[SceneColumn, ...] = ()
 
 
 @dataclass(frozen=True)
-class PresentationScene:
-    title: str
-    window: tuple[date, date]
-    axes: tuple[AxisInterval, ...]
-    ticks: tuple[AxisInterval, ...]
-    marks: tuple[ComparisonMark, ...]
-    lanes: tuple[LaneAssignment, ...]
-    lane_tracks: tuple[LaneTrack, ...]
-    primitives: tuple[ScenePrimitive, ...]
-    slots: tuple[SceneSlot, ...]
-    rows: tuple[SceneRow, ...]
-    groups: tuple[SceneGroup, ...]
+class SceneProvenance:
+    """Immutable render closure evidence for an inspection-only Scene."""
+
+    mode: str
+    chrona_version: str
+    resources: tuple[tuple[str, str, str, str], ...]
+
+
+@dataclass(frozen=True)
+class InspectionScene:
+    """The one completed runtime Scene exposed to adapters and inspection tooling."""
+
+    provenance: SceneProvenance
+    viewport: tuple[float, float]
+    required_capabilities: tuple[str, ...]
     surfaces: tuple[SceneSurface, ...]
     manifest: SceneManifest
     diagnostics: tuple[str, ...]

@@ -98,6 +98,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("memberLabelInsideSnapshot", "label", "member-label", "member-label-inside-snapshot", "member-label-inside-snapshot"),
     _binding("memberLabelInsideScenario", "label", "member-label", "member-label-inside-scenario", "member-label-inside-scenario"),
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
+    _binding("varianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
+    _binding("varianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
     _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text"),
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
@@ -107,6 +109,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
     # Legend, notes and annotations.
     _binding("legendEntry", "decoration", "legend-swatch", "legend-swatch", "legend"),
+    _binding("scaleLegendEntry", "decoration", "legend-swatch", "planned", "planned"),
     _binding("legendLabel", "label", "legend-label", "text", "legend"),
     _binding("projectNote", "label", "project-note", "text", "annotation"),
     _binding("noteIndex", "label", "note-index", "note-index", "note-index"),
