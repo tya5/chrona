@@ -63,3 +63,17 @@ entries:
     comparison: {set: halcyon-mission-brief-appearance, dimension: appearance, axis: colour scheme}
     target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
     accessibility: {note: Semantic labels and table structure remain present without colour distinction.}
+  - id: halcyon-tvac-scenario
+    corpus: halcyon-1
+    slide: tvac-slip
+    narrative: {title: TVAC slip scenario, audience: programme office, purpose: Investigate the primary plan under the declared TVAC slip scenario.}
+    comparison: {set: halcyon-investigating-slip, dimension: content, axis: comparison baseline}
+    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
+    accessibility: {note: Scenario differences remain expressed in structured labels and comparison facets.}
+  - id: halcyon-replan-baseline
+    corpus: halcyon-1
+    slide: replan-baseline
+    narrative: {title: Captured replan baseline, audience: programme office, purpose: Investigate the same programme against its pinned June baseline.}
+    comparison: {set: halcyon-investigating-slip, dimension: content, axis: comparison baseline}
+    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
+    accessibility: {note: Baseline comparison remains expressed in structured labels and comparison facets.}

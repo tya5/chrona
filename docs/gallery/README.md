@@ -8,6 +8,7 @@ Generated from declared corpus evidence; it is not a renderer or an authoring in
 | --- | --- | --- |
 | [comparison focus](sets/controller-z-executive-status.md) | `content` | 2 |
 | [visual treatment](sets/controller-z-treatment-ladder.md) | `appearance` | 2 |
+| [comparison baseline](sets/halcyon-investigating-slip.md) | `content` | 2 |
 | [colour scheme](sets/halcyon-mission-brief-appearance.md) | `appearance` | 3 |
 | [surface](sets/halcyon-two-surfaces.md) | `content` | 2 |
 
