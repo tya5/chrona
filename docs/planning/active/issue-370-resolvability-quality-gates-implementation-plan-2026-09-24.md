@@ -21,10 +21,11 @@ run the slice acceptance, and push serially.
 
 **Work:** Implement conservative AST extraction of literal diagnostic
 constructions, stable source anchors, layer attribution, detail-bearing call
-shapes, deterministic Markdown rendering, and `--check`.  Add exact
-per-construction bare-ingress classifications.  Replace unjustified bare
-ingress exceptions with details owned by their existing detecting boundary;
-do not add code-wide exemptions.
+shapes, deterministic Markdown rendering, and `--check`.  Add exact per-code
+bare-ingress classifications, with the report retaining every bare site.
+Replace unjustified bare ingress exceptions with details owned by their
+existing detecting boundary; a code is allowlisted only when its identifier is
+the complete message across every bare ingress use.
 
 **Acceptance:** the report is byte-current; a newly introduced bare ingress
 construction and a stale/missing policy entry fail focused tests; an internal
