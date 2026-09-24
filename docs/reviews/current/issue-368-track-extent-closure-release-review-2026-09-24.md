@@ -6,6 +6,8 @@ point-milestone placement checks; the surface composer applies its maximum to
 the uniform row allocator. This eliminates duplicated multipliers and the
 aggregate-versus-uniform-row mismatch.
 
-Evidence: direct multi-lane milestone boundary test, Draft auto/fixed render
-coverage, public materializer checks (28 passed), focused Layout/render checks
-(52 passed), import-direction gate, and three-OS CI.
+Evidence: the public three-lane point-milestone fixture proves Draft `auto`
+succeeds, while fixed 392px rejects and the one-pixel-larger 393px surface
+materializes. The focused Layout/render checks pass (31 passed), public
+materializer checks pass (22 passed), and the import-direction gate and
+three-OS CI remain required release gates.
