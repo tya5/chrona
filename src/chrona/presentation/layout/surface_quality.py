@@ -240,6 +240,7 @@ class IconPlacement:
     icon_id: str
     kind: str
     asset_identity: str
+    viewport: tuple[int, int]
     payload: Any
     alternative: str
     decorative: bool

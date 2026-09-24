@@ -39,6 +39,7 @@ def test_icon_requires_exact_v07_profile_before_adapter():
     icon = ScenePrimitive("i", "Icon", "risk", "object", "icon-mark", "planned", (0, 0, 1, 1),
                           paint=ScenePaint("#111111", None, None, (), 1), icon_kind="vector",
                           icon_asset_identity="sha256:" + "a" * 64,
+                          icon_viewport=(24, 24),
                           visual_capability_source_ref="/body/iconBindings/0")
     surface = SceneSurface("s", (), (), (), None, (icon,), ScenePaint("#fff", None, None, (), 1))
     with pytest.raises(VisualCapabilityError, match="E_VISUAL_CAPABILITY_UNSUPPORTED") as error:

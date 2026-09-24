@@ -153,6 +153,7 @@ class ScenePrimitive:
     link_title: str | None = None
     icon_kind: str | None = None
     icon_asset_identity: str | None = None
+    icon_viewport: tuple[int, int] | None = None
     icon_vector: NormalizedVectorIcon | None = None
     icon_paths: tuple[SceneIconPath, ...] = ()
     icon_raster: bytes | None = None
@@ -172,7 +173,11 @@ class ScenePrimitive:
                 or (self.purpose == "table-cell" and self.table_column_id is None)
                 or (self.purpose != "table-cell" and self.table_row_id is not None)
                 or (self.purpose not in {"table-cell", "table-column-label"}
-                    and self.table_column_id is not None)):
+                    and self.table_column_id is not None)
+                or (self.kind == "Icon" and (self.icon_kind not in {"vector", "raster"}
+                                               or self.icon_viewport is None
+                                               or any(item <= 0 for item in self.icon_viewport)))
+                or (self.kind != "Icon" and self.icon_viewport is not None)):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 @dataclass(frozen=True)

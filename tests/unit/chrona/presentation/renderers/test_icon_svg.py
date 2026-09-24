@@ -11,7 +11,7 @@ def test_svg_serializes_completed_vector_icon_without_source_svg():
                           paint=ScenePaint("#123456", None, None, (), 1.0), icon_kind="vector",
                           icon_asset_identity="sha256:" + "a" * 64, icon_paths=(SceneIconPath(
                               (("move", ((1, 2),)), ("line", ((13, 14),)), ("close", ())), "#123456", None, None),),
-                          icon_alternative="Risk", icon_decorative=False)
+                          icon_alternative="Risk", icon_decorative=False, icon_viewport=(24, 24))
     svg = render_v05_svg(_surface(icon), viewport=(24, 24))
     assert 'data-asset-identity="sha256:' in svg and 'aria-label="Risk"' in svg and "M1 2L13 14Z" in svg
 
@@ -21,7 +21,7 @@ def test_svg_serializes_completed_stroke_icon_path_with_layout_scale():
                           paint=ScenePaint("#123456", None, None, (), 1.0), icon_kind="vector",
                           icon_asset_identity="sha256:" + "a" * 64, icon_paths=(SceneIconPath(
                               (("move", ((1, 2),)), ("line", ((13, 14),))), None, "#123456", 1.0, "round", "bevel"),),
-                          icon_alternative="Risk", icon_decorative=False)
+                          icon_alternative="Risk", icon_decorative=False, icon_viewport=(24, 24))
     svg = render_v05_svg(_surface(icon), viewport=(24, 24))
     assert 'fill="none"' in svg and 'stroke="#123456"' in svg and 'stroke-width="1"' in svg
     assert 'stroke-linecap="round"' in svg and 'stroke-linejoin="bevel"' in svg

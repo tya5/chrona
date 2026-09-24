@@ -464,6 +464,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         icon_binding = semantic_binding(placed.semantic_id)
         primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.ICON, placed.source_ref, "object", icon_binding.purpose, icon_binding.scene_role, bounds,
                                          icon_kind=placed.kind, icon_asset_identity=placed.asset_identity,
+                                         icon_viewport=placed.viewport,
                                          icon_vector=placed.payload if placed.kind == "vector" else None,
                                          icon_raster=placed.payload if placed.kind == "raster" else None,
                                          icon_alternative=placed.alternative, icon_decorative=placed.decorative,
