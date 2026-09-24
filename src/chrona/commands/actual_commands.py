@@ -100,7 +100,7 @@ class LocalActualStore:
     def write(self, expected_revision: str, actual_set: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
         if expected_revision != self._revision or actual_set.get("id") != self.actual_set_id:
             return None
-        counter = int(json.loads(self.tip.read_text())["counter"]) + 1
+        counter = int(json.loads(self.tip.read_text(encoding="utf-8"))["counter"]) + 1
         self._revision, self._actual_set = self._persist(actual_set, counter)
         return self.read()
 

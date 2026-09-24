@@ -6,9 +6,9 @@ import re
 import yaml
 
 DOCS = Path(__file__).resolve().parents[1] / "docs"
-MATRIX = yaml.safe_load((DOCS / "traceability" / "design-usecase-milestone-v0.1.yaml").read_text())
-CATALOG = (DOCS / "specification" / "14-use-case-catalog.md").read_text()
-ROADMAP = (DOCS / "planning" / "active" / "product-delivery-roadmap.md").read_text()
+MATRIX = yaml.safe_load((DOCS / "traceability" / "design-usecase-milestone-v0.1.yaml").read_text(encoding="utf-8"))
+CATALOG = (DOCS / "specification" / "14-use-case-catalog.md").read_text(encoding="utf-8")
+ROADMAP = (DOCS / "planning" / "active" / "product-delivery-roadmap.md").read_text(encoding="utf-8")
 
 
 def fail(message: str) -> None:

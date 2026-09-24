@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
 DOCS = REPO / "docs"
-plan = (DOCS / "archive" / "planning" / "whole-design-recompletion-plan-2026-09-19.md").read_text()
+plan = (DOCS / "archive" / "planning" / "whole-design-recompletion-plan-2026-09-19.md").read_text(encoding="utf-8")
 required = {
     "WD-1": "docs/archive/reviews/wd-1-wd-4-delivery-state-review-2026-09-19.md",
     "WD-2a": "docs/archive/reviews/wd-2a-command-registry-closure-review-2026-09-19.md",

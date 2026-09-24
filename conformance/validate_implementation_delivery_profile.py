@@ -12,8 +12,8 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from chrona.scheduling.scheduler import schedule
 
 ROOT = Path(__file__).resolve().parent
-SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "profile-v0.2.schema.yaml").read_text())
-RESOURCE_SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml").read_text())
+SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "profile-v0.2.schema.yaml").read_text(encoding="utf-8"))
+RESOURCE_SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml").read_text(encoding="utf-8"))
 EXPECTED = {
     "implementation-delivery.work-item": "task",
     "implementation-delivery.delivery-gate": "milestone",
@@ -61,7 +61,7 @@ def diagnose(data):
 
 
 def fixture_diagnostics(name):
-    data = yaml.safe_load((ROOT / name).read_text())
+    data = yaml.safe_load((ROOT / name).read_text(encoding="utf-8"))
     schema_errors = list(Draft202012Validator(SCHEMA).iter_errors(data))
     if schema_errors:
         raise AssertionError("schema failure: " + "; ".join(error.message for error in schema_errors))
@@ -69,7 +69,7 @@ def fixture_diagnostics(name):
 
 
 def check_state_isolation():
-    data = yaml.safe_load((ROOT / "implementation-delivery-state-isolation-v0.1.yaml").read_text())
+    data = yaml.safe_load((ROOT / "implementation-delivery-state-isolation-v0.1.yaml").read_text(encoding="utf-8"))
     expected = data["expectedPlacement"]
     placements = []
     for state in data["states"]:
@@ -84,7 +84,7 @@ def check_state_isolation():
 
 
 def check_evidence_references():
-    cases = yaml.safe_load((ROOT / "implementation-delivery-evidence-v0.1.yaml").read_text())["cases"]
+    cases = yaml.safe_load((ROOT / "implementation-delivery-evidence-v0.1.yaml").read_text(encoding="utf-8"))["cases"]
     allowed_kinds = {"artifacts": "delivery-artifact", "acceptanceEvidence": "delivery-acceptance-evidence"}
     for case in cases:
         diagnostics = []
@@ -101,7 +101,7 @@ def check_evidence_references():
 
 
 def check_self_hosted_roadmap():
-    project = yaml.safe_load((ROOT / "implementation-delivery-roadmap-v0.1.yaml").read_text())
+    project = yaml.safe_load((ROOT / "implementation-delivery-roadmap-v0.1.yaml").read_text(encoding="utf-8"))
     expected = project.pop("expectedPlacements")
     if project["extensions"][0]["packageId"] != "implementation-delivery":
         raise AssertionError("roadmap does not resolve the standard package")

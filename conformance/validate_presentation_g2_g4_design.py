@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent
-case = yaml.safe_load((ROOT / "presentation-g2-g4-design-v0.1.yaml").read_text())
+case = yaml.safe_load((ROOT / "presentation-g2-g4-design-v0.1.yaml").read_text(encoding="utf-8"))
 
 assert len(case["positive"]["projects"]) == 2
 assert any(len(label["text"]) >= 48

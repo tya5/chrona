@@ -10,6 +10,7 @@ from typing import Any
 from pathlib import Path
 
 from chrona.core.ports import SnapshotReadError
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _canonical(value: Any) -> bytes:
@@ -195,9 +196,18 @@ class LocalSnapshotReader:
             raise SnapshotReadError("E_STORE_REFERENCE")
         token = reference.get("revision", {}).get("token", "")
         address = reference.get("address", "")
-        if not token or not address or token in {"Draft", "draft"} or "/" in token or ".." in address.split("/"):
+        if (
+            not token
+            or not address
+            or address.startswith("/")
+            or "\\" in address
+            or ".." in address.split("/")
+        ):
             raise SnapshotReadError("E_IMMUTABLE_SNAPSHOT_REQUIRED")
-        path = self.root / token / address
+        try:
+            path = snapshot_directory(self.root, token) / address
+        except ValueError as error:
+            raise SnapshotReadError(str(error)) from error
         if not path.is_file():
             raise SnapshotReadError("E_STORE_REFERENCE")
         payload = path.read_bytes()

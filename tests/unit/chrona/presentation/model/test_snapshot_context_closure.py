@@ -6,11 +6,12 @@ import yaml
 import chrona.presentation.model.closure as closure
 from chrona.presentation.contracts import RenderContextContract, RenderEnvironment, RenderTarget, ResourceReference, freeze
 from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _write(root, token, address, value):
     payload = yaml.safe_dump(value, sort_keys=True).encode()
-    path = root / token / address
+    path = snapshot_directory(root, token) / address
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(payload)
     return {"id": value.get("id", value.get("project", {}).get("id")), "kind": value.get("kind", "project"),

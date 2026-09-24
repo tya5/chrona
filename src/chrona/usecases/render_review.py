@@ -38,6 +38,7 @@ from chrona.presentation.scene.visual_capabilities import (
     visual_capability_message,
 )
 from chrona.presentation.renderers.registry import renderer_for
+from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.core.scenarios import resolve_scenario, ScenarioError
 from chrona.core.scenarios import ScenarioProvenance
 
@@ -147,7 +148,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         ledger.snapshot()
 
     environment = render_closure.context.environment
-    asset_root = request.asset_root or request.snapshot_root / render_closure.context.theme.revision_token
+    asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.theme.revision_token)
     font_metrics = _font_metrics(theme, environment.font_metrics, asset_root)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,

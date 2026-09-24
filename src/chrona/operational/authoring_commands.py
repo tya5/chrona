@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-import fcntl
 from hashlib import sha256
 import json
 import os
@@ -109,12 +108,38 @@ def _relative(name: str) -> bool:
 @contextmanager
 def _aggregate_lock(path: Path):
     lock = path.with_name(f".{path.name}.authoring.lock")
-    with lock.open("a", encoding="utf-8") as handle:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+    with lock.open("a+b") as handle:
+        _lock_file(handle)
         try:
             yield
         finally:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            _unlock_file(handle)
+
+
+def _lock_file(handle: Any) -> None:
+    """Acquire the one-byte advisory aggregate lock on the active platform."""
+    if os.name == "nt":
+        import msvcrt
+        handle.seek(0)
+        if not handle.read(1):
+            handle.seek(0)
+            handle.write(b"\0")
+            handle.flush()
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        return
+    import fcntl
+    fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+
+
+def _unlock_file(handle: Any) -> None:
+    if os.name == "nt":
+        import msvcrt
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        return
+    import fcntl
+    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def _transaction_marker(path: Path) -> Path:

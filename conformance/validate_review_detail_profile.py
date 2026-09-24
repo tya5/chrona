@@ -30,8 +30,8 @@ def diagnostics(profile):
 
 
 def main():
-    schema = yaml.safe_load((REPO / "schemas/review-detail-profile-v0.1.schema.yaml").read_text())
-    fixture = yaml.safe_load((REPO / "conformance/review-detail-profile-v0.1.yaml").read_text())
+    schema = yaml.safe_load((REPO / "schemas/review-detail-profile-v0.1.schema.yaml").read_text(encoding="utf-8"))
+    fixture = yaml.safe_load((REPO / "conformance/review-detail-profile-v0.1.yaml").read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
     validator = Draft202012Validator(schema)
     validator.validate(fixture)

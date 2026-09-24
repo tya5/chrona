@@ -11,7 +11,7 @@ jobs:
   conformance:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -26,10 +26,12 @@ jobs:
       - run: python tools/check_scene_primitive_delivery.py
       - run: python tools/check_view_dispatch_reachability.py
       - run: python tools/check_import_direction.py
+      - run: python tools/check_text_encoding.py
       - run: pytest -n 4
       - run: python -m pip wheel . --no-deps -w dist
       - run: python -m pip install --force-reinstall --no-deps dist/*.whl
       - name: Smoke-test installed wheel outside the checkout
+        shell: bash
         run: |
           smoke_dir="$(mktemp -d)"
           cd "$smoke_dir"

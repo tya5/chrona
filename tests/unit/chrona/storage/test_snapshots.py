@@ -1,5 +1,6 @@
 from chrona.storage.revision_store import MemoryRevisionStore
 from chrona.storage.snapshots import LocalBaselineRegistry, MemorySnapshotStore, capture_baseline_v02, capture_snapshot
+import chrona.storage.snapshots as snapshots
 
 
 def _project():
@@ -40,6 +41,13 @@ def test_v02_capture_is_append_only_and_registry_reference_is_verifiable(tmp_pat
     assert result.status == "accepted"
     assert registry.read(result.snapshot_ref)
     assert capture_baseline_v02(project_store, project.revision, _reference(project), "q2", registry).diagnostics == ("E_BASELINE_EXISTS",)
+
+
+def test_v02_capture_does_not_require_hard_link_support(tmp_path, monkeypatch):
+    monkeypatch.setattr(snapshots.os, "link", lambda *_args: (_ for _ in ()).throw(OSError("unsupported")))
+    project_store = MemoryRevisionStore(_project())
+    result = capture_baseline_v02(project_store, project_store.read().revision, _reference(project_store.read()), "q2", LocalBaselineRegistry(tmp_path, "baselines"))
+    assert result.status == "accepted"
 
 
 def test_v02_capture_rejects_stale_or_mismatched_project_reference(tmp_path):

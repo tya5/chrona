@@ -34,7 +34,13 @@ python -m pip install -e '.[dev,render]'
 pytest
 chrona validate path/to/project.yaml
 chrona schedule path/to/project.yaml
+python -m chrona validate path/to/project.yaml
 ```
+
+On Windows, `python -m chrona` is equivalent to the installed `chrona` command
+and avoids depending on the virtual environment's `Scripts` directory being on
+`PATH`. Contributors should retain the repository's `.gitattributes`; it pins
+LF checkout bytes for identity-bound YAML, JSON, SVG, and schema resources.
 
 `validate` and `schedule` also accept an immutable local snapshot instead of a
 raw Draft path:

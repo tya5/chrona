@@ -1,9 +1,12 @@
 from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
+import sys
 
 import yaml
 
 from chrona.usecases.authoring_commands import apply_authoring_command
+import chrona.operational.authoring_commands as authoring_commands
 from chrona.operational.authoring_commands import _bytes_identity, _transaction_marker, _write_marker, cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import content_identity
 
@@ -34,6 +37,18 @@ def test_authoring_command_updates_one_task_with_a_new_content_revision(tmp_path
     assert result["status"] == "accepted"
     assert result["resultRevision"] != result["baseRevision"]
     assert yaml.safe_load(path.read_text())["body"]["project"]["tasks"][0]["title"] == "Renamed"
+
+
+def test_aggregate_lock_uses_lazy_windows_adapter_without_fcntl(tmp_path, monkeypatch):
+    calls = []
+    fake = SimpleNamespace(LK_LOCK=1, LK_UNLCK=2,
+                           locking=lambda descriptor, mode, length: calls.append((descriptor, mode, length)))
+    monkeypatch.setattr(authoring_commands.os, "name", "nt")
+    monkeypatch.setitem(sys.modules, "msvcrt", fake)
+    with (tmp_path / "workspace.yaml").open("a+b") as handle:
+        authoring_commands._lock_file(handle)
+        authoring_commands._unlock_file(handle)
+    assert [mode for _, mode, _ in calls] == [fake.LK_LOCK, fake.LK_UNLCK]
 
 
 def test_stale_or_illegal_command_leaves_workspace_bytes_unchanged(tmp_path):

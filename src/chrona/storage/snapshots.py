@@ -65,14 +65,21 @@ class LocalBaselineRegistry:
         target = self.root / "snapshots" / f"{snapshot_id}.yaml"
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+        reserved_target = False
         try:
             with temporary.open("xb") as handle:
                 handle.write(payload)
-            os.link(temporary, target)
+            with target.open("xb"):
+                pass
+            reserved_target = True
+            temporary.replace(target)
+            reserved_target = False
         except FileExistsError:
             return None
         finally:
             temporary.unlink(missing_ok=True)
+            if reserved_target:
+                target.unlink(missing_ok=True)
         return {"id": snapshot_id, "kind": "snapshot-ref", "store": {"provider": "local", "identity": self.identity}, "address": f"snapshots/{snapshot_id}.yaml", "revision": {"token": f"baseline:{digest}"}, "contentIdentity": f"sha256:{digest}"}
 
     def read(self, reference: dict[str, Any]) -> bytes:

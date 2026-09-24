@@ -63,7 +63,7 @@ def main() -> int:
     orphans = sorted(name for name in set(found) - reached - staged if not is_package(found[name]))
     revived = sorted(name for name in staged if name in reached)
     for name in orphans:
-        print(f"unreachable: {name} ({len(found[name].read_text().splitlines())} lines)")
+        print(f"unreachable: {name} ({len(found[name].read_text(encoding="utf-8").splitlines())} lines)")
     for name in revived:
         print(f"listed as staged but now reachable: {name}")
     if orphans or revived:

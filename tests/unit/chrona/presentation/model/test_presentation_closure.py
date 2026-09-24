@@ -6,6 +6,7 @@ import yaml
 
 from chrona.presentation.model.closure import ClosureError, resolve_render_context
 from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _ref(kind, identifier, address, payload, token="snapshot-1"):
@@ -14,7 +15,7 @@ def _ref(kind, identifier, address, payload, token="snapshot-1"):
 
 def _write(root: Path, address: str, value: dict, token="snapshot-1"):
     payload = yaml.safe_dump(value, sort_keys=True).encode()
-    path = root / token / address
+    path = snapshot_directory(root, token) / address
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(payload)
     return payload

@@ -17,6 +17,7 @@ from chrona.resources import safe_load
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
 
 
@@ -70,7 +71,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
     payload = _reference_payload(example, reference)
     if reference.get("contentIdentity") not in (None, _identity(payload)):
         raise ValueError("E_CONTENT_IDENTITY")
-    target = _inside(snapshot / (target_token or token), address)
+    target = _inside(snapshot_directory(snapshot, target_token or token), address)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(payload)
     if reference.get("kind") == "snapshot-ref":
@@ -109,7 +110,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
             payload = source_path.read_bytes()
         if expected != _identity(payload):
             raise ValueError("E_ICON_ASSET_IDENTITY")
-        target = _inside(snapshot / token, asset_address)
+        target = _inside(snapshot_directory(snapshot, token), asset_address)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(payload)
     return catalog
@@ -152,7 +153,7 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
             icon_catalog["store"] = body["project"]["store"]
             icon_catalog["revision"] = body["project"]["revision"]
     raw = yaml.safe_dump(context, sort_keys=False).encode()
-    destination = snapshot / revision
+    destination = snapshot_directory(snapshot, revision)
     target = _inside(destination, context_path.relative_to(example).as_posix())
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(raw)
@@ -177,7 +178,7 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
 
 def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool = False) -> MaterializationResult:
     example = manifest_path.parent.resolve()
-    manifest = safe_load(manifest_path.read_text())
+    manifest = safe_load(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("version") != "chrona/example-materializer/v0.1" or manifest.get("role") != "regression-corpus":
         raise ValueError("E_MATERIALIZER_MANIFEST")
     slide = next((item for item in manifest.get("slides", ()) if item.get("id") == slide_id), None)
@@ -207,7 +208,7 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
                     for item in rendered.scenario_provenance
                 ],
             }
-        (output / "closure.yaml").write_text(yaml.safe_dump(evidence, sort_keys=True))
+        (output / "closure.yaml").write_text(yaml.safe_dump(evidence, sort_keys=True), encoding="utf-8")
         if write:
             expected.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(derived, expected)
         elif not expected.is_file() or derived.read_bytes() != expected.read_bytes():

@@ -7,10 +7,24 @@ import pytest
 import yaml
 from PIL import Image
 
+from chrona.presentation.model.closure import resolve_render_context
+from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.storage.revision_store import ProjectSnapshot
+from chrona.storage.snapshot_paths import snapshot_directory
+from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
+from chrona.usecases.materialize import copy_context_closure
 from tools.materialize_example import _copy_context_closure, materialize
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+class _FixedProjectStore:
+    def __init__(self, snapshot: ProjectSnapshot):
+        self.snapshot = snapshot
+
+    def read(self) -> ProjectSnapshot:
+        return self.snapshot
 
 
 def test_declared_examples_reproduce_by_public_cli(tmp_path):
@@ -98,10 +112,43 @@ def test_materializer_preserves_authored_context_bytes_and_pins(tmp_path):
 
     reference, revision = _copy_context_closure(example, context_path, snapshot)
 
-    copied = snapshot / revision / "contexts/01-overview.yaml"
+    copied = snapshot_directory(snapshot, revision) / "contexts/01-overview.yaml"
     assert copied.read_bytes() == context_path.read_bytes()
     assert reference["contentIdentity"] == "sha256:" + sha256(context_path.read_bytes()).hexdigest()
     assert yaml.safe_load(copied.read_text()) == yaml.safe_load(context_path.read_text())
+
+
+def test_baseline_capture_materializes_a_context_through_its_windows_safe_token(tmp_path):
+    example = tmp_path / "controller-z"
+    shutil.copytree(ROOT / "examples/controller-z", example)
+    project_path = example / "project.yaml"
+    project_payload = project_path.read_bytes()
+    project = yaml.safe_load(project_payload)
+    identity = "controller-z-example"
+    project_ref = {
+        "id": project["project"]["id"], "kind": "project",
+        "store": {"provider": "local", "identity": identity}, "address": "project.yaml",
+        "revision": {"token": "example-v1"},
+    }
+    captured = capture_baseline_v02(
+        _FixedProjectStore(ProjectSnapshot("example-v1", "sha256:" + sha256(project_payload).hexdigest(), project)),
+        "example-v1", project_ref, "q2", LocalBaselineRegistry(example, identity),
+    )
+    assert captured.status == "accepted"
+
+    context_path = example / "contexts/executive.yaml"
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    context["body"]["inputs"]["snapshot"] = captured.snapshot_ref
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+
+    snapshot = tmp_path / "snapshot"
+    reference, revision = copy_context_closure(example, context_path, snapshot)
+
+    token = captured.snapshot_ref["revision"]["token"]
+    assert (snapshot_directory(snapshot, token) / "snapshots/q2.yaml").is_file()
+    assert (snapshot_directory(snapshot, revision) / "contexts/executive.yaml").is_file()
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, identity))
+    assert any(resource.kind == "snapshot-project" for resource in closure.resources)
 
 
 def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
@@ -122,7 +169,7 @@ def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
         snapshot = tmp_path / str(index)
         snapshot.mkdir()
         reference, revision = _copy_context_closure(example, example / relative, snapshot)
-    assert reference["id"] == yaml.safe_load((snapshot / revision / relative).read_text())["id"]
+    assert reference["id"] == yaml.safe_load((snapshot_directory(snapshot, revision) / relative).read_text())["id"]
 
 
 def test_materializer_copies_only_declared_icon_assets(tmp_path):
@@ -135,8 +182,8 @@ def test_materializer_copies_only_declared_icon_assets(tmp_path):
     context_path.write_text(yaml.safe_dump(context, sort_keys=False))
     snapshot = tmp_path / "snapshot"; snapshot.mkdir()
     _, revision = _copy_context_closure(copied, context_path, snapshot)
-    assert (snapshot / revision / "assets/programme-mark.png").read_bytes() == (copied / "assets/programme-mark.png").read_bytes()
-    assert not (snapshot / revision / "assets/risk.svg").exists()
+    assert (snapshot_directory(snapshot, revision) / "assets/programme-mark.png").read_bytes() == (copied / "assets/programme-mark.png").read_bytes()
+    assert not (snapshot_directory(snapshot, revision) / "assets/risk.svg").exists()
 
 
 def test_public_icon_evidence_is_bounded_and_decodes_its_purpose_built_raster(tmp_path):
@@ -226,7 +273,7 @@ def test_materializer_closes_a_declared_local_font_pair_before_packaged_assets(t
                  "font": {"path": "assets/font.ttf", "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()}}]
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
     reference, revision = _copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
-    assert (tmp_path / "snapshot" / revision / "assets/font.ttf").read_bytes() == font_target.read_bytes()
+    assert (snapshot_directory(tmp_path / "snapshot", revision) / "assets/font.ttf").read_bytes() == font_target.read_bytes()
     assert reference["id"] == "controller-z-executive"
 
 

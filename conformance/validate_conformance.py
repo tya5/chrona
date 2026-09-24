@@ -43,7 +43,7 @@ def apply_work(d, n, cal):
 
 def main():
     path=Path(__file__).with_name("conformance-v0.1.yaml")
-    data=yaml.safe_load(path.read_text())
+    data=yaml.safe_load(path.read_text(encoding="utf-8"))
     failures=[]
     for case in data["temporal"]["calendar_period"]:
         if "input" not in case: continue

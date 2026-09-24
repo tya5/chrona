@@ -22,7 +22,7 @@ def live_versions(schema_root: Path, inventory_path: Path) -> set[str]:
     for entry in validate_inventory(schema_root, inventory_path):
         if entry["state"] != "live":
             continue
-        schema = yaml.safe_load((schema_root / entry["file"]).read_text())
+        schema = yaml.safe_load((schema_root / entry["file"]).read_text(encoding="utf-8"))
         const = schema.get("properties", {}).get("version", {}).get("const")
         if isinstance(const, str):
             values.add(const)
@@ -32,7 +32,7 @@ def live_versions(schema_root: Path, inventory_path: Path) -> set[str]:
 def validate_specifications(specification_root: Path, schema_root: Path, inventory_path: Path) -> None:
     live = live_versions(schema_root, inventory_path)
     for path in sorted(specification_root.glob("*.md")):
-        lines = path.read_text().splitlines()
+        lines = path.read_text(encoding="utf-8").splitlines()
         for number, line in enumerate(lines):
             match = VERSION.match(line)
             if not match:

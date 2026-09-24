@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 
 
 def load(path: Path):
-    return yaml.safe_load(path.read_text())
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
 def main() -> int:

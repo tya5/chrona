@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 import yaml
 from chrona.usecases.materialize import copy_context_closure, materialize as _materialize
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _inside(root: Path, relative: str) -> Path:
@@ -41,7 +42,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path) ->
     source = _inside(example, address)
     payload = source.read_bytes()
     _verify_identity(reference, payload)
-    target = _inside(snapshot / token, address)
+    target = _inside(snapshot_directory(snapshot, token), address)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(payload)
     if reference.get("kind") == "snapshot-ref":
@@ -63,7 +64,7 @@ def _legacy_copy_context_closure(example: Path, context_path: Path, snapshot: Pa
     for item in references:
         _copy_reference(example, item, snapshot)
 
-    destination = snapshot / revision
+    destination = snapshot_directory(snapshot, revision)
     context_target = _inside(destination, context_path.relative_to(example).as_posix())
     context_target.parent.mkdir(parents=True, exist_ok=True)
     context_target.write_bytes(raw)
@@ -88,7 +89,7 @@ def _legacy_copy_context_closure(example: Path, context_path: Path, snapshot: Pa
 
 def _legacy_materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool) -> None:
     example = manifest_path.parent.resolve()
-    manifest = yaml.safe_load(manifest_path.read_text())
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("version") != "chrona/example-materializer/v0.1":
         raise ValueError("E_MATERIALIZER_MANIFEST")
     slide = next((item for item in manifest.get("slides", ()) if item.get("id") == slide_id), None)
@@ -104,7 +105,7 @@ def _legacy_materialize(manifest_path: Path, slide_id: str, output: Path, *, wri
         context_path = _inside(example, str(slide.get("context", manifest["context"])))
         reference, _ = _legacy_copy_context_closure(example, context_path, snapshot)
         ref_path = Path(temporary) / "context-ref.yaml"
-        ref_path.write_text(yaml.safe_dump(reference, sort_keys=False))
+        ref_path.write_text(yaml.safe_dump(reference, sort_keys=False), encoding="utf-8")
         derived = output / "review.svg"
         command = [sys.executable, "-c", "from chrona.app.cli import main; main()", "render-review",
                    "--context-reference", str(ref_path), "--snapshot-root", str(snapshot),
@@ -113,7 +114,7 @@ def _legacy_materialize(manifest_path: Path, slide_id: str, output: Path, *, wri
         completed = subprocess.run(command, check=False, text=True, capture_output=True)
         if completed.returncode:
             raise ValueError("E_MATERIALIZER_RENDER:" + completed.stdout)
-        (output / "closure.yaml").write_text(yaml.safe_dump(reference, sort_keys=True))
+        (output / "closure.yaml").write_text(yaml.safe_dump(reference, sort_keys=True), encoding="utf-8")
         if write:
             expected.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(derived, expected)

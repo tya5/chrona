@@ -2,6 +2,7 @@ import json
 from hashlib import sha256
 from pathlib import Path
 import sys
+import subprocess
 from types import SimpleNamespace
 
 import yaml
@@ -10,11 +11,12 @@ import pytest
 import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
 from chrona.scheduling.scheduler import schedule
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
     payload = payload if payload is not None else yaml.safe_dump(value, sort_keys=True).encode()
-    path = root / token / address
+    path = snapshot_directory(root, token) / address
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(payload)
     return {
@@ -23,6 +25,12 @@ def _snapshot_resource(root, token, address, value, kind, identifier, identity="
         "address": address, "revision": {"token": token},
         "contentIdentity": "sha256:" + sha256(payload).hexdigest(),
     }
+
+
+def test_python_module_entry_point_exposes_the_cli():
+    completed = subprocess.run([sys.executable, "-m", "chrona", "--help"], text=True, capture_output=True, check=False)
+    assert completed.returncode == 0
+    assert "chrona" in completed.stdout
 
 
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
@@ -357,8 +365,8 @@ def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path
     }
     payload = yaml.safe_dump(project).encode()
     token = "snapshot-1"
-    (tmp_path / token).mkdir()
-    (tmp_path / token / "project.yaml").write_bytes(payload)
+    snapshot_directory(tmp_path, token).mkdir()
+    (snapshot_directory(tmp_path, token) / "project.yaml").write_bytes(payload)
     reference = {
         "kind": "project",
         "store": {"provider": "local", "identity": "cli-test"},
@@ -424,6 +432,13 @@ def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkey
     with pytest.raises(SystemExit) as exited:
         main()
     assert exited.value.code == 2
+
+
+def test_cli_result_write_does_not_require_hard_link_support(tmp_path, monkeypatch):
+    monkeypatch.setattr(cli.os, "link", lambda *_args: (_ for _ in ()).throw(OSError("unsupported")))
+    destination = tmp_path / "result.json"
+    cli._write_result(destination, {"status": "accepted"})
+    assert json.loads(destination.read_text(encoding="utf-8")) == {"status": "accepted"}
 
 
 def test_cli_command_check_writes_non_mutating_result(tmp_path, monkeypatch):
@@ -530,10 +545,10 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     font_assets = []
     for weight, name, face in ((400, "noto-sans-cjk-jp-regular-v1.json", "regular"), (700, "noto-sans-cjk-jp-bold-v1.json", "bold")):
         metrics_payload = (font_root / "font_metrics" / name).read_bytes()
-        metrics_path = tmp_path / token / "font_metrics" / name
+        metrics_path = snapshot_directory(tmp_path, token) / "font_metrics" / name
         metrics_path.parent.mkdir(parents=True, exist_ok=True); metrics_path.write_bytes(metrics_payload)
         font_payload = (font_root / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf").read_bytes()
-        font_path = tmp_path / token / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
+        font_path = snapshot_directory(tmp_path, token) / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
         font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
         font_assets.append({"family": "Noto Sans CJK JP", "weight": weight,
                             "metrics": {"path": f"font_metrics/{name}", "contentIdentity": "sha256:" + sha256(metrics_payload).hexdigest()},
