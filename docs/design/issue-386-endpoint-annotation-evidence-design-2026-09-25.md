@@ -46,7 +46,10 @@ The chosen ordering and long enough texts require the second box/leader to
 avoid the first box.  The committed SVG proves the resolved route rather than
 asserting router behavior in prose.  The View-level source references remain
 object/facet/endpoint identities, so no coordinate is authored.  Layout owns
-the rail allocation before either box is measured.
+the rail allocation before either box is measured.  `callout` and
+`explanatory-arrow` share the View-declared annotation fallback ladder, so an
+endpoint explanatory arrow can select the rail without a renderer-specific
+placement mode.
 
 ## 3. Ownership flow
 

@@ -9,7 +9,8 @@
 Add focused Layout and Scene-projection tests for two View v0.13 object
 endpoint annotations.  Assert actual/planned finish endpoint selection,
 deterministic orthogonal leader geometry, obstacle avoidance, source identity,
-and annotation-specific Scene purpose/role.  Add a structural regression that
+annotation fallback-rung selection for `callout` and `explanatory-arrow`, and
+annotation-specific Scene purpose/role.  Add a structural regression that
 Scene/adapter modules do not import the Layout router.
 
 **Files:** focused Layout/Scene tests and only production changes required to
