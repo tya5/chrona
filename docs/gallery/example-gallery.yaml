@@ -18,14 +18,14 @@ entries:
     corpus: controller-z
     slide: executive
     narrative: {title: Baseline treatment, audience: programme leadership, purpose: Establish the ordinary status-review treatment.}
-    comparison: {set: controller-z-treatment-ladder, dimension: visual-grammar, axis: visual treatment}
+    comparison: {set: controller-z-treatment-ladder, dimension: appearance, axis: visual treatment}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
     accessibility: {note: Semantic labels and table structure remain present alongside colour.}
   - id: controller-z-elevated-treatment
     corpus: controller-z
     slide: elevated
     narrative: {title: Elevated status review, audience: programme leadership, purpose: Compare bounded portable visual treatment on the same review.}
-    comparison: {set: controller-z-treatment-ladder, dimension: visual-grammar, axis: visual treatment}
+    comparison: {set: controller-z-treatment-ladder, dimension: appearance, axis: visual treatment}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
     accessibility: {note: Gradient and shadow are decorative; semantic labels, source metadata, and table structure remain present.}
   - id: halcyon-programme-board-surface

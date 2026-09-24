@@ -46,7 +46,7 @@ evidence and new contexts over existing resources:
 | Set | Dimension | Status |
 | --- | --- | --- |
 | Executive status | content | split from existing Controller Z pair |
-| Treatment ladder | visual-grammar | split from elevated Controller Z direction |
+| Treatment ladder | appearance | split from elevated Controller Z direction; treatment is Theme-owned |
 | Two surfaces | content | Halcyon existing evidence; `surface` is View-owned Content per Specification 55 |
 | Four appearances | appearance | needs two scheme-pinned Contexts |
 | Programme at scale | composition | needs normalized Context pairs; overlay waits for #272 |
@@ -62,6 +62,11 @@ View/Theme/Layout under those three Schemes. A fourth appearance is not
 invented by copying a screenshot: it remains a later, separately designed
 Theme/Scheme resource slice. This correction preserves the one-axis rule and
 does not make a nonexistent Controller Z resource part of the gallery contract.
+
+The existing Controller Z elevated direction changes a Theme-owned
+gradient/shadow treatment. It is therefore an `appearance` set, not a
+`visual-grammar` set: visual grammar remains the View/semantic-presentation
+owner. This distinction is enforced rather than narrated around.
 
 Slot-focused set 8 and encoding set 7 require their own View/Layout or
 encoding prerequisites and remain subsequent slices. CJK set 9 is blocked by
