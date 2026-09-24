@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src"
-ENTRY_POINTS = ("chrona.app.cli",)
+ENTRY_POINTS = ("chrona.app.cli", "chrona.__main__")
 ENTRY_SCRIPTS = ("conformance/*.py", "tools/*.py")
 
 def modules() -> dict[str, Path]:
