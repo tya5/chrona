@@ -41,7 +41,11 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
     )
-    row_minimum = metric_values["timeline.row.minBlockSize"]
+    # A stacked member reserves one mark plus its planned/actual companion.
+    # ``place_mark_tracks`` positions the pair at 25%/125% mark offsets, so a
+    # track needs three mark blocks even when the Theme row minimum is smaller.
+    row_minimum = max(metric_values["timeline.row.minBlockSize"],
+                      metric_values["timeline.mark.blockSize"] * Decimal(3))
     tracks = sum(max(1, sum(item.track != "shared" for item in row.items)) for row in rows)
     headers = 0
     previous = object()
@@ -288,7 +292,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size)
     row_height = raw_rows[0].bounds[3] if raw_rows else timeline_bounds[3]
-    minimum = float(metric_values["timeline.row.minBlockSize"])
+    minimum = float(max(metric_values["timeline.row.minBlockSize"],
+                        metric_values["timeline.mark.blockSize"] * Decimal(3)))
     if any(row_height < minimum * max(1, sum(item.track != "shared" for item in row.items))
            for row in review_rows):
         required = timeline_content_block_requirement(
