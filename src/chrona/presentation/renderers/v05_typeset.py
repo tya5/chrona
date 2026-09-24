@@ -72,11 +72,9 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) ->
             text = "\\n".join(_typst_string(line) for line in layout.lines)
             parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt, fill: {_typst_fill(node)})[{text}]]')
         elif node.kind == "Symbol":
-            if node.shape != "diamond":
+            if node.symbol is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            if node.path_commands:
-                raise ValueError("E_PRESENTATION_ROUNDED_PATH_UNSUPPORTED")
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#rotate(45deg, rect(width: {_number(w)}pt, height: {_number(h)}pt, fill: {_typst_fill(node)})]')
+            raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
         elif node.kind == "Path":
             if node.path_commands:
                 raise ValueError("E_PRESENTATION_ROUNDED_PATH_UNSUPPORTED")
@@ -110,11 +108,11 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
             text = r"\\".join(_tex_string(line) for line in layout.lines)
             parts.append(f"\\node[anchor=base west, align=left, text={_color(node, 'fill')}, text opacity={_number(_opacity(node))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{\\fontfamily{{{_tex_string(layout.family)}}}\\selectfont {text}}};")
         elif node.kind == "Symbol":
-            if node.shape != "diamond":
+            if node.symbol is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            if node.path_commands:
+            if node.symbol.outline:
                 commands = []
-                for command in node.path_commands:
+                for command in node.symbol.outline:
                     if command.kind == "move":
                         commands.append(f"({_number(command.points[0][0])},{_number(command.points[0][1])})")
                     elif command.kind == "line":
@@ -126,7 +124,6 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
                         raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
                 parts.append(f"\\path[fill={_color(node, 'fill')}{_tikz_opacity(node)}] {' '.join(commands)};")
                 continue
-            parts.append(f"\\path[fill={_color(node, 'fill')}{_tikz_opacity(node)}] ({_number(x+w/2)},{_number(y)}) -- ({_number(x+w)},{_number(y+h/2)}) -- ({_number(x+w/2)},{_number(y+h)}) -- ({_number(x)},{_number(y+h/2)}) -- cycle;")
         elif node.kind == "Path":
             if len(node.points) < 2:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

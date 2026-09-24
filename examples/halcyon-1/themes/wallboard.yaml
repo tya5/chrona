@@ -1,4 +1,4 @@
-version: chrona/theme/v0.6
+version: chrona/theme/v0.7
 kind: theme
 id: wallboard
 body:
@@ -44,13 +44,25 @@ body:
       value: 0.25
     arrow:
       type: marker
-      value: triangle
+      value:
+        shape: triangle
+        headLength: 10
+        headWidth: 10
+        attachmentOffset: 1
+    milestone-symbol:
+      type: symbol
+      value: {shape: diamond}
     stroke-width:
       type: number
       value: 1
     hatch:
       type: pattern
-      value: diagonal-hatch
+      value:
+        kind: diagonal-hatch
+        tileInlineSize: 6
+        tileBlockSize: 6
+        angle: 45
+        strokeWidth: 1
     spacing.none:
       type: number
       value: 0
@@ -182,6 +194,8 @@ body:
       lineHeight: leading.body
       iconScale: icon-scale
       iconGap: icon-gap
+    milestoneSymbol:
+      symbol: milestone-symbol
     dependency:
       marker: arrow
       strokeWidth: stroke-width

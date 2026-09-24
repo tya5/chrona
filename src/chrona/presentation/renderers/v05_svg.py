@@ -51,8 +51,20 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
     def shadow_id(paint: ScenePaint) -> str:
         assert paint.shadow is not None
         return "shadow-" + sha256(repr(paint.shadow).encode()).hexdigest()[:12]
-    marker_pairs = {(completed(node).stroke, node.shape) for node in surface.primitives if node.kind == "Path" and node.shape}
-    patterns = {(node.visual_role, node.pattern, completed(node)) for node in surface.primitives if node.pattern}
+    def commands_data(commands: tuple[object, ...]) -> str:
+        parts: list[str] = []
+        for command in commands:
+            if command.kind == "move": parts.append("M" + " ".join(number(value) for value in command.points[0]))
+            elif command.kind == "line": parts.append("L" + " ".join(number(value) for value in command.points[0]))
+            elif command.kind == "quadratic": parts.append("Q" + " ".join(number(value) for point in command.points for value in point))
+            else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        return "".join(parts)
+    def marker_id(color: str, geometry: object) -> str:
+        return "marker-" + sha256(repr((color, geometry)).encode()).hexdigest()[:12]
+    def pattern_id(geometry: object, paint: ScenePaint) -> str:
+        return "pattern-" + sha256(repr((geometry, paint.stroke, paint.opacity)).encode()).hexdigest()[:12]
+    marker_pairs = {(completed(node).stroke, node.marker) for node in surface.primitives if node.kind == "Path" and node.marker}
+    patterns = {(node.pattern, completed(node)) for node in surface.primitives if node.pattern}
     has_links = any(node.href is not None for node in surface.primitives)
     ns = ' xmlns:xlink="http://www.w3.org/1999/xlink"' if has_links else ""
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg"{ns} width="{number(width)}" height="{number(height)}" viewBox="0 0 {number(width)} {number(height)}" role="img">',
@@ -62,14 +74,15 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
     shadows = {shadow_id(paint): paint.shadow for paint in paints if paint.shadow}
     if marker_pairs or patterns or gradients or shadows:
         definitions: list[str] = []
-        for color, marker in sorted(marker_pairs):
-            if marker != "triangle" or color is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            definitions.append(f'<marker id="marker-{escape(color, quote=True)}-{marker}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="{escape(color, quote=True)}"/></marker>')
-        for role, pattern, paint in sorted(patterns, key=lambda item: (item[0], item[1] or "")):
+        for color, marker in sorted(marker_pairs, key=repr):
+            if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            appearance = (f'fill="{escape(color, quote=True)}"' if marker.paint_mode == "fill"
+                          else f'fill="none" stroke="{escape(color, quote=True)}"')
+            definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="auto"><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
+        for pattern, paint in sorted(patterns, key=repr):
             if paint.stroke is None or paint.stroke_width is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
-            if pattern == "diagonal-hatch":
-                definitions.append(f'<pattern id="pattern-{role}-{pattern}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" {attrs(paint, fill=False, stroke=True)}/></pattern>')
-            elif pattern != "outline": raise ValueError("E_PRESENTATION_PATTERN_UNSUPPORTED")
+            strokes = "".join(f'<line x1="{number(stroke.start[0])}" y1="{number(stroke.start[1])}" x2="{number(stroke.end[0])}" y2="{number(stroke.end[1])}" opacity="{number(paint.opacity)}" fill="none" stroke="{escape(paint.stroke, quote=True)}" stroke-width="{number(stroke.width)}"/>' for stroke in pattern.strokes)
+            definitions.append(f'<pattern id="{pattern_id(pattern, paint)}" patternUnits="userSpaceOnUse" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" patternTransform="rotate({number(pattern.angle_degrees)})">{strokes}</pattern>')
         for identifier, gradient in sorted(gradients.items()):
             assert gradient is not None
             definitions.append(f'<linearGradient id="{identifier}" gradientUnits="userSpaceOnUse" x1="{number(gradient.start[0])}" y1="{number(gradient.start[1])}" x2="{number(gradient.end[0])}" y2="{number(gradient.end[1])}">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"/>' for position, color in gradient.stops) + '</linearGradient>')
@@ -101,10 +114,8 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
         if node.kind == "Rect":
-            if node.pattern == "outline": appearance = attrs(paint, fill=False, stroke=True)
-            elif node.pattern == "diagonal-hatch": appearance = f'fill="url(#pattern-{escape(node.visual_role, quote=True)}-{node.pattern})" ' + attrs(paint, fill=False, stroke=True)
-            elif node.pattern is None: appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)
-            else: raise ValueError("E_PRESENTATION_PATTERN_UNSUPPORTED")
+            appearance = (f'fill="url(#{pattern_id(node.pattern, paint)})" ' + attrs(paint, fill=False, stroke=True)
+                          if node.pattern is not None else attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
             radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
             append(node, f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius} {appearance}/>')
         elif node.kind == "Text":
@@ -113,15 +124,12 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             body = escape(lines[0]) if len(lines) == 1 else "".join(f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else number(node.text_layout.font_size * node.text_layout.line_height)}">{escape(line)}</tspan>' for index, line in enumerate(lines))
             append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}" {attrs(paint, fill=True, stroke=False)}>{body}</text>')
         elif node.kind == "Symbol":
-            if node.shape != "diamond": raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if node.symbol is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)
-            if node.path_commands: append(node, f'<path {common} d="{path_data(node)}" {appearance}/>')
-            else:
-                points = " ".join(f"{number(px)},{number(py)}" for px, py in ((x+w/2,y),(x+w,y+h/2),(x+w/2,y+h),(x,y+h/2)))
-                append(node, f'<polygon {common} points="{points}" {appearance}/>')
+            append(node, f'<path {common} d="{commands_data(node.symbol.outline)}" {appearance}/>')
         elif node.kind == "Path":
             if len(node.points) < 2 or paint.stroke is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            marker = f' marker-end="url(#marker-{escape(paint.stroke, quote=True)}-{escape(node.shape, quote=True)})"' if node.shape else ""
+            marker = f' marker-end="url(#{marker_id(paint.stroke, node.marker)})"' if node.marker else ""
             append(node, f'<path {common} d="{path_data(node)}" fill="none" {attrs(paint, fill=False, stroke=True)}{marker}/>')
         elif node.kind == "Icon":
             if node.icon_kind not in {"vector", "raster"} or node.icon_asset_identity is None:

@@ -64,15 +64,27 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/opacity")
         return float(value)
 
-    def optional_pattern(self, role: str) -> str | None:
-        """Return explicitly declared renderer form intent, if the role has one."""
+    def optional_pattern(self, role: str) -> Mapping[str, Any] | None:
+        """Return one structured, schema-closed pattern treatment if declared."""
         binding = self._body["roles"].get(role)
         if not isinstance(binding, Mapping) or "pattern" not in binding:
             return None
         value = self.token(role, "pattern", "pattern")
-        if not isinstance(value, str):
+        if not isinstance(value, Mapping):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/pattern")
         return value
+
+    def marker(self, role: str) -> Mapping[str, Any]:
+        value = self.token(role, "marker", "marker")
+        if not isinstance(value, Mapping):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/marker")
+        return value
+
+    def symbol(self, role: str = "milestoneSymbol") -> str:
+        value = self.token(role, "symbol", "symbol")
+        if not isinstance(value, Mapping) or not isinstance(value.get("shape"), str):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
+        return value["shape"]
 
     def optional_color(self, role: str, property_name: str) -> str | None:
         """Resolve an optional concrete colour without introducing a fallback."""

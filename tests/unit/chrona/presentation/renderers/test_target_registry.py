@@ -146,7 +146,6 @@ def test_pdf_rasterizer_identity_mismatch_is_rejected():
 
 
 @pytest.mark.parametrize(("kind", "media_type", "signature", "identity"), [
-    ("typst", "application/x-typst", b"// chrona-typst/v0.1", "chrona-typst/v0.1"),
     ("tikz", "application/x-tex", b"% chrona-tikz/v0.1", "chrona-tikz/v0.1"),
 ])
 def test_typeset_sources_preserve_completed_placement_order(kind, media_type, signature, identity):
@@ -162,6 +161,13 @@ def test_typeset_sources_preserve_completed_placement_order(kind, media_type, si
     identifiers = [f"scene-id: {node.scene_id}" for node in surface.primitives]
     assert [source.index(identifier) for identifier in identifiers] == sorted(source.index(identifier) for identifier in identifiers)
     assert "font-asset:" in source and "baseline:" in source
+
+
+def test_typst_rejects_completed_symbol_geometry_it_cannot_serialize():
+    renderer = renderer_for({"kind": "typst", "capabilities": []}, {"typesetter": {
+        "engine": "typst", "version": "0.13.1", "adapterGrammar": "chrona-typst/v0.1"}})
+    with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
+        renderer.render(_completed_surface(), viewport=(1600, 900))
 
 
 def test_typeset_target_rejects_svg_semantic_requirement():

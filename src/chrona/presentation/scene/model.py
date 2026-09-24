@@ -78,6 +78,60 @@ class SceneIconPath:
 
 
 @dataclass(frozen=True)
+class MarkerGeometry:
+    """Completed local arrowhead geometry; never a renderer-selected name."""
+
+    outline: tuple[PathCommand, ...]
+    head_length: float
+    head_width: float
+    attachment_offset: float
+    paint_mode: str
+
+    def __post_init__(self) -> None:
+        if (not self.outline or self.head_length <= 0 or self.head_width <= 0
+                or not 0 <= self.attachment_offset <= self.head_length
+                or self.paint_mode not in {"fill", "stroke"}):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
+class PatternStroke:
+    start: tuple[float, float]
+    end: tuple[float, float]
+    width: float
+
+    def __post_init__(self) -> None:
+        if self.width <= 0:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
+class PatternGeometry:
+    """Completed repeat-tile geometry; target adapters choose syntax, not values."""
+
+    tile_inline_size: float
+    tile_block_size: float
+    angle_degrees: float
+    strokes: tuple[PatternStroke, ...]
+
+    def __post_init__(self) -> None:
+        if (self.tile_inline_size <= 0 or self.tile_block_size <= 0
+                or not 0 <= self.angle_degrees < 360 or not self.strokes):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
+class SymbolGeometry:
+    """Completed absolute point-symbol outline from Theme treatment and Layout bounds."""
+
+    outline: tuple[PathCommand, ...]
+
+    def __post_init__(self) -> None:
+        if not self.outline:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
 class ScenePrimitive:
     """A measured renderer-neutral primitive; adapters serialize but never reinterpret it."""
 
@@ -91,8 +145,9 @@ class ScenePrimitive:
     text: str | None = None
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
-    shape: str | None = None
-    pattern: str | None = None
+    marker: MarkerGeometry | None = None
+    pattern: PatternGeometry | None = None
+    symbol: SymbolGeometry | None = None
     paint: ScenePaint | None = None
     corner_radius: float | None = None
     path_commands: tuple[PathCommand, ...] = ()
@@ -108,6 +163,13 @@ class ScenePrimitive:
     icon_decorative: bool = True
     icon_stroke_scale: float | None = None
     visual_capability_source_ref: str = "/"
+
+    def __post_init__(self) -> None:
+        if ((self.marker is not None and self.kind != "Path")
+                or (self.pattern is not None and self.kind != "Rect")
+                or (self.symbol is not None and self.kind != "Symbol")
+                or (self.kind == "Symbol" and self.symbol is None)):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 @dataclass(frozen=True)
 class SceneSlot:

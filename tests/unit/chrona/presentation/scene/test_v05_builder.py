@@ -76,12 +76,14 @@ def _theme():
                    "group-header-opacity": {"type": "number", "value": "0.2"},
                    "calendar-opacity": {"type": "number", "value": "0.12"},
                    "stroke-width": {"type": "number", "value": 1},
-                   "dependency-marker": {"type": "marker", "value": "triangle"},
+                   "dependency-marker": {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}},
+                   "milestone-symbol": {"type": "symbol", "value": {"shape": "diamond"}},
                    "line": {"type": "number", "value": "1.4"}},
         "roles": {**roles,
                   "group-band": {**roles["group-band"], "opacity": "group-opacity"},
                   "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity"},
-                  "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity"}}, "metrics": {}}}
+                  "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity"},
+                  "milestoneSymbol": {"symbol": "milestone-symbol"}}, "metrics": {}}}
 
 
 def _measurements():
@@ -180,14 +182,14 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
 def test_scene_completes_pattern_form_before_adapter_invocation():
     primitive = ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1))
     themed = _theme()
-    themed["body"]["values"]["hatch"] = {"type": "pattern", "value": "diagonal-hatch"}
+    themed["body"]["values"]["hatch"] = {"type": "pattern", "value": {"kind": "diagonal-hatch", "tileInlineSize": 6, "tileBlockSize": 6, "angle": 45, "strokeWidth": 1}}
     themed["body"]["roles"]["planned"]["pattern"] = "hatch"
     value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
                               surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
     from chrona.presentation.scene.v05_builder import _complete_surface_paint
     completed = _complete_surface_paint(SceneSurface("s", (), (), (), None, (primitive,)), value.theme_tokens)
-    assert completed.primitives[0].pattern == "diagonal-hatch"
+    assert completed.primitives[0].pattern is not None
 
 
 def test_scene_projects_title_links_only_to_selected_current_title_cells():
@@ -243,7 +245,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
         LayoutDecision("annotations", "slot", Rect(Decimal(500), Decimal(40), Decimal(300), Decimal(100)), "annotations", priority="required", overflow="diagnose"),
     ))
     theme = _theme()
-    theme["body"]["values"].update({"marker": {"type": "marker", "value": "triangle"}})
+    theme["body"]["values"].update({"marker": {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}})
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
     value = build_scene_input(projection=projection, surface_content=surface_content(
         relations=({"id": "r", "from": {"object": "a"}, "to": {"object": "b"}},),
@@ -253,7 +255,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     surface = compose_review_surface(value)
     dependency = next(item for item in surface.primitives if item.scene_id == "relation:r")
     leader = next(item for item in surface.primitives if item.scene_id == "annotation-leader:note")
-    assert dependency.shape == "triangle"
+    assert dependency.marker is not None
     assert dependency.purpose == "dependency"
     assert dependency.points[0][0] == 500
     assert dependency.points[-1][0] == 100
@@ -409,7 +411,7 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
     theme = _theme()
-    theme["body"]["values"]["marker"] = {"type": "marker", "value": "triangle"}
+    theme["body"]["values"]["marker"] = {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
     value = build_scene_input(projection=projection,
                               surface_content=surface_content(relations=({"id": "depends", "from": {"object": "a"}, "to": {"object": "b"}},)),
@@ -507,7 +509,7 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
         LayoutDecision("annotations", "slot", Rect(Decimal(800), Decimal(40), Decimal(200), Decimal(160)), "annotations"),
     ))
     theme = _theme()
-    theme["body"]["values"]["marker"] = {"type": "marker", "value": "triangle"}
+    theme["body"]["values"]["marker"] = {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
     value = build_scene_input(projection=projection, surface_content=surface_content(
         table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),

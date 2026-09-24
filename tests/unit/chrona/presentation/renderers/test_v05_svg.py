@@ -2,6 +2,7 @@ from datetime import date
 
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.renderers.v05_svg import render_v05_svg
+from chrona.presentation.scene.mark_geometry import marker_geometry
 from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, TextLayout
 
 
@@ -19,9 +20,9 @@ def test_svg_serializes_completed_fill_stroke_width_dash_and_opacity():
 
 def test_svg_serializes_completed_path_marker_and_commands():
     paint = ScenePaint(None, "#445566", 2, (), 1)
-    primitive = ScenePrimitive("p", "Path", "a", "relation", "dependency", "dependency", (0, 0, 0, 0), shape="triangle", paint=paint, points=((1, 1), (9, 9)), path_commands=(PathCommand("move", ((1, 1),)), PathCommand("line", ((9, 9),))))
+    primitive = ScenePrimitive("p", "Path", "a", "relation", "dependency", "dependency", (0, 0, 0, 0), marker=marker_geometry({"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}), paint=paint, points=((1, 1), (9, 9)), path_commands=(PathCommand("move", ((1, 1),)), PathCommand("line", ((9, 9),))))
     output = render_v05_svg(_surface(primitive), viewport=(10, 10))
-    assert 'marker-end="url(#marker-#445566-triangle)"' in output and 'd="M1 1L9 9"' in output
+    assert 'marker-end="url(#marker-' in output and 'd="M1 1L9 9"' in output
 
 
 def test_svg_rejects_primitive_without_completed_paint():

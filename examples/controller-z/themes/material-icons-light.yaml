@@ -1,4 +1,4 @@
-version: chrona/theme/v0.6
+version: chrona/theme/v0.7
 kind: theme
 id: material-icons-light
 body:
@@ -68,7 +68,14 @@ body:
       value: 1.4
     dependency-marker:
       type: marker
-      value: triangle
+      value:
+        shape: triangle
+        headLength: 10
+        headWidth: 10
+        attachmentOffset: 1
+    milestone-symbol:
+      type: symbol
+      value: {shape: diamond}
     stroke-width:
       type: number
       value: 1
@@ -179,6 +186,8 @@ body:
       strokeWidth: stroke-width
     variance-behind:
       strokeWidth: stroke-width
+    milestoneSymbol:
+      symbol: milestone-symbol
     dependency:
       marker: dependency-marker
       strokeWidth: stroke-width

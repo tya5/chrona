@@ -17,6 +17,7 @@ from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.scene.mark_geometry import marker_geometry, pattern_geometry, pattern_kind, symbol_geometry
 from chrona.presentation.scene.model import SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
@@ -62,9 +63,9 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
     if primitive.kind == PrimitiveKind.PATH:
         return PaintFamily.PATH
     pattern = tokens.optional_pattern(primitive.visual_role)
-    if pattern == "outline":
+    if pattern is not None and pattern_kind(pattern) == "outline":
         return PaintFamily.OUTLINE
-    if pattern == "diagonal-hatch":
+    if pattern is not None and pattern_kind(pattern) == "diagonal-hatch":
         return PaintFamily.HATCH
     return PaintFamily.SOLID
 
@@ -100,7 +101,9 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     if primitive.source_kind == "legend":
         override = scale_legend_paints.get(primitive.source_ref, override)
     completed = replace(paint, fill=override) if override is not None else paint
-    result = replace(primitive, paint=completed, pattern=tokens.optional_pattern(primitive.visual_role))
+    treatment = tokens.optional_pattern(primitive.visual_role)
+    result = replace(primitive, paint=completed,
+                     pattern=pattern_geometry(treatment) if treatment is not None else None)
     if result.kind == "Icon" and result.icon_kind == "vector":
         return replace(result, icon_paths=_complete_icon_paths(result, completed),
                        icon_vector=None, icon_stroke_scale=None)
@@ -315,7 +318,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                       float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
             if item.source_type == "point":
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", planned_binding.purpose, planned_role,
-                                                 bounds, shape="diamond",
+                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds),
                                                  corner_radius=planned_mark.corner_radius,
                                                  path_commands=planned_mark.path_commands,
                                                  href=href, link_title=link_title))
@@ -335,7 +338,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                  bounds, corner_radius=actual_mark.corner_radius))
             else:
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, shape="diamond", corner_radius=actual_mark.corner_radius,
+                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds), corner_radius=actual_mark.corner_radius,
                                                  path_commands=actual_mark.path_commands))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
@@ -363,7 +366,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
-                                                 binding.purpose, binding.scene_role, bounds, shape="diamond",
+                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds),
                                                  corner_radius=planned_mark.corner_radius,
                                                  path_commands=planned_mark.path_commands, href=href, link_title=link_title))
             actual_mark = mark_placements.get(f"actual:{instance_id}")
@@ -372,7 +375,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                           float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
-                                                 binding.purpose, binding.scene_role, bounds, shape="diamond",
+                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds),
                                                  corner_radius=actual_mark.corner_radius,
                                                  path_commands=actual_mark.path_commands))
         label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"
@@ -415,7 +418,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
         dependency = semantic_binding(relation.semantic_id)
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
-                                         (0, 0, 0, 0), shape=str(value.theme_tokens.token("dependency", "marker", "marker")),
+                                         (0, 0, 0, 0), marker=marker_geometry(value.theme_tokens.marker("dependency")),
                                          points=relation.points, path_commands=relation.path_commands))
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
@@ -474,9 +477,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             continue
         source = relation.relation_id.removeprefix("annotation-leader:")
         leader = semantic_binding("annotationLeader")
-        purpose, role, shape, layer = leader.purpose, leader.scene_role, None, "annotation"
+        purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
-                                         shape=shape, points=relation.points))
+                                         points=relation.points))
     return SceneSurface("table-timeline", slots, rows, groups, scale, tuple(primitives))
 
 
