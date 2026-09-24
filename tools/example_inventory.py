@@ -57,6 +57,11 @@ def validate_design_gallery(path: Path, root: Path, corpus_entries: dict[tuple[s
     value = _load(path)
     if not isinstance(value, dict) or value.get("version") != "chrona/design-gallery/v0.2" or not isinstance(value.get("entries"), list):
         raise ExampleInventoryError(f"E_DESIGN_GALLERY_FORMAT:{path}")
+    deferred = value.get("deferred", [])
+    if (not isinstance(deferred, list) or any(not isinstance(item, dict) or not isinstance(item.get("id"), str)
+            or item.get("dimension") not in {"content", "composition", "visual-grammar", "appearance"}
+            or not isinstance(item.get("blocker"), str) or not item["blocker"] for item in deferred)):
+        raise ExampleInventoryError(f"E_DESIGN_GALLERY_DEFERRED:{path}")
     seen: set[str] = set(); pairs: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
     for entry in value["entries"]:
         if not isinstance(entry, dict) or not all(isinstance(entry.get(key), str) and entry[key] for key in ("id", "corpus", "slide")):

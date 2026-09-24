@@ -65,6 +65,11 @@ def render(root: Path) -> dict[Path, str]:
         pages[page] = "\n".join(lines)
     coverage = root / "docs/examples/corpus-coverage.md"
     index.extend(["", "## Coverage backlog", "", f"See [corpus coverage](../examples/{coverage.name}). Missing vocabulary is curation backlog, not a render gate.", ""])
+    deferred = catalogue.get("deferred", [])
+    if deferred:
+        index.extend(["## Deferred sets", "", "| Set | Dimension | Blocker |", "| --- | --- | --- |"])
+        index.extend(f"| `{item['id']}` | `{item['dimension']}` | {item['blocker']} |" for item in deferred)
+        index.append("")
     pages[Path("docs/gallery/README.md")] = "\n".join(index)
     return pages
 

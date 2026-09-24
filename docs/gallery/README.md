@@ -15,3 +15,13 @@ Generated from declared corpus evidence; it is not a renderer or an authoring in
 ## Coverage backlog
 
 See [corpus coverage](../examples/corpus-coverage.md). Missing vocabulary is curation backlog, not a render gate.
+
+## Deferred sets
+
+| Set | Dimension | Blocker |
+| --- | --- | --- |
+| `programme-at-scale` | `composition` | Requires a responsive View/Layout design; existing Halcyon peer resources are not composable. |
+| `milestones-notes-margins` | `composition` | Requires a new View/Layout design for the undrawn detail slots. |
+| `bar-encodings` | `visual-grammar` | Requires the remaining per-object encoding design. |
+| `japanese-board` | `appearance` | Blocked on #351 CJK font metrics and target support. |
+| `print-and-typeset` | `content` | Requires a multi-target materializer evidence contract; target is not a Design Space dimension. |

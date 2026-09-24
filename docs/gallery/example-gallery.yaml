@@ -1,4 +1,10 @@
 version: chrona/design-gallery/v0.2
+deferred:
+  - {id: programme-at-scale, dimension: composition, blocker: "Requires a responsive View/Layout design; existing Halcyon peer resources are not composable."}
+  - {id: milestones-notes-margins, dimension: composition, blocker: "Requires a new View/Layout design for the undrawn detail slots."}
+  - {id: bar-encodings, dimension: visual-grammar, blocker: "Requires the remaining per-object encoding design."}
+  - {id: japanese-board, dimension: appearance, blocker: "Blocked on #351 CJK font metrics and target support."}
+  - {id: print-and-typeset, dimension: content, blocker: "Requires a multi-target materializer evidence contract; target is not a Design Space dimension."}
 entries:
   - id: controller-z-executive-status
     corpus: controller-z
