@@ -77,6 +77,13 @@ def test_scene_validation_rejects_a_table_reference_not_owned_by_its_surface():
         validate_scene_document(document)
 
 
+def test_scene_serializer_does_not_reopen_layout_theme_or_renderer_policy():
+    source = Path(__import__("chrona.presentation.scene.serialization", fromlist=["*"]).__file__).read_text(encoding="utf-8")
+    assert "presentation.layout" not in source
+    assert "presentation.renderers" not in source
+    assert "theme_tokens" not in source
+
+
 def test_render_review_reads_a_bound_summary_profile():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
