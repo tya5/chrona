@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import errno
 from hashlib import sha256
 import json
 import os
@@ -109,14 +110,14 @@ def _relative(name: str) -> bool:
 def _aggregate_lock(path: Path):
     lock = path.with_name(f".{path.name}.authoring.lock")
     with lock.open("a+b") as handle:
-        _lock_file(handle)
+        _lock_file(handle, workspace_path=path, lock_path=lock)
         try:
             yield
         finally:
             _unlock_file(handle)
 
 
-def _lock_file(handle: Any) -> None:
+def _lock_file(handle: Any, *, workspace_path: Path | None = None, lock_path: Path | None = None) -> None:
     """Acquire the one-byte advisory aggregate lock on the active platform."""
     if os.name == "nt":
         import msvcrt
@@ -126,7 +127,18 @@ def _lock_file(handle: Any) -> None:
             handle.write(b"\0")
             handle.flush()
         handle.seek(0)
-        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        try:
+            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        except OSError as error:
+            if error.errno not in {errno.EACCES, errno.EAGAIN}:
+                raise
+            workspace = workspace_path if workspace_path is not None else "<unknown workspace>"
+            lock = lock_path if lock_path is not None else "<unknown lock>"
+            raise OperationalResourceError(
+                "E_AUTHORING_LOCK_TIMEOUT",
+                f"timed out acquiring authoring aggregate lock {lock} for workspace {workspace}; "
+                "wait for the active authoring command to finish and retry",
+            ) from error
         return
     import fcntl
     fcntl.flock(handle.fileno(), fcntl.LOCK_EX)

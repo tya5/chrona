@@ -7,6 +7,7 @@ from typing import Any
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
 from chrona.core.identity import content_identity
+from chrona.operational.resources import OperationalResourceError
 
 
 def parse_authoring_command(path: Path) -> dict[str, Any]:
@@ -60,6 +61,8 @@ def apply_authoring_command(
             return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
     except FileExistsError as error:
         return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_MATERIALIZE_COLLISION", base)
+    except OperationalResourceError as error:
+        return _rejected(command, error.code, base, detail=error.detail)
     except (KeyError, ContractError, ValueError) as error:
         return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_COMMAND", base)
     return _accepted(command, base, result)
@@ -92,8 +95,10 @@ def _accepted(command: dict[str, Any], workspace: str, result: str, *, reversibl
     return value if reversible is None else value | {"reversible": reversible}
 
 
-def _rejected(command: dict[str, Any], code: str, base: str) -> dict[str, Any]:
+def _rejected(command: dict[str, Any], code: str, base: str, *, detail: str = "") -> dict[str, Any]:
     diagnostic: dict[str, Any] = {"code": code}
+    if detail:
+        diagnostic["detail"] = detail
     if code == "E_AUTHORING_BASE_REVISION":
         diagnostic |= {
             "expectedRevision": base, "receivedRevision": command.get("baseRevision"),

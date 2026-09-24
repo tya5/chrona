@@ -1,14 +1,17 @@
 from copy import deepcopy
+import errno
 from pathlib import Path
 from types import SimpleNamespace
 import sys
 
+import pytest
 import yaml
 
 from chrona.usecases.authoring_commands import apply_authoring_command, workspace_revision
 import chrona.operational.authoring_commands as authoring_commands
 from chrona.operational.authoring_commands import _bytes_identity, _transaction_marker, _write_marker, cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import content_identity
+from chrona.operational.resources import OperationalResourceError
 
 
 def _workspace() -> dict:
@@ -82,6 +85,34 @@ def test_aggregate_lock_uses_lazy_windows_adapter_without_fcntl(tmp_path, monkey
         authoring_commands._lock_file(handle)
         authoring_commands._unlock_file(handle)
     assert [mode for _, mode, _ in calls] == [fake.LK_LOCK, fake.LK_UNLCK]
+
+
+def test_aggregate_lock_turns_windows_contention_into_an_actionable_diagnostic(tmp_path, monkeypatch):
+    fake = SimpleNamespace(LK_LOCK=1, LK_UNLCK=2,
+                           locking=lambda *_args: (_ for _ in ()).throw(OSError(13, "locked")))
+    monkeypatch.setattr(authoring_commands.os, "name", "nt")
+    monkeypatch.setitem(sys.modules, "msvcrt", fake)
+    workspace = tmp_path / "workspace.yaml"
+    lock = tmp_path / ".workspace.yaml.authoring.lock"
+
+    with lock.open("a+b") as handle:
+        with pytest.raises(OperationalResourceError, match="E_AUTHORING_LOCK_TIMEOUT") as raised:
+            authoring_commands._lock_file(handle, workspace_path=workspace, lock_path=lock)
+
+    assert raised.value.code == "E_AUTHORING_LOCK_TIMEOUT"
+    assert str(workspace) in raised.value.detail
+    assert str(lock) in raised.value.detail
+
+
+def test_aggregate_lock_does_not_misclassify_unrelated_windows_io_failure(tmp_path, monkeypatch):
+    fake = SimpleNamespace(LK_LOCK=1, LK_UNLCK=2,
+                           locking=lambda *_args: (_ for _ in ()).throw(OSError(errno.EIO, "disk failure")))
+    monkeypatch.setattr(authoring_commands.os, "name", "nt")
+    monkeypatch.setitem(sys.modules, "msvcrt", fake)
+
+    with (tmp_path / "workspace.yaml").open("a+b") as handle:
+        with pytest.raises(OSError, match="disk failure"):
+            authoring_commands._lock_file(handle)
 
 
 def test_stale_or_illegal_command_leaves_workspace_bytes_unchanged(tmp_path):

@@ -9,6 +9,7 @@ import yaml
 from chrona.presentation.model.closure import resolve_draft_render, resolve_guided_draft_render
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import content_identity
+from chrona.operational.resources import OperationalResourceError
 from chrona.usecases.authoring_commands import apply_authoring_command
 from chrona.usecases.authoring_materialization import _render_bytes
 
@@ -106,6 +107,30 @@ def test_materialization_rejects_existing_destination_without_switching_workspac
     result = _materialize(workspace)
 
     assert result["diagnostics"] == [{"code": "E_AUTHORING_MATERIALIZE_COLLISION"}]
+    assert workspace.read_bytes() == original
+
+
+def test_materialization_preserves_actionable_operational_lock_detail(tmp_path):
+    workspace = _workspace(tmp_path)
+    original = workspace.read_bytes()
+
+    def locked(*_args, **_kwargs):
+        raise OperationalResourceError(
+            "E_AUTHORING_LOCK_TIMEOUT",
+            "timed out acquiring authoring aggregate lock /tmp/.workspace.lock for workspace /tmp/workspace.yaml; retry",
+        )
+
+    current = yaml.safe_load(original)
+    command = {"version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
+               "target": {"kind": "authoring-workspace", "path": workspace.name},
+               "baseRevision": content_identity(current), "payload": {"directory": "presentation"}}
+    result = apply_authoring_command(workspace, command, read_workspace=read_authoring_workspace,
+                                     cas_write=cas_write_authoring_workspace, cas_write_aggregate=locked)
+
+    assert result["diagnostics"] == [{
+        "code": "E_AUTHORING_LOCK_TIMEOUT",
+        "detail": "timed out acquiring authoring aggregate lock /tmp/.workspace.lock for workspace /tmp/workspace.yaml; retry",
+    }]
     assert workspace.read_bytes() == original
 
 
