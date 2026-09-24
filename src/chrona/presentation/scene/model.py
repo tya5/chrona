@@ -139,6 +139,7 @@ class ScenePrimitive:
     purpose: str
     visual_role: str
     bounds: tuple[float, float, float, float]
+    slot_id: str = ""
     text: str | None = None
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None

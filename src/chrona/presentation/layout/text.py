@@ -95,7 +95,8 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                collision_domain: CollisionDomain = CollisionDomain("surface", "content"),
                source_content: str | None = None, lines: tuple[str, ...] | None = None,
                available_inline_start: float | None = None,
-               available_inline_size: float | None = None) -> TextPlacement:
+               available_inline_size: float | None = None,
+               slot_id: str | None = None) -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     family, weight, size, line_height = theme_tokens.typography(typography_role)
     font_size, leading = float(size), float(line_height)
@@ -113,4 +114,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         source_content=source_content,
         available_inline_start=available_inline_start,
         available_inline_size=available_inline_size,
+        slot_id=slot_id or collision_domain.slot,
     )

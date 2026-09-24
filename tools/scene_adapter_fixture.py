@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A stdlib-only example consumer of published chrona/scene/v0.1 JSON.
+"""A stdlib-only example consumer of published chrona/scene/v0.2 JSON.
 
 This is deliberately outside ``src/chrona``: it proves that an adapter can
 consume the inspection boundary without importing Project, View, Theme, Layout,
@@ -42,7 +42,7 @@ def _path(commands: list[dict], points: list[list[float]]) -> str:
 
 
 def render(document: dict) -> str:
-    if document.get("version") != "chrona/scene/v0.1" or document.get("kind") != "scene":
+    if document.get("version") != "chrona/scene/v0.2" or document.get("kind") != "scene":
         raise ValueError("E_SCENE_VERSION")
     viewport = document["viewport"]
     output = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{viewport["inlineSize"]}" height="{viewport["blockSize"]}" viewBox="0 0 {viewport["inlineSize"]} {viewport["blockSize"]}">']

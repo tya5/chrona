@@ -1,0 +1,92 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/scene/v0.2"
+title: "Chrona inspection Scene v0.2"
+description: "Derived, non-authoritative inspection and adapter evidence for one completed render."
+type: object
+required: [version, kind, provenance, viewport, requiredCapabilities, surfaces, manifest, diagnostics]
+additionalProperties: false
+properties:
+  version: {$ref: "#/$defs/sceneVersion"}
+  kind: {$ref: "#/$defs/sceneKind"}
+  provenance: {$ref: "#/$defs/provenance"}
+  viewport: {$ref: "#/$defs/viewport"}
+  requiredCapabilities: {$ref: "#/$defs/capabilities"}
+  surfaces: {$ref: "#/$defs/surfaces"}
+  manifest: {$ref: "#/$defs/manifest"}
+  diagnostics: {$ref: "#/$defs/diagnostics"}
+$defs:
+  sceneVersion: {description: "The supported public Scene contract version.", const: chrona/scene/v0.2}
+  sceneKind: {description: "The document kind identifying a Scene.", const: scene}
+  string: {description: "A non-empty identifier or label.", type: string, minLength: 1}
+  text: {description: "Text that may be empty when the source declares it so.", type: string}
+  number: {description: "A finite coordinate or scalar number.", type: number}
+  positive: {description: "A strictly positive coordinate extent.", type: number, exclusiveMinimum: 0}
+  nonnegative: {description: "A non-negative extent or numeric property.", type: number, minimum: 0}
+  unitInterval: {description: "A normalized opacity or stop offset.", type: number, minimum: 0, maximum: 1}
+  integer: {description: "An integer count.", type: integer}
+  positiveInteger: {description: "A strictly positive integer extent or weight.", type: integer, minimum: 1}
+  identity: {description: "An immutable SHA-256 content identity.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  boolean: {description: "A Boolean presentation value.", type: boolean}
+  point: {description: "A completed inline/block coordinate.", type: array, minItems: 2, maxItems: 2, items: {$ref: "#/$defs/number"}}
+  viewport: {description: "A positive final render viewport.", type: object, required: [inlineSize, blockSize], additionalProperties: false, properties: {inlineSize: {$ref: "#/$defs/positive"}, blockSize: {$ref: "#/$defs/positive"}}}
+  provenance: {description: "The closure provenance of a derived Scene.", type: object, required: [mode, chronaVersion, resources], additionalProperties: false, properties: {mode: {$ref: "#/$defs/mode"}, chronaVersion: {$ref: "#/$defs/string"}, resources: {$ref: "#/$defs/resources"}}}
+  mode: {description: "Whether the render was Draft or immutable.", enum: [draft, immutable]}
+  resources: {description: "Closed resource identities read by the render.", type: array, items: {$ref: "#/$defs/resource"}}
+  resource: {description: "One closed resource identity.", type: object, required: [kind, id, revision, contentIdentity], additionalProperties: false, properties: {kind: {$ref: "#/$defs/string"}, id: {$ref: "#/$defs/string"}, revision: {$ref: "#/$defs/string"}, contentIdentity: {$ref: "#/$defs/identity"}}}
+  capabilities: {description: "Sorted completed feature capabilities required by a consumer.", type: array, uniqueItems: true, items: {$ref: "#/$defs/capability"}}
+  capability: {description: "One closed completed-Scene feature capability.", enum: [mark.marker-geometry, paint.pattern-geometry, mark.symbol-outline, icon.vector, icon.raster]}
+  surfaces: {description: "Completed renderer-neutral surfaces.", type: array, minItems: 1, items: {$ref: "#/$defs/surface"}}
+  surface: {description: "One completed surface with its typed geometry and primitives.", type: object, required: [id, slots, rows, columns, groups, primitives], additionalProperties: false, properties: {id: {$ref: "#/$defs/string"}, slots: {$ref: "#/$defs/slots"}, rows: {$ref: "#/$defs/rows"}, columns: {$ref: "#/$defs/columns"}, groups: {$ref: "#/$defs/groups"}, scale: {$ref: "#/$defs/scale"}, canvasPaint: {$ref: "#/$defs/paint"}, primitives: {$ref: "#/$defs/primitives"}}}
+  slots: {description: "Resolved Layout slots.", type: array, items: {$ref: "#/$defs/slot"}}
+  slot: {description: "One resolved surface slot.", type: object, required: [id, source, bounds, priority, overflow], additionalProperties: false, properties: {id: {$ref: "#/$defs/string"}, source: {$ref: "#/$defs/string"}, scaleId: {$ref: "#/$defs/string"}, bounds: {$ref: "#/$defs/bounds"}, priority: {$ref: "#/$defs/string"}, overflow: {$ref: "#/$defs/string"}}}
+  rows: {description: "Typed table/timeline rows.", type: array, items: {$ref: "#/$defs/row"}}
+  row: {description: "One completed row identity and extent.", type: object, required: [id, objectId, groupId, bounds], additionalProperties: false, properties: {id: {$ref: "#/$defs/string"}, objectId: {$ref: "#/$defs/string"}, groupId: {$ref: "#/$defs/string"}, bounds: {$ref: "#/$defs/bounds"}}}
+  columns: {description: "Typed table columns from Layout.", type: array, items: {$ref: "#/$defs/column"}}
+  column: {description: "One column identity, label, and extent.", type: object, required: [id, label, bounds], additionalProperties: false, properties: {id: {$ref: "#/$defs/string"}, label: {$ref: "#/$defs/string"}, bounds: {$ref: "#/$defs/bounds"}}}
+  groups: {description: "Completed group extents.", type: array, items: {$ref: "#/$defs/group"}}
+  group: {description: "One group content extent and optional header extent.", type: object, required: [id, contentBounds], additionalProperties: false, properties: {id: {$ref: "#/$defs/string"}, headerBounds: {$ref: "#/$defs/bounds"}, contentBounds: {$ref: "#/$defs/bounds"}}}
+  primitives: {description: "Completed primitives in draw order.", type: array, items: {$ref: "#/$defs/primitive"}}
+  primitive: {description: "One completed primitive with opaque identifier, Layout-owned slot identity, and typed optional data.", type: object, required: [id, kind, sourceRef, sourceKind, purpose, visualRole, bounds, slotId], additionalProperties: false, properties: {id: {$ref: "#/$defs/string"}, kind: {$ref: "#/$defs/primitiveKind"}, sourceRef: {$ref: "#/$defs/string"}, sourceKind: {$ref: "#/$defs/string"}, purpose: {$ref: "#/$defs/string"}, visualRole: {$ref: "#/$defs/string"}, bounds: {$ref: "#/$defs/bounds"}, slotId: {$ref: "#/$defs/string"}, text: {$ref: "#/$defs/text"}, baseline: {$ref: "#/$defs/point"}, textLayout: {$ref: "#/$defs/textLayout"}, paint: {$ref: "#/$defs/paint"}, cornerRadius: {$ref: "#/$defs/nonnegative"}, pathCommands: {$ref: "#/$defs/pathCommands"}, points: {$ref: "#/$defs/points"}, href: {$ref: "#/$defs/text"}, linkTitle: {$ref: "#/$defs/text"}, tableRowId: {$ref: "#/$defs/text"}, tableColumnId: {$ref: "#/$defs/text"}, marker: {$ref: "#/$defs/marker"}, pattern: {$ref: "#/$defs/pattern"}, symbol: {$ref: "#/$defs/symbol"}, icon: {$ref: "#/$defs/icon"}}}
+  primitiveKind: {description: "One closed renderer-neutral primitive kind.", enum: [Rect, Text, Symbol, Path, Icon]}
+  bounds: {description: "A completed rectangle; path extents may be zero.", type: object, required: [inline, block, inlineSize, blockSize], additionalProperties: false, properties: {inline: {$ref: "#/$defs/number"}, block: {$ref: "#/$defs/number"}, inlineSize: {$ref: "#/$defs/nonnegative"}, blockSize: {$ref: "#/$defs/nonnegative"}}}
+  manifest: {description: "Derived role, content, font, and scale inspection evidence.", type: object, required: [version, settingsVersion, viewport, selectedObjectIds, fontAssetIdentities, contentFamilyCounts, surfaceScales, visualRoleCounts], additionalProperties: false, properties: {version: {$ref: "#/$defs/manifestVersion"}, settingsVersion: {$ref: "#/$defs/string"}, viewport: {$ref: "#/$defs/viewport"}, selectedObjectIds: {$ref: "#/$defs/strings"}, fontAssetIdentities: {$ref: "#/$defs/identities"}, contentFamilyCounts: {$ref: "#/$defs/contentCounts"}, surfaceScales: {$ref: "#/$defs/scales"}, visualRoleCounts: {$ref: "#/$defs/roleCounts"}}}
+  manifestVersion: {description: "The supported derived Scene manifest version.", const: chrona/scene-manifest/v0.1}
+  diagnostics: {description: "Non-fatal diagnostic strings retained as inspection evidence.", type: array, items: {$ref: "#/$defs/string"}}
+  strings: {description: "An ordered collection of text values.", type: array, items: {$ref: "#/$defs/text"}}
+  identities: {description: "An ordered collection of immutable content identities.", type: array, items: {$ref: "#/$defs/identity"}}
+  pathCommands: {description: "An ordered completed path command list.", type: array, items: {$ref: "#/$defs/pathCommand"}}
+  points: {description: "An ordered completed coordinate list.", type: array, items: {$ref: "#/$defs/point"}}
+  pathCommand: {description: "One renderer-neutral path command.", type: object, required: [kind, points], additionalProperties: false, properties: {kind: {$ref: "#/$defs/pathCommandKind"}, points: {$ref: "#/$defs/points"}}}
+  pathCommandKind: {description: "One closed path command kind.", enum: [move, line, quadratic, cubic, close]}
+  date: {description: "An ISO-8601 calendar date.", examples: ["2026-09-25"], type: string, format: date}
+  scale: {description: "A completed time-to-inline coordinate scale.", type: object, required: [surfaceId, scaleId, domainStart, domainEnd, rangeStart, rangeEnd, origin, unitRatio], additionalProperties: false, properties: {surfaceId: {$ref: "#/$defs/string"}, scaleId: {$ref: "#/$defs/string"}, domainStart: {$ref: "#/$defs/date"}, domainEnd: {$ref: "#/$defs/date"}, rangeStart: {$ref: "#/$defs/number"}, rangeEnd: {$ref: "#/$defs/number"}, origin: {$ref: "#/$defs/number"}, unitRatio: {$ref: "#/$defs/positive"}}}
+  scales: {description: "Completed surface scales.", type: array, items: {$ref: "#/$defs/scale"}}
+  paint: {description: "Completed primitive paint, including optional fidelity-bearing details.", type: object, required: [opacity], additionalProperties: false, properties: {fill: {$ref: "#/$defs/text"}, stroke: {$ref: "#/$defs/text"}, strokeWidth: {$ref: "#/$defs/positive"}, dash: {$ref: "#/$defs/positiveNumbers"}, opacity: {$ref: "#/$defs/unitInterval"}, gradient: {$ref: "#/$defs/gradient"}, shadow: {$ref: "#/$defs/shadow"}, strokeFinish: {$ref: "#/$defs/strokeFinish"}}}
+  positiveNumbers: {description: "An ordered collection of strictly positive numbers.", type: array, items: {$ref: "#/$defs/positive"}}
+  gradient: {description: "A completed linear gradient with fidelity policy.", type: object, required: [start, end, stops, fidelity], additionalProperties: false, properties: {start: {$ref: "#/$defs/point"}, end: {$ref: "#/$defs/point"}, stops: {$ref: "#/$defs/gradientStops"}, fidelity: {$ref: "#/$defs/fidelity"}}}
+  gradientStops: {description: "An ordered gradient stop list.", type: array, minItems: 2, items: {$ref: "#/$defs/gradientStop"}}
+  gradientStop: {description: "One completed gradient stop.", type: object, required: [offset, color], additionalProperties: false, properties: {offset: {$ref: "#/$defs/unitInterval"}, color: {$ref: "#/$defs/text"}}}
+  shadow: {description: "A completed shadow with fidelity policy.", type: object, required: [color, offsetInline, offsetBlock, blur, opacity, fidelity], additionalProperties: false, properties: {color: {$ref: "#/$defs/text"}, offsetInline: {$ref: "#/$defs/number"}, offsetBlock: {$ref: "#/$defs/number"}, blur: {$ref: "#/$defs/nonnegative"}, opacity: {$ref: "#/$defs/unitInterval"}, fidelity: {$ref: "#/$defs/fidelity"}}}
+  strokeFinish: {description: "A completed stroke cap, join, and fidelity policy.", type: object, required: [lineCap, lineJoin, fidelity], additionalProperties: false, properties: {lineCap: {$ref: "#/$defs/lineCap"}, lineJoin: {$ref: "#/$defs/lineJoin"}, fidelity: {$ref: "#/$defs/fidelity"}}}
+  fidelity: {description: "Whether a visual detail must be preserved by consumers.", enum: [required, decorative-optional]}
+  lineCap: {description: "A closed SVG-compatible stroke cap.", enum: [butt, round, square]}
+  lineJoin: {description: "A closed SVG-compatible stroke join.", enum: [miter, round, bevel]}
+  textLayout: {description: "Measured text geometry and resolved font identity.", type: object, required: [bounds, baseline, lines, family, weight, fontSize, lineHeight, assetIdentity], additionalProperties: false, properties: {bounds: {$ref: "#/$defs/bounds"}, baseline: {$ref: "#/$defs/point"}, lines: {$ref: "#/$defs/nonemptyStrings"}, family: {$ref: "#/$defs/text"}, weight: {$ref: "#/$defs/positiveInteger"}, fontSize: {$ref: "#/$defs/positive"}, lineHeight: {$ref: "#/$defs/positive"}, assetIdentity: {$ref: "#/$defs/identity"}}}
+  nonemptyStrings: {description: "A non-empty ordered text line collection.", type: array, minItems: 1, items: {$ref: "#/$defs/text"}}
+  marker: {description: "A completed relation marker geometry.", type: object, required: [outline, headLength, headWidth, attachmentOffset, paintMode], additionalProperties: false, properties: {outline: {$ref: "#/$defs/nonemptyPathCommands"}, headLength: {$ref: "#/$defs/positive"}, headWidth: {$ref: "#/$defs/positive"}, attachmentOffset: {$ref: "#/$defs/nonnegative"}, paintMode: {$ref: "#/$defs/markerPaintMode"}}}
+  nonemptyPathCommands: {description: "A non-empty completed path command list.", type: array, minItems: 1, items: {$ref: "#/$defs/pathCommand"}}
+  markerPaintMode: {description: "The closed marker paint mode.", enum: [fill, stroke]}
+  pattern: {description: "A completed repeated line pattern.", type: object, required: [tileInlineSize, tileBlockSize, angleDegrees, strokes], additionalProperties: false, properties: {tileInlineSize: {$ref: "#/$defs/positive"}, tileBlockSize: {$ref: "#/$defs/positive"}, angleDegrees: {$ref: "#/$defs/patternAngle"}, strokes: {$ref: "#/$defs/patternStrokes"}}}
+  patternAngle: {description: "A pattern angle in the half-open degree range.", type: number, minimum: 0, exclusiveMaximum: 360}
+  patternStrokes: {description: "A non-empty ordered pattern stroke list.", type: array, minItems: 1, items: {$ref: "#/$defs/patternStroke"}}
+  patternStroke: {description: "One completed pattern stroke.", type: object, required: [start, end, width], additionalProperties: false, properties: {start: {$ref: "#/$defs/point"}, end: {$ref: "#/$defs/point"}, width: {$ref: "#/$defs/positive"}}}
+  symbol: {description: "A completed symbol outline.", type: object, required: [outline], additionalProperties: false, properties: {outline: {$ref: "#/$defs/nonemptyPathCommands"}}}
+  icon: {description: "A completed vector or raster icon identity and optional vector outlines.", type: object, required: [kind, assetIdentity, viewport, alternative, decorative], additionalProperties: false, properties: {kind: {$ref: "#/$defs/iconKind"}, assetIdentity: {$ref: "#/$defs/identity"}, viewport: {$ref: "#/$defs/iconViewport"}, alternative: {$ref: "#/$defs/text"}, decorative: {$ref: "#/$defs/boolean"}, encoding: {$ref: "#/$defs/pngEncoding"}, paths: {$ref: "#/$defs/iconPaths"}}}
+  iconKind: {description: "The closed public icon representation kind.", enum: [vector, raster]}
+  iconViewport: {description: "The intrinsic positive icon viewport.", type: object, required: [inlineSize, blockSize], additionalProperties: false, properties: {inlineSize: {$ref: "#/$defs/positiveInteger"}, blockSize: {$ref: "#/$defs/positiveInteger"}}}
+  pngEncoding: {description: "The supported raster icon encoding.", const: png}
+  iconPaths: {description: "Ordered vector icon paint paths.", type: array, items: {$ref: "#/$defs/iconPath"}}
+  iconPath: {description: "One completed vector icon paint path.", type: object, required: [commands, opacity], additionalProperties: false, properties: {commands: {$ref: "#/$defs/nonemptyPathCommands"}, fill: {$ref: "#/$defs/text"}, stroke: {$ref: "#/$defs/text"}, strokeWidth: {$ref: "#/$defs/positive"}, lineCap: {$ref: "#/$defs/lineCap"}, lineJoin: {$ref: "#/$defs/lineJoin"}, opacity: {$ref: "#/$defs/unitInterval"}}}
+  contentCounts: {description: "Counts of supported optional content families.", type: object, required: [relations, annotations, notes, legendEntries, summaryPanels, groupDetails, milestones, observationRows], additionalProperties: false, properties: {relations: {$ref: "#/$defs/nonnegativeInteger"}, annotations: {$ref: "#/$defs/nonnegativeInteger"}, notes: {$ref: "#/$defs/nonnegativeInteger"}, legendEntries: {$ref: "#/$defs/nonnegativeInteger"}, summaryPanels: {$ref: "#/$defs/nonnegativeInteger"}, groupDetails: {$ref: "#/$defs/nonnegativeInteger"}, milestones: {$ref: "#/$defs/nonnegativeInteger"}, observationRows: {$ref: "#/$defs/nonnegativeInteger"}}}
+  nonnegativeInteger: {description: "A non-negative integer count.", type: integer, minimum: 0}
+  roleCounts: {description: "Counts keyed by completed visual role.", type: object, additionalProperties: {$ref: "#/$defs/nonnegativeInteger"}}

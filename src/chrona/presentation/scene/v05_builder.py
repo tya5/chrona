@@ -499,7 +499,19 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
                                          points=relation.points))
-    return SceneSurface("table-timeline", slots, rows, groups, scale, tuple(primitives), columns=columns)
+    ownership = {item.placement_id: item.slot_id for item in placed_surface.text}
+    ownership.update({item.placement_id: item.slot_id for item in placed_surface.marks})
+    ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})
+    ownership.update({item.relation_id: item.slot_id for item in placed_surface.relations})
+    ownership.update({item.placement_id: item.slot_id for item in placed_surface.icons})
+    for group in groups:
+        ownership[f"group:{group.group_id}"] = table.slot_id
+        ownership[f"group-header-band:{group.group_id}"] = table.slot_id
+    try:
+        completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
+    except KeyError as error:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
+    return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns)
 
 
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
@@ -557,4 +569,12 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     for text in placed.text:
         if text.placement_id != "title":
             emit_text(text)
-    return SceneSurface("dependency-network", slots, (), (), None, tuple(primitives))
+    ownership = {item.placement_id: item.slot_id for item in placed.text}
+    ownership.update({item.relation_id: item.slot_id for item in placed.relations})
+    ownership.update({f"network-node:{item.object_id}": item.slot_id for item in placed.nodes})
+    ownership.update({f"network-edge:{item.relation_id}": item.slot_id for item in placed.relations})
+    try:
+        completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
+    except KeyError as error:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
+    return SceneSurface("dependency-network", slots, (), (), None, completed_primitives)

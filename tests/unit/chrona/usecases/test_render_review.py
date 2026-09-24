@@ -65,6 +65,8 @@ def test_completed_scene_serializes_deterministically_with_typed_table_links():
     cells = [item for item in document["surfaces"][0]["primitives"] if item["purpose"] == "table-cell"]
     assert cells and all("tableRowId" in item and "tableColumnId" in item for item in cells)
     assert document["manifest"]["visualRoleCounts"]
+    slots = {item["id"] for item in document["surfaces"][0]["slots"]}
+    assert slots and all(item["slotId"] in slots for item in document["surfaces"][0]["primitives"])
 
 
 def test_scene_validation_rejects_a_table_reference_not_owned_by_its_surface():
@@ -73,6 +75,15 @@ def test_scene_validation_rejects_a_table_reference_not_owned_by_its_surface():
         document = scene_document(render_review(_request(closure, snapshot)).scene)
     cell = next(item for item in document["surfaces"][0]["primitives"] if item["purpose"] == "table-cell")
     cell["tableColumnId"] = "not-a-column"
+    with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
+        validate_scene_document(document)
+
+
+def test_scene_validation_rejects_a_primitive_slot_not_owned_by_its_surface():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        document = scene_document(render_review(_request(closure, snapshot)).scene)
+    document["surfaces"][0]["primitives"][0]["slotId"] = "missing-slot"
     with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
         validate_scene_document(document)
 

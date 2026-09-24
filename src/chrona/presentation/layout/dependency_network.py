@@ -19,6 +19,7 @@ class NetworkNodePlacement:
     input_port: tuple[float, float]
     output_port: tuple[float, float]
     critical: bool
+    slot_id: str = "network"
 
 
 @dataclass(frozen=True)
@@ -157,7 +158,7 @@ def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> T
         font_family=measured.font_family, font_weight=measured.font_weight,
         font_size=measured.font_size, line_height=measured.line_height,
         font_asset_identity=measured.font_asset_identity, collision_region="network",
-        collision_domain=CollisionDomain("network", "nodes"))
+        collision_domain=CollisionDomain("network", "nodes"), slot_id="network")
 
 
 def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
@@ -170,7 +171,7 @@ def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
         font_family=measured.font_family, font_weight=measured.font_weight,
         font_size=measured.font_size, line_height=measured.line_height,
         font_asset_identity=measured.font_asset_identity, collision_region="network-title",
-        collision_domain=CollisionDomain("network-title", "content"))
+        collision_domain=CollisionDomain("network-title", "content"), slot_id="title")
 
 
 def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], bounds: Rect,
@@ -192,7 +193,8 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
         if not relation_route_quality(points, max_bends=max_bends, max_detour_ratio=max_detour_ratio):
             raise LayoutError("E_LAYOUT_NETWORK_UNROUTABLE", f"/projection/network/edges/{edge.relation_id}")
         relations.append(RelationPlacement(edge.relation_id, f"{edge.source_id}:output", f"{edge.target_id}:input",
-                                           tuple(points), semantic_id="dependency-critical" if edge.critical else "dependency"))
+                                           tuple(points), semantic_id="dependency-critical" if edge.critical else "dependency",
+                                           slot_id="network"))
     return tuple(relations)
 
 

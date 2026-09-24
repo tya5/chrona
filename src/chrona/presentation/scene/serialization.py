@@ -19,7 +19,7 @@ class SceneSerializationError(ValueError):
 
 
 def serialize_scene(scene: InspectionScene) -> bytes:
-    """Return canonical UTF-8 scene-v0.1 JSON after typed and schema validation."""
+    """Return canonical UTF-8 scene-v0.2 JSON after typed and schema validation."""
     document = scene_document(scene)
     validate_scene_document(document)
     try:
@@ -32,7 +32,7 @@ def serialize_scene(scene: InspectionScene) -> bytes:
 def scene_document(scene: InspectionScene) -> dict[str, Any]:
     """Map each public Scene field explicitly; no dataclass reflection is used."""
     return {
-        "version": "chrona/scene/v0.1",
+        "version": "chrona/scene/v0.2",
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
@@ -73,7 +73,7 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
     """Validate schema shape plus cross-reference invariants JSON Schema cannot state."""
     try:
         errors = tuple(jsonschema.Draft202012Validator(
-            schema_document("scene-v0.1.schema.yaml")
+            schema_document("scene-v0.2.schema.yaml")
         ).iter_errors(document))
     except Exception as error:  # schema resource failures have no public partial document
         raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
@@ -88,14 +88,18 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
     for surface in surfaces:
         if not isinstance(surface, Mapping):
             return False
+        slots = {item.get("id") for item in surface.get("slots", ()) if isinstance(item, Mapping)}
         rows = {item.get("id") for item in surface.get("rows", ()) if isinstance(item, Mapping)}
         columns = {item.get("id") for item in surface.get("columns", ()) if isinstance(item, Mapping)}
-        if None in rows or None in columns or len(rows) != len(surface.get("rows", ())) or len(columns) != len(surface.get("columns", ())):
+        if (None in slots or None in rows or None in columns or len(slots) != len(surface.get("slots", ()))
+                or len(rows) != len(surface.get("rows", ())) or len(columns) != len(surface.get("columns", ()) )):
             return False
         for primitive in surface.get("primitives", ()):
             if not isinstance(primitive, Mapping):
                 return False
             row, column, purpose = primitive.get("tableRowId"), primitive.get("tableColumnId"), primitive.get("purpose")
+            if primitive.get("slotId") not in slots:
+                return False
             if purpose == "table-cell":
                 if row not in rows or column not in columns:
                     return False
@@ -145,7 +149,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
     result: dict[str, Any] = {
         "id": item.scene_id, "kind": item.kind, "sourceRef": item.source_ref,
         "sourceKind": item.source_kind, "purpose": item.purpose,
-        "visualRole": item.visual_role, "bounds": _bounds(item.bounds),
+        "visualRole": item.visual_role, "bounds": _bounds(item.bounds), "slotId": item.slot_id,
     }
     optional = {
         "text": item.text, "baseline": _point(item.baseline) if item.baseline is not None else None,

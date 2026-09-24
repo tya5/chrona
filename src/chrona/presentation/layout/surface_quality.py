@@ -74,6 +74,7 @@ class TextPlacement:
     available_inline_size: float | None = None
     fallback_ladder: tuple[str, ...] = ()
     selected_rung: str | None = None
+    slot_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -107,6 +108,7 @@ class MarkPlacement:
     mark_shape: str = "span"
     corner_radius: float = 0.0
     path_commands: tuple[PathCommand, ...] = ()
+    slot_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -119,6 +121,7 @@ class ShapePlacement:
     bounds: Rect
     points: tuple[tuple[float, float], ...] = ()
     required: bool = True
+    slot_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -202,6 +205,7 @@ class RelationPlacement:
     semantic_id: str = "dependency"
     corner_radius: float = 0.0
     path_commands: tuple[PathCommand, ...] = ()
+    slot_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -247,6 +251,7 @@ class IconPlacement:
     bounds: Rect
     semantic_id: str = "iconMark"
     stroke_scale: float = 1.0
+    slot_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -301,6 +306,14 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")
             if primitive.kind == "Text" and primitive.text is None:
                 raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")
+        if self.slots:
+            slot_ids = {slot.slot_id for slot in self.slots}
+            for kind, items in (("text", self.text), ("mark", self.marks), ("shape", self.shapes),
+                                ("relation", self.relations), ("icon", self.icons)):
+                for item in items:
+                    if not item.slot_id or item.slot_id not in slot_ids:
+                        identifier = getattr(item, "placement_id", getattr(item, "relation_id", ""))
+                        raise ValueError(f"E_LAYOUT_SLOT_OWNERSHIP_INVALID:{kind}:{identifier}")
         for decision in self.decisions:
             if decision.outcome not in {"placed", "suppressed", "diagnosed"}:
                 raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")

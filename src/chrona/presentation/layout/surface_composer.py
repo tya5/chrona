@@ -146,7 +146,7 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
                           Decimal(str(icon_width)), Decimal(str(item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0]))) )
             icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
                                        icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                       visual.decorative, bounds, "labelVisual", icon_width / icon.viewport[0]))
+                                       visual.decorative, bounds, "labelVisual", icon_width / icon.viewport[0], item.slot_id))
     if requested:
         raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
     return text, icons
@@ -178,7 +178,7 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
                       Decimal(str(width)), host.bounds.block_size)
         icons.append(IconPlacement(f"visual:{host.placement_id}", host.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                   visual.decorative, bounds, "iconMark", width / icon.viewport[0]))
+                                   visual.decorative, bounds, "iconMark", width / icon.viewport[0], host.slot_id))
     return icons
 
 
@@ -491,7 +491,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                          inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                     if shape == "point" and radius > 0 else ())
         return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
-                             mark_shape=shape, corner_radius=radius, path_commands=commands)
+                             mark_shape=shape, corner_radius=radius, path_commands=commands,
+                             slot_id=timeline.slot_id)
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -1038,6 +1039,33 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals)
     icons.extend(candidate_icons)
     icons.extend(resolve_mark_visual_requests(marks, request))
+
+    # Slot ownership is completed here with the rest of Layout geometry.  Scene
+    # projection receives the relation verbatim and must never reconstruct it
+    # from primitive purpose, identity, or containment.
+    slot_ids = {slot.slot_id for slot in slots}
+    def text_slot(item: Any) -> str:
+        if item.slot_id in slot_ids:
+            return item.slot_id
+        if item.collision_domain.slot == "group-header":
+            return table.slot_id
+        raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
+    text = [replace(item, slot_id=text_slot(item)) for item in text]
+    def shape_slot(item: Any) -> str:
+        if item.placement_id.startswith("legend-swatch:"):
+            return by_source["legend"].slot_id
+        if item.placement_id.startswith("summary-bar:"):
+            return by_source.get("summary", timeline).slot_id
+        if item.placement_id.startswith("annotation-box:"):
+            return by_source["annotations"].slot_id
+        if item.source_ref == "timeline-axis":
+            return axis.slot_id
+        return timeline.slot_id
+    shapes = [replace(item, slot_id=shape_slot(item)) for item in shapes]
+    relations = [replace(item, slot_id=(by_source["annotations"].slot_id
+                                        if item.relation_id.startswith("annotation-leader:")
+                                        else timeline.slot_id)) for item in relations]
+    icons = [replace(item, slot_id=(item.slot_id or by_source["annotations"].slot_id)) for item in icons]
     column_placements = tuple(
         ColumnPlacement(item.column_id, label,
                         Rect(Decimal(str(item.inline)), Decimal(str(table_bounds[1])),
