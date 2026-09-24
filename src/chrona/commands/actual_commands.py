@@ -10,6 +10,7 @@ from typing import Any, Protocol
 import yaml
 
 from chrona.resources import safe_load
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 class ActualStore(Protocol):
@@ -114,7 +115,7 @@ class LocalActualStore:
         payload = yaml.safe_dump(actual_set, sort_keys=True).encode()
         digest = sha256(payload).hexdigest()
         token = f"actual:{counter}:{digest[:12]}"
-        path = self.root / token / "actuals" / f"{self.actual_set_id}.yaml"
+        path = snapshot_directory(self.root, token) / "actuals" / f"{self.actual_set_id}.yaml"
         path.parent.mkdir(parents=True, exist_ok=False)
         path.write_bytes(payload)
         self.tip.parent.mkdir(parents=True, exist_ok=True)
@@ -126,7 +127,7 @@ class LocalActualStore:
     def _load_tip(self) -> tuple[str, dict[str, Any]]:
         pointer = json.loads(self.tip.read_text(encoding="utf-8"))
         token = pointer["token"]
-        value = safe_load((self.root / token / "actuals" / f"{self.actual_set_id}.yaml").read_text(encoding="utf-8"))
+        value = safe_load((snapshot_directory(self.root, token) / "actuals" / f"{self.actual_set_id}.yaml").read_text(encoding="utf-8"))
         return token, value
 
 

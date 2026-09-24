@@ -5,10 +5,11 @@ import yaml
 from chrona.commands.actual_commands import LocalActualStore
 from chrona.operational.command_engine import apply_actual_command
 from chrona.operational.store_config import ConfiguredStoreReader
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _write(root: Path, token: str, address: str, value: dict, kind: str, identifier: str):
-    payload = yaml.safe_dump(value, sort_keys=True).encode(); path = root / token / address
+    payload = yaml.safe_dump(value, sort_keys=True).encode(); path = snapshot_directory(root, token) / address
     path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(payload)
     return {"id": identifier, "kind": kind, "store": {"provider": "local", "identity": "test"}, "address": address, "revision": {"token": token}, "contentIdentity": "sha256:" + sha256(payload).hexdigest()}
 
@@ -16,7 +17,7 @@ def _write(root: Path, token: str, address: str, value: dict, kind: str, identif
 def test_apply_intake_uses_v02_batch_cas_and_replays(tmp_path: Path):
     actual = {"version": "chrona/actual-set/v0.2", "kind": "actual-set", "id": "actuals", "body": {"observations": []}}
     store = LocalActualStore(tmp_path, actual); revision, loaded = store.read()
-    payload = (tmp_path / revision / "actuals" / "actuals.yaml").read_bytes()
+    payload = (snapshot_directory(tmp_path, revision) / "actuals" / "actuals.yaml").read_bytes()
     target = {"id": "actuals", "kind": "actual-set", "store": {"provider": "local", "identity": "test"}, "address": "actuals/actuals.yaml", "revision": {"token": revision}, "contentIdentity": "sha256:" + sha256(payload).hexdigest()}
     project = {"version": "timeline/v0.6", "project": {"id": "p"}, "extensions": [], "objects": {"firmware": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-01-01"}}}, "relations": []}
     project_ref = _write(tmp_path, "project-r1", "project.yaml", project, "project", "p")

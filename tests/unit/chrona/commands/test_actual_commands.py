@@ -6,6 +6,7 @@ from chrona.commands.actual_commands import (
     resolve_actual_observation,
     undo_actual_command,
 )
+from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _actual_set_v02():
@@ -119,4 +120,4 @@ def test_local_actual_store_publishes_new_immutable_token_and_reopens(tmp_path):
     assert accepted.status == "accepted" and accepted.result_revision != base
     reopened = LocalActualStore(tmp_path, _actual_set_v02())
     assert reopened.read()[0] == accepted.result_revision
-    assert (tmp_path / accepted.result_revision / "actuals" / "supplier-observed.yaml").is_file()
+    assert (snapshot_directory(tmp_path, accepted.result_revision) / "actuals" / "supplier-observed.yaml").is_file()
