@@ -10,6 +10,7 @@ import pytest
 
 import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
+from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
 from chrona.scheduling.scheduler import schedule
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -203,6 +204,36 @@ def test_cli_render_accepts_a_declared_local_font_closure(tmp_path, monkeypatch)
     ])
     main()
     assert output.read_bytes().startswith(b"<svg")
+
+
+@pytest.mark.parametrize(
+    ("target_kind", "profile", "signature"),
+    [("png", "chrona-output/visual/v0.6-png", b"\x89PNG\r\n\x1a\n"), ("pdf", None, b"%PDF-")],
+)
+def test_cli_rasterizes_an_imported_context_font_pair(tmp_path, monkeypatch, target_kind, profile, signature):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    font_directory = tmp_path / "fonts"
+    imported = import_font(root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf",
+                           font_directory, family="Noto Sans", weight=400)
+    output = tmp_path / f"review.{target_kind}"
+    argv = [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(root / "examples/controller-z/views/executive.yaml"),
+        "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--font-metrics", str(font_directory / "font-metrics.yaml"),
+        "--format", target_kind, "--output", str(output),
+    ]
+    if profile:
+        argv.extend(("--visual-profile", profile))
+    monkeypatch.setattr(sys, "argv", argv)
+
+    main()
+
+    assert output.read_bytes().startswith(signature)
+    assert (font_directory / imported["font"]).is_file()
 
 
 def test_cli_renders_a_bundled_catalog_icon_with_the_explicit_v07_profile(tmp_path, monkeypatch):

@@ -17,7 +17,6 @@ from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
-from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
 from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
@@ -281,10 +280,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
     """Adapt one resolved closure to the render use case and its diagnostics."""
     request = RenderRequest(
         closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
-        scheduler=ReferenceScheduler(), renderer=renderer_for(
-            {"kind": closure.context.target.kind, "capabilities": list(closure.context.target.capabilities)},
-            closure.context.environment.renderer_environment(),
-        ),
+        scheduler=ReferenceScheduler(),
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
         asset_root=asset_root,
     )

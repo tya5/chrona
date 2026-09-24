@@ -221,7 +221,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
-        asset_root=request.asset_root,
+        asset_root=asset_root,
     )
     try:
         artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])))

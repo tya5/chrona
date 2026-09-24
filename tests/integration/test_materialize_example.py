@@ -8,11 +8,13 @@ import yaml
 from PIL import Image
 
 from chrona.presentation.model.closure import ClosureError, resolve_render_context
+from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
 from chrona.usecases.materialize import copy_context_closure
+from chrona.usecases.render_review import RenderRequest, render_review
 from tools.materialize_example import _copy_context_closure, materialize
 
 
@@ -295,6 +297,39 @@ def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_f
     assert (snapshot_directory(tmp_path / "snapshot", revision) / "assets/metrics.json").read_bytes() == metrics_target.read_bytes()
     assert not (snapshot_directory(tmp_path / "snapshot", revision) / "assets/font.ttf").exists()
     assert reference["id"] == "controller-z-executive"
+
+
+def test_materialized_context_font_pair_reaches_the_default_png_adapter(tmp_path):
+    copied_example = tmp_path / "local-raster-font"
+    shutil.copytree(ROOT / "examples/controller-z", copied_example)
+    source = ROOT / "src/chrona/resources"
+    font_target = copied_example / "assets/font.ttf"
+    metrics_target = copied_example / "assets/metrics.json"
+    font_target.parent.mkdir(exist_ok=True)
+    font_target.write_bytes((source / "fonts/noto-sans-regular-v1.ttf").read_bytes())
+    metrics_target.write_bytes((source / "font_metrics/noto-sans-regular-v1.json").read_bytes())
+    context_path = copied_example / "contexts/executive.yaml"
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    context["body"]["environment"]["fontMetrics"]["assets"] = [{
+        "family": "Noto Sans", "weight": 400,
+        "metrics": {"locator": {"provider": "context", "address": "assets/metrics.json"}, "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
+        "font": {"locator": {"provider": "context", "address": "assets/font.ttf"}, "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()},
+    }]
+    import resvg_py
+    context["body"]["environment"]["rasterizer"] = {
+        "engine": "resvg-py", "version": resvg_py.__version__, "resvgVersion": resvg_py.__resvg_version__, "dpi": 96,
+    }
+    context["body"]["target"] = {"kind": "png", "visualProfile": "chrona-output/visual/v0.6-png", "capabilities": []}
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+
+    snapshot = tmp_path / "snapshot"; snapshot.mkdir()
+    reference, revision = copy_context_closure(copied_example, context_path, snapshot)
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "controller-z-example"))
+    rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
+
+    assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert (snapshot_directory(snapshot, revision) / "assets/font.ttf").is_file()
+    assert sha256(font_target.read_bytes()).hexdigest() in rendered.artifact.adapter_identity
 
 
 def test_materializer_records_selected_scenario_evidence_and_omits_unselected_scenarios(tmp_path):
