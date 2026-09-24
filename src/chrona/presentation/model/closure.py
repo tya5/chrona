@@ -461,10 +461,13 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         raise ClosureError(str(error)) from error
     catalog_resources = tuple(item for item in resources if item.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
-    view_contract = resources[1].contract
-    if not isinstance(view_contract, ViewContract):
-        raise ClosureError("E_CLOSURE_KIND")
-    icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract)
+    if catalog_resources:
+        view_contract = resources[1].contract
+        if not isinstance(view_contract, ViewContract):
+            raise ClosureError("E_CLOSURE_KIND")
+        icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract)
+    else:
+        icon_assets = ()
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
 
 
