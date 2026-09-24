@@ -12,8 +12,8 @@ prefix and percent encoding with `-_` as its only unescaped characters. The
 prefix prevents Windows device-name collisions; encoding every period also
 prevents trailing-dot aliases. This mapping is injective: `:` becomes `%3A`,
 while an authored `%3A` becomes `%253A`. No schema restriction or semantic
-token migration is introduced. Local snapshot readers and all materializers
-use the same codec.
+token migration is introduced. Local snapshot readers, materializers, and the
+independently versioned Actual Store use the same codec.
 
 ### Publication and locking
 

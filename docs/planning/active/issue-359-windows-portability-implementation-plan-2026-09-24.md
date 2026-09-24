@@ -13,7 +13,7 @@ byte, and no production/tool/conformance text call has an implicit encoding.
 Implement the `revision-`-prefixed token-directory codec (including device-name
 and trailing-dot safety), replace hard-link publication with exclusive
 reservation plus replacement, and add lazy POSIX/Windows locking. Route
-snapshot readers and materializers through the codec.
+snapshot readers, materializers, and LocalActualStore through the codec.
 
 **Acceptance:** `baseline:<digest>` round-trips through local snapshot reads and
 materialization; races remain no-overwrite; lock and publication tests do not
