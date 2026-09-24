@@ -21,6 +21,14 @@ comparison:
 references, and at least one different View/Theme/Scheme/Layout reference.
 The target is evidence metadata, not a fifth Design Space dimension.
 
+Some Content choices require a typed Layout companion before Scene can form
+the selected primitive family. `comparison.supports` is therefore an optional,
+lexically ordered documentary list of coupled owner names. It never adds a
+second compared dimension. For a surface set it may contain only `layout`; the
+peer page must disclose that support diff. The attempted dependency-network
+Context with a table-timeline Layout failed `E_PRESENTATION_PRIMITIVE_MISSING`,
+which proves this is a product contract dependency rather than gallery prose.
+
 ## Generated documentation
 
 `tools/render_design_gallery.py` is a read-only documentation generator.  It
@@ -47,7 +55,7 @@ evidence and new contexts over existing resources:
 | --- | --- | --- |
 | Executive status | content | split from existing Controller Z pair |
 | Treatment ladder | appearance | split from elevated Controller Z direction; treatment is Theme-owned |
-| Two surfaces | content | Halcyon existing evidence; `surface` is View-owned Content per Specification 55 |
+| Two surfaces | content | Halcyon evidence with disclosed `layout` support; `surface` is View-owned Content per Specification 55 |
 | Four appearances | appearance | needs two scheme-pinned Contexts |
 | Programme at scale | composition | needs normalized Context pairs; overlay waits for #272 |
 | Investigating a slip | content | needs normalized Context pairs |
