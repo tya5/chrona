@@ -15,14 +15,7 @@ import yaml
 
 POLICY_VERSION = "chrona/resolvability-quality-policy/v0.1"
 DIAGNOSTIC_CODE = re.compile(r"^[EW]_[A-Z0-9_]+$")
-INGRESS_PREFIXES = (
-    "src/chrona/app/",
-    "src/chrona/usecases/",
-    "src/chrona/operational/",
-    "src/chrona/storage/",
-    "src/chrona/presentation/contracts/",
-    "src/chrona/presentation/model/closure.py",
-)
+DISPOSITIONS = {"sufficient", "backlog"}
 
 
 class DiagnosticInventoryError(ValueError):
@@ -76,11 +69,52 @@ def _function_names(tree: ast.AST) -> dict[int, str]:
     return names
 
 
-def _layer(path: str) -> str:
-    return "user-facing-ingress" if path.startswith(INGRESS_PREFIXES) else "internal"
+def _modules(root: Path) -> dict[str, Path]:
+    source = root / "src"
+    found = {}
+    for path in (source / "chrona").rglob("*.py"):
+        name = path.relative_to(source).as_posix().replace("/", ".")[:-3]
+        found[name.removesuffix(".__init__")] = path
+    return found
 
 
-def _calls(tree: ast.AST, path: str) -> Iterable[DiagnosticSite]:
+def _imports(path: Path, package: str, known: set[str]) -> set[str]:
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.ImportFrom):
+            if node.level:
+                base = package if node.level == 1 else package.rsplit(".", node.level - 1)[0]
+                target = f"{base}.{node.module}" if node.module else base
+            elif node.module and node.module.startswith("chrona"):
+                target = node.module
+            else:
+                continue
+            found.add(target)
+            found.update(f"{target}.{alias.name}" for alias in node.names)
+        elif isinstance(node, ast.Import):
+            found.update(alias.name for alias in node.names if alias.name.startswith("chrona"))
+    return {name for name in found if name in known}
+
+
+def cli_reachable_modules(root: Path) -> set[str]:
+    modules = _modules(root)
+    known = set(modules)
+    graph = {
+        name: _imports(path, name if path.name == "__init__.py" else name.rsplit(".", 1)[0], known)
+        for name, path in modules.items()
+    }
+    reached: set[str] = set()
+    stack = [name for name in ("chrona.app.cli", "chrona.__main__") if name in modules]
+    while stack:
+        name = stack.pop()
+        if name in reached:
+            continue
+        reached.add(name)
+        stack.extend(graph[name])
+    return reached
+
+
+def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
     functions = _function_names(tree)
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
@@ -99,18 +133,20 @@ def _calls(tree: ast.AST, path: str) -> Iterable[DiagnosticSite]:
             column=node.col_offset,
             function=functions.get(id(node), "<module>"),
             constructor=_name(node.func),
-            layer=_layer(path),
+            layer=layer,
             has_detail=bool(detail_arguments or detail_keywords),
         )
 
 
 def discover(root: Path) -> tuple[DiagnosticSite, ...]:
     source = root / "src" / "chrona"
+    reachable = cli_reachable_modules(root)
     sites: list[DiagnosticSite] = []
     for source_path in sorted(source.rglob("*.py")):
         path = source_path.relative_to(root).as_posix()
         tree = ast.parse(source_path.read_text(encoding="utf-8"), filename=path)
-        sites.extend(_calls(tree, path))
+        module = path.removeprefix("src/").replace("/", ".").removesuffix(".py").removesuffix(".__init__")
+        sites.extend(_calls(tree, path, layer="user-facing-ingress" if module in reachable else "internal"))
     return tuple(sorted(sites))
 
 
@@ -131,28 +167,36 @@ def load_policy(path: Path) -> tuple[Mapping[str, Any], ...]:
     bare = actionability.get("bareDiagnostics")
     if not isinstance(bare, list):
         raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_BARE")
+    default = _mapping(actionability.get("defaultBacklog"), "DEFAULT_BACKLOG")
+    if default.get("disposition") != "backlog" or not isinstance(default.get("nextAction"), str) or not default["nextAction"].strip():
+        raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_DEFAULT_BACKLOG")
     entries: list[Mapping[str, Any]] = []
     for entry in bare:
         entry = _mapping(entry, "ENTRY")
-        if not isinstance(entry.get("code"), str) or not DIAGNOSTIC_CODE.fullmatch(entry["code"]) or not isinstance(entry.get("reason"), str) or not entry["reason"].strip():
+        disposition = entry.get("disposition")
+        if not isinstance(entry.get("code"), str) or not DIAGNOSTIC_CODE.fullmatch(entry["code"]) or disposition not in DISPOSITIONS:
+            raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_ENTRY")
+        if disposition == "sufficient" and (not isinstance(entry.get("reason"), str) or not entry["reason"].strip()):
+            raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_ENTRY")
+        if disposition == "backlog" and (not isinstance(entry.get("nextAction"), str) or not entry["nextAction"].strip()):
             raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_ENTRY")
         entries.append(entry)
-    return tuple(entries)
+    return (*entries, {"code": "*", **default})
 
 
 def validate(sites: tuple[DiagnosticSite, ...], policy: tuple[Mapping[str, Any], ...]) -> None:
     bare = {site.code for site in sites if site.layer == "user-facing-ingress" and not site.has_detail}
-    classified = {str(entry["code"]) for entry in policy}
-    if len(classified) != len(policy):
+    classified = {str(entry["code"]) for entry in policy if entry["code"] != "*"}
+    if len(classified) != len(policy) - 1:
         raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_DUPLICATE")
     unknown = sorted(classified - bare)
-    missing = sorted(bare - classified)
+    missing: list[str] = []
     if unknown or missing:
         detail = [*(f"unknown={item}" for item in unknown), *(f"missing={item}" for item in missing)]
         raise DiagnosticInventoryError("E_DIAGNOSTIC_ACTIONABILITY\n" + "\n".join(detail))
 
 
-def render(sites: tuple[DiagnosticSite, ...]) -> str:
+def render(sites: tuple[DiagnosticSite, ...], policy: tuple[Mapping[str, Any], ...]) -> str:
     lines = [
         "# Diagnostic inventory",
         "",
@@ -165,6 +209,16 @@ def render(sites: tuple[DiagnosticSite, ...]) -> str:
         detail = "yes" if site.has_detail else "no"
         lines.append(f"| `{site.code}` | {site.layer} | {detail} | `{site.constructor}` | `{site.anchor}` ({site.function}) |")
     bare = [site for site in sites if site.layer == "user-facing-ingress" and not site.has_detail]
+    entries = {str(entry["code"]): entry for entry in policy}
+    default = entries.pop("*")
+    backlog = [(code, sum(site.code == code for site in bare), entry["nextAction"])
+               for code, entry in sorted(entries.items()) if entry["disposition"] == "backlog"]
+    backlog.extend((code, sum(site.code == code for site in bare), default["nextAction"])
+                   for code in sorted({site.code for site in bare} - set(entries)))
+    lines.extend(["", "## Actionability backlog", "", "| Code | Bare reachable sites | Next action |", "| --- | ---: | --- |"])
+    lines.extend(f"| `{code}` | {count} | {action} |" for code, count, action in sorted(backlog, key=lambda item: (-item[1], item[0])))
+    if not backlog:
+        lines.append("None.")
     lines.extend(["", "## Bare user-facing constructions", ""])
     lines.extend(f"- `{site.anchor}` — `{site.code}` in `{site.function}`" for site in bare)
     if not bare:
@@ -192,9 +246,10 @@ def main() -> None:
     policy_path = args.policy if args.policy.is_absolute() else root / args.policy
     output = args.output if args.output.is_absolute() else root / args.output
     sites = discover(root)
-    content = render(sites)
+    policy = load_policy(policy_path)
+    content = render(sites, policy)
     if args.check:
-        validate(sites, load_policy(policy_path))
+        validate(sites, policy)
         if not output.is_file() or output.read_text(encoding="utf-8") != content:
             raise SystemExit("E_DIAGNOSTIC_INVENTORY_STALE")
         return

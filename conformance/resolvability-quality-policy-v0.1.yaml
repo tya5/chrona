@@ -1,62 +1,63 @@
 version: chrona/resolvability-quality-policy/v0.1
 diagnosticActionability:
-  # Existing identifier-only ingress diagnostics are classified explicitly so
-  # new codes cannot enter unnoticed.  Each remains visible in the generated
-  # inventory and is a candidate for owner-specific contextual detail.
+  defaultBacklog: {disposition: backlog, nextAction: "Add owner-local actionable detail or explicitly classify the identifier as sufficient."}
+  # Every existing bare ingress diagnostic is a visible improvement backlog;
+  # code-specific owner work is selected by its generated site count.
+  backlog: &backlog {disposition: backlog, nextAction: "Add owner-local actionable detail or explicitly justify identifier-only output."}
   bareDiagnostics:
-    - {code: E_AUTHORING_ACTUAL_TASK, reason: "Existing guided-authoring validation identifier."}
-    - {code: E_AUTHORING_AGGREGATE_CANDIDATE, reason: "Existing guided-authoring aggregate identifier."}
-    - {code: E_AUTHORING_AGGREGATE_PATH, reason: "Existing guided-authoring aggregate identifier."}
-    - {code: E_AUTHORING_AGGREGATE_RECOVERY, reason: "Existing guided-authoring aggregate identifier."}
-    - {code: E_AUTHORING_AGGREGATE_WRITER, reason: "Existing guided-authoring aggregate identifier."}
-    - {code: E_AUTHORING_COMMAND, reason: "Existing guided-authoring command identifier."}
-    - {code: E_AUTHORING_COMMAND_SCHEMA, reason: "Existing guided-authoring schema identifier."}
-    - {code: E_AUTHORING_EXPLICIT_MODE, reason: "Existing guided-authoring mode identifier."}
-    - {code: E_AUTHORING_MATERIALIZE_COLLISION, reason: "Existing guided-authoring collision identifier."}
-    - {code: E_AUTHORING_MATERIALIZE_OUTPUT_PROOF, reason: "Existing guided-authoring evidence identifier."}
-    - {code: E_AUTHORING_MATERIALIZE_PATH, reason: "Existing guided-authoring path identifier."}
-    - {code: E_AUTHORING_NORMALIZATION, reason: "Existing guided-authoring normalization identifier."}
-    - {code: E_AUTHORING_PRESET_PATH, reason: "Existing guided-authoring preset identifier."}
-    - {code: E_AUTHORING_PRESET_RESOURCE, reason: "Existing guided-authoring preset identifier."}
-    - {code: E_AUTHORING_PRESET_SCHEMA, reason: "Existing guided-authoring preset schema identifier."}
-    - {code: E_AUTHORING_TASK_ID, reason: "Existing guided-authoring task identifier."}
-    - {code: E_AUTHORING_WORKSPACE_SCHEMA, reason: "Existing guided-authoring schema identifier."}
-    - {code: E_AUTOMATION_BASE_REVISION, reason: "Existing revision precondition identifier."}
-    - {code: E_AUTOMATION_OPERATION_UNSUPPORTED, reason: "Existing automation operation identifier."}
-    - {code: E_AUTOMATION_TARGET_CLOSURE, reason: "Existing automation closure identifier."}
-    - {code: E_BASELINE_REFERENCE, reason: "Existing baseline reference identifier."}
-    - {code: E_CLOSURE_ID, reason: "Existing immutable closure identity identifier."}
-    - {code: E_CLOSURE_KIND, reason: "Existing immutable closure kind identifier."}
-    - {code: E_CLOSURE_REQUIRED, reason: "Existing immutable closure required-resource identifier."}
-    - {code: E_COMMAND_ID_REUSE, reason: "Existing idempotency identifier."}
-    - {code: E_CONTENT_IDENTITY, reason: "Existing immutable content-identity identifier."}
-    - {code: E_CONTENT_IDENTITY_REQUIRED, reason: "Existing immutable content-identity requirement identifier."}
-    - {code: E_FONT_METRICS_UNAVAILABLE, reason: "Existing font-metrics availability identifier."}
-    - {code: E_FONT_SUBSTITUTE_CONTEXT, reason: "Existing font-substitution context identifier."}
-    - {code: E_ICON_ASSET_IDENTITY, reason: "Existing icon-asset identity identifier."}
-    - {code: E_ICON_ASSET_PATH, reason: "Existing icon-asset path identifier."}
-    - {code: E_ICON_CATALOG_GEOMETRY, reason: "Existing icon-catalog geometry identifier."}
-    - {code: E_ICON_CATALOG_SCHEMA, reason: "Existing icon-catalog schema identifier."}
-    - {code: E_ICON_REFERENCE, reason: "Existing icon-reference identifier."}
-    - {code: E_ICON_SET_AMBIGUOUS, reason: "Existing icon-set ambiguity identifier."}
-    - {code: E_IMMUTABLE_SNAPSHOT_REQUIRED, reason: "Existing immutable snapshot requirement identifier."}
-    - {code: E_INIT_EXAMPLE, reason: "Existing initialization example identifier."}
-    - {code: E_INIT_OUTPUT_EXISTS, reason: "Existing non-overwrite initialization identifier."}
-    - {code: E_MATERIALIZER_CONTEXT, reason: "Existing materializer context identifier."}
-    - {code: E_MATERIALIZER_FONT, reason: "Existing materializer font identifier."}
-    - {code: E_MATERIALIZER_FONT_IDENTITY, reason: "Existing materializer font-identity identifier."}
-    - {code: E_MATERIALIZER_MANIFEST, reason: "Existing materializer manifest identifier."}
-    - {code: E_MATERIALIZER_OUTPUT, reason: "Existing materializer output identifier."}
-    - {code: E_MATERIALIZER_PACKAGE_IDENTITY, reason: "Existing package identity identifier."}
-    - {code: E_MATERIALIZER_PACKAGE_RESOURCE, reason: "Existing package resource identifier."}
-    - {code: E_MATERIALIZER_PATH, reason: "Existing materializer path identifier."}
-    - {code: E_MATERIALIZER_SLIDE, reason: "Existing materializer slide identifier."}
-    - {code: E_RENDER_CONTEXT_SCHEMA, reason: "Existing render-context schema identifier."}
-    - {code: E_RENDER_TYPESETTER_DESCRIPTOR, reason: "Existing typesetter descriptor identifier."}
-    - {code: E_STORE_CONFIG, reason: "Existing store configuration identifier."}
-    - {code: E_STORE_CONFIG_REQUIRED, reason: "Existing store configuration requirement identifier."}
-    - {code: E_STORE_REFERENCE, reason: "Existing immutable store-reference identifier."}
-    - {code: E_TARGET_CAPABILITY_ORDER, reason: "Existing target-capability ordering identifier."}
+    - {<<: *backlog, code: E_AUTHORING_ACTUAL_TASK}
+    - {<<: *backlog, code: E_AUTHORING_AGGREGATE_CANDIDATE}
+    - {<<: *backlog, code: E_AUTHORING_AGGREGATE_PATH}
+    - {<<: *backlog, code: E_AUTHORING_AGGREGATE_RECOVERY}
+    - {<<: *backlog, code: E_AUTHORING_AGGREGATE_WRITER}
+    - {<<: *backlog, code: E_AUTHORING_COMMAND}
+    - {<<: *backlog, code: E_AUTHORING_COMMAND_SCHEMA}
+    - {<<: *backlog, code: E_AUTHORING_EXPLICIT_MODE}
+    - {<<: *backlog, code: E_AUTHORING_MATERIALIZE_COLLISION}
+    - {<<: *backlog, code: E_AUTHORING_MATERIALIZE_OUTPUT_PROOF}
+    - {<<: *backlog, code: E_AUTHORING_MATERIALIZE_PATH}
+    - {<<: *backlog, code: E_AUTHORING_NORMALIZATION}
+    - {<<: *backlog, code: E_AUTHORING_PRESET_PATH}
+    - {<<: *backlog, code: E_AUTHORING_PRESET_RESOURCE}
+    - {<<: *backlog, code: E_AUTHORING_PRESET_SCHEMA}
+    - {<<: *backlog, code: E_AUTHORING_TASK_ID}
+    - {<<: *backlog, code: E_AUTHORING_WORKSPACE_SCHEMA}
+    - {<<: *backlog, code: E_AUTOMATION_BASE_REVISION}
+    - {<<: *backlog, code: E_AUTOMATION_OPERATION_UNSUPPORTED}
+    - {<<: *backlog, code: E_AUTOMATION_TARGET_CLOSURE}
+    - {<<: *backlog, code: E_BASELINE_REFERENCE}
+    - {<<: *backlog, code: E_CLOSURE_ID}
+    - {<<: *backlog, code: E_CLOSURE_KIND}
+    - {<<: *backlog, code: E_CLOSURE_REQUIRED}
+    - {<<: *backlog, code: E_COMMAND_ID_REUSE}
+    - {<<: *backlog, code: E_CONTENT_IDENTITY}
+    - {<<: *backlog, code: E_CONTENT_IDENTITY_REQUIRED}
+    - {<<: *backlog, code: E_FONT_METRICS_UNAVAILABLE}
+    - {<<: *backlog, code: E_FONT_SUBSTITUTE_CONTEXT}
+    - {<<: *backlog, code: E_ICON_ASSET_IDENTITY}
+    - {<<: *backlog, code: E_ICON_ASSET_PATH}
+    - {<<: *backlog, code: E_ICON_CATALOG_GEOMETRY}
+    - {<<: *backlog, code: E_ICON_CATALOG_SCHEMA}
+    - {<<: *backlog, code: E_ICON_REFERENCE}
+    - {<<: *backlog, code: E_ICON_SET_AMBIGUOUS}
+    - {<<: *backlog, code: E_IMMUTABLE_SNAPSHOT_REQUIRED}
+    - {<<: *backlog, code: E_INIT_EXAMPLE}
+    - {<<: *backlog, code: E_INIT_OUTPUT_EXISTS}
+    - {<<: *backlog, code: E_MATERIALIZER_CONTEXT}
+    - {<<: *backlog, code: E_MATERIALIZER_FONT}
+    - {<<: *backlog, code: E_MATERIALIZER_FONT_IDENTITY}
+    - {<<: *backlog, code: E_MATERIALIZER_MANIFEST}
+    - {<<: *backlog, code: E_MATERIALIZER_OUTPUT}
+    - {<<: *backlog, code: E_MATERIALIZER_PACKAGE_IDENTITY}
+    - {<<: *backlog, code: E_MATERIALIZER_PACKAGE_RESOURCE}
+    - {<<: *backlog, code: E_MATERIALIZER_PATH}
+    - {<<: *backlog, code: E_MATERIALIZER_SLIDE}
+    - {<<: *backlog, code: E_RENDER_CONTEXT_SCHEMA}
+    - {<<: *backlog, code: E_RENDER_TYPESETTER_DESCRIPTOR}
+    - {<<: *backlog, code: E_STORE_CONFIG}
+    - {<<: *backlog, code: E_STORE_CONFIG_REQUIRED}
+    - {<<: *backlog, code: E_STORE_REFERENCE}
+    - {<<: *backlog, code: E_TARGET_CAPABILITY_ORDER}
 declaredComputedValues:
   - path: src/chrona/operational/references.py
     function: lookup
@@ -91,8 +92,8 @@ declaredComputedValues:
   - path: src/chrona/usecases/authoring_commands.py
     function: apply_authoring_command
     field: baseRevision
-    classification: product-bookkeeping
-    resolver: chrona workspace revision
+    classification: pinned-deliberately
+    producer: chrona workspace revision
   - path: src/chrona/usecases/materialize.py
     function: _reference_payload
     field: contentIdentity

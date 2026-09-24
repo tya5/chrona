@@ -7,13 +7,16 @@ def _site(*, anchor_line: int, layer: str = "user-facing-ingress", detail: bool 
     return DiagnosticSite("E_SAMPLE", "src/chrona/usecases/sample.py", anchor_line, 4, "run", "ValueError", layer, detail)
 
 
+def _default() -> dict:
+    return {"code": "*", "disposition": "backlog", "nextAction": "add owner detail"}
+
+
 def test_bare_ingress_requires_an_exact_code_classification():
     site = _site(anchor_line=10)
 
-    with pytest.raises(DiagnosticInventoryError, match="missing=E_SAMPLE"):
-        validate((site,), ())
+    validate((site,), (_default(),))
 
-    validate((site,), ({"code": site.code, "reason": "identifier is the complete message"},))
+    validate((site,), ({"code": site.code, "disposition": "sufficient", "reason": "identifier is the complete message"}, _default()))
 
 
 def test_policy_cannot_classify_detailed_or_internal_site():
@@ -21,15 +24,16 @@ def test_policy_cannot_classify_detailed_or_internal_site():
     internal = _site(anchor_line=11, layer="internal")
 
     with pytest.raises(DiagnosticInventoryError, match="unknown=E_SAMPLE"):
-        validate((detailed, internal), ({"code": detailed.code, "reason": "stale"},))
+        validate((detailed, internal), ({"code": detailed.code, "disposition": "sufficient", "reason": "stale"}, _default()))
 
 
 def test_existing_allowlisted_code_does_not_hide_a_new_bare_site():
     first, second = _site(anchor_line=10), _site(anchor_line=11)
 
-    validate((first, second), ({"code": "E_SAMPLE", "reason": "complete identifier"},))
+    policy = ({"code": "E_SAMPLE", "disposition": "backlog", "nextAction": "add detail"}, _default())
+    validate((first, second), policy)
 
-    report = render((first, second))
+    report = render((first, second), policy)
 
     assert first.anchor in report
     assert second.anchor in report
@@ -48,7 +52,8 @@ def test_discovery_requires_a_complete_diagnostic_identifier(tmp_path):
 
 
 def test_report_retains_detail_and_source_provenance():
-    report = render((_site(anchor_line=10, detail=True), _site(anchor_line=11)))
+    policy = ({"code": "E_SAMPLE", "disposition": "backlog", "nextAction": "add detail"}, _default())
+    report = render((_site(anchor_line=10, detail=True), _site(anchor_line=11)), policy)
 
     assert "| `E_SAMPLE` | user-facing-ingress | yes |" in report
     assert "`src/chrona/usecases/sample.py:11:4`" in report
