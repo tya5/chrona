@@ -32,6 +32,8 @@ slide.  It retains the existing Project, Actual set, Theme, and Scheme.  The
 existing executive Layout is a no-annotation control; the evidence Layout
 reserves a required measured, full-width annotation rail below the feasible
 table/timeline review row.
+The evidence Context explicitly declares a 1600×1100 viewport so the rail and
+the eight-row required timeline both receive their measured block extents.
 
 The View enables presentation annotations and declares two annotations:
 
