@@ -147,7 +147,8 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
             continue
         fallback = None
         if descriptor.get("missingFont") == "substitute" and _allow_substitute:
-            fallback = resolve_font_metrics("Noto Color Emoji Check", _packaged_substitute_descriptor(),
+            substitute_descriptor = _packaged_substitute_descriptor()
+            fallback = resolve_font_metrics(_declared_substitute_family(substitute_descriptor), substitute_descriptor,
                                             _allow_substitute=False)
         return FontMetrics(metrics_path, metrics_identity, str(table["sourceContentIdentity"]), family, weight,
                            units, ascent, descent, cap_height, advances, fallback)
@@ -159,6 +160,17 @@ def _packaged_substitute_descriptor() -> dict:
     if not isinstance(value, dict):
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
     return value
+
+
+def _declared_substitute_family(descriptor: dict) -> str:
+    """Return the fallback family from the packaged descriptor, never code."""
+    assets = descriptor.get("assets")
+    if not isinstance(assets, list) or not assets:
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+    family = assets[0].get("family") if isinstance(assets[0], dict) else None
+    if not isinstance(family, str) or not family:
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+    return family
 
 
 def resolve_font_files(descriptor: dict, *, asset_root: Path | None) -> tuple[tuple[FontFile, ...], tuple[str, ...]]:

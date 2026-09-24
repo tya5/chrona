@@ -81,6 +81,7 @@ def _emit_font_warnings(rendered: RenderedReview) -> None:
             "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
             "requestedFamily": warning.requested_family, "fallbackFamily": warning.fallback_family,
             "weight": warning.weight, "codepoint": f"U+{warning.codepoint:04X}", "text": warning.text,
+            **({"drawn": warning.drawn} if warning.drawn is not None else {}),
         }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 

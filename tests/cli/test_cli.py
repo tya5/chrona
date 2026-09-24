@@ -11,7 +11,7 @@ import pytest
 import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
 from chrona.presentation.fonts.importer import import_font
-from chrona.presentation.model.font_metrics import FontGlyphSubstitution
+from chrona.usecases.render_review import FontGlyphWarning
 from chrona.scheduling.scheduler import schedule
 import chrona.storage.publication as publication
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -85,14 +85,21 @@ def test_cli_identity_document_rejects_a_scalar(tmp_path, monkeypatch, capsys):
 
 
 def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
-    cli._emit_font_warnings(SimpleNamespace(font_warnings=(FontGlyphSubstitution(
-        "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
+    cli._emit_font_warnings(SimpleNamespace(font_warnings=(FontGlyphWarning(
+        "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅", False,
     ),)))
     assert json.loads(capsys.readouterr().err) == {
         "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
         "requestedFamily": "Noto Sans", "fallbackFamily": "Noto Color Emoji Check",
-        "weight": 400, "codepoint": "U+2705", "text": "General Availability ✅",
+        "weight": 400, "codepoint": "U+2705", "text": "General Availability ✅", "drawn": False,
     }
+
+
+def test_cli_omits_draw_result_for_svg_font_substitution_warning(capsys):
+    cli._emit_font_warnings(SimpleNamespace(font_warnings=(FontGlyphWarning(
+        "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
+    ),)))
+    assert "drawn" not in json.loads(capsys.readouterr().err)
 
 
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):

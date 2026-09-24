@@ -90,7 +90,19 @@ class RenderedReview:
     surface: SceneSurface
     read_inputs: frozenset[str] = field(default_factory=frozenset)
     scenario_provenance: tuple[ScenarioProvenance, ...] = ()
-    font_warnings: tuple[FontGlyphSubstitution, ...] = ()
+    font_warnings: tuple["FontGlyphWarning", ...] = ()
+
+
+@dataclass(frozen=True)
+class FontGlyphWarning:
+    """One target-honest draft font substitution warning."""
+
+    requested_family: str
+    fallback_family: str
+    weight: int
+    codepoint: int
+    text: str
+    drawn: bool | None = None
 
 
 class ClosureReadLedger:
@@ -266,7 +278,15 @@ def render_review(request: RenderRequest) -> RenderedReview:
     if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
     return RenderedReview(artifact, surface, frozenset(ledger.read), scenario_provenance,
-                          font_metrics.warnings)
+                          _font_warnings(font_metrics.warnings, artifact.target_kind))
+
+
+def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind: str) -> tuple[FontGlyphWarning, ...]:
+    """Project metric substitutions once the completed output target is known."""
+    drawn = False if target_kind in {"png", "pdf"} else None
+    return tuple(FontGlyphWarning(
+        item.requested_family, item.fallback_family, item.weight, item.codepoint, item.text, drawn,
+    ) for item in substitutions)
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:

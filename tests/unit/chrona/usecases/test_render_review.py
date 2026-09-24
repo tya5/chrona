@@ -11,8 +11,18 @@ from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import (
-    RenderRequest, render_review,
+    RenderRequest, _font_warnings, render_review,
 )
+from chrona.presentation.model.font_metrics import FontGlyphSubstitution
+
+
+def test_font_substitution_warning_only_claims_raster_draw_result():
+    substitution = FontGlyphSubstitution("Requested", "Metrics only", 400, 0x2705, "✅")
+    assert _font_warnings((substitution,), "png")[0].drawn is False
+    assert _font_warnings((substitution,), "pdf")[0].drawn is False
+    assert _font_warnings((substitution,), "svg")[0].drawn is None
+
+
 from tools.materialize_example import _copy_context_closure
 
 ROOT = Path(__file__).resolve().parents[4]
