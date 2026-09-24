@@ -85,6 +85,7 @@ def render(root: Path) -> dict[Path, str]:
         pages[page] = "\n".join(lines)
     coverage = root / "docs/examples/corpus-coverage.md"
     index.extend(["", "## Semantic corpus coverage", "", f"See [semantic corpus coverage](../examples/{coverage.name}). It is one curation input, not presentation-vocabulary coverage or a render gate.", ""])
+    index.extend(["## Presentation vocabulary coverage", "", "See [presentation vocabulary coverage](presentation-coverage.md). It measures declared live presentation grammar and declared, placed, and realized Layout slots from published Scene evidence; it is a curation selector, not a render gate.", ""])
     deferred = catalogue.get("deferred", [])
     if deferred:
         index.extend(["## Deferred sets", "", "| Set | Dimension | Blocker |", "| --- | --- | --- |"])

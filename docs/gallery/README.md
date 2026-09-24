@@ -19,9 +19,7 @@ See [semantic corpus coverage](../examples/corpus-coverage.md). It is one curati
 
 ## Presentation vocabulary coverage
 
-See [presentation vocabulary coverage](presentation-coverage.md). It measures
-declared live presentation grammar and declared, placed, and realized Layout
-slots from published Scene evidence; it is a curation selector, not a render gate.
+See [presentation vocabulary coverage](presentation-coverage.md). It measures declared live presentation grammar and declared, placed, and realized Layout slots from published Scene evidence; it is a curation selector, not a render gate.
 
 ## Deferred sets
 

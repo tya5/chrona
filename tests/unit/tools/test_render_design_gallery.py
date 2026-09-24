@@ -14,3 +14,4 @@ def test_gallery_pages_are_deterministic_and_documentary():
     assert "Referenced-resource YAML diff" in page
     assert "tools/render_design_gallery.py --root ." in page
     assert "project.yaml" not in page
+    assert "presentation-coverage.md" in pages[Path("docs/gallery/README.md")]
