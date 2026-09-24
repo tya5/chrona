@@ -1,6 +1,6 @@
 # Implementation Plan: Font Distribution Integrity (#373, #380)
 
-**Status:** Proposed
+**Status:** Complete
 
 **Implements:** [Font distribution integrity design](../../design/issues-373-380-font-distribution-integrity-design-2026-09-25.md)
 
