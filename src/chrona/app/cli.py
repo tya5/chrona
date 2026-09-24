@@ -23,7 +23,7 @@ from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
 from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
 from chrona.operational.command_engine import apply_actual_command, check_command
-from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command
+from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import materialize
@@ -208,6 +208,11 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--index", type=int, default=0, help="TTC face index (default: 0)")
     command.add_argument("--axis", action="append", default=[], metavar="TAG=VALUE", help="instantiate one variable-font axis; repeatable")
 
+    workspace = sub.add_parser("workspace", help="inspect a guided authoring workspace")
+    workspace_sub = workspace.add_subparsers(dest="workspace_command", required=True, parser_class=JsonArgumentParser)
+    command = workspace_sub.add_parser("revision", help="print the current guided workspace revision")
+    command.add_argument("workspace", help="guided authoring workspace YAML path")
+
     command = sub.add_parser("authoring-command-apply", help="apply one revision-bound guided workspace command")
     command.add_argument("--workspace", required=True)
     command.add_argument("--command", dest="authoring_command", required=True)
@@ -371,6 +376,10 @@ def _run_authoring_command(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
+def _run_workspace_revision(args: argparse.Namespace) -> None:
+    print(workspace_revision(Path(args.workspace), read_workspace=read_authoring_workspace))
+
+
 def _parse_viewport(value: str) -> tuple[int, int | None]:
     parts = value.lower().split("x")
     if len(parts) != 2:
@@ -472,6 +481,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "render-workspace":
         _run_guided_draft_render(args)
+        return
+    if args.command == "workspace":
+        _run_workspace_revision(args)
         return
     if args.command == "authoring-command-apply":
         _run_authoring_command(args)

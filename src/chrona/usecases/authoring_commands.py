@@ -26,6 +26,11 @@ def parse_authoring_command(path: Path) -> dict[str, Any]:
     return value
 
 
+def workspace_revision(workspace_path: Path, *, read_workspace: Any) -> str:
+    """Return the one local CAS precondition for a validated workspace."""
+    return content_identity(read_workspace(workspace_path))
+
+
 def apply_authoring_command(
     workspace_path: Path, command: dict[str, Any], *, read_workspace: Any, cas_write: Any,
     cas_write_aggregate: Any | None = None,
@@ -46,7 +51,7 @@ def apply_authoring_command(
             result = cas_write_aggregate(workspace_path, base, candidates)
             if result is None:
                 return _rejected(command, "E_AUTHORING_BASE_REVISION", base)
-            return {"status": "accepted", "commandId": command["commandId"], "baseRevision": base, "resultRevision": result, "reversible": False, "diagnostics": []}
+            return _accepted(command, base, result, reversible=False)
         candidate = deepcopy(current)
         _apply(candidate, command)
         parse_contract(ClosureIdentity("authoring-workspace", str(candidate["id"]), "draft", content_identity(candidate)), candidate)
@@ -57,7 +62,7 @@ def apply_authoring_command(
         return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_MATERIALIZE_COLLISION", base)
     except (KeyError, ContractError, ValueError) as error:
         return _rejected(command, str(error) if str(error).startswith("E_") else "E_AUTHORING_COMMAND", base)
-    return {"status": "accepted", "commandId": command["commandId"], "baseRevision": base, "resultRevision": result, "diagnostics": []}
+    return _accepted(command, base, result)
 
 
 def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> None:
@@ -78,5 +83,26 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> None:
         raise ValueError("E_AUTHORING_COMMAND")
 
 
+def _accepted(command: dict[str, Any], workspace: str, result: str, *, reversible: bool | None = None) -> dict[str, Any]:
+    value = {
+        "version": "chrona/authoring-command-result/v0.1", "status": "accepted",
+        "commandId": command["commandId"], "commandBaseRevision": command["baseRevision"],
+        "workspaceRevision": workspace, "resultRevision": result, "diagnostics": [],
+    }
+    return value if reversible is None else value | {"reversible": reversible}
+
+
 def _rejected(command: dict[str, Any], code: str, base: str) -> dict[str, Any]:
-    return {"status": "rejected", "commandId": command.get("commandId"), "baseRevision": base, "resultRevision": None, "diagnostics": [{"code": code}]}
+    diagnostic: dict[str, Any] = {"code": code}
+    if code == "E_AUTHORING_BASE_REVISION":
+        diagnostic |= {
+            "expectedRevision": base, "receivedRevision": command.get("baseRevision"),
+            "detail": (f"workspace revision expected {base}; command declared "
+                       f"{command.get('baseRevision')}; run `chrona workspace revision "
+                       f"{command['target']['path']}` and retry"),
+        }
+    return {
+        "version": "chrona/authoring-command-result/v0.1", "status": "rejected",
+        "commandId": command.get("commandId"), "commandBaseRevision": command.get("baseRevision"),
+        "workspaceRevision": base, "resultRevision": None, "diagnostics": [diagnostic],
+    }

@@ -19,6 +19,26 @@ body:
     assert canonical_bytes(value) == canonical_bytes(dict(value))
 
 
+def test_authoring_command_result_distinguishes_command_and_workspace_revisions():
+    value = parse_document(
+        """version: chrona/authoring-command-result/v0.1
+status: rejected
+commandId: change-1
+commandBaseRevision: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+workspaceRevision: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+resultRevision: null
+diagnostics:
+  - code: E_AUTHORING_BASE_REVISION
+    expectedRevision: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    receivedRevision: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    detail: obtain the current workspace revision and retry
+""",
+        "authoring-command-result-v0.1.schema.yaml",
+    )
+    assert value["commandBaseRevision"] != value["workspaceRevision"]
+    assert "baseRevision" not in value
+
+
 def test_command_v02_requires_a_complete_immutable_target_reference():
     payload = """version: chrona/command/v0.2
 commandId: bad

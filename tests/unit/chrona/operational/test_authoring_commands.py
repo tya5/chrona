@@ -5,7 +5,7 @@ import sys
 
 import yaml
 
-from chrona.usecases.authoring_commands import apply_authoring_command
+from chrona.usecases.authoring_commands import apply_authoring_command, workspace_revision
 import chrona.operational.authoring_commands as authoring_commands
 from chrona.operational.authoring_commands import _bytes_identity, _transaction_marker, _write_marker, cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import content_identity
@@ -35,7 +35,9 @@ def test_authoring_command_updates_one_task_with_a_new_content_revision(tmp_path
     result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace)
 
     assert result["status"] == "accepted"
-    assert result["resultRevision"] != result["baseRevision"]
+    assert result["resultRevision"] != result["workspaceRevision"]
+    assert result["commandBaseRevision"] == result["workspaceRevision"] == content_identity(workspace)
+    assert "baseRevision" not in result
     assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["project"]["tasks"][0]["title"] == "Renamed"
 
 
@@ -51,7 +53,23 @@ def test_authoring_command_updates_a_japanese_workspace_at_its_current_revision(
                                      cas_write=cas_write_authoring_workspace)
 
     assert result["status"] == "accepted"
-    assert result["baseRevision"] == content_identity(workspace)
+    assert result["workspaceRevision"] == content_identity(workspace)
+
+
+def test_workspace_revision_is_the_first_command_precondition_without_writing(tmp_path):
+    workspace, path = _workspace(), tmp_path / "workspace.yaml"
+    _write(path, workspace)
+    original = path.read_bytes()
+    revision = workspace_revision(path, read_workspace=read_authoring_workspace)
+    command = _command(workspace, "setWorkspaceTask", {
+        "task": {"id": "one", "title": "First edit", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}},
+    }) | {"baseRevision": revision}
+
+    result = apply_authoring_command(path, command, read_workspace=read_authoring_workspace,
+                                     cas_write=cas_write_authoring_workspace)
+
+    assert original != path.read_bytes()
+    assert result["status"] == "accepted"
 
 
 def test_aggregate_lock_uses_lazy_windows_adapter_without_fcntl(tmp_path, monkeypatch):
@@ -72,7 +90,13 @@ def test_stale_or_illegal_command_leaves_workspace_bytes_unchanged(tmp_path):
     original = path.read_bytes()
     stale = _command(workspace, "setWorkspaceTask", {"task": {"id": "two", "title": "Two", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}}})
     stale["baseRevision"] = "sha256:" + "0" * 64
-    assert apply_authoring_command(path, stale, read_workspace=read_authoring_workspace, cas_write=cas_write_authoring_workspace)["diagnostics"] == [{"code": "E_AUTHORING_BASE_REVISION"}]
+    result = apply_authoring_command(path, stale, read_workspace=read_authoring_workspace,
+                                     cas_write=cas_write_authoring_workspace)
+    diagnostic = result["diagnostics"][0]
+    assert diagnostic["code"] == "E_AUTHORING_BASE_REVISION"
+    assert diagnostic["expectedRevision"] == result["workspaceRevision"] == content_identity(workspace)
+    assert diagnostic["receivedRevision"] == result["commandBaseRevision"] == stale["baseRevision"]
+    assert "chrona workspace revision workspace.yaml" in diagnostic["detail"]
     assert path.read_bytes() == original
 
     illegal = _command(workspace, "setPresentationOverride", {"overrides": {"view": {"offset": {"x": 1}}}})

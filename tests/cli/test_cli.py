@@ -670,7 +670,9 @@ def test_cli_materializes_through_the_authoring_command_use_case(tmp_path, monke
     }), encoding="utf-8")
     called = {}
     monkeypatch.setattr(cli, "apply_authoring_command", lambda *args, **kwargs: called.update(args=args, kwargs=kwargs) or {
-        "status": "accepted", "commandId": "eject", "baseRevision": "base", "resultRevision": "result", "diagnostics": [],
+        "version": "chrona/authoring-command-result/v0.1", "status": "accepted", "commandId": "eject",
+        "commandBaseRevision": "sha256:" + "a" * 64, "workspaceRevision": "sha256:" + "a" * 64,
+        "resultRevision": "sha256:" + "b" * 64, "diagnostics": [],
     })
     monkeypatch.setattr(sys, "argv", [
         "chrona", "materialize-presentation-preset", "--workspace", str(workspace), "--command", str(command), "--result", str(result),
@@ -682,6 +684,32 @@ def test_cli_materializes_through_the_authoring_command_use_case(tmp_path, monke
     assert called["args"][1]["type"] == "materializePresentationPreset"
     assert called["kwargs"]["cas_write_aggregate"] is cli.cas_write_authoring_aggregate
     assert json.loads(result.read_text(encoding="utf-8"))["status"] == "accepted"
+
+
+def test_cli_workspace_revision_is_read_only_and_supports_the_first_authoring_command(tmp_path, monkeypatch, capsys):
+    workspace = {
+        "version": "chrona/authoring-workspace/v0.1", "kind": "authoring-workspace", "id": "workspace",
+        "body": {"project": {"id": "project", "tasks": [{"id": "one", "title": "One", "planned": {"start": "2026-01-01", "finish": "2026-01-02"}}]},
+                 "presentation": {"mode": "guided", "binding": {"preset": {"id": "starter", "version": "1", "path": "preset.yaml"}}}},
+    }
+    path = tmp_path / "workspace.yaml"; path.write_text(yaml.safe_dump(workspace), encoding="utf-8")
+    original = path.read_bytes()
+    monkeypatch.setattr(sys, "argv", ["chrona", "workspace", "revision", str(path)])
+    main()
+    revision = capsys.readouterr().out.strip()
+    assert revision.startswith("sha256:") and path.read_bytes() == original
+
+    command = tmp_path / "command.yaml"; result = tmp_path / "result.json"
+    command.write_text(yaml.safe_dump({
+        "version": "chrona/authoring-command/v0.1", "commandId": "first", "type": "setWorkspaceTask",
+        "target": {"kind": "authoring-workspace", "path": path.name}, "baseRevision": revision,
+        "payload": {"task": {"id": "one", "title": "Edited", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}}},
+    }), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["chrona", "authoring-command-apply", "--workspace", str(path), "--command", str(command), "--result", str(result)])
+    main()
+    accepted = json.loads(result.read_text(encoding="utf-8"))
+    assert accepted["commandBaseRevision"] == accepted["workspaceRevision"] == revision
+    assert accepted["resultRevision"] != revision
 
 
 @pytest.mark.parametrize(("format_name", "prefix"), [("png", b"\x89PNG\r\n\x1a\n"), ("pdf", b"%PDF-")])

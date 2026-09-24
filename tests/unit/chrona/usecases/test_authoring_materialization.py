@@ -115,7 +115,8 @@ def test_materialization_rejects_a_stale_base_without_writing(tmp_path):
 
     result = _materialize(workspace, base="sha256:" + "0" * 64)
 
-    assert result["diagnostics"] == [{"code": "E_AUTHORING_BASE_REVISION"}]
+    assert result["diagnostics"][0]["code"] == "E_AUTHORING_BASE_REVISION"
+    assert result["diagnostics"][0]["expectedRevision"] == result["workspaceRevision"]
     assert workspace.read_bytes() == original
     assert not (tmp_path / "presentation").exists()
 

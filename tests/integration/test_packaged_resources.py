@@ -26,6 +26,7 @@ SCHEMAS = (
     "review-detail-profile-v0.1.schema.yaml",
     "actual-intake-batch-v0.2.schema.yaml",
     "actual-set-v0.2.schema.yaml",
+    "authoring-command-result-v0.1.schema.yaml",
     "command-request-v0.2.schema.yaml",
     "automation-result-v0.1.schema.yaml",
     "snapshot-ref-v0.2.schema.yaml",
