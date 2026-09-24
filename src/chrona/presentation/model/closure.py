@@ -301,7 +301,7 @@ def _normalized_draft_resource(kind: str, document: Mapping[str, Any]) -> Closur
     try:
         contract = parse_contract(identity, document)
     except ContractError as error:
-        raise ClosureError(str(error)) from error
+        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
     return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
 
 
@@ -364,7 +364,7 @@ def _draft_render_from_resources(
     except SchemaContractError as error:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA", error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
-        raise ClosureError("E_RENDER_CONTEXT_SCHEMA") from error
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA", detail=error.detail) from error
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise ClosureError("E_CLOSURE_KIND")
     return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance),
@@ -386,7 +386,7 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     except SchemaContractError as error:
         raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA", error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
-        raise ClosureError(str(error)) from error
+        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
     return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
 
 
@@ -697,7 +697,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
         code = "E_" + expected_kind.upper().replace("-", "_") + "_SCHEMA"
         raise ClosureError(code, error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
-        raise ClosureError(error.args[0]) from error
+        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
     return ClosureResource(expected_kind, actual_id, identity.revision, identity.content_identity, contract)
 
 

@@ -18,6 +18,15 @@ from chrona.schema_diagnostics import SchemaViolation, explain_errors
 class ContractError(ValueError):
     """A decoded resource cannot become a runtime contract."""
 
+    def __init__(self, diagnostic_id: str, detail: str = "") -> None:
+        super().__init__(diagnostic_id)
+        self.diagnostic_id = diagnostic_id
+        self.detail = detail
+
+
+def _closure_kind_error(identity: ClosureIdentity, expected: str, found: object) -> ContractError:
+    return ContractError("E_CLOSURE_KIND", f"resource kind={identity.kind} id={identity.id}; expected {expected}; found {type(found).__name__}")
+
 
 class SchemaContractError(ContractError):
     """A supported resource has a schema-shape error at one JSON pointer."""
@@ -404,10 +413,10 @@ class IconCatalogContract(ResourceContract):
 def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: FrozenDict) -> IconCatalogContract:
     raw_icons = body["icons"]
     if not isinstance(raw_icons, FrozenDict):
-        raise ContractError("E_CLOSURE_KIND")
+        raise _closure_kind_error(identity, "icons object", raw_icons)
     aliases, provenance, entry_aliases = body["aliases"], body["provenance"], body["entryAliases"]
     if not isinstance(aliases, (FrozenList, tuple)) or not isinstance(provenance, FrozenDict) or not isinstance(entry_aliases, FrozenDict):
-        raise ContractError("E_CLOSURE_KIND")
+        raise _closure_kind_error(identity, "aliases list, provenance object, and entryAliases object", {"aliases": aliases, "provenance": provenance, "entryAliases": entry_aliases})
     return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance,
                                entry_aliases, (), tuple(sorted(str(name) for name in raw_icons)), raw_icons)
 
@@ -448,7 +457,7 @@ class ResourceReference:
     def from_value(cls, value: FrozenDict) -> "ResourceReference":
         revision = value["revision"]
         if not isinstance(revision, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
+            raise ContractError("E_CLOSURE_KIND", "resource reference; expected revision object; found " + type(revision).__name__)
         return cls(str(value["id"]), str(value["kind"]), value["store"], str(value["address"]),
                    str(revision["token"]), value.get("contentIdentity"))
 
@@ -548,7 +557,7 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
     version = value.get("version")
     schema_name = _SCHEMAS.get((kind, version)) if isinstance(version, str) else None
     if schema_name is None:
-        raise ContractError("E_CLOSURE_KIND")
+        raise _closure_kind_error(identity, "supported resource kind/version", {"kind": kind, "version": version})
     if kind == "icon-catalog":
         body = value.get("body")
         icons = body.get("icons") if isinstance(body, Mapping) else None
@@ -724,12 +733,12 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
     frozen = freeze(value)
     body = frozen.get("body", FrozenDict())
     if not isinstance(body, FrozenDict):
-        raise ContractError("E_CLOSURE_KIND")
+        raise _closure_kind_error(identity, "resource body object", body)
     version = _validate(identity.kind, value, identity)
     if identity.kind == "project":
         extensions = frozen.get("extensions", ())
         if not isinstance(extensions, (tuple, FrozenList)) or not all(isinstance(item, FrozenDict) for item in extensions):
-            raise ContractError("E_CLOSURE_KIND")
+            raise _closure_kind_error(identity, "extension object list", extensions)
         return ProjectContract(identity, version, frozen, tuple(extensions))
     if identity.kind == "view":
         return ViewContract(identity, version, _view_input(body))
@@ -744,16 +753,16 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
     if identity.kind == "render-context":
         inputs, environment, target = body["inputs"], body["environment"], body["target"]
         if not all(isinstance(item, FrozenDict) for item in (inputs, environment, target)):
-            raise ContractError("E_CLOSURE_KIND")
+            raise _closure_kind_error(identity, "inputs, environment, and target objects", {"inputs": inputs, "environment": environment, "target": target})
         viewport = environment["viewport"]
         if not isinstance(viewport, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
+            raise _closure_kind_error(identity, "viewport object", viewport)
         rasterizer = environment.get("rasterizer")
         if rasterizer is not None and not isinstance(rasterizer, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
+            raise _closure_kind_error(identity, "rasterizer object or absent", rasterizer)
         raw_typesetter = environment.get("typesetter")
         if raw_typesetter is not None and not isinstance(raw_typesetter, FrozenDict):
-            raise ContractError("E_CLOSURE_KIND")
+            raise _closure_kind_error(identity, "typesetter object or absent", raw_typesetter)
         typesetter = (TypesetterIdentity(str(raw_typesetter["engine"]), str(raw_typesetter["version"]),
                                          str(raw_typesetter["adapterGrammar"])) if raw_typesetter else None)
         return RenderContextContract(
