@@ -154,12 +154,12 @@ def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monke
 def test_cli_render_accepts_a_declared_local_font_closure(tmp_path, monkeypatch):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     source = root / "src/chrona/resources"
-    font, metrics = source / "fonts/noto-sans-cjk-jp-regular-v1.ttf", source / "font_metrics/noto-sans-cjk-jp-regular-v1.json"
+    font, metrics = source / "fonts/noto-sans-regular-v1.ttf", source / "font_metrics/noto-sans-regular-v1.json"
     local_font, local_metrics = tmp_path / "assets/font.ttf", tmp_path / "assets/metrics.json"
     local_font.parent.mkdir(); local_font.write_bytes(font.read_bytes()); local_metrics.write_bytes(metrics.read_bytes())
     descriptor = {
         "algorithm": "declared-metrics-v2", "missingFont": "diagnose",
-        "assets": [{"family": "Noto Sans CJK JP", "weight": 400,
+        "assets": [{"family": "Noto Sans", "weight": 400,
                     "metrics": {"locator": {"provider": "context", "address": "assets/metrics.json"}, "contentIdentity": "sha256:" + sha256(local_metrics.read_bytes()).hexdigest()},
                     "font": {"locator": {"provider": "context", "address": "assets/font.ttf"}, "contentIdentity": "sha256:" + sha256(local_font.read_bytes()).hexdigest()}}],
     }
@@ -543,16 +543,16 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     }
     font_root = root / "src/chrona/resources"
     font_assets = []
-    for weight, name, face in ((400, "noto-sans-cjk-jp-regular-v1.json", "regular"), (700, "noto-sans-cjk-jp-bold-v1.json", "bold")):
+    for weight, name, face in ((400, "noto-sans-regular-v1.json", "regular"), (700, "noto-sans-bold-v1.json", "bold")):
         metrics_payload = (font_root / "font_metrics" / name).read_bytes()
         metrics_path = snapshot_directory(tmp_path, token) / "font_metrics" / name
         metrics_path.parent.mkdir(parents=True, exist_ok=True); metrics_path.write_bytes(metrics_payload)
-        font_payload = (font_root / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf").read_bytes()
-        font_path = snapshot_directory(tmp_path, token) / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
+        font_payload = (font_root / "fonts" / f"noto-sans-{face}-v1.ttf").read_bytes()
+        font_path = snapshot_directory(tmp_path, token) / "fonts" / f"noto-sans-{face}-v1.ttf"
         font_path.parent.mkdir(parents=True, exist_ok=True); font_path.write_bytes(font_payload)
-        font_assets.append({"family": "Noto Sans CJK JP", "weight": weight,
+        font_assets.append({"family": "Noto Sans", "weight": weight,
                             "metrics": {"locator": {"provider": "context", "address": f"font_metrics/{name}"}, "contentIdentity": "sha256:" + sha256(metrics_payload).hexdigest()},
-                            "font": {"locator": {"provider": "context", "address": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font_payload).hexdigest()}})
+                            "font": {"locator": {"provider": "context", "address": f"fonts/noto-sans-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font_payload).hexdigest()}})
     context = {
         "version": "chrona/render-context/v0.14", "kind": "render-context", "id": "controller-z-current",
         "body": {

@@ -5,7 +5,7 @@ body:
   values:
     editorial:
       type: fontFamily
-      value: Noto Sans CJK JP
+      value: Noto Sans, sans-serif
     weight.regular:
       type: fontWeight
       value: '400'

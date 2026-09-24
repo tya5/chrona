@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chrona-fonts-noto-cjk"
+version = "0.1.0a0"
+description = "OFL Noto Sans JP resources for Chrona."
+requires-python = ">=3.11"
+
+[project.entry-points."chrona.font-resource-provider"]
+chrona-fonts-noto-cjk = "chrona_fonts_noto_cjk:resource_root"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chrona_fonts_noto_cjk"]

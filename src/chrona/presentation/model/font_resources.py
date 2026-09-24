@@ -43,7 +43,7 @@ def resolve_font_resource(locator: Any, *, asset_root: Path | None) -> Path:
 def _package_root(identity: str):
     if identity == "chrona.resources":
         return files("chrona.resources")
-    matches = entry_points(group="chrona.font-resource-provider", name=identity)
+    matches = tuple(entry_points(group="chrona.font-resource-provider", name=identity))
     if len(matches) != 1:
         raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
     root = matches[0].load()()

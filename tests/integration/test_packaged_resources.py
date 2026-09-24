@@ -40,11 +40,11 @@ def test_schema_resources_resolve_to_the_source_authority():
 
 def test_package_owned_runtime_resources_exist():
     for resource_path in (
-        "font_metrics/noto-sans-cjk-jp-regular-v1.json",
-        "font_metrics/noto-sans-cjk-jp-bold-v1.json",
-        "fonts/noto-sans-cjk-jp-regular-v1.ttf",
-        "fonts/noto-sans-cjk-jp-bold-v1.ttf",
-        "fonts/NotoSansCJKJP.LICENSE",
+        "font_metrics/noto-sans-regular-v1.json",
+        "font_metrics/noto-sans-bold-v1.json",
+        "fonts/noto-sans-regular-v1.ttf",
+        "fonts/noto-sans-bold-v1.ttf",
+        "fonts/NotoSans.LICENSE",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 

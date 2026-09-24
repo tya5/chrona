@@ -1,15 +1,16 @@
 # Declared Font Assets
 
-Chrona measures text and rasterizes PNG/PDF from the exact font pair declared
-by a Render Context. It never uses a host-installed font as a fallback. The
-bundled default is `Noto Sans CJK JP`, distributed with its OFL license under
-`src/chrona/resources/fonts/`; it supports Japanese text for SVG, PNG, and PDF.
+Chrona measures text from the exact metrics declared by a Render Context.
+PNG/PDF additionally use identity-pinned font bytes; SVG does not load them.
+It never uses a host-installed font at render time. The bundled default is the
+small OFL `Noto Sans` Regular/Bold pair. Install `chrona[fonts-cjk]` to use the
+separately distributed OFL `Noto Sans JP` pair for Japanese text.
 
 ## Context closure
 
-`chrona/render-context/v0.13` requires a metrics and font record for every
-family/weight that its Theme can select. Both paths are relative to the Context
-asset root and both content identities are required.
+`chrona/render-context/v0.14` requires a metrics record for every family/weight
+that its Theme can select. A font record is required only for PNG/PDF. Each
+record is either Context-relative or an identity-named installed package asset.
 
 ```yaml
 fontMetrics:
@@ -19,17 +20,18 @@ fontMetrics:
     - family: Acme Sans
       weight: 400
       metrics:
-        path: fonts/acme-regular.metrics.json
+        locator: {provider: context, address: fonts/acme-regular.metrics.json}
         contentIdentity: sha256:<metrics-bytes>
       font:
-        path: fonts/acme-regular.ttf
+        locator: {provider: context, address: fonts/acme-regular.ttf}
         contentIdentity: sha256:<font-bytes>
 ```
 
-Example materializers first resolve these paths below the example directory,
-then use a packaged resource only when no local asset exists. The materialized
-snapshot copies and verifies both payloads. A missing glyph is rejected as
-`E_FONT_GLYPH_UNAVAILABLE`; it is never measured as `.notdef`.
+Package records use `{provider: package, identity: chrona-fonts-noto-cjk,
+address: ...}`. The materializer copies and verifies metrics for every target,
+and copies font bytes only for PNG/PDF, rewriting copied records to Context
+locators. A missing glyph is rejected as `E_FONT_GLYPH_UNAVAILABLE`; it is
+never measured as `.notdef`.
 
 ## Bring your own pair
 

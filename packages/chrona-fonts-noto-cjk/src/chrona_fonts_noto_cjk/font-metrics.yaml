@@ -1,0 +1,19 @@
+algorithm: declared-metrics-v2
+missingFont: diagnose
+assets:
+  - family: Noto Sans JP
+    weight: 400
+    metrics:
+      locator: {provider: package, identity: chrona-fonts-noto-cjk, address: font_metrics/noto-sans-jp-regular-v1.json}
+      contentIdentity: sha256:4a89b99129f4d97b222be59dcec2affdb44640db3fe0901d94b0d9bf22ddd75b
+    font:
+      locator: {provider: package, identity: chrona-fonts-noto-cjk, address: fonts/noto-sans-jp-regular-v1.ttf}
+      contentIdentity: sha256:6f78eeee7d1b287040f03b7619863b070736fe8144caf7d75c3a3bf5feadf4d4
+  - family: Noto Sans JP
+    weight: 700
+    metrics:
+      locator: {provider: package, identity: chrona-fonts-noto-cjk, address: font_metrics/noto-sans-jp-bold-v1.json}
+      contentIdentity: sha256:f304c445f21e96e9590bb066419063dca660755a20ef75d044bef857d1f9d833
+    font:
+      locator: {provider: package, identity: chrona-fonts-noto-cjk, address: fonts/noto-sans-jp-bold-v1.ttf}
+      contentIdentity: sha256:6a51ba2ec057d850be364489b4055cfb6b0449b652ad9ef4b2ab1bbc565fcad7

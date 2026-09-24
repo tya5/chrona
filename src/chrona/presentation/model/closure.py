@@ -397,15 +397,11 @@ def _draft_reference(resource: ClosureResource) -> dict[str, Any]:
 
 
 def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
-    assets = []
-    for weight, name, face in ((400, "noto-sans-cjk-jp-regular-v1.json", "regular"),
-                               (700, "noto-sans-cjk-jp-bold-v1.json", "bold")):
-        metrics_path = asset_root / "font_metrics" / name
-        font_path = asset_root / "fonts" / f"noto-sans-cjk-jp-{face}-v1.ttf"
-        assets.append({"family": "Noto Sans CJK JP", "weight": weight,
-                       "metrics": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"font_metrics/{name}"}, "contentIdentity": "sha256:" + sha256(metrics_path.read_bytes()).hexdigest()},
-                       "font": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"fonts/noto-sans-cjk-jp-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font_path.read_bytes()).hexdigest()}})
-    return {"algorithm": "declared-metrics-v2", "assets": assets, "missingFont": "diagnose"}
+    """Load the selected packaged default as declared data, never code literals."""
+    value = safe_load((asset_root / "fonts" / "default-font-metrics.yaml").read_bytes())
+    if not isinstance(value, dict):
+        raise ClosureError("E_FONT_METRICS_UNAVAILABLE")
+    return value
 
 
 def _draft_rasterizer(target_kind: str) -> dict[str, Any]:

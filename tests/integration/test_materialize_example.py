@@ -264,12 +264,12 @@ def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_f
     source = ROOT / "src/chrona/resources"
     font_target = copied_example / "assets/font.ttf"
     metrics_target = copied_example / "assets/metrics.json"
-    font_target.parent.mkdir(exist_ok=True); font_target.write_bytes((source / "fonts/noto-sans-cjk-jp-regular-v1.ttf").read_bytes())
-    metrics_target.write_bytes((source / "font_metrics/noto-sans-cjk-jp-regular-v1.json").read_bytes())
+    font_target.parent.mkdir(exist_ok=True); font_target.write_bytes((source / "fonts/noto-sans-regular-v1.ttf").read_bytes())
+    metrics_target.write_bytes((source / "font_metrics/noto-sans-regular-v1.json").read_bytes())
     context_path = copied_example / "contexts/executive.yaml"
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     asset = context["body"]["environment"]["fontMetrics"]["assets"]
-    asset[:] = [{"family": "Noto Sans CJK JP", "weight": 400,
+    asset[:] = [{"family": "Noto Sans", "weight": 400,
                  "metrics": {"locator": {"provider": "context", "address": "assets/metrics.json"}, "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
                  "font": {"locator": {"provider": "context", "address": "assets/font.ttf"}, "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()}}]
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
