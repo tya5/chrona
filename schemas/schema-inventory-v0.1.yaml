@@ -18,6 +18,7 @@ schemas:
   - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: preset-library-v0.1.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
   - {file: presentation-materialization-receipt-v0.1.schema.yaml, kind: presentation-materialization-receipt, state: live, consumers: [src/chrona/usecases/authoring_materialization.py]}
   - {file: profile-v0.2.schema.yaml, kind: profile-package, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: profile-v0.3.schema.yaml, removalSlice: I1}
   - {file: profile-v0.3.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

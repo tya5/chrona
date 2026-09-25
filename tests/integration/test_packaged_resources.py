@@ -41,6 +41,7 @@ SCHEMAS = (
     "theme-v0.9.schema.yaml",
     "theme-v0.10.schema.yaml",
     "theme-v0.11.schema.yaml",
+    "preset-library-v0.1.schema.yaml",
 )
 
 
@@ -75,6 +76,8 @@ def test_package_owned_runtime_resources_exist():
         "font_metrics/noto-color-emoji-check-v1.json",
         "fonts/draft-substitute-font-metrics.yaml",
         "fonts/NotoColorEmoji.LICENSE",
+        "presets/library.yaml",
+        "presets/bundles/print-mono/layout.yaml",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 

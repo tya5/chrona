@@ -15,14 +15,23 @@ identifiers.  The command uses Chrona's packaged `chrona-default-draft`
 presentation preset.  The SVG is a Draft review artifact, not immutable
 materializer evidence.
 
-To select an appearance explicitly, use a presentation preset:
+To select a supplied appearance explicitly, copy one into your own source tree
+and render through its ordinary local preset.  Available ids are
+`mission-light`, `control-room-dark`, `print-mono`, `executive-light`, and
+`elevated-light`.
 
-<!-- chrona:doc-check skip: requires an author-supplied preset file -->
 ```bash
+chrona preset copy control-room-dark --output my-first-chrona-project/looks/control-room-dark
 chrona render my-first-chrona-project/project.yaml \
-  --actual my-first-chrona-project/actual.yaml --preset my-preset.yaml \
+  --actual my-first-chrona-project/actual.yaml \
+  --preset my-first-chrona-project/looks/control-room-dark/preset.yaml \
   --output my-first-chrona-project/plan.svg
 ```
+
+The copied `preset.yaml`, `view.yaml`, `theme.yaml`, `scheme.yaml`, and
+`layout.yaml` are ordinary editable files.  `elevated-light` uses the explicit
+`chrona-output/visual/v0.7-svg` profile because that appearance requests a
+v0.7 treatment; the other supplied looks use the default SVG profile.
 
 For a complete materialized regression corpus instead, request it explicitly:
 

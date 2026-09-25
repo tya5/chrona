@@ -198,6 +198,55 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
 
 
 @pytest.mark.parametrize(
+    ("preset_id", "visual_profile"),
+    [
+        ("mission-light", None),
+        ("control-room-dark", None),
+        ("print-mono", None),
+        ("executive-light", None),
+        ("elevated-light", "chrona-output/visual/v0.7-svg"),
+    ],
+)
+def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path, monkeypatch, preset_id, visual_profile):
+    project = tmp_path / "starter"
+    preset = tmp_path / preset_id
+    output = tmp_path / f"{preset_id}.svg"
+
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
+    main()
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
+    main()
+    command = [
+        "chrona", "render", str(project / "project.yaml"), "--actual", str(project / "actual.yaml"),
+        "--preset", str(preset / "preset.yaml"), "--output", str(output),
+    ]
+    if visual_profile is not None:
+        command.extend(["--visual-profile", visual_profile])
+    monkeypatch.setattr(sys, "argv", command)
+    main()
+
+    svg = output.read_text(encoding="utf-8")
+    assert output.read_bytes().startswith(b"<svg")
+    for object_id in ("design", "build", "release"):
+        assert f'data-source-ref="{object_id}"' in svg
+
+
+def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, monkeypatch, capsys):
+    occupied = tmp_path / "occupied"
+    occupied.mkdir()
+    (occupied / "keep").write_text("existing", encoding="utf-8")
+    for preset_id, destination, expected in (
+        ("not-a-preset", tmp_path / "unknown", "E_BUILTIN_PRESET_UNKNOWN"),
+        ("mission-light", occupied, "E_BUILTIN_PRESET_OUTPUT_EXISTS"),
+    ):
+        monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(destination)])
+        with pytest.raises(SystemExit) as exited:
+            main()
+        assert exited.value.code == 1
+        assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == expected
+
+
+@pytest.mark.parametrize(
     ("format_name", "extra", "expected"),
     [
         ("typst", [], "E_RENDER_TYPESETTER_DESCRIPTOR"),

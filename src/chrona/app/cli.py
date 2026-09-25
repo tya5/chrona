@@ -29,6 +29,7 @@ from chrona.operational.authoring_commands import cas_write_authoring_aggregate,
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
+from chrona.usecases.preset_library import copy_builtin_preset
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 from chrona.presentation.fonts.importer import FontImportError, import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
@@ -312,6 +313,12 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--example", choices=("halcyon-1",),
                          help="create a full named corpus example instead of the editable minimal starter")
 
+    preset = sub.add_parser("preset", help="copy one builtin presentation preset into editable source")
+    preset_sub = preset.add_subparsers(dest="preset_command", required=True, parser_class=JsonArgumentParser)
+    command = preset_sub.add_parser("copy", help="copy one named builtin preset")
+    command.add_argument("id", help="builtin preset identifier")
+    command.add_argument("--output", "-o", required=True, help="empty output directory")
+
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
     command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.8 resource-reference YAML; repeat for each scheme")
@@ -388,6 +395,10 @@ def _run_materialize(args: argparse.Namespace) -> None:
 
 def _run_init(args: argparse.Namespace) -> None:
     initialize_project(Path(args.directory), example=args.example)
+
+
+def _run_preset_copy(args: argparse.Namespace) -> None:
+    copy_builtin_preset(args.id, Path(args.output))
 
 
 def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:
@@ -584,6 +595,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "init":
         _run_init(args)
+        return
+    if args.command == "preset":
+        _run_preset_copy(args)
         return
     if args.command == "render":
         _run_draft_render(args)

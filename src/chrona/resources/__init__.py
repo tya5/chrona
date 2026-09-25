@@ -5,6 +5,7 @@ from functools import cache
 from importlib.resources import files
 from importlib.resources.abc import Traversable
 import json
+from pathlib import PurePosixPath
 from typing import Any, Mapping
 
 import yaml
@@ -69,6 +70,33 @@ def default_preset_resource() -> Traversable:
     if not resource.is_file():
         raise ValueError("E_DRAFT_DEFAULT_PRESET")
     return resource
+
+
+def builtin_preset_library_resource() -> Traversable:
+    """Return the finite wheel-owned builtin preset catalogue."""
+    resource = files(__package__).joinpath("presets", "library.yaml")
+    if not resource.is_file():
+        raise ValueError("E_BUILTIN_PRESET_LIBRARY")
+    return resource
+
+
+def builtin_preset_source_root(address: str) -> Traversable:
+    """Resolve one safe builtin-library source root in wheel or source authority."""
+    path = PurePosixPath(address)
+    if (not address or path.is_absolute() or address != path.as_posix()
+            or any(part in {"", ".", ".."} for part in path.parts)):
+        raise ValueError("E_BUILTIN_PRESET_LIBRARY")
+    packaged = files(__package__).joinpath(*path.parts)
+    if packaged.is_dir() and (
+        packaged.joinpath("project.yaml").is_file()
+        or path.parts[:2] == ("presets", "bundles")
+    ):
+        return packaged
+    if path.parts[0] == "examples":
+        source = files("examples").joinpath(*path.parts[1:])
+        if source.is_dir():
+            return source
+    raise ValueError("E_BUILTIN_PRESET_RESOURCE")
 
 
 def default_preset_root() -> Traversable:
