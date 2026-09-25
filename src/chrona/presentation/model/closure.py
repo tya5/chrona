@@ -23,6 +23,8 @@ from chrona.presentation.contracts import (
     freeze, parse_contract, validate_icon_catalog_entry, IconRasterSource,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
+from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_font, resolve_system_font
 from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.resources import safe_load
@@ -177,6 +179,7 @@ class DraftRender:
     closure: RenderClosure
     asset_root: Path
     auto_block: bool = False
+    font_resolution: DraftFontResolution | None = None
 
 
 @dataclass(frozen=True)
@@ -200,6 +203,8 @@ def resolve_draft_render(
     layout_path: Path | None = None, preset_path: Path | None = None, preset_root: Path | None = None, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
     font_metrics_path: Path | None = None,
+    system_fonts: bool = False,
+    system_font_resolver: SystemFontResolver | None = None,
     viewport: tuple[int, int | None] = (1600, 900),
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
@@ -232,7 +237,8 @@ def resolve_draft_render(
                                         icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths,
                                                                             _draft_view(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
-                                        font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None))
+                                        font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
+                                        system_fonts=system_fonts, system_font_resolver=system_font_resolver)
 
 
 def _draft_preset_paths(preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
@@ -340,6 +346,8 @@ def _draft_render_from_resources(
     icon_assets: tuple[IconAsset, ...] = (),
     font_metrics: dict[str, Any] | None = None,
     font_asset_root: Path | None = None,
+    system_fonts: bool = False,
+    system_font_resolver: SystemFontResolver | None = None,
 ) -> DraftRender:
     by_kind = {item.kind: item for item in resources}
 
@@ -357,6 +365,12 @@ def _draft_render_from_resources(
 
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
+    if system_fonts and font_metrics is not None:
+        raise ClosureError("E_FONT_SYSTEM_MISMATCH", detail="--system-fonts cannot be combined with --font-metrics")
+    resolution = (_draft_system_font_resolution(resolved_theme.resolved_input, system_font_resolver or resolve_system_font)
+                  if system_fonts else None)
+    if resolution is not None and target_kind not in {"svg", "png"}:
+        raise ClosureError("E_FONT_SYSTEM_IMMUTABLE", detail=f"draft system fonts do not support {target_kind}")
     context_value = {
             "version": "chrona/render-context/v0.16", "kind": "render-context", "id": "draft-render",
         "body": {
@@ -395,7 +409,31 @@ def _draft_render_from_resources(
     if not isinstance(context, RenderContextContract):  # defensive contract boundary
         raise _closure_kind_error("draft render context", "RenderContextContract", context)
     return DraftRender(RenderClosure(context, tuple(resources), resolved_theme, icon_assets, provenance),
-                       font_asset_root or asset_root, auto_block=viewport[1] is None)
+                       font_asset_root or asset_root, auto_block=viewport[1] is None, font_resolution=resolution)
+
+
+def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFontResolver) -> DraftFontResolution:
+    """Resolve the one face the current measurement contract can represent."""
+    try:
+        typography = ThemeTokenView(theme)
+        roles = theme.get("body", {}).get("roles", {})
+        requests = {
+            (typography.font_family(role).split(",", 1)[0].strip(), typography.font_weight(role))
+            for role, binding in roles.items()
+            if isinstance(binding, Mapping) and "fontFamily" in binding and "fontWeight" in binding
+        }
+    except (AttributeError, ThemeTokenError, TypeError, ValueError) as error:
+        raise ClosureError("E_FONT_SYSTEM_MISMATCH", detail="Theme typography cannot select one system face") from error
+    if len(requests) != 1:
+        values = ", ".join(f"{family}/{weight}" for family, weight in sorted(requests))
+        raise ClosureError("E_FONT_SYSTEM_MISMATCH", detail=f"multiple Theme faces: {values}")
+    family, weight = next(iter(requests))
+    if not family:
+        raise ClosureError("E_FONT_SYSTEM_MISSING", detail="Theme primary font family is empty")
+    try:
+        return resolve_draft_font(resolver(family, weight))
+    except SystemFontError as error:
+        raise ClosureError(error.code, detail=error.detail) from error
 
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:

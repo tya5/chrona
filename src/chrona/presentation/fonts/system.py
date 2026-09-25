@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 import subprocess
+from typing import Protocol
 
 from fontTools.ttLib import TTFont
 
@@ -26,6 +27,12 @@ class SystemFontFace:
     family: str
     weight: int
     content_identity: str
+
+
+class SystemFontResolver(Protocol):
+    """Host bridge used only by explicit draft ingress."""
+
+    def __call__(self, family: str, weight: int) -> SystemFontFace: ...
 
 
 @dataclass(frozen=True)

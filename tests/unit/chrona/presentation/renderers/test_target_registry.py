@@ -1,4 +1,5 @@
 from io import BytesIO
+from dataclasses import replace
 from hashlib import sha256
 from importlib.resources import files
 from pathlib import Path
@@ -8,6 +9,8 @@ import yaml
 from PIL import Image, ImageChops
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.fonts.system import resolve_system_font
+from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, PNG_PROFILE
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -32,6 +35,52 @@ def _render(kind: str):
                      context.environment.renderer_environment(), asset_root=draft.asset_root),
         asset_root=draft.asset_root,
     )).artifact
+
+
+def _fixture_system_resolver(root: Path):
+    face = root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf"
+
+    def runner(_command, **_kwargs):
+        return type("Result", (), {"stdout": f"{face}\nNoto Sans\n80\n"})()
+
+    return lambda family, weight: resolve_system_font(family, weight, runner=runner)
+
+
+def test_draft_system_font_png_receives_the_measured_file_without_scene_path_provenance():
+    root = _root()
+    draft = resolve_draft_render(
+        project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
+        theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+        target_kind="png", system_fonts=True, system_font_resolver=_fixture_system_resolver(root),
+    )
+    context = draft.closure.context
+    rendered = render_review(RenderRequest(
+        draft.closure, draft.asset_root, ReferenceScheduler(),
+        renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
+                     context.environment.renderer_environment(), asset_root=draft.asset_root,
+                     font_files=(draft.font_resolution.font_file,)),
+        asset_root=draft.asset_root, draft_font_resolution=draft.font_resolution,
+    ))
+
+    assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert str(draft.font_resolution.face.path).encode() not in serialize_scene(rendered.scene)
+
+
+def test_system_font_resolution_is_rejected_if_a_caller_attempts_immutable_rendering():
+    root = _root()
+    draft = resolve_draft_render(
+        project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
+        theme_path=root / "examples/controller-z/themes/executive-light.yaml", scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml", actual_path=root / "examples/controller-z/actual.yaml",
+        system_fonts=True, system_font_resolver=_fixture_system_resolver(root),
+    )
+    immutable_context = replace(draft.closure.context, identity=replace(draft.closure.context.identity, revision="immutable"))
+    immutable = replace(draft.closure, context=immutable_context)
+
+    with pytest.raises(RenderFailed, match="E_FONT_SYSTEM_IMMUTABLE"):
+        render_review(RenderRequest(immutable, draft.asset_root, ReferenceScheduler(),
+                                    draft_font_resolution=draft.font_resolution, asset_root=draft.asset_root))
 
 
 def _completed_surface():

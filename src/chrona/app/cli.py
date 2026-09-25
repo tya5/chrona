@@ -184,6 +184,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--icon-catalog", action="append", default=[],
                          help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
+    command.add_argument("--system-fonts", action="store_true", help="draft-only: measure and rasterize the Theme's exact installed face")
     command.add_argument("--viewport", default="1600x900", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600x900)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
@@ -297,7 +298,8 @@ def _parser() -> JsonArgumentParser:
 
 
 
-def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_root: Path | None = None) -> RenderedReview:
+def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_root: Path | None = None,
+                   draft_font_resolution=None) -> RenderedReview:
     """Adapt one resolved closure to the render use case and its diagnostics."""
     request = RenderRequest(
         closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
@@ -305,6 +307,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
         require_all_inputs_read=getattr(args, "reject_unused_closure_inputs", False),
         asset_root=asset_root,
         draft_auto_block=getattr(args, "draft_auto_block", False),
+        draft_font_resolution=draft_font_resolution,
     )
     try:
         return render_review(request)
@@ -358,12 +361,14 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         detail_path=Path(args.detail) if args.detail else None,
         icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
         font_metrics_path=Path(args.font_metrics) if args.font_metrics else None,
+        system_fonts=args.system_fonts,
         viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=args.format,
         visual_profile=args.visual_profile,
         typesetter=_draft_typesetter_identity(args),
     )
     args.draft_auto_block = closure.auto_block
-    rendered = _render_review(closure.closure, args, asset_root=closure.asset_root)
+    rendered = _render_review(closure.closure, args, asset_root=closure.asset_root,
+                              draft_font_resolution=closure.font_resolution)
     _write_render_outputs(rendered, args)
     _emit_font_warnings(rendered)
 

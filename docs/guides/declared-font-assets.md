@@ -1,8 +1,8 @@
 # Declared Font Assets
 
-Chrona measures text from the exact metrics declared by a Render Context.
-PNG/PDF additionally use identity-pinned font bytes; SVG does not load them.
-It never uses a host-installed font at render time. The bundled default is the
+Chrona measures text from the exact metrics declared by an immutable Render
+Context. PNG/PDF additionally use identity-pinned font bytes; SVG does not
+load them. Immutable rendering never uses a host-installed font. The bundled default is the
 small OFL `Noto Sans` Regular/Bold pair. The separately distributed OFL
 `Noto Sans JP` provider is installed explicitly for repository development:
 `pip install -e packages/chrona-fonts-noto-cjk`. It is not advertised as a
@@ -59,6 +59,30 @@ a corpus or distributed in a package. A licensed font may be used for a
 private user's PNG/PDF, or its metrics may be shared for SVG layout, but a
 materialized raster snapshot copies its bytes and must not be redistributed
 unless its license permits that use.
+
+### Installed font for a private draft PNG
+
+For a one-off SVG or PNG that is not evidence, `chrona render --system-fonts`
+can use the exact installed face named by the Theme. It is an explicit,
+machine-local opt-in: Chrona resolves the first Theme family, verifies its
+OpenType family and weight, derives Layout metrics from those exact bytes, and
+passes only that file to the PNG renderer. It does not enable renderer-wide
+system fallback.
+
+<!-- chrona:doc-check skip: requires a host with the Theme's installed face and fontconfig bridge -->
+```sh
+chrona render project.yaml --view view.yaml --theme theme.yaml --scheme scheme.yaml \
+  --layout layout.yaml --system-fonts --format png --output private-review.png
+```
+
+The current system-font path requires every typographic Theme role to use the
+same primary family and weight. A missing bridge, absent face, mismatched face,
+or multi-face Theme reports `E_FONT_SYSTEM_UNAVAILABLE`,
+`E_FONT_SYSTEM_MISSING`, or `E_FONT_SYSTEM_MISMATCH`; it never substitutes.
+Draft system fonts support SVG and PNG only. PDF, Typst, TikZ, immutable
+`render-review`, Context serialization, and `materialize` reject this volatile
+state with `E_FONT_SYSTEM_IMMUTABLE`. The emitted image may be shared, but the
+host path and font-resolution state are not written to Scene provenance.
 
 ## Bring your own pair
 

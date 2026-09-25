@@ -27,6 +27,7 @@ from chrona.presentation.layout.surface_composer import resolve_label_visual_adv
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, resolve_font_metrics
+from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
@@ -85,6 +86,7 @@ class RenderRequest:
     require_all_inputs_read: bool = False
     asset_root: Path | None = None
     draft_auto_block: bool = False
+    draft_font_resolution: DraftFontResolution | None = None
 
 
 @dataclass(frozen=True)
@@ -171,7 +173,12 @@ def render_review(request: RenderRequest) -> RenderedReview:
 
     environment = render_closure.context.environment
     asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.theme.revision_token)
-    font_metrics = _font_metrics(theme, environment.font_metrics, asset_root)
+    resolution = request.draft_font_resolution
+    if resolution is not None and render_closure.context.identity.revision != "draft":
+        raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render immutable Context", "presentation")
+    if resolution is not None and render_closure.context.target.kind not in {"svg", "png"}:
+        raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render this target", "presentation")
+    font_metrics = resolution.metrics if resolution is not None else _font_metrics(theme, environment.font_metrics, asset_root)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project)
@@ -279,6 +286,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
         asset_root=asset_root,
+        font_files=(resolution.font_file,) if resolution is not None else None,
     )
     try:
         artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])))

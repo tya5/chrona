@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_guided_draft_render
+from chrona.presentation.fonts.system import resolve_system_font
 from chrona.presentation.contracts import TypesetterIdentity
 from chrona.resources import default_preset_resource, default_preset_root
 
@@ -116,6 +117,45 @@ def test_draft_closure_never_probes_a_host_typesetter():
     source = Path(__import__("chrona.presentation.model.closure", fromlist=["*"]).__file__).read_text(encoding="utf-8")
     assert "subprocess" not in source
     assert '"--version"' not in source
+
+
+def _system_resolver(root: Path):
+    face = root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf"
+
+    def runner(_command, **_kwargs):
+        return type("Result", (), {"stdout": f"{face}\nNoto Sans\n80\n"})()
+
+    return lambda family, weight: resolve_system_font(family, weight, runner=runner)
+
+
+def test_system_font_opt_in_is_draft_only_runtime_state_not_context_font_metrics():
+    root = _root()
+    draft = resolve_draft_render(**_paths(root), system_fonts=True, system_font_resolver=_system_resolver(root))
+
+    assert draft.font_resolution is not None
+    assert draft.font_resolution.face.path.name == "noto-sans-regular-v1.ttf"
+    assert str(draft.font_resolution.face.path) not in repr(draft.closure.context.environment.font_metrics)
+
+
+def test_system_font_opt_in_rejects_multiple_theme_faces_before_layout(tmp_path):
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme["body"]["values"]["heading-weight"] = {"type": "fontWeight", "value": 700}
+    theme["body"]["roles"]["heading"]["fontWeight"] = "heading-weight"
+    theme_path = tmp_path / "multiple-faces.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ClosureError, match="E_FONT_SYSTEM_MISMATCH") as error:
+        resolve_draft_render(**(_paths(root) | {"theme_path": theme_path}), system_fonts=True,
+                             system_font_resolver=_system_resolver(root))
+    assert "Noto Sans/400" in error.value.detail and "Noto Sans/700" in error.value.detail
+
+
+def test_system_font_opt_in_rejects_non_svg_png_draft_target():
+    root = _root()
+    with pytest.raises(ClosureError, match="E_FONT_SYSTEM_IMMUTABLE"):
+        resolve_draft_render(**_paths(root), target_kind="pdf", system_fonts=True,
+                             system_font_resolver=_system_resolver(root))
 
 
 def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provenance(tmp_path):
