@@ -88,6 +88,15 @@ def test_scene_validation_rejects_a_primitive_slot_not_owned_by_its_surface():
         validate_scene_document(document)
 
 
+def test_scene_validation_requires_layout_completed_canvas_bounds():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        document = scene_document(render_review(_request(closure, snapshot)).scene)
+    document["surfaces"][0].pop("canvasBounds")
+    with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
+        validate_scene_document(document)
+
+
 def test_scene_serializer_does_not_reopen_layout_theme_or_renderer_policy():
     source = Path(__import__("chrona.presentation.scene.serialization", fromlist=["*"]).__file__).read_text(encoding="utf-8")
     assert "presentation.layout" not in source

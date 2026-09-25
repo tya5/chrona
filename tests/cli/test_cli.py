@@ -12,6 +12,7 @@ import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
 from chrona.presentation.fonts.importer import import_font
 from chrona.usecases.render_review import FontGlyphWarning
+from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.scheduling.scheduler import schedule
 import chrona.storage.publication as publication
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -100,6 +101,20 @@ def test_cli_omits_draw_result_for_svg_font_substitution_warning(capsys):
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
     ),)))
     assert "drawn" not in json.loads(capsys.readouterr().err)
+
+
+def test_cli_emits_completed_fit_warning_to_stderr(capsys):
+    cli._emit_fit_warnings(SimpleNamespace(surface=SimpleNamespace(fit_warnings=(FitWarning(
+        "W_LAYOUT_ROW_DENSITY", "row:delivery", "delivery", "review-row-density",
+        "visible-overflow", 120, 72, 120, 40,
+    ),))))
+    assert json.loads(capsys.readouterr().err) == {
+        "code": "W_LAYOUT_ROW_DENSITY", "severity": "warning",
+        "placementId": "row:delivery", "sourceRef": "delivery",
+        "failureKind": "review-row-density", "behaviour": "visible-overflow",
+        "requiredInline": 120, "requiredBlock": 72,
+        "availableInline": 120, "availableBlock": 40,
+    }
 
 
 def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_routes():

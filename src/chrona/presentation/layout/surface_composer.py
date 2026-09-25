@@ -24,7 +24,7 @@ from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
-    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
 )
 
@@ -89,6 +89,27 @@ def _contains_block_interval(*, container_start: Decimal, container_end: Decimal
                              item_start: Decimal, item_end: Decimal) -> bool:
     """Apply the Layout coordinate tolerance to a physical containment test."""
     return item_start >= container_start - GEOMETRY_TOLERANCE and item_end <= container_end + GEOMETRY_TOLERANCE
+
+
+def _completed_canvas(*, requested: Rect, rectangles: tuple[Rect, ...],
+                      paths: tuple[tuple[tuple[float, float], ...], ...]) -> Rect:
+    """Expand the requested canvas to contain Layout's completed geometry.
+
+    A requested viewport is a minimum allocation.  This deliberately lives in
+    the composition layer rather than in Scene or a renderer: every target
+    receives the identical, already-completed extent.
+    """
+    inline_end = requested.inline + requested.inline_size
+    block_end = requested.block + requested.block_size
+    for bounds in rectangles:
+        inline_end = max(inline_end, bounds.inline + bounds.inline_size)
+        block_end = max(block_end, bounds.block + bounds.block_size)
+    for points in paths:
+        for inline, block in points:
+            inline_end = max(inline_end, Decimal(str(inline)))
+            block_end = max(block_end, Decimal(str(block)))
+    return Rect(requested.inline, requested.block,
+                inline_end - requested.inline, block_end - requested.block)
 
 
 def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
@@ -547,25 +568,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
                                source_content=label, available_inline_start=positions[column_id][0],
                                available_inline_size=available, orientation=column.header_orientation))
-        header_start = Decimal(str(table_bounds[1]))
-        header_end = Decimal(str(table_bounds[1] + header_block))
-        if not _contains_block_interval(
-            container_start=header_start,
-            container_end=header_end,
-            item_start=text[-1].bounds.block,
-            item_end=text[-1].bounds.block + text[-1].bounds.block_size,
-        ):
-            raise LayoutError(
-                "E_LAYOUT_TABLE_OVERFLOW",
-                "/layoutManifest/table",
-                detail=(
-                    f"header {column_id!r} occupies block interval "
-                    f"[{text[-1].bounds.block}, "
-                    f"{text[-1].bounds.block + text[-1].bounds.block_size}] "
-                    f"outside reserved table-header interval "
-                    f"[{header_start}, {header_end}]"
-                ),
-            )
+        # A rotated header may need more block extent than its allocated table
+        # header.  Its completed text remains visible; the warning and canvas
+        # expansion are assembled with all other Layout geometry below.
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for cell in table_cells:
         object_id, column_id, content, typography_role = cell.object_id, cell.column_id, cell.content, cell.typography_role
@@ -1517,13 +1522,85 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for item, column in zip(columns, table_columns, strict=True)
     )
     _validate_background_shapes(shapes, request.theme_tokens)
+
+    # Complete the observable fallback records at the same point as completed
+    # geometry.  Neither Scene nor an adapter gets a policy question to answer.
+    fit_warnings: list[FitWarning] = []
+    warned_placement_ids: set[str] = set()
+    timeline_end = timeline.bounds.block + timeline.bounds.block_size
+    header_start = Decimal(str(table_bounds[1]))
+    header_end = Decimal(str(timeline_bounds[1]))
+    row_by_id = {row.row_id: row for row in rows}
+    table_end = table.bounds.inline + table.bounds.inline_size
+    for column in column_placements:
+        if column.bounds.inline + column.bounds.inline_size > table_end + GEOMETRY_TOLERANCE:
+            placement_id = f"column:{column.column_id}"
+            fit_warnings.append(FitWarning(
+                "W_LAYOUT_VISIBLE_OVERFLOW", placement_id, "view:tableColumns",
+                "table-text", "visible-overflow", float(column.bounds.inline_size),
+                float(column.bounds.block_size), max(0.0, float(table_end - column.bounds.inline)),
+                float(column.bounds.block_size),
+            ))
+            warned_placement_ids.add(placement_id)
+    for item in text:
+        if (not item.placement_id.startswith(("column:", "cell:")) or item.overflow != "fit"
+                or item.placement_id in warned_placement_ids):
+            continue
+        inline_overflow = (item.available_inline_size is not None
+                           and item.bounds.inline_size > Decimal(str(item.available_inline_size)) + GEOMETRY_TOLERANCE)
+        if item.placement_id.startswith("column:"):
+            block_available = max(0.0, float(header_end - header_start))
+            block_overflow = not _contains_block_interval(
+                container_start=header_start, container_end=header_end,
+                item_start=item.bounds.block, item_end=item.bounds.block + item.bounds.block_size,
+            )
+        else:
+            object_id = item.placement_id.split(":", 2)[1]
+            row = row_by_id.get(object_id) or next((candidate for candidate in rows if candidate.object_id == object_id), None)
+            block_available = float(row.bounds.block_size) if row is not None else 0.0
+            block_overflow = row is not None and not _contains_block_interval(
+                container_start=row.bounds.block, container_end=row.bounds.block + row.bounds.block_size,
+                item_start=item.bounds.block, item_end=item.bounds.block + item.bounds.block_size,
+            )
+        if inline_overflow or block_overflow:
+            fit_warnings.append(FitWarning(
+                "W_LAYOUT_VISIBLE_OVERFLOW", item.placement_id, item.source_ref,
+                "table-text", "visible-overflow", float(item.bounds.inline_size),
+                float(item.bounds.block_size), float(item.available_inline_size or 0), block_available,
+            ))
+    for row in rows:
+        if row.bounds.block + row.bounds.block_size > timeline_end + GEOMETRY_TOLERANCE:
+            fit_warnings.append(FitWarning(
+                "W_LAYOUT_ROW_DENSITY", f"row:{row.row_id}", row.object_id,
+                "review-row-density", "visible-overflow", float(row.bounds.inline_size),
+                float(row.bounds.block_size), float(timeline.bounds.inline_size),
+                max(0.0, float(timeline_end - row.bounds.block)),
+            ))
+    for mark in marks:
+        if mark.bounds.block + mark.bounds.block_size > timeline_end + GEOMETRY_TOLERANCE:
+            fit_warnings.append(FitWarning(
+                "W_LAYOUT_MARK_OVERFLOW", mark.placement_id, mark.source_ref,
+                "mark-containment", "visible-overflow", float(mark.bounds.inline_size),
+                float(mark.bounds.block_size), float(timeline.bounds.inline_size),
+                max(0.0, float(timeline_end - mark.bounds.block)),
+            ))
+    canvas = _completed_canvas(
+        requested=request.layout_manifest.viewport,
+        rectangles=(tuple(slot.bounds for slot in slots) + tuple(row.bounds for row in rows)
+                    + tuple(column.bounds for column in column_placements)
+                    + tuple(group.content_bounds for group in groups)
+                    + tuple(group.header_bounds for group in groups if group.header_bounds is not None)
+                    + tuple(item.bounds for item in text) + tuple(item.bounds for item in marks)
+                    + tuple(item.bounds for item in shapes) + tuple(item.bounds for item in icons)),
+        paths=tuple(item.points for item in relations),
+    )
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
                                  axis_tier_outcomes=tuple(axis_tier_outcomes),
                                  diagnostics=tuple(diagnostics), icons=tuple(icons),
-                                 canvas_bounds=request.layout_manifest.viewport)
+                                 canvas_bounds=canvas, fit_warnings=tuple(fit_warnings))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 

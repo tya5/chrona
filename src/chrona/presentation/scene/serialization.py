@@ -154,8 +154,11 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
         result["scale"] = _scale(surface.scale_manifest)
     if surface.canvas_paint is not None:
         result["canvasPaint"] = _paint(surface.canvas_paint)
-    if surface.canvas_bounds is not None:
-        result["canvasBounds"] = _bounds(surface.canvas_bounds)
+    # A public Scene is a completed render contract: consumers must never
+    # infer an extent from primitive geometry or their own target viewport.
+    if surface.canvas_bounds is None:
+        raise SceneSerializationError("E_SCENE_SERIALIZATION")
+    result["canvasBounds"] = _bounds(surface.canvas_bounds)
     if surface.fit_warnings:
         result["fitWarnings"] = [_fit_warning(item) for item in surface.fit_warnings]
     return result

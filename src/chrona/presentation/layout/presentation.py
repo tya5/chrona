@@ -72,19 +72,22 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
     if gutter < 0:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
-    if available < 0 or sum(column.width.maximum == "fill" for column in columns) > 1:
+    if sum(column.width.maximum == "fill" for column in columns) > 1:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
     ellipsis_floor = max(minimum_inline, measure_text("…", "text", "horizontal")) + minimum_inline
     minima = tuple(natural if column.width.minimum == "content" else ellipsis_floor
                    for column, natural in zip(columns, natural_widths, strict=True))
-    if geometry_sum(minima) > available:
-        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
+    # A normal visible-overflow table retains natural measured columns even
+    # when they exceed its requested slot.  Ellipsis remains the sole compact
+    # disposition and therefore still needs finite minima inside the slot.
     preferred_total = geometry_sum(natural_widths)
-    if preferred_total > available and overflow != "ellipsize-with-source":
-        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW_POLICY", "/layoutManifest/table")
-    base = natural_widths if preferred_total <= available else minima
+    base = (minima if preferred_total > available and overflow == "ellipsize-with-source"
+            else natural_widths)
     flexible = tuple(index for index, column in enumerate(columns) if column.width.flexible)
-    remaining = available - geometry_sum(base)
+    # A declared compact representation is retained where it fits.  If even
+    # its measured ellipsis minima exceed the requested slot, those minima are
+    # still completed visibly rather than becoming a fit refusal.
+    remaining = max(0.0, available - geometry_sum(base))
     weights = geometry_sum(columns[index].width.fraction for index in flexible)
     widths = tuple(width + (remaining * columns[index].width.fraction / weights
                             if index in flexible and weights else 0.0)
@@ -123,10 +126,11 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
     )
     available = timeline_bounds[3] - group_header_size * len(group_starts)
     required = geometry_sum(required_block_sizes)
-    if available < required:
-        raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline",
-                          detail=f"required={required}; available={available}")
-    surplus = (available - required) / len(review_rows) if distribution == "fill" and review_rows else 0.0
+    # Requirements remain P1 geometry.  A requested timeline is a minimum
+    # allocation, not a refusal boundary: surplus can be distributed only when
+    # it exists, otherwise rows naturally extend the completed surface.
+    surplus = ((available - required) / len(review_rows)
+               if distribution == "fill" and review_rows and available >= required else 0.0)
     cursor = timeline_bounds[1]
     placements: list[RowPlacement] = []
     for index, row in enumerate(review_rows):

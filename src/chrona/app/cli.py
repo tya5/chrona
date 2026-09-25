@@ -86,6 +86,23 @@ def _emit_font_warnings(rendered: RenderedReview) -> None:
         }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 
+def _emit_fit_warnings(rendered: RenderedReview) -> None:
+    """Report Layout-owned visible fallbacks after a successful artifact write."""
+    for warning in rendered.surface.fit_warnings:
+        print(json.dumps({
+            "code": warning.code, "severity": "warning",
+            "placementId": warning.placement_id, "sourceRef": warning.source_ref,
+            "failureKind": warning.failure_kind, "behaviour": warning.behaviour,
+            "requiredInline": warning.required_inline, "requiredBlock": warning.required_block,
+            "availableInline": warning.available_inline, "availableBlock": warning.available_block,
+        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+
+
+def _emit_render_warnings(rendered: RenderedReview) -> None:
+    _emit_font_warnings(rendered)
+    _emit_fit_warnings(rendered)
+
+
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
     payload = {
         "status": "rejected",
@@ -323,6 +340,7 @@ def _run_render_review(args: argparse.Namespace) -> None:
     _assert_context_format(closure, args.format)
     rendered = _render_review(closure, args)
     _write_render_outputs(rendered, args)
+    _emit_render_warnings(rendered)
 
 
 def _store_reader(args: argparse.Namespace):
@@ -370,7 +388,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root,
                               draft_font_resolution=closure.font_resolution)
     _write_render_outputs(rendered, args)
-    _emit_font_warnings(rendered)
+    _emit_render_warnings(rendered)
 
 
 def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) -> None:
@@ -404,7 +422,7 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
     args.draft_auto_block = draft.auto_block
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)
-    _emit_font_warnings(rendered)
+    _emit_render_warnings(rendered)
     if args.provenance:
         provenance = draft.closure.guided_provenance
         if provenance is None:  # defensive: this route must never become an explicit Draft alias

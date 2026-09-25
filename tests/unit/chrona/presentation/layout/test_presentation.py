@@ -55,14 +55,15 @@ def test_table_placements_reserve_the_declared_positive_gutter() -> None:
     assert placements[1].inline - (placements[0].inline + placements[0].inline_size) == 12.0
 
 
-def test_table_placement_diagnoses_when_required_text_cannot_fit() -> None:
-    with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
-        place_table_columns(
-            columns=table_columns(("owner", "Owner"), ("status", "Status")),
-            cells=table_cells(("a", "owner", "Firmware"), ("a", "status", "In progress")),
-            bounds=(0.0, 0.0, 20.0, 20.0),
-            measure_text=fixed_measure, minimum_inline=10.0,
-        )
+def test_table_placement_retains_natural_width_when_visible_overflow_is_selected() -> None:
+    placements = place_table_columns(
+        columns=table_columns(("owner", "Owner"), ("status", "Status")),
+        cells=table_cells(("a", "owner", "Firmware"), ("a", "status", "In progress")),
+        bounds=(0.0, 0.0, 20.0, 20.0),
+        measure_text=fixed_measure, minimum_inline=10.0,
+    )
+    assert sum(item.inline_size for item in placements) > 20.0
+    assert tuple(item.inline_size for item in placements) == tuple(item.natural_inline_size for item in placements)
 
 
 def test_table_header_containment_ignores_only_sub_micro_point_float_residue() -> None:
@@ -259,8 +260,8 @@ def test_row_requirements_are_per_row_and_fill_only_distributes_surplus() -> Non
     assert tuple(row.bounds[3] for row in filled) == (25.0, 35.0)
 
 
-def test_row_allocation_rejects_infeasible_requirements_before_track_projection() -> None:
+def test_row_allocation_retains_infeasible_requirements_for_visible_canvas_growth() -> None:
     rows = (SimpleNamespace(row_id="r", group_id=None),)
-    with pytest.raises(LayoutError, match="E_LAYOUT_REQUIRED_OVERFLOW"):
-        place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 19.0), group_header_size=0.0,
-                   required_block_sizes=(20.0,), distribution="pack")
+    placed = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 19.0), group_header_size=0.0,
+                        required_block_sizes=(20.0,), distribution="pack")
+    assert placed[0].bounds == (0.0, 0.0, 100.0, 20.0)

@@ -16,7 +16,7 @@ from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
-from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
+from chrona.usecases.render_review import RenderRequest, render_review
 from chrona.presentation.scene.serialization import serialize_scene
 
 
@@ -85,10 +85,11 @@ def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count
     view_path = tmp_path / "scale-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW") as error:
-        render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, 900)))
-    assert "required=" in error.value.message and "available=" in error.value.message
-    assert "use --viewport" not in error.value.message
+    fixed = render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, 900)))
+    assert any(item.code == "W_LAYOUT_ROW_DENSITY" for item in fixed.surface.fit_warnings)
+    assert fixed.surface.canvas_bounds[3] > 900
+    scene_warnings = json.loads(serialize_scene(fixed.scene))["surfaces"][0]["fitWarnings"]
+    assert any(item["code"] == "W_LAYOUT_ROW_DENSITY" for item in scene_warnings)
     rendered = render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, None)))
     height = int(re.search(r'height="(\d+)"', rendered.artifact.content.decode()).group(1))
     assert height >= row_count * 72
@@ -102,15 +103,12 @@ def test_draft_auto_block_closes_the_public_multi_lane_milestone_fixture():
         actual_path=root / "actual.yaml", viewport=(1600, None),
     ))
     assert automatic.artifact.content.count(b'data-purpose="planned"') == 3
-    with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW"):
-        render_review(_draft_request(
+    fixed = render_review(_draft_request(
         project_path=root / "project.yaml", view_path=root / "view.yaml",
-        actual_path=root / "actual.yaml", viewport=(1600, 256),
-        ))
-    render_review(_draft_request(
-        project_path=root / "project.yaml", view_path=root / "view.yaml",
-        actual_path=root / "actual.yaml", viewport=(1600, 257),
+        actual_path=root / "actual.yaml", viewport=(1600, 180),
     ))
+    assert fixed.surface.canvas_bounds[3] > 180
+    assert {item.code for item in fixed.surface.fit_warnings} >= {"W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"}
 
 
 def test_immutable_context_overflow_has_no_render_ingress_viewport_remedy(tmp_path):
@@ -121,9 +119,9 @@ def test_immutable_context_overflow_has_no_render_ingress_viewport_remedy(tmp_pa
     context = replace(request.closure.context,
                       identity=replace(request.closure.context.identity, revision="snapshot"))
     request = replace(request, closure=replace(request.closure, context=context))
-    with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW") as error:
-        render_review(request)
-    assert "--viewport" not in error.value.message
+    rendered = render_review(request)
+    assert rendered.surface.canvas_bounds[3] > 900
+    assert any(item.code == "W_LAYOUT_ROW_DENSITY" for item in rendered.surface.fit_warnings)
 
 
 def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
