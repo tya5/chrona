@@ -6,6 +6,9 @@ body:
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
+    monospace:
+      type: fontFamily
+      value: Noto Sans Mono, monospace
     weight.regular:
       type: fontWeight
       value: '400'
@@ -273,7 +276,7 @@ body:
       iconGap: icon-gap
       strokeWidth: stroke-width
     summary:
-      fontFamily: editorial
+      fontFamily: monospace
       fontWeight: weight.regular
       fontSize: size.legend
       lineHeight: leading.body

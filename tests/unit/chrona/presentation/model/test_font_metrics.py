@@ -6,6 +6,7 @@ import pytest
 
 from chrona.presentation.model.font_metrics import resolve_font_files, resolve_font_metrics, resolve_font_metrics_catalog
 from chrona.presentation.model.font_metrics import FontMetricsError
+from chrona.resources import safe_load
 
 
 def descriptor():
@@ -73,6 +74,15 @@ def test_catalog_selects_exact_declared_family_weight_and_rejects_missing_face()
         catalog.select("Noto Sans Mono", 400)
     with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
         catalog.select("Noto Sans", 500)
+
+
+def test_packaged_catalog_selects_the_bundled_monospace_face():
+    value = safe_load(files("chrona.resources").joinpath("fonts", "default-font-metrics.yaml").read_bytes())
+    catalog = resolve_font_metrics_catalog(value)
+
+    mono = catalog.select("Noto Sans Mono, monospace", 400)
+    assert mono.family == "Noto Sans Mono"
+    assert mono.content_identity == "sha256:c886cba7994069f6ba1c1a97c49d3aff58a3c131e6b4710237a452bd67a845a4"
 
 
 def test_font_metrics_rejects_path_traversal():
