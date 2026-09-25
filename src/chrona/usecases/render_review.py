@@ -38,6 +38,8 @@ from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
 )
+from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding, evaluate_scene_perceptibility
+from chrona.presentation.scene.serialization import scene_document
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 from chrona.presentation.scene.visual_capabilities import (
     VisualCapabilityError,
@@ -99,6 +101,7 @@ class RenderedReview:
     read_inputs: frozenset[str] = field(default_factory=frozenset)
     scenario_provenance: tuple[ScenarioProvenance, ...] = ()
     font_warnings: tuple["FontGlyphWarning", ...] = ()
+    perceptibility_warnings: tuple["ScenePerceptibilityWarning", ...] = ()
 
 
 @dataclass(frozen=True)
@@ -111,6 +114,19 @@ class FontGlyphWarning:
     codepoint: int
     text: str
     drawn: bool | None = None
+
+
+@dataclass(frozen=True)
+class ScenePerceptibilityWarning:
+    """Draft-only transport of one error finding over the completed Scene."""
+
+    code: str
+    finding_code: str
+    scene_path: str
+    primitive_ids: tuple[str, ...]
+    slot_id: str | None
+    measured_facts: tuple[tuple[str, float | str], ...]
+    disposition: str | None
 
 
 class ClosureReadLedger:
@@ -274,6 +290,10 @@ def render_review(request: RenderRequest) -> RenderedReview:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
+    scene = _inspection_scene(render_closure, surface, projection, surface_content,
+                              (surface.canvas_bounds[2], surface.canvas_bounds[3]))
+    perceptibility_warnings = (_scene_perceptibility_warnings(scene)
+                               if render_closure.context.identity.revision == "draft" else ())
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
@@ -288,10 +308,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
     if surface.canvas_bounds is None:
         raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
-    scene = _inspection_scene(render_closure, surface, projection, surface_content,
-                              (surface.canvas_bounds[2], surface.canvas_bounds[3]))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
-                          _font_warnings(font_metrics.warnings, artifact.target_kind))
+                          _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
@@ -339,6 +357,18 @@ def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind
     return tuple(FontGlyphWarning(
         item.requested_family, item.fallback_family, item.weight, item.codepoint, item.text, drawn,
     ) for item in substitutions)
+
+
+def _scene_perceptibility_warnings(scene: InspectionScene) -> tuple[ScenePerceptibilityWarning, ...]:
+    """Project only evaluator errors into ordered draft feedback facts."""
+    return _warnings_from_findings(evaluate_scene_perceptibility(scene_document(scene)))
+
+
+def _warnings_from_findings(findings: tuple[ScenePerceptibilityFinding, ...]) -> tuple[ScenePerceptibilityWarning, ...]:
+    return tuple(ScenePerceptibilityWarning(
+        "W_" + finding.code.removeprefix("E_"), finding.code, finding.scene_path,
+        finding.primitive_ids, finding.slot_id, finding.measured_facts, finding.disposition,
+    ) for finding in findings if finding.severity == "error")
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:

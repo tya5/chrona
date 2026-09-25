@@ -12,8 +12,9 @@ from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import (
-    RenderRequest, _font_warnings, render_review,
+    RenderRequest, _font_warnings, _warnings_from_findings, render_review,
 )
+from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
 from chrona.presentation.scene.serialization import SceneSerializationError, scene_document, serialize_scene, validate_scene_document
 
@@ -23,6 +24,19 @@ def test_font_substitution_warning_only_claims_raster_draw_result():
     assert _font_warnings((substitution,), "png")[0].drawn is False
     assert _font_warnings((substitution,), "pdf")[0].drawn is False
     assert _font_warnings((substitution,), "svg")[0].drawn is None
+
+
+def test_scene_error_findings_become_draft_warnings_without_information_duplication():
+    error = ScenePerceptibilityFinding("v1", "E_SCENE_TEXT_OCCLUDED", "error", "/surfaces/0:review",
+                                       ("text", "cover"), "timeline", (("coverageRatio", 1.0),))
+    info = ScenePerceptibilityFinding("v1", "I_SCENE_PAINT_CONTRAST", "info", "/surfaces/0:review",
+                                      ("tint",), "timeline", (("contrastRatio", 1.1),))
+
+    warnings = _warnings_from_findings((error, info))
+
+    assert [(item.code, item.finding_code, item.primitive_ids) for item in warnings] == [
+        ("W_SCENE_TEXT_OCCLUDED", "E_SCENE_TEXT_OCCLUDED", ("text", "cover")),
+    ]
 
 
 from tools.materialize_example import _copy_context_closure

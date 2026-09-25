@@ -11,7 +11,7 @@ import pytest
 import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
 from chrona.presentation.fonts.importer import import_font
-from chrona.usecases.render_review import FontGlyphWarning
+from chrona.usecases.render_review import FontGlyphWarning, ScenePerceptibilityWarning
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.scheduling.scheduler import schedule
 import chrona.storage.publication as publication
@@ -101,6 +101,18 @@ def test_cli_omits_draw_result_for_svg_font_substitution_warning(capsys):
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
     ),)))
     assert "drawn" not in json.loads(capsys.readouterr().err)
+
+
+def test_cli_emits_structured_scene_perceptibility_warning_to_stderr(capsys):
+    cli._emit_scene_perceptibility_warnings(SimpleNamespace(perceptibility_warnings=(ScenePerceptibilityWarning(
+        "W_SCENE_TEXT_OCCLUDED", "E_SCENE_TEXT_OCCLUDED", "/surfaces/0:review", ("text", "cover"),
+        "timeline", (("coverageRatio", 1.0),), None,
+    ),)))
+    assert json.loads(capsys.readouterr().err) == {
+        "code": "W_SCENE_TEXT_OCCLUDED", "severity": "warning", "findingCode": "E_SCENE_TEXT_OCCLUDED",
+        "scenePath": "/surfaces/0:review", "primitiveIds": ["text", "cover"], "slotId": "timeline",
+        "measuredFacts": {"coverageRatio": 1.0},
+    }
 
 
 def test_cli_emits_completed_fit_warning_to_stderr(capsys):

@@ -98,9 +98,21 @@ def _emit_fit_warnings(rendered: RenderedReview) -> None:
         }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 
+def _emit_scene_perceptibility_warnings(rendered: RenderedReview) -> None:
+    for warning in rendered.perceptibility_warnings:
+        print(json.dumps({
+            "code": warning.code, "severity": "warning", "findingCode": warning.finding_code,
+            "scenePath": warning.scene_path, "primitiveIds": list(warning.primitive_ids),
+            "measuredFacts": dict(warning.measured_facts),
+            **({"slotId": warning.slot_id} if warning.slot_id is not None else {}),
+            **({"disposition": warning.disposition} if warning.disposition is not None else {}),
+        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+
+
 def _emit_render_warnings(rendered: RenderedReview) -> None:
     _emit_font_warnings(rendered)
     _emit_fit_warnings(rendered)
+    _emit_scene_perceptibility_warnings(rendered)
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
