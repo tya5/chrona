@@ -265,7 +265,9 @@ def main() -> None:
         if not output.is_file() or output.read_text(encoding="utf-8") != content: raise SystemExit("E_PRESENTATION_COVERAGE_STALE")
         return
     output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=output.parent, delete=False) as temporary:
+    # Evidence is committed bytes, so generation must not inherit the host
+    # platform's newline translation (notably CRLF on Windows).
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", dir=output.parent, delete=False) as temporary:
         temporary.write(content); temporary_path = Path(temporary.name)
     temporary_path.replace(output)
 
