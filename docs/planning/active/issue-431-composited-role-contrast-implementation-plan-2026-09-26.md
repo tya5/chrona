@@ -39,7 +39,9 @@ classified state-text Scene primitive carries its resolved finite treatment;
 `none` yields inspectable Scene absence without a drawable primitive; enabled
 classified flat decorations are represented as completed paint; every
 committed materializer context remains materializable; all five decoration
-families have a visible corpus witness.
+families have a visible corpus witness.  The View decoration selection must
+express row and group policies independently; do not add a witness-specific
+Layout branch.
 
 ## I431-3 — Checked policy report and release gate
 
