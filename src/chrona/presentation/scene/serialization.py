@@ -164,6 +164,9 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "pattern": _pattern(item.pattern) if item.pattern is not None else None,
         "symbol": {"outline": [_path(path) for path in item.symbol.outline]} if item.symbol is not None else None,
         "icon": _icon(item) if item.kind == "Icon" else None,
+        "paintOrder": item.paint_order if item.paint_order else None,
+        "clipSourceId": item.clip_source_id,
+        "endTreatment": item.end_treatment if item.end_treatment != "closed" else None,
     }
     result.update(_omit(optional))
     return result

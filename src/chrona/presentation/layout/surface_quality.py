@@ -109,6 +109,9 @@ class MarkPlacement:
     corner_radius: float = 0.0
     path_commands: tuple[PathCommand, ...] = ()
     slot_id: str = ""
+    semantic_id: str = "planned"
+    paint_order: int = 0
+    end_treatment: str = "closed"
 
 
 @dataclass(frozen=True)
@@ -122,6 +125,8 @@ class ShapePlacement:
     points: tuple[tuple[float, float], ...] = ()
     required: bool = True
     slot_id: str = ""
+    clip_host_id: str | None = None
+    paint_order: int = 0
 
 
 @dataclass(frozen=True)
@@ -295,12 +300,18 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_MARK_PLACEMENT_INVALID:{mark.placement_id}")
             if mark.corner_radius < 0 or mark.corner_radius > float(min(mark.bounds.inline_size, mark.bounds.block_size)) / 2:
                 raise ValueError(f"E_LAYOUT_MARK_CORNER_RADIUS_INVALID:{mark.placement_id}")
+            if mark.end_treatment not in {"closed", "open"}:
+                raise ValueError(f"E_LAYOUT_MARK_END_TREATMENT_INVALID:{mark.placement_id}")
         for shape in self.shapes:
             if shape.kind == "Path":
                 if len(shape.points) < 2:
                     raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{shape.placement_id}")
             elif shape.bounds.inline_size < 0 or shape.bounds.block_size < 0:
                 raise ValueError(f"E_LAYOUT_SHAPE_PLACEMENT_INVALID:{shape.placement_id}")
+            if shape.clip_host_id is not None:
+                host = next((mark for mark in self.marks if mark.placement_id == shape.clip_host_id), None)
+                if host is None or host.slot_id != shape.slot_id:
+                    raise ValueError(f"E_LAYOUT_CLIP_HOST_INVALID:{shape.placement_id}")
         for primitive in self.primitives:
             if primitive.kind == "Path" and len(primitive.points) < 2:
                 raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")

@@ -164,6 +164,9 @@ class ScenePrimitive:
     visual_capability_source_ref: str = "/"
     table_row_id: str | None = None
     table_column_id: str | None = None
+    paint_order: int = 0
+    clip_source_id: str | None = None
+    end_treatment: str = "closed"
 
     def __post_init__(self) -> None:
         if ((self.marker is not None and self.kind != "Path")
@@ -179,6 +182,8 @@ class ScenePrimitive:
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))
                 or (self.kind != "Icon" and self.icon_viewport is not None)):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        if self.end_treatment not in {"closed", "open"}:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 @dataclass(frozen=True)

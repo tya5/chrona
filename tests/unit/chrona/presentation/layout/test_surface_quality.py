@@ -81,6 +81,18 @@ def test_surface_placement_validates_completed_mark_and_shape_geometry():
         SurfacePlacement(shapes=(ShapePlacement("path:bad", "a", "Path", bounds, ((1.0, 2.0),)),)).assert_valid()
 
 
+def test_surface_placement_closes_clip_hosts_and_mark_end_treatment():
+    bounds = _rect(1, 2, 20, 4)
+    host = MarkPlacement("actual:a", "a", bounds, (1, 4), (21, 4), slot_id="timeline", end_treatment="open")
+    SurfacePlacement(marks=(host,), shapes=(ShapePlacement("progress:a", "a", "Rect", bounds,
+                                                           slot_id="timeline", clip_host_id="actual:a"),)).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_CLIP_HOST_INVALID:progress:a"):
+        SurfacePlacement(shapes=(ShapePlacement("progress:a", "a", "Rect", bounds,
+                                                slot_id="timeline", clip_host_id="actual:a"),)).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_MARK_END_TREATMENT_INVALID:actual:a"):
+        SurfacePlacement(marks=(MarkPlacement("actual:a", "a", bounds, (1, 4), (21, 4), end_treatment="unknown"),)).assert_valid()
+
+
 def test_surface_placement_rejects_icon_without_a_declared_slot_owner():
     bounds = _rect(1, 2, 3, 4)
     icon = IconPlacement("visual:title:leading", "title", "/body/visuals/0", "risk", "svg", "sha256:x",
