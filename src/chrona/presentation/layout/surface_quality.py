@@ -185,7 +185,7 @@ class SlotPlacement:
     source_ref: str
     bounds: Rect
     priority: str = "required"
-    overflow: str = "diagnose"
+    overflow: str = "visible-overflow"
     scale_id: str | None = None
 
 
@@ -278,6 +278,28 @@ class PlacementDecision:
 
 
 @dataclass(frozen=True)
+class FitWarning:
+    """A completed, user-visible fit fallback selected by Layout."""
+
+    code: str
+    placement_id: str
+    source_ref: str
+    failure_kind: str
+    behaviour: str
+    required_inline: float
+    required_block: float
+    available_inline: float
+    available_block: float
+
+    def __post_init__(self) -> None:
+        if (not self.code.startswith("W" + "_LAYOUT_") or not self.placement_id or not self.source_ref
+                or not self.failure_kind or not self.behaviour
+                or min(self.required_inline, self.required_block,
+                       self.available_inline, self.available_block) < 0):
+            raise ValueError("E_LAYOUT_FIT_WARNING_INVALID")
+
+
+@dataclass(frozen=True)
 class AxisIntervalOutcome:
     """One calendar interval and its completed label measurement, if any."""
 
@@ -364,10 +386,14 @@ class SurfacePlacement:
     axis_tier_outcomes: tuple[AxisTierOutcome, ...] = ()
     diagnostics: tuple[str, ...] = ()
     icons: tuple[IconPlacement, ...] = ()
+    canvas_bounds: Rect | None = None
+    fit_warnings: tuple[FitWarning, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
+        if self.canvas_bounds is not None and (self.canvas_bounds.inline_size <= 0 or self.canvas_bounds.block_size <= 0):
+            raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")
         for index, item in enumerate(required):
             for other in required[index + 1:]:
                 if _collision_domains_intersect(item.collision_domain, other.collision_domain) and intersects(item.bounds, other.bounds):

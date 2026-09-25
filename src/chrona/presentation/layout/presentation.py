@@ -57,7 +57,7 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         cells: tuple[TableCellContent, ...],
                         bounds: tuple[float, float, float, float],
                         measure_text: Callable[[str, str, str], float], minimum_inline: float,
-                        overflow: str = "diagnose", gutter: float = 0.0,
+                        overflow: str = "visible-overflow", gutter: float = 0.0,
                         ) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
     content_by_column = {column.column_id: [(column.header, "text", column.header_orientation)] for column in columns}

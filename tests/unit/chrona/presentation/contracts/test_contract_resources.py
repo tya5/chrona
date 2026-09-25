@@ -100,7 +100,7 @@ def test_v18_axis_tiers_have_one_role_and_unit_valid_label_forms():
         _view_contract(invalid_form)
 
     invalid_grid_label = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
-    invalid_grid_label["body"]["axis"]["tiers"][1]["label"] = {"form": "year-quarter", "align": "center", "overflow": "diagnose"}
+    invalid_grid_label["body"]["axis"]["tiers"][1]["label"] = {"form": "year-quarter", "align": "center", "overflow": "visible-overflow"}
     with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
         _view_contract(invalid_grid_label)
 

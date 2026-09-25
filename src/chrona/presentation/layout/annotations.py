@@ -129,7 +129,7 @@ def project_annotation_box(annotation: AnnotationIntent, resolved: AnnotationAnc
             box = LabelRect(box.x, y, box.width, box.height)
         intersects = any(box.x < item.right and item.x < box.right and box.y < item.bottom and item.y < box.bottom for item in obstacles)
         if box.x < viewport.x or box.y < viewport.y or box.right > viewport.right or box.bottom > viewport.bottom or intersects:
-            if required or overflow == "diagnose":
+            if required or overflow == "visible-overflow":
                 raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
             return None
         placement = LabelPlacement(placement.side, box)
@@ -143,7 +143,7 @@ def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnch
     """Place an object-anchored callout in a dedicated annotation rail."""
     width, height = text_size
     if width > rail.width or height > rail.height:
-        if required or overflow == "diagnose":
+        if required or overflow == "visible-overflow":
             raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
         return None
     occupied = tuple(obstacles)
@@ -158,6 +158,6 @@ def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnch
             for item in occupied
         ):
             return AnnotationBox(resolved, LabelPlacement("rail", box), True)
-    if required or overflow == "diagnose":
+    if required or overflow == "visible-overflow":
         raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
     return None

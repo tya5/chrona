@@ -1,4 +1,4 @@
-version: chrona/layout-profile/v0.8
+version: chrona/layout-profile/v0.9
 id: dependency-network
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
@@ -22,7 +22,7 @@ root:
       blockSize: content
       place: {inline: start, block: start, safety: safe}
       priority: required
-      overflow: diagnose
+      overflow: visible-overflow
     - id: network
       kind: slot
       source: network
@@ -30,4 +30,4 @@ root:
       blockSize: fill
       place: {inline: stretch, block: stretch, safety: strict}
       priority: required
-      overflow: diagnose
+      overflow: visible-overflow

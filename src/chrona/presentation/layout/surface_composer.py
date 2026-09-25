@@ -411,7 +411,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
     slots = tuple(
         SlotPlacement(source, source, item.bounds, item.priority or "required",
-                      item.overflow or "diagnose", "primary" if source in {"timeline", "timeline-axis"} else None)
+                      item.overflow or "visible-overflow", "primary" if source in {"timeline", "timeline-axis"} else None)
         for source, item in sorted(decisions.items())
     )
     by_source = {slot.source_ref: slot for slot in slots}
@@ -1030,7 +1030,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             label_requests.append(LabelRequest(
                 f"member-label:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
                 folded.item.title, LabelRect(*_bounds(mark.bounds)), default_ladder, "groupHeader", "group-header-point",
-                CollisionDomain("group-header", folded.group_id), "diagnose", bounds=LabelRect(*_bounds(group.header_bounds)),
+                CollisionDomain("group-header", folded.group_id), "visible-overflow", bounds=LabelRect(*_bounds(group.header_bounds)),
                 inside_host_obstacle_id=mark.placement_id))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
@@ -1522,7 +1522,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
                                  axis_tier_outcomes=tuple(axis_tier_outcomes),
-                                 diagnostics=tuple(diagnostics), icons=tuple(icons))
+                                 diagnostics=tuple(diagnostics), icons=tuple(icons),
+                                 canvas_bounds=request.layout_manifest.viewport)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 

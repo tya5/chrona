@@ -1,4 +1,4 @@
-version: chrona/view/v0.18
+version: chrona/view/v0.19
 kind: view
 id: halcyon-04-tvac-slip
 body:
@@ -75,7 +75,7 @@ body:
       label:
         form: year-quarter
         align: center
-        overflow: diagnose
+        overflow: visible-overflow
         orientation: horizontal
     - unit: month
       every: 1
@@ -83,7 +83,7 @@ body:
       label:
         form: short-month
         align: start
-        overflow: diagnose
+        overflow: visible-overflow
         orientation: horizontal
     - unit: month
       every: 1

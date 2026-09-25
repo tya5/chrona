@@ -9,8 +9,8 @@ from chrona.presentation.model.surface_content import SummaryContent, SurfaceCon
 
 def surface_content(**overrides):
     value = dict(table_columns=(), table_cells=(), relations=(), annotations=(), show_member_labels=False,
-                 label_placement="none", label_content=(), label_side="auto", label_overflow="diagnose",
-                 relation_overflow="diagnose", group_presentation="band", axis_tiers=(), axis_fiscal_start_month=1,
+                 label_placement="none", label_content=(), label_side="auto", label_overflow="visible-overflow",
+                 relation_overflow="visible-overflow", group_presentation="band", axis_tiers=(), axis_fiscal_start_month=1,
                  as_of=None, as_of_label="As of", annotation_numbered=False,
                  calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="", summary=SummaryContent(()),
                  template_values=(), group_details=(), milestones=(),

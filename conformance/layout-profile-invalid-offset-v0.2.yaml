@@ -1,4 +1,4 @@
-version: chrona/layout-profile/v0.8
+version: chrona/layout-profile/v0.9
 id: invalid-offset
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
@@ -19,4 +19,4 @@ root:
       place: {inline: center, block: center, safety: safe}
       offsetX: 17
       priority: required
-      overflow: diagnose
+      overflow: visible-overflow

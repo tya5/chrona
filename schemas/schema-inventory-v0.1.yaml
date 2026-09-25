@@ -13,7 +13,8 @@ schemas:
   - {file: layout-profile-v0.4.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.5.schema.yaml, removalSlice: I2}
   - {file: layout-profile-v0.5.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.7.schema.yaml, removalSlice: I3}
   - {file: layout-profile-v0.7.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.8.schema.yaml, removalSlice: I412-1}
-  - {file: layout-profile-v0.8.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: layout-profile-v0.8.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.9.schema.yaml, removalSlice: I449-1}
+  - {file: layout-profile-v0.9.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
@@ -32,7 +33,8 @@ schemas:
   - {file: scene-v0.2.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.3.schema.yaml, removalSlice: I398-1}
   - {file: scene-v0.3.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.4.schema.yaml, removalSlice: I394-2}
   - {file: scene-v0.4.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.5.schema.yaml, removalSlice: I412-A}
-  - {file: scene-v0.5.schema.yaml, kind: inspection-scene, state: live, consumers: [src/chrona/presentation/scene/serialization.py]}
+  - {file: scene-v0.5.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.6.schema.yaml, removalSlice: I449-1}
+  - {file: scene-v0.6.schema.yaml, kind: inspection-scene, state: live, consumers: [src/chrona/presentation/scene/serialization.py]}
   - {file: revision-store-resource-ref-v0.1.schema.yaml, kind: revision-store-resource-reference, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/resources.py]}
@@ -50,4 +52,5 @@ schemas:
   - {file: view-v0.15.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.16.schema.yaml, removalSlice: I1}
   - {file: view-v0.16.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.17.schema.yaml, removalSlice: I1}
   - {file: view-v0.17.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.18.schema.yaml, removalSlice: I412-1}
-  - {file: view-v0.18.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: view-v0.18.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.19.schema.yaml, removalSlice: I449-1}
+  - {file: view-v0.19.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

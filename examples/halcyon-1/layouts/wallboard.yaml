@@ -1,4 +1,4 @@
-version: chrona/layout-profile/v0.8
+version: chrona/layout-profile/v0.9
 id: wallboard
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
@@ -31,7 +31,7 @@ root:
           blockSize: content
           place: {inline: start, block: start, safety: safe}
           priority: required
-          overflow: diagnose
+          overflow: visible-overflow
         - id: summary
           kind: slot
           source: summary
@@ -63,7 +63,7 @@ root:
       blockSize: fill
       place: {inline: stretch, block: stretch, safety: strict}
       priority: required
-      overflow: diagnose
+      overflow: visible-overflow
     - id: timeline-stack
       kind: column
       inlineSize: {fr: 9}
@@ -80,7 +80,7 @@ root:
           blockSize: content
           place: {inline: stretch, block: start, safety: strict}
           priority: required
-          overflow: diagnose
+          overflow: visible-overflow
         - id: timeline
           kind: slot
           source: timeline
@@ -88,4 +88,4 @@ root:
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
           priority: required
-          overflow: diagnose
+          overflow: visible-overflow

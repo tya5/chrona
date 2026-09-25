@@ -30,9 +30,9 @@ Layout returns only completed placements. Scene accepts `SurfacePlacement` and i
 
 ### 3.1 Table
 
-For every table column, Layout measures the header and all selected normalized cell strings. A `diagnose` table slot is feasible only when every required cell can receive its measured unbroken bounds inside the table slot with the declared inter-column gap. Layout MUST NOT uniformly shrink columns below those bounds.
+For every table column, Layout measures the header and all selected normalized cell strings. A `visible-overflow` table slot retains measured unbroken bounds and completes visible natural geometry even when it escapes the allocated slot; Layout expands the completed canvas where needed. Layout MUST NOT uniformly shrink columns below those bounds.
 
-For `ellipsize-with-source`, Layout allocates deterministic widths, produces ellipsized `TextPlacement` values, and retains full source text/provenance. For `diagnose`, infeasibility raises `E_LAYOUT_TABLE_OVERFLOW` before Scene. Text bounds from distinct table cells and column headers MUST NOT intersect.
+For `ellipsize-with-source`, Layout allocates deterministic widths, produces ellipsized `TextPlacement` values, and retains full source text/provenance. `visible-overflow` produces `W_LAYOUT_VISIBLE_OVERFLOW` with required/available facts. Non-intersection is required only for an author-selected policy that requests it; a visible fallback may deliberately overlap rather than remove content.
 
 ### 3.2 Labels and delta
 
@@ -44,28 +44,28 @@ visibility:
     placement: plot | table | none
     content: [title, finishDelta]
     side: auto | start | end
-    overflow: suppress | diagnose
+    overflow: suppress | visible-overflow
 ```
 
-`plot` creates ordered candidates at the eligible mark sides and rejects candidates that intersect required table text, axis text, marks, accepted labels, required annotations, or viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, the chosen overflow policy applies.
+`plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice.
 
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
 ### 3.3 Relations
 
-View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | diagnose`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
+View relation intent becomes `none` or an object with `mode: semantic` and `overflow: suppress | visible-overflow`. Layout Profile adds `relationRouting.maxBends` and `relationRouting.maxDetourRatio` numeric geometry policy.
 
-Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable only when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. It ranks candidates by crossings, length, bends, then lexicographic points. No acceptable route follows the relation overflow policy. Suppression creates `W_LAYOUT_RELATION_SUPPRESSED`; diagnosis raises `E_LAYOUT_RELATION_UNROUTABLE`.
+Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. It ranks candidates by crossings, length, bends, then lexicographic points. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
 
 ### 3.4 Groups and legend
 
-View grouping gains `presentation: band | header`; `header` requires a non-zero resolved `timeline.groupHeader.blockSize`. Layout reserves one header block before the group's first row and supplies measured header text bounds spanning the selected table/timeline surface. Missing capacity raises `E_LAYOUT_GROUP_HEADER_OVERFLOW`.
+View grouping gains `presentation: band | header`; `header` requires a non-zero resolved `timeline.groupHeader.blockSize`. Layout reserves one header block before the group's first row and supplies measured header text bounds spanning the selected table/timeline surface. Missing capacity completes visible stacked geometry and `W_LAYOUT_GROUP_HEADER_OVERFLOW`.
 
-A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback.
+A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
 
 ## 4. Schema and normalization
 
-Update View schema/normalizer for the label overflow field, relation object form, and grouping presentation. Update Layout Profile schema/normalizer for relation routing. Preserve legacy `relations: semantic` by ingress-normalizing it to `{mode: semantic, overflow: diagnose}`. Preserve existing boolean or shorthand labels through the existing ingress adapter and normalize before Layout.
+Update View schema/normalizer for the label overflow field, relation object form, and grouping presentation. Update Layout Profile schema/normalizer for relation routing. Preserve legacy `relations: semantic` by ingress-normalizing it to `{mode: semantic, overflow: visible-overflow}`. Preserve existing boolean or shorthand labels through the existing ingress adapter and normalize before Layout.
 
 No HALCYON identifier, canvas size, role name, or fixture chooses behavior.
 
@@ -73,8 +73,8 @@ No HALCYON identifier, canvas size, role name, or fixture chooses behavior.
 
 Before Scene construction, `assert_surface_placement` verifies:
 
-1. required text bounds are inside their slots and pairwise non-intersecting;
-2. table, axis, label, group header and legend placements satisfy their selected overflow policy;
+1. every completed primitive is inside Layout's completed canvas bounds;
+2. table, axis, label, group header and legend placements satisfy their selected overflow policy and every visible fallback has a structured warning;
 3. every accepted relation route meets its quality limits;
 4. no semantic item has duplicate finish-delta text;
 5. every present slot family has its required placements.

@@ -1,4 +1,4 @@
-version: chrona/view/v0.18
+version: chrona/view/v0.19
 kind: view
 id: controller-z-ja-executive
 body:
@@ -70,7 +70,7 @@ body:
       label:
         form: half-year
         align: center
-        overflow: diagnose
+        overflow: visible-overflow
         orientation: horizontal
     - unit: auto
       every: 1

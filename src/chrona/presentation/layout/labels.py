@@ -81,10 +81,10 @@ def _candidate(anchor: LabelRect, size: tuple[float, float], side: str, gap: flo
 def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterable[str], *,
                 bounds: LabelRect, obstacles: Iterable[LabelObstacle | LabelRect] = (), gap: float = 0,
                 inside_host_obstacle_id: str | None = None,
-                required: bool = True, overflow: str = "diagnose") -> LabelPlacement | None:
+                required: bool = True, overflow: str = "visible-overflow") -> LabelPlacement | None:
     """Choose the first legal candidate in declared order; never search indefinitely."""
     sides = tuple(candidates)
-    if not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides) or overflow not in {"diagnose", "suppress", "clip-optional"}:
+    if not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides) or overflow not in {"visible-overflow", "suppress", "clip-optional"}:
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     blocked = tuple(obstacles)
     for side in sides:
@@ -102,6 +102,6 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         if not any(_intersects(candidate, obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle)
                    for obstacle in active_obstacles):
             return LabelPlacement(side, candidate)
-    if required or overflow == "diagnose":
+    if required or overflow == "visible-overflow":
         raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
     return None

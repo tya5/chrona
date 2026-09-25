@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from chrona.presentation.layout.surface_quality import MarkerGeometry, PathCommand
+from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
 from chrona.presentation.icons import NormalizedVectorIcon
 
 
@@ -192,7 +192,7 @@ class SceneSlot:
     scale_id: str | None
     bounds: tuple[float, float, float, float]
     priority: str = "required"
-    overflow: str = "diagnose"
+    overflow: str = "visible-overflow"
 
 
 @dataclass(frozen=True)
@@ -272,9 +272,13 @@ class SceneSurface:
     canvas_paint: ScenePaint | None = None
     columns: tuple[SceneColumn, ...] = ()
     diagnostics: tuple[str, ...] = ()
+    canvas_bounds: tuple[float, float, float, float] | None = None
+    fit_warnings: tuple[FitWarning, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
+        if self.canvas_bounds is not None and (len(self.canvas_bounds) != 4 or self.canvas_bounds[2] <= 0 or self.canvas_bounds[3] <= 0):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         by_id = {item.scene_id: (index, item) for index, item in enumerate(self.primitives)}
         if len(by_id) != len(self.primitives):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

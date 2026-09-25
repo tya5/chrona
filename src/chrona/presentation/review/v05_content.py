@@ -67,7 +67,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     title_link_columns = tuple(column.id for column in view.table_columns if column.source == "title")
     # Legacy boolean visibility never declared a failure policy.  Preserve its
     # materializability by treating a rejected candidate as optional.
-    label_overflow = "suppress" if labels is True else "diagnose"
+    label_overflow = "suppress" if labels is True else "visible-overflow"
     if isinstance(labels, Mapping):
         if "members" in labels:
             label_placement, label_content = ("plot", ("title",)) if labels["members"] else ("none", ())
@@ -75,7 +75,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             label_placement = str(labels["placement"])
             label_content = tuple(str(item) for item in labels["content"])
             label_side = str(labels["side"])
-            label_overflow = str(labels.get("overflow", "diagnose"))
+            label_overflow = str(labels.get("overflow", "visible-overflow"))
     if isinstance(visible.fallback, Mapping):
         label_fallback = tuple(str(item) for item in visible.fallback.get("labels", ()))
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
@@ -95,7 +95,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     annotation_mode = annotation_visibility.get("mode", "none") if isinstance(annotation_visibility, Mapping) else annotation_visibility
     annotation_numbered = (isinstance(annotation_visibility, Mapping) and annotation_visibility.get("marker") == "numbered") or view.annotation_presentation == "numbered"
     relation_value = visible.relations
-    relation_overflow = str(relation_value.get("overflow", "diagnose")) if isinstance(relation_value, Mapping) else "diagnose"
+    relation_overflow = (str(relation_value.get("overflow", "visible-overflow"))
+                         if isinstance(relation_value, Mapping) else "visible-overflow")
     relation_mode = relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value
     relation_content = (tuple(str(item) for item in relation_value.get("content", ()))
                         if isinstance(relation_value, Mapping) else ())

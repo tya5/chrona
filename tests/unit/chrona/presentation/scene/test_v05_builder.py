@@ -30,7 +30,7 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
     value = dict(
         table_columns=table_columns, table_cells=table_cells, relations=(), annotations=(),
         show_member_labels=False, label_placement="none", label_content=(), label_side="auto",
-        label_overflow="diagnose", relation_overflow="diagnose", group_presentation="band",
+        label_overflow="visible-overflow", relation_overflow="visible-overflow", group_presentation="band",
         axis_tiers=(), axis_fiscal_start_month=1, as_of=None, as_of_label="As of",
         annotation_numbered=False, calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="",
         summary=SummaryContent(()), template_values=(), group_details=(),
@@ -332,7 +332,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
         LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(40), Decimal(100), Decimal(100)), "table"),
         LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(40), Decimal(400), Decimal(100)), "timeline"),
         LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(140), Decimal(400), Decimal(40)), "timeline-axis"),
-        LayoutDecision("annotations", "slot", Rect(Decimal(500), Decimal(40), Decimal(300), Decimal(100)), "annotations", priority="required", overflow="diagnose"),
+        LayoutDecision("annotations", "slot", Rect(Decimal(500), Decimal(40), Decimal(300), Decimal(100)), "annotations", priority="required", overflow="visible-overflow"),
     ), background_extents=BACKGROUND_EXTENTS)
     theme = _theme()
     theme["body"]["values"].update({"marker": {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}})
@@ -439,7 +439,7 @@ def test_scene_projects_selected_inside_label_with_its_host_mark_role():
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
-                                        label_side="inside", label_overflow="diagnose"),
+                                        label_side="inside", label_overflow="visible-overflow"),
         layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
         font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
     )
@@ -460,7 +460,7 @@ def test_scene_anchors_an_explicit_actual_inside_label_to_its_actual_mark():
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
-                                        label_side="inside", label_overflow="diagnose"),
+                                        label_side="inside", label_overflow="visible-overflow"),
         layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
         font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
     )
@@ -481,7 +481,7 @@ def test_scene_falls_back_from_short_inside_label_to_outside_text_role():
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
-                                        label_side="inside", label_fallback=("inside", "above"), label_overflow="diagnose"),
+                                        label_side="inside", label_fallback=("inside", "above"), label_overflow="visible-overflow"),
         layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
         font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
     )
@@ -631,7 +631,7 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
     value = build_scene_input(projection=projection, surface_content=surface_content(
         table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),
-        group_presentation="header", label_placement="plot", label_content=("title",), label_overflow="diagnose",
+        group_presentation="header", label_placement="plot", label_content=("title",), label_overflow="visible-overflow",
         relations=({"id": "task-gate", "from": {"object": "task"}, "to": {"object": "gate"}},),
         annotations=({"id": "gate-note", "purpose": "callout", "anchor": {"kind": "object", "id": "gate", "facet": "planned", "endpoint": "at"},
                       "placement": {"side": "end", "alignment": "center"}, "text": "Review"},),
@@ -755,7 +755,7 @@ def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
     value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=(
                                   AxisTier("quarter", 1, "band"), AxisTier("quarter", 1, "grid-major"),
                                   AxisTier("month", 1, "grid-minor"),
-                                  AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "diagnose")),
+                                  AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow")),
                               )),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,

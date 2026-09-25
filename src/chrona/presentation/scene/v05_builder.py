@@ -520,8 +520,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
+    canvas = placed_surface.canvas_bounds
     return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
-                        diagnostics=placed_surface.diagnostics)
+                        diagnostics=placed_surface.diagnostics,
+                        canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
+                                       float(canvas.block_size)) if canvas is not None else None,
+                        fit_warnings=placed_surface.fit_warnings)
 
 
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
@@ -547,7 +551,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     slots = tuple(SceneSlot(item.node_id, item.source, None,
                             (float(item.bounds.inline), float(item.bounds.block),
                              float(item.bounds.inline_size), float(item.bounds.block_size)),
-                            item.priority or "required", item.overflow or "diagnose")
+                            item.priority or "required", item.overflow or "visible-overflow")
                   for item in decisions)
     primitives: list[ScenePrimitive] = []
     title_binding = semantic_binding("titleText")

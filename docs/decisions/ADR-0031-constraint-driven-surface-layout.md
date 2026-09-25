@@ -15,12 +15,12 @@ Changing HALCYON YAML alone can reduce density but cannot make an infeasible req
 Introduce one internal, immutable **SurfaceLayoutRequest → SurfacePlacement** boundary.
 
 - PresentationContract remains the canonical semantic closure.
-- Layout alone measures text, allocates table columns, selects label candidates, reserves group header space, and chooses or rejects relation routes.
-- Layout returns completed placements for table cells, plot labels, marks, group headers, relation paths, axis labels and decoration slots, plus ordered diagnostics.
+- Layout alone measures text, allocates table columns, selects label candidates, reserves group header space, chooses relation routes, and completes any visible fit fallback.
+- Layout returns completed placements for table cells, plot labels, marks, group headers, relation paths, axis labels and decoration slots, a completed canvas extent, and ordered structured warnings.
 - Scene consumes placements and emits primitives. It does not call font metrics, scale columns, choose label positions, reserve group space, or invoke a router.
 - SVG remains a serializer of completed primitives.
 
-A placement is valid only when it satisfies its required constraints. A placement that cannot be made valid follows its declared policy: `diagnose` fails before Scene; `suppress` produces an explicit suppressed optional placement and diagnostic; `ellipsize-with-source` creates a measured ellipsized text placement retaining source provenance. No policy permits overlapping text.
+A fit or placement condition in an otherwise valid closure never fails before Scene. Layout completes a deterministic `visible-overflow` placement and warning, expanding the completed canvas where necessary. `suppress`, `ellipsize-with-source`, clipping, wrapping and thinning remain explicit author-selected alternatives and retain their source/provenance evidence. Schema, resource, identity, and other invalid-input failures remain errors. Scene and adapters project the completed canvas, geometry and warning records verbatim.
 
 ## Consequences
 

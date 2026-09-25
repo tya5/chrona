@@ -11,6 +11,7 @@ from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome,
     AxisTierOutcome,
     CollisionDomain,
+    FitWarning,
     GroupPlacement,
     IconPlacement,
     MarkPlacement,
@@ -34,6 +35,17 @@ def _rect(inline, block, inline_size, block_size):
 def test_intersects_treats_touching_rectangles_as_non_overlapping():
     assert not intersects(_rect(0, 0, 10, 10), _rect(10, 0, 10, 10))
     assert intersects(_rect(0, 0, 10, 10), _rect(9, 0, 10, 10))
+
+
+def test_fit_warning_requires_completed_visible_fallback_facts():
+    warning = FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", "cell:a:title", "a", "table-text",
+                         "natural-overflow", 120, 20, 80, 20)
+    assert warning.placement_id == "cell:a:title"
+    with pytest.raises(ValueError, match="E_LAYOUT_FIT_WARNING_INVALID"):
+        FitWarning("E_LAYOUT_REQUIRED_OVERFLOW", "", "a", "table-text", "natural-overflow", 1, 1, 1, 1)
+
+    with pytest.raises(ValueError, match="E_LAYOUT_CANVAS_BOUNDS_INVALID"):
+        SurfacePlacement(canvas_bounds=_rect(0, 0, 0, 20)).assert_valid()
 
 
 def test_relation_label_content_preserves_signed_calendar_provenance_and_omits_zero_lag():

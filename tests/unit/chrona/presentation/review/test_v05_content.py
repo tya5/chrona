@@ -198,7 +198,7 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ()),),
                                   (date(2026, 1, 1), date(2026, 1, 5)), (), ())
     view = {"body": {"tableColumns": (), "visibility": {"labels": {"members": True}, "relations": "none", "annotations": "presentation"},
-                         "axis": {"tiers": [{"unit": "week", "every": 1, "role": "labels", "label": {"form": "iso-week", "align": "start", "overflow": "diagnose", "orientation": "horizontal"}}]},
+                         "axis": {"tiers": [{"unit": "week", "every": 1, "role": "labels", "label": {"form": "iso-week", "align": "start", "overflow": "visible-overflow", "orientation": "horizontal"}}]},
                          "timePresentation": {"asOf": "hidden", "calendarClosed": False},
                      "annotationPresentation": "numbered", "annotations": [{"id": "note", "purpose": "note", "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "finish"}, "placement": {"side": "end", "alignment": "center"}, "text": "Watch this"}]}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
@@ -294,14 +294,14 @@ def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
     view = {"body": {"tableColumns": (),
                      "visibility": {"labels": {"placement": "plot", "content": ["title", "finishDelta"], "side": "auto"},
                                     "relations": "none", "annotations": {"mode": "presentation", "marker": "numbered"}},
-                         "axis": {"tiers": [{"unit": "quarter", "every": 1, "role": "band"}, {"unit": "month", "every": 1, "role": "labels", "label": {"form": "short-month", "align": "start", "overflow": "diagnose", "orientation": "horizontal"}}]},
+                     "axis": {"tiers": [{"unit": "quarter", "every": 1, "role": "band"}, {"unit": "month", "every": 1, "role": "labels", "label": {"form": "short-month", "align": "start", "overflow": "visible-overflow", "orientation": "horizontal"}}]},
                      "markers": [{"kind": "asOf", "source": "actual", "label": "as of"}], "shading": {"nonWorking": False}}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-03-04"}}, summary=EMPTY_SUMMARY)
     assert value.label_placement == "plot"
     assert value.label_content == ("title", "finishDelta")
     assert value.label_side == "auto"
-    assert value.label_overflow == "diagnose"
+    assert value.label_overflow == "visible-overflow"
     assert tuple((tier.unit, tier.role) for tier in value.axis_tiers) == (("quarter", "band"), ("month", "labels"))
     assert value.as_of_label == "as of"
 

@@ -1,4 +1,4 @@
-version: chrona/layout-profile/v0.8
+version: chrona/layout-profile/v0.9
 id: annotations-review
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
@@ -21,7 +21,7 @@ root:
       blockSize: content
       place: {inline: center, block: start, safety: safe}
       priority: required
-      overflow: diagnose
+      overflow: visible-overflow
     - id: review
       kind: row
       inlineSize: fill
@@ -38,7 +38,7 @@ root:
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
           priority: required
-          overflow: diagnose
+          overflow: visible-overflow
         - id: timeline-stack
           kind: column
           inlineSize: {fr: 7}
@@ -55,7 +55,7 @@ root:
               blockSize: content
               place: {inline: stretch, block: start, safety: strict}
               priority: required
-              overflow: diagnose
+              overflow: visible-overflow
             - id: timeline
               kind: slot
               source: timeline
@@ -63,7 +63,7 @@ root:
               blockSize: fill
               place: {inline: stretch, block: stretch, safety: strict}
               priority: required
-              overflow: diagnose
+              overflow: visible-overflow
     - id: footer
       kind: flow
       inlineSize: fill
@@ -81,7 +81,7 @@ root:
           blockSize: content
           place: {inline: start, block: first-baseline, safety: safe}
           priority: optional
-          overflow: diagnose
+          overflow: visible-overflow
         - id: milestones
           kind: slot
           source: milestones
@@ -89,7 +89,7 @@ root:
           blockSize: content
           place: {inline: start, block: first-baseline, safety: safe}
           priority: optional
-          overflow: diagnose
+          overflow: visible-overflow
         - id: observations
           kind: slot
           source: observations
@@ -97,7 +97,7 @@ root:
           blockSize: content
           place: {inline: start, block: first-baseline, safety: safe}
           priority: optional
-          overflow: diagnose
+          overflow: visible-overflow
         - id: legend
           kind: slot
           source: legend
@@ -105,7 +105,7 @@ root:
           blockSize: content
           place: {inline: start, block: first-baseline, safety: safe}
           priority: optional
-          overflow: diagnose
+          overflow: visible-overflow
         - id: notes
           kind: slot
           source: notes
@@ -121,4 +121,4 @@ root:
       blockSize: {fixed: {token: panel.minimum}}
       place: {inline: stretch, block: stretch, safety: strict}
       priority: required
-      overflow: diagnose
+      overflow: visible-overflow

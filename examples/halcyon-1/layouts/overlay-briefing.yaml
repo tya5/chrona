@@ -1,4 +1,4 @@
-version: chrona/layout-profile/v0.8
+version: chrona/layout-profile/v0.9
 id: overlay-briefing
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
@@ -38,7 +38,7 @@ root:
           blockSize: content
           place: {inline: start, block: start, safety: safe}
           priority: required
-          overflow: diagnose
+          overflow: visible-overflow
     - id: table
       kind: slot
       source: table
@@ -52,7 +52,7 @@ root:
           block: {ref: guide:review-top, point: start}
         gap: {inline: {token: spacing.m}}
       priority: required
-      overflow: diagnose
+      overflow: visible-overflow
     - id: timeline-stack
       kind: column
       inlineSize: content
@@ -75,7 +75,7 @@ root:
           blockSize: content
           place: {inline: stretch, block: start, safety: strict}
           priority: required
-          overflow: diagnose
+          overflow: visible-overflow
         - id: timeline
           kind: slot
           source: timeline
@@ -83,4 +83,4 @@ root:
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
           priority: required
-          overflow: diagnose
+          overflow: visible-overflow

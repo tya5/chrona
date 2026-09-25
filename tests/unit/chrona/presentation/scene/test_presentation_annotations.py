@@ -38,7 +38,7 @@ def test_annotation_box_uses_shared_finite_label_placement():
     intent = annotation()
     resolved = resolve_annotation_anchor(intent, [ComparisonMark("ship", "planned", "span", start=date(2027, 1, 1), end=date(2027, 1, 8))])
     box = project_annotation_box(intent, resolved, anchor_bounds=LabelRect(40, 40, 10, 10), text_size=(30, 10),
-                                 candidate_sides=["above", "below"], viewport=LabelRect(0, 0, 100, 100), obstacles=[], overflow="diagnose")
+                                 candidate_sides=["above", "below"], viewport=LabelRect(0, 0, 100, 100), obstacles=[], overflow="visible-overflow")
     assert box.placement.side == "above" and box.leader_required
 
 
@@ -68,7 +68,7 @@ def test_callout_uses_annotation_rail_without_timeline_obstacles():
 
     box = place_annotation_rail(intent, resolved, anchor_y=50, text_size=(30, 10),
                                 rail=LabelRect(110, 0, 40, 100), obstacles=(),
-                                overflow="diagnose", required=True)
+                                overflow="visible-overflow", required=True)
 
     assert box is not None
     assert box.placement.side == "rail"

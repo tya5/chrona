@@ -1,4 +1,4 @@
-version: chrona/view/v0.18
+version: chrona/view/v0.19
 kind: view
 id: orion-asic-gates
 body:
@@ -76,7 +76,7 @@ body:
       label:
         form: year-quarter
         align: center
-        overflow: diagnose
+        overflow: visible-overflow
         orientation: horizontal
     - unit: month
       every: 1
