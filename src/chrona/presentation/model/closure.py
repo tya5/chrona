@@ -361,7 +361,7 @@ def _draft_render_from_resources(
             )),
         )
     except ColorSchemeError as error:
-        raise ClosureError(str(error)) from error
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
 
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
@@ -589,7 +589,7 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         value = resolve_theme(theme.contract.theme_input, scheme.contract.scheme_input, scheme_content_identity=scheme.content_identity)
         resolved_theme = ResolvedThemeContract(theme.id, freeze(value))
     except ColorSchemeError as error:
-        raise ClosureError(str(error)) from error
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     catalog_resources = tuple(item for item in resources if item.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
     if catalog_resources:

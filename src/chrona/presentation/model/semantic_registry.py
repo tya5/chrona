@@ -25,6 +25,13 @@ class PrimitiveKind(str, Enum):
     ICON = "Icon"
 
 
+class ContrastClass(str, Enum):
+    """Finite completed-paint policy classes with no renderer interpretation."""
+
+    STATE_TEXT = "state-text"
+    DECORATION = "decoration"
+
+
 class Slot(str, Enum):
     """Every surface region a Layout Profile may bind content to."""
 
@@ -54,11 +61,12 @@ class SemanticBinding:
     purpose: str
     scene_role: str
     theme_role: str
+    contrast_class: ContrastClass | None = None
 
 
 def _binding(semantic_id: str, primitive_kind: str, purpose: str,
-             scene_role: str, theme_role: str) -> SemanticBinding:
-    return SemanticBinding(semantic_id, primitive_kind, purpose, scene_role, theme_role)
+             scene_role: str, theme_role: str, contrast_class: ContrastClass | None = None) -> SemanticBinding:
+    return SemanticBinding(semantic_id, primitive_kind, purpose, scene_role, theme_role, contrast_class)
 
 
 _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for binding in (
@@ -75,27 +83,27 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # Public Scene role remains hyphenated; theme authoring resolves the canonical asOf binding.
     _binding("asOf", "line", "as-of", "as-of", "asOf"),
     _binding("asOfLabel", "label", "as-of-label", "text", "text"),
-    _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed"),
+    _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed", ContrastClass.DECORATION),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
-    _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration"),
+    _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),
     _binding("axisLabel", "label", "axis-label", "text", "axis"),
     _binding("axisGrid", "line", "axis-grid", "axis-major", "axis-major"),
     _binding("axisGridMinor", "line", "axis-grid", "axis-minor", "axis-minor"),
     # Grouping.
-    _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band"),
-    _binding("rowBand", "decoration", "row-decoration", "row-band", "row-band"),
-    _binding("groupHeaderBand", "decoration", "group-header-band", "group-header-band", "group-header-band"),
+    _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band", ContrastClass.DECORATION),
+    _binding("rowBand", "decoration", "row-decoration", "row-band", "row-band", ContrastClass.DECORATION),
+    _binding("groupHeaderBand", "decoration", "group-header-band", "group-header-band", "group-header-band", ContrastClass.DECORATION),
     _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader"),
     _binding("groupDetail", "label", "group-detail", "text", "text"),
     # Table.
     _binding("titleText", "label", "title-text", "text", "heading"),
     _binding("tableColumnLabel", "label", "table-column-label", "text", "text"),
     _binding("tableCell", "label", "table-cell", "text", "text"),
-    _binding("tableVarianceAhead", "label", "table-cell", "variance-ahead", "variance-ahead"),
-    _binding("tableVarianceOnTrack", "label", "table-cell", "variance-on-track", "variance-on-track"),
-    _binding("tableVarianceBehind", "label", "table-cell", "variance-behind", "variance-behind"),
-    _binding("missingActualCell", "label", "table-cell", "missing-actual-cell", "missing-actual-cell"),
+    _binding("tableVarianceAhead", "label", "table-cell", "variance-ahead", "variance-ahead", ContrastClass.STATE_TEXT),
+    _binding("tableVarianceOnTrack", "label", "table-cell", "variance-on-track", "variance-on-track", ContrastClass.STATE_TEXT),
+    _binding("tableVarianceBehind", "label", "table-cell", "variance-behind", "variance-behind", ContrastClass.STATE_TEXT),
+    _binding("missingActualCell", "label", "table-cell", "missing-actual-cell", "missing-actual-cell", ContrastClass.STATE_TEXT),
     # Plot labels.
     _binding("memberLabel", "label", "member-label", "text", "text"),
     _binding("memberLabelInsidePlanned", "label", "member-label", "member-label-inside-planned", "member-label-inside-planned"),
@@ -144,6 +152,20 @@ def semantic_binding(semantic_id: str) -> SemanticBinding:
         return _REGISTRY[semantic_id]
     except KeyError as error:
         raise ValueError(f"E_PRESENTATION_SEMANTIC_UNKNOWN:{semantic_id}") from error
+
+
+def contrast_binding(scene_role: str) -> SemanticBinding | None:
+    """Return the unique classified binding for one completed Scene role."""
+    matches = tuple(binding for binding in _REGISTRY.values()
+                    if binding.scene_role == scene_role and binding.contrast_class is not None)
+    if len(matches) > 1:
+        raise ValueError(f"E_PRESENTATION_SEMANTIC_CONTRAST_AMBIGUOUS:{scene_role}")
+    return matches[0] if matches else None
+
+
+def contrast_bindings(contrast_class: ContrastClass) -> tuple[SemanticBinding, ...]:
+    """Return classified bindings in the registry's stable declaration order."""
+    return tuple(binding for binding in _REGISTRY.values() if binding.contrast_class == contrast_class)
 
 
 def label_host_semantic(source_kind: str) -> str:

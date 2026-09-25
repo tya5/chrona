@@ -134,13 +134,13 @@ body:
       value: 20
     opacity.group-band:
       type: number
-      value: 0.12
+      value: 1
     opacity.group-header-band:
       type: number
-      value: 0.2
+      value: 1
     opacity.calendar-closed:
       type: number
-      value: 0.12
+      value: 1
     mark-height-container:
       type: number
       value: 1
@@ -195,6 +195,10 @@ body:
       backgroundPaintOrder: 12
       strokeWidth: stroke-width
       opacity: opacity.calendar-closed
+    axis-band-decoration:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.group-band
     text:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -322,6 +326,13 @@ body:
       strokeWidth: stroke-width
     variance-behind:
       strokeWidth: stroke-width
+      contrastTreatment: deemphasized
+    variance-ahead:
+      contrastTreatment: deemphasized
+    variance-on-track:
+      contrastTreatment: required
+    missing-actual-cell:
+      contrastTreatment: required
     baseline:
       strokeWidth: stroke-width
     asOf:
@@ -373,7 +384,7 @@ body:
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: surface
+    axis-band-decoration.fill: surfaceRaised
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
@@ -396,6 +407,7 @@ body:
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
+    missing-actual-cell.fill: textMuted
     variance-behind.stroke: negative
     dependency.stroke: textMuted
     groupHeader.fill: surfaceRaised

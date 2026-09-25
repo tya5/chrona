@@ -263,6 +263,18 @@ class SceneManifest:
 
 
 @dataclass(frozen=True)
+class DecorationDisposition:
+    """One classified decoration deliberately omitted from a completed surface."""
+
+    visual_role: str
+    disposition: str
+
+    def __post_init__(self) -> None:
+        if self.disposition != "absent":
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
 class SceneSurface:
     """Resolved geometry for one public adapter route."""
 
@@ -277,6 +289,7 @@ class SceneSurface:
     diagnostics: tuple[str, ...] = ()
     canvas_bounds: tuple[float, float, float, float] | None = None
     fit_warnings: tuple[FitWarning, ...] = ()
+    decoration_dispositions: tuple[DecorationDisposition, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
@@ -284,6 +297,8 @@ class SceneSurface:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         by_id = {item.scene_id: (index, item) for index, item in enumerate(self.primitives)}
         if len(by_id) != len(self.primitives):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        if len({item.visual_role for item in self.decoration_dispositions}) != len(self.decoration_dispositions):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         for index, item in enumerate(self.primitives):
             if item.host_placement_id is not None:

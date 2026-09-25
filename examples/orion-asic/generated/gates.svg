@@ -6,17 +6,17 @@
 <rect data-scene-id="legend-swatch:scale:revision:A0" data-source-ref="scale:revision:A0" data-purpose="legend-swatch" x="806.493" y="832.338" width="9.6" height="9.6" opacity="1" fill="#3B6FB6"/>
 <rect data-scene-id="legend-swatch:scale:revision:A1" data-source-ref="scale:revision:A1" data-purpose="legend-swatch" x="806.493" y="850.338" width="9.6" height="9.6" opacity="1" fill="#2E8B6E"/>
 <rect data-scene-id="legend-swatch:scale:revision:B0" data-source-ref="scale:revision:B0" data-purpose="legend-swatch" x="806.493" y="868.338" width="9.6" height="9.6" opacity="1" fill="#B5651D"/>
-<rect data-scene-id="group:design" data-source-ref="design" data-purpose="group-decoration" x="657.839" y="136.8" width="918.161" height="192" opacity="0.12" fill="#EEF3F8"/>
-<rect data-scene-id="group:product" data-source-ref="product" data-purpose="group-decoration" x="657.839" y="348.8" width="918.161" height="192" opacity="0.12" fill="#EEF3F8"/>
-<rect data-scene-id="group:validation" data-source-ref="validation" data-purpose="group-decoration" x="657.839" y="560.8" width="918.161" height="192" opacity="0.12" fill="#EEF3F8"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="657.839" y="68.8" width="90.624" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="748.463" y="68.8" width="219.405" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="967.868" y="68.8" width="214.635" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1182.503" y="68.8" width="217.02" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:0:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1399.522" y="68.8" width="176.478" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="group-header-band:design" data-source-ref="design" data-purpose="group-header-band" x="24" y="116.8" width="1552" height="20" opacity="0.2" fill="#EAF0F8"/>
-<rect data-scene-id="group-header-band:product" data-source-ref="product" data-purpose="group-header-band" x="24" y="328.8" width="1552" height="20" opacity="0.2" fill="#EAF0F8"/>
-<rect data-scene-id="group-header-band:validation" data-source-ref="validation" data-purpose="group-header-band" x="24" y="540.8" width="1552" height="20" opacity="0.2" fill="#EAF0F8"/>
+<rect data-scene-id="group:design" data-source-ref="design" data-purpose="group-decoration" x="657.839" y="136.8" width="918.161" height="192" opacity="1" fill="#EEF3F8"/>
+<rect data-scene-id="group:product" data-source-ref="product" data-purpose="group-decoration" x="657.839" y="348.8" width="918.161" height="192" opacity="1" fill="#EEF3F8"/>
+<rect data-scene-id="group:validation" data-source-ref="validation" data-purpose="group-decoration" x="657.839" y="560.8" width="918.161" height="192" opacity="1" fill="#EEF3F8"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="657.839" y="68.8" width="90.624" height="48" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="748.463" y="68.8" width="219.405" height="48" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="967.868" y="68.8" width="214.635" height="48" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1182.503" y="68.8" width="217.02" height="48" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="axis-band-rect:0:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1399.522" y="68.8" width="176.478" height="48" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="group-header-band:design" data-source-ref="design" data-purpose="group-header-band" x="24" y="116.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="group-header-band:product" data-source-ref="product" data-purpose="group-header-band" x="24" y="328.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="group-header-band:validation" data-source-ref="validation" data-purpose="group-header-band" x="24" y="540.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M657.839 116.8L657.839 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M748.463 116.8L748.463 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M967.868 116.8L967.868 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
@@ -64,10 +64,10 @@
 <path data-scene-id="axis-grid:5:50" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1492.531 116.8L1492.531 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
 <path data-scene-id="axis-grid:5:52" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1525.919 116.8L1525.919 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
 <path data-scene-id="axis-grid:5:54" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1559.306 116.8L1559.306 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2026-09-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="724.615" y="116.8" width="2.385" height="653.2" opacity="0.12" stroke="#EAF0F8" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2026-11-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="874.859" y="116.8" width="2.385" height="653.2" opacity="0.12" stroke="#EAF0F8" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2026-12-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="951.174" y="116.8" width="2.385" height="653.2" opacity="0.12" stroke="#EAF0F8" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2027-01-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="967.868" y="116.8" width="2.385" height="653.2" opacity="0.12" stroke="#EAF0F8" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2026-09-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="724.615" y="116.8" width="2.385" height="653.2" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2026-11-23" data-source-ref="project-calendar" data-purpose="calendar-closed" x="874.859" y="116.8" width="2.385" height="653.2" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2026-12-25" data-source-ref="project-calendar" data-purpose="calendar-closed" x="951.174" y="116.8" width="2.385" height="653.2" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2027-01-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="967.868" y="116.8" width="2.385" height="653.2" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1068.031 116.8L1068.031 770" fill="none" opacity="1" stroke="#C8762B" stroke-width="1"/>
 <rect data-scene-id="planned:rtl-freeze:rtl-freeze" data-source-ref="rtl-freeze" data-purpose="planned" x="676.918" y="158.8" width="90.624" height="20" opacity="1" fill="#3B6FB6"/>
 <path data-scene-id="planned:tapeout:tapeout" data-source-ref="tapeout" data-purpose="planned" d="M784.236 222.8L794.236 232.8L784.236 242.8L774.236 232.8L784.236 222.8" opacity="1" fill="#3B6FB6"/>

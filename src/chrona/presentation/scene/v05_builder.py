@@ -15,11 +15,11 @@ from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_member_label_semantic, semantic_binding
+from chrona.presentation.model.semantic_registry import ContrastClass, PrimitiveKind, contrast_bindings, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.mark_geometry import pattern_geometry, pattern_kind, symbol_geometry
-from chrona.presentation.scene.model import SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.model import DecorationDisposition, SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
 
@@ -65,6 +65,8 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
         return PaintFamily.PATH
     if primitive.purpose in {"group-decoration", "row-decoration", "group-header-band", "calendar-closed"}:
         treatment, _ = tokens.background(primitive.visual_role)
+        if treatment == "none":
+            raise SceneBuildError("E_THEME_BACKGROUND_ABSENT", f"/body/roles/{primitive.visual_role}")
         return PaintFamily.OUTLINE if treatment == "outline" else PaintFamily.SOLID
     pattern = tokens.optional_pattern(primitive.visual_role)
     if pattern is not None and pattern_kind(pattern) == "outline":
@@ -90,7 +92,13 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                                      gradient_bounds=(0.0, 0.0, *viewport))
     except ScenePaintError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
-    return replace(surface, primitives=primitives, canvas_paint=canvas)
+    absent_decorations = tuple(
+        DecorationDisposition(binding.scene_role, "absent")
+        for binding in contrast_bindings(ContrastClass.DECORATION)
+        if tokens.has_role(binding.scene_role) and tokens.background(binding.scene_role)[0] == "none"
+    )
+    return replace(surface, primitives=primitives, canvas_paint=canvas,
+                   decoration_dispositions=absent_decorations)
 
 
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,

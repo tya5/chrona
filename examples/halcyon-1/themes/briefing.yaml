@@ -143,13 +143,13 @@ body:
       value: 42
     opacity.group-band:
       type: number
-      value: 0.12
+      value: 1
     opacity.group-header-band:
       type: number
-      value: 0.2
+      value: 1
     opacity.calendar-closed:
       type: number
-      value: 0.12
+      value: 1
     mark-height-container:
       type: number
       value: 1
@@ -204,6 +204,10 @@ body:
       backgroundPaintOrder: 12
       strokeWidth: stroke-width
       opacity: opacity.calendar-closed
+    axis-band-decoration:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.group-band
     text:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -339,6 +343,13 @@ body:
       markCornerRadius: mark-radius-rounded
     variance-behind:
       strokeWidth: stroke-width
+      contrastTreatment: deemphasized
+    variance-ahead:
+      contrastTreatment: deemphasized
+    variance-on-track:
+      contrastTreatment: required
+    missing-actual-cell:
+      contrastTreatment: required
     snapshot:
       markHeight: mark-height-container
       markOffset: mark-offset-start
@@ -382,9 +393,9 @@ body:
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: surface
-    group-band.fill: surface
-    row-band.fill: surface
+    axis-band-decoration.fill: surfaceRaised
+    group-band.fill: surfaceRaised
+    row-band.fill: surfaceRaised
     group-header-band.fill: surfaceRaised
     groupHeader.fill: surfaceRaised
     baseline.stroke: neutral
@@ -413,7 +424,7 @@ body:
     milestone.fill: accent
     missing-actual.fill: neutral
     missing-actual.stroke: neutral
-    missing-actual-cell.fill: neutral
+    missing-actual-cell.fill: textMuted
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted
     variance-behind.fill: negative

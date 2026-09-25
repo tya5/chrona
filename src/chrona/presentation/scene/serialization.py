@@ -8,7 +8,7 @@ from typing import Any, Mapping
 import jsonschema
 
 from chrona.presentation.scene.model import (
-    InspectionScene, LinearGradient, PatternGeometry, SceneIconPath,
+    DecorationDisposition, InspectionScene, LinearGradient, PatternGeometry, SceneIconPath,
     ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, TextLayout,
 )
 from chrona.resources import schema_document
@@ -170,6 +170,11 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
     result["canvasBounds"] = _bounds(surface.canvas_bounds)
     if surface.fit_warnings:
         result["fitWarnings"] = [_fit_warning(item) for item in surface.fit_warnings]
+    if surface.decoration_dispositions:
+        result["decorationDispositions"] = [
+            {"visualRole": item.visual_role, "disposition": item.disposition}
+            for item in surface.decoration_dispositions
+        ]
     return result
 
 

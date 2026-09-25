@@ -39,7 +39,7 @@ class SurfaceLayoutComposition:
 
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
-BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed"})
+BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed", "axisBandDecoration"})
 BACKGROUND_PAINT_ORDER = 10
 MARK_PAINT_ORDER_BASE = 100
 HOSTED_TEXT_PAINT_ORDER = 200
@@ -850,9 +850,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     visible_label_overflows: list[tuple[Any, LabelRect]] = []
     background_extents = layout_manifest.background_extents
 
-    def background_shape(placement_id: str, source_ref: str, semantic_id: str, source_bounds: Rect) -> ShapePlacement:
+    def background_shape(placement_id: str, source_ref: str, semantic_id: str,
+                         source_bounds: Rect) -> ShapePlacement | None:
         role = semantic_binding(semantic_id).scene_role
-        _, paint_order = request.theme_tokens.background(role)
+        treatment, paint_order = request.theme_tokens.background(role)
+        if treatment == "none":
+            return None
         bounds, slot_id = _background_bounds(semantic_id=semantic_id, extent=background_extents.get(semantic_id, ""), source_bounds=source_bounds,
                                              table_bounds=table_bounds, timeline_bounds=timeline_bounds)
         return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
@@ -862,13 +865,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     if decoration == "alternate-rows":
         for index, row in enumerate(rows):
             if index % 2 == 0:
-                shapes.append(background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds))
+                shape = background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds)
+                if shape is not None:
+                    shapes.append(shape)
     for index, group in enumerate(groups):
         if decoration in {"none", "alternate-groups"} and (decoration == "none" or index % 2 == 0):
-            shapes.append(background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds))
+            shape = background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds)
+            if shape is not None:
+                shapes.append(shape)
         if group.header_bounds is not None:
-            shapes.append(background_shape(f"group-header-band:{group.group_id}", group.group_id,
-                                           "groupHeaderBand", group.header_bounds))
+            shape = background_shape(f"group-header-band:{group.group_id}", group.group_id,
+                                     "groupHeaderBand", group.header_bounds)
+            if shape is not None:
+                shapes.append(shape)
     label_lane_offset = 0.0
     for tier_index, tier in enumerate(request.surface_content.axis_tiers):
         form = tier.label.form if tier.label else None
@@ -967,11 +976,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             for interval in intervals:
                 x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
                 placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
-                axis_band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
-                shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
-                                              Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(max(0.0, x2 - x))), axis.bounds.block_size),
-                                              semantic_id="axisBandDecoration",
-                                              paint_order=BACKGROUND_PAINT_ORDER))
+                treatment, paint_order = request.theme_tokens.background(
+                    semantic_binding("axisBandDecoration").scene_role)
+                if treatment != "none":
+                    axis_band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
+                    shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
+                                                  Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(max(0.0, x2 - x))), axis.bounds.block_size),
+                                                  semantic_id="axisBandDecoration",
+                                                  paint_order=paint_order))
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
             for interval in intervals:
@@ -1044,11 +1056,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     for closed_day in closed_days:
         if start <= closed_day < end:
             x1, x2 = _coordinate(closed_day, scale), _coordinate(closed_day.fromordinal(closed_day.toordinal() + 1), scale)
-            shapes.append(background_shape(
+            shape = background_shape(
                 f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "calendarClosed",
                 Rect(Decimal(str(x1)), timeline.bounds.block,
                      Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size),
-            ))
+            )
+            if shape is not None:
+                shapes.append(shape)
     as_of_label: tuple[float, str] | None = None
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
         x = _coordinate(contract.time.as_of, scale)
@@ -1862,6 +1876,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     # projection receives the relation verbatim and must never reconstruct it
     # from primitive purpose, identity, or containment.
     def shape_slot(item: Any) -> str:
+        if item.semantic_id == "axisBandDecoration":
+            return axis.slot_id
         if item.semantic_id in BACKGROUND_SEMANTIC_IDS:
             return item.slot_id
         if item.placement_id.startswith("legend-swatch:"):

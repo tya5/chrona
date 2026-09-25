@@ -14,7 +14,7 @@ from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabe
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
-from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
+from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 BACKGROUND_EXTENTS = {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}
@@ -182,6 +182,7 @@ def _theme():
                   "row-band": {**roles["group-band"], "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
                   "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 11},
                   "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity", "backgroundTreatment": "outline", "backgroundPaintOrder": 12},
+                  "axis-band-decoration": {"fill": "ink", "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
                   "milestoneSymbol": {"symbol": "milestone-symbol"}}, "metrics": {}}}
 
 
@@ -290,6 +291,19 @@ def test_scene_completes_pattern_form_before_adapter_invocation():
     from chrona.presentation.scene.v05_builder import _complete_surface_paint
     completed = _complete_surface_paint(SceneSurface("s", (), (), (), None, (primitive,)), value.theme_tokens)
     assert completed.primitives[0].pattern is not None
+
+
+def test_scene_records_declared_background_absence_without_a_drawable_primitive():
+    themed = _theme()
+    themed["body"]["roles"]["row-band"] = {
+        **themed["body"]["roles"]["row-band"], "backgroundTreatment": "none",
+    }
+    value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+                              surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
+    from chrona.presentation.scene.v05_builder import _complete_surface_paint
+    completed = _complete_surface_paint(SceneSurface("s", (), (), (), None, ()), value.theme_tokens)
+    assert completed.decoration_dispositions == (DecorationDisposition("row-band", "absent"),)
 
 
 def test_scene_projects_title_links_only_to_selected_current_title_cells():
@@ -720,6 +734,29 @@ def test_layout_projects_alternate_row_bands_only_into_the_declared_table_region
     assert band.slot_id == "table"
     assert band.paint.fill is None and band.paint.stroke == "#102030"
     assert not any(node.scene_id.startswith("group:") for node in surface.primitives)
+
+
+def test_layout_suppresses_a_none_row_band_and_scene_records_its_absence():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 3)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(200)), (
+        LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(20)), "title"),
+        LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(20), Decimal(100), Decimal(100)), "table"),
+        LayoutDecision("timeline", "slot", Rect(Decimal(120), Decimal(20), Decimal(300), Decimal(100)), "timeline"),
+        LayoutDecision("axis", "slot", Rect(Decimal(120), Decimal(120), Decimal(300), Decimal(20)), "timeline-axis"),
+    ), background_extents=BACKGROUND_EXTENTS)
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
+    })
+    theme = _theme()
+    theme["body"]["roles"]["row-band"] = {**theme["body"]["roles"]["row-band"], "backgroundTreatment": "none"}
+    surface = compose_review_surface(build_scene_input(
+        projection=projection, surface_content=surface_content(row_decoration="alternate-rows"), layout_manifest=manifest,
+        resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
+    ))
+    assert not any(node.scene_id.startswith("row-band:") for node in surface.primitives)
+    assert DecorationDisposition("row-band", "absent") in surface.decoration_dispositions
 
 
 def test_layout_rejects_intersecting_translucent_background_fills_before_scene():

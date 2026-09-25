@@ -47,6 +47,15 @@ def test_missing_role_property_is_a_stable_diagnostic():
     assert error.value.path == "/body/roles/planned/fill"
 
 
+def test_background_treatment_preserves_explicit_nondrawable_absence():
+    theme = _theme()
+    theme["body"]["values"]["order"] = {"type": "number", "value": 10}
+    theme["body"]["roles"]["decoration"] = {
+        "backgroundTreatment": "none", "backgroundPaintOrder": 10,
+    }
+    assert ThemeTokenView(theme).background("decoration") == ("none", 10)
+
+
 def test_declared_token_type_must_match_the_requested_property():
     with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
         ThemeTokenView(_theme()).color("text", "fontFamily")

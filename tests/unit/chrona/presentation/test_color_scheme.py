@@ -24,8 +24,15 @@ def test_scheme_rejects_insufficient_text_contrast():
 
 def test_theme_validates_each_inside_label_role_against_its_host_mark():
     theme = {"version": "chrona/theme/v0.11", "kind": "theme", "id": "inside", "body": {
-        "values": {}, "roles": {}, "colorBindings": {
+        "values": {}, "roles": {
+            "variance-ahead": {"contrastTreatment": "deemphasized"},
+            "variance-on-track": {"contrastTreatment": "required"},
+            "variance-behind": {"contrastTreatment": "deemphasized"},
+            "missing-actual-cell": {"contrastTreatment": "required"},
+        }, "colorBindings": {
             "planned.fill": "accent", "actual.fill": "positive", "snapshot.fill": "neutral",
+            "variance-ahead.fill": "positive", "variance-on-track.fill": "textMuted",
+            "variance-behind.fill": "negative", "missing-actual-cell.fill": "textMuted",
             "member-label-inside-planned.fill": "insideLabelPlanned",
             "member-label-inside-actual.fill": "insideLabelActual",
             "member-label-inside-snapshot.fill": "insideLabelSnapshot",
@@ -37,3 +44,23 @@ def test_theme_validates_each_inside_label_role_against_its_host_mark():
     theme["body"]["colorBindings"]["member-label-inside-planned.fill"] = "accent"
     with pytest.raises(ColorSchemeError, match="E_SCHEME_INSIDE_LABEL_CONTRAST"):
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+
+
+def test_theme_state_text_requires_declared_treatment_and_composited_floor():
+    theme = {"version": "chrona/theme/v0.11", "kind": "theme", "id": "state", "body": {
+        "values": {}, "roles": {
+            "variance-ahead": {"contrastTreatment": "deemphasized"},
+            "variance-on-track": {"contrastTreatment": "required"},
+            "variance-behind": {"contrastTreatment": "deemphasized"},
+            "missing-actual-cell": {"contrastTreatment": "required"},
+        }, "colorBindings": {
+            "variance-ahead.fill": "positive", "variance-on-track.fill": "textMuted",
+            "variance-behind.fill": "negative", "missing-actual-cell.fill": "textMuted",
+        }, "metrics": {},
+    }}
+    resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    del theme["body"]["roles"]["variance-ahead"]["contrastTreatment"]
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_TREATMENT"
+    assert error.value.source_ref == "/body/roles/variance-ahead"

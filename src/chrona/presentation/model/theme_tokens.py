@@ -64,6 +64,10 @@ class ThemeTokenView:
     def _body(self) -> Mapping[str, Any]:
         return self.resolved_theme["body"]
 
+    def has_role(self, role: str) -> bool:
+        """Whether this resolved Theme declares the exact semantic role."""
+        return isinstance(self._body["roles"].get(role), Mapping)
+
     def token(self, role: str, property_name: str, expected_type: str) -> Any:
         roles = self._body["roles"]
         binding = roles.get(role)
@@ -214,7 +218,7 @@ class ThemeTokenView:
         if not isinstance(binding, Mapping):
             raise ThemeTokenError("E_THEME_ROLE_REQUIRED", path)
         treatment, order = binding.get("backgroundTreatment"), binding.get("backgroundPaintOrder")
-        if treatment not in {"fill", "outline"} or not isinstance(order, int) or not 0 <= order <= 1000:
+        if treatment not in {"fill", "outline", "none"} or not isinstance(order, int) or not 0 <= order <= 1000:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
         return treatment, order
 

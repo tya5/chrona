@@ -3,9 +3,18 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
+from chrona.presentation.scene.paint_analysis import composited_contrast
+
 
 class ColorSchemeError(ValueError):
     """Stable diagnostic emitted before Scene construction."""
+
+    def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None):
+        super().__init__(diagnostic_id)
+        self.diagnostic_id = diagnostic_id
+        self.source_ref = source_ref
+        self.detail = detail
 
 
 _INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral",
@@ -24,20 +33,51 @@ _INSIDE_LABEL_INTENTS = {
 }
 
 
-def _luminance(color: str) -> float:
-    if not isinstance(color, str) or len(color) != 7 or not color.startswith("#"):
-        raise ColorSchemeError("E_SCHEME_SCHEMA")
+def _contrast(first: str, second: str) -> float:
     try:
-        channels = [int(color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+        return composited_contrast(fill=first, opacity=1.0, ground=second)
     except ValueError as error:
         raise ColorSchemeError("E_SCHEME_SCHEMA") from error
-    linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in channels]
-    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
 
 
-def _contrast(first: str, second: str) -> float:
-    low, high = sorted((_luminance(first), _luminance(second)))
-    return (high + 0.05) / (low + 0.05)
+_STATE_TEXT_CONTRAST_FLOORS = {"required": 4.5, "deemphasized": 3.0}
+
+
+def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
+                         values: Mapping[str, Any], surface: str) -> None:
+    """Enforce the finite state-text policy at Theme/Scheme closure.
+
+    The check intentionally reads the declared treatment while resolving its
+    colour from the completed Theme role: Scheme bindings must not sidestep a
+    role's author-visible contrast declaration.
+    """
+    for binding in contrast_bindings(ContrastClass.STATE_TEXT):
+        role = binding.theme_role
+        path = f"/body/roles/{role}"
+        declared = declared_roles.get(role)
+        treatment = declared.get("contrastTreatment") if isinstance(declared, Mapping) else None
+        if treatment not in _STATE_TEXT_CONTRAST_FLOORS:
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
+        resolved = resolved_roles.get(role)
+        token = resolved.get("fill") if isinstance(resolved, Mapping) else None
+        value = values.get(token) if isinstance(token, str) else None
+        if not isinstance(value, Mapping) or value.get("type") != "color" or not isinstance(value.get("value"), str):
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill")
+        opacity = 1.0
+        opacity_token = resolved.get("opacity") if isinstance(resolved, Mapping) else None
+        if opacity_token is not None:
+            opacity_value = values.get(opacity_token) if isinstance(opacity_token, str) else None
+            if (not isinstance(opacity_value, Mapping) or opacity_value.get("type") != "number"
+                    or not isinstance(opacity_value.get("value"), (int, float))):
+                raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/opacity")
+            opacity = float(opacity_value["value"])
+        try:
+            contrast = composited_contrast(fill=value["value"], opacity=opacity, ground=surface)
+        except ValueError as error:
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill") from error
+        if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill",
+                                   detail=f"{role}:{contrast:.2f}")
 
 
 def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) -> dict[str, str]:
@@ -82,6 +122,8 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         color = colors[intent]
         values[token] = {"type": "color", "value": color}
         roles.setdefault(role, {})[property_name] = token
+    _state_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
+                         values=values, surface=colors["surface"])
     inside_roles = set(_INSIDE_LABEL_HOSTS)
     if inside_roles & set(roles):
         for label_role, host_role in _INSIDE_LABEL_HOSTS.items():
