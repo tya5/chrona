@@ -115,6 +115,18 @@ def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_rou
     assert not hasattr(workspace, "emit_scene")
 
 
+def test_draft_locale_ingress_admits_only_the_render_context_locale_pair():
+    parser = cli._parser()
+    for command, arguments in (
+        ("render", ["project.yaml", "--output", "out.svg"]),
+        ("render-workspace", ["workspace.yaml", "--output", "out.svg"]),
+    ):
+        for locale in ("en-US", "ja-JP"):
+            assert parser.parse_args([command, *arguments, "--locale", locale]).locale == locale
+        with pytest.raises(CliFailure, match="E_COMMAND_SYNTAX"):
+            parser.parse_args([command, *arguments, "--locale", "en-GB"])
+
+
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     project = {
         "version": "timeline/v0.6",

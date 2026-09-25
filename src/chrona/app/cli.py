@@ -185,7 +185,8 @@ def _parser() -> JsonArgumentParser:
                          help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--font-metrics", help="declared-metrics-v2 YAML descriptor; paths resolve beside it")
     command.add_argument("--viewport", default="1600x900", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600x900)")
-    command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
+    command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
+                         help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
     command.add_argument("--output", "-o", required=True)
     command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
@@ -239,7 +240,8 @@ def _parser() -> JsonArgumentParser:
     command = sub.add_parser("render-workspace", help="render a guided authoring workspace Draft (not reproducible evidence)")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
     command.add_argument("--viewport", default="1600x900", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600x900)")
-    command.add_argument("--locale", default="en-US", help="render locale (default: en-US)")
+    command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
+                         help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
     command.add_argument("--provenance", help="write non-Scene guided closure provenance JSON")
     command.add_argument("--output", "-o", required=True)

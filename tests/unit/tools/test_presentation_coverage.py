@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.presentation_coverage import PresentationCoverageError, _validate_resource_versions, discover, live_schemas, render, vocabulary
+from tools.presentation_coverage import PresentationCoverageError, _validate_resource_versions, discover, live_schemas, render, vocabulary, _vocabulary
 
 
 def _root() -> Path:
@@ -25,6 +25,17 @@ def test_presentation_vocabulary_uses_live_contracts_only():
     assert rows == tuple(sorted(rows))
     assert {row.kind for row in rows} == {"view", "layout-profile", "theme", "color-scheme"}
     assert any(row.kind == "layout-profile" and row.value == '"overlay"' for row in rows)
+
+
+def test_presentation_vocabulary_follows_nested_conditional_schema_values():
+    schema = {"properties": {"token": {"if": {"properties": {"kind": {"const": "marker"}}},
+                                         "then": {"properties": {"value": {"properties": {"shape": {"enum": ["circle", "square"]}}}}}}}}
+    values = _vocabulary({"theme": schema})
+    assert {(value.path, value.value) for value in values} >= {
+        (("token", "kind"), '"marker"'),
+        (("token", "value", "shape"), '"circle"'),
+        (("token", "value", "shape"), '"square"'),
+    }
 
 
 def test_presentation_coverage_rejects_non_live_resource_versions():

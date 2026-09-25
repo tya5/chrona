@@ -26,8 +26,10 @@ jobs:
       - run: python tools/check_module_reachability.py
       - run: python tools/check_scene_primitive_delivery.py
       - run: python tools/check_view_dispatch_reachability.py
+      - run: python tools/check_semantic_registry_reachability.py
       - run: python tools/check_import_direction.py
       - run: python tools/check_text_encoding.py
+      - run: python tools/presentation_coverage.py --check
       - run: pytest -n 4
       - run: python -m pip wheel . --no-deps -w dist
       - name: Enforce primary wheel budget

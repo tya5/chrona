@@ -476,7 +476,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             ("legend:", "legendLabel", None), ("note:", "projectNote", None),
             ("group-detail:", "groupDetail", None), ("milestone:", "milestoneDigestEntry", None),
             ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
-            ("annotation-text:", "annotation", "annotation-text"),
+            ("annotation-text:", "annotationText", None),
         ))
     for placed in placed_surface.text:
         for prefix, purpose, role in text_roles:

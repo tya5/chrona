@@ -107,11 +107,24 @@ def _schema_values(schema: Mapping[str, Any], node: Mapping[str, Any] | None = N
     for key, component in (("additionalProperties", "*"), ("items", "[]")):
         child = node.get(key)
         if isinstance(child, Mapping):
-            yield from _schema_values(schema, child, path + (component,), seen)
-    for key in ("allOf", "anyOf", "oneOf"):
+                yield from _schema_values(schema, child, path + (component,), seen)
+    for key in ("allOf", "anyOf", "oneOf", "prefixItems"):
         for child in node.get(key, ()):
             if isinstance(child, Mapping):
                 yield from _schema_values(schema, child, path, seen)
+    # Conditional schemas retain their enclosing instance path.  Treating
+    # ``then`` as an unrelated schema is what previously hid finite values in
+    # Theme token ``value`` objects.
+    for key in ("if", "then", "else", "not", "contains"):
+        child = node.get(key)
+        if isinstance(child, Mapping):
+            yield from _schema_values(schema, child, path, seen)
+    for child in (node.get("patternProperties") or {}).values():
+        if isinstance(child, Mapping):
+            yield from _schema_values(schema, child, path + ("*",), seen)
+    for child in (node.get("dependentSchemas") or {}).values():
+        if isinstance(child, Mapping):
+            yield from _schema_values(schema, child, path, seen)
 
 
 def _values_at(value: Any, path: tuple[str, ...]) -> Iterable[Any]:
