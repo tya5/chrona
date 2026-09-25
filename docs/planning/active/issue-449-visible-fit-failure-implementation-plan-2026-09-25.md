@@ -19,16 +19,18 @@ preserve fit/placement refusal.
 
 Amend ADR-0031 and Specifications 08/50.  Introduce typed `FitWarning` and
 completed canvas bounds at the Layout → Scene contract, including versioned
-Scene serialization/schema support.  Replace all live `diagnose` fit/placement
-declarations with `visible-overflow` in a single v0.8 → v0.9 Profile/View and
-Context migration; delete the v0.8 reader and do not retain a compatibility
-normalizer.  Retire the unpublishable I400-1 row-density type/policy changes.
+Scene serialization/schema support.  Replace live fit/placement `diagnose`
+declarations with `visible-overflow` in one v0.8 → v0.9 Layout Profile and
+v0.18 → v0.19 View/Context migration; delete both retired readers and do not
+retain a compatibility normalizer.  Preserve the out-of-scope
+`missingFont: diagnose` resource policy.  Retire the unpublishable I400-1
+row-density type/policy changes.
 
-**Acceptance:** no live resource has `diagnose`; all affected schemas and
-inventory entries agree; warning/canvas values cannot be incomplete; existing
-ordinary outputs have unchanged geometry and an explicitly reviewed identity
-only Scene diff; schema, closure, vocabulary and public materializer checks
-pass.
+**Acceptance:** no live fit/placement declaration has `diagnose`; all affected
+schemas and inventory entries agree; missing-resource policy is unchanged;
+warning/canvas values cannot be incomplete; existing ordinary outputs have
+unchanged geometry and an explicitly reviewed identity-only Scene diff; schema,
+closure, vocabulary and public materializer checks pass.
 
 ## I449-2 — Completed canvas transport
 
