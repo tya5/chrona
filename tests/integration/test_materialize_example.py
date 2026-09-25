@@ -155,6 +155,14 @@ def test_replan_baseline_records_the_nonfitting_partial_quarter_label(tmp_path):
     scene = json.loads((tmp_path / "replan/review.scene.json").read_text(encoding="utf-8"))
     assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit" in scene["diagnostics"]
     assert "W_LAYOUT_AXIS_DENSITY:axis-tier:2:stride=2:phase=1" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit" in scene["diagnostics"]
+    labels = [primitive["bounds"] for primitive in scene["surfaces"][0]["primitives"]
+              if primitive["purpose"] == "axis-label"]
+    assert all(not (left["inline"] < right["inline"] + right["inlineSize"] - 0.000001
+                    and right["inline"] < left["inline"] + left["inlineSize"] - 0.000001
+                    and left["block"] < right["block"] + right["blockSize"] - 0.000001
+                    and right["block"] < left["block"] + left["blockSize"] - 0.000001)
+               for index, left in enumerate(labels) for right in labels[index + 1:])
 
 
 def test_materializer_detects_changed_expected_svg(tmp_path):

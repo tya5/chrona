@@ -78,7 +78,7 @@ body:
       label:
         form: short-month
         align: start
-        overflow: visible-overflow
+        overflow: thin-with-record
         orientation: horizontal
     - unit: month
       every: 1
