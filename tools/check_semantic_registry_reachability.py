@@ -41,7 +41,8 @@ def reachable_semantic_ids(root: Path) -> frozenset[str]:
 
 
 def missing_semantic_ids(root: Path) -> tuple[str, ...]:
-    return tuple(identifier for identifier in semantic_ids() if identifier not in reachable_semantic_ids(root))
+    reachable = reachable_semantic_ids(root)
+    return tuple(identifier for identifier in semantic_ids() if identifier not in reachable)
 
 
 def main() -> None:
