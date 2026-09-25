@@ -74,6 +74,23 @@ implementation publication, and batch P0 #439/#443/#435/#445 release review
 against that evidence.  Do not perform repeated local full-suite runs or CI
 polling.
 
+## I445-4 — Downstream footer-flow completion
+
+**Files:** Layout panel allocation/composition, annotation-slot fixtures and
+affected generated public materializers.
+
+1. Derive provisional and completed footer-band extent from the existing
+   resolved slots, then translate only the physical downstream annotations
+   successor by the measured growth while retaining its manifest gap.
+2. Compose annotation boxes/text/leaders from the translated completed slot;
+   validate that no group-detail/annotation intersection remains.
+3. Add no-growth, expanded-footer, and public Controller-Z annotations
+   coverage; regenerate artifacts after the source closure is complete.
+
+**Acceptance:** no unhosted group-detail/annotation intersection remains in
+the committed corpus; no-growth layouts remain byte-stable; Scene/adapters
+receive only the final translated slot and primitives.
+
 ## Non-goals and stop conditions
 
 - Do not generalize to every text slot, redesign the Layout Profile language,
