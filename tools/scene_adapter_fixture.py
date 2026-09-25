@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A stdlib-only example consumer of published chrona/scene/v0.5 JSON.
+"""A stdlib-only example consumer of published chrona/scene/v0.6 JSON.
 
 This is deliberately outside ``src/chrona``: it proves that an adapter can
 consume the inspection boundary without importing Project, View, Theme, Layout,
@@ -42,14 +42,24 @@ def _path(commands: list[dict], points: list[list[float]]) -> str:
 
 
 def render(document: dict) -> str:
-    if document.get("version") != "chrona/scene/v0.5" or document.get("kind") != "scene":
+    if document.get("version") != "chrona/scene/v0.6" or document.get("kind") != "scene":
         raise ValueError("E_SCENE_VERSION")
-    viewport = document["viewport"]
-    output = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{viewport["inlineSize"]}" height="{viewport["blockSize"]}" viewBox="0 0 {viewport["inlineSize"]} {viewport["blockSize"]}">']
-    for surface in document["surfaces"]:
+    surfaces = document.get("surfaces")
+    if not isinstance(surfaces, list) or not surfaces:
+        raise ValueError("E_SCENE_CANVAS")
+    canvas = surfaces[0].get("canvasBounds")
+    if (not isinstance(canvas, dict)
+            or not all(isinstance(canvas.get(key), (int, float)) for key in ("inline", "block", "inlineSize", "blockSize"))
+            or canvas["inlineSize"] <= 0 or canvas["blockSize"] <= 0):
+        raise ValueError("E_SCENE_CANVAS")
+    if any(surface.get("canvasBounds") != canvas for surface in surfaces):
+        raise ValueError("E_SCENE_CANVAS")
+    inline, block, width, height = (canvas[key] for key in ("inline", "block", "inlineSize", "blockSize"))
+    output = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="{inline} {block} {width} {height}">']
+    for surface in surfaces:
         canvas = surface.get("canvasPaint")
         if canvas is not None:
-            output.append(f'<rect x="0" y="0" width="{viewport["inlineSize"]}" height="{viewport["blockSize"]}" {_paint({"paint": canvas})}/>')
+            output.append(f'<rect x="{inline}" y="{block}" width="{width}" height="{height}" {_paint({"paint": canvas})}/>')
         for primitive in surface["primitives"]:
             bounds = primitive["bounds"]
             kind = primitive["kind"]
