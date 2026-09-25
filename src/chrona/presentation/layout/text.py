@@ -96,7 +96,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                source_content: str | None = None, lines: tuple[str, ...] | None = None,
                available_inline_start: float | None = None,
                available_inline_size: float | None = None,
-               slot_id: str | None = None) -> TextPlacement:
+               slot_id: str | None = None, semantic_id: str = "") -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     family, weight, size, line_height = theme_tokens.typography(typography_role)
     font_size, leading = float(size), float(line_height)
@@ -115,4 +115,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         available_inline_start=available_inline_start,
         available_inline_size=available_inline_size,
         slot_id=slot_id or collision_domain.slot,
+        semantic_id=semantic_id,
     )

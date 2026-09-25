@@ -6,7 +6,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.projection import shared_track_member_key
-from chrona.presentation.model.surface_content import TableColumnContent
+from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
 
 
 @dataclass(frozen=True)
@@ -53,14 +53,14 @@ def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, f
 
 
 def place_table_columns(*, columns: tuple[TableColumnContent, ...],
-                        cells: tuple[tuple[str, str, str], ...],
+                        cells: tuple[TableCellContent, ...],
                         bounds: tuple[float, float, float, float],
                         font_metrics: Any, font_size: float,
                         overflow: str = "diagnose", gutter: float = 0.0) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
     content_by_column = {column.column_id: [column.header] for column in columns}
-    for _, column_id, cell in cells:
-        content_by_column.setdefault(column_id, []).append(cell)
+    for cell in cells:
+        content_by_column.setdefault(cell.column_id, []).append(cell.content)
     natural_widths = tuple(
         max(font_size, max((font_metrics.width(item, font_size)
                             for item in content_by_column.get(column.column_id, (column.header,))),

@@ -20,7 +20,7 @@ def reachable_semantic_ids(root: Path) -> frozenset[str]:
     declared = set(semantic_ids())
     found: set[str] = set()
     semantic_factories: set[str] = set()
-    for package in (root / "src/chrona/presentation/layout", root / "src/chrona/presentation/scene"):
+    for package in (root / "src/chrona/presentation/review", root / "src/chrona/presentation/layout", root / "src/chrona/presentation/scene"):
         for path in package.rglob("*.py"):
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             found.update(

@@ -47,6 +47,7 @@ body:
     - planned
     - actual
     - finishDelta
+    - missingActual
     - unmatchedActual
   visibility:
     labels:
@@ -130,6 +131,12 @@ body:
     format: signedDays
     missing: em-dash
     align: end
+    width: content
+  - id: Obs
+    source:
+      comparisonFacet: missingActual
+    missing: em-dash
+    align: center
     width: content
   colorEncoding:
     scale: owner

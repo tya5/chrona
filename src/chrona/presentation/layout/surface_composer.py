@@ -508,7 +508,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                source_content=label, available_inline_start=positions[column_id][0],
                                available_inline_size=available))
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
-    for object_id, column_id, content in table_cells:
+    for cell in table_cells:
+        object_id, column_id, content = cell.object_id, cell.column_id, cell.content
         row = row_by_subject.get(object_id)
         position = positions.get(column_id)
         if row is not None and position is not None and column_id in column_intents:
@@ -526,7 +527,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    overflow=overflow, collision_region="table",
                                    collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
                                    available_inline_start=position[0] + indent,
-                                   available_inline_size=available))
+                                   available_inline_size=available, semantic_id=cell.semantic_id))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:

@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
-from chrona.presentation.model.surface_content import SummaryContent
+from chrona.presentation.model.surface_content import SummaryContent, TableCellContent
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.contracts.resources import (
     SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
@@ -56,7 +56,7 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     project = {"relations": ({"id": "r", "from": {"object": "a"}, "to": {"object": "a"}},), "annotations": {"n": {"text": "note"}}}
     view = {"body": {"tableColumns": ({"id": "Name", "source": "title", "missing": "blank"},), "visibility": {"relations": "semantic", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.table_cells == (("a", "Name", "A"),)
+    assert value.table_cells == (TableCellContent("a", "Name", "A", "tableCell"),)
     assert value.relations[0].relation_id == "r"
     assert value.notes == (("n", "note"),)
 
@@ -72,6 +72,25 @@ def test_table_column_intent_is_normalized_before_layout_ingress():
     assert [(column.column_id, column.align, column.width.minimum, column.width.maximum, column.width.fraction)
             for column in value.table_columns] == [("Delta", "end", "ellipsis", "fr", 2.0),
                                                     ("Title", "start", "content", "fill", 1.0)]
+
+
+def test_table_cell_semantics_follow_declared_source_not_item_role_order():
+    ahead = ReviewItem("ahead", "Ahead", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, -2, ("planned", "variance-ahead"))
+    on_plan = ReviewItem("plan", "Plan", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, 0, ("variance-behind",))
+    behind = ReviewItem("behind", "Behind", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, 4, ("variance-ahead",))
+    unknown = ReviewItem("unknown", "Unknown", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, None, ("variance-behind",))
+    missing = ReviewItem("missing", "Missing", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((ahead, on_plan, behind, unknown, missing), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
+    view = {"body": {"tableColumns": (
+        {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "em-dash"},
+        {"id": "Missing", "source": {"comparisonFacet": "missingActual"}, "missing": "em-dash"},
+        {"id": "Title", "source": "title", "missing": "em-dash"},
+    ), "visibility": {"relations": "none", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
+    selected = {(cell.object_id, cell.column_id): cell.semantic_id for cell in value.table_cells}
+    assert [selected[(item, "Delta")] for item in ("ahead", "plan", "behind", "unknown")] == ["tableVarianceAhead", "tableVarianceOnTrack", "tableVarianceBehind", "tableCell"]
+    assert selected[("missing", "Missing")] == "missingActualCell"
+    assert all(selected[(item, "Title")] == "tableCell" for item in ("ahead", "plan", "behind", "unknown", "missing"))
 
 
 def test_critical_relation_mode_uses_only_scheduler_driving_relations():
@@ -130,7 +149,7 @@ def test_actual_missing_display_uses_item_kind_and_actual_cutoff():
                      "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-01-05"}}, summary=EMPTY_SUMMARY)
-    assert value.table_cells == (("active", "Actual", "in progress"), ("future", "Actual", "—"), ("gate", "Actual", "—"))
+    assert value.table_cells == (TableCellContent("active", "Actual", "in progress", "tableCell"), TableCellContent("future", "Actual", "—", "tableCell"), TableCellContent("gate", "Actual", "—", "tableCell"))
 
 
 def test_date_range_is_compact_and_retains_cross_year_precision():
@@ -139,7 +158,7 @@ def test_date_range_is_compact_and_retains_cross_year_precision():
     view = {"body": {"tableColumns": ({"id": "Plan", "source": {"facet": "planned"}, "format": "dateRange", "missing": "em-dash"},),
                      "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.table_cells == (("a", "Plan", "31 Dec 2026 – 02 Jan 2027"),)
+    assert value.table_cells == (TableCellContent("a", "Plan", "31 Dec 2026 – 02 Jan 2027", "tableCell"),)
 
 
 def test_scenario_table_facts_use_the_table_subject_and_missing_policy():
@@ -155,7 +174,7 @@ def test_scenario_table_facts_use_the_table_subject_and_missing_policy():
     ), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"scenarios": {"delayed": {"title": "Delayed launch"}},
                                                         "relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.table_cells == (("scenario", "Scenario", "Delayed launch"), ("scenario", "Scenario id", "delayed"))
+    assert value.table_cells == (TableCellContent("scenario", "Scenario", "Delayed launch", "tableCell"), TableCellContent("scenario", "Scenario id", "delayed", "tableCell"))
 
 
 def test_scenario_summary_facts_are_stable_and_limited_to_selected_sources():

@@ -29,6 +29,10 @@ _FAMILIES = (
         "annotation-purpose", "annotation:purpose",
         "annotation", ("callout", "highlight", "note", "explanatory-arrow"),
     ),
+    RealizationFamily(
+        "table-missing-observation", "table-column:comparisonFacet=missingActual",
+        "table-cell", ("observed", "missing"),
+    ),
 )
 
 

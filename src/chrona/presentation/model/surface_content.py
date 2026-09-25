@@ -76,6 +76,16 @@ class TableColumnContent:
 
 
 @dataclass(frozen=True)
+class TableCellContent:
+    """One rendered table fact with its selected, finite Scene semantic."""
+
+    object_id: str
+    column_id: str
+    content: str
+    semantic_id: str
+
+
+@dataclass(frozen=True)
 class AxisLabelIntent:
     """Finite label vocabulary and placement policy for one labels tier."""
 
@@ -100,7 +110,7 @@ class SurfaceContentInput:
     """Selected presentation facts normalized once before Scene construction."""
 
     table_columns: tuple[TableColumnContent, ...]
-    table_cells: tuple[tuple[str, str, str], ...]
+    table_cells: tuple[TableCellContent, ...]
     relations: tuple[RelationPresentationFact, ...]
     annotations: tuple[dict, ...]
     show_member_labels: bool

@@ -10,7 +10,7 @@ from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import PathCommand, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableColumnContent, TableColumnWidth
+from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
@@ -25,6 +25,8 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
         item if isinstance(item, TableColumnContent) else TableColumnContent(item[0], item[1], "start", TableColumnWidth("content", "content"))
         for item in table_columns
     )
+    table_cells = tuple(item if isinstance(item, TableCellContent) else TableCellContent(*item, "tableCell")
+                        for item in table_cells)
     value = dict(
         table_columns=table_columns, table_cells=table_cells, relations=(), annotations=(),
         show_member_labels=False, label_placement="none", label_content=(), label_side="auto",
@@ -91,6 +93,7 @@ def test_scene_roles_are_registry_owned_without_direct_variance_or_scale_role_li
     assert '"variance-ahead"' not in source
     assert '"variance-behind"' not in source
     assert 'role = "planned"' not in source
+    assert '"tableCell", href=href' not in source
 
 
 def _manifest(*sources):

@@ -295,14 +295,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for column in value.surface_content.table_columns:
         emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", table_column_id=column.column_id)
     row_ids = {row.object_id: row.row_id for row in rows} | {row.row_id: row.row_id for row in rows}
-    for object_id, column_id, cell in value.surface_content.table_cells:
-        if f"cell:{object_id}:{column_id}" in layout_text:
-            href, link_title = link_for_cell(object_id, column_id)
-            row_id = row_ids.get(object_id)
+    for cell in value.surface_content.table_cells:
+        if f"cell:{cell.object_id}:{cell.column_id}" in layout_text:
+            href, link_title = link_for_cell(cell.object_id, cell.column_id)
+            row_id = row_ids.get(cell.object_id)
             if row_id is None:
-                raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", f"cell:{object_id}:{column_id}")
-            emit_semantic_text(f"cell:{object_id}:{column_id}", "tableCell", href=href, link_title=link_title,
-                               table_row_id=row_id, table_column_id=column_id)
+                raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", f"cell:{cell.object_id}:{cell.column_id}")
+            emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id, href=href, link_title=link_title,
+                               table_row_id=row_id, table_column_id=cell.column_id)
     for group in groups:
         if group.header_bounds is not None:
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")

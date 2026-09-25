@@ -29,13 +29,14 @@ def _primitives(slide: Slide) -> tuple[Mapping[str, Any], ...]:
         raise SemanticRealizationCoverageError(f"E_PRESENTATION_REALIZATION_SCENE:{slide.scene}") from error
 
 
-def _table_columns(view: Mapping[str, Any]) -> frozenset[str]:
+def _table_columns(view: Mapping[str, Any], facet: str) -> frozenset[str]:
     body = view.get("body", {})
     columns = body.get("tableColumns", ()) if isinstance(body, Mapping) else ()
     return frozenset(str(column.get("id")) for column in columns
                      if isinstance(column, Mapping)
                      and isinstance(column.get("source"), Mapping)
-                     and column["source"].get("comparisonFacet") == "finishDelta"
+                     and (column["source"].get("comparisonFacet") == facet
+                          or column["source"].get("facet") == facet)
                      and isinstance(column.get("id"), str))
 
 
@@ -53,8 +54,8 @@ def _evidence(family: RealizationFamily, slides: tuple[Slide, ...]) -> tuple[tup
     evidence: set[str] = set()
     for slide in slides:
         view, primitives = _view(slide), _primitives(slide)
-        if family.selector == "table-column:comparisonFacet=finishDelta":
-            columns = _table_columns(view)
+        if family.selector.startswith("table-column:comparisonFacet="):
+            columns = _table_columns(view, family.selector.rsplit("=", 1)[1])
             if not columns:
                 continue
             states.update(family.admitted_states)

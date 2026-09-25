@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableColumnContent, TableColumnWidth, display_value, table_value,
+    AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -30,9 +30,18 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         if value is None and column.missing == "in-progress" and _is_actual_source(column.source):
             return _missing_actual_display(item, as_of)
         return display_value(value, column.missing, column.format, locale=locale)
+    def cell_semantic(item: Any, column: Any) -> str:
+        source = column.source
+        facet = (source.get("comparisonFacet") if isinstance(source, Mapping) else None)
+        if facet == "finishDelta" or (isinstance(source, Mapping) and source.get("facet") == "finishDelta"):
+            delta = item.finish_delta
+            return "tableVarianceBehind" if isinstance(delta, int) and delta > 0 else ("tableVarianceAhead" if isinstance(delta, int) and delta < 0 else ("tableVarianceOnTrack" if delta == 0 else "tableCell"))
+        if facet == "missingActual" and not item.actual:
+            return "missingActualCell"
+        return "tableCell"
     if projection.rows:
         cells = tuple(
-            (row.row_id, column.id, cell(next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index))
+            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column))
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
         table_cell_objects = tuple(
             (row.row_id, column.id,
@@ -40,7 +49,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
              next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"})
             for row in projection.rows for column in view.table_columns)
     else:
-        cells = tuple((item.object_id, column.id, cell(item, column, row_index))
+        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)

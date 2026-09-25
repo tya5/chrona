@@ -361,6 +361,7 @@ body:
     milestone.fill: accent
     missing-actual.fill: neutral
     missing-actual.stroke: neutral
+    missing-actual-cell.fill: neutral
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted
     variance-behind.fill: negative

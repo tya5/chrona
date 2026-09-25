@@ -5,7 +5,7 @@ import pytest
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import RowPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.text import ellipsize_text
-from chrona.presentation.model.surface_content import TableColumnContent, TableColumnWidth
+from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
 
 
 class FixedMetrics:
@@ -18,10 +18,14 @@ def table_columns(*items: tuple[str, str]) -> tuple[TableColumnContent, ...]:
                  for column_id, header in items)
 
 
+def table_cells(*items: tuple[str, str, str]) -> tuple[TableCellContent, ...]:
+    return tuple(TableCellContent(*item, "tableCell") for item in items)
+
+
 def test_table_placements_are_ordered_and_non_overlapping() -> None:
     placements = place_table_columns(
         columns=table_columns(("owner", "Owner"), ("status", "Status")),
-        cells=(("a", "owner", "Firmware"), ("a", "status", "In progress")),
+        cells=table_cells(("a", "owner", "Firmware"), ("a", "status", "In progress")),
         bounds=(10.0, 0.0, 240.0, 20.0),
         font_metrics=FixedMetrics(),
         font_size=10.0,
@@ -34,7 +38,7 @@ def test_table_placements_are_ordered_and_non_overlapping() -> None:
 def test_table_placements_reserve_the_declared_positive_gutter() -> None:
     placements = place_table_columns(
         columns=table_columns(("owner", "Owner"), ("status", "Status")),
-        cells=(("a", "owner", "Firmware"), ("a", "status", "In progress")),
+        cells=table_cells(("a", "owner", "Firmware"), ("a", "status", "In progress")),
         bounds=(10.0, 0.0, 260.0, 20.0), font_metrics=FixedMetrics(), font_size=10.0, gutter=12.0,
     )
     assert placements[1].inline - (placements[0].inline + placements[0].inline_size) == 12.0
@@ -44,7 +48,7 @@ def test_table_placement_diagnoses_when_required_text_cannot_fit() -> None:
     with pytest.raises(LayoutError, match="E_LAYOUT_TABLE_OVERFLOW"):
         place_table_columns(
             columns=table_columns(("owner", "Owner"), ("status", "Status")),
-            cells=(("a", "owner", "Firmware"), ("a", "status", "In progress")),
+            cells=table_cells(("a", "owner", "Firmware"), ("a", "status", "In progress")),
             bounds=(0.0, 0.0, 20.0, 20.0),
             font_metrics=FixedMetrics(),
             font_size=10.0,
@@ -55,7 +59,7 @@ def test_ellipsize_allocation_preserves_a_minimum_for_each_column() -> None:
     placements = place_table_columns(
         columns=(TableColumnContent("first", "Long heading", "start", TableColumnWidth("ellipsis", "fr", 1)),
                  TableColumnContent("second", "Another heading", "start", TableColumnWidth("ellipsis", "fr", 1))),
-        cells=(("a", "first", "a very long value"), ("a", "second", "another long value")),
+        cells=table_cells(("a", "first", "a very long value"), ("a", "second", "another long value")),
         bounds=(0.0, 0.0, 60.0, 20.0), font_metrics=FixedMetrics(), font_size=10.0,
         overflow="ellipsize-with-source",
     )
@@ -70,7 +74,7 @@ def test_declared_content_and_fractional_columns_allocate_from_measured_minima()
         TableColumnContent("one", "One", "start", TableColumnWidth("ellipsis", "fr", 1)),
         TableColumnContent("three", "Three", "start", TableColumnWidth("ellipsis", "fr", 3)),
     )
-    placements = place_table_columns(columns=columns, cells=(("a", "fixed", "fixed value"),),
+    placements = place_table_columns(columns=columns, cells=table_cells(("a", "fixed", "fixed value")),
                                      bounds=(0.0, 0.0, 300.0, 20.0), font_metrics=FixedMetrics(), font_size=10.0)
     assert placements[0].inline_size >= placements[0].natural_inline_size
     assert placements[2].inline_size - placements[2].natural_inline_size == pytest.approx(
@@ -83,7 +87,7 @@ def test_minmax_content_reserves_preferred_width_while_ellipsis_uses_only_flexib
         TableColumnContent("flex", "Flexible", "start", TableColumnWidth("ellipsis", "fill", 1)),
     )
     placements = place_table_columns(columns=columns,
-                                     cells=(("a", "minimum", "a deliberately long fixed value"), ("a", "flex", "long")),
+                                     cells=table_cells(("a", "minimum", "a deliberately long fixed value"), ("a", "flex", "long")),
                                      bounds=(0.0, 0.0, 360.0, 20.0), font_metrics=FixedMetrics(), font_size=10.0,
                                      overflow="ellipsize-with-source")
     assert placements[0].inline_size >= placements[0].natural_inline_size

@@ -13,3 +13,7 @@ def test_every_semantic_registry_binding_has_a_layout_or_scene_lookup_path():
 
 def test_mark_icon_is_reachable_but_corpus_evidence_is_a_separate_question():
     assert "iconMark" in reachable_semantic_ids(_root())
+
+
+def test_table_state_semantics_are_reachable_from_the_normalized_content_producer():
+    assert {"tableVarianceAhead", "tableVarianceOnTrack", "tableVarianceBehind", "missingActualCell"} <= reachable_semantic_ids(_root())

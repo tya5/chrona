@@ -11,7 +11,7 @@ def _root() -> Path:
 
 
 def test_realization_registry_is_finite_and_resolvable():
-    assert tuple(item.family_id for item in realization_families()) == ("table-finish-variance", "annotation-purpose")
+    assert tuple(item.family_id for item in realization_families()) == ("table-finish-variance", "annotation-purpose", "table-missing-observation")
     assert realization_family("annotation-purpose").admitted_states == ("callout", "highlight", "note", "explanatory-arrow")
 
 

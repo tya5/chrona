@@ -92,6 +92,10 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("titleText", "label", "title-text", "text", "heading"),
     _binding("tableColumnLabel", "label", "table-column-label", "text", "text"),
     _binding("tableCell", "label", "table-cell", "text", "text"),
+    _binding("tableVarianceAhead", "label", "table-cell", "variance-ahead", "variance-ahead"),
+    _binding("tableVarianceOnTrack", "label", "table-cell", "variance-on-track", "variance-on-track"),
+    _binding("tableVarianceBehind", "label", "table-cell", "variance-behind", "variance-behind"),
+    _binding("missingActualCell", "label", "table-cell", "missing-actual-cell", "missing-actual-cell"),
     # Plot labels.
     _binding("memberLabel", "label", "member-label", "text", "text"),
     _binding("memberLabelInsidePlanned", "label", "member-label", "member-label-inside-planned", "member-label-inside-planned"),
