@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import yaml
 
+import chrona.presentation.contracts.diagnostics as contract_diagnostics
 import chrona.presentation.model.closure as closure
 from chrona.presentation.contracts import RenderContextContract, RenderEnvironment, RenderTarget, ResourceReference, freeze
 from chrona.storage.revision_store import LocalSnapshotReader
@@ -39,7 +40,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
         "colorScheme": resources["scheme"], "layout": resources["layout"],
         "inputs": {"snapshot": snapshot_ref}, "environment": {"fontMetrics": {"missingFont": "diagnose"}}, "target": {"capabilities": []}}}
     context_ref = _write(tmp_path, "current", "context.yaml", context)
-    monkeypatch.setattr(closure.jsonschema, "Draft202012Validator", lambda _schema: type("V", (), {"iter_errors": lambda self, _value: iter(())})())
+    monkeypatch.setattr(closure.jsonschema, "Draft202012Validator", lambda _schema, **_kwargs: type("V", (), {"iter_errors": lambda self, _value: iter(())})())
     monkeypatch.setattr(closure, "resolve_theme", lambda *_args, **_kwargs: {})
     def fake_parse(identity, value):
         if identity.kind != "render-context":
@@ -63,6 +64,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
         )
 
     monkeypatch.setattr(closure, "parse_contract", fake_parse)
+    monkeypatch.setattr(contract_diagnostics, "parse_contract", fake_parse)
 
     resources = closure.resolve_render_context(context_ref, LocalSnapshotReader(tmp_path, "test")).resources
 
