@@ -11,6 +11,8 @@ from typing import Any, Iterable, Mapping
 
 import yaml
 
+from tools.derived_artifact_report import report_stale_artifact
+
 
 class PresentationCoverageError(ValueError):
     """Declared presentation evidence cannot be used for coverage."""
@@ -281,7 +283,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(); parser.add_argument("--root", type=Path, default=Path(".")); parser.add_argument("--output", type=Path, default=Path("docs/gallery/presentation-coverage.md")); parser.add_argument("--check", action="store_true")
     args = parser.parse_args(); root = args.root.resolve(); output = args.output if args.output.is_absolute() else root / args.output; content = render(root)
     if args.check:
-        if not output.is_file() or output.read_text(encoding="utf-8") != content: raise SystemExit("E_PRESENTATION_COVERAGE_STALE")
+        if not output.is_file() or output.read_text(encoding="utf-8") != content:
+            report_stale_artifact(output=output, generated=content, code="E_PRESENTATION_COVERAGE_STALE",
+                                  refresh_argv=("python", "tools/presentation_coverage.py"), root=root)
+            raise SystemExit("E_PRESENTATION_COVERAGE_STALE")
         return
     output.parent.mkdir(parents=True, exist_ok=True)
     # Evidence is committed bytes, so generation must not inherit the host

@@ -13,6 +13,7 @@ from typing import Any, Iterable, Mapping
 import yaml
 
 from chrona.resources import safe_load
+from tools.derived_artifact_report import report_stale_artifact
 
 
 POLICY_VERSION = "chrona/resolvability-quality-policy/v0.1"
@@ -253,6 +254,8 @@ def main() -> None:
     if args.check:
         validate(sites, policy)
         if not output.is_file() or output.read_text(encoding="utf-8") != content:
+            report_stale_artifact(output=output, generated=content, code="E_DIAGNOSTIC_INVENTORY_STALE",
+                                  refresh_argv=("python", "tools/diagnostic_inventory.py"), root=root)
             raise SystemExit("E_DIAGNOSTIC_INVENTORY_STALE")
         return
     write(output, content)

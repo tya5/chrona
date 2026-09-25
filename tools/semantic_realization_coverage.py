@@ -9,6 +9,7 @@ import tempfile
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_realization import RealizationFamily, realization_families, validate_realization_families
+from tools.derived_artifact_report import report_stale_artifact
 from tools.presentation_coverage import Slide, discover
 
 
@@ -109,6 +110,8 @@ def main() -> None:
     content = render(root)
     if args.check:
         if not output.is_file() or output.read_text(encoding="utf-8") != content:
+            report_stale_artifact(output=output, generated=content, code="E_PRESENTATION_REALIZATION_COVERAGE_STALE",
+                                  refresh_argv=("python", "tools/semantic_realization_coverage.py"), root=root)
             raise SystemExit("E_PRESENTATION_REALIZATION_COVERAGE_STALE")
         return
     output.parent.mkdir(parents=True, exist_ok=True)

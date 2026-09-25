@@ -11,6 +11,7 @@ from typing import Any, Mapping
 import yaml
 
 from chrona.resources import safe_load
+from tools.derived_artifact_report import report_stale_artifact
 
 
 POLICY_VERSION = "chrona/declared-vocabulary-policy/v0.1"
@@ -149,6 +150,8 @@ def main() -> None:
     if args.check:
         validate(root, entries)
         if not output.is_file() or output.read_text(encoding="utf-8") != content:
+            report_stale_artifact(output=output, generated=content, code="E_VOCABULARY_INVENTORY_STALE",
+                                  refresh_argv=("python", "tools/vocabulary_inventory.py"), root=root)
             raise SystemExit("E_VOCABULARY_INVENTORY_STALE")
         return
     write(output, content)
