@@ -13,9 +13,10 @@ if an invariant needs a typed, reusable helper.
 
 1. Extract the current `group-details` and `milestones` branch from the
    generic one-line side-content loop.
-2. Build each entry through measured `wrap_text` and `place_text`, preserving
-   existing formatting, source identity, typography selection and visual
-   target identities.
+2. Reserve any closed leading/trailing visual geometry through the shared
+   Layout helper, then build each entry through measured `wrap_text` and
+   `place_text`, preserving existing formatting, source identity, typography
+   selection and visual target identities.
 3. Complete final per-panel `SlotPlacement` bounds from the measured text
    block; allocate overlapping panel inline intervals by stable vertical
    stacking.
@@ -25,8 +26,8 @@ if an invariant needs a typed, reusable helper.
 
 **Acceptance:** Japanese group detail has multiple deterministic CJK lines;
 text bounds are inside final panel slots under normal wrapping; group detail
-and milestone text do not intersect; all prior group/milestone semantic IDs
-and selected font facts remain present.
+and milestone text do not intersect; visual reservations apply exactly once;
+all prior group/milestone semantic IDs and selected font facts remain present.
 
 ## I445-2 — Explicit completed overflow record
 
