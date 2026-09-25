@@ -59,3 +59,16 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
 
     assert ids.count("scene-perceptibility") == 1
     assert ids.index("example-inventory") < ids.index("scene-perceptibility") < ids.index("diagnostic-inventory")
+
+
+def test_runner_configures_aggregate_report_transport_as_utf8():
+    runner = _runner()
+    calls = []
+
+    class Stream:
+        def reconfigure(self, **kwargs):
+            calls.append(kwargs)
+
+    runner.configure_stdout(Stream())
+
+    assert calls == [{"encoding": "utf-8"}]

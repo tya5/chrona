@@ -42,6 +42,13 @@ class CheckResult:
     skip_reason: str | None = None
 
 
+def configure_stdout(stream: object) -> None:
+    """Use one portable transport for aggregate Unicode check output."""
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8")
+
+
 def _command(path: str, *args: str) -> tuple[str, ...]:
     return (sys.executable, str(REPOSITORY / path), *args)
 
@@ -158,6 +165,7 @@ def main(argv: tuple[str, ...] = tuple(sys.argv[1:])) -> int:
         return _profile_conformance()
     if argv:
         raise SystemExit("E_CONFORMANCE_ARGUMENT")
+    configure_stdout(sys.stdout)
     results = run_checks(CHECKS)
     print(render_results(results))
     if any(result.status == "FAIL" for result in results):
