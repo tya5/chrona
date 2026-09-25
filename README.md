@@ -1,8 +1,12 @@
 # Chrona
 
-**Chrona** is a Git-friendly grammar for temporal project data, scheduling, and
-visualization.  Its source of truth is semantic, structured data; a renderer is
-a consumer, never the editor-owned authority.
+**Chrona** turns a YAML project file into a presentation-grade Gantt slide.
+Define the plan, pick a presentation, render SVG or PNG. Dependencies and
+working calendars decide the dates, and the data decides the layout, so the
+chart is never drawn by hand.
+
+The plan stays the source of truth. A renderer consumes it and never owns it,
+so any slide can be regenerated from the data that produced it.
 
 This repository contains the living, versioned Chrona specification and reference
 implementations for the accepted delivery milestones. Core v0.1 remains the stable
