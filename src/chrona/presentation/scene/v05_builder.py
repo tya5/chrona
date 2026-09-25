@@ -17,7 +17,7 @@ from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import PrimitiveKind, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.scene.mark_geometry import marker_geometry, pattern_geometry, pattern_kind, symbol_geometry
+from chrona.presentation.scene.mark_geometry import pattern_geometry, pattern_kind, symbol_geometry
 from chrona.presentation.scene.model import SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
@@ -449,7 +449,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
         dependency = semantic_binding(relation.semantic_id)
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
-                                         (0, 0, 0, 0), marker=marker_geometry(value.theme_tokens.marker("dependency")),
+                                         (0, 0, 0, 0), marker_start=relation.marker_start, marker_end=relation.marker_end,
                                          points=relation.points, path_commands=relation.path_commands))
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
@@ -493,6 +493,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             ("group-detail:", "groupDetail", None), ("milestone:", "milestoneDigestEntry", None),
             ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
             ("annotation-text:", "annotationText", None),
+            ("relation-label:", "relationLabel", None),
         ))
     for placed in placed_surface.text:
         for prefix, purpose, role in text_roles:

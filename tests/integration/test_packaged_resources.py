@@ -20,7 +20,7 @@ SCHEMAS = (
     "icon-catalog-v0.3.schema.yaml",
     "render-context-v0.12.schema.yaml",
     "render-context-v0.15.schema.yaml",
-    "view-v0.14.schema.yaml",
+    "view-v0.15.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",

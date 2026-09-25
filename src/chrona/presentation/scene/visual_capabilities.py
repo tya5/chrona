@@ -89,7 +89,7 @@ def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfil
             _require(profile, LINE_CAP, paint.stroke_finish.fidelity, path)
             _require(profile, LINE_JOIN, paint.stroke_finish.fidelity, path)
     for node in surface.primitives:
-        _require(profile, MARKER_GEOMETRY, "required" if node.marker is not None else None,
+        _require(profile, MARKER_GEOMETRY, "required" if node.marker_start is not None or node.marker_end is not None else None,
                  node.visual_capability_source_ref)
         _require(profile, PATTERN_GEOMETRY, "required" if node.pattern is not None else None,
                  node.visual_capability_source_ref)

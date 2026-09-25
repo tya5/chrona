@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
+from collections.abc import Mapping
+import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
@@ -17,6 +19,7 @@ from chrona.presentation.layout.annotations import (
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelObstacle, LabelRect, LabelRequest, place_label
+from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
@@ -73,6 +76,31 @@ def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
     if fraction == 0:
         return None
     return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
+
+
+def relation_label_content(relation: Any) -> str:
+    """Format only selected, non-zero relation facts before measured placement."""
+    parts: list[str] = []
+    if "endpointPair" in relation.label_content:
+        parts.append(f"{relation.source_endpoint}->{relation.target_endpoint}")
+    if "lag" in relation.label_content:
+        raw = relation.lag.get("value") if isinstance(relation.lag, Mapping) else relation.lag
+        value = str(raw)
+        if all(int(component) == 0 for component in re.findall(r"-?\d+", value)):
+            value = ""
+        elif value and value[0] not in "+-":
+            value = "+" + value
+        if value:
+            parts.append(value + (f" [{relation.lag_calendar}]" if relation.lag_calendar else ""))
+    return " ".join(parts)
+
+
+def relation_label_anchor(points: tuple[tuple[float, float], ...]) -> LabelRect:
+    """Choose the first longest route segment; ties retain canonical route order."""
+    left, right = max(zip(points, points[1:]), key=lambda pair: abs(pair[1][0] - pair[0][0]) + abs(pair[1][1] - pair[0][1]))
+    x1, y1 = left
+    x2, y2 = right
+    return LabelRect(min(x1, x2), min(y1, y2), max(1.0, abs(x2 - x1)), max(1.0, abs(y2 - y1)))
 
 
 def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest, *,
@@ -868,9 +896,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 source_port = source_ports[0] if relation.source_endpoint in {"start", "at"} else source_ports[1]
                 target_port = target_ports[0] if relation.target_endpoint in {"start", "at"} else target_ports[1]
                 scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
+                source_port_id = f"{source_id}:{relation.source_endpoint}"
+                target_port_id = f"{target_id}:{relation.target_endpoint}"
                 if source_port == target_port:
                     if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start",
+                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
@@ -886,7 +916,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                           timeline_bounds[0] + timeline_bounds[2], route_bottom))
                 except ValueError as error:
                     if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start",
+                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
@@ -894,17 +924,50 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 if not relation_route_quality(tuple(points), max_bends=layout_manifest.relation_max_bends,
                                               max_detour_ratio=layout_manifest.relation_max_detour_ratio):
                     if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start",
+                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
                     raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
                 relation_radius = float(metric_values.get("timeline.relation.cornerRadius", 0))
-                relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points),
+                relations.append(RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
                                                    semantic_id=relation.semantic_id,
                                                    corner_radius=relation_radius,
                                                    path_commands=(rounded_orthogonal_path(tuple(points), relation_radius)
-                                                                  if relation_radius > 0 else ())))
+                                                                  if relation_radius > 0 else ()),
+                                                   marker_start=marker_geometry(request.theme_tokens.marker("relationSourceTerminal")),
+                                                   marker_end=marker_geometry(request.theme_tokens.marker("relationTargetTerminal")),
+                                                   label_content=relation_label_content(relation)))
+
+    # Relation labels are routed facts, not a Scene or adapter policy.  They run
+    # after relation paths exist so their anchor is a stable completed segment.
+    for placed_relation in relations:
+        if placed_relation.suppressed:
+            continue
+        content = placed_relation.label_content
+        if not content:
+            continue
+        _, _, font_size, line_height = request.theme_tokens.typography("annotation")
+        size = (measure_text_width(content, font_size=float(font_size), font_metrics=request.font_metrics),
+                float(font_size) * float(line_height))
+        relation_text_id = f"relation-label:{placed_relation.relation_id.removeprefix('relation:')}"
+        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
+        obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
+                         if item.required and item.overflow != "suppressed")
+        candidate = place_label(relation_label_anchor(placed_relation.points), size, ("above", "below", "start", "end"),
+                                bounds=timeline_rect, obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                required=False, overflow="suppress")
+        if candidate is None:
+            if request.surface_content.relation_overflow == "diagnose":
+                raise LayoutError("E_LAYOUT_RELATION_LABEL_UNPLACEABLE", f"/relations/{placed_relation.relation_id}")
+            diagnostics.append(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:{placed_relation.relation_id}")
+            continue
+        text.append(replace(place_text(placement_id=relation_text_id, source_ref=relation.relation_id,
+                                       content=content, inline=candidate.bounds.x,
+                                       baseline_block=candidate.bounds.y + float(font_size), typography_role="annotation",
+                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                       collision_region="relation-label", collision_domain=CollisionDomain("timeline", "overlay")),
+                            fallback_ladder=("above", "below", "start", "end"), selected_rung=candidate.side))
 
     legend = by_source.get("legend")
     if legend:

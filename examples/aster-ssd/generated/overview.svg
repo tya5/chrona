@@ -121,7 +121,7 @@
 <path data-scene-id="axis-grid:major:quarter:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1324.53 116.8L1324.53 826.4" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1320.474 116.8L1320.474 826.4" fill="none" opacity="1" stroke="#C8762B" stroke-width="1"/>
 <text data-scene-id="as-of-label" data-source-ref="actual-set" data-purpose="as-of-label" x="1320.474" y="130.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">As of 2027-06-30</text>
-<path data-scene-id="relation:qual-pilot:qual-exit:qual-exit:pilot:pilot" data-source-ref="qual-pilot" data-purpose="dependency" d="M1356.978 604.65L1356.978 693.35L1397.537 693.35" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-end="url(#marker-0529b66119d9)"/>
+<path data-scene-id="relation:qual-pilot:qual-exit:qual-exit:pilot:pilot" data-source-ref="qual-pilot" data-purpose="dependency" d="M1356.978 604.65L1356.978 693.35L1397.537 693.35" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-start="url(#marker-0529b66119d9)" marker-end="url(#marker-0529b66119d9)"/>
 <rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="24" y="852.138" width="9.6" height="9.6" opacity="1" fill="#3986E6"/>
 <rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="24" y="868.938" width="9.6" height="9.6" opacity="1" fill="#269D79"/>
 <text data-scene-id="legend:planned" data-source-ref="planned" data-purpose="legend-label" x="38.4" y="861.738" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Planned</text>

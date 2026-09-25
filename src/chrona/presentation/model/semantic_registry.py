@@ -104,6 +104,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
     _binding("dependency-critical", "line", "dependency", "dependency-critical", "dependency-critical"),
+    _binding("relationLabel", "label", "relation-label", "annotation", "annotation"),
     _binding("networkNode", "mark", "network-node", "network-node", "network-node"),
     _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),

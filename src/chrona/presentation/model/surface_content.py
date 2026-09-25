@@ -49,6 +49,7 @@ class RelationPresentationFact:
     lag: object
     lag_calendar: str | None
     semantic_id: str
+    label_content: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

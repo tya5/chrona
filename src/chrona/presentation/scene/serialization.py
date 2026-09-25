@@ -8,7 +8,7 @@ from typing import Any, Mapping
 import jsonschema
 
 from chrona.presentation.scene.model import (
-    InspectionScene, LinearGradient, MarkerGeometry, PatternGeometry, SceneIconPath,
+    InspectionScene, LinearGradient, PatternGeometry, SceneIconPath,
     ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, TextLayout,
 )
 from chrona.resources import schema_document
@@ -19,7 +19,7 @@ class SceneSerializationError(ValueError):
 
 
 def serialize_scene(scene: InspectionScene) -> bytes:
-    """Return canonical UTF-8 scene-v0.3 JSON after typed and schema validation."""
+    """Return canonical UTF-8 scene-v0.4 JSON after typed and schema validation."""
     document = scene_document(scene)
     validate_scene_document(document)
     try:
@@ -32,7 +32,7 @@ def serialize_scene(scene: InspectionScene) -> bytes:
 def scene_document(scene: InspectionScene) -> dict[str, Any]:
     """Map each public Scene field explicitly; no dataclass reflection is used."""
     return {
-        "version": "chrona/scene/v0.3",
+        "version": "chrona/scene/v0.4",
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
@@ -73,7 +73,7 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
     """Validate schema shape plus cross-reference invariants JSON Schema cannot state."""
     try:
         errors = tuple(jsonschema.Draft202012Validator(
-            schema_document("scene-v0.3.schema.yaml")
+            schema_document("scene-v0.4.schema.yaml")
         ).iter_errors(document))
     except Exception as error:  # schema resource failures have no public partial document
         raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
@@ -172,7 +172,8 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "points": [_point(point) for point in item.points] if item.points else None,
         "href": item.href, "linkTitle": item.link_title, "tableRowId": item.table_row_id,
         "tableColumnId": item.table_column_id,
-        "marker": _marker(item.marker) if item.marker is not None else None,
+        "markerStart": _marker(item.marker_start) if item.marker_start is not None else None,
+        "markerEnd": _marker(item.marker_end) if item.marker_end is not None else None,
         "pattern": _pattern(item.pattern) if item.pattern is not None else None,
         "symbol": {"outline": [_path(path) for path in item.symbol.outline]} if item.symbol is not None else None,
         "icon": _icon(item) if item.kind == "Icon" else None,
@@ -237,7 +238,7 @@ def _finish(value: StrokeFinish) -> dict[str, Any]:
     return {"lineCap": value.line_cap, "lineJoin": value.line_join, "fidelity": value.fidelity}
 
 
-def _marker(value: MarkerGeometry) -> dict[str, Any]:
+def _marker(value: Any) -> dict[str, Any]:
     return {"outline": [_path(item) for item in value.outline], "headLength": value.head_length,
             "headWidth": value.head_width, "attachmentOffset": value.attachment_offset,
             "paintMode": value.paint_mode}

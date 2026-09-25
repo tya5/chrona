@@ -1,4 +1,4 @@
-version: chrona/theme/v0.8
+version: chrona/theme/v0.9
 kind: theme
 id: wallboard
 body:
@@ -232,6 +232,10 @@ body:
       iconGap: icon-gap
     milestoneSymbol:
       symbol: milestone-symbol
+    relationSourceTerminal:
+      marker: arrow
+    relationTargetTerminal:
+      marker: arrow
     dependency:
       marker: arrow
       strokeWidth: stroke-width

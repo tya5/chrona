@@ -63,7 +63,7 @@ def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) ->
 
 def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme_content_identity: str) -> dict[str, Any]:
     """Produce the only concrete Theme value permitted to reach presentation adapters."""
-    if theme.get("version") != "chrona/theme/v0.8" or theme.get("kind") != "theme":
+    if theme.get("version") != "chrona/theme/v0.9" or theme.get("kind") != "theme":
         raise ColorSchemeError("E_SCHEME_THEME_BINDING")
     body = theme.get("body")
     if not isinstance(body, Mapping) or not isinstance(body.get("colorBindings"), Mapping):

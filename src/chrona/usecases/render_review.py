@@ -296,7 +296,7 @@ def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection:
     primitive_roles = Counter(item.visual_role for item in surface.primitives)
     capabilities: set[str] = set()
     for primitive in surface.primitives:
-        if primitive.marker is not None:
+        if primitive.marker_start is not None or primitive.marker_end is not None:
             capabilities.add("mark.marker-geometry")
         if primitive.pattern is not None:
             capabilities.add("paint.pattern-geometry")

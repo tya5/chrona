@@ -56,7 +56,7 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     view = {"body": {"tableColumns": ({"id": "Name", "source": "title", "missing": "blank"},), "visibility": {"relations": "semantic", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
     assert value.table_cells == (("a", "Name", "A"),)
-    assert value.relations[0]["id"] == "r"
+    assert value.relations[0].relation_id == "r"
     assert value.notes == (("n", "note"),)
 
 
@@ -72,7 +72,10 @@ def test_critical_relation_mode_uses_only_scheduler_driving_relations():
     ), "annotations": {}}
     view = {"body": {"tableColumns": (), "visibility": {"relations": "critical", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY)
-    assert value.relations == ({"id": "critical", "from": {"object": "a"}, "to": {"object": "b"}, "_semantic": "dependency-critical"},)
+    assert value.relations[0].relation_id == "critical"
+    assert value.relations[0].semantic_id == "dependency-critical"
+    assert value.relations[0].source_endpoint == "end"
+    assert value.relations[0].target_endpoint == "start"
 
 
 def test_calendar_closures_come_only_from_project_calendar_exceptions():

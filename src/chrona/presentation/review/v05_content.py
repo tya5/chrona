@@ -79,13 +79,15 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     relation_value = visible.relations
     relation_overflow = str(relation_value.get("overflow", "diagnose")) if isinstance(relation_value, Mapping) else "diagnose"
     relation_mode = relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value
+    relation_content = (tuple(str(item) for item in relation_value.get("content", ()))
+                        if isinstance(relation_value, Mapping) else ())
     def relation_fact(relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
         source, target = relation["from"], relation["to"]
         lag = relation.get("lag", "0d")
         return RelationPresentationFact(str(relation["id"]), str(source["object"]), str(source.get("endpoint", "end")),
                                         str(target["object"]), str(target.get("endpoint", "start")), lag,
                                         str(lag.get("calendar")) if isinstance(lag, Mapping) and lag.get("calendar") is not None else None,
-                                        semantic_id)
+                                        semantic_id, relation_content)
     if relation_mode == "critical":
         relations = tuple(relation_fact(relation, "dependency-critical")
                           for index, relation in enumerate(project.get("relations", ()))

@@ -5,7 +5,8 @@ import pytest
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.path_geometry import open_span_path
-from chrona.presentation.layout.surface_composer import progress_fill_bounds
+from chrona.presentation.layout.surface_composer import progress_fill_bounds, relation_label_content
+from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain,
     GroupPlacement,
@@ -31,6 +32,16 @@ def _rect(inline, block, inline_size, block_size):
 def test_intersects_treats_touching_rectangles_as_non_overlapping():
     assert not intersects(_rect(0, 0, 10, 10), _rect(10, 0, 10, 10))
     assert intersects(_rect(0, 0, 10, 10), _rect(9, 0, 10, 10))
+
+
+def test_relation_label_content_preserves_signed_calendar_provenance_and_omits_zero_lag():
+    positive = RelationPresentationFact("r", "a", "start", "b", "start",
+                                        {"value": "2wd", "calendar": "range"}, "range",
+                                        "dependency", ("endpointPair", "lag"))
+    zero = RelationPresentationFact("z", "a", "end", "b", "start", "0d", None,
+                                    "dependency", ("lag",))
+    assert relation_label_content(positive) == "start->start +2wd [range]"
+    assert relation_label_content(zero) == ""
 
 
 def test_surface_placement_rejects_overlapping_required_text():

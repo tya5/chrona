@@ -63,7 +63,8 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
         return "marker-" + sha256(repr((color, geometry)).encode()).hexdigest()[:12]
     def pattern_id(geometry: object, paint: ScenePaint) -> str:
         return "pattern-" + sha256(repr((geometry, paint.stroke, paint.opacity)).encode()).hexdigest()[:12]
-    marker_pairs = {(completed(node).stroke, node.marker) for node in surface.primitives if node.kind == "Path" and node.marker}
+    marker_pairs = {(completed(node).stroke, marker) for node in surface.primitives if node.kind == "Path"
+                    for marker in (node.marker_start, node.marker_end) if marker}
     patterns = {(node.pattern, completed(node)) for node in surface.primitives if node.pattern}
     has_links = any(node.href is not None for node in surface.primitives)
     ns = ' xmlns:xlink="http://www.w3.org/1999/xlink"' if has_links else ""
@@ -147,8 +148,9 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             append(node, f'<path {common} d="{commands_data(node.symbol.outline)}" {appearance}/>')
         elif node.kind == "Path":
             if len(node.points) < 2 or paint.stroke is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            marker = f' marker-end="url(#{marker_id(paint.stroke, node.marker)})"' if node.marker else ""
-            append(node, f'<path {common} d="{path_data(node)}" fill="none" {attrs(paint, fill=False, stroke=True)}{marker}/>')
+            start = f' marker-start="url(#{marker_id(paint.stroke, node.marker_start)})"' if node.marker_start else ""
+            end = f' marker-end="url(#{marker_id(paint.stroke, node.marker_end)})"' if node.marker_end else ""
+            append(node, f'<path {common} d="{path_data(node)}" fill="none" {attrs(paint, fill=False, stroke=True)}{start}{end}/>')
         elif node.kind == "Icon":
             if node.icon_kind not in {"vector", "raster"} or node.icon_asset_identity is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

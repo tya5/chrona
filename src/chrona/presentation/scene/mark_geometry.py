@@ -5,20 +5,8 @@ from collections.abc import Mapping
 from math import isfinite
 
 from chrona.presentation.layout.surface_quality import PathCommand
-from chrona.presentation.scene.model import MarkerGeometry, PatternGeometry, PatternStroke, SymbolGeometry
-
-
-def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry:
-    shape = _choice(value, "shape", {"triangle", "open-triangle", "chevron"})
-    length, width, offset = (_number(value, name) for name in ("headLength", "headWidth", "attachmentOffset"))
-    if length <= 0 or width <= 0 or not 0 <= offset <= length:
-        raise ValueError("E_THEME_TOKEN_TYPE")
-    outline = (PathCommand("move", ((0.0, 0.0),)),
-               PathCommand("line", ((length, width / 2),)),
-               PathCommand("line", ((0.0, width),)))
-    if shape == "triangle":
-        outline += (PathCommand("line", ((0.0, 0.0),)),)
-    return MarkerGeometry(outline, length, width, offset, "fill" if shape == "triangle" else "stroke")
+from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.scene.model import PatternGeometry, PatternStroke, SymbolGeometry
 
 
 def pattern_geometry(value: Mapping[str, object]) -> PatternGeometry | None:

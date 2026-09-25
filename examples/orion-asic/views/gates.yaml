@@ -1,4 +1,4 @@
-version: chrona/view/v0.14
+version: chrona/view/v0.15
 kind: view
 id: orion-asic-gates
 body:

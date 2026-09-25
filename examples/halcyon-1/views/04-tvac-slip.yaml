@@ -1,4 +1,4 @@
-version: chrona/view/v0.14
+version: chrona/view/v0.15
 kind: view
 id: halcyon-04-tvac-slip
 body:
@@ -55,6 +55,7 @@ body:
     relations:
       mode: semantic
       overflow: suppress
+      content: [lag, endpointPair]
     annotations:
       mode: presentation
       marker: numbered

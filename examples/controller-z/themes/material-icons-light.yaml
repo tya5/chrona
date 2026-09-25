@@ -1,4 +1,4 @@
-version: chrona/theme/v0.8
+version: chrona/theme/v0.9
 kind: theme
 id: material-icons-light
 body:
@@ -221,6 +221,10 @@ body:
       strokeWidth: stroke-width
     milestoneSymbol:
       symbol: milestone-symbol
+    relationSourceTerminal:
+      marker: dependency-marker
+    relationTargetTerminal:
+      marker: dependency-marker
     dependency:
       marker: dependency-marker
       strokeWidth: stroke-width

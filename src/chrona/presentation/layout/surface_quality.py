@@ -23,6 +23,23 @@ class PathCommand:
             raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
 
 
+@dataclass(frozen=True)
+class MarkerGeometry:
+    """Completed terminal geometry selected by Theme and owned by Layout."""
+
+    outline: tuple[PathCommand, ...]
+    head_length: float
+    head_width: float
+    attachment_offset: float
+    paint_mode: str
+
+    def __post_init__(self) -> None:
+        if (not self.outline or self.head_length <= 0 or self.head_width <= 0
+                or not 0 <= self.attachment_offset <= self.head_length
+                or self.paint_mode not in {"fill", "stroke"}):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
 def _edges(rect: Rect) -> tuple[float, float, float, float]:
     return (float(rect.inline), float(rect.block),
             float(rect.inline + rect.inline_size),
@@ -210,6 +227,9 @@ class RelationPlacement:
     semantic_id: str = "dependency"
     corner_radius: float = 0.0
     path_commands: tuple[PathCommand, ...] = ()
+    marker_start: MarkerGeometry | None = None
+    marker_end: MarkerGeometry | None = None
+    label_content: str | None = None
     slot_id: str = ""
 
 

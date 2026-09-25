@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.layout.surface_quality import MarkerGeometry, PathCommand
 from chrona.presentation.icons import NormalizedVectorIcon
 
 
@@ -75,23 +75,6 @@ class SceneIconPath:
 
 
 @dataclass(frozen=True)
-class MarkerGeometry:
-    """Completed local arrowhead geometry; never a renderer-selected name."""
-
-    outline: tuple[PathCommand, ...]
-    head_length: float
-    head_width: float
-    attachment_offset: float
-    paint_mode: str
-
-    def __post_init__(self) -> None:
-        if (not self.outline or self.head_length <= 0 or self.head_width <= 0
-                or not 0 <= self.attachment_offset <= self.head_length
-                or self.paint_mode not in {"fill", "stroke"}):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-
-
-@dataclass(frozen=True)
 class PatternStroke:
     start: tuple[float, float]
     end: tuple[float, float]
@@ -143,7 +126,8 @@ class ScenePrimitive:
     text: str | None = None
     baseline: tuple[float, float] | None = None
     text_layout: TextLayout | None = None
-    marker: MarkerGeometry | None = None
+    marker_start: MarkerGeometry | None = None
+    marker_end: MarkerGeometry | None = None
     pattern: PatternGeometry | None = None
     symbol: SymbolGeometry | None = None
     paint: ScenePaint | None = None
@@ -169,7 +153,7 @@ class ScenePrimitive:
     end_treatment: str = "closed"
 
     def __post_init__(self) -> None:
-        if ((self.marker is not None and self.kind != "Path")
+        if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
                 or (self.symbol is not None and self.kind != "Symbol")
                 or (self.kind == "Symbol" and self.symbol is None)

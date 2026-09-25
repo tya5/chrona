@@ -1,4 +1,4 @@
-version: chrona/theme/v0.8
+version: chrona/theme/v0.9
 kind: theme
 id: executive-light
 body:
@@ -72,6 +72,13 @@ body:
         shape: triangle
         headLength: 10
         headWidth: 10
+        attachmentOffset: 1
+    relation-source-terminal:
+      type: marker
+      value:
+        shape: circle
+        headLength: 8
+        headWidth: 8
         attachmentOffset: 1
     milestone-symbol:
       type: symbol
@@ -221,6 +228,10 @@ body:
       strokeWidth: stroke-width
     milestoneSymbol:
       symbol: milestone-symbol
+    relationSourceTerminal:
+      marker: relation-source-terminal
+    relationTargetTerminal:
+      marker: dependency-marker
     dependency:
       marker: dependency-marker
       strokeWidth: stroke-width

@@ -1,4 +1,4 @@
-version: chrona/view/v0.14
+version: chrona/view/v0.15
 kind: view
 id: controller-z-executive
 body:
@@ -55,6 +55,7 @@ body:
     relations:
       mode: semantic
       overflow: suppress
+      content: [lag, endpointPair]
     annotations: none
   tableColumns:
   - id: Workstream

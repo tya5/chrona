@@ -98,7 +98,8 @@ def _theme():
     for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size"}.items():
         roles.setdefault(name, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
             {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"})
-    roles["dependency"]["marker"] = "dependency-marker"
+    roles["relationSourceTerminal"] = {"marker": "dependency-marker"}
+    roles["relationTargetTerminal"] = {"marker": "dependency-marker"}
     for role, height, offset, order, radius in (
         ("planned", "mark-full", "mark-start", "mark-middle", "mark-square"),
         ("actual", "mark-content", "mark-nested", "mark-front", "mark-rounded"),
@@ -303,7 +304,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     surface = compose_review_surface(value)
     dependency = next(item for item in surface.primitives if item.scene_id == "relation:r")
     leader = next(item for item in surface.primitives if item.scene_id == "annotation-leader:note")
-    assert dependency.marker is not None
+    assert dependency.marker_start is not None and dependency.marker_end is not None
     assert dependency.purpose == "dependency"
     assert dependency.points[0][0] == 500
     assert dependency.points[-1][0] == 100
