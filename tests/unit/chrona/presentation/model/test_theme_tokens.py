@@ -46,3 +46,19 @@ def test_missing_role_property_is_a_stable_diagnostic():
 def test_declared_token_type_must_match_the_requested_property():
     with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
         ThemeTokenView(_theme()).color("text", "fontFamily")
+
+
+@pytest.mark.parametrize("value", [0, -1, 1.1])
+def test_summary_bar_height_requires_one_positive_lane_relative_token(value):
+    theme = _theme()
+    theme["body"]["values"]["height"] = {"type": "number", "value": value}
+    theme["body"]["roles"]["summary-bar"] = {"markHeight": "height"}
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+        ThemeTokenView(theme).summary_bar_height("summary-bar")
+
+
+def test_summary_bar_height_resolves_its_theme_owned_value():
+    theme = _theme()
+    theme["body"]["values"]["height"] = {"type": "number", "value": "0.25"}
+    theme["body"]["roles"]["summary-bar"] = {"markHeight": "height"}
+    assert ThemeTokenView(theme).summary_bar_height("summary-bar") == Decimal("0.25")

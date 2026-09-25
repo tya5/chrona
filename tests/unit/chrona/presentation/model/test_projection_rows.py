@@ -3,13 +3,21 @@ from dataclasses import replace
 import inspect
 import pytest
 
-from chrona.presentation.model.projection import _roles, build_review_projection
+from chrona.presentation.model.projection import ReviewItem, _roles, build_review_projection, shared_track_member_key
 from chrona.presentation.model.surface_content import table_value
 from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGrouping, ViewInput, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
     ViewVisibility, ViewWindow, freeze,
 )
 from chrona.scheduling.scheduler import ScheduleAnalysis
+
+
+def test_shared_track_member_order_is_one_finite_model_policy():
+    members = tuple(ReviewItem("item", kind, "span", {}, None, None, (), source_kind=kind, track="shared")
+                    for kind in ("actual", "primary", "scenario", "snapshot"))
+    assert [item.source_kind for _, item in sorted(enumerate(members), key=lambda pair: shared_track_member_key(pair[1], pair[0]))] == [
+        "snapshot", "scenario", "primary", "actual",
+    ]
 
 
 def typed_view(value):

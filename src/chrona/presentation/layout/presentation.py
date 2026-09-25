@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.surface_content import TableColumnContent
 
 
@@ -169,10 +170,7 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
         stacked_index = 0
         members = sorted(
             enumerate(review_row.items),
-            key=lambda pair: (
-                0,
-                {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}.get(pair[1].source_kind, 4),
-            ) if pair[1].track == "shared" else (1, pair[0]),
+            key=lambda pair: shared_track_member_key(pair[1], pair[0]),
         )
         for _, item in members:
             if item.track == "shared":

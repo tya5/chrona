@@ -116,6 +116,7 @@ def _theme():
     ):
         roles.setdefault(role, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
             {"markHeight": height, "markOffset": offset, "markPaintOrder": order, "markCornerRadius": radius})
+    roles["summary-bar"].update({"markHeight": "summary-height"})
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {
         "values": {"ink": {"type": "color", "value": "#102030"},
                    "body": {"type": "fontFamily", "value": "Test Sans"},
@@ -134,7 +135,7 @@ def _theme():
                    "mark-start": {"type": "number", "value": 0}, "mark-nested": {"type": "number", "value": 0},
                    "mark-back": {"type": "number", "value": 0}, "mark-middle": {"type": "number", "value": 1},
                    "mark-front": {"type": "number", "value": 2}, "mark-square": {"type": "number", "value": 0},
-                   "mark-rounded": {"type": "number", "value": "0.25"}},
+                   "mark-rounded": {"type": "number", "value": "0.25"}, "summary-height": {"type": "number", "value": Decimal(1) / Decimal(3)}},
         "roles": {**roles,
                   "group-band": {**roles["group-band"], "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
                   "row-band": {**roles["group-band"], "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},

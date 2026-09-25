@@ -163,6 +163,13 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
         return height, offset, int(order), corner_radius
 
+    def summary_bar_height(self, role: str) -> Decimal:
+        """Return the positive lane-relative block-size ratio for a summary bar."""
+        height = self.number(role, "markHeight")
+        if height <= 0 or height > 1:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
+        return height
+
     def background(self, role: str) -> tuple[str, int]:
         """Return a completed finite treatment and paint order for one background."""
         binding = self._body["roles"].get(role)

@@ -10,6 +10,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
+from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
@@ -629,8 +630,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
-            key=lambda pair: (0, {"snapshot": 0, "primary": 1, "actual": 2}.get(pair[1].source_kind, 3))
-            if pair[1].track == "shared" else (1, pair[0]),
+            key=lambda pair: shared_track_member_key(pair[1], pair[0]),
         )
         for _, item in members:
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
@@ -722,8 +722,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for track_index, folded in enumerate(sorted(folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))):
             block = first_block + track_index * block_size
             members = sorted(enumerate(folded.all_items),
-                             key=lambda pair: (0, {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}.get(pair[1].source_kind, 4))
-                             if pair[1].track == "shared" else (1, pair[0]))
+                             key=lambda pair: shared_track_member_key(pair[1], pair[0]))
             for _, item in members:
                 instance_id = _folded_instance_id(folded, item)
                 planned_at = item.planned.get("at")
@@ -780,7 +779,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if not isinstance(start_at, date) or not isinstance(end_at, date):
             continue
         x1, x2 = _coordinate(start_at, scale), _coordinate(end_at, scale)
-        height = max(1.0, float(metric_values["timeline.mark.blockSize"]) / 3)
+        height = float(request.theme_tokens.summary_bar_height("summary-bar")) * float(metric_values["timeline.mark.blockSize"])
         shapes.append(ShapePlacement(f"summary-bar:{review_row.row_id}", subject.object_id, "Rect",
                                      Rect(Decimal(str(x1)), row.bounds.block,
                                           Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))))

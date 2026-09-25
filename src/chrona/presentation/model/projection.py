@@ -11,6 +11,16 @@ from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.presentation.contracts.resources import ViewInput
 
 
+_SHARED_TRACK_SOURCE_ORDER = {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}
+
+
+def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, int]:
+    """Return the sole stable semantic traversal order for normalized track members."""
+    if getattr(member, "track", "stacked") != "shared":
+        return (1, source_index, source_index)
+    return (0, _SHARED_TRACK_SOURCE_ORDER.get(getattr(member, "source_kind", ""), len(_SHARED_TRACK_SOURCE_ORDER)), source_index)
+
+
 @dataclass(frozen=True)
 class ReviewItem:
     """One selected source object as displayed by a ReviewRow."""
