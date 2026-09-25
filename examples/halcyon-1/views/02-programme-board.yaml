@@ -1,4 +1,4 @@
-version: chrona/view/v0.16
+version: chrona/view/v0.17
 kind: view
 id: halcyon-02-programme-board
 body:
@@ -96,12 +96,26 @@ body:
       mode: presentation
       marker: numbered
   axis:
-    levels:
+    tiers:
     - unit: quarter
-      format: year-quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
     - unit: month
-      format: short-month
-    ticks: week
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: diagnose
+    - unit: month
+      every: 1
+      role: grid-minor
+    - unit: week
+      every: 1
+      role: grid-minor
   markers:
   - kind: asOf
     source: actual

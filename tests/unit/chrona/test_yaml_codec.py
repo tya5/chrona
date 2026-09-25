@@ -13,16 +13,16 @@ def test_safe_load_preserves_safe_loader_values() -> None:
 
 
 def test_safe_load_falls_back_for_a_yaml_flow_mapping() -> None:
-    payload = "{version: timeline/v0.6, kind: project}"
+    payload = "{version: timeline/v0.7, kind: project}"
 
-    assert safe_load(payload) == {"version": "timeline/v0.6", "kind": "project"}
+    assert safe_load(payload) == {"version": "timeline/v0.7", "kind": "project"}
 
 
 def test_packaged_schema_document_is_decoded_once_per_name() -> None:
     schema_document.cache_clear()
 
-    first = schema_document("project-v0.6.schema.yaml")
-    second = schema_document("project-v0.6.schema.yaml")
+    first = schema_document("project-v0.7.schema.yaml")
+    second = schema_document("project-v0.7.schema.yaml")
 
     assert first is second
     assert schema_document.cache_info().misses == 1

@@ -12,7 +12,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from chrona.scheduling.scheduler import schedule
 
 ROOT = Path(__file__).resolve().parent
-SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "profile-v0.2.schema.yaml").read_text(encoding="utf-8"))
+SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "profile-v0.3.schema.yaml").read_text(encoding="utf-8"))
 RESOURCE_SCHEMA = yaml.safe_load((REPO_ROOT / "schemas" / "revision-store-resource-ref-v0.1.schema.yaml").read_text(encoding="utf-8"))
 EXPECTED = {
     "implementation-delivery.work-item": "task",

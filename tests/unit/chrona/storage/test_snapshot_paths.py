@@ -30,7 +30,7 @@ def test_local_snapshot_reader_reads_a_captured_baseline_token(tmp_path):
 
 def test_materializer_copies_baseline_token_under_the_same_encoded_directory(tmp_path):
     example = tmp_path / "example"; example.mkdir()
-    (example / "project.yaml").write_text("version: timeline/v0.6\n", encoding="utf-8")
+    (example / "project.yaml").write_text("version: timeline/v0.7\n", encoding="utf-8")
     token = "baseline:abc"
     reference = {"revision": {"token": token}, "address": "project.yaml", "kind": "project"}
     snapshot = tmp_path / "snapshot"; snapshot.mkdir()

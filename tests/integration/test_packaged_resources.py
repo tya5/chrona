@@ -14,14 +14,14 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "pyproject.toml").is_file())
 RESOURCES = files("chrona.resources")
 SCHEMAS = (
-    "project-v0.6.schema.yaml",
-    "profile-v0.2.schema.yaml",
+    "project-v0.7.schema.yaml",
+    "profile-v0.3.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",
     "icon-catalog-v0.3.schema.yaml",
     "render-context-v0.12.schema.yaml",
     "render-context-v0.15.schema.yaml",
     "view-v0.15.schema.yaml",
-    "view-v0.16.schema.yaml",
+    "view-v0.17.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",
     "layout-profile-v0.5.schema.yaml",

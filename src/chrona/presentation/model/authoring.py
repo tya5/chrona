@@ -149,7 +149,7 @@ def _apply_view_overrides(view: dict[str, Any], overrides: Mapping[str, Any]) ->
 def _project_document(workspace: AuthoringWorkspaceContract) -> dict[str, Any]:
     project = workspace.project
     return {
-        "version": "timeline/v0.6",
+        "version": "timeline/v0.7",
         "project": {"id": project["id"], **({"title": project["title"]} if "title" in project else {})},
         "objects": {
             task["id"]: {"type": "task", "title": task["title"], "schedule": {

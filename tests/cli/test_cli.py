@@ -129,7 +129,7 @@ def test_draft_locale_ingress_admits_only_the_render_context_locale_pair():
 
 def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     project = {
-        "version": "timeline/v0.6",
+        "version": "timeline/v0.7",
         "project": {"id": "demo", "title": "Demo"},
         "extensions": [],
         "objects": {"gate": {"type": "milestone", "title": "Gate", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}},
@@ -433,7 +433,7 @@ def test_cli_renders_typst_draft_with_an_explicit_descriptor(tmp_path, monkeypat
 
 def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, monkeypatch, capsys):
     project = {
-        "version": "timeline/v0.6", "project": {"id": "ordered"}, "extensions": [],
+        "version": "timeline/v0.7", "project": {"id": "ordered"}, "extensions": [],
         "objects": {
             "second": {"type": "milestone", "title": "Second", "schedule": {"mode": "fixed-point", "at": "2026-10-02"}},
             "first": {"type": "milestone", "title": "First", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}},
@@ -459,7 +459,7 @@ def test_cli_schedule_analysis_uses_project_order_and_halcyon_facts(tmp_path, mo
 
 def test_cli_schedule_rejection_has_no_analysis_payload(tmp_path, monkeypatch, capsys):
     project = {
-        "version": "timeline/v0.6", "project": {"id": "invalid"}, "extensions": [],
+        "version": "timeline/v0.7", "project": {"id": "invalid"}, "extensions": [],
         "objects": {
             "a": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
             "b": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
@@ -482,7 +482,7 @@ def test_cli_schedule_rejection_has_no_analysis_payload(tmp_path, monkeypatch, c
 
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):
     project = {
-        "version": "timeline/v0.6", "project": {"id": "snapshot"}, "extensions": [],
+        "version": "timeline/v0.7", "project": {"id": "snapshot"}, "extensions": [],
         "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}},
         "relations": [],
     }
@@ -520,7 +520,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
 
 
 def test_cli_review_reports_stable_semantic_ids(tmp_path, monkeypatch, capsys):
-    before = {"version": "timeline/v0.6", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
+    before = {"version": "timeline/v0.7", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
     after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}}}
     token = "snapshot-review"
     references = [
@@ -536,7 +536,7 @@ def test_cli_review_reports_stable_semantic_ids(tmp_path, monkeypatch, capsys):
 
 
 def test_cli_baseline_compare_uses_store_config_and_writes_once(tmp_path, monkeypatch):
-    before = {"version": "timeline/v0.6", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
+    before = {"version": "timeline/v0.7", "project": {"id": "demo"}, "extensions": [], "objects": {}, "relations": []}
     after = before | {"objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}}}
     token = "snapshot"
     before_ref = _snapshot_resource(tmp_path, token, "before.yaml", before, "project", "demo")
@@ -565,7 +565,7 @@ def test_cli_result_write_does_not_require_hard_link_support(tmp_path, monkeypat
 
 
 def test_cli_command_check_writes_non_mutating_result(tmp_path, monkeypatch):
-    project = {"version": "timeline/v0.6", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
+    project = {"version": "timeline/v0.7", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
     target = _snapshot_resource(tmp_path, "p-r1", "project.yaml", project, "project", "p")
     command = {"version": "chrona/command/v0.2", "commandId": "check-1", "type": "captureSnapshot", "target": target, "baseRevision": target["revision"]["token"], "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "cli-test"}}}
     command_path, config_path, result = tmp_path / "command.yaml", tmp_path / "stores.yaml", tmp_path / "result.json"

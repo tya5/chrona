@@ -5,7 +5,7 @@ cases:
     expect: {state: verified, closureRecordsIdentity: true}
   - id: incompatible-version-rejects
     reference: {packageId: semiconductor, version: 3.0.0}
-    projectFormat: timeline/v0.6
+    projectFormat: timeline/v0.7
     expect: {diagnostic: E_PACKAGE_INCOMPATIBLE}
   - id: missing-package-rejects-not-latest
     reference: {packageId: unavailable, version: 1.0.0}

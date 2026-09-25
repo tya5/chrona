@@ -7,7 +7,7 @@ from chrona.scheduling.scheduler import schedule, schedule_scenario
 
 
 def _project():
-    return {"version": "timeline/v0.6", "project": {"id": "demo"}, "objects": {
+    return {"version": "timeline/v0.7", "project": {"id": "demo"}, "objects": {
         "tvac": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-01-01", "end": "2026-01-05"}},
         "launch": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1d"}},
     }, "relations": [{"id": "tvac-launch", "type": "dependency", "from": {"object": "tvac", "endpoint": "end"}, "to": {"object": "launch", "endpoint": "start"}}],

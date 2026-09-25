@@ -4,7 +4,7 @@ import chrona.storage.publication as publication
 
 
 def _project():
-    return {"version": "timeline/v0.6", "project": {"id": "controller"}, "objects": {}, "relations": []}
+    return {"version": "timeline/v0.7", "project": {"id": "controller"}, "objects": {}, "relations": []}
 
 
 def _reference(snapshot):

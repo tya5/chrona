@@ -45,7 +45,7 @@ def validate_profiles(project: dict[str, Any], package_manifests: dict[str, dict
     manifest = package_manifests.get(PACKAGE_ID)
     if manifest is None:
         return [Diagnostic("IDP-PROFILE-006", "Implementation-delivery package is unresolved", "/extensions")]
-    schema = schema_document("profile-v0.2.schema.yaml")
+    schema = schema_document("profile-v0.3.schema.yaml")
     errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(manifest))
     if errors or manifest.get("packageId") != PACKAGE_ID:
         detail = "packageId must be 'implementation-delivery'" if not errors else explain_errors(

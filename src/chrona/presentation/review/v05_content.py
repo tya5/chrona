@@ -70,6 +70,20 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
     temporal = view.time_presentation or {}
     axis = view.axis or {}
+    axis_tiers = tuple(axis.get("tiers", ()))
+    label_tiers = tuple(item for item in axis_tiers if item.get("role") == "labels")
+    band_tiers = tuple(item for item in axis_tiers if item.get("role") == "band")
+    default_axis_forms = {
+        "day": "localized-date", "week": "iso-week", "month": "short-month",
+        "quarter": "year-quarter", "half": "half-year", "year": "year",
+    }
+    # I1 preserves the current internal composition input while accepting only
+    # the role-specific public contract. I2 consumes every tier directly.
+    normalized_axis_levels = tuple(
+        (str(item["unit"]),
+         str(item["label"]["form"]) if item.get("role") == "labels" and item["unit"] != "auto"
+         else default_axis_forms.get(str(item["unit"]), "auto"))
+        for item in band_tiers + label_tiers)
     markers = view.markers
     as_of_value = actual_body.get("asOf")
     as_of_marker = next((item for item in markers if item.get("kind") == "asOf" and item.get("source") == "actual"), None)
@@ -122,9 +136,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                label_side=label_side,
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
                                group_presentation=group_presentation,
-                               axis_level=str(temporal.get("axisLevel", "auto")),
-                               axis_levels=tuple((str(item["unit"]), str(item["format"])) for item in axis.get("levels", ())),
-                               axis_ticks=str(axis.get("ticks")) if axis.get("ticks") else None,
+                               axis_level=(str(label_tiers[-1]["unit"]) if label_tiers else "auto"),
+                               axis_levels=normalized_axis_levels,
+                               axis_ticks=None,
                                as_of=as_of, as_of_label=str(as_of_marker.get("label", "As of")) if as_of_marker else "As of",
                                annotation_numbered=annotation_numbered,
                                calendar_closed=calendar_closed, calendar_exceptions=calendar_exceptions,

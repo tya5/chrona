@@ -1,10 +1,10 @@
 # Semiconductor development profile package: gate profiles and typed fields for an ASIC programme.
 # contentIdentity frames this document with the contentIdentity field omitted (Specification 62 correction).
-version: chrona/profile/v0.2
+version: chrona/profile/v0.3
 packageId: semiconductor-development
-contentIdentity: sha256:7265d214e5e8e69015d95a2c7a11fe4c8cde04419a8698d93c55789337b8e9b4
+contentIdentity: sha256:e0571fd30fc81b41a304f824f8a81ba8c739b9208f96d03310ca6eac02733493
 requires:
-  projectFormat: timeline/v0.6
+  projectFormat: timeline/v0.7
 profiles:
   EVT:
     extends: milestone

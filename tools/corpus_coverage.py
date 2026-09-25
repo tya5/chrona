@@ -48,10 +48,10 @@ class CorpusMagnitude:
 
 
 SCHEMA_SOURCES = (
-    ("Project", "project", "project-v0.6.schema.yaml"),
+    ("Project", "project", "project-v0.7.schema.yaml"),
     ("Actual set", "actual", "actual-set-v0.3.schema.yaml"),
     ("Snapshot reference", "snapshot", "snapshot-ref-v0.2.schema.yaml"),
-    ("Profile package", "extension", "profile-v0.2.schema.yaml"),
+    ("Profile package", "extension", "profile-v0.3.schema.yaml"),
 )
 
 

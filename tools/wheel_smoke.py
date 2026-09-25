@@ -16,7 +16,7 @@ from chrona.scheduling.scheduler import schedule
 
 
 PROJECT = {
-    "version": "timeline/v0.6",
+    "version": "timeline/v0.7",
     "project": {"id": "wheel-smoke", "title": "Wheel smoke"},
     "objects": {
         "task": {

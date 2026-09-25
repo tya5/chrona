@@ -531,15 +531,15 @@ class ResolvedThemeContract:
 
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.15"): "render-context-v0.15.schema.yaml",
-    ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
-    ("view", "chrona/view/v0.16"): "view-v0.16.schema.yaml",
+    ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
+    ("view", "chrona/view/v0.17"): "view-v0.17.schema.yaml",
     ("theme", "chrona/theme/v0.10"): "theme-v0.10.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.6"): "layout-profile-v0.6.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
-    ("profile-package", "chrona/profile/v0.2"): "profile-v0.2.schema.yaml",
+    ("profile-package", "chrona/profile/v0.3"): "profile-v0.3.schema.yaml",
     ("summary-profile", "chrona/summary-profile/v0.1"): "summary-profile-v0.2.schema.yaml",
     ("review-detail-profile", "chrona/review-detail-profile/v0.1"): "review-detail-profile-v0.1.schema.yaml",
     ("presentation-preset", "chrona/presentation-preset/v0.1"): "presentation-preset-v0.1.schema.yaml",

@@ -1,4 +1,4 @@
-version: timeline/v0.6
+version: timeline/v0.7
 
 project:
   id: controller-z-silicon-bringup

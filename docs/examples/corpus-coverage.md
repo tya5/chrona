@@ -70,8 +70,8 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 | Profile package | `profiles.*.fields.*.type` | `"objectReference"` | — | — | — | — | — |
 | Profile package | `profiles.*.fields.*.type` | `"resourceReference"` | — | — | — | — | — |
 | Profile package | `profiles.*.fields.*.type` | `"string"` | — | — | — | — | — |
-| Profile package | `requires.projectFormat` | `"timeline/v0.6"` | — | — | — | — | examples/orion-asic/extensions/semiconductor-development.yaml |
-| Profile package | `version` | `"chrona/profile/v0.2"` | — | — | — | — | examples/orion-asic/extensions/semiconductor-development.yaml |
+| Profile package | `requires.projectFormat` | `"timeline/v0.7"` | — | — | — | — | examples/orion-asic/extensions/semiconductor-development.yaml |
+| Profile package | `version` | `"chrona/profile/v0.3"` | — | — | — | — | examples/orion-asic/extensions/semiconductor-development.yaml |
 | Project | `calendars.*.working_days[]` | `"fri"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
 | Project | `calendars.*.working_days[]` | `"mon"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
 | Project | `calendars.*.working_days[]` | `"sat"` | examples/aster-ssd/project.yaml | — | — | examples/halcyon-1/project.yaml | — |
@@ -97,7 +97,7 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 | Project | `scenarios.*.relations.add[].to.endpoint` | `"end"` | — | — | — | — | — |
 | Project | `scenarios.*.relations.add[].to.endpoint` | `"start"` | — | — | — | examples/halcyon-1/project.yaml | — |
 | Project | `scenarios.*.relations.add[].type` | `"dependency"` | — | — | — | examples/halcyon-1/project.yaml | — |
-| Project | `version` | `"timeline/v0.6"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
+| Project | `version` | `"timeline/v0.7"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
 | Snapshot reference | `body.project.kind` | `"project"` | — | — | — | examples/halcyon-1/snapshots/baseline-2027-06.yaml | — |
 | Snapshot reference | `kind` | `"snapshot-ref"` | — | — | — | examples/halcyon-1/snapshots/baseline-2027-06.yaml | — |
 | Snapshot reference | `version` | `"chrona/snapshot-ref/v0.2"` | — | — | — | examples/halcyon-1/snapshots/baseline-2027-06.yaml | — |

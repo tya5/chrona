@@ -84,6 +84,41 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
     assert contract.view.row_decoration == "alternate-rows"
 
 
+def test_v17_axis_tiers_have_one_role_and_unit_valid_label_forms():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
+    assert isinstance(_view_contract(value), ViewContract)
+
+    invalid_role = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
+    invalid_role["body"]["axis"]["tiers"][0]["roles"] = ["band", "grid-major"]
+    invalid_role["body"]["axis"]["tiers"][0].pop("role")
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        _view_contract(invalid_role)
+
+    invalid_form = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
+    invalid_form["body"]["axis"]["tiers"][2]["label"]["form"] = "year"
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        _view_contract(invalid_form)
+
+    invalid_grid_label = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
+    invalid_grid_label["body"]["axis"]["tiers"][1]["label"] = {"form": "year-quarter", "align": "center", "overflow": "diagnose"}
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        _view_contract(invalid_grid_label)
+
+
+def test_v17_auto_axis_is_labels_only_and_declares_its_candidate_forms():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
+    value["body"]["axis"]["tiers"] = [{
+        "unit": "auto", "every": 1, "role": "labels",
+        "label": {"forms": {"month": "short-month", "quarter": "year-quarter"}, "align": "start", "overflow": "thin-with-record"},
+    }]
+    assert isinstance(_view_contract(value), ViewContract)
+
+    invalid = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
+    invalid["body"]["axis"]["tiers"] = [{"unit": "auto", "every": 1, "role": "grid-major"}]
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        _view_contract(invalid)
+
+
 @pytest.mark.parametrize(
     ("kind", "path", "mutate"),
     (

@@ -1,4 +1,4 @@
-version: timeline/v0.6
+version: timeline/v0.7
 project: {id: chrona-delivery-roadmap, title: Chrona delivery roadmap}
 extensions:
   - packageId: implementation-delivery

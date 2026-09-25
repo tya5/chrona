@@ -14,7 +14,7 @@ from chrona.resources import safe_load, schema_document, schema_resource
 from chrona.schema_diagnostics import explain_errors
 
 
-SCHEMA_PATH = schema_resource("project-v0.6.schema.yaml")
+SCHEMA_PATH = schema_resource("project-v0.7.schema.yaml")
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
@@ -38,7 +38,7 @@ def validate_project(
     if diagnostics:
         return diagnostics
     schema = (
-        schema_document("project-v0.6.schema.yaml")
+        schema_document("project-v0.7.schema.yaml")
         if schema_path == SCHEMA_PATH
         else safe_load(schema_path.read_text(encoding="utf-8"))
     )

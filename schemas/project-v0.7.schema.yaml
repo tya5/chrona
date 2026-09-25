@@ -1,0 +1,297 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "timeline/project-v0.7"
+title: "Timeline Project v0.7"
+description: "Timeline Project source with calendars, objects, relations, scenarios, and annotations."
+type: object
+required: [version, project]
+additionalProperties: false
+
+properties:
+  version: {description: "This Project source format version.", const: "timeline/v0.7"}
+  project:
+    type: object
+    description: "Identity and optional default calendar of this Project."
+    required: [id]
+    additionalProperties: false
+    properties:
+      id: {description: "Stable Project identifier.", type: string, minLength: 1}
+      title: {description: "Human-readable Project title.", type: string}
+      calendar: {description: "Default calendar identifier for Project objects.", type: string}
+  calendars:
+    type: object
+    description: "Named working-time calendars used by Project objects."
+    additionalProperties: {$ref: "#/$defs/calendar"}
+  entities:
+    type: object
+    description: "Named reusable entity records referenced by Project data."
+    additionalProperties: {$ref: "#/$defs/entity"}
+  objects:
+    type: object
+    description: "Named scheduled Project objects."
+    additionalProperties: {$ref: "#/$defs/object"}
+  relations:
+    type: array
+    description: "Dependency relations between Project object endpoints."
+    items: {$ref: "#/$defs/relation"}
+  annotations:
+    type: object
+    description: "Named semantic annotations attached to Project objects."
+    additionalProperties: {$ref: "#/$defs/annotation"}
+  extensions:
+    type: array
+    description: "Optional extension package declarations in one supported reference form."
+    examples:
+      - "chrona.example.package"
+      - {packageId: "chrona.example.package", path: "extensions/example.yaml", revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}
+      - {packageId: "chrona.example.package", resource: {}}
+    items:
+      description: "One extension package declaration in a supported reference form."
+      examples:
+        - "chrona.example.package"
+        - {packageId: "chrona.example.package", path: "extensions/example.yaml", revision: "git:0123456789abcdef0123456789abcdef01234567", contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}
+        - {packageId: "chrona.example.package", resource: {}}
+      oneOf:
+        - type: string
+          description: "Identifier of an extension package resolved by the environment."
+          minLength: 1
+        - type: object
+          description: "Pinned file reference to an extension package."
+          required: [packageId, path, revision, contentIdentity]
+          additionalProperties: false
+          properties:
+            packageId: {description: "Extension package identifier.", type: string, minLength: 1}
+            path: {description: "Safe relative path to the extension resource.", examples: ["extensions/example.yaml"], type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+            revision: {description: "Pinned Git revision of the extension resource.", examples: ["git:0123456789abcdef0123456789abcdef01234567"], type: string, pattern: "^git:[0-9A-Fa-f]{40,64}$"}
+            contentIdentity: {description: "SHA-256 identity of the extension resource.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        - type: object
+          description: "Inline extension package and resource declaration."
+          required: [packageId, resource]
+          additionalProperties: false
+          properties:
+            packageId: {description: "Extension package identifier.", type: string, minLength: 1}
+            resource: {description: "Package-defined extension resource data.", type: object}
+  scenarios:
+    type: object
+    description: "Named scenario overlays applied to the base Project."
+    additionalProperties: {$ref: "#/$defs/scenario"}
+
+$defs:
+  scenario:
+    type: object
+    description: "One optional overlay of object and relation changes."
+    additionalProperties: false
+    properties:
+      title: {description: "Human-readable scenario title.", type: string, minLength: 1}
+      objects:
+        type: object
+        description: "Object removals or overrides selected by object identifier."
+        additionalProperties:
+          description: "Either remove an object with null or supply its override."
+          examples: [null, {title: "Scenario title"}]
+          oneOf:
+            - {description: "Remove the base object from this scenario.", type: 'null'}
+            - {description: "Override selected base object properties.", $ref: "#/$defs/objectOverride"}
+      relations:
+        type: object
+        description: "Relation removals and additions for this scenario."
+        additionalProperties: false
+        properties:
+          remove: {description: "Unique relation identifiers removed by this scenario.", type: array, uniqueItems: true, items: {description: "One relation identifier.", type: string, minLength: 1}}
+          add: {description: "Dependency relations added by this scenario.", type: array, items: {$ref: "#/$defs/relation"}}
+  objectOverride:
+    type: object
+    description: "Partial replacement values for one base Project object."
+    additionalProperties: false
+    properties:
+      type: {description: "Replacement object type, or null to clear it.", type: [string, 'null']}
+      title: {description: "Replacement title, or null to clear it.", type: [string, 'null']}
+      calendar: {description: "Replacement calendar identifier, or null to clear it.", type: [string, 'null']}
+      fields: {description: "Replacement field map, or null to clear it.", examples: [{risk: "high"}, null], oneOf: [{description: "Replacement field map.", type: object}, {description: "Clear the field map.", type: 'null'}]}
+      parent: {description: "Replacement parent identifier, or null to clear it.", type: [string, 'null']}
+      wbsCode: {description: "Replacement WBS code, or null to clear it.", examples: ["1.2", null], oneOf: [{$ref: "#/$defs/wbsCode"}, {description: "Clear the WBS code.", type: 'null'}]}
+      plannedProgress: {description: "Replacement planned completion fraction, or null to clear it.", type: [number, 'null'], minimum: 0, maximum: 1}
+      deadline: {description: "Replacement deadline, or null to clear it.", examples: ["2026-09-23", null], oneOf: [{$ref: "#/$defs/date"}, {description: "Clear the deadline.", type: 'null'}]}
+      link: {description: "Replacement link form, or null to clear it.", examples: ["https://example.test", {}, null], oneOf: [{$ref: "#/$defs/linkHref"}, {description: "Package-defined link object.", type: object}, {description: "Clear the link.", type: 'null'}]}
+      schedule: {description: "Replacement schedule data interpreted by an extension.", type: object}
+  date: {description: "ISO 8601 calendar date.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+  temporalAmount: {description: "Signed duration with an explicit supported unit.", examples: ["2d"], type: string, pattern: "^-?(?:\\d+(?:h|min|s|d|w|mo|y|wd))(?: \\d+(?:d|w|mo|y))*$"}
+  linkHref: {description: "Absolute web or mail link, or safe relative link.", examples: ["https://example.test"], type: string, pattern: "^(?:https?://[^\\s]+|mailto:[^\\s]+|\\./[^\\s]+|/(?!/)[^\\s]+)$"}
+  scheduledAmount: {description: "Positive scheduled duration in working or calendar days.", examples: ["5d"], type: string, pattern: "^[1-9]\\d*(?:d|w|wd)$"}
+  wbsCode: {description: "Dot-separated work-breakdown identifier.", examples: ["1.2"], type: string, pattern: "^[^.\\s]+(?:\\.[^.\\s]+)*$"}
+  calendar:
+    type: object
+    description: "Working-day calendar with optional date exceptions."
+    additionalProperties: false
+    required: [working_days]
+    properties:
+      working_days:
+        type: array
+        description: "Unique weekday names that are normally working days."
+        minItems: 1
+        uniqueItems: true
+        items: {description: "One working weekday.", enum: [mon, tue, wed, thu, fri, sat, sun]}
+      exceptions:
+        type: array
+        description: "Date-specific working-day overrides."
+        items:
+          type: object
+          description: "One date-specific working-day override."
+          additionalProperties: false
+          required: [date, working]
+          properties:
+            date: {description: "Date affected by this exception.", $ref: "#/$defs/date"}
+            working: {description: "Whether the date is a working day.", type: boolean}
+      fiscalStartMonth:
+        description: "Month in which fiscal quarters and half-years begin; January when absent."
+        type: integer
+        minimum: 1
+        maximum: 12
+  entity:
+    type: object
+    description: "Reusable named entity with an author-defined type."
+    required: [type]
+    additionalProperties: false
+    properties:
+      type: {description: "Entity type identifier.", type: string}
+      title: {description: "Human-readable entity title.", type: string}
+      fields: {description: "Entity-type-specific field map.", type: object}
+  object:
+    type: object
+    description: "Scheduled Project object and its semantic metadata."
+    required: [type, schedule]
+    additionalProperties: false
+    properties:
+      type: {description: "Object type identifier.", type: string}
+      title: {description: "Human-readable object title.", type: string}
+      calendar: {description: "Calendar identifier overriding the Project default.", type: string}
+      fields: {description: "Object-type-specific field map.", type: object}
+      parent: {description: "Parent object identifier.", type: string, minLength: 1}
+      wbsCode: {description: "Work-breakdown identifier.", $ref: "#/$defs/wbsCode"}
+      plannedProgress: {description: "Planned completion fraction from zero through one.", type: number, minimum: 0, maximum: 1}
+      deadline: {description: "Desired completion date.", $ref: "#/$defs/date"}
+      link:
+        description: "External link in URL or titled-link form."
+        examples: ["https://example.test", {href: "https://example.test", title: "Reference"}]
+        oneOf:
+          - {description: "Direct link URL.", $ref: "#/$defs/linkHref"}
+          - type: object
+            description: "Link URL with an optional display title."
+            required: [href]
+            additionalProperties: false
+            properties:
+              href: {description: "Link URL.", $ref: "#/$defs/linkHref"}
+              title: {description: "Optional human-readable link title.", type: string, minLength: 1}
+      schedule: {description: "One discriminated fixed, scheduled, or rollup schedule form.", $ref: "#/$defs/schedule"}
+  schedule:
+    description: "Completed-date authority for one Project object."
+    examples:
+      - {mode: fixed-point, at: "2026-09-23"}
+      - {mode: fixed-span, start: "2026-09-23", end: "2026-09-24"}
+      - {mode: scheduled, amount: "5d"}
+      - {mode: rollup}
+    oneOf:
+      - {description: "Fixed single-date schedule.", $ref: "#/$defs/fixedPoint"}
+      - {description: "Fixed start/end schedule.", $ref: "#/$defs/fixedSpan"}
+      - {description: "Duration scheduled from anchors and constraints.", $ref: "#/$defs/scheduled"}
+      - {description: "Schedule derived from child objects.", $ref: "#/$defs/rollup"}
+  fixedPoint:
+    type: object
+    description: "Fixed schedule represented by one completed date."
+    additionalProperties: false
+    required: [mode, at]
+    properties:
+      mode: {description: "Selects the fixed single-date schedule form.", const: fixed-point}
+      at: {description: "Completed date for the fixed point.", $ref: "#/$defs/date"}
+  fixedSpan:
+    type: object
+    description: "Fixed schedule represented by an explicit date span."
+    additionalProperties: false
+    required: [mode, start, end]
+    properties:
+      mode: {description: "Selects the fixed start/end schedule form.", const: fixed-span}
+      start: {description: "Inclusive start date for the fixed span.", $ref: "#/$defs/date"}
+      end: {description: "Exclusive end date for the fixed span.", $ref: "#/$defs/date"}
+  scheduled:
+    type: object
+    description: "Duration schedule derived under existing scheduling rules."
+    additionalProperties: false
+    required: [mode, amount]
+    properties:
+      mode: {description: "Selects the duration-scheduled form.", const: scheduled}
+      amount: {description: "Positive duration to schedule.", $ref: "#/$defs/scheduledAmount"}
+      anchor:
+        type: object
+        description: "Exactly one date anchor for the scheduled duration."
+        minProperties: 1
+        maxProperties: 1
+        additionalProperties: false
+        properties:
+          start: {description: "Anchor date for the scheduled start.", $ref: "#/$defs/date"}
+          end: {description: "Anchor date for the scheduled end.", $ref: "#/$defs/date"}
+      constraints: {description: "Optional allowed date bounds for scheduling.", $ref: "#/$defs/constraints"}
+  rollup:
+    type: object
+    description: "Schedule derived as the envelope of child objects."
+    additionalProperties: false
+    required: [mode]
+    properties:
+      mode: {description: "Selects the child-derived rollup form.", const: rollup}
+  constraints:
+    type: object
+    description: "Optional minimum and maximum dates for scheduled placement."
+    additionalProperties: false
+    properties:
+      start: {description: "Bounds for the scheduled start date.", $ref: "#/$defs/bounds"}
+      end: {description: "Bounds for the scheduled end date.", $ref: "#/$defs/bounds"}
+  bounds:
+    type: object
+    description: "Inclusive minimum and maximum date bounds."
+    additionalProperties: false
+    properties:
+      min: {description: "Earliest allowed date.", $ref: "#/$defs/date"}
+      max: {description: "Latest allowed date.", $ref: "#/$defs/date"}
+  endpointRef:
+    type: object
+    description: "One named completed-date endpoint of a Project object."
+    additionalProperties: false
+    required: [object, endpoint]
+    properties:
+      object: {description: "Identifier of the referenced Project object.", type: string}
+      endpoint: {description: "Completed-date endpoint on the referenced object.", enum: [at, start, end]}
+  relation:
+    type: object
+    description: "Directed dependency relation between two object endpoints."
+    required: [type, from, to]
+    additionalProperties: false
+    properties:
+      id: {description: "Optional stable relation identifier.", type: string}
+      type: {description: "The only core relation type.", const: dependency}
+      from: {description: "Predecessor object endpoint.", $ref: "#/$defs/endpointRef"}
+      to: {description: "Successor object endpoint.", $ref: "#/$defs/endpointRef"}
+      lag:
+        description: "Optional dependency lag as a duration or calendar-qualified value."
+        examples: ["2d", {value: "2d", calendar: "standard"}]
+        oneOf:
+          - {description: "Duration using the relation's default calendar.", $ref: "#/$defs/temporalAmount"}
+          - type: object
+            description: "Duration with an explicit calendar identifier."
+            additionalProperties: false
+            required: [value]
+            properties:
+              value: {description: "Lag duration.", $ref: "#/$defs/temporalAmount"}
+              calendar: {description: "Calendar identifier used to interpret the lag.", type: string}
+  annotation:
+    type: object
+    description: "Named semantic annotation anchored to one Project object."
+    required: [kind, text, anchor]
+    additionalProperties: false
+    properties:
+      kind: {description: "Annotation kind identifier.", type: string}
+      text: {description: "Author-provided annotation text.", type: string}
+      anchor:
+        type: object
+        description: "Object selected as the semantic annotation anchor."
+        additionalProperties: false
+        required: [object]
+        properties:
+          object: {description: "Identifier of the anchored Project object.", type: string}

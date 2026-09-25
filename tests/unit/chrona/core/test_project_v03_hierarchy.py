@@ -9,7 +9,7 @@ from chrona.scheduling.scheduler import schedule
 
 def _project(objects, relations=()):
     return {
-        "version": "timeline/v0.6",
+        "version": "timeline/v0.7",
         "project": {"id": "hierarchy"},
         "objects": objects,
         "relations": list(relations),

@@ -20,8 +20,8 @@ def _write(root, token, address, value):
 
 
 def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path, monkeypatch):
-    primary = {"version": "timeline/v0.6", "project": {"id": "p"}, "objects": {}}
-    historic = {"version": "timeline/v0.6", "project": {"id": "p"}, "objects": {}}
+    primary = {"version": "timeline/v0.7", "project": {"id": "p"}, "objects": {}}
+    historic = {"version": "timeline/v0.7", "project": {"id": "p"}, "objects": {}}
     primary_ref = _write(tmp_path, "current", "project.yaml", primary)
     historic_ref = _write(tmp_path, "historic", "project.yaml", historic)
     snapshot = {"version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": "q2", "body": {"project": historic_ref}}
@@ -29,7 +29,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
     resources = {}
     for name, kind in (("view", "view"), ("theme", "theme"), ("scheme", "color-scheme"), ("layout", "layout-profile")):
         versions = {
-            "view": "chrona/view/v0.16", "theme": "chrona/theme/v0.10",
+            "view": "chrona/view/v0.17", "theme": "chrona/theme/v0.10",
             "color-scheme": "chrona/color-scheme/v0.2", "layout-profile": "chrona/layout-profile/v0.6",
         }
         value = {"version": versions[kind], "kind": kind, "id": name, "body": {}}

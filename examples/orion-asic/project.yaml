@@ -1,4 +1,4 @@
-version: timeline/v0.6
+version: timeline/v0.7
 
 project:
   id: orion-asic
@@ -13,7 +13,7 @@ extensions:
       store: {provider: local, identity: orion-asic-example}
       address: extensions/semiconductor-development.yaml
       revision: {token: example-v1}
-      contentIdentity: sha256:e8f8a48a520f6849bff4dcd75f05f202607db1601c27405a04eca23a3b821f50
+      contentIdentity: sha256:20d989ebfbc40215e7024e07c74e4db73138e95406c1751a1aa5f787fe05265d
 
 calendars:
   engineering:

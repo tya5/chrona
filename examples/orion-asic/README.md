@@ -4,7 +4,7 @@ The **extension** register of the corpus: a project whose object types and typed
 come from a declared profile package rather than from Chrona's core vocabulary.
 
 - `project.yaml` declares `extensions[0].resource`, a pinned reference to
-  `extensions/semiconductor-development.yaml`, a `chrona/profile/v0.2` package that
+  `extensions/semiconductor-development.yaml`, a `chrona/profile/v0.3` package that
   defines the `EVT`, `DVT` and `PVT` gate profiles, the `approval` enum field they
   require, and the package-wide `revision`, `customerReview` and `lot` fields.
   The package's own `contentIdentity` frames the document with that field omitted; the
