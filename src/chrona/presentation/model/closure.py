@@ -574,7 +574,6 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
                 raise ClosureError("E_CLOSURE_REQUIRED")
             if package.contract.package_id != extension.get("packageId"):
                 raise ClosureError("E_CLOSURE_ID")
-            resources.append(package)
     if context_contract.snapshot is not None:
         snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref", decoded_resources)
         snapshot_project = _load_reference(snapshot.contract.project.as_reader_reference(), reader, "project", decoded_resources)
