@@ -25,7 +25,8 @@ def typed_view(value):
         ViewWindow(body.get("window", {}).get("mode", "selected-planned"), None, None, 0),
         ViewComparison(None, body.get("comparison", {}).get("actual", "optional"), None, None, ()),
         ViewVisibility(visibility.get("labels", False), visibility.get("relations", "none"), visibility.get("annotations", "none")),
-        tuple(TableColumn(item["id"], item["source"], item.get("format", "text"), item["missing"])
+        tuple(TableColumn(item["id"], item["source"], item.get("format", "text"), item["missing"],
+                          item.get("align", "start"), item.get("width", "content"))
               for item in body.get("tableColumns", ())),
         tuple(freeze(item) for item in body.get("annotations", ())), ViewRows(body.get("rows", {}).get("mode", "automatic"), ()),
         freeze(body.get("axis")) if body.get("axis") else None, tuple(freeze(item) for item in body.get("markers", ())),
@@ -58,6 +59,19 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     assert value.table_cells == (("a", "Name", "A"),)
     assert value.relations[0].relation_id == "r"
     assert value.notes == (("n", "note"),)
+
+
+def test_table_column_intent_is_normalized_before_layout_ingress():
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    view = {"body": {"tableColumns": (
+        {"id": "Delta", "source": "totalFloat", "missing": "em-dash", "align": "end", "width": {"fr": 2}},
+        {"id": "Title", "source": "title", "missing": "em-dash", "align": "start",
+         "width": {"minmax": {"min": "content", "max": "fill"}}},
+    ), "visibility": {"relations": "none", "annotations": "none"}}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)
+    assert [(column.column_id, column.align, column.width.minimum, column.width.maximum, column.width.fraction)
+            for column in value.table_columns] == [("Delta", "end", "ellipsis", "fr", 2.0),
+                                                    ("Title", "start", "content", "fill", 1.0)]
 
 
 def test_critical_relation_mode_uses_only_scheduler_driving_relations():

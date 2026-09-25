@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.model.surface_content import TableColumnContent
 
 
 @dataclass(frozen=True)
@@ -50,44 +51,46 @@ def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, f
     return track.block + track.block_size * geometry.offset, track.block_size * geometry.height
 
 
-def place_table_columns(*, columns: tuple[tuple[str, str], ...],
+def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         cells: tuple[tuple[str, str, str], ...],
                         bounds: tuple[float, float, float, float],
                         font_metrics: Any, font_size: float,
                         overflow: str = "diagnose", gutter: float = 0.0) -> tuple[TableColumnPlacement, ...]:
-    """Measure and place columns without shrinking required text below its bounds."""
-    content_by_column = {column_id: [label] for column_id, label in columns}
+    """Allocate only declared-flexible columns after measured minima close."""
+    content_by_column = {column.column_id: [column.header] for column in columns}
     for _, column_id, cell in cells:
         content_by_column.setdefault(column_id, []).append(cell)
     natural_widths = tuple(
         max(font_size, max((font_metrics.width(item, font_size)
-                            for item in content_by_column.get(column_id, (label,))),
+                            for item in content_by_column.get(column.column_id, (column.header,))),
                            default=font_size) + font_size)
-        for column_id, label in columns
+        for column in columns
     )
     if gutter < 0:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
-    total = sum(natural_widths)
-    if available < 0 or (total > available and overflow == "diagnose"):
+    if available < 0 or sum(column.width.maximum == "fill" for column in columns) > 1:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-    if total > available and overflow != "ellipsize-with-source":
+    ellipsis_floor = max(font_size, font_metrics.width("…", font_size)) + font_size
+    minima = tuple(natural if column.width.minimum == "content" else ellipsis_floor
+                   for column, natural in zip(columns, natural_widths, strict=True))
+    if sum(minima) > available:
+        raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
+    preferred_total = sum(natural_widths)
+    if preferred_total > available and overflow != "ellipsize-with-source":
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW_POLICY", "/layoutManifest/table")
-    if total <= available:
-        widths = natural_widths
-    else:
-        minimum = font_size * 2
-        if minimum * len(natural_widths) > available:
-            raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-        remaining = available - minimum * len(natural_widths)
-        excess = sum(max(0.0, width - minimum) for width in natural_widths)
-        widths = tuple(minimum + remaining * max(0.0, width - minimum) / excess
-                       if excess else minimum for width in natural_widths)
+    base = natural_widths if preferred_total <= available else minima
+    flexible = tuple(index for index, column in enumerate(columns) if column.width.flexible)
+    remaining = available - sum(base)
+    weights = sum(columns[index].width.fraction for index in flexible)
+    widths = tuple(width + (remaining * columns[index].width.fraction / weights
+                            if index in flexible and weights else 0.0)
+                   for index, width in enumerate(base))
     cursor = bounds[0]
     placements: list[TableColumnPlacement] = []
-    for (column_id, _), width in zip(columns, natural_widths, strict=True):
+    for column, natural, width in zip(columns, natural_widths, widths, strict=True):
         placed_width = widths[len(placements)]
-        placements.append(TableColumnPlacement(column_id, cursor, placed_width, width))
+        placements.append(TableColumnPlacement(column.column_id, cursor, placed_width, natural))
         cursor += placed_width + gutter
     return tuple(placements)
 

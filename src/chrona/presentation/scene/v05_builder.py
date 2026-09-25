@@ -288,8 +288,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                          table_row_id, table_column_id)
 
     emit_semantic_text("title", "titleText")
-    for column_id, label in value.surface_content.table_columns:
-        emit_semantic_text(f"column:{column_id}", "tableColumnLabel", table_column_id=column_id)
+    for column in value.surface_content.table_columns:
+        emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", table_column_id=column.column_id)
     row_ids = {row.object_id: row.row_id for row in rows} | {row.row_id: row.row_id for row in rows}
     for object_id, column_id, cell in value.surface_content.table_cells:
         if f"cell:{object_id}:{column_id}" in layout_text:

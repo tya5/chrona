@@ -53,10 +53,33 @@ class RelationPresentationFact:
 
 
 @dataclass(frozen=True)
+class TableColumnWidth:
+    """Closed measured-allocation intent, normalized before Layout ingress."""
+
+    minimum: str
+    maximum: str
+    fraction: float = 0.0
+
+    @property
+    def flexible(self) -> bool:
+        return self.maximum in {"fill", "fr"}
+
+
+@dataclass(frozen=True)
+class TableColumnContent:
+    """One semantic table column, retaining View intent without schema maps."""
+
+    column_id: str
+    header: str
+    align: str
+    width: TableColumnWidth
+
+
+@dataclass(frozen=True)
 class SurfaceContentInput:
     """Selected presentation facts normalized once before Scene construction."""
 
-    table_columns: tuple[tuple[str, str], ...]
+    table_columns: tuple[TableColumnContent, ...]
     table_cells: tuple[tuple[str, str, str], ...]
     relations: tuple[RelationPresentationFact, ...]
     annotations: tuple[dict, ...]
@@ -98,6 +121,7 @@ class SurfaceContentInput:
     scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     progress_fill_source: str | None = None
+    table_hierarchy_column: str | None = None
 
 
 @dataclass(frozen=True)

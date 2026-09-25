@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from chrona.presentation.model.surface_content import RelationPresentationFact, SurfaceContentInput
+from chrona.presentation.model.surface_content import RelationPresentationFact, SurfaceContentInput, TableColumnContent
 
 
 @dataclass(frozen=True)
@@ -41,7 +41,7 @@ class DecorationContract:
 class PresentationContract:
     """Canonical presentation semantics consumed by later presentation stages."""
 
-    table_columns: tuple[tuple[str, str], ...]
+    table_columns: tuple[TableColumnContent, ...]
     table_cells: tuple[tuple[str, str, str], ...]
     relations: tuple[RelationPresentationFact, ...]
     labels: LabelContract

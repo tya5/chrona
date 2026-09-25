@@ -400,41 +400,54 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)))
     positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
     column_widths = {item.column_id: item.inline_size for item in columns}
-    def table_text(content: str, column_id: str) -> tuple[str, str]:
+    column_intents = {item.column_id: item for item in table_columns}
+
+    def table_text(content: str, available_inline: float) -> tuple[str, str]:
         if table.overflow != "ellipsize-with-source":
             return content, "fit"
-        available = max(0.0, column_widths[column_id] - body_size)
-        resolved = ellipsize_text(content, available_inline=available, font_size=body_size,
+        resolved = ellipsize_text(content, available_inline=available_inline, font_size=body_size,
                                   font_metrics=request.font_metrics)
         return resolved, "ellipsized" if resolved != content else "fit"
-    for column_id, label in table_columns:
-        resolved, overflow = table_text(label, column_id)
+
+    def aligned_inline(content: str, column_id: str, start: float, available_inline: float) -> float:
+        width = measure_text_width(content, font_size=body_size, font_metrics=request.font_metrics)
+        align = column_intents[column_id].align
+        if align == "end":
+            return start + max(0.0, available_inline - width)
+        if align == "center":
+            return start + max(0.0, (available_inline - width) / 2)
+        return start
+
+    for column in table_columns:
+        column_id, label = column.column_id, column.header
+        available = max(0.0, column_widths[column_id] - body_size)
+        resolved, overflow = table_text(label, available)
         text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
-                               inline=positions[column_id][0], baseline_block=table_bounds[1] + body_size,
+                               inline=aligned_inline(resolved, column_id, positions[column_id][0], available), baseline_block=table_bounds[1] + body_size,
                                typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
                                source_content=label, available_inline_start=positions[column_id][0],
-                               available_inline_size=column_widths[column_id]))
+                               available_inline_size=available))
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for object_id, column_id, content in table_cells:
         row = row_by_subject.get(object_id)
         position = positions.get(column_id)
-        index = next((offset for offset, item in enumerate(table_columns) if item[0] == column_id), None)
-        if row is not None and position is not None and index is not None:
+        if row is not None and position is not None and column_id in column_intents:
             indent_token = metric_values.get("table.indent.inlineSize")
             if row.depth and indent_token is None:
                 raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues/table.indent.inlineSize")
             indent = ((body_size if row.group_id else 0) + float(indent_token or 0) * row.depth
-                      if index == 0 else 0)
-            resolved, overflow = table_text(content, column_id)
+                      if column_id == request.surface_content.table_hierarchy_column else 0)
+            available = max(0.0, column_widths[column_id] - indent - body_size)
+            resolved, overflow = table_text(content, available)
             text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
-                                   inline=position[0] + indent,
+                                   inline=aligned_inline(resolved, column_id, position[0] + indent, available),
                                    baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
                                    typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    overflow=overflow, collision_region="table",
                                    collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
                                    available_inline_start=position[0] + indent,
-                                   available_inline_size=max(0.0, column_widths[column_id] - indent)))
+                                   available_inline_size=available))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     for group in groups:
@@ -1207,10 +1220,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                         if item.relation_id.startswith("annotation-leader:")
                                         else timeline.slot_id)) for item in relations]
     column_placements = tuple(
-        ColumnPlacement(item.column_id, label,
+        ColumnPlacement(item.column_id, column.header,
                         Rect(Decimal(str(item.inline)), Decimal(str(table_bounds[1])),
                              Decimal(str(item.inline_size)), Decimal(str(table_bounds[3]))))
-        for item, (_, label) in zip(columns, table_columns, strict=True)
+        for item, column in zip(columns, table_columns, strict=True)
     )
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,

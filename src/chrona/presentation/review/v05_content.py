@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, display_value, table_value,
+    RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableColumnContent, TableColumnWidth, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -22,7 +22,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   color_scale: ResolvedColorScale | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
-    columns = tuple((column.id, column.id) for column in view.table_columns)
+    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width))
+                    for column in view.table_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell(item: Any, column: Any, row_index: int) -> str:
         value = table_value(item, dict(project), column.source, row_index)
@@ -139,7 +140,27 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                table_cell_objects=table_cell_objects,
                                scale_target_role=color_scale.target_role if color_scale else None,
                                scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
-                               progress_fill_source=view.progress_fill)
+                               progress_fill_source=view.progress_fill,
+                               table_hierarchy_column=view.hierarchy_column)
+
+
+def _column_width(value: object) -> TableColumnWidth:
+    """Translate schema-accepted width grammar into Layout's closed descriptor."""
+    if value == "content":
+        return TableColumnWidth("content", "content")
+    if value == "fill":
+        return TableColumnWidth("ellipsis", "fill", 1.0)
+    if isinstance(value, Mapping) and "fr" in value:
+        return TableColumnWidth("ellipsis", "fr", float(value["fr"]))
+    if isinstance(value, Mapping) and "minmax" in value and isinstance(value["minmax"], Mapping):
+        maximum = value["minmax"]["max"]
+        if maximum == "content":
+            return TableColumnWidth("content", "content")
+        if maximum == "fill":
+            return TableColumnWidth("content", "fill", 1.0)
+        if isinstance(maximum, Mapping) and "fr" in maximum:
+            return TableColumnWidth("content", "fr", float(maximum["fr"]))
+    raise ValueError("E_VIEW_TABLE_WIDTH")
 
 
 def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], shading: Mapping[str, Any],

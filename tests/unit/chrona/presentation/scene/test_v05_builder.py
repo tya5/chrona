@@ -8,7 +8,7 @@ import pytest
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
-from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
+from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
@@ -17,6 +17,10 @@ from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_i
 
 
 def surface_content(table_columns=(), table_cells=(), **overrides):
+    table_columns = tuple(
+        item if isinstance(item, TableColumnContent) else TableColumnContent(item[0], item[1], "start", TableColumnWidth("content", "content"))
+        for item in table_columns
+    )
     value = dict(
         table_columns=table_columns, table_cells=table_cells, relations=(), annotations=(),
         show_member_labels=False, label_placement="none", label_content=(), label_side="auto",
@@ -334,6 +338,34 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
     assert baseline.visual_role == "snapshot"
     assert any(item.scene_id == "member-label:release:primary" and item.text == "Current plan"
                for item in surface.primitives)
+
+
+def test_layout_indents_only_the_named_nonleading_hierarchy_column_and_aligns_cells() -> None:
+    item = ReviewItem("a", "Indented title", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)},
+                      None, None, (), item_id="a", source_kind="primary")
+    row = ReviewRowProjection("child", "Child", "", "a", (item,), depth=2)
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 10)), (), (), (row,))
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
+        "timeline.mark.blockSize": Decimal(8), "table.indent.inlineSize": Decimal(12),
+    })
+    columns = (
+        TableColumnContent("index", "#", "end", TableColumnWidth("content", "fr", 1)),
+        TableColumnContent("title", "Title", "start", TableColumnWidth("content", "content")),
+    )
+    value = build_scene_input(projection=projection,
+                              surface_content=surface_content(columns, (("child", "index", "7"), ("child", "title", "Indented title")),
+                                                              table_hierarchy_column="title"),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    index = next(node for node in surface.primitives if node.scene_id == "cell:child:index")
+    title = next(node for node in surface.primitives if node.scene_id == "cell:child:title")
+    title_column = next(node for node in surface.primitives if node.scene_id == "column:title")
+    assert index.bounds[0] > 0
+    assert title.bounds[0] == title_column.bounds[0] + 24
 
 
 def test_scene_projects_layout_completed_rollup_summary_bar():
