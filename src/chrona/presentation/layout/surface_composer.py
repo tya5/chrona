@@ -18,7 +18,7 @@ from chrona.presentation.layout.annotations import (
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelObstacle, LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
-from chrona.presentation.layout.path_geometry import rounded_diamond_path, rounded_orthogonal_path
+from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, ColumnPlacement, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
@@ -520,7 +520,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         geometry = role_geometries[semantic_id]
         radius = min(geometry.corner_radius * float(min(bounds.inline_size, bounds.block_size)),
                      float(min(bounds.inline_size, bounds.block_size)) / 2)
-        commands = (rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
+        commands = (open_span_path(inline=float(bounds.inline), block=float(bounds.block),
+                                   inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
+                    if shape == "open-span" else
+                    rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
                                          inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                     if shape == "point" and radius > 0 else ())
         return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
@@ -577,7 +580,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                   Decimal(str(x2 - x1)), Decimal(str(actual_size)))
                     mark = place_mark(f"actual:{instance_id}", item.object_id, bounds,
                                       (x1, actual_block + actual_size / 2),
-                                      (x2, actual_block + actual_size / 2), shape="span", semantic_id="actual",
+                                      (x2, actual_block + actual_size / 2), shape="open-span", semantic_id="actual",
                                       end_treatment="open")
                     marks.append(mark)
             elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):

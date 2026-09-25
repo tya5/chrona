@@ -3,7 +3,7 @@ from datetime import date
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.scene.mark_geometry import marker_geometry
-from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, SymbolGeometry, TextLayout
 
 
 def _surface(*primitives):
@@ -59,3 +59,19 @@ def test_svg_projects_completed_mark_paint_order_clip_and_link_interaction_separ
     assert 'clip-path="url(#clip-host)"' in output
     assert '<g data-layer="mark-paint" aria-hidden="true">' in output
     assert '<g data-layer="mark-interaction"><a href="https://example.test/a"' in output
+
+
+def test_svg_projects_layout_owned_open_symbol_and_uses_it_as_a_progress_clip_host():
+    outline = (PathCommand("move", ((1, 2),)), PathCommand("line", ((7, 2),)),
+               PathCommand("line", ((9, 4),)), PathCommand("line", ((7, 6),)),
+               PathCommand("line", ((1, 6),)), PathCommand("line", ((1, 2),)))
+    host = ScenePrimitive("actual:open", "Symbol", "a", "object", "actual", "actual", (1, 2, 8, 4),
+                          slot_id="timeline", symbol=SymbolGeometry(outline), paint=ScenePaint("#112233", None, None, (), 1),
+                          paint_order=1, end_treatment="open")
+    fill = ScenePrimitive("progress:open", "Rect", "a", "object", "progress-fill", "progress-fill", (1, 2, 3, 4),
+                          slot_id="timeline", paint=ScenePaint("#445566", None, None, (), 1),
+                          clip_source_id="actual:open", paint_order=2)
+    output = render_v05_svg(_surface(host, fill), viewport=(10, 10))
+    assert '<clipPath id="clip-actual:open"><path d="M1 2L7 2L9 4L7 6L1 6L1 2"/></clipPath>' in output
+    assert 'data-scene-id="actual:open"' in output and 'd="M1 2L7 2L9 4L7 6L1 6L1 2"' in output
+    assert 'clip-path="url(#clip-actual:open)"' in output

@@ -92,11 +92,17 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             assert shadow is not None
             definitions.append(f'<filter id="{identifier}"><feDropShadow dx="{number(shadow.offset_x)}" dy="{number(shadow.offset_y)}" stdDeviation="{number(shadow.blur)}" flood-color="{escape(shadow.color, quote=True)}" flood-opacity="{number(shadow.opacity)}"/></filter>')
         for identifier, host in sorted(clip_hosts.items()):
-            if host.kind != "Rect":
+            if host.kind not in {"Rect", "Symbol"}:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            x, y, w, h = host.bounds
-            radius = f' rx="{number(host.corner_radius)}" ry="{number(host.corner_radius)}"' if host.corner_radius else ""
-            definitions.append(f'<clipPath id="clip-{escape(identifier, quote=True)}"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}/></clipPath>')
+            if host.kind == "Rect":
+                x, y, w, h = host.bounds
+                radius = f' rx="{number(host.corner_radius)}" ry="{number(host.corner_radius)}"' if host.corner_radius else ""
+                clip_content = f'<rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}/>'
+            else:
+                if host.symbol is None:
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                clip_content = f'<path d="{commands_data(host.symbol.outline)}"/>'
+            definitions.append(f'<clipPath id="clip-{escape(identifier, quote=True)}">{clip_content}</clipPath>')
         parts.append("<defs>" + "".join(definitions) + "</defs>")
     rendered: list[tuple[ScenePrimitive, str]] = []
     def append(node: ScenePrimitive, content: str) -> None:

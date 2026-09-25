@@ -116,7 +116,8 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
             clip_source_id = primitive.get("clipSourceId")
             if clip_source_id is not None:
                 source = by_id.get(clip_source_id)
-                if (source is None or source[0] >= index or source[1].get("kind") != "Rect"
+                if (source is None or source[0] >= index or source[1].get("kind") not in {"Rect", "Symbol"}
+                        or (source[1].get("kind") == "Symbol" and not source[1].get("symbol"))
                         or source[1].get("slotId") != primitive.get("slotId")):
                     return False
     return True

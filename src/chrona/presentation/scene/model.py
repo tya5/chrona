@@ -185,6 +185,8 @@ class ScenePrimitive:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if self.end_treatment not in {"closed", "open"}:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        if self.end_treatment == "open" and (self.kind != "Symbol" or self.symbol is None or self.purpose != "actual"):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 @dataclass(frozen=True)
 class SceneSlot:
@@ -274,6 +276,7 @@ class SceneSurface:
     primitives: tuple[ScenePrimitive, ...] = ()
     canvas_paint: ScenePaint | None = None
     columns: tuple[SceneColumn, ...] = ()
+    diagnostics: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
@@ -284,7 +287,8 @@ class SceneSurface:
             if item.clip_source_id is None:
                 continue
             source = by_id.get(item.clip_source_id)
-            if (source is None or source[0] >= index or source[1].kind != "Rect"
+            if (source is None or source[0] >= index or source[1].kind not in {"Rect", "Symbol"}
+                    or (source[1].kind == "Symbol" and source[1].symbol is None)
                     or source[1].slot_id != item.slot_id):
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 

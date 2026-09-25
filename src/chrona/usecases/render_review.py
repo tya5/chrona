@@ -326,7 +326,7 @@ def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection:
         "draft" if context_identity.revision == "draft" else "immutable",
         version("chrona"), tuple(sorted(resources)),
     )
-    return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest, ())
+    return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest, surface.diagnostics)
 
 
 def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind: str) -> tuple[FontGlyphWarning, ...]:

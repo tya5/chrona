@@ -302,6 +302,13 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_MARK_CORNER_RADIUS_INVALID:{mark.placement_id}")
             if mark.end_treatment not in {"closed", "open"}:
                 raise ValueError(f"E_LAYOUT_MARK_END_TREATMENT_INVALID:{mark.placement_id}")
+            if mark.mark_shape not in {"span", "point", "open-span"}:
+                raise ValueError(f"E_LAYOUT_MARK_SHAPE_INVALID:{mark.placement_id}")
+            if ((mark.end_treatment == "open") != (mark.mark_shape == "open-span")
+                    or (mark.mark_shape == "open-span"
+                        and (not mark.path_commands or mark.path_commands[0].kind != "move"
+                             or mark.path_commands[-1].points[-1] != mark.path_commands[0].points[0]))):
+                raise ValueError(f"E_LAYOUT_MARK_OPEN_OUTLINE_INVALID:{mark.placement_id}")
         for shape in self.shapes:
             if shape.kind == "Path":
                 if len(shape.points) < 2:

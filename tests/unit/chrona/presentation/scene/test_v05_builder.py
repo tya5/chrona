@@ -6,11 +6,12 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
+from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
-from chrona.presentation.scene.model import ScenePrimitive, SceneSurface
+from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, SymbolGeometry
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 
@@ -57,6 +58,15 @@ def test_scene_rejects_a_clip_that_does_not_reference_a_preceding_same_slot_host
                           slot_id="timeline")
     with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
         SceneSurface("s", (), (), (), None, (fill, host))
+
+
+def test_scene_accepts_a_completed_open_symbol_as_a_clip_host():
+    outline = (PathCommand("move", ((0, 0),)), PathCommand("line", ((1, 0),)), PathCommand("line", ((0, 0),)))
+    host = ScenePrimitive("host", "Symbol", "a", "object", "actual", "actual", (0, 0, 1, 1),
+                          slot_id="timeline", symbol=SymbolGeometry(outline), end_treatment="open")
+    fill = ScenePrimitive("fill", "Rect", "a", "object", "progress-fill", "progress-fill", (0, 0, 1, 1),
+                          slot_id="timeline", clip_source_id="host")
+    SceneSurface("s", (), (), (), None, (host, fill))
 
 
 def test_scene_roles_are_registry_owned_without_direct_variance_or_scale_role_literals():

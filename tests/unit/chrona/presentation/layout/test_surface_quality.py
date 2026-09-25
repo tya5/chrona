@@ -4,6 +4,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.path_geometry import open_span_path
 from chrona.presentation.layout.surface_composer import progress_fill_bounds
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain,
@@ -83,7 +84,8 @@ def test_surface_placement_validates_completed_mark_and_shape_geometry():
 
 def test_surface_placement_closes_clip_hosts_and_mark_end_treatment():
     bounds = _rect(1, 2, 20, 4)
-    host = MarkPlacement("actual:a", "a", bounds, (1, 4), (21, 4), slot_id="timeline", end_treatment="open")
+    host = MarkPlacement("actual:a", "a", bounds, (1, 4), (21, 4), slot_id="timeline", mark_shape="open-span",
+                         path_commands=open_span_path(inline=1, block=2, inline_size=20, block_size=4, radius=1), end_treatment="open")
     SurfacePlacement(marks=(host,), shapes=(ShapePlacement("progress:a", "a", "Rect", bounds,
                                                            slot_id="timeline", clip_host_id="actual:a"),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_CLIP_HOST_INVALID:progress:a"):
@@ -91,6 +93,8 @@ def test_surface_placement_closes_clip_hosts_and_mark_end_treatment():
                                                 slot_id="timeline", clip_host_id="actual:a"),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_MARK_END_TREATMENT_INVALID:actual:a"):
         SurfacePlacement(marks=(MarkPlacement("actual:a", "a", bounds, (1, 4), (21, 4), end_treatment="unknown"),)).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_MARK_OPEN_OUTLINE_INVALID:actual:a"):
+        SurfacePlacement(marks=(MarkPlacement("actual:a", "a", bounds, (1, 4), (21, 4), end_treatment="open"),)).assert_valid()
 
 
 def test_surface_placement_rejects_icon_without_a_declared_slot_owner():

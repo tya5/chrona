@@ -40,13 +40,13 @@ def pattern_kind(value: Mapping[str, object]) -> str:
 
 def symbol_geometry(shape: str, bounds: tuple[float, float, float, float],
                     layout_outline: tuple[PathCommand, ...] = ()) -> SymbolGeometry:
+    if layout_outline:
+        return SymbolGeometry(layout_outline)
     if shape not in {"diamond", "circle", "square", "chevron"}:
         raise ValueError("E_THEME_TOKEN_TYPE")
     x, y, width, height = bounds
     if width < 0 or height < 0:
         raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-    if shape == "diamond" and layout_outline:
-        return SymbolGeometry(layout_outline)
     if shape == "diamond":
         points = ((x + width / 2, y), (x + width, y + height / 2), (x + width / 2, y + height), (x, y + height / 2))
         return SymbolGeometry(_closed_lines(points))

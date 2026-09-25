@@ -354,6 +354,40 @@ def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp
     assert 'data-scene-id="progress-fill:actual:firmware:firmware"' not in without_host
 
 
+def test_open_actual_is_a_layout_completed_continuation_host_with_progress(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["body"]["progressFill"] = {"source": "actual"}
+    view_path = tmp_path / "actual-open-view.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    result = render_review(_draft_request(view_path=view_path))
+    by_id = {primitive.scene_id: primitive for primitive in result.surface.primitives}
+    actual = by_id["actual:performance:performance"]
+    progress = by_id["progress-fill:actual:performance:performance"]
+    assert actual.kind == "Symbol" and actual.end_treatment == "open" and actual.symbol is not None
+    assert actual.symbol.outline[0].points[0] == actual.symbol.outline[-1].points[-1]
+    assert progress.clip_source_id == actual.scene_id
+    assert "missing-actual:performance:performance" not in by_id
+    svg = result.artifact.content.decode()
+    assert 'data-scene-id="actual:performance:performance"' in svg
+    assert 'clip-path="url(#clip-actual:performance:performance)"' in svg
+
+
+def test_open_actual_without_set_as_of_warns_without_fabricating_a_missing_stub(tmp_path):
+    root = _root()
+    actual = yaml.safe_load((root / "examples/controller-z/actual.yaml").read_text(encoding="utf-8"))
+    actual["body"].pop("asOf")
+    actual_path = tmp_path / "without-as-of.yaml"
+    actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
+    result = render_review(_draft_request(actual_path=actual_path))
+    ids = {primitive.scene_id for primitive in result.surface.primitives}
+    assert "actual:performance:performance" not in ids
+    assert "missing-actual:performance:performance" not in ids
+    assert "W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:performance" in result.scene.diagnostics
+    assert "W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:performance" in json.loads(serialize_scene(result.scene))["diagnostics"]
+
+
 def test_progress_fill_omits_absent_and_zero_planned_progress(tmp_path):
     root = _root()
     project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))

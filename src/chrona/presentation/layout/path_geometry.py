@@ -63,3 +63,25 @@ def rounded_diamond_path(*, inline: float, block: float, inline_size: float, blo
             commands.append(PathCommand("line", (before_after[index + 1][0],)))
     commands.append(PathCommand("line", (before_after[0][0],)))
     return tuple(commands)
+
+
+def open_span_path(*, inline: float, block: float, inline_size: float, block_size: float,
+                   radius: float) -> tuple[PathCommand, ...]:
+    """Return a closed continuation-chevron outline for a completed open span."""
+    if inline_size <= 0 or block_size <= 0 or radius < 0 or not isfinite(radius):
+        raise ValueError("E_LAYOUT_PATH_INPUT")
+    terminal = min(block_size / 2, inline_size / 2)
+    leading = min(radius, block_size / 2, max(0.0, (inline_size - terminal) / 2))
+    left, top = inline, block
+    right, bottom = inline + inline_size, block + block_size
+    shoulder = right - terminal
+    return (
+        PathCommand("move", ((left + leading, top),)),
+        PathCommand("line", ((shoulder, top),)),
+        PathCommand("line", ((right, top + block_size / 2),)),
+        PathCommand("line", ((shoulder, bottom),)),
+        PathCommand("line", ((left + leading, bottom),)),
+        PathCommand("quadratic", ((left, bottom), (left, bottom - leading))),
+        PathCommand("line", ((left, top + leading),)),
+        PathCommand("quadratic", ((left, top), (left + leading, top))),
+    )

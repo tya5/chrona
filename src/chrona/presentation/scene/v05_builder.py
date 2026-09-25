@@ -351,9 +351,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                       float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
             if item.source_type == "span":
-                primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
-                                                 paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                if actual_mark.mark_shape == "open-span":
+                    primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                                     bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands),
+                                                     corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                else:
+                    primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                                     bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
             else:
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                  bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands), corner_radius=actual_mark.corner_radius,
@@ -521,7 +527,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
-    return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns)
+    return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
+                        diagnostics=placed_surface.diagnostics)
 
 
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
