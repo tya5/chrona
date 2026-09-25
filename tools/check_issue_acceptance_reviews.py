@@ -13,6 +13,7 @@ MARKER = "<!-- chrona:literal-acceptance/v1 -->"
 DISPOSITIONS = frozenset({"met", "not met", "narrowed", "deferred"})
 ISSUE_HEADING = re.compile(r"^### Issue #(?P<number>[1-9][0-9]*)\s*$")
 LINK = re.compile(r"\[[^][]+\]\([^()]+\)|https?://\S+")
+MARKDOWN_LINK = re.compile(r"\[[^][]+\]\((?P<target>[^()\s]+)(?:\s+[^()]*)?\)")
 
 
 def _error(path: Path, line: int, code: str) -> str:
@@ -27,6 +28,14 @@ def _cells(line: str) -> tuple[str, ...] | None:
 
 def _is_separator(cells: tuple[str, ...]) -> bool:
     return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell) is not None for cell in cells)
+
+
+def _has_resolved_local_link(value: str, *, review: Path) -> bool:
+    """Accept an external URL or a local Markdown target that exists."""
+    if "http://" in value or "https://" in value:
+        return True
+    targets = tuple(match.group("target").split("#", 1)[0] for match in MARKDOWN_LINK.finditer(value))
+    return bool(targets) and all((review.parent / target).resolve().exists() for target in targets)
 
 
 def validate_review(path: Path) -> tuple[str, ...]:
@@ -85,9 +94,10 @@ def validate_review(path: Path) -> tuple[str, ...]:
                 errors.append(_error(path, line, "E_LITERAL_ACCEPTANCE_CRITERION"))
             if disposition not in DISPOSITIONS:
                 errors.append(_error(path, line, "E_LITERAL_ACCEPTANCE_DISPOSITION"))
-            if not evidence or not LINK.search(evidence):
+            if not evidence or not LINK.search(evidence) or not _has_resolved_local_link(evidence, review=path):
                 errors.append(_error(path, line, "E_LITERAL_ACCEPTANCE_EVIDENCE"))
-            if disposition in {"narrowed", "deferred"} and not LINK.search(successor):
+            if disposition in {"narrowed", "deferred"} and (
+                    not LINK.search(successor) or not _has_resolved_local_link(successor, review=path)):
                 errors.append(_error(path, line, "E_LITERAL_ACCEPTANCE_SUCCESSOR"))
         if not row_count:
             errors.append(_error(path, table_header, "E_LITERAL_ACCEPTANCE_ROW"))
