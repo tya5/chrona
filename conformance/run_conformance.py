@@ -51,6 +51,7 @@ CHECKS = (
     CheckSpec("schema-annotations", _command("tools/schema_annotations.py")),
     CheckSpec("schema-references", _command("tools/validate_schema_references.py")),
     CheckSpec("example-inventory", _command("tools/example_inventory.py")),
+    CheckSpec("scene-perceptibility", _command("tools/check_scene_perceptibility.py")),
     CheckSpec("diagnostic-inventory", _command("tools/diagnostic_inventory.py", "--check")),
     CheckSpec("layout-float-accumulation", _command("tools/check_layout_float_accumulation.py")),
     CheckSpec("declared-value-inventory", _command("tools/declared_value_inventory.py", "--check")),

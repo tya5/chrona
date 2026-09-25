@@ -51,3 +51,11 @@ def test_runner_bounds_captured_output_without_hiding_failure_status():
     assert result.status == "FAIL"
     assert "output truncated" in result.stdout
     assert len(result.stdout) < len(payload)
+
+
+def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
+    runner = _runner()
+    ids = [item.check_id for item in runner.CHECKS]
+
+    assert ids.count("scene-perceptibility") == 1
+    assert ids.index("example-inventory") < ids.index("scene-perceptibility") < ids.index("diagnostic-inventory")
