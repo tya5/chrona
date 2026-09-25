@@ -177,24 +177,42 @@ allOf:
                     role: {enum: [band, labels, grid-major, grid-minor]}
                     label: {}
                   allOf:
-                    - if: {properties: {role: {const: labels}}, required: [role]}
+                    - description: "Only a labels tier owns a label declaration."
+                      examples: [{unit: month, every: 1, role: labels, label: {form: short-month, align: start, overflow: diagnose}}]
+                      if: {properties: {role: {const: labels}}, required: [role]}
                       then: {required: [label]}
                       else: {not: {required: [label]}}
-                    - if: {properties: {unit: {const: auto}}, required: [unit]}
+                    - description: "Automatic unit selection is available only for labels."
+                      examples: [{unit: auto, every: 1, role: labels, label: {forms: {month: short-month}, align: start, overflow: diagnose}}]
+                      if: {properties: {unit: {const: auto}}, required: [unit]}
                       then: {properties: {role: {const: labels}}}
-                    - if: {properties: {unit: {const: day}, role: {const: labels}}, required: [unit, role]}
+                    - description: "Day labels use the localized-date form."
+                      examples: [{unit: day, every: 1, role: labels, label: {form: localized-date, align: start, overflow: diagnose}}]
+                      if: {properties: {unit: {const: day}, role: {const: labels}}, required: [unit, role]}
                       then: {properties: {label: {type: object, required: [form, align, overflow], additionalProperties: false, properties: {form: {const: localized-date}, align: {enum: [start, center]}, overflow: {enum: [diagnose, thin-with-record]}}}}}
-                    - if: {properties: {unit: {const: week}, role: {const: labels}}, required: [unit, role]}
+                    - description: "Week labels use ISO week numbers."
+                      examples: [{unit: week, every: 1, role: labels, label: {form: iso-week, align: start, overflow: diagnose}}]
+                      if: {properties: {unit: {const: week}, role: {const: labels}}, required: [unit, role]}
                       then: {properties: {label: {type: object, required: [form, align, overflow], additionalProperties: false, properties: {form: {const: iso-week}, align: {enum: [start, center]}, overflow: {enum: [diagnose, thin-with-record]}}}}}
-                    - if: {properties: {unit: {const: month}, role: {const: labels}}, required: [unit, role]}
+                    - description: "Month labels select one finite month form."
+                      examples: [{unit: month, every: 1, role: labels, label: {form: short-month, align: start, overflow: diagnose}}]
+                      if: {properties: {unit: {const: month}, role: {const: labels}}, required: [unit, role]}
                       then: {properties: {label: {type: object, required: [form, align, overflow], additionalProperties: false, properties: {form: {enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]}, align: {enum: [start, center]}, overflow: {enum: [diagnose, thin-with-record]}}}}}
-                    - if: {properties: {unit: {const: quarter}, role: {const: labels}}, required: [unit, role]}
+                    - description: "Quarter labels select one finite quarter form."
+                      examples: [{unit: quarter, every: 1, role: labels, label: {form: year-quarter, align: center, overflow: diagnose}}]
+                      if: {properties: {unit: {const: quarter}, role: {const: labels}}, required: [unit, role]}
                       then: {properties: {label: {type: object, required: [form, align, overflow], additionalProperties: false, properties: {form: {enum: [quarter, year-quarter, quarter-year]}, align: {enum: [start, center]}, overflow: {enum: [diagnose, thin-with-record]}}}}}
-                    - if: {properties: {unit: {const: half}, role: {const: labels}}, required: [unit, role]}
+                    - description: "Half-year labels use the fiscal half-year form."
+                      examples: [{unit: half, every: 1, role: labels, label: {form: half-year, align: center, overflow: diagnose}}]
+                      if: {properties: {unit: {const: half}, role: {const: labels}}, required: [unit, role]}
                       then: {properties: {label: {type: object, required: [form, align, overflow], additionalProperties: false, properties: {form: {const: half-year}, align: {enum: [start, center]}, overflow: {enum: [diagnose, thin-with-record]}}}}}
-                    - if: {properties: {unit: {const: year}, role: {const: labels}}, required: [unit, role]}
+                    - description: "Year labels use the year form."
+                      examples: [{unit: year, every: 1, role: labels, label: {form: year, align: center, overflow: diagnose}}]
+                      if: {properties: {unit: {const: year}, role: {const: labels}}, required: [unit, role]}
                       then: {properties: {label: {type: object, required: [form, align, overflow], additionalProperties: false, properties: {form: {const: year}, align: {enum: [start, center]}, overflow: {enum: [diagnose, thin-with-record]}}}}}
-                    - if: {properties: {unit: {const: auto}, role: {const: labels}}, required: [unit, role]}
+                    - description: "Automatic labels declare their allowed concrete forms."
+                      examples: [{unit: auto, every: 1, role: labels, label: {forms: {month: short-month}, align: start, overflow: thin-with-record}}]
+                      if: {properties: {unit: {const: auto}, role: {const: labels}}, required: [unit, role]}
                       then:
                         properties:
                           label:
