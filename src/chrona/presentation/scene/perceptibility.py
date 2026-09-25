@@ -159,10 +159,14 @@ def _occlusion_findings(scene_path: str, primitives: Sequence[_Primitive]) -> li
             ratio = _intersection(text.bounds, rect.bounds) / text.bounds.area
             if ratio < OCCLUSION_RATIO:
                 continue
-            code = "I_SCENE_HOSTED_TEXT_OVERLAP" if text.host_placement_id == rect.primitive_id else "E_SCENE_TEXT_OCCLUDED"
-            severity = "info" if code.startswith("I_") else "error"
-            findings.append(_finding(code, severity, scene_path, (text.primitive_id, rect.primitive_id), text.slot_id,
-                                     (("coverageRatio", ratio), ("threshold", OCCLUSION_RATIO))))
+            if text.host_placement_id == rect.primitive_id:
+                findings.append(_finding("I_SCENE_HOSTED_TEXT_OVERLAP", "info", scene_path,
+                                         (text.primitive_id, rect.primitive_id), text.slot_id,
+                                         (("coverageRatio", ratio), ("threshold", OCCLUSION_RATIO))))
+            else:
+                findings.append(_finding("E_SCENE_TEXT_OCCLUDED", "error", scene_path,
+                                         (text.primitive_id, rect.primitive_id), text.slot_id,
+                                         (("coverageRatio", ratio), ("threshold", OCCLUSION_RATIO))))
     return findings
 
 
@@ -278,4 +282,4 @@ def _string(value: Any, label: str) -> str:
 
 def _require(condition: bool, detail: str) -> None:
     if not condition:
-        raise ScenePerceptibilityError(f"E_SCENE_PERCEPTIBILITY_DOCUMENT: {detail}")
+        raise ScenePerceptibilityError("E_SCENE_PERCEPTIBILITY_DOCUMENT: " + detail)

@@ -4,3 +4,5 @@
 #
 # There are currently no staged modules. A future entry must name its owning
 # issue, why it cannot yet be product-reachable, and its planned removal date.
+
+chrona.presentation.scene.perceptibility # #446 I446-1 pure evaluator; remove in I446-2 corpus-tool publication (2026-09-26).
