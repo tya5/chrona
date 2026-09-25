@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 import subprocess
-from typing import Protocol
+from typing import Iterable, Protocol
 
 from fontTools.ttLib import TTFont
 
 from chrona.presentation.fonts.importer import FontImportError, font_metrics_document
-from chrona.presentation.model.font_metrics import FontFile, FontMetrics, FontMetricsError, font_metrics_from_document
+from chrona.presentation.model.font_metrics import FontFile, FontMetrics, FontMetricsCatalog, FontMetricsError, font_metrics_from_document
 
 
 class SystemFontError(ValueError):
@@ -37,11 +37,11 @@ class SystemFontResolver(Protocol):
 
 @dataclass(frozen=True)
 class DraftFontResolution:
-    """Volatile exact face state, valid only while rendering one Draft."""
+    """Volatile exact face catalog, valid only while rendering one Draft."""
 
-    face: SystemFontFace
-    metrics: FontMetrics
-    font_file: FontFile
+    faces: tuple[SystemFontFace, ...]
+    metrics: FontMetricsCatalog
+    font_files: tuple[FontFile, ...]
 
 
 def _name(font: TTFont, name_id: int) -> str | None:
@@ -81,8 +81,8 @@ def resolve_system_font(family: str, weight: int, *, runner=subprocess.run) -> S
                           "sha256:" + sha256(path.read_bytes()).hexdigest())
 
 
-def resolve_draft_font(face: SystemFontFace) -> DraftFontResolution:
-    """Measure the exact bytes that the draft PNG renderer will receive."""
+def _draft_entry(face: SystemFontFace) -> tuple[FontMetrics, FontFile]:
+    """Measure one exact face before it enters the draft catalog."""
     try:
         payload = face.path.read_bytes()
         if "sha256:" + sha256(payload).hexdigest() != face.content_identity:
@@ -92,4 +92,29 @@ def resolve_draft_font(face: SystemFontFace) -> DraftFontResolution:
                                              weight=face.weight, source_content_identity=face.content_identity)
     except (OSError, ValueError, FontImportError, FontMetricsError) as error:
         raise SystemFontError("E_FONT_SYSTEM_MISMATCH", face.requested_family) from error
-    return DraftFontResolution(face, metrics, FontFile(face.path, face.content_identity, face.family, face.weight))
+    return metrics, FontFile(face.path, face.content_identity, face.family, face.weight)
+
+
+def resolve_draft_fonts(faces: Iterable[SystemFontFace]) -> DraftFontResolution:
+    """Close exact system faces into the same catalog shape Layout already uses."""
+    resolved_faces = tuple(sorted(faces, key=lambda face: (face.family.casefold(), face.weight)))
+    if not resolved_faces:
+        raise SystemFontError("E_FONT_SYSTEM_MISSING", "no Theme faces")
+    metrics: dict[tuple[str, int], FontMetrics] = {}
+    files: dict[str, FontFile] = {}
+    for face in resolved_faces:
+        key = (face.family.casefold(), face.weight)
+        if key in metrics:
+            raise SystemFontError("E_FONT_SYSTEM_MISMATCH", f"duplicate face: {face.family}/{face.weight}")
+        metric, font_file = _draft_entry(face)
+        metrics[key] = metric
+        previous = files.setdefault(font_file.content_identity, font_file)
+        if previous.family.casefold() != font_file.family.casefold() or previous.weight != font_file.weight:
+            raise SystemFontError("E_FONT_SYSTEM_MISMATCH", f"ambiguous face identity: {font_file.content_identity}")
+    return DraftFontResolution(resolved_faces, FontMetricsCatalog(metrics),
+                               tuple(files[key] for key in sorted(files)))
+
+
+def resolve_draft_font(face: SystemFontFace) -> DraftFontResolution:
+    """Close one exact face for callers that deliberately need a one-face catalog."""
+    return resolve_draft_fonts((face,))

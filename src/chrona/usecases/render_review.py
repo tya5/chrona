@@ -298,7 +298,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
         asset_root=asset_root,
-        font_files=(resolution.font_file,) if resolution is not None else None,
+        font_files=resolution.font_files if resolution is not None else None,
     )
     try:
         artifact = renderer.render(surface)

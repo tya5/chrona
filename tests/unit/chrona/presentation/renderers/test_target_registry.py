@@ -59,12 +59,13 @@ def test_draft_system_font_png_receives_the_measured_file_without_scene_path_pro
         draft.closure, draft.asset_root, ReferenceScheduler(),
         renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
                      context.environment.renderer_environment(), asset_root=draft.asset_root,
-                     font_files=(draft.font_resolution.font_file,)),
+                     font_files=draft.font_resolution.font_files),
         asset_root=draft.asset_root, draft_font_resolution=draft.font_resolution,
     ))
 
     assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
-    assert str(draft.font_resolution.face.path).encode() not in serialize_scene(rendered.scene)
+    assert all(str(face.path).encode() not in serialize_scene(rendered.scene)
+               for face in draft.font_resolution.faces)
 
 
 def test_system_font_resolution_is_rejected_if_a_caller_attempts_immutable_rendering():

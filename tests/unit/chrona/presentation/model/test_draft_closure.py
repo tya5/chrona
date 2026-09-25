@@ -7,6 +7,8 @@ import yaml
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_guided_draft_render
 from chrona.presentation.fonts.system import resolve_system_font
 from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
+from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.resources import default_preset_resource, default_preset_root
 
 
@@ -120,10 +122,14 @@ def test_draft_closure_never_probes_a_host_typesetter():
 
 
 def _system_resolver(root: Path):
-    face = root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf"
+    faces = {
+        400: root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf",
+        700: root / "src/chrona/resources/fonts/noto-sans-bold-v1.ttf",
+    }
 
-    def runner(_command, **_kwargs):
-        return type("Result", (), {"stdout": f"{face}\nNoto Sans\n80\n"})()
+    def runner(command, **_kwargs):
+        weight = 700 if "weight=700" in command[-1] else 400
+        return type("Result", (), {"stdout": f"{faces[weight]}\nNoto Sans\n80\n"})()
 
     return lambda family, weight: resolve_system_font(family, weight, runner=runner)
 
@@ -133,11 +139,11 @@ def test_system_font_opt_in_is_draft_only_runtime_state_not_context_font_metrics
     draft = resolve_draft_render(**_paths(root), system_fonts=True, system_font_resolver=_system_resolver(root))
 
     assert draft.font_resolution is not None
-    assert draft.font_resolution.face.path.name == "noto-sans-regular-v1.ttf"
-    assert str(draft.font_resolution.face.path) not in repr(draft.closure.context.environment.font_metrics)
+    assert tuple(face.path.name for face in draft.font_resolution.faces) == ("noto-sans-regular-v1.ttf",)
+    assert str(draft.font_resolution.faces[0].path) not in repr(draft.closure.context.environment.font_metrics)
 
 
-def test_system_font_opt_in_rejects_multiple_theme_faces_before_layout(tmp_path):
+def test_system_font_opt_in_closes_multiple_theme_faces_before_layout(tmp_path):
     root = _root()
     theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     theme["body"]["values"]["heading-weight"] = {"type": "fontWeight", "value": 700}
@@ -145,10 +151,22 @@ def test_system_font_opt_in_rejects_multiple_theme_faces_before_layout(tmp_path)
     theme_path = tmp_path / "multiple-faces.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(ClosureError, match="E_FONT_SYSTEM_MISMATCH") as error:
-        resolve_draft_render(**(_paths(root) | {"theme_path": theme_path}), system_fonts=True,
-                             system_font_resolver=_system_resolver(root))
-    assert "Noto Sans/400" in error.value.detail and "Noto Sans/700" in error.value.detail
+    draft = resolve_draft_render(**(_paths(root) | {"theme_path": theme_path,
+                                                    "actual_path": root / "examples/controller-z/actual.yaml"}), system_fonts=True,
+                                 system_font_resolver=_system_resolver(root))
+    assert draft.font_resolution is not None
+    assert tuple((face.family, face.weight) for face in draft.font_resolution.faces) == (("Noto Sans", 400), ("Noto Sans", 700))
+    assert draft.font_resolution.metrics.select("Noto Sans", 700).content_identity != (
+        draft.font_resolution.metrics.select("Noto Sans", 400).content_identity)
+    rendered = render_review(RenderRequest(
+        draft.closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root,
+        draft_font_resolution=draft.font_resolution,
+    ))
+    identities = {(primitive.text_layout.weight, primitive.text_layout.asset_identity)
+                  for surface in rendered.scene.surfaces for primitive in surface.primitives
+                  if primitive.text_layout is not None}
+    assert (400, draft.font_resolution.metrics.select("Noto Sans", 400).content_identity) in identities
+    assert (700, draft.font_resolution.metrics.select("Noto Sans", 700).content_identity) in identities
 
 
 def test_system_font_opt_in_rejects_non_svg_png_draft_target():

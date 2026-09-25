@@ -25,7 +25,7 @@ from chrona.presentation.contracts import (
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
-from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_font, resolve_system_font
+from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.resources import safe_load
@@ -413,7 +413,7 @@ def _draft_render_from_resources(
 
 
 def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFontResolver) -> DraftFontResolution:
-    """Resolve the one face the current measurement contract can represent."""
+    """Close every finite Theme typography face before Layout measures text."""
     try:
         typography = ThemeTokenView(theme)
         roles = theme.get("body", {}).get("roles", {})
@@ -424,14 +424,12 @@ def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFont
         }
     except (AttributeError, ThemeTokenError, TypeError, ValueError) as error:
         raise ClosureError("E_FONT_SYSTEM_MISMATCH", detail="Theme typography cannot select one system face") from error
-    if len(requests) != 1:
-        values = ", ".join(f"{family}/{weight}" for family, weight in sorted(requests))
-        raise ClosureError("E_FONT_SYSTEM_MISMATCH", detail=f"multiple Theme faces: {values}")
-    family, weight = next(iter(requests))
-    if not family:
+    if not requests:
+        raise ClosureError("E_FONT_SYSTEM_MISSING", detail="Theme has no typography faces")
+    if any(not family for family, _weight in requests):
         raise ClosureError("E_FONT_SYSTEM_MISSING", detail="Theme primary font family is empty")
     try:
-        return resolve_draft_font(resolver(family, weight))
+        return resolve_draft_fonts(resolver(family, weight) for family, weight in sorted(requests))
     except SystemFontError as error:
         raise ClosureError(error.code, detail=error.detail) from error
 
