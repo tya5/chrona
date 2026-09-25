@@ -83,6 +83,7 @@ class TableCellContent:
     column_id: str
     content: str
     semantic_id: str
+    typography_role: str = "text"
 
 
 @dataclass(frozen=True)

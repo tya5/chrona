@@ -24,7 +24,8 @@ schemas:
   - {file: render-context-v0.12.schema.yaml, kind: render-context, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: render-context-v0.13.schema.yaml, removalSlice: P351-1}
   - {file: render-context-v0.13.schema.yaml, kind: render-context, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: render-context-v0.14.schema.yaml, removalSlice: I360-1}
   - {file: render-context-v0.14.schema.yaml, kind: render-context, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: render-context-v0.15.schema.yaml, removalSlice: I387-2}
-  - {file: render-context-v0.15.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: render-context-v0.15.schema.yaml, kind: render-context, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: render-context-v0.16.schema.yaml, removalSlice: I410-2}
+  - {file: render-context-v0.16.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: review-detail-profile-v0.1.schema.yaml, kind: review-detail-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: scene-v0.1.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.2.schema.yaml, removalSlice: I375-0}
   - {file: scene-v0.2.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.3.schema.yaml, removalSlice: I398-1}

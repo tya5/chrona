@@ -43,6 +43,7 @@ class FontMetrics:
     descent: int
     cap_height: int
     advances: dict[int, int]
+    numeric_advances: dict[str, dict[int, int]] | None
     substitute_metrics: "FontMetrics | None" = None
     substitutions: set[FontGlyphSubstitution] = field(default_factory=set, compare=False, repr=False)
 
@@ -51,14 +52,26 @@ class FontMetrics:
         """The exact source face identity carried into measured placements."""
         return self.source_content_identity
 
-    def width(self, value: str, size: float, letter_spacing: float = 0) -> float:
+    def width(self, value: str, size: float, letter_spacing: float = 0,
+              numeric_spacing: str = "proportional") -> float:
         total = 0
         for character in value:
             codepoint = ord(character)
-            advance = self.advances.get(codepoint)
+            if ord("0") <= codepoint <= ord("9"):
+                self.ensure_numeric_spacing(numeric_spacing)
+                advance = self.numeric_advances[numeric_spacing].get(codepoint) if self.numeric_advances else None
+            else:
+                advance = self.advances.get(codepoint)
             if advance is None:
                 if codepoint <= 0x1F or codepoint == 0x7F:
                     continue
+                # Primary faces must carry every selected numeric feature.
+                # A character-level substitute never supplies numeric policy.
+                if ord("0") <= codepoint <= ord("9"):
+                    raise FontMetricsError(
+                        "E_FONT_GLYPH_UNAVAILABLE",
+                        f"{self.family} has no metric for U+{codepoint:04X} in {value!r}",
+                    )
                 if self.substitute_metrics is not None:
                     fallback_advance = self.substitute_metrics.advances.get(codepoint)
                     if fallback_advance is not None:
@@ -74,6 +87,11 @@ class FontMetrics:
                 )
             total += advance
         return total / self.units_per_em * size + max(0, len(value) - 1) * letter_spacing
+
+    def ensure_numeric_spacing(self, numeric_spacing: str) -> None:
+        """Reject a selected numeric feature that this primary face cannot measure."""
+        if self.numeric_advances is None or numeric_spacing not in self.numeric_advances:
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
 
     def baseline(self, top: float, size: float, line_height: float) -> float:
         line = size * line_height
@@ -108,9 +126,10 @@ def _identity(path: Path) -> str:
 
 
 def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400,
-                         asset_root: Path | None = None, _allow_substitute: bool = True) -> FontMetrics:
+                         asset_root: Path | None = None, _allow_substitute: bool = True,
+                         _require_numeric: bool = True) -> FontMetrics:
     """Resolve one exact metrics/font pair from a declared Context closure."""
-    if descriptor.get("algorithm") != "declared-metrics-v2":
+    if descriptor.get("algorithm") != "declared-metrics-v3":
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
     assets = descriptor.get("assets")
     families = _families(font_stack)
@@ -134,14 +153,26 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
             continue
         try:
             table = json.loads(metrics_path.read_bytes())
-            if (table.get("version") != "chrona/font-metrics/v2"
+            if (table.get("version") != "chrona/font-metrics/v3"
                     or table.get("family", "").casefold() != family.casefold()
                     or table.get("weight") != weight
                     or not isinstance(table.get("sourceContentIdentity"), str)):
                 continue
             units, ascent, descent, cap_height = (int(table[key]) for key in ("unitsPerEm", "ascent", "descent", "capHeight"))
             advances = {int(code): int(value) for code, value in table["advances"].items()}
-            if units <= 0 or cap_height <= 0 or cap_height > units or any(code < 0 or value < 0 for code, value in advances.items()):
+            raw_numeric = table.get("numericAdvances")
+            numeric_advances = ({
+                mode: {int(code): int(value) for code, value in raw_numeric[mode].items()}
+                for mode in ("proportional", "tabular")
+            } if isinstance(raw_numeric, dict) else None)
+            digits = set(range(ord("0"), ord("9") + 1))
+            if (units <= 0 or cap_height <= 0 or cap_height > units
+                    or any(code < 0 or value < 0 for code, value in advances.items())
+                    or (numeric_advances is None and _require_numeric)
+                    or (numeric_advances is not None and (
+                        any(set(values) != digits or any(value <= 0 for value in values.values())
+                            for values in numeric_advances.values())
+                        or len(set(numeric_advances["tabular"].values())) != 1))):
                 continue
         except (KeyError, TypeError, ValueError, json.JSONDecodeError, FontResourceError):
             continue
@@ -149,9 +180,9 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
         if descriptor.get("missingFont") == "substitute" and _allow_substitute:
             substitute_descriptor = _packaged_substitute_descriptor()
             fallback = resolve_font_metrics(_declared_substitute_family(substitute_descriptor), substitute_descriptor,
-                                            _allow_substitute=False)
+                                            _allow_substitute=False, _require_numeric=False)
         return FontMetrics(metrics_path, metrics_identity, str(table["sourceContentIdentity"]), family, weight,
-                           units, ascent, descent, cap_height, advances, fallback)
+                           units, ascent, descent, cap_height, advances, numeric_advances, fallback)
     raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
 
 
@@ -175,7 +206,7 @@ def _declared_substitute_family(descriptor: dict) -> str:
 
 def resolve_font_files(descriptor: dict, *, asset_root: Path | None) -> tuple[tuple[FontFile, ...], tuple[str, ...]]:
     """Return the unique, identity-checked font files declared by one Context."""
-    if descriptor.get("algorithm") != "declared-metrics-v2":
+    if descriptor.get("algorithm") != "declared-metrics-v3":
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
     assets = descriptor.get("assets")
     if not isinstance(assets, list) or not assets:

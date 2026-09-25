@@ -1,4 +1,4 @@
-"""Deterministic local font ingestion for declared-metrics-v2 descriptors."""
+"""Deterministic local font ingestion for declared-metrics-v3 descriptors."""
 from __future__ import annotations
 
 from hashlib import sha256
@@ -46,6 +46,40 @@ def _slug(family: str, weight: int) -> str:
     return f"{stem[:180]}-{weight}"
 
 
+def _numeric_advances(font: TTFont, cmap: dict[int, str], hmtx: dict[str, tuple[int, int]]) -> dict[str, dict[str, int]]:
+    """Extract the exact pnum/tnum digit glyph advances from one selected face."""
+    features: dict[str, dict[str, str]] = {"proportional": {}, "tabular": {}}
+    tags = {"pnum": "proportional", "tnum": "tabular"}
+    try:
+        records = font["GSUB"].table.FeatureList.FeatureRecord
+        lookups = font["GSUB"].table.LookupList.Lookup
+    except (AttributeError, KeyError):
+        records, lookups = (), ()
+    for record in records:
+        mode = tags.get(record.FeatureTag)
+        if mode is None:
+            continue
+        for index in record.Feature.LookupListIndex:
+            for table in lookups[index].SubTable:
+                mapping = getattr(table, "mapping", {})
+                if isinstance(mapping, dict):
+                    features[mode].update(mapping)
+    result: dict[str, dict[str, int]] = {}
+    for mode, substitutions in features.items():
+        advances: dict[str, int] = {}
+        for codepoint in range(ord("0"), ord("9") + 1):
+            glyph = cmap.get(codepoint)
+            target = substitutions.get(glyph, glyph)
+            advance = hmtx.get(target or "", (None,))[0]
+            if not isinstance(advance, int) or advance <= 0:
+                raise FontImportError("E_FONT_IMPORT_FORMAT", "/numericAdvances")
+            advances[str(codepoint)] = advance
+        result[mode] = advances
+    if len(set(result["tabular"].values())) != 1:
+        raise FontImportError("E_FONT_IMPORT_FORMAT", "/numericAdvances/tabular")
+    return result
+
+
 def _metrics(font: TTFont, payload: bytes, family: str, weight: int) -> bytes:
     try:
         cmap = font.getBestCmap() or {}
@@ -58,11 +92,12 @@ def _metrics(font: TTFont, payload: bytes, family: str, weight: int) -> bytes:
     if cap_height <= 0:
         raise FontImportError("E_FONT_CAP_HEIGHT_REQUIRED", "/OS/2/sCapHeight")
     table = {
-        "version": "chrona/font-metrics/v2", "family": family, "weight": weight,
+        "version": "chrona/font-metrics/v3", "family": family, "weight": weight,
         "sourceContentIdentity": "sha256:" + sha256(payload).hexdigest(),
         "unitsPerEm": units, "ascent": ascent, "descent": descent, "capHeight": cap_height,
         "defaultAdvance": int(hmtx.get(".notdef", (units, 0))[0]),
         "advances": {str(code): int(hmtx[name][0]) for code, name in sorted(cmap.items()) if name in hmtx},
+        "numericAdvances": _numeric_advances(font, cmap, hmtx),
     }
     return (json.dumps(table, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
 
@@ -82,12 +117,12 @@ def _write_atomic(destination: Path, payload: bytes) -> None:
 
 def _descriptor(path: Path) -> dict[str, Any]:
     if not path.exists():
-        return {"algorithm": "declared-metrics-v2", "missingFont": "diagnose", "assets": []}
+        return {"algorithm": "declared-metrics-v3", "missingFont": "diagnose", "assets": []}
     try:
         value = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as error:
         raise FontImportError("E_FONT_IMPORT_DESCRIPTOR", "/font-metrics.yaml") from error
-    if (not isinstance(value, dict) or value.get("algorithm") != "declared-metrics-v2"
+    if (not isinstance(value, dict) or value.get("algorithm") != "declared-metrics-v3"
             or value.get("missingFont") != "diagnose" or not isinstance(value.get("assets"), list)):
         raise FontImportError("E_FONT_IMPORT_DESCRIPTOR", "/font-metrics.yaml")
     return value

@@ -59,7 +59,7 @@ def _rename_face(source: Path, output: Path, *, weight: int, subfamily: str) -> 
 
 
 def _descriptor(records: list[dict]) -> dict:
-    return {"algorithm": "declared-metrics-v2", "missingFont": "diagnose", "assets": records}
+    return {"algorithm": "declared-metrics-v3", "missingFont": "diagnose", "assets": records}
 
 
 def build(*, regular_source: Path, bold_source: Path, notice_source: Path, output_root: Path,
@@ -75,7 +75,7 @@ def build(*, regular_source: Path, bold_source: Path, notice_source: Path, outpu
         output = fonts / f"noto-sans-jp-{slug}-v1.ttf"
         _rename_face(source, output, weight=weight, subfamily=subfamily)
         payload = output.read_bytes()
-        metric_output = metrics / f"noto-sans-jp-{slug}-v1.json"
+        metric_output = metrics / f"noto-sans-jp-{slug}-v2.json"
         metric_output.parent.mkdir(parents=True, exist_ok=True)
         metric_output.write_bytes(_metrics(TTFont(output), payload, FAMILY, weight))
         font_identity, metrics_identity = _identity(output), _identity(metric_output)

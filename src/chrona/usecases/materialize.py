@@ -145,8 +145,8 @@ def _copy_extension_packages(example: Path, project_reference: dict[str, Any], s
 def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          *, decoded_catalogs: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
     context = safe_load(context_path.read_bytes())
-    if context.get("version") != "chrona/render-context/v0.15" or context.get("kind") != "render-context":
-        raise _context_error("context", "chrona/render-context/v0.15 render-context", {"version": context.get("version"), "kind": context.get("kind")})
+    if context.get("version") != "chrona/render-context/v0.16" or context.get("kind") != "render-context":
+        raise _context_error("context", "chrona/render-context/v0.16 render-context", {"version": context.get("version"), "kind": context.get("kind")})
     body = context["body"]
     revision = body["project"]["revision"]["token"]
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]

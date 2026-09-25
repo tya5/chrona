@@ -29,6 +29,15 @@ def test_svg_projects_nondefault_measured_text_treatment_without_remeasuring():
     assert 'font-variant-numeric="tabular-nums"' in output
 
 
+def test_svg_projects_proportional_figures_explicitly_after_layout_measurement():
+    layout = TextLayout((1, 2, 8, 4), (1, 6), ("12",), "Test Sans", 400, 12, 1.2,
+                        "sha256:test")
+    primitive = ScenePrimitive("label", "Text", "a", "label", "label", "label", (1, 2, 8, 4),
+                               text="12", baseline=(1, 6), text_layout=layout,
+                               paint=ScenePaint("#112233", None, None, (), 1))
+    assert 'font-variant-numeric="proportional-nums"' in render_v05_svg(_surface(primitive), viewport=(10, 10))
+
+
 def test_svg_serializes_completed_path_marker_and_commands():
     paint = ScenePaint(None, "#445566", 2, (), 1)
     primitive = ScenePrimitive("p", "Path", "a", "relation", "dependency", "dependency", (0, 0, 0, 0),

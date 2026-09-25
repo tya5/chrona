@@ -16,6 +16,8 @@ def _surface() -> SceneSurface:
 
 def test_typeset_adapters_project_completed_tracking_without_font_inference():
     surface = _surface()
-    assert "tracking: 3pt" in render_v05_typst(surface, viewport=(10, 10))
+    typst = render_v05_typst(surface, viewport=(10, 10))
+    assert "tracking: 3pt" in typst and 'number-width: "proportional"' in typst
     tikz = render_v05_tikz(surface, viewport=(10, 10))
     assert r"\usepackage{letterspace}" in tikz and r"\textls[250]{AB}" in tikz
+    assert r"\usepackage{fontspec}" in tikz and r"\fontspec[Numbers=Proportional]{Test Sans}" in tikz

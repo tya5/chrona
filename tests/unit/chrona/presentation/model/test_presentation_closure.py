@@ -42,11 +42,11 @@ def test_v05_closure_binds_theme_scheme_and_layout_separately(tmp_path):
         refs[name] = _ref(kind, identifier, f"{name}.yaml", payload)
     identity = "sha256:" + "a" * 64
     context = {
-            "version": "chrona/render-context/v0.15", "kind": "render-context", "id": "ctx",
+            "version": "chrona/render-context/v0.16", "kind": "render-context", "id": "ctx",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"],
             "colorScheme": refs["scheme"], "layout": refs["layout"], "inputs": {},
-            "environment": {"viewport": {"inlineSize": 1000, "blockSize": 600}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v2", "assets": [{"family": "Noto Sans", "weight": 400, "metrics": {"locator": {"provider": "context", "address": "fonts/noto.json"}, "contentIdentity": identity}, "font": {"locator": {"provider": "context", "address": "fonts/noto.ttf"}, "contentIdentity": identity}}], "missingFont": "diagnose"}, "scenePrecision": 3},
+            "environment": {"viewport": {"inlineSize": 1000, "blockSize": 600}, "locale": "en-US", "fontMetrics": {"algorithm": "declared-metrics-v3", "assets": [{"family": "Noto Sans", "weight": 400, "metrics": {"locator": {"provider": "context", "address": "fonts/noto.json"}, "contentIdentity": identity}, "font": {"locator": {"provider": "context", "address": "fonts/noto.ttf"}, "contentIdentity": identity}}], "missingFont": "diagnose"}, "scenePrecision": 3},
             "target": {"kind": "svg", "capabilities": ["accessibleText"], "visualProfile": "chrona-output/visual/v0.5-baseline"},
         },
     }

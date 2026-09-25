@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.text import measure_text_width
@@ -56,18 +56,17 @@ def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, f
 def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         cells: tuple[TableCellContent, ...],
                         bounds: tuple[float, float, float, float],
-                        font_metrics: Any, font_size: float,
+                        measure_text: Callable[[str, str], float], minimum_inline: float,
                         overflow: str = "diagnose", gutter: float = 0.0,
-                        letter_spacing: float = 0.0, text_transform: str = "none") -> tuple[TableColumnPlacement, ...]:
+                        ) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
-    content_by_column = {column.column_id: [column.header] for column in columns}
+    content_by_column = {column.column_id: [(column.header, "text")] for column in columns}
     for cell in cells:
-        content_by_column.setdefault(cell.column_id, []).append(cell.content)
+        content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role))
     natural_widths = tuple(
-        max(font_size, max((measure_text_width(item, font_size=font_size, font_metrics=font_metrics,
-                                                letter_spacing=letter_spacing, text_transform=text_transform)
-                            for item in content_by_column.get(column.column_id, (column.header,))),
-                           default=font_size) + font_size)
+        max(minimum_inline, max((measure_text(item, role)
+                                 for item, role in content_by_column.get(column.column_id, ((column.header, "text"),))),
+                                default=minimum_inline) + minimum_inline)
         for column in columns
     )
     if gutter < 0:
@@ -75,8 +74,7 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
     if available < 0 or sum(column.width.maximum == "fill" for column in columns) > 1:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-    ellipsis_floor = max(font_size, measure_text_width("…", font_size=font_size, font_metrics=font_metrics,
-                                                        letter_spacing=letter_spacing)) + font_size
+    ellipsis_floor = max(minimum_inline, measure_text("…", "text")) + minimum_inline
     minima = tuple(natural if column.width.minimum == "content" else ellipsis_floor
                    for column, natural in zip(columns, natural_widths, strict=True))
     if sum(minima) > available:

@@ -39,9 +39,11 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         if facet == "missingActual" and not item.actual:
             return "missingActualCell"
         return "tableCell"
+    def cell_typography_role(column: Any) -> str:
+        return "numeric" if column.format == "signedDays" else "text"
     if projection.rows:
         cells = tuple(
-            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column))
+            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column))
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
         table_cell_objects = tuple(
             (row.row_id, column.id,
@@ -49,7 +51,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
              next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"})
             for row in projection.rows for column in view.table_columns)
     else:
-        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column))
+        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)

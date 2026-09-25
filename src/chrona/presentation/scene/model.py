@@ -63,6 +63,10 @@ class TextLayout:
     text_transform: str = "none"
     numeric_spacing: str = "proportional"
 
+    def __post_init__(self) -> None:
+        if self.numeric_spacing not in {"proportional", "tabular"}:
+            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID")
+
 
 @dataclass(frozen=True)
 class SceneIconPath:

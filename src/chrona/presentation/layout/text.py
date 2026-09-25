@@ -19,27 +19,39 @@ def paint_text(content: str, *, text_transform: str = "none") -> str:
 
 
 def measure_text_width(content: str, *, font_size: float, font_metrics: Any,
-                       letter_spacing: float = 0, text_transform: str = "none") -> float:
+                       letter_spacing: float = 0, text_transform: str = "none",
+                       numeric_spacing: str = "proportional") -> float:
     """Measure text width at the Layout boundary."""
     content = paint_text(content, text_transform=text_transform)
-    if letter_spacing == 0:
+    supports_numeric_spacing = hasattr(font_metrics, "ensure_numeric_spacing")
+    if supports_numeric_spacing:
+        font_metrics.ensure_numeric_spacing(numeric_spacing)
+    if letter_spacing == 0 and numeric_spacing == "proportional":
         return float(font_metrics.width(content, font_size))
+    if numeric_spacing == "proportional":
+        return float(font_metrics.width(content, font_size, letter_spacing=letter_spacing))
+    if supports_numeric_spacing:
+        return float(font_metrics.width(content, font_size, letter_spacing=letter_spacing,
+                                        numeric_spacing=numeric_spacing))
     return float(font_metrics.width(content, font_size, letter_spacing=letter_spacing))
 
 
 def ellipsize_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any,
-                   letter_spacing: float = 0, text_transform: str = "none") -> str:
+                   letter_spacing: float = 0, text_transform: str = "none",
+                   numeric_spacing: str = "proportional") -> str:
     """Return the longest deterministic source prefix that fits with an ellipsis."""
     if measure_text_width(content, font_size=font_size, font_metrics=font_metrics,
-                          letter_spacing=letter_spacing, text_transform=text_transform) <= available_inline:
+                          letter_spacing=letter_spacing, text_transform=text_transform,
+                          numeric_spacing=numeric_spacing) <= available_inline:
         return content
     marker = "…"
     if measure_text_width(marker, font_size=font_size, font_metrics=font_metrics,
-                          letter_spacing=letter_spacing) > available_inline:
+                          letter_spacing=letter_spacing, numeric_spacing=numeric_spacing) > available_inline:
         return ""
     prefix = content
     while prefix and measure_text_width(prefix + marker, font_size=font_size, font_metrics=font_metrics,
-                                        letter_spacing=letter_spacing, text_transform=text_transform) > available_inline:
+                                        letter_spacing=letter_spacing, text_transform=text_transform,
+                                        numeric_spacing=numeric_spacing) > available_inline:
         prefix = prefix[:-1]
     return prefix + marker
 
@@ -88,7 +100,8 @@ def _wrap_units(content: str) -> tuple[str, ...]:
 
 
 def wrap_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any,
-              letter_spacing: float = 0, text_transform: str = "none") -> tuple[str, ...]:
+              letter_spacing: float = 0, text_transform: str = "none",
+              numeric_spacing: str = "proportional") -> tuple[str, ...]:
     """Greedily wrap words and declared CJK character boundaries by measurement."""
     if available_inline <= 0:
         raise ValueError("E_PRESENTATION_WRAP_INPUT")
@@ -98,7 +111,8 @@ def wrap_text(content: str, *, available_inline: float, font_size: float, font_m
         separator = " " if current and not (_cjk(word[0]) or _cjk(current[-1])) else ""
         candidate = word if not current else f"{current}{separator}{word}"
         if current and measure_text_width(candidate, font_size=font_size, font_metrics=font_metrics,
-                                          letter_spacing=letter_spacing, text_transform=text_transform) > available_inline:
+                                          letter_spacing=letter_spacing, text_transform=text_transform,
+                                          numeric_spacing=numeric_spacing) > available_inline:
             lines.append(current)
             current = word
         else:
@@ -126,7 +140,9 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     painted_content = paint_text(content, text_transform=treatment.transform)
     letter_spacing = float(treatment.letter_spacing)
     width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
-                                   letter_spacing=letter_spacing) for line in (lines or (content,)))
+                                   letter_spacing=letter_spacing,
+                                   numeric_spacing=treatment.numeric_spacing)
+                for line in (lines or (content,)))
     return TextPlacement(
         placement_id, source_ref, painted_content,
         Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),

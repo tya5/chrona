@@ -34,7 +34,7 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
         }
         value = {"version": versions[kind], "kind": kind, "id": name, "body": {}}
         resources[name] = _write(tmp_path, "current", f"{name}.yaml", value)
-    context = {"version": "chrona/render-context/v0.15", "kind": "render-context", "id": "ctx", "body": {
+    context = {"version": "chrona/render-context/v0.16", "kind": "render-context", "id": "ctx", "body": {
         "project": primary_ref, "view": resources["view"], "theme": resources["theme"],
         "colorScheme": resources["scheme"], "layout": resources["layout"],
         "inputs": {"snapshot": snapshot_ref}, "environment": {"fontMetrics": {"missingFont": "diagnose"}}, "target": {"capabilities": []}}}

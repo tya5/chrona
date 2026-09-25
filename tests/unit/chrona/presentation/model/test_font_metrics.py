@@ -1,6 +1,7 @@
 from copy import deepcopy
 from hashlib import sha256
 from importlib.resources import files
+import json
 import pytest
 
 from chrona.presentation.model.font_metrics import resolve_font_files, resolve_font_metrics
@@ -9,13 +10,13 @@ from chrona.presentation.model.font_metrics import FontMetricsError
 
 def descriptor():
     assets = []
-    for weight, name, face in ((400, "noto-sans-regular-v1.json", "regular"), (700, "noto-sans-bold-v1.json", "bold")):
+    for weight, name, face in ((400, "noto-sans-regular-v2.json", "regular"), (700, "noto-sans-bold-v2.json", "bold")):
         payload = files("chrona.resources").joinpath("font_metrics", name).read_bytes()
         font = files("chrona.resources").joinpath("fonts", f"noto-sans-{face}-v1.ttf")
         assets.append({"family": "Noto Sans", "weight": weight,
                        "metrics": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"font_metrics/{name}"}, "contentIdentity": "sha256:" + sha256(payload).hexdigest()},
                        "font": {"locator": {"provider": "package", "identity": "chrona.resources", "address": f"fonts/noto-sans-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font.read_bytes()).hexdigest()}})
-    return {"algorithm": "declared-metrics-v2", "assets": assets, "missingFont": "diagnose"}
+    return {"algorithm": "declared-metrics-v3", "assets": assets, "missingFont": "diagnose"}
 
 
 def test_font_metrics_measurement_is_asset_bound_and_deterministic():
@@ -27,9 +28,33 @@ def test_font_metrics_measurement_is_asset_bound_and_deterministic():
     assert metrics.width("Chrona", 20) == metrics.width("Chrona", 20)
     assert metrics.width("Chrona", 20) > 0
     assert metrics.cap_height_at(20) == 14.28
-    assert metrics.metrics_path.name == "noto-sans-regular-v1.json"
+    assert metrics.metrics_path.name == "noto-sans-regular-v2.json"
     with pytest.raises(FontMetricsError, match="E_FONT_GLYPH_UNAVAILABLE"):
         metrics.width("日本語", 20)
+
+
+def test_primary_metrics_select_the_declared_proportional_or_tabular_digit_advances():
+    metrics = resolve_font_metrics("Noto Sans", descriptor())
+    assert metrics.width("111", 20, numeric_spacing="proportional") < metrics.width("111", 20, numeric_spacing="tabular")
+    assert metrics.width("111", 20, numeric_spacing="tabular") == metrics.width("999", 20, numeric_spacing="tabular")
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda payload: payload["numericAdvances"]["tabular"].pop("48"),
+    lambda payload: payload["numericAdvances"]["tabular"].__setitem__("49", 1),
+])
+def test_primary_metrics_reject_incomplete_or_nonuniform_tabular_advances(tmp_path, mutate):
+    payload = json.loads(files("chrona.resources").joinpath("font_metrics", "noto-sans-regular-v2.json").read_bytes())
+    mutate(payload)
+    metric_path = tmp_path / "metrics.json"
+    metric_path.write_text(json.dumps(payload), encoding="utf-8")
+    descriptor = {"algorithm": "declared-metrics-v3", "missingFont": "diagnose", "assets": [{
+        "family": "Noto Sans", "weight": 400,
+        "metrics": {"locator": {"provider": "context", "address": "metrics.json"},
+                    "contentIdentity": "sha256:" + sha256(metric_path.read_bytes()).hexdigest()},
+    }]}
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+        resolve_font_metrics("Noto Sans", descriptor, asset_root=tmp_path)
 
 
 def test_font_metrics_rejects_a_different_declared_weight():

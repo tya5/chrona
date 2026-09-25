@@ -183,7 +183,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--detail", help="Review Detail Profile YAML path")
     command.add_argument("--icon-catalog", action="append", default=[],
                          help="explicit local icon catalog YAML path; repeatable")
-    command.add_argument("--font-metrics", help="declared-metrics-v2 YAML descriptor; paths resolve beside it")
+    command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
     command.add_argument("--viewport", default="1600x900", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600x900)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")

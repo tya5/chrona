@@ -52,6 +52,14 @@ def _typst_tracking(layout: object) -> str:
     return f", tracking: {_number(spacing)}pt" if spacing else ""
 
 
+def _typst_numeric_width(layout: object) -> str:
+    """Project Layout's selected OpenType number width to Typst directly."""
+    spacing = getattr(layout, "numeric_spacing", "proportional")
+    if spacing not in {"proportional", "tabular"}:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    return f', number-width: "{spacing}"'
+
+
 def _tikz_tracked_text(layout: object, text: str) -> str:
     """Keep TikZ's letterspace request proportional to the completed em value."""
     spacing, size = getattr(layout, "letter_spacing", 0.0), getattr(layout, "font_size", 0.0)
@@ -60,6 +68,18 @@ def _tikz_tracked_text(layout: object, text: str) -> str:
     if size <= 0:
         raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
     return f"\\textls[{_number(spacing / size * 1000)}]{{{text}}}"
+
+
+def _tikz_numeric_text(layout: object, text: str) -> str:
+    """Apply Layout's selected OpenType number width in the fontspec run."""
+    spacing = getattr(layout, "numeric_spacing", "proportional")
+    if spacing not in {"proportional", "tabular"}:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    number = "Monospaced" if spacing == "tabular" else "Proportional"
+    family = str(getattr(layout, "family", "")).split(",", 1)[0].strip()
+    if not family:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    return f"\\fontspec[Numbers={number}]{{{_tex_string(family)}}}{text}"
 
 
 def _typst_rect_paint(node: ScenePrimitive) -> str:
@@ -116,7 +136,7 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) ->
             layout = node.text_layout
             parts.append(f"// font-asset: {_typst_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
             text = "\\n".join(_typst_string(line) for line in layout.lines)
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}, fill: {_typst_fill(node)})[{text}]]')
+            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}{_typst_numeric_width(layout)}, fill: {_typst_fill(node)})[{text}]]')
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -139,7 +159,7 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
     width, height = viewport
     parts = ["% chrona-tikz/v0.1", r"\documentclass{article}",
              f"\\usepackage[paperwidth={_number(width)}pt,paperheight={_number(height)}pt,margin=0pt]{{geometry}}",
-             r"\usepackage{tikz}", *( [r"\usepackage{letterspace}"]
+             r"\usepackage{tikz}", r"\usepackage{fontspec}", *( [r"\usepackage{letterspace}"]
                                           if any(node.text_layout is not None and node.text_layout.letter_spacing
                                                  for node in surface.primitives) else []),
              r"\pagestyle{empty}", r"\begin{document}", r"\noindent",
@@ -157,7 +177,7 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
             layout = node.text_layout
             parts.append(f"% font-asset: {_tex_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
             text = _tikz_tracked_text(layout, r"\\".join(_tex_string(line) for line in layout.lines))
-            parts.append(f"\\node[anchor=base west, align=left, text={_color(node, 'fill')}, text opacity={_number(_opacity(node))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{\\fontfamily{{{_tex_string(layout.family)}}}\\selectfont {text}}};")
+            parts.append(f"\\node[anchor=base west, align=left, text={_color(node, 'fill')}, text opacity={_number(_opacity(node))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

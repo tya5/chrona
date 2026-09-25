@@ -145,7 +145,7 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
                 (f'letter-spacing="{number(node.text_layout.letter_spacing)}"'
                  if node.text_layout.letter_spacing != 0 else ""),
                 (f'font-variant-numeric="{node.text_layout.numeric_spacing}-nums"'
-                 if node.text_layout.numeric_spacing != "proportional" else ""),
+                 ),
             ) if part)
             treatment = f" {treatment}" if treatment else ""
             append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')

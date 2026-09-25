@@ -216,8 +216,7 @@ def _text_layout(value: TextLayout) -> dict[str, Any]:
         result["letterSpacing"] = value.letter_spacing
     if value.text_transform != "none":
         result["textTransform"] = value.text_transform
-    if value.numeric_spacing != "proportional":
-        result["numericSpacing"] = value.numeric_spacing
+    result["numericSpacing"] = value.numeric_spacing
     return result
 
 

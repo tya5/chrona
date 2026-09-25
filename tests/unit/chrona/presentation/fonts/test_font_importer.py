@@ -25,6 +25,7 @@ def test_import_static_face_creates_resolvable_declared_pair(tmp_path):
     metric = resolve_font_metrics("Private Sans", descriptor, asset_root=tmp_path)
     assert metric.content_identity == "sha256:" + sha256(_source().read_bytes()).hexdigest()
     assert metric.width("Private", 12) > 0
+    assert metric.width("111", 12, numeric_spacing="proportional") < metric.width("111", 12, numeric_spacing="tabular")
 
 
 def test_import_ttc_extracts_selected_face_as_static_ttf(tmp_path):

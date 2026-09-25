@@ -18,6 +18,9 @@ body:
     numeric-spacing:
       type: numericSpacing
       value: proportional
+    tabular-spacing:
+      type: numericSpacing
+      value: tabular
     spacing.none:
       type: number
       value: 0
@@ -192,6 +195,14 @@ body:
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
+    numeric:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: tabular-spacing
     heading:
       fontFamily: editorial
       fontWeight: text-weight

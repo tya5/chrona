@@ -333,7 +333,7 @@ def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_f
     font_target = copied_example / "assets/font.ttf"
     metrics_target = copied_example / "assets/metrics.json"
     font_target.parent.mkdir(exist_ok=True); font_target.write_bytes((source / "fonts/noto-sans-regular-v1.ttf").read_bytes())
-    metrics_target.write_bytes((source / "font_metrics/noto-sans-regular-v1.json").read_bytes())
+    metrics_target.write_bytes((source / "font_metrics/noto-sans-regular-v2.json").read_bytes())
     context_path = copied_example / "contexts/executive.yaml"
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     asset = context["body"]["environment"]["fontMetrics"]["assets"]
@@ -355,7 +355,7 @@ def test_materialized_context_font_pair_reaches_the_default_png_adapter(tmp_path
     metrics_target = copied_example / "assets/metrics.json"
     font_target.parent.mkdir(exist_ok=True)
     font_target.write_bytes((source / "fonts/noto-sans-regular-v1.ttf").read_bytes())
-    metrics_target.write_bytes((source / "font_metrics/noto-sans-regular-v1.json").read_bytes())
+    metrics_target.write_bytes((source / "font_metrics/noto-sans-regular-v2.json").read_bytes())
     context_path = copied_example / "contexts/executive.yaml"
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     context["body"]["environment"]["fontMetrics"]["assets"] = [{

@@ -51,6 +51,9 @@ body:
     numeric-spacing:
       type: numericSpacing
       value: proportional
+    tabular-spacing:
+      type: numericSpacing
+      value: tabular
     arrow:
       type: marker
       value:
@@ -200,6 +203,16 @@ body:
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    numeric:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.body
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: tabular-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     heading:

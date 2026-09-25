@@ -358,7 +358,7 @@ def _draft_render_from_resources(
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
     context_value = {
-            "version": "chrona/render-context/v0.15", "kind": "render-context", "id": "draft-render",
+            "version": "chrona/render-context/v0.16", "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -469,7 +469,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader,
                            *, decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
     context = _load_presentation(reference, reader, decoded_resources)
-    if context.version != "chrona/render-context/v0.15":
+    if context.version != "chrona/render-context/v0.16":
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader, decoded_resources)
 

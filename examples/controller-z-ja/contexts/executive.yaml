@@ -1,4 +1,4 @@
-version: chrona/render-context/v0.15
+version: chrona/render-context/v0.16
 kind: render-context
 id: controller-z-ja-executive
 body:
@@ -72,7 +72,7 @@ body:
       blockSize: 900
     locale: ja-JP
     fontMetrics:
-      algorithm: declared-metrics-v2
+      algorithm: declared-metrics-v3
       missingFont: diagnose
       assets:
       - family: Noto Sans JP
@@ -81,8 +81,8 @@ body:
           locator:
             provider: package
             identity: chrona-fonts-noto-cjk
-            address: font_metrics/noto-sans-jp-regular-v1.json
-          contentIdentity: sha256:4bfb5cfa9320784de799cf9bc08dff27fc4ca907a06a8d5534ea07a370fc4734
+            address: font_metrics/noto-sans-jp-regular-v2.json
+          contentIdentity: sha256:06ced32a2737bdfcb83596eca7e79eebf379f7b43f69d09b4974a459818e76c9
         font:
           locator:
             provider: package
@@ -95,8 +95,8 @@ body:
           locator:
             provider: package
             identity: chrona-fonts-noto-cjk
-            address: font_metrics/noto-sans-jp-bold-v1.json
-          contentIdentity: sha256:e1ee0f9be9c3dc318b175a317f207e23e7da77dfb6c1caf1740632ee62b19fd5
+            address: font_metrics/noto-sans-jp-bold-v2.json
+          contentIdentity: sha256:4672250bb08d13c822bc55a2f4e557996164ce291210843f4b3dc4a99ff3a789
         font:
           locator:
             provider: package

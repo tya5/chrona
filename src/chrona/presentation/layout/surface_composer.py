@@ -481,26 +481,33 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        available_inline_size=float(by_source["title"].bounds.inline_size))]
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
+    def measure_table_text(content: str, typography_role: str) -> float:
+        treatment = request.theme_tokens.text_treatment(typography_role)
+        return measure_text_width(content, font_size=float(treatment.font_size), font_metrics=request.font_metrics,
+                                  letter_spacing=float(treatment.letter_spacing),
+                                  text_transform=treatment.transform,
+                                  numeric_spacing=treatment.numeric_spacing)
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
-                                  font_metrics=request.font_metrics, font_size=body_size, overflow=table.overflow,
-                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)),
-                                  letter_spacing=float(body_treatment.letter_spacing),
-                                  text_transform=body_treatment.transform)
+                                  measure_text=measure_table_text, minimum_inline=body_size,
+                                  overflow=table.overflow,
+                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)))
     positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
     column_widths = {item.column_id: item.inline_size for item in columns}
     column_intents = {item.column_id: item for item in table_columns}
 
-    def table_text(content: str, available_inline: float) -> tuple[str, str]:
+    def table_text(content: str, available_inline: float, typography_role: str) -> tuple[str, str]:
         if table.overflow != "ellipsize-with-source":
             return content, "fit"
-        resolved = ellipsize_text(content, available_inline=available_inline, font_size=body_size,
-                                  font_metrics=request.font_metrics, letter_spacing=float(body_treatment.letter_spacing),
-                                  text_transform=body_treatment.transform)
+        treatment = request.theme_tokens.text_treatment(typography_role)
+        resolved = ellipsize_text(content, available_inline=available_inline, font_size=float(treatment.font_size),
+                                  font_metrics=request.font_metrics, letter_spacing=float(treatment.letter_spacing),
+                                  text_transform=treatment.transform,
+                                  numeric_spacing=treatment.numeric_spacing)
         return resolved, "ellipsized" if resolved != content else "fit"
 
-    def aligned_inline(content: str, column_id: str, start: float, available_inline: float) -> float:
-        width = measure_text_width(content, font_size=body_size, font_metrics=request.font_metrics,
-                                   letter_spacing=float(body_treatment.letter_spacing), text_transform=body_treatment.transform)
+    def aligned_inline(content: str, column_id: str, start: float, available_inline: float,
+                       typography_role: str) -> float:
+        width = measure_table_text(content, typography_role)
         align = column_intents[column_id].align
         if align == "end":
             return start + max(0.0, available_inline - width)
@@ -511,16 +518,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     for column in table_columns:
         column_id, label = column.column_id, column.header
         available = max(0.0, column_widths[column_id] - body_size)
-        resolved, overflow = table_text(label, available)
+        resolved, overflow = table_text(label, available, "text")
         text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
-                               inline=aligned_inline(resolved, column_id, positions[column_id][0], available), baseline_block=table_bounds[1] + body_size,
+                               inline=aligned_inline(resolved, column_id, positions[column_id][0], available, "text"), baseline_block=table_bounds[1] + body_size,
                                typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
                                source_content=label, available_inline_start=positions[column_id][0],
                                available_inline_size=available))
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for cell in table_cells:
-        object_id, column_id, content = cell.object_id, cell.column_id, cell.content
+        object_id, column_id, content, typography_role = cell.object_id, cell.column_id, cell.content, cell.typography_role
         row = row_by_subject.get(object_id)
         position = positions.get(column_id)
         if row is not None and position is not None and column_id in column_intents:
@@ -530,11 +537,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             indent = ((body_size if row.group_id else 0) + float(indent_token or 0) * row.depth
                       if column_id == request.surface_content.table_hierarchy_column else 0)
             available = max(0.0, column_widths[column_id] - indent - body_size)
-            resolved, overflow = table_text(content, available)
+            resolved, overflow = table_text(content, available, typography_role)
             text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
-                                   inline=aligned_inline(resolved, column_id, position[0] + indent, available),
+                                   inline=aligned_inline(resolved, column_id, position[0] + indent, available, typography_role),
                                    baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
-                                   typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                   typography_role=typography_role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    overflow=overflow, collision_region="table",
                                    collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
                                    available_inline_start=position[0] + indent,

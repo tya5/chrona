@@ -10,13 +10,13 @@ primary-package extra until that provider is published to an installable index.
 
 ## Context closure
 
-`chrona/render-context/v0.14` requires a metrics record for every family/weight
+`chrona/render-context/v0.16` requires a metrics record for every family/weight
 that its Theme can select. A font record is required only for PNG/PDF. Each
 record is either Context-relative or an identity-named installed package asset.
 
 ```yaml
 fontMetrics:
-  algorithm: declared-metrics-v2
+  algorithm: declared-metrics-v3
   missingFont: diagnose
   assets:
     - family: Acme Sans
@@ -34,6 +34,13 @@ address: ...}`. The materializer copies and verifies metrics for every target,
 and copies font bytes only for PNG/PDF, rewriting copied records to Context
 locators. A missing glyph is rejected as `E_FONT_GLYPH_UNAVAILABLE`; it is
 never measured as `.notdef`.
+
+Every primary face also records proportional (`pnum`) and tabular (`tnum`)
+advances for ASCII digits. Layout chooses the already-resolved `numericSpacing`
+feature from the Theme before it measures a numeric text run; adapters project
+that same feature rather than choosing figures independently. A draft-only
+character substitute may omit those maps because it never supplies a primary
+face's numeric policy.
 
 ## Target and draft policy
 
