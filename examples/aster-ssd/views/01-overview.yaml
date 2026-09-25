@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: aster-01-overview
 body:
@@ -45,9 +45,13 @@ body:
       mode: semantic
       overflow: suppress
     annotations: none
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: Work package / gate
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   rows:
     mode: automatic

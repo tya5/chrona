@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: controller-z-annotations
 body:
@@ -64,17 +64,33 @@ body:
   annotations:
   - id: firmware-slip
     purpose: explanatory-arrow
-    anchor: {kind: object, id: firmware, facet: actual, endpoint: finish}
-    placement: {side: end, alignment: start}
+    anchor:
+      kind: object
+      id: firmware
+      facet: actual
+      endpoint: finish
+    placement:
+      side: end
+      alignment: start
     text: Firmware finished late; the EVB gate moved with it.
   - id: bringup-risk
     purpose: explanatory-arrow
-    anchor: {kind: object, id: silicon-bringup, facet: planned, endpoint: finish}
-    placement: {side: end, alignment: end}
+    anchor:
+      kind: object
+      id: silicon-bringup
+      facet: planned
+      endpoint: finish
+    placement:
+      side: end
+      alignment: end
     text: Bring-up finish leaves no reserve before DVT.
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: Workstream
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   rows:
     mode: automatic

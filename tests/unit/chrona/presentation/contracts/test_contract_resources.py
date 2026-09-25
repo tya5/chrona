@@ -41,6 +41,49 @@ def test_contract_rejects_schema_invalid_mandatory_resource():
     assert (error.value.violation.resource_kind, error.value.violation.resource_identity) == ("theme", "theme")
 
 
+def _view_contract(value):
+    return parse_contract(ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64), value)
+
+
+def test_v16_table_intent_contract_rejects_ambiguous_hierarchy_column():
+    automatic = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
+    automatic["body"].pop("hierarchyColumn")
+    with pytest.raises(ContractError, match="E_VIEW_HIERARCHY_COLUMN_REQUIRED"):
+        _view_contract(automatic)
+
+    automatic = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
+    automatic["body"]["hierarchyColumn"] = "missing"
+    with pytest.raises(ContractError, match="E_VIEW_HIERARCHY_COLUMN_UNKNOWN"):
+        _view_contract(automatic)
+
+    flat = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    flat["body"]["hierarchyColumn"] = flat["body"]["tableColumns"][0]["id"]
+    with pytest.raises(ContractError, match="E_VIEW_HIERARCHY_COLUMN_UNEXPECTED"):
+        _view_contract(flat)
+
+
+def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_nesting_typed():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
+    duplicate = dict(value["body"]["tableColumns"][0])
+    duplicate["source"] = "id"
+    value["body"]["tableColumns"].append(duplicate)
+    with pytest.raises(ContractError, match="E_VIEW_TABLE_COLUMN_DUPLICATE"):
+        _view_contract(value)
+
+    explicit = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    body = explicit["body"]
+    for name in ("selection", "grouping", "ordering"):
+        body.pop(name)
+    body["rows"] = {"mode": "explicit", "items": [
+        {"id": "parent", "depth": 0, "items": [{"id": "primary", "source": {"kind": "primary", "object": "board"}}]},
+        {"id": "child", "depth": 1, "parentRow": "parent", "items": [{"id": "actual", "source": {"kind": "actual", "object": "ftl"}}]},
+    ]}
+    body["hierarchyColumn"] = body["tableColumns"][0]["id"]
+    contract = _view_contract(explicit)
+    assert contract.view.hierarchy_column == "Work package / gate"
+    assert contract.view.row_decoration == "none"
+
+
 @pytest.mark.parametrize(
     ("kind", "path", "mutate"),
     (

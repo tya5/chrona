@@ -1,46 +1,88 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: controller-z-material-icons
 body:
   surface: table-timeline
   selection:
     include:
-      types: [span, point]
+      types:
+      - span
+      - point
   grouping:
     by: field
     field: owner
     missing: ungrouped
-    order: [fw-team, validation-team, factory-team]
+    order:
+    - fw-team
+    - validation-team
+    - factory-team
     presentation: header
-  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
-  window: {mode: explicit, start: '2026-02-01', end: '2026-07-01'}
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-02-01'
+    end: '2026-07-01'
   comparison:
     baseline: primary
     actual: required
     observationSelection: latest
     deltaUnit: calendar-days
-    facets: [planned, actual, finishDelta, missingActual, unmatchedActual]
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
   visibility:
-    labels: {placement: plot, content: [title], side: inside, overflow: suppress}
-    fallback: {labels: [inside, above, suppress]}
-    relations: {mode: semantic, overflow: suppress}
+    labels:
+      placement: plot
+      content:
+      - title
+      side: inside
+      overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
     annotations: none
   visuals:
-  - target: {kind: title}
+  - target:
+      kind: title
     ref: material:flag
     decorative: false
-  - target: {kind: title}
+  - target:
+      kind: title
     ref: material:check-outline-rounded
     side: trailing
     decorative: true
-  - target: {kind: column, id: Workstream}
+  - target:
+      kind: column
+      id: Workstream
     ref: material:flag
     decorative: true
-  - target: {kind: cell, object: firmware, column: Workstream}
-    encoding: {field: owner, domain: {fw-team: material:flag}}
+  - target:
+      kind: cell
+      object: firmware
+      column: Workstream
+    encoding:
+      field: owner
+      domain:
+        fw-team: material:flag
     decorative: true
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: Workstream
     source: title
     missing: em-dash
-  rows: {mode: automatic}
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+  rows:
+    mode: automatic

@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: controller-z-ja-executive
 body:
@@ -56,9 +56,13 @@ body:
       mode: semantic
       overflow: suppress
     annotations: none
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: 作業ストリーム
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   rows:
     mode: automatic

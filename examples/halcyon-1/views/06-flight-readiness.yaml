@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: halcyon-06-flight-readiness
 body:
@@ -69,18 +69,29 @@ body:
   shading:
     nonWorking: true
     exceptions: true
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: WBS
     source: wbsCode
     missing: em-dash
+    align: start
+    width: content
   - id: Work package
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   - id: Float
     source: totalFloat
     format: signedDays
     missing: em-dash
+    align: end
+    width: content
   - id: Scenario
     source:
       scenario: title
     missing: em-dash
+    align: start
+    width: content
+  hierarchyColumn: Work package

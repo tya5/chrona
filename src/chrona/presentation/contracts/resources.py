@@ -121,6 +121,8 @@ class TableColumn:
     source: str | FrozenDict
     format: str
     missing: str
+    align: str = "start"
+    width: str | FrozenDict = "content"
 
 
 @dataclass(frozen=True)
@@ -239,6 +241,8 @@ class ViewInput:
     color_encoding: FrozenDict | None = None
     progress_fill: str | None = None
     visuals: tuple[ViewVisual, ...] = ()
+    hierarchy_column: str | None = None
+    row_decoration: str = "none"
 
 
 @dataclass(frozen=True)
@@ -528,7 +532,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.15"): "render-context-v0.15.schema.yaml",
     ("project", "timeline/v0.6"): "project-v0.6.schema.yaml",
-    ("view", "chrona/view/v0.15"): "view-v0.15.schema.yaml",
+    ("view", "chrona/view/v0.16"): "view-v0.16.schema.yaml",
     ("theme", "chrona/theme/v0.9"): "theme-v0.9.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.4"): "layout-profile-v0.4.schema.yaml",
@@ -673,10 +677,14 @@ def _view_input(body: FrozenDict) -> ViewInput:
                                   str(item["source"]["scenario"]) if "scenario" in item["source"] else None)
                       for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
+    table_columns = tuple(TableColumn(str(column["id"]), column["source"], str(column.get("format", "text")),
+                                      str(column["missing"]), str(column["align"]), column["width"])
+                          for column in body.get("tableColumns", ()))
+    hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
+    _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
-        tuple(TableColumn(str(column["id"]), column["source"], str(column.get("format", "text")),
-                          str(column["missing"])) for column in body.get("tableColumns", ())),
+        table_columns,
         tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row"))), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
@@ -684,7 +692,27 @@ def _view_input(body: FrozenDict) -> ViewInput:
         str(body["progressFill"]["source"]) if "progressFill" in body else None,
         tuple(ViewVisual(str(item["target"]["kind"]), item["target"], str(item["ref"]) if "ref" in item else None,
                          item.get("encoding"), str(item.get("side", "leading")), bool(item.get("decorative", True)))
-              for item in body.get("visuals", ())) )
+              for item in body.get("visuals", ())),
+        hierarchy_column=hierarchy_column,
+        row_decoration=str(body.get("rowDecoration", FrozenDict()).get("mode", "none")))
+
+
+def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping: ViewGrouping | None,
+                                rows: tuple[ViewRow, ...], hierarchy_column: str | None) -> None:
+    """Reject View composition ambiguities before Layout measures them."""
+    column_ids = tuple(column.id for column in table_columns)
+    if len(set(column_ids)) != len(column_ids):
+        raise ContractError("E_VIEW_TABLE_COLUMN_DUPLICATE")
+    visible_nesting = ((grouping is not None and grouping.by == "hierarchy")
+                       or any(row.depth > 0 or row.parent_row is not None for row in rows))
+    if hierarchy_column is None:
+        if visible_nesting:
+            raise ContractError("E_VIEW_HIERARCHY_COLUMN_REQUIRED")
+        return
+    if hierarchy_column not in column_ids:
+        raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNKNOWN")
+    if not visible_nesting:
+        raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNEXPECTED")
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:

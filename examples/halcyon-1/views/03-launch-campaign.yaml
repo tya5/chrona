@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: halcyon-03-launch-campaign
 body:
@@ -70,22 +70,32 @@ body:
   shading:
     nonWorking: true
     exceptions: true
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: Activity
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   - id: Plan
     source:
       facet: planned
     format: dateRange
     missing: em-dash
+    align: start
+    width: content
   - id: Actual
     source:
       facet: actual
     format: dateRange
     missing: in-progress
+    align: start
+    width: content
   - id: Δ
     source:
       facet: finishDelta
     format: signedDays
     missing: em-dash
+    align: end
+    width: content

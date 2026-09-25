@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: controller-z-executive
 body:
@@ -55,11 +55,17 @@ body:
     relations:
       mode: semantic
       overflow: suppress
-      content: [lag, endpointPair]
+      content:
+      - lag
+      - endpointPair
     annotations: none
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: Workstream
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   rows:
     mode: automatic

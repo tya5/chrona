@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: orion-asic-gates
 body:
@@ -76,22 +76,32 @@ body:
   shading:
     nonWorking: false
     exceptions: true
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: Work package
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   - id: Revision
     source:
       field: revision
     missing: em-dash
+    align: start
+    width: content
   - id: Approval
     source:
       field: approval
     missing: blank
+    align: start
+    width: content
   - id: Δ
     source:
       facet: finishDelta
     format: signedDays
     missing: em-dash
+    align: end
+    width: content
   rows:
     mode: automatic

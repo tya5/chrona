@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: multi-lane-milestones
 body:
@@ -6,20 +6,26 @@ body:
   rows:
     mode: explicit
     items:
-      - id: review-gates
-        label: Review gates
-        depth: 0
-        tableSubject: gate-a
-        items:
-          - id: gate-a
-            source: {kind: primary, object: gate-a}
-            track: stacked
-          - id: gate-b
-            source: {kind: primary, object: gate-b}
-            track: stacked
-          - id: gate-c
-            source: {kind: primary, object: gate-c}
-            track: stacked
+    - id: review-gates
+      label: Review gates
+      depth: 0
+      tableSubject: gate-a
+      items:
+      - id: gate-a
+        source:
+          kind: primary
+          object: gate-a
+        track: stacked
+      - id: gate-b
+        source:
+          kind: primary
+          object: gate-b
+        track: stacked
+      - id: gate-c
+        source:
+          kind: primary
+          object: gate-c
+        track: stacked
   window:
     mode: explicit
     start: '2026-04-01'
@@ -29,12 +35,17 @@ body:
     actual: optional
     observationSelection: latest
     deltaUnit: calendar-days
-    facets: [planned]
+    facets:
+    - planned
   visibility:
     labels: false
-    relations: {mode: none, overflow: suppress}
+    relations:
+      mode: none
+      overflow: suppress
     annotations: none
   tableColumns:
-    - id: Work item
-      source: title
-      missing: em-dash
+  - id: Work item
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}

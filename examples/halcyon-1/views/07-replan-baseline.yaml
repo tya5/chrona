@@ -1,4 +1,4 @@
-version: chrona/view/v0.15
+version: chrona/view/v0.16
 kind: view
 id: halcyon-07-replan-baseline
 body:
@@ -70,17 +70,26 @@ body:
   shading:
     nonWorking: true
     exceptions: true
+  rowDecoration:
+    mode: none
   tableColumns:
   - id: Work package
     source: title
     missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
   - id: Baseline finish
     source:
       comparisonFacet: finishDelta
     format: signedDays
     missing: em-dash
+    align: end
+    width: content
   - id: Δ
     source:
       facet: finishDelta
     format: signedDays
     missing: em-dash
+    align: end
+    width: content
+  hierarchyColumn: Work package
