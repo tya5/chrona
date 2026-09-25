@@ -37,15 +37,17 @@ construction path; focused Layout/Scene tests.
    completed canvas through the existing `_completed_canvas` route and append
    a deterministic `W_LAYOUT_VISIBLE_OVERFLOW` / `detail-panel` record.
 2. Apply a declared exceptional slot disposition to an unbreakable oversized
-   unit; do not invent a renderer-specific alternative or resurrect
-   `diagnose`.
+   unit: measured ellipsis, visible-overflow warning, or Layout-owned optional
+   suppression with `W_LAYOUT_DETAIL_PANEL_CLIPPED`.  Do not invent a
+   renderer-specific clip or resurrect `diagnose`.
 3. Verify the Scene builder and serializers retain final slot bounds, lines,
    warning payload and canvas verbatim.  No Scene code should be modified
    unless the test identifies an actual projection loss.
 
 **Acceptance:** the long Japanese panel completes successfully with a larger
 canvas and structured warning when appropriate; an intentional overlap fixture
-stacks deterministically; SVG text uses supplied `<tspan>` lines; no adapter
+stacks deterministically; all three declared exceptional dispositions have a
+completed Layout result; SVG text uses supplied `<tspan>` lines; no adapter
 imports Layout text measurement/wrapping.
 
 ## I445-3 — Corpus evidence and focused verification
