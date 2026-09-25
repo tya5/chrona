@@ -96,3 +96,14 @@ replace the earlier I412-1 outline with a detailed implementation plan.  Any
 need for an additional label category, non-right-angle transform, vertical
 shaping, or different surface axis model requires a new versioned design
 decision before implementation.
+
+## Post-review correction — atomic evidence boundary
+
+The I412-1 prototype showed that a public View/Profile migration changes the
+immutable resource hashes embedded in every generated Scene.  Publishing that
+contract migration before Scene v0.5 and corpus regeneration would make the
+repository's declared materializer evidence fail, even with no visible geometry
+change.  The review therefore accepts one atomic #412 release unit with
+internal contract, geometry, and adapter checkpoints.  This preserves the
+repository's stronger public invariant (every committed corpus is
+materializable) and does not blur the reviewed layer boundaries.
