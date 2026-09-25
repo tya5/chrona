@@ -58,6 +58,7 @@ CHECKS = (
     CheckSpec("schema-annotations", _command("tools/schema_annotations.py")),
     CheckSpec("schema-references", _command("tools/validate_schema_references.py")),
     CheckSpec("example-inventory", _command("tools/example_inventory.py")),
+    CheckSpec("example-reachability", _command("tools/check_example_reachability.py")),
     CheckSpec("scene-perceptibility", _command("tools/check_scene_perceptibility.py")),
     CheckSpec("presentation-contrast", _command("tools/presentation_contrast.py", "--check")),
     CheckSpec("presentation-font-identity", _command("tools/presentation_font_identity.py", "--check")),

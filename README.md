@@ -10,13 +10,11 @@ Date-only scheduling profile; successor DateTime, capacity, collaboration, and
 presentation capabilities are opt-in versioned profiles rather than changes to
 Date-only meaning.
 
-![Presentation slide rendered by Chrona: a 1600x900 dark Gantt showing the ASTER
-qualification and production phase, with baseline and observed bars, finish
-variance markers, gates and routed dependencies](examples/aster-ssd/slides/04-qualification-production/preview.png)
+![Presentation slide rendered by Chrona: a 1600x900 ASTER plan-only schedule
+with calendar-aware spans, gates, milestone markers and routed dependencies](examples/aster-ssd/generated/overview.svg)
 
-<sup>One of five slides in [`examples/aster-ssd`](examples/aster-ssd), rendered
-from YAML with no per-sample renderer code. The chart is a derived artifact:
-edit the project, re-run, and the slide follows.</sup>
+<sup>Manifest-declared materializer evidence from [`examples/aster-ssd`](examples/aster-ssd).
+Edit the project, re-run the materializer, and this SVG follows.</sup>
 
 ## What is usable today
 

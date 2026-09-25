@@ -11,7 +11,6 @@ inputs are organized by authority:
 - `layouts/executive-review.yaml`
 - `executive-light.preset.yaml` is a public declarative preset whose ordinary
   presentation resources are the ones pinned by the Executive Context.
-- `styles/plan-actual.yaml`
 - `profiles/summary.yaml` and `profiles/review-detail.yaml`
 - `contexts/executive.yaml` is the generated immutable binding example
 - `actual.yaml` records finished spans, a point observation for the EVB gate, an

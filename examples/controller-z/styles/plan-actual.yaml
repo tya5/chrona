@@ -1,8 +1,0 @@
-version: chrona/style/v0.1
-kind: style
-id: controller-z-plan-actual
-body:
-  rules:
-    - {id: planned, when: {facet: planned}, addRoles: [planned]}
-    - {id: actual, when: {facet: actual}, addRoles: [actual]}
-    - {id: behind, when: {facet: finishDelta, comparisonCategory: behind}, addRoles: [variance-behind]}

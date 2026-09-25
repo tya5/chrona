@@ -1,0 +1,17 @@
+version: chrona/example-reachability/v0.1
+supportingFiles:
+  - {path: README.md, reason: corpus index documentation}
+  - {path: aster-ssd/README.md, reason: ASTER corpus documentation}
+  - {path: controller-z/README.md, reason: Controller Z corpus and curriculum documentation}
+  - {path: controller-z-ja/README.md, reason: Japanese corpus documentation}
+  - {path: halcyon-1/README.md, reason: HALCYON corpus documentation}
+  - {path: orion-asic/README.md, reason: Orion corpus documentation}
+  - {path: controller-z/assets/icons-source.json, reason: reproducible Iconify catalog generator source}
+  - {path: controller-z/assets/icons.NOTICE, reason: icon source license notice}
+  - {path: controller-z/assets/lucide-tabler-icons.json, reason: icon importer regression source}
+  - {path: controller-z/assets/lucide-tabler.NOTICE, reason: icon importer license notice}
+  - {path: controller-z/curriculum/scale-30.yaml, reason: executable draft scale curriculum source}
+  - {path: controller-z/elevated-light.preset.yaml, reason: reusable elevated draft preset source}
+  - {path: controller-z/executive-light.preset.yaml, reason: reusable executive draft preset source}
+  - {path: controller-z/imported-icons.yaml, reason: generated icon importer regression evidence}
+  - {path: controller-z/profiles/summary.yaml, reason: optional draft summary profile fixture}

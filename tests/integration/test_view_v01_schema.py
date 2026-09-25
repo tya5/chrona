@@ -8,6 +8,7 @@ import pytest
 import yaml
 
 from chrona.resources import schema_resource
+from tools.check_example_reachability import reachable_view_paths
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -31,11 +32,10 @@ def _validator() -> jsonschema.Draft202012Validator:
     )
 
 
-@pytest.mark.parametrize("path", sorted(ROOT.glob("examples/**/views/*.yaml")))
+@pytest.mark.parametrize("path", reachable_view_paths(ROOT))
 def test_declared_public_v03_view_validates(path: Path):
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if value.get("version") != "chrona/view/v0.21":
-        pytest.skip("not a v0.3 View")
+    assert value.get("version") == "chrona/view/v0.21", path
     assert next(_validator().iter_errors(_json_value(value)), None) is None, path
 
 
