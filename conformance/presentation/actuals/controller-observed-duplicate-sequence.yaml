@@ -1,4 +1,4 @@
-version: chrona/actual-set/v0.2
+version: chrona/actual-set/v0.3
 kind: actual-set
 id: controller-observed-duplicate-sequence
 body:

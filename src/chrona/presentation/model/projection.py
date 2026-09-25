@@ -18,7 +18,7 @@ class ReviewItem:
     title: str
     source_type: str
     planned: dict[str, date]
-    actual: dict[str, date | float] | None
+    actual: dict[str, date | float | str] | None
     finish_delta: int | None
     roles: tuple[str, ...]
     group_id: str = ""
@@ -407,9 +407,14 @@ def _latest_observations(observations: list[dict[str, Any]], placements: dict[st
     return latest, unmatched
 
 
-def _actual(observation: dict[str, Any] | None) -> dict[str, date | float] | None:
+def _actual(observation: dict[str, Any] | None) -> dict[str, date | float | str] | None:
     raw = (observation or {}).get("actual")
-    return {key: _date_or_number(value) for key, value in raw.items()} if raw else None
+    if not raw:
+        return None
+    # ``openUntil`` is an explicit observation policy, not a date and never a
+    # fabricated ``finish``.  Preserve it through View projection so Layout can
+    # resolve its shared Actual Set cutoff.
+    return {key: (value if key == "openUntil" else _date_or_number(value)) for key, value in raw.items()}
 
 
 def _object_link(value: Any) -> dict[str, str] | None:

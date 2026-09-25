@@ -68,7 +68,7 @@ def test_operational_schema_error_uses_a_stable_pointer_and_explanation():
 
 
 def test_actual_set_v02_requires_provenance_for_external_facts():
-    payload = """version: chrona/actual-set/v0.2
+    payload = """version: chrona/actual-set/v0.3
 kind: actual-set
 id: actuals
 body:
@@ -79,7 +79,7 @@ body:
       actual: {finish: '2026-04-18'}
 """
     try:
-        parse_document(payload, "actual-set-v0.2.schema.yaml")
+        parse_document(payload, "actual-set-v0.3.schema.yaml")
     except OperationalResourceError as error:
         assert error.code == "E_OPERATIONAL_SCHEMA"
     else:

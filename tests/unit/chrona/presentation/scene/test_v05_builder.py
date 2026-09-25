@@ -50,6 +50,15 @@ def test_scene_projects_completed_layout_geometry_without_measurement_or_routing
     assert all(fragment not in source for fragment in forbidden)
 
 
+def test_scene_rejects_a_clip_that_does_not_reference_a_preceding_same_slot_host():
+    fill = ScenePrimitive("fill", "Rect", "a", "object", "progress-fill", "progress-fill", (0, 0, 1, 1),
+                          slot_id="timeline", clip_source_id="host")
+    host = ScenePrimitive("host", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1),
+                          slot_id="timeline")
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneSurface("s", (), (), (), None, (fill, host))
+
+
 def test_scene_roles_are_registry_owned_without_direct_variance_or_scale_role_literals():
     source = Path(__import__("chrona.presentation.scene.v05_builder", fromlist=["*"]).__file__).read_text(encoding="utf-8")
     assert '"variance-ahead"' not in source
@@ -72,6 +81,15 @@ def _theme():
         roles.setdefault(name, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
             {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"})
     roles["dependency"]["marker"] = "dependency-marker"
+    for role, height, offset, order, radius in (
+        ("planned", "mark-full", "mark-start", "mark-middle", "mark-square"),
+        ("actual", "mark-content", "mark-nested", "mark-front", "mark-rounded"),
+        ("snapshot", "mark-full", "mark-start", "mark-back", "mark-square"),
+        ("scenario", "mark-full", "mark-start", "mark-back", "mark-square"),
+        ("missing-actual", "mark-content", "mark-nested", "mark-front", "mark-rounded"),
+    ):
+        roles.setdefault(role, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
+            {"markHeight": height, "markOffset": offset, "markPaintOrder": order, "markCornerRadius": radius})
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {
         "values": {"ink": {"type": "color", "value": "#102030"},
                    "body": {"type": "fontFamily", "value": "Test Sans"},
@@ -85,7 +103,12 @@ def _theme():
                    "stroke-width": {"type": "number", "value": 1},
                    "dependency-marker": {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}},
                    "milestone-symbol": {"type": "symbol", "value": {"shape": "diamond"}},
-                   "line": {"type": "number", "value": "1.4"}},
+                   "line": {"type": "number", "value": "1.4"},
+                   "mark-full": {"type": "number", "value": 1}, "mark-content": {"type": "number", "value": 1},
+                   "mark-start": {"type": "number", "value": 0}, "mark-nested": {"type": "number", "value": 0},
+                   "mark-back": {"type": "number", "value": 0}, "mark-middle": {"type": "number", "value": 1},
+                   "mark-front": {"type": "number", "value": 2}, "mark-square": {"type": "number", "value": 0},
+                   "mark-rounded": {"type": "number", "value": "0.25"}},
         "roles": {**roles,
                   "group-band": {**roles["group-band"], "opacity": "group-opacity"},
                   "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity"},

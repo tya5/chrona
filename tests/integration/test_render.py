@@ -102,15 +102,14 @@ def test_draft_auto_block_closes_the_public_multi_lane_milestone_fixture():
         actual_path=root / "actual.yaml", viewport=(1600, None),
     ))
     assert automatic.artifact.content.count(b'data-purpose="planned"') == 3
-
     with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW"):
         render_review(_draft_request(
             project_path=root / "project.yaml", view_path=root / "view.yaml",
-            actual_path=root / "actual.yaml", viewport=(1600, 392),
+            actual_path=root / "actual.yaml", viewport=(1600, 248),
         ))
     render_review(_draft_request(
         project_path=root / "project.yaml", view_path=root / "view.yaml",
-        actual_path=root / "actual.yaml", viewport=(1600, 393),
+        actual_path=root / "actual.yaml", viewport=(1600, 250),
     ))
 
 
@@ -333,7 +332,7 @@ def test_label_and_mark_visuals_use_distinct_completed_paint_roles(tmp_path):
     by_id = {primitive.scene_id: primitive for primitive in surface.primitives}
     label, mark = by_id["visual:title:trailing"], by_id["visual:planned:firmware:firmware"]
     assert (label.visual_role, label.paint.fill) == ("text", "#172033")
-    assert (mark.visual_role, mark.paint.fill) == ("planned", "#3986E6")
+    assert (mark.visual_role, mark.paint.fill) == ("icon-mark", "#FFFFFF")
 
 
 def test_actual_progress_fill_uses_actual_set_progress_and_omits_absent_host(tmp_path):

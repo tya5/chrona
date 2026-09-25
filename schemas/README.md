@@ -7,7 +7,7 @@ are migration-only and record their successor and removal slice.
 | Kind | Live schema |
 | --- | --- |
 | actual-intake-batch | actual-intake-batch-v0.2.schema.yaml |
-| actual-set | actual-set-v0.2.schema.yaml |
+| actual-set | actual-set-v0.3.schema.yaml |
 | automation-result | automation-result-v0.1.schema.yaml |
 | color-scheme | color-scheme-v0.2.schema.yaml |
 | command-request | command-request-v0.2.schema.yaml |
@@ -20,8 +20,8 @@ are migration-only and record their successor and removal slice.
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
-| theme | theme-v0.7.schema.yaml |
-| view | view-v0.13.schema.yaml |
+| theme | theme-v0.8.schema.yaml |
+| view | view-v0.14.schema.yaml |
 
 # Project Schema v0.3 Notes
 

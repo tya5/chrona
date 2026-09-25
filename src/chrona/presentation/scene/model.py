@@ -275,6 +275,19 @@ class SceneSurface:
     canvas_paint: ScenePaint | None = None
     columns: tuple[SceneColumn, ...] = ()
 
+    def __post_init__(self) -> None:
+        """Reject incomplete clip references before any adapter can serialize them."""
+        by_id = {item.scene_id: (index, item) for index, item in enumerate(self.primitives)}
+        if len(by_id) != len(self.primitives):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        for index, item in enumerate(self.primitives):
+            if item.clip_source_id is None:
+                continue
+            source = by_id.get(item.clip_source_id)
+            if (source is None or source[0] >= index or source[1].kind != "Rect"
+                    or source[1].slot_id != item.slot_id):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
 
 @dataclass(frozen=True)
 class SceneProvenance:

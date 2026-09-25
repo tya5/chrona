@@ -116,7 +116,7 @@ def test_track_placements_reject_completed_mark_extent_outside_its_row(track, so
     rows = (item(row_id="row", group_id=None, items=(item(
         item_id="member", object_id="member", track=track, source_kind=source_kind, actual=actual,
     ),)),)
-    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 20.0), group_header_size=0.0)
+    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 9.0), group_header_size=0.0)
 
     with pytest.raises(LayoutError, match="E_LAYOUT_MARK_OVERFLOW") as error:
         place_mark_tracks(review_rows=rows, row_placements=row_placements, mark_block_size=10.0)
@@ -133,7 +133,8 @@ def test_track_placements_accept_mark_extents_at_the_row_boundary() -> None:
 
     tracks = place_mark_tracks(review_rows=rows, row_placements=row_placements, mark_block_size=10.0)
 
-    assert tracks[0].block == 7.5
+    assert tracks[0].block == tracks[0].actual_block == 10.0
+    assert tracks[0].block_size == 10.0
 
 
 def test_track_minimum_uses_the_completed_multi_lane_milestone_placement() -> None:
@@ -142,8 +143,8 @@ def test_track_minimum_uses_the_completed_multi_lane_milestone_placement() -> No
         item(item_id="gate-a", object_id="gate-a", track="stacked", source_kind="combined", actual=None),
         item(item_id="gate-b", object_id="gate-b", track="stacked", source_kind="combined", actual=None),
     ))
-    assert minimum_track_block_extent(review_row=row, mark_block_size=10.0) == 60.0
+    assert minimum_track_block_extent(review_row=row, mark_block_size=10.0) == 20.0
     with pytest.raises(LayoutError, match="E_LAYOUT_MARK_OVERFLOW"):
         place_mark_tracks(review_rows=(row,), row_placements=(
-            RowPlacement("milestone-lanes", None, (0.0, 0.0, 100.0, 59.0)),
+            RowPlacement("milestone-lanes", None, (0.0, 0.0, 100.0, 19.0)),
         ), mark_block_size=10.0)

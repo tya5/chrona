@@ -336,12 +336,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                  bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, planned_mark.path_commands),
                                                  corner_radius=planned_mark.corner_radius,
                                                  path_commands=planned_mark.path_commands,
-                                                 href=href, link_title=link_title))
+                                                 href=href, link_title=link_title, slot_id=planned_mark.slot_id,
+                                                 paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
             else:
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds,
                                                  corner_radius=planned_mark.corner_radius,
-                                                 href=href, link_title=link_title))
+                                                 href=href, link_title=link_title, slot_id=planned_mark.slot_id,
+                                                 paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
         actual = item.actual or {}
         actual_binding = semantic_binding("actual")
         actual_mark = mark_placements.get(f"actual:{instance_id}")
@@ -350,18 +352,21 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                       float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
             if item.source_type == "span":
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, corner_radius=actual_mark.corner_radius))
+                                                 bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                                                 paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
             else:
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                  bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands), corner_radius=actual_mark.corner_radius,
-                                                 path_commands=actual_mark.path_commands))
+                                                 path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
+                                                 paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
             missing_binding = semantic_binding("missingActual")
             primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
-                                             bounds, corner_radius=missing_mark.corner_radius))
+                                             bounds, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
+                                             paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment))
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
             semantic_id = inside_member_label_semantic(source_kind) if layout_text[label_id].selected_rung == "inside" else "memberLabel"
@@ -385,7 +390,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
                                                  binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, planned_mark.path_commands),
                                                  corner_radius=planned_mark.corner_radius,
-                                                 path_commands=planned_mark.path_commands, href=href, link_title=link_title))
+                                                 path_commands=planned_mark.path_commands, href=href, link_title=link_title,
+                                                 slot_id=planned_mark.slot_id, paint_order=planned_mark.paint_order,
+                                                 end_treatment=planned_mark.end_treatment))
             actual_mark = mark_placements.get(f"actual:{instance_id}")
             if actual_mark is not None:
                 binding = semantic_binding("actual")
@@ -394,7 +401,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
                                                  binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands),
                                                  corner_radius=actual_mark.corner_radius,
-                                                 path_commands=actual_mark.path_commands))
+                                                 path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
+                                                 paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
         label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"
         if label_id in layout_text:
             semantic_id = (inside_member_label_semantic(folded.item.source_kind)
@@ -448,7 +456,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         elif placed.placement_id.startswith("progress-fill:"):
             progress = semantic_binding("progressFill")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "object",
-                                             progress.purpose, progress.scene_role, bounds))
+                                             progress.purpose, progress.scene_role, bounds, slot_id=placed.slot_id,
+                                             paint_order=placed.paint_order, clip_source_id=placed.clip_host_id))
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
@@ -469,7 +478,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          icon_raster=placed.payload if placed.kind == "raster" else None,
                                          icon_alternative=placed.alternative, icon_decorative=placed.decorative,
                                          icon_stroke_scale=placed.stroke_scale,
-                                         visual_capability_source_ref=placed.visual_capability_source_ref))
+                                         visual_capability_source_ref=placed.visual_capability_source_ref,
+                                         slot_id=placed.slot_id))
     text_roles = tuple(
         (prefix, semantic_binding(semantic_id).purpose, role or semantic_binding(semantic_id).scene_role)
         for prefix, semantic_id, role in (

@@ -46,7 +46,7 @@ def _schema_store() -> dict[str, Any]:
     names = (
         "revision-store-resource-ref-v0.1.schema.yaml",
         "actual-intake-batch-v0.2.schema.yaml",
-        "actual-set-v0.2.schema.yaml",
+        "actual-set-v0.3.schema.yaml",
         "authoring-command-v0.1.schema.yaml",
         "authoring-command-result-v0.1.schema.yaml",
         "command-request-v0.2.schema.yaml",

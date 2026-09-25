@@ -153,6 +153,16 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
         return scale, gap
 
+    def mark_geometry(self, role: str) -> tuple[Decimal, Decimal, int, Decimal]:
+        """Return the closed lane-relative geometry for one mark semantic role."""
+        height = self.number(role, "markHeight")
+        offset = self.number(role, "markOffset")
+        order = self.number(role, "markPaintOrder")
+        corner_radius = self.number(role, "markCornerRadius")
+        if height <= 0 or offset < 0 or offset + height > 1 or corner_radius < 0 or corner_radius > Decimal("0.5") or order != order.to_integral_value():
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
+        return height, offset, int(order), corner_radius
+
     def number(self, role: str, property_name: str) -> Decimal:
         value = self.token(role, property_name, "number")
         try:

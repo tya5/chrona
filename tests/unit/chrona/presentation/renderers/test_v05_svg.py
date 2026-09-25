@@ -45,3 +45,17 @@ def test_svg_serializes_only_completed_rich_visual_values_with_stable_ids():
     assert '<feDropShadow dx="1" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.4"/>' in output
     assert 'fill="url(#gradient-' in output and 'filter="url(#shadow-' in output
     assert 'stroke-linecap="round" stroke-linejoin="bevel"' in output
+
+
+def test_svg_projects_completed_mark_paint_order_clip_and_link_interaction_separately():
+    host = ScenePrimitive("host", "Rect", "a", "object", "planned", "planned", (1, 2, 8, 4),
+                          slot_id="timeline", paint=ScenePaint("#112233", None, None, (), 1),
+                          corner_radius=2, paint_order=1, href="https://example.test/a")
+    fill = ScenePrimitive("fill", "Rect", "a", "object", "progress-fill", "progress-fill", (1, 2, 3, 4),
+                          slot_id="timeline", paint=ScenePaint("#445566", None, None, (), 1),
+                          clip_source_id="host", paint_order=2)
+    output = render_v05_svg(_surface(host, fill), viewport=(10, 10))
+    assert '<clipPath id="clip-host"><rect x="1" y="2" width="8" height="4" rx="2" ry="2"/></clipPath>' in output
+    assert 'clip-path="url(#clip-host)"' in output
+    assert '<g data-layer="mark-paint" aria-hidden="true">' in output
+    assert '<g data-layer="mark-interaction"><a href="https://example.test/a"' in output

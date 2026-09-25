@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError
 
@@ -28,6 +28,26 @@ class TrackPlacement:
     block: float
     actual_block: float
     block_size: float
+
+
+@dataclass(frozen=True)
+class MarkGeometry:
+    """One role's lane-slot-relative geometry, resolved before Scene."""
+
+    height: float
+    offset: float
+    paint_order: int
+    corner_radius: float
+
+    def __post_init__(self) -> None:
+        if self.height <= 0 or self.offset < 0 or self.offset + self.height > 1 or not 0 <= self.corner_radius <= 0.5:
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/theme/markGeometry",
+                              detail=f"height={self.height}; offset={self.offset}")
+
+
+def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, float]:
+    """Return one completed block coordinate and extent within an assigned slot."""
+    return track.block + track.block_size * geometry.offset, track.block_size * geometry.height
 
 
 def place_table_columns(*, columns: tuple[tuple[str, str], ...],
@@ -93,23 +113,35 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
 
 
 def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[RowPlacement, ...],
-                      mark_block_size: float) -> tuple[TrackPlacement, ...]:
+                      mark_block_size: float, role_geometries: Mapping[str, MarkGeometry] | None = None) -> tuple[TrackPlacement, ...]:
     """Allocate member tracks whose completed marks are contained by their row."""
-    def require_contained(row: RowPlacement, block: float, *, instance_id: str) -> None:
+    geometries = role_geometries or {
+        "planned": MarkGeometry(1.0, 0.0, 0, 0.0),
+        "actual": MarkGeometry(1.0, 0.0, 1, 0.0),
+        "missing-actual": MarkGeometry(1.0, 0.0, 1, 0.0),
+        "snapshot": MarkGeometry(1.0, 0.0, 0, 0.0),
+        "scenario": MarkGeometry(1.0, 0.0, 0, 0.0),
+    }
+
+    def require_contained(row: RowPlacement, block: float, block_size: float, *, instance_id: str, role: str) -> None:
         row_start, row_size = row.bounds[1], row.bounds[3]
-        if (mark_block_size <= 0 or block < row_start
-                or block + mark_block_size > row_start + row_size):
-            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize",
-                              instance_id)
+        if (mark_block_size <= 0 or block < row_start or block + block_size > row_start + row_size):
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/theme/roles/" + role, instance_id,
+                              detail=f"role={role}; block={block}; extent={block_size}")
 
     def has_actual(item: Any) -> bool:
         actual = getattr(item, "actual", None) or {}
         return bool((actual.get("start") is not None and actual.get("finish") is not None)
+                    or (actual.get("start") is not None and actual.get("openUntil") == "asOf")
                     or actual.get("at") is not None)
 
     placements: list[TrackPlacement] = []
     for review_row, row in zip(review_rows, row_placements, strict=True):
         stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
+        if row.bounds[3] < stacked_total * mark_block_size:
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize",
+                              detail=f"lanes={stacked_total}; extent={stacked_total * mark_block_size}")
+        lane_origin = row.bounds[1] + (row.bounds[3] - stacked_total * mark_block_size) / 2
         stacked_index = 0
         members = sorted(
             enumerate(review_row.items),
@@ -120,25 +152,32 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
         )
         for _, item in members:
             if item.track == "shared":
-                block = row.bounds[1] + (row.bounds[3] - mark_block_size) / 2
+                block = lane_origin
                 actual_block = block
             else:
-                track_height = row.bounds[3] / stacked_total
-                block = row.bounds[1] + stacked_index * track_height + track_height * 0.25
-                actual_block = block + mark_block_size * 1.25
+                # A lane has a fixed base mark extent.  Role geometry is
+                # relative to this lane slot, never to the spare row space:
+                # rows may be taller for labels, group treatment, or viewport
+                # allocation without silently stretching marks.
+                block = lane_origin + stacked_index * mark_block_size
+                actual_block = block
                 stacked_index += 1
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             source_kind = getattr(item, "source_kind", "primary")
-            if source_kind != "actual":
-                require_contained(row, block, instance_id=instance_id)
-            if source_kind in {"primary", "combined", "actual"}:
-                companion_block = actual_block if has_actual(item) else block + mark_block_size * 1.25
-                require_contained(row, companion_block, instance_id=instance_id)
-            placements.append(TrackPlacement(instance_id, block, actual_block, mark_block_size))
+            roles = ("actual",) if source_kind == "actual" else ("snapshot" if source_kind in {"snapshot", "scenario"} else "planned",)
+            if source_kind in {"primary", "combined"}:
+                roles += ("actual" if has_actual(item) else "missing-actual",)
+            slot_size = mark_block_size
+            for role in roles:
+                geometry = geometries[role]
+                role_block = block + slot_size * geometry.offset
+                require_contained(row, role_block, slot_size * geometry.height, instance_id=instance_id, role=role)
+            placements.append(TrackPlacement(instance_id, block, actual_block, slot_size))
     return tuple(placements)
 
 
-def minimum_track_block_extent(*, review_row: Any, mark_block_size: float) -> float:
+def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
+                               role_geometries: Mapping[str, MarkGeometry] | None = None) -> float:
     """Find the smallest integral row block accepted by the track planner.
 
     This deliberately invokes ``place_mark_tracks`` rather than re-encoding
@@ -149,7 +188,7 @@ def minimum_track_block_extent(*, review_row: Any, mark_block_size: float) -> fl
             place_mark_tracks(review_rows=(review_row,), row_placements=(
                 RowPlacement(str(review_row.row_id), getattr(review_row, "group_id", None),
                              (0.0, 0.0, 1.0, block_size)),
-            ), mark_block_size=mark_block_size)
+            ), mark_block_size=mark_block_size, role_geometries=role_geometries)
         except LayoutError as error:
             if error.diagnostic_id != "E_LAYOUT_MARK_OVERFLOW":
                 raise

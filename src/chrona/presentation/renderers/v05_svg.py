@@ -72,7 +72,9 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
     paints = (surface.canvas_paint, *(completed(node) for node in surface.primitives))
     gradients = {gradient_id(paint): paint.gradient for paint in paints if paint.gradient}
     shadows = {shadow_id(paint): paint.shadow for paint in paints if paint.shadow}
-    if marker_pairs or patterns or gradients or shadows:
+    clip_hosts = {node.scene_id: node for node in surface.primitives
+                  if any(item.clip_source_id == node.scene_id for item in surface.primitives)}
+    if marker_pairs or patterns or gradients or shadows or clip_hosts:
         definitions: list[str] = []
         for color, marker in sorted(marker_pairs, key=repr):
             if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -89,12 +91,21 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
         for identifier, shadow in sorted(shadows.items()):
             assert shadow is not None
             definitions.append(f'<filter id="{identifier}"><feDropShadow dx="{number(shadow.offset_x)}" dy="{number(shadow.offset_y)}" stdDeviation="{number(shadow.blur)}" flood-color="{escape(shadow.color, quote=True)}" flood-opacity="{number(shadow.opacity)}"/></filter>')
+        for identifier, host in sorted(clip_hosts.items()):
+            if host.kind != "Rect":
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            x, y, w, h = host.bounds
+            radius = f' rx="{number(host.corner_radius)}" ry="{number(host.corner_radius)}"' if host.corner_radius else ""
+            definitions.append(f'<clipPath id="clip-{escape(identifier, quote=True)}"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}/></clipPath>')
         parts.append("<defs>" + "".join(definitions) + "</defs>")
+    rendered: list[tuple[ScenePrimitive, str]] = []
     def append(node: ScenePrimitive, content: str) -> None:
-        paint = completed(node)
-        if node.href is None: parts.append(content); return
+        rendered.append((node, content))
+    def link(node: ScenePrimitive, content: str) -> str:
+        if node.href is None:
+            return content
         title = f' xlink:title="{escape(node.link_title, quote=True)}"' if node.link_title is not None else ""
-        parts.append(f'<a href="{escape(node.href, quote=True)}" target="_top"{title}>{content}</a>')
+        return f'<a href="{escape(node.href, quote=True)}" target="_top"{title}>{content}</a>'
     def icon_path(path: object) -> str:
         values: list[str] = []
         for kind, points in path.commands:
@@ -117,7 +128,8 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             appearance = (f'fill="url(#{pattern_id(node.pattern, paint)})" ' + attrs(paint, fill=False, stroke=True)
                           if node.pattern is not None else attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
             radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
-            append(node, f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius} {appearance}/>')
+            clip = f' clip-path="url(#clip-{escape(node.clip_source_id, quote=True)})"' if node.clip_source_id else ""
+            append(node, f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}{clip} {appearance}/>')
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             lines = node.text_layout.lines
@@ -145,6 +157,24 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
                 encoded = b64encode(node.icon_raster).decode("ascii")
                 append(node, f'<image {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}" x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" href="data:image/png;base64,{encoded}"/>')
         else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    mark_purposes = {"planned", "actual", "snapshot", "missingActual", "progress-fill", "icon-mark"}
+    visual_marks = [(index, node, content) for index, (node, content) in enumerate(rendered)
+                    if node.purpose in mark_purposes]
+    for node, content in ((node, content) for node, content in rendered if node.purpose not in mark_purposes):
+        parts.append(link(node, content))
+    if visual_marks:
+        parts.append('<g data-layer="mark-paint" aria-hidden="true">' + "".join(
+            content for _, _, content in sorted(visual_marks, key=lambda item: (item[1].paint_order, item[0]))
+        ) + '</g>')
+        interactions = []
+        for _, node, _ in visual_marks:
+            if node.href is None:
+                continue
+            x, y, w, h = node.bounds
+            title = f'<title>{escape(node.link_title)}</title>' if node.link_title else ""
+            interactions.append(f'<a href="{escape(node.href, quote=True)}" target="_top" data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" fill="transparent" pointer-events="all"/>{title}</a>')
+        if interactions:
+            parts.append('<g data-layer="mark-interaction">' + "".join(interactions) + '</g>')
     return "\n".join((*parts, "</svg>")) + "\n"
 
 

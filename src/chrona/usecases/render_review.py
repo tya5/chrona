@@ -23,7 +23,7 @@ from chrona.presentation.layout.engine import resolve_draft_block_extent, solve_
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
-from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, timeline_content_block_requirement
+from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, resolve_mark_geometries, timeline_content_block_requirement
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, resolve_font_metrics
@@ -204,6 +204,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
                 projection=projection,
                 group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
                 metric_values=measured.metric_values,
+                role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
             )
             required_block = resolve_draft_block_extent(
                 resolved_layout, viewport_inline=viewport["inlineSize"],

@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:theme-v0.7"
-title: "Chrona Theme v0.7"
+$id: "urn:chrona:theme-v0.8"
+title: "Chrona Theme v0.8"
 description: "Semantic appearance tokens and bindings; concrete colors remain in a Color Scheme."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {description: "This Theme contract version.", const: "chrona/theme/v0.7"}
+  version: {description: "This Theme contract version.", const: "chrona/theme/v0.8"}
   kind: {description: "The resource kind for semantic appearance bindings.", const: theme}
   id: {description: "Stable Theme identifier.", type: string, minLength: 1}
   body:
@@ -96,6 +96,10 @@ properties:
             lineHeight: {description: "Named line-height token for the role.", type: string, minLength: 1}
             iconScale: {description: "Named typography-relative icon block-size ratio for the role.", type: string, minLength: 1}
             iconGap: {description: "Named typography-relative icon inline-gap ratio for the role.", type: string, minLength: 1}
+            markHeight: {description: "Named lane-slot-relative mark block-size ratio for this semantic role.", type: string, minLength: 1}
+            markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
+            markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
+            markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
             opacity: {description: "Named opacity token for the role.", type: string, minLength: 1}
             strokeWidth: {description: "Named stroke-width token for the role.", type: string, minLength: 1}
             dash: {description: "Named dash-pattern token for the role.", type: string, minLength: 1}

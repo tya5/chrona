@@ -1,21 +1,21 @@
 version: chrona/declared-vocabulary-policy/v0.1
 vocabularies:
-  - schema: schemas/theme-v0.7.schema.yaml
+  - schema: schemas/theme-v0.8.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/1/then/properties/value/properties/shape
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
     accepted: [triangle, open-triangle, chevron]
-  - schema: schemas/theme-v0.7.schema.yaml
+  - schema: schemas/theme-v0.8.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/2/then/properties/value/oneOf/0/properties/kind
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
     accepted: [outline]
-  - schema: schemas/theme-v0.7.schema.yaml
+  - schema: schemas/theme-v0.8.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/2/then/properties/value/oneOf/1/properties/kind
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
     accepted: [diagonal-hatch]
-  - schema: schemas/theme-v0.7.schema.yaml
+  - schema: schemas/theme-v0.8.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/3/then/properties/value/properties/shape
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
@@ -25,17 +25,17 @@ vocabularies:
     owner: chrona.presentation.model.surface_content.display_value
     disposition: finite
     accepted: [en-US, ja-JP]
-  - schema: schemas/view-v0.13.schema.yaml
+  - schema: schemas/view-v0.14.schema.yaml
     pointer: /allOf/1/properties/body/properties/annotations/items/properties/anchor/properties/kind
     owner: chrona.presentation.layout.annotations.resolve_annotation_anchor
     disposition: finite
     accepted: [object]
-  - schema: schemas/view-v0.13.schema.yaml
+  - schema: schemas/view-v0.14.schema.yaml
     pointer: /allOf/1/properties/body/properties/annotations/items/properties/anchor/properties/facet
     owner: chrona.presentation.layout.annotations.resolve_annotation_anchor
     disposition: finite
     accepted: [planned, actual]
-  - schema: schemas/view-v0.13.schema.yaml
+  - schema: schemas/view-v0.14.schema.yaml
     pointer: /allOf/1/properties/body/properties/annotations/items/properties/anchor/properties/endpoint
     owner: chrona.presentation.layout.annotations.resolve_annotation_anchor
     disposition: finite

@@ -1,13 +1,13 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.13"
-title: "Chrona View v0.13"
+$id: "chrona/view-v0.14"
+title: "Chrona View v0.14"
 description: "Declarative selection and presentation intent for one review surface."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - description: "View document fields extending the shared presentation resource."
     type: object
     properties:
-      version: {description: "This View document contract version.", const: "chrona/view/v0.13"}
+      version: {description: "This View document contract version.", const: "chrona/view/v0.14"}
       kind: {description: "Resource kind identifying this document as a View.", const: view}
       body:
         description: "Surface selection and presentation semantics."
@@ -201,7 +201,7 @@ allOf:
           visuals:
             description: "Closed icon requests resolved by Layout against Context-local catalogs."
             type: array
-            items: {$ref: "chrona/view-v0.13#/$defs/visual"}
+            items: {$ref: "chrona/view-v0.14#/$defs/visual"}
           tableColumns:
             type: array
             minItems: 1

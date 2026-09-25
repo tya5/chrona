@@ -1,4 +1,4 @@
-version: chrona/theme/v0.7
+version: chrona/theme/v0.8
 kind: theme
 id: executive-light
 body:
@@ -124,6 +124,39 @@ body:
     opacity.calendar-closed:
       type: number
       value: 0.12
+    mark-height-container:
+      type: number
+      value: 1
+    mark-height-content:
+      type: number
+      value: 0.6
+    mark-offset-start:
+      type: number
+      value: 0
+    mark-offset-nested:
+      type: number
+      value: 0.2
+    mark-paint-back:
+      type: number
+      value: 0
+    mark-paint-middle:
+      type: number
+      value: 1
+    mark-paint-front:
+      type: number
+      value: 2
+    mark-radius-square:
+      type: number
+      value: 0
+    mark-radius-rounded:
+      type: number
+      value: 0.25
+    icon-mark-scale:
+      type: number
+      value: 0.55
+    icon-mark-gap:
+      type: number
+      value: 0
   roles:
     group-band:
       opacity: opacity.group-band
@@ -191,6 +224,34 @@ body:
     dependency:
       marker: dependency-marker
       strokeWidth: stroke-width
+    snapshot:
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-back
+      markCornerRadius: mark-radius-square
+    scenario:
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-back
+      markCornerRadius: mark-radius-square
+    planned:
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-middle
+      markCornerRadius: mark-radius-square
+    actual:
+      markHeight: mark-height-content
+      markOffset: mark-offset-nested
+      markPaintOrder: mark-paint-front
+      markCornerRadius: mark-radius-rounded
+    missing-actual:
+      markHeight: mark-height-content
+      markOffset: mark-offset-nested
+      markPaintOrder: mark-paint-front
+      markCornerRadius: mark-radius-rounded
+    icon-mark:
+      iconScale: icon-mark-scale
+      iconGap: icon-mark-gap
   colorBindings:
     background.fill: surface
     text.fill: text
@@ -227,6 +288,7 @@ body:
     note-index.fill: accent
     annotation.stroke: neutral
     progress-fill.fill: warning
+    icon-mark.fill: surface
   metrics:
     text.body.size: text-size
     text.body.lineHeight: text-line-height

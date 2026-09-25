@@ -15,7 +15,7 @@ def _write(root: Path, token: str, address: str, value: dict, kind: str, identif
 
 
 def test_apply_intake_uses_v02_batch_cas_and_replays(tmp_path: Path):
-    actual = {"version": "chrona/actual-set/v0.2", "kind": "actual-set", "id": "actuals", "body": {"observations": []}}
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "actuals", "body": {"observations": []}}
     store = LocalActualStore(tmp_path, actual); revision, loaded = store.read()
     payload = (snapshot_directory(tmp_path, revision) / "actuals" / "actuals.yaml").read_bytes()
     target = {"id": "actuals", "kind": "actual-set", "store": {"provider": "local", "identity": "test"}, "address": "actuals/actuals.yaml", "revision": {"token": revision}, "contentIdentity": "sha256:" + sha256(payload).hexdigest()}

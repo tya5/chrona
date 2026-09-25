@@ -34,8 +34,10 @@ Scene v0.3 supersedes v0.2. It adds authoritative primitive fields:
 * `endTreatment` — `closed` or `open`, selected by Layout.
 
 The Scene validator verifies that a clip source exists, precedes its dependent
-fill in canonical source order, is a compatible closed mark outline, and is in
-the same slot. SVG creates a clip definition only from that validated source;
+fill in canonical source order, is a compatible mark outline (closed or open),
+and is in the same slot. An open actual remains a completed host outline and
+may therefore contain its own progress fill; its terminal treatment does not
+make the observed extent incomplete. SVG creates a clip definition only from that validated source;
 an adapter must not recreate rounded geometry or infer an open end.
 
 ## Lane geometry clarification

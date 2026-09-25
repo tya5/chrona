@@ -161,7 +161,7 @@ def _project_document(workspace: AuthoringWorkspaceContract) -> dict[str, Any]:
 
 def _actual_document(workspace: AuthoringWorkspaceContract) -> dict[str, Any]:
     return {
-        "version": "chrona/actual-set/v0.2", "kind": "actual-set", "id": f"{workspace.identity.id}-actuals",
+        "version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": f"{workspace.identity.id}-actuals",
         "body": {"observations": [
             {"id": f"{item['taskId']}-actual", "sequence": index, "projectObjectId": item["taskId"],
              "actual": {"start": item["actual"]["start"], "finish": item["actual"]["finish"],

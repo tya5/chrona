@@ -46,9 +46,10 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 
 | Contract | Schema path | Value | aster-ssd | controller-z | controller-z-ja | halcyon-1 | orion-asic |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| Actual set | `body.observations[].actual.openUntil` | `"asOf"` | — | examples/controller-z/actual.yaml | — | — | — |
 | Actual set | `body.observations[].alignment` | `"unmatched"` | examples/aster-ssd/actual.yaml | examples/controller-z/actual.yaml | examples/controller-z-ja/actual.yaml | examples/halcyon-1/actual.yaml | examples/orion-asic/actual.yaml |
 | Actual set | `kind` | `"actual-set"` | examples/aster-ssd/actual.yaml | examples/controller-z/actual.yaml | examples/controller-z-ja/actual.yaml | examples/halcyon-1/actual.yaml | examples/orion-asic/actual.yaml |
-| Actual set | `version` | `"chrona/actual-set/v0.2"` | examples/aster-ssd/actual.yaml | examples/controller-z/actual.yaml | examples/controller-z-ja/actual.yaml | examples/halcyon-1/actual.yaml | examples/orion-asic/actual.yaml |
+| Actual set | `version` | `"chrona/actual-set/v0.3"` | examples/aster-ssd/actual.yaml | examples/controller-z/actual.yaml | examples/controller-z-ja/actual.yaml | examples/halcyon-1/actual.yaml | examples/orion-asic/actual.yaml |
 | Profile package | `fields.*.cardinality` | `"many"` | — | — | — | — | examples/orion-asic/extensions/semiconductor-development.yaml |
 | Profile package | `fields.*.cardinality` | `"one"` | — | — | — | — | examples/orion-asic/extensions/semiconductor-development.yaml |
 | Profile package | `fields.*.type` | `"boolean"` | — | — | — | — | examples/orion-asic/extensions/semiconductor-development.yaml |

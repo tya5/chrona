@@ -19,7 +19,7 @@ class SceneSerializationError(ValueError):
 
 
 def serialize_scene(scene: InspectionScene) -> bytes:
-    """Return canonical UTF-8 scene-v0.2 JSON after typed and schema validation."""
+    """Return canonical UTF-8 scene-v0.3 JSON after typed and schema validation."""
     document = scene_document(scene)
     validate_scene_document(document)
     try:
@@ -32,7 +32,7 @@ def serialize_scene(scene: InspectionScene) -> bytes:
 def scene_document(scene: InspectionScene) -> dict[str, Any]:
     """Map each public Scene field explicitly; no dataclass reflection is used."""
     return {
-        "version": "chrona/scene/v0.2",
+        "version": "chrona/scene/v0.3",
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
@@ -73,7 +73,7 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
     """Validate schema shape plus cross-reference invariants JSON Schema cannot state."""
     try:
         errors = tuple(jsonschema.Draft202012Validator(
-            schema_document("scene-v0.2.schema.yaml")
+            schema_document("scene-v0.3.schema.yaml")
         ).iter_errors(document))
     except Exception as error:  # schema resource failures have no public partial document
         raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
@@ -94,7 +94,12 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         if (None in slots or None in rows or None in columns or len(slots) != len(surface.get("slots", ()))
                 or len(rows) != len(surface.get("rows", ())) or len(columns) != len(surface.get("columns", ()) )):
             return False
-        for primitive in surface.get("primitives", ()):
+        primitives = surface.get("primitives", ())
+        by_id = {item.get("id"): (index, item) for index, item in enumerate(primitives)
+                 if isinstance(item, Mapping)}
+        if len(by_id) != len(primitives):
+            return False
+        for index, primitive in enumerate(primitives):
             if not isinstance(primitive, Mapping):
                 return False
             row, column, purpose = primitive.get("tableRowId"), primitive.get("tableColumnId"), primitive.get("purpose")
@@ -108,6 +113,12 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                     return False
             elif row is not None or column is not None:
                 return False
+            clip_source_id = primitive.get("clipSourceId")
+            if clip_source_id is not None:
+                source = by_id.get(clip_source_id)
+                if (source is None or source[0] >= index or source[1].get("kind") != "Rect"
+                        or source[1].get("slotId") != primitive.get("slotId")):
+                    return False
     return True
 
 

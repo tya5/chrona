@@ -8,7 +8,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
-from chrona.presentation.layout.presentation import TrackPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
@@ -34,15 +34,27 @@ class SurfaceLayoutComposition:
     track_placements: tuple[TrackPlacement, ...]
 
 
+MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
+
+
+def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
+    """Close every comparison-mark role to lane-relative Layout geometry."""
+    result = {}
+    for role in MARK_GEOMETRY_ROLES:
+        height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
+        result[role] = MarkGeometry(float(height), float(offset), paint_order, float(corner_radius))
+    return result
+
+
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
-                                       metric_values: dict[str, Decimal]) -> Decimal:
+                                       metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
     rows = projection.rows or tuple(
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
     )
     track_minimum = max((minimum_track_block_extent(
-        review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]))
+        review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
         for row in rows), default=0.0)
     row_minimum = max(metric_values["timeline.row.minBlockSize"], Decimal(str(track_minimum)))
     headers = 0
@@ -172,10 +184,17 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
         if len(mark) != 1 or icon is None:
             raise LayoutError("E_LAYOUT_VISUAL_TARGET" if len(mark) != 1 else "E_ICON_NAME_UNKNOWN", visual.source_ref)
         host = mark[0]
-        height = float(host.bounds.block_size)
+        try:
+            scale, _ = request.theme_tokens.icon_ratios("icon-mark")
+        except Exception as error:
+            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
+        height = float(host.bounds.block_size) * float(scale)
+        if height <= 0:
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
         width = min(float(host.bounds.inline_size), height * icon.viewport[0] / icon.viewport[1])
-        bounds = Rect(host.bounds.inline + (host.bounds.inline_size - Decimal(str(width))) / 2, host.bounds.block,
-                      Decimal(str(width)), host.bounds.block_size)
+        bounds = Rect(host.bounds.inline + (host.bounds.inline_size - Decimal(str(width))) / 2,
+                      host.bounds.block + (host.bounds.block_size - Decimal(str(height))) / 2,
+                      Decimal(str(width)), Decimal(str(height)))
         icons.append(IconPlacement(f"visual:{host.placement_id}", host.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                    visual.decorative, bounds, "iconMark", width / icon.viewport[0], host.slot_id))
@@ -301,15 +320,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size)
     row_height = raw_rows[0].bounds[3] if raw_rows else timeline_bounds[3]
+    role_geometries = resolve_mark_geometries(request.theme_tokens)
     track_minimum = max((
-        minimum_track_block_extent(review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]))
+        minimum_track_block_extent(review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]),
+                                   role_geometries=role_geometries)
         for row in review_rows
     ), default=0.0)
     minimum = float(max(metric_values["timeline.row.minBlockSize"], Decimal(str(track_minimum))))
     if row_height < minimum:
         required = timeline_content_block_requirement(
             projection=projection, group_presentation=request.surface_content.group_presentation,
-            metric_values=metric_values,
+            metric_values=metric_values, role_geometries=role_geometries,
         )
         rows_count = len(review_rows)
         hint = int(timeline.bounds.block + required + (layout_manifest.viewport.block_size - timeline.bounds.block - timeline.bounds.block_size))
@@ -487,22 +508,25 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                source_content=f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}",
                                available_inline_start=x,
                                available_inline_size=max(0.0, timeline_bounds[0] + timeline_bounds[2] - x)))
+    diagnostics: list[str] = []
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
-                               mark_block_size=float(metric_values["timeline.mark.blockSize"]))
+                               mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
     track_by_id = {item.instance_id: item for item in tracks}
     marks: list[MarkPlacement] = []
 
     def place_mark(placement_id: str, source_ref: str, bounds: Rect,
-                   start_port: tuple[float, float], end_port: tuple[float, float], *, shape: str) -> MarkPlacement:
-        requested = float(metric_values.get(
-            "timeline.point.cornerRadius" if shape == "point" else "timeline.mark.cornerRadius", 0))
-        radius = min(requested, float(min(bounds.inline_size, bounds.block_size)) / 2)
+                   start_port: tuple[float, float], end_port: tuple[float, float], *, shape: str,
+                   semantic_id: str, end_treatment: str = "closed") -> MarkPlacement:
+        geometry = role_geometries[semantic_id]
+        radius = min(geometry.corner_radius * float(min(bounds.inline_size, bounds.block_size)),
+                     float(min(bounds.inline_size, bounds.block_size)) / 2)
         commands = (rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
                                          inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                     if shape == "point" and radius > 0 else ())
         return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
                              mark_shape=shape, corner_radius=radius, path_commands=commands,
-                             slot_id=timeline.slot_id)
+                             slot_id=timeline.slot_id, semantic_id=semantic_id, paint_order=geometry.paint_order,
+                             end_treatment=end_treatment)
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -515,41 +539,71 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             track = track_by_id[layout_id]
             source_kind = item.source_kind if projection.rows else "combined"
             planned = item.planned
+            planned_semantic = "snapshot" if source_kind in {"snapshot", "scenario"} else "planned"
+            planned_block, planned_size = mark_bounds(track, role_geometries[planned_semantic])
+            actual_block, actual_size = mark_bounds(track, role_geometries["actual"])
+            missing_block, missing_size = mark_bounds(track, role_geometries["missing-actual"])
             if source_kind != "actual" and item.source_type == "point":
                 x = _coordinate(planned["at"], scale)
-                bounds = Rect(Decimal(str(x - track.block_size / 2)), Decimal(str(track.block)),
-                              Decimal(str(track.block_size)), Decimal(str(track.block_size)))
-                port = (x, track.block + track.block_size / 2)
-                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point"))
+                bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)),
+                              Decimal(str(planned_size)), Decimal(str(planned_size)))
+                port = (x, planned_block + planned_size / 2)
+                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point",
+                                        semantic_id=planned_semantic))
             elif source_kind != "actual":
                 x1, x2 = _coordinate(planned["start"], scale), _coordinate(planned["end"], scale)
-                bounds = Rect(Decimal(str(x1)), Decimal(str(track.block)),
-                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(track.block_size)))
+                bounds = Rect(Decimal(str(x1)), Decimal(str(planned_block)),
+                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(planned_size)))
                 marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds,
-                                        (x1, track.block + track.block_size / 2),
-                                        (x2, track.block + track.block_size / 2), shape="span"))
+                                        (x1, planned_block + planned_size / 2),
+                                        (x2, planned_block + planned_size / 2), shape="span", semantic_id=planned_semantic))
             actual = item.actual or {}
+            open_actual = (source_kind in {"actual", "combined"} and item.source_type == "span"
+                           and actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
+                           and contract.time.as_of is not None)
             if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
                 x1, x2 = _coordinate(actual["start"], scale), _coordinate(actual["finish"], scale)
-                bounds = Rect(Decimal(str(x1)), Decimal(str(track.actual_block)),
-                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(track.block_size)))
+                bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
+                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(actual_size)))
                 marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds,
-                                        (x1, track.actual_block + track.block_size / 2),
-                                        (x2, track.actual_block + track.block_size / 2), shape="span"))
+                                        (x1, actual_block + actual_size / 2),
+                                        (x2, actual_block + actual_size / 2), shape="span", semantic_id="actual"))
+            elif open_actual:
+                x1, x2 = _coordinate(actual["start"], scale), _coordinate(contract.time.as_of, scale)
+                if x2 <= x1:
+                    diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_INVALID:{item.object_id}")
+                else:
+                    bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
+                                  Decimal(str(x2 - x1)), Decimal(str(actual_size)))
+                    mark = place_mark(f"actual:{instance_id}", item.object_id, bounds,
+                                      (x1, actual_block + actual_size / 2),
+                                      (x2, actual_block + actual_size / 2), shape="span", semantic_id="actual",
+                                      end_treatment="open")
+                    marks.append(mark)
             elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
                 x = _coordinate(actual["at"], scale)
-                bounds = Rect(Decimal(str(x - track.block_size / 2)), Decimal(str(track.actual_block)),
-                              Decimal(str(track.block_size)), Decimal(str(track.block_size)))
-                port = (x, track.actual_block + track.block_size / 2)
-                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point"))
+                bounds = Rect(Decimal(str(x - actual_size / 2)), Decimal(str(actual_block)),
+                              Decimal(str(actual_size)), Decimal(str(actual_size)))
+                port = (x, actual_block + actual_size / 2)
+                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id="actual"))
             elif source_kind in {"actual", "combined"}:
+                if (actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
+                        and contract.time.as_of is None):
+                    diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:{item.object_id}")
+                    continue
+                # An observation that is incomplete for this mark policy is
+                # still an observation.  A missing-actual treatment is only
+                # truthful when the projection has no actual object at all.
+                if actual:
+                    diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
+                    continue
                 anchor = planned.get("end", planned.get("at"))
                 if isinstance(anchor, date):
                     x = _coordinate(anchor, scale)
-                    bounds = Rect(Decimal(str(x)), Decimal(str(track.block + track.block_size * 1.25)),
-                                  Decimal(str(max(1.0, track.block_size * 1.5))), Decimal(str(track.block_size)))
+                    bounds = Rect(Decimal(str(x)), Decimal(str(missing_block)),
+                                  Decimal(str(max(1.0, missing_size * 1.5))), Decimal(str(missing_size)))
                     marks.append(place_mark(f"missing-actual:{instance_id}", item.object_id, bounds,
-                                            (x, track.block), (x, track.block), shape="span"))
+                                            (x, missing_block), (x, missing_block), shape="span", semantic_id="missing-actual"))
     # A group-header target is a real GroupPlacement extent, not a synthetic table row.
     group_by_id = {group.group_id: group for group in groups}
     folded_by_group: dict[str, list[Any]] = {}
@@ -574,17 +628,24 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             for _, item in members:
                 instance_id = _folded_instance_id(folded, item)
                 planned_at = item.planned.get("at")
+                planned_semantic = "snapshot" if item.source_kind in {"snapshot", "scenario"} else "planned"
+                planned_geometry = role_geometries[planned_semantic]
+                planned_block = block + block_size * planned_geometry.offset
+                planned_size = block_size * planned_geometry.height
+                actual_geometry = role_geometries["actual"]
+                actual_block = block + block_size * actual_geometry.offset
+                actual_size = block_size * actual_geometry.height
                 if item.source_kind != "actual" and isinstance(planned_at, date):
                     x = _coordinate(planned_at, scale)
-                    bounds = Rect(Decimal(str(x - block_size / 2)), Decimal(str(block)), Decimal(str(block_size)), Decimal(str(block_size)))
-                    port = (x, block + block_size / 2)
-                    marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point"))
+                    bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)), Decimal(str(planned_size)), Decimal(str(planned_size)))
+                    port = (x, planned_block + planned_size / 2)
+                    marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id=planned_semantic))
                 actual_at = (item.actual or {}).get("at")
                 if item.source_kind in {"actual", "combined"} and isinstance(actual_at, date):
                     x = _coordinate(actual_at, scale)
-                    bounds = Rect(Decimal(str(x - block_size / 2)), Decimal(str(block)), Decimal(str(block_size)), Decimal(str(block_size)))
-                    port = (x, block + block_size / 2)
-                    marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point"))
+                    bounds = Rect(Decimal(str(x - actual_size / 2)), Decimal(str(actual_block)), Decimal(str(actual_size)), Decimal(str(actual_size)))
+                    port = (x, actual_block + actual_size / 2)
+                    marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id="actual"))
     mark_by_id = {item.placement_id: item for item in marks}
     progress_source = request.surface_content.progress_fill_source
     if progress_source is not None:
@@ -606,7 +667,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 bounds = progress_fill_bounds(host.bounds, float(fraction))
                 if bounds is not None and bounds.inline_size > 0:
                     shapes.append(ShapePlacement(f"progress-fill:{host.placement_id}", item.object_id,
-                                                 "Rect", bounds, required=False))
+                                                 "Rect", bounds, required=False, slot_id=host.slot_id,
+                                                 clip_host_id=host.placement_id,
+                                                 paint_order=host.paint_order + 1))
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
             continue
@@ -622,7 +685,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         shapes.append(ShapePlacement(f"summary-bar:{review_row.row_id}", subject.object_id, "Rect",
                                      Rect(Decimal(str(x1)), row.bounds.block,
                                           Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))))
-    diagnostics: list[str] = []
     placement_decisions: list[PlacementDecision] = []
     label_requests: list[LabelRequest] = []
     candidate_icons: list[IconPlacement] = []
@@ -715,7 +777,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines)
         label_size = (leading + text_width + trailing,
                       float(font_size) * float(line_height) * len(lines))
-        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
+        # Mark labels are a foreground text layer.  An inside label is
+        # deliberately allowed over its completed comparison-mark stack; only
+        # placed text can obscure it.  Treating sibling actual/planned marks
+        # as obstacles would turn a valid host label into an accidental
+        # fallback whenever a comparison is present.
+        obstacles = ([] if label_request.inside_host_obstacle_id is not None else
+                     [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks])
         obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
                          if item.required and item.overflow != "suppressed")
         candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
@@ -1014,21 +1082,35 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                           if visual.side == "trailing")
                 note_index_content = str(annotation["number"])
                 note_index_width = measure_text_width(note_index_content, font_size=size, font_metrics=request.font_metrics)
-                note_index_inline = anchor_bounds.x + anchor_bounds.width
-                text.append(place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
-                                       content=note_index_content, inline=note_index_inline + note_index_leading,
-                                       baseline_block=anchor_bounds.y + body_size, typography_role="annotation",
-                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                       collision_region="annotations",
-                                       collision_domain=CollisionDomain("timeline", "overlay")))
+                note_index_size = (note_index_leading + note_index_width + note_index_trailing, size * line_height)
+                note_index_obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds)))
+                                        for item in text
+                                        if item.required and item.overflow != "suppressed"
+                                        and item.collision_domain == CollisionDomain("timeline", "overlay")]
+                note_index = place_label(
+                    anchor_bounds, note_index_size, ("end", "start", "above", "below"),
+                    bounds=LabelRect(*timeline_bounds), obstacles=note_index_obstacles,
+                    gap=max(1.0, size * 0.25), required=False, overflow="suppress",
+                )
+                if note_index is None:
+                    diagnostics.append(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}")
+                    continue
+                note_index_inline = note_index.bounds.x
+                note_index_text = place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
+                                             content=note_index_content, inline=note_index_inline + note_index_leading,
+                                             baseline_block=note_index.bounds.y + size, typography_role="annotation",
+                                             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                             collision_region="annotations",
+                                             collision_domain=CollisionDomain("timeline", "overlay"))
+                text.append(note_index_text)
                 if note_index_visuals:
                     if not hasattr(request.font_metrics, "cap_height_at"):
                         raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in note_index_visuals))
                     cap_height = float(request.font_metrics.cap_height_at(size))
                     for visual, icon, icon_width, gap in note_index_visuals:
-                        inline = (note_index_inline if visual.side == "leading"
-                                  else note_index_inline + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
-                        icon_bounds = Rect(Decimal(str(inline)), Decimal(str(anchor_bounds.y + body_size - cap_height
+                        inline = (note_index.bounds.x if visual.side == "leading"
+                                  else note_index.bounds.x + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
+                        icon_bounds = Rect(Decimal(str(inline)), Decimal(str(note_index_text.baseline[1] - cap_height
                                                                               + (cap_height - size) / 2)),
                                            Decimal(str(icon_width)), Decimal(str(size)))
                         candidate_icons.append(IconPlacement(f"visual:note-index:{annotation_id}:{visual.side}",

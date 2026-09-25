@@ -152,7 +152,7 @@ def apply_actual_intake_batch(
     revision, current = store.read()
     if revision != base_revision:
         return ActualIntakeCommandResult("rejected", None, ("E_CONFLICT",), ())
-    if current.get("version") != "chrona/actual-set/v0.2" or current.get("kind") != "actual-set":
+    if current.get("version") != "chrona/actual-set/v0.3" or current.get("kind") != "actual-set":
         return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_SCHEMA",), ())
 
     def identity(value: Any) -> tuple[str, str]:
@@ -243,7 +243,7 @@ def resolve_actual_observation(
 
     provenance = {"externalIdentity": deepcopy(observation["externalIdentity"])}
     observation.pop("alignment")
-    if candidate.get("version") != "chrona/actual-set/v0.2":
+    if candidate.get("version") != "chrona/actual-set/v0.3":
         observation.pop("externalIdentity")
     observation["projectObjectId"] = project_object_id
     persisted = store.write(base_revision, candidate)

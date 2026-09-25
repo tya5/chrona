@@ -10,7 +10,7 @@ from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _actual_set_v02():
-    return {"version": "chrona/actual-set/v0.2", "kind": "actual-set", "id": "supplier-observed", "body": {"observations": []}}
+    return {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "supplier-observed", "body": {"observations": []}}
 
 
 def _batch(records):
@@ -19,7 +19,7 @@ def _batch(records):
 
 def _actual_set():
     return {
-        "version": "chrona/actual-set/v0.2",
+        "version": "chrona/actual-set/v0.3",
         "kind": "actual-set",
         "id": "supplier-observed",
         "body": {
