@@ -1363,6 +1363,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                      target, obstacles=placed_boxes[:-1], limit=1024)
                 except ValueError as error:
                     raise LayoutError(str(error), f"/annotations/{index}") from error
+                if not relation_route_quality(tuple(points), max_bends=layout_manifest.annotation_max_bends,
+                                              max_detour_ratio=layout_manifest.annotation_max_detour_ratio):
+                    raise LayoutError("E_LAYOUT_ANNOTATION_UNROUTABLE", f"/annotations/{index}")
                 relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))

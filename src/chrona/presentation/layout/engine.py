@@ -401,11 +401,14 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
     _measure_node(root, "/root", measurements, profile)
     arranger = _Arranger(profile, measurements); arranger.arrange(root, "/root", viewport)
     relation_routing = profile.profile.get("relationRouting", {})
+    annotation_routing = profile.profile["reviewSurface"]["annotationRouting"]
     return LayoutManifest(
         profile.profile_id, profile.content_hash, str(profile.profile["writingMode"]), viewport,
         tuple(arranger.decisions),
         relation_max_bends=int(relation_routing.get("maxBends", 4)),
         relation_max_detour_ratio=float(relation_routing.get("maxDetourRatio", 2.0)),
+        annotation_max_bends=int(annotation_routing["maxBends"]),
+        annotation_max_detour_ratio=float(annotation_routing["maxDetourRatio"]),
         row_distribution=str(profile.profile["reviewSurface"]["rowDistribution"]),
         background_extents=dict(profile.profile["reviewSurface"]["backgroundExtents"]),
     )

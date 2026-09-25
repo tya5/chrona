@@ -69,6 +69,8 @@ class LayoutManifest:
     diagnostics: tuple[str, ...] = ()
     relation_max_bends: int = 4
     relation_max_detour_ratio: float = 2.0
+    annotation_max_bends: int = 4
+    annotation_max_detour_ratio: float = 2.0
     row_distribution: str = "pack"
     background_extents: Mapping[str, str] = field(default_factory=dict)
 
@@ -106,6 +108,10 @@ class LayoutManifest:
             "relationRouting": {
                 "maxBends": self.relation_max_bends,
                 "maxDetourRatio": self.relation_max_detour_ratio,
+            },
+            "annotationRouting": {
+                "maxBends": self.annotation_max_bends,
+                "maxDetourRatio": self.annotation_max_detour_ratio,
             },
             "reviewSurface": {
                 "backgroundExtents": dict(sorted(self.background_extents.items())),

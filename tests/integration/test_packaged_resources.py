@@ -25,7 +25,7 @@ SCHEMAS = (
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",
     "layout-profile-v0.5.schema.yaml",
-    "layout-profile-v0.6.schema.yaml",
+    "layout-profile-v0.7.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
     "actual-intake-batch-v0.2.schema.yaml",
     "actual-set-v0.3.schema.yaml",

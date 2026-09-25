@@ -535,7 +535,7 @@ _SCHEMAS = {
     ("view", "chrona/view/v0.17"): "view-v0.17.schema.yaml",
     ("theme", "chrona/theme/v0.10"): "theme-v0.10.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
-    ("layout-profile", "chrona/layout-profile/v0.6"): "layout-profile-v0.6.schema.yaml",
+    ("layout-profile", "chrona/layout-profile/v0.7"): "layout-profile-v0.7.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",

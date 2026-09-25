@@ -88,7 +88,7 @@ def test_layout_token_requirement_contract_is_exact_and_theme_checked():
 
 def test_unavailable_optional_source_does_not_participate_in_layout():
     raw = {
-        "version": "chrona/layout-profile/v0.6", "id": "optional-source", "writingMode": "horizontal-tb", "requiredThemeTokens": ["spacing.m", "spacing.none"], "reviewSurface": {"rowDistribution": "pack", "backgroundExtents": {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}},
+        "version": "chrona/layout-profile/v0.7", "id": "optional-source", "writingMode": "horizontal-tb", "requiredThemeTokens": ["spacing.m", "spacing.none"], "reviewSurface": {"rowDistribution": "pack", "backgroundExtents": {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}, "annotationRouting": {"maxBends": 4, "maxDetourRatio": 2}},
         "root": {"id": "root", "kind": "column", "inlineSize": "fill", "blockSize": "fill",
                  "gap": {"token": "spacing.m"}, "padding": {"token": "spacing.none"},
                  "alignItems": "stretch", "justifyContent": "start", "children": [
@@ -109,7 +109,7 @@ def test_unavailable_optional_source_does_not_participate_in_layout():
 
 def test_grid_and_distribution_are_deterministic():
     raw={
-      "version":"chrona/layout-profile/v0.6","id":"grid","writingMode":"horizontal-tb","requiredThemeTokens":["spacing.m","spacing.none"],"reviewSurface":{"rowDistribution":"pack","backgroundExtents":{"rowBand":"table","groupBand":"timeline","groupHeaderBand":"both","calendarClosed":"timeline"}},
+      "version":"chrona/layout-profile/v0.7","id":"grid","writingMode":"horizontal-tb","requiredThemeTokens":["spacing.m","spacing.none"],"reviewSurface":{"rowDistribution":"pack","backgroundExtents":{"rowBand":"table","groupBand":"timeline","groupHeaderBand":"both","calendarClosed":"timeline"},"annotationRouting":{"maxBends":4,"maxDetourRatio":2}},
       "root":{"id":"root","kind":"grid","inlineSize":"fill","blockSize":"fill","columnTracks":[{"fr":1},{"fr":1}],"rowTracks":["content"],"gap":{"token":"spacing.m"},"padding":{"token":"spacing.none"},"alignItems":"stretch","justifyContent":"start","children":[
         {"id":"legend","kind":"slot","source":"legend","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":1,"row":1}},
         {"id":"notes","kind":"slot","source":"notes","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":2,"row":1}}
@@ -130,6 +130,35 @@ def test_review_surface_requires_the_closed_background_extent_mapping():
     with pytest.raises(LayoutError, match="E_LAYOUT_SCHEMA") as error:
         resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
     assert error.value.path == "/reviewSurface/backgroundExtents"
+
+
+def test_v07_requires_annotation_routing_and_rejects_the_removed_v06_identity():
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    values = {name: {"type": "number", "value": value} for name, value in {
+        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24, "panel.minimum": 180,
+    }.items()}
+    del raw["reviewSurface"]["annotationRouting"]
+    with pytest.raises(LayoutError, match="E_LAYOUT_SCHEMA") as error:
+        resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
+    assert error.value.path == "/reviewSurface"
+
+    raw["version"] = "chrona/layout-profile/v0.6"
+    with pytest.raises(LayoutError, match="E_LAYOUT_SCHEMA") as error:
+        resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
+    assert error.value.path == "/version"
+
+
+def test_annotation_routing_is_manifested_independently_of_relation_routing():
+    raw = yaml.safe_load((ROOT / "examples/halcyon-1/layouts/briefing.yaml").read_text(encoding="utf-8"))
+    raw["reviewSurface"]["annotationRouting"] = {"maxBends": 1, "maxDetourRatio": 1}
+    values = {name: {"type": "number", "value": value} for name, value in {
+        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24, "panel.minimum": 180,
+    }.items()}
+    resolved = resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=900, measurements=MEASUREMENTS)
+    assert (manifest.annotation_max_bends, manifest.annotation_max_detour_ratio) == (1, 1.0)
+    assert (manifest.relation_max_bends, manifest.relation_max_detour_ratio) == (4, 2.0)
+    assert b'"annotationRouting":{"maxBends":1,"maxDetourRatio":1.0}' in manifest.canonical_bytes()
 
 
 def relative_profile():

@@ -1,12 +1,12 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "urn:chrona:layout-profile-v0.6"
-title: "Chrona Intent-Oriented Layout Profile v0.6"
+$id: "urn:chrona:layout-profile-v0.7"
+title: "Chrona Intent-Oriented Layout Profile v0.7"
 description: "Declarative physical-layout intent for presentation slots and containers."
 type: object
 additionalProperties: false
 required: [version, id, writingMode, requiredThemeTokens, reviewSurface]
 properties:
-  version: {description: "This Layout Profile contract version.", const: "chrona/layout-profile/v0.6"}
+  version: {description: "This Layout Profile contract version.", const: "chrona/layout-profile/v0.7"}
   id: {description: "Stable Layout Profile identifier.", $ref: "#/$defs/id"}
   writingMode: {description: "Writing mode used to resolve inline and block axes.", enum: [horizontal-tb, vertical-rl, vertical-lr]}
   requiredThemeTokens:
@@ -18,7 +18,7 @@ properties:
     type: object
     description: "Finite arrangement policies for the table--timeline review surface."
     additionalProperties: false
-    required: [rowDistribution, backgroundExtents]
+    required: [rowDistribution, backgroundExtents, annotationRouting]
     properties:
       rowDistribution:
         description: "Distribution of remaining block space after completed row requirements."
@@ -35,6 +35,14 @@ properties:
           calendarClosed:
             description: "Calendar closures are column-oriented stripes in the timeline domain."
             const: timeline
+      annotationRouting:
+        type: object
+        description: "Limits for Layout-owned orthogonal annotation-leader routing."
+        additionalProperties: false
+        required: [maxBends, maxDetourRatio]
+        properties:
+          maxBends: {description: "Maximum bends allowed in one annotation leader.", type: integer, minimum: 0, maximum: 64}
+          maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
   extends: {description: "Base Layout Profile pinned for an override profile.", $ref: "#/$defs/reference"}
   overrides:
     type: object
@@ -53,8 +61,8 @@ properties:
   root: {description: "Complete root container for a standalone Layout Profile.", $ref: "#/$defs/container"}
 description: "Choose either a standalone root or an extends-plus-overrides profile."
 examples:
-  - {version: "chrona/layout-profile/v0.6", id: example, writingMode: horizontal-tb, requiredThemeTokens: [], reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}}, root: {id: root, kind: overlay, inlineSize: fill, blockSize: fill, padding: 0, children: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]}}
-  - {version: "chrona/layout-profile/v0.6", id: example, writingMode: horizontal-tb, requiredThemeTokens: [], reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}}, extends: {id: base, kind: layout-profile, store: {provider: local, identity: local}, address: layouts/base.yaml, revision: {token: main}, contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, overrides: {root: {padding: 0}}}
+  - {version: "chrona/layout-profile/v0.7", id: example, writingMode: horizontal-tb, requiredThemeTokens: [], reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}, root: {id: root, kind: overlay, inlineSize: fill, blockSize: fill, padding: 0, children: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]}}
+  - {version: "chrona/layout-profile/v0.7", id: example, writingMode: horizontal-tb, requiredThemeTokens: [], reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}, extends: {id: base, kind: layout-profile, store: {provider: local, identity: local}, address: layouts/base.yaml, revision: {token: main}, contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, overrides: {root: {padding: 0}}}
 oneOf:
   - description: "Standalone profile with a complete root container."
     examples: [{root: {id: root, kind: overlay, inlineSize: fill, blockSize: fill, padding: 0, children: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]}}]

@@ -11,8 +11,8 @@ schemas:
   - {file: command-request-v0.2.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: layout-profile-v0.3.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.4.schema.yaml, removalSlice: P358-1}
   - {file: layout-profile-v0.4.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.5.schema.yaml, removalSlice: I2}
-  - {file: layout-profile-v0.5.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.6.schema.yaml, removalSlice: I3}
-  - {file: layout-profile-v0.6.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: layout-profile-v0.5.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.7.schema.yaml, removalSlice: I3}
+  - {file: layout-profile-v0.7.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
