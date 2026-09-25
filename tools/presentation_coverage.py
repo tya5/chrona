@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import tempfile
 from typing import Any, Iterable, Mapping
@@ -34,14 +34,29 @@ class Value:
     value: str
 
 
+@dataclass
+class RunLocalYamlLoader:
+    """Safely load each current evidence path once for one report operation."""
+
+    documents: dict[Path, Mapping[str, Any]] = field(default_factory=dict)
+
+    def load(self, path: Path) -> Mapping[str, Any]:
+        resolved = path.resolve()
+        if resolved in self.documents:
+            return self.documents[resolved]
+        try:
+            value = yaml.load(resolved.read_text(encoding="utf-8"), Loader=getattr(yaml, "CSafeLoader", yaml.SafeLoader))
+        except (OSError, yaml.YAMLError) as error:
+            raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_LOAD:{path}") from error
+        if not isinstance(value, Mapping):
+            raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_DOCUMENT:{path}")
+        self.documents[resolved] = value
+        return value
+
+
 def _load(path: Path) -> Mapping[str, Any]:
-    try:
-        value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except (OSError, yaml.YAMLError) as error:
-        raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_LOAD:{path}") from error
-    if not isinstance(value, Mapping):
-        raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_DOCUMENT:{path}")
-    return value
+    """Load one path outside a report operation without retaining state."""
+    return RunLocalYamlLoader().load(path)
 
 
 def _inside(root: Path, address: object) -> Path:
@@ -53,18 +68,19 @@ def _inside(root: Path, address: object) -> Path:
     return path
 
 
-def discover(root: Path) -> tuple[Slide, ...]:
+def discover(root: Path, loader: RunLocalYamlLoader | None = None) -> tuple[Slide, ...]:
     """Return every declared slide with its presentation closure and Scene."""
+    loader = loader or RunLocalYamlLoader()
     result: list[Slide] = []
     for manifest_path in sorted((root / "examples").glob("*/manifest.yaml")):
-        manifest, example = _load(manifest_path), manifest_path.parent.resolve()
+        manifest, example = loader.load(manifest_path), manifest_path.parent.resolve()
         if manifest.get("role") != "regression-corpus" or not isinstance(manifest.get("id"), str):
             raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_MANIFEST:{manifest_path}")
         default = manifest.get("context")
         for item in manifest.get("slides", ()):
             if not isinstance(item, Mapping) or not isinstance(item.get("id"), str):
                 raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_MANIFEST:{manifest_path}")
-            context = _load(_inside(example, item.get("context", default)))
+            context = loader.load(_inside(example, item.get("context", default)))
             body = context.get("body")
             if not isinstance(body, Mapping):
                 raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_CONTEXT:{item['id']}")
@@ -74,7 +90,8 @@ def discover(root: Path) -> tuple[Slide, ...]:
                 ref = body.get(key)
                 if not isinstance(ref, Mapping) or ref.get("kind") != kind:
                     raise PresentationCoverageError(f"E_PRESENTATION_COVERAGE_CONTEXT:{item['id']}:{key}")
-                resources.append((kind, _inside(example, ref.get("address")), _load(_inside(example, ref.get("address")))))
+                path = _inside(example, ref.get("address"))
+                resources.append((kind, path, loader.load(path)))
             scene = _inside(example, item.get("expectedScene"))
             result.append(Slide(f"{manifest['id']}/{item['id']}", example, tuple(resources), scene))
     return tuple(result)
@@ -138,15 +155,16 @@ def _values_at(value: Any, path: tuple[str, ...]) -> Iterable[Any]:
         yield from _values_at(value[path[0]], path[1:])
 
 
-def live_schemas(root: Path) -> dict[str, Mapping[str, Any]]:
-    inventory = _load(root / "schemas/schema-inventory-v0.1.yaml")
+def live_schemas(root: Path, loader: RunLocalYamlLoader | None = None) -> dict[str, Mapping[str, Any]]:
+    loader = loader or RunLocalYamlLoader()
+    inventory = loader.load(root / "schemas/schema-inventory-v0.1.yaml")
     result: dict[str, Mapping[str, Any]] = {}
     for entry in inventory.get("schemas", ()):
         if isinstance(entry, Mapping) and entry.get("state") == "live" and entry.get("kind") in KINDS:
             kind, filename = entry["kind"], entry.get("file")
             if kind in result or not isinstance(filename, str):
                 raise PresentationCoverageError("E_PRESENTATION_COVERAGE_SCHEMA")
-            result[kind] = _load(root / "schemas" / filename)
+            result[kind] = loader.load(root / "schemas" / filename)
     if set(result) != set(KINDS):
         raise PresentationCoverageError("E_PRESENTATION_COVERAGE_SCHEMA")
     return result
@@ -224,7 +242,8 @@ def _label(path: tuple[str, ...]) -> str:
 
 
 def render(root: Path) -> str:
-    slides, schemas = discover(root), live_schemas(root)
+    loader = RunLocalYamlLoader()
+    slides, schemas = discover(root, loader), live_schemas(root, loader)
     _validate_resource_versions(slides, schemas)
     rows = _vocabulary(schemas)
     lines = ["# Presentation vocabulary coverage", "", "Generated by `tools/presentation_coverage.py`; this is a non-gating curation selector, not render validation.", "",

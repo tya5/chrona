@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.presentation_coverage import PresentationCoverageError, _validate_resource_versions, discover, live_schemas, render, vocabulary, _vocabulary
+from tools.presentation_coverage import PresentationCoverageError, RunLocalYamlLoader, _validate_resource_versions, discover, live_schemas, render, vocabulary, _vocabulary
 
 
 def _root() -> Path:
@@ -58,3 +58,13 @@ def test_presentation_coverage_commits_platform_independent_lf_bytes():
     source = (_root() / "tools/presentation_coverage.py").read_text(encoding="utf-8")
     assert 'newline="\\n"' in source
     assert ".relative_to(root).as_posix()" in source
+
+
+def test_run_local_loader_reuses_only_one_report_operation(tmp_path):
+    path = tmp_path / "evidence.yaml"
+    path.write_text("value: first\n", encoding="utf-8")
+    first_run = RunLocalYamlLoader()
+    assert first_run.load(path) == {"value": "first"}
+    path.write_text("value: second\n", encoding="utf-8")
+    assert first_run.load(path) == {"value": "first"}
+    assert RunLocalYamlLoader().load(path) == {"value": "second"}

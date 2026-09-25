@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 import yaml
+from chrona.resources import safe_load
 from chrona.usecases.materialize import copy_context_closure, materialize as _materialize
 from chrona.storage.snapshot_paths import snapshot_directory
 
@@ -46,7 +47,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path) ->
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(payload)
     if reference.get("kind") == "snapshot-ref":
-        nested = yaml.safe_load(payload).get("body", {}).get("project")
+        nested = safe_load(payload).get("body", {}).get("project")
         if not isinstance(nested, dict):
             raise ValueError("E_MATERIALIZER_CONTEXT")
         _copy_reference(example, nested, snapshot)
@@ -54,7 +55,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path) ->
 
 def _legacy_copy_context_closure(example: Path, context_path: Path, snapshot: Path) -> tuple[dict[str, Any], str]:
     raw = context_path.read_bytes()
-    context = yaml.safe_load(raw)
+    context = safe_load(raw)
     if context.get("version") != "chrona/render-context/v0.8" or context.get("kind") != "render-context":
         raise ValueError("E_MATERIALIZER_CONTEXT")
     body = context["body"]
@@ -89,7 +90,7 @@ def _legacy_copy_context_closure(example: Path, context_path: Path, snapshot: Pa
 
 def _legacy_materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool) -> None:
     example = manifest_path.parent.resolve()
-    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    manifest = safe_load(manifest_path.read_bytes())
     if manifest.get("version") != "chrona/example-materializer/v0.1":
         raise ValueError("E_MATERIALIZER_MANIFEST")
     slide = next((item for item in manifest.get("slides", ()) if item.get("id") == slide_id), None)

@@ -10,6 +10,8 @@ from typing import Any, Mapping
 
 import yaml
 
+from chrona.resources import safe_load
+
 
 POLICY_VERSION = "chrona/declared-vocabulary-policy/v0.1"
 DISPOSITIONS = {"finite", "open-ended"}
@@ -41,7 +43,7 @@ def _mapping(value: Any, code: str) -> Mapping[str, Any]:
 
 def load_policy(path: Path) -> tuple[VocabularyEntry, ...]:
     try:
-        document = _mapping(yaml.safe_load(path.read_text(encoding="utf-8")), "E_VOCABULARY_POLICY_DOCUMENT")
+        document = _mapping(safe_load(path.read_bytes()), "E_VOCABULARY_POLICY_DOCUMENT")
     except (OSError, yaml.YAMLError) as error:
         raise VocabularyInventoryError("E_VOCABULARY_POLICY_READ") from error
     if document.get("version") != POLICY_VERSION:
@@ -85,7 +87,7 @@ def _pointer(document: Mapping[str, Any], pointer: str) -> Mapping[str, Any]:
 
 def declared_values(root: Path, entry: VocabularyEntry) -> tuple[str, ...]:
     try:
-        document = _mapping(yaml.safe_load((root / entry.schema).read_text(encoding="utf-8")), "E_VOCABULARY_SCHEMA_DOCUMENT")
+        document = _mapping(safe_load((root / entry.schema).read_bytes()), "E_VOCABULARY_SCHEMA_DOCUMENT")
     except (OSError, yaml.YAMLError) as error:
         raise VocabularyInventoryError(f"E_VOCABULARY_SCHEMA_READ:{entry.schema}") from error
     node = _pointer(document, entry.pointer)

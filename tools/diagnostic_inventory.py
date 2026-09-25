@@ -12,6 +12,8 @@ from typing import Any, Iterable, Mapping
 
 import yaml
 
+from chrona.resources import safe_load
+
 
 POLICY_VERSION = "chrona/resolvability-quality-policy/v0.1"
 DIAGNOSTIC_CODE = re.compile(r"^[EW]_[A-Z0-9_]+$")
@@ -158,7 +160,7 @@ def _mapping(value: Any, label: str) -> Mapping[str, Any]:
 
 def load_policy(path: Path) -> tuple[Mapping[str, Any], ...]:
     try:
-        document = _mapping(yaml.safe_load(path.read_text(encoding="utf-8")), "DOCUMENT")
+        document = _mapping(safe_load(path.read_bytes()), "DOCUMENT")
     except (OSError, yaml.YAMLError) as error:
         raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_READ") from error
     if document.get("version") != POLICY_VERSION:

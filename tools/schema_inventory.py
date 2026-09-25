@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-import yaml
+from chrona.resources import safe_load
 
 
 SCHEMA_SUFFIXES = (".schema.yaml", ".schema.json")
@@ -24,7 +24,7 @@ def schema_files(schema_root: Path) -> frozenset[str]:
 
 
 def load_inventory(path: Path) -> tuple[dict[str, Any], ...]:
-    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    value = safe_load(path.read_bytes())
     if not isinstance(value, dict) or value.get("version") != "chrona/schema-inventory/v0.1":
         raise SchemaInventoryError("E_SCHEMA_INVENTORY_FORMAT")
     entries = value.get("schemas")

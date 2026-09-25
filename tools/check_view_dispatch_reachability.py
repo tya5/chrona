@@ -5,7 +5,7 @@ import ast
 import sys
 from pathlib import Path
 
-import yaml
+from chrona.resources import safe_load
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,7 +37,7 @@ def literals(path: Path) -> set[str]:
 
 
 def main() -> int:
-    declared = enum_values(yaml.safe_load(SCHEMA.read_text(encoding="utf-8")))
+    declared = enum_values(safe_load(SCHEMA.read_bytes()))
     failures = []
     for path, values in DISPATCHES.items():
         missing_engine = sorted(values - literals(path))

@@ -164,7 +164,7 @@ def magnitude(project: CorpusProject) -> CorpusMagnitude:
 def _magnitude_thresholds(root: Path) -> tuple[tuple[str, CorpusMagnitude], ...]:
     policy_path = root / "conformance" / "resolvability-quality-policy-v0.1.yaml"
     try:
-        policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+        policy = safe_load(policy_path.read_bytes())
     except (OSError, yaml.YAMLError) as error:
         raise CorpusCoverageError("E_CORPUS_MAGNITUDE_POLICY") from error
     entries = policy.get("corpusMagnitude") if isinstance(policy, Mapping) else None

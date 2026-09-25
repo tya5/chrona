@@ -7,13 +7,15 @@ import re
 
 import yaml
 
+from chrona.resources import safe_load
+
 
 class FontClosureSyncError(ValueError):
     """The requested Context/provider synchronization is unsafe."""
 
 
 def _load(path: Path) -> dict:
-    value = yaml.safe_load(path.read_bytes())
+    value = safe_load(path.read_bytes())
     if not isinstance(value, dict):
         raise FontClosureSyncError("E_FONT_CLOSURE_SYNC_SCHEMA")
     return value

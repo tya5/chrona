@@ -8,6 +8,7 @@ from typing import Any, Iterator
 import yaml
 from jsonschema import Draft202012Validator
 
+from chrona.resources import safe_load
 from tools.schema_inventory import validate_inventory
 
 
@@ -75,7 +76,7 @@ def validate_annotations(schema_root: Path, inventory_path: Path) -> None:
     for entry in validate_inventory(schema_root, inventory_path):
         if entry["state"] != "live":
             continue
-        schema = yaml.safe_load((schema_root / entry["file"]).read_text(encoding="utf-8"))
+        schema = safe_load((schema_root / entry["file"]).read_bytes())
         validator = Draft202012Validator(schema)
         for path, node in annotation_paths(schema):
             description = node.get("description")

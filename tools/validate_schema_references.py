@@ -5,7 +5,7 @@ import argparse
 import re
 from pathlib import Path
 
-import yaml
+from chrona.resources import safe_load
 
 from tools.schema_inventory import validate_inventory
 
@@ -22,7 +22,7 @@ def live_versions(schema_root: Path, inventory_path: Path) -> set[str]:
     for entry in validate_inventory(schema_root, inventory_path):
         if entry["state"] != "live":
             continue
-        schema = yaml.safe_load((schema_root / entry["file"]).read_text(encoding="utf-8"))
+        schema = safe_load((schema_root / entry["file"]).read_bytes())
         const = schema.get("properties", {}).get("version", {}).get("const")
         if isinstance(const, str):
             values.add(const)

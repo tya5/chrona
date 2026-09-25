@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+import tools.semantic_realization_coverage as realization_coverage
 from chrona.presentation.model.semantic_realization import RealizationFamily, realization_family, realization_families, validate_realization_families
 from tools.semantic_realization_coverage import render
 
@@ -31,6 +32,20 @@ def test_realization_coverage_is_deterministic_and_reports_completed_annotation_
     assert "`table-finish-variance`" in report and "**realized**" in report
     assert "`annotation-purpose`" in report
     assert "`annotation-arrow-box`, `annotation-callout-box`, `annotation-highlight-box`, `annotation-note-box`" in report
+
+
+def test_realization_coverage_discovers_the_corpus_once_per_report(monkeypatch):
+    calls = 0
+    original = realization_coverage.discover
+
+    def counted(root):
+        nonlocal calls
+        calls += 1
+        return original(root)
+
+    monkeypatch.setattr(realization_coverage, "discover", counted)
+    realization_coverage.render(_root())
+    assert calls == 1
 
 
 def test_realization_coverage_does_not_inspect_renderers_or_svg():

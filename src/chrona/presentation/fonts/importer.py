@@ -15,6 +15,8 @@ import yaml
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
+from chrona.resources import safe_load
+
 
 class FontImportError(ValueError):
     def __init__(self, code: str, source_ref: str = "/") -> None:
@@ -125,7 +127,7 @@ def _descriptor(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"algorithm": "declared-metrics-v3", "missingFont": "diagnose", "assets": []}
     try:
-        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+        value = safe_load(path.read_bytes())
     except (OSError, yaml.YAMLError) as error:
         raise FontImportError("E_FONT_IMPORT_DESCRIPTOR", "/font-metrics.yaml") from error
     if (not isinstance(value, dict) or value.get("algorithm") != "declared-metrics-v3"

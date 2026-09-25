@@ -7,6 +7,8 @@ from typing import Any
 
 import yaml
 
+from chrona.resources import safe_load
+
 
 DIMENSION_OWNERS = {
     "content": frozenset({"view"}),
@@ -23,7 +25,7 @@ class ExampleInventoryError(ValueError):
 
 
 def _load(path: Path) -> Any:
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
+    return safe_load(path.read_bytes())
 
 
 def corpus(root: Path) -> dict[tuple[str, str], dict[str, Any]]:
