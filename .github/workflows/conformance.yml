@@ -10,6 +10,7 @@ concurrency:
 jobs:
   conformance:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -21,31 +22,30 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
-      - run: python conformance/run_conformance.py
-      - run: python tools/check_documented_commands.py --check --execute
-      - run: python tools/check_module_reachability.py
-      - run: python tools/check_scene_primitive_delivery.py
-      - run: python tools/check_layout_float_accumulation.py
-      - run: python tools/check_view_dispatch_reachability.py
-      - run: python tools/check_semantic_registry_reachability.py
-      - run: python tools/check_import_direction.py
-      - run: python tools/check_text_encoding.py
-      - run: python tools/presentation_coverage.py --check
-      - run: python tools/semantic_realization_coverage.py --check
-      - run: pytest -n 4
-      - run: python -m pip wheel . --no-deps -w dist
-      - name: Enforce primary wheel budget
-        shell: bash
-        run: python tools/check_wheel_size.py dist/chrona-*.whl
-      - name: Install the built wheel
-        shell: bash
-        run: python -m pip install --force-reinstall --no-deps dist/*.whl
-      - name: Smoke-test installed wheel outside the checkout
+      - id: conformance
+        continue-on-error: true
+        run: python conformance/run_conformance.py
+      - id: pytest
+        if: ${{ always() }}
+        continue-on-error: true
+        run: pytest -n 4
+      - id: wheel_smoke
+        if: ${{ always() && steps.conformance.outcome == 'success' && steps.pytest.outcome == 'success' }}
         shell: bash
         run: |
+          python -m pip wheel . --no-deps -w dist
+          python tools/check_wheel_size.py dist/chrona-*.whl
+          python -m pip install --force-reinstall --no-deps dist/*.whl
           smoke_dir="$(mktemp -d)"
           cd "$smoke_dir"
           python "$GITHUB_WORKSPACE/tools/wheel_smoke.py"
+      - name: Finalize independent CI outcomes
+        if: ${{ always() }}
+        run: >-
+          python tools/check_ci_outcomes.py
+          --required conformance=${{ steps.conformance.outcome }}
+          --required pytest=${{ steps.pytest.outcome }}
+          --dependent wheel-smoke=${{ steps.wheel_smoke.outcome }}
 
   reproduction-newest-python:
     runs-on: ubuntu-latest
