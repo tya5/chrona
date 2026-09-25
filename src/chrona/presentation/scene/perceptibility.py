@@ -3,14 +3,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
-import re
 from typing import Any, Mapping, Sequence
+
+from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
 
 
 MICRO_POINT_TOLERANCE = 0.001
 TEXT_INTERSECTION_AREA = 4.0
 OCCLUSION_RATIO = 0.5
-_HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 class ScenePerceptibilityError(ValueError):
@@ -186,17 +186,16 @@ def _text_intersection_findings(scene_path: str, primitives: Sequence[_Primitive
 
 def _paint_findings(scene_path: str, surface: Mapping[str, Any], primitives: Sequence[_Primitive]) -> list[ScenePerceptibilityFinding]:
     canvas = surface.get("canvasPaint")
-    if not isinstance(canvas, Mapping) or not _hex(canvas.get("fill")):
+    if not isinstance(canvas, Mapping) or not is_hex_color(canvas.get("fill")):
         return []
-    ground = _rgb(str(canvas["fill"]))
     ground_opacity = _opacity(canvas)
     if ground_opacity != 1.0:
         return []
     findings: list[ScenePerceptibilityFinding] = []
     for item in primitives:
-        if not item.bounds.positive_area or not isinstance(item.paint, Mapping) or not _hex(item.paint.get("fill")):
+        if not item.bounds.positive_area or not isinstance(item.paint, Mapping) or not is_hex_color(item.paint.get("fill")):
             continue
-        ratio = _contrast(_composite(_rgb(str(item.paint["fill"])), _opacity(item.paint), ground), ground)
+        ratio = composited_contrast(fill=str(item.paint["fill"]), opacity=_opacity(item.paint), ground=str(canvas["fill"]))
         findings.append(_finding("I_SCENE_PAINT_CONTRAST", "info", scene_path, (item.primitive_id,), item.slot_id,
                                  (("contrastRatio", ratio),), None))
     return findings
@@ -212,7 +211,7 @@ def _later(candidate: _Primitive, reference: _Primitive) -> bool:
 
 
 def _opaque_fill(paint: Mapping[str, Any] | None) -> bool:
-    return isinstance(paint, Mapping) and _hex(paint.get("fill")) and _opacity(paint) == 1.0
+    return isinstance(paint, Mapping) and is_hex_color(paint.get("fill")) and _opacity(paint) == 1.0
 
 
 def _excess(item: Rect, slot: Rect) -> float:
@@ -244,25 +243,6 @@ def _opacity(paint: Mapping[str, Any]) -> float:
     _require(isinstance(value, (int, float)) and not isinstance(value, bool) and isfinite(float(value)) and 0 <= float(value) <= 1,
              "invalid paint opacity")
     return float(value)
-
-
-def _hex(value: Any) -> bool:
-    return isinstance(value, str) and _HEX.fullmatch(value) is not None
-
-
-def _rgb(value: str) -> tuple[float, float, float]:
-    return tuple(int(value[index:index + 2], 16) / 255 for index in (1, 3, 5))
-
-
-def _composite(foreground: tuple[float, float, float], opacity: float, background: tuple[float, float, float]) -> tuple[float, float, float]:
-    return tuple(opacity * front + (1 - opacity) * back for front, back in zip(foreground, background))
-
-
-def _contrast(first: tuple[float, float, float], second: tuple[float, float, float]) -> float:
-    def luminance(color: tuple[float, float, float]) -> float:
-        channels = tuple(channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4 for channel in color)
-        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
-    return (max(luminance(first), luminance(second)) + 0.05) / (min(luminance(first), luminance(second)) + 0.05)
 
 
 def _mapping(value: Any, label: str) -> Mapping[str, Any]:

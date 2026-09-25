@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityError, evaluate_scene_perceptibility
+from chrona.presentation.scene.paint_analysis import composited_contrast
 
 
 def _bounds(inline=0, block=0, inline_size=10, block_size=10):
@@ -79,6 +80,11 @@ def test_paint_observation_composites_opacity_without_selecting_a_policy_floor()
     )) if item.code == "I_SCENE_PAINT_CONTRAST")
     assert finding.severity == "info"
     assert 1 < dict(finding.measured_facts)["contrastRatio"] < 1.3
+
+
+def test_shared_flat_paint_analysis_composites_translucent_and_opaque_values():
+    assert composited_contrast(fill="#000000", opacity=1, ground="#FFFFFF") == 21
+    assert 1 < composited_contrast(fill="#000000", opacity=0.1, ground="#FFFFFF") < 1.3
 
 
 def test_findings_are_ordered_independently_of_primitive_input_order():
