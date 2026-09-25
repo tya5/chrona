@@ -64,6 +64,7 @@ CHECKS = (
     CheckSpec("declared-value-inventory", _command("tools/declared_value_inventory.py", "--check")),
     CheckSpec("vocabulary-inventory", _command("tools/vocabulary_inventory.py", "--check")),
     CheckSpec("documented-commands", _command("tools/check_documented_commands.py", "--check", "--execute")),
+    CheckSpec("literal-issue-acceptance", _command("tools/check_issue_acceptance_reviews.py")),
     CheckSpec("core-conformance", _command("conformance/validate_conformance.py")),
     CheckSpec("revision-store-conformance", _command("conformance/revision-store/validate_conformance.py")),
     CheckSpec("implementation-delivery", _command("conformance/validate_implementation_delivery_profile.py")),

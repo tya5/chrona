@@ -61,6 +61,14 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
     assert ids.index("example-inventory") < ids.index("scene-perceptibility") < ids.index("diagnostic-inventory")
 
 
+def test_literal_issue_acceptance_gate_runs_once_after_documented_commands():
+    runner = _runner()
+    ids = [item.check_id for item in runner.CHECKS]
+
+    assert ids.count("literal-issue-acceptance") == 1
+    assert ids.index("documented-commands") < ids.index("literal-issue-acceptance") < ids.index("core-conformance")
+
+
 def test_runner_configures_aggregate_report_transport_as_utf8():
     runner = _runner()
     calls = []
