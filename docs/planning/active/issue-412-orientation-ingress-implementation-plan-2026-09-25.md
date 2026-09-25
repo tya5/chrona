@@ -7,12 +7,13 @@ and architecture review.
 
 This plan replaces the earlier broad I412-1 outline.  It implements only the
 versioned contracts and finite 90-degree rotated horizontal text defined by
-`issue-412-orientation-ingress-correction-2026-09-25.md`.  Each slice is a
-reviewable fast-forward publication.  Later slices must start only from the
-merged preceding slice.  No compatibility reader for View v0.17, Layout
+`issue-412-orientation-ingress-correction-2026-09-25.md`.  The work has three
+reviewable internal checkpoints, but they publish as one atomic #412 release:
+immutable Scene provenance makes a standalone View/Profile migration fail the
+public materializer gate.  No compatibility reader for View v0.17, Layout
 Profile v0.7, or Scene v0.4 is added.
 
-## I412-1 — Contract migration and typed ingress
+## I412-A1 — Contract migration and typed ingress (internal checkpoint)
 
 **Files/areas**
 
@@ -36,7 +37,7 @@ Profile v0.7, or Scene v0.4 is added.
   dedicated test for each permitted network direction;
 * all unrelated public contexts remain materializable before regeneration.
 
-## I412-2 — Layout-owned completed geometry
+## I412-A2 — Layout-owned completed geometry (internal checkpoint)
 
 **Files/areas**
 
@@ -61,7 +62,7 @@ Profile v0.7, or Scene v0.4 is added.
 * Scene projection has no font-metric, orientation-angle mapping, or layout
   fitting import.
 
-## I412-3 — Materializers, corpus, and evidence
+## I412-A3 — Materializers, corpus, and evidence (release completion)
 
 **Files/areas**
 
@@ -86,12 +87,14 @@ Profile v0.7, or Scene v0.4 is added.
 
 ## Execution order and stop conditions
 
-1. Implement, test, review, and publish I412-1.
-2. Re-read the live contract migration and implement I412-2.  If table header
+1. Implement and focused-test I412-A1 without publishing a corpus-breaking
+   intermediate state.
+2. Re-read the live contract migration and implement I412-A2.  If table header
    reservation reveals an incompatible slot model, stop implementation and
    return to correction design rather than adding an adapter or surface-local
    workaround.
-3. Implement I412-3, regenerate once as a batch, then run release gates.
+3. Implement I412-A3, regenerate once as a batch, run release gates, review
+   the atomic diff, and publish the complete #412 release.
 4. Fetch `origin/main`, check exact ahead/behind and diff before every push.
    Stop on remote movement, non-fast-forward, unrelated generated changes, or
    any design drift.
@@ -101,7 +104,11 @@ Profile v0.7, or Scene v0.4 is added.
 Scene v0.5 was originally listed in I412-1 alongside View/Profile ingress.
 That would either publish an unused schema as live or require a Scene whose
 new mandatory orientation/angle values have not yet been completed by Layout.
-The schema and Scene-version migration therefore belong to I412-2, the slice
-that creates and validates those values.  This does not change the approved
-design or release outcome; it keeps every published slice internally
-materializable and version-truthful.
+The schema and Scene-version migration therefore belong to I412-A2, the
+checkpoint that creates and validates those values.
+
+The I412-A1 prototype additionally proved that new View/Profile bytes alter
+immutable Scene provenance and hence invalidate every committed public Scene.
+The checkpoints are consequently one atomic public release rather than
+independent fast-forward commits.  This keeps the release outcome
+materializable and version-truthful; it does not reintroduce compatibility.
