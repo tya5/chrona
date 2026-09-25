@@ -1,0 +1,39 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/actual-set-v0.2"
+title: "Chrona Actual set with external intake provenance v0.2"
+description: "Observed Actual values with optional immutable external-source provenance."
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {description: "This Actual-set contract version.", const: chrona/actual-set/v0.2}
+  kind: {description: "The resource kind for observed Actual values.", const: actual-set}
+  id: {description: "Stable identifier for this Actual set.", type: string, minLength: 1}
+  body:
+    type: object
+    description: "Optional observation date and the ordered observations."
+    required: [observations]
+    additionalProperties: false
+    properties:
+      asOf: {description: "Optional ISO date at which this set was observed.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+      observations:
+        type: array
+        description: "Observed records ordered by their positive sequence number."
+        items:
+          type: object
+          description: "One identified Actual observation."
+          required: [id, sequence, actual]
+          additionalProperties: false
+          properties:
+            id: {description: "Stable observation identifier.", type: string, minLength: 1}
+            sequence: {description: "Positive order within this Actual set.", type: integer, minimum: 1}
+            projectObjectId: {description: "Optional Project object receiving this observation.", type: string, minLength: 1}
+            externalIdentity: {description: "External system and key for an imported observation.", type: object, required: [system, key], additionalProperties: false, properties: {system: {description: "Stable external system name.", type: string, minLength: 1}, key: {description: "External record key.", type: [string, integer]}}}
+            sourceContentIdentity: {description: "SHA-256 identity of the external content that supplied this record.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+            alignment: {description: "Marks an imported observation that could not be matched to a Project object.", const: unmatched}
+            actual: {description: "Observed start, finish, point, or progress values.", type: object, minProperties: 1, additionalProperties: false, properties: {start: {description: "Observed ISO start date.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}, finish: {description: "Observed ISO finish date.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}, at: {description: "Observed ISO date for a point event.", examples: ["2026-09-23"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}, progress: {description: "Observed completion fraction from zero through one.", type: number, minimum: 0, maximum: 1}}}
+          allOf:
+            - description: "Imported observations require provenance for their source content."
+              examples: [{}]
+              if: {required: [externalIdentity]}
+              then: {required: [sourceContentIdentity]}
