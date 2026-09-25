@@ -3,6 +3,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from chrona.presentation.scene.capabilities import (
+    DROP_SHADOW,
+    ICON_RASTER,
+    ICON_VECTOR,
+    LINE_CAP,
+    LINE_JOIN,
+    LINEAR_GRADIENT,
+    MARKER_GEOMETRY,
+    PATTERN_GEOMETRY,
+    SYMBOL_OUTLINE,
+    admitted_capability_ids,
+)
 from chrona.presentation.scene.model import SceneSurface
 
 
@@ -11,17 +23,9 @@ SVG_PROFILE = "chrona-output/visual/v0.6-svg"
 PNG_PROFILE = "chrona-output/visual/v0.6-png"
 SVG_ICON_PROFILE = "chrona-output/visual/v0.7-svg"
 PNG_ICON_PROFILE = "chrona-output/visual/v0.7-png"
-LINEAR_GRADIENT = "paint.linear-gradient"
-DROP_SHADOW = "effect.drop-shadow"
-LINE_CAP = "stroke.line-cap"
-LINE_JOIN = "stroke.line-join"
-RICH_CAPABILITIES = frozenset((LINEAR_GRADIENT, DROP_SHADOW, LINE_CAP, LINE_JOIN))
-ICON_VECTOR = "icon.vector"
-ICON_RASTER = "icon.raster"
-MARKER_GEOMETRY = "mark.marker-geometry"
-PATTERN_GEOMETRY = "paint.pattern-geometry"
-SYMBOL_OUTLINE = "mark.symbol-outline"
-MARK_GEOMETRY_CAPABILITIES = frozenset((MARKER_GEOMETRY, PATTERN_GEOMETRY, SYMBOL_OUTLINE))
+RICH_CAPABILITIES = admitted_capability_ids(LINEAR_GRADIENT, DROP_SHADOW, LINE_CAP, LINE_JOIN)
+MARK_GEOMETRY_CAPABILITIES = admitted_capability_ids(MARKER_GEOMETRY, PATTERN_GEOMETRY, SYMBOL_OUTLINE)
+ICON_CAPABILITIES = admitted_capability_ids(ICON_VECTOR, ICON_RASTER)
 
 _MESSAGES = {
     "E_VISUAL_CAPABILITY_UNSUPPORTED": "required visual treatment is not supported by the selected visual profile",
@@ -65,9 +69,9 @@ def resolve_visual_profile(identifier: str, target_kind: str) -> VisualProfile:
     if identifier == PNG_PROFILE and target_kind == "png":
         return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES, False)
     if identifier == SVG_ICON_PROFILE and target_kind == "svg":
-        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
+        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
     if identifier == PNG_ICON_PROFILE and target_kind == "png":
-        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | {ICON_VECTOR, ICON_RASTER}, False)
+        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
     raise VisualCapabilityError("E_VISUAL_CAPABILITY_PROFILE", "/body/target/visualProfile",
                                 f"{identifier} is not available for {target_kind}")
 
