@@ -24,6 +24,7 @@ SCHEMAS = (
     "view-v0.16.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",
+    "layout-profile-v0.5.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
     "actual-intake-batch-v0.2.schema.yaml",
     "actual-set-v0.3.schema.yaml",
@@ -32,6 +33,8 @@ SCHEMAS = (
     "automation-result-v0.1.schema.yaml",
     "snapshot-ref-v0.2.schema.yaml",
     "store-config-v0.1.schema.yaml",
+    "theme-v0.9.schema.yaml",
+    "theme-v0.10.schema.yaml",
 )
 
 

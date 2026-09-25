@@ -706,8 +706,8 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
             raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/review-detail-profile/v0.1 object; found {value!r}")
         actual_id = value.get("id")
     elif expected_kind == "layout-profile":
-        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.4":
-            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/layout-profile/v0.4 object; found {value!r}")
+        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.5":
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/layout-profile/v0.5 object; found {value!r}")
         actual_id = value.get("id")
     else:
         actual_id = value.get("id") if isinstance(value, dict) else None

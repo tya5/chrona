@@ -1,7 +1,8 @@
-version: chrona/layout-profile/v0.4
+version: chrona/layout-profile/v0.5
 id: overlay-briefing
 writingMode: horizontal-tb
 requiredThemeTokens: [panel.review.block, panel.side, spacing.l, spacing.m, spacing.none]
+reviewSurface: {rowDistribution: pack}
 relationRouting: {maxBends: 4, maxDetourRatio: 2}
 root:
   id: overlay-page

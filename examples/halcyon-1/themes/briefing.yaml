@@ -1,4 +1,4 @@
-version: chrona/theme/v0.9
+version: chrona/theme/v0.10
 kind: theme
 id: briefing
 body:
@@ -87,6 +87,9 @@ body:
     timeline-row-height:
       type: number
       value: 30
+    timeline-row-padding:
+      type: number
+      value: 8
     timeline-mark-size:
       type: number
       value: 10
@@ -352,6 +355,7 @@ body:
     text.body.lineHeight: leading.body
     timeline.dayWidth: timeline-day-width
     timeline.row.minBlockSize: timeline-row-height
+    timeline.row.paddingBlock: timeline-row-padding
     timeline.mark.blockSize: timeline-mark-size
     timeline.mark.cornerRadius: timeline-mark-radius
     timeline.point.cornerRadius: timeline-point-radius

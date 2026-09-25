@@ -1,4 +1,4 @@
-version: chrona/theme/v0.9
+version: chrona/theme/v0.10
 kind: theme
 id: print
 body:
@@ -84,6 +84,9 @@ body:
     timeline-row-height:
       type: number
       value: 44
+    timeline-row-padding:
+      type: number
+      value: 8
     timeline-mark-size:
       type: number
       value: 12
@@ -340,6 +343,7 @@ body:
     text.body.lineHeight: leading.body
     timeline.dayWidth: timeline-day-width
     timeline.row.minBlockSize: timeline-row-height
+    timeline.row.paddingBlock: timeline-row-padding
     timeline.mark.blockSize: timeline-mark-size
     timeline.axis.blockSize: timeline-axis-height
     network.node.minInlineSize: network-node-min-inline

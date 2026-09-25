@@ -65,7 +65,7 @@ class MeasuredSources:
 
 REQUIRED_METRICS = (
     "text.body.size", "text.body.lineHeight",
-    "timeline.dayWidth", "timeline.row.minBlockSize", "timeline.mark.blockSize", "timeline.axis.blockSize",
+    "timeline.dayWidth", "timeline.row.minBlockSize", "timeline.row.paddingBlock", "timeline.mark.blockSize", "timeline.axis.blockSize",
     "table.column.minInlineSize", "table.column.gutter.inlineSize", "table.header.blockSize",
     "table.indent.inlineSize",
     "network.node.minInlineSize", "network.node.minBlockSize", "network.rank.gap",

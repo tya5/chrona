@@ -1,0 +1,359 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:layout-profile-v0.5"
+title: "Chrona Intent-Oriented Layout Profile v0.4"
+description: "Declarative physical-layout intent for presentation slots and containers."
+type: object
+additionalProperties: false
+required: [version, id, writingMode, requiredThemeTokens, reviewSurface]
+properties:
+  version: {description: "This Layout Profile contract version.", const: "chrona/layout-profile/v0.5"}
+  id: {description: "Stable Layout Profile identifier.", $ref: "#/$defs/id"}
+  writingMode: {description: "Writing mode used to resolve inline and block axes.", enum: [horizontal-tb, vertical-rl, vertical-lr]}
+  requiredThemeTokens:
+    description: "Sorted, exact vocabulary of nonnegative numeric Theme tokens used by this Layout."
+    type: array
+    uniqueItems: true
+    items: {$ref: "#/$defs/id"}
+  reviewSurface:
+    type: object
+    description: "Finite arrangement policies for the table--timeline review surface."
+    additionalProperties: false
+    required: [rowDistribution]
+    properties:
+      rowDistribution:
+        description: "Distribution of remaining block space after completed row requirements."
+        enum: [pack, fill]
+  extends: {description: "Base Layout Profile pinned for an override profile.", $ref: "#/$defs/reference"}
+  overrides:
+    type: object
+    description: "Named node overrides applied to the extended Layout Profile."
+    minProperties: 1
+    propertyNames: {$ref: "#/$defs/id"}
+    additionalProperties: {$ref: "#/$defs/override"}
+  relationRouting:
+    type: object
+    description: "Limits for Layout-owned orthogonal relation routing."
+    additionalProperties: false
+    required: [maxBends, maxDetourRatio]
+    properties:
+      maxBends: {description: "Maximum bends allowed in one relation route.", type: integer, minimum: 0, maximum: 64}
+      maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
+  root: {description: "Complete root container for a standalone Layout Profile.", $ref: "#/$defs/container"}
+description: "Choose either a standalone root or an extends-plus-overrides profile."
+examples:
+  - {version: "chrona/layout-profile/v0.5", id: example, writingMode: horizontal-tb, requiredThemeTokens: [], root: {id: root, kind: overlay, inlineSize: fill, blockSize: fill, padding: 0, children: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]}}
+  - {version: "chrona/layout-profile/v0.5", id: example, writingMode: horizontal-tb, requiredThemeTokens: [], extends: {id: base, kind: layout-profile, store: {provider: local, identity: local}, address: layouts/base.yaml, revision: {token: main}, contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, overrides: {root: {padding: 0}}}
+oneOf:
+  - description: "Standalone profile with a complete root container."
+    examples: [{root: {id: root, kind: overlay, inlineSize: fill, blockSize: fill, padding: 0, children: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]}}]
+    required: [root]
+    not: {anyOf: [{required: [extends]}, {required: [overrides]}]}
+  - description: "Derived profile with a pinned base and named overrides."
+    examples: [{extends: {id: base, kind: layout-profile, store: {provider: local, identity: local}, address: layouts/base.yaml, revision: {token: main}, contentIdentity: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}, overrides: {root: {padding: 0}}}]
+    required: [extends, overrides]
+    not: {required: [root]}
+
+$defs:
+  id: {description: "Identifier beginning with a letter and safe for node references.", examples: ["main-panel"], type: string, minLength: 1, maxLength: 256, pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
+  reference:
+    type: object
+    description: "Pinned reference to an immutable Layout Profile resource."
+    additionalProperties: false
+    required: [id, kind, store, address, revision, contentIdentity]
+    properties:
+      id: {description: "Referenced Layout Profile identifier.", $ref: "#/$defs/id"}
+      kind: {description: "The only allowed referenced resource kind.", const: layout-profile}
+      store:
+        type: object
+        description: "Store that resolves the referenced profile revision."
+        additionalProperties: false
+        required: [provider, identity]
+        properties:
+          provider: {description: "Store provider implementation.", enum: [git, local, content]}
+          identity: {description: "Stable Store identity.", type: string, minLength: 1}
+          locator: {description: "Optional provider-specific Store locator.", type: string, minLength: 1}
+      address: {description: "Safe Store-relative profile address.", examples: ["layouts/briefing.yaml"], type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      revision:
+        type: object
+        description: "Opaque revision identity in the named Store."
+        additionalProperties: false
+        required: [token]
+        properties: {token: {description: "Nonempty opaque revision token.", examples: ["main"], type: string, minLength: 1, pattern: "^\\S+$"}}
+      contentIdentity: {description: "SHA-256 identity of the referenced profile bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  distance:
+    description: "Nonnegative physical distance or named distance token."
+    examples: [12, {token: gutter}]
+    oneOf:
+      - {description: "Explicit nonnegative distance.", type: number, minimum: 0, maximum: 1000000}
+      - type: object
+        description: "Named distance token resolved by the profile environment."
+        additionalProperties: false
+        required: [token]
+        properties: {token: {description: "Named distance token identifier.", $ref: "#/$defs/id"}}
+  simpleSize:
+    description: "Content-based, fractional, fixed, or fit-content track size."
+    examples: [content, {fr: 1}, {fixed: 24}, {fitContent: 320}]
+    oneOf:
+      - {description: "Keyword content-based or fill track size.", enum: [content, min-content, max-content, fill]}
+      - type: object
+        description: "Positive fractional track size."
+        additionalProperties: false
+        required: [fr]
+        properties: {fr: {description: "Positive fractional allocation weight.", type: number, exclusiveMinimum: 0, maximum: 1000000}}
+      - type: object
+        description: "Explicit fixed track size."
+        additionalProperties: false
+        required: [fixed]
+        properties: {fixed: {description: "Fixed physical track size.", $ref: "#/$defs/distance"}}
+      - type: object
+        description: "Content-fitting track size with a maximum."
+        additionalProperties: false
+        required: [fitContent]
+        properties: {fitContent: {description: "Maximum size for content fitting.", $ref: "#/$defs/distance"}}
+  size:
+    description: "Simple, min/max, or aspect-ratio dimension intent."
+    examples: [fill, {minmax: {min: content, max: fill}}, {aspectRatio: 1.6}]
+    oneOf:
+      - {description: "Simple content, fractional, fixed, or fit-content size.", $ref: "#/$defs/simpleSize"}
+      - type: object
+        description: "Size bounded by simple minimum and maximum sizes."
+        additionalProperties: false
+        required: [minmax]
+        properties:
+          minmax:
+            type: object
+            description: "Paired minimum and maximum track sizes."
+            additionalProperties: false
+            required: [min, max]
+            properties: {min: {description: "Minimum track size.", $ref: "#/$defs/simpleSize"}, max: {description: "Maximum track size.", $ref: "#/$defs/simpleSize"}}
+      - type: object
+        description: "Size derived from a positive aspect ratio."
+        additionalProperties: false
+        required: [aspectRatio]
+        properties: {aspectRatio: {description: "Positive inline-to-block aspect ratio.", type: number, exclusiveMinimum: 0, maximum: 1000000}}
+  padding:
+    description: "Uniform or per-edge padding around a container."
+    examples: [12, {inlineStart: 12, inlineEnd: 12, blockStart: 8, blockEnd: 8}]
+    oneOf:
+      - {description: "Uniform padding on every edge.", $ref: "#/$defs/distance"}
+      - type: object
+        description: "Separately specified logical-edge padding."
+        additionalProperties: false
+        required: [inlineStart, inlineEnd, blockStart, blockEnd]
+        properties:
+          inlineStart: {description: "Padding at inline start.", $ref: "#/$defs/distance"}
+          inlineEnd: {description: "Padding at inline end.", $ref: "#/$defs/distance"}
+          blockStart: {description: "Padding at block start.", $ref: "#/$defs/distance"}
+          blockEnd: {description: "Padding at block end.", $ref: "#/$defs/distance"}
+  alignment: {description: "Alignment along one logical axis.", enum: [start, center, end, stretch, first-baseline, last-baseline]}
+  distribution: {description: "Free-space distribution along a container axis.", enum: [start, center, end, space-between, space-around, space-evenly]}
+  place:
+    type: object
+    description: "Alignment and overflow-safety policy for one node."
+    additionalProperties: false
+    required: [inline, block, safety]
+    properties:
+      inline: {description: "Alignment on the inline axis.", $ref: "#/$defs/alignment"}
+      block: {description: "Alignment on the block axis.", $ref: "#/$defs/alignment"}
+      safety: {description: "Whether alignment may fall back to avoid overflow.", enum: [safe, strict]}
+  point: {description: "Reference point along one logical axis.", enum: [start, center, end, first-baseline, last-baseline]}
+  anchor:
+    type: object
+    description: "Position a node relative to a target node, guide, or barrier."
+    additionalProperties: false
+    required: [self, target]
+    properties:
+      self: {description: "Point on this node used for anchoring.", $ref: "#/$defs/anchorPoint"}
+      target:
+        type: object
+        description: "Target references independently selected on both axes."
+        additionalProperties: false
+        required: [inline, block]
+        properties:
+          inline: {description: "Target on the inline axis.", $ref: "#/$defs/axisTarget"}
+          block: {description: "Target on the block axis.", $ref: "#/$defs/axisTarget"}
+      gap:
+        type: object
+        description: "Optional distance from the target on either axis."
+        additionalProperties: false
+        minProperties: 1
+        properties:
+          inline: {description: "Gap on the inline axis.", $ref: "#/$defs/distance"}
+          block: {description: "Gap on the block axis.", $ref: "#/$defs/distance"}
+  axisTarget:
+    type: object
+    description: "One referenced point on one logical axis."
+    additionalProperties: false
+    required: [ref, point]
+    properties:
+      ref: {description: "Parent, node, guide, or barrier reference.", examples: ["node:main-panel"], type: string, pattern: "^(parent|node:[A-Za-z][A-Za-z0-9._-]*|guide:[A-Za-z][A-Za-z0-9._-]*|barrier:[A-Za-z][A-Za-z0-9._-]*)$"}
+      point: {description: "Reference point on the target.", $ref: "#/$defs/point"}
+  anchorPoint:
+    type: object
+    description: "Pair of logical-axis points on this node."
+    additionalProperties: false
+    required: [inline, block]
+    properties: {inline: {description: "This node's inline reference point.", $ref: "#/$defs/point"}, block: {description: "This node's block reference point.", $ref: "#/$defs/point"}}
+  node:
+    description: "Either a layout container or a materialized presentation slot."
+    examples: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]
+    oneOf:
+      - {description: "Container node with child layout nodes.", $ref: "#/$defs/container"}
+      - {description: "Leaf slot receiving one presentation surface.", $ref: "#/$defs/slot"}
+  container:
+    description: "One row, grid, flow, or overlay container."
+    examples: [{id: root, kind: overlay, inlineSize: fill, blockSize: fill, padding: 0, children: [{id: title, kind: slot, source: title, inlineSize: fill, blockSize: content, place: {inline: start, block: start, safety: safe}, priority: required, overflow: diagnose}]}]
+    oneOf:
+      - {description: "Linear row or column container.", $ref: "#/$defs/linear"}
+      - {description: "Explicit track grid container.", $ref: "#/$defs/grid"}
+      - {description: "Wrapping flow container.", $ref: "#/$defs/flow"}
+      - {description: "Overlapping-position overlay container.", $ref: "#/$defs/overlay"}
+  linear:
+    type: object
+    description: "Container that lays children in a row or column."
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, gap, padding, alignItems, justifyContent, children]
+    properties:
+      id: {description: "Stable container identifier.", $ref: "#/$defs/id"}
+      kind: {description: "Linear direction for child layout.", enum: [row, column]}
+      inlineSize: {description: "Container inline size intent.", $ref: "#/$defs/size"}
+      blockSize: {description: "Container block size intent.", $ref: "#/$defs/size"}
+      place: {description: "Container alignment policy.", $ref: "#/$defs/place"}
+      anchor: {description: "Optional relative container position.", $ref: "#/$defs/anchor"}
+      cell: {description: "Optional parent grid cell.", $ref: "#/$defs/cell"}
+      gap: {description: "Space between linear children.", $ref: "#/$defs/distance"}
+      padding: {description: "Space around linear children.", $ref: "#/$defs/padding"}
+      alignItems: {description: "Cross-axis child alignment.", $ref: "#/$defs/alignment"}
+      justifyContent: {description: "Main-axis free-space distribution.", $ref: "#/$defs/distribution"}
+      children: {description: "Child containers or slots in layout order.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  grid:
+    type: object
+    description: "Container with explicit column and row track allocation."
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, columnTracks, rowTracks, gap, padding, alignItems, justifyContent, children]
+    properties:
+      id: {description: "Stable container identifier.", $ref: "#/$defs/id"}
+      kind: {description: "Selects the grid container form.", const: grid}
+      inlineSize: {description: "Container inline size intent.", $ref: "#/$defs/size"}
+      blockSize: {description: "Container block size intent.", $ref: "#/$defs/size"}
+      place: {description: "Container alignment policy.", $ref: "#/$defs/place"}
+      anchor: {description: "Optional relative container position.", $ref: "#/$defs/anchor"}
+      columnTracks: {description: "Inline sizes of grid columns.", type: array, minItems: 1, items: {$ref: "#/$defs/size"}}
+      rowTracks: {description: "Block sizes of grid rows.", type: array, minItems: 1, items: {$ref: "#/$defs/size"}}
+      gap: {description: "Space between grid tracks.", $ref: "#/$defs/distance"}
+      padding: {description: "Space around grid content.", $ref: "#/$defs/padding"}
+      alignItems: {description: "Cross-axis child alignment.", $ref: "#/$defs/alignment"}
+      justifyContent: {description: "Free-space distribution for grid content.", $ref: "#/$defs/distribution"}
+      cell: {description: "Optional parent grid cell.", $ref: "#/$defs/cell"}
+      children: {description: "Grid child containers or slots.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  cell:
+    type: object
+    description: "Optional grid placement and span of one child node."
+    additionalProperties: false
+    required: [column, row]
+    properties:
+      column: {description: "One-based destination grid column.", type: integer, minimum: 1, maximum: 10000}
+      row: {description: "One-based destination grid row.", type: integer, minimum: 1, maximum: 10000}
+      columnSpan: {description: "Number of grid columns occupied.", type: integer, minimum: 1, maximum: 10000}
+      rowSpan: {description: "Number of grid rows occupied.", type: integer, minimum: 1, maximum: 10000}
+  flow:
+    type: object
+    description: "Container that wraps children subject to a minimum inline size."
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, itemMinInlineSize, gap, padding, alignItems, justifyContent, children]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {description: "Selects the wrapping flow container form.", const: flow}
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      cell: {$ref: "#/$defs/cell"}
+      itemMinInlineSize: {$ref: "#/$defs/distance"}
+      gap: {$ref: "#/$defs/distance"}
+      padding: {$ref: "#/$defs/padding"}
+      alignItems: {$ref: "#/$defs/alignment"}
+      justifyContent: {$ref: "#/$defs/distribution"}
+      children: {description: "Flow child containers or slots.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  overlay:
+    type: object
+    description: "Container that allows anchored children, guides, and barriers to overlap."
+    additionalProperties: false
+    required: [id, kind, inlineSize, blockSize, padding, children]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {description: "Selects the overlay container form.", const: overlay}
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      cell: {$ref: "#/$defs/cell"}
+      padding: {$ref: "#/$defs/padding"}
+      guides:
+        type: object
+        description: "Named alignment guides available to anchored children."
+        propertyNames: {$ref: "#/$defs/id"}
+        additionalProperties: {$ref: "#/$defs/guide"}
+      barriers:
+        type: object
+        description: "Named barriers that constrain relation routing or placement."
+        propertyNames: {$ref: "#/$defs/id"}
+        additionalProperties: {$ref: "#/$defs/barrier"}
+      children: {description: "Overlay child containers or slots.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
+  guide:
+    type: object
+    description: "Named logical-axis guide at a keyword or fractional position."
+    additionalProperties: false
+    required: [axis, at]
+    properties:
+      axis: {description: "Logical axis carrying the guide.", enum: [inline, block]}
+      at:
+        description: "Keyword edge/center or positive fractional guide position."
+        examples: [center, "1/2"]
+        oneOf:
+          - {description: "Named guide position.", enum: [start, center, end]}
+          - {description: "Positive numerator/denominator position.", examples: ["1/2"], type: string, pattern: "^[1-9][0-9]*/[1-9][0-9]*$"}
+  barrier:
+    type: object
+    description: "Named edge formed from a set of member nodes."
+    additionalProperties: false
+    required: [axis, edge, members]
+    properties:
+      axis: {description: "Logical axis normal to the barrier edge.", enum: [inline, block]}
+      edge: {description: "Member edge used to form the barrier.", enum: [start, end]}
+      members: {description: "Unique node identifiers contributing to the barrier.", type: array, minItems: 1, uniqueItems: true, items: {$ref: "#/$defs/id"}}
+  slot:
+    type: object
+    description: "Leaf layout node assigned to one semantic presentation surface."
+    additionalProperties: false
+    required: [id, kind, source, inlineSize, blockSize, place, priority, overflow]
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {description: "Selects the leaf slot node form.", const: slot}
+      source:
+        description: "Semantic presentation surface placed by this slot."
+        enum: [title, table, timeline, timeline-axis, network, summary, legend, group-details, observations, milestones, annotations, notes]
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      priority: {description: "Importance used during constrained layout allocation.", enum: [required, preferred, optional]}
+      overflow: {description: "Declared behavior when this slot cannot fit.", enum: [diagnose, ellipsize-with-source, clip-optional]}
+      cell: {$ref: "#/$defs/cell"}
+  override:
+    type: object
+    description: "Partial replacement of a named node's layout settings."
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      inlineSize: {$ref: "#/$defs/size"}
+      blockSize: {$ref: "#/$defs/size"}
+      place: {$ref: "#/$defs/place"}
+      anchor: {$ref: "#/$defs/anchor"}
+      gap: {$ref: "#/$defs/distance"}
+      padding: {$ref: "#/$defs/padding"}
+      alignItems: {$ref: "#/$defs/alignment"}
+      justifyContent: {$ref: "#/$defs/distribution"}
+      itemMinInlineSize: {$ref: "#/$defs/distance"}
+      priority: {description: "Replacement allocation priority.", enum: [required, preferred, optional]}
+      overflow: {description: "Replacement overflow behavior.", enum: [diagnose, ellipsize-with-source, clip-optional]}

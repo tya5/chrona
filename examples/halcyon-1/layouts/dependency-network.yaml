@@ -1,7 +1,8 @@
-version: chrona/layout-profile/v0.4
+version: chrona/layout-profile/v0.5
 id: dependency-network
 writingMode: horizontal-tb
 requiredThemeTokens: [spacing.l, spacing.m]
+reviewSurface: {rowDistribution: pack}
 relationRouting: {maxBends: 4, maxDetourRatio: 2}
 root:
   id: page

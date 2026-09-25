@@ -1,4 +1,4 @@
-version: chrona/theme/v0.9
+version: chrona/theme/v0.10
 kind: theme
 id: material-icons-light
 body:
@@ -85,6 +85,9 @@ body:
     timeline-row-height:
       type: number
       value: 72
+    timeline-row-padding:
+      type: number
+      value: 8
     timeline-mark-size:
       type: number
       value: 24
@@ -298,6 +301,7 @@ body:
     text.body.lineHeight: text-line-height
     timeline.dayWidth: timeline-day-width
     timeline.row.minBlockSize: timeline-row-height
+    timeline.row.paddingBlock: timeline-row-padding
     timeline.mark.blockSize: timeline-mark-size
     timeline.groupHeader.blockSize: timeline-group-header-size
     timeline.axis.blockSize: timeline-axis-height

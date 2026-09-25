@@ -14,7 +14,7 @@ from chrona.resources import schema_document
 from chrona.schema_diagnostics import explain_errors
 
 
-LAYOUT_VERSION = "chrona/layout-profile/v0.4"
+LAYOUT_VERSION = "chrona/layout-profile/v0.5"
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class LayoutBase:
 
 
 def _schema() -> dict[str, Any]:
-    return dict(schema_document("layout-profile-v0.4.schema.yaml"))
+    return dict(schema_document("layout-profile-v0.5.schema.yaml"))
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:
@@ -85,6 +85,7 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
     resolved["id"] = profile["id"]
     resolved["writingMode"] = profile["writingMode"]
     resolved["requiredThemeTokens"] = deepcopy(profile["requiredThemeTokens"])
+    resolved["reviewSurface"] = deepcopy(profile["reviewSurface"])
     return resolved
 
 

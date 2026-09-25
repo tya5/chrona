@@ -88,7 +88,7 @@ def test_layout_token_requirement_contract_is_exact_and_theme_checked():
 
 def test_unavailable_optional_source_does_not_participate_in_layout():
     raw = {
-        "version": "chrona/layout-profile/v0.4", "id": "optional-source", "writingMode": "horizontal-tb", "requiredThemeTokens": ["spacing.m", "spacing.none"],
+        "version": "chrona/layout-profile/v0.5", "id": "optional-source", "writingMode": "horizontal-tb", "requiredThemeTokens": ["spacing.m", "spacing.none"], "reviewSurface": {"rowDistribution": "pack"},
         "root": {"id": "root", "kind": "column", "inlineSize": "fill", "blockSize": "fill",
                  "gap": {"token": "spacing.m"}, "padding": {"token": "spacing.none"},
                  "alignItems": "stretch", "justifyContent": "start", "children": [
@@ -109,7 +109,7 @@ def test_unavailable_optional_source_does_not_participate_in_layout():
 
 def test_grid_and_distribution_are_deterministic():
     raw={
-      "version":"chrona/layout-profile/v0.4","id":"grid","writingMode":"horizontal-tb","requiredThemeTokens":["spacing.m","spacing.none"],
+      "version":"chrona/layout-profile/v0.5","id":"grid","writingMode":"horizontal-tb","requiredThemeTokens":["spacing.m","spacing.none"],"reviewSurface":{"rowDistribution":"pack"},
       "root":{"id":"root","kind":"grid","inlineSize":"fill","blockSize":"fill","columnTracks":[{"fr":1},{"fr":1}],"rowTracks":["content"],"gap":{"token":"spacing.m"},"padding":{"token":"spacing.none"},"alignItems":"stretch","justifyContent":"start","children":[
         {"id":"legend","kind":"slot","source":"legend","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":1,"row":1}},
         {"id":"notes","kind":"slot","source":"notes","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"diagnose","cell":{"column":2,"row":1}}

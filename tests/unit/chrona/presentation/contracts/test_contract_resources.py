@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[5]
 
 def _theme():
     return {
-        "version": "chrona/theme/v0.9", "kind": "theme", "id": "theme",
+        "version": "chrona/theme/v0.10", "kind": "theme", "id": "theme",
         "body": {"values": {}, "roles": {}, "colorBindings": {"text.fill": "text"}},
     }
 
