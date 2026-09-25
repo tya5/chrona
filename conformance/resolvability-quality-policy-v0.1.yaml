@@ -90,6 +90,11 @@ declaredComputedValues:
     field: contentIdentity
     classification: pinned-deliberately
     producer: chrona identity bytes
+  - path: src/chrona/presentation/fonts/system.py
+    function: resolve_draft_font
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona render
   - path: src/chrona/usecases/authoring_commands.py
     function: apply_authoring_command
     field: baseRevision
