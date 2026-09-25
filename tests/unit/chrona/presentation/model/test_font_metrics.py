@@ -4,7 +4,7 @@ from importlib.resources import files
 import json
 import pytest
 
-from chrona.presentation.model.font_metrics import resolve_font_files, resolve_font_metrics
+from chrona.presentation.model.font_metrics import resolve_font_files, resolve_font_metrics, resolve_font_metrics_catalog
 from chrona.presentation.model.font_metrics import FontMetricsError
 
 
@@ -62,6 +62,17 @@ def test_font_metrics_rejects_a_different_declared_weight():
     value["assets"][1]["metrics"] = value["assets"][0]["metrics"]
     with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
         resolve_font_metrics("Noto Sans", value, weight=700)
+
+
+def test_catalog_selects_exact_declared_family_weight_and_rejects_missing_face():
+    catalog = resolve_font_metrics_catalog(descriptor())
+
+    assert catalog.select("Noto Sans, sans-serif", 400).weight == 400
+    assert catalog.select("Noto Sans", 700).weight == 700
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+        catalog.select("Noto Sans Mono", 400)
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+        catalog.select("Noto Sans", 500)
 
 
 def test_font_metrics_rejects_path_traversal():

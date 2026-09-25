@@ -21,6 +21,27 @@ class FontMetricsError(ValueError):
 
 
 @dataclass(frozen=True)
+class FontMetricsCatalog:
+    """Closed exact-face metrics selection owned above Layout."""
+
+    metrics: dict[tuple[str, int], "FontMetrics"]
+
+    def select(self, family: str, weight: int) -> "FontMetrics":
+        selected = _families(family)[0] if _families(family) else ""
+        metric = self.metrics.get((selected.casefold(), weight))
+        if metric is None:
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE",
+                                   f"declared metrics are unavailable for {selected}/{weight}")
+        return metric
+
+    @property
+    def warnings(self) -> tuple[FontGlyphSubstitution, ...]:
+        return tuple(sorted((warning for metric in self.metrics.values() for warning in metric.warnings),
+                            key=lambda item: (item.requested_family.casefold(), item.weight,
+                                              item.codepoint, item.text)))
+
+
+@dataclass(frozen=True)
 class FontGlyphSubstitution:
     """One observable draft-only measurement substitution."""
 
@@ -206,6 +227,25 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
                            metric.units_per_em, metric.ascent, metric.descent, metric.cap_height,
                            metric.advances, metric.numeric_advances, fallback)
     raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+
+
+def resolve_font_metrics_catalog(descriptor: dict, *, asset_root: Path | None = None) -> FontMetricsCatalog:
+    """Validate every declared face before Layout can select a Theme treatment."""
+    assets = descriptor.get("assets")
+    if descriptor.get("algorithm") != "declared-metrics-v3" or not isinstance(assets, list) or not assets:
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+    resolved: dict[tuple[str, int], FontMetrics] = {}
+    for asset in assets:
+        if not isinstance(asset, dict) or not isinstance(asset.get("family"), str) or not isinstance(asset.get("weight"), int):
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+        family, weight = asset["family"], asset["weight"]
+        key = (family.casefold(), weight)
+        if key in resolved:
+            raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
+        # A one-family stack makes this exact asset selection, while retaining
+        # the established descriptor validation and glyph-substitute policy.
+        resolved[key] = resolve_font_metrics(family, descriptor, weight=weight, asset_root=asset_root)
+    return FontMetricsCatalog(resolved)
 
 
 def _packaged_substitute_descriptor() -> dict:

@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError, Measurement
-from chrona.presentation.layout.text import measure_text_width, paint_text
+from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
@@ -122,9 +122,10 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     metric = resolve_theme_metrics(theme, required_metrics=required_metrics)
     typography = ThemeTokenView(theme)
     body_treatment = typography.text_treatment("text")
+    body_metrics = metric_for_role(typography, "text", font_metrics)
     body_size = body_treatment.font_size
     metric["text.measuredAverageAdvance"] = Decimal(str(measure_text_width(
-        "M", font_size=float(body_size), font_metrics=font_metrics,
+        "M", font_size=float(body_size), font_metrics=body_metrics,
         letter_spacing=float(body_treatment.letter_spacing), text_transform=body_treatment.transform)))
     result: dict[str, Measurement] = {}
     run_measurements: dict[str, tuple[MeasuredTextRun, ...]] = {}
@@ -132,24 +133,26 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         runs = value.text_runs()
         first_role = runs[0].typography_role if runs else value.typography_role
         first_treatment = typography.text_treatment(first_role)
+        first_metrics = metric_for_role(typography, first_role, font_metrics)
         font_size, line_height = first_treatment.font_size, first_treatment.line_height
         text_line = font_size * line_height
         average_advance = Decimal(str(measure_text_width(
-            "M", font_size=float(font_size), font_metrics=font_metrics,
+            "M", font_size=float(font_size), font_metrics=first_metrics,
             letter_spacing=float(first_treatment.letter_spacing), text_transform=first_treatment.transform)))
         measured_runs = []
         for run in runs:
             treatment = typography.text_treatment(run.typography_role)
+            run_metrics = metric_for_role(typography, run.typography_role, font_metrics)
             family, weight, run_size, run_line_height = (treatment.family, treatment.weight,
                                                          treatment.font_size, treatment.line_height)
             width = Decimal(str(measure_text_width(
-                run.content, font_size=float(run_size), font_metrics=font_metrics,
+                run.content, font_size=float(run_size), font_metrics=run_metrics,
                 letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform))) + run.inline_advance
-            baseline = Decimal(str(font_metrics.baseline(0, float(run_size), float(run_line_height))))
+            baseline = Decimal(str(run_metrics.baseline(0, float(run_size), float(run_line_height))))
             measured_runs.append(MeasuredTextRun(
                 run.source_ref, paint_text(run.content, text_transform=treatment.transform), run.typography_role, width,
                 run_size * run_line_height, baseline, family, int(weight),
-                float(run_size), float(run_line_height), str(font_metrics.content_identity),
+                float(run_size), float(run_line_height), str(run_metrics.content_identity),
                 float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing))
         run_measurements[source] = tuple(measured_runs)
         measured_width = max((run.inline_size for run in measured_runs), default=average_advance)
@@ -172,7 +175,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         result[source] = Measurement(
             min(preferred_inline, text_inline), preferred_inline, preferred_inline * 2,
             min(preferred_block, text_block), preferred_block, preferred_block * 2,
-            Decimal(str(font_metrics.baseline(0, float(font_size), float(line_height)))),
-            Decimal(str(font_metrics.baseline(0, float(font_size), float(line_height)))),
+            Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
+            Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
         )
     return MeasuredSources(result, dict(inputs), metric, run_measurements)

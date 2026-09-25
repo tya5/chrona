@@ -26,7 +26,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measu
 from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, resolve_mark_geometries, timeline_content_block_requirement
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
-from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, resolve_font_metrics
+from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, resolve_font_metrics_catalog
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
@@ -405,13 +405,8 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path) -> Any:
-    body = theme["body"]
-    family_token = body.get("roles", {}).get("text", {}).get("fontFamily")
-    family = body.get("values", {}).get(family_token, {}).get("value")
-    if not isinstance(family, str):
-        raise RenderFailed("E_THEME_ROLE_REQUIRED", "text.fontFamily is required", "theme")
     try:
-        return resolve_font_metrics(family, font_metrics, asset_root=asset_root)
+        return resolve_font_metrics_catalog(font_metrics, asset_root=asset_root)
     except FontMetricsError as error:
         raise _font_failure(error) from error
 

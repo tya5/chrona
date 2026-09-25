@@ -18,6 +18,18 @@ def paint_text(content: str, *, text_transform: str = "none") -> str:
     }[text_transform]
 
 
+def metric_for_role(theme_tokens: Any, typography_role: str, font_metrics: Any) -> Any:
+    """Select the exact declared metric before a role can affect geometry."""
+    treatment = theme_tokens.text_treatment(typography_role)
+    return metric_for_family(treatment.family, int(treatment.weight), font_metrics)
+
+
+def metric_for_family(family: str, weight: int, font_metrics: Any) -> Any:
+    """Select one exact metric when a completed placement owns family/weight."""
+    select = getattr(font_metrics, "select", None)
+    return select(family, weight) if callable(select) else font_metrics
+
+
 def measure_text_width(content: str, *, font_size: float, font_metrics: Any,
                        letter_spacing: float = 0, text_transform: str = "none",
                        numeric_spacing: str = "proportional") -> float:
@@ -135,6 +147,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                orientation: str = "horizontal") -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     treatment = theme_tokens.text_treatment(typography_role)
+    font_metrics = metric_for_role(theme_tokens, typography_role, font_metrics)
     font_size, leading = float(treatment.font_size), float(treatment.line_height)
     source = source_content if source_content is not None else content
     resolved_lines = tuple(paint_text(line, text_transform=treatment.transform) for line in (lines or (content,)))
