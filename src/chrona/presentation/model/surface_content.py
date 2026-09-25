@@ -170,6 +170,7 @@ class SurfaceContentInput:
     progress_fill_source: str | None = None
     table_hierarchy_column: str | None = None
     row_decoration: str = "none"
+    group_decoration: str = "all"
 
 
 @dataclass(frozen=True)

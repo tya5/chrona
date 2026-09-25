@@ -124,7 +124,7 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
     body["hierarchyColumn"] = body["tableColumns"][0]["id"]
     contract = _view_contract(explicit)
     assert contract.view.hierarchy_column == "Work package / gate"
-    assert contract.view.row_decoration == "alternate-rows"
+    assert contract.view.background_decoration == ("alternate", "none")
 
 
 def test_boolean_comparison_columns_require_a_complete_typed_presence_presentation():

@@ -253,7 +253,7 @@ class ViewInput:
     progress_fill: str | None = None
     visuals: tuple[ViewVisual, ...] = ()
     hierarchy_column: str | None = None
-    row_decoration: str = "none"
+    background_decoration: tuple[str, str] = ("none", "all")
 
 
 @dataclass(frozen=True)
@@ -543,7 +543,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
-    ("view", "chrona/view/v0.20"): "view-v0.20.schema.yaml",
+    ("view", "chrona/view/v0.21"): "view-v0.21.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
@@ -738,7 +738,8 @@ def _view_input(body: FrozenDict) -> ViewInput:
                          item.get("encoding"), str(item.get("side", "leading")), bool(item.get("decorative", True)))
               for item in body.get("visuals", ())),
         hierarchy_column=hierarchy_column,
-        row_decoration=str(body.get("rowDecoration", FrozenDict()).get("mode", "none")))
+        background_decoration=(str(body.get("backgroundDecoration", FrozenDict()).get("rows", "none")),
+                               str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))))
 
 
 def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping: ViewGrouping | None,

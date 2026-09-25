@@ -861,15 +861,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
                               paint_order=paint_order, semantic_id=semantic_id)
 
-    decoration = request.surface_content.row_decoration
-    if decoration == "alternate-rows":
+    row_decoration = request.surface_content.row_decoration
+    group_decoration = request.surface_content.group_decoration
+    if row_decoration == "alternate":
         for index, row in enumerate(rows):
             if index % 2 == 0:
                 shape = background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds)
                 if shape is not None:
                     shapes.append(shape)
     for index, group in enumerate(groups):
-        if decoration in {"none", "alternate-groups"} and (decoration == "none" or index % 2 == 0):
+        if group_decoration in {"all", "alternate"} and (group_decoration == "all" or index % 2 == 0):
             shape = background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds)
             if shape is not None:
                 shapes.append(shape)

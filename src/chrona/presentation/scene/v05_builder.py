@@ -15,7 +15,7 @@ from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.semantic_registry import ContrastClass, PrimitiveKind, contrast_bindings, inside_member_label_semantic, semantic_binding
+from chrona.presentation.model.semantic_registry import ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.mark_geometry import pattern_geometry, pattern_kind, symbol_geometry
@@ -289,11 +289,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
                             placed.line_height, placed.font_asset_identity, placed.letter_spacing,
                             placed.text_transform, placed.numeric_spacing, placed.orientation, placed.rotation_degrees)
+        classification = contrast_binding(role)
+        treatment = (value.theme_tokens.contrast_treatment(role)
+                     if classification is not None and classification.contrast_class == ContrastClass.STATE_TEXT else None)
         primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
                                          text=placed.content, baseline=layout.baseline, text_layout=layout,
                                          href=href, link_title=link_title, table_row_id=table_row_id,
                                          table_column_id=table_column_id, paint_order=placed.paint_order,
-                                         host_placement_id=placed.host_placement_id))
+                                         host_placement_id=placed.host_placement_id,
+                                         contrast_treatment=treatment))
     def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None,
                            href: str | None = None, link_title: str | None = None,
                            table_row_id: str | None = None, table_column_id: str | None = None) -> None:

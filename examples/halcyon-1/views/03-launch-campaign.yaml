@@ -1,4 +1,4 @@
-version: chrona/view/v0.20
+version: chrona/view/v0.21
 kind: view
 id: halcyon-03-launch-campaign
 body:
@@ -93,8 +93,9 @@ body:
   shading:
     nonWorking: true
     exceptions: true
-  rowDecoration:
-    mode: none
+  backgroundDecoration:
+    rows: none
+    groups: all
   tableColumns:
   - id: Activity
     source: title

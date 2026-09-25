@@ -24,7 +24,7 @@ def _json_value(value: Any) -> Any:
 
 
 def _validator() -> jsonschema.Draft202012Validator:
-    schema = yaml.safe_load(schema_resource("view-v0.20.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("view-v0.21.schema.yaml").read_text(encoding="utf-8"))
     foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
     return jsonschema.Draft202012Validator(
         schema, resolver=jsonschema.RefResolver.from_schema(schema, store={foundation["$id"]: foundation})
@@ -34,7 +34,7 @@ def _validator() -> jsonschema.Draft202012Validator:
 @pytest.mark.parametrize("path", sorted(ROOT.glob("examples/**/views/*.yaml")))
 def test_declared_public_v03_view_validates(path: Path):
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if value.get("version") != "chrona/view/v0.20":
+    if value.get("version") != "chrona/view/v0.21":
         pytest.skip("not a v0.3 View")
     assert next(_validator().iter_errors(_json_value(value)), None) is None, path
 
@@ -58,7 +58,7 @@ def test_view_admits_inside_at_each_member_label_side_ingress():
     }
     value["body"]["visibility"]["fallback"] = {"labels": ["inside", "end", "suppress"]}
     assert next(_validator().iter_errors(_json_value(value)), None) is None
-    schema = yaml.safe_load(schema_resource("view-v0.20.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("view-v0.21.schema.yaml").read_text(encoding="utf-8"))
     assert "inside" in schema["$defs"]["presentationIntent"]["properties"]["label"]["properties"]["side"]["enum"]
 
 
@@ -111,11 +111,11 @@ def test_v16_table_intent_requires_finite_alignment_and_logical_width():
     assert next(_validator().iter_errors(_json_value(value)), None) is None
 
 
-def test_v16_row_decoration_is_finite_and_table_timeline_only():
+def test_v21_background_decoration_has_independent_closed_row_and_group_policies():
     value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
-    value["body"]["rowDecoration"] = {"mode": "gradient"}
+    value["body"]["backgroundDecoration"] = {"rows": "gradient", "groups": "all"}
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
-    value["body"]["rowDecoration"] = {"mode": "alternate-rows"}
+    value["body"]["backgroundDecoration"] = {"rows": "alternate", "groups": "all"}
     assert next(_validator().iter_errors(_json_value(value)), None) is None
     body = value["body"]
     body["surface"] = "dependency-network"
@@ -135,7 +135,7 @@ def test_dependency_network_keeps_common_window_and_rejects_timeline_authoring()
     value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
     body = value["body"]
     body["surface"] = "dependency-network"
-    forbidden = ("tableColumns", "hierarchyColumn", "rowDecoration", "axis", "markers", "shading", "timePresentation", "annotations", "annotationPresentation")
+    forbidden = ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "shading", "timePresentation", "annotations", "annotationPresentation")
     saved = {name: body.pop(name) for name in forbidden if name in body}
     assert "window" in body
     assert next(_validator().iter_errors(_json_value(value)), None) is None

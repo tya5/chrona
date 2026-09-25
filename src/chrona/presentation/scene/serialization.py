@@ -215,6 +215,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "paintOrder": item.paint_order,
         "hostPlacementId": item.host_placement_id,
         "clipSourceId": item.clip_source_id,
+        "contrastTreatment": item.contrast_treatment,
         "endTreatment": item.end_treatment if item.end_treatment != "closed" else None,
     }
     result.update(_omit(optional))

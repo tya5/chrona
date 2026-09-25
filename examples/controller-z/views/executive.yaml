@@ -1,4 +1,4 @@
-version: chrona/view/v0.20
+version: chrona/view/v0.21
 kind: view
 id: controller-z-executive
 body:
@@ -86,8 +86,9 @@ body:
     - unit: month
       every: 1
       role: grid-minor
-  rowDecoration:
-    mode: none
+  backgroundDecoration:
+    rows: alternate
+    groups: all
   tableColumns:
   - id: Workstream
     source: title

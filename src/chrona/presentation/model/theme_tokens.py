@@ -222,6 +222,15 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
         return treatment, order
 
+    def contrast_treatment(self, role: str) -> str:
+        """Return the finite completed state-text treatment for one role."""
+        binding = self._body["roles"].get(role)
+        path = f"/body/roles/{role}/contrastTreatment"
+        treatment = binding.get("contrastTreatment") if isinstance(binding, Mapping) else None
+        if treatment not in {"required", "deemphasized"}:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
+        return treatment
+
     def number(self, role: str, property_name: str) -> Decimal:
         value = self.token(role, property_name, "number")
         try:

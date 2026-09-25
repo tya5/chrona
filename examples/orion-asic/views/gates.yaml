@@ -1,4 +1,4 @@
-version: chrona/view/v0.20
+version: chrona/view/v0.21
 kind: view
 id: orion-asic-gates
 body:
@@ -99,8 +99,9 @@ body:
   shading:
     nonWorking: false
     exceptions: true
-  rowDecoration:
-    mode: none
+  backgroundDecoration:
+    rows: none
+    groups: all
   tableColumns:
   - id: Work package
     source: title

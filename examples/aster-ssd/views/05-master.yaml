@@ -1,4 +1,4 @@
-version: chrona/view/v0.20
+version: chrona/view/v0.21
 kind: view
 id: aster-05-master
 body:
@@ -96,8 +96,9 @@ body:
     - unit: month
       every: 1
       role: grid-minor
-  rowDecoration:
-    mode: none
+  backgroundDecoration:
+    rows: none
+    groups: all
   tableColumns:
   - id: Work package / gate
     source: title

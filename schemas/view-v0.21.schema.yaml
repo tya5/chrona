@@ -1,0 +1,541 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/view-v0.21"
+title: "Chrona View v0.20"
+description: "Declarative selection and presentation intent for one review surface."
+allOf:
+  - $ref: "urn:chrona:presentation-resource-v0.1"
+  - description: "View document fields extending the shared presentation resource."
+    type: object
+    properties:
+      version: {description: "This View document contract version.", const: "chrona/view/v0.21"}
+      kind: {description: "Resource kind identifying this document as a View.", const: view}
+      body:
+        description: "Surface selection and presentation semantics."
+        type: object
+        required: [surface, comparison, visibility, rows]
+        additionalProperties: false
+        properties:
+          surface: {description: "Review surface family.", enum: [table-timeline, dependency-network]}
+          colorEncoding:
+            type: object
+            description: "One closed field-to-colour encoding for eligible planned marks."
+            required: [scale, target, source, domain]
+            additionalProperties: false
+            properties:
+              scale: {description: "Named colour scale to apply.", type: string, minLength: 1}
+              target: {description: "Only planned marks are colour-encoded.", const: planned}
+              source:
+                description: "Project field supplying the encoded value."
+                type: object
+                required: [field]
+                additionalProperties: false
+                properties: {field: {description: "Project field name.", type: string, minLength: 1}}
+              domain:
+                description: "Closed set of values admitted by the scale."
+                type: array
+                minItems: 1
+                uniqueItems: true
+                items: {description: "One admitted source value.", type: string, minLength: 1}
+          progressFill:
+            type: object
+            description: "Optional display-only fraction submark source for completed planned or actual marks."
+            required: [source]
+            additionalProperties: false
+            properties:
+              source: {description: "The authoritative fraction source.", enum: [actual, planned]}
+          selection:
+            description: "Objects included in or excluded from automatic rows."
+            type: object
+            required: [include]
+            additionalProperties: false
+            properties:
+              include:
+                description: "Positive selection predicates."
+                type: object
+                additionalProperties: false
+                properties:
+                  ids: {description: "Explicit object identifiers.", type: array, uniqueItems: true, items: {description: "One object identifier.", type: string, minLength: 1}}
+                  types: {description: "Included scheduling types.", type: array, uniqueItems: true, items: {description: "One scheduling type.", type: string, minLength: 1}}
+                  objectTypes: {description: "Included domain object types.", type: array, uniqueItems: true, items: {description: "One domain object type.", type: string, minLength: 1}}
+              exclude:
+                description: "Negative selection predicates applied after inclusion."
+                type: object
+                additionalProperties: false
+                properties:
+                  objectTypes: {description: "Excluded domain object types.", type: array, uniqueItems: true, items: {description: "One excluded domain object type.", type: string, minLength: 1}}
+          grouping:
+            description: "Automatic-row grouping policy."
+            type: object
+            required: [by]
+            additionalProperties: false
+            properties:
+              by: {description: "Grouping dimension.", enum: [objectType, field, hierarchy, none]}
+              field: {description: "Project field used when grouping by field.", type: string, minLength: 1}
+              order: {description: "Preferred order of group values.", type: array, uniqueItems: true, items: {description: "One group value.", type: string, minLength: 1}}
+              missing: {description: "Label for missing field values.", type: string, minLength: 1}
+              presentation: {description: "Visual treatment for groups.", enum: [band, header]}
+              depth: {description: "Maximum hierarchy depth.", type: integer, minimum: 0}
+              rollup: {description: "Hierarchy rollup presentation.", enum: [bar, header, none]}
+            allOf:
+              - description: "Field grouping requires its field name and missing-value label."
+                examples: [{by: field, field: status, missing: Unset}]
+                if: {properties: {by: {const: field}}, required: [by]}
+                then: {required: [field, missing]}
+              - description: "Hierarchy grouping requires a depth and rollup presentation."
+                examples: [{by: hierarchy, depth: 1, rollup: header}]
+                if: {properties: {by: {const: hierarchy}}, required: [by]}
+                then: {required: [depth, rollup]}
+          ordering:
+            description: "Deterministic automatic-row ordering."
+            type: object
+            required: [by, direction, tieBreak]
+            additionalProperties: false
+            properties:
+              by: {description: "Primary ordering key.", enum: [id, title, plannedStart, plannedEnd]}
+              direction: {description: "Ordering direction.", enum: [ascending, descending]}
+              tieBreak: {description: "Stable ordering tie-breaker.", enum: [id, title, plannedStart, plannedFinish]}
+          window:
+            description: "Temporal window selected for the surface."
+            type: object
+            required: [mode]
+            additionalProperties: false
+            properties:
+              mode: {description: "Window derivation mode.", enum: [explicit, selected-planned, selected-comparison]}
+              start: {description: "Inclusive explicit ISO calendar start.", examples: ["2026-01-01"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+              end: {description: "Exclusive explicit ISO calendar end.", examples: ["2026-02-01"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+              marginDays: {description: "Non-negative expansion around a derived window.", type: integer, minimum: 0}
+          comparison:
+            description: "Baseline, actual, and comparison-facet policy."
+            type: object
+            required: [baseline, actual, observationSelection, deltaUnit, facets]
+            additionalProperties: false
+            properties:
+              baseline: {description: "Comparison baseline source.", enum: [primary, snapshot, scenario]}
+              scenario: {description: "Scenario identifier when scenario is the baseline.", type: string, minLength: 1}
+              actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
+              observationSelection: {description: "Only the latest observation is selected.", const: latest}
+              deltaUnit: {description: "Comparison delta unit.", const: calendar-days}
+              facets: {description: "Comparison facets exposed to the surface.", type: array, uniqueItems: true, items: {description: "One comparison facet.", enum: [planned, actual, startDelta, finishDelta, atDelta, progress, missingActual, unmatchedActual]}}
+          visibility:
+            description: "Visibility and fallback policy for surface content."
+            type: object
+            required: [labels, relations, annotations]
+            additionalProperties: false
+            properties:
+              labels:
+                oneOf:
+                  - {type: boolean}
+                  - type: object
+                    required: [placement, content, side]
+                    additionalProperties: false
+                    properties:
+                      placement: {enum: [plot, table, none]}
+                      content: {type: array, minItems: 1, uniqueItems: true, items: {enum: [title, finishDelta]}}
+                      side: {enum: [auto, above, below, start, end, inside]}
+                      overflow: {enum: [suppress, visible-overflow]}
+              relations:
+                oneOf:
+                  - {enum: [none, semantic, critical, all]}
+                  - type: object
+                    required: [mode, overflow]
+                    additionalProperties: false
+                    properties:
+                      mode: {enum: [none, semantic, critical]}
+                      overflow: {enum: [suppress, visible-overflow]}
+                      content: {description: "Ordered optional relation-label facts; absence selects no labels.", type: array, uniqueItems: true, items: {enum: [lag, endpointPair]}}
+              annotations:
+                oneOf:
+                  - {enum: [none, semantic, presentation, all]}
+                  - type: object
+                    required: [mode, marker]
+                    additionalProperties: false
+                    properties:
+                      mode: {enum: [none, semantic, presentation, all]}
+                      marker: {enum: [none, numbered]}
+              links: {enum: [none, title, row]}
+              fallback:
+                type: object
+                additionalProperties: false
+                properties:
+                  labels: {type: array, minItems: 1, uniqueItems: true, items: {enum: [above, below, start, end, inside, suppress]}}
+                  annotations: {type: array, minItems: 1, uniqueItems: true, items: {enum: [above, below, start, end, rail, suppress]}}
+          axis:
+            type: object
+            required: [tiers]
+            additionalProperties: false
+            properties:
+              tiers:
+                type: array
+                minItems: 1
+                items:
+                  type: object
+                  required: [unit, every, role]
+                  additionalProperties: false
+                  properties:
+                    unit: {enum: [auto, day, week, month, quarter, half, year]}
+                    every: {type: integer, minimum: 1}
+                    role: {enum: [band, labels, grid-major, grid-minor]}
+                    label: {}
+                  allOf:
+                    - description: "Only a labels tier owns a label declaration."
+                      examples: [{unit: month, every: 1, role: labels, label: {form: short-month, align: start, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {role: {const: labels}}, required: [role]}
+                      then: {required: [label]}
+                      else: {not: {required: [label]}}
+                    - description: "Automatic unit selection is available only for labels."
+                      examples: [{unit: auto, every: 1, role: labels, label: {forms: {month: short-month}, align: start, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {unit: {const: auto}}, required: [unit]}
+                      then: {properties: {role: {const: labels}}}
+                    - description: "Day labels use the localized-date form."
+                      examples: [{unit: day, every: 1, role: labels, label: {form: localized-date, align: start, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {unit: {const: day}, role: {const: labels}}, required: [unit, role]}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {const: localized-date}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}}}}}
+                    - description: "Week labels use ISO week numbers."
+                      examples: [{unit: week, every: 1, role: labels, label: {form: iso-week, align: start, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {unit: {const: week}, role: {const: labels}}, required: [unit, role]}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {const: iso-week}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}}}}}
+                    - description: "Month labels select one finite month form."
+                      examples: [{unit: month, every: 1, role: labels, label: {form: short-month, align: start, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {unit: {const: month}, role: {const: labels}}, required: [unit, role]}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}}}}}
+                    - description: "Quarter labels select one finite quarter form."
+                      examples: [{unit: quarter, every: 1, role: labels, label: {form: year-quarter, align: center, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {unit: {const: quarter}, role: {const: labels}}, required: [unit, role]}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {enum: [quarter, year-quarter, quarter-year]}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}}}}}
+                    - description: "Half-year labels use the fiscal half-year form."
+                      examples: [{unit: half, every: 1, role: labels, label: {form: half-year, align: center, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {unit: {const: half}, role: {const: labels}}, required: [unit, role]}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {const: half-year}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}}}}}
+                    - description: "Year labels use the year form."
+                      examples: [{unit: year, every: 1, role: labels, label: {form: year, align: center, overflow: visible-overflow, orientation: horizontal}}]
+                      if: {properties: {unit: {const: year}, role: {const: labels}}, required: [unit, role]}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {const: year}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}}}}}
+                    - description: "Automatic labels declare their allowed concrete forms."
+                      examples: [{unit: auto, every: 1, role: labels, label: {forms: {month: short-month}, align: start, overflow: thin-with-record, orientation: horizontal}}]
+                      if: {properties: {unit: {const: auto}, role: {const: labels}}, required: [unit, role]}
+                      then:
+                        properties:
+                          label:
+                            type: object
+                            required: [forms, align, overflow, orientation]
+                            additionalProperties: false
+                            properties:
+                              forms:
+                                type: object
+                                minProperties: 1
+                                additionalProperties: false
+                                properties:
+                                  day: {const: localized-date}
+                                  week: {const: iso-week}
+                                  month: {enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]}
+                                  quarter: {enum: [quarter, year-quarter, quarter-year]}
+                                  half: {const: half-year}
+                                  year: {const: year}
+                              align: {enum: [start, center]}
+                              overflow: {enum: [visible-overflow, thin-with-record]}
+                              orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}
+          markers:
+            type: array
+            items:
+              type: object
+              required: [kind, source, label]
+              additionalProperties: false
+              properties:
+                kind: {const: asOf}
+                source: {const: actual}
+                label: {type: string}
+          shading:
+            type: object
+            additionalProperties: false
+            properties:
+              nonWorking: {type: boolean}
+              exceptions: {type: boolean}
+          timePresentation:
+            type: object
+            additionalProperties: false
+            properties:
+              asOf: {enum: [hidden, line]}
+              calendarClosed: {type: boolean}
+          annotationPresentation: {enum: [plain, numbered]}
+          visuals:
+            description: "Closed icon requests resolved by Layout against Context-local catalogs."
+            type: array
+            items: {$ref: "chrona/view-v0.21#/$defs/visual"}
+          hierarchyColumn:
+            description: "Named table column that receives resolved row nesting indentation."
+            type: string
+            minLength: 1
+          backgroundDecoration:
+            description: "Independent finite row and group decoration selections for completed table--timeline surfaces."
+            type: object
+            required: [rows, groups]
+            additionalProperties: false
+            properties:
+              rows: {enum: [none, alternate]}
+              groups: {enum: [none, all, alternate]}
+          tableColumns:
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items:
+              type: object
+              required: [id, source, missing, align, width, headerOrientation]
+              additionalProperties: false
+              properties:
+                id: {type: string, minLength: 1}
+                source:
+                  oneOf:
+                    - {enum: [id, title, objectType, entity, rowIndex, wbsCode, path, totalFloat]}
+                    - type: object
+                      required: [field]
+                      additionalProperties: false
+                      properties: {field: {type: string, minLength: 1}}
+                    - type: object
+                      required: [comparisonFacet]
+                      additionalProperties: false
+                      properties: {comparisonFacet: {enum: [startDelta, finishDelta, atDelta, progress, missingActual]}}
+                    - type: object
+                      required: [facet]
+                      additionalProperties: false
+                      properties: {facet: {enum: [planned, actual, finishDelta]}}
+                    - type: object
+                      required: [scenario]
+                      additionalProperties: false
+                      properties: {scenario: {enum: [id, title]}}
+                format:
+                  description: "Closed scalar formatter or an explicit boolean presence presentation."
+                  oneOf:
+                    - {enum: [text, dateRange, date, signedDays]}
+                    - type: object
+                      required: [kind, whenTrue, whenFalse]
+                      additionalProperties: false
+                      properties:
+                        kind: {const: presence}
+                        whenTrue: {description: "Text rendered for boolean true; an empty string is intentional.", type: string}
+                        whenFalse: {description: "Text rendered for boolean false; an empty string is intentional.", type: string}
+                missing: {enum: [blank, em-dash, unknown, in-progress]}
+                align: {description: "Inline alignment inside the measured column allocation.", enum: [start, center, end]}
+                headerOrientation: {description: "Finite orientation of this column header; table cells remain horizontal.", enum: [horizontal, rotate-cw, rotate-ccw]}
+                width:
+                  description: "Table subset of the Layout logical size grammar for this measured column."
+                  oneOf:
+                    - {enum: [content, fill]}
+                    - {type: object, required: [fr], additionalProperties: false, properties: {fr: {type: number, exclusiveMinimum: 0, maximum: 1000000}}}
+                    - type: object
+                      required: [minmax]
+                      additionalProperties: false
+                      properties:
+                        minmax:
+                          type: object
+                          required: [min, max]
+                          additionalProperties: false
+                          properties:
+                            min: {enum: [content]}
+                            max:
+                              oneOf:
+                                - {enum: [content, fill]}
+                                - type: object
+                                  type: object
+                                  required: [fr]
+                                  additionalProperties: false
+                                  properties: {fr: {type: number, exclusiveMinimum: 0, maximum: 1000000}}
+          annotations:
+            type: array
+            items:
+              type: object
+              required: [id, purpose, anchor, placement, text]
+              additionalProperties: false
+              properties:
+                id: {type: string, minLength: 1}
+                purpose: {enum: [callout, highlight, note, explanatory-arrow]}
+                anchor:
+                  type: object
+                  required: [kind, id, facet, endpoint]
+                  additionalProperties: false
+                  properties:
+                    kind: {const: object}
+                    id: {type: string, minLength: 1}
+                    facet: {enum: [planned, actual]}
+                    endpoint: {enum: [start, finish, at, body]}
+                    rowId: {type: string, minLength: 1}
+                    itemId: {type: string, minLength: 1}
+                    date: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                placement:
+                  type: object
+                  required: [side, alignment]
+                  additionalProperties: false
+                  properties:
+                    side: {enum: [above, below, start, end]}
+                    alignment: {enum: [start, center, end]}
+                text: {type: string}
+          rows:
+            type: object
+            required: [mode]
+            additionalProperties: false
+            properties:
+              mode: {enum: [automatic, explicit]}
+              points: {enum: [own-row, group-header, predecessor]}
+              items:
+                type: array
+                minItems: 1
+                items:
+                  type: object
+                  required: [id, depth, items]
+                  additionalProperties: false
+                  properties:
+                    id: {type: string, minLength: 1}
+                    label: {type: string, minLength: 1}
+                    depth: {type: integer, minimum: 0}
+                    parentRow: {type: string, minLength: 1}
+                    group: {type: string, minLength: 1}
+                    tableSubject: {type: string, minLength: 1}
+                    presentation: {$ref: "#/$defs/presentationIntent"}
+                    items:
+                      type: array
+                      minItems: 1
+                      items:
+                        type: object
+                        required: [id, source]
+                        additionalProperties: false
+                        properties:
+                          id: {type: string, minLength: 1}
+                          track: {enum: [stacked, shared]}
+                          presentation: {$ref: "#/$defs/presentationIntent"}
+                          source:
+                            type: object
+                            required: [kind, object]
+                            additionalProperties: false
+                            properties:
+                              kind: {enum: [primary, snapshot, scenario, actual]}
+                              object: {type: string, minLength: 1}
+                              scenario: {type: string, minLength: 1}
+            allOf:
+              - description: "Automatic rows derive rows and cannot declare explicit items."
+                examples: [{mode: automatic}]
+                if: {properties: {mode: {const: automatic}}}
+                then: {not: {required: [items]}}
+              - description: "Explicit rows require items and cannot use automatic point policy."
+                examples: [{mode: explicit, items: []}]
+                if: {properties: {mode: {const: explicit}}}
+                then:
+                  required: [items]
+                  not: {required: [points]}
+        allOf:
+          - description: "Automatic rows require selection, grouping, ordering, and a window."
+            examples: [{rows: {mode: automatic}, selection: {}, grouping: {}, ordering: {}, window: {}}]
+            if: {properties: {rows: {properties: {mode: {const: automatic}}, required: [mode]}}}
+            then: {required: [selection, grouping, ordering, window]}
+          - description: "Scenario comparison requires a scenario identifier."
+            examples: [{comparison: {baseline: scenario, scenario: baseline}}]
+            if: {properties: {comparison: {properties: {baseline: {const: scenario}}, required: [baseline]}}}
+            then: {properties: {comparison: {required: [scenario]}}}
+          - description: "Explicit rows prohibit automatic selection, grouping, and ordering."
+            examples: [{rows: {mode: explicit}, window: {}}]
+            if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
+            then: {not: {anyOf: [{required: [selection]}, {required: [grouping]}, {required: [ordering]}]}, required: [window]}
+          - description: "A dependency network omits table-timeline-only presentation fields."
+            examples: [{surface: dependency-network}]
+            if: {properties: {surface: {const: dependency-network}}, required: [surface]}
+            then:
+              not:
+                anyOf:
+                  - {required: [tableColumns]}
+                  - {required: [hierarchyColumn]}
+                  - {required: [backgroundDecoration]}
+                  - {required: [axis]}
+                  - {required: [markers]}
+                  - {required: [shading]}
+                  - {required: [timePresentation]}
+                  - {required: [annotations]}
+                  - {required: [annotationPresentation]}
+$defs:
+  visual:
+    description: "One direct or data-encoded icon request for an admitted occurrence."
+    examples:
+      - {target: {kind: title}, ref: material:flag-outline-rounded, decorative: true}
+    type: object
+    required: [target]
+    additionalProperties: false
+    properties:
+      target:
+        description: "Exact label or mark occurrence receiving the icon."
+        $ref: "#/$defs/visualTarget"
+      ref: {description: "Direct Context-local set:name icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      encoding:
+        description: "Closed source-field to icon-reference mapping."
+        type: object
+        required: [field, domain]
+        additionalProperties: false
+        properties:
+          field: {description: "Projection-exposed source field name.", type: string, minLength: 1}
+          domain:
+            description: "Mapping from source value to Context-local icon reference."
+            type: object
+            minProperties: 1
+            additionalProperties: {description: "Mapped Context-local icon reference.", examples: ["material:flag-outline-rounded"], type: string, pattern: "^[A-Za-z][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      side: {description: "Logical slot beside the target text.", enum: [leading, trailing], default: leading}
+      decorative: {description: "Whether the adjacent text already supplies the icon's meaning.", type: boolean, default: true}
+    oneOf:
+      - description: "A direct request names one catalog asset."
+        examples: [{target: {kind: title}, ref: material:flag-outline-rounded}]
+        required: [ref]
+      - description: "An encoded request derives an asset from a source field."
+        examples: [{target: {kind: cell, object: firmware, column: Workstream}, encoding: {field: owner, domain: {fw-team: material:flag-outline-rounded}}}]
+        required: [encoding]
+    allOf:
+      - description: "Field-to-icon encoding is meaningful only for projection-exposed object targets."
+        examples: [{target: {kind: cell, object: firmware, column: Workstream}, encoding: {field: owner, domain: {fw-team: material:flag-outline-rounded}}}]
+        if:
+          properties:
+            target:
+              properties: {kind: {enum: [cell, plot-label, mark]}}
+              required: [kind]
+          required: [target]
+        then: {}
+        else:
+          not: {required: [encoding]}
+  visualTarget:
+    description: "One closed visual occurrence selector; no kind admits irrelevant selector fields."
+    examples: [{kind: title}]
+    oneOf:
+      - {description: "Document title.", examples: [{kind: title}], type: object, required: [kind], additionalProperties: false, properties: {kind: {description: "Target kind.", const: title}}}
+      - {description: "As-of label.", examples: [{kind: as-of-label}], type: object, required: [kind], additionalProperties: false, properties: {kind: {description: "Target kind.", const: as-of-label}}}
+      - {description: "Table column header.", examples: [{kind: column, id: Workstream}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: column}, id: {description: "Column identifier.", type: string, minLength: 1}}}
+      - {description: "Group header.", examples: [{kind: group-header, id: firmware}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: group-header}, id: {description: "Group identifier.", type: string, minLength: 1}}}
+      - {description: "Plot label.", examples: [{kind: plot-label, id: firmware}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: plot-label}, id: {description: "Object identifier.", type: string, minLength: 1}}}
+      - {description: "Annotation text.", examples: [{kind: annotation, id: note-1}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: annotation}, id: {description: "Annotation identifier.", type: string, minLength: 1}}}
+      - {description: "Project note.", examples: [{kind: note, id: note-1}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: note}, id: {description: "Note identifier.", type: string, minLength: 1}}}
+      - {description: "Project note index.", examples: [{kind: note-index, id: note-1}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: note-index}, id: {description: "Note identifier.", type: string, minLength: 1}}}
+      - {description: "Group detail label.", examples: [{kind: group-detail, id: firmware}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: group-detail}, id: {description: "Group identifier.", type: string, minLength: 1}}}
+      - {description: "Summary panel header.", examples: [{kind: summary, panel: readiness}], type: object, required: [kind, panel], additionalProperties: false, properties: {kind: {description: "Target kind.", const: summary}, panel: {description: "Summary panel identifier.", type: string, minLength: 1}}}
+      - {description: "Summary metric value or caption.", examples: [{kind: summary, panel: readiness, metric: blockers, part: value}], type: object, required: [kind, panel, metric, part], additionalProperties: false, properties: {kind: {description: "Target kind.", const: summary}, panel: {description: "Summary panel identifier.", type: string, minLength: 1}, metric: {description: "Metric identifier.", type: string, minLength: 1}, part: {description: "Metric text occurrence.", enum: [value, caption]}}}
+      - {description: "Milestone digest entry.", examples: [{kind: milestone, id: launch}], type: object, required: [kind, id], additionalProperties: false, properties: {kind: {description: "Target kind.", const: milestone}, id: {description: "Milestone identifier.", type: string, minLength: 1}}}
+      - {description: "Legend label.", examples: [{kind: legend, role: planned}], type: object, required: [kind, role], additionalProperties: false, properties: {kind: {description: "Target kind.", const: legend}, role: {description: "Legend role.", type: string, minLength: 1}}}
+      - {description: "Table cell label.", examples: [{kind: cell, object: firmware, column: Workstream}], type: object, required: [kind, object, column], additionalProperties: false, properties: {kind: {description: "Target kind.", const: cell}, object: {description: "Object identifier.", type: string, minLength: 1}, column: {description: "Column identifier.", type: string, minLength: 1}}}
+      - {description: "Axis label.", examples: [{kind: axis-label, level: month, index: 0}], type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {description: "Target kind.", const: axis-label}, level: {description: "Axis level identifier.", type: string, minLength: 1}, index: {description: "Zero-based axis occurrence.", type: integer, minimum: 0}}}
+      - {description: "Axis band label.", examples: [{kind: axis-band, level: month, index: 0}], type: object, required: [kind, level, index], additionalProperties: false, properties: {kind: {description: "Target kind.", const: axis-band}, level: {description: "Axis level identifier.", type: string, minLength: 1}, index: {description: "Zero-based band occurrence.", type: integer, minimum: 0}}}
+      - {description: "Planned or actual semantic mark.", examples: [{kind: mark, object: firmware, facet: planned}], type: object, required: [kind, object, facet], additionalProperties: false, properties: {kind: {description: "Target kind.", const: mark}, object: {description: "Object identifier.", type: string, minLength: 1}, facet: {description: "Mark facet.", enum: [planned, actual]}}}
+      - {description: "Variance label.", examples: [{kind: variance-label, object: firmware}], type: object, required: [kind, object], additionalProperties: false, properties: {kind: {description: "Target kind.", const: variance-label}, object: {description: "Object identifier.", type: string, minLength: 1}}}
+  presentationIntent:
+    type: object
+    description: "Optional placement preferences for a row or item."
+    additionalProperties: false
+    properties:
+      label:
+        type: object
+        description: "Preferred placement for an item label."
+        required: [side]
+        additionalProperties: false
+        properties: {side: {description: "Preferred side for the label.", enum: [above, below, start, end, inside]}}
+      callout:
+        type: object
+        description: "Preferred placement for an item callout."
+        required: [placement]
+        additionalProperties: false
+        properties: {placement: {description: "Preferred region for the callout.", enum: [above, below, start, end, rail]}}
+      text:
+        type: object
+        description: "Text wrapping preference for the item."
+        required: [wrap]
+        additionalProperties: false
+        properties: {wrap: {description: "Whether the text may wrap.", enum: [allow, forbid]}}

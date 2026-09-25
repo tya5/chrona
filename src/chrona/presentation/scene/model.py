@@ -6,6 +6,7 @@ from datetime import date
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
 from chrona.presentation.icons import NormalizedVectorIcon
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
 
 
 @dataclass(frozen=True)
@@ -163,6 +164,7 @@ class ScenePrimitive:
     host_placement_id: str | None = None
     clip_source_id: str | None = None
     end_treatment: str = "closed"
+    contrast_treatment: str | None = None
 
     def __post_init__(self) -> None:
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
@@ -180,6 +182,12 @@ class ScenePrimitive:
                 or (self.kind != "Icon" and self.icon_viewport is not None)):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if self.end_treatment not in {"closed", "open"}:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        classified = contrast_binding(self.visual_role)
+        if ((classified is not None and classified.contrast_class == ContrastClass.STATE_TEXT
+             and self.contrast_treatment not in {"required", "deemphasized"})
+                or ((classified is None or classified.contrast_class != ContrastClass.STATE_TEXT)
+                    and self.contrast_treatment is not None)):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if self.paint_order < 0:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

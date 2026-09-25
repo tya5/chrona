@@ -136,6 +136,8 @@ def _theme():
              for semantic_id in semantic_ids()}
     roles.update({name: {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
                   for name in ("background", "variance-ahead", "variance-behind", "variance-on-track", "table-header")})
+    for name in ("variance-ahead", "variance-on-track", "variance-behind", "missing-actual-cell"):
+        roles[name]["contrastTreatment"] = "required"
     for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size",
                        "annotation-callout-text": "body-size", "annotation-highlight-text": "body-size",
                        "annotation-note-text": "body-size", "annotation-arrow-text": "body-size"}.items():
@@ -726,7 +728,7 @@ def test_layout_projects_alternate_row_bands_only_into_the_declared_table_region
     theme = _theme()
     theme["body"]["roles"]["row-band"] = {**theme["body"]["roles"]["row-band"], "backgroundTreatment": "outline"}
     surface = compose_review_surface(build_scene_input(
-        projection=projection, surface_content=surface_content(row_decoration="alternate-rows"), layout_manifest=manifest,
+            projection=projection, surface_content=surface_content(row_decoration="alternate", group_decoration="none"), layout_manifest=manifest,
         resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
     ))
     band = next(node for node in surface.primitives if node.scene_id.startswith("row-band:"))
@@ -752,7 +754,7 @@ def test_layout_suppresses_a_none_row_band_and_scene_records_its_absence():
     theme = _theme()
     theme["body"]["roles"]["row-band"] = {**theme["body"]["roles"]["row-band"], "backgroundTreatment": "none"}
     surface = compose_review_surface(build_scene_input(
-        projection=projection, surface_content=surface_content(row_decoration="alternate-rows"), layout_manifest=manifest,
+        projection=projection, surface_content=surface_content(row_decoration="alternate"), layout_manifest=manifest,
         resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
     ))
     assert not any(node.scene_id.startswith("row-band:") for node in surface.primitives)

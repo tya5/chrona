@@ -58,7 +58,8 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
     ids = [item.check_id for item in runner.CHECKS]
 
     assert ids.count("scene-perceptibility") == 1
-    assert ids.index("example-inventory") < ids.index("scene-perceptibility") < ids.index("diagnostic-inventory")
+    assert ids.count("presentation-contrast") == 1
+    assert ids.index("example-inventory") < ids.index("scene-perceptibility") < ids.index("presentation-contrast") < ids.index("diagnostic-inventory")
 
 
 def test_literal_issue_acceptance_gate_runs_once_after_documented_commands():
