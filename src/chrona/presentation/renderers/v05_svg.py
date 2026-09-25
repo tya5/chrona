@@ -9,11 +9,13 @@ from chrona.core.ports import RenderArtifact
 from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface
 
 
-def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> str:
+def render_v05_svg(surface: SceneSurface) -> str:
     """Serialize completed primitives only; Theme and Scheme are not renderer inputs."""
     if surface.canvas_paint is None or surface.canvas_paint.fill is None:
         raise ValueError("E_PRESENTATION_PAINT_INVALID")
-    width, height = viewport
+    if surface.canvas_bounds is None:
+        raise ValueError("E_PRESENTATION_RENDER_INPUT")
+    canvas_inline, canvas_block, width, height = surface.canvas_bounds
     def number(value: float) -> str: return f"{value:.3f}".rstrip("0").rstrip(".")
     def completed(node: ScenePrimitive) -> ScenePaint:
         if node.paint is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
@@ -68,8 +70,11 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
     patterns = {(node.pattern, completed(node)) for node in surface.primitives if node.pattern}
     has_links = any(node.href is not None for node in surface.primitives)
     ns = ' xmlns:xlink="http://www.w3.org/1999/xlink"' if has_links else ""
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg"{ns} width="{number(width)}" height="{number(height)}" viewBox="0 0 {number(width)} {number(height)}" role="img">',
-             f'<rect width="{number(width)}" height="{number(height)}" {attrs(surface.canvas_paint, fill=True, stroke=False)}/>']
+    view_box = f"{number(canvas_inline)} {number(canvas_block)} {number(width)} {number(height)}"
+    canvas_origin = (f' x="{number(canvas_inline)}" y="{number(canvas_block)}"'
+                     if canvas_inline or canvas_block else "")
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg"{ns} width="{number(width)}" height="{number(height)}" viewBox="{view_box}" role="img">',
+             f'<rect{canvas_origin} width="{number(width)}" height="{number(height)}" {attrs(surface.canvas_paint, fill=True, stroke=False)}/>']
     paints = (surface.canvas_paint, *(completed(node) for node in surface.primitives))
     gradients = {gradient_id(paint): paint.gradient for paint in paints if paint.gradient}
     shadows = {shadow_id(paint): paint.shadow for paint in paints if paint.shadow}
@@ -198,6 +203,6 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
 class V05SvgRenderer:
     target_kind = "svg"
 
-    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:
+    def render(self, surface: object) -> RenderArtifact:
         if not isinstance(surface, SceneSurface): raise ValueError("E_PRESENTATION_RENDER_INPUT")
-        return RenderArtifact("svg", "image/svg+xml", render_v05_svg(surface, viewport=viewport).encode("utf-8"), "chrona-svg-v0.5")
+        return RenderArtifact("svg", "image/svg+xml", render_v05_svg(surface).encode("utf-8"), "chrona-svg-v0.5")

@@ -13,16 +13,23 @@ def _surface() -> SceneSurface:
     primitive = ScenePrimitive("label", "Text", "a", "label", "label", "label", (1, 2, 8, 4),
                                text="AB", baseline=(1, 6), text_layout=layout,
                                paint=ScenePaint("#112233", None, None, (), 1))
-    return SceneSurface("s", (), (), (), scale, (primitive,), ScenePaint("#ffffff", None, None, (), 1))
+    return SceneSurface("s", (), (), (), scale, (primitive,), ScenePaint("#ffffff", None, None, (), 1),
+                        canvas_bounds=(0, 0, 10, 10))
 
 
 def test_typeset_adapters_project_completed_tracking_without_font_inference():
     surface = _surface()
-    typst = render_v05_typst(surface, viewport=(10, 10))
+    typst = render_v05_typst(surface)
     assert "tracking: 3pt" in typst and 'number-width: "proportional"' in typst
-    tikz = render_v05_tikz(surface, viewport=(10, 10))
+    tikz = render_v05_tikz(surface)
     assert r"\usepackage{letterspace}" in tikz and r"\textls[250]{AB}" in tikz
     assert r"\usepackage{fontspec}" in tikz and r"\fontspec[Numbers=Proportional]{Test Sans}" in tikz
+
+
+def test_typeset_adapters_use_the_completed_canvas_not_a_caller_supplied_viewport():
+    surface = replace(_surface(), canvas_bounds=(0, 0, 17, 19))
+    assert "#set page(width: 17pt, height: 19pt" in render_v05_typst(surface)
+    assert r"\usepackage[paperwidth=17pt,paperheight=19pt,margin=0pt]{geometry}" in render_v05_tikz(surface)
 
 
 def test_typeset_adapters_project_the_supplied_rotation_degrees():
@@ -30,8 +37,8 @@ def test_typeset_adapters_project_the_supplied_rotation_degrees():
     node = surface.primitives[0]
     layout = replace(node.text_layout, orientation="rotate-cw", rotation_degrees=90)
     rotated = replace(surface, primitives=(replace(node, text_layout=layout),))
-    assert "#rotate(90deg" in render_v05_typst(rotated, viewport=(10, 10))
-    assert "rotate=90" in render_v05_tikz(rotated, viewport=(10, 10))
+    assert "#rotate(90deg" in render_v05_typst(rotated)
+    assert "rotate=90" in render_v05_tikz(rotated)
 
 
 def test_typeset_adapters_do_not_infer_orientation_or_measure_text() -> None:

@@ -234,6 +234,7 @@ def test_scene_dispatches_completed_network_layout_through_registry_semantics_on
     surface = compose_review_surface(value)
     assert surface.surface_id == "dependency-network"
     assert surface.scale_manifest is None
+    assert surface.canvas_bounds == (0.0, 0.0, 400.0, 250.0)
     assert {(node.scene_id, node.visual_role) for node in surface.primitives} >= {
         ("title", "text"), ("network-label:a", "text"), ("network-node:a", "network-node"),
     }

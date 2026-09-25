@@ -592,4 +592,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
-    return SceneSurface("dependency-network", slots, (), (), None, completed_primitives)
+    canvas = value.layout_manifest.viewport
+    return SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
+                        canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
+                                       float(canvas.block_size)))

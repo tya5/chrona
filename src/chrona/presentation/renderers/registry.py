@@ -23,10 +23,10 @@ class ResvgPngRenderer:
         self._asset_root = asset_root
         self._font_files_override = font_files
 
-    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:
+    def render(self, surface: object) -> RenderArtifact:
         _verify_resvg(self._descriptor)
         files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override)
-        svg = V05SvgRenderer().render(surface, viewport=viewport).content
+        svg = V05SvgRenderer().render(surface).content
         try:
             import resvg_py
             content = resvg_py.svg_to_bytes(svg_string=svg.decode("utf-8"), dpi=self._descriptor["dpi"],
@@ -47,10 +47,10 @@ class ReportLabPdfRenderer:
         self._font_metrics = font_metrics
         self._asset_root = asset_root
 
-    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:
+    def render(self, surface: object) -> RenderArtifact:
         _verify_reportlab(self._descriptor)
         files, identities = _font_files(self._font_metrics, self._asset_root)
-        svg = V05SvgRenderer().render(surface, viewport=viewport).content
+        svg = V05SvgRenderer().render(surface).content
         try:
             from reportlab import rl_config
             from reportlab.pdfbase import pdfmetrics

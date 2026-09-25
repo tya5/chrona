@@ -87,8 +87,8 @@ def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count
 
     with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW") as error:
         render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, 900)))
-    assert f"for {row_count} rows" in error.value.message
-    assert "use --viewport 1600x" in error.value.message
+    assert "required=" in error.value.message and "available=" in error.value.message
+    assert "use --viewport" not in error.value.message
     rendered = render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, None)))
     height = int(re.search(r'height="(\d+)"', rendered.artifact.content.decode()).group(1))
     assert height >= row_count * 72
@@ -113,8 +113,8 @@ def test_draft_auto_block_closes_the_public_multi_lane_milestone_fixture():
     ))
 
 
-def test_immutable_context_overflow_names_its_context_viewport(tmp_path):
-    """Context diagnostics never advertise Draft-only command-line repair."""
+def test_immutable_context_overflow_has_no_render_ingress_viewport_remedy(tmp_path):
+    """The renderer does not prescribe a Draft-only repair before Layout fallback."""
     root = _root()
     request = _draft_request(project_path=root / "examples/controller-z/curriculum/scale-30.yaml",
                              viewport=(1600, 900))
@@ -123,7 +123,6 @@ def test_immutable_context_overflow_names_its_context_viewport(tmp_path):
     request = replace(request, closure=replace(request.closure, context=context))
     with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW") as error:
         render_review(request)
-    assert "environment.viewport.blockSize" in error.value.message
     assert "--viewport" not in error.value.message
 
 

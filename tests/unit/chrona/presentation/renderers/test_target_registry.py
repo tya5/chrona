@@ -186,12 +186,12 @@ def test_raster_target_rejects_semantic_capability_requirement():
 
 def test_rasterizer_identity_mismatch_is_rejected():
     with pytest.raises(ValueError, match="E_RENDER_RASTERIZER_IDENTITY"):
-        renderer_for({"kind": "png", "capabilities": []}, {"rasterizer": {"engine": "resvg-py", "version": "wrong", "resvgVersion": "wrong", "dpi": 96}}).render(None, viewport=(1, 1))
+        renderer_for({"kind": "png", "capabilities": []}, {"rasterizer": {"engine": "resvg-py", "version": "wrong", "resvgVersion": "wrong", "dpi": 96}}).render(None)
 
 
 def test_pdf_rasterizer_identity_mismatch_is_rejected():
     with pytest.raises(ValueError, match="E_RENDER_RASTERIZER_IDENTITY"):
-        renderer_for({"kind": "pdf", "capabilities": []}, {"rasterizer": {"engine": "reportlab", "svglibVersion": "wrong", "reportlabVersion": "wrong", "invariant": True}}).render(None, viewport=(1, 1))
+        renderer_for({"kind": "pdf", "capabilities": []}, {"rasterizer": {"engine": "reportlab", "svglibVersion": "wrong", "reportlabVersion": "wrong", "invariant": True}}).render(None)
 
 
 @pytest.mark.parametrize(("kind", "descriptor"), [
@@ -201,7 +201,7 @@ def test_pdf_rasterizer_identity_mismatch_is_rejected():
 def test_typeset_rejects_completed_geometry_it_cannot_serialize(kind, descriptor):
     renderer = renderer_for({"kind": kind, "capabilities": []}, {"typesetter": descriptor})
     with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_UNSUPPORTED"):
-        renderer.render(_completed_surface(), viewport=(1600, 900))
+        renderer.render(_completed_surface())
 
 
 def test_typeset_target_rejects_svg_semantic_requirement():

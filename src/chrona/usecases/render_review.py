@@ -223,14 +223,6 @@ def render_review(request: RenderRequest) -> RenderedReview:
                 raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
                                   detail=f"surface={view.surface}")
             viewport["blockSize"] = required_block
-        elif (render_closure.context.identity.revision == "draft" and required_block is not None
-              and viewport["blockSize"] < required_block):
-            rows_count = len(projection.rows or projection.items)
-            minimum = int(measured.metric_values["timeline.row.minBlockSize"])
-            detail = (f"timeline requires {required_block}px for {rows_count} rows at {minimum}px per row; "
-                      f"available {viewport['blockSize']}px; use --viewport {viewport['inlineSize']}x{required_block} "
-                      "or select fewer rows")
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline", detail=detail)
         manifest = solve_layout(
             resolved_layout, viewport_inline=viewport["inlineSize"],
             viewport_block=viewport["blockSize"], measurements=measurements,
@@ -289,13 +281,15 @@ def render_review(request: RenderRequest) -> RenderedReview:
         font_files=(resolution.font_file,) if resolution is not None else None,
     )
     try:
-        artifact = renderer.render(surface, viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])))
+        artifact = renderer.render(surface)
     except FontMetricsError as error:
         raise _font_failure(error) from error
     if artifact.target_kind != render_closure.context.target.kind:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
+    if surface.canvas_bounds is None:
+        raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
-                              (float(viewport["inlineSize"]), float(viewport["blockSize"])))
+                              (surface.canvas_bounds[2], surface.canvas_bounds[3]))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           _font_warnings(font_metrics.warnings, artifact.target_kind))
 

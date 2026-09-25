@@ -116,10 +116,12 @@ def _validate(surface: object) -> SceneSurface:
     return surface
 
 
-def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) -> str:
+def render_v05_typst(surface: SceneSurface) -> str:
     if any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None or node.symbol is not None for node in surface.primitives):
         raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
-    width, height = viewport
+    if surface.canvas_bounds is None:
+        raise ValueError("E_PRESENTATION_RENDER_INPUT")
+    _, _, width, height = surface.canvas_bounds
     background = surface.canvas_paint.fill
     if background is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
     parts = ["// chrona-typst/v0.1", f"#set page(width: {_number(width)}pt, height: {_number(height)}pt, margin: 0pt)",
@@ -159,10 +161,12 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) ->
     return "\n".join(parts) + "\n"
 
 
-def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> str:
+def render_v05_tikz(surface: SceneSurface) -> str:
     if any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None for node in surface.primitives):
         raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
-    width, height = viewport
+    if surface.canvas_bounds is None:
+        raise ValueError("E_PRESENTATION_RENDER_INPUT")
+    _, _, width, height = surface.canvas_bounds
     parts = ["% chrona-tikz/v0.1", r"\documentclass{article}",
              f"\\usepackage[paperwidth={_number(width)}pt,paperheight={_number(height)}pt,margin=0pt]{{geometry}}",
              r"\usepackage{tikz}", r"\usepackage{fontspec}", *( [r"\usepackage{letterspace}"]
@@ -230,14 +234,14 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
 class V05TypstRenderer:
     target_kind = "typst"
 
-    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:
+    def render(self, surface: object) -> RenderArtifact:
         checked_surface = _validate(surface)
-        return RenderArtifact("typst", "application/x-typst", render_v05_typst(checked_surface, viewport=viewport).encode("utf-8"), "chrona-typst/v0.1")
+        return RenderArtifact("typst", "application/x-typst", render_v05_typst(checked_surface).encode("utf-8"), "chrona-typst/v0.1")
 
 
 class V05TikzRenderer:
     target_kind = "tikz"
 
-    def render(self, surface: object, *, viewport: tuple[float, float]) -> RenderArtifact:
+    def render(self, surface: object) -> RenderArtifact:
         checked_surface = _validate(surface)
-        return RenderArtifact("tikz", "application/x-tex", render_v05_tikz(checked_surface, viewport=viewport).encode("utf-8"), "chrona-tikz/v0.1")
+        return RenderArtifact("tikz", "application/x-tex", render_v05_tikz(checked_surface).encode("utf-8"), "chrona-tikz/v0.1")

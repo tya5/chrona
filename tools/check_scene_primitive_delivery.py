@@ -48,7 +48,7 @@ OWNERS = {
     "ContentFamilyCounts": (_owner("inspection", "scene/serialization.py", "relations annotations notes legend_entries summary_panels group_details milestones observation_rows"),),
     "SceneManifest": (_owner("inspection", "scene/serialization.py", "version settings_version viewport selected_object_ids font_asset_identities content_family_counts surface_scales visual_role_counts"),),
     "SceneSurface": (
-        _owner("inspection", "scene/serialization.py", "surface_id slots rows groups scale_manifest primitives canvas_paint columns"),
+        _owner("inspection", "scene/serialization.py", "surface_id slots rows groups scale_manifest primitives canvas_paint columns canvas_bounds fit_warnings"),
         _owner("derived", "scene/v05_builder.py", "diagnostics"),
     ),
     "SceneProvenance": (_owner("inspection", "scene/serialization.py", "mode chrona_version resources"),),
