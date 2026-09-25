@@ -35,6 +35,11 @@ generated inventories, release review.
 are reachable or explicitly reasoned; README image target is declared
 materializer evidence; public materializer reproduces every corpus slide.
 
+**Publication dependency:** I441-1's strict enforcement and I441-2's ASTER
+deletions publish in one atomic commit. A standalone enforcement commit would
+intentionally fail against the known legacy population it is meant to remove.
+Focused checker development remains independently testable before that release.
+
 ## Verification and publication
 
 Run focused reachability/readme/schema tests per slice, then all public
