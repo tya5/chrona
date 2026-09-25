@@ -7,9 +7,10 @@
 
 Completed Layout geometry has one determinism boundary: finite float
 accumulations that affect placement use `math.fsum` through a local
-`geometry_sum` helper.  The helper is owned by Layout, accepts only an
-iterable of `float`, and returns its correctly rounded float result.  It does
-not round, quantize, serialize, or accept `Decimal` values.  `Rect` continues
+`geometry_sum` helper.  The helper is owned by Layout, accepts float fragments
+(and exact integer fractions from typed allocation declarations), and returns
+its correctly rounded float result.  It does not round, quantize, serialize,
+or accept `Decimal` values.  `Rect` continues
 to own its existing Decimal conversion after a completed float coordinate is
 selected.
 
