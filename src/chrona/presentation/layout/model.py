@@ -70,6 +70,7 @@ class LayoutManifest:
     relation_max_bends: int = 4
     relation_max_detour_ratio: float = 2.0
     row_distribution: str = "pack"
+    background_extents: Mapping[str, str] = field(default_factory=dict)
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
@@ -106,7 +107,10 @@ class LayoutManifest:
                 "maxBends": self.relation_max_bends,
                 "maxDetourRatio": self.relation_max_detour_ratio,
             },
-            "reviewSurface": {"rowDistribution": self.row_distribution},
+            "reviewSurface": {
+                "backgroundExtents": dict(sorted(self.background_extents.items())),
+                "rowDistribution": self.row_distribution,
+            },
             "viewport": rect(self.viewport),
             "writingMode": self.writing_mode,
         }

@@ -122,6 +122,7 @@ class SurfaceContentInput:
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     progress_fill_source: str | None = None
     table_hierarchy_column: str | None = None
+    row_decoration: str = "none"
 
 
 @dataclass(frozen=True)

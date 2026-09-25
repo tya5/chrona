@@ -101,10 +101,10 @@
 <rect data-scene-id="group-header-band:launch" data-source-ref="launch" data-purpose="group-header-band" x="484" y="891" width="1754" height="20" opacity="0.2" fill="#16213A"/>
 <rect data-scene-id="group:ops" data-source-ref="ops" data-purpose="group-decoration" x="1138" y="1081" width="1100" height="90" opacity="0.12" fill="#142642"/>
 <rect data-scene-id="group-header-band:ops" data-source-ref="ops" data-purpose="group-header-band" x="484" y="1061" width="1754" height="20" opacity="0.2" fill="#16213A"/>
-<rect data-scene-id="calendar-closed:2027-04-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1266" y="271" width="4" height="914" opacity="0.12" fill="#16213A" stroke="#16213A" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2027-05-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1502" y="271" width="4" height="914" opacity="0.12" fill="#16213A" stroke="#16213A" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2027-07-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1642" y="271" width="4" height="914" opacity="0.12" fill="#16213A" stroke="#16213A" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2027-09-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1894" y="271" width="4" height="914" opacity="0.12" fill="#16213A" stroke="#16213A" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2027-04-02" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1266" y="271" width="4" height="914" opacity="0.12" stroke="#16213A" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2027-05-31" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1502" y="271" width="4" height="914" opacity="0.12" stroke="#16213A" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2027-07-05" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1642" y="271" width="4" height="914" opacity="0.12" stroke="#16213A" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2027-09-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1894" y="271" width="4" height="914" opacity="0.12" stroke="#16213A" stroke-width="1"/>
 <text data-scene-id="variance:structure:structure" data-source-ref="structure" data-purpose="finish-delta" x="1211.687" y="323.2" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#8EA0BA">+0d</text>
 <text data-scene-id="variance:eps:eps" data-source-ref="eps" data-purpose="finish-delta" x="1239.437" y="386.5" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#35D0A0">-3d</text>
 <text data-scene-id="variance:avionics:avionics" data-source-ref="avionics" data-purpose="finish-delta" x="1319.687" y="383.2" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#FF6B6B">+3d</text>

@@ -15,6 +15,8 @@ from chrona.presentation.model.semantic_registry import semantic_binding, semant
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, SymbolGeometry
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
+BACKGROUND_EXTENTS = {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}
+
 
 def surface_content(table_columns=(), table_cells=(), **overrides):
     table_columns = tuple(
@@ -92,7 +94,7 @@ def _manifest(*sources):
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
     return LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
                           tuple(LayoutDecision(source, "slot", rect, source) for source in sources),
-                          row_distribution="fill")
+                          row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
 
 
 def _theme():
@@ -135,6 +137,7 @@ def _theme():
                    "mark-rounded": {"type": "number", "value": "0.25"}},
         "roles": {**roles,
                   "group-band": {**roles["group-band"], "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
+                  "row-band": {**roles["group-band"], "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
                   "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 11},
                   "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity", "backgroundTreatment": "outline", "backgroundPaintOrder": 12},
                   "milestoneSymbol": {"symbol": "milestone-symbol"}}, "metrics": {}}}
@@ -188,7 +191,7 @@ def test_scene_dispatches_completed_network_layout_through_registry_semantics_on
     manifest = LayoutManifest("network", "sha256:test", "horizontal-tb", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(250)), (
         LayoutDecision("title", "slot", title_bounds, "title", priority="required"),
         LayoutDecision("network", "slot", network_bounds, "network", priority="required"),
-    ), row_distribution="fill")
+    ), row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
     run = lambda source, content, role, width, block, base: MeasuredTextRun(source, content, role, Decimal(width), Decimal(block), Decimal(base), "Test Sans", 400, float(block), 1.0, "sha256:test")
     measured = MeasuredSources({}, {}, {
         "network.node.minInlineSize": Decimal(60), "network.node.minBlockSize": Decimal(30), "network.rank.gap": Decimal(12),
@@ -297,7 +300,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
         LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(40), Decimal(400), Decimal(100)), "timeline"),
         LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(140), Decimal(400), Decimal(40)), "timeline-axis"),
         LayoutDecision("annotations", "slot", Rect(Decimal(500), Decimal(40), Decimal(300), Decimal(100)), "annotations", priority="required", overflow="diagnose"),
-    ))
+    ), background_extents=BACKGROUND_EXTENTS)
     theme = _theme()
     theme["body"]["values"].update({"marker": {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}})
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
@@ -466,7 +469,7 @@ def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
     manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
                               tuple(LayoutDecision(source, "slot", rect, source)
                                     for source in ("title", "table", "timeline", "timeline-axis")),
-                              relation_max_bends=0, row_distribution="fill")
+                              relation_max_bends=0, row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(
@@ -589,7 +592,7 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
         LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(40), Decimal(700), Decimal(160)), "timeline"),
         LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(200), Decimal(700), Decimal(40)), "timeline-axis"),
         LayoutDecision("annotations", "slot", Rect(Decimal(800), Decimal(40), Decimal(200), Decimal(160)), "annotations"),
-    ), row_distribution="fill")
+    ), row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
     theme = _theme()
     theme["body"]["values"]["marker"] = {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
@@ -644,7 +647,53 @@ def test_project_calendar_closure_emits_background_shading():
                               capabilities={"svg": True})
     surface = compose_review_surface(value)
 
-    assert next(node for node in surface.primitives if node.scene_id == "calendar-closed:2026-01-03").visual_role == "calendar-closed"
+    closure = next(node for node in surface.primitives if node.scene_id == "calendar-closed:2026-01-03")
+    assert closure.visual_role == "calendar-closed"
+    assert closure.paint.fill is None and closure.paint.stroke == "#102030"
+    assert closure.bounds[2] < 1000
+
+
+def test_layout_projects_alternate_row_bands_only_into_the_declared_table_region():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 3)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
+    manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(200)), (
+        LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(20)), "title"),
+        LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(20), Decimal(100), Decimal(100)), "table"),
+        LayoutDecision("timeline", "slot", Rect(Decimal(120), Decimal(20), Decimal(300), Decimal(100)), "timeline"),
+        LayoutDecision("axis", "slot", Rect(Decimal(120), Decimal(120), Decimal(300), Decimal(20)), "timeline-axis"),
+    ), background_extents=BACKGROUND_EXTENTS)
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
+    })
+    theme = _theme()
+    theme["body"]["roles"]["row-band"] = {**theme["body"]["roles"]["row-band"], "backgroundTreatment": "outline"}
+    surface = compose_review_surface(build_scene_input(
+        projection=projection, surface_content=surface_content(row_decoration="alternate-rows"), layout_manifest=manifest,
+        resolved_theme=theme, font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
+    ))
+    band = next(node for node in surface.primitives if node.scene_id.startswith("row-band:"))
+    assert band.bounds == (0.0, 20.0, 100.0, 40.0)
+    assert band.slot_id == "table"
+    assert band.paint.fill is None and band.paint.stroke == "#102030"
+    assert not any(node.scene_id.startswith("group:") for node in surface.primitives)
+
+
+def test_layout_rejects_intersecting_translucent_background_fills_before_scene():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 4)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
+    })
+    theme = _theme()
+    theme["body"]["roles"]["calendar-closed"] = {**theme["body"]["roles"]["calendar-closed"], "backgroundTreatment": "fill"}
+    with pytest.raises(SceneBuildError, match="E_LAYOUT_BACKGROUND_OVERLAP"):
+        compose_review_surface(build_scene_input(
+            projection=projection, surface_content=surface_content(calendar_closed=(date(2026, 1, 2),)),
+            layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=theme,
+            font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
+        ))
 
 
 def test_narrow_calendar_density_retains_only_declared_exception_closures():

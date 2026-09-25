@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
-from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
+from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
@@ -24,7 +24,7 @@ from chrona.presentation.layout.routing import place_relation_route, relation_ro
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, ColumnPlacement, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
+    IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, intersects,
 )
 
 
@@ -38,6 +38,46 @@ class SurfaceLayoutComposition:
 
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
+BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed"})
+
+
+def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect, table_bounds: tuple[float, float, float, float],
+                       timeline_bounds: tuple[float, float, float, float]) -> tuple[Rect, str]:
+    """Resolve one finite background extent without exposing coordinates to View."""
+    if semantic_id == "calendarClosed":
+        if extent != "timeline":
+            raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents")
+        _, timeline_block, _, timeline_block_size = timeline_bounds
+        return (Rect(source_bounds.inline, Decimal(str(timeline_block)), source_bounds.inline_size,
+                     Decimal(str(timeline_block_size)),), "timeline")
+    table_inline, _, table_inline_size, _ = table_bounds
+    timeline_inline, _, timeline_inline_size, _ = timeline_bounds
+    if extent == "table":
+        return Rect(Decimal(str(table_inline)), source_bounds.block, Decimal(str(table_inline_size)), source_bounds.block_size), "table"
+    if extent == "timeline":
+        return Rect(Decimal(str(timeline_inline)), source_bounds.block, Decimal(str(timeline_inline_size)), source_bounds.block_size), "timeline"
+    if extent == "both":
+        return (Rect(Decimal(str(table_inline)), source_bounds.block,
+                     Decimal(str(timeline_inline + timeline_inline_size - table_inline)), source_bounds.block_size),
+                "review-surface")
+    raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents")
+
+
+def _validate_background_shapes(shapes: list[ShapePlacement], theme_tokens: Any) -> None:
+    """Reject completed translucent background fills that would compound."""
+    translucent: list[ShapePlacement] = []
+    for shape in shapes:
+        if shape.semantic_id not in BACKGROUND_SEMANTIC_IDS:
+            continue
+        role = semantic_binding(shape.semantic_id).scene_role
+        treatment, _ = theme_tokens.background(role)
+        if treatment == "fill" and theme_tokens.opacity(role) < 1:
+            translucent.append(shape)
+    for index, shape in enumerate(translucent):
+        for other in translucent[index + 1:]:
+            if intersects(shape.bounds, other.bounds):
+                raise LayoutError("E_LAYOUT_BACKGROUND_OVERLAP", "/layoutManifest/reviewSurface/backgroundExtents",
+                                  detail=f"{shape.placement_id}:{other.placement_id}")
 
 
 def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
@@ -329,6 +369,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     )
     by_source = {slot.source_ref: slot for slot in slots}
     table = by_source["table"]
+    timeline = by_source["timeline"]
+    review_surface = SlotPlacement(
+        "review-surface", "review-surface",
+        Rect(table.bounds.inline, min(table.bounds.block, timeline.bounds.block),
+             timeline.bounds.inline + timeline.bounds.inline_size - table.bounds.inline,
+             max(table.bounds.block + table.bounds.block_size, timeline.bounds.block + timeline.bounds.block_size)
+             - min(table.bounds.block, timeline.bounds.block)),
+    )
+    slots += (review_surface,)
     slot_ids = {slot.slot_id for slot in slots}
 
     def text_slot(item: Any) -> str:
@@ -339,7 +388,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             return table.slot_id
         raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
 
-    timeline = by_source["timeline"]
     review_rows = projection.rows or tuple(
         type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
                             "table_subject_id": item.object_id, "items": (item,)})()
@@ -478,15 +526,27 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     format_by_level = {unit: formatter for unit, formatter in configured_levels}
     format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
     shapes: list[ShapePlacement] = []
-    for group in groups:
-        treatment, paint_order = request.theme_tokens.background("group-band")
-        shapes.append(ShapePlacement(f"group:{group.group_id}", group.group_id, "Rect", group.content_bounds,
-                                     slot_id=table.slot_id, paint_order=paint_order, semantic_id="groupBand"))
+    background_extents = layout_manifest.background_extents
+
+    def background_shape(placement_id: str, source_ref: str, semantic_id: str, source_bounds: Rect) -> ShapePlacement:
+        role = semantic_binding(semantic_id).scene_role
+        _, paint_order = request.theme_tokens.background(role)
+        bounds, slot_id = _background_bounds(semantic_id=semantic_id, extent=background_extents.get(semantic_id, ""), source_bounds=source_bounds,
+                                             table_bounds=table_bounds, timeline_bounds=timeline_bounds)
+        return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
+                              paint_order=paint_order, semantic_id=semantic_id)
+
+    decoration = request.surface_content.row_decoration
+    if decoration == "alternate-rows":
+        for index, row in enumerate(rows):
+            if index % 2 == 0:
+                shapes.append(background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds))
+    for index, group in enumerate(groups):
+        if decoration in {"none", "alternate-groups"} and (decoration == "none" or index % 2 == 0):
+            shapes.append(background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds))
         if group.header_bounds is not None:
-            _, header_order = request.theme_tokens.background("group-header-band")
-            shapes.append(ShapePlacement(f"group-header-band:{group.group_id}", group.group_id, "Rect",
-                                         group.header_bounds, slot_id=table.slot_id,
-                                         paint_order=header_order, semantic_id="groupHeaderBand"))
+            shapes.append(background_shape(f"group-header-band:{group.group_id}", group.group_id,
+                                           "groupHeaderBand", group.header_bounds))
     for interval in band_intervals:
         x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
         inline_size = max(0.0, x2 - x)
@@ -532,11 +592,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     for closed_day in closed_days:
         if start <= closed_day < end:
             x1, x2 = _coordinate(closed_day, scale), _coordinate(closed_day.fromordinal(closed_day.toordinal() + 1), scale)
-            _, paint_order = request.theme_tokens.background("calendar-closed")
-            shapes.append(ShapePlacement(f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "Rect",
-                                         Rect(Decimal(str(x1)), timeline.bounds.block,
-                                              Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size),
-                                         slot_id=timeline.slot_id, paint_order=paint_order, semantic_id="calendarClosed"))
+            shapes.append(background_shape(
+                f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "calendarClosed",
+                Rect(Decimal(str(x1)), timeline.bounds.block,
+                     Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size),
+            ))
     as_of_label: tuple[float, str] | None = None
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
         x = _coordinate(contract.time.as_of, scale)
@@ -1217,6 +1277,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     # projection receives the relation verbatim and must never reconstruct it
     # from primitive purpose, identity, or containment.
     def shape_slot(item: Any) -> str:
+        if item.semantic_id in BACKGROUND_SEMANTIC_IDS:
+            return item.slot_id
         if item.placement_id.startswith("legend-swatch:"):
             return by_source["legend"].slot_id
         if item.placement_id.startswith("summary-bar:"):
@@ -1236,6 +1298,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                              Decimal(str(item.inline_size)), Decimal(str(table_bounds[3]))))
         for item, column in zip(columns, table_columns, strict=True)
     )
+    _validate_background_shapes(shapes, request.theme_tokens)
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),

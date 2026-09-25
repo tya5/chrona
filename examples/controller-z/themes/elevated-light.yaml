@@ -190,6 +190,10 @@ body:
       shadowOpacity: elevated.shadow-opacity
       gradientFidelity: elevated.fidelity
       shadowFidelity: elevated.fidelity
+    row-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.group-band
     group-header-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 11
@@ -303,6 +307,7 @@ body:
     axis-band-decoration.fill: surface
     table-header.fill: surfaceRaised
     group-band.fill: category:default
+    row-band.fill: category:default
     group-header-band.fill: surfaceRaised
     group:factory-team.fill: category:factory-team
     group:fw-team.fill: category:fw-team

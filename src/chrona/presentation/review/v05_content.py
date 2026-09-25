@@ -141,7 +141,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                scale_target_role=color_scale.target_role if color_scale else None,
                                scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
                                progress_fill_source=view.progress_fill,
-                               table_hierarchy_column=view.hierarchy_column)
+                               table_hierarchy_column=view.hierarchy_column,
+                               row_decoration=view.row_decoration)
 
 
 def _column_width(value: object) -> TableColumnWidth:

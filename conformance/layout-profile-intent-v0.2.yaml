@@ -1,8 +1,8 @@
-version: chrona/layout-profile/v0.5
+version: chrona/layout-profile/v0.6
 id: executive-review
 writingMode: horizontal-tb
 requiredThemeTokens: [panel.minimum, spacing.l, spacing.m, spacing.none]
-reviewSurface: {rowDistribution: pack}
+reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}}
 root:
   id: page
   kind: column

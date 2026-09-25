@@ -81,7 +81,7 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
     body["hierarchyColumn"] = body["tableColumns"][0]["id"]
     contract = _view_contract(explicit)
     assert contract.view.hierarchy_column == "Work package / gate"
-    assert contract.view.row_decoration == "none"
+    assert contract.view.row_decoration == "alternate-rows"
 
 
 @pytest.mark.parametrize(

@@ -62,7 +62,7 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
         return PaintFamily.TEXT
     if primitive.kind == PrimitiveKind.PATH:
         return PaintFamily.PATH
-    if primitive.purpose in {"group-decoration", "group-header-band", "calendar-closed"}:
+    if primitive.purpose in {"group-decoration", "row-decoration", "group-header-band", "calendar-closed"}:
         treatment, _ = tokens.background(primitive.visual_role)
         return PaintFamily.OUTLINE if treatment == "outline" else PaintFamily.SOLID
     pattern = tokens.optional_pattern(primitive.visual_role)
@@ -306,7 +306,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if group.header_bounds is not None:
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
     for placed in placed_surface.shapes:
-        if placed.semantic_id in {"groupBand", "groupHeaderBand", "calendarClosed"}:
+        if placed.semantic_id in {"groupBand", "rowBand", "groupHeaderBand", "calendarClosed"}:
             binding = semantic_binding(placed.semantic_id)
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration",
@@ -519,9 +519,6 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})
     ownership.update({item.relation_id: item.slot_id for item in placed_surface.relations})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.icons})
-    for group in groups:
-        ownership[f"group:{group.group_id}"] = table.slot_id
-        ownership[f"group-header-band:{group.group_id}"] = table.slot_id
     try:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:

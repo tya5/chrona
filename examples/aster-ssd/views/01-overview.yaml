@@ -46,7 +46,7 @@ body:
       overflow: suppress
     annotations: none
   rowDecoration:
-    mode: none
+    mode: alternate-rows
   tableColumns:
   - id: Work package / gate
     source: title

@@ -14,7 +14,7 @@ from chrona.resources import schema_document
 from chrona.schema_diagnostics import explain_errors
 
 
-LAYOUT_VERSION = "chrona/layout-profile/v0.5"
+LAYOUT_VERSION = "chrona/layout-profile/v0.6"
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class LayoutBase:
 
 
 def _schema() -> dict[str, Any]:
-    return dict(schema_document("layout-profile-v0.5.schema.yaml"))
+    return dict(schema_document("layout-profile-v0.6.schema.yaml"))
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:

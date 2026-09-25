@@ -46,6 +46,34 @@ def _tikz_opacity(node: ScenePrimitive) -> str:
     return "" if opacity == 1 else f", fill opacity={_number(opacity)}, draw opacity={_number(opacity)}"
 
 
+def _typst_rect_paint(node: ScenePrimitive) -> str:
+    """Serialize completed rect paint without inventing a missing fill channel."""
+    paint = node.paint
+    if paint is None or (paint.fill is None and paint.stroke is None):
+        raise ValueError("E_PRESENTATION_PAINT_INVALID")
+    values = []
+    if paint.fill is not None:
+        values.append(f"fill: {_typst_fill(node)}")
+    if paint.stroke is not None:
+        values.append(f'stroke: rgb("{paint.stroke}")')
+    return ", " + ", ".join(values)
+
+
+def _tikz_rect_paint(node: ScenePrimitive) -> str:
+    """Serialize completed rect paint without replacing outline with a fill."""
+    paint = node.paint
+    if paint is None or (paint.fill is None and paint.stroke is None):
+        raise ValueError("E_PRESENTATION_PAINT_INVALID")
+    values = []
+    if paint.fill is not None:
+        values.append(f"fill={paint.fill}")
+    if paint.stroke is not None:
+        values.append(f"draw={paint.stroke}")
+        if paint.stroke_width is not None:
+            values.append(f"line width={_number(paint.stroke_width)}pt")
+    return ", ".join(values) + _tikz_opacity(node)
+
+
 def _validate(surface: object) -> SceneSurface:
     if not isinstance(surface, SceneSurface) or surface.canvas_paint is None:
         raise ValueError("E_PRESENTATION_RENDER_INPUT")
@@ -65,7 +93,7 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) ->
         parts.append(f"// scene-id: {_typst_string(node.scene_id)} source-ref: {_typst_string(node.source_ref)}")
         if node.kind == "Rect":
             radius = f', radius: {_number(node.corner_radius)}pt' if node.corner_radius else ''
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#rect(width: {_number(w)}pt, height: {_number(h)}pt{radius}, fill: {_typst_fill(node)})]')
+            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#rect(width: {_number(w)}pt, height: {_number(h)}pt{radius}{_typst_rect_paint(node)})]')
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -103,7 +131,7 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
         parts.append(f"% scene-id: {_tex_string(node.scene_id)} source-ref: {_tex_string(node.source_ref)}")
         if node.kind == "Rect":
             rounded = f", rounded corners={_number(node.corner_radius)}pt" if node.corner_radius else ""
-            parts.append(f"\\path[fill={_color(node, 'fill')}{rounded}{_tikz_opacity(node)}] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});")
+            parts.append(f"\\path[{_tikz_rect_paint(node)}{rounded}] ({_number(x)},{_number(y)}) rectangle ({_number(x+w)},{_number(y+h)});")
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

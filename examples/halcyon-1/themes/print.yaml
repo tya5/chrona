@@ -161,6 +161,10 @@ body:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
       opacity: opacity.group-band
+    row-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.group-band
     group-header-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 11
@@ -311,6 +315,7 @@ body:
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: surface
     group-band.fill: surface
+    row-band.fill: surface
     group-header-band.fill: surfaceRaised
     groupHeader.fill: surfaceRaised
     baseline.stroke: neutral
