@@ -231,7 +231,7 @@ def resolve_draft_render(
     sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
     sources.extend(_load_draft_source("icon-catalog", path) for path in icon_catalog_paths)
-    resources = _collect_draft_resources(sources)
+    resources = _collect_presentation_resources(sources)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
@@ -286,16 +286,17 @@ def resolve_guided_draft_render(
         normalized = normalize_authoring_workspace(workspace_resource.contract, preset_resource.contract, resources_by_path)
     except (AuthoringError, ContractError) as error:
         raise ClosureError(str(error)) from error
-    resources = [_normalized_draft_resource(kind, source) for kind, source in normalized.draft_sources()]
+    sources = [_normalized_draft_source(kind, source) for kind, source in normalized.draft_sources()]
     catalog_declarations = preset_resource.contract.resources.get("iconCatalogs", ())
     if not isinstance(catalog_declarations, (tuple, list)):
         raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
     catalog_paths = tuple(_declared_child(preset_path.parent, str(item["path"])) for item in catalog_declarations)
-    catalog_resources = tuple(_load_draft_resource("icon-catalog", path) for path in catalog_paths)
+    sources.extend(_load_draft_source("icon-catalog", path) for path in catalog_paths)
+    resources = _collect_presentation_resources(sources)
+    catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     if any(resource.id != declaration["id"] for resource, declaration in zip(catalog_resources, catalog_declarations)):
         raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
     _validate_icon_catalog_set(catalog_resources)
-    resources.extend(catalog_resources)
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
@@ -327,17 +328,14 @@ def _plain_value(value: Any) -> Any:
     return value
 
 
-def _normalized_draft_resource(kind: str, document: Mapping[str, Any]) -> ClosureResource:
+def _normalized_draft_source(kind: str, document: Mapping[str, Any]) -> PresentationResourceSource:
+    """Expose a normalized guided resource to the same validation collector."""
     payload = yaml.safe_dump(document, sort_keys=True).encode("utf-8")
     identifier = _resource_id(kind, dict(document))
     if not isinstance(identifier, str) or not identifier:
         raise ClosureError("E_AUTHORING_NORMALIZATION")
     identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
-    try:
-        contract = parse_contract(identity, document)
-    except ContractError as error:
-        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
-    return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
+    return PresentationResourceSource(identity, document)
 
 
 def _draft_render_from_resources(
@@ -470,8 +468,8 @@ def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:
     return PresentationResourceSource(identity, value)
 
 
-def _collect_draft_resources(sources: list[PresentationResourceSource]) -> list[ClosureResource]:
-    """Collect all known Draft resource findings before any closure work begins."""
+def _collect_presentation_resources(sources: list[PresentationResourceSource]) -> list[ClosureResource]:
+    """Turn a fully declared, valid resource set into closure resources."""
     collection = collect_presentation_contracts(tuple(sources))
     if collection.diagnostics:
         if len(collection.diagnostics) == 1:
@@ -553,20 +551,30 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         (context_contract.color_scheme.as_reader_reference(), "color-scheme"),
         (context_contract.layout.as_reader_reference(), "layout-profile"),
     )
-    resources = [_load_reference(reference, reader, kind, decoded_resources) for reference, kind in ordered]
+    sources = [_load_reference_source(reference, reader, kind, decoded_resources) for reference, kind in ordered]
+    optional = ((context_contract.actual, "actual-set"),
+                (context_contract.summary_profile, "summary-profile"),
+                (context_contract.detail_profile, "review-detail-profile"),
+                *((reference, "icon-catalog") for reference in (context_contract.icon_catalogs or ())))
+    sources.extend(_load_reference_source(reference.as_reader_reference(), reader, kind, decoded_resources)
+                   for reference, kind in optional if reference is not None)
+    initial = collect_presentation_contracts(tuple(sources))
+    project = next((contract for contract in initial.contracts if isinstance(contract, ProjectContract)), None)
+    if project is not None:
+        for extension in project.extensions:
+            package_reference = extension.get("resource")
+            if package_reference is not None:
+                sources.append(_load_reference_source(package_reference, reader, "profile-package", decoded_resources))
+    resources = _collect_presentation_resources(sources)
     for extension in resources[0].contract.extensions:
         package_reference = extension.get("resource")
         if package_reference is not None:
-            package = _load_reference(package_reference, reader, "profile-package", decoded_resources)
+            package = next((item for item in resources if item.kind == "profile-package" and item.id == package_reference.get("id")), None)
+            if package is None:
+                raise ClosureError("E_CLOSURE_REQUIRED")
             if package.contract.package_id != extension.get("packageId"):
                 raise ClosureError("E_CLOSURE_ID")
             resources.append(package)
-    for reference, kind in ((context_contract.actual, "actual-set"),
-                            (context_contract.summary_profile, "summary-profile"),
-                            (context_contract.detail_profile, "review-detail-profile"),
-                            *((reference, "icon-catalog") for reference in (context_contract.icon_catalogs or ()))):
-        if reference is not None:
-            resources.append(_load_reference(reference.as_reader_reference(), reader, kind, decoded_resources))
     if context_contract.snapshot is not None:
         snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref", decoded_resources)
         snapshot_project = _load_reference(snapshot.contract.project.as_reader_reference(), reader, "project", decoded_resources)
@@ -755,6 +763,20 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
 
 def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str,
                     decoded_resources: Mapping[str, Any] | None = None) -> ClosureResource:
+    source = _load_reference_source(reference, reader, expected_kind, decoded_resources)
+    try:
+        contract = parse_contract(source.identity, source.value)
+    except SchemaContractError as error:
+        code = "E_" + expected_kind.upper().replace("-", "_") + "_SCHEMA"
+        raise ClosureError(code, error.source_ref, _schema_detail(error)) from error
+    except ContractError as error:
+        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
+    return ClosureResource(expected_kind, source.identity.id, source.identity.revision, source.identity.content_identity, contract)
+
+
+def _load_reference_source(reference: dict[str, Any], reader: SnapshotReader, expected_kind: str,
+                           decoded_resources: Mapping[str, Any] | None = None) -> PresentationResourceSource:
+    """Verify one immutable reference before it joins its known collector set."""
     if reference.get("kind") != expected_kind:
         raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind}; found kind={reference.get('kind')!r}")
     try:
@@ -786,14 +808,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
     identity = ClosureIdentity(expected_kind, actual_id, reference["revision"]["token"], reference.get("contentIdentity", computed_identity))
-    try:
-        contract = parse_contract(identity, value)
-    except SchemaContractError as error:
-        code = "E_" + expected_kind.upper().replace("-", "_") + "_SCHEMA"
-        raise ClosureError(code, error.source_ref, _schema_detail(error)) from error
-    except ContractError as error:
-        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
-    return ClosureResource(expected_kind, actual_id, identity.revision, identity.content_identity, contract)
+    return PresentationResourceSource(identity, value)
 
 
 def _load_presentation(reference: dict[str, Any], reader: SnapshotReader,
