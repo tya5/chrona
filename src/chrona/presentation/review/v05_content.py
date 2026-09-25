@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, display_value, table_value,
+    RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -79,12 +79,19 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     relation_value = visible.relations
     relation_overflow = str(relation_value.get("overflow", "diagnose")) if isinstance(relation_value, Mapping) else "diagnose"
     relation_mode = relation_value.get("mode", "none") if isinstance(relation_value, Mapping) else relation_value
+    def relation_fact(relation: Mapping[str, Any], semantic_id: str) -> RelationPresentationFact:
+        source, target = relation["from"], relation["to"]
+        lag = relation.get("lag", "0d")
+        return RelationPresentationFact(str(relation["id"]), str(source["object"]), str(source.get("endpoint", "end")),
+                                        str(target["object"]), str(target.get("endpoint", "start")), lag,
+                                        str(lag.get("calendar")) if isinstance(lag, Mapping) and lag.get("calendar") is not None else None,
+                                        semantic_id)
     if relation_mode == "critical":
-        relations = tuple({**relation, "_semantic": "dependency-critical"}
+        relations = tuple(relation_fact(relation, "dependency-critical")
                           for index, relation in enumerate(project.get("relations", ()))
                           if relation_identity(index, relation) in projection.driving_relations)
     elif relation_mode != "none":
-        relations = tuple({**relation, "_semantic": "dependency"} for relation in project.get("relations", ()))
+        relations = tuple(relation_fact(relation, "dependency") for relation in project.get("relations", ()))
     else:
         relations = ()
     raw_annotations = view.annotations if annotation_mode != "none" else ()

@@ -9,6 +9,7 @@ from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Mea
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
+from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
 from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, SymbolGeometry
@@ -26,6 +27,13 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
         milestones=(), observation_columns=(), observation_rows=(),
     )
     value.update(overrides)
+    value["relations"] = tuple(
+        item if isinstance(item, RelationPresentationFact) else RelationPresentationFact(
+            str(item["id"]), str(item["from"]["object"]), str(item["from"].get("endpoint", "end")),
+            str(item["to"]["object"]), str(item["to"].get("endpoint", "start")), item.get("lag", "0d"),
+            None, str(item.get("_semantic", "dependency")))
+        for item in value["relations"]
+    )
     return SurfaceContentInput(**value)
 
 

@@ -860,12 +860,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         *(float(group.header_bounds.block + group.header_bounds.block_size)
                           for group in groups if group.header_bounds is not None)))
     for relation in request.surface_content.relations:
-        source, target = relation.get("from", {}).get("object"), relation.get("to", {}).get("object")
-        relation_id = str(relation.get("id", f"{source}-{target}"))
+        source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         for source_id, source_anchor in instance_anchors.get(str(source), ()):
             for target_id, target_anchor in instance_anchors.get(str(target), ()):
-                source_port = mark_ports.get(source_id, (source_anchor, source_anchor))[1]
-                target_port = mark_ports.get(target_id, (target_anchor, target_anchor))[0]
+                source_ports = mark_ports.get(source_id, (source_anchor, source_anchor))
+                target_ports = mark_ports.get(target_id, (target_anchor, target_anchor))
+                source_port = source_ports[0] if relation.source_endpoint in {"start", "at"} else source_ports[1]
+                target_port = target_ports[0] if relation.target_endpoint in {"start", "at"} else target_ports[1]
                 scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
                 if source_port == target_port:
                     if request.surface_content.relation_overflow == "suppress":
@@ -900,7 +901,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
                 relation_radius = float(metric_values.get("timeline.relation.cornerRadius", 0))
                 relations.append(RelationPlacement(scene_id, f"{source_id}:end", f"{target_id}:start", tuple(points),
-                                                   semantic_id=str(relation.get("_semantic", "dependency")),
+                                                   semantic_id=relation.semantic_id,
                                                    corner_radius=relation_radius,
                                                    path_commands=(rounded_orthogonal_path(tuple(points), relation_radius)
                                                                   if relation_radius > 0 else ())))

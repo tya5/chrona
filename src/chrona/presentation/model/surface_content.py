@@ -38,12 +38,26 @@ class SummaryContent:
 
 
 @dataclass(frozen=True)
+class RelationPresentationFact:
+    """One selected dependency fact closed before Layout resolves geometry."""
+
+    relation_id: str
+    source_object_id: str
+    source_endpoint: str
+    target_object_id: str
+    target_endpoint: str
+    lag: object
+    lag_calendar: str | None
+    semantic_id: str
+
+
+@dataclass(frozen=True)
 class SurfaceContentInput:
     """Selected presentation facts normalized once before Scene construction."""
 
     table_columns: tuple[tuple[str, str], ...]
     table_cells: tuple[tuple[str, str, str], ...]
-    relations: tuple[dict, ...]
+    relations: tuple[RelationPresentationFact, ...]
     annotations: tuple[dict, ...]
     show_member_labels: bool
     label_placement: str
