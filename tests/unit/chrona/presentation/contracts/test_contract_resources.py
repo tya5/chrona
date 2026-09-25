@@ -1,10 +1,18 @@
+from copy import deepcopy
 from dataclasses import fields
 from pathlib import Path
 
 import pytest
 import yaml
 
-from chrona.presentation.contracts import ClosureIdentity, ContractError, ThemeContract, parse_contract
+from chrona.presentation.contracts import (
+    ClosureIdentity,
+    ContractError,
+    PresentationResourceSource,
+    ThemeContract,
+    collect_presentation_contracts,
+    parse_contract,
+)
 from chrona.presentation.contracts.resources import (
     ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,
     ProjectContract, RenderContextContract, ReviewDetailProfileContract, SchemaContractError, SnapshotRefContract,
@@ -39,6 +47,41 @@ def test_contract_rejects_schema_invalid_mandatory_resource():
         parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
     assert error.value.violation is not None
     assert (error.value.violation.resource_kind, error.value.violation.resource_identity) == ("theme", "theme")
+
+
+def _source(kind, value):
+    return PresentationResourceSource(
+        ClosureIdentity(kind, value["id"], "draft", "sha256:" + "a" * 64), value,
+    )
+
+
+def test_presentation_collector_reports_all_independent_resource_schema_errors_in_declaration_order():
+    view = yaml.safe_load((ROOT / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((ROOT / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    view["body"]["surface"] = "table-timelinez"
+    view["body"]["tableColumns"][0]["missing"] = "em-dashz"
+    theme["body"]["values"]["text-weight"]["type"] = "fontWeightz"
+
+    result = collect_presentation_contracts((_source("view", view), _source("theme", theme)))
+
+    assert [(item.code, item.resource_kind, item.resource_identity, item.pointer, item.phase) for item in result.diagnostics] == [
+        ("E_RESOURCE_SCHEMA", "view", "controller-z-executive", "/body/surface", "schema"),
+        ("E_RESOURCE_SCHEMA", "view", "controller-z-executive", "/body/tableColumns/0/missing", "schema"),
+        ("E_RESOURCE_SCHEMA", "theme", "executive-light", "/body/values/text-weight/type", "schema"),
+    ]
+    assert result.contracts == ()
+
+
+def test_presentation_collector_runs_contract_semantics_only_after_resource_schema_acceptance():
+    view = deepcopy(yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8")))
+    view["body"].pop("hierarchyColumn")
+
+    result = collect_presentation_contracts((_source("view", view),))
+
+    assert [(item.code, item.phase, item.pointer) for item in result.diagnostics] == [
+        ("E_VIEW_HIERARCHY_COLUMN_REQUIRED", "contract", "/"),
+    ]
+    assert result.contracts == ()
 
 
 def _view_contract(value):

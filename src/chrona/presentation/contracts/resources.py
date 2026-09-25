@@ -12,7 +12,7 @@ import jsonschema
 from referencing import Registry, Resource
 
 from chrona.resources import schema_document
-from chrona.schema_diagnostics import SchemaViolation, explain_errors
+from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
@@ -579,6 +579,23 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
         violation = explain_errors(errors, resource_kind=kind, resource_identity=identity.id)
         raise SchemaContractError(kind, violation.pointer, violation.message, violation)
     return version
+
+
+def explain_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> tuple[SchemaViolation, ...]:
+    """Explain every resource-schema error without constructing a contract.
+
+    The single-error ``_validate`` path remains the compatibility boundary for
+    existing callers.  Presentation ingress collection uses this separate
+    function before it decides whether a resource is safe to parse.
+    """
+    version = value.get("version")
+    schema_name = _SCHEMAS.get((identity.kind, version)) if isinstance(version, str) else None
+    if schema_name is None:
+        raise _closure_kind_error(identity, "supported resource kind/version", {"kind": identity.kind, "version": version})
+    schema = schema_document(schema_name)
+    candidate = _icon_catalog_envelope(value) if identity.kind == "icon-catalog" else _schema_value(value)
+    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))
+    return explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id) if errors else ()
 
 
 def _icon_catalog_envelope(value: Mapping[str, Any]) -> dict[str, Any]:
