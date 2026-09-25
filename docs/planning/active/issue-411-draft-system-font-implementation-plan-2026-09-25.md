@@ -12,10 +12,13 @@ malformed face, and unavailable bridge through a fake resolver.
 Add the draft-only `chrona render --system-fonts` ingress and volatile
 host-font closure state.  Theme-derived family/weight remains the sole face
 request; do not add a Context provider or reuse `--font-metrics` as a system
-configuration channel.  Inject resolved metrics/files into the normal draft
-pipeline.  PNG uses the resolved files with restricted system fallback; SVG
-remains completed geometry.  PDF/typeset reject system state.  Immutable
-closure and materialize reject it structurally and at runtime.
+configuration channel.  The current one-face measurement contract means the
+first release rejects a Theme that requests multiple family/weight pairs;
+never synthesize or silently measure a different face.  Inject the resolved
+metrics/file into the normal draft pipeline.  PNG uses that file with
+restricted system fallback; SVG remains completed geometry.  PDF/typeset
+reject system state.  Immutable closure and materialize reject it structurally
+and at runtime.
 
 ## I411-3 Acceptance and publication
 
