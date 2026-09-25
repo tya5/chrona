@@ -57,3 +57,4 @@ def test_presentation_coverage_is_not_a_renderer_or_svg_reader():
 def test_presentation_coverage_commits_platform_independent_lf_bytes():
     source = (_root() / "tools/presentation_coverage.py").read_text(encoding="utf-8")
     assert 'newline="\\n"' in source
+    assert ".relative_to(root).as_posix()" in source

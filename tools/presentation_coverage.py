@@ -231,7 +231,7 @@ def render(root: Path) -> str:
              "## Evidence inputs", "", "- Scene contract: `chrona/scene/v0.2`", "- Corpus slides: " + str(len(slides)),
              "- Live schemas: " + ", ".join(f"`{kind}` = `{_schema_version(schemas[kind])}`" for kind in sorted(schemas)),
              "- Scene artifacts:"]
-    lines.extend(f"  - `{slide.scene.relative_to(root)}`" for slide in slides)
+    lines.extend(f"  - `{slide.scene.relative_to(root).as_posix()}`" for slide in slides)
     lines.extend(["", "## Finite live-schema vocabulary", "", "| Contract | Schema path | Value | Declared slides |", "| --- | --- | --- | --- |"])
     uncovered = []
     for row in rows:
