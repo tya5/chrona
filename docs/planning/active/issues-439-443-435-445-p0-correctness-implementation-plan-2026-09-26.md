@@ -4,6 +4,8 @@
 `issue-454-p0-p1-p2-remediation-architecture-design-2026-09-26.md`.
 **Architecture review:**
 `issue-454-p0-p1-p2-remediation-architecture-review-2026-09-26.md`.
+**Paint-order correction:**
+`issue-454-p0-paint-order-adapter-correction-2026-09-26.md` and its review.
 
 ## Preconditions
 
@@ -30,12 +32,15 @@ Layout/Scene fixtures.
 3. Validate host existence, same-surface ownership, and allowed semantic
    host/text pairs before Scene construction.
 4. Thread the supplied order and host identity through Scene without a builder
-   fallback.  Make adapters serialize the completed stable ordering only.
+   fallback.  Delete renderer-local mark-purpose visual grouping; every adapter
+   serializes all visual primitive kinds in completed stable `(paintOrder,
+   Scene input index)` order.  Keep interaction overlays separate and
+   non-visual.
 
 **Focused acceptance:** axis-band and mark-hosted text has a greater resolved
 order than its host; invalid/missing/cross-surface host references fail;
-ordinary text does not acquire an implicit host; SVG and one non-SVG adapter
-preserve supplied order.
+ordinary text does not acquire an implicit host; SVG and each supported target
+preserve supplied mixed-primitive order without a mark-purpose branch.
 
 ## I454-P0-2 — Atomic axis visibility and rotation closure (#439, #443)
 
