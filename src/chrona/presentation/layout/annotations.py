@@ -128,11 +128,13 @@ def project_annotation_box(annotation: AnnotationIntent, resolved: AnnotationAnc
             y = anchor_bounds.y if alignment == "start" else anchor_bounds.bottom - box.height
             box = LabelRect(box.x, y, box.width, box.height)
         intersects = any(box.x < item.right and item.x < box.right and box.y < item.bottom and item.y < box.bottom for item in obstacles)
-        if box.x < viewport.x or box.y < viewport.y or box.right > viewport.right or box.bottom > viewport.bottom or intersects:
-            if required or overflow == "visible-overflow":
-                raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+        outside_or_colliding = (box.x < viewport.x or box.y < viewport.y
+                                 or box.right > viewport.right or box.bottom > viewport.bottom
+                                 or intersects)
+        if outside_or_colliding and overflow != "visible-overflow":
             return None
-        placement = LabelPlacement(placement.side, box)
+        placement = LabelPlacement(placement.side, box,
+                                   placement.visible_overflow or outside_or_colliding)
     return AnnotationBox(resolved, placement, purpose in {"callout", "note", "explanatory-arrow"})
 
 
@@ -143,9 +145,10 @@ def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnch
     """Place an object-anchored callout in a dedicated annotation rail."""
     width, height = text_size
     if width > rail.width or height > rail.height:
-        if required or overflow == "visible-overflow":
-            raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
-        return None
+        if overflow != "visible-overflow":
+            return None
+        box = LabelRect(rail.x, anchor_y - height / 2, width, height)
+        return AnnotationBox(resolved, LabelPlacement("rail", box, True), True)
     occupied = tuple(obstacles)
     y = min(max(anchor_y - height / 2, rail.y), rail.bottom - height)
     candidates = [y]
@@ -158,6 +161,7 @@ def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnch
             for item in occupied
         ):
             return AnnotationBox(resolved, LabelPlacement("rail", box), True)
-    if required or overflow == "visible-overflow":
-        raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
-    return None
+    if overflow != "visible-overflow":
+        return None
+    box = LabelRect(rail.x, anchor_y - height / 2, width, height)
+    return AnnotationBox(resolved, LabelPlacement("rail", box, True), True)

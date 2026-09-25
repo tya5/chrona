@@ -74,3 +74,20 @@ def test_callout_uses_annotation_rail_without_timeline_obstacles():
     assert box.placement.side == "rail"
     assert box.placement.bounds.x == 110
     assert box.leader_required
+
+
+def test_annotation_visible_overflow_completes_oversized_or_colliding_box():
+    intent = annotation()
+    resolved = resolve_annotation_anchor(intent, [ComparisonMark(
+        "ship", "planned", "span", start=date(2027, 1, 1), end=date(2027, 1, 8))])
+
+    box = project_annotation_box(
+        intent, resolved, anchor_bounds=LabelRect(40, 40, 10, 10), text_size=(80, 20),
+        candidate_sides=["above"], viewport=LabelRect(0, 0, 50, 50),
+        obstacles=[LabelRect(0, 0, 50, 50)], overflow="visible-overflow")
+    rail = place_annotation_rail(
+        intent, resolved, anchor_y=20, text_size=(80, 20), rail=LabelRect(60, 0, 20, 30),
+        obstacles=(), overflow="visible-overflow", required=True)
+
+    assert box is not None and box.placement.visible_overflow
+    assert rail is not None and rail.placement.visible_overflow

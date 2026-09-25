@@ -1422,12 +1422,28 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                             box, selected_rung = candidate_box, rung
                             break
                     if box is None:
-                        if "suppress" not in ladder:
+                        if "suppress" in ladder:
+                            placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
+                                                                         tuple(ladder), "suppress", "suppressed"))
+                            diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                            continue
+                        # A normal annotation is never silently suppressed or
+                        # rejected.  Complete its first declared placement in
+                        # visible-overflow mode after the explicit fit ladder
+                        # has been exhausted.
+                        selected_rung = next(rung for rung in ladder if rung != "suppress")
+                        if selected_rung == "rail":
+                            box = place_annotation_rail(
+                                annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
+                                text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
+                                obstacles=placed_boxes, overflow="visible-overflow", required=True)
+                        else:
+                            box = project_annotation_box(
+                                annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
+                                candidate_sides=(selected_rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
+                                obstacles=placed_boxes, overflow="visible-overflow", required=True)
+                        if box is None:  # Defensive: visible-overflow is a total Layout policy.
                             raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/annotations/{index}")
-                        placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
-                                                                     tuple(ladder), "suppress", "suppressed"))
-                        diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
-                        continue
                     placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
                                                                  tuple(ladder), selected_rung, "placed"))
                 else:
@@ -1451,6 +1467,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,
                                            annotation=presentation)
             text.append(placed_annotation)
+            if box.placement.visible_overflow:
+                visible_label_overflows.append((placed_annotation, LabelRect(*_bounds(annotation_slot.bounds))))
             if annotation_visuals:
                 if not hasattr(request.font_metrics, "cap_height_at"):
                     raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in annotation_visuals))
@@ -1515,22 +1533,26 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                              icon_width / icon.viewport[0], annotation_slot.slot_id))
             if box.leader_required and presentation.leader_semantic_id is not None:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
+                source = (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2)
+                leader_fallback = False
                 try:
-                    points = route_annotation_leader((anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2),
-                                                     target, obstacles=placed_boxes[:-1], limit=1024)
-                except ValueError as error:
-                    raise LayoutError(str(error), f"/annotations/{index}") from error
+                    points = route_annotation_leader(source, target, obstacles=placed_boxes[:-1], limit=1024)
+                except ValueError:
+                    points, leader_fallback = (source, target), True
                 if not relation_route_quality(tuple(points), max_bends=layout_manifest.annotation_max_bends,
                                               max_detour_ratio=layout_manifest.annotation_max_detour_ratio):
-                    raise LayoutError("E_LAYOUT_ANNOTATION_UNROUTABLE", f"/annotations/{index}")
+                    points, leader_fallback = (source, target), True
                 leader_semantic_id = presentation.leader_semantic_id
                 marker_end = (marker_geometry(request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role))
                               if presentation.purpose == "explanatory-arrow" else None)
-                relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
-                                                   f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
-                                                   f"annotation-box:{annotation_id}", tuple(points),
-                                                   semantic_id=leader_semantic_id, marker_end=marker_end,
-                                                   annotation=presentation, source_ref=annotation_id))
+                placed_leader = RelationPlacement(f"annotation-leader:{annotation_id}",
+                                                  f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
+                                                  f"annotation-box:{annotation_id}", tuple(points),
+                                                  semantic_id=leader_semantic_id, marker_end=marker_end,
+                                                  annotation=presentation, source_ref=annotation_id)
+                relations.append(placed_leader)
+                if leader_fallback:
+                    visible_route_fallbacks.append(placed_leader)
     text = [replace(item, slot_id=text_slot(item)) for item in text]
     text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals,
                                                 axis_label_targets=axis_label_targets)
