@@ -17,9 +17,10 @@ def test_labels_use_declared_finite_candidate_order_and_obstacles():
     assert result.bounds == LabelRect(62, 41, 30, 8)
 
 
-def test_inside_requires_measured_text_to_fit_the_mark():
-    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
-        place_label(LabelRect(10, 10, 10, 8), (12, 6), ["inside"], bounds=LabelRect(0, 0, 100, 100))
+def test_inside_retains_measured_text_when_visible_overflow_is_selected():
+    result = place_label(LabelRect(10, 10, 10, 8), (12, 6), ["inside"], bounds=LabelRect(0, 0, 100, 100))
+    assert result.bounds == LabelRect(9, 11, 12, 6)
+    assert result.visible_overflow
 
 
 def test_inside_exempts_only_its_identified_host_mark_obstacle():
@@ -27,18 +28,18 @@ def test_inside_exempts_only_its_identified_host_mark_obstacle():
     host = LabelObstacle("planned:a", anchor)
     assert place_label(anchor, (10, 8), ["inside"], bounds=LabelRect(0, 0, 100, 100),
                        obstacles=[host], inside_host_obstacle_id="planned:a").side == "inside"
-    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
-        place_label(anchor, (10, 8), ["inside"], bounds=LabelRect(0, 0, 100, 100),
-                    obstacles=[host, LabelObstacle("planned:b", anchor)],
-                    inside_host_obstacle_id="planned:a")
+    result = place_label(anchor, (10, 8), ["inside"], bounds=LabelRect(0, 0, 100, 100),
+                         obstacles=[host, LabelObstacle("planned:b", anchor)],
+                         inside_host_obstacle_id="planned:a")
+    assert result.visible_overflow
 
 
 def test_optional_label_can_be_omitted_only_by_explicit_policy():
     anchor = LabelRect(10, 10, 10, 10)
     assert place_label(anchor, (40, 10), ["above"], bounds=LabelRect(0, 0, 30, 30),
                        required=False, overflow="clip-optional") is None
-    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_UNPLACEABLE"):
-        place_label(anchor, (40, 10), ["above"], bounds=LabelRect(0, 0, 30, 30), required=False)
+    result = place_label(anchor, (40, 10), ["above"], bounds=LabelRect(0, 0, 30, 30), required=False)
+    assert result.visible_overflow
 
 
 def test_label_candidates_are_bounded_and_unique():

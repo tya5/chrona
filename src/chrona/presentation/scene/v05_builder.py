@@ -545,7 +545,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
             network, title_bounds=title.bounds, bounds=network_slot.bounds,
             measured_sources=value.measured_sources, flow_direction=value.layout_manifest.dependency_network_flow_direction,
             max_bends=value.layout_manifest.relation_max_bends,
-            max_detour_ratio=value.layout_manifest.relation_max_detour_ratio)
+            max_detour_ratio=value.layout_manifest.relation_max_detour_ratio,
+            canvas_bounds=value.layout_manifest.viewport)
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     slots = tuple(SceneSlot(item.node_id, item.source, None,
@@ -592,7 +593,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
-    canvas = value.layout_manifest.viewport
     return SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
-                        canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
-                                       float(canvas.block_size)))
+                        canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
+                                       float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),
+                        fit_warnings=placed.fit_warnings)

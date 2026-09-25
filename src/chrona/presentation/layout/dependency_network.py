@@ -8,7 +8,7 @@ from typing import Any, Mapping
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
-from chrona.presentation.layout.surface_quality import CollisionDomain, RelationPlacement, TextPlacement, intersects
+from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
 
 
 @dataclass(frozen=True)
@@ -29,13 +29,16 @@ class DependencyNetworkLayout:
     nodes: tuple[NetworkNodePlacement, ...]
     text: tuple[TextPlacement, ...]
     relations: tuple[RelationPlacement, ...]
+    canvas_bounds: Rect
+    fit_warnings: tuple[FitWarning, ...] = ()
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
                                       measured_sources: MeasuredSources,
                                       flow_direction: str,
                                       max_bends: int = 4,
-                                      max_detour_ratio: float = 2.0) -> DependencyNetworkLayout:
+                                      max_detour_ratio: float = 2.0,
+                                      canvas_bounds: Rect | None = None) -> DependencyNetworkLayout:
     """Place a typed View graph without reading Project, View syntax, or Scene state."""
     nodes, edges = tuple(network.nodes), tuple(network.edges)
     ids = {node.object_id for node in nodes}
@@ -62,9 +65,28 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
     placed = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
                           flow_direction == "horizontal")
     text = (title_placement,) + tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
-    _assert_surface_quality(placed, text, title_bounds, bounds)
-    return DependencyNetworkLayout(tuple(placed), text,
-                                   _route_edges(edges, placed, bounds, max_bends, max_detour_ratio))
+    _assert_surface_quality(placed, text)
+    requested_canvas = canvas_bounds or _union(title_bounds, bounds)
+    canvas = _completed_canvas(requested_canvas, title_bounds, tuple(node.bounds for node in placed),
+                               tuple(item.bounds for item in text))
+    relations, route_warnings = _route_edges(edges, placed, canvas, max_bends, max_detour_ratio)
+    overflowed = (canvas.inline_size > requested_canvas.inline_size
+                  or canvas.block_size > requested_canvas.block_size)
+    title_overflow = (title_placement.bounds.inline_size > title_bounds.inline_size
+                      or title_placement.bounds.block_size > title_bounds.block_size)
+    warnings = tuple(
+        item for item in (
+            FitWarning("W_LAYOUT_NETWORK_OVERFLOW", "network", "/layoutManifest/network",
+                       "network-allocation", "visible-overflow", float(canvas.inline_size),
+                       float(canvas.block_size), float(requested_canvas.inline_size), float(requested_canvas.block_size))
+            if overflowed else None,
+            FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", "title", "title", "network-title",
+                       "visible-overflow", float(title_placement.bounds.inline_size),
+                       float(title_placement.bounds.block_size), float(title_bounds.inline_size),
+                       float(title_bounds.block_size)) if title_overflow else None,
+        ) if item is not None
+    ) + route_warnings
+    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings)
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:
@@ -116,8 +138,6 @@ def _place_nodes(by_rank: Mapping[int, list[Any]], ranks: Mapping[str, int],
     extent = {rank: max(dimensions[node.object_id][0 if horizontal else 1] for node in members)
               for rank, members in by_rank.items()}
     primary_size = bounds.inline_size if horizontal else bounds.block_size
-    if sum(extent.values(), gap * (len(rank_ids) + 1)) > primary_size:
-        raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
     starts, cursor = {}, (bounds.inline if horizontal else bounds.block) + gap
     for rank in rank_ids:
         starts[rank] = cursor
@@ -128,8 +148,6 @@ def _place_nodes(by_rank: Mapping[int, list[Any]], ranks: Mapping[str, int],
     for rank in rank_ids:
         members = by_rank[rank]
         cross_total = sum((dimensions[node.object_id][1 if horizontal else 0] for node in members), Decimal(0))
-        if cross_total + gap * (len(members) + 1) > secondary_size:
-            raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
         cursor = secondary_origin + gap
         for node in members:
             inline_size, block_size = dimensions[node.object_id]
@@ -165,8 +183,6 @@ def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> T
 
 def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
     text_bounds = Rect(bounds.inline, bounds.block, measured.inline_size, measured.block_size)
-    if not _contains(bounds, text_bounds):
-        raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/title")
     return TextPlacement(
         "title", "title", measured.content, text_bounds, measured.typography_role,
         baseline=(float(bounds.inline), float(bounds.block + measured.baseline)), lines=(measured.content,),
@@ -179,10 +195,11 @@ def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
 
 
 def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], bounds: Rect,
-                 max_bends: int, max_detour_ratio: float) -> tuple[RelationPlacement, ...]:
+                 max_bends: int, max_detour_ratio: float) -> tuple[tuple[RelationPlacement, ...], tuple[FitWarning, ...]]:
     by_id = {node.object_id: node for node in nodes}
     boxes = {node.object_id: _box(node.bounds) for node in nodes}
     relations = []
+    warnings = []
     for edge in edges:
         source, target = by_id[edge.source_id], by_id[edge.target_id]
         try:
@@ -193,28 +210,49 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
                                                   float(bounds.inline + bounds.inline_size),
                                                   float(bounds.block + bounds.block_size)))
         except ValueError as error:
-            raise LayoutError("E_LAYOUT_NETWORK_UNROUTABLE", f"/projection/network/edges/{edge.relation_id}") from error
+            points = (source.output_port, target.input_port)
+            warnings.append(FitWarning("W_LAYOUT_ROUTE_FALLBACK", edge.relation_id,
+                                       f"/projection/network/edges/{edge.relation_id}", "relation-route",
+                                       "direct-path", 0.0, 0.0, float(bounds.inline_size), float(bounds.block_size)))
         if not relation_route_quality(points, max_bends=max_bends, max_detour_ratio=max_detour_ratio):
-            raise LayoutError("E_LAYOUT_NETWORK_UNROUTABLE", f"/projection/network/edges/{edge.relation_id}")
+            points = (source.output_port, target.input_port)
+            warnings.append(FitWarning("W_LAYOUT_ROUTE_FALLBACK", edge.relation_id,
+                                       f"/projection/network/edges/{edge.relation_id}", "relation-route",
+                                       "direct-path", 0.0, 0.0, float(bounds.inline_size), float(bounds.block_size)))
         relations.append(RelationPlacement(edge.relation_id, f"{edge.source_id}:output", f"{edge.target_id}:input",
                                            tuple(points), semantic_id="dependency-critical" if edge.critical else "dependency",
                                            slot_id="network"))
-    return tuple(relations)
+    return tuple(relations), tuple(warnings)
 
 
-def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextPlacement, ...],
-                            title_bounds: Rect, bounds: Rect) -> None:
+def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextPlacement, ...]) -> None:
     for index, node in enumerate(nodes):
-        if not _contains(bounds, node.bounds) or node.input_port == node.output_port:
+        if node.input_port == node.output_port:
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
         if any(intersects(node.bounds, other.bounds) for other in nodes[index + 1:]):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
-    title, *labels = text
-    if not _contains(title_bounds, title.bounds):
-        raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/title")
+    _, *labels = text
     for label, node in zip(labels, nodes, strict=True):
-        if not _contains(node.bounds, label.bounds) or not _contains(bounds, label.bounds):
+        if not _contains(node.bounds, label.bounds):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", f"/projection/network/nodes/{node.object_id}")
+
+
+def _completed_canvas(requested: Rect, title_bounds: Rect, nodes: tuple[Rect, ...], text: tuple[Rect, ...]) -> Rect:
+    """Return Layout's natural network extent, anchored at the requested origin."""
+    inline_end = max(requested.inline + requested.inline_size, title_bounds.inline + title_bounds.inline_size)
+    block_end = max(requested.block + requested.block_size, title_bounds.block + title_bounds.block_size)
+    for item in nodes + text:
+        inline_end = max(inline_end, item.inline + item.inline_size)
+        block_end = max(block_end, item.block + item.block_size)
+    return Rect(requested.inline, requested.block, inline_end - requested.inline, block_end - requested.block)
+
+
+def _union(left: Rect, right: Rect) -> Rect:
+    inline = min(left.inline, right.inline)
+    block = min(left.block, right.block)
+    inline_end = max(left.inline + left.inline_size, right.inline + right.inline_size)
+    block_end = max(left.block + left.block_size, right.block + right.block_size)
+    return Rect(inline, block, inline_end - inline, block_end - block)
 
 
 def _contains(outer: Rect, inner: Rect) -> bool:

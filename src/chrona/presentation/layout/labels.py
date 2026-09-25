@@ -27,6 +27,7 @@ class LabelRect:
 class LabelPlacement:
     side: str
     bounds: LabelRect
+    visible_overflow: bool = False
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,17 @@ def _candidate(anchor: LabelRect, size: tuple[float, float], side: str, gap: flo
     raise ValueError("E_PRESENTATION_LABEL_INPUT")
 
 
+def _visible_candidate(anchor: LabelRect, size: tuple[float, float], side: str, gap: float) -> LabelRect:
+    """Return a deterministic preferred label position without fit rejection."""
+    if side == "inside":
+        width, height = size
+        if width <= 0 or height <= 0 or gap < 0:
+            raise ValueError("E_PRESENTATION_LABEL_INPUT")
+        return LabelRect(anchor.x + (anchor.width - width) / 2,
+                         anchor.y + (anchor.height - height) / 2, width, height)
+    return _candidate(anchor, size, side, gap)
+
+
 def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterable[str], *,
                 bounds: LabelRect, obstacles: Iterable[LabelObstacle | LabelRect] = (), gap: float = 0,
                 inside_host_obstacle_id: str | None = None,
@@ -102,6 +114,17 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         if not any(_intersects(candidate, obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle)
                    for obstacle in active_obstacles):
             return LabelPlacement(side, candidate)
-    if required or overflow == "visible-overflow":
+    if overflow == "visible-overflow":
+        # Retain the author-declared candidate order.  The first candidate is
+        # the deterministic visible fallback even when it crosses a collision
+        # boundary or its requested slot.
+        for side in sides:
+            try:
+                return LabelPlacement(side, _visible_candidate(anchor, size, side, gap), True)
+            except ValueError as exc:
+                if str(exc) != "E_PRESENTATION_LABEL_UNPLACEABLE":
+                    raise
+        raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+    if required:
         raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
     return None

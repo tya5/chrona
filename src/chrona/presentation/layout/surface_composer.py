@@ -617,6 +617,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     axis_label_targets: dict[tuple[str, str, str], str] = {}
     axis_band_targets: dict[tuple[str, str, str], str] = {}
     diagnostics: list[str] = []
+    visible_label_overflows: list[tuple[Any, LabelRect]] = []
     background_extents = layout_manifest.background_extents
 
     def background_shape(placement_id: str, source_ref: str, semantic_id: str, source_bounds: Rect) -> ShapePlacement:
@@ -652,18 +653,25 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         continue
                     trial = axis_intervals(start, end, candidate, tick_step=tier.every,
                                            fiscal_start_month=request.surface_content.axis_fiscal_start_month)
-                    if all(axis_label_fits(content=format_axis_tier_label(item, forms[candidate], request.locale),
-                                          available_inline=(item.end - item.start).days * scale.unit_ratio,
-                                          font_size=axis_size, font_metrics=request.font_metrics,
-                                          letter_spacing=float(axis_treatment.letter_spacing),
-                                          text_transform=axis_treatment.transform,
-                                          numeric_spacing=axis_treatment.numeric_spacing,
-                                          orientation=tier.label.orientation,
-                                          line_height=float(axis_treatment.line_height)) for item in trial):
+                    fits_trial = all(axis_label_fits(content=format_axis_tier_label(item, forms[candidate], request.locale),
+                                                      available_inline=(item.end - item.start).days * scale.unit_ratio,
+                                                      font_size=axis_size, font_metrics=request.font_metrics,
+                                                      letter_spacing=float(axis_treatment.letter_spacing),
+                                                      text_transform=axis_treatment.transform,
+                                                      numeric_spacing=axis_treatment.numeric_spacing,
+                                                      orientation=tier.label.orientation,
+                                                      line_height=float(axis_treatment.line_height)) for item in trial)
+                    if fits_trial or tier.label.overflow == "visible-overflow":
                         selected, form = trial, forms[candidate]
                         break
                 if selected is None:
-                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", "/view/body/axis/tiers")
+                    # An explicit thinning request is not a refusal mode.  If
+                    # no candidate can be thinned legally, retain the first
+                    # declared deterministic form as a visible overlap.
+                    candidate = next(item for item in ("day", "week", "month", "quarter", "half", "year")
+                                     if item in forms)
+                    selected, form = axis_intervals(start, end, candidate, tick_step=tier.every,
+                                                    fiscal_start_month=request.surface_content.axis_fiscal_start_month), forms[candidate]
                 intervals = selected
             else:
                 intervals = axis_intervals(start, end, tier.unit, tick_step=tier.every,
@@ -688,27 +696,27 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             )
             fits = tuple(bool(item.label_fits) for item in interval_outcomes)
             if not all(fits):
-                if tier.label.overflow == "diagnose":
-                    failing = next(item for item in interval_outcomes if not item.label_fits)
-                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
-                                      detail=failing.candidate_id)
-                try:
-                    schedule = thinning_schedule(fits)
-                except ValueError as error:
-                    raise LayoutError(str(error), f"/view/body/axis/tiers/{tier_index}") from error
-                retained = set(schedule.retained_positions)
-                resolved_outcomes: list[AxisIntervalOutcome] = []
-                for position, outcome in enumerate(interval_outcomes):
-                    if position in retained:
-                        resolved_outcomes.append(replace(outcome, disposition="placed"))
+                if tier.label.overflow == "thin-with-record":
+                    try:
+                        schedule = thinning_schedule(fits)
+                    except ValueError as error:
+                        interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
                     else:
-                        reason = "label-does-not-fit" if not outcome.label_fits else "thinning-stride"
-                        resolved_outcomes.append(replace(outcome, disposition="thinned", reason=reason))
-                        diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:{reason}")
-                        axis_decisions.append(PlacementDecision(outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
-                                                                ("thin-with-record", "suppress"), "suppress", "suppressed"))
-                interval_outcomes = tuple(resolved_outcomes)
-                diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:stride={schedule.stride}:phase={schedule.phase}")
+                        retained = set(schedule.retained_positions)
+                        resolved_outcomes: list[AxisIntervalOutcome] = []
+                        for position, outcome in enumerate(interval_outcomes):
+                            if position in retained:
+                                resolved_outcomes.append(replace(outcome, disposition="placed"))
+                            else:
+                                reason = "label-does-not-fit" if not outcome.label_fits else "thinning-stride"
+                                resolved_outcomes.append(replace(outcome, disposition="thinned", reason=reason))
+                                diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:{reason}")
+                                axis_decisions.append(PlacementDecision(outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
+                                                                        ("thin-with-record", "suppress"), "suppress", "suppressed"))
+                        interval_outcomes = tuple(resolved_outcomes)
+                        diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:stride={schedule.stride}:phase={schedule.phase}")
+                else:
+                    interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
             else:
                 interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
         else:
@@ -748,8 +756,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 for outcome in interval_outcomes if outcome.disposition == "placed"
             )
             lane_size = (axis_size if orientation == "horizontal" else max(label_widths, default=0.0))
-            if label_lane_offset + lane_size > float(axis.bounds.block_size):
-                raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}")
+            lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)
             for interval, outcome in zip(intervals, interval_outcomes, strict=True):
                 if outcome.disposition == "thinned":
                     continue
@@ -757,7 +764,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
                 available = max(0.0, x2 - x)
                 label = outcome.label
-                if not outcome.label_fits or label is None or outcome.disposition != "placed":
+                if label is None or outcome.disposition != "placed":
                     raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
                                       detail=outcome.candidate_id)
                 width = measure_text_width(label, font_size=axis_size, font_metrics=request.font_metrics,
@@ -774,7 +781,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                     collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", f"label-{tier_index}"),
                                     source_content=label, available_inline_start=x, available_inline_size=available,
                                     orientation=orientation)
-                text.append(replace(placed, semantic_id="axisLabel"))
+                placed = replace(placed, semantic_id="axisLabel")
+                text.append(placed)
+                if not outcome.label_fits or lane_overflow:
+                    visible_label_overflows.append((placed, LabelRect(*_bounds(axis.bounds))))
             label_lane_offset += lane_size
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
@@ -897,6 +907,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                             (x, missing_block), (x, missing_block), shape="span", semantic_id="missing-actual"))
     # A group-header target is a real GroupPlacement extent, not a synthetic table row.
     group_by_id = {group.group_id: group for group in groups}
+    visible_group_header_overflows: list[tuple[str, Rect, float]] = []
     folded_by_group: dict[str, list[Any]] = {}
     for folded in getattr(projection, "folded_points", ()):
         folded_by_group.setdefault(folded.group_id, []).append(folded)
@@ -907,10 +918,23 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             raise LayoutError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE", f"/projection/foldedPoints/{folded.item.object_id}")
         block_size = float(metric_values["timeline.mark.blockSize"])
         capacity = int(float(group.header_bounds.block_size) // block_size)
-        if capacity < len(folded_points):
-            raise LayoutError("E_LAYOUT_GROUP_HEADER_OVERFLOW", f"/projection/foldedPoints/{group_id}")
         occupied = len(folded_points) * block_size
-        first_block = float(group.header_bounds.block) + (float(group.header_bounds.block_size) - occupied) / 2
+        if occupied > float(group.header_bounds.block_size):
+            # Folded marks retain their stable stack order.  Extend the real
+            # group-header host rather than inventing a synthetic row or
+            # suppressing excess milestones.
+            expanded_header = Rect(group.header_bounds.inline, group.header_bounds.block,
+                                   group.header_bounds.inline_size, Decimal(str(occupied)))
+            replacement = GroupPlacement(group.group_id, group.content_bounds, expanded_header)
+            groups[groups.index(group)] = replacement
+            group_by_id[group_id] = replacement
+            shapes = [replace(shape, bounds=expanded_header)
+                      if shape.placement_id == f"group-header-band:{group_id}" else shape
+                      for shape in shapes]
+            visible_group_header_overflows.append((group_id, expanded_header,
+                                                   float(group.header_bounds.block_size)))
+            group = replacement
+        first_block = float(group.header_bounds.block) + max(0.0, (float(group.header_bounds.block_size) - occupied) / 2)
         for track_index, folded in enumerate(sorted(folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))):
             block = first_block + track_index * block_size
             members = sorted(enumerate(folded.all_items),
@@ -1115,6 +1139,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    collision_domain=provisional.collision_domain,
                                    lines=lines), fallback_ladder=label_request.candidates, selected_rung=candidate.side)
             text.append(placed_text)
+            if candidate.visible_overflow:
+                visible_label_overflows.append((placed_text, placement_bounds))
             if visuals:
                 if not hasattr(request.font_metrics, "cap_height_at"):
                     raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
@@ -1134,6 +1160,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          label_request.candidates, candidate.side, "placed"))
 
     relations: list[RelationPlacement] = []
+    visible_route_fallbacks: list[RelationPlacement] = []
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
     for review_row, row in zip(review_rows, rows, strict=True):
@@ -1173,12 +1200,21 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
-                    raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
+                    # A direct zero-length path is not inspectable, so retain
+                    # a deterministic one-point inline stub for coincident
+                    # endpoints.  Scene still receives completed geometry.
+                    fallback = (source_port, (source_port[0] + 1.0, source_port[1]))
+                    placed = RelationPlacement(scene_id, source_port_id, target_port_id, fallback,
+                                               semantic_id=relation.semantic_id, source_ref=relation_id)
+                    relations.append(placed)
+                    visible_route_fallbacks.append(placed)
+                    continue
                 endpoint_rows = {instance_rows.get(source_id), instance_rows.get(target_id)}
                 obstacles = tuple((float(row.bounds.inline), float(row.bounds.block),
                                    float(row.bounds.inline + row.bounds.inline_size),
                                    float(row.bounds.block + row.bounds.block_size))
                                   for row in rows if row.row_id not in endpoint_rows)
+                fallback = False
                 try:
                     points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=obstacles,
                                                   bounds=(timeline_bounds[0], route_top,
@@ -1189,7 +1225,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
-                    raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}") from error
+                    points = (source_port, target_port)
+                    fallback = True
                 if not relation_route_quality(tuple(points), max_bends=layout_manifest.relation_max_bends,
                                               max_detour_ratio=layout_manifest.relation_max_detour_ratio):
                     if request.surface_content.relation_overflow == "suppress":
@@ -1197,16 +1234,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
-                    raise LayoutError("E_LAYOUT_RELATION_UNROUTABLE", f"/relations/{relation_id}")
+                    points = (source_port, target_port)
+                    fallback = True
                 relation_radius = float(metric_values.get("timeline.relation.cornerRadius", 0))
-                relations.append(RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
-                                                   semantic_id=relation.semantic_id,
-                                                   corner_radius=relation_radius,
-                                                   path_commands=(rounded_orthogonal_path(tuple(points), relation_radius)
-                                                                  if relation_radius > 0 else ()),
-                                                   marker_start=marker_geometry(request.theme_tokens.marker("relationSourceTerminal")),
-                                                   marker_end=marker_geometry(request.theme_tokens.marker("relationTargetTerminal")),
-                                                   label_content=relation_label_content(relation)))
+                placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
+                                           semantic_id=relation.semantic_id,
+                                           corner_radius=relation_radius,
+                                           path_commands=(rounded_orthogonal_path(tuple(points), relation_radius)
+                                                          if relation_radius > 0 and not fallback else ()),
+                                           marker_start=marker_geometry(request.theme_tokens.marker("relationSourceTerminal")),
+                                           marker_end=marker_geometry(request.theme_tokens.marker("relationTargetTerminal")),
+                                           label_content=relation_label_content(relation), source_ref=relation_id)
+                relations.append(placed)
+                if fallback:
+                    visible_route_fallbacks.append(placed)
 
     # Relation labels are routed facts, not a Scene or adapter policy.  They run
     # after relation paths exist so their anchor is a stable completed segment.
@@ -1228,18 +1269,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                          if item.required and item.overflow != "suppressed")
         candidate = place_label(relation_label_anchor(placed_relation.points), size, ("above", "below", "start", "end"),
                                 bounds=timeline_rect, obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                required=False, overflow="suppress")
+                                required=False, overflow=request.surface_content.relation_overflow)
         if candidate is None:
-            if request.surface_content.relation_overflow == "diagnose":
-                raise LayoutError("E_LAYOUT_RELATION_LABEL_UNPLACEABLE", f"/relations/{placed_relation.relation_id}")
             diagnostics.append(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:{placed_relation.relation_id}")
             continue
-        text.append(replace(place_text(placement_id=relation_text_id, source_ref=relation.relation_id,
+        placed_text = replace(place_text(placement_id=relation_text_id, source_ref=placed_relation.source_ref,
                                        content=content, inline=candidate.bounds.x,
                                        baseline_block=candidate.bounds.y + float(font_size), typography_role="annotation",
                                        theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                        collision_region="relation-label", collision_domain=CollisionDomain("timeline", "overlay")),
-                            fallback_ladder=("above", "below", "start", "end"), selected_rung=candidate.side))
+                            fallback_ladder=("above", "below", "start", "end"), selected_rung=candidate.side)
+        text.append(placed_text)
+        if candidate.visible_overflow:
+            visible_label_overflows.append((placed_text, timeline_rect))
 
     legend = by_source.get("legend")
     if legend:
@@ -1584,6 +1626,24 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 float(mark.bounds.block_size), float(timeline.bounds.inline_size),
                 max(0.0, float(timeline_end - mark.bounds.block)),
             ))
+    for item, available in visible_label_overflows:
+        fit_warnings.append(FitWarning(
+            "W_LAYOUT_LABEL_OVERFLOW", item.placement_id, item.source_ref,
+            "label-collision", "visible-overflow", float(item.bounds.inline_size),
+            float(item.bounds.block_size), available.width, available.height,
+        ))
+    for relation in visible_route_fallbacks:
+        fit_warnings.append(FitWarning(
+            "W_LAYOUT_ROUTE_FALLBACK", relation.relation_id, relation.source_ref,
+            "relation-route", "direct-path", 0.0, 0.0,
+            float(timeline.bounds.inline_size), float(timeline.bounds.block_size),
+        ))
+    for group_id, header, available_block in visible_group_header_overflows:
+        fit_warnings.append(FitWarning(
+            "W_LAYOUT_GROUP_HEADER_OVERFLOW", f"group-header:{group_id}", group_id,
+            "group-header-density", "visible-overflow", float(header.inline_size),
+            float(header.block_size), float(header.inline_size), available_block,
+        ))
     canvas = _completed_canvas(
         requested=request.layout_manifest.viewport,
         rectangles=(tuple(slot.bounds for slot in slots) + tuple(row.bounds for row in rows)
