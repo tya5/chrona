@@ -266,37 +266,46 @@ def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: S
                                        float(final_slot.bounds.block_size), float(final_slot.bounds.inline_size),
                                        max(0.0, float(requested_end - final_slot.bounds.block))))
     final_slots = tuple(replacements.get(slot.source_ref, slot) for slot in slots)
-    # The manifest's source measurements provide a provisional one-line footer.
-    # Once detail panels complete it, a physical successor must retain its
-    # established gap instead of occupying the former provisional extent.
-    panel_start = min((slot.bounds.block for slot in slot_by_source.values()
-                       if slot.source_ref in {"group-details", "milestones"}), default=None)
-    if panel_start is not None:
-        footer_sources = {"group-details", "milestones", "observations", "legend", "notes"}
-        line_step = Decimal(str(font_size * float(treatment.line_height)))
-        provisional_footer = tuple(slot for slot in slots
-                                   if slot.source_ref in footer_sources
-                                   and panel_start <= slot.bounds.block <= panel_start + line_step + GEOMETRY_TOLERANCE)
-        completed_by_source = {slot.source_ref: slot for slot in final_slots}
-        if provisional_footer:
-            provisional_end = max(slot.bounds.block + slot.bounds.block_size for slot in provisional_footer)
-            completed_end = max(completed_by_source[slot.source_ref].bounds.block
-                                + completed_by_source[slot.source_ref].bounds.block_size
-                                for slot in provisional_footer)
-            growth = completed_end - provisional_end
-            annotation = completed_by_source.get("annotations")
-            panel_slots = tuple(completed_by_source[source] for source in ("group-details", "milestones")
-                                if source in completed_by_source)
-            overlaps_panel_inline = annotation is not None and any(
-                annotation.bounds.inline < panel.bounds.inline + panel.bounds.inline_size
-                and panel.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
-                for panel in panel_slots
-            )
-            if growth > GEOMETRY_TOLERANCE and annotation is not None and annotation.bounds.block >= provisional_end and overlaps_panel_inline:
-                translated = replace(annotation, bounds=Rect(annotation.bounds.inline, annotation.bounds.block + growth,
-                                                             annotation.bounds.inline_size, annotation.bounds.block_size))
-                final_slots = tuple(translated if slot.source_ref == "annotations" else slot for slot in final_slots)
     return final_slots, completed, warnings, frozenset(pre_reserved)
+
+
+_FOOTER_SOURCES = frozenset({"group-details", "milestones", "observations", "legend", "notes"})
+
+
+def _complete_footer_band(*, provisional_slots: tuple[SlotPlacement, ...],
+                          completed_slots: tuple[SlotPlacement, ...]) -> tuple[SlotPlacement, ...]:
+    """Translate the physical annotations successor from the final footer union."""
+    provisional_by_source = {slot.source_ref: slot for slot in provisional_slots}
+    completed_by_source = {slot.source_ref: slot for slot in completed_slots}
+    panel_start = min((slot.bounds.block for source, slot in provisional_by_source.items()
+                       if source in {"group-details", "milestones"}), default=None)
+    if panel_start is None:
+        return completed_slots
+    panel_line = max((slot.bounds.block_size for source, slot in provisional_by_source.items()
+                      if source in {"group-details", "milestones"}), default=Decimal(0))
+    provisional_footer = tuple(slot for source, slot in provisional_by_source.items()
+                               if source in _FOOTER_SOURCES
+                               and panel_start <= slot.bounds.block <= panel_start + panel_line + GEOMETRY_TOLERANCE)
+    if not provisional_footer:
+        return completed_slots
+    provisional_end = max(slot.bounds.block + slot.bounds.block_size for slot in provisional_footer)
+    completed_footer = tuple(completed_by_source[slot.source_ref] for slot in provisional_footer)
+    completed_end = max(slot.bounds.block + slot.bounds.block_size for slot in completed_footer)
+    annotation = completed_by_source.get("annotations")
+    panels = tuple(completed_by_source[source] for source in ("group-details", "milestones")
+                   if source in completed_by_source)
+    overlaps_panel_inline = annotation is not None and any(
+        annotation.bounds.inline < panel.bounds.inline + panel.bounds.inline_size
+        and panel.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
+        for panel in panels
+    )
+    growth = completed_end - provisional_end
+    if (growth <= GEOMETRY_TOLERANCE or annotation is None
+            or annotation.bounds.block < provisional_end or not overlaps_panel_inline):
+        return completed_slots
+    translated = replace(annotation, bounds=Rect(annotation.bounds.inline, annotation.bounds.block + growth,
+                                                 annotation.bounds.inline_size, annotation.bounds.block_size))
+    return tuple(translated if slot.source_ref == "annotations" else slot for slot in completed_slots)
 
 
 def _validate_detail_panel_placement(text: list[Any], slots: tuple[SlotPlacement, ...]) -> None:
@@ -724,6 +733,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        collision_region="title", collision_domain=CollisionDomain("title", "content"),
                        source_content=title, available_inline_start=float(by_source["title"].bounds.inline),
                        available_inline_size=float(by_source["title"].bounds.inline_size))]
+    footer_provisional_slots = slots
     slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = _compose_detail_panel_blocks(
         slots=slots, request=request, requested_canvas=request.layout_manifest.viewport,
     )
@@ -1531,40 +1541,72 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if candidate.visible_overflow:
             visible_label_overflows.append((placed_text, timeline_rect))
 
+    side_content_warnings: list[FitWarning] = []
     legend = by_source.get("legend")
     if legend:
         legend_treatment = request.theme_tokens.text_treatment("legend")
         legend_size = float(legend_treatment.font_size)
         legend_step = legend_size * float(legend_treatment.line_height)
         swatch_size = max(2.0, legend_size * 0.8)
+        text_inline = float(legend.bounds.inline) + swatch_size * 1.5
+        text_available = max(0.0, float(legend.bounds.inline_size) - swatch_size * 1.5)
+        final_legend_end = legend.bounds.block
         for index, (role, label) in enumerate(request.surface_content.legend_entries):
             baseline = float(legend.bounds.block) + (index + 1) * legend_step
             shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
                                          Rect(legend.bounds.inline, Decimal(str(baseline - swatch_size)),
                                               Decimal(str(swatch_size)), Decimal(str(swatch_size)))))
-            text.append(place_text(placement_id=f"legend:{role}", source_ref=role, content=label,
-                                   inline=float(legend.bounds.inline) + swatch_size * 1.5, baseline_block=baseline,
-                                   typography_role="legend", theme_tokens=request.theme_tokens,
-                                   font_metrics=request.font_metrics, collision_region="legend",
-                                   collision_domain=CollisionDomain("legend", "content"), source_content=label,
-                                   available_inline_start=float(legend.bounds.inline) + swatch_size * 1.5,
-                                   available_inline_size=max(0.0, float(legend.bounds.inline_size) - swatch_size * 1.5)))
-    for slot_name, values, prefix, typography in (
-        ("notes", request.surface_content.notes, "note", "text"),
-    ):
-        slot = by_source.get(slot_name)
-        if slot:
-            for index, value in enumerate(values):
-                source, content = value
-                text.append(place_text(placement_id=f"{prefix}:{source}", source_ref=source, content=content,
-                                       inline=float(slot.bounds.inline),
-                                       baseline_block=float(slot.bounds.block) + (index + 1) * body_size,
-                                       typography_role=typography, theme_tokens=request.theme_tokens,
-                                       font_metrics=request.font_metrics,
-                                       collision_region=f"{slot_name}:{source}",
-                                       collision_domain=CollisionDomain(slot_name, f"line:{index}"), source_content=content,
-                                       available_inline_start=float(slot.bounds.inline),
-                                       available_inline_size=float(slot.bounds.inline_size)))
+            natural_width = measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
+                                               letter_spacing=float(legend_treatment.letter_spacing),
+                                               text_transform=legend_treatment.transform,
+                                               numeric_spacing=legend_treatment.numeric_spacing)
+            content = label
+            disposition = "fit"
+            if natural_width > text_available and legend.overflow == "ellipsize-with-source":
+                content = ellipsize_text(label, available_inline=text_available, font_size=legend_size,
+                                         font_metrics=metric_for("legend"),
+                                         letter_spacing=float(legend_treatment.letter_spacing),
+                                         text_transform=legend_treatment.transform,
+                                         numeric_spacing=legend_treatment.numeric_spacing)
+                disposition = "ellipsized"
+            elif natural_width > text_available and legend.overflow == "visible-overflow":
+                disposition = "visible-overflow"
+            placed = place_text(placement_id=f"legend:{role}", source_ref=role, content=content,
+                                inline=text_inline, baseline_block=baseline, typography_role="legend",
+                                theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                overflow=disposition, collision_region="legend",
+                                collision_domain=CollisionDomain("legend", "content"), source_content=label,
+                                available_inline_start=text_inline, available_inline_size=text_available)
+            text.append(placed)
+            final_legend_end = max(final_legend_end, placed.bounds.block + placed.bounds.block_size)
+            if disposition == "visible-overflow":
+                side_content_warnings.append(FitWarning(
+                    "W_LAYOUT_VISIBLE_OVERFLOW", placed.placement_id, role, "legend-text", "visible-overflow",
+                    natural_width, float(placed.bounds.block_size), text_available, float(legend.bounds.block_size),
+                ))
+        final_size = max(legend.bounds.block_size, final_legend_end - legend.bounds.block)
+        replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
+                                                   legend.bounds.inline_size, final_size))
+        slots = tuple(replacement if slot.source_ref == "legend" else slot for slot in slots)
+    notes = by_source.get("notes")
+    if notes:
+        cursor = notes.bounds.block
+        for index, (source, content) in enumerate(request.surface_content.notes):
+            placed = place_text(placement_id=f"note:{source}", source_ref=source, content=content,
+                                inline=float(notes.bounds.inline), baseline_block=float(cursor) + body_size,
+                                typography_role="text", theme_tokens=request.theme_tokens,
+                                font_metrics=request.font_metrics, collision_region=f"notes:{source}",
+                                collision_domain=CollisionDomain("notes", f"line:{index}"), source_content=content,
+                                available_inline_start=float(notes.bounds.inline),
+                                available_inline_size=float(notes.bounds.inline_size))
+            text.append(placed)
+            cursor = placed.bounds.block + placed.bounds.block_size
+        final_size = max(notes.bounds.block_size, cursor - notes.bounds.block)
+        replacement = replace(notes, bounds=Rect(notes.bounds.inline, notes.bounds.block,
+                                                  notes.bounds.inline_size, final_size))
+        slots = tuple(replacement if slot.source_ref == "notes" else slot for slot in slots)
+    slots = _complete_footer_band(provisional_slots=footer_provisional_slots, completed_slots=slots)
+    by_source = {slot.source_ref: slot for slot in slots}
     summary_slot = by_source.get("summary")
     if summary_slot:
         cursor = float(summary_slot.bounds.block)
@@ -1846,7 +1888,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     # Complete the observable fallback records at the same point as completed
     # geometry.  Neither Scene nor an adapter gets a policy question to answer.
-    fit_warnings: list[FitWarning] = list(detail_panel_warnings)
+    fit_warnings: list[FitWarning] = [*detail_panel_warnings, *side_content_warnings]
     warned_placement_ids: set[str] = set()
     timeline_end = timeline.bounds.block + timeline.bounds.block_size
     header_start = Decimal(str(table_bounds[1]))

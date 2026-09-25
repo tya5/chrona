@@ -346,6 +346,14 @@ def test_unexpanded_detail_footer_leaves_annotation_successor_at_manifest_positi
     assert annotations[1] == footer_end + 16
 
 
+def test_project_notes_advance_by_their_completed_measured_block_extent():
+    rendered = render_review(_draft_request())
+    notes = [item for item in rendered.surface.primitives if item.scene_id.startswith("note:")]
+    assert len(notes) > 1
+    assert all(left.bounds[1] + left.bounds[3] <= right.bounds[1]
+               for left, right in zip(notes, notes[1:]))
+
+
 def test_draft_annotation_visual_is_measured_before_its_rail_is_allocated(tmp_path):
     root = _root(); example = root / "examples/controller-z"
     view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))

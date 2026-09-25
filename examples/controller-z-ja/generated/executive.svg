@@ -118,5 +118,5 @@
 <text data-scene-id="legend:planned" data-source-ref="planned" data-purpose="legend-label" x="950.4" y="856.32" font-family="Noto Sans JP, sans-serif" font-weight="400" font-size="12" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">計画</text>
 <text data-scene-id="legend:actual" data-source-ref="actual" data-purpose="legend-label" x="950.4" y="873.12" font-family="Noto Sans JP, sans-serif" font-weight="400" font-size="12" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">実績</text>
 <text data-scene-id="note:evb-risk" data-source-ref="evb-risk" data-purpose="project-note" x="1240" y="850.8" font-family="Noto Sans JP, sans-serif" font-weight="400" font-size="14" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">評価ボードの到着が最初のシリコン起動を左右する。</text>
-<text data-scene-id="note:pvt-exit" data-source-ref="pvt-exit" data-purpose="project-note" x="1240" y="864.8" font-family="Noto Sans JP, sans-serif" font-weight="400" font-size="14" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">認定完了後にリリース判断を行う。</text>
+<text data-scene-id="note:pvt-exit" data-source-ref="pvt-exit" data-purpose="project-note" x="1240" y="870.4" font-family="Noto Sans JP, sans-serif" font-weight="400" font-size="14" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">認定完了後にリリース判断を行う。</text>
 </svg>

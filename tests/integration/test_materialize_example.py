@@ -122,6 +122,14 @@ def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     assert 'data-scene-id="legend:scale:owner:payload"' in svg
     assert 'data-scene-id="progress-fill:planned:campaign:campaign"' in svg
     assert 'data-purpose="progress-fill"' in svg
+    scene = json.loads((tmp_path / "board/review.scene.json").read_text(encoding="utf-8"))
+    surface = scene["surfaces"][0]
+    legend = next(slot["bounds"] for slot in surface["slots"] if slot["id"] == "legend")
+    labels = [primitive for primitive in surface["primitives"] if primitive["purpose"] == "legend-label"]
+    assert labels and all(legend["inline"] <= item["bounds"]["inline"]
+                          and item["bounds"]["inline"] + item["bounds"]["inlineSize"]
+                          <= legend["inline"] + legend["inlineSize"]
+                          for item in labels)
 
 
 def test_halcyon_overlay_briefing_materializes_guide_and_barrier_anchored_slots(tmp_path):
