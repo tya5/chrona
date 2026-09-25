@@ -38,6 +38,31 @@ def explain_errors(
     return replace(_explain(error), resource_kind=resource_kind, resource_identity=resource_identity)
 
 
+def explain_all_errors(
+    errors: Iterable[ValidationError], *, resource_kind: str | None = None, resource_identity: str | None = None,
+) -> tuple[SchemaViolation, ...]:
+    """Explain every independent leaf violation in deterministic order."""
+    candidates = tuple(_leaf_errors(tuple(errors)))
+    if not candidates:
+        raise ValueError("E_SCHEMA_VIOLATION_EMPTY")
+    explained = [replace(_explain(error), resource_kind=resource_kind, resource_identity=resource_identity)
+                 for error in sorted(candidates, key=_aggregate_error_key)]
+    unique: dict[tuple[object, ...], SchemaViolation] = {}
+    for violation in explained:
+        unique[(violation.pointer, violation.rule, violation.expected, violation.actual_kind, violation.message,
+                violation.resource_kind, violation.resource_identity)] = violation
+    return tuple(unique.values())
+
+
+def _leaf_errors(errors: Iterable[ValidationError]) -> Iterable[ValidationError]:
+    """Replace diagnostic-unhelpful union wrappers with their actual leaves."""
+    for error in errors:
+        if error.validator in {"oneOf", "anyOf"} and error.context:
+            yield from _leaf_errors(error.context)
+        else:
+            yield error
+
+
 def json_pointer(path: Iterable[Any]) -> str:
     """Encode an instance path as an RFC 6901 pointer."""
     parts = tuple(str(item).replace("~", "~0").replace("/", "~1") for item in path)
@@ -49,6 +74,16 @@ def _error_key(error: ValidationError) -> tuple[Any, ...]:
     # A leaf at a deeper instance location is normally more useful than a
     # wrapper `oneOf` error. Stable remaining fields avoid iterator-order leaks.
     return (-len(tuple(error.absolute_path)), pointer, _rule_rank(error.validator), str(error.validator), error.message)
+
+
+def _aggregate_error_key(error: ValidationError) -> tuple[Any, ...]:
+    """Order the new multi-diagnostic API independently of legacy selection."""
+    return (
+        json_pointer(error.absolute_path),
+        _rule_rank(error.validator),
+        str(error.validator),
+        error.message,
+    )
 
 
 def _rule_rank(rule: str | None) -> int:

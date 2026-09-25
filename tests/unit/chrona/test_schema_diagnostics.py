@@ -1,7 +1,7 @@
 import jsonschema
 
 from chrona.core.validation import validate_project
-from chrona.schema_diagnostics import explain_errors
+from chrona.schema_diagnostics import explain_all_errors, explain_errors
 
 
 def _violation(schema, value):
@@ -26,6 +26,33 @@ def test_unknown_property_explanation_suggests_one_close_declared_name():
     assert violation.pointer == "/"
     assert violation.rule == "additionalProperties"
     assert violation.message == "unexpected property 'visiblity'; did you mean 'visibility'?"
+
+
+def test_explain_all_errors_keeps_every_leaf_in_stable_pointer_order():
+    schema = {"type": "object", "properties": {
+        "alpha": {"enum": ["a"]}, "beta": {"type": "integer"},
+    }}
+    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors({"alpha": "wrong", "beta": "wrong"}))
+
+    all_errors = explain_all_errors(errors, resource_kind="view", resource_identity="demo")
+
+    assert [(item.pointer, item.rule, item.resource_kind, item.resource_identity) for item in all_errors] == [
+        ("/alpha", "enum", "view", "demo"), ("/beta", "type", "view", "demo"),
+    ]
+
+
+def test_explain_all_errors_flattens_union_wrappers_without_changing_legacy_explanation():
+    schema = {"oneOf": [
+        {"type": "object", "required": ["mode"], "properties": {"mode": {"const": "fixed-point"}}},
+        {"type": "object", "required": ["amount"], "properties": {"amount": {"type": "integer"}}},
+    ]}
+    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors({"mode": "wrong"}))
+
+    all_errors = explain_all_errors(errors)
+
+    assert all(item.rule != "union" for item in all_errors)
+    assert {item.rule for item in all_errors} == {"const", "required"}
+    assert explain_errors(errors).rule == "union"
 
 
 def test_tagged_union_explanation_names_the_available_tags_once():
