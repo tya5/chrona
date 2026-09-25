@@ -31,6 +31,10 @@ diagnosticActionability:
     - {<<: *backlog, code: E_COMMAND_ID_REUSE}
     - {<<: *backlog, code: E_CONTENT_IDENTITY}
     - {<<: *backlog, code: E_CONTENT_IDENTITY_REQUIRED}
+    - {<<: *backlog, code: E_DRAFT_DEFAULT_PRESET}
+    - {<<: *backlog, code: E_DRAFT_PRESENTATION_INCOMPLETE}
+    - {<<: *backlog, code: E_DRAFT_PRESET_RESOURCE}
+    - {<<: *backlog, code: E_DRAFT_PRESET_SCHEMA}
     - {<<: *backlog, code: E_FONT_METRICS_UNAVAILABLE}
     - {<<: *backlog, code: E_FONT_SUBSTITUTE_CONTEXT}
     - {<<: *backlog, code: E_ICON_ASSET_IDENTITY}
