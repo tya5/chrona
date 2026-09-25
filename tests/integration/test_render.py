@@ -304,6 +304,48 @@ def test_detail_panels_stack_when_their_declared_inline_slots_overlap(tmp_path):
     assert milestones[1] >= group[1] + group[3]
 
 
+def test_completed_detail_footer_preserves_the_annotation_successor_gap():
+    root = _root(); example = root / "examples/controller-z"
+    rendered = render_review(_draft_request(
+        view_path=example / "views/annotations.yaml",
+        layout_path=example / "layouts/annotations-review.yaml",
+        detail_path=example / "profiles/review-detail.yaml",
+    ))
+    slots = {slot.slot_id: slot.bounds for slot in rendered.surface.slots}
+    annotations = slots["annotations"]
+    footer_end = max(slots[slot_id][1] + slots[slot_id][3]
+                     for slot_id in ("group-details", "milestones", "observations", "legend", "notes"))
+    assert annotations[1] == footer_end + 16
+    group_text = [item for item in rendered.surface.primitives if item.scene_id.startswith("group-detail:")]
+    annotation_text = [item for item in rendered.surface.primitives if item.scene_id.startswith("annotation-text:")]
+    assert all(not (left.bounds[0] < right.bounds[0] + right.bounds[2]
+                    and right.bounds[0] < left.bounds[0] + left.bounds[2]
+                    and left.bounds[1] < right.bounds[1] + right.bounds[3]
+                    and right.bounds[1] < left.bounds[1] + left.bounds[3])
+               for left in group_text for right in annotation_text)
+
+
+def test_unexpanded_detail_footer_leaves_annotation_successor_at_manifest_position(tmp_path):
+    """The downstream correction is inert when panel completion adds no extent."""
+    root = _root(); example = root / "examples/controller-z"
+    detail = yaml.safe_load((example / "profiles/review-detail.yaml").read_text(encoding="utf-8"))
+    detail["body"].pop("groupDetails")
+    detail["body"].pop("milestones")
+    detail_path = tmp_path / "no-detail-panels.yaml"
+    detail_path.write_text(yaml.safe_dump(detail, sort_keys=False), encoding="utf-8")
+
+    rendered = render_review(_draft_request(
+        view_path=example / "views/annotations.yaml",
+        layout_path=example / "layouts/annotations-review.yaml",
+        detail_path=detail_path,
+    ))
+    slots = {slot.slot_id: slot.bounds for slot in rendered.surface.slots}
+    annotations = slots["annotations"]
+    footer_end = max(slots[slot_id][1] + slots[slot_id][3]
+                     for slot_id in ("group-details", "milestones", "observations", "legend", "notes"))
+    assert annotations[1] == footer_end + 16
+
+
 def test_draft_annotation_visual_is_measured_before_its_rail_is_allocated(tmp_path):
     root = _root(); example = root / "examples/controller-z"
     view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))

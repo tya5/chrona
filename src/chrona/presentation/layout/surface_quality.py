@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
@@ -40,17 +41,22 @@ class MarkerGeometry:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
-def _edges(rect: Rect) -> tuple[float, float, float, float]:
-    return (float(rect.inline), float(rect.block),
-            float(rect.inline + rect.inline_size),
-            float(rect.block + rect.block_size))
+GEOMETRY_TOLERANCE = Decimal("0.000001")
+
+
+def _edges(rect: Rect) -> tuple[Any, Any, Any, Any]:
+    """Return exact Layout coordinates for contact-versus-overlap checks."""
+    return (rect.inline, rect.block,
+            rect.inline + rect.inline_size,
+            rect.block + rect.block_size)
 
 
 def intersects(left: Rect, right: Rect) -> bool:
     """Return whether two positive-area rectangles overlap, not merely touch."""
     lx1, ly1, lx2, ly2 = _edges(left)
     rx1, ry1, rx2, ry2 = _edges(right)
-    return lx1 < rx2 and rx1 < lx2 and ly1 < ry2 and ry1 < ly2
+    return (lx1 < rx2 - GEOMETRY_TOLERANCE and rx1 < lx2 - GEOMETRY_TOLERANCE
+            and ly1 < ry2 - GEOMETRY_TOLERANCE and ry1 < ly2 - GEOMETRY_TOLERANCE)
 
 
 @dataclass(frozen=True)

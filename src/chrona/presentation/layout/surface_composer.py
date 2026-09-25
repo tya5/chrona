@@ -266,6 +266,36 @@ def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: S
                                        float(final_slot.bounds.block_size), float(final_slot.bounds.inline_size),
                                        max(0.0, float(requested_end - final_slot.bounds.block))))
     final_slots = tuple(replacements.get(slot.source_ref, slot) for slot in slots)
+    # The manifest's source measurements provide a provisional one-line footer.
+    # Once detail panels complete it, a physical successor must retain its
+    # established gap instead of occupying the former provisional extent.
+    panel_start = min((slot.bounds.block for slot in slot_by_source.values()
+                       if slot.source_ref in {"group-details", "milestones"}), default=None)
+    if panel_start is not None:
+        footer_sources = {"group-details", "milestones", "observations", "legend", "notes"}
+        line_step = Decimal(str(font_size * float(treatment.line_height)))
+        provisional_footer = tuple(slot for slot in slots
+                                   if slot.source_ref in footer_sources
+                                   and panel_start <= slot.bounds.block <= panel_start + line_step + GEOMETRY_TOLERANCE)
+        completed_by_source = {slot.source_ref: slot for slot in final_slots}
+        if provisional_footer:
+            provisional_end = max(slot.bounds.block + slot.bounds.block_size for slot in provisional_footer)
+            completed_end = max(completed_by_source[slot.source_ref].bounds.block
+                                + completed_by_source[slot.source_ref].bounds.block_size
+                                for slot in provisional_footer)
+            growth = completed_end - provisional_end
+            annotation = completed_by_source.get("annotations")
+            panel_slots = tuple(completed_by_source[source] for source in ("group-details", "milestones")
+                                if source in completed_by_source)
+            overlaps_panel_inline = annotation is not None and any(
+                annotation.bounds.inline < panel.bounds.inline + panel.bounds.inline_size
+                and panel.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
+                for panel in panel_slots
+            )
+            if growth > GEOMETRY_TOLERANCE and annotation is not None and annotation.bounds.block >= provisional_end and overlaps_panel_inline:
+                translated = replace(annotation, bounds=Rect(annotation.bounds.inline, annotation.bounds.block + growth,
+                                                             annotation.bounds.inline_size, annotation.bounds.block_size))
+                final_slots = tuple(translated if slot.source_ref == "annotations" else slot for slot in final_slots)
     return final_slots, completed, warnings, frozenset(pre_reserved)
 
 

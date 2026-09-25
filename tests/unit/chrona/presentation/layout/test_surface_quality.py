@@ -37,6 +37,20 @@ def test_intersects_treats_touching_rectangles_as_non_overlapping():
     assert intersects(_rect(0, 0, 10, 10), _rect(9, 0, 10, 10))
 
 
+def test_intersects_preserves_decimal_contact_without_float_rounding():
+    first = _rect("24", "1052.8", "223.146", "19.6")
+    second = _rect("24", "1072.4", "161.896", "19.6")
+
+    assert not intersects(first, second)
+
+
+def test_intersects_ignores_sub_micro_point_measurement_residue():
+    first = _rect("24", "1052.8", "223.146", "19.599999999999998")
+    second = _rect("24", "1072.3999999999999", "161.896", "19.6")
+
+    assert not intersects(first, second)
+
+
 def test_fit_warning_requires_completed_visible_fallback_facts():
     warning = FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", "cell:a:title", "a", "table-text",
                          "natural-overflow", 120, 20, 80, 20)
