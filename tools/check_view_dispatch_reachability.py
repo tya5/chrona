@@ -9,7 +9,7 @@ from chrona.resources import safe_load
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = ROOT / "schemas" / "view-v0.18.schema.yaml"
+SCHEMA = ROOT / "schemas" / "view-v0.20.schema.yaml"
 
 # Each entry is a closed author-facing dispatch family.  The checker proves
 # both doors of the pipeline: the engine compares the value, and View admits it.

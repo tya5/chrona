@@ -13,6 +13,7 @@ from referencing import Registry, Resource
 
 from chrona.resources import schema_document
 from chrona.schema_diagnostics import SchemaViolation, explain_errors
+from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
 class ContractError(ValueError):
@@ -119,7 +120,7 @@ class TableColumn:
 
     id: str
     source: str | FrozenDict
-    format: str
+    format: str | BooleanPresencePresentation
     missing: str
     align: str = "start"
     width: str | FrozenDict = "content"
@@ -533,7 +534,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
-    ("view", "chrona/view/v0.19"): "view-v0.19.schema.yaml",
+    ("view", "chrona/view/v0.20"): "view-v0.20.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
@@ -678,7 +679,7 @@ def _view_input(body: FrozenDict) -> ViewInput:
                                   str(item["source"]["scenario"]) if "scenario" in item["source"] else None)
                       for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
-    table_columns = tuple(TableColumn(str(column["id"]), column["source"], str(column.get("format", "text")),
+    table_columns = tuple(TableColumn(str(column["id"]), column["source"], _table_format(column.get("format", "text")),
                                       str(column["missing"]), str(column["align"]), column["width"],
                                       str(column["headerOrientation"]))
                           for column in body.get("tableColumns", ()))
@@ -705,6 +706,10 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
     column_ids = tuple(column.id for column in table_columns)
     if len(set(column_ids)) != len(column_ids):
         raise ContractError("E_VIEW_TABLE_COLUMN_DUPLICATE")
+    for column in table_columns:
+        if (isinstance(column.source, Mapping) and column.source.get("comparisonFacet") == "missingActual"
+                and not isinstance(column.format, BooleanPresencePresentation)):
+            raise ContractError("E_VIEW_BOOLEAN_PRESENTATION")
     visible_nesting = ((grouping is not None and grouping.by == "hierarchy")
                        or any(row.depth > 0 or row.parent_row is not None for row in rows))
     if hierarchy_column is None:
@@ -715,6 +720,17 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
         raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNKNOWN")
     if not visible_nesting:
         raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNEXPECTED")
+
+
+def _table_format(value: object) -> str | BooleanPresencePresentation:
+    """Close the schema-approved formatter before content normalization."""
+    if isinstance(value, Mapping):
+        if value.get("kind") == "presence" and isinstance(value.get("whenTrue"), str) and isinstance(value.get("whenFalse"), str):
+            return BooleanPresencePresentation(value["whenTrue"], value["whenFalse"])
+        raise ContractError("E_VIEW_BOOLEAN_PRESENTATION")
+    if isinstance(value, str):
+        return value
+    raise ContractError("E_VIEW_BOOLEAN_PRESENTATION")
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:

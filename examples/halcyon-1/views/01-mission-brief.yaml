@@ -1,4 +1,4 @@
-version: chrona/view/v0.19
+version: chrona/view/v0.20
 kind: view
 id: halcyon-01-mission-brief
 body:
@@ -142,6 +142,10 @@ body:
   - id: Obs
     source:
       comparisonFacet: missingActual
+    format:
+      kind: presence
+      whenTrue: Missing
+      whenFalse: Recorded
     missing: em-dash
     align: center
     width: content

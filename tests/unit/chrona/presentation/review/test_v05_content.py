@@ -4,6 +4,7 @@ import pytest
 
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.surface_content import SummaryContent, TableCellContent
+from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
 from chrona.presentation.contracts.resources import (
     SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
@@ -25,7 +26,9 @@ def typed_view(value):
         ViewWindow(body.get("window", {}).get("mode", "selected-planned"), None, None, 0),
         ViewComparison(None, body.get("comparison", {}).get("actual", "optional"), None, None, ()),
         ViewVisibility(visibility.get("labels", False), visibility.get("relations", "none"), visibility.get("annotations", "none")),
-        tuple(TableColumn(item["id"], item["source"], item.get("format", "text"), item["missing"],
+        tuple(TableColumn(item["id"], item["source"],
+                          (BooleanPresencePresentation(item["format"]["whenTrue"], item["format"]["whenFalse"])
+                           if isinstance(item.get("format"), dict) else item.get("format", "text")), item["missing"],
                           item.get("align", "start"), item.get("width", "content"))
               for item in body.get("tableColumns", ())),
         tuple(freeze(item) for item in body.get("annotations", ())), ViewRows(body.get("rows", {}).get("mode", "automatic"), ()),
@@ -83,7 +86,8 @@ def test_table_cell_semantics_follow_declared_source_not_item_role_order():
     projection = ReviewProjection((ahead, on_plan, behind, unknown, missing), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
     view = {"body": {"tableColumns": (
         {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "em-dash"},
-        {"id": "Missing", "source": {"comparisonFacet": "missingActual"}, "missing": "em-dash"},
+        {"id": "Missing", "source": {"comparisonFacet": "missingActual"},
+         "format": {"kind": "presence", "whenTrue": "Missing", "whenFalse": "Recorded"}, "missing": "em-dash"},
         {"id": "Title", "source": "title", "missing": "em-dash"},
     ), "visibility": {"relations": "none", "annotations": "none"}}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view), summary=EMPTY_SUMMARY)

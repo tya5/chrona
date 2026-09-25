@@ -1,7 +1,10 @@
 from datetime import date
 
+import pytest
+
 from chrona.presentation.model.projection import ReviewItem
 from chrona.presentation.model.surface_content import display_value, table_value
+from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
 def test_declared_table_missing_values_are_normalized_before_scene_construction():
@@ -33,3 +36,11 @@ def test_in_flight_actual_renders_as_an_open_date_range():
 def test_missing_actual_uses_the_declared_in_progress_policy_without_context():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ())
     assert display_value(table_value(item, {}, {"facet": "actual"}), "in-progress", "dateRange") == "in progress"
+
+
+def test_boolean_table_values_require_and_use_a_declared_presence_presentation():
+    presence = BooleanPresencePresentation("Missing", "Recorded")
+    assert display_value(True, "blank", presence) == "Missing"
+    assert display_value(False, "blank", presence) == "Recorded"
+    with pytest.raises(ValueError, match="E_VIEW_BOOLEAN_PRESENTATION"):
+        display_value(True, "blank", "text")

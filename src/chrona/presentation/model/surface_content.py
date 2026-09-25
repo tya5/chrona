@@ -6,6 +6,7 @@ from datetime import date
 from typing import Any
 
 from chrona.presentation.model.projection import ReviewItem
+from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
 @dataclass(frozen=True)
@@ -208,11 +209,17 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 
-def display_value(value: Any, missing: str, formatter: str = "text", *, locale: str = "en-US") -> str:
+def display_value(value: Any, missing: str, formatter: str | BooleanPresencePresentation = "text", *, locale: str = "en-US") -> str:
     """Format a normalized table value according to its declared View contract."""
     if value is None:
         return {"blank": "", "em-dash": "—", "unknown": "unknown",
                 "in-progress": "in progress"}[missing]
+    if isinstance(value, bool):
+        if isinstance(formatter, BooleanPresencePresentation):
+            return formatter.when_true if value else formatter.when_false
+        raise ValueError("E_VIEW_BOOLEAN_PRESENTATION")
+    if isinstance(formatter, BooleanPresencePresentation):
+        raise ValueError("E_VIEW_BOOLEAN_PRESENTATION")
     if formatter == "date":
         if isinstance(value, date):
             return value.isoformat()

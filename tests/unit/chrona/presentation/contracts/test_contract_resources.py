@@ -84,6 +84,16 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
     assert contract.view.row_decoration == "alternate-rows"
 
 
+def test_boolean_comparison_columns_require_a_complete_typed_presence_presentation():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
+    column = next(item for item in value["body"]["tableColumns"] if item["id"] == "Obs")
+    contract = _view_contract(value)
+    assert contract.view.table_columns[-1].format.when_true == "Missing"
+    column["format"] = "text"
+    with pytest.raises(ContractError, match="E_VIEW_BOOLEAN_PRESENTATION"):
+        _view_contract(value)
+
+
 def test_v18_axis_tiers_have_one_role_and_unit_valid_label_forms():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
     assert isinstance(_view_contract(value), ViewContract)

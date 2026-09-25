@@ -1,4 +1,4 @@
-version: chrona/view/v0.19
+version: chrona/view/v0.20
 kind: view
 id: halcyon-06-flight-readiness
 body:

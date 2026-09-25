@@ -53,4 +53,5 @@ schemas:
   - {file: view-v0.16.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.17.schema.yaml, removalSlice: I1}
   - {file: view-v0.17.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.18.schema.yaml, removalSlice: I412-1}
   - {file: view-v0.18.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.19.schema.yaml, removalSlice: I449-1}
-  - {file: view-v0.19.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: view-v0.19.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.20.schema.yaml, removalSlice: I435-1}
+  - {file: view-v0.20.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
