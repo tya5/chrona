@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from chrona.resources import template_resource
+from chrona.resources import minimal_template_resource, template_resource
 from chrona.usecases.materialize import copy_context_closure
 
 
@@ -31,23 +31,26 @@ def discover_store_configuration(*, explicit: Path | None = None, start: Path | 
     raise ValueError("E_STORE_CONFIG_REQUIRED")
 
 
-def initialize_project(destination: Path, *, example: str = "halcyon-1") -> Path:
-    """Create a complete local project without ever replacing authored files."""
-    if example != "halcyon-1":
+def initialize_project(destination: Path, *, example: str | None = None) -> Path:
+    """Create an editable starter or an explicitly selected corpus without replacement."""
+    if example not in (None, "halcyon-1"):
         raise ValueError("E_INIT_EXAMPLE")
     if destination.exists() and any(destination.iterdir()):
         raise ValueError("E_INIT_OUTPUT_EXISTS")
-    source = template_resource(example)
+    source = minimal_template_resource() if example is None else template_resource(example)
     _copy_template(source, destination)
+    if example is None:
+        return destination
     # Contexts are immutable references.  A freshly initialized project must
     # therefore contain their snapshot closure before its Store config is
     # advertised to commands; mutable source paths are never a reader fallback.
+    store_root = destination / ".chrona" / "store"
     for context in sorted((destination / "contexts").glob("*.yaml")):
-        copy_context_closure(destination, context, destination)
+        copy_context_closure(destination, context, store_root)
     config = destination / ".chrona" / "store.yaml"
     config.parent.mkdir(parents=True, exist_ok=True)
     config.write_text(yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{
-        "provider": "local", "identity": f"{example}-example", "root": str(destination.resolve()), "integrity": "optional",
+        "provider": "local", "identity": f"{example}-example", "root": str(store_root.resolve()), "integrity": "optional",
     }]}, sort_keys=False), encoding="utf-8")
     return destination
 

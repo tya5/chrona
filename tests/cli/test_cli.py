@@ -182,6 +182,21 @@ def test_cli_render_parser_advertises_the_bundled_default_preset():
     assert "chrona-default-draft" in parser._subparsers._group_actions[0].choices["render"].format_help()
 
 
+def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch):
+    destination = tmp_path / "first-plan"
+    output = destination / "plan.svg"
+
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(destination)])
+    main()
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(destination / "project.yaml"), "--actual", str(destination / "actual.yaml"),
+        "--viewport", "1600xauto", "--output", str(output),
+    ])
+    main()
+
+    assert output.read_bytes().startswith(b"<svg")
+
+
 @pytest.mark.parametrize(
     ("format_name", "extra", "expected"),
     [

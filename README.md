@@ -157,19 +157,33 @@ See [Specification 64](docs/specification/64-portable-icon-catalogs.md) and
 [Controller Z's icon Context](examples/controller-z/contexts/icons.yaml) for a
 fully pinned materialized example.
 
-Create a complete non-overwriting project and materialize its declared first
-slide through the public service:
+Create a small editable project and render its first Draft with the bundled
+default presentation preset:
 
 ```bash
 chrona init my-chrona-project
-chrona materialize my-chrona-project/manifest.yaml \
-  --slide mission-brief --output my-chrona-project/out
+chrona render my-chrona-project/project.yaml --actual my-chrona-project/actual.yaml \
+  --viewport 1600xauto --output my-chrona-project/plan.svg
 ```
 
-`init` refuses a non-empty target. Commands that use a configured Store prefer
-an explicit `--store-config`; otherwise they discover `.chrona/store.yaml` by
-walking upward from the current project directory. No home-directory or broad
-filesystem fallback is used.
+The resulting SVG is a Draft for review, not immutable materializer evidence.
+The three generated source files are yours to edit.  Use `--preset PATH` to
+choose an explicit presentation preset, or explicit View/Theme/Color Scheme/
+Layout paths to override its members.
+
+The complete reproducible HALCYON corpus remains available explicitly:
+
+```bash
+chrona init my-halcyon-example --example halcyon-1
+chrona materialize my-halcyon-example/manifest.yaml \
+  --slide mission-brief --output my-halcyon-example/out
+```
+
+`init` refuses a non-empty target. The HALCYON example keeps its immutable
+Store closure under `.chrona/store`; commands that use a configured Store
+prefer an explicit `--store-config`, otherwise discover `.chrona/store.yaml`
+by walking upward from the current project directory. No home-directory or
+broad filesystem fallback is used.
 
 Materialization verifies declared generated evidence. If a reviewed source
 change intentionally changes that artifact, rerun the same `chrona materialize`

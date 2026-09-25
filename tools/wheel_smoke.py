@@ -45,22 +45,25 @@ def run() -> None:
         raise AssertionError("CLI help did not terminate through argparse")
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
-        project, output = root / "my-chrona-project", root / "my-chrona-project" / "out"
+        starter, corpus = root / "my-chrona-project", root / "my-halcyon-example"
+        output = corpus / "out"
         draft = root / "draft-project.yaml"
-        default_svg = root / "default.svg"
+        default_svg, starter_svg = root / "default.svg", starter / "plan.svg"
         catalog, raster = root / "material.yaml", root / "smoke.png"
         draft.write_text(json.dumps(PROJECT), encoding="utf-8")
         for arguments in (
-            ["init", str(project)],
+            ["init", str(starter)],
+            ["render", str(starter / "project.yaml"), "--actual", str(starter / "actual.yaml"), "--output", str(starter_svg)],
+            ["init", str(corpus), "--example", "halcyon-1"],
             ["render", str(draft), "--output", str(default_svg)],
-            ["materialize", str(project / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
+            ["materialize", str(corpus / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
             ["icon-catalog", "material-default", "--output", str(catalog)],
-            ["render", str(project / "project.yaml"),
-             "--view", str(project / "views/01-mission-brief.yaml"),
-             "--theme", str(project / "themes/briefing.yaml"),
-             "--scheme", str(project / "schemes/mission-light.yaml"),
-             "--layout", str(project / "layouts/briefing.yaml"),
-             "--actual", str(project / "actual.yaml"), "--format", "png",
+            ["render", str(corpus / "project.yaml"),
+             "--view", str(corpus / "views/01-mission-brief.yaml"),
+             "--theme", str(corpus / "themes/briefing.yaml"),
+             "--scheme", str(corpus / "schemes/mission-light.yaml"),
+             "--layout", str(corpus / "layouts/briefing.yaml"),
+             "--actual", str(corpus / "actual.yaml"), "--format", "png",
              "--visual-profile", "chrona-output/visual/v0.6-png", "--output", str(raster)],
         ):
             command = [sys.executable, "-m", "chrona", *arguments]
@@ -71,6 +74,8 @@ def run() -> None:
             raise AssertionError("documented materialize command did not create its artifact")
         if not default_svg.read_bytes().startswith(b"<svg"):
             raise AssertionError("no-preset Draft render did not use the bundled default")
+        if not starter_svg.read_bytes().startswith(b"<svg"):
+            raise AssertionError("minimal initialized project did not render with the bundled default")
         catalog_value = safe_load(catalog.read_bytes())
         catalog_body = catalog_value.get("body") if isinstance(catalog_value, dict) else None
         if (not isinstance(catalog_value, dict) or catalog_value.get("version") != "chrona/icon-catalog/v0.3"

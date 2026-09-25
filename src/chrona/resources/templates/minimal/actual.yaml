@@ -1,0 +1,9 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: my-first-plan-observed
+body:
+  asOf: '2026-10-20'
+  observations:
+    - {id: design-progress, sequence: 1, projectObjectId: design, actual: {start: '2026-10-01', progress: 0.6}}
+    - {id: build-not-started, sequence: 1, projectObjectId: build, actual: {progress: 0}}
+    - {id: release-planned, sequence: 1, projectObjectId: release, actual: {at: '2026-12-18'}}

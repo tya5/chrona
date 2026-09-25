@@ -309,7 +309,8 @@ def _parser() -> JsonArgumentParser:
 
     command = sub.add_parser("init", help="create a non-overwriting local Chrona project")
     command.add_argument("directory", nargs="?", default=".")
-    command.add_argument("--example", default="halcyon-1", choices=("halcyon-1",))
+    command.add_argument("--example", choices=("halcyon-1",),
+                         help="create a full named corpus example instead of the editable minimal starter")
 
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")

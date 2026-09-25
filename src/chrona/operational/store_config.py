@@ -28,7 +28,8 @@ class ConfiguredStoreReader:
             raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
         if self.integrity[key] == "required" and not reference.get("contentIdentity"):
             raise ValueError("E_CONTENT_IDENTITY_REQUIRED")
-        if reference.get("kind") == "snapshot-ref":
+        token = reference.get("revision", {}).get("token")
+        if reference.get("kind") == "snapshot-ref" and isinstance(token, str) and token.startswith("baseline:"):
             return LocalBaselineRegistry(root, key[1]).read(reference)
         return LocalSnapshotReader(root, key[1]).read(reference)
 

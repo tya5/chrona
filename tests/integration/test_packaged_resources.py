@@ -6,7 +6,7 @@ from time import perf_counter
 
 import yaml
 
-from chrona.resources import schema_resource, template_resource
+from chrona.resources import minimal_template_resource, schema_resource, template_resource
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
 
@@ -53,6 +53,13 @@ def test_init_template_resolves_to_the_single_source_authority():
     template = template_resource("halcyon-1")
 
     assert template.joinpath("manifest.yaml").read_bytes() == (ROOT / "examples" / "halcyon-1" / "manifest.yaml").read_bytes()
+
+
+def test_minimal_init_template_is_a_wheel_owned_non_corpus_resource():
+    template = minimal_template_resource()
+
+    assert {item.name for item in template.iterdir()} == {"README.md", "actual.yaml", "project.yaml"}
+    assert not template.joinpath("manifest.yaml").is_file()
 
 
 def test_package_owned_runtime_resources_exist():

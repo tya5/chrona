@@ -54,6 +54,15 @@ def template_resource(name: str) -> Traversable:
     raise ValueError("E_INIT_EXAMPLE")
 
 
+def minimal_template_resource() -> Traversable:
+    """Return the wheel-owned editable starter template, not a corpus example."""
+    resource = files(__package__).joinpath("templates", "minimal")
+    required = ("project.yaml", "actual.yaml", "README.md")
+    if not resource.is_dir() or any(not resource.joinpath(name).is_file() for name in required):
+        raise ValueError("E_INIT_TEMPLATE")
+    return resource
+
+
 def default_preset_resource() -> Traversable:
     """Return the wheel-owned draft default preset without repository lookup."""
     resource = files(__package__).joinpath("presets", "default.yaml")
