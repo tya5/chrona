@@ -92,20 +92,41 @@ def place_table_columns(*, columns: tuple[tuple[str, str], ...],
     return tuple(placements)
 
 
+def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: float,
+                               row_padding: float, mark_block_size: float,
+                               role_geometries: Mapping[str, MarkGeometry] | None = None) -> tuple[float, ...]:
+    """Close each row's minimum before any surplus distribution occurs."""
+    if row_minimum <= 0 or row_padding < 0:
+        raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/measuredSources/metricValues/timeline.row")
+    return tuple(max(row_minimum, minimum_track_block_extent(
+        review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
+    ) + row_padding) for row in review_rows)
+
+
 def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, float, float, float],
-               group_header_size: float) -> tuple[RowPlacement, ...]:
-    """Allocate group headers and rows without allowing Scene to infer geometry."""
+               group_header_size: float, required_block_sizes: tuple[float, ...],
+               distribution: str) -> tuple[RowPlacement, ...]:
+    """Allocate completed row requirements and only then distribute surplus."""
+    if len(required_block_sizes) != len(review_rows) or any(size <= 0 for size in required_block_sizes):
+        raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/layoutManifest/timeline")
+    if distribution not in {"pack", "fill"}:
+        raise LayoutError("E_LAYOUT_ROW_DISTRIBUTION", "/layoutManifest/reviewSurface/rowDistribution")
     group_starts = tuple(
         index for index, row in enumerate(review_rows)
         if row.group_id and (index == 0 or review_rows[index - 1].group_id != row.group_id)
     )
     available = timeline_bounds[3] - group_header_size * len(group_starts)
-    height = available / max(1, len(review_rows))
+    required = sum(required_block_sizes)
+    if available < required:
+        raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline",
+                          detail=f"required={required}; available={available}")
+    surplus = (available - required) / len(review_rows) if distribution == "fill" and review_rows else 0.0
     cursor = timeline_bounds[1]
     placements: list[RowPlacement] = []
     for index, row in enumerate(review_rows):
         if index in group_starts:
             cursor += group_header_size
+        height = required_block_sizes[index] + surplus
         placements.append(RowPlacement(row.row_id, row.group_id,
                                        (timeline_bounds[0], cursor, timeline_bounds[2], height)))
         cursor += height

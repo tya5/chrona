@@ -267,6 +267,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
                 and render_closure.context.identity.revision != "draft"):
             detail = re.sub(r"use --viewport \d+x(\d+)",
                             r"set environment.viewport.blockSize to \1 and rematerialize the Context", detail)
+            if "environment.viewport.blockSize" not in detail:
+                detail += "; set environment.viewport.blockSize and rematerialize the Context"
         raise RenderFailed(error.diagnostic_id, detail,
                            "presentation", error.path) from error
     try:

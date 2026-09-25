@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.presentation import RowPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.presentation import RowPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.text import ellipsize_text
 
 
@@ -71,6 +71,8 @@ def test_row_placements_reserve_declared_group_headers() -> None:
         review_rows=rows,
         timeline_bounds=(0.0, 0.0, 100.0, 100.0),
         group_header_size=10.0,
+        required_block_sizes=(20.0, 20.0, 20.0),
+        distribution="pack",
     )
 
     assert placements[0].bounds[1] == 10.0
@@ -94,6 +96,8 @@ def test_track_placements_keep_shared_members_on_one_track() -> None:
         review_rows=rows,
         timeline_bounds=(0.0, 0.0, 100.0, 40.0),
         group_header_size=0.0,
+        required_block_sizes=(10.0,),
+        distribution="pack",
     )
 
     tracks = place_mark_tracks(
@@ -116,7 +120,8 @@ def test_track_placements_reject_completed_mark_extent_outside_its_row(track, so
     rows = (item(row_id="row", group_id=None, items=(item(
         item_id="member", object_id="member", track=track, source_kind=source_kind, actual=actual,
     ),)),)
-    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 9.0), group_header_size=0.0)
+    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 9.0), group_header_size=0.0,
+                                required_block_sizes=(9.0,), distribution="pack")
 
     with pytest.raises(LayoutError, match="E_LAYOUT_MARK_OVERFLOW") as error:
         place_mark_tracks(review_rows=rows, row_placements=row_placements, mark_block_size=10.0)
@@ -129,7 +134,8 @@ def test_track_placements_accept_mark_extents_at_the_row_boundary() -> None:
     rows = (item(row_id="row", group_id=None, items=(item(
         item_id="member", object_id="member", track="stacked", source_kind="combined", actual=None,
     ),)),)
-    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 30.0), group_header_size=0.0)
+    row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 30.0), group_header_size=0.0,
+                                required_block_sizes=(30.0,), distribution="pack")
 
     tracks = place_mark_tracks(review_rows=rows, row_placements=row_placements, mark_block_size=10.0)
 
@@ -148,3 +154,29 @@ def test_track_minimum_uses_the_completed_multi_lane_milestone_placement() -> No
         place_mark_tracks(review_rows=(row,), row_placements=(
             RowPlacement("milestone-lanes", None, (0.0, 0.0, 100.0, 19.0)),
         ), mark_block_size=10.0)
+
+
+def test_row_requirements_are_per_row_and_fill_only_distributes_surplus() -> None:
+    item = SimpleNamespace
+    rows = (
+        item(row_id="one-lane", group_id=None, items=(item(item_id="one", object_id="one", track="stacked", source_kind="primary"),)),
+        item(row_id="two-lane", group_id=None, items=(
+            item(item_id="two-a", object_id="two-a", track="stacked", source_kind="primary"),
+            item(item_id="two-b", object_id="two-b", track="stacked", source_kind="primary"),
+        )),
+    )
+    required = required_row_block_extents(review_rows=rows, row_minimum=12.0, row_padding=4.0, mark_block_size=10.0)
+    assert required == (14.0, 24.0)
+    packed = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 60.0), group_header_size=0.0,
+                        required_block_sizes=required, distribution="pack")
+    filled = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 60.0), group_header_size=0.0,
+                        required_block_sizes=required, distribution="fill")
+    assert tuple(row.bounds[3] for row in packed) == required
+    assert tuple(row.bounds[3] for row in filled) == (25.0, 35.0)
+
+
+def test_row_allocation_rejects_infeasible_requirements_before_track_projection() -> None:
+    rows = (SimpleNamespace(row_id="r", group_id=None),)
+    with pytest.raises(LayoutError, match="E_LAYOUT_REQUIRED_OVERFLOW"):
+        place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 19.0), group_header_size=0.0,
+                   required_block_sizes=(20.0,), distribution="pack")

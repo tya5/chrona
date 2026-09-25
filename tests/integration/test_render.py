@@ -104,12 +104,12 @@ def test_draft_auto_block_closes_the_public_multi_lane_milestone_fixture():
     assert automatic.artifact.content.count(b'data-purpose="planned"') == 3
     with pytest.raises(RenderFailed, match="E_LAYOUT_REQUIRED_OVERFLOW"):
         render_review(_draft_request(
-            project_path=root / "project.yaml", view_path=root / "view.yaml",
-            actual_path=root / "actual.yaml", viewport=(1600, 248),
+        project_path=root / "project.yaml", view_path=root / "view.yaml",
+        actual_path=root / "actual.yaml", viewport=(1600, 256),
         ))
     render_review(_draft_request(
         project_path=root / "project.yaml", view_path=root / "view.yaml",
-        actual_path=root / "actual.yaml", viewport=(1600, 250),
+        actual_path=root / "actual.yaml", viewport=(1600, 257),
     ))
 
 

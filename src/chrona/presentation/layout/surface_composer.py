@@ -10,7 +10,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
-from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns
+from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
@@ -56,17 +56,18 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
     )
-    track_minimum = max((minimum_track_block_extent(
-        review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
-        for row in rows), default=0.0)
-    row_minimum = max(metric_values["timeline.row.minBlockSize"], Decimal(str(track_minimum)))
+    requirements = required_row_block_extents(
+        review_rows=tuple(rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
+        row_padding=float(metric_values["timeline.row.paddingBlock"]),
+        mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
+    )
     headers = 0
     previous = object()
     for row in rows:
         if row.group_id != previous:
             headers += 1 if row.group_id and group_presentation == "header" else 0
             previous = row.group_id
-    return Decimal(len(rows)) * row_minimum + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
+    return Decimal(str(sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
 def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
@@ -317,7 +318,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
-    if "timeline.row.minBlockSize" not in metric_values or "timeline.mark.blockSize" not in metric_values:
+    if ("timeline.row.minBlockSize" not in metric_values
+            or "timeline.row.paddingBlock" not in metric_values
+            or "timeline.mark.blockSize" not in metric_values):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
     slots = tuple(
         SlotPlacement(source, source, item.bounds, item.priority or "required",
@@ -345,27 +348,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     timeline_bounds = _bounds(timeline.bounds)
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
                          if request.surface_content.group_presentation == "header" else 0.0)
-    raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
-                          group_header_size=group_header_size)
-    row_height = raw_rows[0].bounds[3] if raw_rows else timeline_bounds[3]
     role_geometries = resolve_mark_geometries(request.theme_tokens)
-    track_minimum = max((
-        minimum_track_block_extent(review_row=row, mark_block_size=float(metric_values["timeline.mark.blockSize"]),
-                                   role_geometries=role_geometries)
-        for row in review_rows
-    ), default=0.0)
-    minimum = float(max(metric_values["timeline.row.minBlockSize"], Decimal(str(track_minimum))))
-    if row_height < minimum:
-        required = timeline_content_block_requirement(
-            projection=projection, group_presentation=request.surface_content.group_presentation,
-            metric_values=metric_values, role_geometries=role_geometries,
-        )
-        rows_count = len(review_rows)
-        hint = int(timeline.bounds.block + required + (layout_manifest.viewport.block_size - timeline.bounds.block - timeline.bounds.block_size))
-        detail = (f"timeline requires {int(required)}px for {rows_count} rows at {int(minimum)}px per row; "
-                  f"available {int(timeline.bounds.block_size)}px; use --viewport "
-                  f"{int(layout_manifest.viewport.inline_size)}x{hint} or select fewer rows")
-        raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline", detail=detail)
+    requirements = required_row_block_extents(
+        review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
+        row_padding=float(metric_values["timeline.row.paddingBlock"]),
+        mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
+    )
+    raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
+                          group_header_size=group_header_size, required_block_sizes=requirements,
+                          distribution=layout_manifest.row_distribution)
     rows = tuple(
         RowPlacement(item.row_id, item.table_subject_id, placement.group_id or "", _rect(placement.bounds),
                      depth=int(getattr(item, "depth", 0)))
@@ -522,20 +513,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             shapes.append(ShapePlacement(f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "Rect",
                                          Rect(Decimal(str(x1)), timeline.bounds.block,
                                               Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size)))
+    as_of_label: tuple[float, str] | None = None
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
         x = _coordinate(contract.time.as_of, scale)
         shapes.append(ShapePlacement("as-of", "actual-set", "Path",
                                      Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
                                      ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
-        text.append(place_text(placement_id="as-of-label", source_ref="actual-set",
-                               content=f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}", inline=x,
-                               baseline_block=float(timeline.bounds.block) + body_size, typography_role="text",
-                               theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                               collision_region="timeline-as-of",
-                               collision_domain=CollisionDomain("timeline", "overlay"),
-                               source_content=f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}",
-                               available_inline_start=x,
-                               available_inline_size=max(0.0, timeline_bounds[0] + timeline_bounds[2] - x)))
+        as_of_label = (x, f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}")
     diagnostics: list[str] = []
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
@@ -720,6 +704,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     label_requests: list[LabelRequest] = []
     candidate_icons: list[IconPlacement] = []
     handled_candidate_visuals: set[str] = set()
+    if as_of_label is not None:
+        x, content = as_of_label
+        label_requests.append(LabelRequest(
+            "as-of-label", "actual-set", content,
+            LabelRect(x, timeline_bounds[1], 0.0, body_size), ("end", "start", "below"),
+            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "suppress",
+        ))
     if contract.labels.enabled:
         for review_row in review_rows:
             for item in review_row.items:
@@ -808,13 +799,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines)
         label_size = (leading + text_width + trailing,
                       float(font_size) * float(line_height) * len(lines))
-        # Mark labels are a foreground text layer.  An inside label is
-        # deliberately allowed over its completed comparison-mark stack; only
-        # placed text can obscure it.  Treating sibling actual/planned marks
-        # as obstacles would turn a valid host label into an accidental
-        # fallback whenever a comparison is present.
-        obstacles = ([] if label_request.inside_host_obstacle_id is not None else
-                     [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks])
+        # Mark labels remain subject to every completed mark.  ``place_label``
+        # alone exempts this request's declared host for an ``inside``
+        # candidate; a comparison sibling or another row is never an implicit
+        # host.
+        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
         obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
                          if item.required and item.overflow != "suppressed")
         candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,

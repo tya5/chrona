@@ -87,7 +87,8 @@ def test_scene_roles_are_registry_owned_without_direct_variance_or_scale_role_li
 def _manifest(*sources):
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
     return LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
-                          tuple(LayoutDecision(source, "slot", rect, source) for source in sources))
+                          tuple(LayoutDecision(source, "slot", rect, source) for source in sources),
+                          row_distribution="fill")
 
 
 def _theme():
@@ -183,7 +184,7 @@ def test_scene_dispatches_completed_network_layout_through_registry_semantics_on
     manifest = LayoutManifest("network", "sha256:test", "horizontal-tb", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(250)), (
         LayoutDecision("title", "slot", title_bounds, "title", priority="required"),
         LayoutDecision("network", "slot", network_bounds, "network", priority="required"),
-    ))
+    ), row_distribution="fill")
     run = lambda source, content, role, width, block, base: MeasuredTextRun(source, content, role, Decimal(width), Decimal(block), Decimal(base), "Test Sans", 400, float(block), 1.0, "sha256:test")
     measured = MeasuredSources({}, {}, {
         "network.node.minInlineSize": Decimal(60), "network.node.minBlockSize": Decimal(30), "network.rank.gap": Decimal(12),
@@ -214,7 +215,7 @@ def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None, ("planned",)),),
                                   (date(2026, 1, 1), date(2026, 2, 1)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
-                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     manifest = _manifest("title", "table", "timeline", "timeline-axis")
     value = build_scene_input(projection=projection, surface_content=surface_content((("name", "Name"),), (("a", "name", "A"),)),
                               layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True})
@@ -247,7 +248,7 @@ def test_scene_projects_title_links_only_to_selected_current_title_cells():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 2, 1)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content((("title", "Title"),), (("a", "title", "A"),),
@@ -269,7 +270,7 @@ def test_scene_projects_row_links_to_current_marks_but_not_actual_comparison_mar
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 2, 2)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(
         projection=projection, surface_content=surface_content(link_mode="row"),
         layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=_theme(),
@@ -284,7 +285,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
                                   ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 6)}, None, None, ("planned",))),
                                   (date(2026, 1, 1), date(2026, 1, 11)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
-                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(300))
     manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", viewport, (
         LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(40)), "title"),
@@ -319,7 +320,7 @@ def test_explicit_row_members_keep_fixed_mark_size_labels_and_snapshot_role():
     projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 10)), (), (), (row,))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
                               surface_content=surface_content(show_member_labels=True),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
@@ -344,7 +345,7 @@ def test_scene_projects_layout_completed_rollup_summary_bar():
     projection = ReviewProjection((rollup,), (date(2026, 1, 1), date(2026, 1, 10)), (), (), (row,))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(9)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(9)})
     value = build_scene_input(projection=projection, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -366,7 +367,7 @@ def test_scene_projects_selected_inside_label_with_its_host_mark_role():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 11)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(20)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(20)})
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
@@ -387,7 +388,7 @@ def test_scene_anchors_an_explicit_actual_inside_label_to_its_actual_mark():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 12)), (), (), (row,))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(48), "timeline.mark.blockSize": Decimal(20)})
+                                   "timeline.row.minBlockSize": Decimal(48), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(20)})
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
@@ -408,7 +409,7 @@ def test_scene_falls_back_from_short_inside_label_to_outside_text_role():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 2, 1)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(20)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(20)})
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(show_member_labels=True, label_placement="plot", label_content=("title",),
@@ -428,12 +429,12 @@ def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
     ), (date(2026, 1, 1), date(2026, 1, 10)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
     manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
                               tuple(LayoutDecision(source, "slot", rect, source)
                                     for source in ("title", "table", "timeline", "timeline-axis")),
-                              relation_max_bends=0)
+                              relation_max_bends=0, row_distribution="fill")
     value = build_scene_input(
         projection=projection,
         surface_content=surface_content(
@@ -458,7 +459,7 @@ def test_same_explicit_row_relation_uses_distinct_mark_ports():
     projection = ReviewProjection((first, second), (date(2026, 1, 1), date(2026, 1, 9)), (), (), (row,))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     theme = _theme()
     theme["body"]["values"]["marker"] = {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
@@ -479,7 +480,7 @@ def test_legend_entries_emit_role_derived_swatches():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
                               surface_content=surface_content(legend_entries=(("planned", "Plan"),)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
@@ -500,7 +501,7 @@ def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
     projection = ReviewProjection((primary,), (date(2026, 1, 1), date(2026, 1, 8)), (), (), (row,))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -519,7 +520,7 @@ def test_grouped_rows_reserve_and_emit_a_group_header():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 4)), (), (), (row,))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
                                    "timeline.groupHeader.blockSize": Decimal(20)})
     value = build_scene_input(projection=projection, surface_content=surface_content(group_presentation="header"),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
@@ -546,7 +547,7 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
                                   folded_points=(FoldedPointProjection(point, "fw", members=(scenario,)),))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
         "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-        "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
         "timeline.groupHeader.blockSize": Decimal(20),
     })
     viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(400))
@@ -556,7 +557,7 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
         LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(40), Decimal(700), Decimal(160)), "timeline"),
         LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(200), Decimal(700), Decimal(40)), "timeline-axis"),
         LayoutDecision("annotations", "slot", Rect(Decimal(800), Decimal(40), Decimal(200), Decimal(160)), "annotations"),
-    ))
+    ), row_distribution="fill")
     theme = _theme()
     theme["body"]["values"]["marker"] = {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}}
     theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "marker"}
@@ -586,7 +587,7 @@ def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 10)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
                               surface_content=surface_content(as_of=date(2026, 1, 5)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
@@ -603,7 +604,7 @@ def test_project_calendar_closure_emits_background_shading():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 5)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
                               surface_content=surface_content(calendar_closed=(date(2026, 1, 3),)),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
@@ -619,7 +620,7 @@ def test_narrow_calendar_density_retains_only_declared_exception_closures():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 5)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
         "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-        "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
         "timeline.calendarClosed.minimumDayWidth": Decimal(500),
     })
     value = build_scene_input(projection=projection, surface_content=surface_content(
@@ -636,7 +637,7 @@ def test_month_axis_emits_quarter_band_labels():
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection, surface_content=surface_content(),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -655,7 +656,7 @@ def test_table_columns_use_measured_non_overlapping_origins():
                                   (date(2026, 1, 1), date(2026, 1, 2)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
-                                   "timeline.row.minBlockSize": Decimal(40), "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     value = build_scene_input(projection=projection,
                               surface_content=surface_content((("long", "Long heading"), ("short", "B")),
                                                                 (("a", "long", "a deliberately long table value"), ("a", "short", "B"))),
