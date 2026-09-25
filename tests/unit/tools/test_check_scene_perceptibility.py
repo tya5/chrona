@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from tools.check_scene_perceptibility import evaluate_committed_scenes, report_document, render_human
+from tools.check_scene_perceptibility import configure_stdout, evaluate_committed_scenes, report_document, render_human
 
 
 def _scene(*primitives):
@@ -38,3 +38,15 @@ def test_tool_turns_invalid_or_error_scene_into_named_failure_record(tmp_path):
 
     assert report["errorCount"] == 1
     assert report["findings"][0]["finding"]["code"] == "E_SCENE_PERCEPTIBILITY_DOCUMENT"
+
+
+def test_tool_configures_report_transport_as_utf8_without_mutating_findings():
+    calls = []
+
+    class Stream:
+        def reconfigure(self, **kwargs):
+            calls.append(kwargs)
+
+    configure_stdout(Stream())
+
+    assert calls == [{"encoding": "utf-8"}]

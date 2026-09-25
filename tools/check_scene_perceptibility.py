@@ -20,6 +20,13 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT_VERSION = "chrona/scene-perceptibility/v1"
 
 
+def configure_stdout(stream: Any) -> None:
+    """Make report bytes portable without changing Unicode finding values."""
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8")
+
+
 def committed_scene_paths(root: Path = ROOT) -> tuple[Path, ...]:
     """Return only Git-tracked public generated Scene evidence in stable order."""
     completed = subprocess.run(("git", "-C", str(root), "ls-files", "-z", "examples"), check=False,
@@ -75,6 +82,7 @@ def main(argv: tuple[str, ...] = tuple(sys.argv[1:])) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--format", choices=("human", "json"), default="human")
     args = parser.parse_args(argv)
+    configure_stdout(sys.stdout)
     report = report_document(evaluate_committed_scenes(committed_scene_paths()))
     if args.format == "json":
         print(json.dumps(report, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
