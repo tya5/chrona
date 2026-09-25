@@ -16,8 +16,7 @@ Profile v0.7, or Scene v0.4 is added.
 
 **Files/areas**
 
-* add `schemas/view-v0.18.schema.yaml`, `schemas/layout-profile-v0.8.schema.yaml`,
-  and `schemas/scene-v0.5.schema.yaml`;
+* add `schemas/view-v0.18.schema.yaml` and `schemas/layout-profile-v0.8.schema.yaml`;
 * update schema/resource inventories, packaging manifests, contract resource
   maps, closure validation, parsers, and typed resource records;
 * migrate all public Views to v0.18 with explicit axis-label orientation and
@@ -41,8 +40,9 @@ Profile v0.7, or Scene v0.4 is added.
 
 **Files/areas**
 
-* centralize `TextOrientation -> rotationDegrees` and four-corner bounds in
-  the text-placement module;
+* add `schemas/scene-v0.5.schema.yaml`, then centralize
+  `TextOrientation -> rotationDegrees` and four-corner bounds in the
+  text-placement module;
 * require/validate the orientation/angle pair in `TextPlacement` and Scene
   `TextLayout`; update Scene construction and schema serialization to v0.5;
 * make `axis_label_fits` and auto-form/thinning selection consume completed
@@ -95,3 +95,13 @@ Profile v0.7, or Scene v0.4 is added.
 4. Fetch `origin/main`, check exact ahead/behind and diff before every push.
    Stop on remote movement, non-fast-forward, unrelated generated changes, or
    any design drift.
+
+## Plan correction — 2026-09-25
+
+Scene v0.5 was originally listed in I412-1 alongside View/Profile ingress.
+That would either publish an unused schema as live or require a Scene whose
+new mandatory orientation/angle values have not yet been completed by Layout.
+The schema and Scene-version migration therefore belong to I412-2, the slice
+that creates and validates those values.  This does not change the approved
+design or release outcome; it keeps every published slice internally
+materializable and version-truthful.
