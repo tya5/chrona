@@ -21,7 +21,8 @@ no Layout, renderer, raster, or font imports.
 ## I431-2 — Atomic role contract and corpus migration
 
 In one publishable implementation unit, add finite semantic contrast classes,
-state-text `contrastTreatment`, decoration `backgroundTreatment: none`, typed
+state-text `contrastTreatment` and completed-Scene `contrastTreatment`
+transport, decoration `backgroundTreatment: none`, typed
 resolved-Theme access, explicit Scene `decorationDispositions`, and the
 Theme-closure diagnostic `E_SCHEME_STATE_TEXT_CONTRAST`.  Migrate every
 affected light/dark Theme declaration, regenerate every affected Scene/SVG,
@@ -33,7 +34,8 @@ enforcing contract before every committed materializer context is valid.
 model/serialization/validation, examples and generated evidence, inventories,
 and focused schema/closure/Layout/Scene tests.
 
-**Acceptance:** invalid state-text paint is rejected with its role path;
+**Acceptance:** invalid state-text paint is rejected with its role path; each
+classified state-text Scene primitive carries its resolved finite treatment;
 `none` yields inspectable Scene absence without a drawable primitive; enabled
 classified flat decorations are represented as completed paint; every
 committed materializer context remains materializable; all five decoration
@@ -51,7 +53,9 @@ numeric baseline or suppression is permitted.
 focused tests, `conformance/run_conformance.py`, generated report, release
 review.
 
-**Acceptance:** every below-floor classified decoration yields a stable error;
+**Acceptance:** every below-floor classified decoration or state-text primitive
+yields a stable error using only completed Scene facts; a malformed state-text
+treatment yields a stable evidence-integrity error;
 every declared absence is reported separately; report ordering is stable;
 `--check` detects stale content; report includes all five decoration purposes
 and state-text purposes; public materializer evidence and SVG diff are
