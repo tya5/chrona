@@ -125,6 +125,46 @@ def _identity(path: Path) -> str:
     return "sha256:" + sha256(path.read_bytes()).hexdigest()
 
 
+def font_metrics_from_document(document: bytes, *, metrics_path: Path, family: str, weight: int,
+                               source_content_identity: str | None = None,
+                               require_numeric: bool = True) -> FontMetrics:
+    """Validate one canonical v3 document into the shared measurement model.
+
+    A caller must supply the selected face identity when the document was
+    generated in memory, as draft system-font discovery does.  Declared
+    metrics retain their own document identity and source identity checks.
+    """
+    try:
+        table = json.loads(document)
+        if (table.get("version") != "chrona/font-metrics/v3"
+                or table.get("family", "").casefold() != family.casefold()
+                or table.get("weight") != weight
+                or not isinstance(table.get("sourceContentIdentity"), str)
+                or (source_content_identity is not None
+                    and table["sourceContentIdentity"] != source_content_identity)):
+            raise ValueError("invalid metric identity")
+        units, ascent, descent, cap_height = (int(table[key]) for key in ("unitsPerEm", "ascent", "descent", "capHeight"))
+        advances = {int(code): int(value) for code, value in table["advances"].items()}
+        raw_numeric = table.get("numericAdvances")
+        numeric_advances = ({
+            mode: {int(code): int(value) for code, value in raw_numeric[mode].items()}
+            for mode in ("proportional", "tabular")
+        } if isinstance(raw_numeric, dict) else None)
+        digits = set(range(ord("0"), ord("9") + 1))
+        if (units <= 0 or cap_height <= 0 or cap_height > units
+                or any(code < 0 or value < 0 for code, value in advances.items())
+                or (numeric_advances is None and require_numeric)
+                or (numeric_advances is not None and (
+                    any(set(values) != digits or any(value <= 0 for value in values.values())
+                        for values in numeric_advances.values())
+                    or len(set(numeric_advances["tabular"].values())) != 1))):
+            raise ValueError("invalid metrics")
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE") from error
+    return FontMetrics(metrics_path, "sha256:" + sha256(document).hexdigest(), str(table["sourceContentIdentity"]),
+                       family, weight, units, ascent, descent, cap_height, advances, numeric_advances)
+
+
 def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400,
                          asset_root: Path | None = None, _allow_substitute: bool = True,
                          _require_numeric: bool = True) -> FontMetrics:
@@ -152,37 +192,19 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
         if metrics.get("contentIdentity") != metrics_identity:
             continue
         try:
-            table = json.loads(metrics_path.read_bytes())
-            if (table.get("version") != "chrona/font-metrics/v3"
-                    or table.get("family", "").casefold() != family.casefold()
-                    or table.get("weight") != weight
-                    or not isinstance(table.get("sourceContentIdentity"), str)):
-                continue
-            units, ascent, descent, cap_height = (int(table[key]) for key in ("unitsPerEm", "ascent", "descent", "capHeight"))
-            advances = {int(code): int(value) for code, value in table["advances"].items()}
-            raw_numeric = table.get("numericAdvances")
-            numeric_advances = ({
-                mode: {int(code): int(value) for code, value in raw_numeric[mode].items()}
-                for mode in ("proportional", "tabular")
-            } if isinstance(raw_numeric, dict) else None)
-            digits = set(range(ord("0"), ord("9") + 1))
-            if (units <= 0 or cap_height <= 0 or cap_height > units
-                    or any(code < 0 or value < 0 for code, value in advances.items())
-                    or (numeric_advances is None and _require_numeric)
-                    or (numeric_advances is not None and (
-                        any(set(values) != digits or any(value <= 0 for value in values.values())
-                            for values in numeric_advances.values())
-                        or len(set(numeric_advances["tabular"].values())) != 1))):
-                continue
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError, FontResourceError):
+            metric = font_metrics_from_document(metrics_path.read_bytes(), metrics_path=metrics_path,
+                                                family=family, weight=weight,
+                                                require_numeric=_require_numeric)
+        except FontMetricsError:
             continue
         fallback = None
         if descriptor.get("missingFont") == "substitute" and _allow_substitute:
             substitute_descriptor = _packaged_substitute_descriptor()
             fallback = resolve_font_metrics(_declared_substitute_family(substitute_descriptor), substitute_descriptor,
                                             _allow_substitute=False, _require_numeric=False)
-        return FontMetrics(metrics_path, metrics_identity, str(table["sourceContentIdentity"]), family, weight,
-                           units, ascent, descent, cap_height, advances, numeric_advances, fallback)
+        return FontMetrics(metric.metrics_path, metrics_identity, metric.source_content_identity, family, weight,
+                           metric.units_per_em, metric.ascent, metric.descent, metric.cap_height,
+                           metric.advances, metric.numeric_advances, fallback)
     raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
 
 

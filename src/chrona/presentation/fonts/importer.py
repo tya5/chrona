@@ -80,7 +80,13 @@ def _numeric_advances(font: TTFont, cmap: dict[int, str], hmtx: dict[str, tuple[
     return result
 
 
-def _metrics(font: TTFont, payload: bytes, family: str, weight: int) -> bytes:
+def font_metrics_document(font: TTFont, payload: bytes, family: str, weight: int) -> bytes:
+    """Build the canonical v3 metrics document for exactly ``payload``.
+
+    Both local import and draft system discovery use this function.  Keeping
+    the extraction here ensures that a system face has the very same glyph and
+    numeric-feature contract as a declared face.
+    """
     try:
         cmap = font.getBestCmap() or {}
         hmtx = font["hmtx"].metrics
@@ -163,7 +169,7 @@ def import_font(source: Path, output: Path, *, family: str, weight: int,
         persisted = TTFont(__import__("io").BytesIO(font_bytes), recalcTimestamp=False)
     except Exception as error:  # pragma: no cover - defensive against fontTools regressions
         raise FontImportError("E_FONT_IMPORT_FORMAT") from error
-    metric_bytes = _metrics(persisted, font_bytes, family, weight)
+    metric_bytes = font_metrics_document(persisted, font_bytes, family, weight)
     slug = _slug(family, weight)
     font_name, metric_name = f"{slug}{suffix}", f"{slug}.metrics.json"
     descriptor_path = output / "font-metrics.yaml"
