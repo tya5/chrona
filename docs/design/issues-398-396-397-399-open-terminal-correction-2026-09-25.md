@@ -35,6 +35,19 @@ inside `clipPath`.  It does not recreate host geometry.  This lets the
 in-flight actual host its own progress fill while keeping the open terminal
 and leading containment exact.
 
+## Diagnostic projection correction
+
+`W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED` is a completed Layout decision, but the
+initial implementation retained `SurfacePlacement.diagnostics` only at the
+Layout boundary and constructed the public `InspectionScene` with an empty
+diagnostic list. That loses the author-visible warning required by #399.
+
+The Scene builder carries completed placement diagnostics forward unchanged
+into the inspection Scene. It does not recreate the condition from Actual
+data, because that would make Scene a second policy implementation. The
+render use case combines those completed surface diagnostics with any other
+established inspection diagnostics before serialization.
+
 ## Invariants
 
 * Only Layout selects `open-span`; a Scene builder neither infers it from
@@ -48,6 +61,8 @@ and leading containment exact.
   same reference rule.
 * Source order and `paintOrder` remain unchanged; the additional outline does
   not introduce a renderer-owned mark or a new accessibility item.
+* A Layout warning is observable in the inspection Scene exactly as emitted;
+  neither Scene nor SVG decides whether an actual should be open.
 
 ## Architecture review
 

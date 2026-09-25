@@ -18,11 +18,14 @@ continuation terminal; a closed actual remains a rectangular placement.
 ## C2 — Scene and adapter projection
 
 Project an open-span as a `Symbol`; permit a completed `Symbol` outline as a
-clip host.  Serialize that outline verbatim in SVG graphics and clip paths.
+clip host. Serialize that outline verbatim in SVG graphics and clip paths.
+Carry completed placement diagnostics into the inspection Scene without
+re-evaluating their triggering policy.
 
 Acceptance: Scene structural tests reject inconsistent treatment/shape pairs;
 SVG tests prove an open host's completed path is painted and clips a progress
-rectangle without geometry synthesis.
+rectangle without geometry synthesis; render integration tests prove the
+missing-as-of warning is observable with no fabricated missing-actual stub.
 
 ## C3 — Public evidence and release gate
 
