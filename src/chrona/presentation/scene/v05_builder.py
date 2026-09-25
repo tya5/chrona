@@ -492,6 +492,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             ("relation-label:", "relationLabel", None),
         ))
     for placed in placed_surface.text:
+        if placed.overflow == "suppressed":
+            continue
         if placed.annotation is not None:
             emit_semantic_text(placed.placement_id, placed.semantic_id)
             continue

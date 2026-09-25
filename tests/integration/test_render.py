@@ -265,6 +265,45 @@ def test_draft_detail_visuals_reach_group_and_milestone_slots(tmp_path):
     assert "visual:milestone:evb-arrival:leading" in by_id
 
 
+@pytest.mark.parametrize(("overflow", "expected"), (("ellipsize-with-source", "ellipsized"),
+                                                        ("clip-optional", "suppressed")))
+def test_detail_panel_unbreakable_overflow_is_completed_in_layout(tmp_path, overflow, expected):
+    root = _root(); example = root / "examples/controller-z"
+    layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
+    footer = next(node for node in layout["root"]["children"] if node["id"] == "footer")
+    next(node for node in footer["children"] if node.get("source") == "group-details")["overflow"] = overflow
+    detail = yaml.safe_load((example / "profiles/review-detail.yaml").read_text(encoding="utf-8"))
+    detail["body"]["groupDetails"][0]["description"] = "X" * 1000
+    layout_path = tmp_path / "layout.yaml"; layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    detail_path = tmp_path / "detail.yaml"; detail_path.write_text(yaml.safe_dump(detail, sort_keys=False), encoding="utf-8")
+    rendered = render_review(_draft_request(layout_path=layout_path, detail_path=detail_path))
+    primitives = {item.scene_id: item for item in rendered.surface.primitives}
+    placement_id = "group-detail:fw-team"
+    if expected == "ellipsized":
+        assert any(line.endswith("…") for line in primitives[placement_id].text_layout.lines)
+    else:
+        assert placement_id not in primitives
+        assert any(item.code == "W_LAYOUT_DETAIL_PANEL_CLIPPED" and item.placement_id == placement_id
+                   for item in rendered.surface.fit_warnings)
+
+
+def test_detail_panels_stack_when_their_declared_inline_slots_overlap(tmp_path):
+    root = _root(); example = root / "examples/controller-z"
+    layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
+    footer = next(node for node in layout["root"]["children"] if node["id"] == "footer")
+    footer["kind"] = "overlay"
+    for field in ("alignItems", "justifyContent", "itemMinInlineSize", "gap"):
+        footer.pop(field)
+    layout["requiredThemeTokens"].remove("panel.minimum")
+    layout_path = tmp_path / "overlapping-detail-layout.yaml"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    rendered = render_review(_draft_request(layout_path=layout_path, detail_path=example / "profiles/review-detail.yaml"))
+    slots = {slot.slot_id: slot.bounds for slot in rendered.surface.slots}
+    group = slots["group-details"]
+    milestones = slots["milestones"]
+    assert milestones[1] >= group[1] + group[3]
+
+
 def test_draft_annotation_visual_is_measured_before_its_rail_is_allocated(tmp_path):
     root = _root(); example = root / "examples/controller-z"
     view = yaml.safe_load((example / "views/executive.yaml").read_text(encoding="utf-8"))

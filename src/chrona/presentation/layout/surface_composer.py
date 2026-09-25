@@ -117,6 +117,182 @@ def _completed_canvas(*, requested: Rect, rectangles: tuple[Rect, ...],
                 inline_end - requested.inline, block_end - requested.block)
 
 
+def _visual_reservation(*, typography_role: str, font_size: float,
+                        visuals: Mapping[str, Any], request: SurfaceLayoutRequest) -> tuple[dict[str, tuple[Any, float, float]], float, float]:
+    """Resolve one text run's icon inline budget before its text is measured."""
+    resolved: dict[str, tuple[Any, float, float]] = {}
+    for side, visual in visuals.items():
+        icon = request.icon_assets.get(visual.ref)
+        if icon is None:
+            raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
+        try:
+            scale, gap_ratio = request.theme_tokens.icon_ratios(typography_role)
+        except Exception as error:
+            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
+        height = font_size * float(scale)
+        if height <= 0 or icon.viewport[1] <= 0:
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+        resolved[side] = (icon, height * icon.viewport[0] / icon.viewport[1], font_size * float(gap_ratio))
+    leading = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "leading")
+    trailing = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "trailing")
+    return resolved, leading, trailing
+
+
+def _detail_visual_requests(request: SurfaceLayoutRequest) -> dict[str, dict[str, Any]]:
+    """Select detail-panel visual intents without assigning any Scene geometry."""
+    result: dict[str, dict[str, Any]] = {}
+    prefixes = {"group-detail": "group-detail", "milestone": "milestone"}
+    for visual in request.visual_requests:
+        prefix = prefixes.get(visual.target_kind)
+        if prefix is None:
+            continue
+        selector = dict(visual.selector)
+        identifier = selector.get("id")
+        if not identifier:
+            continue
+        placement_id = f"{prefix}:{identifier}"
+        if visual.side in result.setdefault(placement_id, {}):
+            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
+        result[placement_id][visual.side] = visual
+    return result
+
+
+def _detail_panel_entries(source: str, values: tuple[Any, ...]) -> tuple[tuple[str, str], ...]:
+    """Keep Review Detail formatting semantic while delegating geometry to Layout."""
+    if source == "group-details":
+        return tuple((value[0], f"{value[1]}: {value[2]}") for value in values)
+    return tuple((value[0], f"{value[1]} — {value[2].isoformat()}") for value in values)
+
+
+def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: SurfaceLayoutRequest,
+                                 requested_canvas: Rect) -> tuple[tuple[SlotPlacement, ...], list[Any], list[FitWarning], frozenset[str]]:
+    """Complete Review Detail panel lines, rectangles, and visible-fit records."""
+    slot_by_source = {slot.source_ref: slot for slot in slots}
+    sources = (("group-details", request.surface_content.group_details, "group-detail"),
+               ("milestones", request.surface_content.milestones, "milestone"))
+    visual_requests = _detail_visual_requests(request)
+    completed: list[Any] = []
+    warnings: list[FitWarning] = []
+    replacements: dict[str, SlotPlacement] = {}
+    allocated: list[SlotPlacement] = []
+    pre_reserved: set[str] = set()
+    treatment = request.theme_tokens.text_treatment("text")
+    font_size = float(treatment.font_size)
+    metrics = metric_for_role(request.theme_tokens, "text", request.font_metrics)
+    requested_end = requested_canvas.block + requested_canvas.block_size
+
+    for source, values, prefix in sources:
+        slot = slot_by_source.get(source)
+        if slot is None or not values:
+            continue
+        available = float(slot.bounds.inline_size)
+        if available <= 0:
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", source)
+        block = slot.bounds.block
+        for previous in allocated:
+            left, right = slot.bounds.inline, slot.bounds.inline + slot.bounds.inline_size
+            previous_left = previous.bounds.inline
+            previous_right = previous.bounds.inline + previous.bounds.inline_size
+            if left < previous_right and previous_left < right:
+                block = max(block, previous.bounds.block + previous.bounds.block_size)
+        cursor = block
+        item_overflows: list[tuple[Any, float, float]] = []
+        for source_ref, content in _detail_panel_entries(source, values):
+            placement_id = f"{prefix}:{source_ref}"
+            _, leading, trailing = _visual_reservation(
+                typography_role="text", font_size=font_size,
+                visuals=visual_requests.get(placement_id, {}), request=request,
+            )
+            text_available = available - leading - trailing
+            if text_available <= 0:
+                raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", placement_id)
+            lines = wrap_text(content, available_inline=text_available, font_size=font_size, font_metrics=metrics,
+                              letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                              numeric_spacing=treatment.numeric_spacing)
+            natural_width = max(measure_text_width(line, font_size=font_size, font_metrics=metrics,
+                                                   letter_spacing=float(treatment.letter_spacing),
+                                                   text_transform=treatment.transform,
+                                                   numeric_spacing=treatment.numeric_spacing) for line in lines)
+            disposition = "fit"
+            if natural_width > text_available:
+                if slot.overflow == "ellipsize-with-source":
+                    lines = tuple(ellipsize_text(line, available_inline=text_available, font_size=font_size,
+                                                  font_metrics=metrics, letter_spacing=float(treatment.letter_spacing),
+                                                  text_transform=treatment.transform,
+                                                  numeric_spacing=treatment.numeric_spacing) for line in lines)
+                    disposition = "ellipsized"
+                elif slot.overflow == "clip-optional":
+                    suppressed = place_text(placement_id=placement_id, source_ref=source_ref, content=content,
+                                            inline=float(slot.bounds.inline), baseline_block=float(cursor + Decimal(str(font_size))),
+                                            typography_role="text", theme_tokens=request.theme_tokens,
+                                            font_metrics=request.font_metrics, overflow="suppressed", required=False,
+                                            collision_region=f"{source}:{source_ref}",
+                                            collision_domain=CollisionDomain(source, "content"), source_content=content,
+                                            lines=lines, available_inline_start=float(slot.bounds.inline),
+                                            available_inline_size=text_available, slot_id=slot.slot_id)
+                    completed.append(suppressed)
+                    warnings.append(FitWarning("W_LAYOUT_DETAIL_PANEL_CLIPPED", placement_id, source_ref,
+                                               "detail-panel", "clip-optional", natural_width,
+                                               float(suppressed.bounds.block_size), text_available,
+                                               float(slot.bounds.block_size)))
+                    continue
+                else:
+                    disposition = "visible-overflow"
+            placed = place_text(placement_id=placement_id, source_ref=source_ref, content="\n".join(lines),
+                                inline=float(slot.bounds.inline), baseline_block=float(cursor + Decimal(str(font_size))),
+                                typography_role="text", theme_tokens=request.theme_tokens,
+                                font_metrics=request.font_metrics, overflow=disposition,
+                                collision_region=f"{source}:{source_ref}",
+                                collision_domain=CollisionDomain(source, "content"), source_content=content,
+                                lines=lines, available_inline_start=float(slot.bounds.inline),
+                                available_inline_size=available, slot_id=slot.slot_id)
+            completed.append(placed)
+            pre_reserved.add(placement_id)
+            cursor += placed.bounds.block_size
+            if disposition == "visible-overflow":
+                item_overflows.append((placed, natural_width, text_available))
+        final_size = max(slot.bounds.block_size, cursor - block)
+        final_slot = replace(slot, bounds=Rect(slot.bounds.inline, block, slot.bounds.inline_size,
+                                                final_size))
+        replacements[source] = final_slot
+        allocated.append(final_slot)
+        for placed, required_inline, available_inline in item_overflows:
+            warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", placed.placement_id, placed.source_ref,
+                                       "detail-panel", "visible-overflow", required_inline,
+                                       float(placed.bounds.block_size), available_inline, float(final_size)))
+        if final_slot.bounds.block + final_slot.bounds.block_size > requested_end + GEOMETRY_TOLERANCE:
+            warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", f"detail-panel:{source}", source,
+                                       "detail-panel", "visible-overflow", float(final_slot.bounds.inline_size),
+                                       float(final_slot.bounds.block_size), float(final_slot.bounds.inline_size),
+                                       max(0.0, float(requested_end - final_slot.bounds.block))))
+    final_slots = tuple(replacements.get(slot.source_ref, slot) for slot in slots)
+    return final_slots, completed, warnings, frozenset(pre_reserved)
+
+
+def _validate_detail_panel_placement(text: list[Any], slots: tuple[SlotPlacement, ...]) -> None:
+    """Keep final detail text and final panel rectangles consistent after visual projection."""
+    slot_by_id = {slot.slot_id: slot for slot in slots}
+    panels = [item for item in text if item.placement_id.startswith(("group-detail:", "milestone:"))]
+    for item in panels:
+        if item.overflow in {"suppressed", "visible-overflow"}:
+            continue
+        slot = slot_by_id.get(item.slot_id)
+        if slot is None:
+            raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
+        if (item.bounds.inline < slot.bounds.inline - GEOMETRY_TOLERANCE
+                or item.bounds.inline + item.bounds.inline_size > slot.bounds.inline + slot.bounds.inline_size + GEOMETRY_TOLERANCE
+                or item.bounds.block < slot.bounds.block - GEOMETRY_TOLERANCE
+                or item.bounds.block + item.bounds.block_size > slot.bounds.block + slot.bounds.block_size + GEOMETRY_TOLERANCE):
+            raise LayoutError("E_LAYOUT_DETAIL_PANEL_CONTAINMENT", item.placement_id)
+    groups = [item for item in panels if item.placement_id.startswith("group-detail:") and item.overflow != "suppressed"]
+    milestones = [item for item in panels if item.placement_id.startswith("milestone:") and item.overflow != "suppressed"]
+    for group in groups:
+        for milestone in milestones:
+            if (group.overflow != "visible-overflow" and milestone.overflow != "visible-overflow"
+                    and intersects(group.bounds, milestone.bounds)):
+                raise LayoutError("E_LAYOUT_DETAIL_PANEL_OVERLAP", f"{group.placement_id}:{milestone.placement_id}")
+
+
 def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
     """Close every comparison-mark role to lane-relative Layout geometry."""
     result = {}
@@ -183,7 +359,8 @@ def relation_label_anchor(points: tuple[tuple[float, float], ...]) -> LabelRect:
 
 def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest, *,
                                  handled_sources: set[str] | None = None,
-                                 axis_label_targets: Mapping[tuple[str, str, str], str] | None = None) -> tuple[list[Any], list[IconPlacement]]:
+                                 axis_label_targets: Mapping[tuple[str, str, str], str] | None = None,
+                                 pre_reserved_placements: frozenset[str] = frozenset()) -> tuple[list[Any], list[IconPlacement]]:
     """Turn already-resolved View visual intents into completed Layout geometry.
 
     The caller supplies only placement identities; target vocabulary translation
@@ -220,27 +397,22 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
         if not by_side or item.overflow == "suppressed":
             continue
         item_metrics = metric_for_family(item.font_family, item.font_weight, request.font_metrics)
-        resolved: dict[str, tuple[Any, float, float]] = {}
-        for side, visual in by_side.items():
-            icon = request.icon_assets.get(visual.ref)
-            if icon is None:
-                raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
-            try:
-                scale, gap_ratio = request.theme_tokens.icon_ratios(item.typography_role)
-            except Exception as error:
-                raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
-            height = item.font_size * float(scale)
-            if height <= 0 or icon.viewport[1] <= 0:
-                raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
-            resolved[side] = (icon, height * icon.viewport[0] / icon.viewport[1], item.font_size * float(gap_ratio))
-        leading = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "leading")
-        trailing = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "trailing")
+        resolved, leading, trailing = _visual_reservation(
+            typography_role=item.typography_role, font_size=item.font_size,
+            visuals=by_side, request=request,
+        )
         available = (item.available_inline_size if item.available_inline_size is not None
                      else float(item.bounds.inline_size)) - leading - trailing
         if available <= 0:
             raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
         source = item.source_content if item.source_content is not None else item.content
-        if len(item.lines) > 1:
+        if item.placement_id in pre_reserved_placements:
+            lines, content, overflow = item.lines, item.content, item.overflow
+            if any(measure_text_width(line, font_size=item.font_size, font_metrics=item_metrics,
+                                      letter_spacing=item.letter_spacing, text_transform=item.text_transform,
+                                      numeric_spacing=item.numeric_spacing) > available for line in lines):
+                raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
+        elif len(item.lines) > 1:
             lines = wrap_text(source, available_inline=available, font_size=item.font_size, font_metrics=item_metrics,
                               letter_spacing=item.letter_spacing, text_transform=item.text_transform)
             content, overflow = "\n".join(lines), item.overflow
@@ -522,6 +694,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        collision_region="title", collision_domain=CollisionDomain("title", "content"),
                        source_content=title, available_inline_start=float(by_source["title"].bounds.inline),
                        available_inline_size=float(by_source["title"].bounds.inline_size))]
+    slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = _compose_detail_panel_blocks(
+        slots=slots, request=request, requested_canvas=request.layout_manifest.viewport,
+    )
+    by_source = {slot.source_ref: slot for slot in slots}
+    text.extend(detail_panel_text)
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
     def measure_table_text(content: str, typography_role: str, orientation: str = "horizontal") -> float:
@@ -1342,20 +1519,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    collision_domain=CollisionDomain("legend", "content"), source_content=label,
                                    available_inline_start=float(legend.bounds.inline) + swatch_size * 1.5,
                                    available_inline_size=max(0.0, float(legend.bounds.inline_size) - swatch_size * 1.5)))
-    for slot_name, values, prefix, purpose, typography in (
-        ("notes", request.surface_content.notes, "note", "project-note", "text"),
-        ("group-details", request.surface_content.group_details, "group-detail", "group-detail", "text"),
-        ("milestones", request.surface_content.milestones, "milestone", "milestone-digest-entry", "text"),
+    for slot_name, values, prefix, typography in (
+        ("notes", request.surface_content.notes, "note", "text"),
     ):
         slot = by_source.get(slot_name)
         if slot:
             for index, value in enumerate(values):
-                if slot_name == "group-details":
-                    source, content = value[0], f"{value[1]}: {value[2]}"
-                elif slot_name == "milestones":
-                    source, content = value[0], f"{value[1]} — {value[2].isoformat()}"
-                else:
-                    source, content = value
+                source, content = value
                 text.append(place_text(placement_id=f"{prefix}:{source}", source_ref=source, content=content,
                                        inline=float(slot.bounds.inline),
                                        baseline_block=float(slot.bounds.block) + (index + 1) * body_size,
@@ -1610,7 +1780,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     visible_route_fallbacks.append(placed_leader)
     text = [replace(item, slot_id=text_slot(item)) for item in text]
     text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals,
-                                                axis_label_targets=axis_label_targets)
+                                                axis_label_targets=axis_label_targets,
+                                                pre_reserved_placements=detail_visual_reservations)
+    _validate_detail_panel_placement(text, slots)
     icons.extend(candidate_icons)
     icons.extend(resolve_mark_visual_requests(marks, request))
 
@@ -1644,7 +1816,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     # Complete the observable fallback records at the same point as completed
     # geometry.  Neither Scene nor an adapter gets a policy question to answer.
-    fit_warnings: list[FitWarning] = []
+    fit_warnings: list[FitWarning] = list(detail_panel_warnings)
     warned_placement_ids: set[str] = set()
     timeline_end = timeline.bounds.block + timeline.bounds.block_size
     header_start = Decimal(str(table_bounds[1]))

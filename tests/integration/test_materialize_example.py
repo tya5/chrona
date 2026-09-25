@@ -80,6 +80,32 @@ def test_controller_japanese_public_evidence_uses_the_explicit_cjk_provider(tmp_
     assert "量産検証（PVT）および工場工程バリデーション" in artifact
 
 
+def test_controller_japanese_detail_panels_are_completed_wrapped_blocks(tmp_path):
+    _require_cjk_provider()
+    materialize(ROOT / "examples/controller-z-ja/manifest.yaml", "executive", tmp_path / "controller-z-ja", write=False)
+    scene = json.loads((tmp_path / "controller-z-ja/review.scene.json").read_text(encoding="utf-8"))
+    surface = scene["surfaces"][0]
+    slots = {item["id"]: item["bounds"] for item in surface["slots"]}
+    panel_text = [item for item in surface["primitives"]
+                  if item["id"].startswith(("group-detail:", "milestone:"))]
+    assert any(len(item["textLayout"]["lines"]) > 1 for item in panel_text if item["id"].startswith("group-detail:"))
+    for item in panel_text:
+        slot = slots[item["slotId"]]; bounds = item["bounds"]
+        tolerance = 1e-6
+        assert slot["inline"] - tolerance <= bounds["inline"] <= bounds["inline"] + bounds["inlineSize"] <= slot["inline"] + slot["inlineSize"] + tolerance
+        assert slot["block"] - tolerance <= bounds["block"] <= bounds["block"] + bounds["blockSize"] <= slot["block"] + slot["blockSize"] + tolerance
+    group_text = [item for item in panel_text if item["id"].startswith("group-detail:")]
+    milestone_text = [item for item in panel_text if item["id"].startswith("milestone:")]
+    assert all(not (left["bounds"]["inline"] < right["bounds"]["inline"] + right["bounds"]["inlineSize"]
+                    and right["bounds"]["inline"] < left["bounds"]["inline"] + left["bounds"]["inlineSize"]
+                    and left["bounds"]["block"] < right["bounds"]["block"] + right["bounds"]["blockSize"]
+                    and right["bounds"]["block"] < left["bounds"]["block"] + left["bounds"]["blockSize"])
+               for left in group_text for right in milestone_text)
+    assert surface["canvasBounds"]["blockSize"] > 900
+    assert any(item["failureKind"] == "detail-panel" and item["code"] == "W_LAYOUT_VISIBLE_OVERFLOW"
+               for item in surface["fitWarnings"])
+
+
 def test_controller_elevated_public_evidence_uses_only_portable_completed_treatments(tmp_path):
     materialize(ROOT / "examples/controller-z/manifest.yaml", "elevated", tmp_path / "elevated", write=False)
     artifact = (tmp_path / "elevated/review.svg").read_text(encoding="utf-8")
