@@ -160,6 +160,7 @@ class ScenePrimitive:
     table_row_id: str | None = None
     table_column_id: str | None = None
     paint_order: int = 0
+    host_placement_id: str | None = None
     clip_source_id: str | None = None
     end_treatment: str = "closed"
 
@@ -179,6 +180,8 @@ class ScenePrimitive:
                 or (self.kind != "Icon" and self.icon_viewport is not None)):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if self.end_treatment not in {"closed", "open"}:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        if self.paint_order < 0:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if self.end_treatment == "open" and (self.kind != "Symbol" or self.symbol is None or self.purpose != "actual"):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -283,10 +286,17 @@ class SceneSurface:
         if len(by_id) != len(self.primitives):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         for index, item in enumerate(self.primitives):
+            if item.host_placement_id is not None:
+                host = by_id.get(item.host_placement_id)
+                if (item.kind != "Text" or host is None or host[1].slot_id != item.slot_id
+                        or host[1].paint_order >= item.paint_order):
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             if item.clip_source_id is None:
                 continue
             source = by_id.get(item.clip_source_id)
-            if (source is None or source[0] >= index or source[1].kind not in {"Rect", "Symbol"}
+            if (source is None or source[1].paint_order > item.paint_order
+                    or (source[1].paint_order == item.paint_order and source[0] >= index)
+                    or source[1].kind not in {"Rect", "Symbol"}
                     or (source[1].kind == "Symbol" and source[1].symbol is None)
                     or source[1].slot_id != item.slot_id):
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

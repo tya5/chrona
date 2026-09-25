@@ -40,6 +40,11 @@ class SurfaceLayoutComposition:
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
 BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed"})
+BACKGROUND_PAINT_ORDER = 10
+MARK_PAINT_ORDER_BASE = 100
+HOSTED_TEXT_PAINT_ORDER = 200
+FOREGROUND_TEXT_PAINT_ORDER = 300
+ANNOTATION_PAINT_ORDER = 400
 # Layout emits coordinates at micro-point precision.  Intermediate measurement
 # APIs are float-based, so containment must not turn a sub-micro-point binary
 # conversion residue into a user-visible overflow diagnostic.
@@ -271,7 +276,8 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
                           Decimal(str(icon_width)), Decimal(str(item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0]))) )
             icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
                                        icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                       visual.decorative, bounds, "labelVisual", icon_width / icon.viewport[0], item.slot_id))
+                                       visual.decorative, bounds, "labelVisual", icon_width / icon.viewport[0], item.slot_id,
+                                       paint_order=item.paint_order))
     if requested:
         raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
     return text, icons
@@ -310,7 +316,8 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
                       Decimal(str(width)), Decimal(str(height)))
         icons.append(IconPlacement(f"visual:{host.placement_id}", host.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                   visual.decorative, bounds, "iconMark", width / icon.viewport[0], host.slot_id))
+                                   visual.decorative, bounds, "iconMark", width / icon.viewport[0], host.slot_id,
+                                   paint_order=host.paint_order + 1))
     return icons
 
 
@@ -337,7 +344,8 @@ def resolve_axis_band_visual_requests(shapes: list[ShapePlacement], request: Sur
                       Decimal(str(width)), Decimal(str(height)))
         icons.append(IconPlacement(f"visual:{shape.placement_id}", shape.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload,
-                                   icon.alternative, visual.decorative, bounds, "iconMark", width / icon.viewport[0], shape.slot_id))
+                                   icon.alternative, visual.decorative, bounds, "iconMark", width / icon.viewport[0], shape.slot_id,
+                                   paint_order=HOSTED_TEXT_PAINT_ORDER))
     return icons
 
 
@@ -745,7 +753,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 axis_band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
                 shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
                                               Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(max(0.0, x2 - x))), axis.bounds.block_size),
-                                              semantic_id="axisBandDecoration"))
+                                              semantic_id="axisBandDecoration",
+                                              paint_order=BACKGROUND_PAINT_ORDER))
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
             for interval in intervals:
@@ -753,7 +762,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 shapes.append(ShapePlacement(f"axis-grid:{tier_index}:{interval.index}", "timeline-axis", "Path",
                                               Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
                                               ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
-                                              semantic_id=semantic_id))
+                                              semantic_id=semantic_id,
+                                              paint_order=BACKGROUND_PAINT_ORDER + 1))
         elif tier.role == "labels" and form is not None:
             orientation = tier.label.orientation
             label_widths = tuple(
@@ -763,7 +773,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    numeric_spacing=axis_treatment.numeric_spacing)
                 for outcome in interval_outcomes if outcome.disposition == "placed"
             )
-            lane_size = (axis_size if orientation == "horizontal" else max(label_widths, default=0.0))
+            lane_size = (axis_size * float(axis_treatment.line_height) + float(GEOMETRY_TOLERANCE)
+                         if orientation == "horizontal" else max(label_widths, default=0.0))
             lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)
             for interval, outcome in zip(intervals, interval_outcomes, strict=True):
                 if outcome.disposition == "thinned":
@@ -786,7 +797,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
                                     content=label, inline=inline, baseline_block=baseline,
                                     typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                    collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", f"label-{tier_index}"),
+                                    collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", "labels"),
                                     source_content=label, available_inline_start=x, available_inline_size=available,
                                     orientation=orientation,
                                     overflow="visible-overflow" if not outcome.label_fits or lane_overflow else "fit")
@@ -797,6 +808,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             label_lane_offset += lane_size
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
+    axis_bands = tuple(item for item in shapes if item.semantic_id == "axisBandDecoration")
+
+    def axis_band_host(item: TextPlacement) -> str | None:
+        centre = item.bounds.inline + item.bounds.inline_size / 2
+        candidates = tuple(band for band in axis_bands
+                           if band.bounds.inline <= centre <= band.bounds.inline + band.bounds.inline_size)
+        return min(candidates, key=lambda band: band.placement_id).placement_id if candidates else None
+
+    text = [replace(item, host_placement_id=axis_band_host(item), paint_order=HOSTED_TEXT_PAINT_ORDER)
+            if item.semantic_id == "axisLabel" else item
+            for item in text]
     contract = request.presentation_contract
     minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
     closed_days = contract.time.calendar_closed
@@ -815,7 +837,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         x = _coordinate(contract.time.as_of, scale)
         shapes.append(ShapePlacement("as-of", "actual-set", "Path",
                                      Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
-                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
+                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
+                                     paint_order=MARK_PAINT_ORDER_BASE))
         as_of_label = (x, f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}")
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
@@ -836,7 +859,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     if shape == "point" and radius > 0 else ())
         return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
                              mark_shape=shape, corner_radius=radius, path_commands=commands,
-                             slot_id=timeline.slot_id, semantic_id=semantic_id, paint_order=geometry.paint_order,
+                             slot_id=timeline.slot_id, semantic_id=semantic_id,
+                             paint_order=MARK_PAINT_ORDER_BASE + geometry.paint_order,
                              end_treatment=end_treatment)
     for review_row in review_rows:
         members = sorted(
@@ -1141,6 +1165,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          ladder, "suppress", "suppressed"))
             diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
         else:
+            host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
             placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
                                    content=provisional.content, inline=candidate.bounds.x + leading,
                                    baseline_block=candidate.bounds.y + float(font_size),
@@ -1148,7 +1173,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    font_metrics=request.font_metrics, collision_region=provisional.collision_region,
                                    collision_domain=provisional.collision_domain,
                                    overflow="visible-overflow" if candidate.visible_overflow else "fit",
-                                   lines=lines), fallback_ladder=label_request.candidates, selected_rung=candidate.side)
+                                   lines=lines), fallback_ladder=label_request.candidates, selected_rung=candidate.side,
+                                  host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
+                                  paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
+                                  if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
             text.append(placed_text)
             if candidate.visible_overflow:
                 visible_label_overflows.append((placed_text, placement_bounds))
@@ -1166,7 +1194,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          placed_text.source_ref, visual.source_ref, icon.icon_id,
                                                          icon.kind, icon.content_identity, icon.viewport, icon.payload,
                                                          icon.alternative, visual.decorative, bounds, "labelVisual",
-                                                         width / icon.viewport[0], text_slot(placed_text)))
+                                                         width / icon.viewport[0], text_slot(placed_text),
+                                                         paint_order=placed_text.paint_order))
             placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                                          label_request.candidates, candidate.side, "placed"))
 
@@ -1385,10 +1414,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 anchor_bounds = _annotation_anchor_bounds(resolved.mark, resolved.endpoint, matching[0][1], scale)
                 selected_items = tuple(item for item in matching[0][0].items
                                        if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id))
+                anchor_item = selected_items[0] if selected_items else None
+                anchor_instance_id = (f"{matching[0][0].row_id}:{anchor_item.item_id or anchor_item.object_id}"
+                                      if anchor_item is not None else "")
+                anchor_host = mark_by_id.get(f"{resolved.facet}:{anchor_instance_id}")
             elif folded_matches and folded_matches[0][1] is not None:
                 folded, mark = folded_matches[0]
                 anchor_bounds = LabelRect(*_bounds(mark.bounds))
                 selected_items = (folded.item,)
+                anchor_host = mark
             else:
                 raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
             annotation_text_role = semantic_binding(presentation.text_semantic_id).theme_role
@@ -1472,13 +1506,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             bounds = box.placement.bounds
             shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
                                          Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)), Decimal(str(bounds.width)), Decimal(str(bounds.height))),
-                                         semantic_id=presentation.box_semantic_id, annotation=presentation))
+                                         semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                         paint_order=ANNOTATION_PAINT_ORDER))
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                            inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                            collision_region="annotations", collision_domain=CollisionDomain("annotations", "content"),
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,
                                            annotation=presentation)
+            placed_annotation = replace(placed_annotation, paint_order=ANNOTATION_PAINT_ORDER + 1)
             text.append(placed_annotation)
             if box.placement.visible_overflow:
                 visible_label_overflows.append((placed_annotation, LabelRect(*_bounds(annotation_slot.bounds))))
@@ -1496,7 +1532,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                          icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                          visual.decorative, icon_bounds, "labelVisual",
-                                                         icon_width / icon.viewport[0], annotation_slot.slot_id))
+                                                         icon_width / icon.viewport[0], annotation_slot.slot_id,
+                                                         paint_order=placed_annotation.paint_order))
             if annotation.number is not None:
                 note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
                 handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
@@ -1527,7 +1564,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                              baseline_block=note_index.bounds.y + size, typography_role="annotation",
                                              theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                              collision_region="annotations",
-                                             collision_domain=CollisionDomain("timeline", "overlay"))
+                                             collision_domain=CollisionDomain("timeline", "overlay"),
+                                             semantic_id="noteIndex")
+                if anchor_host is not None:
+                    note_index_text = replace(note_index_text, host_placement_id=anchor_host.placement_id,
+                                              paint_order=max(HOSTED_TEXT_PAINT_ORDER, anchor_host.paint_order + 1))
                 text.append(note_index_text)
                 if note_index_visuals:
                     if not hasattr(annotation_metrics, "cap_height_at"):
@@ -1543,7 +1584,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                              annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                              icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                              visual.decorative, icon_bounds, "labelVisual",
-                                                             icon_width / icon.viewport[0], annotation_slot.slot_id))
+                                                             icon_width / icon.viewport[0], annotation_slot.slot_id,
+                                                             paint_order=note_index_text.paint_order))
             if box.leader_required and presentation.leader_semantic_id is not None:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
                 source = (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2)

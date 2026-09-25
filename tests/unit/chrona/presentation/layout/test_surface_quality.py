@@ -122,6 +122,19 @@ def test_surface_placement_closes_clip_hosts_and_mark_end_treatment():
         SurfacePlacement(marks=(MarkPlacement("actual:a", "a", bounds, (1, 4), (21, 4), end_treatment="open"),)).assert_valid()
 
 
+def test_surface_placement_validates_typed_text_hosts_before_scene_projection():
+    bounds = _rect(1, 2, 20, 4)
+    band = ShapePlacement("axis-band", "timeline-axis", "Rect", bounds, slot_id="timeline",
+                          semantic_id="axisBandDecoration", paint_order=10)
+    axis = TextPlacement("axis-label", "timeline-axis", "Q1", bounds, "axis", slot_id="timeline",
+                         semantic_id="axisLabel", host_placement_id="axis-band", paint_order=200)
+    SurfacePlacement(text=(axis,), shapes=(band,)).assert_valid()
+    invalid = TextPlacement("axis-label", "timeline-axis", "Q1", bounds, "axis", slot_id="timeline",
+                            semantic_id="axisLabel", host_placement_id="axis-band", paint_order=10)
+    with pytest.raises(ValueError, match="E_LAYOUT_TEXT_HOST_INVALID:axis-label"):
+        SurfacePlacement(text=(invalid,), shapes=(band,)).assert_valid()
+
+
 def test_surface_placement_rejects_icon_without_a_declared_slot_owner():
     bounds = _rect(1, 2, 3, 4)
     icon = IconPlacement("visual:title:leading", "title", "/body/visuals/0", "risk", "svg", "sha256:x",

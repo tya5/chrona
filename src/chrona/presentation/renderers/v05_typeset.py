@@ -126,7 +126,7 @@ def render_v05_typst(surface: SceneSurface) -> str:
     if background is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
     parts = ["// chrona-typst/v0.1", f"#set page(width: {_number(width)}pt, height: {_number(height)}pt, margin: 0pt)",
              f'#rect(width: {_number(width)}pt, height: {_number(height)}pt, fill: rgb("{background}"))']
-    for node in surface.primitives:
+    for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         x, y, w, h = node.bounds
         parts.append(f"// scene-id: {_typst_string(node.scene_id)} source-ref: {_typst_string(node.source_ref)}")
         if node.kind == "Rect":
@@ -175,7 +175,7 @@ def render_v05_tikz(surface: SceneSurface) -> str:
              r"\pagestyle{empty}", r"\begin{document}", r"\noindent",
              r"\begin{tikzpicture}[x=1pt,y=-1pt]",
              f"\\path[fill={surface.canvas_paint.fill}] (0,0) rectangle ({_number(width)},{_number(height)});"]
-    for node in surface.primitives:
+    for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         x, y, w, h = node.bounds
         parts.append(f"% scene-id: {_tex_string(node.scene_id)} source-ref: {_tex_string(node.source_ref)}")
         if node.kind == "Rect":

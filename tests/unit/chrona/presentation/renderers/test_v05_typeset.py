@@ -41,6 +41,16 @@ def test_typeset_adapters_project_the_supplied_rotation_degrees():
     assert "rotate=90" in render_v05_tikz(rotated)
 
 
+def test_typeset_adapters_preserve_completed_global_paint_order():
+    later = ScenePrimitive("later", "Rect", "a", "object", "planned", "planned", (1, 2, 8, 4),
+                           paint=ScenePaint("#112233", None, None, (), 1), paint_order=20)
+    first = ScenePrimitive("first", "Rect", "a", "object", "planned", "planned", (1, 2, 8, 4),
+                           paint=ScenePaint("#445566", None, None, (), 1), paint_order=10)
+    surface = replace(_surface(), primitives=(later, first))
+    assert render_v05_typst(surface).index("scene-id: first") < render_v05_typst(surface).index("scene-id: later")
+    assert render_v05_tikz(surface).index("scene-id: first") < render_v05_tikz(surface).index("scene-id: later")
+
+
 def test_typeset_adapters_do_not_infer_orientation_or_measure_text() -> None:
     source = Path("src/chrona/presentation/renderers/v05_typeset.py").read_text(encoding="utf-8")
     assert ".rotation_degrees" in source

@@ -121,6 +121,8 @@ class TextPlacement:
     slot_id: str = ""
     semantic_id: str = ""
     annotation: AnnotationPresentation | None = None
+    paint_order: int = 300
+    host_placement_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -264,6 +266,7 @@ class RelationPlacement:
     slot_id: str = ""
     annotation: AnnotationPresentation | None = None
     source_ref: str = ""
+    paint_order: int = 250
 
 
 @dataclass(frozen=True)
@@ -366,6 +369,7 @@ class IconPlacement:
     semantic_id: str = "iconMark"
     stroke_scale: float = 1.0
     slot_id: str = ""
+    paint_order: int = 300
 
 
 @dataclass(frozen=True)
@@ -435,6 +439,25 @@ class SurfacePlacement:
                 host = next((mark for mark in self.marks if mark.placement_id == shape.clip_host_id), None)
                 if host is None or host.slot_id != shape.slot_id:
                     raise ValueError(f"E_LAYOUT_CLIP_HOST_INVALID:{shape.placement_id}")
+        hosts = {item.placement_id: item for item in self.marks}
+        hosts.update({item.placement_id: item for item in self.shapes})
+        for item in self.text:
+            if item.host_placement_id is None:
+                continue
+            host = hosts.get(item.host_placement_id)
+            if (host is None or host.slot_id != item.slot_id
+                    or host.paint_order >= item.paint_order):
+                raise ValueError(f"E_LAYOUT_TEXT_HOST_INVALID:{item.placement_id}")
+            if item.semantic_id == "axisLabel":
+                allowed = isinstance(host, ShapePlacement) and host.semantic_id == "axisBandDecoration"
+            elif item.semantic_id == "noteIndex" or item.selected_rung == "inside":
+                allowed = isinstance(host, MarkPlacement) and host.semantic_id in {
+                    "planned", "actual", "snapshot", "scenario", "missing-actual",
+                }
+            else:
+                allowed = False
+            if not allowed:
+                raise ValueError(f"E_LAYOUT_TEXT_HOST_INVALID:{item.placement_id}")
         for primitive in self.primitives:
             if primitive.kind == "Path" and len(primitive.points) < 2:
                 raise ValueError(f"E_LAYOUT_PRIMITIVE_PLACEMENT_INVALID:{primitive.placement_id}")

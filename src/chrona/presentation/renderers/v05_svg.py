@@ -133,7 +133,7 @@ def render_v05_svg(surface: SceneSurface) -> str:
             return (f'fill="none" opacity="{number(path.opacity)}" stroke="{escape(path.stroke, quote=True)}" '
                     f'stroke-width="{number(path.stroke_width)}" stroke-linecap="{path.line_cap}" stroke-linejoin="{path.line_join}"')
         raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-    for node in surface.primitives:
+    for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
         if node.kind == "Rect":
@@ -179,24 +179,18 @@ def render_v05_svg(surface: SceneSurface) -> str:
                 encoded = b64encode(node.icon_raster).decode("ascii")
                 append(node, f'<image {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}" x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" href="data:image/png;base64,{encoded}"/>')
         else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-    mark_purposes = {"planned", "actual", "snapshot", "missingActual", "progress-fill", "icon-mark"}
-    visual_marks = [(index, node, content) for index, (node, content) in enumerate(rendered)
-                    if node.purpose in mark_purposes]
-    for node, content in ((node, content) for node, content in rendered if node.purpose not in mark_purposes):
+    for node, content in rendered:
         parts.append(link(node, content))
-    if visual_marks:
-        parts.append('<g data-layer="mark-paint" aria-hidden="true">' + "".join(
-            content for _, _, content in sorted(visual_marks, key=lambda item: (item[1].paint_order, item[0]))
-        ) + '</g>')
-        interactions = []
-        for _, node, _ in visual_marks:
-            if node.href is None:
-                continue
-            x, y, w, h = node.bounds
-            title = f'<title>{escape(node.link_title)}</title>' if node.link_title else ""
-            interactions.append(f'<a href="{escape(node.href, quote=True)}" target="_top" data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" fill="transparent" pointer-events="all"/>{title}</a>')
-        if interactions:
-            parts.append('<g data-layer="mark-interaction">' + "".join(interactions) + '</g>')
+    mark_purposes = {"planned", "actual", "snapshot", "missingActual", "progress-fill", "icon-mark"}
+    interactions = []
+    for node, _ in rendered:
+        if node.purpose not in mark_purposes or node.href is None:
+            continue
+        x, y, w, h = node.bounds
+        title = f'<title>{escape(node.link_title)}</title>' if node.link_title else ""
+        interactions.append(f'<a href="{escape(node.href, quote=True)}" target="_top" data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" fill="transparent" pointer-events="all"/>{title}</a>')
+    if interactions:
+        parts.append('<g data-layer="mark-interaction">' + "".join(interactions) + '</g>')
     return "\n".join((*parts, "</svg>")) + "\n"
 
 

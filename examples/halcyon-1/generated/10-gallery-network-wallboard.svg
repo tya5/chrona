@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img">
 <rect width="1920" height="1080" opacity="1" fill="#0B1220"/>
-<text data-scene-id="title" data-source-ref="title" data-purpose="title-text" x="40" y="85.76" font-family="Noto Sans, sans-serif" font-weight="700" font-size="40" font-variant-numeric="proportional-nums" opacity="1" fill="#EAF0FA">HALCYON-1</text>
 <path data-scene-id="network-edge:avionics-bustest" data-source-ref="avionics-bustest" data-purpose="network-edge" d="M638.32 152L679.585 152" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
 <path data-scene-id="network-edge:avionics-cdr" data-source-ref="avionics-cdr" data-purpose="network-edge" d="M638.32 152L679.585 152L679.585 212" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
 <path data-scene-id="network-edge:bustest-integration" data-source-ref="bustest-integration" data-purpose="network-edge" d="M810.88 152L882.43 152" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
@@ -28,6 +27,7 @@
 <rect data-scene-id="network-node:leop" data-source-ref="leop" data-purpose="network-node" x="679.585" y="254" width="178.845" height="36" opacity="1" fill="#16213A"/>
 <rect data-scene-id="network-node:integration" data-source-ref="integration" data-purpose="network-node" x="882.43" y="134" width="156.3" height="36" opacity="1" fill="#16213A"/>
 <rect data-scene-id="network-node:first-light" data-source-ref="first-light" data-purpose="network-node" x="882.43" y="194" width="120" height="36" opacity="1" fill="#16213A"/>
+<text data-scene-id="title" data-source-ref="title" data-purpose="title-text" x="40" y="85.76" font-family="Noto Sans, sans-serif" font-weight="700" font-size="40" font-variant-numeric="proportional-nums" opacity="1" fill="#EAF0FA">HALCYON-1</text>
 <text data-scene-id="network-label:pdr" data-source-ref="pdr" data-purpose="title-text" x="64" y="160.535" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#EAF0FA">Preliminary design review</text>
 <text data-scene-id="network-label:optics" data-source-ref="optics" data-purpose="title-text" x="64" y="220.535" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#EAF0FA">Imager optics alignment</text>
 <text data-scene-id="network-label:payload-tvac" data-source-ref="payload-tvac" data-purpose="title-text" x="64" y="280.535" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#EAF0FA">Payload thermal-vacuum</text>

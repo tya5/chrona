@@ -93,6 +93,15 @@ def test_scene_rejects_a_clip_that_does_not_reference_a_preceding_same_slot_host
         SceneSurface("s", (), (), (), None, (fill, host))
 
 
+def test_scene_rejects_text_host_without_a_lower_completed_paint_order():
+    host = ScenePrimitive("host", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1),
+                          slot_id="timeline", paint_order=10)
+    text = ScenePrimitive("label", "Text", "a", "review", "label", "label", (0, 0, 1, 1),
+                          slot_id="timeline", paint_order=10, host_placement_id="host")
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneSurface("s", (), (), (), None, (host, text))
+
+
 def test_scene_accepts_a_completed_open_symbol_as_a_clip_host():
     outline = (PathCommand("move", ((0, 0),)), PathCommand("line", ((1, 0),)), PathCommand("line", ((0, 0),)))
     host = ScenePrimitive("host", "Symbol", "a", "object", "actual", "actual", (0, 0, 1, 1),
@@ -765,6 +774,10 @@ def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
 
     assert any(node.scene_id.startswith("axis-band-rect:") for node in surface.primitives)
     assert any(node.scene_id.startswith("axis-label:") for node in surface.primitives)
+    labels = [node for node in surface.primitives if node.scene_id.startswith("axis-label:")]
+    assert all(node.host_placement_id and node.paint_order > next(
+        band.paint_order for band in surface.primitives if band.scene_id == node.host_placement_id
+    ) for node in labels)
     grids = [node for node in surface.primitives if node.scene_id.startswith("axis-grid:")]
     assert {node.visual_role for node in grids} == {"axis-major", "axis-minor"}
     assert all(node.points[0][1] == next(slot.bounds[1] for slot in surface.slots if slot.source == "timeline")

@@ -284,7 +284,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
                                          text=placed.content, baseline=layout.baseline, text_layout=layout,
                                          href=href, link_title=link_title, table_row_id=table_row_id,
-                                         table_column_id=table_column_id))
+                                         table_column_id=table_column_id, paint_order=placed.paint_order,
+                                         host_placement_id=placed.host_placement_id))
     def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None,
                            href: str | None = None, link_title: str | None = None,
                            table_row_id: str | None = None, table_column_id: str | None = None) -> None:
@@ -422,18 +423,19 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "timeline-axis", "axis", band.purpose,
                                              band.scene_role,
                                              (float(placed.bounds.inline), float(placed.bounds.block),
-                                              float(placed.bounds.inline_size), float(placed.bounds.block_size))))
+                                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                                             paint_order=placed.paint_order))
         if placed.semantic_id in {"axisGrid", "axisGridMinor"}:
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             axis_grid = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.PATH, "timeline-axis", "axis", axis_grid.purpose, axis_grid.scene_role,
-                                             bounds, points=placed.points))
+                                             bounds, points=placed.points, paint_order=placed.paint_order))
     for placed in placed_surface.shapes:
         if placed.placement_id == "as-of":
             as_of_binding = semantic_binding("asOf")
             primitives.append(ScenePrimitive("as-of", PrimitiveKind.PATH, "actual-set", "actual", as_of_binding.purpose, as_of_binding.scene_role,
                                              (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size)),
-                                             points=placed.points))
+                                             points=placed.points, paint_order=placed.paint_order))
             emit_semantic_text("as-of-label", "asOfLabel")
     legend_binding = semantic_binding("legendEntry")
     for relation in placed_surface.relations:
@@ -443,7 +445,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         dependency = semantic_binding(relation.semantic_id)
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          (0, 0, 0, 0), marker_start=relation.marker_start, marker_end=relation.marker_end,
-                                         points=relation.points, path_commands=relation.path_commands))
+                                         points=relation.points, path_commands=relation.path_commands,
+                                         paint_order=relation.paint_order))
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
@@ -451,7 +454,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             role = (semantic_binding("scaleLegendEntry").scene_role
                     if placed.source_ref.startswith("scale:") else placed.source_ref)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
-                                             legend_binding.purpose, role, bounds))
+                                             legend_binding.purpose, role, bounds, paint_order=placed.paint_order))
         elif placed.placement_id.startswith("progress-fill:"):
             progress = semantic_binding("progressFill")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "object",
@@ -460,12 +463,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
-                                             summary_bar.purpose, summary_bar.scene_role, bounds))
+                                             summary_bar.purpose, summary_bar.scene_role, bounds,
+                                             paint_order=placed.paint_order))
         elif placed.annotation is not None:
             annotation_box = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
                                              annotation_box.purpose, annotation_box.scene_role,
-                                             bounds))
+                                             bounds, paint_order=placed.paint_order))
     for placed in placed_surface.icons:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
@@ -478,7 +482,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          icon_alternative=placed.alternative, icon_decorative=placed.decorative,
                                          icon_stroke_scale=placed.stroke_scale,
                                          visual_capability_source_ref=placed.visual_capability_source_ref,
-                                         slot_id=placed.slot_id))
+                                         slot_id=placed.slot_id, paint_order=placed.paint_order))
     text_roles = tuple(
         (prefix, semantic_binding(semantic_id).purpose, role or semantic_binding(semantic_id).scene_role)
         for prefix, semantic_id, role in (
@@ -510,7 +514,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         leader = semantic_binding(relation.semantic_id)
         purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
-                                         points=relation.points, marker_end=relation.marker_end))
+                                         points=relation.points, marker_end=relation.marker_end,
+                                         paint_order=relation.paint_order))
     ownership = {item.placement_id: item.slot_id for item in placed_surface.text}
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.marks})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})
@@ -569,19 +574,22 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees)
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
                                          binding.purpose, binding.scene_role, layout.bounds, text=text.content,
-                                         baseline=layout.baseline, text_layout=layout))
+                                         baseline=layout.baseline, text_layout=layout,
+                                         paint_order=text.paint_order, host_placement_id=text.host_placement_id))
     title_text = next(item for item in placed.text if item.placement_id == "title")
     emit_text(title_text)
     for relation in placed.relations:
         binding = edge_bindings[relation.semantic_id]
         primitives.append(ScenePrimitive(f"network-edge:{relation.relation_id}", PrimitiveKind.PATH,
                                          relation.relation_id, "network", binding.purpose, binding.scene_role,
-                                         (0, 0, 0, 0), points=relation.points))
+                                         (0, 0, 0, 0), points=relation.points,
+                                         paint_order=relation.paint_order))
     for node in placed.nodes:
         bounds = (float(node.bounds.inline), float(node.bounds.block),
                   float(node.bounds.inline_size), float(node.bounds.block_size))
         primitives.append(ScenePrimitive(f"network-node:{node.object_id}", PrimitiveKind.RECT, node.object_id,
-                                         "network", node_binding.purpose, node_binding.scene_role, bounds))
+                                         "network", node_binding.purpose, node_binding.scene_role, bounds,
+                                         paint_order=node.paint_order))
     for text in placed.text:
         if text.placement_id != "title":
             emit_text(text)

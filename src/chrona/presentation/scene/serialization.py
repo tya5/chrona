@@ -113,10 +113,19 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                     return False
             elif row is not None or column is not None:
                 return False
+            host_placement_id = primitive.get("hostPlacementId")
+            if host_placement_id is not None:
+                host = by_id.get(host_placement_id)
+                if (primitive.get("kind") != "Text" or host is None
+                        or host[1].get("slotId") != primitive.get("slotId")
+                        or host[1].get("paintOrder", 0) >= primitive.get("paintOrder", 0)):
+                    return False
             clip_source_id = primitive.get("clipSourceId")
             if clip_source_id is not None:
                 source = by_id.get(clip_source_id)
-                if (source is None or source[0] >= index or source[1].get("kind") not in {"Rect", "Symbol"}
+                if (source is None or source[1].get("paintOrder", 0) > primitive.get("paintOrder", 0)
+                        or (source[1].get("paintOrder", 0) == primitive.get("paintOrder", 0) and source[0] >= index)
+                        or source[1].get("kind") not in {"Rect", "Symbol"}
                         or (source[1].get("kind") == "Symbol" and not source[1].get("symbol"))
                         or source[1].get("slotId") != primitive.get("slotId")):
                     return False
@@ -198,7 +207,8 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "pattern": _pattern(item.pattern) if item.pattern is not None else None,
         "symbol": {"outline": [_path(path) for path in item.symbol.outline]} if item.symbol is not None else None,
         "icon": _icon(item) if item.kind == "Icon" else None,
-        "paintOrder": item.paint_order if item.paint_order else None,
+        "paintOrder": item.paint_order,
+        "hostPlacementId": item.host_placement_id,
         "clipSourceId": item.clip_source_id,
         "endTreatment": item.end_treatment if item.end_treatment != "closed" else None,
     }

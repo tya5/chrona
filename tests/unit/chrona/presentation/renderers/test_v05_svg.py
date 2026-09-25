@@ -98,17 +98,24 @@ def test_svg_serializes_only_completed_rich_visual_values_with_stable_ids():
     assert 'stroke-linecap="round" stroke-linejoin="bevel"' in output
 
 
-def test_svg_projects_completed_mark_paint_order_clip_and_link_interaction_separately():
+def test_svg_projects_completed_global_paint_order_clip_and_link_interaction_separately():
     host = ScenePrimitive("host", "Rect", "a", "object", "planned", "planned", (1, 2, 8, 4),
                           slot_id="timeline", paint=ScenePaint("#112233", None, None, (), 1),
                           corner_radius=2, paint_order=1, href="https://example.test/a")
     fill = ScenePrimitive("fill", "Rect", "a", "object", "progress-fill", "progress-fill", (1, 2, 3, 4),
                           slot_id="timeline", paint=ScenePaint("#445566", None, None, (), 1),
                           clip_source_id="host", paint_order=2)
-    output = render_v05_svg(_surface(host, fill))
+    text = ScenePrimitive("label", "Text", "a", "review", "label", "label", (1, 2, 8, 4),
+                          slot_id="timeline", text="Label", baseline=(1, 6),
+                          text_layout=TextLayout((1, 2, 8, 4), (1, 6), ("Label",), "Test Sans", 400, 12, 1.2,
+                                                 "sha256:test"),
+                          paint=ScenePaint("#ffffff", None, None, (), 1), paint_order=3,
+                          host_placement_id="host")
+    output = render_v05_svg(_surface(text, fill, host))
     assert '<clipPath id="clip-host"><rect x="1" y="2" width="8" height="4" rx="2" ry="2"/></clipPath>' in output
     assert 'clip-path="url(#clip-host)"' in output
-    assert '<g data-layer="mark-paint" aria-hidden="true">' in output
+    assert '<g data-layer="mark-paint"' not in output
+    assert output.index('data-scene-id="host"') < output.index('data-scene-id="fill"') < output.index('data-scene-id="label"')
     assert '<g data-layer="mark-interaction"><a href="https://example.test/a"' in output
 
 

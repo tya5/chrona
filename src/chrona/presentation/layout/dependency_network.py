@@ -20,6 +20,7 @@ class NetworkNodePlacement:
     output_port: tuple[float, float]
     critical: bool
     slot_id: str = "network"
+    paint_order: int = 200
 
 
 @dataclass(frozen=True)
@@ -221,7 +222,7 @@ def _route_edges(edges: tuple[Any, ...], nodes: list[NetworkNodePlacement], boun
                                        "direct-path", 0.0, 0.0, float(bounds.inline_size), float(bounds.block_size)))
         relations.append(RelationPlacement(edge.relation_id, f"{edge.source_id}:output", f"{edge.target_id}:input",
                                            tuple(points), semantic_id="dependency-critical" if edge.critical else "dependency",
-                                           slot_id="network"))
+                                           slot_id="network", paint_order=100))
     return tuple(relations), tuple(warnings)
 
 
