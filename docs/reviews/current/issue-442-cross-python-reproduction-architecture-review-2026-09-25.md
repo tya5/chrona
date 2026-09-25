@@ -41,10 +41,13 @@ accepted design correctly rejects all three.
 
 ## Cross-issue assessment
 
-#442 is a prerequisite release repair for #412, not an orientation-design
-amendment.  The design keeps the concerns separate, permits #412 to retain an
-atomic Scene v0.5 migration, and prevents regenerated #412 evidence from
-reintroducing a known Python-minor dependency.
+#442 is a prerequisite repair for #412, not an orientation-design amendment.
+The issues remain separate by responsibility, but their generated corpus has
+one atomic publication boundary: #412 changes immutable View/Profile and
+Scene v0.5 inputs, while #442 changes their Layout arithmetic.  Publishing
+only one regenerated evidence set would be non-materializable.  The combined
+release therefore preserves, rather than weakens, #412's atomic migration and
+prevents regenerated evidence from reintroducing a Python-minor dependency.
 
 ## Review conditions for implementation
 

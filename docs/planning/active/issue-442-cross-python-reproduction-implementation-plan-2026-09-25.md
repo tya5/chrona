@@ -58,7 +58,9 @@ Scene provenance.
 ## Publication boundary
 
 I442-1 and I442-2 may be reviewed independently but are not released with
-partial generated evidence.  I442-3 publishes the source, structural gate,
-workflow, regenerated corpus, and acceptance review as one fast-forward
-release.  Only after that merge may #412 regenerate and publish its own atomic
-orientation contract/evidence release.
+partial generated evidence.  The #412 v0.5 migration changes the immutable
+inputs of that same corpus, so I442-3 publishes the source, structural gate,
+workflow, regenerated corpus, and acceptance review **together with** #412's
+approved contract, geometry, adapter, and corpus changes as one fast-forward
+release.  The release is atomic for evidence, while the issue ownership and
+acceptance criteria remain separately reviewed.

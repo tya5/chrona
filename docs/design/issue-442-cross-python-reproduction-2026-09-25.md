@@ -76,10 +76,18 @@ minor matrix makes evidence valid independent of the machine that writes it.
 
 #412 continues to own orientation ingress, completed rotation geometry, and
 Scene v0.5.  #442 owns only deterministic arithmetic and its release evidence.
-The #412 release is blocked until #442's helper, corpus regeneration, and
-dual-minor reproduction are merged; then #412 regenerates its atomic corpus
-on the repaired boundary.  No orientation field, transform, or adapter gains
-Python-version-specific behavior.
+The generated Scene is immutable evidence of both the View/Profile inputs and
+the Layout arithmetic.  Because #412's required v0.5 contract migration has
+already changed those inputs, there is no materializable public corpus state
+in which #442 can regenerate only its arithmetic evidence while leaving #412's
+new provenance and required text fields unpublished.
+
+Therefore the two implementation streams have one **atomic public release**:
+#442's helper, structural gate, dual-minor workflow, and complete regenerated
+corpus publish with #412's View/Profile/Scene v0.5 contract, adapters, and
+same corpus.  This changes publication grouping only; it does not merge their
+ownership.  No orientation field, transform, or adapter gains Python-version-
+specific behavior.
 
 ## Acceptance criteria
 
