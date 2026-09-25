@@ -186,8 +186,13 @@ provided baseline pivot.
 
 All Views, profiles, contract maps, schema inventories, parser/resource types,
 tests, and public corpus resources migrate atomically.  Old versions are not
-read.  Existing artifacts are byte-stable except for the designated rotated
-axis/header evidence artifact and necessary scene-version serialization.
+read.  The immutable Scene provenance records the exact hashes of View and
+Layout resources, so a View/Profile contract migration necessarily changes the
+generated Scene even before a visible rotated label is selected.  Scene v0.5
+and the generated corpus therefore migrate in the same public release unit as
+the View/Profile changes.  Within that unit, unchanged visible geometry remains
+byte-stable; provenance, manifest-version, and required text-layout contract
+fields are reviewed as intentional versioned changes.
 
 ## Acceptance criteria
 
@@ -203,3 +208,15 @@ axis/header evidence artifact and necessary scene-version serialization.
    structural tests reject adapter-side angle mapping or text measurement.
 6. A public corpus artifact intentionally contains rotation.  #404 can reuse
    the completed facility without adding a second transform pipeline.
+
+## Correction — atomic publication boundary
+
+Materializer verification on the v0.18/v0.8 ingress prototype established that
+the previously planned independent I412-1 publication is not materializable:
+the generated Scene's provenance changes whenever those immutable inputs
+change, while a v0.4 Scene cannot represent the required completed text angle.
+The implementation may retain internal checkpoints for contract migration,
+geometry, and adapters, but their public publication boundary is one atomic
+#412 release unit containing the Scene v0.5 and regenerated corpus evidence.
+This is a dependency imposed by the reproducibility contract, not a relaxation
+of the no-compatibility rule.
