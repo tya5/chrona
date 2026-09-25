@@ -28,6 +28,11 @@ clip delivery and open-end treatment with no adapter inference.
 **Acceptance:** icon badge is legible; rounded partial progress is contained
 with square trailing edge; serializer tests reject invalid clip references.
 
+Before B3 implementation, apply the published Scene order and version
+correction: Scene v0.3 carries completed paint/clip/end fields, and SVG uses
+separate visual paint and source-ordered linked-interaction projections rather
+than relying on impossible independent sibling DOM z-order.
+
 ## B4 — Corpus and release gate
 
 Add one slide (or tightly scoped declared variants) exercising: a container
