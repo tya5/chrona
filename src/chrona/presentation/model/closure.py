@@ -24,11 +24,13 @@ from chrona.presentation.contracts import (
     freeze, parse_contract, validate_icon_catalog_entry, IconRasterSource,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
+from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, resolve_draft_theme
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.resources import safe_load
+from chrona.core.identity import content_identity
 
 
 class ClosureError(ValueError):
@@ -456,13 +458,16 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
 def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:
     """Read one declared Draft file without allowing it into typed closure yet."""
     payload = path.read_bytes()
-    value = safe_load(payload)
+    try:
+        value = resolve_draft_theme(path) if kind == "theme" else safe_load(payload)
+    except ThemeInheritanceError as error:
+        raise ClosureError(error.code) from error
     if not isinstance(value, dict):
         raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
     identifier = _resource_id(kind, value)
     if not isinstance(identifier, str) or not identifier:
         raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
-    identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
+    identity = ClosureIdentity(kind, identifier, "draft", content_identity(value) if kind == "theme" else "sha256:" + sha256(payload).hexdigest())
     return PresentationResourceSource(identity, value)
 
 
