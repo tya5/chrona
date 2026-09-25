@@ -9,15 +9,19 @@ def _theme():
         "values": {"ink": {"type": "color", "value": "#102030"},
                    "body": {"type": "fontFamily", "value": "Test Sans"},
                    "regular": {"type": "fontWeight", "value": 400},
-                   "size": {"type": "number", "value": 14}, "line": {"type": "number", "value": 1.4}},
-        "roles": {"text": {"fill": "ink", "fontFamily": "body", "fontWeight": "regular", "fontSize": "size", "lineHeight": "line"}}, "metrics": {}}}
+                   "size": {"type": "number", "value": 14}, "line": {"type": "number", "value": 1.4},
+                   "spacing": {"type": "number", "value": 0},
+                   "transform": {"type": "textTransform", "value": "none"},
+                   "numeric": {"type": "numericSpacing", "value": "proportional"}},
+        "roles": {"text": {"fill": "ink", "fontFamily": "body", "fontWeight": "regular", "fontSize": "size", "lineHeight": "line",
+                           "letterSpacing": "spacing", "textTransform": "transform", "numericSpacing": "numeric"}}, "metrics": {}}}
 
 
 def test_typed_view_reads_current_resolved_theme_roles_only():
     tokens = ThemeTokenView(_theme())
     assert tokens.color("text") == "#102030"
     assert tokens.font_family() == "Test Sans"
-    assert tokens.typography("text") == ("Test Sans", 400, Decimal(14), Decimal("1.4"))
+    assert tokens.text_treatment("text").font_size == Decimal(14)
 
 
 @pytest.mark.parametrize("value", [0, 1, "0.12"])

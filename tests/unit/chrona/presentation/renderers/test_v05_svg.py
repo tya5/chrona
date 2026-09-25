@@ -18,6 +18,17 @@ def test_svg_serializes_completed_fill_stroke_width_dash_and_opacity():
     assert 'stroke-width="1.5"' in output and 'stroke-dasharray="2 3"' in output and 'opacity="0.4"' in output
 
 
+def test_svg_projects_nondefault_measured_text_treatment_without_remeasuring():
+    layout = TextLayout((1, 2, 8, 4), (1, 6), ("AB",), "Test Sans", 400, 12, 1.2,
+                        "sha256:test", 3, "uppercase", "tabular")
+    primitive = ScenePrimitive("label", "Text", "a", "label", "label", "label", (1, 2, 8, 4),
+                               text="AB", baseline=(1, 6), text_layout=layout,
+                               paint=ScenePaint("#112233", None, None, (), 1))
+    output = render_v05_svg(_surface(primitive), viewport=(10, 10))
+    assert 'letter-spacing="3"' in output
+    assert 'font-variant-numeric="tabular-nums"' in output
+
+
 def test_svg_serializes_completed_path_marker_and_commands():
     paint = ScenePaint(None, "#445566", 2, (), 1)
     primitive = ScenePrimitive("p", "Path", "a", "relation", "dependency", "dependency", (0, 0, 0, 0),

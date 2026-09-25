@@ -208,10 +208,17 @@ def _icon_path(path: SceneIconPath) -> dict[str, Any]:
 
 
 def _text_layout(value: TextLayout) -> dict[str, Any]:
-    return {"bounds": _bounds(value.bounds), "baseline": _point(value.baseline),
+    result = {"bounds": _bounds(value.bounds), "baseline": _point(value.baseline),
             "lines": list(value.lines), "family": value.family, "weight": value.weight,
             "fontSize": value.font_size, "lineHeight": value.line_height,
             "assetIdentity": value.asset_identity}
+    if value.letter_spacing != 0:
+        result["letterSpacing"] = value.letter_spacing
+    if value.text_transform != "none":
+        result["textTransform"] = value.text_transform
+    if value.numeric_spacing != "proportional":
+        result["numericSpacing"] = value.numeric_spacing
+    return result
 
 
 def _paint(value: ScenePaint) -> dict[str, Any]:

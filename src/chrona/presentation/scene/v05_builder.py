@@ -279,7 +279,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
-                            placed.line_height, placed.font_asset_identity)
+                            placed.line_height, placed.font_asset_identity, placed.letter_spacing,
+                            placed.text_transform, placed.numeric_spacing)
         primitives.append(ScenePrimitive(scene_id, PrimitiveKind.TEXT, placed.source_ref, "review", purpose, role, layout.bounds,
                                          text=placed.content, baseline=layout.baseline, text_layout=layout,
                                          href=href, link_title=link_title, table_row_id=table_row_id,
@@ -559,7 +560,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                              float(text.bounds.inline_size), float(text.bounds.block_size)),
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
                             text.lines, text.font_family, text.font_weight, text.font_size,
-                            text.line_height, text.font_asset_identity)
+                            text.line_height, text.font_asset_identity, text.letter_spacing,
+                            text.text_transform, text.numeric_spacing)
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
                                          binding.purpose, binding.scene_role, layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout))

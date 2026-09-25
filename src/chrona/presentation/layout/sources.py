@@ -6,6 +6,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError, Measurement
+from chrona.presentation.layout.text import measure_text_width, paint_text
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
@@ -34,6 +35,9 @@ class MeasuredTextRun:
     font_size: float
     line_height: float
     font_asset_identity: str
+    letter_spacing: float = 0.0
+    text_transform: str = "none"
+    numeric_spacing: str = "proportional"
 
 
 @dataclass(frozen=True)
@@ -117,28 +121,40 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     """Measure every declared source once without reading Layout or renderer state."""
     metric = resolve_theme_metrics(theme, required_metrics=required_metrics)
     typography = ThemeTokenView(theme)
-    _, _, body_size, _ = typography.typography("text")
-    metric["text.measuredAverageAdvance"] = Decimal(str(font_metrics.width("M", float(body_size))))
+    body_treatment = typography.text_treatment("text")
+    body_size = body_treatment.font_size
+    metric["text.measuredAverageAdvance"] = Decimal(str(measure_text_width(
+        "M", font_size=float(body_size), font_metrics=font_metrics,
+        letter_spacing=float(body_treatment.letter_spacing), text_transform=body_treatment.transform)))
     result: dict[str, Measurement] = {}
     run_measurements: dict[str, tuple[MeasuredTextRun, ...]] = {}
     for source, value in sorted(inputs.items()):
         runs = value.text_runs()
         first_role = runs[0].typography_role if runs else value.typography_role
-        _, _, font_size, line_height = typography.typography(first_role)
+        first_treatment = typography.text_treatment(first_role)
+        font_size, line_height = first_treatment.font_size, first_treatment.line_height
         text_line = font_size * line_height
-        average_advance = Decimal(str(font_metrics.width("M", float(font_size))))
+        average_advance = Decimal(str(measure_text_width(
+            "M", font_size=float(font_size), font_metrics=font_metrics,
+            letter_spacing=float(first_treatment.letter_spacing), text_transform=first_treatment.transform)))
         measured_runs = []
         for run in runs:
-            family, weight, run_size, run_line_height = typography.typography(run.typography_role)
-            width = Decimal(str(font_metrics.width(run.content, float(run_size)))) + run.inline_advance
+            treatment = typography.text_treatment(run.typography_role)
+            family, weight, run_size, run_line_height = (treatment.family, treatment.weight,
+                                                         treatment.font_size, treatment.line_height)
+            width = Decimal(str(measure_text_width(
+                run.content, font_size=float(run_size), font_metrics=font_metrics,
+                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform))) + run.inline_advance
             baseline = Decimal(str(font_metrics.baseline(0, float(run_size), float(run_line_height))))
             measured_runs.append(MeasuredTextRun(
-                run.source_ref, run.content, run.typography_role, width,
+                run.source_ref, paint_text(run.content, text_transform=treatment.transform), run.typography_role, width,
                 run_size * run_line_height, baseline, family, int(weight),
-                float(run_size), float(run_line_height), str(font_metrics.content_identity)))
+                float(run_size), float(run_line_height), str(font_metrics.content_identity),
+                float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing))
         run_measurements[source] = tuple(measured_runs)
         measured_width = max((run.inline_size for run in measured_runs), default=average_advance)
-        text_block = sum((typography.typography(run.typography_role)[2] * typography.typography(run.typography_role)[3] for run in runs), Decimal(0))
+        text_block = sum((typography.text_treatment(run.typography_role).font_size
+                          * typography.text_treatment(run.typography_role).line_height for run in runs), Decimal(0))
         if not runs:
             text_block = text_line
         text_inline = max(average_advance, measured_width)

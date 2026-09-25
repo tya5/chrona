@@ -5,6 +5,8 @@ font choice and SVG emission remain later Scene/adapter responsibilities.
 """
 from __future__ import annotations
 
+from chrona.presentation.layout.text import measure_text_width
+
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any, Literal
@@ -194,6 +196,8 @@ def _raise_format() -> str:
 
 
 def axis_label_fits(*, content: str, available_inline: float, font_size: float,
-                    font_metrics: Any) -> bool:
+                    font_metrics: Any, letter_spacing: float = 0.0,
+                    text_transform: str = "none") -> bool:
     """Return whether a selected axis label fits its clipped interval."""
-    return float(font_metrics.width(content, font_size)) <= available_inline
+    return measure_text_width(content, font_size=font_size, font_metrics=font_metrics,
+                              letter_spacing=letter_spacing, text_transform=text_transform) <= available_inline

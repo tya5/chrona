@@ -157,6 +157,8 @@ def _place_node_text(node: NetworkNodePlacement, measured: MeasuredTextRun) -> T
         measured.typography_role, baseline=(float(inline), float(baseline)), lines=(measured.content,),
         font_family=measured.font_family, font_weight=measured.font_weight,
         font_size=measured.font_size, line_height=measured.line_height,
+        letter_spacing=measured.letter_spacing, text_transform=measured.text_transform,
+        numeric_spacing=measured.numeric_spacing,
         font_asset_identity=measured.font_asset_identity, collision_region="network",
         collision_domain=CollisionDomain("network", "nodes"), slot_id="network")
 
@@ -170,6 +172,8 @@ def _place_title(measured: MeasuredTextRun, bounds: Rect) -> TextPlacement:
         baseline=(float(bounds.inline), float(bounds.block + measured.baseline)), lines=(measured.content,),
         font_family=measured.font_family, font_weight=measured.font_weight,
         font_size=measured.font_size, line_height=measured.line_height,
+        letter_spacing=measured.letter_spacing, text_transform=measured.text_transform,
+        numeric_spacing=measured.numeric_spacing,
         font_asset_identity=measured.font_asset_identity, collision_region="network-title",
         collision_domain=CollisionDomain("network-title", "content"), slot_id="title")
 

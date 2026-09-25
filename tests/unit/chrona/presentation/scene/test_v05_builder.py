@@ -120,7 +120,9 @@ def _theme():
                        "annotation-callout-text": "body-size", "annotation-highlight-text": "body-size",
                        "annotation-note-text": "body-size", "annotation-arrow-text": "body-size"}.items():
         roles.setdefault(name, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
-            {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"})
+            {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line",
+             "letterSpacing": "letter-spacing", "textTransform": "text-transform",
+             "numericSpacing": "numeric-spacing"})
     roles["relationSourceTerminal"] = {"marker": "dependency-marker"}
     roles["relationTargetTerminal"] = {"marker": "dependency-marker"}
     for role, height, offset, order, radius in (
@@ -147,6 +149,9 @@ def _theme():
                    "dependency-marker": {"type": "marker", "value": {"shape": "triangle", "headLength": 10, "headWidth": 10, "attachmentOffset": 1}},
                    "milestone-symbol": {"type": "symbol", "value": {"shape": "diamond"}},
                    "line": {"type": "number", "value": "1.4"},
+                   "letter-spacing": {"type": "number", "value": 0},
+                   "text-transform": {"type": "textTransform", "value": "none"},
+                   "numeric-spacing": {"type": "numericSpacing", "value": "proportional"},
                    "mark-full": {"type": "number", "value": 1}, "mark-content": {"type": "number", "value": 1},
                    "mark-start": {"type": "number", "value": 0}, "mark-nested": {"type": "number", "value": 0},
                    "mark-back": {"type": "number", "value": 0}, "mark-middle": {"type": "number", "value": 1},

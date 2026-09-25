@@ -1,4 +1,4 @@
-version: chrona/theme/v0.10
+version: chrona/theme/v0.11
 kind: theme
 id: executive-light
 body:
@@ -9,6 +9,15 @@ body:
     text-weight:
       type: fontWeight
       value: 400
+    letter-spacing:
+      type: number
+      value: 0
+    text-transform:
+      type: textTransform
+      value: none
+    numeric-spacing:
+      type: numericSpacing
+      value: proportional
     spacing.none:
       type: number
       value: 0
@@ -200,6 +209,9 @@ body:
       fontWeight: text-weight
       fontSize: text-size
       lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     heading:
@@ -207,6 +219,9 @@ body:
       fontWeight: text-weight
       fontSize: heading-size
       lineHeight: heading-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     axis:
@@ -214,6 +229,9 @@ body:
       fontWeight: text-weight
       fontSize: axis-size
       lineHeight: axis-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     legend:
@@ -221,6 +239,9 @@ body:
       fontWeight: text-weight
       fontSize: legend-size
       lineHeight: legend-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     summary:
@@ -228,6 +249,9 @@ body:
       fontWeight: text-weight
       fontSize: summary-size
       lineHeight: summary-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     annotation:
@@ -235,6 +259,9 @@ body:
       fontWeight: text-weight
       fontSize: annotation-size
       lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
       strokeWidth: stroke-width
@@ -245,6 +272,9 @@ body:
       fontWeight: text-weight
       fontSize: annotation-size
       lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     annotation-callout-leader:
       strokeWidth: stroke-width
     annotation-highlight-box:
@@ -254,6 +284,9 @@ body:
       fontWeight: text-weight
       fontSize: annotation-size
       lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     annotation-note-box:
       strokeWidth: stroke-width
     annotation-note-text:
@@ -261,6 +294,9 @@ body:
       fontWeight: text-weight
       fontSize: annotation-size
       lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     annotation-note-leader:
       strokeWidth: stroke-width
     annotation-arrow-box:
@@ -270,6 +306,9 @@ body:
       fontWeight: text-weight
       fontSize: annotation-size
       lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     annotation-arrow-leader:
       marker: annotation-arrow-terminal
       strokeWidth: stroke-width

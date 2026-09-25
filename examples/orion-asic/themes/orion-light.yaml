@@ -1,4 +1,4 @@
-version: chrona/theme/v0.10
+version: chrona/theme/v0.11
 kind: theme
 id: orion-light
 body:
@@ -9,6 +9,15 @@ body:
     text-weight:
       type: fontWeight
       value: 400
+    letter-spacing:
+      type: number
+      value: 0
+    text-transform:
+      type: textTransform
+      value: none
+    numeric-spacing:
+      type: numericSpacing
+      value: proportional
     spacing.none:
       type: number
       value: 0
@@ -180,31 +189,49 @@ body:
       fontWeight: text-weight
       fontSize: text-size
       lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     heading:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: heading-size
       lineHeight: heading-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     axis:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: axis-size
       lineHeight: axis-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     legend:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: legend-size
       lineHeight: legend-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     summary:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: summary-size
       lineHeight: summary-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     annotation:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: annotation-size
       lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       strokeWidth: stroke-width
     axis-major:
       strokeWidth: stroke-width

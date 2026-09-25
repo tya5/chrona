@@ -29,7 +29,7 @@ OWNERS = {
     "LinearGradient": (_owner("inspection", "scene/serialization.py", "start end stops fidelity"),),
     "DropShadow": (_owner("inspection", "scene/serialization.py", "color offset_x offset_y blur opacity fidelity"),),
     "StrokeFinish": (_owner("inspection", "scene/serialization.py", "line_cap line_join fidelity"),),
-    "TextLayout": (_owner("inspection", "scene/serialization.py", "bounds baseline lines family weight font_size line_height asset_identity"),),
+    "TextLayout": (_owner("inspection", "scene/serialization.py", "bounds baseline lines family weight font_size line_height asset_identity letter_spacing text_transform numeric_spacing"),),
     "SceneIconPath": (_owner("inspection", "scene/serialization.py", "commands fill stroke stroke_width line_cap line_join opacity"),),
     "PatternStroke": (_owner("inspection", "scene/serialization.py", "start end width"),),
     "PatternGeometry": (_owner("inspection", "scene/serialization.py", "tile_inline_size tile_block_size angle_degrees strokes"),),

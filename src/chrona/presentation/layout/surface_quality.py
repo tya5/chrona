@@ -105,6 +105,9 @@ class TextPlacement:
     font_weight: int = 0
     font_size: float = 0.0
     line_height: float = 0.0
+    letter_spacing: float = 0.0
+    text_transform: str = "none"
+    numeric_spacing: str = "proportional"
     font_asset_identity: str = ""
     collision_region: str = "surface"
     collision_domain: CollisionDomain = CollisionDomain("surface", "content")

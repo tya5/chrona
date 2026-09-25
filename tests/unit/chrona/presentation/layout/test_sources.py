@@ -20,9 +20,13 @@ def theme():
         "weight": {"type": "fontWeight", "value": 400},
         "heading-size": {"type": "number", "value": 34},
         "heading-line": {"type": "number", "value": 1.2},
+        "letter-spacing": {"type": "number", "value": 0},
+        "text-transform": {"type": "textTransform", "value": "none"},
+        "numeric-spacing": {"type": "numericSpacing", "value": "proportional"},
     }
-    text = {"fontFamily": "family", "fontWeight": "weight", "fontSize": "metric.0", "lineHeight": "metric.1"}
-    heading = {"fontFamily": "family", "fontWeight": "weight", "fontSize": "heading-size", "lineHeight": "heading-line"}
+    treatment = {"letterSpacing": "letter-spacing", "textTransform": "text-transform", "numericSpacing": "numeric-spacing"}
+    text = {"fontFamily": "family", "fontWeight": "weight", "fontSize": "metric.0", "lineHeight": "metric.1"} | treatment
+    heading = {"fontFamily": "family", "fontWeight": "weight", "fontSize": "heading-size", "lineHeight": "heading-line"} | treatment
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
             "body": {"values": values, "metrics": {name: f"metric.{i}" for i, name in enumerate(metrics)},
                      "roles": {"text": text, "heading": heading, "axis": text, "legend": text,

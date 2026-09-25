@@ -46,6 +46,22 @@ def _tikz_opacity(node: ScenePrimitive) -> str:
     return "" if opacity == 1 else f", fill opacity={_number(opacity)}, draw opacity={_number(opacity)}"
 
 
+def _typst_tracking(layout: object) -> str:
+    """Serialize Layout's resolved tracking without deriving a font feature."""
+    spacing = getattr(layout, "letter_spacing", 0.0)
+    return f", tracking: {_number(spacing)}pt" if spacing else ""
+
+
+def _tikz_tracked_text(layout: object, text: str) -> str:
+    """Keep TikZ's letterspace request proportional to the completed em value."""
+    spacing, size = getattr(layout, "letter_spacing", 0.0), getattr(layout, "font_size", 0.0)
+    if not spacing:
+        return text
+    if size <= 0:
+        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+    return f"\\textls[{_number(spacing / size * 1000)}]{{{text}}}"
+
+
 def _typst_rect_paint(node: ScenePrimitive) -> str:
     """Serialize completed rect paint without inventing a missing fill channel."""
     paint = node.paint
@@ -100,7 +116,7 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) ->
             layout = node.text_layout
             parts.append(f"// font-asset: {_typst_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
             text = "\\n".join(_typst_string(line) for line in layout.lines)
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt, fill: {_typst_fill(node)})[{text}]]')
+            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}, fill: {_typst_fill(node)})[{text}]]')
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -123,7 +139,10 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
     width, height = viewport
     parts = ["% chrona-tikz/v0.1", r"\documentclass{article}",
              f"\\usepackage[paperwidth={_number(width)}pt,paperheight={_number(height)}pt,margin=0pt]{{geometry}}",
-             r"\usepackage{tikz}", r"\pagestyle{empty}", r"\begin{document}", r"\noindent",
+             r"\usepackage{tikz}", *( [r"\usepackage{letterspace}"]
+                                          if any(node.text_layout is not None and node.text_layout.letter_spacing
+                                                 for node in surface.primitives) else []),
+             r"\pagestyle{empty}", r"\begin{document}", r"\noindent",
              r"\begin{tikzpicture}[x=1pt,y=-1pt]",
              f"\\path[fill={surface.canvas_paint.fill}] (0,0) rectangle ({_number(width)},{_number(height)});"]
     for node in surface.primitives:
@@ -137,7 +156,7 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             layout = node.text_layout
             parts.append(f"% font-asset: {_tex_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
-            text = r"\\".join(_tex_string(line) for line in layout.lines)
+            text = _tikz_tracked_text(layout, r"\\".join(_tex_string(line) for line in layout.lines))
             parts.append(f"\\node[anchor=base west, align=left, text={_color(node, 'fill')}, text opacity={_number(_opacity(node))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{\\fontfamily{{{_tex_string(layout.family)}}}\\selectfont {text}}};")
         elif node.kind == "Symbol":
             if node.symbol is None:

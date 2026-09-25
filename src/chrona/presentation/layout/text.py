@@ -8,20 +8,38 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import AnnotationPresentation, CollisionDomain, TextPlacement
 
 
-def measure_text_width(content: str, *, font_size: float, font_metrics: Any) -> float:
+def paint_text(content: str, *, text_transform: str = "none") -> str:
+    """Apply the finite treatment before it becomes measured display text."""
+    return {
+        "none": content,
+        "uppercase": content.upper(),
+        "lowercase": content.lower(),
+        "capitalize": content.title(),
+    }[text_transform]
+
+
+def measure_text_width(content: str, *, font_size: float, font_metrics: Any,
+                       letter_spacing: float = 0, text_transform: str = "none") -> float:
     """Measure text width at the Layout boundary."""
-    return float(font_metrics.width(content, font_size))
+    content = paint_text(content, text_transform=text_transform)
+    if letter_spacing == 0:
+        return float(font_metrics.width(content, font_size))
+    return float(font_metrics.width(content, font_size, letter_spacing=letter_spacing))
 
 
-def ellipsize_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any) -> str:
+def ellipsize_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any,
+                   letter_spacing: float = 0, text_transform: str = "none") -> str:
     """Return the longest deterministic source prefix that fits with an ellipsis."""
-    if measure_text_width(content, font_size=font_size, font_metrics=font_metrics) <= available_inline:
+    if measure_text_width(content, font_size=font_size, font_metrics=font_metrics,
+                          letter_spacing=letter_spacing, text_transform=text_transform) <= available_inline:
         return content
     marker = "…"
-    if measure_text_width(marker, font_size=font_size, font_metrics=font_metrics) > available_inline:
+    if measure_text_width(marker, font_size=font_size, font_metrics=font_metrics,
+                          letter_spacing=letter_spacing) > available_inline:
         return ""
     prefix = content
-    while prefix and measure_text_width(prefix + marker, font_size=font_size, font_metrics=font_metrics) > available_inline:
+    while prefix and measure_text_width(prefix + marker, font_size=font_size, font_metrics=font_metrics,
+                                        letter_spacing=letter_spacing, text_transform=text_transform) > available_inline:
         prefix = prefix[:-1]
     return prefix + marker
 
@@ -69,7 +87,8 @@ def _wrap_units(content: str) -> tuple[str, ...]:
     return tuple(units)
 
 
-def wrap_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any) -> tuple[str, ...]:
+def wrap_text(content: str, *, available_inline: float, font_size: float, font_metrics: Any,
+              letter_spacing: float = 0, text_transform: str = "none") -> tuple[str, ...]:
     """Greedily wrap words and declared CJK character boundaries by measurement."""
     if available_inline <= 0:
         raise ValueError("E_PRESENTATION_WRAP_INPUT")
@@ -78,7 +97,8 @@ def wrap_text(content: str, *, available_inline: float, font_size: float, font_m
     for word in _wrap_units(content):
         separator = " " if current and not (_cjk(word[0]) or _cjk(current[-1])) else ""
         candidate = word if not current else f"{current}{separator}{word}"
-        if current and measure_text_width(candidate, font_size=font_size, font_metrics=font_metrics) > available_inline:
+        if current and measure_text_width(candidate, font_size=font_size, font_metrics=font_metrics,
+                                          letter_spacing=letter_spacing, text_transform=text_transform) > available_inline:
             lines.append(current)
             current = word
         else:
@@ -99,20 +119,25 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                slot_id: str | None = None, semantic_id: str = "",
                annotation: AnnotationPresentation | None = None) -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
-    family, weight, size, line_height = theme_tokens.typography(typography_role)
-    font_size, leading = float(size), float(line_height)
-    resolved_lines = lines or (content,)
-    width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics) for line in resolved_lines)
+    treatment = theme_tokens.text_treatment(typography_role)
+    font_size, leading = float(treatment.font_size), float(treatment.line_height)
+    source = source_content if source_content is not None else content
+    resolved_lines = tuple(paint_text(line, text_transform=treatment.transform) for line in (lines or (content,)))
+    painted_content = paint_text(content, text_transform=treatment.transform)
+    letter_spacing = float(treatment.letter_spacing)
+    width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
+                                   letter_spacing=letter_spacing) for line in (lines or (content,)))
     return TextPlacement(
-        placement_id, source_ref, content,
+        placement_id, source_ref, painted_content,
         Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),
              Decimal(str(width)), Decimal(str(font_size * leading * len(resolved_lines)))),
         typography_role, overflow, required,
-        baseline=(inline, baseline_block), lines=resolved_lines, font_family=family,
-        font_weight=int(weight), font_size=font_size, line_height=leading,
+        baseline=(inline, baseline_block), lines=resolved_lines, font_family=treatment.family,
+        font_weight=int(treatment.weight), font_size=font_size, line_height=leading,
+        letter_spacing=letter_spacing, text_transform=treatment.transform, numeric_spacing=treatment.numeric_spacing,
         font_asset_identity=str(font_metrics.content_identity), collision_region=collision_region,
         collision_domain=collision_domain,
-        source_content=source_content,
+        source_content=source,
         available_inline_start=available_inline_start,
         available_inline_size=available_inline_size,
         slot_id=slot_id or collision_domain.slot,

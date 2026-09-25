@@ -16,6 +16,31 @@ class ThemeTokenError(ValueError):
 
 
 @dataclass(frozen=True)
+class TextTreatment:
+    """Finite text values resolved before Layout measures a painted run."""
+
+    family: str
+    weight: int
+    font_size: Decimal
+    line_height: Decimal
+    letter_spacing_em: Decimal
+    transform: str
+    numeric_spacing: str
+
+    def paint_content(self, content: str) -> str:
+        return {
+            "none": content,
+            "uppercase": content.upper(),
+            "lowercase": content.lower(),
+            "capitalize": content.title(),
+        }[self.transform]
+
+    @property
+    def letter_spacing(self) -> Decimal:
+        return self.font_size * self.letter_spacing_em
+
+
+@dataclass(frozen=True)
 class ThemeTokenView:
     """Non-persistent, typed view derived solely from resolved Theme v0.2.
 
@@ -138,13 +163,25 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/fontWeight")
         return weight
 
-    def typography(self, role: str) -> tuple[str, int, Decimal, Decimal]:
-        """Resolve one fully declared typography role without metric fallbacks."""
+    def _typography_components(self, role: str) -> tuple[str, int, Decimal, Decimal]:
+        """Resolve the components used exclusively to construct TextTreatment."""
         family, weight = self.font_family(role), self.font_weight(role)
         size, line_height = self.number(role, "fontSize"), self.number(role, "lineHeight")
         if size <= 0 or line_height <= 0:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
         return family, weight, size, line_height
+
+    def text_treatment(self, role: str) -> TextTreatment:
+        """Resolve the complete measured treatment selected for one text role."""
+        family, weight, size, line_height = self._typography_components(role)
+        spacing = self.number(role, "letterSpacing")
+        transform = self.token(role, "textTransform", "textTransform")
+        numeric_spacing = self.token(role, "numericSpacing", "numericSpacing")
+        if (spacing < Decimal("-1") or spacing > Decimal("1")
+                or transform not in {"none", "uppercase", "lowercase", "capitalize"}
+                or numeric_spacing not in {"proportional", "tabular"}):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
+        return TextTreatment(family, weight, size, line_height, spacing, transform, numeric_spacing)
 
     def icon_ratios(self, role: str) -> tuple[Decimal, Decimal]:
         """Return the closed typography-relative icon scale and gap for one role."""

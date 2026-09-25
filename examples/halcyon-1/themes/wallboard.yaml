@@ -1,4 +1,4 @@
-version: chrona/theme/v0.10
+version: chrona/theme/v0.11
 kind: theme
 id: wallboard
 body:
@@ -42,6 +42,15 @@ body:
     icon-gap:
       type: number
       value: 0.25
+    letter-spacing:
+      type: number
+      value: 0
+    text-transform:
+      type: textTransform
+      value: none
+    numeric-spacing:
+      type: numericSpacing
+      value: proportional
     arrow:
       type: marker
       value:
@@ -188,6 +197,9 @@ body:
       fontWeight: weight.regular
       fontSize: size.body
       lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     heading:
@@ -195,6 +207,9 @@ body:
       fontWeight: weight.bold
       fontSize: size.heading
       lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     subtitle:
@@ -202,6 +217,9 @@ body:
       fontWeight: weight.regular
       fontSize: size.subtitle
       lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     axis:
@@ -209,6 +227,9 @@ body:
       fontWeight: weight.bold
       fontSize: size.axis
       lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     legend:
@@ -216,6 +237,9 @@ body:
       fontWeight: weight.regular
       fontSize: size.legend
       lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     annotation:
@@ -223,6 +247,9 @@ body:
       fontWeight: weight.regular
       fontSize: size.note
       lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
       strokeWidth: stroke-width
@@ -231,6 +258,9 @@ body:
       fontWeight: weight.regular
       fontSize: size.legend
       lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     metric:
@@ -238,6 +268,9 @@ body:
       fontWeight: weight.bold
       fontSize: size.heading
       lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     groupHeader:
@@ -245,6 +278,9 @@ body:
       fontWeight: weight.bold
       fontSize: size.axis
       lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
     milestoneSymbol:

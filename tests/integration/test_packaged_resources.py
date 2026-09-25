@@ -36,6 +36,7 @@ SCHEMAS = (
     "store-config-v0.1.schema.yaml",
     "theme-v0.9.schema.yaml",
     "theme-v0.10.schema.yaml",
+    "theme-v0.11.schema.yaml",
 )
 
 

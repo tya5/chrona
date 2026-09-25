@@ -13,7 +13,7 @@ from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
+from chrona.presentation.layout.text import ellipsize_text, measure_text_width, paint_text, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     nearest_box_port, place_annotation_rail, project_annotation_box,
     resolve_annotation_anchor, route_annotation_leader,
@@ -204,23 +204,29 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
             raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
         source = item.source_content if item.source_content is not None else item.content
         if len(item.lines) > 1:
-            lines = wrap_text(source, available_inline=available, font_size=item.font_size, font_metrics=request.font_metrics)
+            lines = wrap_text(source, available_inline=available, font_size=item.font_size, font_metrics=request.font_metrics,
+                              letter_spacing=item.letter_spacing, text_transform=item.text_transform)
             content, overflow = "\n".join(lines), item.overflow
         elif item.source_content is not None:
-            content = ellipsize_text(source, available_inline=available, font_size=item.font_size, font_metrics=request.font_metrics)
+            content = ellipsize_text(source, available_inline=available, font_size=item.font_size, font_metrics=request.font_metrics,
+                                     letter_spacing=item.letter_spacing, text_transform=item.text_transform)
             lines, overflow = (content,), "ellipsized" if content != source else "fit"
-        elif measure_text_width(source, font_size=item.font_size, font_metrics=request.font_metrics) <= available:
+        elif measure_text_width(source, font_size=item.font_size, font_metrics=request.font_metrics,
+                                letter_spacing=item.letter_spacing, text_transform=item.text_transform) <= available:
             content, lines, overflow = source, (source,), item.overflow
         else:
             raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
-        width = max(measure_text_width(line, font_size=item.font_size, font_metrics=request.font_metrics) for line in lines)
+        width = max(measure_text_width(line, font_size=item.font_size, font_metrics=request.font_metrics,
+                                       letter_spacing=item.letter_spacing, text_transform=item.text_transform) for line in lines)
         baseline = item.baseline
         if baseline is None or not hasattr(request.font_metrics, "cap_height_at"):
             raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(iter(by_side.values())).source_ref)
         available_start = (item.available_inline_start if item.available_inline_start is not None
                            else float(item.bounds.inline))
         shifted_baseline = (available_start + leading, baseline[1])
-        text[index] = replace(item, content=content, lines=lines, overflow=overflow,
+        painted_lines = tuple(paint_text(line, text_transform=item.text_transform) for line in lines)
+        text[index] = replace(item, content=paint_text(content, text_transform=item.text_transform),
+                              lines=painted_lines, overflow=overflow,
                               bounds=Rect(Decimal(str(shifted_baseline[0])), item.bounds.block,
                                           Decimal(str(width)), Decimal(str(item.font_size * item.line_height * len(lines)))),
                               baseline=shifted_baseline)
@@ -332,7 +338,7 @@ def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
     if not matching:
         return ()
     found: dict[str, tuple[Any, Any, float, float]] = {}
-    _, _, size, _ = theme_tokens.typography(typography_role)
+    size = theme_tokens.text_treatment(typography_role).font_size
     try:
         scale, gap_ratio = theme_tokens.icon_ratios(typography_role)
     except Exception as error:
@@ -459,7 +465,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             groups.append(GroupPlacement(row.group_id, row.bounds, header))
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    body_size = float(request.theme_tokens.typography("text")[2])
+    body_treatment = request.theme_tokens.text_treatment("text")
+    body_size = float(body_treatment.font_size)
     title_input = measured_sources.inputs.get("title")
     title_measurement = measured_sources.measurements.get("title")
     if title_measurement is None:
@@ -476,7 +483,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     table_cells = request.surface_content.table_cells
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
                                   font_metrics=request.font_metrics, font_size=body_size, overflow=table.overflow,
-                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)))
+                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)),
+                                  letter_spacing=float(body_treatment.letter_spacing),
+                                  text_transform=body_treatment.transform)
     positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
     column_widths = {item.column_id: item.inline_size for item in columns}
     column_intents = {item.column_id: item for item in table_columns}
@@ -485,11 +494,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if table.overflow != "ellipsize-with-source":
             return content, "fit"
         resolved = ellipsize_text(content, available_inline=available_inline, font_size=body_size,
-                                  font_metrics=request.font_metrics)
+                                  font_metrics=request.font_metrics, letter_spacing=float(body_treatment.letter_spacing),
+                                  text_transform=body_treatment.transform)
         return resolved, "ellipsized" if resolved != content else "fit"
 
     def aligned_inline(content: str, column_id: str, start: float, available_inline: float) -> float:
-        width = measure_text_width(content, font_size=body_size, font_metrics=request.font_metrics)
+        width = measure_text_width(content, font_size=body_size, font_metrics=request.font_metrics,
+                                   letter_spacing=float(body_treatment.letter_spacing), text_transform=body_treatment.transform)
         align = column_intents[column_id].align
         if align == "end":
             return start + max(0.0, available_inline - width)
@@ -545,7 +556,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
     axis = by_source["timeline-axis"]
-    axis_size = float(request.theme_tokens.typography("axis")[2])
+    axis_treatment = request.theme_tokens.text_treatment("axis")
+    axis_size = float(axis_treatment.font_size)
     shapes: list[ShapePlacement] = []
     axis_tier_outcomes: list[AxisTierOutcome] = []
     axis_decisions: list[PlacementDecision] = []
@@ -589,7 +601,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                            fiscal_start_month=request.surface_content.axis_fiscal_start_month)
                     if all(axis_label_fits(content=format_axis_tier_label(item, forms[candidate], request.locale),
                                           available_inline=(item.end - item.start).days * scale.unit_ratio,
-                                          font_size=axis_size, font_metrics=request.font_metrics) for item in trial):
+                                          font_size=axis_size, font_metrics=request.font_metrics,
+                                          letter_spacing=float(axis_treatment.letter_spacing),
+                                          text_transform=axis_treatment.transform) for item in trial):
                         selected, form = trial, forms[candidate]
                         break
                 if selected is None:
@@ -608,7 +622,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                     format_axis_tier_label(interval, form, request.locale),
                                     axis_label_fits(content=format_axis_tier_label(interval, form, request.locale),
                                                    available_inline=max(0.0, _coordinate(interval.end, scale) - _coordinate(interval.start, scale)),
-                                                   font_size=axis_size, font_metrics=request.font_metrics))
+                                                   font_size=axis_size, font_metrics=request.font_metrics,
+                                                   letter_spacing=float(axis_treatment.letter_spacing),
+                                                   text_transform=axis_treatment.transform))
                 for interval in intervals
             )
             fits = tuple(bool(item.label_fits) for item in interval_outcomes)
@@ -674,7 +690,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 if not outcome.label_fits or label is None or outcome.disposition != "placed":
                     raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
                                       detail=outcome.candidate_id)
-                width = measure_text_width(label, font_size=axis_size, font_metrics=request.font_metrics)
+                width = measure_text_width(label, font_size=axis_size, font_metrics=request.font_metrics,
+                                           letter_spacing=float(axis_treatment.letter_spacing),
+                                           text_transform=axis_treatment.transform)
                 inline = x if tier.label.align == "start" else x + (available - width) / 2
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
                                     content=label, inline=inline, baseline_block=float(axis.bounds.block) + axis_size * (label_lane + 1),
@@ -968,17 +986,22 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     timeline_rect = LabelRect(*timeline_bounds)
     for label_request in label_requests:
-        _, _, font_size, line_height = request.theme_tokens.typography(label_request.typography_role)
+        label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
+        font_size, line_height = label_treatment.font_size, label_treatment.line_height
         visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
         handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
         leading = sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
         trailing = sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
         available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
         lines = (wrap_text(label_request.content, available_inline=available,
-                           font_size=float(font_size), font_metrics=request.font_metrics)
+                           font_size=float(font_size), font_metrics=request.font_metrics,
+                           letter_spacing=float(label_treatment.letter_spacing),
+                           text_transform=label_treatment.transform)
                  if label_request.wrap == "allow" else (label_request.content,))
         placement_bounds = label_request.bounds or timeline_rect
-        text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics) for line in lines)
+        text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=request.font_metrics,
+                                            letter_spacing=float(label_treatment.letter_spacing),
+                                            text_transform=label_treatment.transform) for line in lines)
         label_size = (leading + text_width + trailing,
                       float(font_size) * float(line_height) * len(lines))
         # Mark labels remain subject to every completed mark.  ``place_label``
@@ -1118,8 +1141,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         content = placed_relation.label_content
         if not content:
             continue
-        _, _, font_size, line_height = request.theme_tokens.typography("annotation")
-        size = (measure_text_width(content, font_size=float(font_size), font_metrics=request.font_metrics),
+        relation_treatment = request.theme_tokens.text_treatment("annotation")
+        font_size, line_height = relation_treatment.font_size, relation_treatment.line_height
+        size = (measure_text_width(content, font_size=float(font_size), font_metrics=request.font_metrics,
+                                   letter_spacing=float(relation_treatment.letter_spacing),
+                                   text_transform=relation_treatment.transform),
                 float(font_size) * float(line_height))
         relation_text_id = f"relation-label:{placed_relation.relation_id.removeprefix('relation:')}"
         obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
@@ -1142,9 +1168,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     legend = by_source.get("legend")
     if legend:
-        _, _, legend_font_size, legend_line_height = request.theme_tokens.typography("legend")
-        legend_size = float(legend_font_size)
-        legend_step = legend_size * float(legend_line_height)
+        legend_treatment = request.theme_tokens.text_treatment("legend")
+        legend_size = float(legend_treatment.font_size)
+        legend_step = legend_size * float(legend_treatment.line_height)
         swatch_size = max(2.0, legend_size * 0.8)
         for index, (role, label) in enumerate(request.surface_content.legend_entries):
             baseline = float(legend.bounds.block) + (index + 1) * legend_step
@@ -1185,7 +1211,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     if summary_slot:
         cursor = float(summary_slot.bounds.block)
         for run in request.surface_content.summary.runs:
-            _, _, font_size, line_height = request.theme_tokens.typography(run.typography_role)
+            summary_treatment = request.theme_tokens.text_treatment(run.typography_role)
+            font_size, line_height = summary_treatment.font_size, summary_treatment.line_height
             text.append(place_text(placement_id=run.placement_id, source_ref=run.source_ref, content=run.content,
                                    inline=float(summary_slot.bounds.inline), baseline_block=cursor + float(font_size),
                                    typography_role=run.typography_role, theme_tokens=request.theme_tokens,
@@ -1236,9 +1263,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             else:
                 raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
             annotation_text_role = semantic_binding(presentation.text_semantic_id).theme_role
-            size, line_height = (float(item) for item in request.theme_tokens.typography(annotation_text_role)[2:])
+            annotation_treatment = request.theme_tokens.text_treatment(annotation_text_role)
+            size, line_height = float(annotation_treatment.font_size), float(annotation_treatment.line_height)
             text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
-            text_width = min(text_available, max(size * 4, measure_text_width(content, font_size=size, font_metrics=request.font_metrics)))
+            text_width = min(text_available, max(size * 4, measure_text_width(
+                content, font_size=size, font_metrics=request.font_metrics,
+                letter_spacing=float(annotation_treatment.letter_spacing), text_transform=annotation_treatment.transform)))
             width = annotation_leading + text_width + annotation_trailing
             annotation_lines = (content,)
             try:
@@ -1246,9 +1276,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
-                    annotation_lines = (wrap_text(content, available_inline=text_available, font_size=size, font_metrics=request.font_metrics)
+                    annotation_lines = (wrap_text(content, available_inline=text_available, font_size=size, font_metrics=request.font_metrics,
+                                                  letter_spacing=float(annotation_treatment.letter_spacing),
+                                                  text_transform=annotation_treatment.transform)
                                         if wrap == "allow" else (content,))
-                    text_width = max(measure_text_width(line, font_size=size, font_metrics=request.font_metrics)
+                    text_width = max(measure_text_width(line, font_size=size, font_metrics=request.font_metrics,
+                                                        letter_spacing=float(annotation_treatment.letter_spacing),
+                                                        text_transform=annotation_treatment.transform)
                                      for line in annotation_lines)
                     annotation_size = (annotation_leading + text_width + annotation_trailing,
                                        size * line_height * len(annotation_lines))
@@ -1323,7 +1357,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 note_index_trailing = sum(width + gap for visual, _, width, gap in note_index_visuals
                                           if visual.side == "trailing")
                 note_index_content = str(annotation.number)
-                note_index_width = measure_text_width(note_index_content, font_size=size, font_metrics=request.font_metrics)
+                note_index_width = measure_text_width(note_index_content, font_size=size, font_metrics=request.font_metrics,
+                                                      letter_spacing=float(annotation_treatment.letter_spacing),
+                                                      text_transform=annotation_treatment.transform)
                 note_index_size = (note_index_leading + note_index_width + note_index_trailing, size * line_height)
                 note_index_obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds)))
                                         for item in text

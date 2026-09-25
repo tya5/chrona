@@ -141,7 +141,14 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
             if node.text is None or node.text_layout is None or node.baseline is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             lines = node.text_layout.lines
             body = escape(lines[0]) if len(lines) == 1 else "".join(f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else number(node.text_layout.font_size * node.text_layout.line_height)}">{escape(line)}</tspan>' for index, line in enumerate(lines))
-            append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}" {attrs(paint, fill=True, stroke=False)}>{body}</text>')
+            treatment = " ".join(part for part in (
+                (f'letter-spacing="{number(node.text_layout.letter_spacing)}"'
+                 if node.text_layout.letter_spacing != 0 else ""),
+                (f'font-variant-numeric="{node.text_layout.numeric_spacing}-nums"'
+                 if node.text_layout.numeric_spacing != "proportional" else ""),
+            ) if part)
+            treatment = f" {treatment}" if treatment else ""
+            append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')
         elif node.kind == "Symbol":
             if node.symbol is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)

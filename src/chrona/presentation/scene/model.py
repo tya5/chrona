@@ -59,6 +59,9 @@ class TextLayout:
     font_size: float
     line_height: float
     asset_identity: str
+    letter_spacing: float = 0.0
+    text_transform: str = "none"
+    numeric_spacing: str = "proportional"
 
 
 @dataclass(frozen=True)
