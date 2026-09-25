@@ -144,6 +144,7 @@ class ShapePlacement:
     slot_id: str = ""
     clip_host_id: str | None = None
     paint_order: int = 0
+    semantic_id: str = ""
 
 
 @dataclass(frozen=True)

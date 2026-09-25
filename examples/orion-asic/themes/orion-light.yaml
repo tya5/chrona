@@ -156,10 +156,17 @@ body:
       value: 0
   roles:
     group-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
       opacity: opacity.group-band
     group-header-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 11
       opacity: opacity.group-header-band
     calendar-closed:
+      backgroundTreatment: outline
+      backgroundPaintOrder: 12
+      strokeWidth: stroke-width
       opacity: opacity.calendar-closed
     text:
       fontFamily: editorial
@@ -266,6 +273,7 @@ body:
     actual.fill: positive
     as-of.stroke: warning
     calendar-closed.fill: surfaceRaised
+    calendar-closed.stroke: surfaceRaised
     missing-actual.fill: textMuted
     variance-ahead.fill: positive
     variance-on-track.fill: neutral

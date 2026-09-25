@@ -62,6 +62,9 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
         return PaintFamily.TEXT
     if primitive.kind == PrimitiveKind.PATH:
         return PaintFamily.PATH
+    if primitive.purpose in {"group-decoration", "group-header-band", "calendar-closed"}:
+        treatment, _ = tokens.background(primitive.visual_role)
+        return PaintFamily.OUTLINE if treatment == "outline" else PaintFamily.SOLID
     pattern = tokens.optional_pattern(primitive.visual_role)
     if pattern is not None and pattern_kind(pattern) == "outline":
         return PaintFamily.OUTLINE
@@ -300,20 +303,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             emit_semantic_text(f"cell:{object_id}:{column_id}", "tableCell", href=href, link_title=link_title,
                                table_row_id=row_id, table_column_id=column_id)
     for group in groups:
-        group_band = semantic_binding("groupBand")
-        primitives.append(ScenePrimitive(f"group:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", group_band.purpose, group_band.scene_role,
-                                         group.content_bounds))
         if group.header_bounds is not None:
-            header_band = semantic_binding("groupHeaderBand")
-            primitives.append(ScenePrimitive(f"group-header-band:{group.group_id}", PrimitiveKind.RECT, group.group_id, "group", header_band.purpose, header_band.scene_role,
-                                             group.header_bounds))
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
-    calendar_binding = semantic_binding("calendarClosed")
     for placed in placed_surface.shapes:
-        if placed.placement_id.startswith("calendar-closed:"):
+        if placed.semantic_id in {"groupBand", "groupHeaderBand", "calendarClosed"}:
+            binding = semantic_binding(placed.semantic_id)
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "project-calendar", "calendar",
-                                             calendar_binding.purpose, calendar_binding.scene_role, bounds))
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration",
+                                             binding.purpose, binding.scene_role, bounds, slot_id=placed.slot_id,
+                                             paint_order=placed.paint_order))
     mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
     for review_row, row in zip(review_rows, rows, strict=True):
       members = sorted(enumerate(review_row.items),

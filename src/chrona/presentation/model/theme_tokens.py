@@ -163,6 +163,17 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
         return height, offset, int(order), corner_radius
 
+    def background(self, role: str) -> tuple[str, int]:
+        """Return a completed finite treatment and paint order for one background."""
+        binding = self._body["roles"].get(role)
+        path = f"/body/roles/{role}"
+        if not isinstance(binding, Mapping):
+            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", path)
+        treatment, order = binding.get("backgroundTreatment"), binding.get("backgroundPaintOrder")
+        if treatment not in {"fill", "outline"} or not isinstance(order, int) or not 0 <= order <= 1000:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
+        return treatment, order
+
     def number(self, role: str, property_name: str) -> Decimal:
         value = self.token(role, property_name, "number")
         try:

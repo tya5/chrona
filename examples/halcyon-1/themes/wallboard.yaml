@@ -164,10 +164,17 @@ body:
       value: 0
   roles:
     group-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
       opacity: opacity.group-band
     group-header-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 11
       opacity: opacity.group-header-band
     calendar-closed:
+      backgroundTreatment: outline
+      backgroundPaintOrder: 12
+      strokeWidth: stroke-width
       opacity: opacity.calendar-closed
     text:
       fontFamily: editorial
@@ -335,6 +342,7 @@ body:
     groupHeader.fill: surfaceRaised
     baseline.stroke: neutral
     calendar-closed.fill: surfaceRaised
+    calendar-closed.stroke: surfaceRaised
     calendar-exception.fill: warning
     range.fill: warning
     asOf.stroke: warning

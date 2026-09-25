@@ -478,6 +478,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     format_by_level = {unit: formatter for unit, formatter in configured_levels}
     format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
     shapes: list[ShapePlacement] = []
+    for group in groups:
+        treatment, paint_order = request.theme_tokens.background("group-band")
+        shapes.append(ShapePlacement(f"group:{group.group_id}", group.group_id, "Rect", group.content_bounds,
+                                     slot_id=table.slot_id, paint_order=paint_order, semantic_id="groupBand"))
+        if group.header_bounds is not None:
+            _, header_order = request.theme_tokens.background("group-header-band")
+            shapes.append(ShapePlacement(f"group-header-band:{group.group_id}", group.group_id, "Rect",
+                                         group.header_bounds, slot_id=table.slot_id,
+                                         paint_order=header_order, semantic_id="groupHeaderBand"))
     for interval in band_intervals:
         x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
         inline_size = max(0.0, x2 - x)
@@ -523,9 +532,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     for closed_day in closed_days:
         if start <= closed_day < end:
             x1, x2 = _coordinate(closed_day, scale), _coordinate(closed_day.fromordinal(closed_day.toordinal() + 1), scale)
+            _, paint_order = request.theme_tokens.background("calendar-closed")
             shapes.append(ShapePlacement(f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "Rect",
                                          Rect(Decimal(str(x1)), timeline.bounds.block,
-                                              Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size)))
+                                              Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size),
+                                         slot_id=timeline.slot_id, paint_order=paint_order, semantic_id="calendarClosed"))
     as_of_label: tuple[float, str] | None = None
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
         x = _coordinate(contract.time.as_of, scale)

@@ -134,9 +134,9 @@ def _theme():
                    "mark-front": {"type": "number", "value": 2}, "mark-square": {"type": "number", "value": 0},
                    "mark-rounded": {"type": "number", "value": "0.25"}},
         "roles": {**roles,
-                  "group-band": {**roles["group-band"], "opacity": "group-opacity"},
-                  "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity"},
-                  "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity"},
+                  "group-band": {**roles["group-band"], "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
+                  "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 11},
+                  "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity", "backgroundTreatment": "outline", "backgroundPaintOrder": 12},
                   "milestoneSymbol": {"symbol": "milestone-symbol"}}, "metrics": {}}}
 
 
