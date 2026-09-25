@@ -9,6 +9,7 @@ enforced before every defect behind it is fixed; see ``check`` for the rules.
 from __future__ import annotations
 
 import re
+from math import isclose, isfinite
 from importlib.util import find_spec
 from pathlib import Path
 from xml.etree import ElementTree
@@ -88,6 +89,41 @@ def _load(svg_path: Path, context_path: Path):
     return tree, viewport, metrics
 
 
+def _serialized_canvas(tree, requested: tuple[float, float]) -> tuple[float, float]:
+    """Return the coherent, Layout-completed SVG canvas for document checks."""
+    root = tree
+
+    def number(name: str) -> float:
+        value = root.get(name)
+        assert value is not None, f"serialized SVG canvas is missing {name}"
+        try:
+            result = float(value)
+        except ValueError as error:
+            raise AssertionError(f"serialized SVG canvas has non-numeric {name}: {value!r}") from error
+        assert isfinite(result) and result > 0, f"serialized SVG canvas has invalid {name}: {value!r}"
+        return result
+
+    width, height = number("width"), number("height")
+    view_box = root.get("viewBox")
+    assert view_box is not None, "serialized SVG canvas is missing viewBox"
+    try:
+        origin_inline, origin_block, view_width, view_height = (float(value) for value in view_box.split())
+    except ValueError as error:
+        raise AssertionError(f"serialized SVG canvas has invalid viewBox: {view_box!r}") from error
+    assert all(isfinite(value) for value in (origin_inline, origin_block, view_width, view_height)), (
+        f"serialized SVG canvas has non-finite viewBox: {view_box!r}"
+    )
+    assert origin_inline == 0 and origin_block == 0, f"serialized SVG canvas has translated viewBox: {view_box!r}"
+    assert isclose(view_width, width) and isclose(view_height, height), (
+        f"serialized SVG width/height and viewBox disagree: {width}x{height} vs {view_box!r}"
+    )
+    requested_width, requested_height = requested
+    assert width >= requested_width and height >= requested_height, (
+        f"serialized SVG canvas {width}x{height} is smaller than requested {requested_width}x{requested_height}"
+    )
+    return width, height
+
+
 def _bound(context_path: Path, body: dict, name: str) -> dict:
     return yaml.safe_load((context_path.parents[1] / body[name]["address"]).read_text(encoding="utf-8"))
 
@@ -122,6 +158,30 @@ def _texts(tree, metrics):
         font = metrics.get(int(node.get("font-weight", 400))) or next(iter(metrics.values()))
         x, baseline, content = float(node.get("x")), float(node.get("y")), node.text or ""
         yield node.get("data-purpose"), content, (x, baseline - size, x + font.width(content, size), baseline)
+
+
+@pytest.mark.parametrize(
+    "svg, requested, expected",
+    [
+        ('<svg width="1600" height="900" viewBox="0 0 1600 900"/>', (1600.0, 900.0), (1600.0, 900.0)),
+        ('<svg width="1600" height="1032.8" viewBox="0 0 1600 1032.8"/>', (1600.0, 900.0), (1600.0, 1032.8)),
+    ],
+)
+def test_serialized_canvas_accepts_requested_and_completed_extents(svg, requested, expected):
+    assert _serialized_canvas(ElementTree.fromstring(svg), requested) == expected
+
+
+@pytest.mark.parametrize(
+    "svg, requested, message",
+    [
+        ('<svg width="1600" height="900" viewBox="0 0 1599 900"/>', (1600.0, 900.0), "disagree"),
+        ('<svg width="1600" height="900" viewBox="1 0 1600 900"/>', (1600.0, 900.0), "translated"),
+        ('<svg width="1599" height="900" viewBox="0 0 1599 900"/>', (1600.0, 900.0), "smaller"),
+    ],
+)
+def test_serialized_canvas_rejects_incoherent_or_undersized_output(svg, requested, message):
+    with pytest.raises(AssertionError, match=message):
+        _serialized_canvas(ElementTree.fromstring(svg), requested)
 
 
 def _overlaps(a, b):
@@ -166,7 +226,8 @@ def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
 
 @CASES
 def test_no_text_leaves_the_viewport(slide, context_path, svg_path, request):
-    tree, (width, height), metrics = _load(svg_path, context_path)
+    tree, requested, metrics = _load(svg_path, context_path)
+    width, height = _serialized_canvas(tree, requested)
     escaped = [(content, round(box[2] - width, 1)) for _, content, box in _texts(tree, metrics)
                if box[0] < 0 or box[1] < 0 or box[2] > width or box[3] > height]
     check(slide, request, [list(item) for item in escaped], f"text past the canvas edge: {escaped}")
