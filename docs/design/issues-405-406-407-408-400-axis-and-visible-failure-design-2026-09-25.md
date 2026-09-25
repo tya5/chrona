@@ -1,6 +1,6 @@
 # Axis and Visible-Failure Design (#405, #406, #407, #408, #400)
 
-**Status:** Proposed design.
+**Status:** Accepted for implementation after P1 completion (`a0396d93`).
 
 ## Decision
 
