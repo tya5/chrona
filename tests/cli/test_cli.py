@@ -398,6 +398,37 @@ def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_pat
     assert diagnostic["message"].startswith("expected one permitted form")
 
 
+def test_cli_draft_schema_diagnostics_report_all_known_resources_with_provenance(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    view["body"]["surface"] = "table-timelinez"
+    view["body"]["tableColumns"][0]["missing"] = "em-dashz"
+    theme["body"]["values"]["text-weight"]["type"] = "fontWeightz"
+    view_path, theme_path = tmp_path / "view.yaml", tmp_path / "theme.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(view_path), "--theme", str(theme_path),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "examples/controller-z/layouts/executive-review.yaml"),
+        "--output", str(tmp_path / "ignored.svg"),
+    ])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    diagnostics = json.loads(capsys.readouterr().out)["diagnostics"]
+    assert [(item["code"], item["resourceKind"], item["resourceIdentity"], item["sourceRef"])
+            for item in diagnostics] == [
+        ("E_VIEW_SCHEMA", "view", "controller-z-executive", "/body/surface"),
+        ("E_VIEW_SCHEMA", "view", "controller-z-executive", "/body/tableColumns/0/missing"),
+        ("E_THEME_SCHEMA", "theme", "executive-light", "/body/values/text-weight/type"),
+    ]
+
+
 def test_cli_baseline_rejection_keeps_visual_capability_pointer_and_message(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     monkeypatch.setattr(sys, "argv", [

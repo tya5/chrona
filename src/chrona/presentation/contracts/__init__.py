@@ -7,6 +7,7 @@ from chrona.presentation.contracts.resources import (
     ColorSchemeContract,
     ContractError,
     SchemaContractError,
+    SchemaErrorExplanations,
     LayoutProfileContract,
     IconCatalogContract,
     IconEntry,
@@ -29,19 +30,21 @@ from chrona.presentation.contracts.resources import (
     ViewContract,
     validate_icon_catalog_entry,
     explain_schema_errors,
+    explain_resource_schema_errors,
     freeze,
     parse_contract,
 )
 from chrona.presentation.contracts.diagnostics import (
     PresentationContractCollection,
     PresentationDiagnostic,
+    PresentationIngressRejected,
     PresentationResourceSource,
     collect_presentation_contracts,
 )
 
 __all__ = [
-    "ActualSetContract", "AuthoringWorkspaceContract", "ClosureIdentity", "ColorSchemeContract", "ContractError", "SchemaContractError", "LayoutProfileContract", "IconCatalogContract", "IconEntry", "IconPath", "IconRasterSource", "PresentationPresetContract", "ProfilePackageContract",
+    "ActualSetContract", "AuthoringWorkspaceContract", "ClosureIdentity", "ColorSchemeContract", "ContractError", "SchemaContractError", "SchemaErrorExplanations", "LayoutProfileContract", "IconCatalogContract", "IconEntry", "IconPath", "IconRasterSource", "PresentationPresetContract", "ProfilePackageContract",
     "ProjectContract", "RenderContextContract", "RenderEnvironment", "RenderTarget", "TypesetterIdentity", "ResourceReference", "ResolvedThemeContract", "ResourceContract", "ThemeContract",
-    "ReviewDetailProfileContract", "SnapshotRefContract", "SummaryProfileContract", "ViewContract", "freeze", "parse_contract", "validate_icon_catalog_entry", "explain_schema_errors",
-    "PresentationContractCollection", "PresentationDiagnostic", "PresentationResourceSource", "collect_presentation_contracts",
+    "ReviewDetailProfileContract", "SnapshotRefContract", "SummaryProfileContract", "ViewContract", "freeze", "parse_contract", "validate_icon_catalog_entry", "explain_schema_errors", "explain_resource_schema_errors",
+    "PresentationContractCollection", "PresentationDiagnostic", "PresentationIngressRejected", "PresentationResourceSource", "collect_presentation_contracts",
 ]

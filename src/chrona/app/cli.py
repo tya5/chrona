@@ -16,7 +16,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
-from chrona.presentation.contracts import TypesetterIdentity
+from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
 from chrona.storage.loader import load_project
@@ -74,6 +74,21 @@ def _emit_failure(failure: CliFailure) -> NoReturn:
     }
     print(json.dumps(payload, ensure_ascii=False))
     raise SystemExit(failure.exit_code)
+
+
+def _emit_presentation_rejection(error: PresentationIngressRejected) -> NoReturn:
+    """Transport aggregate ingress findings without changing legacy one-error JSON."""
+    multiple = len(error.diagnostics) > 1
+    diagnostics = []
+    for item in error.diagnostics:
+        code = f"E_{item.resource_kind.upper().replace('-', '_')}_SCHEMA" if item.code == "E_RESOURCE_SCHEMA" else item.code
+        diagnostic = _diagnostic(code, item.message, "closure", item.pointer)
+        if multiple:
+            diagnostic |= {"resourceKind": item.resource_kind, "resourceIdentity": item.resource_identity,
+                           "phase": item.phase, **({"rule": item.rule} if item.rule is not None else {})}
+        diagnostics.append(diagnostic)
+    print(json.dumps({"status": "rejected", "diagnostics": diagnostics}, ensure_ascii=False))
+    raise SystemExit(1)
 
 
 def _emit_font_warnings(rendered: RenderedReview) -> None:
@@ -652,6 +667,8 @@ def main() -> None:
         _run(args)
     except CliFailure as error:
         _emit_failure(error)
+    except PresentationIngressRejected as error:
+        _emit_presentation_rejection(error)
     except (SnapshotReadError, ClosureError) as error:
         message = error.detail if error.detail else str(error)
         source_ref = error.source_ref if isinstance(error, ClosureError) else "/"

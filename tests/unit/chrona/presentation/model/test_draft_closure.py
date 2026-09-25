@@ -6,7 +6,7 @@ import yaml
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_guided_draft_render
 from chrona.presentation.fonts.system import resolve_system_font
-from chrona.presentation.contracts import TypesetterIdentity
+from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
 from chrona.resources import default_preset_resource, default_preset_root
 
 
@@ -36,13 +36,13 @@ def test_draft_closure_accepts_optional_review_inputs():
     assert draft.asset_root.name == "resources"
 
 
-def test_draft_closure_reports_the_invalid_resource_schema_pointer(tmp_path):
+def test_draft_closure_aggregates_every_schema_finding_in_the_known_resource_set(tmp_path):
     invalid_view = tmp_path / "view.yaml"
     invalid_view.write_text("version: chrona/view/v0.20\nkind: view\nid: bad\nbody: {}\n", encoding="utf-8")
-    with pytest.raises(ClosureError) as error:
+    with pytest.raises(PresentationIngressRejected) as error:
         resolve_draft_render(**(_paths(_root()) | {"view_path": invalid_view}))
-    assert error.value.diagnostic_id == "E_VIEW_SCHEMA"
-    assert error.value.source_ref.startswith("/body")
+    assert {item.pointer for item in error.value.diagnostics} >= {"/body"}
+    assert {item.resource_kind for item in error.value.diagnostics} == {"view"}
 
 
 def test_draft_preset_resolves_the_same_typed_resources_as_explicit_inputs():

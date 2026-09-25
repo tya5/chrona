@@ -38,6 +38,15 @@ class SchemaContractError(ContractError):
         self.source_ref = source_ref
         self.violation = violation
 
+
+@dataclass(frozen=True)
+class SchemaErrorExplanations:
+    """Aggregate and legacy views of one resource validator result."""
+
+    aggregate: tuple[SchemaViolation, ...]
+    legacy: SchemaViolation
+    error_count: int
+
 class FrozenDict(dict[str, Any]):
     """A dict-compatible value that rejects all mutation after closure parsing."""
 
@@ -588,14 +597,29 @@ def explain_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -
     existing callers.  Presentation ingress collection uses this separate
     function before it decides whether a resource is safe to parse.
     """
+    report = explain_resource_schema_errors(identity, value)
+    return report.aggregate if report is not None else ()
+
+
+def explain_resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> SchemaErrorExplanations | None:
+    """Return aggregate and legacy explanations for one resource, if invalid."""
+    errors = _resource_schema_errors(identity, value)
+    if not errors:
+        return None
+    return SchemaErrorExplanations(
+        explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id),
+        explain_errors(errors, resource_kind=identity.kind, resource_identity=identity.id),
+        len(errors),
+    )
+def _resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> tuple[ValidationError, ...]:
+    """Evaluate one resource schema without constructing a runtime contract."""
     version = value.get("version")
     schema_name = _SCHEMAS.get((identity.kind, version)) if isinstance(version, str) else None
     if schema_name is None:
         raise _closure_kind_error(identity, "supported resource kind/version", {"kind": identity.kind, "version": version})
     schema = schema_document(schema_name)
     candidate = _icon_catalog_envelope(value) if identity.kind == "icon-catalog" else _schema_value(value)
-    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))
-    return explain_all_errors(errors, resource_kind=identity.kind, resource_identity=identity.id) if errors else ()
+    return tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))
 
 
 def _icon_catalog_envelope(value: Mapping[str, Any]) -> dict[str, Any]:

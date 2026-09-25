@@ -9,7 +9,8 @@ from chrona.presentation.contracts.resources import (
     ContractError,
     ResourceContract,
     SchemaContractError,
-    explain_schema_errors,
+    SchemaErrorExplanations,
+    explain_resource_schema_errors,
     parse_contract,
 )
 
@@ -47,6 +48,14 @@ class PresentationContractCollection:
     diagnostics: tuple[PresentationDiagnostic, ...]
 
 
+class PresentationIngressRejected(ValueError):
+    """The known presentation resource set has one or more ingress findings."""
+
+    def __init__(self, diagnostics: tuple[PresentationDiagnostic, ...]) -> None:
+        super().__init__("E_PRESENTATION_REJECTED")
+        self.diagnostics = diagnostics
+
+
 def collect_presentation_contracts(
     sources: Sequence[PresentationResourceSource],
 ) -> PresentationContractCollection:
@@ -59,16 +68,18 @@ def collect_presentation_contracts(
     """
     contracts: list[ResourceContract] = []
     diagnostics: list[PresentationDiagnostic] = []
+    schema_reports: list[tuple[PresentationResourceSource, SchemaErrorExplanations | None]] = []
     for source in sources:
-        violations = explain_schema_errors(source.identity, source.value)
-        if violations:
-            diagnostics.extend(
-                PresentationDiagnostic(
-                    "E_RESOURCE_SCHEMA", source.identity.kind, source.identity.id,
-                    violation.pointer, violation.rule, violation.message, "schema",
-                )
-                for violation in violations
-            )
+        schema_reports.append((source, explain_resource_schema_errors(source.identity, source.value)))
+
+    schema_error_count = sum(report.error_count for _source, report in schema_reports if report is not None)
+    for source, report in schema_reports:
+        if report is not None:
+            violations = (report.legacy,) if schema_error_count == 1 else report.aggregate
+            diagnostics.extend(PresentationDiagnostic(
+                "E_RESOURCE_SCHEMA", source.identity.kind, source.identity.id,
+                violation.pointer, violation.rule, violation.message, "schema",
+            ) for violation in violations)
             continue
         try:
             contracts.append(parse_contract(source.identity, source.value))

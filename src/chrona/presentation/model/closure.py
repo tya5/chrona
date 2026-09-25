@@ -20,6 +20,7 @@ from chrona.presentation.contracts import (
     ProfilePackageContract, ProjectContract, RenderContextContract,
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
     SnapshotRefContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
+    PresentationIngressRejected, PresentationResourceSource, collect_presentation_contracts,
     freeze, parse_contract, validate_icon_catalog_entry, IconRasterSource,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
@@ -227,10 +228,11 @@ def resolve_draft_render(
         ("actual-set", actual_path), ("summary-profile", summary_path),
         ("review-detail-profile", detail_path),
     )
-    resources = [_load_draft_resource(kind, path) for kind, path in paths if path is not None]
-    resources.extend(_load_draft_resource(kind, path) for kind, path in optional if path is not None)
-    catalog_resources = tuple(_load_draft_resource("icon-catalog", path) for path in icon_catalog_paths)
-    resources.extend(catalog_resources)
+    sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
+    sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
+    sources.extend(_load_draft_source("icon-catalog", path) for path in icon_catalog_paths)
+    resources = _collect_draft_resources(sources)
+    catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter,
@@ -453,6 +455,34 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     except ContractError as error:
         raise ClosureError(error.diagnostic_id, detail=error.detail) from error
     return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
+
+
+def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:
+    """Read one declared Draft file without allowing it into typed closure yet."""
+    payload = path.read_bytes()
+    value = safe_load(payload)
+    if not isinstance(value, dict):
+        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+    identifier = _resource_id(kind, value)
+    if not isinstance(identifier, str) or not identifier:
+        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+    identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
+    return PresentationResourceSource(identity, value)
+
+
+def _collect_draft_resources(sources: list[PresentationResourceSource]) -> list[ClosureResource]:
+    """Collect all known Draft resource findings before any closure work begins."""
+    collection = collect_presentation_contracts(tuple(sources))
+    if collection.diagnostics:
+        if len(collection.diagnostics) == 1:
+            diagnostic = collection.diagnostics[0]
+            code = ("E_" + diagnostic.resource_kind.upper().replace("-", "_") + "_SCHEMA"
+                    if diagnostic.code == "E_RESOURCE_SCHEMA" else diagnostic.code)
+            raise ClosureError(code, diagnostic.pointer, diagnostic.message)
+        raise PresentationIngressRejected(collection.diagnostics)
+    return [ClosureResource(contract.identity.kind, contract.identity.id, contract.identity.revision,
+                            contract.identity.content_identity, contract)
+            for contract in collection.contracts]
 
 
 def _resource_id(kind: str, value: dict[str, Any]) -> object:
