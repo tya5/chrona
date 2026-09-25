@@ -396,7 +396,9 @@ class SurfacePlacement:
             raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")
         for index, item in enumerate(required):
             for other in required[index + 1:]:
-                if _collision_domains_intersect(item.collision_domain, other.collision_domain) and intersects(item.bounds, other.bounds):
+                if (item.overflow != "visible-overflow" and other.overflow != "visible-overflow"
+                        and _collision_domains_intersect(item.collision_domain, other.collision_domain)
+                        and intersects(item.bounds, other.bounds)):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
             if relation.corner_radius < 0:
@@ -470,7 +472,9 @@ class SurfacePlacement:
                 for item in outcome.intervals:
                     if item.disposition not in {"placed", "thinned"}:
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
-                    if item.disposition == "placed" and (not item.label_fits or item.reason is not None):
+                    if item.disposition == "placed" and (
+                            (item.label_fits and item.reason is not None)
+                            or (not item.label_fits and item.reason != "visible-overflow")):
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
                     if item.disposition == "thinned" and item.reason not in {"label-does-not-fit", "thinning-stride"}:
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")

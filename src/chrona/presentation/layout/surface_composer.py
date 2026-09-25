@@ -721,7 +721,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         interval_outcomes = tuple(resolved_outcomes)
                         diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:stride={schedule.stride}:phase={schedule.phase}")
                 else:
-                    interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
+                    interval_outcomes = tuple(replace(
+                        item, disposition="placed",
+                        reason=None if item.label_fits else "visible-overflow")
+                        for item in interval_outcomes)
             else:
                 interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
         else:
@@ -785,7 +788,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                     typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                     collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", f"label-{tier_index}"),
                                     source_content=label, available_inline_start=x, available_inline_size=available,
-                                    orientation=orientation)
+                                    orientation=orientation,
+                                    overflow="visible-overflow" if not outcome.label_fits or lane_overflow else "fit")
                 placed = replace(placed, semantic_id="axisLabel")
                 text.append(placed)
                 if not outcome.label_fits or lane_overflow:
@@ -1143,6 +1147,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region=provisional.collision_region,
                                    collision_domain=provisional.collision_domain,
+                                   overflow="visible-overflow" if candidate.visible_overflow else "fit",
                                    lines=lines), fallback_ladder=label_request.candidates, selected_rung=candidate.side)
             text.append(placed_text)
             if candidate.visible_overflow:

@@ -52,3 +52,15 @@ paths.  The annotation unit test explicitly covers an oversized/colliding box
 and an oversized rail under `visible-overflow`.  Diagnostic inventory,
 primitive-delivery, and import-direction checks remain current.  Public
 materializer and corpus evidence are rechecked in the I449-5 release gate.
+
+## Follow-up: completed axis-overflow validation
+
+Corpus regeneration exercised a dense `replan-baseline` axis where several
+labels correctly selected the visible-overflow fallback.  The final placement
+validator still treated those explicit placements as ordinary collision-free
+text and rejected them.  The correction records `visible-overflow` on each
+completed non-fitting axis text placement and on its axis interval outcome.
+The validator now permits an overlap only when one of the two completed
+placements carries that explicit policy; ordinary overlapping text remains an
+error.  This closes the validator boundary without weakening collision checks
+for unmarked geometry.
