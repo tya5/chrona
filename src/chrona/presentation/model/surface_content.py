@@ -76,6 +76,26 @@ class TableColumnContent:
 
 
 @dataclass(frozen=True)
+class AxisLabelIntent:
+    """Finite label vocabulary and placement policy for one labels tier."""
+
+    form: str | None
+    candidate_forms: tuple[tuple[str, str], ...]
+    align: str
+    overflow: str
+
+
+@dataclass(frozen=True)
+class AxisTier:
+    """One View-declared axis responsibility before Layout creates geometry."""
+
+    unit: str
+    every: int
+    role: str
+    label: AxisLabelIntent | None = None
+
+
+@dataclass(frozen=True)
 class SurfaceContentInput:
     """Selected presentation facts normalized once before Scene construction."""
 
@@ -90,9 +110,8 @@ class SurfaceContentInput:
     label_overflow: str
     relation_overflow: str
     group_presentation: str
-    axis_level: str
-    axis_levels: tuple[tuple[str, str], ...]
-    axis_ticks: str | None
+    axis_tiers: tuple[AxisTier, ...]
+    axis_fiscal_start_month: int
     as_of: date | None
     as_of_label: str
     annotation_numbered: bool

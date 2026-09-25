@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableColumnContent, TableColumnWidth, display_value, table_value,
+    AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableColumnContent, TableColumnWidth, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -70,20 +70,12 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
     temporal = view.time_presentation or {}
     axis = view.axis or {}
-    axis_tiers = tuple(axis.get("tiers", ()))
-    label_tiers = tuple(item for item in axis_tiers if item.get("role") == "labels")
-    band_tiers = tuple(item for item in axis_tiers if item.get("role") == "band")
-    default_axis_forms = {
-        "day": "localized-date", "week": "iso-week", "month": "short-month",
-        "quarter": "year-quarter", "half": "half-year", "year": "year",
-    }
-    # I1 preserves the current internal composition input while accepting only
-    # the role-specific public contract. I2 consumes every tier directly.
-    normalized_axis_levels = tuple(
-        (str(item["unit"]),
-         str(item["label"]["form"]) if item.get("role") == "labels" and item["unit"] != "auto"
-         else default_axis_forms.get(str(item["unit"]), "auto"))
-        for item in band_tiers + label_tiers)
+    axis_tiers = tuple(_axis_tier(item) for item in axis.get("tiers", ()))
+    project_body = project.get("project", {})
+    calendar_id = project_body.get("calendar") if isinstance(project_body, Mapping) else None
+    calendars = project.get("calendars", {})
+    calendar = calendars.get(calendar_id, {}) if isinstance(calendars, Mapping) and isinstance(calendar_id, str) else {}
+    fiscal_start_month = int(calendar.get("fiscalStartMonth", 1)) if isinstance(calendar, Mapping) else 1
     markers = view.markers
     as_of_value = actual_body.get("asOf")
     as_of_marker = next((item for item in markers if item.get("kind") == "asOf" and item.get("source") == "actual"), None)
@@ -136,9 +128,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                label_side=label_side,
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
                                group_presentation=group_presentation,
-                               axis_level=(str(label_tiers[-1]["unit"]) if label_tiers else "auto"),
-                               axis_levels=normalized_axis_levels,
-                               axis_ticks=None,
+                               axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
                                as_of=as_of, as_of_label=str(as_of_marker.get("label", "As of")) if as_of_marker else "As of",
                                annotation_numbered=annotation_numbered,
                                calendar_closed=calendar_closed, calendar_exceptions=calendar_exceptions,
@@ -157,6 +147,19 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                progress_fill_source=view.progress_fill,
                                table_hierarchy_column=view.hierarchy_column,
                                row_decoration=view.row_decoration)
+
+
+def _axis_tier(value: Mapping[str, Any]) -> AxisTier:
+    """Detach one schema-validated View tier into Layout-owned typed intent."""
+    role, unit = str(value["role"]), str(value["unit"])
+    raw_label = value.get("label")
+    if role != "labels" or not isinstance(raw_label, Mapping):
+        return AxisTier(unit, int(value["every"]), role)
+    candidates = raw_label.get("forms", {})
+    candidate_forms = tuple((str(candidate), str(form)) for candidate, form in candidates.items()) if isinstance(candidates, Mapping) else ()
+    return AxisTier(unit, int(value["every"]), role,
+                    AxisLabelIntent(str(raw_label["form"]) if "form" in raw_label else None,
+                                    candidate_forms, str(raw_label["align"]), str(raw_label["overflow"])))
 
 
 def _column_width(value: object) -> TableColumnWidth:

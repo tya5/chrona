@@ -57,48 +57,70 @@
 <rect data-scene-id="calendar-closed:2027-01-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="967.79" y="116.8" width="2.385" height="653.2" opacity="0.12" stroke="#EAF0F8" stroke-width="1"/>
 <text data-scene-id="variance:rtl-freeze:rtl-freeze" data-source-ref="rtl-freeze" data-purpose="finish-delta" x="780.479" y="173" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#C8762B">+4d</text>
 <text data-scene-id="variance:fab-a0:fab-a0" data-source-ref="fab-a0" data-purpose="finish-delta" x="1004.682" y="385" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#C8762B">+7d</text>
-<text data-scene-id="axis-band:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="679.633" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2026 Q3</text>
-<text data-scene-id="axis-band:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="834.667" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2026 Q4</text>
-<text data-scene-id="axis-band:quarter:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1051.715" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2027 Q1</text>
-<text data-scene-id="axis-band:quarter:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1267.57" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2027 Q2</text>
-<text data-scene-id="axis-band:quarter:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1464.344" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2027 Q3</text>
-<rect data-scene-id="axis-band-rect:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="657.722" y="68.8" width="90.635" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="748.357" y="68.8" width="219.433" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:quarter:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="967.79" y="68.8" width="214.662" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:quarter:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1182.452" y="68.8" width="217.048" height="48" opacity="1" fill="#FFFFFF"/>
-<rect data-scene-id="axis-band-rect:quarter:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1399.5" y="68.8" width="176.5" height="48" opacity="1" fill="#FFFFFF"/>
-<path data-scene-id="axis-grid:minor:month:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M657.722 116.8L657.722 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<path data-scene-id="axis-grid:minor:month:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M676.803 116.8L676.803 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:1" data-source-ref="timeline-axis" data-purpose="axis-label" x="676.803" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Sep</text>
-<path data-scene-id="axis-grid:minor:month:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M748.357 116.8L748.357 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:2" data-source-ref="timeline-axis" data-purpose="axis-label" x="748.357" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Oct</text>
-<path data-scene-id="axis-grid:minor:month:3" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M822.296 116.8L822.296 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:3" data-source-ref="timeline-axis" data-purpose="axis-label" x="822.296" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Nov</text>
-<path data-scene-id="axis-grid:minor:month:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M893.85 116.8L893.85 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:4" data-source-ref="timeline-axis" data-purpose="axis-label" x="893.85" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Dec</text>
-<path data-scene-id="axis-grid:minor:month:5" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M967.79 116.8L967.79 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:5" data-source-ref="timeline-axis" data-purpose="axis-label" x="967.79" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Jan</text>
-<path data-scene-id="axis-grid:minor:month:6" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1041.729 116.8L1041.729 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:6" data-source-ref="timeline-axis" data-purpose="axis-label" x="1041.729" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Feb</text>
-<path data-scene-id="axis-grid:minor:month:7" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1108.513 116.8L1108.513 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:7" data-source-ref="timeline-axis" data-purpose="axis-label" x="1108.513" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Mar</text>
-<path data-scene-id="axis-grid:minor:month:8" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1182.452 116.8L1182.452 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:8" data-source-ref="timeline-axis" data-purpose="axis-label" x="1182.452" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Apr</text>
-<path data-scene-id="axis-grid:minor:month:9" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1254.006 116.8L1254.006 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:9" data-source-ref="timeline-axis" data-purpose="axis-label" x="1254.006" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">May</text>
-<path data-scene-id="axis-grid:minor:month:10" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1327.946 116.8L1327.946 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:10" data-source-ref="timeline-axis" data-purpose="axis-label" x="1327.946" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Jun</text>
-<path data-scene-id="axis-grid:minor:month:11" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1399.5 116.8L1399.5 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:11" data-source-ref="timeline-axis" data-purpose="axis-label" x="1399.5" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Jul</text>
-<path data-scene-id="axis-grid:minor:month:12" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1473.439 116.8L1473.439 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:12" data-source-ref="timeline-axis" data-purpose="axis-label" x="1473.439" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Aug</text>
-<path data-scene-id="axis-grid:minor:month:13" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1547.378 116.8L1547.378 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
-<text data-scene-id="axis-label:month:13" data-source-ref="timeline-axis" data-purpose="axis-label" x="1547.378" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Sep</text>
-<path data-scene-id="axis-grid:major:quarter:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M657.722 116.8L657.722 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
-<path data-scene-id="axis-grid:major:quarter:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M748.357 116.8L748.357 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
-<path data-scene-id="axis-grid:major:quarter:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M967.79 116.8L967.79 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
-<path data-scene-id="axis-grid:major:quarter:3" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1182.452 116.8L1182.452 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
-<path data-scene-id="axis-grid:major:quarter:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1399.5 116.8L1399.5 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
+<text data-scene-id="axis-label:2:0" data-source-ref="timeline-axis" data-purpose="axis-label" x="679.633" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2026 Q3</text>
+<text data-scene-id="axis-label:2:1" data-source-ref="timeline-axis" data-purpose="axis-label" x="834.667" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2026 Q4</text>
+<text data-scene-id="axis-label:2:2" data-source-ref="timeline-axis" data-purpose="axis-label" x="1051.715" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2027 Q1</text>
+<text data-scene-id="axis-label:2:3" data-source-ref="timeline-axis" data-purpose="axis-label" x="1267.57" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2027 Q2</text>
+<text data-scene-id="axis-label:2:4" data-source-ref="timeline-axis" data-purpose="axis-label" x="1464.344" y="80.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">2027 Q3</text>
+<text data-scene-id="axis-label:3:1" data-source-ref="timeline-axis" data-purpose="axis-label" x="676.803" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Sep</text>
+<text data-scene-id="axis-label:3:3" data-source-ref="timeline-axis" data-purpose="axis-label" x="822.296" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Nov</text>
+<text data-scene-id="axis-label:3:5" data-source-ref="timeline-axis" data-purpose="axis-label" x="967.79" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Jan</text>
+<text data-scene-id="axis-label:3:7" data-source-ref="timeline-axis" data-purpose="axis-label" x="1108.513" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Mar</text>
+<text data-scene-id="axis-label:3:9" data-source-ref="timeline-axis" data-purpose="axis-label" x="1254.006" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">May</text>
+<text data-scene-id="axis-label:3:11" data-source-ref="timeline-axis" data-purpose="axis-label" x="1399.5" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Jul</text>
+<text data-scene-id="axis-label:3:13" data-source-ref="timeline-axis" data-purpose="axis-label" x="1547.378" y="92.8" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" opacity="1" fill="#172033">Sep</text>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="657.722" y="68.8" width="90.635" height="48" opacity="1" fill="#FFFFFF"/>
+<rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="748.357" y="68.8" width="219.433" height="48" opacity="1" fill="#FFFFFF"/>
+<rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="967.79" y="68.8" width="214.662" height="48" opacity="1" fill="#FFFFFF"/>
+<rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1182.452" y="68.8" width="217.048" height="48" opacity="1" fill="#FFFFFF"/>
+<rect data-scene-id="axis-band-rect:0:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1399.5" y="68.8" width="176.5" height="48" opacity="1" fill="#FFFFFF"/>
+<path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M657.722 116.8L657.722 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
+<path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M748.357 116.8L748.357 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
+<path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M967.79 116.8L967.79 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
+<path data-scene-id="axis-grid:1:3" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1182.452 116.8L1182.452 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
+<path data-scene-id="axis-grid:1:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1399.5 116.8L1399.5 770" fill="none" opacity="1" stroke="#C9CED8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M657.722 116.8L657.722 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M676.803 116.8L676.803 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M748.357 116.8L748.357 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:3" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M822.296 116.8L822.296 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M893.85 116.8L893.85 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:5" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M967.79 116.8L967.79 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:6" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1041.729 116.8L1041.729 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:7" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1108.513 116.8L1108.513 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:8" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1182.452 116.8L1182.452 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:9" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1254.006 116.8L1254.006 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:10" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1327.946 116.8L1327.946 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:11" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1399.5 116.8L1399.5 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:12" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1473.439 116.8L1473.439 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:4:13" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1547.378 116.8L1547.378 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M657.722 116.8L657.722 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M691.114 116.8L691.114 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M724.506 116.8L724.506 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:6" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M757.898 116.8L757.898 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:8" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M791.29 116.8L791.29 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:10" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M824.681 116.8L824.681 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:12" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M858.073 116.8L858.073 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:14" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M891.465 116.8L891.465 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:16" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M924.857 116.8L924.857 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:18" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M958.249 116.8L958.249 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:20" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M991.641 116.8L991.641 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:22" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1025.033 116.8L1025.033 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:24" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1058.425 116.8L1058.425 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:26" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1091.817 116.8L1091.817 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:28" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1125.209 116.8L1125.209 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:30" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1158.601 116.8L1158.601 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:32" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1191.993 116.8L1191.993 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:34" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1225.385 116.8L1225.385 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:36" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1258.777 116.8L1258.777 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:38" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1292.169 116.8L1292.169 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:40" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1325.56 116.8L1325.56 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:42" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1358.952 116.8L1358.952 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:44" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1392.344 116.8L1392.344 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:46" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1425.736 116.8L1425.736 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:48" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1459.128 116.8L1459.128 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:50" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1492.52 116.8L1492.52 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:52" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1525.912 116.8L1525.912 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
+<path data-scene-id="axis-grid:5:54" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1559.304 116.8L1559.304 770" fill="none" opacity="1" stroke="#EAF0F8" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1067.966 116.8L1067.966 770" fill="none" opacity="1" stroke="#C8762B" stroke-width="1"/>
 <text data-scene-id="as-of-label" data-source-ref="actual-set" data-purpose="as-of-label" x="1013.863" y="148.3" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" opacity="1" fill="#172033">as of 2027-02-12</text>
 <path data-scene-id="relation:rtl-tapeout:rtl-freeze:rtl-freeze:tapeout:tapeout" data-source-ref="rtl-tapeout" data-purpose="dependency" d="M767.438 168.8L767.438 232.8L784.134 232.8" fill="none" opacity="1" stroke="#4B5563" stroke-width="1" marker-start="url(#marker-0529b66119d9)" marker-end="url(#marker-0529b66119d9)"/>

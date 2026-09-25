@@ -56,6 +56,28 @@ body:
       mode: semantic
       overflow: suppress
     annotations: none
+  axis:
+    tiers:
+    - unit: half
+      every: 1
+      role: band
+    - unit: half
+      every: 1
+      role: grid-major
+    - unit: half
+      every: 1
+      role: labels
+      label:
+        form: half-year
+        align: center
+        overflow: diagnose
+    - unit: auto
+      every: 1
+      role: labels
+      label:
+        forms: {month: short-month, quarter: year-quarter, half: half-year}
+        align: center
+        overflow: thin-with-record
   rowDecoration:
     mode: none
   tableColumns:

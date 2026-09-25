@@ -6,9 +6,11 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
-from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.layout.surface_composer import compose_surface_layout
+from chrona.presentation.layout.surface_quality import PathCommand, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
-from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput, TableColumnContent, TableColumnWidth
+from chrona.presentation.model.presentation_contract import normalize_presentation_input
+from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
@@ -27,7 +29,7 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
         table_columns=table_columns, table_cells=table_cells, relations=(), annotations=(),
         show_member_labels=False, label_placement="none", label_content=(), label_side="auto",
         label_overflow="diagnose", relation_overflow="diagnose", group_presentation="band",
-        axis_level="auto", axis_levels=(), axis_ticks=None, as_of=None, as_of_label="As of",
+        axis_tiers=(), axis_fiscal_start_month=1, as_of=None, as_of_label="As of",
         annotation_numbered=False, calendar_closed=(), calendar_exceptions=(), notes=(), legend_entries=(), coverage_text="",
         summary=SummaryContent(()), template_values=(), group_details=(),
         milestones=(), observation_columns=(), observation_rows=(),
@@ -61,6 +63,7 @@ def test_scene_projects_completed_layout_geometry_without_measurement_or_routing
         "measure_text_width(",
         "place_text(",
         "progress_fill_bounds(",
+        "placement_id.startswith(\"axis-",
     )
     assert all(fragment not in source for fragment in forbidden)
 
@@ -714,23 +717,57 @@ def test_narrow_calendar_density_retains_only_declared_exception_closures():
     assert closure_ids == {"calendar-closed:2026-01-02"}
 
 
-def test_month_axis_emits_quarter_band_labels():
+def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
-    value = build_scene_input(projection=projection, surface_content=surface_content(),
+    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=(
+                                  AxisTier("quarter", 1, "band"), AxisTier("quarter", 1, "grid-major"),
+                                  AxisTier("month", 1, "grid-minor"),
+                                  AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "diagnose")),
+                              )),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
                               capabilities={"svg": True})
     surface = compose_review_surface(value)
 
-    assert any(node.scene_id.startswith("axis-band:quarter:") for node in surface.primitives)
+    assert any(node.scene_id.startswith("axis-band-rect:") for node in surface.primitives)
+    assert any(node.scene_id.startswith("axis-label:") for node in surface.primitives)
     grids = [node for node in surface.primitives if node.scene_id.startswith("axis-grid:")]
     assert {node.visual_role for node in grids} == {"axis-major", "axis-minor"}
     assert all(node.points[0][1] == next(slot.bounds[1] for slot in surface.slots if slot.source == "timeline")
                for node in grids)
+
+
+def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 7, 1)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 7, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
+    content = surface_content(axis_tiers=(
+        AxisTier("quarter", 1, "band"),
+        AxisTier("auto", 2, "labels", AxisLabelIntent(None, (("month", "short-month"), ("quarter", "year-quarter")), "center", "thin-with-record")),
+    ))
+    value = build_scene_input(projection=projection, surface_content=content,
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    composition = compose_surface_layout(SurfaceLayoutRequest(
+        projection=value.projection, presentation_contract=normalize_presentation_input(content),
+        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
+        theme_tokens=value.theme_tokens, font_metrics=value.font_metrics, locale=value.locale,
+        capabilities=dict(value.capabilities),
+    ))
+
+    band, labels = composition.placement.axis_tier_outcomes
+    assert (band.role, band.selected_unit, band.label_form) == ("band", "quarter", None)
+    assert (labels.requested_units, labels.selected_unit, labels.every, labels.label_form) == (
+        ("month", "quarter"), "month", 2, "short-month")
+    assert [item.candidate_id for item in labels.intervals] == ["axis-label:1:0", "axis-label:1:2", "axis-label:1:4"]
+    assert all(item.label is not None and item.label_fits and item.disposition == "placed" for item in labels.intervals)
 
 
 def test_table_columns_use_measured_non_overlapping_origins():

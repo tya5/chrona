@@ -235,7 +235,8 @@ def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):
         icon_catalog_paths=(root / "examples/controller-z/icons.yaml",), visual_profile="chrona-output/visual/v0.7-svg",
         viewport=(1920, 1080)))
     by_id = {primitive.scene_id: primitive for primitive in rendered.surface.primitives}
-    for placement_id in ("axis-band:quarter:0", "axis-label:month:0", "legend:planned", "summary:key-figures",
+    assert "visual:axis-band-rect:0:0" in by_id
+    for placement_id in ("axis-label:3:0", "legend:planned", "summary:key-figures",
                           "summary:key-figures:launch:value", "summary:key-figures:launch:caption", "as-of-label"):
         assert f"visual:{placement_id}:leading" in by_id
 

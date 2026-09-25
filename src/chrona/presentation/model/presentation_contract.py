@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from chrona.presentation.model.surface_content import RelationPresentationFact, SurfaceContentInput, TableColumnContent
+from chrona.presentation.model.surface_content import AxisTier, RelationPresentationFact, SurfaceContentInput, TableColumnContent
 
 
 @dataclass(frozen=True)
@@ -24,8 +24,8 @@ class LabelContract:
 class TimeContract:
     as_of: date | None
     as_of_label: str
-    axis_level: str
-    axis_levels: tuple[tuple[str, str], ...]
+    axis_tiers: tuple[AxisTier, ...]
+    axis_fiscal_start_month: int
     calendar_closed: tuple[date, ...]
     calendar_exceptions: tuple[date, ...]
 
@@ -60,8 +60,8 @@ def normalize_presentation_input(value: SurfaceContentInput) -> PresentationCont
         table_cells=value.table_cells,
         relations=value.relations,
         labels=LabelContract(labels_enabled, placement, label_content, value.label_side, value.label_overflow),
-        time=TimeContract(value.as_of, value.as_of_label, value.axis_level,
-                          value.axis_levels, value.calendar_closed, value.calendar_exceptions),
+        time=TimeContract(value.as_of, value.as_of_label, value.axis_tiers,
+                          value.axis_fiscal_start_month, value.calendar_closed, value.calendar_exceptions),
         decorations=DecorationContract(value.legend_entries, value.annotations, value.notes),
         source=value,
     )

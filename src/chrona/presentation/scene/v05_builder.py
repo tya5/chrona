@@ -412,26 +412,21 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             semantic_id = (inside_member_label_semantic(folded.item.source_kind)
                            if layout_text[label_id].selected_rung == "inside" else "memberLabel")
             emit_semantic_text(label_id, semantic_id)
-    axis_band_binding = semantic_binding("axisBand")
     for placed in placed_surface.text:
-        if placed.placement_id.startswith("axis-band:"):
-            emit_semantic_text(placed.placement_id, "axisBand", "text")
+        if placed.semantic_id in {"axisBand", "axisLabel"}:
+            emit_semantic_text(placed.placement_id, placed.semantic_id, "text")
     for placed in placed_surface.shapes:
-        if placed.placement_id.startswith("axis-band-rect:"):
-            band = semantic_binding("axisBandDecoration")
+        if placed.semantic_id == "axisBandDecoration":
+            band = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "timeline-axis", "axis", band.purpose,
                                              band.scene_role,
                                              (float(placed.bounds.inline), float(placed.bounds.block),
                                               float(placed.bounds.inline_size), float(placed.bounds.block_size))))
-        if placed.placement_id.startswith("axis-grid:"):
+        if placed.semantic_id in {"axisGrid", "axisGridMinor"}:
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
-            axis_grid = semantic_binding("axisGridMinor" if placed.placement_id.startswith("axis-grid:minor:") else "axisGrid")
+            axis_grid = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.PATH, "timeline-axis", "axis", axis_grid.purpose, axis_grid.scene_role,
                                              bounds, points=placed.points))
-            _, _, level, index = placed.placement_id.split(":", 3)
-            label_id = f"axis-label:{level}:{index}"
-            if label_id in layout_text:
-                emit_semantic_text(label_id, "axisLabel")
     for placed in placed_surface.shapes:
         if placed.placement_id == "as-of":
             as_of_binding = semantic_binding("asOf")

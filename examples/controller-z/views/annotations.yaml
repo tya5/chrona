@@ -84,6 +84,31 @@ body:
       side: end
       alignment: end
     text: Bring-up finish leaves no reserve before DVT.
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: thin-with-record
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: thin-with-record
+    - unit: month
+      every: 1
+      role: grid-minor
   rowDecoration:
     mode: none
   tableColumns:

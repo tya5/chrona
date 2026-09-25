@@ -12,7 +12,7 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
-from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, fitting_axis, format_axis_label
+from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     nearest_box_port, place_annotation_rail, project_annotation_box,
@@ -24,7 +24,7 @@ from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, ColumnPlacement, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, intersects,
 )
 
@@ -146,7 +146,8 @@ def relation_label_anchor(points: tuple[tuple[float, float], ...]) -> LabelRect:
 
 
 def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest, *,
-                                 handled_sources: set[str] | None = None) -> tuple[list[Any], list[IconPlacement]]:
+                                 handled_sources: set[str] | None = None,
+                                 axis_label_targets: Mapping[tuple[str, str, str], str] | None = None) -> tuple[list[Any], list[IconPlacement]]:
     """Turn already-resolved View visual intents into completed Layout geometry.
 
     The caller supplies only placement identities; target vocabulary translation
@@ -160,7 +161,11 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
         if visual.target_kind == "mark" or visual.source_ref in handled_sources:
             continue
         selector = dict(visual.selector)
-        placement_id = selector.get("placementId") or visual_target_placement_id(visual.target_kind, selector)
+        if visual.target_kind == "axis-band":
+            continue
+        axis_key = (visual.target_kind, selector.get("level", ""), selector.get("index", ""))
+        placement_id = (selector.get("placementId") or (axis_label_targets or {}).get(axis_key)
+                        or visual_target_placement_id(visual.target_kind, selector))
         key = (placement_id, visual.side)
         if key in occupied:
             raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
@@ -271,6 +276,33 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
     return icons
 
 
+def resolve_axis_band_visual_requests(shapes: list[ShapePlacement], request: SurfaceLayoutRequest,
+                                      targets: Mapping[tuple[str, str, str], str]) -> list[IconPlacement]:
+    """Place a band-targeted icon from typed axis metadata, never an ID parser."""
+    icons: list[IconPlacement] = []
+    for visual in request.visual_requests:
+        if visual.target_kind != "axis-band":
+            continue
+        selector = dict(visual.selector)
+        placement_id = targets.get(("axis-band", selector.get("level", ""), selector.get("index", "")))
+        shape = next((item for item in shapes if item.placement_id == placement_id), None)
+        icon = request.icon_assets.get(visual.ref or "")
+        if shape is None or icon is None:
+            raise LayoutError("E_LAYOUT_VISUAL_TARGET" if shape is None else "E_ICON_NAME_UNKNOWN", visual.source_ref)
+        scale, _ = request.theme_tokens.icon_ratios("icon-mark")
+        height = min(float(shape.bounds.inline_size), float(shape.bounds.block_size)) * float(scale)
+        if height <= 0 or icon.viewport[1] <= 0:
+            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+        width = height * icon.viewport[0] / icon.viewport[1]
+        bounds = Rect(shape.bounds.inline + (shape.bounds.inline_size - Decimal(str(width))) / 2,
+                      shape.bounds.block + (shape.bounds.block_size - Decimal(str(height))) / 2,
+                      Decimal(str(width)), Decimal(str(height)))
+        icons.append(IconPlacement(f"visual:{shape.placement_id}", shape.source_ref, visual.source_ref,
+                                   icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload,
+                                   icon.alternative, visual.decorative, bounds, "iconMark", width / icon.viewport[0], shape.slot_id))
+    return icons
+
+
 def candidate_label_visuals(placement_id: str, typography_role: str,
                             request: SurfaceLayoutRequest) -> tuple[tuple[Any, Any, float, float], ...]:
     """Resolve visual advances before a candidate-label solver chooses bounds."""
@@ -292,7 +324,7 @@ def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
     """
     matching = []
     for visual in visual_requests:
-        if visual.target_kind == "mark":
+        if visual.target_kind in {"mark", "axis-band", "axis-label"}:
             continue
         target = visual_target_placement_id(visual.target_kind, dict(visual.selector))
         if placement_id == target or placement_id.startswith(target + ":"):
@@ -333,8 +365,6 @@ def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
     if kind == "summary" and "panel" in selector and "metric" not in selector: return f"summary:{selector['panel']}"
     if kind == "summary" and {"panel", "metric", "part"} <= selector.keys(): return f"summary:{selector['panel']}:{selector['metric']}:{selector['part']}"
     if kind == "milestone" and "id" in selector: return f"milestone:{selector['id']}"
-    if kind == "axis-label" and {"level", "index"} <= selector.keys(): return f"axis-label:{selector['level']}:{selector['index']}"
-    if kind == "axis-band" and {"level", "index"} <= selector.keys(): return f"axis-band:{selector['level']}:{selector['index']}"
     if kind == "as-of-label": return "as-of-label"
     if kind == "variance-label" and "object" in selector: return f"variance:{selector['object']}"
     if kind == "mark" and {"object", "facet"} <= selector.keys(): return f"{selector['facet']}:{selector['object']}"
@@ -514,19 +544,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
     axis = by_source["timeline-axis"]
-    configured_levels = request.surface_content.axis_levels
-    try:
-        intervals = (axis_intervals(start, end, configured_levels[-1][0]) if configured_levels
-                     else fitting_axis(requested=request.surface_content.axis_level, start=start, end=end,
-                                       inline_size=float(axis.bounds.inline_size),
-                                       font_size=float(metric_values["text.body.size"]), font_metrics=request.font_metrics))
-    except ValueError as error:
-        raise LayoutError(str(error), "/view/body/timePresentation/axisLevel") from error
     axis_size = float(request.theme_tokens.typography("axis")[2])
-    band_intervals = axis_intervals(start, end, configured_levels[0][0]) if len(configured_levels) > 1 else (axis_intervals(start, end, "quarter") if intervals and intervals[0].level in {"month", "week"} else ())
-    format_by_level = {unit: formatter for unit, formatter in configured_levels}
-    format_by_level.update({"month": format_by_level.get("month", "short-month"), "quarter": format_by_level.get("quarter", "year-quarter"), "date": "localized-date"})
     shapes: list[ShapePlacement] = []
+    axis_tier_outcomes: list[AxisTierOutcome] = []
+    axis_decisions: list[PlacementDecision] = []
+    axis_label_targets: dict[tuple[str, str, str], str] = {}
+    axis_band_targets: dict[tuple[str, str, str], str] = {}
+    diagnostics: list[str] = []
     background_extents = layout_manifest.background_extents
 
     def background_shape(placement_id: str, source_ref: str, semantic_id: str, source_bounds: Rect) -> ShapePlacement:
@@ -548,43 +572,118 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if group.header_bounds is not None:
             shapes.append(background_shape(f"group-header-band:{group.group_id}", group.group_id,
                                            "groupHeaderBand", group.header_bounds))
-    for interval in band_intervals:
-        x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
-        inline_size = max(0.0, x2 - x)
-        label = format_axis_label(interval, format_by_level, request.locale)
-        shapes.append(ShapePlacement(f"axis-band-rect:{interval.level}:{interval.index}", "timeline-axis", "Rect",
-                                     Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(inline_size)), axis.bounds.block_size)))
-        if axis_label_fits(content=label, available_inline=inline_size, font_size=axis_size, font_metrics=request.font_metrics):
-            width = measure_text_width(label, font_size=axis_size, font_metrics=request.font_metrics)
-            text.append(place_text(placement_id=f"axis-band:{interval.level}:{interval.index}", source_ref="timeline-axis",
-                                   content=label, inline=x + (inline_size - width) / 2,
-                                   baseline_block=float(axis.bounds.block) + axis_size, typography_role="axis",
-                                   theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="timeline-axis-band",
-                                   collision_domain=CollisionDomain("timeline-axis", "coarse-band"), source_content=label,
-                                   available_inline_start=x,
-                                   available_inline_size=inline_size))
-    for interval in intervals:
-        x = _coordinate(interval.start, scale)
-        grid_level = "minor" if band_intervals else "major"
-        shapes.append(ShapePlacement(f"axis-grid:{grid_level}:{interval.level}:{interval.index}", "timeline-axis", "Path",
-                                     Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
-                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
-        label = format_axis_label(interval, format_by_level, request.locale)
-        if axis_label_fits(content=label, available_inline=(interval.end - interval.start).days * scale.unit_ratio,
-                           font_size=float(metric_values["text.body.size"]), font_metrics=request.font_metrics):
-            text.append(place_text(placement_id=f"axis-label:{interval.level}:{interval.index}", source_ref="timeline-axis",
-                                   content=label, inline=x, baseline_block=float(axis.bounds.block) + axis_size * (2 if band_intervals else 1),
-                                   typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region="timeline-axis-label",
-                                   collision_domain=CollisionDomain("timeline-axis", "fine-label"), source_content=label,
-                                   available_inline_start=x,
-                                   available_inline_size=(interval.end - interval.start).days * scale.unit_ratio))
-    for interval in band_intervals:
-        x = _coordinate(interval.start, scale)
-        shapes.append(ShapePlacement(f"axis-grid:major:{interval.level}:{interval.index}", "timeline-axis", "Path",
-                                     Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
-                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
+    label_lane = 0
+    for tier_index, tier in enumerate(request.surface_content.axis_tiers):
+        form = tier.label.form if tier.label else None
+        requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
+                           if tier.unit == "auto" and tier.label else (tier.unit,))
+        try:
+            if tier.unit == "auto":
+                selected = None
+                forms = dict(tier.label.candidate_forms) if tier.label else {}
+                for candidate in ("day", "week", "month", "quarter", "half", "year"):
+                    if candidate not in forms:
+                        continue
+                    trial = axis_intervals(start, end, candidate, tick_step=tier.every,
+                                           fiscal_start_month=request.surface_content.axis_fiscal_start_month)
+                    if all(axis_label_fits(content=format_axis_tier_label(item, forms[candidate], request.locale),
+                                          available_inline=(item.end - item.start).days * scale.unit_ratio,
+                                          font_size=axis_size, font_metrics=request.font_metrics) for item in trial):
+                        selected, form = trial, forms[candidate]
+                        break
+                if selected is None:
+                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", "/view/body/axis/tiers")
+                intervals = selected
+            else:
+                intervals = axis_intervals(start, end, tier.unit, tick_step=tier.every,
+                                           fiscal_start_month=request.surface_content.axis_fiscal_start_month)
+        except ValueError as error:
+            raise LayoutError(str(error), "/view/body/axis/tiers") from error
+        interval_outcomes: tuple[AxisIntervalOutcome, ...]
+        if tier.role == "labels" and form is not None:
+            interval_outcomes = tuple(
+                AxisIntervalOutcome(f"axis-label:{tier_index}:{interval.index}", interval.start, interval.end,
+                                    interval.natural_start, interval.natural_end,
+                                    format_axis_tier_label(interval, form, request.locale),
+                                    axis_label_fits(content=format_axis_tier_label(interval, form, request.locale),
+                                                   available_inline=max(0.0, _coordinate(interval.end, scale) - _coordinate(interval.start, scale)),
+                                                   font_size=axis_size, font_metrics=request.font_metrics))
+                for interval in intervals
+            )
+            fits = tuple(bool(item.label_fits) for item in interval_outcomes)
+            if not all(fits):
+                if tier.label.overflow == "diagnose":
+                    failing = next(item for item in interval_outcomes if not item.label_fits)
+                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
+                                      detail=failing.candidate_id)
+                try:
+                    schedule = thinning_schedule(fits)
+                except ValueError as error:
+                    raise LayoutError(str(error), f"/view/body/axis/tiers/{tier_index}") from error
+                retained = set(schedule.retained_positions)
+                resolved_outcomes: list[AxisIntervalOutcome] = []
+                for position, outcome in enumerate(interval_outcomes):
+                    if position in retained:
+                        resolved_outcomes.append(replace(outcome, disposition="placed"))
+                    else:
+                        reason = "label-does-not-fit" if not outcome.label_fits else "thinning-stride"
+                        resolved_outcomes.append(replace(outcome, disposition="thinned", reason=reason))
+                        diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:{reason}")
+                        axis_decisions.append(PlacementDecision(outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
+                                                                ("thin-with-record", "suppress"), "suppress", "suppressed"))
+                interval_outcomes = tuple(resolved_outcomes)
+                diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:stride={schedule.stride}:phase={schedule.phase}")
+            else:
+                interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
+        else:
+            interval_outcomes = tuple(
+                AxisIntervalOutcome(f"axis-tier:{tier_index}:{interval.index}", interval.start, interval.end,
+                                    interval.natural_start, interval.natural_end)
+                for interval in intervals
+            )
+        axis_tier_outcomes.append(AxisTierOutcome(
+            tier_index, f"/view/body/axis/tiers/{tier_index}", tier.role, requested_units,
+            intervals[0].level if intervals else (tier.unit if tier.unit != "auto" else ""), tier.every, form,
+            interval_outcomes,
+        ))
+        if tier.role == "band":
+            for interval in intervals:
+                x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
+                placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
+                axis_band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
+                shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
+                                              Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(max(0.0, x2 - x))), axis.bounds.block_size),
+                                              semantic_id="axisBandDecoration"))
+        elif tier.role in {"grid-major", "grid-minor"}:
+            semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
+            for interval in intervals:
+                x = _coordinate(interval.start, scale)
+                shapes.append(ShapePlacement(f"axis-grid:{tier_index}:{interval.index}", "timeline-axis", "Path",
+                                              Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
+                                              ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
+                                              semantic_id=semantic_id))
+        elif tier.role == "labels" and form is not None:
+            for interval, outcome in zip(intervals, interval_outcomes, strict=True):
+                if outcome.disposition == "thinned":
+                    continue
+                axis_label_targets[("axis-label", interval.level, str(interval.index))] = outcome.candidate_id
+                x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
+                available = max(0.0, x2 - x)
+                label = outcome.label
+                if not outcome.label_fits or label is None or outcome.disposition != "placed":
+                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
+                                      detail=outcome.candidate_id)
+                width = measure_text_width(label, font_size=axis_size, font_metrics=request.font_metrics)
+                inline = x if tier.label.align == "start" else x + (available - width) / 2
+                placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
+                                    content=label, inline=inline, baseline_block=float(axis.bounds.block) + axis_size * (label_lane + 1),
+                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                    collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", f"label-{label_lane}"),
+                                    source_content=label, available_inline_start=x, available_inline_size=available)
+                text.append(replace(placed, semantic_id="axisLabel"))
+            label_lane += 1
+        else:
+            raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
     contract = request.presentation_contract
     minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
     closed_days = contract.time.calendar_closed
@@ -605,7 +704,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
                                      ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size)))))
         as_of_label = (x, f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}")
-    diagnostics: list[str] = []
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
     track_by_id = {item.instance_id: item for item in tracks}
@@ -783,7 +881,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         shapes.append(ShapePlacement(f"summary-bar:{review_row.row_id}", subject.object_id, "Rect",
                                      Rect(Decimal(str(x1)), row.bounds.block,
                                           Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))))
-    placement_decisions: list[PlacementDecision] = []
+    placement_decisions: list[PlacementDecision] = list(axis_decisions)
     label_requests: list[LabelRequest] = []
     candidate_icons: list[IconPlacement] = []
     handled_candidate_visuals: set[str] = set()
@@ -1268,7 +1366,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
                                                    f"annotation-box:{annotation_id}", tuple(points)))
     text = [replace(item, slot_id=text_slot(item)) for item in text]
-    text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals)
+    text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals,
+                                                axis_label_targets=axis_label_targets)
     icons.extend(candidate_icons)
     icons.extend(resolve_mark_visual_requests(marks, request))
 
@@ -1288,6 +1387,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             return axis.slot_id
         return timeline.slot_id
     shapes = [replace(item, slot_id=shape_slot(item)) for item in shapes]
+    icons.extend(resolve_axis_band_visual_requests(shapes, request, axis_band_targets))
     relations = [replace(item, slot_id=(by_source["annotations"].slot_id
                                         if item.relation_id.startswith("annotation-leader:")
                                         else timeline.slot_id)) for item in relations]
@@ -1302,6 +1402,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
+                                 axis_tier_outcomes=tuple(axis_tier_outcomes),
                                  diagnostics=tuple(diagnostics), icons=tuple(icons))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)

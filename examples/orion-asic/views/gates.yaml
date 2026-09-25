@@ -70,18 +70,25 @@ body:
     - unit: quarter
       every: 1
       role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: diagnose
     - unit: month
       every: 1
       role: labels
       label:
         form: short-month
         align: start
-        overflow: diagnose
+        overflow: thin-with-record
     - unit: month
       every: 1
       role: grid-minor
     - unit: week
-      every: 1
+      every: 2
       role: grid-minor
   markers:
   - kind: asOf

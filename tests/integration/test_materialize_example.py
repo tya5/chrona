@@ -116,6 +116,16 @@ def test_orion_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     assert len(baselines) == 5 and max(baselines) < block
     assert 'data-scene-id="legend:scale:revision:B0"' in svg
     assert 'data-purpose="progress-fill"' in svg
+    scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
+    assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:stride=2:phase=1" in scene["diagnostics"]
+
+
+def test_replan_baseline_records_the_nonfitting_partial_quarter_label(tmp_path):
+    materialize(ROOT / "examples/halcyon-1/manifest.yaml", "replan-baseline", tmp_path / "replan", write=False)
+    scene = json.loads((tmp_path / "replan/review.scene.json").read_text(encoding="utf-8"))
+    assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:2:stride=2:phase=1" in scene["diagnostics"]
 
 
 def test_materializer_detects_changed_expected_svg(tmp_path):

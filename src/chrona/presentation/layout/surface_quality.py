@@ -92,6 +92,7 @@ class TextPlacement:
     fallback_ladder: tuple[str, ...] = ()
     selected_rung: str | None = None
     slot_id: str = ""
+    semantic_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -246,6 +247,40 @@ class PlacementDecision:
 
 
 @dataclass(frozen=True)
+class AxisIntervalOutcome:
+    """One calendar interval and its completed label measurement, if any."""
+
+    candidate_id: str
+    start: date
+    end: date
+    natural_start: date
+    natural_end: date
+    label: str | None = None
+    label_fits: bool | None = None
+    disposition: str = "not-applicable"
+    reason: str | None = None
+
+
+@dataclass(frozen=True)
+class AxisTierOutcome:
+    """Layout-owned result for one declared axis tier.
+
+    This keeps auto selection, fiscal intervals and label measurements available
+    to the failure-policy slice without reopening View syntax or recomputing
+    text geometry in Scene.
+    """
+
+    tier_index: int
+    source_ref: str
+    role: str
+    requested_units: tuple[str, ...]
+    selected_unit: str
+    every: int
+    label_form: str | None
+    intervals: tuple[AxisIntervalOutcome, ...]
+
+
+@dataclass(frozen=True)
 class SurfaceLayoutRequest:
     """Closed Layout input; semantic values are supplied by PresentationContract."""
 
@@ -295,6 +330,7 @@ class SurfacePlacement:
     primitives: tuple[PrimitivePlacement, ...] = ()
     relations: tuple[RelationPlacement, ...] = ()
     decisions: tuple[PlacementDecision, ...] = ()
+    axis_tier_outcomes: tuple[AxisTierOutcome, ...] = ()
     diagnostics: tuple[str, ...] = ()
     icons: tuple[IconPlacement, ...] = ()
 
@@ -362,6 +398,32 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")
             if decision.outcome == "suppressed" and decision.selected_rung != "suppress":
                 raise ValueError(f"E_LAYOUT_DECISION_INVALID:{decision.decision_id}")
+        tier_indices: set[int] = set()
+        for outcome in self.axis_tier_outcomes:
+            if (outcome.tier_index < 0 or outcome.tier_index in tier_indices
+                    or outcome.role not in {"band", "grid-major", "grid-minor", "labels"}
+                    or not outcome.requested_units or outcome.selected_unit not in outcome.requested_units
+                    or outcome.every < 1):
+                raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
+            tier_indices.add(outcome.tier_index)
+            if outcome.role == "labels":
+                if outcome.label_form is None or any(item.label is None or item.label_fits is None
+                                                     for item in outcome.intervals):
+                    raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
+                for item in outcome.intervals:
+                    if item.disposition not in {"placed", "thinned"}:
+                        raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
+                    if item.disposition == "placed" and (not item.label_fits or item.reason is not None):
+                        raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
+                    if item.disposition == "thinned" and item.reason not in {"label-does-not-fit", "thinning-stride"}:
+                        raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
+            elif outcome.label_form is not None or any(item.label is not None or item.label_fits is not None
+                                                       or item.disposition != "not-applicable" or item.reason is not None
+                                                       for item in outcome.intervals):
+                raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
+            identifiers = tuple(item.candidate_id for item in outcome.intervals)
+            if len(set(identifiers)) != len(identifiers):
+                raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
 
 
 def _collision_domains_intersect(left: CollisionDomain, right: CollisionDomain) -> bool:

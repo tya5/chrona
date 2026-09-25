@@ -7,6 +7,7 @@ project:
 
 calendars:
   engineering-jp:
+    fiscalStartMonth: 4
     working_days: [mon, tue, wed, thu, fri]
     exceptions:
       - {date: 2026-02-11, working: false}

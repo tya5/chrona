@@ -185,7 +185,7 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-01-03"}}, summary=EMPTY_SUMMARY)
     assert value.show_member_labels is True
-    assert value.axis_level == "week"
+    assert value.axis_tiers[0].unit == "week"
     assert value.as_of is None
     assert value.calendar_closed == ()
     assert value.annotations == ({"id": "note", "text": "Watch this", "number": 1},)
@@ -281,8 +281,7 @@ def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
     assert value.label_content == ("title", "finishDelta")
     assert value.label_side == "auto"
     assert value.label_overflow == "diagnose"
-    assert value.axis_levels == (("quarter", "year-quarter"), ("month", "short-month"))
-    assert value.axis_ticks is None
+    assert tuple((tier.unit, tier.role) for tier in value.axis_tiers) == (("quarter", "band"), ("month", "labels"))
     assert value.as_of_label == "as of"
 
 

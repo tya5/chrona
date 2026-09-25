@@ -8,6 +8,8 @@ from chrona.presentation.layout.path_geometry import open_span_path
 from chrona.presentation.layout.surface_composer import progress_fill_bounds, relation_label_content
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.layout.surface_quality import (
+    AxisIntervalOutcome,
+    AxisTierOutcome,
     CollisionDomain,
     GroupPlacement,
     IconPlacement,
@@ -147,3 +149,17 @@ def test_surface_placement_validates_inspectable_late_decisions():
     )).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_DECISION_INVALID:label:a"):
         SurfacePlacement(decisions=(PlacementDecision("label:a", "a", ("above", "above"), "above", "placed"),)).assert_valid()
+
+
+def test_surface_placement_closes_axis_outcomes_for_later_failure_policy():
+    interval = AxisIntervalOutcome("axis-label:0:0", date(2026, 1, 1), date(2026, 2, 1),
+                                   date(2026, 1, 1), date(2026, 2, 1), "Jan", True, "placed")
+    SurfacePlacement(axis_tier_outcomes=(
+        AxisTierOutcome(0, "/view/body/axis/tiers/0", "labels", ("month", "quarter"), "month", 1,
+                        "short-month", (interval,)),
+    )).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_AXIS_OUTCOME_INVALID:0"):
+        SurfacePlacement(axis_tier_outcomes=(
+            AxisTierOutcome(0, "/view/body/axis/tiers/0", "labels", ("month",), "month", 1,
+                            None, (interval,)),
+        )).assert_valid()
