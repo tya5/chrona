@@ -35,7 +35,7 @@ OWNERS = {
     "PatternGeometry": (_owner("inspection", "scene/serialization.py", "tile_inline_size tile_block_size angle_degrees strokes"),),
     "SymbolGeometry": (_owner("inspection", "scene/serialization.py", "outline"),),
     "ScenePrimitive": (
-        _owner("inspection", "scene/serialization.py", "scene_id kind source_ref source_kind purpose visual_role bounds slot_id text baseline text_layout marker_start marker_end pattern symbol paint corner_radius path_commands points href link_title icon_kind icon_asset_identity icon_viewport icon_paths icon_alternative icon_decorative table_row_id table_column_id paint_order host_placement_id clip_source_id end_treatment"),
+        _owner("inspection", "scene/serialization.py", "scene_id kind source_ref source_kind purpose visual_role bounds slot_id text baseline text_layout marker_start marker_end pattern symbol paint corner_radius path_commands points href link_title icon_kind icon_asset_identity icon_viewport icon_paths icon_alternative icon_decorative table_row_id table_column_id paint_order host_placement_id clip_source_id end_treatment contrast_treatment"),
         _owner("derived", "scene/v05_builder.py", "icon_vector icon_stroke_scale"),
         _owner("adapter", "renderers/v05_svg.py", "icon_raster"),
         _owner("derived", "scene/visual_capabilities.py", "visual_capability_source_ref"),
@@ -48,10 +48,11 @@ OWNERS = {
     "ContentFamilyCounts": (_owner("inspection", "scene/serialization.py", "relations annotations notes legend_entries summary_panels group_details milestones observation_rows"),),
     "SceneManifest": (_owner("inspection", "scene/serialization.py", "version settings_version viewport selected_object_ids font_asset_identities content_family_counts surface_scales visual_role_counts"),),
     "SceneSurface": (
-        _owner("inspection", "scene/serialization.py", "surface_id slots rows groups scale_manifest primitives canvas_paint columns canvas_bounds fit_warnings"),
+        _owner("inspection", "scene/serialization.py", "surface_id slots rows groups scale_manifest primitives canvas_paint columns canvas_bounds fit_warnings decoration_dispositions"),
         _owner("derived", "scene/v05_builder.py", "diagnostics"),
     ),
     "SceneProvenance": (_owner("inspection", "scene/serialization.py", "mode chrona_version resources"),),
+    "DecorationDisposition": (_owner("inspection", "scene/serialization.py", "visual_role disposition"),),
     "InspectionScene": (_owner("inspection", "scene/serialization.py", "provenance viewport required_capabilities surfaces manifest diagnostics"),),
 }
 

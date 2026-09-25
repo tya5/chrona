@@ -60,6 +60,7 @@ CHECKS = (
     CheckSpec("example-inventory", _command("tools/example_inventory.py")),
     CheckSpec("scene-perceptibility", _command("tools/check_scene_perceptibility.py")),
     CheckSpec("presentation-contrast", _command("tools/presentation_contrast.py", "--check")),
+    CheckSpec("presentation-font-identity", _command("tools/presentation_font_identity.py", "--check")),
     CheckSpec("diagnostic-inventory", _command("tools/diagnostic_inventory.py", "--check")),
     CheckSpec("layout-float-accumulation", _command("tools/check_layout_float_accumulation.py")),
     CheckSpec("declared-value-inventory", _command("tools/declared_value_inventory.py", "--check")),
