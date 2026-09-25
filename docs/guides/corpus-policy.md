@@ -24,4 +24,6 @@ regenerated corpus/gallery command and artifacts visually assessed by a
 reviewer. This human record supplements — never replaces — byte reproduction,
 schema validation, and generated-output checks. The capability disposition
 matrix is generated from the typed ceiling; it is review evidence and never a
-render input.
+render input. Start from the
+[visual acceptance record template](../reviews/presentation-visual-acceptance-record-template.md)
+when the change has visual output.

@@ -99,3 +99,12 @@ this vocabulary only after package acquisition is re-designed. A registry may
 compare that declaration with a target profile without rendering; it cannot
 select a target or alter a closure. Design Space may expose a named appearance
 only when it resolves to these owner fields and profile requirements.
+
+## 6. Closed capability ceiling
+
+The renderer-neutral vocabulary is governed by the typed closed capability
+ceiling, rather than by target-adapter affordances. Its generated dispositions
+and source-observation evidence are published in the
+[presentation capability prior-art matrix](../research/presentation/presentation-capability-prior-art.md).
+The matrix is review evidence only: it cannot configure a profile, adapter, or
+presentation resource.
