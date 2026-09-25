@@ -136,12 +136,11 @@ def test_cli_schedule_matches_library_result(tmp_path, monkeypatch, capsys):
     assert output["analysis"] == {"criticalObjectIds": ["gate"], "totalFloat": {"gate": 0}}
 
 
-def test_cli_render_requires_draft_review_inputs(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["chrona", "render", "project.yaml", "--output", "timeline.svg"])
-    with pytest.raises(SystemExit) as exited:
-        main()
-    assert exited.value.code == 2
-    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_SYNTAX"
+def test_cli_render_parser_advertises_the_bundled_default_preset():
+    parser = cli._parser()
+    render = parser.parse_args(["render", "project.yaml", "--output", "timeline.svg"])
+    assert render.preset is None
+    assert "chrona-default-draft" in parser._subparsers._group_actions[0].choices["render"].format_help()
 
 
 @pytest.mark.parametrize(

@@ -196,8 +196,8 @@ _DRAFT_CAPABILITIES = (
 
 
 def resolve_draft_render(
-    *, project_path: Path, view_path: Path, theme_path: Path, scheme_path: Path,
-    layout_path: Path, actual_path: Path | None = None, summary_path: Path | None = None,
+    *, project_path: Path, view_path: Path | None = None, theme_path: Path | None = None, scheme_path: Path | None = None,
+    layout_path: Path | None = None, preset_path: Path | None = None, preset_root: Path | None = None, actual_path: Path | None = None, summary_path: Path | None = None,
     detail_path: Path | None = None, icon_catalog_paths: tuple[Path, ...] = (),
     font_metrics_path: Path | None = None,
     viewport: tuple[int, int | None] = (1600, 900),
@@ -210,15 +210,19 @@ def resolve_draft_render(
     artifact.  Once returned, the normal review use case cannot distinguish it
     from an immutable closure.
     """
-    paths = (
-        ("project", project_path), ("view", view_path), ("theme", theme_path),
-        ("color-scheme", scheme_path), ("layout-profile", layout_path),
-    )
+    preset_paths = _draft_preset_paths(preset_path, preset_root) if preset_path is not None else {}
+    paths = (("project", project_path),
+             ("view", view_path or preset_paths.get("view")),
+             ("theme", theme_path or preset_paths.get("theme")),
+             ("color-scheme", scheme_path or preset_paths.get("color-scheme")),
+             ("layout-profile", layout_path or preset_paths.get("layout-profile")))
+    if any(path is None for _kind, path in paths):
+        raise ClosureError("E_DRAFT_PRESENTATION_INCOMPLETE")
     optional = (
         ("actual-set", actual_path), ("summary-profile", summary_path),
         ("review-detail-profile", detail_path),
     )
-    resources = [_load_draft_resource(kind, path) for kind, path in paths]
+    resources = [_load_draft_resource(kind, path) for kind, path in paths if path is not None]
     resources.extend(_load_draft_resource(kind, path) for kind, path in optional if path is not None)
     catalog_resources = tuple(_load_draft_resource("icon-catalog", path) for path in icon_catalog_paths)
     resources.extend(catalog_resources)
@@ -229,6 +233,25 @@ def resolve_draft_render(
                                                                             _draft_view(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None))
+
+
+def _draft_preset_paths(preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
+    """Resolve one explicit preset into safe ordinary-resource paths."""
+    preset = _load_draft_resource("presentation-preset", preset_path)
+    if not isinstance(preset.contract, PresentationPresetContract):
+        raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+    mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile"}
+    paths: dict[str, Path] = {}
+    for name, kind in mapping.items():
+        declaration = preset.contract.resources.get(name)
+        if not isinstance(declaration, Mapping):
+            raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+        path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
+        resource = _load_draft_resource(kind, path)
+        if resource.id != declaration["id"]:
+            raise ClosureError("E_DRAFT_PRESET_RESOURCE")
+        paths[kind] = path
+    return paths
 
 
 def resolve_guided_draft_render(

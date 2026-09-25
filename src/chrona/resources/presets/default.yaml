@@ -1,0 +1,12 @@
+version: chrona/presentation-preset/v0.1
+kind: presentation-preset
+id: chrona-default-draft
+body:
+  package: {version: "1"}
+  resources:
+    view: {id: chrona-default-draft, kind: view, path: views/default-draft.yaml}
+    theme: {id: briefing, kind: theme, path: themes/briefing.yaml}
+    colorScheme: {id: mission-light, kind: color-scheme, path: schemes/mission-light.yaml}
+    layout: {id: briefing, kind: layout-profile, path: layouts/briefing.yaml}
+  compatibleColorSchemes:
+    - {id: mission-light, kind: color-scheme, path: schemes/mission-light.yaml}

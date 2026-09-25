@@ -54,6 +54,22 @@ def template_resource(name: str) -> Traversable:
     raise ValueError("E_INIT_EXAMPLE")
 
 
+def default_preset_resource() -> Traversable:
+    """Return the wheel-owned draft default preset without repository lookup."""
+    resource = files(__package__).joinpath("presets", "default.yaml")
+    if not resource.is_file():
+        raise ValueError("E_DRAFT_DEFAULT_PRESET")
+    return resource
+
+
+def default_preset_root() -> Traversable:
+    """Return the one explicit resource root declared by the bundled default."""
+    packaged = files(__package__).joinpath("examples", "halcyon-1")
+    if packaged.joinpath("project.yaml").is_file():
+        return packaged
+    return files("examples").joinpath("halcyon-1")
+
+
 @cache
 def schema_document(name: str) -> Mapping[str, Any]:
     """Decode one immutable schema resource once per process."""

@@ -11,7 +11,7 @@ ROOT = Path(__file__).parents[2]
 
 def test_controller_z_public_preset_names_the_executive_context_resources():
     root = ROOT / "examples/controller-z"
-    preset = yaml.safe_load((root / "presets/executive-light.yaml").read_bytes())
+    preset = yaml.safe_load((root / "executive-light.preset.yaml").read_bytes())
     contract = parse_contract(ClosureIdentity("presentation-preset", preset["id"], "evidence", "sha256:" + sha256(yaml.safe_dump(preset, sort_keys=True).encode()).hexdigest()), preset)
     assert isinstance(contract, PresentationPresetContract)
     context = yaml.safe_load((root / "contexts/executive.yaml").read_bytes())["body"]

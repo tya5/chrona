@@ -32,7 +32,7 @@ from chrona.usecases.local_authoring import discover_store_configuration, initia
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 from chrona.presentation.fonts.importer import FontImportError, import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
-from chrona.resources import safe_load
+from chrona.resources import default_preset_resource, default_preset_root, safe_load
 
 
 @dataclass(frozen=True)
@@ -173,10 +173,11 @@ def _parser() -> JsonArgumentParser:
     command = sub.add_parser("render", help="render a draft review surface (not reproducible evidence)",
                               description="render a draft review surface (not reproducible evidence)")
     command.add_argument("project", help="Draft Project YAML path")
-    command.add_argument("--view", required=True, help="View YAML path")
-    command.add_argument("--theme", required=True, help="Theme YAML path")
-    command.add_argument("--scheme", required=True, help="Color Scheme YAML path")
-    command.add_argument("--layout", required=True, help="Layout Profile YAML path")
+    command.add_argument("--preset", help="Presentation preset YAML path; omit it to use bundled chrona-default-draft; explicit resource flags override its members")
+    command.add_argument("--view", help="View YAML path")
+    command.add_argument("--theme", help="Theme YAML path")
+    command.add_argument("--scheme", help="Color Scheme YAML path")
+    command.add_argument("--layout", help="Layout Profile YAML path")
     command.add_argument("--actual", help="Actual Set YAML path")
     command.add_argument("--summary", help="Summary Profile YAML path")
     command.add_argument("--detail", help="Review Detail Profile YAML path")
@@ -344,9 +345,12 @@ def _assert_context_format(closure: RenderClosure, format_name: str | None) -> N
 
 
 def _run_draft_render(args: argparse.Namespace) -> None:
+    default = default_preset_resource() if not args.preset else None
     closure = resolve_draft_render(
-        project_path=Path(args.project), view_path=Path(args.view), theme_path=Path(args.theme),
-        scheme_path=Path(args.scheme), layout_path=Path(args.layout),
+        project_path=Path(args.project), preset_path=Path(args.preset) if args.preset else Path(str(default)),
+        preset_root=None if args.preset else Path(str(default_preset_root())),
+        view_path=Path(args.view) if args.view else None, theme_path=Path(args.theme) if args.theme else None,
+        scheme_path=Path(args.scheme) if args.scheme else None, layout_path=Path(args.layout) if args.layout else None,
         actual_path=Path(args.actual) if args.actual else None,
         summary_path=Path(args.summary) if args.summary else None,
         detail_path=Path(args.detail) if args.detail else None,

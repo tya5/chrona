@@ -6,6 +6,7 @@ import yaml
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_guided_draft_render
 from chrona.presentation.contracts import TypesetterIdentity
+from chrona.resources import default_preset_resource, default_preset_root
 
 
 def _root() -> Path:
@@ -41,6 +42,33 @@ def test_draft_closure_reports_the_invalid_resource_schema_pointer(tmp_path):
         resolve_draft_render(**(_paths(_root()) | {"view_path": invalid_view}))
     assert error.value.diagnostic_id == "E_VIEW_SCHEMA"
     assert error.value.source_ref.startswith("/body")
+
+
+def test_draft_preset_resolves_the_same_typed_resources_as_explicit_inputs():
+    root = _root() / "examples/controller-z"
+    preset = root / "executive-light.preset.yaml"
+    draft = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset)
+    explicit = resolve_draft_render(
+        project_path=root / "project.yaml", view_path=root / "views/executive.yaml",
+        theme_path=root / "themes/executive-light.yaml", scheme_path=root / "schemes/executive-light.yaml",
+        layout_path=root / "layouts/executive-review.yaml",
+    )
+    assert tuple((item.kind, item.content_identity) for item in draft.closure.resources) == tuple(
+        (item.kind, item.content_identity) for item in explicit.closure.resources)
+
+
+def test_bundled_default_preset_resolves_a_non_halcyon_project_with_or_without_actuals():
+    root = _root()
+    values = {
+        "project_path": root / "examples/controller-z/project.yaml",
+        "preset_path": Path(str(default_preset_resource())),
+        "preset_root": Path(str(default_preset_root())),
+    }
+    without_actual = resolve_draft_render(**values)
+    with_actual = resolve_draft_render(**values, actual_path=root / "examples/controller-z/actual.yaml")
+    assert without_actual.closure.resource("view").id == with_actual.closure.resource("view").id == "chrona-default-draft"
+    assert without_actual.closure.actual_set is None
+    assert with_actual.closure.actual_set is not None
 
 
 def test_draft_typeset_closure_uses_an_explicit_descriptor_without_host_discovery():
