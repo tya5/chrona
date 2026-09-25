@@ -64,6 +64,29 @@ another axis tier; no unrelated text collision rule is weakened.
 **Publication rule:** I454-P0-1 and I454-P0-2 source/evidence changes merge
 as one atomic #439/#443 release unit.
 
+### I454-P0-2A — Corpus axis-policy correction (#443)
+
+**Authority:**
+`issue-443-visible-axis-overflow-corpus-correction-2026-09-26.md` and its
+architecture review.
+**Files:** `halcyon-1` replan-baseline View, the corresponding generated Scene
+and SVG evidence, focused axis/materializer tests, and the P0 audit record.
+
+1. Replace the replan month tier's explicit `visible-overflow` declaration
+   with the already-supported `thin-with-record` alternative; do not alter
+   global visible-overflow semantics, collision tolerance, or Scene code.
+2. Prove that retained labels and each thinned candidate have deterministic
+   completed outcomes/diagnostics, and that the formerly colliding Jun/Jul
+   pair no longer coexists as positive-area text.
+3. Regenerate public evidence only after the resource policy is complete; run
+   the tolerance-aware corpus audit and retain a focused fixture for the
+   general #449 visible-overflow fallback.
+
+**Acceptance:** no committed Scene has a positive-area axis-label
+intersection at micro-point precision; replan-baseline's thinning is explicit
+and inspectable; an independent explicit visible-overflow fixture remains a
+successful completed warning result.
+
 ## I454-P0-3 — Boolean table presentation (#435)
 
 **Files:** View schema and typed contract, review-content normalization,
