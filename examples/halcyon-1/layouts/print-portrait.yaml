@@ -1,6 +1,7 @@
-version: chrona/layout-profile/v0.7
+version: chrona/layout-profile/v0.8
 id: print-portrait
-writingMode: horizontal-tb
+flowDirection: horizontal
+dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [panel.timeline, spacing.m, spacing.none, spacing.xl]
 reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 2}

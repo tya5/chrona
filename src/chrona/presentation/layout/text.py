@@ -131,7 +131,8 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                available_inline_start: float | None = None,
                available_inline_size: float | None = None,
                slot_id: str | None = None, semantic_id: str = "",
-               annotation: AnnotationPresentation | None = None) -> TextPlacement:
+               annotation: AnnotationPresentation | None = None,
+               orientation: str = "horizontal") -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     treatment = theme_tokens.text_treatment(typography_role)
     font_size, leading = float(treatment.font_size), float(treatment.line_height)
@@ -143,14 +144,27 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                                    letter_spacing=letter_spacing,
                                    numeric_spacing=treatment.numeric_spacing)
                 for line in (lines or (content,)))
+    rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}.get(orientation)
+    if rotation is None:
+        raise ValueError("E_PRESENTATION_TEXT_ORIENTATION")
+    height = font_size * leading * len(resolved_lines)
+    if rotation == 0:
+        bounds = Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),
+                      Decimal(str(width)), Decimal(str(height)))
+    elif rotation == 90:
+        bounds = Rect(Decimal(str(inline + font_size - height)), Decimal(str(baseline_block)),
+                      Decimal(str(height)), Decimal(str(width)))
+    else:
+        bounds = Rect(Decimal(str(inline - font_size)), Decimal(str(baseline_block - width)),
+                      Decimal(str(height)), Decimal(str(width)))
     return TextPlacement(
         placement_id, source_ref, painted_content,
-        Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),
-             Decimal(str(width)), Decimal(str(font_size * leading * len(resolved_lines)))),
+        bounds,
         typography_role, overflow, required,
         baseline=(inline, baseline_block), lines=resolved_lines, font_family=treatment.family,
         font_weight=int(treatment.weight), font_size=font_size, line_height=leading,
         letter_spacing=letter_spacing, text_transform=treatment.transform, numeric_spacing=treatment.numeric_spacing,
+        orientation=orientation, rotation_degrees=rotation,
         font_asset_identity=str(font_metrics.content_identity), collision_region=collision_region,
         collision_domain=collision_domain,
         source_content=source,

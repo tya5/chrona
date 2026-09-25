@@ -1,4 +1,4 @@
-version: chrona/view/v0.17
+version: chrona/view/v0.18
 kind: view
 id: halcyon-06-flight-readiness
 body:
@@ -70,6 +70,7 @@ body:
         form: year-quarter
         align: center
         overflow: diagnose
+        orientation: horizontal
     - unit: month
       every: 1
       role: labels
@@ -77,6 +78,7 @@ body:
         form: short-month
         align: start
         overflow: diagnose
+        orientation: rotate-cw
     - unit: month
       every: 1
       role: grid-minor
@@ -98,21 +100,25 @@ body:
     missing: em-dash
     align: start
     width: content
+    headerOrientation: horizontal
   - id: Work package
     source: title
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
   - id: Float
     source: totalFloat
     format: signedDays
     missing: em-dash
     align: end
     width: content
+    headerOrientation: horizontal
   - id: Scenario
     source:
       scenario: title
     missing: em-dash
     align: start
     width: content
+    headerOrientation: horizontal
   hierarchyColumn: Work package

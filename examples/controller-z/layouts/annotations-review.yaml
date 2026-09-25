@@ -1,6 +1,7 @@
-version: chrona/layout-profile/v0.7
+version: chrona/layout-profile/v0.8
 id: annotations-review
-writingMode: horizontal-tb
+flowDirection: horizontal
+dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [panel.minimum, spacing.l, spacing.m, spacing.none]
 reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 8, maxDetourRatio: 2}}
 root:

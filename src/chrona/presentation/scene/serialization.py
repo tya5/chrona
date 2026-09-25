@@ -19,7 +19,7 @@ class SceneSerializationError(ValueError):
 
 
 def serialize_scene(scene: InspectionScene) -> bytes:
-    """Return canonical UTF-8 scene-v0.4 JSON after typed and schema validation."""
+    """Return canonical UTF-8 scene-v0.5 JSON after typed and schema validation."""
     document = scene_document(scene)
     validate_scene_document(document)
     try:
@@ -32,7 +32,7 @@ def serialize_scene(scene: InspectionScene) -> bytes:
 def scene_document(scene: InspectionScene) -> dict[str, Any]:
     """Map each public Scene field explicitly; no dataclass reflection is used."""
     return {
-        "version": "chrona/scene/v0.4",
+        "version": "chrona/scene/v0.5",
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
@@ -73,7 +73,7 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
     """Validate schema shape plus cross-reference invariants JSON Schema cannot state."""
     try:
         errors = tuple(jsonschema.Draft202012Validator(
-            schema_document("scene-v0.4.schema.yaml")
+            schema_document("scene-v0.5.schema.yaml")
         ).iter_errors(document))
     except Exception as error:  # schema resource failures have no public partial document
         raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
@@ -217,6 +217,8 @@ def _text_layout(value: TextLayout) -> dict[str, Any]:
     if value.text_transform != "none":
         result["textTransform"] = value.text_transform
     result["numericSpacing"] = value.numeric_spacing
+    result["orientation"] = value.orientation
+    result["rotationDegrees"] = value.rotation_degrees
     return result
 
 

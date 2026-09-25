@@ -197,7 +197,16 @@ def _raise_format() -> str:
 
 def axis_label_fits(*, content: str, available_inline: float, font_size: float,
                     font_metrics: Any, letter_spacing: float = 0.0,
-                    text_transform: str = "none") -> bool:
+                    text_transform: str = "none", numeric_spacing: str = "proportional",
+                    orientation: str = "horizontal", line_height: float = 1.2) -> bool:
     """Return whether a selected axis label fits its clipped interval."""
-    return measure_text_width(content, font_size=font_size, font_metrics=font_metrics,
-                              letter_spacing=letter_spacing, text_transform=text_transform) <= available_inline
+    width = measure_text_width(content, font_size=font_size, font_metrics=font_metrics,
+                               letter_spacing=letter_spacing, text_transform=text_transform,
+                               numeric_spacing=numeric_spacing)
+    if orientation == "horizontal":
+        occupied_inline = width
+    elif orientation in {"rotate-cw", "rotate-ccw"}:
+        occupied_inline = font_size * line_height
+    else:
+        raise ValueError("E_PRESENTATION_TEXT_ORIENTATION")
+    return occupied_inline <= available_inline

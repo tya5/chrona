@@ -22,7 +22,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   color_scale: ResolvedColorScale | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
-    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width))
+    columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation)
                     for column in view.table_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
     def cell(item: Any, column: Any, row_index: int) -> str:
@@ -177,7 +177,8 @@ def _axis_tier(value: Mapping[str, Any]) -> AxisTier:
     candidate_forms = tuple((str(candidate), str(form)) for candidate, form in candidates.items()) if isinstance(candidates, Mapping) else ()
     return AxisTier(unit, int(value["every"]), role,
                     AxisLabelIntent(str(raw_label["form"]) if "form" in raw_label else None,
-                                    candidate_forms, str(raw_label["align"]), str(raw_label["overflow"])))
+                                    candidate_forms, str(raw_label["align"]), str(raw_label["overflow"]),
+                                    str(raw_label["orientation"])))
 
 
 def _column_width(value: object) -> TableColumnWidth:

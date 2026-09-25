@@ -1,4 +1,4 @@
-version: chrona/view/v0.17
+version: chrona/view/v0.18
 kind: view
 id: chrona-default-draft
 body:
@@ -50,6 +50,7 @@ body:
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
   - id: Plan
     source:
       facet: planned
@@ -57,5 +58,6 @@ body:
     missing: em-dash
     align: start
     width: content
+    headerOrientation: horizontal
   rows:
     mode: automatic

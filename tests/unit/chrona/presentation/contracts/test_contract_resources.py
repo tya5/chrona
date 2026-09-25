@@ -84,7 +84,7 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
     assert contract.view.row_decoration == "alternate-rows"
 
 
-def test_v17_axis_tiers_have_one_role_and_unit_valid_label_forms():
+def test_v18_axis_tiers_have_one_role_and_unit_valid_label_forms():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
     assert isinstance(_view_contract(value), ViewContract)
 
@@ -105,11 +105,11 @@ def test_v17_axis_tiers_have_one_role_and_unit_valid_label_forms():
         _view_contract(invalid_grid_label)
 
 
-def test_v17_auto_axis_is_labels_only_and_declares_its_candidate_forms():
+def test_v18_auto_axis_is_labels_only_and_declares_its_candidate_forms():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
     value["body"]["axis"]["tiers"] = [{
         "unit": "auto", "every": 1, "role": "labels",
-        "label": {"forms": {"month": "short-month", "quarter": "year-quarter"}, "align": "start", "overflow": "thin-with-record"},
+        "label": {"forms": {"month": "short-month", "quarter": "year-quarter"}, "align": "start", "overflow": "thin-with-record", "orientation": "horizontal"},
     }]
     assert isinstance(_view_contract(value), ViewContract)
 
@@ -117,6 +117,13 @@ def test_v17_auto_axis_is_labels_only_and_declares_its_candidate_forms():
     invalid["body"]["axis"]["tiers"] = [{"unit": "auto", "every": 1, "role": "grid-major"}]
     with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
         _view_contract(invalid)
+
+
+def test_v18_detaches_closed_orientation_intent_for_layout():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
+    value["body"]["tableColumns"][0]["headerOrientation"] = "rotate-cw"
+    contract = _view_contract(value)
+    assert contract.view.table_columns[0].header_orientation == "rotate-cw"
 
 
 @pytest.mark.parametrize(

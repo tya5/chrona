@@ -1,4 +1,4 @@
-version: chrona/view/v0.17
+version: chrona/view/v0.18
 kind: view
 id: controller-z-executive
 body:
@@ -86,6 +86,7 @@ body:
         form: year-quarter
         align: center
         overflow: thin-with-record
+        orientation: horizontal
     - unit: month
       every: 1
       role: labels
@@ -93,6 +94,7 @@ body:
         form: short-month
         align: start
         overflow: thin-with-record
+        orientation: horizontal
     - unit: month
       every: 1
       role: grid-minor
@@ -104,5 +106,6 @@ body:
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
   rows:
     mode: automatic

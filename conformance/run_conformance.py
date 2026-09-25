@@ -12,6 +12,7 @@ COMMANDS = [
     [sys.executable, str(ROOT.parent / "tools" / "validate_schema_references.py")],
     [sys.executable, str(ROOT.parent / "tools" / "example_inventory.py")],
     [sys.executable, str(ROOT.parent / "tools" / "diagnostic_inventory.py"), "--check"],
+    [sys.executable, str(ROOT.parent / "tools" / "check_layout_float_accumulation.py")],
     [sys.executable, str(ROOT.parent / "tools" / "declared_value_inventory.py"), "--check"],
     [sys.executable, str(ROOT.parent / "tools" / "vocabulary_inventory.py"), "--check"],
     [sys.executable, str(ROOT.parent / "tools" / "check_documented_commands.py"), "--check"],

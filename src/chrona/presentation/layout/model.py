@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
+from math import fsum
+from collections.abc import Iterable
 import json
 from typing import Any, Mapping
 
@@ -16,6 +18,19 @@ class LayoutError(ValueError):
         self.path = path
         self.node_id = node_id
         self.detail = detail
+
+
+def geometry_sum(values: Iterable[float]) -> float:
+    """Correctly round one Layout-owned float geometry accumulation.
+
+    Decimal profile arithmetic intentionally remains outside this helper.  A
+    completed placement must never inherit the Python-minor-dependent builtin
+    float ``sum`` algorithm.
+    """
+    result = tuple(values)
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in result):
+        raise TypeError("E_LAYOUT_GEOMETRY_SUM_INPUT")
+    return fsum(result)
 
 
 @dataclass(frozen=True)
@@ -63,7 +78,8 @@ class LayoutDecision:
 class LayoutManifest:
     profile_id: str
     profile_hash: str
-    writing_mode: str
+    flow_direction: str
+    dependency_network_flow_direction: str
     viewport: Rect
     decisions: tuple[LayoutDecision, ...]
     diagnostics: tuple[str, ...] = ()
@@ -118,6 +134,7 @@ class LayoutManifest:
                 "rowDistribution": self.row_distribution,
             },
             "viewport": rect(self.viewport),
-            "writingMode": self.writing_mode,
+            "flowDirection": self.flow_direction,
+            "dependencyNetworkFlowDirection": self.dependency_network_flow_direction,
         }
         return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()

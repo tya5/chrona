@@ -1,4 +1,4 @@
-version: chrona/view/v0.17
+version: chrona/view/v0.18
 kind: view
 id: orion-asic-gates
 body:
@@ -77,6 +77,7 @@ body:
         form: year-quarter
         align: center
         overflow: diagnose
+        orientation: horizontal
     - unit: month
       every: 1
       role: labels
@@ -84,6 +85,7 @@ body:
         form: short-month
         align: start
         overflow: thin-with-record
+        orientation: horizontal
     - unit: month
       every: 1
       role: grid-minor
@@ -105,18 +107,21 @@ body:
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
   - id: Revision
     source:
       field: revision
     missing: em-dash
     align: start
     width: content
+    headerOrientation: horizontal
   - id: Approval
     source:
       field: approval
     missing: blank
     align: start
     width: content
+    headerOrientation: horizontal
   - id: Δ
     source:
       facet: finishDelta
@@ -124,5 +129,6 @@ body:
     missing: em-dash
     align: end
     width: content
+    headerOrientation: horizontal
   rows:
     mode: automatic

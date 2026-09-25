@@ -1,10 +1,12 @@
 from types import SimpleNamespace
+from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.presentation import RowPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.text import ellipsize_text
+from chrona.presentation.layout.surface_composer import _contains_block_interval
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
 
 
@@ -13,8 +15,8 @@ class FixedMetrics:
         return len(value) * size
 
 
-def fixed_measure(value: str, _role: str) -> float:
-    return len(value) * 10
+def fixed_measure(value: str, _role: str, orientation: str = "horizontal") -> float:
+    return len(value) * 10 if orientation == "horizontal" else 10
 
 
 def table_columns(*items: tuple[str, str]) -> tuple[TableColumnContent, ...]:
@@ -38,6 +40,12 @@ def test_table_placements_are_ordered_and_non_overlapping() -> None:
     assert placements[0].inline + placements[0].inline_size <= placements[1].inline
 
 
+def test_geometry_sum_uses_the_cross_python_correctly_rounded_float_result() -> None:
+    # Python 3.11's builtin sum returns 0.9999999999999999 here, while 3.12
+    # compensates it.  Completed Layout placements use the invariant result.
+    assert geometry_sum((0.1 for _ in range(10))) == 1.0
+
+
 def test_table_placements_reserve_the_declared_positive_gutter() -> None:
     placements = place_table_columns(
         columns=table_columns(("owner", "Owner"), ("status", "Status")),
@@ -55,6 +63,17 @@ def test_table_placement_diagnoses_when_required_text_cannot_fit() -> None:
             bounds=(0.0, 0.0, 20.0, 20.0),
             measure_text=fixed_measure, minimum_inline=10.0,
         )
+
+
+def test_table_header_containment_ignores_only_sub_micro_point_float_residue() -> None:
+    assert _contains_block_interval(
+        container_start=Decimal("116.2"), container_end=Decimal("156.2"),
+        item_start=Decimal("116.19999999999999"), item_end=Decimal("137.19999999999999"),
+    )
+    assert not _contains_block_interval(
+        container_start=Decimal("116.2"), container_end=Decimal("156.2"),
+        item_start=Decimal("116.199"), item_end=Decimal("137.199"),
+    )
 
 
 def test_ellipsize_allocation_preserves_a_minimum_for_each_column() -> None:
@@ -85,15 +104,28 @@ def test_declared_content_and_fractional_columns_allocate_from_measured_minima()
 
 def test_table_allocator_measures_numeric_cells_with_their_completed_role() -> None:
     observed = []
-    def measure(value: str, role: str) -> float:
-        observed.append((value, role))
+    def measure(value: str, role: str, orientation: str) -> float:
+        observed.append((value, role, orientation))
         return len(value) * 10
     place_table_columns(
         columns=table_columns(("delta", "Δ")),
         cells=(TableCellContent("a", "delta", "+12d", "tableCell", "numeric"),),
         bounds=(0.0, 0.0, 100.0, 20.0), measure_text=measure, minimum_inline=10.0,
     )
-    assert ("+12d", "numeric") in observed
+    assert ("+12d", "numeric", "horizontal") in observed
+
+
+def test_table_allocator_uses_rotated_header_occupied_inline_measurement() -> None:
+    observed = []
+    def measure(value: str, role: str, orientation: str) -> float:
+        observed.append((value, role, orientation))
+        return 10 if orientation != "horizontal" else len(value) * 10
+    place_table_columns(
+        columns=(TableColumnContent("status", "Long status heading", "start",
+                                    TableColumnWidth("content", "content"), "rotate-cw"),),
+        cells=(), bounds=(0.0, 0.0, 100.0, 20.0), measure_text=measure, minimum_inline=10.0,
+    )
+    assert ("Long status heading", "text", "rotate-cw") in observed
 
 
 def test_minmax_content_reserves_preferred_width_while_ellipsis_uses_only_flexible_columns() -> None:

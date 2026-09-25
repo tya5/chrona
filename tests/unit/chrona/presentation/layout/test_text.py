@@ -50,3 +50,18 @@ def test_place_text_measures_the_transformed_spaced_painted_form():
     assert placed.content == "AB" and placed.lines == ("AB",)
     assert float(placed.bounds.inline_size) == 15
     assert placed.letter_spacing == 3 and placed.numeric_spacing == "tabular"
+
+
+def test_place_text_rotates_the_completed_block_about_its_baseline_pivot():
+    clockwise = place_text(placement_id="label:cw", source_ref="a", content="AB",
+                           inline=10, baseline_block=30, typography_role="text",
+                           theme_tokens=_Theme(), font_metrics=_Font(), orientation="rotate-cw")
+    counterclockwise = place_text(placement_id="label:ccw", source_ref="a", content="AB",
+                                  inline=10, baseline_block=30, typography_role="text",
+                                  theme_tokens=_Theme(), font_metrics=_Font(), orientation="rotate-ccw")
+    assert (clockwise.orientation, clockwise.rotation_degrees) == ("rotate-cw", 90)
+    assert tuple(map(float, (clockwise.bounds.inline, clockwise.bounds.block,
+                             clockwise.bounds.inline_size, clockwise.bounds.block_size))) == (4, 30, 18, 12)
+    assert (counterclockwise.orientation, counterclockwise.rotation_degrees) == ("rotate-ccw", -90)
+    assert tuple(map(float, (counterclockwise.bounds.inline, counterclockwise.bounds.block,
+                             counterclockwise.bounds.inline_size, counterclockwise.bounds.block_size))) == (-2, 18, 18, 12)

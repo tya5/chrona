@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import measure_text_width
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
@@ -56,16 +56,16 @@ def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, f
 def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         cells: tuple[TableCellContent, ...],
                         bounds: tuple[float, float, float, float],
-                        measure_text: Callable[[str, str], float], minimum_inline: float,
+                        measure_text: Callable[[str, str, str], float], minimum_inline: float,
                         overflow: str = "diagnose", gutter: float = 0.0,
                         ) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
-    content_by_column = {column.column_id: [(column.header, "text")] for column in columns}
+    content_by_column = {column.column_id: [(column.header, "text", column.header_orientation)] for column in columns}
     for cell in cells:
-        content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role))
+        content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role, "horizontal"))
     natural_widths = tuple(
-        max(minimum_inline, max((measure_text(item, role)
-                                 for item, role in content_by_column.get(column.column_id, ((column.header, "text"),))),
+        max(minimum_inline, max((measure_text(item, role, orientation)
+                                 for item, role, orientation in content_by_column.get(column.column_id, ((column.header, "text", column.header_orientation),))),
                                 default=minimum_inline) + minimum_inline)
         for column in columns
     )
@@ -74,18 +74,18 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
     if available < 0 or sum(column.width.maximum == "fill" for column in columns) > 1:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-    ellipsis_floor = max(minimum_inline, measure_text("…", "text")) + minimum_inline
+    ellipsis_floor = max(minimum_inline, measure_text("…", "text", "horizontal")) + minimum_inline
     minima = tuple(natural if column.width.minimum == "content" else ellipsis_floor
                    for column, natural in zip(columns, natural_widths, strict=True))
-    if sum(minima) > available:
+    if geometry_sum(minima) > available:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
-    preferred_total = sum(natural_widths)
+    preferred_total = geometry_sum(natural_widths)
     if preferred_total > available and overflow != "ellipsize-with-source":
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW_POLICY", "/layoutManifest/table")
     base = natural_widths if preferred_total <= available else minima
     flexible = tuple(index for index, column in enumerate(columns) if column.width.flexible)
-    remaining = available - sum(base)
-    weights = sum(columns[index].width.fraction for index in flexible)
+    remaining = available - geometry_sum(base)
+    weights = geometry_sum(columns[index].width.fraction for index in flexible)
     widths = tuple(width + (remaining * columns[index].width.fraction / weights
                             if index in flexible and weights else 0.0)
                    for index, width in enumerate(base))
@@ -122,7 +122,7 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
         if row.group_id and (index == 0 or review_rows[index - 1].group_id != row.group_id)
     )
     available = timeline_bounds[3] - group_header_size * len(group_starts)
-    required = sum(required_block_sizes)
+    required = geometry_sum(required_block_sizes)
     if available < required:
         raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", "/layoutManifest/timeline",
                           detail=f"required={required}; available={available}")

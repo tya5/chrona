@@ -403,7 +403,8 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
     relation_routing = profile.profile.get("relationRouting", {})
     annotation_routing = profile.profile["reviewSurface"]["annotationRouting"]
     return LayoutManifest(
-        profile.profile_id, profile.content_hash, str(profile.profile["writingMode"]), viewport,
+        profile.profile_id, profile.content_hash, str(profile.profile["flowDirection"]),
+        str(profile.profile["dependencyNetworkFlowDirection"]), viewport,
         tuple(arranger.decisions),
         relation_max_bends=int(relation_routing.get("maxBends", 4)),
         relation_max_detour_ratio=float(relation_routing.get("maxDetourRatio", 2.0)),

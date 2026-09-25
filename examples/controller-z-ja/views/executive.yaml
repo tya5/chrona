@@ -1,4 +1,4 @@
-version: chrona/view/v0.17
+version: chrona/view/v0.18
 kind: view
 id: controller-z-ja-executive
 body:
@@ -71,6 +71,7 @@ body:
         form: half-year
         align: center
         overflow: diagnose
+        orientation: horizontal
     - unit: auto
       every: 1
       role: labels
@@ -78,6 +79,7 @@ body:
         forms: {month: short-month, quarter: year-quarter, half: half-year}
         align: center
         overflow: thin-with-record
+        orientation: horizontal
   rowDecoration:
     mode: none
   tableColumns:
@@ -86,5 +88,6 @@ body:
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
   rows:
     mode: automatic

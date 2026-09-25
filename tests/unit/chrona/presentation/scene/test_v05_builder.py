@@ -14,7 +14,7 @@ from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabe
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
-from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, SymbolGeometry
+from chrona.presentation.scene.model import ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
 BACKGROUND_EXTENTS = {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}
@@ -78,6 +78,12 @@ def test_scene_projects_completed_layout_geometry_without_measurement_or_routing
     assert all(fragment not in source for fragment in forbidden)
 
 
+def test_scene_text_layout_rejects_an_unpaired_orientation_and_rotation() -> None:
+    with pytest.raises(ValueError, match="E_PRESENTATION_TEXT_LAYOUT_INVALID"):
+        TextLayout((0, 0, 1, 1), (0, 0), ("x",), "Test", 400, 12, 1.2,
+                   "sha256:test", orientation="rotate-cw", rotation_degrees=-90)
+
+
 def test_scene_rejects_a_clip_that_does_not_reference_a_preceding_same_slot_host():
     fill = ScenePrimitive("fill", "Rect", "a", "object", "progress-fill", "progress-fill", (0, 0, 1, 1),
                           slot_id="timeline", clip_source_id="host")
@@ -106,8 +112,13 @@ def test_scene_roles_are_registry_owned_without_direct_variance_or_scale_role_li
 
 def _manifest(*sources):
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
-    return LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
-                          tuple(LayoutDecision(source, "slot", rect, source) for source in sources),
+    bounds = {
+        "table": Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(1000)),
+        "timeline-axis": Rect(Decimal(500), Decimal(0), Decimal(500), Decimal(48)),
+        "timeline": Rect(Decimal(500), Decimal(48), Decimal(500), Decimal(952)),
+    }
+    return LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect,
+                          tuple(LayoutDecision(source, "slot", bounds.get(source, rect), source) for source in sources),
                           row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
 
 
@@ -210,7 +221,7 @@ def test_scene_dispatches_completed_network_layout_through_registry_semantics_on
     projection = SimpleNamespace(surface="dependency-network", network=SimpleNamespace(nodes=(node,), edges=()))
     title_bounds = Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40))
     network_bounds = Rect(Decimal(0), Decimal(50), Decimal(400), Decimal(200))
-    manifest = LayoutManifest("network", "sha256:test", "horizontal-tb", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(250)), (
+    manifest = LayoutManifest("network", "sha256:test", "horizontal", "horizontal", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(250)), (
         LayoutDecision("title", "slot", title_bounds, "title", priority="required"),
         LayoutDecision("network", "slot", network_bounds, "network", priority="required"),
     ), row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
@@ -316,7 +327,7 @@ def test_scene_uses_declared_marker_and_projects_an_object_annotation_leader():
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(300))
-    manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", viewport, (
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", viewport, (
         LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(40)), "title"),
         LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(40), Decimal(100), Decimal(100)), "table"),
         LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(40), Decimal(400), Decimal(100)), "timeline"),
@@ -488,7 +499,7 @@ def test_scene_projects_only_accepted_typed_plot_labels_and_relations():
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
-    manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", rect,
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect,
                               tuple(LayoutDecision(source, "slot", rect, source)
                                     for source in ("title", "table", "timeline", "timeline-axis")),
                               relation_max_bends=0, row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
@@ -608,10 +619,10 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
         "timeline.groupHeader.blockSize": Decimal(20),
     })
     viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(400))
-    manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", viewport, (
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", viewport, (
         LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(40)), "title"),
         LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(40), Decimal(100), Decimal(160)), "table"),
-        LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(40), Decimal(700), Decimal(160)), "timeline"),
+            LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(60), Decimal(700), Decimal(140)), "timeline"),
         LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(200), Decimal(700), Decimal(40)), "timeline-axis"),
         LayoutDecision("annotations", "slot", Rect(Decimal(800), Decimal(40), Decimal(200), Decimal(160)), "annotations"),
     ), row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
@@ -678,7 +689,7 @@ def test_project_calendar_closure_emits_background_shading():
 def test_layout_projects_alternate_row_bands_only_into_the_declared_table_region():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 3)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
-    manifest = LayoutManifest("review", "sha256:test", "horizontal-tb", Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(200)), (
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(200)), (
         LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(20)), "title"),
         LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(20), Decimal(100), Decimal(100)), "table"),
         LayoutDecision("timeline", "slot", Rect(Decimal(120), Decimal(20), Decimal(300), Decimal(100)), "timeline"),

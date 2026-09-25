@@ -148,7 +148,9 @@ def render_v05_svg(surface: SceneSurface, *, viewport: tuple[float, float]) -> s
                  ),
             ) if part)
             treatment = f" {treatment}" if treatment else ""
-            append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')
+            transform = (f' transform="rotate({node.text_layout.rotation_degrees} {number(node.baseline[0])} {number(node.baseline[1])})"'
+                         if node.text_layout.rotation_degrees else "")
+            append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{transform}{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')
         elif node.kind == "Symbol":
             if node.symbol is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)

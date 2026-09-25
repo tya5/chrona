@@ -1,4 +1,6 @@
 from datetime import date
+from dataclasses import replace
+from pathlib import Path
 
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.renderers.v05_svg import render_v05_svg
@@ -36,6 +38,23 @@ def test_svg_projects_proportional_figures_explicitly_after_layout_measurement()
                                text="12", baseline=(1, 6), text_layout=layout,
                                paint=ScenePaint("#112233", None, None, (), 1))
     assert 'font-variant-numeric="proportional-nums"' in render_v05_svg(_surface(primitive), viewport=(10, 10))
+
+
+def test_svg_projects_the_layout_selected_rotation_about_the_supplied_baseline():
+    layout = TextLayout((1, 2, 4, 8), (1, 6), ("AB",), "Test Sans", 400, 12, 1.2,
+                        "sha256:test", orientation="rotate-cw", rotation_degrees=90)
+    primitive = ScenePrimitive("label", "Text", "a", "label", "label", "label", layout.bounds,
+                               text="AB", baseline=layout.baseline, text_layout=layout,
+                               paint=ScenePaint("#112233", None, None, (), 1))
+    assert 'transform="rotate(90 1 6)"' in render_v05_svg(_surface(primitive), viewport=(10, 10))
+
+
+def test_svg_adapter_does_not_infer_orientation_or_measure_text() -> None:
+    source = Path("src/chrona/presentation/renderers/v05_svg.py").read_text(encoding="utf-8")
+    assert ".rotation_degrees" in source
+    assert "orientation" not in source
+    assert "measure_text" not in source
+    assert "font_metrics" not in source
 
 
 def test_svg_serializes_completed_path_marker_and_commands():

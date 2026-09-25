@@ -8,7 +8,7 @@ from collections.abc import Mapping
 import re
 from typing import Any
 
-from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect
+from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
@@ -40,6 +40,10 @@ class SurfaceLayoutComposition:
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
 BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed"})
+# Layout emits coordinates at micro-point precision.  Intermediate measurement
+# APIs are float-based, so containment must not turn a sub-micro-point binary
+# conversion residue into a user-visible overflow diagnostic.
+GEOMETRY_TOLERANCE = Decimal("0.000001")
 
 
 def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect, table_bounds: tuple[float, float, float, float],
@@ -81,6 +85,12 @@ def _validate_background_shapes(shapes: list[ShapePlacement], theme_tokens: Any)
                                   detail=f"{shape.placement_id}:{other.placement_id}")
 
 
+def _contains_block_interval(*, container_start: Decimal, container_end: Decimal,
+                             item_start: Decimal, item_end: Decimal) -> bool:
+    """Apply the Layout coordinate tolerance to a physical containment test."""
+    return item_start >= container_start - GEOMETRY_TOLERANCE and item_end <= container_end + GEOMETRY_TOLERANCE
+
+
 def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
     """Close every comparison-mark role to lane-relative Layout geometry."""
     result = {}
@@ -108,7 +118,7 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         if row.group_id != previous:
             headers += 1 if row.group_id and group_presentation == "header" else 0
             previous = row.group_id
-    return Decimal(str(sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
+    return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
 def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
@@ -196,8 +206,8 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
             if height <= 0 or icon.viewport[1] <= 0:
                 raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
             resolved[side] = (icon, height * icon.viewport[0] / icon.viewport[1], item.font_size * float(gap_ratio))
-        leading = sum(width + gap for side, (_, width, gap) in resolved.items() if side == "leading")
-        trailing = sum(width + gap for side, (_, width, gap) in resolved.items() if side == "trailing")
+        leading = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "leading")
+        trailing = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "trailing")
         available = (item.available_inline_size if item.available_inline_size is not None
                      else float(item.bounds.inline_size)) - leading - trailing
         if available <= 0:
@@ -481,12 +491,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        available_inline_size=float(by_source["title"].bounds.inline_size))]
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
-    def measure_table_text(content: str, typography_role: str) -> float:
+    def measure_table_text(content: str, typography_role: str, orientation: str = "horizontal") -> float:
         treatment = request.theme_tokens.text_treatment(typography_role)
-        return measure_text_width(content, font_size=float(treatment.font_size), font_metrics=request.font_metrics,
-                                  letter_spacing=float(treatment.letter_spacing),
-                                  text_transform=treatment.transform,
-                                  numeric_spacing=treatment.numeric_spacing)
+        return (measure_text_width(content, font_size=float(treatment.font_size), font_metrics=request.font_metrics,
+                                   letter_spacing=float(treatment.letter_spacing),
+                                   text_transform=treatment.transform,
+                                   numeric_spacing=treatment.numeric_spacing)
+                if orientation == "horizontal" else float(treatment.font_size * treatment.line_height))
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
                                   measure_text=measure_table_text, minimum_inline=body_size,
                                   overflow=table.overflow,
@@ -506,8 +517,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         return resolved, "ellipsized" if resolved != content else "fit"
 
     def aligned_inline(content: str, column_id: str, start: float, available_inline: float,
-                       typography_role: str) -> float:
-        width = measure_table_text(content, typography_role)
+                       typography_role: str, orientation: str = "horizontal") -> float:
+        width = measure_table_text(content, typography_role, orientation)
         align = column_intents[column_id].align
         if align == "end":
             return start + max(0.0, available_inline - width)
@@ -519,12 +530,42 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         column_id, label = column.column_id, column.header
         available = max(0.0, column_widths[column_id] - body_size)
         resolved, overflow = table_text(label, available, "text")
+        header_width = measure_text_width(resolved, font_size=body_size, font_metrics=request.font_metrics,
+                                          letter_spacing=float(body_treatment.letter_spacing),
+                                          text_transform=body_treatment.transform,
+                                          numeric_spacing=body_treatment.numeric_spacing)
+        header_block = timeline_bounds[1] - table_bounds[1]
+        if column.header_orientation == "rotate-cw":
+            baseline = table_bounds[1]
+        elif column.header_orientation == "rotate-ccw":
+            baseline = table_bounds[1] + header_width
+        else:
+            baseline = table_bounds[1] + body_size
         text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
-                               inline=aligned_inline(resolved, column_id, positions[column_id][0], available, "text"), baseline_block=table_bounds[1] + body_size,
+                               inline=aligned_inline(resolved, column_id, positions[column_id][0], available, "text", column.header_orientation), baseline_block=baseline,
                                typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
                                source_content=label, available_inline_start=positions[column_id][0],
-                               available_inline_size=available))
+                               available_inline_size=available, orientation=column.header_orientation))
+        header_start = Decimal(str(table_bounds[1]))
+        header_end = Decimal(str(table_bounds[1] + header_block))
+        if not _contains_block_interval(
+            container_start=header_start,
+            container_end=header_end,
+            item_start=text[-1].bounds.block,
+            item_end=text[-1].bounds.block + text[-1].bounds.block_size,
+        ):
+            raise LayoutError(
+                "E_LAYOUT_TABLE_OVERFLOW",
+                "/layoutManifest/table",
+                detail=(
+                    f"header {column_id!r} occupies block interval "
+                    f"[{text[-1].bounds.block}, "
+                    f"{text[-1].bounds.block + text[-1].bounds.block_size}] "
+                    f"outside reserved table-header interval "
+                    f"[{header_start}, {header_end}]"
+                ),
+            )
     row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
     for cell in table_cells:
         object_id, column_id, content, typography_role = cell.object_id, cell.column_id, cell.content, cell.typography_role
@@ -592,7 +633,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if group.header_bounds is not None:
             shapes.append(background_shape(f"group-header-band:{group.group_id}", group.group_id,
                                            "groupHeaderBand", group.header_bounds))
-    label_lane = 0
+    label_lane_offset = 0.0
     for tier_index, tier in enumerate(request.surface_content.axis_tiers):
         form = tier.label.form if tier.label else None
         requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
@@ -610,7 +651,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                           available_inline=(item.end - item.start).days * scale.unit_ratio,
                                           font_size=axis_size, font_metrics=request.font_metrics,
                                           letter_spacing=float(axis_treatment.letter_spacing),
-                                          text_transform=axis_treatment.transform) for item in trial):
+                                          text_transform=axis_treatment.transform,
+                                          numeric_spacing=axis_treatment.numeric_spacing,
+                                          orientation=tier.label.orientation,
+                                          line_height=float(axis_treatment.line_height)) for item in trial):
                         selected, form = trial, forms[candidate]
                         break
                 if selected is None:
@@ -631,7 +675,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    available_inline=max(0.0, _coordinate(interval.end, scale) - _coordinate(interval.start, scale)),
                                                    font_size=axis_size, font_metrics=request.font_metrics,
                                                    letter_spacing=float(axis_treatment.letter_spacing),
-                                                   text_transform=axis_treatment.transform))
+                                                   text_transform=axis_treatment.transform,
+                                                   numeric_spacing=axis_treatment.numeric_spacing,
+                                                   orientation=tier.label.orientation,
+                                                   line_height=float(axis_treatment.line_height)))
                 for interval in intervals
             )
             fits = tuple(bool(item.label_fits) for item in interval_outcomes)
@@ -687,6 +734,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                               ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
                                               semantic_id=semantic_id))
         elif tier.role == "labels" and form is not None:
+            orientation = tier.label.orientation
+            label_widths = tuple(
+                measure_text_width(outcome.label or "", font_size=axis_size, font_metrics=request.font_metrics,
+                                   letter_spacing=float(axis_treatment.letter_spacing),
+                                   text_transform=axis_treatment.transform,
+                                   numeric_spacing=axis_treatment.numeric_spacing)
+                for outcome in interval_outcomes if outcome.disposition == "placed"
+            )
+            lane_size = (axis_size if orientation == "horizontal" else max(label_widths, default=0.0))
+            if label_lane_offset + lane_size > float(axis.bounds.block_size):
+                raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}")
             for interval, outcome in zip(intervals, interval_outcomes, strict=True):
                 if outcome.disposition == "thinned":
                     continue
@@ -699,15 +757,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                       detail=outcome.candidate_id)
                 width = measure_text_width(label, font_size=axis_size, font_metrics=request.font_metrics,
                                            letter_spacing=float(axis_treatment.letter_spacing),
-                                           text_transform=axis_treatment.transform)
-                inline = x if tier.label.align == "start" else x + (available - width) / 2
+                                           text_transform=axis_treatment.transform,
+                                           numeric_spacing=axis_treatment.numeric_spacing)
+                occupied_inline = width if orientation == "horizontal" else axis_size * float(axis_treatment.line_height)
+                inline = x if tier.label.align == "start" else x + (available - occupied_inline) / 2
+                baseline = float(axis.bounds.block) + label_lane_offset + (
+                    axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
-                                    content=label, inline=inline, baseline_block=float(axis.bounds.block) + axis_size * (label_lane + 1),
+                                    content=label, inline=inline, baseline_block=baseline,
                                     typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                    collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", f"label-{label_lane}"),
-                                    source_content=label, available_inline_start=x, available_inline_size=available)
+                                    collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", f"label-{tier_index}"),
+                                    source_content=label, available_inline_start=x, available_inline_size=available,
+                                    orientation=orientation)
                 text.append(replace(placed, semantic_id="axisLabel"))
-            label_lane += 1
+            label_lane_offset += lane_size
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
     contract = request.presentation_contract
@@ -997,8 +1060,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         font_size, line_height = label_treatment.font_size, label_treatment.line_height
         visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
         handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
-        leading = sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
-        trailing = sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
+        leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
+        trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
         available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
         lines = (wrap_text(label_request.content, available_inline=available,
                            font_size=float(font_size), font_metrics=request.font_metrics,
@@ -1239,8 +1302,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             content = f"{annotation.number}. {content}" if annotation.number is not None else content
             annotation_visuals = candidate_label_visuals(f"annotation-text:{annotation_id}", "annotation", request)
             handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in annotation_visuals)
-            annotation_leading = sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "leading")
-            annotation_trailing = sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "trailing")
+            annotation_leading = geometry_sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "leading")
+            annotation_trailing = geometry_sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "trailing")
             resolved = resolve_annotation_anchor(annotation, annotation_marks)
             matching = [(review_row, row) for review_row, row in zip(review_rows, rows, strict=True)
                         if any(item.object_id == resolved.object_id for item in review_row.items)]
@@ -1359,10 +1422,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             if annotation.number is not None:
                 note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
                 handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
-                note_index_leading = sum(width + gap for visual, _, width, gap in note_index_visuals
-                                         if visual.side == "leading")
-                note_index_trailing = sum(width + gap for visual, _, width, gap in note_index_visuals
-                                          if visual.side == "trailing")
+                note_index_leading = geometry_sum(width + gap for visual, _, width, gap in note_index_visuals
+                                                  if visual.side == "leading")
+                note_index_trailing = geometry_sum(width + gap for visual, _, width, gap in note_index_visuals
+                                                   if visual.side == "trailing")
                 note_index_content = str(annotation.number)
                 note_index_width = measure_text_width(note_index_content, font_size=size, font_metrics=request.font_metrics,
                                                       letter_spacing=float(annotation_treatment.letter_spacing),

@@ -123,6 +123,7 @@ class TableColumn:
     missing: str
     align: str = "start"
     width: str | FrozenDict = "content"
+    header_orientation: str = "horizontal"
 
 
 @dataclass(frozen=True)
@@ -532,10 +533,10 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
-    ("view", "chrona/view/v0.17"): "view-v0.17.schema.yaml",
+    ("view", "chrona/view/v0.18"): "view-v0.18.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
-    ("layout-profile", "chrona/layout-profile/v0.7"): "layout-profile-v0.7.schema.yaml",
+    ("layout-profile", "chrona/layout-profile/v0.8"): "layout-profile-v0.8.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
@@ -678,7 +679,8 @@ def _view_input(body: FrozenDict) -> ViewInput:
                       for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
     table_columns = tuple(TableColumn(str(column["id"]), column["source"], str(column.get("format", "text")),
-                                      str(column["missing"]), str(column["align"]), column["width"])
+                                      str(column["missing"]), str(column["align"]), column["width"],
+                                      str(column["headerOrientation"]))
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)

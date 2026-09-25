@@ -136,7 +136,13 @@ def render_v05_typst(surface: SceneSurface, *, viewport: tuple[float, float]) ->
             layout = node.text_layout
             parts.append(f"// font-asset: {_typst_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
             text = "\\n".join(_typst_string(line) for line in layout.lines)
-            parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}{_typst_numeric_width(layout)}, fill: {_typst_fill(node)})[{text}]]')
+            rendered = f'#text(font: "{_typst_string(layout.family)}", weight: {layout.weight}, size: {_number(layout.font_size)}pt{_typst_tracking(layout)}{_typst_numeric_width(layout)}, fill: {_typst_fill(node)})[{text}]'
+            if layout.rotation_degrees:
+                rendered = (f'#rotate({_number(layout.rotation_degrees)}deg, origin: top + left, reflow: false)['
+                            f'{rendered}]')
+                parts.append(f'#place(left: {_number(node.baseline[0])}pt, top: {_number(node.baseline[1])}pt)[{rendered}]')
+            else:
+                parts.append(f'#place(left: {_number(x)}pt, top: {_number(y)}pt)[{rendered}]')
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -177,7 +183,8 @@ def render_v05_tikz(surface: SceneSurface, *, viewport: tuple[float, float]) -> 
             layout = node.text_layout
             parts.append(f"% font-asset: {_tex_string(layout.asset_identity)} baseline: {_number(node.baseline[0])},{_number(node.baseline[1])}")
             text = _tikz_tracked_text(layout, r"\\".join(_tex_string(line) for line in layout.lines))
-            parts.append(f"\\node[anchor=base west, align=left, text={_color(node, 'fill')}, text opacity={_number(_opacity(node))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
+            rotation = f", rotate={_number(layout.rotation_degrees)}" if layout.rotation_degrees else ""
+            parts.append(f"\\node[anchor=base west, align=left{rotation}, text={_color(node, 'fill')}, text opacity={_number(_opacity(node))}, font=\\fontsize{{{_number(layout.font_size)}pt}}{{{_number(layout.font_size * layout.line_height)}pt}}\\selectfont] at ({_number(node.baseline[0])},{_number(node.baseline[1])}) {{{_tikz_numeric_text(layout, text)}}};")
         elif node.kind == "Symbol":
             if node.symbol is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

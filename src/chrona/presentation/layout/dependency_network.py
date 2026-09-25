@@ -33,7 +33,7 @@ class DependencyNetworkLayout:
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
                                       measured_sources: MeasuredSources,
-                                      writing_mode: str,
+                                      flow_direction: str,
                                       max_bends: int = 4,
                                       max_detour_ratio: float = 2.0) -> DependencyNetworkLayout:
     """Place a typed View graph without reading Project, View syntax, or Scene state."""
@@ -41,8 +41,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
     ids = {node.object_id for node in nodes}
     if not nodes or len(ids) != len(nodes) or any(edge.source_id not in ids or edge.target_id not in ids for edge in edges):
         raise LayoutError("E_LAYOUT_NETWORK_GRAPH", "/projection/network")
-    if writing_mode not in {"horizontal-tb", "vertical-rl", "vertical-lr"}:
-        raise LayoutError("E_LAYOUT_NETWORK_WRITING_MODE", "/layoutManifest/writingMode")
+    if flow_direction not in {"horizontal", "vertical-rl", "vertical-lr"}:
+        raise LayoutError("E_LAYOUT_NETWORK_FLOW_DIRECTION", "/layoutManifest/dependencyNetworkFlowDirection")
     metric = measured_sources.metric_values
     try:
         min_inline = metric["network.node.minInlineSize"]
@@ -60,7 +60,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
     for node in sorted(nodes, key=lambda item: (ranks[item.object_id], item.order_key, item.object_id)):
         by_rank.setdefault(ranks[node.object_id], []).append(node)
     placed = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
-                          writing_mode == "horizontal-tb")
+                          flow_direction == "horizontal")
     text = (title_placement,) + tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
     _assert_surface_quality(placed, text, title_bounds, bounds)
     return DependencyNetworkLayout(tuple(placed), text,

@@ -25,6 +25,7 @@ jobs:
       - run: python tools/check_documented_commands.py --check --execute
       - run: python tools/check_module_reachability.py
       - run: python tools/check_scene_primitive_delivery.py
+      - run: python tools/check_layout_float_accumulation.py
       - run: python tools/check_view_dispatch_reachability.py
       - run: python tools/check_semantic_registry_reachability.py
       - run: python tools/check_import_direction.py
@@ -45,3 +46,16 @@ jobs:
           smoke_dir="$(mktemp -d)"
           cd "$smoke_dir"
           python "$GITHUB_WORKSPACE/tools/wheel_smoke.py"
+
+  reproduction-newest-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - name: Reproduce every committed public materializer context
+        run: pytest -q tests/integration/test_materialize_example.py::test_declared_examples_reproduce_by_public_cli

@@ -31,7 +31,7 @@ def test_every_emitted_purpose_is_a_registered_semantic(svg_path):
 
 
 def test_layout_profile_declares_exactly_the_registered_slots():
-    schema = yaml.safe_load(schema_resource("layout-profile-v0.7.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("layout-profile-v0.8.schema.yaml").read_text(encoding="utf-8"))
     declared = set(re.findall(r"[a-z-]+", str(_slot_enum(schema))))
     assert declared == {slot.value for slot in Slot}
 

@@ -73,6 +73,7 @@ class TableColumnContent:
     header: str
     align: str
     width: TableColumnWidth
+    header_orientation: str = "horizontal"
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,7 @@ class AxisLabelIntent:
     candidate_forms: tuple[tuple[str, str], ...]
     align: str
     overflow: str
+    orientation: str = "horizontal"
 
 
 @dataclass(frozen=True)

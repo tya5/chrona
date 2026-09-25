@@ -62,9 +62,13 @@ class TextLayout:
     letter_spacing: float = 0.0
     text_transform: str = "none"
     numeric_spacing: str = "proportional"
+    orientation: str = "horizontal"
+    rotation_degrees: int = 0
 
     def __post_init__(self) -> None:
-        if self.numeric_spacing not in {"proportional", "tabular"}:
+        if (self.numeric_spacing not in {"proportional", "tabular"}
+                or (self.orientation, self.rotation_degrees) not in {
+                    ("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)}):
             raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID")
 
 

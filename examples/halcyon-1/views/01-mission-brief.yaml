@@ -1,4 +1,4 @@
-version: chrona/view/v0.17
+version: chrona/view/v0.18
 kind: view
 id: halcyon-01-mission-brief
 body:
@@ -78,6 +78,7 @@ body:
         form: year-quarter
         align: center
         overflow: diagnose
+        orientation: horizontal
     - unit: month
       every: 1
       role: labels
@@ -85,6 +86,7 @@ body:
         form: short-month
         align: start
         overflow: diagnose
+        orientation: horizontal
     - unit: month
       every: 1
       role: grid-minor
@@ -106,11 +108,13 @@ body:
     missing: em-dash
     align: start
     width: content
+    headerOrientation: horizontal
   - id: Milestone or work package
     source: title
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
   - id: Plan
     source:
       facet: planned
@@ -118,6 +122,7 @@ body:
     missing: em-dash
     align: start
     width: content
+    headerOrientation: horizontal
   - id: Actual
     source:
       facet: actual
@@ -125,6 +130,7 @@ body:
     missing: in-progress
     align: start
     width: content
+    headerOrientation: horizontal
   - id: Δ
     source:
       facet: finishDelta
@@ -132,12 +138,14 @@ body:
     missing: em-dash
     align: end
     width: content
+    headerOrientation: horizontal
   - id: Obs
     source:
       comparisonFacet: missingActual
     missing: em-dash
     align: center
     width: content
+    headerOrientation: horizontal
   colorEncoding:
     scale: owner
     target: planned

@@ -14,7 +14,7 @@ from chrona.resources import schema_document
 from chrona.schema_diagnostics import explain_errors
 
 
-LAYOUT_VERSION = "chrona/layout-profile/v0.7"
+LAYOUT_VERSION = "chrona/layout-profile/v0.8"
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,7 @@ class LayoutBase:
 
 
 def _schema() -> dict[str, Any]:
-    return dict(schema_document("layout-profile-v0.7.schema.yaml"))
+    return dict(schema_document("layout-profile-v0.8.schema.yaml"))
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:
@@ -83,7 +83,8 @@ def _merge_base(profile: Mapping[str, Any], bases: Mapping[str, LayoutBase], sta
             raise LayoutError("E_LAYOUT_OVERRIDE_KIND", f"/overrides/{node_id}", node_id)
         target.update(deepcopy(override))
     resolved["id"] = profile["id"]
-    resolved["writingMode"] = profile["writingMode"]
+    resolved["flowDirection"] = profile["flowDirection"]
+    resolved["dependencyNetworkFlowDirection"] = profile["dependencyNetworkFlowDirection"]
     resolved["requiredThemeTokens"] = deepcopy(profile["requiredThemeTokens"])
     resolved["reviewSurface"] = deepcopy(profile["reviewSurface"])
     return resolved
