@@ -70,7 +70,10 @@ def closure(root: Path) -> tuple[set[Path], dict[Path, set[Path]]]:
                 raise ExampleReachabilityError("E_EXAMPLE_REACHABILITY_MANIFEST")
             for field in ("expectedSvg", "expectedScene"):
                 if isinstance(item.get(field), str):
-                    target = _inside(example, item[field]); reached.add(target); edges.setdefault(manifest_path.resolve(), set()).add(target)
+                    target = _inside(example, item[field])
+                    if not target.is_file():
+                        raise ExampleReachabilityError("E_EXAMPLE_REACHABILITY_MISSING:" + target.relative_to(root).as_posix())
+                    reached.add(target); edges.setdefault(manifest_path.resolve(), set()).add(target)
             context = item.get("context", default)
             if not isinstance(context, str):
                 raise ExampleReachabilityError("E_EXAMPLE_REACHABILITY_MANIFEST")

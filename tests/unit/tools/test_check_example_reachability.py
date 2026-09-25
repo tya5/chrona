@@ -30,3 +30,14 @@ def test_typed_local_context_reference_cannot_silently_point_at_a_missing_file(t
     )
     with pytest.raises(ExampleReachabilityError, match="E_EXAMPLE_REACHABILITY_MISSING"):
         closure(tmp_path / "examples")
+
+
+def test_manifest_evidence_cannot_name_a_missing_generated_file(tmp_path):
+    example = tmp_path / "examples/demo"
+    example.mkdir(parents=True)
+    (example / "manifest.yaml").write_text(
+        "version: chrona/example-materializer/v0.1\ncontext: context.yaml\nslides: [{id: one, expectedSvg: generated/one.svg}]\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ExampleReachabilityError, match="E_EXAMPLE_REACHABILITY_MISSING"):
+        closure(tmp_path / "examples")

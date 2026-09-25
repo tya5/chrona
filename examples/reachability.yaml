@@ -15,3 +15,4 @@ supportingFiles:
   - {path: controller-z/executive-light.preset.yaml, reason: reusable executive draft preset source}
   - {path: controller-z/imported-icons.yaml, reason: generated icon importer regression evidence}
   - {path: controller-z/profiles/summary.yaml, reason: optional draft summary profile fixture}
+  - {path: halcyon-1/views/default-draft.yaml, reason: executable documented default draft View source}
