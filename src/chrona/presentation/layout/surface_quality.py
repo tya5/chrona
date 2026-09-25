@@ -67,6 +67,28 @@ class CollisionDomain:
 
 
 @dataclass(frozen=True)
+class AnnotationPresentation:
+    """Finite purpose-to-placement semantics selected by Layout."""
+
+    purpose: str
+    box_semantic_id: str
+    text_semantic_id: str
+    leader_semantic_id: str | None
+
+
+def annotation_presentation(purpose: str) -> AnnotationPresentation:
+    try:
+        return {
+            "callout": AnnotationPresentation("callout", "annotationCalloutBox", "annotationCalloutText", "annotationCalloutLeader"),
+            "highlight": AnnotationPresentation("highlight", "annotationHighlightBox", "annotationHighlightText", None),
+            "note": AnnotationPresentation("note", "annotationNoteBox", "annotationNoteText", "annotationNoteLeader"),
+            "explanatory-arrow": AnnotationPresentation("explanatory-arrow", "annotationArrowBox", "annotationArrowText", "annotationArrowLeader"),
+        }[purpose]
+    except KeyError as error:
+        raise ValueError("E_PRESENTATION_ANNOTATION_PURPOSE") from error
+
+
+@dataclass(frozen=True)
 class TextPlacement:
     """One measured text decision made by Layout before Scene emission."""
 
@@ -93,6 +115,7 @@ class TextPlacement:
     selected_rung: str | None = None
     slot_id: str = ""
     semantic_id: str = ""
+    annotation: AnnotationPresentation | None = None
 
 
 @dataclass(frozen=True)
@@ -146,6 +169,7 @@ class ShapePlacement:
     clip_host_id: str | None = None
     paint_order: int = 0
     semantic_id: str = ""
+    annotation: AnnotationPresentation | None = None
 
 
 @dataclass(frozen=True)
@@ -233,6 +257,8 @@ class RelationPlacement:
     marker_end: MarkerGeometry | None = None
     label_content: str | None = None
     slot_id: str = ""
+    annotation: AnnotationPresentation | None = None
+    source_ref: str = ""
 
 
 @dataclass(frozen=True)

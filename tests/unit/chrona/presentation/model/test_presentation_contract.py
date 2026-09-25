@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import enabled_semantics, semantic_binding
 from chrona.presentation.model.surface_content import SummaryContent, SurfaceContentInput
@@ -56,3 +58,23 @@ def test_enabled_semantics_are_registry_derived() -> None:
     )
 
     assert [binding.semantic_id for binding in bindings] == ["planned", "actual", "asOf"]
+
+
+def test_annotation_contract_uses_only_purpose_specific_semantics() -> None:
+    bindings = enabled_semantics(
+        has_as_of=False,
+        has_group_headers=False,
+        has_calendar_closure=False,
+        has_axis_bands=False,
+        has_legend=False,
+        has_annotations=True,
+    )
+
+    assert [binding.semantic_id for binding in bindings if binding.purpose.startswith("annotation-")] == [
+        "annotationCalloutBox", "annotationCalloutText", "annotationCalloutLeader",
+        "annotationHighlightBox", "annotationHighlightText",
+        "annotationNoteBox", "annotationNoteText", "annotationNoteLeader",
+        "annotationArrowBox", "annotationArrowText", "annotationArrowLeader",
+    ]
+    with pytest.raises(ValueError, match="E_PRESENTATION_SEMANTIC_UNKNOWN:annotation"):
+        semantic_binding("annotation")

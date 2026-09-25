@@ -8,7 +8,7 @@ slides:
     expectedSvg: generated/executive.svg
     expectedScene: generated/executive.scene.json
   - id: annotations
-    evidence: "Two endpoint-anchored explanatory arrows in the annotation slot, including an obstacle-avoiding leader."
+    evidence: "Purpose-specific callout, highlight, note, and explanatory-arrow placements, including a declared arrow terminal and obstacle-avoiding leaders."
     context: contexts/annotations.yaml
     expectedSvg: generated/annotations.svg
     expectedScene: generated/annotations.scene.json

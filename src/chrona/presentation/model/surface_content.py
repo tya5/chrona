@@ -86,6 +86,20 @@ class TableCellContent:
 
 
 @dataclass(frozen=True)
+class AnnotationIntent:
+    """One schema-validated annotation fact detached before Layout ingress."""
+
+    annotation_id: str
+    purpose: str
+    anchor: dict[str, str]
+    side: str
+    alignment: str
+    content: str
+    number: int | None = None
+    fallback_ladder: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class AxisLabelIntent:
     """Finite label vocabulary and placement policy for one labels tier."""
 
@@ -112,7 +126,7 @@ class SurfaceContentInput:
     table_columns: tuple[TableColumnContent, ...]
     table_cells: tuple[TableCellContent, ...]
     relations: tuple[RelationPresentationFact, ...]
-    annotations: tuple[dict, ...]
+    annotations: tuple[AnnotationIntent, ...]
     show_member_labels: bool
     label_placement: str
     label_content: tuple[str, ...]

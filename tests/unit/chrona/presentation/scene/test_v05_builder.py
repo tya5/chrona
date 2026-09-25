@@ -10,7 +10,7 @@ from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import PathCommand, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth
+from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
@@ -37,6 +37,12 @@ def surface_content(table_columns=(), table_cells=(), **overrides):
         milestones=(), observation_columns=(), observation_rows=(),
     )
     value.update(overrides)
+    value["annotations"] = tuple(
+        item if isinstance(item, AnnotationIntent) else AnnotationIntent(
+            item["id"], item["purpose"], dict(item["anchor"]), item["placement"]["side"],
+            item["placement"].get("alignment", "center"), item["text"], item.get("number"))
+        for item in value["annotations"]
+    )
     value["relations"] = tuple(
         item if isinstance(item, RelationPresentationFact) else RelationPresentationFact(
             str(item["id"]), str(item["from"]["object"]), str(item["from"].get("endpoint", "end")),
@@ -66,6 +72,8 @@ def test_scene_projects_completed_layout_geometry_without_measurement_or_routing
         "place_text(",
         "progress_fill_bounds(",
         "placement_id.startswith(\"axis-",
+        "annotation_presentation(",
+        'semantic_binding("annotation")',
     )
     assert all(fragment not in source for fragment in forbidden)
 
@@ -108,7 +116,9 @@ def _theme():
              for semantic_id in semantic_ids()}
     roles.update({name: {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
                   for name in ("background", "variance-ahead", "variance-behind", "variance-on-track", "table-header")})
-    for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size"}.items():
+    for name, size in {"text": "body-size", "heading": "heading-size", "axis": "axis-size", "legend": "axis-size", "summary": "body-size", "annotation": "body-size", "groupHeader": "axis-size",
+                       "annotation-callout-text": "body-size", "annotation-highlight-text": "body-size",
+                       "annotation-note-text": "body-size", "annotation-arrow-text": "body-size"}.items():
         roles.setdefault(name, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
             {"fontFamily": "body", "fontWeight": "regular", "fontSize": size, "lineHeight": "line"})
     roles["relationSourceTerminal"] = {"marker": "dependency-marker"}

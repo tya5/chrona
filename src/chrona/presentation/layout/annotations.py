@@ -7,6 +7,7 @@ from typing import Iterable
 
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelPlacement, LabelRect, place_label
+from chrona.presentation.model.surface_content import AnnotationIntent
 
 
 @dataclass(frozen=True)
@@ -67,13 +68,25 @@ def route_annotation_leader(source: tuple[float, float], target: tuple[float, fl
     path, node = [], end
     while node != start:
         path.append((xs[node[0]], ys[node[1]])); node = parents[node]
-    return (source, *reversed(path))
+    points = (source, *reversed(path))
+    # Visibility-grid traversal may visit several vertices on one straight
+    # segment.  A route-quality bend is a direction change, not a grid vertex.
+    compact = [points[0]]
+    for point in points[1:]:
+        if len(compact) >= 2:
+            before, current = compact[-2], compact[-1]
+            if ((current[0] - before[0]) * (point[1] - current[1])
+                    == (current[1] - before[1]) * (point[0] - current[0])):
+                compact[-1] = point
+                continue
+        compact.append(point)
+    return tuple(compact)
 
 
-def resolve_annotation_anchor(annotation: dict, marks: Iterable[ComparisonMark]) -> AnnotationAnchor:
+def resolve_annotation_anchor(annotation: AnnotationIntent, marks: Iterable[ComparisonMark]) -> AnnotationAnchor:
     """Resolve only the named object target; never substitute an absent actual."""
-    anchor = annotation.get("anchor")
-    if not isinstance(anchor, dict) or anchor.get("kind") != "object":
+    anchor = annotation.anchor
+    if anchor.get("kind") != "object":
         raise ValueError("E_PRESENTATION_ANCHOR_UNSUPPORTED")
     object_id, facet, endpoint = anchor.get("id"), anchor.get("facet"), anchor.get("endpoint")
     if not isinstance(object_id, str) or facet not in {"planned", "actual"} or endpoint not in {"start", "finish", "at", "body"}:
@@ -88,22 +101,22 @@ def resolve_annotation_anchor(annotation: dict, marks: Iterable[ComparisonMark])
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
     if endpoint == "at" and mark.at is None:
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
-    return AnnotationAnchor(str(annotation.get("id", "")), object_id, facet, endpoint, mark)
+    return AnnotationAnchor(annotation.annotation_id, object_id, facet, endpoint, mark)
 
 
-def project_annotation_box(annotation: dict, resolved: AnnotationAnchor, *, anchor_bounds: LabelRect,
+def project_annotation_box(annotation: AnnotationIntent, resolved: AnnotationAnchor, *, anchor_bounds: LabelRect,
                            text_size: tuple[float, float], candidate_sides: Iterable[str],
                            viewport: LabelRect, obstacles: Iterable[LabelRect], overflow: str,
                            required: bool = True) -> AnnotationBox | None:
     """Place one measured annotation box without assigning renderer semantics."""
-    purpose = annotation.get("purpose")
+    purpose = annotation.purpose
     if purpose not in {"callout", "note", "highlight", "explanatory-arrow"}:
         raise ValueError("E_PRESENTATION_ANCHOR_UNSUPPORTED")
     placement = place_label(anchor_bounds, text_size, candidate_sides, bounds=viewport,
                             obstacles=obstacles, required=required, overflow=overflow)
     if placement is None:
         return None
-    alignment = annotation.get("placement", {}).get("alignment", "center")
+    alignment = annotation.alignment
     if alignment not in {"start", "center", "end"}:
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     box = placement.bounds
@@ -123,7 +136,7 @@ def project_annotation_box(annotation: dict, resolved: AnnotationAnchor, *, anch
     return AnnotationBox(resolved, placement, purpose in {"callout", "note", "explanatory-arrow"})
 
 
-def place_annotation_rail(annotation: dict, resolved: AnnotationAnchor, *, anchor_y: float,
+def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnchor, *, anchor_y: float,
                           text_size: tuple[float, float], rail: LabelRect,
                           obstacles: Iterable[LabelRect], overflow: str,
                           required: bool) -> AnnotationBox | None:

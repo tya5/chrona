@@ -53,16 +53,19 @@ def test_controller_executive_public_evidence_exercises_inside_and_fallback_labe
     assert 'data-scene-id="member-label:evb-arrival:evb-arrival"' in artifact and 'opacity="1" fill="#172033">EVB Arrival' in artifact
 
 
-def test_controller_annotation_evidence_routes_endpoint_arrows_through_the_declared_rail(tmp_path):
+def test_controller_annotation_evidence_realizes_each_purpose_through_layout_completed_primitives(tmp_path):
     example = ROOT / "examples/controller-z"
     materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
-    for identifier in ("firmware-slip", "bringup-risk"):
+    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "firmware-slip", "bringup-risk"):
         assert f'data-scene-id="annotation-box:{identifier}"' in artifact
         assert f'data-scene-id="annotation-text:{identifier}"' in artifact
+    for identifier in ("architecture-callout", "performance-note", "firmware-slip", "bringup-risk"):
         assert f'data-scene-id="annotation-leader:{identifier}"' in artifact
+    assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact
     leader = re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]* d="([^"]+)"', artifact)
     assert leader is not None and leader.group(1).count("L") >= 5
+    assert re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]*marker-end="url\(#marker-[^"]+\)"', artifact)
     scene_source = (ROOT / "src/chrona/presentation/scene/v05_builder.py").read_text(encoding="utf-8")
     adapter_source = (ROOT / "src/chrona/presentation/renderers/v05_svg.py").read_text(encoding="utf-8")
     assert "route_annotation_leader" not in scene_source

@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.surface_quality import CollisionDomain, TextPlacement
+from chrona.presentation.layout.surface_quality import AnnotationPresentation, CollisionDomain, TextPlacement
 
 
 def measure_text_width(content: str, *, font_size: float, font_metrics: Any) -> float:
@@ -96,7 +96,8 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                source_content: str | None = None, lines: tuple[str, ...] | None = None,
                available_inline_start: float | None = None,
                available_inline_size: float | None = None,
-               slot_id: str | None = None, semantic_id: str = "") -> TextPlacement:
+               slot_id: str | None = None, semantic_id: str = "",
+               annotation: AnnotationPresentation | None = None) -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     family, weight, size, line_height = theme_tokens.typography(typography_role)
     font_size, leading = float(size), float(line_height)
@@ -116,4 +117,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         available_inline_size=available_inline_size,
         slot_id=slot_id or collision_domain.slot,
         semantic_id=semantic_id,
+        annotation=annotation,
     )

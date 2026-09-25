@@ -25,7 +25,7 @@ from chrona.presentation.layout.routing import place_relation_route, relation_ro
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, intersects,
+    IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
 )
 
 
@@ -1200,8 +1200,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         annotation_marks = _comparison_marks(projection)
         placed_boxes: list[LabelRect] = []
         for index, annotation in enumerate(request.surface_content.annotations):
-            annotation_id, content = str(annotation.get("id", index)), str(annotation.get("text", ""))
-            content = f"{annotation['number']}. {content}" if "number" in annotation else content
+            presentation = annotation_presentation(annotation.purpose)
+            annotation_id, content = annotation.annotation_id, annotation.content
+            content = f"{annotation.number}. {content}" if annotation.number is not None else content
             annotation_visuals = candidate_label_visuals(f"annotation-text:{annotation_id}", "annotation", request)
             handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in annotation_visuals)
             annotation_leading = sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "leading")
@@ -1209,7 +1210,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             resolved = resolve_annotation_anchor(annotation, annotation_marks)
             matching = [(review_row, row) for review_row, row in zip(review_rows, rows, strict=True)
                         if any(item.object_id == resolved.object_id for item in review_row.items)]
-            anchor = annotation.get("anchor", {})
+            anchor = annotation.anchor
             row_id, item_id = anchor.get("rowId"), anchor.get("itemId")
             if row_id is not None or item_id is not None:
                 matching = [(review_row, row) for review_row, row in matching
@@ -1234,13 +1235,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 selected_items = (folded.item,)
             else:
                 raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
-            size, line_height = (float(item) for item in request.theme_tokens.typography("annotation")[2:])
+            annotation_text_role = semantic_binding(presentation.text_semantic_id).theme_role
+            size, line_height = (float(item) for item in request.theme_tokens.typography(annotation_text_role)[2:])
             text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
             text_width = min(text_available, max(size * 4, measure_text_width(content, font_size=size, font_metrics=request.font_metrics)))
             width = annotation_leading + text_width + annotation_trailing
             annotation_lines = (content,)
             try:
-                if annotation.get("purpose") in {"callout", "explanatory-arrow"}:
+                if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
@@ -1250,7 +1252,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      for line in annotation_lines)
                     annotation_size = (annotation_leading + text_width + annotation_trailing,
                                        size * line_height * len(annotation_lines))
-                    default_ladder = request.surface_content.annotation_fallback or ("rail",)
+                    default_ladder = annotation.fallback_ladder or ("rail",)
                     ladder = ((preferred,) + tuple(rung for rung in default_ladder if rung != preferred)
                               if preferred else default_ladder)
                     box, selected_rung = None, None
@@ -1279,7 +1281,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                                  tuple(ladder), selected_rung, "placed"))
                 else:
                     box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, size * line_height),
-                                                 candidate_sides=(annotation.get("placement", {}).get("side", ""),),
+                                                 candidate_sides=(annotation.side,),
                                                  viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=placed_boxes,
                                                  overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
             except ValueError as error:
@@ -1289,12 +1291,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             placed_boxes.append(box.placement.bounds)
             bounds = box.placement.bounds
             shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
-                                         Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)), Decimal(str(bounds.width)), Decimal(str(bounds.height)))))
+                                         Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)), Decimal(str(bounds.width)), Decimal(str(bounds.height))),
+                                         semantic_id=presentation.box_semantic_id, annotation=presentation))
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
-                                           inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role="annotation",
+                                           inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                            collision_region="annotations", collision_domain=CollisionDomain("annotations", "content"),
-                                           lines=annotation_lines)
+                                           lines=annotation_lines, semantic_id=presentation.text_semantic_id,
+                                           annotation=presentation)
             text.append(placed_annotation)
             if annotation_visuals:
                 if not hasattr(request.font_metrics, "cap_height_at"):
@@ -1311,14 +1315,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                          visual.decorative, icon_bounds, "labelVisual",
                                                          icon_width / icon.viewport[0], annotation_slot.slot_id))
-            if "number" in annotation:
+            if annotation.number is not None:
                 note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
                 handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
                 note_index_leading = sum(width + gap for visual, _, width, gap in note_index_visuals
                                          if visual.side == "leading")
                 note_index_trailing = sum(width + gap for visual, _, width, gap in note_index_visuals
                                           if visual.side == "trailing")
-                note_index_content = str(annotation["number"])
+                note_index_content = str(annotation.number)
                 note_index_width = measure_text_width(note_index_content, font_size=size, font_metrics=request.font_metrics)
                 note_index_size = (note_index_leading + note_index_width + note_index_trailing, size * line_height)
                 note_index_obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds)))
@@ -1356,7 +1360,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                              icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                              visual.decorative, icon_bounds, "labelVisual",
                                                              icon_width / icon.viewport[0], annotation_slot.slot_id))
-            if box.leader_required:
+            if box.leader_required and presentation.leader_semantic_id is not None:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
                 try:
                     points = route_annotation_leader((anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2),
@@ -1366,9 +1370,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 if not relation_route_quality(tuple(points), max_bends=layout_manifest.annotation_max_bends,
                                               max_detour_ratio=layout_manifest.annotation_max_detour_ratio):
                     raise LayoutError("E_LAYOUT_ANNOTATION_UNROUTABLE", f"/annotations/{index}")
+                leader_semantic_id = presentation.leader_semantic_id
+                marker_end = (marker_geometry(request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role))
+                              if presentation.purpose == "explanatory-arrow" else None)
                 relations.append(RelationPlacement(f"annotation-leader:{annotation_id}",
                                                    f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
-                                                   f"annotation-box:{annotation_id}", tuple(points)))
+                                                   f"annotation-box:{annotation_id}", tuple(points),
+                                                   semantic_id=leader_semantic_id, marker_end=marker_end,
+                                                   annotation=presentation, source_ref=annotation_id))
     text = [replace(item, slot_id=text_slot(item)) for item in text]
     text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals,
                                                 axis_label_targets=axis_label_targets)

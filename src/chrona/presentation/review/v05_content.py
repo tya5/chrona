@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -113,7 +113,14 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     else:
         relations = ()
     raw_annotations = view.annotations if annotation_mode != "none" else ()
-    annotations = tuple({**annotation, "number": index + 1} for index, annotation in enumerate(raw_annotations)) if annotation_numbered else raw_annotations
+    annotations = tuple(
+        AnnotationIntent(str(annotation["id"]), str(annotation["purpose"]),
+                         {str(key): str(value) for key, value in annotation["anchor"].items()},
+                         str(annotation["placement"]["side"]), str(annotation["placement"]["alignment"]),
+                         str(annotation["text"]), index + 1 if annotation_numbered else None,
+                         annotation_fallback)
+        for index, annotation in enumerate(raw_annotations)
+    )
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
     resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
                                                           profile_is_validated=True)

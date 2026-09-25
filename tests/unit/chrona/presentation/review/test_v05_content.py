@@ -200,14 +200,16 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     view = {"body": {"tableColumns": (), "visibility": {"labels": {"members": True}, "relations": "none", "annotations": "presentation"},
                          "axis": {"tiers": [{"unit": "week", "every": 1, "role": "labels", "label": {"form": "iso-week", "align": "start", "overflow": "diagnose"}}]},
                          "timePresentation": {"asOf": "hidden", "calendarClosed": False},
-                     "annotationPresentation": "numbered", "annotations": [{"id": "note", "text": "Watch this"}]}}
+                     "annotationPresentation": "numbered", "annotations": [{"id": "note", "purpose": "note", "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "finish"}, "placement": {"side": "end", "alignment": "center"}, "text": "Watch this"}]}}
     value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                           actual_set={"body": {"asOf": "2026-01-03"}}, summary=EMPTY_SUMMARY)
     assert value.show_member_labels is True
     assert value.axis_tiers[0].unit == "week"
     assert value.as_of is None
     assert value.calendar_closed == ()
-    assert value.annotations == ({"id": "note", "text": "Watch this", "number": 1},)
+    assert value.annotations[0].annotation_id == "note"
+    assert value.annotations[0].content == "Watch this"
+    assert value.annotations[0].number == 1
 
 
 def test_typed_summary_figures_resolve_projection_and_actual_facts():

@@ -73,6 +73,13 @@ body:
         headLength: 10
         headWidth: 10
         attachmentOffset: 1
+    annotation-arrow-terminal:
+      type: marker
+      value:
+        shape: triangle
+        headLength: 10
+        headWidth: 10
+        attachmentOffset: 1
     relation-source-terminal:
       type: marker
       value:
@@ -231,6 +238,41 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
       strokeWidth: stroke-width
+    annotation-callout-box:
+      strokeWidth: stroke-width
+    annotation-callout-text:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: annotation-size
+      lineHeight: annotation-line-height
+    annotation-callout-leader:
+      strokeWidth: stroke-width
+    annotation-highlight-box:
+      strokeWidth: stroke-width
+    annotation-highlight-text:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: annotation-size
+      lineHeight: annotation-line-height
+    annotation-note-box:
+      strokeWidth: stroke-width
+    annotation-note-text:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: annotation-size
+      lineHeight: annotation-line-height
+    annotation-note-leader:
+      strokeWidth: stroke-width
+    annotation-arrow-box:
+      strokeWidth: stroke-width
+    annotation-arrow-text:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: annotation-size
+      lineHeight: annotation-line-height
+    annotation-arrow-leader:
+      marker: annotation-arrow-terminal
+      strokeWidth: stroke-width
     axis-major:
       strokeWidth: stroke-width
     axis-minor:
@@ -318,6 +360,21 @@ body:
     annotation.fill: surfaceRaised
     annotation.stroke: neutral
     annotation-text.fill: text
+    annotation-callout-box.fill: surfaceRaised
+    annotation-callout-box.stroke: neutral
+    annotation-callout-text.fill: text
+    annotation-callout-leader.stroke: neutral
+    annotation-highlight-box.fill: surface
+    annotation-highlight-box.stroke: accent
+    annotation-highlight-text.fill: text
+    annotation-note-box.fill: surfaceRaised
+    annotation-note-box.stroke: warning
+    annotation-note-text.fill: text
+    annotation-note-leader.stroke: warning
+    annotation-arrow-box.fill: surfaceRaised
+    annotation-arrow-box.stroke: negative
+    annotation-arrow-text.fill: text
+    annotation-arrow-leader.stroke: negative
     note-index.fill: accent
     progress-fill.fill: warning
     icon-mark.fill: surface

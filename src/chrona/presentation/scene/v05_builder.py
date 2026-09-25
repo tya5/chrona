@@ -434,7 +434,6 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                                              points=placed.points))
             emit_semantic_text("as-of-label", "asOfLabel")
-    annotation_binding = semantic_binding("annotation")
     legend_binding = semantic_binding("legendEntry")
     for relation in placed_surface.relations:
         if relation.suppressed or relation.relation_id.startswith("annotation-leader:"):
@@ -461,8 +460,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             summary_bar = semantic_binding("summaryBar")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
                                              summary_bar.purpose, summary_bar.scene_role, bounds))
-        elif placed.placement_id.startswith("annotation-box:"):
-            annotation_box = semantic_binding("annotationBox")
+        elif placed.annotation is not None:
+            annotation_box = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
                                              annotation_box.purpose, annotation_box.scene_role,
                                              bounds))
@@ -485,10 +484,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             ("legend:", "legendLabel", None), ("note:", "projectNote", None),
             ("group-detail:", "groupDetail", None), ("milestone:", "milestoneDigestEntry", None),
             ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
-            ("annotation-text:", "annotationText", None),
             ("relation-label:", "relationLabel", None),
         ))
     for placed in placed_surface.text:
+        if placed.annotation is not None:
+            emit_semantic_text(placed.placement_id, placed.semantic_id)
+            continue
         for prefix, purpose, role in text_roles:
             if placed.placement_id.startswith(prefix):
                 if ":value" in placed.placement_id:
@@ -502,13 +503,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 emit_layout_text(placed.placement_id, purpose, role)
                 break
     for relation in placed_surface.relations:
-        if relation.suppressed or not relation.relation_id.startswith("annotation-leader:"):
+        if relation.suppressed or relation.annotation is None:
             continue
-        source = relation.relation_id.removeprefix("annotation-leader:")
-        leader = semantic_binding("annotationLeader")
+        source = relation.source_ref
+        leader = semantic_binding(relation.semantic_id)
         purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
-                                         points=relation.points))
+                                         points=relation.points, marker_end=relation.marker_end))
     ownership = {item.placement_id: item.slot_id for item in placed_surface.text}
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.marks})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})

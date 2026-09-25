@@ -62,6 +62,39 @@ body:
       mode: presentation
       marker: numbered
   annotations:
+  - id: architecture-callout
+    purpose: callout
+    anchor:
+      kind: object
+      id: architecture
+      facet: planned
+      endpoint: finish
+    placement:
+      side: end
+      alignment: start
+    text: Architecture baseline approved.
+  - id: evb-highlight
+    purpose: highlight
+    anchor:
+      kind: object
+      id: evb-arrival
+      facet: planned
+      endpoint: at
+    placement:
+      side: above
+      alignment: center
+    text: Board arrival decision.
+  - id: performance-note
+    purpose: note
+    anchor:
+      kind: object
+      id: performance
+      facet: planned
+      endpoint: finish
+    placement:
+      side: end
+      alignment: end
+    text: Performance evidence remains under review.
   - id: firmware-slip
     purpose: explanatory-arrow
     anchor:

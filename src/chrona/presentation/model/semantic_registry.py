@@ -119,10 +119,17 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("legendLabel", "label", "legend-label", "text", "legend"),
     _binding("projectNote", "label", "project-note", "text", "annotation"),
     _binding("noteIndex", "label", "note-index", "note-index", "note-index"),
-    _binding("annotation", "decoration", "annotation", "annotation", "annotation"),
-    _binding("annotationBox", "decoration", "annotation-box", "annotation", "annotation"),
-    _binding("annotationText", "label", "annotation-text", "annotation-text", "annotation"),
-    _binding("annotationLeader", "line", "annotation-leader", "annotation", "annotation"),
+    _binding("annotationCalloutBox", "decoration", "annotation-box", "annotation-callout-box", "annotation-callout-box"),
+    _binding("annotationCalloutText", "label", "annotation-text", "annotation-callout-text", "annotation-callout-text"),
+    _binding("annotationCalloutLeader", "line", "annotation-leader", "annotation-callout-leader", "annotation-callout-leader"),
+    _binding("annotationHighlightBox", "decoration", "annotation-box", "annotation-highlight-box", "annotation-highlight-box"),
+    _binding("annotationHighlightText", "label", "annotation-text", "annotation-highlight-text", "annotation-highlight-text"),
+    _binding("annotationNoteBox", "decoration", "annotation-box", "annotation-note-box", "annotation-note-box"),
+    _binding("annotationNoteText", "label", "annotation-text", "annotation-note-text", "annotation-note-text"),
+    _binding("annotationNoteLeader", "line", "annotation-leader", "annotation-note-leader", "annotation-note-leader"),
+    _binding("annotationArrowBox", "decoration", "annotation-box", "annotation-arrow-box", "annotation-arrow-box"),
+    _binding("annotationArrowText", "label", "annotation-text", "annotation-arrow-text", "annotation-arrow-text"),
+    _binding("annotationArrowLeader", "line", "annotation-leader", "annotation-arrow-leader", "annotation-arrow-leader"),
     # Summary panels.
     _binding("summaryHeader", "label", "summary-header", "text", "summary"),
     _binding("summaryMetric", "label", "summary-metric", "text", "summary"),
@@ -186,5 +193,10 @@ def enabled_semantics(*, has_as_of: bool, has_group_headers: bool,
     if has_legend:
         names.append("legendEntry")
     if has_annotations:
-        names.append("annotation")
+        names.extend((
+            "annotationCalloutBox", "annotationCalloutText", "annotationCalloutLeader",
+            "annotationHighlightBox", "annotationHighlightText",
+            "annotationNoteBox", "annotationNoteText", "annotationNoteLeader",
+            "annotationArrowBox", "annotationArrowText", "annotationArrowLeader",
+        ))
     return tuple(semantic_binding(name) for name in names)
