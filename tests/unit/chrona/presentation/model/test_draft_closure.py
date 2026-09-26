@@ -51,7 +51,7 @@ def test_draft_closure_aggregates_every_schema_finding_in_the_known_resource_set
 def test_draft_preset_resolves_the_same_typed_resources_as_explicit_inputs():
     root = _root() / "examples/controller-z"
     preset = root / "executive-light.preset.yaml"
-    draft = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset)
+    draft = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root)
     explicit = resolve_draft_render(
         project_path=root / "project.yaml", view_path=root / "views/executive.yaml",
         theme_path=root / "themes/executive-light.yaml", scheme_path=root / "schemes/executive-light.yaml",
@@ -273,3 +273,44 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
     assert draft.closure.icon_catalogs[0].set_name == "preset"
     assert draft.closure.icon_catalogs[0].entry_names == ("check",)
     assert draft.auto_block is True
+
+
+@pytest.fixture
+def preset_with(tmp_path):
+    """Write a Controller Z preset variant outside the example; resources resolve from the example root."""
+    root = _root() / "examples/controller-z"
+
+    def make(**body: object) -> Path:
+        preset = yaml.safe_load((root / "executive-light.preset.yaml").read_text(encoding="utf-8"))
+        for key, value in body.items():
+            (preset["body"]["resources"] if key == "detailProfile" else preset["body"])[key] = value
+        path = tmp_path / "variant.preset.yaml"
+        path.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
+        return path
+    return make
+
+
+def test_preset_detail_profile_applies_unless_an_explicit_detail_is_given(preset_with):
+    root = _root() / "examples/controller-z"
+    preset = preset_with(detailProfile={"id": "controller-z-review-detail", "kind": "review-detail-profile",
+                                        "path": "profiles/review-detail.yaml"})
+    draft = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml", preset_path=preset, preset_root=root)
+    assert draft.closure.detail_profile is not None
+    plain = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml",
+                                 preset_path=root / "executive-light.preset.yaml")
+    assert plain.closure.detail_profile is None
+
+
+def test_preset_preferred_visual_profile_applies_unless_a_flag_is_given(preset_with):
+    root = _root() / "examples/controller-z"
+    preset = preset_with(visualProfile={"preferred": "chrona-output/visual/v0.7-svg"})
+    preferred = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root)
+    assert preferred.closure.context.target.visual_profile == "chrona-output/visual/v0.7-svg"
+    explicit = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root,
+                                    visual_profile="chrona-output/visual/v0.5-baseline")
+    assert explicit.closure.context.target.visual_profile == "chrona-output/visual/v0.5-baseline"
+    default = resolve_draft_render(project_path=root / "project.yaml", preset_path=root / "executive-light.preset.yaml")
+    assert default.closure.context.target.visual_profile == "chrona-output/visual/v0.5-baseline"
+    with pytest.raises(ClosureError) as error:
+        resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root, target_kind="png")
+    assert error.value.diagnostic_id == "E_PRESET_VISUAL_PROFILE_TARGET"

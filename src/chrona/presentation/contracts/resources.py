@@ -443,6 +443,7 @@ class PresentationPresetContract(ResourceContract):
     package_version: str
     resources: FrozenDict
     compatible_color_schemes: tuple[FrozenDict, ...]
+    preferred_visual_profile: str | None = None
 
 
 @dataclass(frozen=True)
@@ -886,7 +887,9 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             raise _closure_kind_error(identity, "preset resources object", resources)
         if not isinstance(schemes, (FrozenList, tuple)) or not all(isinstance(item, FrozenDict) for item in schemes):
             raise _closure_kind_error(identity, "preset compatible color-scheme object list", schemes)
-        return PresentationPresetContract(identity, version, str(package["version"]), resources, tuple(schemes))
+        preference = body.get("visualProfile")
+        preferred = str(preference["preferred"]) if isinstance(preference, FrozenDict) else None
+        return PresentationPresetContract(identity, version, str(package["version"]), resources, tuple(schemes), preferred)
     if identity.kind == "authoring-workspace":
         project, presentation = body["project"], body["presentation"]
         actuals = body.get("actuals", ())

@@ -215,7 +215,7 @@ def resolve_draft_render(
     system_fonts: bool = False,
     system_font_resolver: SystemFontResolver | None = None,
     viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
-    locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
+    locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -224,7 +224,9 @@ def resolve_draft_render(
     artifact.  Once returned, the normal review use case cannot distinguish it
     from an immutable closure.
     """
-    preset_paths = _draft_preset_paths(preset_path, preset_root) if preset_path is not None else {}
+    preset = _load_draft_resource("presentation-preset", preset_path) if preset_path is not None else None
+    preset_paths = _draft_preset_paths(preset, preset_path, preset_root) if preset is not None and preset_path is not None else {}
+    visual_profile = _preset_visual_profile(preset.contract if preset is not None else None, visual_profile, target_kind)
     paths = (("project", project_path),
              ("view", view_path or preset_paths.get("view")),
              ("theme", theme_path or preset_paths.get("theme")),
@@ -234,7 +236,7 @@ def resolve_draft_render(
         raise ClosureError("E_DRAFT_PRESENTATION_INCOMPLETE")
     optional = (
         ("actual-set", actual_path), ("summary-profile", summary_path),
-        ("review-detail-profile", detail_path),
+        ("review-detail-profile", detail_path or preset_paths.get("review-detail-profile")),
     )
     sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
@@ -251,15 +253,33 @@ def resolve_draft_render(
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver)
 
 
-def _draft_preset_paths(preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
+_BASELINE_VISUAL_PROFILE = "chrona-output/visual/v0.5-baseline"
+
+
+def _preset_visual_profile(preset: object, requested: str | None, target_kind: str) -> str:
+    """An explicit profile wins; otherwise the preset's preferred profile, else the baseline."""
+    if requested is not None:
+        return requested
+    preferred = preset.preferred_visual_profile if isinstance(preset, PresentationPresetContract) else None
+    if preferred is None:
+        return _BASELINE_VISUAL_PROFILE
+    if preferred != _BASELINE_VISUAL_PROFILE and not preferred.endswith(f"-{target_kind}"):
+        raise ClosureError("E_PRESET_VISUAL_PROFILE_TARGET", "/body/visualProfile/preferred",
+                           f"preset prefers {preferred}, which cannot serve {target_kind}; pass --visual-profile explicitly")
+    return preferred
+
+
+def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
     """Resolve one explicit preset into safe ordinary-resource paths."""
-    preset = _load_draft_resource("presentation-preset", preset_path)
     if not isinstance(preset.contract, PresentationPresetContract):
         raise ClosureError("E_DRAFT_PRESET_SCHEMA")
-    mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile"}
+    mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
+               "detailProfile": "review-detail-profile"}
     paths: dict[str, Path] = {}
     for name, kind in mapping.items():
         declaration = preset.contract.resources.get(name)
+        if declaration is None and kind == "review-detail-profile":
+            continue
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
@@ -272,7 +292,7 @@ def _draft_preset_paths(preset_path: Path, preset_root: Path | None = None) -> d
 
 def resolve_guided_draft_render(
     *, workspace_path: Path, viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
-    locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
+    locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
@@ -283,6 +303,7 @@ def resolve_guided_draft_render(
     preset_resource = _load_draft_resource("presentation-preset", preset_path)
     if not isinstance(preset_resource.contract, PresentationPresetContract):
         raise ClosureError("E_AUTHORING_PRESET_SCHEMA")
+    visual_profile = _preset_visual_profile(preset_resource.contract, visual_profile, target_kind)
     resource_declarations = (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
     resources_by_path = {
         str(declaration["path"]): safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
