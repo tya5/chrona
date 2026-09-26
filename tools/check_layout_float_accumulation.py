@@ -13,7 +13,7 @@ LAYOUT = ROOT / "src/chrona/presentation/layout"
 # precision domain is intentionally different from completed float geometry.
 DECIMAL_SUM_FUNCTIONS = {
     "dependency_network.py": frozenset({"_place_nodes"}),
-    "engine.py": frozenset({"_allocate", "_measure_node", "_linear", "_grid", "_flow"}),
+    "engine.py": frozenset({"_allocate", "_resolve_flexible_tracks", "_measure_node", "_linear", "_grid", "_flow"}),
     "sources.py": frozenset({"measure_sources"}),
 }
 

@@ -169,13 +169,16 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         if source == "table":
             # One measure sizes the slot and places its columns (Specification 24 section 2.1).
             # The metric is a per-column floor for a content-sized slot.
-            # Its minimum keeps the floor-and-label basis; #487 owns `min: content`.
             column_floor = Decimal(max(1, value.column_count)) * metric["table.column.minInlineSize"]
             minimum_inline = min(column_floor, text_inline)
             preferred_inline = column_floor
-            if value.table is not None:
-                preferred_inline = max(column_floor, _table_content_inline(value.table, typography, font_metrics,
-                                                                           metric, float(body_size)))
+            if value.table is not None and value.table.columns:
+                # `minmax: {min: content}` is the table's measured columns and gutters,
+                # never the widest row label (#487, Specification 24 section 2.1).
+                measured_content = _table_content_inline(value.table, typography, font_metrics,
+                                                          metric, float(body_size))
+                preferred_inline = max(column_floor, measured_content)
+                minimum_inline = measured_content
             preferred_block = metric["table.header.blockSize"] + Decimal(max(1, value.item_count)) * metric["timeline.row.minBlockSize"]
         elif source == "timeline":
             preferred_inline = Decimal(max(1, value.span_days)) * metric["timeline.dayWidth"]

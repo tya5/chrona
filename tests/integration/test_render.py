@@ -64,14 +64,25 @@ def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
 
 
-def test_suppressed_plot_member_labels_have_one_completed_info_count(capsys):
-    rendered = render_review(_draft_request())
-    visible_members = {item.scene_id for item in rendered.surface.primitives
-                       if item.kind == "Text" and item.scene_id.startswith("member-label:")}
+def test_suppressed_plot_labels_have_one_completed_info_count(capsys):
+    # #487 corrected the table's `minmax`/content-minimum and its flex-allocation
+    # basis (ADR-0032), which changes which member label this `elevated-light`
+    # draft suppresses (`structure:structure` before #487, `launch:launch`
+    # after) because the table's corrected width gives the plot different room.
+    # The mechanism under test here -- exactly one completed info count and its
+    # JSON emission -- is unaffected; only the specific suppressed label id is.
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    rendered = render_review(_draft_request(
+        project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        view_path=preset / "view.yaml", theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
+    visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
-              if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
+              if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
     assert len(per_id) == 1
-    assert not per_id & visible_members
+    assert not per_id & visible_labels
     assert rendered.scene.diagnostics.count(
         "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1") == 1
     _emit_render_warnings(rendered)
@@ -79,6 +90,25 @@ def test_suppressed_plot_member_labels_have_one_completed_info_count(capsys):
             if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
     assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": 1,
                      "severity": "info", "surfaceId": "table-timeline"}]
+
+
+def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_487():
+    # Direct evidence of the #487 attribution above: the same draft request that
+    # used to suppress `member-label:ga:ga` (and report
+    # `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1`) now fits
+    # it, because the corrected table minimum is narrower than the old
+    # widest-row-label basis for this view under the CSS-Grid flex allocation
+    # (ADR-0032). Two relation labels are suppressed instead, because the
+    # narrower table gives the plot/relation surface different, not more, room
+    # to route through.
+    rendered = render_review(_draft_request())
+    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in rendered.scene.diagnostics)
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
+    assert {item for item in rendered.scene.diagnostics if item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:")} == {
+        "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
+        "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance",
+    }
+    assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
 
 
 def test_suppression_count_excludes_other_plot_text_and_absent_count():

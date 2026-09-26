@@ -145,10 +145,24 @@ def test_content_sized_table_slot_is_its_measured_columns_and_gutters():
                                  measure_text=table_text_measurer(ThemeTokenView(theme()), _table_metrics()),
                                  minimum_inline=14.0, gutter=8.0)
     assert placed[-1].inline + placed[-1].inline_size == pytest.approx(float(preferred))
-    # `min: content` keeps its floor-and-label basis until #487.
+    # #487: `minmax: {min: content}` is the table's measured columns and gutters,
+    # never the widest row label; here the measured content exceeds the column
+    # floor, so the minimum equals the (also content-driven) preferred size.
+    assert measured.measurements["table"].min_inline == preferred
+
+
+def test_table_minimum_falls_back_to_the_floor_and_label_basis_without_columns():
+    """A table source with no typed columns has nothing to measure (#487); the
+    #480 floor-and-label basis still applies."""
+    measured = measure_sources({"table": SourceInput(("A",), 1, 2)}, theme(), font_metrics=_table_metrics())
     assert measured.measurements["table"].min_inline == min(Decimal(240), Decimal(7))
 
 
 def test_table_column_floor_binds_when_the_measured_columns_are_narrower():
     measured = measure_sources({"table": SourceInput(("A",), 1, 2, table=_table("A"))}, theme(), font_metrics=_table_metrics())
     assert measured.measurements["table"].preferred_inline == Decimal(240)
+    # #487: the floor is a `preferred_inline` bound only. The minimum is still
+    # the narrower measured content, so `minmax: {min: content}` never asks for
+    # more than the table actually needs, even though the column floor grows
+    # `preferred_inline` past it.
+    assert measured.measurements["table"].min_inline < Decimal(240)
