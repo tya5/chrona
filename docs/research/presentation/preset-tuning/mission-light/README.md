@@ -26,6 +26,8 @@ Before and after for the `mission-light` catalogue preset. The change is YAML on
 | View | work item names in the table, not over the bars | `visibility.labels.placement: table` |
 | Theme | add the group-header height and closed-day width metrics that header grouping requires | `timeline.groupHeader.blockSize`, `timeline.calendarClosed.minimumDayWidth` |
 | Layout | table sized to its content, timeline takes the rest (was 5 : 6) | slot `inlineSize` |
+| Theme | dependency lines start with a small circle instead of an arrowhead | a `marker` token with `shape: circle` bound to `relationSourceTerminal` |
+| View | no missing-actual marks (see observations) | `comparison.facets` without `missingActual` |
 
 HALCYON-1 renders with no warnings at 1600 × 900. The starter keeps one warning it already had (`W_LAYOUT_LABEL_OVERFLOW` on the as-of label).
 
@@ -38,5 +40,10 @@ These were tried and backed out, or could not be expressed. They are mechanism g
 3. **A window margin creates a sliver month.** `window: {mode: selected-planned, marginDays: 7}` adds a few days of the previous month; its label collides with the next month's.
 4. **One `Other` header when nothing is grouped.** On a project with no `owner` field at all, the whole table sits under a single `Other` header. Header grouping should be omitted when every item falls in the missing group.
 5. **The CLI hides which metric is missing.** Before the Theme was extended, the render failed with `E_THEME_METRIC_REQUIRED` and `sourceRef: "/"`. Layout knows the pointer (`/body/metrics/timeline.groupHeader.blockSize`), but the diagnostic drops it.
+
+## Observations
+
+- **Missing-actual marks appear on work that is not due yet.** With `missingActual` in the facets, every item without an observation gets a hollow capsule at its bar end, including items planned to finish after the as-of date. The preset leaves the facet out.
+- **Dependency lines start with an arrowhead by default** in 10 of the 11 shipped Themes, including `briefing`, which the bare `chrona render` default uses. A small circle at the source is the common convention; this preset uses one.
 
 Not attempted in this step: a legend for plan, actual and baseline, and removing the duplicate finish-delta labels in the plot.

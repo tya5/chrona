@@ -31,7 +31,6 @@ body:
     - planned
     - actual
     - finishDelta
-    - missingActual
   visibility:
     labels:
       placement: table

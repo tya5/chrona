@@ -193,6 +193,13 @@ body:
     timeline-calendar-closed-min-day-width:
       type: number
       value: 6
+    dependency-origin:
+      type: marker
+      value:
+        shape: circle
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
   roles:
     group-band:
       backgroundTreatment: fill
@@ -319,7 +326,7 @@ body:
     milestoneSymbol:
       symbol: milestone-symbol
     relationSourceTerminal:
-      marker: arrow
+      marker: dependency-origin
     relationTargetTerminal:
       marker: arrow
     dependency:
