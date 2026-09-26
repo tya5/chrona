@@ -14,6 +14,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -96,6 +97,63 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count():
                                             summary_path=example / "profiles/summary.yaml"))
     assert not ordinary.info_diagnostics
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
+
+
+def test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_them(capsys):
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+                  view_path=preset / "view.yaml", theme_path=preset / "theme.yaml",
+                  layout_path=preset / "layout.yaml",
+                  scheme_path=root / "examples/controller-z/schemes/executive-light.yaml")
+    baseline = render_review(_draft_request(**inputs))
+    omissions = [item for item in baseline.info_diagnostics if item.code == "I_VISUAL_TREATMENT_OMITTED"]
+    assert {(item.role, item.treatment, item.paintable_profile) for item in omissions} == {
+        ("group-band", "linear-gradient", "chrona-output/visual/v0.6-svg"),
+        ("group-band", "drop-shadow", "chrona-output/visual/v0.6-svg"),
+    }
+    assert all(item.source_ref.startswith("/body/roles/group-band/") for item in omissions)
+    assert sum(item.startswith("I_VISUAL_TREATMENT_OMITTED:") for item in baseline.scene.diagnostics) == 2
+    assert len([item for item in baseline.surface.primitives if item.visual_role == "group-band"]) == 6
+    _emit_render_warnings(baseline)
+    notices = [json.loads(line) for line in capsys.readouterr().err.splitlines()
+               if '"I_VISUAL_TREATMENT_OMITTED"' in line]
+    assert len(notices) == 2
+    assert all(item["severity"] == "info" and item["paintableProfile"] == "chrona-output/visual/v0.6-svg"
+               for item in notices)
+
+    rich = render_review(_draft_request(**inputs, visual_profile="chrona-output/visual/v0.6-svg"))
+    assert not any(item.startswith("I_VISUAL_TREATMENT_OMITTED:") for item in rich.scene.diagnostics)
+    assert all(item.paint.gradient is not None and item.paint.shadow is not None
+               for item in rich.surface.primitives if item.visual_role == "group-band")
+    assert b"<linearGradient" in rich.artifact.content and b"<filter" in rich.artifact.content
+
+
+def test_planned_mark_shadow_is_supported_but_optional_under_baseline(tmp_path):
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    theme = yaml.safe_load((preset / "theme.yaml").read_text(encoding="utf-8"))
+    shadow = {key: value for key, value in theme["body"]["roles"]["group-band"].items()
+              if key.startswith("shadow")}
+    theme["body"]["roles"]["planned"].update(shadow)
+    theme["body"]["colorBindings"]["planned.shadowColor"] = "neutral"
+    theme_path = tmp_path / "planned-shadow.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+                  view_path=preset / "view.yaml", theme_path=theme_path,
+                  layout_path=preset / "layout.yaml",
+                  scheme_path=root / "examples/controller-z/schemes/executive-light.yaml")
+    baseline = render_review(_draft_request(**inputs))
+    rich = render_review(_draft_request(**inputs, visual_profile="chrona-output/visual/v0.6-svg"))
+    assert any(isinstance(item, PaintOmission) and item.role == "planned" and item.treatment == "drop-shadow"
+               for item in baseline.info_diagnostics)
+    assert all(item.paint.shadow is None for item in baseline.surface.primitives
+               if item.visual_role == "planned")
+    assert all(item.paint.shadow is not None for item in rich.surface.primitives
+               if item.visual_role == "planned")
+    assert re.search(rb'<rect[^>]*data-purpose="planned"[^>]*filter="url\(#shadow-', rich.artifact.content)
 
 
 def test_five_line_derived_theme_changes_visible_draft_and_closes_as_ordinary_theme():

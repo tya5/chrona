@@ -1,13 +1,18 @@
 """One-way resolution of Theme/Scheme policy into completed Scene paint."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
 from math import cos, radians, sin
 from typing import Mapping
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, StrokeFinish
-from chrona.presentation.scene.visual_capabilities import DROP_SHADOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN
+from chrona.presentation.scene.visual_capabilities import (
+    DROP_SHADOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN,
+    VisualProfile, first_supporting_visual_profile,
+)
 
 
 class PaintFamily(StrEnum):
@@ -29,10 +34,15 @@ class ScenePaintError(ValueError):
         self.detail = detail
 
 
+@dataclass(frozen=True)
+class PaintResolution:
+    paint: ScenePaint
+    omissions: tuple[PaintOmission, ...] = ()
+
+
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
-                        *, visual_capabilities: frozenset[str] | None = None,
-                        optional_omission: bool = False,
-                        gradient_bounds: tuple[float, float, float, float] | None = None) -> ScenePaint:
+                        *, visual_profile: VisualProfile | None = None,
+                        gradient_bounds: tuple[float, float, float, float] | None = None) -> PaintResolution:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
     fill_required = family in {PaintFamily.TEXT, PaintFamily.SOLID, PaintFamily.CANVAS}
     stroke_required = family in {PaintFamily.OUTLINE, PaintFamily.HATCH, PaintFamily.PATH}
@@ -61,15 +71,30 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
     if fill is None and stroke is None:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
     try:
-        gradient = _gradient(tokens, role, visual_capabilities, optional_omission, gradient_bounds)
-        shadow = _shadow(tokens, role, visual_capabilities, optional_omission)
-        finish = _stroke_finish(tokens, role, visual_capabilities, optional_omission)
+        gradient, gradient_omitted = _gradient(tokens, role, visual_profile, gradient_bounds)
+        shadow, shadow_omitted = _shadow(tokens, role, visual_profile)
+        finish, finish_omitted = _stroke_finish(tokens, role, visual_profile)
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
     if family == PaintFamily.OUTLINE:
         fill = None
-    return ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
-                      1.0 if opacity is None else float(opacity), gradient, shadow, finish)
+    paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
+                       1.0 if opacity is None else float(opacity), gradient, shadow, finish)
+    omissions = tuple(_omission(role, treatment, property_name, visual_profile, required)
+                      for omitted, treatment, property_name, required in (
+                          (gradient_omitted, "linear-gradient", "gradientAngle", frozenset((LINEAR_GRADIENT,))),
+                          (shadow_omitted, "drop-shadow", "shadowBlur", frozenset((DROP_SHADOW,))),
+                          (finish_omitted, "stroke-finish", "strokeLineCap", frozenset((LINE_CAP, LINE_JOIN))),
+                      ) if omitted)
+    return PaintResolution(paint, omissions)
+
+
+def _omission(role: str, treatment: str, property_name: str, profile: VisualProfile | None,
+              required: frozenset[str]) -> PaintOmission:
+    if profile is None:
+        raise AssertionError("an absent profile cannot omit a treatment")
+    return PaintOmission(role, treatment, f"/body/roles/{role}/{property_name}", profile.identifier,
+                         profile.target_kind, first_supporting_visual_profile(profile.target_kind, required))
 
 
 def _fidelity(tokens: ThemeTokenView, role: str, property_name: str) -> str:
@@ -84,20 +109,19 @@ def _fidelity(tokens: ThemeTokenView, role: str, property_name: str) -> str:
     return str(value)
 
 
-def _admit(capabilities: frozenset[str] | None, required: frozenset[str], fidelity: str,
-           optional_omission: bool, path: str) -> bool:
-    if capabilities is None or required.issubset(capabilities):
+def _admit(profile: VisualProfile | None, required: frozenset[str], fidelity: str, path: str) -> bool:
+    if profile is None or required.issubset(profile.capabilities):
         return True
-    if fidelity == "decorative-optional" and optional_omission:
+    if fidelity == "decorative-optional" and profile.optional_omission:
         return False
     raise ThemeTokenError("E_VISUAL_CAPABILITY_UNSUPPORTED", path)
 
 
-def _gradient(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | None,
-              optional_omission: bool, bounds: tuple[float, float, float, float] | None) -> LinearGradient | None:
+def _gradient(tokens: ThemeTokenView, role: str, profile: VisualProfile | None,
+              bounds: tuple[float, float, float, float] | None) -> tuple[LinearGradient | None, bool]:
     start, end = tokens.optional_color(role, "gradientStart"), tokens.optional_color(role, "gradientEnd")
     angle = tokens.optional_number(role, "gradientAngle")
-    if start is None and end is None and angle is None: return None
+    if start is None and end is None and angle is None: return None, False
     if start is None or end is None or angle is None:
         raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle",
                               "gradientStart, gradientEnd, and gradientAngle must be declared together")
@@ -105,9 +129,9 @@ def _gradient(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | 
         raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/gradientAngle",
                               f"gradientAngle {float(angle):g} must be in [0, 360)")
     fidelity = _fidelity(tokens, role, "gradientFidelity")
-    if not _admit(capabilities, frozenset((LINEAR_GRADIENT,)), fidelity, optional_omission,
+    if not _admit(profile, frozenset((LINEAR_GRADIENT,)), fidelity,
                   f"/body/roles/{role}/gradientAngle"):
-        return None
+        return None, True
     if bounds is None:
         raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/gradientAngle",
                               "gradient bounds are required for a declared gradient")
@@ -118,14 +142,13 @@ def _gradient(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | 
     coordinate = lambda value: 0.0 if abs(value) < 1e-12 else value
     endpoints = ((coordinate(centre[0] - direction[0] * extent), coordinate(centre[1] - direction[1] * extent)),
                  (coordinate(centre[0] + direction[0] * extent), coordinate(centre[1] + direction[1] * extent)))
-    return LinearGradient(*endpoints, ((0.0, start), (1.0, end)), fidelity)
+    return LinearGradient(*endpoints, ((0.0, start), (1.0, end)), fidelity), False
 
 
-def _shadow(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | None,
-            optional_omission: bool) -> DropShadow | None:
+def _shadow(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[DropShadow | None, bool]:
     color = tokens.optional_color(role, "shadowColor")
     values = tuple(tokens.optional_number(role, name) for name in ("shadowOffsetX", "shadowOffsetY", "shadowBlur", "shadowOpacity"))
-    if color is None and not any(value is not None for value in values): return None
+    if color is None and not any(value is not None for value in values): return None, False
     if color is None or any(value is None for value in values):
         raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/shadowBlur",
                               "shadowColor, shadowOffsetX, shadowOffsetY, shadowBlur, and shadowOpacity must be declared together")
@@ -136,22 +159,21 @@ def _shadow(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | No
         raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/shadowOpacity",
                               f"shadowOpacity {float(values[3]):g} must be in [0, 1]")
     fidelity = _fidelity(tokens, role, "shadowFidelity")
-    if not _admit(capabilities, frozenset((DROP_SHADOW,)), fidelity, optional_omission,
+    if not _admit(profile, frozenset((DROP_SHADOW,)), fidelity,
                   f"/body/roles/{role}/shadowBlur"):
-        return None
-    return DropShadow(color, float(values[0]), float(values[1]), float(values[2]), float(values[3]), fidelity)
+        return None, True
+    return DropShadow(color, float(values[0]), float(values[1]), float(values[2]), float(values[3]), fidelity), False
 
 
-def _stroke_finish(tokens: ThemeTokenView, role: str, capabilities: frozenset[str] | None,
-                   optional_omission: bool) -> StrokeFinish | None:
+def _stroke_finish(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[StrokeFinish | None, bool]:
     cap = tokens.optional_token(role, "strokeLineCap", "lineCap")
     join = tokens.optional_token(role, "strokeLineJoin", "lineJoin")
-    if cap is None and join is None: return None
+    if cap is None and join is None: return None, False
     if cap not in {"butt", "round", "square"} or join not in {"miter", "round", "bevel"}:
         raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", f"/body/roles/{role}/strokeLineCap",
                               f"strokeLineCap {cap!r} and strokeLineJoin {join!r} must be declared values")
     fidelity = _fidelity(tokens, role, "strokeFinishFidelity")
-    if not _admit(capabilities, frozenset((LINE_CAP, LINE_JOIN)), fidelity, optional_omission,
+    if not _admit(profile, frozenset((LINE_CAP, LINE_JOIN)), fidelity,
                   f"/body/roles/{role}/strokeLineCap"):
-        return None
-    return StrokeFinish(str(cap), str(join), fidelity)
+        return None, True
+    return StrokeFinish(str(cap), str(join), fidelity), False

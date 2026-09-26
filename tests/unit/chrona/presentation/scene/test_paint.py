@@ -4,6 +4,7 @@ import pytest
 
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
+from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, SVG_PROFILE, resolve_visual_profile
 
 
 def _tokens(role: dict[str, str], values: dict[str, dict[str, object]] | None = None) -> ThemeTokenView:
@@ -20,7 +21,7 @@ def _tokens(role: dict[str, str], values: dict[str, dict[str, object]] | None = 
 
 def test_resolver_completes_mixed_solid_paint_without_adapter_defaults():
     paint = resolve_scene_paint(_tokens({"fill": "fill", "stroke": "stroke", "strokeWidth": "width", "dash": "dash", "opacity": "opacity"}),
-                                "role", PaintFamily.SOLID)
+                                "role", PaintFamily.SOLID).paint
     assert (paint.fill, paint.stroke, paint.stroke_width, paint.dash, paint.opacity) == ("#112233", "#445566", 1.5, (2.0, 3.0), 0.4)
 
 
@@ -37,14 +38,15 @@ def test_resolver_rejects_a_dash_without_a_stroke():
 
 
 def test_resolver_completes_absent_opacity_before_adapter_invocation():
-    paint = resolve_scene_paint(_tokens({"fill": "fill"}), "role", PaintFamily.TEXT)
+    paint = resolve_scene_paint(_tokens({"fill": "fill"}), "role", PaintFamily.TEXT).paint
     assert paint.opacity == 1.0
 
 
 def test_resolver_completes_bounded_gradient_shadow_and_stroke_finish():
     values = {"fill": {"type": "color", "value": "#112233"}, "start": {"type": "color", "value": "#112233"}, "end": {"type": "color", "value": "#445566"}, "shadow": {"type": "color", "value": "#000000"}, "angle": {"type": "number", "value": 45}, "x": {"type": "number", "value": 1}, "y": {"type": "number", "value": 2}, "blur": {"type": "number", "value": 3}, "alpha": {"type": "number", "value": 0.4}, "cap": {"type": "lineCap", "value": "round"}, "join": {"type": "lineJoin", "value": "bevel"}}
     role = {"fill": "fill", "gradientStart": "start", "gradientEnd": "end", "shadowColor": "shadow", "gradientAngle": "angle", "shadowOffsetX": "x", "shadowOffsetY": "y", "shadowBlur": "blur", "shadowOpacity": "alpha", "strokeLineCap": "cap", "strokeLineJoin": "join"}
-    paint = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID, gradient_bounds=(0, 0, 10, 10))
+    paint = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID,
+                                gradient_bounds=(0, 0, 10, 10)).paint
     assert paint.gradient and paint.gradient.start == (0, 0)
     assert paint.shadow and paint.shadow.blur == 3
     assert paint.stroke_finish and paint.stroke_finish.line_cap == "round"
@@ -58,10 +60,33 @@ def test_baseline_omits_decorative_optional_treatment_during_scene_completion():
     }
     role = {"fill": "fill", "gradientStart": "start", "gradientEnd": "end", "gradientAngle": "angle",
             "gradientFidelity": "fidelity"}
-    paint = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID,
-                                visual_capabilities=frozenset(), optional_omission=True,
-                                gradient_bounds=(0, 0, 10, 10))
-    assert paint.gradient is None
+    resolution = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID,
+                                     visual_profile=resolve_visual_profile(BASELINE_PROFILE, "svg"),
+                                     gradient_bounds=(0, 0, 10, 10))
+    assert resolution.paint.gradient is None
+    assert len(resolution.omissions) == 1
+    assert resolution.omissions[0].scene_diagnostic() == (
+        "I_VISUAL_TREATMENT_OMITTED:role=role;treatment=linear-gradient;"
+        f"profile={BASELINE_PROFILE};paintable={SVG_PROFILE}")
+    pdf = resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID,
+                              visual_profile=resolve_visual_profile(BASELINE_PROFILE, "pdf"),
+                              gradient_bounds=(0, 0, 10, 10))
+    assert pdf.omissions[0].paintable_profile is None
+    assert pdf.omissions[0].scene_diagnostic().endswith("paintable=none")
+
+
+def test_required_treatment_still_rejects_unsupported_baseline():
+    values = {"fill": {"type": "color", "value": "#112233"},
+              "start": {"type": "color", "value": "#112233"},
+              "end": {"type": "color", "value": "#445566"},
+              "angle": {"type": "number", "value": 45}}
+    role = {"fill": "fill", "gradientStart": "start", "gradientEnd": "end", "gradientAngle": "angle"}
+    with pytest.raises(ScenePaintError) as error:
+        resolve_scene_paint(_tokens(role, values), "role", PaintFamily.SOLID,
+                            visual_profile=resolve_visual_profile(BASELINE_PROFILE, "svg"),
+                            gradient_bounds=(0, 0, 10, 10))
+    assert (error.value.diagnostic_id, error.value.path) == (
+        "E_VISUAL_CAPABILITY_UNSUPPORTED", "/body/roles/role/gradientAngle")
 
 
 @pytest.mark.parametrize(("role", "values", "bounds", "code", "path", "detail"), [

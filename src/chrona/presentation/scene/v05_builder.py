@@ -17,6 +17,7 @@ from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings, inside_member_label_semantic, semantic_binding
 from chrona.presentation.model.projection import shared_track_member_key
+from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.mark_geometry import pattern_geometry, pattern_kind, symbol_geometry
 from chrona.presentation.scene.model import DecorationDisposition, SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
@@ -82,12 +83,11 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                             scale_legend_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     try:
-        primitives = tuple(_complete_primitive_paint(
+        completed = tuple(_complete_primitive_paint(
             primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {})
                            for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
-                                     visual_capabilities=visual_profile.capabilities if visual_profile else None,
-                                     optional_omission=visual_profile.optional_omission if visual_profile else False,
+                                     visual_profile=visual_profile,
                                      gradient_bounds=(0.0, 0.0, *viewport))
     except ScenePaintError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
@@ -96,17 +96,25 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
         for binding in contrast_bindings(ContrastClass.DECORATION)
         if tokens.has_role(binding.scene_role) and tokens.background(binding.scene_role)[0] == "none"
     )
-    return replace(surface, primitives=primitives, canvas_paint=canvas,
-                   decoration_dispositions=absent_decorations)
+    omissions = (*canvas.omissions, *(omission for _, facts in completed for omission in facts))
+    unique_omissions: list[PaintOmission] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for omission in omissions:
+        identity = (omission.role, omission.treatment, omission.visual_profile, omission.target_kind)
+        if identity not in seen:
+            seen.add(identity)
+            unique_omissions.append(omission)
+    return replace(surface, primitives=tuple(item for item, _ in completed), canvas_paint=canvas.paint,
+                   decoration_dispositions=absent_decorations,
+                   info_diagnostics=(*surface.info_diagnostics, *unique_omissions))
 
 
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
                               scale_target_role: str | None, scale_paints: Mapping[str, str],
-                              scale_legend_paints: Mapping[str, str]) -> ScenePrimitive:
-    paint = resolve_scene_paint(tokens, primitive.visual_role, _paint_family(primitive, tokens),
-                                visual_capabilities=visual_profile.capabilities if visual_profile else None,
-                                optional_omission=visual_profile.optional_omission if visual_profile else False,
-                                gradient_bounds=primitive.bounds)
+                              scale_legend_paints: Mapping[str, str]) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
+    resolution = resolve_scene_paint(tokens, primitive.visual_role, _paint_family(primitive, tokens),
+                                     visual_profile=visual_profile, gradient_bounds=primitive.bounds)
+    paint = resolution.paint
     override = (scale_paints.get(primitive.source_ref)
                 if primitive.visual_role == scale_target_role else None)
     if primitive.source_kind == "legend":
@@ -116,9 +124,9 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     result = replace(primitive, paint=completed,
                      pattern=pattern_geometry(treatment) if treatment is not None else None)
     if result.kind == "Icon" and result.icon_kind == "vector":
-        return replace(result, icon_paths=_complete_icon_paths(result, completed),
-                       icon_vector=None, icon_stroke_scale=None)
-    return result
+        return (replace(result, icon_paths=_complete_icon_paths(result, completed),
+                        icon_vector=None, icon_stroke_scale=None), resolution.omissions)
+    return result, resolution.omissions
 
 
 def _complete_icon_paths(primitive: ScenePrimitive, paint: Any) -> tuple[SceneIconPath, ...]:

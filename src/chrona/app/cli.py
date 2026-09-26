@@ -16,7 +16,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
-from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
+from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
 from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
@@ -141,6 +141,15 @@ def _emit_render_warnings(rendered: RenderedReview) -> None:
         if isinstance(info, SuppressedPlotLabels):
             print(json.dumps({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
                               "count": info.count}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        elif isinstance(info, PaintOmission):
+            message = (f"{info.treatment} on {info.role} was omitted by {info.visual_profile}; "
+                       + (f"use {info.paintable_profile} to paint it"
+                          if info.paintable_profile else f"no {info.target_kind} profile can paint it"))
+            print(json.dumps({"code": info.code, "severity": "info", "role": info.role,
+                              "treatment": info.treatment, "sourceRef": info.source_ref,
+                              "visualProfile": info.visual_profile,
+                              "paintableProfile": info.paintable_profile, "message": message},
+                             ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
