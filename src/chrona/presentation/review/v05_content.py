@@ -169,7 +169,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
                                group_presentation=group_presentation,
                                axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
-                               as_of=as_of, as_of_label=str(as_of_marker.get("label", "As of")) if as_of_marker else "As of",
+                               as_of=as_of, as_of_label=_as_of_label(as_of_marker, as_of, locale),
                                annotation_numbered=annotation_numbered,
                                calendar_closed=calendar_closed, calendar_exceptions=calendar_exceptions,
                                    notes=notes, legend_entries=legend, coverage_text="",
@@ -188,6 +188,25 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                table_hierarchy_column=view.hierarchy_column,
                                row_decoration=view.background_decoration[0],
                                group_decoration=view.background_decoration[1])
+
+
+def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: str) -> str:
+    """Return the as-of label exactly as declared, plus a date only in a declared form (#428).
+
+    A View without an as-of marker keeps the implicit "As of <localized date>"
+    label; a declared marker is its own text unless it names a date form.
+    """
+    date_form = {"form": "localized-date"} if marker is None else marker.get("date")
+    label = "As of" if marker is None else str(marker.get("label", ""))
+    if not isinstance(date_form, Mapping) or as_of is None:
+        return label
+    table = axis_name_table(str(date_form.get("nameTable", locale)))
+    formatted = table.format(str(date_form["form"]), {
+        "year": as_of.year, "monthShort": table.month_short[as_of.month - 1],
+        "monthLong": table.month_long[as_of.month - 1], "monthNumber": as_of.month,
+        "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
+    })
+    return f"{label} {formatted}" if label else formatted
 
 
 def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:

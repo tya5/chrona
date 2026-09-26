@@ -34,3 +34,22 @@ Dependency paths remain Scene-owned. Their stroke token is Theme-owned by the `d
 - missing-actual is absent when the facet is not selected or the item is not yet due, and otherwise follows its planned mark;
 - dependency primitives consume the declared dependency role; and
 - no Project, Snapshot, Actual, legacy Settings, or legacy Theme contract changes.
+
+## As-of label content and label chips (#428)
+
+From View v0.23, an `asOf` marker's `label` is rendered exactly as written. A
+date is added only when the marker declares `date: {form: localized-date}`
+(optionally with `nameTable`). It is then formatted by the axis name table
+exactly like an axis `localized-date` label and follows the label, separated by
+a space. A View without an `asOf` marker keeps the implicit label
+`As of <localized date>`.
+
+Any label whose semantic has a registered chip binding (`asOfLabelChip`,
+`memberLabelChip`, `finishDeltaChip`) may carry a chip. A chip is drawn when
+the Theme declares the binding's role (`as-of-label-chip`,
+`member-label-chip`, `finish-delta-chip`) with `backgroundTreatment: fill`,
+optional `chipPadding` (a ratio of the label's font size inline, and half of
+it on the block axis) and optional `markCornerRadius` (a ratio of the chip's
+block size). Layout inflates the label's footprint by the padding before
+candidate search, and completes the chip Rect under the text. Contrast is
+checked against the chip as the text's ground.

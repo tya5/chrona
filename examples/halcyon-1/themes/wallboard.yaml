@@ -3,6 +3,12 @@ kind: theme
 id: wallboard
 body:
   values:
+    chip-padding:
+      type: number
+      value: 0.5
+    chip-radius:
+      type: number
+      value: 0.5
     opacity.axis-band:
       type: number
       value: 1
@@ -191,6 +197,10 @@ body:
       type: number
       value: 0
   roles:
+    as-of-label-chip:
+      backgroundTreatment: fill
+      chipPadding: chip-padding
+      markCornerRadius: chip-radius
     group-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
@@ -445,6 +455,7 @@ body:
     range.fill: warning
     asOf.stroke: warning
     as-of.stroke: warning
+    as-of-label-chip.fill: neutral
     progress-fill.fill: warning
     progress-fill.stroke: surface
     icon-mark.fill: surface

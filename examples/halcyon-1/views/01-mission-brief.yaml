@@ -1,4 +1,4 @@
-version: chrona/view/v0.22
+version: chrona/view/v0.23
 kind: view
 id: halcyon-01-mission-brief
 body:
@@ -97,6 +97,7 @@ body:
   - kind: asOf
     source: actual
     label: as of
+    date: {form: localized-date}
   shading:
     nonWorking: true
     exceptions: true

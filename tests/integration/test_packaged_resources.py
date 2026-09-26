@@ -26,6 +26,7 @@ SCHEMAS = (
     "view-v0.19.schema.yaml",
     "view-v0.20.schema.yaml",
     "view-v0.22.schema.yaml",
+    "view-v0.23.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",
     "layout-profile-v0.5.schema.yaml",

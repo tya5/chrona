@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
-from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
+from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, label_chip_semantic, semantic_binding
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
@@ -1172,7 +1172,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
                                      ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
                                      paint_order=MARK_PAINT_ORDER_BASE))
-        as_of_label = (x, f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}")
+        as_of_label = (x, contract.time.as_of_label) if contract.time.as_of_label else None
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
     track_by_id = {item.instance_id: item for item in tracks}
@@ -1378,9 +1378,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     handled_candidate_visuals: set[str] = set()
     if as_of_label is not None:
         x, content = as_of_label
+        # A chip's block padding extends the anchor too, so a side candidate
+        # keeps the chipped label's top where the bare label's top is (#428).
+        as_of_chip = request.theme_tokens.label_chip(semantic_binding("asOfLabelChip").theme_role)
+        as_of_anchor_block = (body_size if as_of_chip is None else
+                              body_size * float(body_treatment.line_height) + float(as_of_chip[0]) * body_size)
         label_requests.append(LabelRequest(
             "as-of-label", "actual-set", content,
-            LabelRect(x, timeline_bounds[1], 0.0, body_size), ("end", "start", "below"),
+            LabelRect(x, timeline_bounds[1], 0.0, as_of_anchor_block), ("end", "start", "below"),
             "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
             visible_fallback_side="above",
             rule_host_obstacle_id="as-of",
@@ -1514,6 +1519,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                 text_transform=label_treatment.transform) for line in lines)
             label_size = (leading + text_width + trailing,
                           float(font_size) * float(line_height) * len(lines))
+            # A declared ``<purpose>-chip`` Theme role draws a background from
+            # this label's own measured box; its padding is part of the footprint
+            # every candidate negotiates (#428).  Nothing here names a purpose.
+            chip_semantic = label_chip_semantic(label_request.semantic_id) or ""
+            chip = (request.theme_tokens.label_chip(semantic_binding(chip_semantic).theme_role)
+                    if chip_semantic else None)
+            chip_pad = ((float(chip[0]) * float(font_size), float(chip[0]) * float(font_size) / 2)
+                        if chip is not None else (0.0, 0.0))
+            label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
             # Mark labels remain subject to every completed mark.  ``place_label``
             # alone exempts this request's declared host for an ``inside``
             # candidate; a comparison sibling or another row is never an implicit
@@ -1549,6 +1563,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                              ladder, "suppress", "suppressed"))
                 diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
             else:
+                chip_box = candidate.bounds
+                if chip is not None:
+                    candidate = replace(candidate, bounds=LabelRect(
+                        chip_box.x + chip_pad[0], chip_box.y + chip_pad[1],
+                        chip_box.width - 2 * chip_pad[0], chip_box.height - 2 * chip_pad[1]))
                 host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
                 slot = by_source.get(label_request.collision_domain.slot)
                 slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
@@ -1571,8 +1590,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
                 surface_obstacles.add(SurfaceObstacle(f"label-footprint:{placed_text.placement_id}", "label-visual",
                                                       placed_text.collision_domain.slot,
-                                                      ObstacleRect(candidate.bounds.x, candidate.bounds.y,
-                                                                   candidate.bounds.right, candidate.bounds.bottom)))
+                                                      ObstacleRect(chip_box.x, chip_box.y,
+                                                                   chip_box.right, chip_box.bottom)))
+                if chip is not None:
+                    shapes.append(ShapePlacement(
+                        f"chip:{placed_text.placement_id}", placed_text.source_ref, "Rect",
+                        Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)),
+                             Decimal(str(chip_box.width)), Decimal(str(chip_box.height))),
+                        required=False, slot_id=text_slot(placed_text),
+                        paint_order=placed_text.paint_order - 1,
+                        semantic_id=chip_semantic,
+                        corner_radius=float(chip[1]) * chip_box.height))
                 if visible_overflow:
                     visible_label_overflows.append((placed_text, slot_bounds))
                 if visuals:

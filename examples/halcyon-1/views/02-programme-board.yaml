@@ -1,4 +1,4 @@
-version: chrona/view/v0.22
+version: chrona/view/v0.23
 kind: view
 id: halcyon-02-programme-board
 body:
@@ -128,7 +128,7 @@ body:
   markers:
   - kind: asOf
     source: actual
-    label: as of
+    label: Today
   shading:
     nonWorking: true
     exceptions: true

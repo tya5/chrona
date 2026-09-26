@@ -84,6 +84,11 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # Public Scene role remains hyphenated; theme authoring resolves the canonical asOf binding.
     _binding("asOf", "line", "as-of", "as-of", "asOf"),
     _binding("asOfLabel", "label", "as-of-label", "text", "text"),
+    # Label chips (#428): a background drawn from a label's own measured box,
+    # one binding per label semantic, Theme role ``<label purpose>-chip``.
+    _binding("asOfLabelChip", "decoration", "label-chip", "as-of-label-chip", "as-of-label-chip"),
+    _binding("memberLabelChip", "decoration", "label-chip", "member-label-chip", "member-label-chip"),
+    _binding("finishDeltaChip", "decoration", "label-chip", "finish-delta-chip", "finish-delta-chip"),
     _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed", ContrastClass.DECORATION),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
@@ -145,6 +150,12 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("summaryFigureValue", "label", "summary-figure-value", "metric", "metric"),
     _binding("summaryFigureCaption", "label", "summary-figure-caption", "subtitle", "subtitle"),
 )}
+
+
+def label_chip_semantic(label_semantic_id: str) -> str | None:
+    """Return the chip semantic a label may carry, keyed by the label's own semantic (#428)."""
+    return {"asOfLabel": "asOfLabelChip", "memberLabel": "memberLabelChip",
+            "finishDelta": "finishDeltaChip"}.get(label_semantic_id)
 
 
 def semantic_binding(semantic_id: str) -> SemanticBinding:

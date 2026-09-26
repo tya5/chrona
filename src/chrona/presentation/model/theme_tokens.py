@@ -219,6 +219,23 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
         return inset, radius
 
+    def label_chip(self, role: str) -> tuple[Decimal, Decimal] | None:
+        """Return a declared label chip's padding and corner-radius ratios (#428).
+
+        A chip exists only when the Theme declares ``role`` with a fill
+        background; padding is a ratio of the label's font size.
+        """
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or binding.get("backgroundTreatment") != "fill":
+            return None
+        padding = self.number(role, "chipPadding") if "chipPadding" in binding else Decimal(0)
+        radius = self.number(role, "markCornerRadius") if "markCornerRadius" in binding else Decimal(0)
+        if not Decimal(0) <= padding <= Decimal(2):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/chipPadding")
+        if not Decimal(0) <= radius <= Decimal("0.5"):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
+        return padding, radius
+
     def summary_bar_height(self, role: str) -> Decimal:
         """Return the positive lane-relative block-size ratio for a summary bar."""
         height = self.number(role, "markHeight")

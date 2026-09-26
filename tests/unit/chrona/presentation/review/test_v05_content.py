@@ -363,3 +363,16 @@ def test_actual_set_requires_the_current_body_envelope():
     with pytest.raises(ValueError, match="E_PRESENTATION_ACTUAL_SET_SHAPE"):
         normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                       summary=EMPTY_SUMMARY, actual_set={"asOf": "2026-03-04"})
+
+
+def test_as_of_label_is_the_declared_text_and_a_date_only_in_a_declared_form():
+    """#428: no date is appended unless the View states its form."""
+    from datetime import date as _date
+    from chrona.presentation.review.v05_content import _as_of_label
+    as_of = _date(2027, 8, 20)
+    assert _as_of_label({"kind": "asOf", "source": "actual", "label": "Today"}, as_of, "en-US") == "Today"
+    dated = {"kind": "asOf", "source": "actual", "label": "as of", "date": {"form": "localized-date"}}
+    assert _as_of_label(dated, as_of, "en-US") == "as of Aug 20, 2027"
+    assert _as_of_label(dated, as_of, "ja-JP") == "as of 2027/08/20"
+    assert _as_of_label({**dated, "date": {"form": "localized-date", "nameTable": "ja-JP"}}, as_of, "en-US") == "as of 2027/08/20"
+    assert _as_of_label(None, as_of, "en-US") == "As of Aug 20, 2027"
