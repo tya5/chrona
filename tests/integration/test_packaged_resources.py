@@ -83,6 +83,8 @@ def test_package_owned_runtime_resources_exist():
         "fonts/NotoColorEmoji.LICENSE",
         "presets/library.yaml",
         "presets/bundles/print-mono/layout.yaml",
+        "presets/bundles/print-mono/view.yaml",
+        "presets/bundles/print-mono/theme.yaml",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 

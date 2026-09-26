@@ -17,8 +17,8 @@ entries:
   - id: print-mono
     gallerySet: halcyon-mission-brief-appearance
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: print, kind: theme, sourceRoot: examples/halcyon-1, sourcePath: themes/print.yaml}
+      view: {id: chrona-preset-print-mono, kind: view, sourceRoot: presets/bundles/print-mono, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-print-mono, kind: theme, sourceRoot: presets/bundles/print-mono, sourcePath: theme.yaml}
       colorScheme: {id: print-mono, kind: color-scheme, sourceRoot: examples/halcyon-1, sourcePath: schemes/print-mono.yaml}
       layout: {id: chrona-builtin-print-mono, kind: layout-profile, sourceRoot: presets/bundles/print-mono, sourcePath: layout.yaml}
   - id: executive-light

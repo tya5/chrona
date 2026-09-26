@@ -35,14 +35,14 @@ root:
         - id: table
           kind: slot
           source: table
-          inlineSize: {minmax: {min: content, max: {fr: 5}}}
+          inlineSize: {minmax: {min: content, max: {fr: 1}}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
           priority: required
           overflow: visible-overflow
         - id: timeline-stack
           kind: column
-          inlineSize: {fr: 6}
+          inlineSize: {fr: 3}
           blockSize: fill
           gap: {token: spacing.none}
           padding: {token: spacing.none}
