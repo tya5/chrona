@@ -1,0 +1,5 @@
+# Implementation Amendment — Finite Point-Port Pair Search (#466)
+
+**Amends:** [obstacle-only plan](issue-466-shared-obstacle-prerequisite-implementation-plan-2026-09-26.md) and [point-port amendment](issue-466-shared-obstacle-point-port-amendment-2026-09-26.md) after the [candidate correction](../../design/issue-466-general-placement-point-port-candidate-correction-2026-09-26.md) and [architecture review](../../reviews/current/issue-466-general-placement-point-port-candidate-architecture-review-2026-09-26.md).
+
+O2 adds one Layout-owned finite boundary-port enumerator and tests for a blocked closest tip, independent comparison sibling, route-quality fallback, pair count and stable tie order. Semantic relations use the bounded pair product; annotation leaders use the same source-port list. Port obstacles are registered only for accepted choices, so a failed candidate does not pollute later placement. Public aster-ssd must retain its relation; inspect Scene/SVG bytes before accepting the O2 generated-evidence change.

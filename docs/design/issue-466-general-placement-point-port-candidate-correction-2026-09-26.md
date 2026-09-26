@@ -1,0 +1,8 @@
+# Design Correction — Feasible Point-Port Candidate Search (#466)
+
+**Predecessor:** [point-relation-port correction](issue-466-general-placement-point-relation-port-correction-2026-09-26.md).
+**Discovery:** the aster-ssd `qual-exit` point's closest cardinal tip toward `pilot` is covered by its separate missing-actual comparison mark. Choosing that tip unconditionally still suppresses the relation under the correct shared obstacle set. Exempting the sibling mark would hide a real collision.
+
+For a connector endpoint on a point glyph (and a span `body` endpoint), Layout enumerates its four completed boundary ports in `(Manhattan distance to the other original endpoint, side order end/start/above/below)` order. It evaluates the finite source/target port-pair product in that stable order, routing each pair against the same inventory with only the two selected port IDs exempted. The first pair with a valid bounded route and declared route quality wins. A failed port pair is not a relation suppression; suppression/visible fallback occurs only after all finite pairs fail. No candidate may ignore a comparison sibling or required label. The route decision records the selected port identities and bounded candidate count.
+
+Span start/finish remain single fixed candidates. Annotation leader point/body anchors use the same finite boundary-port candidates toward their selected box port; they do not silently use a center anchor. This is a Layout connector policy, not View-authored geometry or the later #466 annotation-box candidate grammar. Public relation coordinates may change; the aster-ssd relation must remain visible without covering the sibling mark.

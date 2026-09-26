@@ -247,6 +247,12 @@ glyph's central mark anchor is not a routable port; Layout chooses a finite
 outline tip toward the other endpoint and exempts only that named port when
 routing. See the [#466 point-relation-port correction](../design/issue-466-general-placement-point-relation-port-correction-2026-09-26.md).
 
+When a point/body tip is blocked by a comparison sibling or another required
+obstacle, Layout tries the remaining finite ports in stable distance/side
+order and accepts the first bounded quality route. Failed port candidates do
+not suppress the relation or enter the obstacle inventory. See the [#466
+point-port-candidate correction](../design/issue-466-general-placement-point-port-candidate-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
