@@ -127,6 +127,41 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
     assert contract.view.background_decoration == ("alternate", "none")
 
 
+def test_lanes_mode_detaches_the_typed_lane_table_intent():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    body = value["body"]
+    body.pop("tableColumns")
+    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True}}
+    body["visibility"]["labels"] = {"placement": "plot", "content": ["title", "finishDelta"], "side": "auto",
+                                    "overflow": "visible-overflow"}
+    contract = _view_contract(value)
+    assert contract.view.rows.mode == "lanes"
+    assert contract.view.rows.lane_table.label == "group"
+    assert contract.view.rows.lane_table.count is True
+    assert contract.view.rows.track_allocation == "subtrack"
+    assert contract.view.table_columns == ()
+
+
+def test_automatic_mode_leaves_lane_table_absent_and_track_allocation_at_its_default():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    contract = _view_contract(value)
+    assert contract.view.rows.mode == "automatic"
+    assert contract.view.rows.lane_table is None
+    assert contract.view.rows.track_allocation == "subtrack"
+
+
+def test_explicit_rows_may_opt_into_collision_track_allocation():
+    value = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    body = value["body"]
+    for name in ("selection", "grouping", "ordering"):
+        body.pop(name)
+    body["rows"] = {"mode": "explicit", "trackAllocation": "collision", "items": [
+        {"id": "row", "depth": 0, "items": [{"id": "primary", "source": {"kind": "primary", "object": "board"}}]},
+    ]}
+    contract = _view_contract(value)
+    assert contract.view.rows.track_allocation == "collision"
+
+
 def test_boolean_comparison_columns_require_a_complete_typed_presence_presentation():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
     column = next(item for item in value["body"]["tableColumns"] if item["id"] == "Obs")

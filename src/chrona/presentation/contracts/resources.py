@@ -159,10 +159,20 @@ class ViewRow:
 
 
 @dataclass(frozen=True)
+class ViewLaneTable:
+    """The `lanes` row-summary declaration (#467): a group/lane identity fact only."""
+
+    label: str
+    count: bool = False
+
+
+@dataclass(frozen=True)
 class ViewRows:
     mode: str
     items: tuple[ViewRow, ...]
     points: str = "own-row"
+    lane_table: ViewLaneTable | None = None
+    track_allocation: str = "subtrack"
 
 
 @dataclass(frozen=True)
@@ -544,7 +554,7 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
-    ("view", "chrona/view/v0.25"): "view-v0.25.schema.yaml",
+    ("view", "chrona/view/v0.26"): "view-v0.26.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
@@ -727,10 +737,15 @@ def _view_input(body: FrozenDict) -> ViewInput:
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
+    raw_lane_table = rows.get("laneTable")
+    lane_table = (ViewLaneTable(str(raw_lane_table["label"]), bool(raw_lane_table.get("count", False)))
+                 if raw_lane_table else None)
+    view_rows = ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row")), lane_table,
+                        str(rows.get("trackAllocation", "subtrack")))
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
-        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row"))), body.get("axis"),
+        tuple(body.get("annotations", ())), view_rows, body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]), body.get("colorEncoding"),

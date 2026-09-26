@@ -1,13 +1,13 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "chrona/view-v0.25"
-title: "Chrona View v0.25"
+$id: "chrona/view-v0.26"
+title: "Chrona View v0.26"
 description: "Declarative selection and presentation intent for one review surface."
 allOf:
   - $ref: "urn:chrona:presentation-resource-v0.1"
   - description: "View document fields extending the shared presentation resource."
     type: object
     properties:
-      version: {description: "This View document contract version.", const: "chrona/view/v0.25"}
+      version: {description: "This View document contract version.", const: "chrona/view/v0.26"}
       kind: {description: "Resource kind identifying this document as a View.", const: view}
       body:
         description: "Surface selection and presentation semantics."
@@ -274,7 +274,7 @@ allOf:
           visuals:
             description: "Closed icon requests resolved by Layout against Context-local catalogs."
             type: array
-            items: {$ref: "chrona/view-v0.25#/$defs/visual"}
+            items: {$ref: "chrona/view-v0.26#/$defs/visual"}
           hierarchyColumn:
             description: "Named table column that receives resolved row nesting indentation."
             type: string
@@ -387,8 +387,17 @@ allOf:
             required: [mode]
             additionalProperties: false
             properties:
-              mode: {enum: [automatic, explicit]}
+              mode: {enum: [automatic, explicit, lanes]}
               points: {enum: [own-row, group-header, predecessor]}
+              trackAllocation: {description: "Explicit-row subtrack policy; `collision` opts into the #467 collision allocator without changing v0.22 authored output.", enum: [subtrack, collision]}
+              laneTable:
+                description: "The lane mode's finite row-summary declaration (#467); a group/lane identity fact, never a table subject's object facts."
+                type: object
+                required: [label]
+                additionalProperties: false
+                properties:
+                  label: {description: "Whether the lone `Lane` column prints the resolved group title (once per group) or the lane's stable representative item title.", enum: [group, lane]}
+                  count: {description: "Add an `Items` column with the number of selected primary items on that lane.", type: boolean}
               items:
                 type: array
                 minItems: 1
@@ -424,16 +433,22 @@ allOf:
                               object: {type: string, minLength: 1}
                               scenario: {type: string, minLength: 1}
             allOf:
-              - description: "Automatic rows derive rows and cannot declare explicit items."
+              - description: "Automatic rows derive rows and cannot declare explicit items or lane-only fields."
                 examples: [{mode: automatic}]
                 if: {properties: {mode: {const: automatic}}}
-                then: {not: {required: [items]}}
-              - description: "Explicit rows require items and cannot use automatic point policy."
+                then: {not: {anyOf: [{required: [items]}, {required: [laneTable]}, {required: [trackAllocation]}]}}
+              - description: "Explicit rows require items, cannot use automatic point policy, and cannot declare the lane-only table summary."
                 examples: [{mode: explicit, items: []}]
                 if: {properties: {mode: {const: explicit}}}
                 then:
                   required: [items]
-                  not: {required: [points]}
+                  not: {anyOf: [{required: [points]}, {required: [laneTable]}]}
+              - description: "Lane rows are table-timeline-only, derive rows like automatic, and forbid item-oriented rows, automatic point policy, and per-row track allocation."
+                examples: [{mode: lanes, laneTable: {label: group}}]
+                if: {properties: {mode: {const: lanes}}}
+                then:
+                  required: [laneTable]
+                  not: {anyOf: [{required: [items]}, {required: [points]}, {required: [trackAllocation]}]}
         allOf:
           - description: "Automatic rows require selection, grouping, ordering, and a window."
             examples: [{rows: {mode: automatic}, selection: {}, grouping: {}, ordering: {}, window: {}}]
@@ -447,6 +462,42 @@ allOf:
             examples: [{rows: {mode: explicit}, window: {}}]
             if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
             then: {not: {anyOf: [{required: [selection]}, {required: [grouping]}, {required: [ordering]}]}, required: [window]}
+          - description: "Lane rows require selection, grouping, ordering, and a window, exactly like automatic."
+            examples: [{rows: {mode: lanes, laneTable: {label: group}}, selection: {}, grouping: {}, ordering: {}, window: {}}]
+            if: {properties: {rows: {properties: {mode: {const: lanes}}, required: [mode]}}}
+            then: {required: [selection, grouping, ordering, window]}
+          - description: "Lane rows are table-timeline-only and never selected with dependency-network surfaces."
+            examples: [{surface: table-timeline, rows: {mode: lanes, laneTable: {label: group}}}]
+            if: {properties: {rows: {properties: {mode: {const: lanes}}, required: [mode]}}}
+            then: {properties: {surface: {const: table-timeline}}, required: [surface]}
+          - description: "Lane rows are not admitted with hierarchy grouping or a hierarchy table column in this version."
+            examples: [{rows: {mode: lanes, laneTable: {label: group}}, grouping: {by: objectType}}]
+            if: {properties: {rows: {properties: {mode: {const: lanes}}, required: [mode]}}}
+            then:
+              not:
+                anyOf:
+                  - {required: [hierarchyColumn]}
+                  - {properties: {grouping: {properties: {by: {const: hierarchy}}, required: [by]}}, required: [grouping]}
+          - description: "Lane rows forbid item-oriented table columns; the lone `Lane` (and optional `Items`) column comes from `laneTable`."
+            examples: [{rows: {mode: lanes, laneTable: {label: group}}}]
+            if: {properties: {rows: {properties: {mode: {const: lanes}}, required: [mode]}}}
+            then: {not: {required: [tableColumns]}}
+          - description: "Lane rows require visible plot labels with a title and visible-overflow, so a packed name is never silently suppressed or hidden in the table."
+            examples: [{rows: {mode: lanes, laneTable: {label: group}}, visibility: {labels: {placement: plot, content: [title], side: auto, overflow: visible-overflow}}}]
+            if: {properties: {rows: {properties: {mode: {const: lanes}}, required: [mode]}}}
+            then:
+              properties:
+                visibility:
+                  required: [labels]
+                  properties:
+                    labels:
+                      type: object
+                      required: [placement, content, overflow]
+                      properties:
+                        placement: {const: plot}
+                        content: {type: array, contains: {const: title}}
+                        overflow: {const: visible-overflow}
+              required: [visibility]
           - description: "A dependency network omits table-timeline-only presentation fields."
             examples: [{surface: dependency-network}]
             if: {properties: {surface: {const: dependency-network}}, required: [surface]}
