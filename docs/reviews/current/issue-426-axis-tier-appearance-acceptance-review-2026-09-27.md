@@ -2,6 +2,9 @@
 
 # Release Review — Axis Tier Appearance (#426)
 
+> **Correction (2026-09-27):** the issue body was extended to ten acceptance rows before this review was published. This review covers only rows 1–4, as read at claim time. Rows 5–10 are not met yet; they are handled by a design correction and slice I426-2, whose acceptance review supersedes this one. #426 was reopened.
+
+
 **Reviewed product:** `6e3b4529` on this branch (`0e75e9d6` View v0.24 + migration, `c55d6c05` lane/appearance implementation, `6e3b4529` public evidence). **Design:** [design](../../design/issue-426-axis-tier-appearance-design-2026-09-26.md), [architecture review](issue-426-axis-tier-appearance-architecture-review-2026-09-26.md), [Specification 39 §1.2](../../specification/39-axis-and-observation-clarity.md#12-axis-tier-appearance-426). **Slice review:** [I426-1](issue-426-axis-tier-appearance-i426-1-review-2026-09-27.md).
 
 ## Literal issue acceptance
