@@ -74,6 +74,13 @@ closure. Axis labels, Symbol shapes, marker shapes, mark opacity, and planned/Ac
 dimensions are completed Scene properties; the serializer does not recover them from
 authoring settings or replace them with adapter defaults.
 
+An explicitly volatile Draft system-font closure is separate from this immutable
+declared-metrics rule. For the exact selected host face, its OS/2 cap height is
+used when positive; otherwise the positive top bound of its uppercase `H`
+outline may supply cap height before Layout. A face without either measure is
+rejected. This never licenses host lookup or derived cap height in an immutable
+Render Context or a persisted declared-metrics artifact.
+
 ## 3. Generalized callouts
 
 A callout is not a special component. Project an existing annotation into a target
