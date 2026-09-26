@@ -5,7 +5,9 @@ import shutil
 from types import SimpleNamespace
 
 import pytest
+from fontTools.ttLib import TTFont
 
+from chrona.presentation.fonts.importer import FontImportError, font_metrics_document
 from chrona.presentation.fonts.system import SystemFontError, resolve_draft_font, resolve_draft_fonts, resolve_system_font
 
 
@@ -79,6 +81,28 @@ def test_real_fontconfig_resolves_regular_and_bold_face_when_host_has_bridge():
     catalog = resolve_draft_fonts((regular, bold))
     assert catalog.metrics.select(family, 400).content_identity == regular.content_identity
     assert catalog.metrics.select(family, 700).content_identity == bold.content_identity
+
+
+def test_draft_host_derives_cap_height_from_exact_h_outline_only(tmp_path):
+    source = TTFont(_face(), recalcTimestamp=False)
+    source["OS/2"].sCapHeight = 0
+    path = tmp_path / "no-cap-height.ttf"
+    source.save(path)
+    face = resolve_system_font("Noto Sans", 400, runner=_runner(path))
+    metric = resolve_draft_font(face).metrics.select("Noto Sans", 400)
+    assert 0 < metric.cap_height <= metric.units_per_em
+
+    with pytest.raises(FontImportError, match="E_FONT_CAP_HEIGHT_REQUIRED"):
+        font_metrics_document(TTFont(path), path.read_bytes(), "Noto Sans", 400)
+
+    missing_h = TTFont(path, recalcTimestamp=False)
+    for table in missing_h["cmap"].tables:
+        table.cmap.pop(ord("H"), None)
+    missing_path = tmp_path / "no-h.ttf"
+    missing_h.save(missing_path)
+    missing_face = resolve_system_font("Noto Sans", 400, runner=_runner(missing_path))
+    with pytest.raises(SystemFontError, match="E_FONT_SYSTEM_MISMATCH"):
+        resolve_draft_font(missing_face)
 
 
 def test_real_hiragino_english_name_and_partial_numeric_capability_on_macos():

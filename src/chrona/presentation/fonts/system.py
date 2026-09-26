@@ -110,7 +110,8 @@ def _draft_entry(face: SystemFontFace) -> tuple[FontMetrics, FontFile]:
         if "sha256:" + sha256(payload).hexdigest() != face.content_identity:
             raise ValueError("face bytes changed after resolution")
         document = font_metrics_document(TTFont(face.path, fontNumber=face.index, recalcTimestamp=False),
-                                         payload, face.family, face.weight, allow_partial_numeric=True)
+                                         payload, face.family, face.weight, allow_partial_numeric=True,
+                                         allow_outline_cap_height=True)
         metrics = font_metrics_from_document(document, metrics_path=face.path, family=face.family,
                                              weight=face.weight, source_content_identity=face.content_identity,
                                              require_numeric=False)

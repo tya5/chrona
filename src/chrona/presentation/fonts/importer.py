@@ -12,6 +12,7 @@ import unicodedata
 from typing import Any
 
 import yaml
+from fontTools.pens.boundsPen import BoundsPen
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
@@ -85,8 +86,26 @@ def _numeric_advances(font: TTFont, cmap: dict[int, str], hmtx: dict[str, tuple[
     return result
 
 
+def _outline_cap_height(font: TTFont, cmap: dict[int, str], units: int) -> int:
+    """Measure the exact face's uppercase H when a volatile host lacks OS/2 data."""
+    glyph_name = cmap.get(ord("H"))
+    if glyph_name is None:
+        raise FontImportError("E_FONT_CAP_HEIGHT_REQUIRED", "/cmap/H")
+    try:
+        glyphs = font.getGlyphSet()
+        pen = BoundsPen(glyphs)
+        glyphs[glyph_name].draw(pen)
+        top = pen.bounds[3] if pen.bounds is not None else None
+    except (KeyError, TypeError, ValueError) as error:
+        raise FontImportError("E_FONT_CAP_HEIGHT_REQUIRED", "/cmap/H") from error
+    if top is None or not 0 < top <= units:
+        raise FontImportError("E_FONT_CAP_HEIGHT_REQUIRED", "/cmap/H")
+    return int(round(top))
+
+
 def font_metrics_document(font: TTFont, payload: bytes, family: str, weight: int,
-                          *, allow_partial_numeric: bool = False) -> bytes:
+                          *, allow_partial_numeric: bool = False,
+                          allow_outline_cap_height: bool = False) -> bytes:
     """Build the canonical v3 metrics document for exactly ``payload``.
 
     Both local import and draft system discovery use this function.  Keeping
@@ -101,6 +120,8 @@ def font_metrics_document(font: TTFont, payload: bytes, family: str, weight: int
         ascent, descent = int(font["hhea"].ascent), int(font["hhea"].descent)
     except KeyError as error:
         raise FontImportError("E_FONT_IMPORT_FORMAT") from error
+    if cap_height <= 0 and allow_outline_cap_height:
+        cap_height = _outline_cap_height(font, cmap, units)
     if cap_height <= 0:
         raise FontImportError("E_FONT_CAP_HEIGHT_REQUIRED", "/OS/2/sCapHeight")
     table = {
