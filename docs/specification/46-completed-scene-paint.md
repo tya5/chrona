@@ -134,3 +134,9 @@ the unpainted bounds centre; the exact sample coordinate is part of the
 finding. A hosted progress-fill is independently tested against its earlier
 host and is not exempt from the mark floor. See the #459 painted-sample
 correction for the finite geometry rule.
+
+An earlier opaque linear-gradient Rect is also a valid ground. Its completed
+absolute gradient is sampled at the same point by clamped sRGB stop
+interpolation; the finding identifies a `gradient-sample` ground. This
+supersedes the first #459 design's exclusion of all gradient hosts. Other
+non-flat or non-opaque hosts still require an explicit contract.
