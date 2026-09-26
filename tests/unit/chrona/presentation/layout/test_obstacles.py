@@ -66,9 +66,18 @@ def test_duplicate_and_invalid_geometry_fail_before_composition() -> None:
     with pytest.raises(ValueError, match="E_LAYOUT_OBSTACLE_ID_DUPLICATE"):
         index.add(obstacle)
     with pytest.raises(ValueError, match="E_LAYOUT_OBSTACLE_GEOMETRY"):
-        ObstacleSegment((0, 0), (1, 1))
+        ObstacleSegment((0, 0), (0, 0))
     with pytest.raises(ValueError, match="E_LAYOUT_OBSTACLE_GEOMETRY"):
         ObstacleRect(0, 0, float("nan"), 1)
+
+
+def test_diagonal_fallback_route_is_exact_obstacle() -> None:
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("fallback:diagonal", "dependency-route", "timeline",
+                              ObstacleSegment((0, 0), (20, 20), stroke_width=2)))
+    assert index.collisions(ObstacleRect(9, 9, 11, 11))
+    assert index.collisions(ObstacleRect(1, 17, 3, 19)) == ()
+    assert index.collisions(ObstacleSegment((0, 20), (20, 0)))
 
 
 def test_existing_label_ladder_can_query_shared_inventory() -> None:

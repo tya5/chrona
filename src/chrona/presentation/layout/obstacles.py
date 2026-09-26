@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite
+from math import hypot, isfinite
 from typing import Iterable
 
 
@@ -21,7 +21,7 @@ class ObstacleRect:
 
 @dataclass(frozen=True)
 class ObstacleSegment:
-    """One axis-aligned stroked route/rule segment, not its enclosing route box."""
+    """One stroked route/rule segment, not its enclosing route box."""
 
     start: tuple[float, float]
     end: tuple[float, float]
@@ -30,7 +30,6 @@ class ObstacleSegment:
     def __post_init__(self) -> None:
         if (not all(isfinite(value) for value in (*self.start, *self.end, self.stroke_width))
                 or self.start == self.end
-                or (self.start[0] != self.end[0] and self.start[1] != self.end[1])
                 or self.stroke_width < 0):
             raise ValueError("E_LAYOUT_OBSTACLE_GEOMETRY")
 
@@ -68,46 +67,82 @@ def _intersects(left: ObstacleGeometry, right: ObstacleGeometry, clearance: floa
     if isinstance(left, ObstacleRect) and isinstance(right, ObstacleRect):
         return (left.left < right.right + clearance and right.left - clearance < left.right
                 and left.top < right.bottom + clearance and right.top - clearance < left.bottom)
-    # Orthogonal segment envelopes are exact stroked-segment rectangles for
-    # positive stroke/clearance. For a zero-width path, an interior crossing
-    # still blocks, while a touch at an endpoint does not.
     if isinstance(left, ObstacleSegment) and isinstance(right, ObstacleSegment):
         return _segments_intersect(left, right, clearance)
     segment = left if isinstance(left, ObstacleSegment) else right
     rect = right if isinstance(left, ObstacleSegment) else left
     assert isinstance(segment, ObstacleSegment) and isinstance(rect, ObstacleRect)
     radius = segment.stroke_width / 2 + clearance
-    x1, y1 = segment.start
-    x2, y2 = segment.end
-    if y1 == y2:
-        return (rect.top - radius < y1 < rect.bottom + radius
-                and min(x1, x2) < rect.right + radius and rect.left - radius < max(x1, x2))
-    return (rect.left - radius < x1 < rect.right + radius
-            and min(y1, y2) < rect.bottom + radius and rect.top - radius < max(y1, y2))
+    if _segment_crosses_rect_interior(segment, rect):
+        return True
+    if radius == 0:
+        return False
+    corners = ((rect.left, rect.top), (rect.right, rect.top),
+               (rect.right, rect.bottom), (rect.left, rect.bottom))
+    return any(_segment_distance(segment.start, segment.end, corners[index], corners[(index + 1) % 4]) < radius
+               for index in range(4))
 
 
 def _segments_intersect(left: ObstacleSegment, right: ObstacleSegment, clearance: float) -> bool:
-    left_radius, right_radius = left.stroke_width / 2 + clearance / 2, right.stroke_width / 2 + clearance / 2
-    lx1, ly1 = left.start
-    lx2, ly2 = left.end
-    rx1, ry1 = right.start
-    rx2, ry2 = right.end
-    if ly1 == ly2 and ry1 == ry2:
-        return (abs(ly1 - ry1) <= left_radius + right_radius
-                and min(lx1, lx2) - left_radius < max(rx1, rx2) + right_radius
-                and min(rx1, rx2) - right_radius < max(lx1, lx2) + left_radius)
-    if lx1 == lx2 and rx1 == rx2:
-        return (abs(lx1 - rx1) <= left_radius + right_radius
-                and min(ly1, ly2) - left_radius < max(ry1, ry2) + right_radius
-                and min(ry1, ry2) - right_radius < max(ly1, ly2) + left_radius)
-    horizontal, vertical = (left, right) if ly1 == ly2 else (right, left)
-    hx1, hy = horizontal.start
-    hx2, _ = horizontal.end
-    vx, vy1 = vertical.start
-    _, vy2 = vertical.end
-    radius = horizontal.stroke_width / 2 + vertical.stroke_width / 2 + clearance
-    return (min(hx1, hx2) - radius < vx < max(hx1, hx2) + radius
-            and min(vy1, vy2) - radius < hy < max(vy1, vy2) + radius)
+    radius = left.stroke_width / 2 + right.stroke_width / 2 + clearance
+    distance = _segment_distance(left.start, left.end, right.start, right.end)
+    if radius > 0:
+        return distance < radius
+    if distance > 1e-9:
+        return False
+    # A shared endpoint is a legal touch only when the interiors do not
+    # overlap. Any crossing or collinear overlap blocks.
+    shared = set((left.start, left.end)).intersection((right.start, right.end))
+    if not shared:
+        return True
+    if len(shared) == 2:
+        return True
+    point = next(iter(shared))
+    other_left = left.end if left.start == point else left.start
+    other_right = right.end if right.start == point else right.start
+    cross = _cross(point, other_left, other_right)
+    return abs(cross) < 1e-9 and ((other_left[0] - point[0]) * (other_right[0] - point[0])
+                                  + (other_left[1] - point[1]) * (other_right[1] - point[1])) > 0
+
+
+def _segment_crosses_rect_interior(segment: ObstacleSegment, rect: ObstacleRect) -> bool:
+    x1, y1 = segment.start
+    x2, y2 = segment.end
+    low, high = 0.0, 1.0
+    for value, delta, start, end in ((x1, x2 - x1, rect.left, rect.right),
+                                     (y1, y2 - y1, rect.top, rect.bottom)):
+        if delta == 0:
+            if not start < value < end:
+                return False
+            continue
+        a, b = sorted(((start - value) / delta, (end - value) / delta))
+        low, high = max(low, a), min(high, b)
+    return low < high
+
+
+def _cross(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
+def _point_segment_distance(point: tuple[float, float], start: tuple[float, float],
+                            end: tuple[float, float]) -> float:
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    position = max(0.0, min(1.0, ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy)
+                            / (dx * dx + dy * dy)))
+    return hypot(point[0] - start[0] - position * dx, point[1] - start[1] - position * dy)
+
+
+def _segment_distance(a: tuple[float, float], b: tuple[float, float],
+                      c: tuple[float, float], d: tuple[float, float]) -> float:
+    cross1, cross2 = _cross(a, b, c), _cross(a, b, d)
+    cross3, cross4 = _cross(c, d, a), _cross(c, d, b)
+    if cross1 * cross2 <= 0 and cross3 * cross4 <= 0:
+        # Collinear disjoint segments fail the bounding-box overlap test.
+        if (max(min(a[0], b[0]), min(c[0], d[0])) <= min(max(a[0], b[0]), max(c[0], d[0]))
+                and max(min(a[1], b[1]), min(c[1], d[1])) <= min(max(a[1], b[1]), max(c[1], d[1]))):
+            return 0.0
+    return min(_point_segment_distance(a, c, d), _point_segment_distance(b, c, d),
+               _point_segment_distance(c, a, b), _point_segment_distance(d, a, b))
 
 
 class SurfaceObstacleIndex:
