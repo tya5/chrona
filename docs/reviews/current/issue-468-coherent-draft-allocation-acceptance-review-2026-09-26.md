@@ -23,6 +23,11 @@ and [correction review](issue-468-fixed-host-allocation-correction-review-2026-0
 | 3 | The default draft render shows month labels on the timeline. | met | [Bundled View](../../../examples/halcyon-1/views/default-draft.yaml) declares month and quarter tiers; [CLI test](../../../tests/cli/test_cli.py) checks `Mar` in actual emitted SVG. Raster inspection confirmed the axis is visible. | — |
 | 4 | The Scene perceptibility gate (#446) or an equivalent check fails when a text primitive intersects another one in a committed or starter render. | met | [Starter gate](../../../tools/check_starter_perceptibility.py) renders the real bundled Draft through Layout/Scene and runs the one #446 evaluator in [conformance](../../../conformance/run_conformance.py). [Negative test](../../../tests/unit/tools/test_check_starter_perceptibility.py) injects colliding text bounds and verifies nonzero exit with `E_SCENE_TEXT_INTERSECTION`. | — |
 
+## Programme-level criteria (optional)
+
+No additional programme criteria apply. The review covers all four literal
+acceptance items without narrowing or deferral.
+
 ## Verification and artifact review
 
 - I468-1 `b440ae5f42b22a360e8dbb3e31bfdcc3d88ea1c7`: focused 45 passed, conformance passed, all 21 public materializers byte-identical; [CI](https://github.com/tya5/chrona/actions/runs/36221442204) passed on three OSes plus newest-Python materializers.
@@ -32,4 +37,4 @@ and [correction review](issue-468-fixed-host-allocation-correction-review-2026-0
 
 ## Architecture conclusion
 
-Layout owns the content-derived allocation and keeps fixed/capped-host fallbacks truthful. Draft ingress selects the auto-block default; the View resource declares axis semantics; Scene and adapters consume completed placement without new sizing or overlap exceptions. The starter gate reuses the existing Scene evaluator, so there is one intersection rule. The fixed-host design correction was published before implementation resumed. All four literal criteria are met; closure awaits the I468-3 and this review commit's release CI gates.
+Layout owns the content-derived allocation and keeps fixed/capped-host fallbacks truthful. Draft ingress selects the auto-block default; the View resource declares axis semantics; Scene and adapters consume completed placement without new sizing or overlap exceptions. The starter gate reuses the existing Scene evaluator, so there is one intersection rule. The fixed-host design correction was published before implementation resumed. All four literal criteria are met; closure awaits the corrected review commit's release CI gate.
