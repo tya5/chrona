@@ -74,6 +74,31 @@ def test_a_multi_part_glyph_part_grounds_against_the_earlier_part_beneath_it():
     assert (finding.ground_id, finding.ground_color, finding.paint_channel) == ("body", "#5FA8FF", "fill")
 
 
+def test_an_image_backed_container_grounds_note_text_by_its_declared_fill_465():
+    """#465: paint.image never changes ground resolution -- fill alone still does.
+
+    An image-backed annotation container is still an ordinary Rect with a flat
+    `fill` (the Theme author's declared representative colour for the
+    artwork's content area); `_ground_under` must keep treating it exactly
+    like a plain rectangle container, oblivious to `paint.image`.
+    """
+    ground = _primitive("annotation-box", "unclassified", "annotation", "#16213A", order=10,
+                        bounds={"inline": 0, "block": 0, "inlineSize": 200, "blockSize": 60})
+    ground["paint"]["image"] = {
+        "assetIdentity": "sha256:" + "0" * 64,
+        "viewport": {"inlineSize": 40, "blockSize": 40},
+        "tiles": [{"source": {"inline": 0, "block": 0, "inlineSize": 40, "blockSize": 40},
+                  "destination": {"inline": 0, "block": 0, "inlineSize": 200, "blockSize": 60}}],
+    }
+    findings = evaluate_scene_contrast(_scene(
+        ground,
+        _primitive("note-text", "variance-ahead", "table-cell", "#FFFFFF", treatment="required",
+                  order=100, bounds={"inline": 10, "block": 10, "inlineSize": 100, "blockSize": 20}),
+    ))
+    finding = next(item for item in findings if item.primitive_id == "note-text")
+    assert (finding.ground_id, finding.ground_color, finding.ground_kind) == ("annotation-box", "#16213A", "flat")
+
+
 def test_stroke_only_rect_samples_painted_edge_not_unpainted_centre():
     findings = evaluate_scene_contrast(_scene(
         _primitive("left", "unclassified", "panel", "#222222", order=10,

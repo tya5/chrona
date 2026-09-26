@@ -25,10 +25,13 @@ def _owner(delivery: str, consumer: str, fields: str) -> Owner:
 # Fields are deliberately literal.  New public Scene data has no delivery
 # authority until it is added here with a real consumer.
 OWNERS = {
-    "ScenePaint": (_owner("inspection", "scene/serialization.py", "fill stroke stroke_width dash opacity gradient shadow stroke_finish"),),
+    "ScenePaint": (_owner("inspection", "scene/serialization.py", "fill stroke stroke_width dash opacity gradient shadow stroke_finish image"),),
     "LinearGradient": (_owner("inspection", "scene/serialization.py", "start end stops fidelity"),),
     "DropShadow": (_owner("inspection", "scene/serialization.py", "color offset_x offset_y blur opacity fidelity"),),
     "StrokeFinish": (_owner("inspection", "scene/serialization.py", "line_cap line_join fidelity"),),
+    "ImageFill": (_owner("inspection", "scene/serialization.py", "asset_identity viewport tiles"),
+                 _owner("adapter", "renderers/v05_svg.py", "payload")),
+    "ImageTile": (_owner("inspection", "scene/serialization.py", "source destination"),),
     "TextLayout": (_owner("inspection", "scene/serialization.py", "bounds baseline lines family weight font_size line_height asset_identity letter_spacing text_transform numeric_spacing orientation rotation_degrees"),),
     "SceneIconPath": (_owner("inspection", "scene/serialization.py", "commands fill stroke stroke_width line_cap line_join opacity"),),
     "PatternStroke": (_owner("inspection", "scene/serialization.py", "start end width"),),
@@ -39,6 +42,7 @@ OWNERS = {
         _owner("derived", "scene/v05_builder.py", "icon_vector icon_stroke_scale glyph_paint_mode glyph_paint_color"),
         _owner("adapter", "renderers/v05_svg.py", "icon_raster"),
         _owner("derived", "scene/visual_capabilities.py", "visual_capability_source_ref"),
+        _owner("derived", "scene/v05_builder.py", "image_fill_pending"),
     ),
     "SceneSlot": (_owner("inspection", "scene/serialization.py", "slot_id source scale_id bounds priority overflow"),),
     "SceneRow": (_owner("inspection", "scene/serialization.py", "object_id group_id bounds row_id"),),

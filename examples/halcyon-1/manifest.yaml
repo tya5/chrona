@@ -73,3 +73,8 @@ slides:
     context: contexts/14-gallery-technical-print.yaml
     expectedSvg: generated/14-gallery-technical-print.svg
     expectedScene: generated/14-gallery-technical-print.scene.json
+  - id: gallery-image-notes
+    evidence: "Programme board notes drawn over a Theme-bound, nine-slice-stretched image container (#465), derived from 02-programme-board without editing it."
+    context: contexts/15-gallery-image-notes.yaml
+    expectedSvg: generated/15-gallery-image-notes.svg
+    expectedScene: generated/15-gallery-image-notes.scene.json

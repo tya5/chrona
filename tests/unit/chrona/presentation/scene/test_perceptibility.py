@@ -44,6 +44,17 @@ def test_hosted_opaque_overlap_is_individually_classified_not_silently_ignored()
     ))
 
 
+def test_an_image_backed_rects_paint_image_does_not_change_occlusion_465():
+    """#465: paint.image is invisible to perceptibility -- only kind/fill/opacity matter."""
+    image = {"assetIdentity": "sha256:" + "0" * 64, "viewport": {"inlineSize": 40, "blockSize": 40},
+            "tiles": [{"source": _bounds(inline_size=40, block_size=40), "destination": _bounds(inline_size=10, block_size=10)}]}
+    findings = evaluate_scene_perceptibility(_scene(
+        _primitive("text"), _primitive("cover", "Rect", order=1, paint={"fill": "#000000", "opacity": 1, "image": image}),
+    ))
+    finding = next(item for item in findings if item.code == "E_SCENE_TEXT_OCCLUDED")
+    assert finding.primitive_ids == ("text", "cover")
+
+
 def test_nonopaque_and_half_coverage_rects_do_not_report_occlusion():
     assert "E_SCENE_TEXT_OCCLUDED" not in _codes(_scene(
         _primitive("text"), _primitive("half", "Rect", order=1, bounds=_bounds(inline_size=4.99), paint={"fill": "#000000", "opacity": 1}),

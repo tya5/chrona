@@ -222,7 +222,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     icon_assets = {item.icon_id: item for item in render_closure.icon_assets}
     visual_requests = tuple(_visual_request(visual, projection, index, render_closure)
                             for index, visual in enumerate(render_closure.view.view.visuals))
-    if visual_requests:
+    if visual_requests or icon_assets:
+        # A Theme-only annotationContainer.image binding (#465) selects a
+        # catalog entry no View visual names; icon_assets is non-empty
+        # exactly when the pinned iconCatalogs closure actually supplied
+        # something to read, whichever selected it.
         ledger.icons()
     actual_observations = render_closure.actual_set.observations_input if render_closure.actual_set else None
     table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
