@@ -546,7 +546,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         diagnostics=placed_surface.diagnostics,
                         canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
                                        float(canvas.block_size)) if canvas is not None else None,
-                        fit_warnings=placed_surface.fit_warnings)
+                        fit_warnings=placed_surface.fit_warnings,
+                        info_diagnostics=placed_surface.info_diagnostics)
 
 
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:

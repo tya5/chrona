@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
 
 
 @dataclass(frozen=True)
@@ -406,9 +407,19 @@ class SurfacePlacement:
     icons: tuple[IconPlacement, ...] = ()
     canvas_bounds: Rect | None = None
     fit_warnings: tuple[FitWarning, ...] = ()
+    info_diagnostics: tuple[PresentationInfo, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
+        suppressed_members = {item.placement_id for item in self.text
+                              if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
+        reported_suppressions = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in self.diagnostics
+                                 if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
+        counts = tuple(item for item in self.info_diagnostics if isinstance(item, SuppressedPlotLabels))
+        if (not suppressed_members.issubset(reported_suppressions)
+                or len(counts) != (1 if suppressed_members else 0)
+                or (counts and counts[0].count != len(suppressed_members))):
+            raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID")
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         if self.canvas_bounds is not None and (self.canvas_bounds.inline_size <= 0 or self.canvas_bounds.block_size <= 0):
             raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")

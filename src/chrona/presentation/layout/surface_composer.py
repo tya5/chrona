@@ -27,6 +27,7 @@ from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_lab
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
 from chrona.presentation.model.placement_candidates import candidate_order
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
@@ -1330,6 +1331,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
             visible_fallback_side="above",
             rule_host_obstacle_id="as-of",
+            semantic_id="asOfLabel",
         ))
     if contract.labels.enabled:
         for review_row in review_rows:
@@ -1366,7 +1368,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
-                                                   wrap, inside_host_obstacle_id=host_mark_id if mark is not None else None))
+                                                   wrap, inside_host_obstacle_id=host_mark_id if mark is not None else None,
+                                                   semantic_id="memberLabel"))
         for folded in getattr(projection, "folded_points", ()):
             instance_id = _folded_instance_id(folded, folded.item)
             host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
@@ -1381,7 +1384,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 f"member-label:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
                 folded.item.title, LabelRect(*_bounds(mark.bounds)), default_ladder, "groupHeader", "group-header-point",
                 CollisionDomain("group-header", folded.group_id), "visible-overflow", bounds=LabelRect(*_bounds(group.header_bounds)),
-                inside_host_obstacle_id=mark.placement_id))
+                inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel"))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
     for review_row in review_rows:
@@ -1402,7 +1405,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 label_requests.append(LabelRequest(f"variance:{instance_id}", item.object_id, f"{item.finish_delta:+d}d",
                                                    anchor_bounds, ("above", "below", "end", "start"), "summary",
                                                    f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
-                                                   request.surface_content.label_overflow))
+                                                   request.surface_content.label_overflow, semantic_id="finishDelta"))
 
     # One monotonically growing Layout inventory is shared by labels, semantic
     # routes and annotations. Background bands deliberately do not enter it.
@@ -1477,7 +1480,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      content=label_request.content, inline=0, baseline_block=float(font_size),
                                      typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
                                      font_metrics=request.font_metrics, collision_region=label_request.collision_region,
-                                     collision_domain=label_request.collision_domain)
+                                     collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id)
             fallback_ladder = label_request.candidates + (
                 (label_request.visible_fallback_side,)
                 if label_request.visible_fallback_side is not None
@@ -1505,7 +1508,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        baseline_block=candidate.bounds.y + float(font_size),
                                        typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
                                        font_metrics=request.font_metrics, collision_region=provisional.collision_region,
-                                       collision_domain=provisional.collision_domain,
+                                       collision_domain=provisional.collision_domain, semantic_id=provisional.semantic_id,
                                        overflow="visible-overflow" if visible_overflow else "fit",
                                        lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
                                       host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
@@ -2269,13 +2272,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     + tuple(item.bounds for item in shapes) + tuple(item.bounds for item in icons)),
         paths=tuple(item.points for item in relations),
     )
+    suppressed_plot_labels = sum(item.semantic_id == "memberLabel" and item.overflow == "suppressed" for item in text)
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
                                  axis_tier_outcomes=tuple(axis_tier_outcomes),
                                  diagnostics=tuple(diagnostics), icons=tuple(icons),
-                                 canvas_bounds=canvas, fit_warnings=tuple(fit_warnings))
+                                 canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
+                                 info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
+                                                   if suppressed_plot_labels else ()))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
 

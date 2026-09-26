@@ -20,6 +20,7 @@ from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
+from chrona.app.cli import _emit_render_warnings
 from chrona.resources import default_preset_resource, default_preset_root
 
 
@@ -60,6 +61,41 @@ def test_draft_render_materializes_the_review_surface():
 
 def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
+
+
+def test_suppressed_plot_member_labels_have_one_completed_info_count(capsys):
+    rendered = render_review(_draft_request())
+    visible_members = {item.scene_id for item in rendered.surface.primitives
+                       if item.kind == "Text" and item.scene_id.startswith("member-label:")}
+    per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
+              if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
+    assert len(per_id) == 1
+    assert not per_id & visible_members
+    assert rendered.scene.diagnostics.count(
+        "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1") == 1
+    _emit_render_warnings(rendered)
+    info = [json.loads(line) for line in capsys.readouterr().err.splitlines()
+            if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
+    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": 1,
+                     "severity": "info", "surfaceId": "table-timeline"}]
+
+
+def test_suppression_count_excludes_other_plot_text_and_absent_count():
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/mission-light"
+    inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+                  scheme_path=example / "schemes/mission-light.yaml")
+    tuned = render_review(_draft_request(**inputs, view_path=preset / "view.yaml",
+                                         theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
+    assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
+    assert "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1" in tuned.scene.diagnostics
+    ordinary = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
+                                            theme_path=example / "themes/briefing.yaml",
+                                            layout_path=example / "layouts/briefing.yaml",
+                                            summary_path=example / "profiles/summary.yaml"))
+    assert not ordinary.info_diagnostics
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
 
 
 def test_five_line_derived_theme_changes_visible_draft_and_closes_as_ordinary_theme():

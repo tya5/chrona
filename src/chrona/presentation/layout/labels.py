@@ -59,6 +59,7 @@ class LabelRequest:
     inside_host_obstacle_id: str | None = None
     visible_fallback_side: str | None = None
     rule_host_obstacle_id: str | None = None
+    semantic_id: str = ""
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:

@@ -7,6 +7,7 @@ from datetime import date
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
 from chrona.presentation.icons import NormalizedVectorIcon
 from chrona.presentation.model.font_metrics import FontTabularWarning
+from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
 
 
@@ -299,6 +300,7 @@ class SceneSurface:
     canvas_bounds: tuple[float, float, float, float] | None = None
     fit_warnings: tuple[FitWarning, ...] = ()
     decoration_dispositions: tuple[DecorationDisposition, ...] = ()
+    info_diagnostics: tuple[PresentationInfo, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""

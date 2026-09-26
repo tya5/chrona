@@ -26,6 +26,7 @@ from chrona.presentation.layout.surface_composer import resolve_label_visual_adv
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
+from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
@@ -102,6 +103,7 @@ class RenderedReview:
     scenario_provenance: tuple[ScenarioProvenance, ...] = ()
     font_warnings: tuple["FontGlyphWarning", ...] = ()
     perceptibility_warnings: tuple["ScenePerceptibilityWarning", ...] = ()
+    info_diagnostics: tuple[PresentationInfo, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -310,7 +312,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if surface.canvas_bounds is None:
         raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
-                          _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings)
+                          _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings,
+                          surface.info_diagnostics)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
@@ -351,7 +354,8 @@ def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection:
         version("chrona"), tuple(sorted(resources)),
     )
     return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest,
-                           surface.diagnostics, tabular_warnings)
+                           (*surface.diagnostics, *(item.scene_diagnostic() for item in surface.info_diagnostics)),
+                           tabular_warnings)
 
 
 def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind: str) -> tuple[FontGlyphWarning, ...]:

@@ -16,6 +16,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
@@ -136,6 +137,10 @@ def _emit_render_warnings(rendered: RenderedReview) -> None:
     _emit_font_warnings(rendered)
     _emit_fit_warnings(rendered)
     _emit_scene_perceptibility_warnings(rendered)
+    for info in rendered.info_diagnostics:
+        if isinstance(info, SuppressedPlotLabels):
+            print(json.dumps({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
+                              "count": info.count}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:

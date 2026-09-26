@@ -7,6 +7,7 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.path_geometry import open_span_path
 from chrona.presentation.layout.surface_composer import progress_fill_bounds, relation_label_content
 from chrona.presentation.model.surface_content import RelationPresentationFact
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome,
     AxisTierOutcome,
@@ -60,6 +61,25 @@ def test_fit_warning_requires_completed_visible_fallback_facts():
 
     with pytest.raises(ValueError, match="E_LAYOUT_CANVAS_BOUNDS_INVALID"):
         SurfacePlacement(canvas_bounds=_rect(0, 0, 0, 20)).assert_valid()
+
+
+def test_suppressed_member_count_matches_completed_placements_and_individual_facts():
+    suppressed = tuple(TextPlacement(f"member-label:{number}", f"source:{number}", "label",
+                                     _rect(number, 0, 1, 1), "text", overflow="suppressed",
+                                     required=False, semantic_id="memberLabel")
+                       for number in (1, 2))
+    warnings = tuple(f"W_LAYOUT_LABEL_SUPPRESSED:{item.placement_id}" for item in suppressed)
+    placement = SurfacePlacement(text=suppressed, diagnostics=warnings,
+                                 info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),))
+    placement.assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
+        SurfacePlacement(text=suppressed, diagnostics=warnings,
+                         info_diagnostics=(SuppressedPlotLabels("table-timeline", 1),)).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
+        SurfacePlacement(text=suppressed, diagnostics=warnings[:1],
+                         info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),)).assert_valid()
+    with pytest.raises(ValueError, match="E_PRESENTATION_INFO_INVALID"):
+        SuppressedPlotLabels("table-timeline", 0)
 
 
 def test_relation_label_content_preserves_signed_calendar_provenance_and_omits_zero_lag():

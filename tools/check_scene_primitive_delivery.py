@@ -49,7 +49,7 @@ OWNERS = {
     "SceneManifest": (_owner("inspection", "scene/serialization.py", "version settings_version viewport selected_object_ids font_asset_identities content_family_counts surface_scales visual_role_counts"),),
     "SceneSurface": (
         _owner("inspection", "scene/serialization.py", "surface_id slots rows groups scale_manifest primitives canvas_paint columns canvas_bounds fit_warnings decoration_dispositions"),
-        _owner("derived", "scene/v05_builder.py", "diagnostics"),
+        _owner("derived", "scene/v05_builder.py", "diagnostics info_diagnostics"),
     ),
     "SceneProvenance": (_owner("inspection", "scene/serialization.py", "mode chrona_version resources"),),
     "DecorationDisposition": (_owner("inspection", "scene/serialization.py", "visual_role disposition"),),
