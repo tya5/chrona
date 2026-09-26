@@ -2,6 +2,7 @@ version: chrona/example-reachability/v0.1
 supportingFiles:
   - {path: README.md, reason: corpus index documentation}
   - {path: aster-ssd/README.md, reason: ASTER corpus documentation}
+  - {path: aster-ssd/themes/onboarding-variation.yaml, reason: executable five-line derived Theme tutorial source}
   - {path: controller-z/README.md, reason: Controller Z corpus and curriculum documentation}
   - {path: controller-z-ja/README.md, reason: Japanese corpus documentation}
   - {path: halcyon-1/README.md, reason: HALCYON corpus documentation}
@@ -16,3 +17,12 @@ supportingFiles:
   - {path: controller-z/imported-icons.yaml, reason: generated icon importer regression evidence}
   - {path: controller-z/profiles/summary.yaml, reason: optional draft summary profile fixture}
   - {path: halcyon-1/views/default-draft.yaml, reason: executable documented default draft View source}
+  - {path: onboarding/01-spans/project.yaml, reason: executable Draft tutorial fixed-span source}
+  - {path: onboarding/02-gate/project.yaml, reason: executable Draft tutorial gate source}
+  - {path: onboarding/03-relations/project.yaml, reason: executable Draft tutorial dependency and lag source}
+  - {path: onboarding/04-calendar/project.yaml, reason: executable Draft tutorial working-day calendar source}
+  - {path: onboarding/05-constraints/project.yaml, reason: executable Draft tutorial constraint and deadline source}
+  - {path: onboarding/06-rollup/project.yaml, reason: executable Draft tutorial hierarchy and rollup source}
+  - {path: onboarding/07-actuals/project.yaml, reason: executable Draft tutorial Project source with observations}
+  - {path: onboarding/07-actuals/actual.yaml, reason: executable Draft tutorial Actual Set progress source}
+  - {path: onboarding/07-actuals/view.yaml, reason: executable Draft tutorial progress selection source}

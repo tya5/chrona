@@ -6,6 +6,7 @@ import yaml
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.resources import default_preset_resource, default_preset_root
 from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.usecases.local_authoring import initialize_project
 from chrona.usecases.render_review import RenderRequest, render_review
 
 
@@ -51,6 +52,22 @@ def test_editing_the_first_tutorial_project_changes_the_render(tmp_path: Path):
     edited_path = tmp_path / "project.yaml"
     edited_path.write_text(yaml.safe_dump(edited, sort_keys=False), encoding="utf-8")
     assert _render(source).artifact.content != _render(edited_path).artifact.content
+
+
+def test_adding_a_task_to_initialized_project_changes_its_render(tmp_path: Path):
+    starter = tmp_path / "demo"
+    initialize_project(starter)
+    project_path = starter / "project.yaml"
+    before = _render(project_path).artifact.content
+    edited = yaml.safe_load(project_path.read_bytes())
+    edited["objects"]["verification"] = {
+        "type": "task", "title": "Verification added by the reader",
+        "schedule": {"mode": "fixed-span", "start": "2026-12-16", "end": "2026-12-17"},
+    }
+    project_path.write_text(yaml.safe_dump(edited, sort_keys=False), encoding="utf-8")
+    after = _render(project_path).artifact.content
+    assert after != before
+    assert b'data-source-ref="verification"' in after
 
 
 def test_advanced_tutorial_examples_select_their_declared_closure_edges():
