@@ -1,6 +1,7 @@
 # Design — Collision-Aware Lane Rows (#467)
 
 **Status:** selected design, subject to the architecture review linked below.
+**Closure-order hold:** the later [#466 topology review](../reviews/current/issue-466-bounded-escape-nonacceptance-review-2026-09-26.md) and [#467 architecture recheck](../reviews/current/issue-467-lane-rows-prerequisite-recheck-2026-09-26.md) suspend the closure-order paragraph below pending a common Layout phase design. Use cases, identity and acceptance thresholds remain selected.
 **Plan:** [#467 design plan](../planning/active/issue-467-lane-packing-design-plan-2026-09-26.md).
 **Prerequisite:** [#466 shared-obstacle design](issue-466-general-placement-design-2026-09-26.md), obstacle-only stage. This design does not declare #466 complete or authorize its later candidate/tail grammar.
 **Target:** the Transit Map research board is inspiration for density, not a table-timeline byte target.

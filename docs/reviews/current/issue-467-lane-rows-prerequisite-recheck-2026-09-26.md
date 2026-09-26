@@ -1,0 +1,7 @@
+# Architecture Recheck — #467 Lane Rows After #466 O2 Non-Acceptance
+
+The [#467 selected design](../../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md) was written before the [#466 route-priority correction](../../design/issue-466-general-placement-route-priority-correction-2026-09-26.md) and [annotation topology non-acceptance](issue-466-bounded-escape-nonacceptance-review-2026-09-26.md). Its closure-order paragraph says final required plot labels precede semantic routes, while the later #466 design separates label measurement from optional final placement and gives semantic routes priority. These cannot both be treated as final implementation instructions.
+
+**Decision:** retain #467's use cases, v0.23 resource model, lane identity, measured footprint and acceptance thresholds, but suspend its closure-order/annotation-interaction instruction until the #466 topology design resolves the common Layout phase contract. Do not start L1–L3 product code or claim the #466 obstacle-only prerequisite complete. L0 measured feasibility may proceed read-only because it depends on measured mark/name/delta footprints, not final connector topology. Any selected phase correction must update #467 design, architecture review, normative specification and implementation plan before code.
+
+This is a whole-architecture dependency, not an automatic-mode compatibility excuse. Project/Schedule identity, View intent, Theme typography, Layout geometry and Scene projection boundaries remain unchanged.

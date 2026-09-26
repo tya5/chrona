@@ -2,6 +2,7 @@
 
 **Design base:** [selected design](../../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md), [whole-architecture review](../../reviews/current/issue-467-collision-aware-lane-rows-architecture-review-2026-09-26.md), and [Specification 38](../../specification/38-review-row-composition.md), published at `c8ff46f17f348a8bb8ee88ad277a1e7004388972`.
 **Prerequisite:** complete and publish [#466 obstacle-only stage](issue-466-shared-obstacle-prerequisite-implementation-plan-2026-09-26.md) before accepting lane code. #466 remains open for its other criteria.
+**Recheck:** [#467 architecture recheck](../../reviews/current/issue-467-lane-rows-prerequisite-recheck-2026-09-26.md) suspends L1–L3 until the #466 connector topology and the shared closure order are resolved; L0 measured feasibility may proceed independently.
 
 ## Literal #467 acceptance ledger
 
