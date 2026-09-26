@@ -31,12 +31,12 @@ body:
       placement: plot
       content:
       - title
-      side: auto
+      side: end
       overflow: suppress
     fallback:
       labels:
-      - inside
-      - above
+      - end
+      - start
       - suppress
     relations:
       mode: semantic
@@ -56,7 +56,7 @@ body:
       role: labels
       label: {form: short-month, align: center, overflow: thin-with-record, orientation: horizontal}
   backgroundDecoration:
-    rows: none
+    rows: alternate
     groups: all
   tableColumns:
   - id: Work item

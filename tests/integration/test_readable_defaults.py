@@ -170,3 +170,36 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
     collisions = [item for item in warnings if item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
     assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
+
+
+def test_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:
+    """#483 item 2: stripes cross the whole plot; names are declared at the bar end, in the row."""
+    view = yaml.safe_load((ROOT / "examples/halcyon-1/views/default-draft.yaml").read_text(encoding="utf-8"))["body"]
+    labels = view["visibility"]["labels"]
+    assert (labels["placement"], labels["side"]) == ("plot", "end")
+    assert view["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
+    assert view["backgroundDecoration"]["rows"] == "alternate"
+    scene = _render(tmp_path, monkeypatch, "default")
+    surface = scene["surfaces"][0]
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    stripes = [item["bounds"] for key, item in primitives.items() if key.startswith("row-band:")]
+    assert stripes and all(stripe["inline"] + stripe["inlineSize"] >= timeline["inline"] + timeline["inlineSize"] - 0.01
+                           for stripe in stripes)
+    # Every row is striped or shares an edge with a stripe, so each bar has a guide to the plot's end.
+    edges = {round(stripe["block"], 3) for stripe in stripes} | {round(stripe["block"] + stripe["blockSize"], 3) for stripe in stripes}
+    assert all(round(bounds["block"], 3) in edges or round(bounds["block"] + bounds["blockSize"], 3) in edges
+               for bounds in rows.values())
+    placed_at_end_in_row = 0
+    member_labels = [key for key in primitives if key.startswith("member-label:")]
+    for key in member_labels:
+        object_id = key.split(":")[1]
+        label, row = primitives[key]["bounds"], rows[object_id]
+        host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
+        if (row["block"] <= label["block"] and label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
+                and label["inline"] >= host["inline"] + host["inlineSize"] - 0.5):
+            placed_at_end_in_row += 1
+    # Measured at the I483-2 commit: 20 of 28; the rest are the plot-edge start
+    # fallback (3) and side-search displacement out of the row (5), tracked by #488.
+    assert placed_at_end_in_row >= 20 and len(member_labels) == 28
