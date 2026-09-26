@@ -2,7 +2,7 @@
 
 # Release Review — Group Bands and Headers (#481)
 
-**Reviewed product:** `57753800` on the `#481` branch (pending push to `main`; base `bf98f9b0`). **Design:** [design](../../design/issue-481-group-bands-and-headers-design-2026-09-26.md), [architecture review](issue-481-group-bands-and-headers-architecture-review-2026-09-26.md), [design correction](../../design/issue-481-group-bands-and-headers-correction-2026-09-26.md), Specification 45, Specification 50 §3.4. **Implementation:** one commit, `57753800`, implementing all three approved contracts together (they share one function in `surface_composer.py`); see the commit message for the per-contract breakdown in lieu of separate slice reviews. **CI:** pending.
+**Reviewed product:** `cd07bcd4` on `main` (the branch commit `57753800`, cherry-picked and split: correction `c58d7611`, then code `cd07bcd4`; the integrated evidence was regenerated on the 22-slide corpus, and the Controller Z `progress-track` Theme received the same `groupHeader` role). **Design:** [design](../../design/issue-481-group-bands-and-headers-design-2026-09-26.md), [architecture review](issue-481-group-bands-and-headers-architecture-review-2026-09-26.md), [design correction](../../design/issue-481-group-bands-and-headers-correction-2026-09-26.md), Specification 45, Specification 50 §3.4. **Implementation:** one commit, `57753800`, implementing all three approved contracts together (they share one function in `surface_composer.py`); see the commit message for the per-contract breakdown in lieu of separate slice reviews. **CI:** [four-job CI run 36249144076](https://github.com/tya5/chrona/actions/runs/36249144076) on `cd07bcd4`, green: three-OS conformance/full pytest/wheel and newest-Python public materializer reproduction.
 
 ## Literal issue acceptance
 
@@ -21,7 +21,7 @@
 
 - The reproduction from the issue is closed end to end through the CLI: a copied `control-room-dark` preset with `rowBand: both, groupBand: both, groups: all, rows: alternate` shows an alternating row stripe painted over a distinctly-coloured group band across the full table-and-timeline surface, and the group's own header row shares the group's tint (PNG crops inspected, not committed).
 - Before/after PNG crops of `examples/halcyon-1/generated/02-programme-board.svg` and `11-overlay-briefing.svg` were inspected: group-header text is bold in `control-room-dark`-derived scenes, and the group band now visually includes its own header row with no separate seam.
-- CI: pending — the lead runs the three-OS conformance/full pytest/wheel and newest-Python public-materializer jobs after push.
+- CI: [four-job CI run 36249144076](https://github.com/tya5/chrona/actions/runs/36249144076) on `cd07bcd4`, green: three-OS conformance/full pytest/wheel and newest-Python public materializer reproduction.
 - Public evidence changed only as attributed in the implementation commit message:
   - a group band's block-start moving up by `timeline.groupHeader.blockSize` in every affected slide (`aster-ssd/overview`, `controller-z-ja/executive`, `controller-z/{annotations,composition-compact,elevated,executive,icons,material-icons,plan-only}`, `halcyon-1/{02-programme-board,04-tvac-slip,11-overlay-briefing}`, `orion-asic/gates`);
   - `group-header:*` text weight/size (Theme-declared, per file).
