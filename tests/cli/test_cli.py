@@ -384,6 +384,44 @@ def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_pat
     assert delta["inline"] + delta["inlineSize"] <= table_bounds["inline"] + table_bounds["inlineSize"] + 1e-6
 
 
+def test_cli_row_height_is_derived_from_the_table_text_it_holds(tmp_path, monkeypatch, capsys):
+    """#480: 26 px rows with 6 px padding hold a 14 x 1.5 line as 27 px rows."""
+    preset = tmp_path / "print-mono"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
+    main()
+    theme_path = preset / "theme.yaml"
+    theme = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
+    theme["body"]["values"]["timeline-row-height"]["value"] = 26
+    theme["body"]["values"]["timeline-row-padding"]["value"] = 6
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    scene_path, output = tmp_path / "scene.json", tmp_path / "halcyon.svg"
+    capsys.readouterr()
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", "examples/halcyon-1/project.yaml", "--actual", "examples/halcyon-1/actual.yaml",
+        "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
+    ])
+    main()
+
+    codes = {json.loads(line)["code"] for line in capsys.readouterr().err.splitlines() if line.startswith("{")}
+    assert not codes & {"W_LAYOUT_VISIBLE_OVERFLOW", "W_SCENE_TEXT_INTERSECTION", "W_LAYOUT_ROW_DENSITY",
+                        "W_LAYOUT_MARK_OVERFLOW"}
+    scene = scene_path.read_text(encoding="utf-8")
+    bands = []
+
+    def collect(value):
+        if isinstance(value, dict):
+            if str(value.get("id", "")).startswith("row-band:"):
+                bands.append(value["bounds"]["blockSize"])
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(json.loads(scene))
+    assert bands and min(bands) == pytest.approx(27.0)
+
+
 def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, monkeypatch, capsys):
     occupied = tmp_path / "occupied"
     occupied.mkdir()

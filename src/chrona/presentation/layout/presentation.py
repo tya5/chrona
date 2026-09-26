@@ -147,13 +147,26 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
     return tuple(placements)
 
 
+def table_text_line_block(theme_tokens: Any, typography_roles: Any) -> float:
+    """Return the tallest line block among the table cell roles a row holds."""
+    return max((float(theme_tokens.text_treatment(role).font_size * theme_tokens.text_treatment(role).line_height)
+                for role in sorted(set(typography_roles))), default=0.0)
+
+
 def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: float,
                                row_padding: float, mark_block_size: float,
-                               role_geometries: Mapping[str, MarkGeometry] | None = None) -> tuple[float, ...]:
-    """Close each row's minimum before any surplus distribution occurs."""
-    if row_minimum <= 0 or row_padding < 0:
+                               role_geometries: Mapping[str, MarkGeometry] | None = None,
+                               text_line_block: float = 0.0) -> tuple[float, ...]:
+    """Close each row's minimum before any surplus distribution occurs.
+
+    ``row_padding`` is the row's total block padding.  It is added once to the
+    mark tracks and once to the table text line the row holds (Specification
+    24 section 2.1).
+    """
+    if row_minimum <= 0 or row_padding < 0 or text_line_block < 0:
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/measuredSources/metricValues/timeline.row")
-    return tuple(max(row_minimum, minimum_track_block_extent(
+    text_requirement = text_line_block + row_padding if text_line_block else 0.0
+    return tuple(max(row_minimum, text_requirement, minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
     ) + row_padding) for row in review_rows)
 

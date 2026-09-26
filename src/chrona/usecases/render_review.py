@@ -20,6 +20,7 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.presentation import table_text_line_block
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
 from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, resolve_mark_geometries, timeline_content_block_requirement
@@ -243,6 +244,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
             metric_values=measured.metric_values,
             role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
+            text_line_block=table_text_line_block(
+                ThemeTokenView(theme), (cell.typography_role for cell in table_content.cells)),
         )
         required_block = resolve_content_block_extent(
             resolved_layout, viewport_inline=viewport["inlineSize"],

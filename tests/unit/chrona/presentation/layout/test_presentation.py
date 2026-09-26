@@ -3,10 +3,10 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.model import LayoutError, geometry_sum
-from chrona.presentation.layout.presentation import RowPlacement, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
+from chrona.presentation.layout.presentation import RowPlacement, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
 from chrona.presentation.layout.text import ellipsize_text
-from chrona.presentation.layout.surface_composer import _contains_block_interval
+from chrona.presentation.layout.surface_composer import _centred_cell_baseline, _contains_block_interval
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.projection import ObservationState
 
@@ -287,3 +287,30 @@ def test_hierarchy_column_natural_width_includes_the_widest_cell_indent() -> Non
                                  measure_text=fixed_measure, minimum_inline=10.0,
                                  hierarchy_column="name", cell_indents=indents)
     assert tuple(item.natural_inline_size for item in placed) == indented
+
+
+def test_row_requirement_holds_one_table_text_line_plus_total_padding() -> None:
+    """#480: paddingBlock is added once to the text line the row holds."""
+    row = SimpleNamespace(row_id="a", group_id=None, items=())
+    assert required_row_block_extents(review_rows=(row,), row_minimum=26.0, row_padding=6.0,
+                                      mark_block_size=12.0, text_line_block=21.0) == (27.0,)
+    assert required_row_block_extents(review_rows=(row,), row_minimum=40.0, row_padding=6.0,
+                                      mark_block_size=12.0, text_line_block=21.0) == (40.0,)
+    assert required_row_block_extents(review_rows=(row,), row_minimum=10.0, row_padding=6.0,
+                                      mark_block_size=12.0) == (18.0,)
+
+
+def test_table_text_line_block_is_the_tallest_cell_role() -> None:
+    treatments = {"text": SimpleNamespace(font_size=14, line_height=1.5),
+                  "numeric": SimpleNamespace(font_size=16, line_height=1.5)}
+    tokens = SimpleNamespace(text_treatment=treatments.__getitem__)
+    assert table_text_line_block(tokens, ("text", "text")) == 21.0
+    assert table_text_line_block(tokens, ("text", "numeric")) == 24.0
+    assert table_text_line_block(tokens, ()) == 0.0
+
+
+def test_table_cell_line_box_is_centred_in_its_row_in_its_own_role() -> None:
+    row = Rect(Decimal(0), Decimal(100), Decimal(10), Decimal(27))
+    baseline = _centred_cell_baseline(row, SimpleNamespace(font_size=14, line_height=1.5))
+    top = baseline - 14
+    assert top - 100 == pytest.approx(100 + 27 - (top + 21))

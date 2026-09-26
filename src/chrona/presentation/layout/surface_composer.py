@@ -11,7 +11,7 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
-from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_measurer
+from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
@@ -357,8 +357,15 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
     return result
 
 
+def _centred_cell_baseline(row: Rect, treatment: Any) -> float:
+    """Centre a table cell's line box in its row, in the cell's own role."""
+    line_block = float(treatment.font_size * treatment.line_height)
+    return float(row.block) + (float(row.block_size) - line_block) / 2 + float(treatment.font_size)
+
+
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
-                                       metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None) -> Decimal:
+                                       metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
+                                       text_line_block: float = 0.0) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
     rows = projection.rows or tuple(
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
@@ -368,6 +375,7 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         review_rows=tuple(rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
         row_padding=float(metric_values["timeline.row.paddingBlock"]),
         mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
+        text_line_block=text_line_block,
     )
     headers = 0
     previous = object()
@@ -724,6 +732,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
         row_padding=float(metric_values["timeline.row.paddingBlock"]),
         mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
+        text_line_block=table_text_line_block(
+            request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells)),
     )
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
@@ -849,7 +859,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             resolved, overflow = table_text(content, available, typography_role)
             text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                                    inline=aligned_inline(resolved, column_id, position[0] + indent, available, typography_role),
-                                   baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
+                                   baseline_block=_centred_cell_baseline(row.bounds, request.theme_tokens.text_treatment(typography_role)),
                                    typography_role=typography_role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    overflow=overflow, collision_region="table",
                                    collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
