@@ -82,7 +82,8 @@ def test_zero_icon_scale_is_invalid_theme_input_not_fit_shortage():
         resolve_text_visual_requests([item], request)
 
 
-def test_required_text_is_not_erased_when_icon_leaves_less_than_ellipsis_width():
+@pytest.mark.parametrize("allocated", [5, 17])
+def test_required_text_is_not_erased_when_icon_leaves_less_than_ellipsis_width(allocated):
     class Metric:
         def width(self, value, size, **_kwargs):
             return len(value) * size
@@ -97,10 +98,10 @@ def test_required_text_is_not_erased_when_icon_leaves_less_than_ellipsis_width()
         font_metrics=Metric(),
         theme_tokens=SimpleNamespace(icon_ratios=lambda _role: (Decimal(1), Decimal("0.2"))),
     )
-    item = TextPlacement("title", "title", "…", Rect(Decimal(0), Decimal(0), Decimal(17), Decimal(12)),
-                         "text", baseline=(0, 10), lines=("…",), font_family="Test", font_weight=400,
+    item = TextPlacement("title", "title", "…", Rect(Decimal(0), Decimal(0), Decimal(allocated), Decimal(12)),
+                         "text", baseline=(0, 10), lines=("…", "…"), font_family="Test", font_weight=400,
                          font_size=10, line_height=1.2, source_content="Long",
-                         available_inline_start=0, available_inline_size=17)
+                         available_inline_start=0, available_inline_size=allocated)
     placed, _, warnings = resolve_text_visual_requests([item], request)
     assert placed[0].content == "Long" and placed[0].overflow == "visible-overflow"
-    assert len(warnings) == 1 and warnings[0].required_inline > 17
+    assert len(warnings) == 1 and warnings[0].required_inline > allocated

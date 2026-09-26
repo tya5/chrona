@@ -453,7 +453,8 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
                      else float(item.bounds.inline_size))
         available = allocated - leading - trailing
         source = item.source_content if item.source_content is not None else item.content
-        natural_lines = item.lines if len(item.lines) > 1 else (source,)
+        natural_lines = (item.lines if item.source_content is None and len(item.lines) > 1
+                         else (source,))
         if item.placement_id in pre_reserved_placements:
             lines, content, overflow = item.lines, item.content, item.overflow
         elif available <= 0:
