@@ -431,7 +431,7 @@ body:
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: neutral
     table-header.fill: surfaceRaised
-    group-band.fill: category:ground
+    group-band.fill: category:capabilities-band
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
     group:factory-team.fill: category:factory-team
