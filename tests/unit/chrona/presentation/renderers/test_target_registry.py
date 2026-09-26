@@ -92,7 +92,14 @@ def test_real_hiragino_collection_paints_png_from_selected_face_on_macos(tmp_pat
         draft_font_resolution=draft.font_resolution,
     ))
     bitmap = Image.open(BytesIO(rendered.artifact.content)).convert("RGB")
-    assert bitmap.getbbox() is not None
+    title = next(item for item in rendered.scene.surfaces[0].primitives if item.scene_id == "title")
+    x, y, width, height = title.bounds
+    painted_title = bitmap.crop((int(x), int(y), int(x + width), int(y + height)))
+    assert painted_title.getbbox() is not None
+    assert len(painted_title.getcolors(maxcolors=1_000_000) or ()) > 1
+    assert all(item.path.suffix == ".ttc" for item in draft.font_resolution.font_files)
+    assert title.text_layout is not None
+    assert title.text_layout.asset_identity == draft.font_resolution.faces[0].content_identity
     assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
 
 

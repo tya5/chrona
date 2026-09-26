@@ -46,6 +46,22 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
             materialize(manifest, slide["id"], tmp_path / manifest.parent.name / slide["id"], write=False)
 
 
+def test_immutable_context_completes_narrow_programme_board_with_visible_warning(tmp_path):
+    example = tmp_path / "halcyon-1"
+    shutil.copytree(ROOT / "examples/halcyon-1", example)
+    context_path = example / "contexts/02-programme-board.yaml"
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    context["body"]["environment"]["viewport"] = {"inlineSize": 800, "blockSize": 450}
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+    snapshot = tmp_path / "snapshot"
+    reference, _ = copy_context_closure(example, context_path, snapshot)
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example"))
+    rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
+    assert rendered.artifact.content.startswith(b"<svg ")
+    assert rendered.surface.fit_warnings
+    assert any(warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" for warning in rendered.surface.fit_warnings)
+
+
 def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp_path):
     example = tmp_path / "aster-ssd"
     shutil.copytree(ROOT / "examples/aster-ssd", example)

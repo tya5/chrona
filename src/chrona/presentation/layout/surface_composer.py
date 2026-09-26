@@ -104,17 +104,22 @@ def _completed_canvas(*, requested: Rect, rectangles: tuple[Rect, ...],
     the composition layer rather than in Scene or a renderer: every target
     receives the identical, already-completed extent.
     """
+    inline_start, block_start = requested.inline, requested.block
     inline_end = requested.inline + requested.inline_size
     block_end = requested.block + requested.block_size
     for bounds in rectangles:
+        inline_start = min(inline_start, bounds.inline)
+        block_start = min(block_start, bounds.block)
         inline_end = max(inline_end, bounds.inline + bounds.inline_size)
         block_end = max(block_end, bounds.block + bounds.block_size)
     for points in paths:
         for inline, block in points:
+            inline_start = min(inline_start, Decimal(str(inline)))
+            block_start = min(block_start, Decimal(str(block)))
             inline_end = max(inline_end, Decimal(str(inline)))
             block_end = max(block_end, Decimal(str(block)))
-    return Rect(requested.inline, requested.block,
-                inline_end - requested.inline, block_end - requested.block)
+    return Rect(inline_start, block_start,
+                inline_end - inline_start, block_end - block_start)
 
 
 def _visual_reservation(*, typography_role: str, font_size: float,
@@ -130,8 +135,10 @@ def _visual_reservation(*, typography_role: str, font_size: float,
         except Exception as error:
             raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
         height = font_size * float(scale)
-        if height <= 0 or icon.viewport[1] <= 0:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+        if height <= 0:
+            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref)
+        if icon.viewport[1] <= 0:
+            raise LayoutError("E_ICON_IMPORT_VIEWPORT", visual.source_ref)
         resolved[side] = (icon, height * icon.viewport[0] / icon.viewport[1], font_size * float(gap_ratio))
     leading = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "leading")
     trailing = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "trailing")
@@ -186,8 +193,6 @@ def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: S
         if slot is None or not values:
             continue
         available = float(slot.bounds.inline_size)
-        if available <= 0:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", source)
         block = slot.bounds.block
         for previous in allocated:
             left, right = slot.bounds.inline, slot.bounds.inline + slot.bounds.inline_size
@@ -203,19 +208,22 @@ def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: S
                 typography_role="text", font_size=font_size,
                 visuals=visual_requests.get(placement_id, {}), request=request,
             )
-            text_available = available - leading - trailing
-            if text_available <= 0:
-                raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", placement_id)
-            lines = wrap_text(content, available_inline=text_available, font_size=font_size, font_metrics=metrics,
-                              letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                              numeric_spacing=treatment.numeric_spacing)
+            text_available = max(0.0, available - leading - trailing)
+            lines = ((content,) if text_available == 0 else
+                     wrap_text(content, available_inline=text_available, font_size=font_size, font_metrics=metrics,
+                               letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                               numeric_spacing=treatment.numeric_spacing))
             natural_width = max(measure_text_width(line, font_size=font_size, font_metrics=metrics,
                                                    letter_spacing=float(treatment.letter_spacing),
                                                    text_transform=treatment.transform,
                                                    numeric_spacing=treatment.numeric_spacing) for line in lines)
             disposition = "fit"
             if natural_width > text_available:
-                if slot.overflow == "ellipsize-with-source":
+                ellipsis_width = measure_text_width("…", font_size=font_size, font_metrics=metrics,
+                                                     letter_spacing=float(treatment.letter_spacing),
+                                                     text_transform=treatment.transform,
+                                                     numeric_spacing=treatment.numeric_spacing)
+                if slot.overflow == "ellipsize-with-source" and text_available >= ellipsis_width:
                     lines = tuple(ellipsize_text(line, available_inline=text_available, font_size=font_size,
                                                   font_metrics=metrics, letter_spacing=float(treatment.letter_spacing),
                                                   text_transform=treatment.transform,
@@ -250,7 +258,7 @@ def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: S
             pre_reserved.add(placement_id)
             cursor += placed.bounds.block_size
             if disposition == "visible-overflow":
-                item_overflows.append((placed, natural_width, text_available))
+                item_overflows.append((placed, leading + natural_width + trailing, max(0.0, available)))
         final_size = max(slot.bounds.block_size, cursor - block)
         final_slot = replace(slot, bounds=Rect(slot.bounds.inline, block, slot.bounds.inline_size,
                                                 final_size))
@@ -399,7 +407,7 @@ def relation_label_anchor(points: tuple[tuple[float, float], ...]) -> LabelRect:
 def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest, *,
                                  handled_sources: set[str] | None = None,
                                  axis_label_targets: Mapping[tuple[str, str, str], str] | None = None,
-                                 pre_reserved_placements: frozenset[str] = frozenset()) -> tuple[list[Any], list[IconPlacement]]:
+                                 pre_reserved_placements: frozenset[str] = frozenset()) -> tuple[list[Any], list[IconPlacement], list[FitWarning]]:
     """Turn already-resolved View visual intents into completed Layout geometry.
 
     The caller supplies only placement identities; target vocabulary translation
@@ -426,6 +434,7 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
             raise LayoutError("E_LAYOUT_VISUAL_TARGET", visual.source_ref)
         requested.setdefault(placement_id, {})[visual.side] = visual
     icons: list[IconPlacement] = []
+    warnings: list[FitWarning] = []
     for placement_id, by_side in requested.items():
         matches = [item for item in text if item.placement_id == placement_id
                    and item.overflow != "suppressed"]
@@ -440,32 +449,49 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
             typography_role=item.typography_role, font_size=item.font_size,
             visuals=by_side, request=request,
         )
-        available = (item.available_inline_size if item.available_inline_size is not None
-                     else float(item.bounds.inline_size)) - leading - trailing
-        if available <= 0:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
+        allocated = (item.available_inline_size if item.available_inline_size is not None
+                     else float(item.bounds.inline_size))
+        available = allocated - leading - trailing
         source = item.source_content if item.source_content is not None else item.content
+        natural_lines = item.lines if len(item.lines) > 1 else (source,)
         if item.placement_id in pre_reserved_placements:
             lines, content, overflow = item.lines, item.content, item.overflow
-            if any(measure_text_width(line, font_size=item.font_size, font_metrics=item_metrics,
-                                      letter_spacing=item.letter_spacing, text_transform=item.text_transform,
-                                      numeric_spacing=item.numeric_spacing) > available for line in lines):
-                raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
+        elif available <= 0:
+            lines, content, overflow = natural_lines, "\n".join(natural_lines), "visible-overflow"
         elif len(item.lines) > 1:
             lines = wrap_text(source, available_inline=available, font_size=item.font_size, font_metrics=item_metrics,
-                              letter_spacing=item.letter_spacing, text_transform=item.text_transform)
+                              letter_spacing=item.letter_spacing, text_transform=item.text_transform,
+                              numeric_spacing=item.numeric_spacing)
             content, overflow = "\n".join(lines), item.overflow
         elif item.source_content is not None:
-            content = ellipsize_text(source, available_inline=available, font_size=item.font_size, font_metrics=item_metrics,
-                                     letter_spacing=item.letter_spacing, text_transform=item.text_transform)
-            lines, overflow = (content,), "ellipsized" if content != source else "fit"
+            ellipsis_width = measure_text_width("…", font_size=item.font_size, font_metrics=item_metrics,
+                                                letter_spacing=item.letter_spacing,
+                                                text_transform=item.text_transform,
+                                                numeric_spacing=item.numeric_spacing)
+            if available < ellipsis_width:
+                lines, content, overflow = (source,), source, "visible-overflow"
+            else:
+                content = ellipsize_text(source, available_inline=available, font_size=item.font_size,
+                                         font_metrics=item_metrics, letter_spacing=item.letter_spacing,
+                                         text_transform=item.text_transform,
+                                         numeric_spacing=item.numeric_spacing)
+                lines, overflow = (content,), "ellipsized" if content != source else "fit"
         elif measure_text_width(source, font_size=item.font_size, font_metrics=item_metrics,
-                                letter_spacing=item.letter_spacing, text_transform=item.text_transform) <= available:
+                                letter_spacing=item.letter_spacing, text_transform=item.text_transform,
+                                numeric_spacing=item.numeric_spacing) <= available:
             content, lines, overflow = source, (source,), item.overflow
         else:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", next(iter(by_side.values())).source_ref)
+            lines, content, overflow = (source,), source, "visible-overflow"
         width = max(measure_text_width(line, font_size=item.font_size, font_metrics=item_metrics,
-                                       letter_spacing=item.letter_spacing, text_transform=item.text_transform) for line in lines)
+                                       letter_spacing=item.letter_spacing, text_transform=item.text_transform,
+                                       numeric_spacing=item.numeric_spacing) for line in lines)
+        if width > available:
+            overflow = "visible-overflow"
+            if item.placement_id not in pre_reserved_placements:
+                warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", item.placement_id, item.source_ref,
+                                           "text-visual", "visible-overflow", leading + width + trailing,
+                                           float(item.bounds.block_size), max(0.0, allocated),
+                                           float(item.bounds.block_size)))
         baseline = item.baseline
         if baseline is None or not hasattr(item_metrics, "cap_height_at"):
             raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(iter(by_side.values())).source_ref)
@@ -482,7 +508,7 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
         for side, visual in by_side.items():
             icon, icon_width, gap = resolved[side]
             inline = (available_start if side == "leading"
-                      else available_start + leading + available + trailing - gap - icon_width)
+                      else available_start + leading + max(available, width) + trailing - gap - icon_width)
             bounds = Rect(Decimal(str(inline)), Decimal(str(baseline[1] - cap_height + (cap_height - item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0])) / 2)),
                           Decimal(str(icon_width)), Decimal(str(item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0]))) )
             icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
@@ -491,7 +517,7 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
                                        paint_order=item.paint_order))
     if requested:
         raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
-    return text, icons
+    return text, icons, warnings
 
 
 def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLayoutRequest) -> list[IconPlacement]:
@@ -520,7 +546,7 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
             raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
         height = float(host.bounds.block_size) * float(scale)
         if height <= 0:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref)
         width = min(float(host.bounds.inline_size), height * icon.viewport[0] / icon.viewport[1])
         bounds = Rect(host.bounds.inline + (host.bounds.inline_size - Decimal(str(width))) / 2,
                       host.bounds.block + (host.bounds.block_size - Decimal(str(height))) / 2,
@@ -548,7 +574,7 @@ def resolve_axis_band_visual_requests(shapes: list[ShapePlacement], request: Sur
         scale, _ = request.theme_tokens.icon_ratios("icon-mark")
         height = min(float(shape.bounds.inline_size), float(shape.bounds.block_size)) * float(scale)
         if height <= 0 or icon.viewport[1] <= 0:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+            raise LayoutError("E_THEME_ICON_RATIO" if height <= 0 else "E_ICON_IMPORT_VIEWPORT", visual.source_ref)
         width = height * icon.viewport[0] / icon.viewport[1]
         bounds = Rect(shape.bounds.inline + (shape.bounds.inline_size - Decimal(str(width))) / 2,
                       shape.bounds.block + (shape.bounds.block_size - Decimal(str(height))) / 2,
@@ -602,7 +628,7 @@ def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
             raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
         height = float(size * scale)
         if height <= 0:
-            raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", visual.source_ref)
+            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref)
         found[visual.side] = (visual, icon, height * icon.viewport[0] / icon.viewport[1], float(size * gap_ratio))
     return tuple(found[side] for side in ("leading", "trailing") if side in found)
 
@@ -1873,7 +1899,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 if leader_fallback:
                     visible_route_fallbacks.append(placed_leader)
     text = [replace(item, slot_id=text_slot(item)) for item in text]
-    text, icons = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals,
+    text, icons, text_visual_warnings = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals,
                                                 axis_label_targets=axis_label_targets,
                                                 pre_reserved_placements=detail_visual_reservations)
     _validate_detail_panel_placement(text, slots)
@@ -1912,7 +1938,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     # Complete the observable fallback records at the same point as completed
     # geometry.  Neither Scene nor an adapter gets a policy question to answer.
-    fit_warnings: list[FitWarning] = [*layout_manifest.fit_warnings, *detail_panel_warnings, *side_content_warnings]
+    fit_warnings: list[FitWarning] = [*layout_manifest.fit_warnings, *detail_panel_warnings,
+                                      *side_content_warnings, *text_visual_warnings]
     warned_placement_ids: set[str] = set()
     timeline_end = timeline.bounds.block + timeline.bounds.block_size
     header_start = Decimal(str(table_bounds[1]))

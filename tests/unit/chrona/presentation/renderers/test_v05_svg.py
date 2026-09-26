@@ -66,6 +66,13 @@ def test_svg_serializes_the_completed_canvas_not_a_caller_supplied_viewport():
     assert '<rect x="3" y="4" width="17" height="19"' in output
 
 
+def test_svg_uses_negative_completed_origin_without_adapter_repositioning():
+    surface = replace(_surface(), canvas_bounds=(-12, -4, 112, 54))
+    output = render_v05_svg(surface)
+    assert 'width="112" height="54" viewBox="-12 -4 112 54"' in output
+    assert '<rect x="-12" y="-4" width="112" height="54"' in output
+
+
 def test_svg_projects_nondefault_measured_text_treatment_without_remeasuring():
     layout = TextLayout((1, 2, 8, 4), (1, 6), ("AB",), "Test Sans", 400, 12, 1.2,
                         "sha256:test", 3, "uppercase", "tabular")

@@ -14,7 +14,6 @@ from decimal import Decimal
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Mapping
-import re
 
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
@@ -278,12 +277,6 @@ def render_review(request: RenderRequest) -> RenderedReview:
         surface = compose_review_surface(scene_input)
     except SceneBuildError as error:
         detail = error.detail or visual_capability_message(error.diagnostic_id)
-        if (error.diagnostic_id == "E_LAYOUT_REQUIRED_OVERFLOW"
-                and render_closure.context.identity.revision != "draft"):
-            detail = re.sub(r"use --viewport \d+x(\d+)",
-                            r"set environment.viewport.blockSize to \1 and rematerialize the Context", detail)
-            if "environment.viewport.blockSize" not in detail:
-                detail += "; set environment.viewport.blockSize and rematerialize the Context"
         raise RenderFailed(error.diagnostic_id, detail,
                            "presentation", error.path) from error
     try:
