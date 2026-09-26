@@ -579,9 +579,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              paint_order=placed.paint_order))
         elif placed.annotation is not None:
             annotation_box = semantic_binding(placed.semantic_id)
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
-                                             annotation_box.purpose, annotation_box.scene_role,
-                                             bounds, paint_order=placed.paint_order))
+            if placed.kind == "Balloon":
+                primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.SYMBOL, placed.source_ref, "annotation",
+                                                 annotation_box.purpose, annotation_box.scene_role, bounds,
+                                                 symbol=SymbolGeometry(placed.path_commands), paint_order=placed.paint_order))
+            else:
+                primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
+                                                 annotation_box.purpose, annotation_box.scene_role,
+                                                 bounds, paint_order=placed.paint_order))
     for placed in placed_surface.icons:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))

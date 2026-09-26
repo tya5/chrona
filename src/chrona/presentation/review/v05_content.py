@@ -11,7 +11,7 @@ from chrona.presentation.model.surface_content import (
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
-from chrona.presentation.model.placement_candidates import legacy_candidate_order
+from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
@@ -136,16 +136,46 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     else:
         relations = ()
     raw_annotations = view.annotations if annotation_mode != "none" else ()
-    annotations = tuple(
-        AnnotationIntent(str(annotation["id"]), str(annotation["purpose"]),
-                         {str(key): str(value) for key, value in annotation["anchor"].items()},
-                         str(annotation["placement"]["side"]), str(annotation["placement"]["alignment"]),
-                         str(annotation["text"]), index + 1 if annotation_numbered else None,
-                         annotation_fallback or ("rail",),
-                         legacy_candidate_order(str(annotation["purpose"]), annotation_fallback)[0])
-        for index, annotation in enumerate(raw_annotations)
-    )
-    notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
+    project_notes = project.get("annotations", {})
+    consumed_note_ids: set[str] = set()
+
+    def _annotation_text(annotation: Mapping[str, Any]) -> str:
+        reference = annotation.get("projectAnnotation")
+        if reference is None:
+            return str(annotation["text"])
+        # A Project reference selects text once (#466): the Project note is
+        # the sole narrative authority, and a missing or empty selection is a
+        # stable ingress error, never a skipped note or guessed target.
+        source = project_notes.get(reference) if isinstance(project_notes, Mapping) else None
+        text = source.get("text") if isinstance(source, Mapping) else None
+        if not isinstance(text, str) or not text:
+            raise ValueError(f"E_PRESENTATION_ANNOTATION_REFERENCE_MISSING:{reference}")
+        consumed_note_ids.add(str(reference))
+        return text
+
+    def _annotation(index: int, annotation: Mapping[str, Any]) -> AnnotationIntent:
+        anchor = {str(key): str(value) for key, value in annotation["anchor"].items()}
+        purpose = str(annotation["purpose"])
+        number = index + 1 if annotation_numbered else None
+        content = _annotation_text(annotation)
+        declared_candidates = annotation.get("candidates")
+        if declared_candidates is not None:
+            # The declared candidate-list spelling (#466): no legacy fallback
+            # ladder applies, and Layout falls back to visible-overflow on
+            # the first declared candidate if every one is exhausted.
+            return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
+                                    content, number, (), parse_candidates(declared_candidates))
+        placement = annotation["placement"]
+        return AnnotationIntent(str(annotation["id"]), purpose, anchor,
+                                str(placement["side"]), str(placement["alignment"]),
+                                content, number, annotation_fallback or ("rail",),
+                                legacy_candidate_order(purpose, annotation_fallback)[0])
+
+    annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
+    # A selected Project annotation is consumed once: it is presented through
+    # its View annotation and no longer duplicated into the notes slot (#466).
+    notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
+                 if key not in consumed_note_ids)
     resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
                                                           profile_is_validated=True)
                        if layout_manifest is not None else None)

@@ -1,22 +1,19 @@
 version: chrona/view/v0.25
 kind: view
-id: controller-z-capabilities
+id: candidate-placement-fixture
 body:
   surface: table-timeline
   selection:
     include:
+      ids:
+      - silicon-bringup
+      - performance
+      - dvt
       types:
       - span
       - point
   grouping:
-    by: field
-    field: owner
-    missing: ungrouped
-    order:
-    - fw-team
-    - validation-team
-    - factory-team
-    presentation: band
+    by: none
   ordering:
     by: plannedStart
     direction: ascending
@@ -27,38 +24,40 @@ body:
     end: '2026-07-01'
   comparison:
     baseline: primary
-    actual: required
+    actual: optional
     observationSelection: latest
     deltaUnit: calendar-days
     facets:
     - planned
     - actual
-    - finishDelta
-    - atDelta
-    - progress
-    - missingActual
-    - unmatchedActual
-  progressFill:
-    source: actual
   visibility:
     labels:
-      placement: plot
+      placement: table
       content:
       - title
-      side: inside
+      side: auto
       overflow: suppress
-    fallback:
-      labels:
-      - inside
-      - above
-      - suppress
     relations:
       mode: semantic
       overflow: suppress
-      content:
-      - lag
-      - endpointPair
-    annotations: none
+    annotations:
+      mode: presentation
+      marker: numbered
+  annotations:
+  - id: performance-note
+    purpose: note
+    anchor:
+      kind: object
+      id: performance
+      facet: planned
+      endpoint: finish
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 512, maxInlineEm: 18}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: tail}
+    text: Under review.
   axis:
     tiers:
     - unit: quarter
@@ -80,7 +79,6 @@ body:
       role: labels
       label:
         form: short-month
-        nameTable: en-US
         align: start
         overflow: thin-with-record
         orientation: horizontal
@@ -88,30 +86,14 @@ body:
       every: 1
       role: grid-minor
   backgroundDecoration:
-    rows: alternate
+    rows: none
     groups: all
   tableColumns:
   - id: Workstream
     source: title
     missing: em-dash
     align: start
-    width: {fr: 1}
-    headerOrientation: horizontal
-  - id: Finish
-    source:
-      facet: planned
-    format: dateRange
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
-  - id: Δ
-    source:
-      facet: finishDelta
-    format: signedDays
-    missing: em-dash
-    align: end
-    width: content
+    width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
   rows:
     mode: automatic

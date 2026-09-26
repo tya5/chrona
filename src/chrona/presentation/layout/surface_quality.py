@@ -186,6 +186,7 @@ class ShapePlacement:
     semantic_id: str = ""
     annotation: AnnotationPresentation | None = None
     corner_radius: float = 0.0
+    path_commands: tuple[PathCommand, ...] = ()
 
 
 @dataclass(frozen=True)

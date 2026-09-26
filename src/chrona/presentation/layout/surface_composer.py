@@ -17,9 +17,12 @@ from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, for
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
-    annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
+    AnnotationBox, annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
     resolve_annotation_anchor, route_annotation_leader,
 )
+from chrona.presentation.layout.annotation_search import lattice_positions, nearest_free_box, nearest_free_tail_box
+from chrona.presentation.layout.balloon_geometry import balloon_outline
+from chrona.presentation.layout.labels import LabelPlacement
 from chrona.presentation.layout.annotation_topology import (
     AnnotationRouteTrial, local_route_bounds, route_annotation_candidate, visible_segments,
 )
@@ -2077,7 +2080,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             cursor += float(font_size) * float(line_height)
 
     annotation_slot = by_source.get("annotations")
-    if annotation_slot:
+    annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
+    if annotation_slot or request.surface_content.annotations:
         annotation_marks = _comparison_marks(projection)
         for index, annotation in enumerate(request.surface_content.annotations):
             presentation = annotation_presentation(annotation.purpose)
@@ -2121,11 +2125,26 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 anchor_host = mark
             else:
                 raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+            as_of_side_constraint: tuple[float, str] | None = None
+            if contract.time.as_of is not None and start <= contract.time.as_of < end:
+                as_of_x = _coordinate(contract.time.as_of, scale)
+                as_of_side_constraint = (as_of_x, "start" if anchor_bounds.x < as_of_x else "end")
             annotation_text_role = semantic_binding(presentation.text_semantic_id).theme_role
             annotation_treatment = request.theme_tokens.text_treatment(annotation_text_role)
             annotation_metrics = metric_for(annotation_text_role)
             size, line_height = float(annotation_treatment.font_size), float(annotation_treatment.line_height)
-            text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
+            if annotation_slot is not None:
+                text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
+            else:
+                # A plot/content-only candidate list declares its own text
+                # width bound (#466); an annotation with no annotations slot
+                # must declare at least one bounded nearest-free/adjacent
+                # candidate.
+                declared_max_em = max((candidate.search.max_inline_em for candidate in annotation.candidates
+                                       if candidate.search.max_inline_em is not None), default=None)
+                if declared_max_em is None:
+                    raise LayoutError("E_LAYOUT_ANNOTATION_WIDTH_UNBOUNDED", f"/annotations/{index}")
+                text_available = max(1.0, declared_max_em * size - annotation_leading - annotation_trailing)
             text_width = min(text_available, max(size * 4, measure_text_width(
                 content, font_size=size, font_metrics=annotation_metrics,
                 letter_spacing=float(annotation_treatment.letter_spacing), text_transform=annotation_treatment.transform)))
@@ -2215,12 +2234,22 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                             return source_egress, trial, tuple(full_points), tuple(prefix)
                 return None
 
+            tail_tip: tuple[float, float] | None = None
             try:
                 if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
-                    annotation_lines = (wrap_text(content, available_inline=text_available, font_size=size, font_metrics=annotation_metrics,
+                    # A declared candidate's maxInlineEm is a text-width bound
+                    # for a plot/content search (#466): it forces wrapping so
+                    # a long note becomes a narrow, tall box rather than one
+                    # too wide to fit any free lattice position.
+                    plot_wrap_em = max((candidate.search.max_inline_em for candidate in annotation.candidates
+                                        if candidate.search.max_inline_em is not None), default=None)
+                    wrap_available = float(plot_wrap_em) * size if plot_wrap_em is not None else text_available
+                    if plot_wrap_em is not None:
+                        wrap = "allow"
+                    annotation_lines = (wrap_text(content, available_inline=wrap_available, font_size=size, font_metrics=annotation_metrics,
                                                   letter_spacing=float(annotation_treatment.letter_spacing),
                                                   text_transform=annotation_treatment.transform)
                                         if wrap == "allow" else (content,))
@@ -2232,7 +2261,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        size * line_height * len(annotation_lines))
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
-                    box, selected_rung = None, None
+                    annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
+                    container = request.theme_tokens.annotation_container(annotation_box_role)
+                    box, selected_rung, tail_tip = None, None, None
                     for candidate in candidates:
                         rung = candidate.candidate_id
                         if candidate.search.kind == "row-aligned":
@@ -2240,19 +2271,57 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
                                 text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
                                 obstacles=surface_obstacles)
+                            for candidate_box in candidate_boxes:
+                                annotation_search_count += 1
+                                leader_trial = trial_leader(candidate_box, rung)
+                                if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
+                                    continue
+                                box, selected_rung, selected_leader = candidate_box, rung, leader_trial
+                                break
+                        elif candidate.search.kind == "nearest-free":
+                            region_bounds = LabelRect(*_bounds(timeline.bounds))
+                            host_id = anchor_host.placement_id if anchor_host is not None else None
+                            if candidate.connector.kind == "tail":
+                                if container is None or container[0] != "balloon":
+                                    raise LayoutError("E_LAYOUT_ANNOTATION_TAIL_REQUIRES_BALLOON", f"/annotations/{index}")
+                                corner_radius, tail_base = float(container[1]) * size, float(container[2]) * size
+                                free_box, trial_tip, trials = nearest_free_tail_box(
+                                    region=region_bounds, anchor=anchor_bounds, box_size=annotation_size,
+                                    max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
+                                    obstacle_classes=candidate.obstacles.classes, corner_radius=corner_radius,
+                                    tail_base=tail_base, host_id=host_id, side_of_as_of=as_of_side_constraint)
+                                annotation_search_count += trials
+                                if free_box is not None:
+                                    box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), False)
+                                    selected_rung, tail_tip = rung, trial_tip
+                            else:
+                                anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
+                                                 anchor_bounds.y + anchor_bounds.height / 2)
+                                free_box, trials = nearest_free_box(
+                                    region=region_bounds, anchor_center=anchor_center, box_size=annotation_size,
+                                    max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
+                                    obstacle_classes=candidate.obstacles.classes, host_id=host_id,
+                                    side_of_as_of=as_of_side_constraint)
+                                annotation_search_count += trials
+                                if free_box is not None:
+                                    leader_required = candidate.connector.kind == "leader"
+                                    candidate_box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), leader_required)
+                                    leader_trial = trial_leader(candidate_box, rung) if leader_required else None
+                                    if not (leader_required and presentation.leader_semantic_id is not None and leader_trial is None):
+                                        box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                         else:
-                            candidate = project_annotation_box(
+                            candidate_box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
                                 candidate_sides=(rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
                                 obstacles=surface_obstacles, overflow="clip-optional", required=False)
-                            candidate_boxes = (candidate,) if candidate is not None else ()
-                        for candidate_box in candidate_boxes:
-                            annotation_search_count += 1
-                            leader_trial = trial_leader(candidate_box, rung)
-                            if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
-                                continue
-                            box, selected_rung, selected_leader = candidate_box, rung, leader_trial
-                            break
+                            candidate_boxes = (candidate_box,) if candidate_box is not None else ()
+                            for candidate_box in candidate_boxes:
+                                annotation_search_count += 1
+                                leader_trial = trial_leader(candidate_box, rung)
+                                if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
+                                    continue
+                                box, selected_rung, selected_leader = candidate_box, rung, leader_trial
+                                break
                         if box is not None:
                             break
                     if box is None:
@@ -2267,11 +2336,25 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         # visible-overflow mode after the explicit fit ladder
                         # has been exhausted.
                         selected_rung = next(rung for rung in ladder if rung != "suppress")
+                        first_candidate = next((item for item in candidates if item.candidate_id == selected_rung), None)
                         if selected_rung == "rail":
                             box = place_annotation_rail(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
                                 text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
                                 obstacles=surface_obstacles, overflow="visible-overflow", required=True)
+                        elif first_candidate is not None and first_candidate.search.kind == "nearest-free":
+                            # #449 never refuses: complete the first declared
+                            # candidate's own region at its nearest lattice
+                            # position, visibly overflowing any obstacle.
+                            region_bounds = LabelRect(*_bounds(timeline.bounds))
+                            anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
+                                             anchor_bounds.y + anchor_bounds.height / 2)
+                            width, height = annotation_size
+                            forced = LabelRect(min(max(anchor_center[0] - width / 2, region_bounds.x),
+                                                   region_bounds.right - width),
+                                               min(max(anchor_center[1] - height / 2, region_bounds.y),
+                                                   region_bounds.bottom - height), width, height)
+                            box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
                         else:
                             box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
@@ -2298,22 +2381,35 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             bounds = box.placement.bounds
             annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
                                      Decimal(str(bounds.width)), Decimal(str(bounds.height)))
-            shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
-                                         annotation_bounds,
-                                         semantic_id=presentation.box_semantic_id, annotation=presentation,
-                                         paint_order=ANNOTATION_PAINT_ORDER))
+            if tail_tip is not None:
+                container = request.theme_tokens.annotation_container(
+                    semantic_binding(presentation.box_semantic_id).theme_role)
+                corner_radius, tail_base = float(container[1]) * size, float(container[2]) * size
+                outline = balloon_outline(bounds, tail_tip, corner_radius=corner_radius, tail_base=tail_base)
+                shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Balloon",
+                                             annotation_bounds, path_commands=outline,
+                                             semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                             paint_order=ANNOTATION_PAINT_ORDER))
+            else:
+                shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
+                                             annotation_bounds,
+                                             semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                             paint_order=ANNOTATION_PAINT_ORDER))
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            annotation_text_slot = "annotations" if annotation_slot is not None else timeline.slot_id
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                            inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                           collision_region="annotations", collision_domain=CollisionDomain("annotations", "content"),
+                                           collision_region="annotations", collision_domain=CollisionDomain(annotation_text_slot, "content"),
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,
                                            annotation=presentation)
             placed_annotation = replace(placed_annotation, paint_order=ANNOTATION_PAINT_ORDER + 1)
             text.append(placed_annotation)
             register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
             if box.placement.visible_overflow:
-                visible_label_overflows.append((placed_annotation, LabelRect(*_bounds(annotation_slot.bounds))))
+                overflow_viewport = (LabelRect(*_bounds(annotation_slot.bounds)) if annotation_slot is not None
+                                     else LabelRect(*_bounds(timeline.bounds)))
+                visible_label_overflows.append((placed_annotation, overflow_viewport))
             if annotation_visuals:
                 if not hasattr(annotation_metrics, "cap_height_at"):
                     raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in annotation_visuals))
@@ -2328,7 +2424,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                          icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                          visual.decorative, icon_bounds, "labelVisual",
-                                                         icon_width / icon.viewport[0], annotation_slot.slot_id,
+                                                         icon_width / icon.viewport[0], annotation_slot_id,
                                                          paint_order=placed_annotation.paint_order))
             if annotation.number is not None:
                 note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
@@ -2377,7 +2473,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                                  annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                                  icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                                  visual.decorative, icon_bounds, "labelVisual",
-                                                                 icon_width / icon.viewport[0], annotation_slot.slot_id,
+                                                                 icon_width / icon.viewport[0], annotation_slot_id,
                                                                  paint_order=note_index_text.paint_order))
             if box.leader_required and presentation.leader_semantic_id is not None:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
@@ -2447,13 +2543,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if item.placement_id.startswith("summary-bar:"):
             return by_source.get("summary", timeline).slot_id
         if item.placement_id.startswith("annotation-box:"):
-            return by_source["annotations"].slot_id
+            return by_source.get("annotations", timeline).slot_id
         if item.source_ref == "timeline-axis":
             return axis.slot_id
         return timeline.slot_id
     shapes = [replace(item, slot_id=shape_slot(item)) for item in shapes]
     icons.extend(resolve_axis_band_visual_requests(shapes, request, axis_band_targets))
-    relations = [replace(item, slot_id=(by_source["annotations"].slot_id
+    relations = [replace(item, slot_id=(by_source.get("annotations", timeline).slot_id
                                         if item.relation_id.startswith("annotation-leader:")
                                         else by_source["legend"].slot_id
                                         if item.relation_id.startswith("legend-swatch:")

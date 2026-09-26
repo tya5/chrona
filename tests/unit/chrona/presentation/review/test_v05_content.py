@@ -386,6 +386,36 @@ def test_actual_set_requires_the_current_body_envelope():
                                       summary=EMPTY_SUMMARY, actual_set={"asOf": "2026-03-04"})
 
 
+def test_project_annotation_reference_selects_text_once_and_leaves_notes_slot() -> None:
+    """#466: a selected Project note is consumed once, not duplicated."""
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    project = {"annotations": {"window": {"text": "Launch window closes soon."},
+                                "other": {"text": "Unrelated note."}}}
+    view = typed_view({"body": {
+        "visibility": {"relations": "none", "annotations": "all"},
+        "annotations": ({"id": "window-note", "purpose": "note",
+                         "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "at"},
+                         "placement": {"side": "above", "alignment": "center"},
+                         "projectAnnotation": "window"},),
+    }})
+    value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    assert value.annotations[0].content == "Launch window closes soon."
+    assert value.notes == (("other", "Unrelated note."),)
+
+
+def test_project_annotation_reference_to_a_missing_id_is_a_stable_ingress_error() -> None:
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    view = typed_view({"body": {
+        "visibility": {"relations": "none", "annotations": "all"},
+        "annotations": ({"id": "window-note", "purpose": "note",
+                         "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "at"},
+                         "placement": {"side": "above", "alignment": "center"},
+                         "projectAnnotation": "missing"},),
+    }})
+    with pytest.raises(ValueError, match="E_PRESENTATION_ANNOTATION_REFERENCE_MISSING"):
+        normalize_v05_surface_content(projection, {"annotations": {}}, view, summary=EMPTY_SUMMARY)
+
+
 def test_as_of_label_is_the_declared_text_and_a_date_only_in_a_declared_form():
     """#428: no date is appended unless the View states its form."""
     from datetime import date as _date

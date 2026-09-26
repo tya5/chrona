@@ -252,6 +252,40 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
         return padding, radius
 
+    def annotation_container(self, role: str) -> tuple[str, Decimal, Decimal | None] | None:
+        """Return a declared annotation container's outline/tail geometry (#466).
+
+        Absence (or a plain rectangle binding) means the role keeps today's
+        plain rectangle box, byte-identical to a Theme without this token.
+        """
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or "annotationContainer" not in binding:
+            return None
+        value = self.token(role, "annotationContainer", "annotationContainer")
+        if not isinstance(value, Mapping) or value.get("outline") not in {"rectangle", "balloon"}:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer")
+        outline = value["outline"]
+        corner_radius = self._decimal(value.get("cornerRadius"), role, "annotationContainer/cornerRadius")
+        if corner_radius is None or corner_radius < 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/cornerRadius")
+        if outline == "rectangle":
+            return outline, corner_radius, None
+        tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
+        if tail_base is None or tail_base <= 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/tailBaseEm")
+        return outline, corner_radius, tail_base
+
+    def _decimal(self, value: Any, role: str, property_name: str) -> Decimal | None:
+        if value is None:
+            return None
+        try:
+            number = Decimal(str(value))
+        except (InvalidOperation, ValueError) as error:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}") from error
+        if not number.is_finite():
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        return number
+
     def summary_bar_height(self, role: str) -> Decimal:
         """Return the positive lane-relative block-size ratio for a summary bar."""
         height = self.number(role, "markHeight")
