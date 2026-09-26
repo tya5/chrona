@@ -4,6 +4,9 @@
 **Authorities:** [design](../../design/issue-432-axis-name-table-design-2026-09-26.md),
 [architecture review](../../reviews/current/issue-432-axis-name-table-architecture-review-2026-09-26.md),
 [specification](../../specification/63-axis-name-tables.md).
+The [template-validation correction](../../design/issue-432-axis-name-table-template-validation-correction-2026-09-26.md)
+and its [review](../../reviews/current/issue-432-axis-name-table-template-correction-review-2026-09-26.md)
+are part of this plan's catalog acceptance gate.
 
 ## Literal issue acceptance gates
 

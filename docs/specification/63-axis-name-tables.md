@@ -19,7 +19,9 @@ v0.21 as runtime ingress, with no compatibility reader.
 The engine bundles a versioned, validated name-table resource containing
 `en-US` and `ja-JP`. Each table supplies complete month-name arrays and
 closed templates for all supported axis label forms. Templates use only
-validated semantic placeholders and cannot be authored inside a View.
+validated semantic placeholders, including ISO week-year and ISO week number,
+and cannot be authored inside a View. Table validation rejects an undeclared
+all-month alias, a false alias, and a pair that collides for only some months.
 Adding a third language requires a table-data entry and schema/catalog
 registration, not an axis formatter branch. Arbitrary host locale lookup,
 format strings and path-based table discovery are forbidden.
