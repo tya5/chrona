@@ -62,6 +62,12 @@ The timeline as-of label uses this visible-overflow fallback beside its marker
 line. A Layout text placement with `suppressed` disposition is non-drawable:
 Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
 by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
+For suppressed plot member labels, Layout MUST also count completed
+`memberLabel` text placements with `overflow: suppressed` once per surface.
+When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface-id>;count=<positive-integer>`
+inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
+number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.
+Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 The as-of label's finite candidate ladder may use the adjacent axis/timeline
 seam as a mark-clear fallback. Layout declares that fallback explicitly and

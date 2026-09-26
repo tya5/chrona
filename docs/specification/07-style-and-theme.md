@@ -158,6 +158,20 @@ A Theme binds visual roles to concrete tokens. Tokens may describe colour, typog
 
 Themes contain no selectors over Project fields. For example, `behind` is chosen by Style; its colour, line treatment, and label treatment are selected by Theme.
 
+Theme authoring is additionally closed by a role/property applicability
+contract. After base inheritance and Color Scheme bindings are resolved, but
+before Layout or Scene construction, every declared `roles` property and every
+`colorBindings` target MUST have a registered consumer for that authoring role.
+The registry distinguishes Layout typography/geometry, Scene paint, and
+marker/symbol/contrast policy from the Scene visual-role spelling. A property
+with no capable consumer is rejected as `E_THEME_ROLE_PROPERTY_UNSUPPORTED`
+with its exact declaration pointer; an unknown role is not accepted merely
+because its syntax matches the Theme schema. A role's property may be valid
+yet unused by a particular View. A valid decorative treatment unsupported by
+the *selected profile* is governed by Specification 63's omission/fidelity
+contract instead of this load-time error. The complete selected contract and
+resource migration are recorded in the [#478 design](../design/issue-478-declared-treatment-visibility-design-2026-09-26.md).
+
 ### 5.3 Inheritance and resolution
 
 Theme composition is deterministic:
