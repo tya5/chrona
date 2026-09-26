@@ -240,3 +240,19 @@ class ThemeTokenView:
         if not result.is_finite():
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
         return result
+
+
+def effective_draft_numeric_theme(resolved_theme: Mapping[str, Any], roles: tuple[str, ...]) -> Mapping[str, Any]:
+    """Overlay selected draft roles without mutating the declared Theme contract."""
+    if not roles:
+        return resolved_theme
+    body = resolved_theme["body"]
+    values = dict(body["values"])
+    bindings = dict(body["roles"])
+    for role in roles:
+        token_id = f"__draft_proportional_{role}"
+        if token_id in values or role not in bindings:
+            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/numericSpacing")
+        values[token_id] = {"type": "numericSpacing", "value": "proportional"}
+        bindings[role] = {**bindings[role], "numericSpacing": token_id}
+    return {**resolved_theme, "body": {**body, "values": values, "roles": bindings}}

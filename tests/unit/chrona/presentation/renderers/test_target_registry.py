@@ -12,7 +12,7 @@ from PIL import Image, ImageChops
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render
 from chrona.presentation.fonts.system import resolve_system_font
-from chrona.presentation.scene.serialization import serialize_scene
+from chrona.presentation.scene.serialization import scene_document, serialize_scene
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.presentation.scene.visual_capabilities import BASELINE_PROFILE, PNG_PROFILE
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -103,24 +103,55 @@ def test_real_hiragino_collection_paints_png_from_selected_face_on_macos(tmp_pat
     assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
 
 
-def test_hiragino_unsupported_tabular_mode_is_rejected_before_layout_on_macos(tmp_path):
+@pytest.mark.parametrize("family", ["Hiragino Sans", "Georgia"])
+def test_host_face_without_tabular_digits_uses_proportional_mode_with_warning_on_macos(tmp_path, family, capsys, monkeypatch):
     if platform.system() != "Darwin" or not shutil.which("fc-match"):
-        pytest.skip("Hiragino collection and fontconfig are macOS host evidence")
+        pytest.skip("Hiragino/Georgia and fontconfig are macOS host evidence")
     root = _root()
-    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
-    theme["body"]["values"]["editorial"]["value"] = "Hiragino Sans"
-    theme["body"]["values"]["numeric-spacing"]["value"] = "tabular"
-    theme_path = tmp_path / "hiragino-tabular.yaml"
+    theme = yaml.safe_load((root / "examples/halcyon-1/themes/briefing.yaml").read_text())
+    theme["body"]["values"]["editorial"]["value"] = family
+    theme_path = tmp_path / "host-tabular.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
-    with pytest.raises(ClosureError, match="E_FONT_METRICS_UNAVAILABLE") as error:
-        resolve_draft_render(**{
-            "project_path": root / "examples/controller-z/project.yaml",
-            "view_path": root / "examples/controller-z/views/executive.yaml", "theme_path": theme_path,
-            "scheme_path": root / "examples/controller-z/schemes/executive-light.yaml",
-            "layout_path": root / "conformance/layout-profile-intent-v0.2.yaml",
-            "system_fonts": True,
-        })
-    assert "tabular digit advances" in (error.value.detail or "")
+    draft = resolve_draft_render(**{
+        "project_path": root / "examples/halcyon-1/project.yaml",
+        "view_path": root / "examples/halcyon-1/views/default-draft.yaml", "theme_path": theme_path,
+        "scheme_path": root / "examples/halcyon-1/schemes/mission-light.yaml",
+        "layout_path": root / "examples/halcyon-1/layouts/briefing.yaml",
+        "actual_path": root / "examples/halcyon-1/actual.yaml",
+        "system_fonts": True,
+    })
+    assert draft.font_resolution is not None
+    assert any(warning.role == "numeric" and warning.family == family
+               for warning in draft.font_resolution.tabular_warnings)
+    rendered = render_review(RenderRequest(
+        draft.closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root,
+        draft_font_resolution=draft.font_resolution,
+    ))
+    assert b"<svg" in rendered.artifact.content
+    assert any(warning.role == "numeric" for warning in rendered.scene.font_warnings)
+    assert any(item.text_layout.numeric_spacing == "proportional"
+               for item in rendered.surface.primitives
+               if item.text_layout is not None and item.text_layout.family == family)
+    assert scene_document(rendered.scene)["fontWarnings"][0]["code"] == "W_FONT_TABULAR_UNAVAILABLE"
+    from chrona.app.cli import main
+    import sys
+    output = tmp_path / "draft.svg"
+    scene_path = tmp_path / "draft.scene.json"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
+        "--view", str(root / "examples/halcyon-1/views/default-draft.yaml"),
+        "--theme", str(theme_path),
+        "--scheme", str(root / "examples/halcyon-1/schemes/mission-light.yaml"),
+        "--layout", str(root / "examples/halcyon-1/layouts/briefing.yaml"),
+        "--actual", str(root / "examples/halcyon-1/actual.yaml"),
+        "--system-fonts", "--output", str(output), "--emit-scene", str(scene_path),
+    ])
+    main()
+    assert output.read_bytes().startswith(b"<svg")
+    assert '"code":"W_FONT_TABULAR_UNAVAILABLE"' in scene_path.read_text()
+    warning_output = capsys.readouterr().err
+    assert '"code": "W_FONT_TABULAR_UNAVAILABLE"' in warning_output
+    assert '"role": "numeric"' in warning_output
 
 
 def test_system_font_resolution_is_rejected_if_a_caller_attempts_immutable_rendering():

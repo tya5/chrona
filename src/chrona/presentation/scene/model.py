@@ -6,6 +6,7 @@ from datetime import date
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
 from chrona.presentation.icons import NormalizedVectorIcon
+from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
 
 
@@ -344,3 +345,4 @@ class InspectionScene:
     surfaces: tuple[SceneSurface, ...]
     manifest: SceneManifest
     diagnostics: tuple[str, ...]
+    font_warnings: tuple[FontTabularWarning, ...] = ()

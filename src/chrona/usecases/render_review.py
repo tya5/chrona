@@ -25,9 +25,9 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measu
 from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, resolve_mark_geometries, timeline_content_block_requirement
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
-from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, resolve_font_metrics_catalog
+from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.fonts.system import DraftFontResolution
-from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.theme_tokens import ThemeTokenView, effective_draft_numeric_theme
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent
@@ -193,6 +193,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render immutable Context", "presentation")
     if resolution is not None and render_closure.context.target.kind not in {"svg", "png"}:
         raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render this target", "presentation")
+    if resolution is not None and resolution.tabular_warnings:
+        theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(theme, environment.font_metrics, asset_root)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
@@ -284,7 +286,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
-                              (surface.canvas_bounds[2], surface.canvas_bounds[3]))
+                              (surface.canvas_bounds[2], surface.canvas_bounds[3]),
+                              resolution.tabular_warnings if resolution is not None else ())
     perceptibility_warnings = (_scene_perceptibility_warnings(scene)
                                if render_closure.context.identity.revision == "draft" else ())
     renderer = request.renderer or renderer_for(
@@ -306,7 +309,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
-                      content: Any, viewport: tuple[float, float]) -> InspectionScene:
+                      content: Any, viewport: tuple[float, float],
+                      tabular_warnings: tuple[FontTabularWarning, ...] = ()) -> InspectionScene:
     """Build inspection evidence from completed runtime values without reopening policy."""
     primitive_roles = Counter(item.visual_role for item in surface.primitives)
     capabilities: set[str] = set()
@@ -341,7 +345,8 @@ def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection:
         "draft" if context_identity.revision == "draft" else "immutable",
         version("chrona"), tuple(sorted(resources)),
     )
-    return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest, surface.diagnostics)
+    return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest,
+                           surface.diagnostics, tabular_warnings)
 
 
 def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind: str) -> tuple[FontGlyphWarning, ...]:

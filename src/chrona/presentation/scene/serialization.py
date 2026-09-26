@@ -66,6 +66,11 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
             "visualRoleCounts": dict(scene.manifest.visual_role_counts),
         },
         "diagnostics": list(scene.diagnostics),
+        **({"fontWarnings": [{"code": "W_FONT_TABULAR_UNAVAILABLE", "role": item.role,
+                              "family": item.family, "weight": item.weight,
+                              "requestedSpacing": item.requested_spacing,
+                              "effectiveSpacing": item.effective_spacing}
+                             for item in scene.font_warnings]} if scene.font_warnings else {}),
     }
 
 

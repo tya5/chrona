@@ -10,7 +10,7 @@ from typing import Iterable, Protocol
 from fontTools.ttLib import TTFont
 
 from chrona.presentation.fonts.importer import FontImportError, font_metrics_document
-from chrona.presentation.model.font_metrics import FontFile, FontMetrics, FontMetricsCatalog, FontMetricsError, font_metrics_from_document
+from chrona.presentation.model.font_metrics import FontFile, FontMetrics, FontMetricsCatalog, FontMetricsError, FontTabularWarning, font_metrics_from_document
 
 
 class SystemFontError(ValueError):
@@ -43,6 +43,7 @@ class DraftFontResolution:
     faces: tuple[SystemFontFace, ...]
     metrics: FontMetricsCatalog
     font_files: tuple[FontFile, ...]
+    tabular_warnings: tuple["FontTabularWarning", ...] = ()
 
 
 def _names(font: TTFont) -> tuple[str, ...]:

@@ -53,7 +53,7 @@ OWNERS = {
     ),
     "SceneProvenance": (_owner("inspection", "scene/serialization.py", "mode chrona_version resources"),),
     "DecorationDisposition": (_owner("inspection", "scene/serialization.py", "visual_role disposition"),),
-    "InspectionScene": (_owner("inspection", "scene/serialization.py", "provenance viewport required_capabilities surfaces manifest diagnostics"),),
+    "InspectionScene": (_owner("inspection", "scene/serialization.py", "provenance viewport required_capabilities surfaces manifest diagnostics font_warnings"),),
 }
 
 

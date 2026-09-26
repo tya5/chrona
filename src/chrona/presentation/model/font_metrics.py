@@ -21,6 +21,17 @@ class FontMetricsError(ValueError):
 
 
 @dataclass(frozen=True)
+class FontTabularWarning:
+    """One exact-face draft numeric-feature degradation, by Theme role."""
+
+    role: str
+    family: str
+    weight: int
+    requested_spacing: str = "tabular"
+    effective_spacing: str = "proportional"
+
+
+@dataclass(frozen=True)
 class FontMetricsCatalog:
     """Closed exact-face metrics selection owned above Layout."""
 

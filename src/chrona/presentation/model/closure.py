@@ -29,7 +29,7 @@ from chrona.presentation.model.theme_inheritance import (
 )
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
-from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, resolve_font_files, resolve_font_metrics
+from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
 from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.resources import safe_load
@@ -461,15 +461,25 @@ def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFont
             selected_files.extend(host.font_files)
         files = tuple({(item.content_identity, item.index): item for item in selected_files}.values())
         resolution = DraftFontResolution(host.faces if host else (), FontMetricsCatalog(metrics), files)
-        for role, treatment in treatments.items():
+        tabular_warnings: list[FontTabularWarning] = []
+        for role, treatment in sorted(treatments.items()):
             metric = resolution.metrics.select(treatment.family, treatment.weight)
             try:
                 metric.ensure_numeric_spacing(treatment.numeric_spacing)
             except FontMetricsError as error:
+                if treatment.numeric_spacing == "tabular":
+                    try:
+                        metric.ensure_numeric_spacing("proportional")
+                    except FontMetricsError:
+                        pass
+                    else:
+                        tabular_warnings.append(FontTabularWarning(role, treatment.family, treatment.weight))
+                        continue
                 raise ClosureError("E_FONT_METRICS_UNAVAILABLE", detail=(
                     f"role={role}; {treatment.family}/{treatment.weight} lacks "
                     f"{treatment.numeric_spacing} digit advances")) from error
-        return resolution
+        return DraftFontResolution(resolution.faces, resolution.metrics, resolution.font_files,
+                                   tuple(tabular_warnings))
     except SystemFontError as error:
         raise ClosureError(error.code, detail=error.detail) from error
     except (FontMetricsError, StopIteration, KeyError, TypeError) as error:

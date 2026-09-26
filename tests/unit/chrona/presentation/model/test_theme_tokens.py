@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
 
-from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 
 
 def _theme():
@@ -22,6 +22,16 @@ def test_typed_view_reads_current_resolved_theme_roles_only():
     assert tokens.color("text") == "#102030"
     assert tokens.font_family() == "Test Sans"
     assert tokens.text_treatment("text").font_size == Decimal(14)
+
+
+def test_draft_numeric_overlay_changes_only_selected_effective_role():
+    declared = _theme()
+    declared["body"]["values"]["numeric"]["value"] = "tabular"
+    declared["body"]["roles"]["heading"] = dict(declared["body"]["roles"]["text"])
+    effective = effective_draft_numeric_theme(declared, ("text",))
+    assert ThemeTokenView(declared).text_treatment("text").numeric_spacing == "tabular"
+    assert ThemeTokenView(effective).text_treatment("text").numeric_spacing == "proportional"
+    assert ThemeTokenView(effective).text_treatment("heading").numeric_spacing == "tabular"
 
 
 @pytest.mark.parametrize("value", [0, 1, "0.12"])

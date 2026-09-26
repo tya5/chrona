@@ -14,9 +14,11 @@ properties:
   surfaces: {$ref: "#/$defs/surfaces"}
   manifest: {$ref: "#/$defs/manifest"}
   diagnostics: {$ref: "#/$defs/diagnostics"}
+  fontWarnings: {description: "Ordered draft-only exact-face numeric degradation warnings.", type: array, items: {$ref: "#/$defs/fontTabularWarning"}}
 $defs:
   sceneVersion: {description: "The supported public Scene contract version.", const: chrona/scene/v0.6}
   sceneKind: {description: "The document kind identifying a Scene.", const: scene}
+  fontTabularWarning: {description: "Exact draft face lacks requested tabular digits.", type: object, required: [code, role, family, weight, requestedSpacing, effectiveSpacing], additionalProperties: false, properties: {code: {description: "Stable warning code.", const: W_FONT_TABULAR_UNAVAILABLE}, role: {description: "Affected Theme typography role.", $ref: "#/$defs/string"}, family: {description: "Selected exact face family.", $ref: "#/$defs/string"}, weight: {description: "Selected exact face weight.", $ref: "#/$defs/positiveInteger"}, requestedSpacing: {description: "Declared tabular spacing request.", const: tabular}, effectiveSpacing: {description: "Exactly measured proportional spacing.", const: proportional}}}
   string: {description: "A non-empty identifier or label.", type: string, minLength: 1}
   text: {description: "Text that may be empty when the source declares it so.", type: string}
   number: {description: "A finite coordinate or scalar number.", type: number}

@@ -93,6 +93,13 @@ def _emit_presentation_rejection(error: PresentationIngressRejected) -> NoReturn
 
 
 def _emit_font_warnings(rendered: RenderedReview) -> None:
+    for warning in rendered.scene.font_warnings:
+        print(json.dumps({
+            "code": "W_FONT_TABULAR_UNAVAILABLE", "severity": "warning",
+            "role": warning.role, "family": warning.family, "weight": warning.weight,
+            "requestedSpacing": warning.requested_spacing,
+            "effectiveSpacing": warning.effective_spacing,
+        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
     for warning in rendered.font_warnings:
         print(json.dumps({
             "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
