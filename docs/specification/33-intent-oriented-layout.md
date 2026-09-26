@@ -281,6 +281,11 @@ Annotation connectors first test a bounded sparse elbow family before the
 bounded dense visibility grid. Both use the same obstacle inventory, local
 corridor, and route-quality policy; the first feasible path is deterministic
 but need not be globally shortest. See the [sparse-search amendment](../design/issue-466-sparse-elbow-route-search-amendment-2026-09-26.md).
+Resolved Theme line widths contribute to registered stroke obstacles and
+Layout-completed bridge gaps. Endpoint-only opposite-direction contact is
+legal; positive-length collinear overlap is not. Sparse/dense bounds and
+internal search accounting are specified in the [clearance precision
+amendment](../design/issue-466-connector-clearance-precision-amendment-2026-09-26.md).
 
 A measured rule label may exempt only its own named rule stroke during its
 placement; the rule remains an obstacle for other labels and annotations.
