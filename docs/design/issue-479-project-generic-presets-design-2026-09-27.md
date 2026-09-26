@@ -32,3 +32,7 @@ Tests render every preset against HALCYON-1 and the `chrona init` starter, and a
 ## Boundaries
 
 Projection owns group order and domain derivation, the Theme owns the palette, Layout and Scene are unchanged, and the CLI selects the profile. There is no Scene or adapter change.
+
+## Amendment 2 (2026-09-27)
+
+A preset's `detailProfile` legend names roles of the preset's own Theme. When `--theme` replaces that Theme, the legend no longer applies, just as it does not when `--detail` is given. Otherwise an explicit Theme without those roles fails with `E_THEME_ROLE_REQUIRED`. #383's default-preset work found this.

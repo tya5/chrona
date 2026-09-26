@@ -236,7 +236,9 @@ def resolve_draft_render(
         raise ClosureError("E_DRAFT_PRESENTATION_INCOMPLETE")
     optional = (
         ("actual-set", actual_path), ("summary-profile", summary_path),
-        ("review-detail-profile", detail_path or preset_paths.get("review-detail-profile")),
+        # A preset legend names roles of the preset's own Theme, so it applies
+        # only when that Theme is the one rendered (#479 amendment 2).
+        ("review-detail-profile", detail_path or (preset_paths.get("review-detail-profile") if theme_path is None else None)),
     )
     sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)

@@ -301,6 +301,10 @@ def test_preset_detail_profile_applies_unless_an_explicit_detail_is_given(preset
     plain = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml",
                                  preset_path=root / "executive-light.preset.yaml")
     assert plain.closure.detail_profile is None
+    explicit_theme = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml",
+                                          preset_path=preset, preset_root=root,
+                                          theme_path=root / "themes/executive-light.yaml")
+    assert explicit_theme.closure.detail_profile is None  # the legend belongs to the preset's own Theme
 
 
 def test_preset_preferred_visual_profile_applies_unless_a_flag_is_given(preset_with):
