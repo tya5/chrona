@@ -24,7 +24,7 @@ Before and after for the `print-mono` catalogue preset. The change is YAML only.
 | Theme | rows 30 px with 4 px padding (were 44 and 8): the densest that still fits one line of 14 px text at 1.5 leading | `timeline-row-height`, `timeline-row-padding` |
 | Layout | the table takes at least its content and shares the rest 1 : 3 with the timeline (was 5 : 6) | slot `inlineSize` |
 
-HALCYON-1: 1600 × 1111, with no warnings (before: 1600 × 1487). The starter keeps its one pre-existing as-of label warning.
+HALCYON-1: 1600 × 1111 from a requested 1600 × 900, with no CLI warnings or layout failures (before: 1600 × 1487). Its Scene still records `W_LAYOUT_ACTUAL_INCOMPLETE:tvac` and one declared `W_LAYOUT_LABEL_SUPPRESSED` outcome. The starter keeps its one pre-existing as-of label warning.
 
 ## Where YAML ran out
 
@@ -46,4 +46,4 @@ Added after review feedback. On a wide timeline, a bar on the right could only b
 | View | each bar is labelled with its name at its end, in its own row, as well as in the table | `visibility.labels.placement: plot, side: end`, fallback `[end, start, suppress]` |
 | Theme | the axis band is painted in `neutral` at full opacity, not the group-band colour, so the axis ends visibly where the plot begins | `colorBindings.axis-band-decoration.fill`, `roles.axis-band-decoration.opacity` |
 
-HALCYON-1 still renders with no warnings. The limits met while doing this are recorded in the `executive-light` README (items 2 and 4–6) and in #470: no axis baseline rule, labels not avoiding dependency lines, suppressed labels leaving no trace, and plot-and-table labels not being a declared choice.
+HALCYON-1 still renders without layout failures. The limits met while doing this are recorded in the `executive-light` README (items 2 and 4–6) and in #470: no axis baseline rule, labels not avoiding dependency lines, suppressed labels leaving no trace, and plot-and-table labels not being a declared choice.

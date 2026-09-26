@@ -26,7 +26,7 @@ Before and after for the `executive-light` catalogue preset. The change is YAML 
 | Theme | the axis band is painted in `neutral` at full opacity instead of `surfaceRaised` at the group-band opacity, so the axis is visibly separate from the plot | `colorBindings.axis-band-decoration.fill`, `roles.axis-band-decoration.opacity` |
 | Layout | the Controller Z executive Layout, unchanged except its id | — |
 
-HALCYON-1: no warnings. The starter keeps its one pre-existing as-of label warning.
+HALCYON-1: no CLI warnings or layout failures. Its Scene still records `W_LAYOUT_ACTUAL_INCOMPLETE:tvac` and one declared `W_LAYOUT_LABEL_SUPPRESSED` outcome. The starter keeps its one pre-existing as-of label warning.
 
 ## Where YAML ran out
 

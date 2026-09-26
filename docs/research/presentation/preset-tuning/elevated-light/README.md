@@ -31,7 +31,7 @@ Before and after for the `elevated-light` catalogue preset. The change is YAML o
 | Theme | rows 40 px and marks 16 px (were 72 and 24); a `numeric` role for Δ; circle source terminals; the axis band in `neutral` | as in `executive-light` |
 | Theme | gradient turned from 35° to **90°**, top to bottom, so each group card fades downwards instead of disappearing towards the right; shadow opacity 0.28 → 0.4 and y-offset 2 → 3 px | `elevated.gradient-angle`, `elevated.shadow-opacity`, `elevated.shadow-offset-y` |
 
-HALCYON-1: no warnings under either profile. The starter keeps its one pre-existing as-of label warning.
+HALCYON-1: no CLI warnings or layout failures under either profile. Its Scene still records `W_LAYOUT_ACTUAL_INCOMPLETE:tvac` and one declared `W_LAYOUT_LABEL_SUPPRESSED` outcome. The starter keeps its one pre-existing as-of label warning.
 
 ## Where YAML ran out
 
