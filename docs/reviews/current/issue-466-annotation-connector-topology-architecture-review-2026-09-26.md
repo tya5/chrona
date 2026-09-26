@@ -1,0 +1,14 @@
+# Architecture Review — Annotation Connector Topology (#466)
+
+**Design:** [topology correction](../../design/issue-466-annotation-connector-topology-correction-2026-09-26.md). **Published product base:** O1 at `6d9df1f6`; O2 remains an unpublished experiment. Reviewed against Specifications [06](../../specification/06-view-model.md), [08](../../specification/08-scene-and-rendering.md), [33](../../specification/33-intent-oriented-layout.md), [44](../../specification/44-usable-explicit-rows-and-annotation-rail.md), [50](../../specification/50-constraint-driven-gantt-surface-quality.md), #413 purpose-independent ladder, #449 visible fallback, #467 lane dependency, and current Layout/Scene/SVG/typeset seams.
+
+## Findings and decision
+
+- Project dependencies remain semantic facts. A bridged annotation leader does not weaken, reroute, or split the semantic dependency; only the later annotation connector receives a visible gap.
+- View owns annotation intent and candidate order, not a crossing coordinate. The O2 legacy rail preset may select bridged topology internally without new View syntax; the later candidate grammar must expose the policy explicitly. No schema is silently extended by this correction.
+- Theme owns paint and resolved stroke widths. Layout uses those resolved quantities to finish gap geometry; Scene carries one source-linked Path with multiple move commands. SVG and typeset already support move commands, but the Scene projection and both adapter outputs require parity tests. No adapter may infer a bridge from intersecting strokes.
+- One monotone obstacle inventory remains authoritative. An atomic box/connector trial does not mutate it until accepted. A bridge is a typed, inspected crossing, not an exemption of all dependency or leader routes. Marks, text, boxes and rule barriers remain hard obstacles.
+- The corridor and quality limits reject the visually harmful perimeter route found in controller-z. A visible fallback remains possible under #449, but acceptance must report it, and an aesthetically harmful fallback cannot be declared accepted merely because a test is green.
+- Specification 08 §6.3 still assigned collision resolution to Scene, contradicting the current Layout/Scene seam; this review corrects that normative text. Specification 33 records the successor topology without claiming O2 is already published.
+
+**Decision:** accept the topology correction as the design base for an amended O2 implementation plan. Its outcome is subject to the rendered public artifact gate. The later candidate grammar, nearest-free, and tail/balloon remain separate design-completion work; this review does not mark issue #466 complete. If implementation finds no local bridge solution within the declared bounds, return to design rather than enlarging the route cap or excluding obstacle classes ad hoc.

@@ -212,6 +212,29 @@ are normalized to candidate data. The obstacle-only prerequisite may publish
 before nearest-free and tail support; those remain incomplete until their own
 design and release gates pass.
 
+### 8.2 Annotation connector topology after the shared inventory
+
+The [#466 connector correction](../design/issue-466-annotation-connector-topology-correction-2026-09-26.md)
+is the accepted successor contract for O2, not a claim that current `main`
+implements it. Layout MUST evaluate each annotation box and its connector as
+one provisional candidate. A fit commits both atomically to the same surface
+obstacle inventory. A failed pair MUST NOT leave provisional obstacles behind.
+
+Strict connectors avoid all declared obstacles. A rail leader MAY use an
+explicit, bounded bridged-orthogonal topology after strict search. A bridge
+MAY cross only a prior leader or semantic dependency stroke, transversely and
+away from junctions/endpoints. It MUST NOT cross a mark, text, annotation box,
+port other than a named endpoint, or rule barrier. Layout completes a visible
+gap in the later annotation connector at each crossing; the crossed stroke
+remains continuous. The connector remains a single source-linked placement,
+and Scene/adapters MUST NOT decide the crossing or gap. A tail connector MUST
+use strict topology. The local search corridor, route quality, crossing count,
+and exhaustion are bounded and recorded in the placement decision. If all
+declared candidates fail, an explicit suppress outcome or the visible
+fallback policy applies; fallback MUST NOT be reported as a collision-free
+fit. The later candidate grammar will specify the public spelling of these
+policies.
+
 ## 9. Diagnostics
 
 The implementation exposes at least:

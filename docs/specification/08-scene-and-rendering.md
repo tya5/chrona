@@ -484,9 +484,9 @@ An omitted relation endpoint may terminate at a declared non-rendered boundary o
 
 ### 6.3 Annotations
 
-The View declares an annotation's stable anchor and logical preference, such as above, below, left, right, or a named lane. Scene resolves concrete offsets, callout bounds, leader paths, and collision adjustments under the Scene profile.
+The View declares an annotation's stable anchor and logical preference, such as above, below, start, end, or a named region. Layout resolves concrete offsets, callout bounds, leader paths, collision adjustments, and any connector bridge gap under the resolved Layout profile. Scene only projects the completed primitives.
 
-Collision resolution may move a presentation annotation within its declared placement constraints, but must retain its anchor and produce deterministic output. If no legal placement exists, Scene emits a diagnostic and applies the profile's explicit fallback; it must not silently detach the annotation.
+Collision resolution may move a presentation annotation within its declared placement constraints, but must retain its anchor and produce deterministic output. If no legal placement exists, Layout emits a diagnostic and applies the profile's explicit fallback; it must not silently detach the annotation. Scene and adapters do not retry placement or routing.
 
 ## 7. Layout metrics, determinism, and diagnostics
 
