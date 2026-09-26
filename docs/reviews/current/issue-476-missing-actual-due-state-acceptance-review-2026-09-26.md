@@ -2,6 +2,11 @@
 
 # Acceptance Review — Due-State Missing Actual (#476)
 
+**Later disposition:** the owner amended literal criterion 2 after this review.
+See the [2026-09-27 acceptance amendment](issue-476-missing-actual-due-state-acceptance-amendment-2026-09-27.md)
+for the current three-row disposition. This document remains the historical
+review of the original wording.
+
 **Authority:** [design](../../design/issue-476-missing-actual-due-state-design-2026-09-26.md), [architecture review](issue-476-missing-actual-due-state-architecture-review-2026-09-26.md), [implementation plan](../../planning/active/issue-476-missing-actual-due-state-implementation-plan-2026-09-26.md). **Public implementation:** `8153f7296daecd94f71a6a66aee10f2017e1ada2`; generated diagnostic/contrast evidence correction: `44b5604e16bd7fa2c1c3e4728a577fcbb4e200d0`.
 
 ## Verification on published main
