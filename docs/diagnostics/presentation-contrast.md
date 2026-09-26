@@ -4,25 +4,25 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 19 | 112 | 3.204 | 7.708 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 21 | 58 | 1.574 | 1.579 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 21 | 896 | 1.388 | 1.441 | 0 |
+| actual | `actual` | required | 3.000 | 20 | 116 | 3.204 | 7.708 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 22 | 60 | 1.574 | 1.579 | 0 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 22 | 944 | 1.388 | 1.414 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 14 | 38 | 5.461 | 5.571 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 15 | 40 | 5.461 | 5.571 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 5 | 13 | 5.692 | 5.692 | 0 |
-| group-decoration | `group-band` | enabled | 1.100 | 20 | 54 | 1.116 | 1.116 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 12 | 12 | 9.523 | 16.268 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 13 | 28 | 16.268 | 16.354 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 14 | 18 | 4.436 | 14.573 | 0 |
+| group-decoration | `group-band` | enabled | 1.100 | 21 | 57 | 1.087 | 1.116 | 3 |
+| legend-swatch | `actual` | required | 3.000 | 13 | 13 | 9.523 | 16.268 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 14 | 29 | 16.268 | 16.354 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 15 | 19 | 4.436 | 14.573 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
-| planned | `planned` | required | 3.000 | 21 | 248 | 6.157 | 14.573 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 10 | 22 | 4.789 | 4.789 | 0 |
-| row-decoration | `row-band` | enabled | 1.100 | 5 | 20 | 1.116 | 1.116 | 0 |
+| planned | `planned` | required | 3.000 | 22 | 256 | 6.157 | 14.573 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 11 | 25 | 4.789 | 4.789 | 0 |
+| row-decoration | `row-band` | enabled | 1.100 | 6 | 24 | 1.027 | 1.116 | 4 |
 | snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 |
 | table-cell | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 9.523 | 9.523 | 0 |
-| table-cell | `variance-behind` | required | 4.500 | 7 | 32 | 5.438 | 6.747 | 0 |
+| table-cell | `variance-behind` | required | 4.500 | 8 | 34 | 5.438 | 6.747 | 0 |
 | table-cell | `variance-on-track` | required | 4.500 | 8 | 21 | 5.448 | 7.032 | 0 |
 
 ## Per-primitive grounds
@@ -198,6 +198,85 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 591.968, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1112.507, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.723, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1055.392, 424.800 | `group:validation-team` | flat | `#FFF4E4` | stroke | 14.961 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `actual:firmware:firmware` | `actual` | 591.968, 248.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `actual:performance:performance` | `actual` | 1112.507, 512.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.723, 336.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 716.755, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1251.555, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-01` | `calendar-closed` | 506.400, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-07` | `calendar-closed` | 549.184, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-08` | `calendar-closed` | 556.315, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-11` | `calendar-closed` | 577.707, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-14` | `calendar-closed` | 599.099, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-15` | `calendar-closed` | 606.229, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-21` | `calendar-closed` | 649.013, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-22` | `calendar-closed` | 656.144, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-02-28` | `calendar-closed` | 698.928, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-01` | `calendar-closed` | 706.059, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-07` | `calendar-closed` | 748.843, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-08` | `calendar-closed` | 755.973, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-14` | `calendar-closed` | 798.757, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-15` | `calendar-closed` | 805.888, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-21` | `calendar-closed` | 848.672, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-22` | `calendar-closed` | 855.803, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-28` | `calendar-closed` | 898.587, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-03-29` | `calendar-closed` | 905.717, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-04` | `calendar-closed` | 948.501, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-05` | `calendar-closed` | 955.632, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-11` | `calendar-closed` | 998.416, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-12` | `calendar-closed` | 1005.547, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-18` | `calendar-closed` | 1048.331, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-19` | `calendar-closed` | 1055.461, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-25` | `calendar-closed` | 1098.245, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-26` | `calendar-closed` | 1105.376, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-04-29` | `calendar-closed` | 1126.768, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-02` | `calendar-closed` | 1148.160, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-03` | `calendar-closed` | 1155.291, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-04` | `calendar-closed` | 1162.421, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-05` | `calendar-closed` | 1169.552, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-06` | `calendar-closed` | 1176.683, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-09` | `calendar-closed` | 1198.075, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-10` | `calendar-closed` | 1205.205, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-16` | `calendar-closed` | 1247.989, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-17` | `calendar-closed` | 1255.120, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-23` | `calendar-closed` | 1297.904, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-24` | `calendar-closed` | 1305.035, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-30` | `calendar-closed` | 1347.819, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-05-31` | `calendar-closed` | 1354.949, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-06` | `calendar-closed` | 1397.733, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-07` | `calendar-closed` | 1404.864, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-13` | `calendar-closed` | 1447.648, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-14` | `calendar-closed` | 1454.779, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-20` | `calendar-closed` | 1497.563, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-21` | `calendar-closed` | 1504.693, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1547.477, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1554.608, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1035.621, 248.800 | `group:fw-team` | flat | `#FFF4E4` | fill | 5.719 | 4.500 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1144.595, 365.300 | `row-band:silicon-bringup` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `group:factory-team` | `group-band` | 1041.200, 732.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.087 | 1.100 | error |
+| `examples/controller-z/generated/capabilities.scene.json` | `group:fw-team` | `group-band` | 1041.200, 248.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.087 | 1.100 | error |
+| `examples/controller-z/generated/capabilities.scene.json` | `group:validation-team` | `group-band` | 1041.200, 512.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.087 | 1.100 | error |
+| `examples/controller-z/generated/capabilities.scene.json` | `legend-swatch:actual` | `actual` | 935.338, 876.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `legend-swatch:planned` | `planned` | 935.338, 851.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 591.968, 160.800 | `row-band:architecture` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:architecture:architecture` | `planned` | 513.531, 160.800 | `row-band:architecture` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:dvt:dvt` | `planned` | 1219.467, 600.800 | `group:validation-team` | flat | `#FFF4E4` | stroke | 14.961 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1029.200, 424.800 | `group:validation-team` | flat | `#FFF4E4` | stroke | 14.961 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:firmware:firmware` | `planned` | 591.968, 248.800 | `group:fw-team` | flat | `#FFF4E4` | stroke | 14.961 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:ga:ga` | `planned` | 1556.869, 776.800 | `group:factory-team` | flat | `#FFF4E4` | stroke | 14.961 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:performance:performance` | `planned` | 1062.592, 512.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:pvt:pvt` | `planned` | 1319.296, 688.800 | `row-band:pvt` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.592, 336.800 | `row-band:silicon-bringup` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 591.968, 248.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1112.507, 512.800 | `actual:performance:performance` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.723, 336.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `row-band:architecture` | `row-band` | 800.000, 160.800 | `group:fw-team` | flat | `#FFF4E4` | fill | 1.027 | 1.100 | error |
+| `examples/controller-z/generated/capabilities.scene.json` | `row-band:performance` | `row-band` | 800.000, 512.800 | `group:validation-team` | flat | `#FFF4E4` | fill | 1.027 | 1.100 | error |
+| `examples/controller-z/generated/capabilities.scene.json` | `row-band:pvt` | `row-band` | 800.000, 688.800 | `group:factory-team` | flat | `#FFF4E4` | fill | 1.027 | 1.100 | error |
+| `examples/controller-z/generated/capabilities.scene.json` | `row-band:silicon-bringup` | `row-band` | 800.000, 336.800 | `group:fw-team` | flat | `#FFF4E4` | fill | 1.027 | 1.100 | error |
+| `examples/controller-z/generated/capabilities.scene.json` | `cell:firmware:Δ` | `variance-behind` | 455.800, 248.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `cell:silicon-bringup:Δ` | `variance-behind` | 455.800, 336.800 | `row-band:silicon-bringup` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1055.328, 392.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `actual:firmware:firmware` | `actual` | 584.512, 228.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `actual:performance:performance` | `actual` | 1113.227, 464.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
@@ -1670,4 +1749,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 ## Five-decoration witness
 
 
-Findings: 1637; errors: 0.
+Findings: 1716; errors: 7.
