@@ -14,7 +14,7 @@ Consecutive rows with the same non-empty View group form a SceneGroup. Theme met
 
 ## Calendar axis and as-of marker
 
-View axis policy chooses one or two semantic levels from existing interval algorithms: year/quarter band and short month/week labels. Scene uses the existing locale-aware formatter rather than raw interval strings. The Actual set's declared observation cutoff, when present, renders an `as-of` line and label; absent cutoff produces no inferred marker. Calendar closures derive from the Project calendar and use Theme `calendar-closed.fill`; they never change schedule dates.
+View axis policy chooses one or two semantic levels from existing interval algorithms: year/quarter band and short month/week labels. For the current axis contract, the View selects a finite form and may select an independent name table; Layout formats and measures the completed label as specified by [Axis Name Tables](63-axis-name-tables.md). Scene projects that text without locale formatting. The Actual set's declared observation cutoff, when present, renders an `as-of` line and label; absent cutoff produces no inferred marker. Calendar closures derive from the Project calendar and use Theme `calendar-closed.fill`; they never change schedule dates.
 
 ## Legend and mark labels
 

@@ -3,6 +3,10 @@
 **Status:** Design complete; M27 product binding accepted  
 **Owns:** the M15 table-timeline projection, profile, Scene, and SVG adapter boundary.
 
+The historical axis formatter and Scene-ownership wording below is superseded
+for the current runtime by [Axis Name Tables](63-axis-name-tables.md) and the
+constraint-driven Layout architecture. It is not a second formatter contract.
+
 ## 1. Contract
 
 M15 composes a semantic table and a Date timeline from one immutable View Projection.
