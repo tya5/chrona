@@ -92,6 +92,12 @@ properties. A target that cannot express a completed paint/pattern combination
 rejects it with `E_PRESENTATION_PAINT_UNSUPPORTED:<target>` before writing an
 artifact. It must not omit a channel, turn a dash solid, or select a fallback.
 
+For SVG drawable shapes, an absent completed fill serializes as explicit
+`fill="none"`; omitting the attribute would invoke SVG's initial black fill
+and contradict the Scene value. A completed pattern or gradient uses one
+explicit target fill reference. ClipPath-only geometry is structural, not a
+painted primitive. The PNG route inherits this mapping through its SVG input.
+
 The public renderer boundary is `SceneSurface + viewport`; it no longer accepts
 `ThemeTokenView`. Output byte checks prove that changing a resolved Scene paint
 changes only declared target attributes, and a search gate rejects Theme/Scheme
