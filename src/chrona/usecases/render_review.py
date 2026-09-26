@@ -27,6 +27,7 @@ from chrona.presentation.layout.surface_composer import resolve_label_visual_adv
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
+from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
@@ -105,6 +106,7 @@ class RenderedReview:
     font_warnings: tuple["FontGlyphWarning", ...] = ()
     perceptibility_warnings: tuple["ScenePerceptibilityWarning", ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
+    scale_collisions: tuple[ScaleCollision, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -191,7 +193,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     projection, scenario_provenance = _project_review(project, view, render_closure, manifests, request.scheduler)
     try:
         color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
-                                          theme["body"].get("categorySlots"))
+                                          theme["body"].get("categorySlots"),
+                                          color_vision=tuple(theme["body"].get("colorVision", ())))
     except ColorScaleError as error:
         raise RenderFailed(str(error), str(error), "presentation") from error
     if render_closure.actual_set is not None:
@@ -299,9 +302,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
+    collisions = color_scale.collisions if color_scale is not None else ()
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),
-                              resolution.tabular_warnings if resolution is not None else ())
+                              resolution.tabular_warnings if resolution is not None else (),
+                              collisions)
     perceptibility_warnings = (_scene_perceptibility_warnings(scene)
                                if render_closure.context.identity.revision == "draft" else ())
     renderer = request.renderer or renderer_for(
@@ -320,12 +325,13 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings,
-                          surface.info_diagnostics)
+                          surface.info_diagnostics, collisions)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
                       content: Any, viewport: tuple[float, float],
-                      tabular_warnings: tuple[FontTabularWarning, ...] = ()) -> InspectionScene:
+                      tabular_warnings: tuple[FontTabularWarning, ...] = (),
+                      collisions: tuple[ScaleCollision, ...] = ()) -> InspectionScene:
     """Build inspection evidence from completed runtime values without reopening policy."""
     primitive_roles = Counter(item.visual_role for item in surface.primitives)
     capabilities: set[str] = set()
@@ -361,7 +367,8 @@ def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection:
         version("chrona"), tuple(sorted(resources)),
     )
     return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest,
-                           (*surface.diagnostics, *(item.scene_diagnostic() for item in surface.info_diagnostics)),
+                           (*surface.diagnostics, *(item.scene_diagnostic() for item in surface.info_diagnostics),
+                            *(item.scene_diagnostic() for item in collisions)),
                            tabular_warnings)
 
 

@@ -28,13 +28,13 @@ body:
     source: Chrona HALCYON-1 example, print-mono
     license: MIT
   categories:
-    default: "#F4F4F4"
-    bus: "#F4F4F4"
-    payload: "#E9E9E9"
-    ait: "#DEDEDE"
-    ground: "#D3D3D3"
-    launch: "#F4F4F4"
-    ops: "#E9E9E9"
-    factory-team: "#F4F4F4"
-    fw-team: "#E9E9E9"
-    validation-team: "#DEDEDE"
+    default: "#F3F3F3"
+    bus: "#F3F3F3"
+    payload: "#DADADA"
+    ait: "#C4C4C4"
+    ground: "#AEAEAE"
+    launch: "#989898"
+    ops: "#848484"
+    factory-team: "#F3F3F3"
+    fw-team: "#DADADA"
+    validation-team: "#C4C4C4"

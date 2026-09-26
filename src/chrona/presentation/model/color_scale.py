@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from chrona.presentation.model.color_separability import ScaleCollision, scale_collisions
+
 
 class ColorScaleError(ValueError):
     """A closed scale cannot resolve one declared presentation input."""
@@ -23,6 +25,7 @@ class ResolvedColorScale:
     source_field: str
     domain: tuple[str, ...]
     colors: tuple[tuple[str, str], ...]
+    collisions: tuple[ScaleCollision, ...] = ()
 
     def color_for(self, object_id: str, fields: Mapping[str, object] | None) -> str:
         """Resolve one selected object's declared scalar value without fallback."""
@@ -34,8 +37,13 @@ class ResolvedColorScale:
 
 def resolve_color_scale(encoding: Mapping[str, object] | None,
                         scales: Mapping[str, object] | None,
-                        categories: Mapping[str, object] | None) -> ResolvedColorScale | None:
-    """Resolve one View encoding against exact Theme and Scheme declarations."""
+                        categories: Mapping[str, object] | None,
+                        *, color_vision: tuple[str, ...] = ()) -> ResolvedColorScale | None:
+    """Resolve one View encoding against exact Theme and Scheme declarations.
+
+    Domain values whose colours a reader cannot separate, under normal vision
+    or a vision the Scheme claims, are returned as non-fatal collisions.
+    """
     if encoding is None:
         return None
     if not isinstance(encoding, Mapping) or not isinstance(scales, Mapping) or not isinstance(categories, Mapping):
@@ -59,4 +67,5 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
         if not isinstance(color, str):
             raise ColorScaleError("E_PRESENTATION_SCALE_MAPPING")
         colors.append((value, color))
-    return ResolvedColorScale(scale_id, target, source["field"], tuple(domain), tuple(colors))
+    return ResolvedColorScale(scale_id, target, source["field"], tuple(domain), tuple(colors),
+                              scale_collisions(scale_id, tuple(colors), color_vision))

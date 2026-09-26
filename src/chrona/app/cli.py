@@ -137,6 +137,13 @@ def _emit_render_warnings(rendered: RenderedReview) -> None:
     _emit_font_warnings(rendered)
     _emit_fit_warnings(rendered)
     _emit_scene_perceptibility_warnings(rendered)
+    for collision in rendered.scale_collisions:
+        print(json.dumps({
+            "code": collision.code, "severity": "warning", "scaleId": collision.scale_id,
+            "values": [collision.first, collision.second], "vision": collision.vision,
+            "deltaE": collision.delta_e,
+            "message": f"{collision.first} and {collision.second} are not separable under {collision.vision} vision",
+        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
     for info in rendered.info_diagnostics:
         if isinstance(info, SuppressedPlotLabels):
             print(json.dumps({"code": info.code, "severity": "info", "surfaceId": info.surface_id,

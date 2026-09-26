@@ -150,4 +150,7 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         if any(f"category:{slot}" not in colors for slot in resolved_slots.values()):
             raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
         resolved_scales[scale_id] = {"slots": resolved_slots}
-    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}}}
+    suitability = scheme.get("body", {}).get("suitability", {}) if isinstance(scheme.get("body"), Mapping) else {}
+    claimed = suitability.get("colorVision", ()) if isinstance(suitability, Mapping) else ()
+    color_vision = [str(item) for item in claimed if item != "none-claimed"]
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}, "colorVision": color_vision}}

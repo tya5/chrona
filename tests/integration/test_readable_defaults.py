@@ -149,3 +149,24 @@ def test_print_mono_separates_slips_and_as_of_in_greyscale(tmp_path, monkeypatch
     grid = [item for item in primitives if item.get("purpose") == "axis-grid"]
     assert as_of and all(item["paint"]["dash"] for item in as_of)
     assert grid and not any(item["paint"].get("dash") for item in grid)
+
+
+def test_no_committed_scene_ships_an_inseparable_colour_scale() -> None:
+    """#421: every committed colour scale separates its domain."""
+    for scene_path in PUBLIC_SCENES:
+        diagnostics = json.loads(scene_path.read_text(encoding="utf-8")).get("diagnostics", [])
+        assert not [item for item in diagnostics if item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE")], scene_path
+
+
+def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None:
+    scheme = yaml.safe_load((ROOT / "examples/halcyon-1/schemes/control-room-dark.yaml").read_text(encoding="utf-8"))
+    scheme["body"]["categories"]["launch"] = scheme["body"]["categories"]["bus"]
+    scheme_path = tmp_path / "collide.yaml"
+    scheme_path.write_text(yaml.safe_dump(scheme, sort_keys=False), encoding="utf-8")
+    capsys.readouterr()
+    _render(tmp_path, monkeypatch, "collide", "--view", str(ROOT / "examples/halcyon-1/views/02-programme-board.yaml"),
+            "--theme", str(ROOT / "examples/halcyon-1/themes/wallboard.yaml"), "--scheme", str(scheme_path),
+            "--layout", str(ROOT / "examples/halcyon-1/layouts/wallboard.yaml"))
+    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    collisions = [item for item in warnings if item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
+    assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
