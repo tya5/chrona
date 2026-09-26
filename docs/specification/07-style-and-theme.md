@@ -158,6 +158,21 @@ A Theme binds visual roles to concrete tokens. Tokens may describe colour, typog
 
 Themes contain no selectors over Project fields. For example, `behind` is chosen by Style; its colour, line treatment, and label treatment are selected by Theme.
 
+A `symbol` token's value is either a built-in shape (`diamond`, `circle`, `square`,
+`chevron`) or a multi-part glyph (`shape: glyph`, with a `viewBox` and an ordered
+`parts` list of SVG path data). Each part paints from the milestone role's own
+resolved colour (`paint: fill` or `paint: stroke`) unless the part declares a fixed
+`color`, in which case that colour is used instead — except that a role whose own
+paint resolves to an outline treatment (`pattern: outline`, typically a baseline
+ghost) draws every part as a stroke of the role's own colour and dash pattern,
+ignoring any part's fixed `color`. This keeps a baseline variant distinguishable
+from its planned/actual variant by shape treatment, not only by colour, even when
+every variant shares one glyph asset. `milestoneSymbol` has two optional sibling
+roles, `milestoneSymbolActual` and `milestoneSymbolBaseline`, each falling back to
+`milestoneSymbol` when unset; a Theme binds a different glyph to one of them only
+when a variant needs a different asset altogether (a ghost sprite for a baseline
+gate), not merely a different treatment of the same asset.
+
 Theme authoring is additionally closed by a role/property applicability
 contract. After base inheritance and Color Scheme bindings are resolved, but
 before Layout or Scene construction, every declared `roles` property and every

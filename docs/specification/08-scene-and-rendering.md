@@ -295,8 +295,15 @@ optional non-negative `cornerRadius`. `cornerRadius` is logical Scene geometry: 
 present on span comparison marks, is bounded to half the smaller Rect dimension, and
 is absent on Rect families that do not declare rounding. An SVG adapter serializes it
 as equal `rx`/`ry` and never re-reads `theme.bar.radius`.
-`Text` carries `text` plus exactly one `TextLayout`. `Symbol` carries a closed `shape`
-identifier and its concrete `bounds`. `Path` carries at least two ordered logical
+`Text` carries `text` plus exactly one `TextLayout`. `Symbol` carries one completed
+outline and its concrete `bounds`, painted by exactly one resolved `ScenePaint`; a
+milestone whose Theme-bound shape is a multi-part glyph is represented as several
+sibling `Symbol` primitives sharing `sourceRef`/`purpose`/`visualRole`/`bounds`, one
+per painted part, in ascending paint order — not as one primitive with several
+paints. Contrast and perceptibility evaluation treat a prior `Symbol` primitive at
+the same bounds as possible ground for a later primitive's paint, exactly as they
+already do for a `Rect`, so a glyph part painted over another part is checked
+against that part's colour rather than against the canvas. `Path` carries at least two ordered logical
 `points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
 tick may omit both port identifiers. `Path.bounds` is the exact union of its points,
 and `Icon` carries exactly one completed normalized vector payload or immutable raster
