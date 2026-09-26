@@ -191,6 +191,13 @@ Python `repr` or YAML presentation order.
 
 ### 8.1 Accepted prerequisite: one surface obstacle contract
 
+**Publication status:** this subsection is the accepted successor contract,
+not a claim that all behavior is implemented on current `main`. O1 publishes
+the typed obstacle inventory; O2 composer/annotation wiring is under the
+[#466 topology design plan](../planning/active/issue-466-annotation-route-topology-design-plan-2026-09-26.md)
+and has not passed its public artifact gate. Current behavior must be checked
+against the actual published code and evidence.
+
 The [#466 design](../design/issue-466-general-placement-design-2026-09-26.md)
 defines the successor for annotation and plot-label placement. Layout creates
 one typed surface obstacle inventory and grows it monotonically as marks,
