@@ -73,6 +73,8 @@ def test_bundled_default_preset_resolves_a_non_halcyon_project_with_or_without_a
     assert without_actual.closure.resource("view").id == with_actual.closure.resource("view").id == "chrona-default-draft"
     assert without_actual.closure.actual_set is None
     assert with_actual.closure.actual_set is not None
+    assert without_actual.auto_block is with_actual.auto_block is True
+    assert without_actual.closure.context.environment.viewport_block == 900
 
 
 def test_draft_typeset_closure_uses_an_explicit_descriptor_without_host_discovery():
@@ -270,3 +272,4 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
 
     assert draft.closure.icon_catalogs[0].set_name == "preset"
     assert draft.closure.icon_catalogs[0].entry_names == ("check",)
+    assert draft.auto_block is True

@@ -36,9 +36,10 @@ chrona schedule path/to/project.yaml
 python -m chrona validate path/to/project.yaml
 ```
 
-For a Draft surface whose row count should determine its block extent, use
-`chrona render --viewport 1600xauto`. This is Draft-only; immutable Render
-Contexts keep a finite `environment.viewport.blockSize`.
+Draft rendering defaults to a content-sized `1600xauto` viewport. Use an
+explicit `--viewport WIDTHxHEIGHT` when you need a finite minimum allocation.
+The `auto` request is Draft-only; immutable Render Contexts keep a finite
+`environment.viewport.blockSize`.
 
 On Windows, `python -m chrona` is equivalent to the installed `chrona` command
 and avoids depending on the virtual environment's `Scripts` directory being on

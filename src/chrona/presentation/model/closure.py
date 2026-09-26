@@ -204,6 +204,9 @@ _DRAFT_CAPABILITIES = (
 )
 
 
+DEFAULT_DRAFT_VIEWPORT: tuple[int, int | None] = (1600, None)
+
+
 def resolve_draft_render(
     *, project_path: Path, view_path: Path | None = None, theme_path: Path | None = None, scheme_path: Path | None = None,
     layout_path: Path | None = None, preset_path: Path | None = None, preset_root: Path | None = None, actual_path: Path | None = None, summary_path: Path | None = None,
@@ -211,7 +214,7 @@ def resolve_draft_render(
     font_metrics_path: Path | None = None,
     system_fonts: bool = False,
     system_font_resolver: SystemFontResolver | None = None,
-    viewport: tuple[int, int | None] = (1600, 900),
+    viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
@@ -268,7 +271,7 @@ def _draft_preset_paths(preset_path: Path, preset_root: Path | None = None) -> d
 
 
 def resolve_guided_draft_render(
-    *, workspace_path: Path, viewport: tuple[int, int | None] = (1600, 900),
+    *, workspace_path: Path, viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
     locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""

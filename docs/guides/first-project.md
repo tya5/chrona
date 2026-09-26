@@ -5,7 +5,7 @@ Start with an editable plan, not a copied corpus:
 ```bash
 chrona init my-first-chrona-project
 chrona render my-first-chrona-project/project.yaml \
-  --actual my-first-chrona-project/actual.yaml --viewport 1600xauto \
+  --actual my-first-chrona-project/actual.yaml \
   --output my-first-chrona-project/plan.svg
 ```
 
@@ -13,7 +13,8 @@ chrona render my-first-chrona-project/project.yaml \
 add objects and relations; `actual.yaml` holds observations for the same object
 identifiers.  The command uses Chrona's packaged `chrona-default-draft`
 presentation preset.  The SVG is a Draft review artifact, not immutable
-materializer evidence.
+materializer evidence. The omitted viewport uses the Draft `1600xauto`
+default; use an explicit finite viewport when its minimum size matters.
 
 To select a supplied appearance explicitly, copy one into your own source tree
 and render through its ordinary local preset.  Available ids are

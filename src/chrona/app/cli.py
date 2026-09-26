@@ -15,7 +15,7 @@ from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import load_yaml, validate_project
-from chrona.presentation.model.closure import ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
+from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
 from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
@@ -237,7 +237,7 @@ def _parser() -> JsonArgumentParser:
                          help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
     command.add_argument("--system-fonts", action="store_true", help="draft-only: measure and rasterize the Theme's exact installed face")
-    command.add_argument("--viewport", default="1600x900", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600x900)")
+    command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
@@ -292,7 +292,7 @@ def _parser() -> JsonArgumentParser:
 
     command = sub.add_parser("render-workspace", help="render a guided authoring workspace Draft (not reproducible evidence)")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
-    command.add_argument("--viewport", default="1600x900", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600x900)")
+    command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)

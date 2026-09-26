@@ -14,6 +14,7 @@ from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.usecases.render_review import FontGlyphWarning, ScenePerceptibilityWarning
 from chrona.presentation.layout.surface_quality import FitWarning
+from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 from chrona.scheduling.scheduler import schedule
 import chrona.storage.publication as publication
 from chrona.storage.snapshot_paths import snapshot_directory
@@ -193,7 +194,38 @@ def test_cli_render_parser_advertises_the_bundled_default_preset():
     parser = cli._parser()
     render = parser.parse_args(["render", "project.yaml", "--output", "timeline.svg"])
     assert render.preset is None
+    assert render.viewport == "1600xauto"
+    assert parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"]).viewport == "1600xauto"
     assert "chrona-default-draft" in parser._subparsers._group_actions[0].choices["render"].format_help()
+
+
+@pytest.mark.parametrize("viewport", (None, "1600x900"))
+def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, monkeypatch, capsys, viewport):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    output, scene_path = tmp_path / "plan.svg", tmp_path / "plan.scene.json"
+    argv = ["chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
+            "--output", str(output), "--emit-scene", str(scene_path)]
+    if viewport is not None:
+        argv.extend(("--viewport", viewport))
+    monkeypatch.setattr(sys, "argv", argv)
+    main()
+
+    stderr = capsys.readouterr().err
+    assert not any(code in stderr for code in (
+        "W_LAYOUT_MARK_OVERFLOW", "W_LAYOUT_ROW_DENSITY", "W_SCENE_TEXT_INTERSECTION"))
+    svg = output.read_text(encoding="utf-8")
+    assert 'data-scene-id="axis-label:2:' in svg
+    assert ">Mar</text>" in svg
+    scene = json.loads(scene_path.read_text(encoding="utf-8"))
+    surface = scene["surfaces"][0]
+    slots = {slot["source"]: slot["bounds"] for slot in surface["slots"]}
+    host_end = slots["timeline"]["block"] + slots["timeline"]["blockSize"]
+    assert abs(host_end - slots["table"]["block"] - slots["table"]["blockSize"]) < 0.001
+    assert slots["notes"]["block"] >= host_end
+    assert all(row["bounds"]["block"] + row["bounds"]["blockSize"] <= host_end + 0.001
+               for row in surface["rows"])
+    assert not [item for item in evaluate_scene_perceptibility(scene)
+                if item.code == "E_SCENE_TEXT_INTERSECTION"]
 
 
 def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch):
