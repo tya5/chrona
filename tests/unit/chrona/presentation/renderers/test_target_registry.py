@@ -3,12 +3,14 @@ from dataclasses import replace
 from hashlib import sha256
 from importlib.resources import files
 from pathlib import Path
+import platform
+import shutil
 
 import pytest
 import yaml
 from PIL import Image, ImageChops
 
-from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.model.closure import ClosureError, resolve_draft_render
 from chrona.presentation.fonts.system import resolve_system_font
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.renderers.registry import renderer_for
@@ -66,6 +68,52 @@ def test_draft_system_font_png_receives_the_measured_file_without_scene_path_pro
     assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
     assert all(str(face.path).encode() not in serialize_scene(rendered.scene)
                for face in draft.font_resolution.faces)
+
+
+def test_real_hiragino_collection_paints_png_from_selected_face_on_macos(tmp_path):
+    if platform.system() != "Darwin" or not shutil.which("fc-match"):
+        pytest.skip("Hiragino collection and fontconfig are macOS host evidence")
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
+    theme["body"]["values"]["editorial"]["value"] = "Hiragino Sans"
+    theme_path = tmp_path / "hiragino.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    draft = resolve_draft_render(
+        project_path=root / "examples/controller-z/project.yaml",
+        view_path=root / "examples/controller-z/views/executive.yaml", theme_path=theme_path,
+        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        layout_path=root / "conformance/layout-profile-intent-v0.2.yaml",
+        actual_path=root / "examples/controller-z/actual.yaml", target_kind="png", system_fonts=True,
+    )
+    assert draft.font_resolution is not None
+    assert draft.font_resolution.faces[0].path.suffix == ".ttc"
+    rendered = render_review(RenderRequest(
+        draft.closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root,
+        draft_font_resolution=draft.font_resolution,
+    ))
+    bitmap = Image.open(BytesIO(rendered.artifact.content)).convert("RGB")
+    assert bitmap.getbbox() is not None
+    assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_hiragino_unsupported_tabular_mode_is_rejected_before_layout_on_macos(tmp_path):
+    if platform.system() != "Darwin" or not shutil.which("fc-match"):
+        pytest.skip("Hiragino collection and fontconfig are macOS host evidence")
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text())
+    theme["body"]["values"]["editorial"]["value"] = "Hiragino Sans"
+    theme["body"]["values"]["numeric-spacing"]["value"] = "tabular"
+    theme_path = tmp_path / "hiragino-tabular.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ClosureError, match="E_FONT_METRICS_UNAVAILABLE") as error:
+        resolve_draft_render(**{
+            "project_path": root / "examples/controller-z/project.yaml",
+            "view_path": root / "examples/controller-z/views/executive.yaml", "theme_path": theme_path,
+            "scheme_path": root / "examples/controller-z/schemes/executive-light.yaml",
+            "layout_path": root / "conformance/layout-profile-intent-v0.2.yaml",
+            "system_fonts": True,
+        })
+    assert "tabular digit advances" in (error.value.detail or "")
 
 
 def test_system_font_resolution_is_rejected_if_a_caller_attempts_immutable_rendering():

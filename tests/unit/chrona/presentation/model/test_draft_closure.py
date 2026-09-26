@@ -1,11 +1,12 @@
 """Draft ingress freezes explicit authoring files before they enter rendering."""
 from pathlib import Path
+from hashlib import sha256
 
 import pytest
 import yaml
 
 from chrona.presentation.model.closure import ClosureError, resolve_draft_render, resolve_guided_draft_render
-from chrona.presentation.fonts.system import resolve_system_font
+from chrona.presentation.fonts.system import SystemFontFace, resolve_system_font
 from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
 from chrona.usecases.render_review import RenderRequest, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -134,30 +135,40 @@ def _system_resolver(root: Path):
     return lambda family, weight: resolve_system_font(family, weight, runner=runner)
 
 
-def test_system_font_opt_in_is_draft_only_runtime_state_not_context_font_metrics():
+def test_system_font_opt_in_reuses_packaged_exact_face_without_host_discovery():
     root = _root()
-    draft = resolve_draft_render(**_paths(root), system_fonts=True, system_font_resolver=_system_resolver(root))
+    def unexpected_host(_family, _weight):
+        raise AssertionError("packaged face should take precedence")
+    draft = resolve_draft_render(**_paths(root), system_fonts=True, system_font_resolver=unexpected_host)
 
     assert draft.font_resolution is not None
-    assert tuple(face.path.name for face in draft.font_resolution.faces) == ("noto-sans-regular-v1.ttf",)
-    assert str(draft.font_resolution.faces[0].path) not in repr(draft.closure.context.environment.font_metrics)
+    assert draft.font_resolution.faces == ()
+    assert tuple(item.family for item in draft.font_resolution.font_files) == ("Noto Sans",)
 
 
 def test_system_font_opt_in_closes_multiple_theme_faces_before_layout(tmp_path):
     root = _root()
     theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme["body"]["values"]["editorial"]["value"] = "Fixture Sans"
     theme["body"]["values"]["heading-weight"] = {"type": "fontWeight", "value": 700}
     theme["body"]["roles"]["heading"]["fontWeight"] = "heading-weight"
+    theme["body"]["values"]["packaged-family"] = {"type": "fontFamily", "value": "Noto Sans"}
+    theme["body"]["roles"]["heading"]["fontFamily"] = "packaged-family"
     theme_path = tmp_path / "multiple-faces.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
 
+    path = root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf"
+    def host(family, weight):
+        assert (family, weight) == ("Fixture Sans", 400)
+        return SystemFontFace(family, weight, path, family, weight,
+                              "sha256:" + sha256(path.read_bytes()).hexdigest())
     draft = resolve_draft_render(**(_paths(root) | {"theme_path": theme_path,
                                                     "actual_path": root / "examples/controller-z/actual.yaml"}), system_fonts=True,
-                                 system_font_resolver=_system_resolver(root))
+                                 system_font_resolver=host)
     assert draft.font_resolution is not None
-    assert tuple((face.family, face.weight) for face in draft.font_resolution.faces) == (("Noto Sans", 400), ("Noto Sans", 700))
+    assert tuple((face.family, face.weight) for face in draft.font_resolution.faces) == (("Fixture Sans", 400),)
     assert draft.font_resolution.metrics.select("Noto Sans", 700).content_identity != (
-        draft.font_resolution.metrics.select("Noto Sans", 400).content_identity)
+        draft.font_resolution.metrics.select("Fixture Sans", 400).content_identity)
     rendered = render_review(RenderRequest(
         draft.closure, draft.asset_root, ReferenceScheduler(), asset_root=draft.asset_root,
         draft_font_resolution=draft.font_resolution,
@@ -165,7 +176,7 @@ def test_system_font_opt_in_closes_multiple_theme_faces_before_layout(tmp_path):
     identities = {(primitive.text_layout.weight, primitive.text_layout.asset_identity)
                   for surface in rendered.scene.surfaces for primitive in surface.primitives
                   if primitive.text_layout is not None}
-    assert (400, draft.font_resolution.metrics.select("Noto Sans", 400).content_identity) in identities
+    assert (400, draft.font_resolution.metrics.select("Fixture Sans", 400).content_identity) in identities
     assert (700, draft.font_resolution.metrics.select("Noto Sans", 700).content_identity) in identities
 
 

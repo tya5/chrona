@@ -30,7 +30,8 @@ class ResvgPngRenderer:
         try:
             import resvg_py
             content = resvg_py.svg_to_bytes(svg_string=svg.decode("utf-8"), dpi=self._descriptor["dpi"],
-                                            font_files=[str(item.path) for item in files], skip_system_fonts=True)
+                                            font_files=list(dict.fromkeys(str(item.path) for item in files)),
+                                            skip_system_fonts=True)
         except ImportError as error:
             raise ValueError("E_RENDER_RASTERIZER_UNAVAILABLE") from error
         return RenderArtifact("png", "image/png", content, _adapter_identity(

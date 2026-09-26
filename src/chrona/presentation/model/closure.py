@@ -29,6 +29,7 @@ from chrona.presentation.model.theme_inheritance import (
 )
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
+from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, resolve_font_files, resolve_font_metrics
 from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.resources import safe_load
@@ -369,9 +370,11 @@ def _draft_render_from_resources(
 
     asset_root = Path(__file__).resolve().parents[2] / "resources"
     typesetter_environment = _draft_typesetter(target_kind, typesetter)
-    if system_fonts and font_metrics is not None:
-        raise ClosureError("E_FONT_SYSTEM_MISMATCH", detail="--system-fonts cannot be combined with --font-metrics")
-    resolution = (_draft_system_font_resolution(resolved_theme.resolved_input, system_font_resolver or resolve_system_font)
+    resolution = (_draft_system_font_resolution(
+        resolved_theme.resolved_input, system_font_resolver or resolve_system_font,
+        font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
+        font_asset_root or asset_root,
+    )
                   if system_fonts else None)
     if resolution is not None and target_kind not in {"svg", "png"}:
         raise ClosureError("E_FONT_SYSTEM_IMMUTABLE", detail=f"draft system fonts do not support {target_kind}")
@@ -416,16 +419,19 @@ def _draft_render_from_resources(
                        font_asset_root or asset_root, auto_block=viewport[1] is None, font_resolution=resolution)
 
 
-def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFontResolver) -> DraftFontResolution:
-    """Close every finite Theme typography face before Layout measures text."""
+def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFontResolver,
+                                  descriptor: dict[str, Any], asset_root: Path) -> DraftFontResolution:
+    """Close declared pairs first, resolving only missing exact faces from the host."""
     try:
         typography = ThemeTokenView(theme)
         roles = theme.get("body", {}).get("roles", {})
-        requests = {
-            (typography.font_family(role).split(",", 1)[0].strip(), typography.font_weight(role))
+        treatments = {
+            role: typography.text_treatment(role)
             for role, binding in roles.items()
             if isinstance(binding, Mapping) and "fontFamily" in binding and "fontWeight" in binding
         }
+        requests = {(treatment.family.split(",", 1)[0].strip(), treatment.weight)
+                    for treatment in treatments.values()}
     except (AttributeError, ThemeTokenError, TypeError, ValueError) as error:
         raise ClosureError("E_FONT_SYSTEM_MISMATCH", detail="Theme typography cannot select one system face") from error
     if not requests:
@@ -433,9 +439,41 @@ def _draft_system_font_resolution(theme: Mapping[str, Any], resolver: SystemFont
     if any(not family for family, _weight in requests):
         raise ClosureError("E_FONT_SYSTEM_MISSING", detail="Theme primary font family is empty")
     try:
-        return resolve_draft_fonts(resolver(family, weight) for family, weight in sorted(requests))
+        declared = {(str(asset.get("family", "")).casefold(), asset.get("weight"))
+                    for asset in descriptor.get("assets", ()) if isinstance(asset, dict)}
+        declared_files = resolve_font_files(descriptor, asset_root=asset_root)[0]
+        metrics = {}
+        selected_files = []
+        missing = []
+        for family, weight in sorted(requests):
+            if (family.casefold(), weight) in declared:
+                metric = resolve_font_metrics(family, descriptor, weight=weight,
+                                              asset_root=asset_root, _allow_substitute=False)
+                metrics[(family.casefold(), weight)] = metric
+                selected_files.append(next(item for item in declared_files
+                                           if item.family.casefold() == family.casefold() and item.weight == weight))
+            else:
+                missing.append((family, weight))
+        host = (resolve_draft_fonts(resolver(family, weight) for family, weight in missing)
+                if missing else None)
+        if host is not None:
+            metrics.update(host.metrics.metrics)
+            selected_files.extend(host.font_files)
+        files = tuple({(item.content_identity, item.index): item for item in selected_files}.values())
+        resolution = DraftFontResolution(host.faces if host else (), FontMetricsCatalog(metrics), files)
+        for role, treatment in treatments.items():
+            metric = resolution.metrics.select(treatment.family, treatment.weight)
+            try:
+                metric.ensure_numeric_spacing(treatment.numeric_spacing)
+            except FontMetricsError as error:
+                raise ClosureError("E_FONT_METRICS_UNAVAILABLE", detail=(
+                    f"role={role}; {treatment.family}/{treatment.weight} lacks "
+                    f"{treatment.numeric_spacing} digit advances")) from error
+        return resolution
     except SystemFontError as error:
         raise ClosureError(error.code, detail=error.detail) from error
+    except (FontMetricsError, StopIteration, KeyError, TypeError) as error:
+        raise ClosureError("E_FONT_METRICS_UNAVAILABLE", detail=str(error)) from error
 
 
 def _load_draft_resource(kind: str, path: Path) -> ClosureResource:

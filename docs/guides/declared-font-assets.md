@@ -63,11 +63,13 @@ unless its license permits that use.
 ### Installed font for a private draft PNG
 
 For a one-off SVG or PNG that is not evidence, `chrona render --system-fonts`
-can use the exact installed face named by the Theme. It is an explicit,
-machine-local opt-in: Chrona resolves the first Theme family, verifies its
-OpenType family and weight, derives Layout metrics from those exact bytes, and
-passes only that file to the PNG renderer. It does not enable renderer-wide
-system fallback.
+can use the exact installed faces named by the Theme. It is an explicit,
+machine-local opt-in: Chrona uses exact packaged or `--font-metrics`-declared
+faces first, then resolves only missing Theme family/weight pairs through
+fontconfig. The selected collection face, when applicable, supplies Layout
+metrics; PNG receives the matching file with renderer-wide system fallback
+disabled. A selected face must support each numeric-spacing mode the Theme
+actually requests; unsupported tabular figures are never simulated.
 
 <!-- chrona:doc-check skip: requires a host with the Theme's installed face and fontconfig bridge -->
 ```sh
@@ -75,9 +77,10 @@ chrona render project.yaml --view view.yaml --theme theme.yaml --scheme scheme.y
   --layout layout.yaml --system-fonts --format png --output private-review.png
 ```
 
-The current system-font path requires every typographic Theme role to use the
-same primary family and weight. A missing bridge, absent face, mismatched face,
-or multi-face Theme reports `E_FONT_SYSTEM_UNAVAILABLE`,
+The host bridge is `fc-match` from fontconfig. Install it with
+`brew install fontconfig` on macOS, your distribution's fontconfig package on
+Linux, or a fontconfig installation on Windows. A missing bridge, absent face,
+or mismatched face reports `E_FONT_SYSTEM_UNAVAILABLE`,
 `E_FONT_SYSTEM_MISSING`, or `E_FONT_SYSTEM_MISMATCH`; it never substitutes.
 Draft system fonts support SVG and PNG only. PDF, Typst, TikZ, immutable
 `render-review`, Context serialization, and `materialize` reject this volatile
