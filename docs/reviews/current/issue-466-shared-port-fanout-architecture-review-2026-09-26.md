@@ -1,0 +1,3 @@
+# Architecture Review — Shared-Port Fanout (#466)
+
+Reviewed the [fanout amendment](../../design/issue-466-shared-port-fanout-amendment-2026-09-26.md) against Specifications 06/08/33/44, typed Layout ports, shared obstacles, route-priority order, and #467's deferred lane work. A fanout is derived from a completed mark and resolved clearance, not a stored coordinate or an adapter heuristic. It preserves the semantic dependency's Project identity and path; the later annotation connector bears the detour. The same inventory checks the stub and later route, with only exact same-host endpoint-port aliases. No layer ownership or public schema change is introduced. **Decision:** accepted for O2's finite connector topology; visual acceptance is still pending.

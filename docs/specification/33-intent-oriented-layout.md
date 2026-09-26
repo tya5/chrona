@@ -273,6 +273,10 @@ An endpoint MAY additionally authorize registered, exactly coincident port IDs
 belonging to the same named connected comparison-host cluster. The authorized
 IDs are resolved before the route query and recorded; unrelated or non-endpoint
 ports remain obstacles. See the [coincident-egress amendment](../design/issue-466-coincident-egress-port-amendment-2026-09-26.md).
+When an already accepted connector leaves the same port, a later connector
+MUST try finite exterior fanout stubs rather than overlap the earlier stroke;
+the complete route, including the stub, remains subject to obstacle and
+quality checks. See the [shared-port fanout amendment](../design/issue-466-shared-port-fanout-amendment-2026-09-26.md).
 
 A measured rule label may exempt only its own named rule stroke during its
 placement; the rule remains an obstacle for other labels and annotations.
