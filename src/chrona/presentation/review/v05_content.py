@@ -11,6 +11,7 @@ from chrona.presentation.model.surface_content import (
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
+from chrona.presentation.model.placement_candidates import legacy_candidate_order
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
@@ -122,7 +123,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                          {str(key): str(value) for key, value in annotation["anchor"].items()},
                          str(annotation["placement"]["side"]), str(annotation["placement"]["alignment"]),
                          str(annotation["text"]), index + 1 if annotation_numbered else None,
-                         annotation_fallback)
+                         annotation_fallback or ("rail",),
+                         legacy_candidate_order(str(annotation["purpose"]), annotation_fallback)[0])
         for index, annotation in enumerate(raw_annotations)
     )
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())

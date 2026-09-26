@@ -1,10 +1,11 @@
 """Normalized presentation content inputs."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date
+from dataclasses import dataclass
 from typing import Any
 
+from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ReviewItem
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
@@ -100,6 +101,7 @@ class AnnotationIntent:
     content: str
     number: int | None = None
     fallback_ladder: tuple[str, ...] = ()
+    candidates: tuple[PlacementCandidate, ...] = ()
 
 
 @dataclass(frozen=True)

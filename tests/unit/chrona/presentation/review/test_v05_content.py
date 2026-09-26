@@ -64,6 +64,21 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     assert value.notes == (("n", "note"),)
 
 
+def test_view_annotation_ladder_normalizes_to_typed_candidates() -> None:
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    view = typed_view({"body": {
+        "visibility": {"relations": "none", "annotations": "all"},
+        "annotations": ({"id": "callout", "purpose": "callout",
+                         "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "at"},
+                         "placement": {"side": "above", "alignment": "center"}, "text": "Check"},),
+    }})
+    value = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY)
+    assert value.annotations[0].fallback_ladder == ("rail",)
+    assert value.annotations[0].candidates[0].region.kind == "slot"
+    assert value.annotations[0].candidates[0].search.kind == "row-aligned"
+    assert value.annotations[0].candidates[0].connector.kind == "leader"
+
+
 def test_table_column_intent_is_normalized_before_layout_ingress():
     projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
     view = {"body": {"tableColumns": (

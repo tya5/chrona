@@ -26,6 +26,7 @@ from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
+from chrona.presentation.model.placement_candidates import candidate_order
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
@@ -1940,12 +1941,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      for line in annotation_lines)
                     annotation_size = (annotation_leading + text_width + annotation_trailing,
                                        size * line_height * len(annotation_lines))
-                    default_ladder = annotation.fallback_ladder or ("rail",)
-                    ladder = ((preferred,) + tuple(rung for rung in default_ladder if rung != preferred)
-                              if preferred else default_ladder)
+                    candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
+                                                          annotation.fallback_ladder, preferred)
                     box, selected_rung = None, None
-                    for rung in (rung for rung in ladder if rung != "suppress"):
-                        if rung == "rail":
+                    for candidate in candidates:
+                        rung = candidate.candidate_id
+                        if candidate.search.kind == "row-aligned":
                             candidate_boxes = annotation_rail_candidates(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
                                 text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
