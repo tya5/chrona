@@ -3,6 +3,9 @@
 **Axis-role amendment:** the [View-named typography rule](issue-478-axis-typography-role-admission-amendment-2026-09-27.md)
 adds a bounded producer family for arbitrary axis-tier measurement roles; it
 does not admit arbitrary Scene paint.
+**Legend-role amendment:** [#427's fallback swatch](issue-478-legend-role-admission-amendment-2026-09-27.md)
+admits bounded fixed-square paint on an otherwise unregistered name, without
+widening known Text/Icon/Path roles.
 
 **Amends:** [declared-treatment design](issue-478-declared-treatment-visibility-design-2026-09-26.md).
 **Plan:** [rebase design plan](../planning/active/issue-478-role-admission-rebase-design-plan-2026-09-27.md).

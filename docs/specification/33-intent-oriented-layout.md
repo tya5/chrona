@@ -71,6 +71,14 @@ inline`, wrapping exactly as a `flow` container wraps its children (#427). Each
 entry's swatch is constructed by the same geometry its role's `primitive_kind`
 already uses for an object mark, relation, or decoration; Layout never derives a
 swatch's shape or size from the legend label's typography role.
+The [#427 dispatch amendment](../design/issue-427-legend-swatches-design-amendment-2026-09-26.md)
+qualifies this rule: known mark/line/decoration roles use the closed
+chart-matching dispatch, while an otherwise unregistered legend role retains
+a fixed-square Rect swatch painted by its own role. The [#478 admission
+amendment](../design/issue-478-legend-role-admission-amendment-2026-09-27.md)
+therefore admits only portable Rect paint for an otherwise unregistered
+legend-only name; it cannot make an unsupported property on a known text or
+relation role valid.
 
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
