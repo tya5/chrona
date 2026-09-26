@@ -11,6 +11,7 @@ import pytest
 import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
 from chrona.presentation.fonts.importer import import_font
+from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.usecases.render_review import FontGlyphWarning, ScenePerceptibilityWarning
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.scheduling.scheduler import schedule
@@ -87,7 +88,7 @@ def test_cli_identity_document_rejects_a_scalar(tmp_path, monkeypatch, capsys):
 
 
 def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
-    cli._emit_font_warnings(SimpleNamespace(font_warnings=(FontGlyphWarning(
+    cli._emit_font_warnings(SimpleNamespace(scene=SimpleNamespace(font_warnings=()), font_warnings=(FontGlyphWarning(
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅", False,
     ),)))
     assert json.loads(capsys.readouterr().err) == {
@@ -98,10 +99,22 @@ def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
 
 
 def test_cli_omits_draw_result_for_svg_font_substitution_warning(capsys):
-    cli._emit_font_warnings(SimpleNamespace(font_warnings=(FontGlyphWarning(
+    cli._emit_font_warnings(SimpleNamespace(scene=SimpleNamespace(font_warnings=()), font_warnings=(FontGlyphWarning(
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
     ),)))
     assert "drawn" not in json.loads(capsys.readouterr().err)
+
+
+def test_cli_emits_exact_face_tabular_degradation_warning(capsys):
+    cli._emit_font_warnings(SimpleNamespace(
+        scene=SimpleNamespace(font_warnings=(FontTabularWarning("numeric", "Georgia", 400),)),
+        font_warnings=(),
+    ))
+    assert json.loads(capsys.readouterr().err) == {
+        "code": "W_FONT_TABULAR_UNAVAILABLE", "severity": "warning",
+        "role": "numeric", "family": "Georgia", "weight": 400,
+        "requestedSpacing": "tabular", "effectiveSpacing": "proportional",
+    }
 
 
 def test_cli_emits_structured_scene_perceptibility_warning_to_stderr(capsys):
