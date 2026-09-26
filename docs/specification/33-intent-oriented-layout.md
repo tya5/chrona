@@ -277,6 +277,10 @@ When an already accepted connector leaves the same port, a later connector
 MUST try finite exterior fanout stubs rather than overlap the earlier stroke;
 the complete route, including the stub, remains subject to obstacle and
 quality checks. See the [shared-port fanout amendment](../design/issue-466-shared-port-fanout-amendment-2026-09-26.md).
+Annotation connectors first test a bounded sparse elbow family before the
+bounded dense visibility grid. Both use the same obstacle inventory, local
+corridor, and route-quality policy; the first feasible path is deterministic
+but need not be globally shortest. See the [sparse-search amendment](../design/issue-466-sparse-elbow-route-search-amendment-2026-09-26.md).
 
 A measured rule label may exempt only its own named rule stroke during its
 placement; the rule remains an obstacle for other labels and annotations.
