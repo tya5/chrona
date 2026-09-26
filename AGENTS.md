@@ -116,12 +116,27 @@ and successor documents so a fresh contributor can reconstruct the decision.
 | At each slice or issue release | `docs/reviews/current/` | Implementation or acceptance review with exact commit, commands, CI run/PR links, artifact diffs, architectural findings, and a row for **every literal issue acceptance criterion** (`met`, `deferred`, or `not met`) with direct evidence. Use `docs/reviews/issue-acceptance-review-template.md` where appropriate. A deferred criterion keeps the issue open unless an explicit successor disposition is approved. |
 
 Keep active plans under `docs/planning/active/` while they are the working
-record, and move them to `docs/planning/archive/` when their issue closes, so
-that `active/` lists only work in flight. A successor should be able to read
-`active/` and see what is open. Do not mistake a document's `Accepted` heading or an old green run for
+record; archive them as described below, so that `active/` and
+`docs/reviews/current/` list only work in flight. Do not mistake a document's `Accepted` heading or an old green run for
 proof that the current public artifact meets an issue's criteria. Check actual
 rendered output when the criterion concerns what a user sees; a Scene-only
 report cannot prove adapter output is correct.
+
+## Archiving plans and reviews
+
+`docs/planning/active/` and `docs/reviews/current/` must show what is in
+flight. Everything else goes to the existing archive.
+
+| | Rule |
+| --- | --- |
+| **When** | In a separate publication **after** the issue is closed: its acceptance review is published, the closing comment is posted, and CI is green. Never in the same commit as the acceptance review, because the closing comment links to that commit. A plan that is abandoned or fully superseded without its issue closing is archived when a successor document says so. |
+| **What** | Every `issue-<n>-*` file of the closed issue in `docs/planning/active/`: design plans, implementation plans, amendments. Every `issue-<n>-*` file in `docs/reviews/current/`: architecture, implementation and acceptance reviews. For a multi-issue programme document, archive it when **all** of its issues are closed. |
+| **Where** | `docs/planning/active/<file>` → `docs/archive/planning/<file>`. `docs/reviews/current/<file>` → `docs/archive/reviews/<file>`. Keep the filename; the date in it keeps the history ordered. |
+| **Not archived** | `docs/design/` (decision records), `docs/specification/`, `docs/decisions/`, templates such as `docs/reviews/issue-acceptance-review-template.md`, and living ledgers that tools reference by path, e.g. `docs/planning/active/milestone-status-ledger-v0.1.md` in `conformance/validate_design_recompletion.py`. Move a ledger only together with the tool that references it. |
+| **How** | `git mv` the files. In the same commit, update every relative link that points to them from documents that stay: an archived review linking `../../planning/active/x.md` becomes `../planning/x.md`, and a current document linking to an archived one points into `docs/archive/`. Then run `python conformance/run_conformance.py`. The literal-acceptance gate scans `docs/reviews/current/` and resolves local links, so a missed link fails it. |
+| **Links from issues and PRs** | Link documents by commit permalink (`/blob/<sha>/docs/...`), never by `/blob/main/...`, so that archiving never breaks an issue's evidence trail. |
+
+The existing backlog is several hundred plans and reviews of closed issues. Archive it once, in its own commit or pull request, following the same rules, before relying on `active/` as a list of open work.
 
 ## Publication and CI discipline
 
