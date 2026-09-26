@@ -10,5 +10,6 @@
 | O3 acceptance review | `docs/reviews/current/` | Row 1 direct fixture and all public materializers; full three-OS CI, wheel/smoke and newest-Python evidence as specified; rows 2–6 explicitly not met. | Publish review; keep #466 open. |
 
 The [corridor amendment](../../design/issue-466-connector-corridor-amendment-2026-09-26.md) replaces the topology design's whole-box corridor with a source-mark/selected-attachment corridor; O2b's fixture must reject the controller-z outer-perimeter route.
+The [coincident-egress amendment](../../design/issue-466-coincident-egress-port-amendment-2026-09-26.md) adds exact same-host endpoint-port alias resolution to O2b. Test both authorized and unrelated coincident ports; do not drop the port obstacle class from routing.
 
 Before each product slice, discard or selectively adapt the unaccepted local experiment only after diff review; do not publish its stale generated files. Run focused tests locally in `.venv311`; run public materializers and inspect Scene/SVG/raster changes as a batch. Let CI supply full pytest. Fetch `origin/main`, inspect exact staged changes and ahead/behind state, push serially, and verify the remote commit. A new policy or schema gap pauses code and returns to design/review/plan publication.
