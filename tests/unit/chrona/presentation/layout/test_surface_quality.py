@@ -222,3 +222,51 @@ def test_surface_placement_closes_axis_outcomes_for_later_failure_policy():
             AxisTierOutcome(0, "/view/body/axis/tiers/0", "labels", ("month",), "month", 1,
                             None, (interval,)),
         )).assert_valid()
+
+
+@pytest.mark.parametrize("length", [4, 20, 58, 132, 388])
+def test_inset_progress_track_measures_the_fraction_against_the_inner_track(length):
+    """#430: 0 is empty and 1 fills the inner track edge to edge at every bar length."""
+    host = Rect(Decimal(100), Decimal(10), Decimal(length), Decimal(20))
+    ratio = Decimal("0.2")
+    assert progress_fill_bounds(host, 0, ratio) is None
+    full = progress_fill_bounds(host, 1, ratio)
+    inline_inset = min(Decimal(4), Decimal(length) / 4)
+    assert full == Rect(host.inline + inline_inset, Decimal(14), Decimal(length) - 2 * inline_inset, Decimal(12))
+    half = progress_fill_bounds(host, 0.5, ratio)
+    assert half.inline == full.inline and half.inline_size == full.inline_size / 2
+    assert full.inline_size >= Decimal(length) / 2
+
+
+def test_zero_progress_inset_is_the_published_full_height_fill():
+    host = Rect(Decimal(3), Decimal(5), Decimal(80), Decimal(16))
+    assert progress_fill_bounds(host, 0.25, Decimal(0)) == progress_fill_bounds(host, 0.25) == Rect(
+        Decimal(3), Decimal(5), Decimal(20), Decimal(16))
+
+
+def test_committed_progress_track_example_draws_inset_capsules_at_several_lengths():
+    import json
+    from pathlib import Path
+    scene = json.loads((Path(__file__).resolve().parents[5] / "examples/controller-z/generated/progress-track.scene.json")
+                       .read_text(encoding="utf-8"))
+    primitives = {}
+
+    def walk(value):
+        if isinstance(value, dict):
+            if isinstance(value.get("id"), str) and "bounds" in value:
+                primitives[value["id"]] = value
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(scene)
+    fills = [item for key, item in primitives.items() if key.startswith("progress-fill:")]
+    assert len({round(item["bounds"]["inlineSize"]) for item in fills}) >= 2
+    for fill in fills:
+        host = primitives[fill["id"].split(":", 1)[1]]["bounds"]
+        bounds = fill["bounds"]
+        assert fill["cornerRadius"] == pytest.approx(bounds["blockSize"] / 2)
+        assert bounds["block"] > host["block"] and bounds["block"] + bounds["blockSize"] < host["block"] + host["blockSize"]
+        assert bounds["inline"] > host["inline"]

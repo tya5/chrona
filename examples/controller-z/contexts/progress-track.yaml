@@ -1,0 +1,130 @@
+version: chrona/render-context/v0.16
+kind: render-context
+id: controller-z-progress-track
+body:
+  project:
+    id: controller-z-silicon-bringup
+    kind: project
+    store:
+      provider: local
+      identity: controller-z-example
+    address: project.yaml
+    revision:
+      token: example-v1
+  view:
+    id: controller-z-executive
+    kind: view
+    store:
+      provider: local
+      identity: controller-z-example
+    address: views/executive.yaml
+    revision:
+      token: example-v1
+  theme:
+    id: progress-track
+    kind: theme
+    store:
+      provider: local
+      identity: controller-z-example
+    address: themes/progress-track.yaml
+    revision:
+      token: example-v1
+  colorScheme:
+    id: executive-light
+    kind: color-scheme
+    store:
+      provider: local
+      identity: controller-z-example
+    address: schemes/executive-light.yaml
+    revision:
+      token: example-v1
+  layout:
+    id: executive-review
+    kind: layout-profile
+    store:
+      provider: local
+      identity: controller-z-example
+    address: layouts/executive-review.yaml
+    revision:
+      token: example-v1
+  inputs:
+    actual:
+      id: controller-z-observed
+      kind: actual-set
+      store:
+        provider: local
+        identity: controller-z-example
+      address: actual.yaml
+      revision:
+        token: example-v1
+    detailProfile:
+      id: controller-z-review-detail
+      kind: review-detail-profile
+      store:
+        provider: local
+        identity: controller-z-example
+      address: profiles/review-detail.yaml
+      revision:
+        token: example-v1
+  environment:
+    viewport:
+      inlineSize: 1600
+      blockSize: 900
+    locale: en-US
+    fontMetrics:
+      algorithm: declared-metrics-v3
+      missingFont: diagnose
+      assets:
+      - family: Noto Sans Mono
+        weight: 400
+        metrics:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: font_metrics/noto-sans-mono-regular-v2.json
+          contentIdentity: sha256:f65de256d7348adacad8a46c6804e491ae9a4b0a013432c00de7b8ce81258816
+        font:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: fonts/noto-sans-mono-regular-v1.ttf
+          contentIdentity: sha256:c886cba7994069f6ba1c1a97c49d3aff58a3c131e6b4710237a452bd67a845a4
+      - family: Noto Sans
+        weight: 400
+        metrics:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: font_metrics/noto-sans-regular-v2.json
+          contentIdentity: sha256:699cefe4fd7a92976e6d694b7753c42a437a49073c81754e59460523a831f1a2
+        font:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: fonts/noto-sans-regular-v1.ttf
+          contentIdentity: sha256:16a1ee5229882c1ba577d265014a85d8a4ddbcf5e45bd30bcfbabfdaf89cabf3
+      - family: Noto Sans
+        weight: 700
+        metrics:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: font_metrics/noto-sans-bold-v2.json
+          contentIdentity: sha256:06fdd7d97a3caba8f7116bb7a13f13291b745dadcef9d6db88d4923171f95658
+        font:
+          locator:
+            provider: package
+            identity: chrona.resources
+            address: fonts/noto-sans-bold-v1.ttf
+          contentIdentity: sha256:1c22860bf564a2e9d56e62b726a0455183e6f86ec9a2c66b69250a0bb686c18f
+    scenePrecision: 3
+  target:
+    kind: svg
+    visualProfile: chrona-output/visual/v0.5-baseline
+    capabilities:
+    - accessibleText
+    - hierarchicalAxis
+    - marker
+    - semanticRoles
+    - sourceMetadata
+    - tableSemantics

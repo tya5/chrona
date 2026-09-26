@@ -11,7 +11,7 @@ def _root() -> Path:
 
 def test_presentation_coverage_is_deterministic_and_complete():
     root = _root()
-    assert len(discover(root)) == 21
+    assert len(discover(root)) == 22
     report = render(root)
     assert report == render(root)
     assert "## Layout slot evidence" in report

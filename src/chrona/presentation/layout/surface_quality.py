@@ -184,6 +184,7 @@ class ShapePlacement:
     paint_order: int = 0
     semantic_id: str = ""
     annotation: AnnotationPresentation | None = None
+    corner_radius: float = 0.0
 
 
 @dataclass(frozen=True)

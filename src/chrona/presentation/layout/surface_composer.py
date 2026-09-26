@@ -386,13 +386,24 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
-def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
-    """Return the optional completed progress submark bounds for one host mark."""
+def progress_fill_bounds(host: Rect, fraction: float, inset_ratio: Decimal = Decimal(0)) -> Rect | None:
+    """Return the optional completed progress submark bounds for one host mark.
+
+    The host is the track.  A declared inset deflates it by ``inset_ratio`` of
+    its block size (inline inset capped at a quarter of the host's inline size)
+    and the fraction is measured against that inner track, so 0 is empty and 1
+    fills the inner track edge to edge at every bar length (#430).
+    """
     if not 0 <= fraction <= 1:
         raise LayoutError("E_PRESENTATION_PROGRESS_INVALID", "/progressFill")
     if fraction == 0:
         return None
-    return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
+    if inset_ratio == 0:
+        return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
+    block_inset = host.block_size * inset_ratio
+    inline_inset = min(block_inset, host.inline_size / 4)
+    return Rect(host.inline + inline_inset, host.block + block_inset,
+                (host.inline_size - 2 * inline_inset) * Decimal(str(fraction)), host.block_size - 2 * block_inset)
 
 
 def relation_label_content(relation: Any) -> str:
@@ -1292,6 +1303,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     mark_by_id = {item.placement_id: item for item in marks}
     progress_source = request.surface_content.progress_fill_source
     if progress_source is not None:
+        progress_inset, progress_radius = request.theme_tokens.progress_track("progress-fill")
         for review_row in review_rows:
             for item in review_row.items:
                 if progress_source == "actual":
@@ -1307,12 +1319,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 host = mark_by_id.get(f"{host_prefix}:{instance_id}")
                 if host is None or fraction == 0:
                     continue
-                bounds = progress_fill_bounds(host.bounds, float(fraction))
+                bounds = progress_fill_bounds(host.bounds, float(fraction), progress_inset)
                 if bounds is not None and bounds.inline_size > 0:
+                    fill_radius = float(progress_radius) * float(min(bounds.inline_size, bounds.block_size))
                     shapes.append(ShapePlacement(f"progress-fill:{host.placement_id}", item.object_id,
                                                  "Rect", bounds, required=False, slot_id=host.slot_id,
                                                  clip_host_id=host.placement_id,
-                                                 paint_order=host.paint_order + 1))
+                                                 paint_order=host.paint_order + 1,
+                                                 corner_radius=fill_radius))
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
             continue

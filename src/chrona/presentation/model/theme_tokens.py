@@ -204,6 +204,21 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
         return height, offset, int(order), corner_radius
 
+    def progress_track(self, role: str) -> tuple[Decimal, Decimal]:
+        """Return the optional track inset and fill corner-radius ratios (#430).
+
+        Both are absent by default, which keeps the fill full-height and square.
+        """
+        binding = self._body["roles"].get(role)
+        declared = binding if isinstance(binding, Mapping) else {}
+        inset = self.number(role, "progressInset") if "progressInset" in declared else Decimal(0)
+        radius = self.number(role, "markCornerRadius") if "markCornerRadius" in declared else Decimal(0)
+        if not Decimal(0) <= inset < Decimal("0.5"):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/progressInset")
+        if not Decimal(0) <= radius <= Decimal("0.5"):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
+        return inset, radius
+
     def summary_bar_height(self, role: str) -> Decimal:
         """Return the positive lane-relative block-size ratio for a summary bar."""
         height = self.number(role, "markHeight")

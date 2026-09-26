@@ -37,3 +37,8 @@ slides:
     context: contexts/material-icons.yaml
     expectedSvg: generated/material-icons.svg
     expectedScene: generated/material-icons.scene.json
+  - id: progress-track
+    evidence: "Progress drawn as an inset capsule inside its bar (track inset and fill radius from a derived Theme), at several bar lengths."
+    context: contexts/progress-track.yaml
+    expectedSvg: generated/progress-track.svg
+    expectedScene: generated/progress-track.scene.json

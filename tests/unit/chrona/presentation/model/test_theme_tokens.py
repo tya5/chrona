@@ -85,3 +85,26 @@ def test_summary_bar_height_resolves_its_theme_owned_value():
     theme["body"]["values"]["height"] = {"type": "number", "value": "0.25"}
     theme["body"]["roles"]["summary-bar"] = {"markHeight": "height"}
     assert ThemeTokenView(theme).summary_bar_height("summary-bar") == Decimal("0.25")
+
+
+@pytest.mark.parametrize(("inset", "radius", "expected"), [
+    (None, None, (Decimal(0), Decimal(0))),
+    (0.2, 0.5, (Decimal("0.2"), Decimal("0.5"))),
+    (0.5, None, "progressInset"),
+    (0.1, 0.6, "markCornerRadius"),
+])
+def test_progress_track_is_optional_and_range_checked(inset, radius, expected):
+    theme = _theme()
+    role = {}
+    for name, value, token in (("progressInset", inset, "inset"), ("markCornerRadius", radius, "radius")):
+        if value is not None:
+            theme["body"]["values"][token] = {"type": "number", "value": value}
+            role[name] = token
+    theme["body"]["roles"]["progress-fill"] = role
+    view = ThemeTokenView(theme)
+    if isinstance(expected, str):
+        with pytest.raises(ThemeTokenError) as raised:
+            view.progress_track("progress-fill")
+        assert raised.value.path.endswith(expected)
+    else:
+        assert view.progress_track("progress-fill") == expected
