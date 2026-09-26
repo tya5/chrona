@@ -40,6 +40,6 @@
 | 4 | One committed slide renders HALCYON-1 `02-programme-board` with a non-built-in gate glyph, and its evidence is reproducible. | met | `examples/halcyon-1/generated/12-glyph-gates.{svg,scene.json}`, reproduced by `tools.regenerate_public_examples --check`. |
 | 5 | Dependency arrows still end at the glyph's edge, and the perceptibility gate passes on that slide. | met | `test_glyph_gate_parts_reach_the_mark_bounds_left_and_right_edge_at_the_centre_line`, `test_every_dependency_route_terminal_touching_a_glyph_gate_lies_on_its_box_edge`, `test_glyph_gates_slide_passes_the_perceptibility_gate` (0 errors). |
 
-All five literal criteria are met. I464-1 is accepted pending CI. The next public base is this review's commit; I464-5 (issue acceptance) may be published once CI is green.
+All five literal criteria are met. I464-1 is accepted. The next public base is this review's commit; I464-5 (issue acceptance) may be published once CI is green.
 
-**CI: pending.**
+**CI:** [four-job CI run 36253380558](https://github.com/tya5/chrona/actions/runs/36253380558) on `ae4cbaf6` (contains the implementation `58f9af24`), green.

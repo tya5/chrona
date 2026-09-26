@@ -24,7 +24,7 @@
 - Root cause reproduced on the published baseline (`908f9d69`): binding a non-built-in `symbol` shape fails `E_THEME_SCHEMA` at Theme-schema validation, with `mark_geometry.symbol_geometry`'s own `E_THEME_TOKEN_TYPE` check as unreachable defense in depth.
 - Public evidence changed only as attributed in the slice review: one new slide (`halcyon-1/glyph-gates`), and five slides sharing `wallboard.yaml` changed only their recorded theme `contentIdentity` provenance — zero primitive, paint or diagnostic differences, confirmed by structural comparison.
 - `.venv/bin/python conformance/run_conformance.py`: PASS, all 31 checks, locally.
-- CI: pending.
+- CI: [four-job CI run 36253380558](https://github.com/tya5/chrona/actions/runs/36253380558) on `ae4cbaf6` (contains the implementation `58f9af24`), green.
 
 ## Architecture conclusion
 
