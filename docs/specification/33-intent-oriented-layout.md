@@ -251,3 +251,14 @@ Obsolete conformance fixtures and tests are rewritten, not kept as compatibility
 7. Layout changes do not alter Project/Schedule/Actual/View facts.
 8. Human and AI proposals use the same schema, resolver, solver, and manifest.
 9. No old layout schema/runtime/settings authority remains reachable.
+# Fit completion (Issue #457)
+
+For a valid Layout Profile and positive viewport, normal-flow measurement and
+arrangement MUST complete finite placements even when fixed tracks, content
+minima, padding, or cross-axis geometry exceed the requested viewport. Layout
+keeps measured natural sizes, records typed `W_LAYOUT_VISIBLE_OVERFLOW`
+warnings with placement identity and required/available extents, and grows the
+completed canvas as necessary. A fit shortage is not
+`E_LAYOUT_CONSTRAINT_CONTRADICTORY` or `E_LAYOUT_REQUIRED_OVERFLOW`.
+Malformed profile constraints and invalid references remain errors. Scene and
+adapters MUST NOT resolve this shortage independently.
