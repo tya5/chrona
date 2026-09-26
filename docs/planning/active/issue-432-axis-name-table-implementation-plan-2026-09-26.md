@@ -7,6 +7,9 @@
 The [template-validation correction](../../design/issue-432-axis-name-table-template-validation-correction-2026-09-26.md)
 and its [review](../../reviews/current/issue-432-axis-name-table-template-correction-review-2026-09-26.md)
 are part of this plan's catalog acceptance gate.
+The [month-specific coincidence correction](../../design/issue-432-axis-name-table-partial-equivalence-correction-2026-09-26.md)
+and [review](../../reviews/current/issue-432-axis-name-table-partial-equivalence-review-2026-09-26.md)
+supersede partial-collision rejection and are also required.
 
 ## Literal issue acceptance gates
 

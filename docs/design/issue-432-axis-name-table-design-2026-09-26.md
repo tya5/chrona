@@ -4,6 +4,8 @@
 **Published base:** `055ad47f44e02653c1a2c3ec6af6550cfdf2c5e0`.
 **Normative authority:** [Axis Name Tables](../specification/63-axis-name-tables.md).
 **Template correction:** [ISO week-year and equivalence validation](issue-432-axis-name-table-template-validation-correction-2026-09-26.md).
+**Coincidence correction:** [month-specific form equivalence](issue-432-axis-name-table-partial-equivalence-correction-2026-09-26.md)
+supersedes the partial-month rejection rule.
 
 ## Decision and use cases
 

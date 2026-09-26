@@ -20,8 +20,10 @@ The engine bundles a versioned, validated name-table resource containing
 `en-US` and `ja-JP`. Each table supplies complete month-name arrays and
 closed templates for all supported axis label forms. Templates use only
 validated semantic placeholders, including ISO week-year and ISO week number,
-and cannot be authored inside a View. Table validation rejects an undeclared
-all-month alias, a false alias, and a pair that collides for only some months.
+and cannot be authored inside a View. Table validation computes every
+month-form pair for all twelve months and rejects an undeclared, false or
+imprecisely scoped coincidence. A legitimate month-specific coincidence,
+such as English `May`, is declared with its exact month numbers.
 Adding a third language requires a table-data entry and schema/catalog
 registration, not an axis formatter branch. Arbitrary host locale lookup,
 format strings and path-based table discovery are forbidden.
@@ -35,13 +37,13 @@ fiscal-year selection, position or schedule facts.
 ## Equivalence and diagnostics
 
 No two month forms may produce the same string under one table without a
-declared, checked equivalence. The bundled-resource validator compares all
-twelve months for the month-only and year-bearing form groups and rejects
-undeclared collisions or false equivalences. A checked public audit records
-the groups. When the author selects a noncanonical equivalent form, Layout
-emits `W_LAYOUT_AXIS_FORM_EQUIVALENT` with table ID, selected form and canonical
-form. A canonical selection remains valid without a runtime warning because
-the audit already discloses its equivalent. An invalid table or unknown ID is
+declared, checked coincidence. The bundled-resource validator compares all
+twelve months for every month-form pair and requires exact month-scoped
+records for all collisions. A checked public audit records them. When the
+author selects a noncanonical form on a coincident month, Layout emits
+`W_LAYOUT_AXIS_FORM_EQUIVALENT` with table ID, selected form, canonical form
+and month number. A canonical selection remains valid without a runtime
+warning because the audit already discloses its equivalent. An invalid table or unknown ID is
 an error; no alternate table is silently chosen.
 
 The `ja-JP` numeric forms mean `01` and `2026-01`; they no longer alias the
