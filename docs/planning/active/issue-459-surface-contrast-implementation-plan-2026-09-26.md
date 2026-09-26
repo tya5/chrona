@@ -7,6 +7,8 @@
 [painted-sample correction](../../design/issue-459-painted-sample-and-hosted-mark-correction-2026-09-26.md).
 [Opaque-gradient correction](../../design/issue-459-opaque-gradient-ground-correction-2026-09-26.md)
 is also normative for this slice.
+[Channel-specific mark ground](../../design/issue-459-channel-specific-mark-ground-correction-2026-09-26.md)
+supersedes single-sample evaluation for dual-channel marks.
 
 ## Literal acceptance gates
 
@@ -22,13 +24,16 @@ is also normative for this slice.
    `tests/unit/chrona/presentation/scene/test_contrast_policy.py` and
    `tests/unit/tools/test_presentation_contrast.py` cover overlapping
    paint-order Rects, canvas fallback, opaque linear-gradient sample points,
-   painted-edge stroke-only Rects, hosted
+   separate fill-centre and stroke-edge grounds, stroke-only Rects, hosted
    progress fills, and per-primitive
    ground evidence. Publish with no corpus gate enabled until the atomic
    resource migration below is ready; do not leave a public red main.
 2. **Atomic policy/resource migration.** Change all affected Theme
    `variance-behind` treatments and Scheme amber/mark colours, including
    controller-z, HALCYON, orion and every other affected public variant.
+   Preserve categorical mark fill identity while adding Theme-owned
+   contrasting outlines where needed; do not darken a shared category slot
+   and its background together.
    Inspect the elevated gradient host in actual SVG as well as flat surfaces.
    The probe's 954 initial failures are a resource-audit worklist, not a
    baseline to suppress. Regenerate

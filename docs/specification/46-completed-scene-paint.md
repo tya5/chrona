@@ -140,3 +140,11 @@ absolute gradient is sampled at the same point by clamped sRGB stop
 interpolation; the finding identifies a `gradient-sample` ground. This
 supersedes the first #459 design's exclusion of all gradient hosts. Other
 non-flat or non-opaque hosts still require an explicit contract.
+
+A dual-channel Rect or Symbol is evaluated at a separate painted sample for
+each channel: fill at bounds centre, stroke at the left-edge block midpoint.
+Either channel may carry a data mark's 3.0:1 visibility floor, and the
+finding records the winning channel and its own ground. Theme-supplied mark
+outlines may therefore preserve a category-coloured fill when the same
+category also colours its background. No outline is inferred by Scene or an
+adapter (#459).
