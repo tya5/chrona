@@ -2,7 +2,8 @@
 
 **Base:** `0a1b2c770dfabc31452d639300ad5009dc5328a2`.
 **Design:** [selected contract](../../design/issue-459-surface-aware-contrast-design-2026-09-26.md),
-[architecture review](../../reviews/current/issue-459-surface-contrast-architecture-review-2026-09-26.md).
+[architecture review](../../reviews/current/issue-459-surface-contrast-architecture-review-2026-09-26.md),
+[mark-role correction](../../design/issue-459-mark-role-normalization-correction-2026-09-26.md).
 
 ## Literal acceptance gates
 
