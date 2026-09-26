@@ -1,0 +1,238 @@
+<title>Blueprint Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&display=swap">
+<style>
+:root{color-scheme:dark;--paper:#1B4F8F;--paper2:#174579;--line:#E8F1FF;--dim:#A8C3E6;--amber:#FFD27A;--sans:"B612","Arial Narrow",Arial,sans-serif;--mono:"B612 Mono",ui-monospace,Menlo,monospace}
+html,body{background:var(--paper2)}
+body{color:var(--line);font-family:var(--sans);font-size:17px;line-height:1.55;margin:0;padding-block:40px 56px;padding-inline:20px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:36px}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+h1{font-weight:700;font-size:clamp(30px,4.4vw,48px);line-height:1.1;margin:10px 0 0;letter-spacing:.02em}
+.lede{max-width:64ch;margin:14px 0 0;color:#D6E4F7}
+.stage-scroll{overflow-x:auto;border:1px solid var(--dim)}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{font-family:var(--mono);color:var(--dim);font-size:13px;margin-top:8px}
+h2{font-weight:700;font-size:22px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 6px}
+.sub{color:var(--dim);margin:0 0 16px;max-width:64ch}
+.map-wrap{overflow-x:auto;border:1px solid var(--dim)}
+.map{width:100%;border-collapse:collapse;font-size:16px}
+.map th{font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);color:var(--dim)}
+.map td{padding:10px 12px;border-bottom:1px solid rgba(232,241,255,.2);vertical-align:top}
+.map td:first-child{font-weight:700;white-space:nowrap}
+.gap{color:var(--amber)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.sw{display:grid;gap:4px}.sw i{display:block;height:54px;border:1px solid var(--dim)}.sw b{font-size:14px;letter-spacing:.08em;text-transform:uppercase}.sw span{font-family:var(--mono);font-size:12px;color:var(--dim)}
+</style>
+<main>
+  <header>
+    <div class="eyebrow">Preset direction study · chrona · target B data</div>
+    <h1>HALCYON-1 programme board, drawn as a blueprint</h1>
+    <p class="lede">An engineering drawing: white linework on blueprint paper, a drawing frame with zone letters and numbers, a title block, slips drawn as <em>dimension lines</em> between plan and actual, and each note marked by a revision cloud and a delta tag, listed in the notes block.</p>
+  </header>
+  <section class="stage">
+    <div class="stage-scroll"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board as a blueprint: outlined plan bars, solid actual lines, dimension lines for slips, revision clouds for notes, and a title block"></svg></div>
+    <p class="caption">Hand-drawn direction mock, not chrona output · 1600 × 900</p>
+  </section>
+  <section>
+    <h2>Drawing to chrona</h2>
+    <div class="map-wrap"><table class="map"><thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead><tbody>
+      <tr><td>Drawing frame</td><td>Slide border with zone letters and numbers in the margin</td><td class="gap">no frame or zone treatment</td></tr>
+      <tr><td>Title block</td><td>Bottom-right block of labelled cells: project, title, scale, date, sheet, revision; plus the notes list</td><td class="gap">no field grid (as Tenth Frame)</td></tr>
+      <tr><td>Dimension lines</td><td>Slip drawn as a dimension between planned and actual finish, arrowheads, extension lines and the value</td><td class="gap">no dimension annotation</td></tr>
+      <tr><td>Revision clouds</td><td>Note marked by a scalloped outline around the subject and a numbered delta tag</td><td class="gap">no cloud or tag shape</td></tr>
+      <tr><td>Linework</td><td>Plan as an outline, actual solid, baseline dashed, unobserved hatched</td><td>expressible (#398, dash #423)</td></tr>
+      <tr><td>Scale</td><td><code>SCALE 1 : 275 DAYS</code> derived from the window</td><td class="gap">no derived figure</td></tr>
+    </tbody></table></div>
+  </section>
+  <section>
+    <h2>Colour</h2>
+    <div class="swatches">
+      <div class="sw"><i style="background:#1B4F8F"></i><b>Blueprint</b><span>#1B4F8F · paper</span></div>
+      <div class="sw"><i style="background:#E8F1FF"></i><b>Line</b><span>#E8F1FF · linework, 7.2:1</span></div>
+      <div class="sw"><i style="background:#A8C3E6"></i><b>Construction</b><span>#A8C3E6 · secondary</span></div>
+      <div class="sw"><i style="background:#FFD27A"></i><b>Redline</b><span>#FFD27A · slips, notes, today</span></div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('stage');
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20', LAUNCH0 = '2027-10-22', LAUNCH1 = '2027-11-05';
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const sectors = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const prints_unused = [
+    {id:'payload-tvac', kind:'risk', tag:'ANALYSIS // ALERT', head:'PAYLOAD TVAC +7D', text:'Margin to integration: zero.'},
+    {id:'station', kind:'note', tag:'ANALYSIS // NOTE', head:'GROUND STATION EARLY', text:'Link test can move up.'},
+    {id:'launch', kind:'note', tag:'OFF-WORLD // NOTE', head:'WINDOW 22 OCT – 05 NOV', text:'Miss it and the launch slips to Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const scale = (x0, x1) => { const w = x1 - x0; const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * w; const dayW = w / totalDays; return {X, Xe: d => X(d) + dayW, dayW, w}; };
+  const buildRows = (rowTop, rowH, headH) => { const rows = []; let y = rowTop; sectors.forEach((a, i) => { rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } }); return {rows, bottom:y}; };
+  const eachDay = f => { for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) f(d.toISOString().slice(0, 10), d.getUTCDay()); };
+  const MONTHS = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const QUARTERS = [['2027-03-01','2027-04-01',1],['2027-04-01','2027-07-01',2],['2027-07-01','2027-10-01',3],['2027-10-01','2027-12-01',4]];
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  const depPath = (A, B, rowH) => (B.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${B.xl - 6} V${B.y} H${B.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${B.y - (B.y > A.y ? rowH/2 : -rowH/2)} H${B.xl - 6} V${B.y} H${B.xl - 1}`;
+  const drawDeps = (anchor, g, rowH, attrs) => { for (const [a, b] of deps) { const A = anchor[a], B = anchor[b]; if (A && B) el('path', Object.assign({d:depPath(A, B, rowH)}, attrs), g); } };
+  const marker = (defs, id, fill, size) => { const m = el('marker', {id, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:size || 7, markerHeight:size || 7, orient:'auto'}, defs); el('path', {d:'M0,0 L10,5 L0,10 z', fill}, m); };
+  const NOTES = [
+    {id:'payload-tvac', kind:'risk', head:'Payload TVAC ten days late', text:'Margin to integration is now zero.'},
+    {id:'station', kind:'note', head:'Ground station early', text:'The link test can move up a week.'},
+    {id:'launch', kind:'note', head:'Window 22 Oct – 5 Nov', text:'Miss it and launch slips to Q1.'},
+  ];
+  const C = {paper:'#1B4F8F', grid:'#2B609F', line:'#E8F1FF', dim:'#A8C3E6', red:'#FFD27A', ok:'#9BE3B4'};
+  const F = {sans:'B612, "Arial Narrow", Arial, sans-serif', mono:'"B612 Mono", Menlo, monospace'};
+  const x0 = 470, x1 = 1280;
+  const {X, Xe, dayW} = scale(x0, x1);
+  const axisTop = 70, rowTop = 124, rowH = 20, headH = 24;
+  const defs = el('defs', {});
+  const g1 = el('pattern', {id:'grid', width:'20', height:'20', patternUnits:'userSpaceOnUse'}, defs);
+  el('path', {d:'M20,0 H0 V20', fill:'none', stroke:C.grid, 'stroke-width':.6}, g1);
+  const hatch = el('pattern', {id:'hatch', width:'5', height:'5', patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)'}, defs);
+  el('line', {x1:0, y1:0, x2:0, y2:5, stroke:C.line, 'stroke-width':1}, hatch);
+  marker(defs, 'arrow', C.dim, 6);
+  const dim = el('marker', {id:'dim', viewBox:'0 0 10 10', refX:'10', refY:'5', markerWidth:8, markerHeight:8, orient:'auto-start-reverse'}, defs);
+  el('path', {d:'M0,1.5 L10,5 L0,8.5 z', fill:C.red}, dim);
+
+  el('rect', {x:0, y:0, width:W, height:H, fill:C.paper});
+  el('rect', {x:0, y:0, width:W, height:H, fill:'url(#grid)', opacity:.7});
+  // drawing frame with zones
+  el('rect', {x:16, y:16, width:W - 32, height:H - 32, fill:'none', stroke:C.line, 'stroke-width':1});
+  el('rect', {x:32, y:32, width:W - 64, height:H - 64, fill:'none', stroke:C.line, 'stroke-width':2});
+  for (let i = 0; i < 8; i++) { const x = 32 + (W - 64) / 8 * i; if (i) { el('line', {x1:x, x2:x, y1:16, y2:32, stroke:C.line}); el('line', {x1:x, x2:x, y1:H - 32, y2:H - 16, stroke:C.line}); } tx(x + (W - 64) / 16, 28, String(8 - i), {'text-anchor':'middle', 'font-family':F.mono, 'font-size':10, fill:C.dim}); tx(x + (W - 64) / 16, H - 20, String(8 - i), {'text-anchor':'middle', 'font-family':F.mono, 'font-size':10, fill:C.dim}); }
+  'DCBA'.split('').forEach((l, i) => { const y = 32 + (H - 64) / 4 * i; if (i) { el('line', {x1:16, x2:32, y1:y, y2:y, stroke:C.line}); el('line', {x1:W - 32, x2:W - 16, y1:y, y2:y, stroke:C.line}); } tx(24, y + (H - 64) / 8 + 4, l, {'text-anchor':'middle', 'font-family':F.mono, 'font-size':10, fill:C.dim}); tx(W - 24, y + (H - 64) / 8 + 4, l, {'text-anchor':'middle', 'font-family':F.mono, 'font-size':10, fill:C.dim}); });
+
+  const {rows, bottom} = buildRows(rowTop, rowH, headH);
+  const plotTop = rowTop - 2, plotBot = bottom + 2;
+  el('rect', {x:x0, y:plotTop, width:x1 - x0, height:plotBot - plotTop, fill:C.paper, opacity:.55});
+  eachDay((iso, w) => { if (w === 0 || w === 6) el('rect', {x:X(iso), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.line, opacity:.035}); });
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW, height:plotBot - plotTop, fill:'url(#hatch)', opacity:.5});
+  const lw0 = X(LAUNCH0), lw1 = Xe(LAUNCH1);
+  el('rect', {x:lw0, y:plotTop, width:lw1 - lw0, height:plotBot - plotTop, fill:'none', stroke:C.line, 'stroke-width':1, 'stroke-dasharray':'10 3 2 3'});
+  tx(lw0 + 4, plotTop + 15, 'LAUNCH WINDOW', {'font-family':F.mono, 'font-size':10.5, fill:C.line});
+
+  tx(56, 60, 'HALCYON-1', {'font-family':F.sans, 'font-weight':700, 'font-size':22, fill:C.line, 'letter-spacing':'.06em'});
+  tx(200, 60, 'PROGRAMME BOARD · GENERAL ARRANGEMENT', {'font-family':F.mono, 'font-size':12, fill:C.dim, 'letter-spacing':'.08em'});
+  // axis as a scale bar
+  for (const [a, b, q] of QUARTERS) { el('rect', {x:X(a), y:axisTop, width:X(b) - X(a), height:14, fill:q % 2 ? C.line : 'none', stroke:C.line, 'stroke-width':1, opacity:q % 2 ? .9 : 1}); tx((X(a) + X(b)) / 2, axisTop + 11, 'Q' + q + ' 2027', {'text-anchor':'middle', 'font-family':F.mono, 'font-size':10.5, fill:q % 2 ? C.paper : C.line}); }
+  const mn = ['MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV'];
+  MONTHS.forEach((m, i) => { el('line', {x1:X(m), x2:X(m), y1:axisTop + 14, y2:plotBot, stroke:C.line, 'stroke-width':.6, opacity:.3}); el('line', {x1:X(m), x2:X(m), y1:axisTop + 14, y2:axisTop + 24, stroke:C.line}); if (i < 9) tx(X(m) + 4, axisTop + 34, mn[i], {'font-family':F.mono, 'font-size':11.5, fill:C.line}); });
+  tx(56, axisTop + 34, 'ITEM', {'font-family':F.mono, 'font-size':11.5, fill:C.dim}); tx(312, axisTop + 34, 'PHASE', {'font-family':F.mono, 'font-size':11.5, fill:C.dim}); tx(452, axisTop + 34, 'Δ', {'text-anchor':'end', 'font-family':F.mono, 'font-size':11.5, fill:C.dim});
+  el('line', {x1:48, x2:x1, y1:rowTop - 4, y2:rowTop - 4, stroke:C.line, 'stroke-width':1.4});
+
+  for (const r of rows) {
+    if (r.kind === 'head') {
+      el('line', {x1:48, x2:x1, y1:r.y + 1, y2:r.y + 1, stroke:C.line, 'stroke-width':.8, opacity:.6});
+      tx(56, r.y + 17, (r.i + 1) + '.0  ' + r.a.title.toUpperCase(), {'font-family':F.sans, 'font-weight':700, 'font-size':12.5, fill:C.line, 'letter-spacing':'.08em'});
+    } else {
+      const it = r.it, n = items.filter(t => t.g === it.g).indexOf(it) + 1;
+      tx(56, r.y + 14.5, (sectors.findIndex(s => s.id === it.g) + 1) + '.' + n, {'font-family':F.mono, 'font-size':11, fill:C.dim});
+      tx(92, r.y + 14.5, it.t, {'font-family':F.sans, 'font-size':12.5, fill:C.line});
+      tx(312, r.y + 14.5, it.ph.toUpperCase(), {'font-family':F.mono, 'font-size':10.5, fill:C.dim});
+      if (it.ae && it.e) { const d = D(it.e, it.ae); tx(452, r.y + 14.5, (d > 0 ? '+' : '') + d, {'text-anchor':'end', 'font-family':F.mono, 'font-size':12, fill:d > 0 ? C.red : d < 0 ? C.ok : C.dim}); }
+      else if (it.missing) tx(452, r.y + 14.5, 'TBD', {'text-anchor':'end', 'font-family':F.mono, 'font-size':11, fill:C.dim});
+    }
+  }
+
+  const anchor = {}; const marks = el('g', {});
+  for (const it of items) {
+    const cy = it.y + rowH/2;
+    if (it.at) { const x = X(it.at) + dayW/2; if (it.bat) el('path', {d:`M${X(it.bat) + dayW/2},${cy - 6} l6,6 l-6,6 l-6,-6 z`, fill:'none', stroke:C.dim, 'stroke-dasharray':'2 2'}, marks); el('path', {d:`M${x},${cy - 6.5} l6.5,6.5 l-6.5,6.5 l-6.5,-6.5 z`, fill:C.paper, stroke:C.line, 'stroke-width':1.4}, marks); el('circle', {cx:x, cy, r:1.6, fill:C.line}, marks); anchor[it.id] = {x:x + 7, y:cy, xl:x - 7, cx:x}; continue; }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 6, width:Xe(it.be) - X(it.bs), height:12, fill:'none', stroke:C.dim, 'stroke-width':1, 'stroke-dasharray':'6 2 1 2'}, marks);
+    el('rect', {x:X(it.s), y:cy - 4, width:Xe(it.e) - X(it.s), height:8, fill:it.missing ? 'url(#hatch)' : C.paper, stroke:C.line, 'stroke-width':1.3}, marks);
+    if (it.as) el('rect', {x:X(it.as), y:cy + 5, width:Xe(it.ae) - X(it.as), height:2, fill:C.line}, marks);
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s), cx:(X(it.s) + Xe(it.e)) / 2};
+    // dimension line for slips of 5 days or more
+    if (it.ae && it.e && D(it.e, it.ae) >= 5) {
+      const a = Xe(it.e), b = Xe(it.ae), dy = cy - 11;
+      el('line', {x1:a, x2:a, y1:cy - 5, y2:dy - 3, stroke:C.red, 'stroke-width':.8}, marks);
+      el('line', {x1:b, x2:b, y1:cy + 5, y2:dy - 3, stroke:C.red, 'stroke-width':.8}, marks);
+      el('line', {x1:a, x2:b, y1:dy, y2:dy, stroke:C.red, 'stroke-width':1, 'marker-start':'url(#dim)', 'marker-end':'url(#dim)'}, marks);
+      tx(b + 4, dy + 3.5, '+' + D(it.e, it.ae) + 'D', {'font-family':F.mono, 'font-size':10.5, fill:C.red}, marks);
+    }
+  }
+  const dg = el('g', {fill:'none', stroke:C.dim, 'stroke-width':.8, opacity:.8}); svg.insertBefore(dg, marks);
+  drawDeps(anchor, dg, rowH, {'marker-end':'url(#arrow)'});
+
+  const ax = X(ASOF) + dayW/2;
+  el('line', {x1:ax, x2:ax, y1:axisTop + 14, y2:plotBot + 8, stroke:C.red, 'stroke-width':1.2, 'stroke-dasharray':'12 3 2 3'});
+  el('path', {d:`M${ax},${plotBot + 8} l-6,10 h12 z`, fill:C.red});
+  tx(ax + 10, plotBot + 18, 'DATUM  AS OF 2027-08-20', {'font-family':F.mono, 'font-size':11, fill:C.red});
+
+  // revision clouds and delta tags
+  const cloud = (cx, cy, rx, ry) => { const n = Math.max(8, Math.round((rx + ry) / 5)); let d = ''; for (let k = 0; k <= n; k++) { const a = k / n * Math.PI * 2, x = cx + rx * Math.cos(a), y = cy + ry * Math.sin(a); if (!k) d = `M${x.toFixed(1)},${y.toFixed(1)}`; else d += ` A${(Math.PI * (rx + ry) / n / 1.6).toFixed(1)},${(Math.PI * (rx + ry) / n / 1.6).toFixed(1)} 0 0 1 ${x.toFixed(1)},${y.toFixed(1)}`; } return d; };
+  const tag = (x, y, n) => { el('path', {d:`M${x},${y - 11} L${x + 11},${y + 8} L${x - 11},${y + 8} Z`, fill:C.paper, stroke:C.red, 'stroke-width':1.3}); tx(x, y + 5, String(n), {'text-anchor':'middle', 'font-family':F.mono, 'font-weight':700, 'font-size':11, fill:C.red}); };
+  NOTES.forEach((n, i) => {
+    const A = anchor[n.id], it = items.find(t => t.id === n.id);
+    const xa = it.at ? A.cx - 12 : X(it.s) - 8, xb = it.at ? A.cx + 12 : Math.max(Xe(it.e), it.ae ? Xe(it.ae) : 0) + 40;
+    el('path', {d:cloud((xa + xb) / 2, A.y, (xb - xa) / 2 + 4, 14), fill:'none', stroke:C.red, 'stroke-width':1.2});
+    tag(xb + 16, A.y - 14, i + 1);
+  });
+
+  // title block with notes
+  const tb = {x:x1 + 24, y:rowTop - 4, w:W - 48 - (x1 + 24), h:plotBot - rowTop + 4};
+  el('rect', {x:tb.x, y:tb.y, width:tb.w, height:tb.h, fill:C.paper, stroke:C.line, 'stroke-width':1.6});
+  tx(tb.x + 12, tb.y + 22, 'NOTES', {'font-family':F.sans, 'font-weight':700, 'font-size':13, fill:C.line, 'letter-spacing':'.14em'});
+  let ny = tb.y + 44;
+  NOTES.forEach((n, i) => {
+    tag(tb.x + 22, ny + 2, i + 1);
+    const lines = wrap(n.head.toUpperCase(), 26).concat(wrap(n.text, 27));
+    lines.forEach((l, k) => tx(tb.x + 42, ny + k * 16, l, {'font-family':k < wrap(n.head, 26).length ? F.sans : F.mono, 'font-weight':k < wrap(n.head, 26).length ? 700 : 400, 'font-size':k < wrap(n.head, 26).length ? 12 : 11, fill:k < wrap(n.head, 26).length ? C.line : C.dim}));
+    ny += lines.length * 16 + 18;
+  });
+  const cells = [['PROJECT','HALCYON-1'],['TITLE','PROGRAMME BOARD'],['SCALE','1 : 275 DAYS'],['DATE','2027-08-20'],['SHEET','02 / 11'],['REV','C']];
+  const cy0 = tb.y + tb.h - cells.length / 2 * 44;
+  cells.forEach(([k, v], i) => { const cx = tb.x + (i % 2) * tb.w / 2, cy = cy0 + Math.floor(i / 2) * 44; el('rect', {x:cx, y:cy, width:tb.w / 2, height:44, fill:'none', stroke:C.line, 'stroke-width':1}); tx(cx + 8, cy + 14, k, {'font-family':F.mono, 'font-size':9.5, fill:C.dim}); tx(cx + 8, cy + 34, v, {'font-family':F.sans, 'font-weight':700, 'font-size':i < 2 ? 10.5 : 13.5, fill:C.line}); });
+
+  // legend as a symbol table
+  const ly = H - 58;
+  tx(56, ly + 4, 'SYMBOLS', {'font-family':F.sans, 'font-weight':700, 'font-size':12, fill:C.line, 'letter-spacing':'.14em'});
+  const keys = [['PLAN', x => el('rect', {x, y:ly - 4, width:24, height:8, fill:'none', stroke:C.line, 'stroke-width':1.3})], ['ACTUAL', x => el('rect', {x, y:ly - 1, width:24, height:2, fill:C.line})], ['BASELINE', x => el('rect', {x, y:ly - 6, width:24, height:12, fill:'none', stroke:C.dim, 'stroke-dasharray':'6 2 1 2'})], ['TBD', x => el('rect', {x, y:ly - 4, width:24, height:8, fill:'url(#hatch)', stroke:C.line})], ['GATE', x => el('path', {d:`M${x + 12},${ly - 6.5} l6.5,6.5 l-6.5,6.5 l-6.5,-6.5 z`, fill:C.paper, stroke:C.line, 'stroke-width':1.4})], ['SLIP', x => el('line', {x1:x, x2:x + 24, y1:ly, y2:ly, stroke:C.red, 'marker-start':'url(#dim)', 'marker-end':'url(#dim)'})], ['HOLIDAY', x => el('rect', {x, y:ly - 7, width:24, height:14, fill:'url(#hatch)', opacity:.6})], ['DEPENDS ON', x => el('path', {d:`M${x},${ly} H${x + 22}`, stroke:C.dim, 'marker-end':'url(#arrow)'})]];
+  keys.forEach(([l, d], i) => { const x = 160 + i * 138; d(x); tx(x + 32, ly + 4, l, {'font-family':F.mono, 'font-size':11, fill:C.line}); });
+  tx(W - 48, H - 42, 'DIRECTION STUDY · NOT RENDERER OUTPUT', {'text-anchor':'end', 'font-family':F.mono, 'font-size':10, fill:C.dim});
+})();
+</script>

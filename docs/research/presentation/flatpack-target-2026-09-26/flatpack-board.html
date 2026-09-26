@@ -1,0 +1,212 @@
+<title>Flat Pack Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;800&display=swap">
+<style>
+:root{color-scheme:light;--ink:#111;--grey:#6A6A6A;--light:#EDEDED;--sans:"Noto Sans","Verdana",sans-serif}
+html,body{background:#fff}
+body{color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55;margin:0;padding-block:40px 56px;padding-inline:20px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:36px}
+.eyebrow{font-weight:600;font-size:13px;letter-spacing:.06em;color:var(--grey)}
+h1{font-weight:800;font-size:clamp(34px,5.6vw,64px);letter-spacing:.02em;margin:6px 0 0;line-height:1}
+.lede{max-width:62ch;margin:14px 0 0}
+.stage-scroll{overflow-x:auto;border:1.5px solid var(--ink)}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{color:var(--grey);font-size:14px;margin-top:8px}
+h2{font-weight:800;font-size:24px;margin:0 0 6px}
+.map-wrap{overflow-x:auto}
+.map{width:100%;border-collapse:collapse;font-size:16px}
+.map th{font-weight:600;font-size:13px;text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--ink)}
+.map td{padding:10px;border-bottom:1px solid #ddd;vertical-align:top}
+.map td:first-child{font-weight:800;white-space:nowrap}
+.gap{color:var(--grey);font-style:italic}
+</style>
+<main>
+  <header>
+    <div class="eyebrow">Preset direction study · chrona · target B data</div>
+    <h1>HALCYON-1</h1>
+    <p class="lede">The programme board as flat-pack assembly instructions: black line art on white, an inventory of parts at the top that doubles as the legend, each group a numbered step, gates ticked once passed, and the notes told mostly in pictograms. As few words as the data allows.</p>
+  </header>
+  <section class="stage">
+    <div class="stage-scroll"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board as assembly instructions: a parts inventory, six numbered steps, outlined plan bars, solid actual lines, ticked gates, a today arrow and three pictogram notes"></svg></div>
+    <p class="caption">Hand-drawn direction mock, not chrona output · 1600 × 900</p>
+  </section>
+  <section>
+    <h2>Step by step</h2>
+    <div class="map-wrap"><table class="map"><thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead><tbody>
+      <tr><td>Parts inventory</td><td>Legend as a row of boxed parts, each with a drawing and a <em>count derived from the data</em> (26×, 8×, 24×)</td><td class="gap">legend has no counts (#427)</td></tr>
+      <tr><td>Step numerals</td><td>Group label as a large numeral spanning the group's rows</td><td class="gap">no row-spanning group column (as Yuya)</td></tr>
+      <tr><td>Ticked gates</td><td>Gate glyph changes with state: ticked before as-of, open after</td><td class="gap">#464; no state-dependent glyph</td></tr>
+      <tr><td>Line art</td><td>Plan as an outline, actual as a heavy line, no colour at all</td><td>expressible</td></tr>
+      <tr><td>Pictogram notes</td><td>Each note led by a pictogram chosen by kind (risk, early, window)</td><td class="gap">icons beside note text exist; no kind-to-icon rule</td></tr>
+      <tr><td>Today arrow</td><td>As-of as a heavy arrow and date</td><td>label (#428)</td></tr>
+    </tbody></table></div>
+  </section>
+</main>
+<script>
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('stage');
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20', LAUNCH0 = '2027-10-22', LAUNCH1 = '2027-11-05';
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const sectors = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const prints_unused = [
+    {id:'payload-tvac', kind:'risk', tag:'ANALYSIS // ALERT', head:'PAYLOAD TVAC +7D', text:'Margin to integration: zero.'},
+    {id:'station', kind:'note', tag:'ANALYSIS // NOTE', head:'GROUND STATION EARLY', text:'Link test can move up.'},
+    {id:'launch', kind:'note', tag:'OFF-WORLD // NOTE', head:'WINDOW 22 OCT – 05 NOV', text:'Miss it and the launch slips to Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const scale = (x0, x1) => { const w = x1 - x0; const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * w; const dayW = w / totalDays; return {X, Xe: d => X(d) + dayW, dayW, w}; };
+  const buildRows = (rowTop, rowH, headH) => { const rows = []; let y = rowTop; sectors.forEach((a, i) => { rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } }); return {rows, bottom:y}; };
+  const eachDay = f => { for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) f(d.toISOString().slice(0, 10), d.getUTCDay()); };
+  const MONTHS = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const QUARTERS = [['2027-03-01','2027-04-01',1],['2027-04-01','2027-07-01',2],['2027-07-01','2027-10-01',3],['2027-10-01','2027-12-01',4]];
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  const depPath = (A, B, rowH) => (B.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${B.xl - 6} V${B.y} H${B.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${B.y - (B.y > A.y ? rowH/2 : -rowH/2)} H${B.xl - 6} V${B.y} H${B.xl - 1}`;
+  const drawDeps = (anchor, g, rowH, attrs) => { for (const [a, b] of deps) { const A = anchor[a], B = anchor[b]; if (A && B) el('path', Object.assign({d:depPath(A, B, rowH)}, attrs), g); } };
+  const marker = (defs, id, fill, size) => { const m = el('marker', {id, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:size || 7, markerHeight:size || 7, orient:'auto'}, defs); el('path', {d:'M0,0 L10,5 L0,10 z', fill}, m); };
+  const NOTES = [
+    {id:'payload-tvac', kind:'risk', head:'Payload TVAC ten days late', text:'Margin to integration is now zero.'},
+    {id:'station', kind:'note', head:'Ground station early', text:'The link test can move up a week.'},
+    {id:'launch', kind:'note', head:'Window 22 Oct – 5 Nov', text:'Miss it and launch slips to Q1.'},
+  ];
+  const C = {ink:'#111111', grey:'#6A6A6A', light:'#EDEDED', white:'#FFFFFF'};
+  const F = '"Noto Sans", Verdana, sans-serif';
+  const x0 = 470, x1 = 1250;
+  const {X, Xe, dayW} = scale(x0, x1);
+  const axisTop = 186, rowTop = 234, rowH = 18, headH = 20;
+  const defs = el('defs', {});
+  marker(defs, 'arrow', C.ink, 6);
+  const dots = el('pattern', {id:'dots', width:'4', height:'4', patternUnits:'userSpaceOnUse'}, defs); el('rect', {width:4, height:4, fill:C.white}, dots); el('circle', {cx:2, cy:2, r:.8, fill:C.ink}, dots);
+  el('rect', {x:0, y:0, width:W, height:H, fill:C.white});
+
+  // title
+  tx(40, 74, 'HALCYON-1', {'font-family':F, 'font-weight':800, 'font-size':50, fill:C.ink, 'letter-spacing':'.02em'});
+  tx(42, 104, 'Programme board', {'font-family':F, 'font-size':17, fill:C.ink});
+  tx(42, 126, '2027-08-20', {'font-family':F, 'font-size':14, fill:C.grey});
+  // parts inventory
+  const gates = items.filter(t => t.at).length, spans = items.filter(t => t.e).length;
+  const parts = [[spans + '×', x => el('rect', {x:x - 22, y:-5, width:44, height:10, fill:C.white, stroke:C.ink, 'stroke-width':1.5})],
+    [gates + '×', x => gate(x, 0, false)],
+    [deps.length + '×', x => el('path', {d:`M${x - 22},0 H${x + 18}`, stroke:C.ink, 'stroke-width':1.3, 'marker-end':'url(#arrow)'})],
+    [items.filter(t => t.as).length + '×', x => el('rect', {x:x - 22, y:-2, width:44, height:4, fill:C.ink})],
+    [items.filter(t => t.bs).length + '×', x => el('rect', {x:x - 22, y:-7, width:44, height:14, fill:'none', stroke:C.ink, 'stroke-dasharray':'3 2'})],
+    ['1×', x => el('rect', {x:x - 22, y:-14, width:44, height:28, fill:C.light})],
+    [holidays.length + '×', x => el('rect', {x:x - 3, y:-14, width:6, height:28, fill:'url(#dots)', stroke:C.ink, 'stroke-width':.8})],
+    ['1×', x => el('rect', {x:x - 22, y:-5, width:44, height:10, fill:'url(#dots)', stroke:C.ink, 'stroke-width':1.5})]];
+  function gate(x, y, done, p) { const g = el('g', {}, p); el('circle', {cx:x, cy:y, r:7, fill:C.white, stroke:C.ink, 'stroke-width':1.6}, g); if (done) el('path', {d:`M${x - 3.5},${y} l2.5,3 l4.5,-6`, fill:'none', stroke:C.ink, 'stroke-width':1.8, 'stroke-linecap':'round', 'stroke-linejoin':'round'}, g); return g; }
+  const pw = 100, px0 = 470; const pname = ['plan','gate','link','actual','baseline','window','holiday','pending'];
+  parts.forEach(([n, d], i) => { const x = px0 + i * (pw + 12); el('rect', {x, y:30, width:pw, height:100, rx:6, fill:C.white, stroke:C.ink, 'stroke-width':1.3}); const g = el('g', {transform:`translate(0,72)`}); const before = svg.lastChild; d(x + pw / 2); let nn = before.nextSibling; while (nn) { const nx = nn.nextSibling; g.appendChild(nn); nn = nx; } tx(x + 10, 120, n, {'font-family':F, 'font-weight':800, 'font-size':18, fill:C.ink}); tx(x + pw - 8, 120, pname[i], {'text-anchor':'end', 'font-family':F, 'font-size':10, fill:C.grey}); });
+  // two-person pictogram
+  const person = (x, y, s, p) => { const g = el('g', {transform:`translate(${x},${y}) scale(${s})`, fill:'none', stroke:C.ink, 'stroke-width':1.6, 'stroke-linecap':'round'}, p); el('circle', {cx:0, cy:-14, r:5}, g); el('path', {d:'M0,-9 V6 M0,6 l-6,12 M0,6 l6,12 M-8,-3 l8,-3 l8,3'}, g); return g; };
+  el('rect', {x:W - 150, y:30, width:110, height:100, rx:6, fill:C.white, stroke:C.ink, 'stroke-width':1.3});
+  person(W - 112, 82, 1.3); person(W - 78, 82, 1.3);
+  tx(W - 140, 120, '6×', {'font-family':F, 'font-weight':800, 'font-size':18, fill:C.ink});
+
+  const {rows, bottom} = buildRows(rowTop, rowH, headH);
+  const plotTop = rowTop - 2, plotBot = bottom + 2;
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW, height:plotBot - plotTop, fill:'url(#dots)', opacity:.7});
+  const lw0 = X(LAUNCH0), lw1 = Xe(LAUNCH1);
+  el('rect', {x:lw0, y:plotTop, width:lw1 - lw0, height:plotBot - plotTop, fill:C.light});
+  const mn = ['MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV'];
+  QUARTERS.forEach(([a, b, q]) => { el('line', {x1:X(a), x2:X(a), y1:axisTop - 22, y2:axisTop + 4, stroke:C.ink, 'stroke-width':1.5}); tx(X(a) + 5, axisTop - 8, 'Q' + q, {'font-family':F, 'font-weight':800, 'font-size':13, fill:C.ink}); });
+  MONTHS.forEach((m, i) => { el('line', {x1:X(m), x2:X(m), y1:axisTop + 4, y2:plotBot, stroke:C.ink, 'stroke-width':.5, opacity:.25}); if (i < 9) tx(X(m) + 5, axisTop + 18, mn[i], {'font-family':F, 'font-size':12, fill:C.ink}); });
+  el('line', {x1:40, x2:x1, y1:rowTop - 6, y2:rowTop - 6, stroke:C.ink, 'stroke-width':1.5});
+
+  // step numerals spanning each group
+  const spansG = []; let cur = null;
+  for (const r of rows) { if (r.kind === 'head') { cur = {i:r.i, a:r.a, y0:r.y}; spansG.push(cur); } cur.y1 = r.y + (r.kind === 'head' ? headH : rowH); }
+  for (const s of spansG) {
+    tx(40, s.y0 + 42, String(s.i + 1), {'font-family':F, 'font-weight':800, 'font-size':44, fill:C.ink});
+    el('line', {x1:96, x2:x1, y1:s.y0 + 1, y2:s.y0 + 1, stroke:C.ink, 'stroke-width':.8});
+    tx(100, s.y0 + 15, s.a.title, {'font-family':F, 'font-weight':600, 'font-size':13, fill:C.ink});
+  }
+  for (const r of rows) if (r.kind === 'item') {
+    const it = r.it;
+    tx(100, r.y + 13.5, it.t, {'font-family':F, 'font-size':12.5, fill:C.ink});
+    if (it.ae && it.e) { const d = D(it.e, it.ae); tx(456, r.y + 13.5, (d > 0 ? '+' : '') + d, {'text-anchor':'end', 'font-family':F, 'font-weight':d > 0 ? 800 : 400, 'font-size':12.5, fill:C.ink}); }
+    else if (it.missing) tx(456, r.y + 13.5, '?', {'text-anchor':'end', 'font-family':F, 'font-weight':800, 'font-size':12.5, fill:C.ink});
+  }
+  const anchor = {}; const marks = el('g', {});
+  for (const it of items) {
+    const cy = it.y + rowH / 2;
+    if (it.at) { const x = X(it.at) + dayW / 2; if (it.bat) el('circle', {cx:X(it.bat) + dayW / 2, cy, r:6, fill:'none', stroke:C.grey, 'stroke-dasharray':'2 2'}, marks); gate(x, cy, it.at <= ASOF, marks); anchor[it.id] = {x:x + 8, y:cy, xl:x - 8, cx:x}; continue; }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 7, width:Xe(it.be) - X(it.bs), height:14, fill:'none', stroke:C.ink, 'stroke-width':.8, 'stroke-dasharray':'3 2'}, marks);
+    el('rect', {x:X(it.s), y:cy - 5, width:Xe(it.e) - X(it.s), height:9, fill:it.missing ? 'url(#dots)' : C.white, stroke:C.ink, 'stroke-width':1.5}, marks);
+    if (it.as) el('rect', {x:X(it.as), y:cy + 5.5, width:Xe(it.ae) - X(it.as), height:3.5, fill:C.ink}, marks);
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s), cx:(X(it.s) + Xe(it.e)) / 2};
+  }
+  const dg = el('g', {fill:'none', stroke:C.ink, 'stroke-width':.8}); svg.insertBefore(dg, marks);
+  drawDeps(anchor, dg, rowH, {'marker-end':'url(#arrow)'});
+  // today arrow
+  const ax = X(ASOF) + dayW / 2;
+  el('line', {x1:ax, x2:ax, y1:axisTop + 22, y2:plotBot, stroke:C.ink, 'stroke-width':2});
+  el('path', {d:`M${ax - 9},${axisTop - 26} h18 v14 h9 l-18,18 l-18,-18 h9 z`, fill:C.ink});
+  tx(ax + 18, axisTop - 12, '20.08', {'font-family':F, 'font-weight':800, 'font-size':14, fill:C.ink});
+
+  // pictogram notes
+  const pict = {
+    risk: (x, y) => { const g = el('g', {}); person(x + 34, y + 50, 1.5, g); el('path', {d:`M${x + 50},${y + 14} q10,-8 18,0 q4,6 -4,10 q-5,3 -5,8`, fill:'none', stroke:C.ink, 'stroke-width':2, 'stroke-linecap':'round'}, g); el('circle', {cx:x + 59, cy:y + 38, r:1.6, fill:C.ink}, g); el('path', {d:`M${x + 6},${y + 58} l10,-17 l10,17 z`, fill:'none', stroke:C.ink, 'stroke-width':1.6}, g); tx(x + 16, y + 56, '!', {'text-anchor':'middle', 'font-family':F, 'font-weight':800, 'font-size':11, fill:C.ink}, g); return g; },
+    early: (x, y) => { const g = el('g', {fill:'none', stroke:C.ink, 'stroke-width':1.6}); el('path', {d:`M${x + 20},${y + 10} h32 M${x + 20},${y + 66} h32 M${x + 24},${y + 10} q0,18 12,28 q12,10 12,28 M${x + 48},${y + 10} q0,18 -12,28 q-12,10 -12,28`}, g); el('path', {d:`M${x + 28},${y + 62} q8,-12 16,0 z`, fill:C.ink}, g); el('path', {d:`M${x + 58},${y + 38} l10,-8 m-10,8 l10,8`, 'stroke-width':2}, g); return g; },
+    window: (x, y) => { const g = el('g', {fill:'none', stroke:C.ink, 'stroke-width':1.6}); el('rect', {x:x + 8, y:y + 14, width:58, height:48, rx:3}, g); el('path', {d:`M${x + 8},${y + 26} h58 M${x + 22},${y + 8} v10 M${x + 52},${y + 8} v10`}, g); for (let k = 0; k < 4; k++) for (let j = 0; j < 3; j++) el('rect', {x:x + 13 + k * 13, y:y + 31 + j * 10, width:8, height:6, fill:(k === 2 && j > 0) || (k === 3 && j === 0) ? C.ink : 'none', 'stroke-width':1}, g); return g; },
+  };
+  const rx0 = x1 + 34, rw = W - 40 - rx0;
+  let last = rowTop - 10;
+  NOTES.forEach((n, i) => {
+    const A = anchor[n.id], kind = i === 0 ? 'risk' : i === 1 ? 'early' : 'window';
+    const lines = wrap(n.text, 20), h = 96 + lines.length * 17;
+    const y = Math.max(A.y - h / 2, last + 20); last = y + h;
+    el('rect', {x:rx0, y, width:rw, height:h, rx:6, fill:C.white, stroke:C.ink, 'stroke-width':1.5});
+    pict[kind](rx0 + 8, y + 8);
+    tx(rx0 + 90, y + 28, i === 0 ? '+10' : i === 1 ? '−11' : '22.10–05.11', {'font-family':F, 'font-weight':800, 'font-size':i === 2 ? 15 : 24, fill:C.ink});
+    tx(rx0 + 90, y + 50, ['Payload TVAC','Ground station','Launch window'][i], {'font-family':F, 'font-weight':600, 'font-size':12.5, fill:C.ink});
+    lines.forEach((l, k) => tx(rx0 + 14, y + 94 + k * 17, l, {'font-family':F, 'font-size':13, fill:C.grey}));
+    el('circle', {cx:rx0 + rw - 18, cy:y + 18, r:11, fill:C.ink}); tx(rx0 + rw - 18, y + 23, String(i + 1), {'text-anchor':'middle', 'font-family':F, 'font-weight':800, 'font-size':13, fill:C.white});
+    el('path', {d:`M${rx0 - 2},${y + h / 2} H${x1 + 10} V${A.y} H${A.x + 6}`, fill:'none', stroke:C.ink, 'stroke-width':1, 'marker-end':'url(#arrow)'});
+  });
+  tx(W - 40, H - 16, 'Direction study · not renderer output', {'text-anchor':'end', 'font-family':F, 'font-size':11, fill:C.grey});
+  tx(40, H - 16, 'AA-2027082-02', {'font-family':F, 'font-size':11, fill:C.grey});
+})();
+</script>

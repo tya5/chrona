@@ -1,0 +1,220 @@
+<title>One Bit Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+<style>
+:root{color-scheme:light;--black:#000;--white:#fff;--px:VT323,ui-monospace,monospace}
+html,body{background:#fff}
+body{color:#000;font-family:var(--px);font-size:18px;line-height:1.55;margin:0;padding-block:40px 56px;padding-inline:20px;background-image:repeating-conic-gradient(#000 0 25%,#fff 0 50%);background-size:4px 4px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:32px}
+.win{background:#fff;border:2px solid #000;box-shadow:4px 4px 0 #000}
+.bar{height:22px;border-bottom:2px solid #000;background:repeating-linear-gradient(#fff 0 2px,#000 2px 3px);display:grid;place-items:center}
+.bar span{background:#fff;padding:0 10px;font-weight:700;font-size:15px}
+.body{padding:16px 20px}
+h1{font-weight:700;font-size:clamp(26px,4vw,42px);line-height:1.1;margin:0}
+.lede{max-width:64ch;margin:10px 0 0}
+.stage-scroll{overflow-x:auto}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{font-size:14px;margin:8px 0 0}
+.map-wrap{overflow-x:auto}
+.map{width:100%;border-collapse:collapse;font-size:16px}
+.map th{text-align:left;padding:6px 10px;background:#000;color:#fff;font-weight:500}
+.map td{padding:8px 10px;border-bottom:1px dotted #000;vertical-align:top}
+.map td:first-child{font-weight:700;white-space:nowrap}
+.gap{text-decoration:underline}
+.stage-scroll.win{box-shadow:4px 4px 0 #000}</style>
+<main>
+  <div class="win"><div class="bar"><span>Read Me</span></div><div class="body">
+    <h1>HALCYON-1 Programme Board, in one bit</h1>
+    <p class="lede">The programme board on a 1984 desktop: black and white only, every grey made by dithering, a striped title bar, a menu bar with the date, and each note as an alert box with an OK button. Proof that a Theme can carry the whole chart without a single colour, which is what a print or e-ink preset needs.</p>
+  </div></div>
+  <section class="stage">
+    <div class="stage-scroll win"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board on a one-bit desktop: dithered plan bars, solid actual bars, black diamond gates, an inverted today marker, and three alert boxes"></svg></div>
+  </section>
+  <div class="win"><div class="bar"><span>Get Info</span></div><div class="body">
+    <div class="map-wrap"><table class="map"><thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead><tbody>
+      <tr><td>One bit</td><td>Only black and white paint; every tint expressed as a dither pattern</td><td class="gap">patterns: outline and diagonal hatch only</td></tr>
+      <tr><td>Dither ramp</td><td>12.5 %, 25 % and 50 % dither patterns as named Theme paints for holidays, pending work and plan</td><td class="gap">no ordered-dither pattern</td></tr>
+      <tr><td>Inverted label</td><td>As-of label as white text on a black block</td><td>label chip (#428)</td></tr>
+      <tr><td>Window chrome</td><td>Chart slot framed as a window: striped title bar, close box, scroll bars</td><td class="gap">no slot frame treatment</td></tr>
+      <tr><td>Alert boxes</td><td>Notes as alert dialogs with a caution icon and an OK button</td><td class="gap">#465 (image behind a note)</td></tr>
+      <tr><td>Menu bar</td><td>A header strip with the date and slide name at the right</td><td class="gap">no header strip slot</td></tr>
+    </tbody></table></div>
+  </div></div>
+</main>
+<script>
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('stage');
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20', LAUNCH0 = '2027-10-22', LAUNCH1 = '2027-11-05';
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const sectors = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const prints_unused = [
+    {id:'payload-tvac', kind:'risk', tag:'ANALYSIS // ALERT', head:'PAYLOAD TVAC +7D', text:'Margin to integration: zero.'},
+    {id:'station', kind:'note', tag:'ANALYSIS // NOTE', head:'GROUND STATION EARLY', text:'Link test can move up.'},
+    {id:'launch', kind:'note', tag:'OFF-WORLD // NOTE', head:'WINDOW 22 OCT – 05 NOV', text:'Miss it and the launch slips to Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const scale = (x0, x1) => { const w = x1 - x0; const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * w; const dayW = w / totalDays; return {X, Xe: d => X(d) + dayW, dayW, w}; };
+  const buildRows = (rowTop, rowH, headH) => { const rows = []; let y = rowTop; sectors.forEach((a, i) => { rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } }); return {rows, bottom:y}; };
+  const eachDay = f => { for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) f(d.toISOString().slice(0, 10), d.getUTCDay()); };
+  const MONTHS = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const QUARTERS = [['2027-03-01','2027-04-01',1],['2027-04-01','2027-07-01',2],['2027-07-01','2027-10-01',3],['2027-10-01','2027-12-01',4]];
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  const depPath = (A, B, rowH) => (B.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${B.xl - 6} V${B.y} H${B.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${B.y - (B.y > A.y ? rowH/2 : -rowH/2)} H${B.xl - 6} V${B.y} H${B.xl - 1}`;
+  const drawDeps = (anchor, g, rowH, attrs) => { for (const [a, b] of deps) { const A = anchor[a], B = anchor[b]; if (A && B) el('path', Object.assign({d:depPath(A, B, rowH)}, attrs), g); } };
+  const marker = (defs, id, fill, size) => { const m = el('marker', {id, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:size || 7, markerHeight:size || 7, orient:'auto'}, defs); el('path', {d:'M0,0 L10,5 L0,10 z', fill}, m); };
+  const NOTES = [
+    {id:'payload-tvac', kind:'risk', head:'Payload TVAC ten days late', text:'Margin to integration is now zero.'},
+    {id:'station', kind:'note', head:'Ground station early', text:'The link test can move up a week.'},
+    {id:'launch', kind:'note', head:'Window 22 Oct – 5 Nov', text:'Miss it and launch slips to Q1.'},
+  ];
+  const B = '#000000', Wt = '#FFFFFF';
+  const F = 'VT323, ui-monospace, monospace';
+  svg.setAttribute('shape-rendering', 'crispEdges');
+  const defs = el('defs', {});
+  const pat = (id, size, px) => { const p = el('pattern', {id, width:size, height:size, patternUnits:'userSpaceOnUse'}, defs); el('rect', {width:size, height:size, fill:Wt}, p); for (const [x, y] of px) el('rect', {x, y, width:1, height:1, fill:B}, p); };
+  pat('d50', 2, [[0, 0], [1, 1]]); pat('d25', 4, [[0, 0], [2, 2]]); pat('d12', 4, [[0, 0]]); pat('desk', 2, [[0, 0], [1, 1]]);
+  const diag = el('pattern', {id:'diag', width:6, height:6, patternUnits:'userSpaceOnUse'}, defs); el('rect', {width:6, height:6, fill:Wt}, diag); for (let i = 0; i < 6; i++) el('rect', {x:i, y:5 - i, width:1, height:1, fill:B}, diag);
+  const arrowM = el('marker', {id:'arrow', viewBox:'0 0 8 8', refX:'7', refY:'4', markerWidth:6, markerHeight:6, orient:'auto'}, defs); el('path', {d:'M0,0 L8,4 L0,8 z', fill:B}, arrowM);
+
+  el('rect', {x:0, y:0, width:W, height:H, fill:'url(#d50)'});
+  // menu bar
+  el('rect', {x:0, y:0, width:W, height:26, fill:Wt}); el('line', {x1:0, x2:W, y1:26, y2:26, stroke:B, 'stroke-width':2});
+  el('path', {d:'M22,6 l7,7 l-7,7 l-7,-7 z', fill:B});
+  ['File','Edit','View','Special','Schedule'].forEach((m, i) => tx(52 + i * 84, 19, m, {'font-family':F, 'font-weight':400, 'font-size':20.5, fill:B}));
+  tx(W - 16, 19, 'Fri 20 Aug 2027', {'text-anchor':'end', 'font-family':F, 'font-weight':400, 'font-size':20.5, fill:B});
+
+  const window = (x, y, w, h, title) => {
+    el('rect', {x:x + 3, y:y + 3, width:w, height:h, fill:B});
+    el('rect', {x, y, width:w, height:h, fill:Wt, stroke:B, 'stroke-width':2});
+    el('line', {x1:x, x2:x + w, y1:y + 22, y2:y + 22, stroke:B, 'stroke-width':2});
+    for (let i = 0; i < 6; i++) el('line', {x1:x + 4, x2:x + w - 4, y1:y + 5 + i * 2.5, y2:y + 5 + i * 2.5, stroke:B, 'stroke-width':1});
+    el('rect', {x:x + 12, y:y + 4, width:14, height:14, fill:Wt, stroke:B, 'stroke-width':1.5});
+    const tw = title.length * 8.6 + 20;
+    el('rect', {x:x + w / 2 - tw / 2, y:y + 2, width:tw, height:18, fill:Wt});
+    tx(x + w / 2, y + 16, title, {'text-anchor':'middle', 'font-family':F, 'font-weight':400, 'font-size':19.5, fill:B});
+  };
+  // main window
+  const MW = {x:26, y:40, w:1236, h:790};
+  window(MW.x, MW.y, MW.w, MW.h, 'HALCYON-1 — Programme Board');
+  // scroll bars
+  el('rect', {x:MW.x + MW.w - 18, y:MW.y + 22, width:18, height:MW.h - 40, fill:'url(#d50)', stroke:B}); el('rect', {x:MW.x + MW.w - 18, y:MW.y + 60, width:18, height:18, fill:Wt, stroke:B});
+  el('rect', {x:MW.x, y:MW.y + MW.h - 18, width:MW.w - 18, height:18, fill:'url(#d50)', stroke:B}); el('rect', {x:MW.x + 400, y:MW.y + MW.h - 18, width:18, height:18, fill:Wt, stroke:B});
+  el('rect', {x:MW.x + MW.w - 18, y:MW.y + MW.h - 18, width:18, height:18, fill:Wt, stroke:B});
+
+  const x0 = 470, x1 = MW.x + MW.w - 34;
+  const {X, Xe, dayW} = scale(x0, x1);
+  const axisTop = 80, rowTop = 132, rowH = 18, headH = 22;
+  const {rows, bottom} = buildRows(rowTop, rowH, headH);
+  const plotTop = rowTop - 2, plotBot = bottom + 2;
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW + .5, height:plotBot - plotTop, fill:'url(#d12)'});
+  const lw0 = X(LAUNCH0), lw1 = Xe(LAUNCH1);
+  el('rect', {x:lw0, y:plotTop, width:lw1 - lw0, height:plotBot - plotTop, fill:'url(#diag)'});
+  el('rect', {x:lw0, y:plotTop, width:lw1 - lw0, height:plotBot - plotTop, fill:'none', stroke:B, 'stroke-width':1});
+  el('rect', {x:lw0 + 3, y:rows[0].y + 3, width:lw1 - lw0 - 6, height:16, fill:Wt, stroke:B});
+  tx((lw0 + lw1) / 2, rows[0].y + 15.5, 'Launch', {'text-anchor':'middle', 'font-family':F, 'font-size':17.0, fill:B});
+
+  QUARTERS.forEach(([a, b, q]) => { el('rect', {x:X(a), y:axisTop, width:X(b) - X(a), height:18, fill:q % 2 ? B : Wt, stroke:B}); tx(X(a) + 6, axisTop + 14, 'Q' + q + ' 2027', {'font-family':F, 'font-weight':400, 'font-size':17.5, fill:q % 2 ? Wt : B}); });
+  const mn = ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov'];
+  MONTHS.forEach((m, i) => { for (let y = axisTop + 20; y < plotBot; y += 4) el('rect', {x:Math.round(X(m)), y, width:1, height:1, fill:B}); if (i < 9) tx(X(m) + 5, axisTop + 38, mn[i], {'font-family':F, 'font-weight':400, 'font-size':19.5, fill:B}); });
+  tx(48, axisTop + 38, 'Name', {'font-family':F, 'font-weight':400, 'font-size':19.5, fill:B}); tx(318, axisTop + 38, 'Kind', {'font-family':F, 'font-weight':400, 'font-size':19.5, fill:B}); tx(456, axisTop + 38, 'Δ', {'text-anchor':'end', 'font-family':F, 'font-weight':400, 'font-size':19.5, fill:B});
+  el('line', {x1:MW.x + 2, x2:x1, y1:rowTop - 4, y2:rowTop - 4, stroke:B, 'stroke-width':1});
+  for (const r of rows) {
+    if (r.kind === 'head') {
+      el('path', {d:`M48,${r.y + 6} l8,5 l-8,5 z`, fill:B});
+      tx(64, r.y + 16, r.a.title, {'font-family':F, 'font-weight':400, 'font-size':19.5, fill:B});
+      el('line', {x1:MW.x + 2, x2:x1, y1:r.y + headH - 1, y2:r.y + headH - 1, stroke:B, 'stroke-width':1, 'stroke-dasharray':'1 1'});
+    } else {
+      const it = r.it;
+      tx(64, r.y + 14, it.t, {'font-family':F, 'font-size':18.5, fill:B});
+      tx(318, r.y + 14, it.ph, {'font-family':F, 'font-size':17.5, fill:B});
+      if (it.ae && it.e) { const d = D(it.e, it.ae); if (d > 0) { const s = '+' + d, w = s.length * 8 + 6; el('rect', {x:456 - w + 3, y:r.y + 2, width:w, height:15, fill:B}); tx(456, r.y + 14, s, {'text-anchor':'end', 'font-family':F, 'font-weight':400, 'font-size':18.0, fill:Wt}); } else tx(456, r.y + 14, String(d), {'text-anchor':'end', 'font-family':F, 'font-size':18.0, fill:B}); }
+      else if (it.missing) tx(456, r.y + 14, '?', {'text-anchor':'end', 'font-family':F, 'font-size':18.0, fill:B});
+    }
+  }
+  const anchor = {}; const marks = el('g', {});
+  for (const it of items) {
+    const cy = Math.round(it.y + rowH / 2);
+    if (it.at) { const x = Math.round(X(it.at) + dayW / 2); if (it.bat) el('path', {d:`M${Math.round(X(it.bat) + dayW / 2)},${cy - 6} l6,6 l-6,6 l-6,-6 z`, fill:'none', stroke:B, 'stroke-dasharray':'1 1'}, marks); el('path', {d:`M${x},${cy - 7} l7,7 l-7,7 l-7,-7 z`, fill:B}, marks); anchor[it.id] = {x:x + 8, y:cy, xl:x - 8, cx:x, top:cy - 7}; continue; }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 6, width:Xe(it.be) - X(it.bs), height:12, fill:'none', stroke:B, 'stroke-dasharray':'1 2'}, marks);
+    el('rect', {x:X(it.s), y:cy - 4, width:Xe(it.e) - X(it.s), height:8, fill:it.missing ? 'url(#d25)' : 'url(#d50)', stroke:B, 'stroke-width':1}, marks);
+    if (it.as) el('rect', {x:X(it.as), y:cy + 5, width:Xe(it.ae) - X(it.as), height:3, fill:B}, marks);
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s), cx:(X(it.s) + Xe(it.e)) / 2, top:cy - 4};
+  }
+  const dg = el('g', {fill:'none', stroke:B, 'stroke-width':1, 'stroke-dasharray':'2 2'}); svg.insertBefore(dg, marks);
+  drawDeps(anchor, dg, rowH, {'marker-end':'url(#arrow)'});
+  const ax = Math.round(X(ASOF) + dayW / 2);
+  el('rect', {x:ax - 1, y:axisTop + 20, width:2, height:plotBot - axisTop - 20, fill:B});
+  el('rect', {x:ax - 44, y:plotBot + 4, width:88, height:20, fill:B});
+  tx(ax, plotBot + 18.5, 'Today 8/20', {'text-anchor':'middle', 'font-family':F, 'font-weight':400, 'font-size':18.0, fill:Wt});
+  // key inside the window
+  const ky = plotBot + 42;
+  const keys = [['Plan', x => el('rect', {x, y:ky - 4, width:24, height:8, fill:'url(#d50)', stroke:B})], ['Actual', x => el('rect', {x, y:ky - 1.5, width:24, height:3, fill:B})], ['Baseline', x => el('rect', {x, y:ky - 6, width:24, height:12, fill:'none', stroke:B, 'stroke-dasharray':'1 2'})], ['Pending', x => el('rect', {x, y:ky - 4, width:24, height:8, fill:'url(#d25)', stroke:B})], ['Gate', x => el('path', {d:`M${x + 12},${ky - 7} l7,7 l-7,7 l-7,-7 z`, fill:B})], ['Holiday', x => el('rect', {x, y:ky - 7, width:24, height:14, fill:'url(#d12)', stroke:B})], ['Launch window', x => el('rect', {x, y:ky - 7, width:24, height:14, fill:'url(#diag)', stroke:B})], ['Late', x => { el('rect', {x, y:ky - 7, width:24, height:14, fill:B}); }]];
+  keys.forEach(([l, d], i) => { const x = 48 + i * 140; d(x); tx(x + 32, ky + 5, l, {'font-family':F, 'font-size':18.5, fill:B}); });
+
+  // alert boxes
+  const AX = 1282, AW = W - 20 - AX;
+  let last = 44;
+  NOTES.forEach((n, i) => {
+    const A = anchor[n.id], head = wrap(n.head, 22), body = wrap(n.text, 26);
+    const h = 72 + head.length * 18 + body.length * 17;
+    const y = Math.max(A.y - h / 2, last + 18); last = y + h;
+    el('rect', {x:AX + 3, y:y + 3, width:AW, height:h, fill:B});
+    el('rect', {x:AX, y, width:AW, height:h, fill:Wt, stroke:B, 'stroke-width':3});
+    el('rect', {x:AX + 5, y:y + 5, width:AW - 10, height:h - 10, fill:'none', stroke:B, 'stroke-width':1});
+    el('path', {d:`M${AX + 34},${y + 16} l18,32 h-36 z`, fill:Wt, stroke:B, 'stroke-width':2.5, 'stroke-linejoin':'round'});
+    tx(AX + 34, y + 44, '!', {'text-anchor':'middle', 'font-family':F, 'font-weight':400, 'font-size':24.5, fill:B});
+    head.forEach((l, k) => tx(AX + 64, y + 30 + k * 18, l, {'font-family':F, 'font-weight':400, 'font-size':19.5, fill:B}));
+    body.forEach((l, k) => tx(AX + 64, y + 32 + head.length * 18 + k * 17, l, {'font-family':F, 'font-size':18.0, fill:B}));
+    const by = y + h - 32;
+    el('rect', {x:AX + AW - 82, y:by, width:64, height:22, rx:10, fill:Wt, stroke:B, 'stroke-width':i === 0 ? 3 : 1.5});
+    tx(AX + AW - 50, by + 16, 'OK', {'text-anchor':'middle', 'font-family':F, 'font-weight':400, 'font-size':18.5, fill:B});
+    el('path', {d:`M${AX - 2},${y + h / 2} H${x1 + 6} V${A.y} H${A.x + 6}`, fill:'none', stroke:B, 'stroke-width':1, 'stroke-dasharray':'1 1'});
+    el('rect', {x:A.x + 3, y:A.y - 3, width:6, height:6, fill:B});
+  });
+  el('rect', {x:W - 300, y:H - 26, width:284, height:18, fill:Wt}); tx(W - 22, H - 12, 'Direction study · not renderer output', {'text-anchor':'end', 'font-family':F, 'font-size':16.5, fill:B});
+})();
+</script>

@@ -1,0 +1,231 @@
+<title>Pastel Symmetry Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Jost:wght@400;500;600&display=swap">
+<style>
+:root{color-scheme:light;--pink:#F2C4CE;--cream:#FFF6EC;--burgundy:#7A2A3A;--lavender:#B9A7D6;--powder:#8FB8DE;--mustard:#D9A441;--ink:#3B2530;--muted:#7D6470;--sans:"Jost","Futura","Century Gothic",sans-serif;--serif:"Cormorant Garamond",Georgia,serif}
+html,body{background:var(--pink)}
+body{color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;margin:0;padding-block:44px 60px;padding-inline:20px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:40px;text-align:center}
+.eyebrow{font-weight:500;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--burgundy)}
+h1{font-weight:500;font-size:clamp(28px,4.4vw,50px);letter-spacing:.14em;text-transform:uppercase;margin:12px 0 0;line-height:1.15}
+.it{font-family:var(--serif);font-style:italic;font-size:24px;color:var(--burgundy)}
+.lede{max-width:60ch;margin:14px auto 0}
+.stage-scroll{overflow-x:auto;border:6px double var(--burgundy)}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:.08em}
+h2{font-weight:500;font-size:22px;letter-spacing:.22em;text-transform:uppercase;margin:0 0 6px}
+.map-wrap{overflow-x:auto;background:var(--cream);border:3px double var(--burgundy);text-align:left}
+.map{width:100%;border-collapse:collapse;font-size:16px}
+.map th{font-weight:600;font-size:12px;letter-spacing:.2em;text-transform:uppercase;padding:10px 12px;border-bottom:1px solid var(--burgundy);color:var(--burgundy)}
+.map td{padding:10px 12px;border-bottom:1px solid rgba(122,42,58,.18);vertical-align:top}
+.map td:first-child{font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.gap{color:var(--burgundy);font-style:italic;font-family:var(--serif);font-size:18px}
+.swatches{display:flex;flex-wrap:wrap;justify-content:center;gap:18px}
+.sw{display:grid;gap:4px;width:130px}.sw i{display:block;height:54px;border:3px double var(--burgundy);border-radius:50% 50% 4px 4px}.sw b{font-weight:500;font-size:13px;letter-spacing:.16em;text-transform:uppercase}.sw span{font-size:12px;color:var(--muted)}
+</style>
+<main>
+  <header>
+    <div class="eyebrow">Preset direction study · chrona · target B data</div>
+    <h1>The HALCYON-1 Programme</h1>
+    <div class="it">a plan in six parts</div>
+    <p class="lede">The programme board as a hotel lobby in pastel: everything mirrored about the centre line, a cartouche for the title, each group announced as a chapter, notes delivered on perforated cards, and a palette of confectionery pink, lavender and powder blue held together by one burgundy.</p>
+  </header>
+  <section class="stage">
+    <div class="stage-scroll"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board in a symmetrical pastel style: a centred cartouche title, chapter headers for six groups, powder-blue plan bars, burgundy actual lines, mustard gates, and three perforated note cards"></svg></div>
+    <p class="caption">Hand-drawn direction mock, not chrona output · 1600 × 900</p>
+  </section>
+  <section>
+    <h2>Part by part</h2>
+    <div class="map-wrap"><table class="map"><thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead><tbody>
+      <tr><td>Symmetry</td><td>Table and rail of equal width either side of a centred plot; titles, chapters and legend centred on the slide's axis</td><td class="gap">slots sized independently; no mirror constraint</td></tr>
+      <tr><td>Cartouche</td><td>Title set centred inside an ornamental frame, with an italic line above and a dated line below</td><td class="gap">no framed title; no multi-line title block</td></tr>
+      <tr><td>Chapters</td><td>Group header centred across the full width: <code>PART ONE · THE SPACECRAFT BUS</code>, with rules either side</td><td class="gap">composed header text; centred band text</td></tr>
+      <tr><td>Right-aligned table</td><td>Work package names aligned against the plot, deltas beside them, no phase column</td><td>column alignment exists</td></tr>
+      <tr><td>Perforated cards</td><td>Notes on cards with a stamp edge and a small-caps heading</td><td class="gap">#465 (image behind a note)</td></tr>
+      <tr><td>Frame</td><td>Double burgundy frame with corner ornaments around the whole slide</td><td class="gap">no frame treatment</td></tr>
+    </tbody></table></div>
+  </section>
+  <section>
+    <h2>The palette</h2>
+    <div class="swatches">
+      <div class="sw"><i style="background:#F2C4CE"></i><b>Pink</b><span>#F2C4CE · ground</span></div>
+      <div class="sw"><i style="background:#FFF6EC"></i><b>Cream</b><span>#FFF6EC · board</span></div>
+      <div class="sw"><i style="background:#8FB8DE"></i><b>Powder</b><span>#8FB8DE · plan</span></div>
+      <div class="sw"><i style="background:#7A2A3A"></i><b>Burgundy</b><span>#7A2A3A · actual, frame</span></div>
+      <div class="sw"><i style="background:#B9A7D6"></i><b>Lavender</b><span>#B9A7D6 · baseline</span></div>
+      <div class="sw"><i style="background:#D9A441"></i><b>Mustard</b><span>#D9A441 · gates</span></div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('stage');
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20', LAUNCH0 = '2027-10-22', LAUNCH1 = '2027-11-05';
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const sectors = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const prints_unused = [
+    {id:'payload-tvac', kind:'risk', tag:'ANALYSIS // ALERT', head:'PAYLOAD TVAC +7D', text:'Margin to integration: zero.'},
+    {id:'station', kind:'note', tag:'ANALYSIS // NOTE', head:'GROUND STATION EARLY', text:'Link test can move up.'},
+    {id:'launch', kind:'note', tag:'OFF-WORLD // NOTE', head:'WINDOW 22 OCT – 05 NOV', text:'Miss it and the launch slips to Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const scale = (x0, x1) => { const w = x1 - x0; const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * w; const dayW = w / totalDays; return {X, Xe: d => X(d) + dayW, dayW, w}; };
+  const buildRows = (rowTop, rowH, headH) => { const rows = []; let y = rowTop; sectors.forEach((a, i) => { rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } }); return {rows, bottom:y}; };
+  const eachDay = f => { for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) f(d.toISOString().slice(0, 10), d.getUTCDay()); };
+  const MONTHS = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const QUARTERS = [['2027-03-01','2027-04-01',1],['2027-04-01','2027-07-01',2],['2027-07-01','2027-10-01',3],['2027-10-01','2027-12-01',4]];
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  const depPath = (A, B, rowH) => (B.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${B.xl - 6} V${B.y} H${B.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${B.y - (B.y > A.y ? rowH/2 : -rowH/2)} H${B.xl - 6} V${B.y} H${B.xl - 1}`;
+  const drawDeps = (anchor, g, rowH, attrs) => { for (const [a, b] of deps) { const A = anchor[a], B = anchor[b]; if (A && B) el('path', Object.assign({d:depPath(A, B, rowH)}, attrs), g); } };
+  const marker = (defs, id, fill, size) => { const m = el('marker', {id, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:size || 7, markerHeight:size || 7, orient:'auto'}, defs); el('path', {d:'M0,0 L10,5 L0,10 z', fill}, m); };
+  const NOTES = [
+    {id:'payload-tvac', kind:'risk', head:'Payload TVAC ten days late', text:'Margin to integration is now zero.'},
+    {id:'station', kind:'note', head:'Ground station early', text:'The link test can move up a week.'},
+    {id:'launch', kind:'note', head:'Window 22 Oct – 5 Nov', text:'Miss it and launch slips to Q1.'},
+  ];
+  const C = {pink:'#F2C4CE', cream:'#FFF6EC', burgundy:'#7A2A3A', lavender:'#B9A7D6', powder:'#8FB8DE', powderD:'#5E8DBA', mustard:'#D9A441', mint:'#CFE8DC', ink:'#3B2530', muted:'#7D6470'};
+  const F = {sans:'Jost, Futura, "Century Gothic", sans-serif', serif:'"Cormorant Garamond", Georgia, serif'};
+  const CX = W / 2;
+  const x0 = 380, x1 = 1220, rail0 = 1240;
+  const {X, Xe, dayW} = scale(x0, x1);
+  const axisTop = 196, rowTop = 240, rowH = 17, headH = 24;
+  const defs = el('defs', {});
+  const hatch = el('pattern', {id:'hatch', width:'5', height:'5', patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)'}, defs);
+  el('rect', {width:'5', height:'5', fill:C.cream}, hatch); el('line', {x1:0, y1:0, x2:0, y2:5, stroke:C.powderD, 'stroke-width':1.6}, hatch);
+  marker(defs, 'arrow', C.lavender, 6);
+
+  el('rect', {x:0, y:0, width:W, height:H, fill:C.pink});
+  el('rect', {x:24, y:20, width:W - 48, height:H - 40, fill:C.cream});
+  el('rect', {x:24, y:20, width:W - 48, height:H - 40, fill:'none', stroke:C.burgundy, 'stroke-width':3});
+  el('rect', {x:32, y:28, width:W - 64, height:H - 56, fill:'none', stroke:C.burgundy, 'stroke-width':1});
+  for (const [cx, cy] of [[32, 28], [W - 32, 28], [32, H - 28], [W - 32, H - 28]]) { el('circle', {cx, cy, r:12, fill:C.pink, stroke:C.burgundy, 'stroke-width':1.5}); el('circle', {cx, cy, r:4, fill:C.burgundy}); }
+
+  // cartouche
+  const cw = 600, ch = 118, cy0 = 44;
+  el('path', {d:`M${CX - cw/2 + 24},${cy0} H${CX + cw/2 - 24} Q${CX + cw/2},${cy0} ${CX + cw/2},${cy0 + 24} V${cy0 + ch - 24} Q${CX + cw/2},${cy0 + ch} ${CX + cw/2 - 24},${cy0 + ch} H${CX - cw/2 + 24} Q${CX - cw/2},${cy0 + ch} ${CX - cw/2},${cy0 + ch - 24} V${cy0 + 24} Q${CX - cw/2},${cy0} ${CX - cw/2 + 24},${cy0} Z`, fill:C.pink, stroke:C.burgundy, 'stroke-width':2.5});
+  el('rect', {x:CX - cw/2 + 10, y:cy0 + 10, width:cw - 20, height:ch - 20, rx:14, fill:'none', stroke:C.burgundy, 'stroke-width':.8});
+  tx(CX, cy0 + 36, 'a plan in six parts', {'text-anchor':'middle', 'font-family':F.serif, 'font-style':'italic', 'font-weight':600, 'font-size':21, fill:C.burgundy});
+  tx(CX, cy0 + 74, 'THE HALCYON-1 PROGRAMME', {'text-anchor':'middle', 'font-family':F.sans, 'font-weight':500, 'font-size':26, fill:C.ink, 'letter-spacing':'.16em'});
+  tx(CX, cy0 + 100, 'AS OF THE TWENTIETH OF AUGUST, 2027', {'text-anchor':'middle', 'font-family':F.sans, 'font-size':12.5, fill:C.muted, 'letter-spacing':'.28em'});
+  // symmetric side captions
+  tx(CX - cw/2 - 40, cy0 + 66, 'SLIDE NO. 2', {'text-anchor':'end', 'font-family':F.sans, 'font-weight':500, 'font-size':13, fill:C.burgundy, 'letter-spacing':'.3em'});
+  tx(CX + cw/2 + 40, cy0 + 66, '26 WORK PACKAGES', {'font-family':F.sans, 'font-weight':500, 'font-size':13, fill:C.burgundy, 'letter-spacing':'.3em'});
+
+  const {rows, bottom} = buildRows(rowTop, rowH, headH);
+  const plotTop = rowTop - 2, plotBot = bottom + 2;
+  eachDay((iso, w) => { if (w === 0 || w === 6) el('rect', {x:X(iso), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.lavender, opacity:.1}); });
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.mustard, opacity:.28});
+  const lw0 = X(LAUNCH0), lw1 = Xe(LAUNCH1);
+  el('rect', {x:lw0, y:plotTop, width:lw1 - lw0, height:plotBot - plotTop, fill:C.mint, opacity:.8});
+
+  // axis, centred labels
+  for (const [a, b, q] of QUARTERS) { tx((X(a) + X(b)) / 2, axisTop - 8, (q > 1 ? 'QUARTER ' : '') + ['','I','II','III','IV'][q], {'text-anchor':'middle', 'font-family':F.sans, 'font-size':10.5, fill:C.muted, 'letter-spacing':'.22em'}); el('line', {x1:X(a), x2:X(a), y1:axisTop - 20, y2:axisTop + 22, stroke:C.burgundy, 'stroke-width':1}); }
+  el('line', {x1:x1, x2:x1, y1:axisTop - 20, y2:axisTop + 22, stroke:C.burgundy, 'stroke-width':1});
+  const mn = ['MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV'];
+  MONTHS.forEach((m, i) => { el('line', {x1:X(m), x2:X(m), y1:axisTop + 22, y2:plotBot, stroke:C.burgundy, 'stroke-width':.6, opacity:.2}); if (i < 9) tx((X(m) + X(MONTHS[i + 1])) / 2, axisTop + 16, mn[i], {'text-anchor':'middle', 'font-family':F.sans, 'font-weight':500, 'font-size':14, fill:C.ink, 'letter-spacing':'.2em'}); });
+  el('line', {x1:60, x2:W - 60, y1:axisTop + 26, y2:axisTop + 26, stroke:C.burgundy, 'stroke-width':1.5});
+
+  const words = ['ONE','TWO','THREE','FOUR','FIVE','SIX'];
+  for (const r of rows) {
+    if (r.kind === 'head') {
+      const s = 'PART ' + words[r.i] + ' · THE ' + r.a.title.toUpperCase(), w = s.length * 8.4 + 30;
+      el('line', {x1:60, x2:CX - w/2, y1:r.y + 13, y2:r.y + 13, stroke:C.burgundy, 'stroke-width':.8});
+      el('line', {x1:CX + w/2, x2:W - 60, y1:r.y + 13, y2:r.y + 13, stroke:C.burgundy, 'stroke-width':.8});
+      el('rect', {x:CX - w/2, y:r.y + 3, width:w, height:20, fill:C.cream});
+      tx(CX, r.y + 18, s, {'text-anchor':'middle', 'font-family':F.sans, 'font-weight':600, 'font-size':12.5, fill:C.burgundy, 'letter-spacing':'.2em'});
+    } else {
+      const it = r.it;
+      tx(x0 - 58, r.y + 13, it.t, {'text-anchor':'end', 'font-family':F.sans, 'font-size':13, fill:C.ink});
+      if (it.ae && it.e) { const d = D(it.e, it.ae); tx(x0 - 12, r.y + 13, (d > 0 ? '+' : '') + d, {'text-anchor':'end', 'font-family':F.sans, 'font-weight':500, 'font-size':13, fill:d > 0 ? C.burgundy : C.muted}); }
+      else if (it.missing) tx(x0 - 12, r.y + 13, '—', {'text-anchor':'end', 'font-family':F.sans, 'font-size':13, fill:C.muted});
+    }
+  }
+  tx((lw0 + lw1) / 2, plotBot - 8, 'LAUNCH', {'text-anchor':'middle', 'font-family':F.sans, 'font-weight':600, 'font-size':10, fill:C.burgundy, 'letter-spacing':'.18em'});
+
+  const anchor = {}; const marks = el('g', {});
+  for (const it of items) {
+    const cy = it.y + rowH/2;
+    if (it.at) { const x = X(it.at) + dayW/2; if (it.bat) el('circle', {cx:X(it.bat) + dayW/2, cy, r:5, fill:'none', stroke:C.lavender, 'stroke-width':1.4, 'stroke-dasharray':'2 1.6'}, marks); el('circle', {cx:x, cy, r:6.5, fill:C.mustard, stroke:C.burgundy, 'stroke-width':1.4}, marks); el('circle', {cx:x, cy, r:2, fill:C.burgundy}, marks); anchor[it.id] = {x:x + 7, y:cy, xl:x - 7}; continue; }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 6.5, width:Xe(it.be) - X(it.bs), height:13, rx:6.5, fill:'none', stroke:C.lavender, 'stroke-width':1.3, 'stroke-dasharray':'3 2'}, marks);
+    el('rect', {x:X(it.s), y:cy - 4.5, width:Xe(it.e) - X(it.s), height:9, rx:4.5, fill:it.missing ? 'url(#hatch)' : C.powder, stroke:it.missing ? C.powderD : 'none'}, marks);
+    if (it.as) el('rect', {x:X(it.as), y:cy + 5.5, width:Xe(it.ae) - X(it.as), height:2, rx:1, fill:C.burgundy}, marks);
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s)};
+  }
+  const dg = el('g', {fill:'none', stroke:C.lavender, 'stroke-width':1}); svg.insertBefore(dg, marks);
+  drawDeps(anchor, dg, rowH, {'marker-end':'url(#arrow)'});
+
+  const ax = X(ASOF) + dayW/2;
+  el('line', {x1:ax, x2:ax, y1:axisTop + 26, y2:plotBot, stroke:C.burgundy, 'stroke-width':1.3});
+  el('path', {d:`M${ax},${plotBot + 2} l7,7 l-7,7 l-7,-7 z`, fill:C.burgundy});
+  tx(ax + 12, plotBot + 13, 'TODAY', { 'font-family':F.sans, 'font-weight':600, 'font-size':10.5, fill:C.burgundy, 'letter-spacing':'.24em'});
+
+  // perforated cards
+  let last = rowTop - 10;
+  NOTES.forEach((n, i) => {
+    const A = anchor[n.id], head = wrap(n.head.toUpperCase(), 22), body = wrap(n.text, 30);
+    const cw2 = W - 60 - rail0, chh = 50 + head.length * 18 + body.length * 20;
+    const y = Math.max(A.y - chh / 2, last + 22); last = y + chh;
+    el('rect', {x:rail0, y, width:cw2, height:chh, fill:i === 0 ? C.pink : '#E6DDF2'});
+    for (let x = rail0; x <= rail0 + cw2; x += 10) { el('circle', {cx:x, cy:y, r:3.2, fill:C.cream}); el('circle', {cx:x, cy:y + chh, r:3.2, fill:C.cream}); }
+    for (let yy = y; yy <= y + chh; yy += 10) { el('circle', {cx:rail0, cy:yy, r:3.2, fill:C.cream}); el('circle', {cx:rail0 + cw2, cy:yy, r:3.2, fill:C.cream}); }
+    el('rect', {x:rail0 + 10, y:y + 10, width:cw2 - 20, height:chh - 20, fill:'none', stroke:C.burgundy, 'stroke-width':.8});
+    tx(rail0 + cw2 / 2, y + 30, i === 0 ? 'URGENT' : 'NOTICE', {'text-anchor':'middle', 'font-family':F.sans, 'font-weight':600, 'font-size':10.5, fill:C.burgundy, 'letter-spacing':'.34em'});
+    head.forEach((l, k) => tx(rail0 + cw2 / 2, y + 50 + k * 18, l, {'text-anchor':'middle', 'font-family':F.sans, 'font-weight':500, 'font-size':14, fill:C.ink, 'letter-spacing':'.1em'}));
+    body.forEach((l, k) => tx(rail0 + cw2 / 2, y + 52 + head.length * 18 + k * 20, l, {'text-anchor':'middle', 'font-family':F.serif, 'font-style':'italic', 'font-weight':600, 'font-size':17, fill:C.muted}));
+    el('path', {d:`M${rail0 - 4},${y + chh / 2} H${x1 + 8} V${A.y} H${A.x + 6}`, fill:'none', stroke:C.burgundy, 'stroke-width':.9});
+    el('circle', {cx:A.x + 6, cy:A.y, r:2.4, fill:C.burgundy});
+  });
+
+  // centred legend
+  const ly = H - 38;
+  const keys = [['PLAN', x => el('rect', {x, y:ly - 4.5, width:24, height:9, rx:4.5, fill:C.powder})], ['ACTUAL', x => el('rect', {x, y:ly - 1, width:24, height:2, fill:C.burgundy})], ['BASELINE', x => el('rect', {x, y:ly - 6.5, width:24, height:13, rx:6.5, fill:'none', stroke:C.lavender, 'stroke-dasharray':'3 2'})], ['PENDING', x => el('rect', {x, y:ly - 4.5, width:24, height:9, rx:4.5, fill:'url(#hatch)', stroke:C.powderD})], ['GATE', x => el('circle', {cx:x + 12, cy:ly, r:6.5, fill:C.mustard, stroke:C.burgundy})], ['HOLIDAY', x => el('rect', {x, y:ly - 7, width:24, height:14, fill:C.mustard, opacity:.35})], ['LAUNCH WINDOW', x => el('rect', {x, y:ly - 7, width:24, height:14, fill:C.mint})]];
+  const widths = keys.map(([l]) => 34 + l.length * 9 + 28), total = widths.reduce((a, b) => a + b, 0);
+  let lx = CX - total / 2;
+  keys.forEach(([l, d], i) => { d(lx); tx(lx + 34, ly + 4.5, l, {'font-family':F.sans, 'font-weight':500, 'font-size':11.5, fill:C.ink, 'letter-spacing':'.2em'}); lx += widths[i]; });
+  tx(W - 60, 56, 'DIRECTION STUDY · NOT RENDERER OUTPUT', {'text-anchor':'end', 'font-family':F.sans, 'font-size':9, fill:C.muted, 'letter-spacing':'.3em'});
+})();
+</script>

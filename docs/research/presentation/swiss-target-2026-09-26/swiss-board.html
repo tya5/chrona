@@ -1,0 +1,217 @@
+<title>Swiss Grid Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap">
+<style>
+:root{color-scheme:light;--white:#FFFFFF;--black:#111111;--grey:#6B6B6B;--red:#E3001B;--line:#D9D9D9;--sans:"Inter","Helvetica Neue",Helvetica,Arial,sans-serif}
+html,body{background:var(--white)}
+body{color:var(--black);font-family:var(--sans);font-size:17px;line-height:1.5;margin:0;padding-block:48px 64px;padding-inline:20px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:40px}
+.eyebrow{font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--red)}
+h1{font-weight:900;font-size:clamp(36px,6vw,76px);line-height:.98;letter-spacing:-.03em;margin:8px 0 0}
+.lede{max-width:60ch;margin:16px 0 0}
+.stage-scroll{overflow-x:auto;border-top:2px solid var(--black)}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{color:var(--grey);font-size:14px;margin-top:8px}
+h2{font-weight:900;font-size:28px;letter-spacing:-.02em;margin:0 0 6px}
+.sub{color:var(--grey);margin:0 0 16px;max-width:62ch}
+.map-wrap{overflow-x:auto}
+.map{width:100%;border-collapse:collapse;font-size:16px}
+.map th{font-weight:700;font-size:12px;text-align:left;padding:8px 10px 8px 0;border-bottom:2px solid var(--black)}
+.map td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.map td:first-child{font-weight:700;white-space:nowrap}
+.gap{color:var(--red)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px}
+.sw{display:grid;gap:4px}.sw i{display:block;height:56px;border:1px solid var(--line)}.sw b{font-size:14px}.sw span{font-size:13px;color:var(--grey)}
+</style>
+<main>
+  <header>
+    <div class="eyebrow">Preset direction study · chrona · target B data</div>
+    <h1>Programme board.<br>Grid, type, one red.</h1>
+    <p class="lede">HALCYON-1's programme board in the International Typographic Style: a strict column grid, one sans-serif family, black on white, and a single red for what is late and for today. No ornament; hierarchy comes only from size, weight and position. Notes are numbered at the mark and set in a numbered column. The most directly usable of the targets.</p>
+  </header>
+  <section class="stage">
+    <div class="stage-scroll"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board in Swiss grid style: 26 work packages in six numbered groups, black plan bars, red actual lines, circle gates, a red today line and three numbered notes"></svg></div>
+    <p class="caption">Hand-drawn direction mock, not chrona output · 1600 × 900</p>
+  </section>
+  <section>
+    <h2>Element by element</h2>
+    <p class="sub">Most of this target is reachable today. What it asks for is discipline: everything on one grid.</p>
+    <div class="map-wrap"><table class="map"><thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead><tbody>
+      <tr><td>Column grid</td><td>Table columns, plot edges, rail and title block all start on a declared 12-column grid</td><td class="gap">slots are sized independently; no shared grid</td></tr>
+      <tr><td>Type only</td><td>Hierarchy by size and weight alone: 900 title, 700 group, 400 rows, bold two-digit months</td><td>expressible (#410)</td></tr>
+      <tr><td>Rules, not bands</td><td>Groups separated by a 2 px black rule, no fills</td><td>expressible</td></tr>
+      <tr><td>One red</td><td>Red reserved for slips, actuals and today</td><td>expressible; contrast policy #459</td></tr>
+      <tr><td>Numbered notes</td><td>Red number at the mark, the same number in the notes column</td><td>numbered marker exists; column alignment (#453)</td></tr>
+      <tr><td>Circle gates</td><td>Gate as a filled circle, baseline as outline</td><td>expressible (circle symbol)</td></tr>
+    </tbody></table></div>
+  </section>
+  <section>
+    <h2>Colour</h2>
+    <div class="swatches">
+      <div class="sw"><i style="background:#FFFFFF"></i><b>White</b><span>#FFFFFF · ground</span></div>
+      <div class="sw"><i style="background:#111111"></i><b>Black</b><span>#111111 · type, plan</span></div>
+      <div class="sw"><i style="background:#6B6B6B"></i><b>Grey</b><span>#6B6B6B · secondary, 5.3:1</span></div>
+      <div class="sw"><i style="background:#E3001B"></i><b>Red</b><span>#E3001B · late, actual, today</span></div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('stage');
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20', LAUNCH0 = '2027-10-22', LAUNCH1 = '2027-11-05';
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const sectors = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const prints_unused = [
+    {id:'payload-tvac', kind:'risk', tag:'ANALYSIS // ALERT', head:'PAYLOAD TVAC +7D', text:'Margin to integration: zero.'},
+    {id:'station', kind:'note', tag:'ANALYSIS // NOTE', head:'GROUND STATION EARLY', text:'Link test can move up.'},
+    {id:'launch', kind:'note', tag:'OFF-WORLD // NOTE', head:'WINDOW 22 OCT – 05 NOV', text:'Miss it and the launch slips to Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const scale = (x0, x1) => { const w = x1 - x0; const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * w; const dayW = w / totalDays; return {X, Xe: d => X(d) + dayW, dayW, w}; };
+  const buildRows = (rowTop, rowH, headH) => { const rows = []; let y = rowTop; sectors.forEach((a, i) => { rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } }); return {rows, bottom:y}; };
+  const eachDay = f => { for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) f(d.toISOString().slice(0, 10), d.getUTCDay()); };
+  const MONTHS = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const QUARTERS = [['2027-03-01','2027-04-01',1],['2027-04-01','2027-07-01',2],['2027-07-01','2027-10-01',3],['2027-10-01','2027-12-01',4]];
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  const depPath = (A, B, rowH) => (B.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${B.xl - 6} V${B.y} H${B.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${B.y - (B.y > A.y ? rowH/2 : -rowH/2)} H${B.xl - 6} V${B.y} H${B.xl - 1}`;
+  const drawDeps = (anchor, g, rowH, attrs) => { for (const [a, b] of deps) { const A = anchor[a], B = anchor[b]; if (A && B) el('path', Object.assign({d:depPath(A, B, rowH)}, attrs), g); } };
+  const marker = (defs, id, fill, size) => { const m = el('marker', {id, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:size || 7, markerHeight:size || 7, orient:'auto'}, defs); el('path', {d:'M0,0 L10,5 L0,10 z', fill}, m); };
+  const NOTES = [
+    {id:'payload-tvac', kind:'risk', head:'Payload TVAC ten days late', text:'Margin to integration is now zero.'},
+    {id:'station', kind:'note', head:'Ground station early', text:'The link test can move up a week.'},
+    {id:'launch', kind:'note', head:'Window 22 Oct – 5 Nov', text:'Miss it and launch slips to Q1.'},
+  ];
+  const C = {white:'#FFFFFF', black:'#111111', grey:'#6B6B6B', light:'#BDBDBD', rule:'#D9D9D9', red:'#E3001B'};
+  const F = 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif';
+  // 12-column grid: margin 60, gutter 20
+  const GM = 60, GG = 20, GC = (W - 2 * GM - 11 * GG) / 12;
+  const col = i => GM + i * (GC + GG);
+  const x0 = col(3), x1 = col(10) - GG, rail0 = col(10);
+  const {X, Xe, dayW} = scale(x0, x1);
+  const axisTop = 184, rowTop = 232, rowH = 17, headH = 22;
+  const defs = el('defs', {});
+  marker(defs, 'arrow', C.light, 6);
+  const hatch = el('pattern', {id:'hatch', width:'4', height:'4', patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)'}, defs);
+  el('rect', {width:'4', height:'4', fill:C.white}, hatch); el('line', {x1:0, y1:0, x2:0, y2:4, stroke:C.black, 'stroke-width':1.3}, hatch);
+
+  el('rect', {x:0, y:0, width:W, height:H, fill:C.white});
+  // title block on the grid
+  tx(col(0) - 4, 112, 'HALCYON-1', {'font-family':F, 'font-weight':900, 'font-size':92, fill:C.black, 'letter-spacing':'-.035em'});
+  el('rect', {x:col(11), y:30, width:GC, height:GC, fill:C.red});
+  tx(col(11) + GC - 8, 30 + GC - 12, '02', {'text-anchor':'end', 'font-family':F, 'font-weight':900, 'font-size':44, fill:C.white, 'letter-spacing':'-.03em'});
+  const info = [[5, 'Programme board', 'Slide 2 of 11'], [7, 'As of', '20.08.2027'], [9, 'Scope', '26 packages, 6 groups']];
+  for (const [c, k, v] of info) { tx(col(c), 58, k, {'font-family':F, 'font-weight':700, 'font-size':13, fill:C.black}); tx(col(c), 78, v, {'font-family':F, 'font-size':13, fill:C.grey}); }
+  el('line', {x1:GM, x2:W - GM, y1:140, y2:140, stroke:C.black, 'stroke-width':2});
+
+  const {rows, bottom} = buildRows(rowTop, rowH, headH);
+  const plotTop = rowTop - 2, plotBot = bottom + 2;
+  eachDay((iso, w) => { if (w === 0 || w === 6) el('rect', {x:X(iso), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.black, opacity:.025}); });
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.black, opacity:.09});
+  const lw0 = X(LAUNCH0), lw1 = Xe(LAUNCH1);
+  el('rect', {x:lw0, y:plotTop, width:lw1 - lw0, height:plotBot - plotTop, fill:C.black, opacity:.06});
+
+  // axis: small quarters, big two-digit months
+  for (const [a, b, q] of QUARTERS) { tx(X(a) + 2, axisTop - 26, 'Q' + q + (q > 1 ? ' 2027' : ''), {'font-family':F, 'font-weight':500, 'font-size':13, fill:C.grey}); el('line', {x1:X(a), x2:X(a), y1:axisTop - 40, y2:axisTop - 20, stroke:C.black, 'stroke-width':1}); }
+  MONTHS.forEach((m, i) => { el('line', {x1:X(m), x2:X(m), y1:axisTop - 14, y2:plotBot, stroke:C.rule, 'stroke-width':1}); if (i < 9) tx(X(m) + 3, axisTop + 18, String(i + 3).padStart(2, '0'), {'font-family':F, 'font-weight':700, 'font-size':30, fill:C.black, 'letter-spacing':'-.02em'}); });
+  tx(col(0), axisTop + 18, 'Work package', {'font-family':F, 'font-weight':700, 'font-size':13, fill:C.black});
+  tx(col(2) - 30, axisTop + 18, 'Phase', {'font-family':F, 'font-weight':700, 'font-size':13, fill:C.black});
+  tx(x0 - 14, axisTop + 18, 'Δ', {'text-anchor':'end', 'font-family':F, 'font-weight':700, 'font-size':13, fill:C.black});
+  tx(rail0, axisTop + 18, 'Notes', {'font-family':F, 'font-weight':700, 'font-size':13, fill:C.black});
+
+  for (const r of rows) {
+    if (r.kind === 'head') {
+      el('line', {x1:GM, x2:x1, y1:r.y + 2, y2:r.y + 2, stroke:C.black, 'stroke-width':2});
+      tx(col(0), r.y + 17, String(r.i + 1), {'font-family':F, 'font-weight':900, 'font-size':14, fill:C.red});
+      tx(col(0) + 22, r.y + 17, r.a.title, {'font-family':F, 'font-weight':700, 'font-size':14, fill:C.black});
+    } else {
+      const it = r.it;
+      tx(col(0) + 22, r.y + 13.5, it.t, {'font-family':F, 'font-size':12.5, fill:C.black});
+      tx(col(2) - 30, r.y + 13.5, it.ph, {'font-family':F, 'font-size':12, fill:C.grey});
+      if (it.ae && it.e) { const d = D(it.e, it.ae); tx(x0 - 14, r.y + 13.5, (d > 0 ? '+' : '') + d, {'text-anchor':'end', 'font-family':F, 'font-weight':d > 0 ? 700 : 400, 'font-size':12.5, fill:d > 0 ? C.red : C.grey, 'font-variant-numeric':'tabular-nums'}); }
+      else if (it.missing) tx(x0 - 14, r.y + 13.5, '–', {'text-anchor':'end', 'font-family':F, 'font-size':12.5, fill:C.grey});
+    }
+  }
+  tx(lw0 + 3, rows[0].y + 17, 'Launch window', {'font-family':F, 'font-weight':500, 'font-size':12, fill:C.black});
+
+  const anchor = {}; const marks = el('g', {});
+  for (const it of items) {
+    const cy = it.y + rowH/2;
+    if (it.at) { const x = X(it.at) + dayW/2; if (it.bat) el('circle', {cx:X(it.bat) + dayW/2, cy, r:4.5, fill:'none', stroke:C.light, 'stroke-width':1.2}, marks); el('circle', {cx:x, cy, r:5, fill:C.black}, marks); anchor[it.id] = {x:x + 6, y:cy, xl:x - 6, top:cy - 5}; continue; }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 6, width:Xe(it.be) - X(it.bs), height:12, fill:'none', stroke:C.light, 'stroke-width':1}, marks);
+    el('rect', {x:X(it.s), y:cy - 4, width:Xe(it.e) - X(it.s), height:7, fill:it.missing ? 'url(#hatch)' : C.black, stroke:it.missing ? C.black : 'none', 'stroke-width':1}, marks);
+    if (it.as) el('rect', {x:X(it.as), y:cy + 4.5, width:Xe(it.ae) - X(it.as), height:2, fill:C.red}, marks);
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s), top:cy - 4};
+  }
+  const dg = el('g', {fill:'none', stroke:C.light, 'stroke-width':1}); svg.insertBefore(dg, marks);
+  drawDeps(anchor, dg, rowH, {'marker-end':'url(#arrow)'});
+
+  const ax = X(ASOF) + dayW/2;
+  el('line', {x1:ax, x2:ax, y1:axisTop - 14, y2:plotBot, stroke:C.red, 'stroke-width':1.5});
+  tx(ax + 4, axisTop - 4, '20.08', {'font-family':F, 'font-weight':700, 'font-size':12, fill:C.red});
+
+  // numbered notes: number at the mark, same number in the notes column, aligned to the anchor row
+  let last = rowTop - 30;
+  NOTES.forEach((n, i) => {
+    const A = anchor[n.id];
+    el('circle', {cx:A.x + 12, cy:A.y - 9, r:8, fill:C.red});
+    tx(A.x + 12, A.y - 5, String(i + 1), {'text-anchor':'middle', 'font-family':F, 'font-weight':700, 'font-size':11, fill:C.white});
+    const head = wrap(n.head, 22), body = wrap(n.text, 27);
+    const y = Math.max(A.y - 12, last + 18);
+    tx(rail0, y + 22, String(i + 1), {'font-family':F, 'font-weight':900, 'font-size':30, fill:C.red});
+    head.forEach((l, k) => tx(rail0 + 30, y + 8 + k * 17, l, {'font-family':F, 'font-weight':700, 'font-size':14, fill:C.black}));
+    body.forEach((l, k) => tx(rail0 + 30, y + 12 + head.length * 17 + k * 16, l, {'font-family':F, 'font-size':12.5, fill:C.grey}));
+    last = y + 12 + head.length * 17 + body.length * 16;
+  });
+
+  // legend on the grid
+  const ly = H - 34;
+  el('line', {x1:GM, x2:W - GM, y1:ly - 22, y2:ly - 22, stroke:C.black, 'stroke-width':2});
+  const keys = [['Plan', x => el('rect', {x, y:ly - 4, width:24, height:7, fill:C.black})], ['Actual', x => el('rect', {x, y:ly - 1, width:24, height:2, fill:C.red})], ['Baseline', x => el('rect', {x, y:ly - 6, width:24, height:12, fill:'none', stroke:C.light})], ['Not yet observed', x => el('rect', {x, y:ly - 4, width:24, height:7, fill:'url(#hatch)', stroke:C.black})], ['Gate', x => el('circle', {cx:x + 12, cy:ly, r:5, fill:C.black})], ['Holiday', x => el('rect', {x, y:ly - 7, width:24, height:14, fill:C.black, opacity:.09})], ['Today', x => el('line', {x1:x + 12, x2:x + 12, y1:ly - 8, y2:ly + 8, stroke:C.red, 'stroke-width':1.5})]];
+  keys.forEach(([l, d], i) => { const x = col(i * 1.5 + 0); d(x); tx(x + 32, ly + 4.5, l, {'font-family':F, 'font-size':12.5, fill:C.black}); });
+  tx(W - GM, ly + 4.5, 'Direction study · not renderer output', {'text-anchor':'end', 'font-family':F, 'font-size':11, fill:C.grey});
+})();
+</script>
