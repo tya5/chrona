@@ -31,7 +31,7 @@ entries:
   - id: elevated-light
     gallerySet: controller-z-treatment-ladder
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: elevated-light, kind: theme, sourceRoot: examples/controller-z, sourcePath: themes/elevated-light.yaml}
+      view: {id: chrona-preset-elevated-light, kind: view, sourceRoot: presets/bundles/elevated-light, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-elevated-light, kind: theme, sourceRoot: presets/bundles/elevated-light, sourcePath: theme.yaml}
       colorScheme: {id: executive-light, kind: color-scheme, sourceRoot: examples/controller-z, sourcePath: schemes/executive-light.yaml}
-      layout: {id: executive-review, kind: layout-profile, sourceRoot: examples/controller-z, sourcePath: layouts/executive-review.yaml}
+      layout: {id: chrona-builtin-elevated-light, kind: layout-profile, sourceRoot: presets/bundles/elevated-light, sourcePath: layout.yaml}
