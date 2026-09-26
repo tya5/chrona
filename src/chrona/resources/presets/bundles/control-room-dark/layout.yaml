@@ -1,0 +1,75 @@
+version: chrona/layout-profile/v0.9
+id: chrona-builtin-control-room-dark
+flowDirection: horizontal
+dependencyNetworkFlowDirection: horizontal
+requiredThemeTokens: [spacing.l, spacing.m, spacing.none]
+reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: both, groupBand: table, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
+relationRouting: {maxBends: 4, maxDetourRatio: 2}
+root:
+  id: page
+  kind: column
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.m}
+  padding: {token: spacing.l}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: start, safety: safe}
+      priority: required
+      overflow: visible-overflow
+    - id: review
+      kind: row
+      inlineSize: fill
+      blockSize: fill
+      gap: {token: spacing.l}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: table
+          kind: slot
+          source: table
+          inlineSize: content
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: required
+          overflow: visible-overflow
+        - id: timeline-stack
+          kind: column
+          inlineSize: fill
+          blockSize: fill
+          gap: {token: spacing.none}
+          padding: {token: spacing.none}
+          alignItems: stretch
+          justifyContent: start
+          children:
+            - id: timeline-axis
+              kind: slot
+              source: timeline-axis
+              inlineSize: fill
+              blockSize: content
+              place: {inline: stretch, block: start, safety: strict}
+              priority: required
+              overflow: visible-overflow
+            - id: timeline
+              kind: slot
+              source: timeline
+              inlineSize: fill
+              blockSize: fill
+              place: {inline: stretch, block: stretch, safety: strict}
+              priority: required
+              overflow: visible-overflow
+    - id: notes
+      kind: slot
+      source: notes
+      inlineSize: fill
+      blockSize: content
+      place: {inline: start, block: end, safety: safe}
+      priority: preferred
+      overflow: ellipsize-with-source
