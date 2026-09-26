@@ -1,0 +1,5 @@
+# Architecture Review — Optional Note Index and Leader (#466)
+
+**Decision:** approve the [correction](../../design/issue-466-general-placement-note-index-leader-correction-2026-09-26.md). The View owns annotation intent and purpose; Layout independently decides optional index fit and completes the leader route; Scene projects whichever completed primitives Layout returns. A missing index must never alter annotation identity or connector obligation. This is consistent with [Specification 33](../../specification/33-intent-oriented-layout.md), the [shared obstacle model](../../design/issue-466-general-placement-design-2026-09-26.md), and the [anchor-port correction](../../design/issue-466-general-placement-anchor-port-correction-2026-09-26.md).
+
+Review the controller-z annotations SVG, not only Scene counts. Focused evidence must show an intentionally blocked index still yields its box, text and leader, while an accepted index remains an obstacle to later routes. Public materializer and CI gates remain required for O2.

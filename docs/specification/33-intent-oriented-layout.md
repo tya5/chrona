@@ -272,6 +272,11 @@ a finite side-relative displacement bounded by their measured footprint and
 ignores accepted route strokes, and leaves required and annotation placement
 unchanged. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
 
+An annotation's optional note-number index and required leader are separate
+Layout outputs. If the index cannot fit, Layout diagnoses and omits only the
+index; the accepted annotation box/text and purpose-required leader remain.
+See the [#466 index/leader correction](../design/issue-466-general-placement-note-index-leader-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
