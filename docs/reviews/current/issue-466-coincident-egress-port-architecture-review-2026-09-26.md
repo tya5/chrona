@@ -1,0 +1,3 @@
+# Architecture Review — Coincident Egress Port Alias (#466)
+
+Reviewed the [amendment](../../design/issue-466-coincident-egress-port-amendment-2026-09-26.md) against Specifications 08/33/44, the typed obstacle index, comparison-host endpoint design, and the O2 local-corridor rule. The exception is attached to an exact endpoint coordinate and a named connected-host cluster, preserving the single inventory and its explicit-exemption principle. It does not authorize route passage through marks, text, dependency strokes, or unrelated ports; it adds no Scene/adapter placement policy. **Decision:** design accepted for O2 implementation. The effect on all public materializers and the rendered controller-z leader still requires review before publication.

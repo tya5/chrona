@@ -269,6 +269,10 @@ not its entire host mark or row. `body` chooses the nearest outline point
 toward the selected annotation box with a deterministic side tie order.
 Visible direct-route fallback is a stroked segment obstacle even if diagonal;
 later placements must account for it. See the [#466 anchor-port correction](../design/issue-466-general-placement-anchor-port-correction-2026-09-26.md).
+An endpoint MAY additionally authorize registered, exactly coincident port IDs
+belonging to the same named connected comparison-host cluster. The authorized
+IDs are resolved before the route query and recorded; unrelated or non-endpoint
+ports remain obstacles. See the [coincident-egress amendment](../design/issue-466-coincident-egress-port-amendment-2026-09-26.md).
 
 A measured rule label may exempt only its own named rule stroke during its
 placement; the rule remains an obstacle for other labels and annotations.
