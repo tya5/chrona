@@ -41,7 +41,7 @@ def test_draft_closure_accepts_optional_review_inputs():
 
 def test_draft_closure_aggregates_every_schema_finding_in_the_known_resource_set(tmp_path):
     invalid_view = tmp_path / "view.yaml"
-    invalid_view.write_text("version: chrona/view/v0.23\nkind: view\nid: bad\nbody: {}\n", encoding="utf-8")
+    invalid_view.write_text("version: chrona/view/v0.24\nkind: view\nid: bad\nbody: {}\n", encoding="utf-8")
     with pytest.raises(PresentationIngressRejected) as error:
         resolve_draft_render(**(_paths(_root()) | {"view_path": invalid_view}))
     assert {item.pointer for item in error.value.diagnostics} >= {"/body"}

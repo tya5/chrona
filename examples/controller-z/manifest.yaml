@@ -47,3 +47,8 @@ slides:
     context: contexts/capabilities.yaml
     expectedSvg: generated/capabilities.svg
     expectedScene: generated/capabilities.scene.json
+  - id: axis-tiers
+    evidence: "Two-tier quarter/month date band, each in its own lane with a distinct fill and label typography (#426)."
+    context: contexts/axis-tiers.yaml
+    expectedSvg: generated/axis-tiers.svg
+    expectedScene: generated/axis-tiers.scene.json

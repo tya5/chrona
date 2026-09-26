@@ -1,72 +1,80 @@
 version: chrona/view/v0.24
 kind: view
-id: halcyon-07-replan-baseline
+id: controller-z-axis-tiers
 body:
   surface: table-timeline
-  rows:
-    mode: automatic
   selection:
     include:
-      ids:
-      - spacecraft-ait
-      - integration
-      - vibration
-      - tvac
-      - emc
-      - psr
-      - shipment
-      - campaign
       types:
       - span
       - point
   grouping:
-    by: hierarchy
-    depth: 1
-    rollup: bar
+    by: field
+    field: owner
     missing: ungrouped
+    order:
+    - fw-team
+    - validation-team
+    - factory-team
+    presentation: header
   ordering:
     by: plannedStart
     direction: ascending
     tieBreak: id
   window:
     mode: explicit
-    start: '2027-06-28'
-    end: '2027-11-15'
+    start: '2026-02-01'
+    end: '2026-07-01'
   comparison:
-    baseline: snapshot
-    actual: optional
+    baseline: primary
+    actual: required
     observationSelection: latest
     deltaUnit: calendar-days
     facets:
     - planned
     - actual
     - finishDelta
+    - atDelta
+    - progress
     - missingActual
     - unmatchedActual
+  progressFill:
+    source: actual
   visibility:
     labels:
       placement: plot
       content:
       - title
-      side: auto
+      side: inside
       overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
     relations:
       mode: semantic
       overflow: suppress
-    annotations:
-      mode: presentation
-      marker: numbered
+      content:
+      - lag
+      - endpointPair
+    annotations: none
   axis:
+    # Two band tiers (#426): each takes its own lane and its own fill, and
+    # each pairs with the labels tier that shares its typographyRole so the
+    # band is the visible ground directly under its own labels.
     tiers:
     - unit: quarter
       every: 1
       role: band
+      typographyRole: axisQuarter
     - unit: quarter
       every: 1
       role: grid-major
     - unit: quarter
       every: 1
       role: labels
+      typographyRole: axisQuarter
       label:
         form: year-quarter
         align: center
@@ -74,50 +82,30 @@ body:
         orientation: horizontal
     - unit: month
       every: 1
+      role: band
+      typographyRole: axisMonth
+    - unit: month
+      every: 1
       role: labels
+      typographyRole: axisMonth
       label:
         form: short-month
+        nameTable: en-US
         align: start
         overflow: thin-with-record
         orientation: horizontal
     - unit: month
       every: 1
       role: grid-minor
-    - unit: week
-      every: 1
-      role: grid-minor
-  markers:
-  - kind: asOf
-    source: actual
-    label: as of
-    date: {form: localized-date}
-  shading:
-    nonWorking: true
-    exceptions: true
   backgroundDecoration:
-    rows: none
+    rows: alternate
     groups: all
   tableColumns:
-  - id: Work package
+  - id: Workstream
     source: title
     missing: em-dash
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
-  - id: Baseline finish
-    source:
-      comparisonFacet: finishDelta
-    format: signedDays
-    missing: em-dash
-    align: end
-    width: content
-    headerOrientation: horizontal
-  - id: Δ
-    source:
-      facet: finishDelta
-    format: signedDays
-    missing: em-dash
-    align: end
-    width: content
-    headerOrientation: horizontal
-  hierarchyColumn: Work package
+  rows:
+    mode: automatic

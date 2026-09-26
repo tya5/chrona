@@ -1,4 +1,4 @@
-version: chrona/view/v0.23
+version: chrona/view/v0.24
 kind: view
 id: controller-z-annotations
 body:
