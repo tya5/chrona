@@ -176,7 +176,7 @@ allOf:
                     every: {type: integer, minimum: 1}
                     role: {enum: [band, labels, grid-major, grid-minor]}
                     label: {}
-                    typographyRole: {description: "Named Theme text-treatment role sizing this tier's lane; for a labels tier, also the role its label is painted with. Defaults to axis.", type: string, minLength: 1}
+                    typographyRole: {description: "Named Theme text-treatment role used to measure this tier and size its lane. Visual paint for a labels tier uses its ordinal axisLabel role, independently of this measurement role. Defaults to axis.", type: string, minLength: 1}
                   allOf:
                     - description: "Only a band or labels tier may bind a typography role for lane sizing."
                       examples: [{unit: quarter, every: 1, role: band, typographyRole: axisQuarter}]
