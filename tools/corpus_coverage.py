@@ -300,6 +300,10 @@ UNREFERENCED_REASONS: dict[str, str] = {
         "derived-Theme (v0.12 inheritance) example used by `docs/guides/first-project.md` and `tests/integration/test_render.py`",
     "examples/controller-z/profiles/summary.yaml":
         "Summary Profile input exercised by `tests/integration/test_render.py` and the contract-resource tests, not by a committed slide",
+    "examples/halcyon-1/views/default-draft.yaml":
+        "#383/#429 repointed the bundled default at the Editorial preset; this View is kept as the documented "
+        "default-draft source (`examples/reachability.yaml`) and is still rendered explicitly by "
+        "`tests/integration/test_readable_defaults.py`, not by a committed slide",
 }
 
 

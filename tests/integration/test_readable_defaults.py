@@ -173,13 +173,26 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
 
 
 def test_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:
-    """#483 item 2: stripes cross the whole plot; names are declared at the bar end, in the row."""
+    """#483 item 2: stripes cross the whole plot; names are declared at the bar end, in the row.
+
+    This is a property of the `default-draft` View file itself, not of
+    "whichever preset the wheel currently bundles as default" -- #383/#429
+    made Editorial the bundled default, and Editorial deliberately has no
+    row stripes (#425: "only the columns carry ground; the rows carry
+    none") and places labels in the table rather than the plot. Render
+    `default-draft` explicitly against its own original Theme/Layout/Color
+    Scheme so this test keeps proving what it always proved.
+    """
     view = yaml.safe_load((ROOT / "examples/halcyon-1/views/default-draft.yaml").read_text(encoding="utf-8"))["body"]
     labels = view["visibility"]["labels"]
     assert (labels["placement"], labels["side"]) == ("plot", "end")
     assert view["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
     assert view["backgroundDecoration"]["rows"] == "alternate"
-    scene = _render(tmp_path, monkeypatch, "default")
+    scene = _render(tmp_path, monkeypatch, "default-draft",
+                    "--view", str(ROOT / "examples/halcyon-1/views/default-draft.yaml"),
+                    "--theme", str(ROOT / "examples/halcyon-1/themes/briefing.yaml"),
+                    "--scheme", str(ROOT / "examples/halcyon-1/schemes/mission-light.yaml"),
+                    "--layout", str(ROOT / "examples/halcyon-1/layouts/briefing.yaml"))
     surface = scene["surfaces"][0]
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}

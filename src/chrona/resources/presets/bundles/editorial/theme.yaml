@@ -418,6 +418,7 @@ body:
       markCornerRadius: mark-radius-square
     actual:
       strokeWidth: stroke-width
+      pattern: outline
       markHeight: mark-height-content
       markOffset: mark-offset-nested
       markPaintOrder: mark-paint-front
@@ -470,7 +471,16 @@ body:
     milestone.fill: text
     snapshot.fill: neutral
     snapshot.stroke: text
-    actual.fill: accent
+    # Editorial's visible inset fill is the progress-fill role (progressInset,
+    # #430), not the ordinary "actual" comparison mark, which still renders
+    # unconditionally whenever Actual data exists (no View policy suppresses
+    # it, see the I383-1 slice commit). Giving it the outline pattern (like
+    # "planned") rather than a second solid coral fill avoids doubling the
+    # progress-fill's own coral on top of itself, and keeps a real,
+    # contrast-checked stroke rather than an invisible blended fill (the
+    # corpus contrast gate classifies "actual" as a required-contrast mark
+    # unconditionally; a theme cannot opt it out via contrastTreatment).
+    actual.fill: surface
     actual.stroke: text
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted

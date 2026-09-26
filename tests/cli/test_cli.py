@@ -289,7 +289,9 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, m
         "W_LAYOUT_MARK_OVERFLOW", "W_LAYOUT_ROW_DENSITY", "W_SCENE_TEXT_INTERSECTION"))
     svg = output.read_text(encoding="utf-8")
     assert 'data-scene-id="axis-label:2:' in svg
-    assert ">Mar</text>" in svg
+    # #383/#429: the bundled default is now the Editorial preset, whose axis
+    # role transforms month labels to uppercase (letterSpacing.wide, #410).
+    assert ">MAR</text>" in svg
     scene = json.loads(scene_path.read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     slots = {slot["source"]: slot["bounds"] for slot in surface["slots"]}

@@ -4,9 +4,9 @@ id: chrona-default-draft
 body:
   package: {version: "1"}
   resources:
-    view: {id: chrona-default-draft, kind: view, path: views/default-draft.yaml}
-    theme: {id: briefing, kind: theme, path: themes/briefing.yaml}
-    colorScheme: {id: mission-light, kind: color-scheme, path: schemes/mission-light.yaml}
-    layout: {id: briefing, kind: layout-profile, path: layouts/briefing.yaml}
+    view: {id: chrona-preset-editorial, kind: view, path: views/editorial.yaml}
+    theme: {id: chrona-builtin-editorial, kind: theme, path: themes/editorial.yaml}
+    colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, path: schemes/editorial.yaml}
+    layout: {id: chrona-builtin-editorial, kind: layout-profile, path: layouts/editorial.yaml}
   compatibleColorSchemes:
-    - {id: mission-light, kind: color-scheme, path: schemes/mission-light.yaml}
+    - {id: chrona-builtin-editorial, kind: color-scheme, path: schemes/editorial.yaml}
