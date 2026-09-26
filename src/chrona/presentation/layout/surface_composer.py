@@ -1308,6 +1308,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             "as-of-label", "actual-set", content,
             LabelRect(x, timeline_bounds[1], 0.0, body_size), ("end", "start", "below"),
             "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
+            visible_fallback_side="above",
         ))
     if contract.labels.enabled:
         for review_row in review_rows:
@@ -1413,15 +1414,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
                                  obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
                                  inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                                 required=label_request.overflow == "diagnose", overflow=label_request.overflow)
+                                 required=label_request.overflow == "diagnose", overflow=label_request.overflow,
+                                 visible_fallback_side=label_request.visible_fallback_side)
                      if label_request.candidates else None)
         provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
                                  content=label_request.content, inline=0, baseline_block=float(font_size),
                                  typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
                                  font_metrics=request.font_metrics, collision_region=label_request.collision_region,
                                  collision_domain=label_request.collision_domain)
+        fallback_ladder = label_request.candidates + (
+            (label_request.visible_fallback_side,)
+            if label_request.visible_fallback_side is not None
+            and label_request.visible_fallback_side not in label_request.candidates else ())
         if candidate is None:
-            ladder = label_request.candidates + (("suppress",) if label_request.overflow == "suppress" else ())
+            ladder = fallback_ladder + (("suppress",) if label_request.overflow == "suppress" else ())
             if not ladder:
                 raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
             text.append(replace(provisional, overflow="suppressed", required=False,
@@ -1432,20 +1438,26 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
         else:
             host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
+            slot = by_source.get(label_request.collision_domain.slot)
+            slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
+            crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y
+                            or candidate.bounds.right > slot_bounds.right
+                            or candidate.bounds.bottom > slot_bounds.bottom)
+            visible_overflow = candidate.visible_overflow or crosses_slot
             placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
                                    content=provisional.content, inline=candidate.bounds.x + leading,
                                    baseline_block=candidate.bounds.y + float(font_size),
                                    typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
                                    font_metrics=request.font_metrics, collision_region=provisional.collision_region,
                                    collision_domain=provisional.collision_domain,
-                                   overflow="visible-overflow" if candidate.visible_overflow else "fit",
-                                   lines=lines), fallback_ladder=label_request.candidates, selected_rung=candidate.side,
+                                   overflow="visible-overflow" if visible_overflow else "fit",
+                                   lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
                                   host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
                                   paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
                                   if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
             text.append(placed_text)
-            if candidate.visible_overflow:
-                visible_label_overflows.append((placed_text, placement_bounds))
+            if visible_overflow:
+                visible_label_overflows.append((placed_text, slot_bounds))
             if visuals:
                 if not hasattr(label_metrics, "cap_height_at"):
                     raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
@@ -1463,7 +1475,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          width / icon.viewport[0], text_slot(placed_text),
                                                          paint_order=placed_text.paint_order))
             placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
-                                                         label_request.candidates, candidate.side, "placed"))
+                                                         fallback_ladder, candidate.side, "placed"))
 
     relations: list[RelationPlacement] = []
     visible_route_fallbacks: list[RelationPlacement] = []

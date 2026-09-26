@@ -54,6 +54,7 @@ class LabelRequest:
     wrap: str = "forbid"
     bounds: LabelRect | None = None
     inside_host_obstacle_id: str | None = None
+    visible_fallback_side: str | None = None
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:
@@ -93,10 +94,15 @@ def _visible_candidate(anchor: LabelRect, size: tuple[float, float], side: str, 
 def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterable[str], *,
                 bounds: LabelRect, obstacles: Iterable[LabelObstacle | LabelRect] = (), gap: float = 0,
                 inside_host_obstacle_id: str | None = None,
-                required: bool = True, overflow: str = "visible-overflow") -> LabelPlacement | None:
+                required: bool = True, overflow: str = "visible-overflow",
+                visible_fallback_side: str | None = None) -> LabelPlacement | None:
     """Choose the first legal candidate in declared order; never search indefinitely."""
     sides = tuple(candidates)
-    if not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides) or overflow not in {"visible-overflow", "suppress", "clip-optional"}:
+    if (not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides)
+            or overflow not in {"visible-overflow", "suppress", "clip-optional"}
+            or (visible_fallback_side is not None
+                and (overflow != "visible-overflow"
+                     or visible_fallback_side not in {"above", "below", "start", "end", "inside"}))):
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     blocked = tuple(obstacles)
     for side in sides:
@@ -115,10 +121,9 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                    for obstacle in active_obstacles):
             return LabelPlacement(side, candidate)
     if overflow == "visible-overflow":
-        # Retain the author-declared candidate order.  The first candidate is
-        # the deterministic visible fallback even when it crosses a collision
-        # boundary or its requested slot.
-        for side in sides:
+        # Ordinary requests retain their first ranked side. A separately
+        # declared terminal side is used only after all ranked candidates fail.
+        for side in ((visible_fallback_side,) if visible_fallback_side is not None else sides):
             try:
                 return LabelPlacement(side, _visible_candidate(anchor, size, side, gap), True)
             except ValueError as exc:

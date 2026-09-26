@@ -42,6 +42,25 @@ def test_optional_label_can_be_omitted_only_by_explicit_policy():
     assert result.visible_overflow
 
 
+def test_declared_visible_fallback_side_is_used_only_after_legal_candidates_fail():
+    anchor = LabelRect(50, 40, 0, 10)
+    bounds = LabelRect(0, 0, 100, 100)
+    obstacles = [LabelRect(0, 0, 100, 100)]
+    fallback = place_label(anchor, (20, 8), ("end",), bounds=bounds,
+                           obstacles=obstacles, visible_fallback_side="above")
+    assert fallback.side == "above" and fallback.visible_overflow
+    first = place_label(anchor, (20, 8), ("end",), bounds=bounds, obstacles=obstacles)
+    assert first.side == "end" and first.visible_overflow
+    legal = place_label(anchor, (20, 8), ("end",), bounds=bounds,
+                        visible_fallback_side="above")
+    assert legal.side == "end" and not legal.visible_overflow
+    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_INPUT"):
+        place_label(anchor, (20, 8), ("end",), bounds=bounds, visible_fallback_side="diagonal")
+    with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_INPUT"):
+        place_label(anchor, (20, 8), ("end",), bounds=bounds, overflow="suppress",
+                    visible_fallback_side="above")
+
+
 def test_label_candidates_are_bounded_and_unique():
     with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_INPUT"):
         place_label(LabelRect(1, 1, 1, 1), (1, 1), ["above"] * 17, bounds=LabelRect(0, 0, 10, 10))
