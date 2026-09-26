@@ -2,7 +2,7 @@
 
 # Release Review — Legend Swatches and Arrangement (#427)
 
-**Reviewed product:** `f8e97c64` on this worktree's branch, pending publication to `main` (I427-1). **Design:** [design](../../design/issue-427-legend-swatches-design-2026-09-26.md), [amendment](../../design/issue-427-legend-swatches-design-amendment-2026-09-26.md), [architecture review](issue-427-legend-swatches-architecture-review-2026-09-26.md), Specifications 33 and 49. **Slice review:** [I427-1](issue-427-legend-swatches-i427-1-review-2026-09-26.md). **CI: pending.**
+**Reviewed product:** `16064c81` on `main` (branch commit `f8e97c64`) (I427-1). **Design:** [design](../../design/issue-427-legend-swatches-design-2026-09-26.md), [amendment](../../design/issue-427-legend-swatches-design-amendment-2026-09-26.md), [architecture review](issue-427-legend-swatches-architecture-review-2026-09-26.md), Specifications 33 and 49. **Slice review:** [I427-1](issue-427-legend-swatches-i427-1-review-2026-09-26.md). **CI:** [four-job CI run 36252576297](https://github.com/tya5/chrona/actions/runs/36252576297) on `4de0e2ae`, green.
 
 ## Literal issue acceptance
 
@@ -25,7 +25,7 @@
 - Focused tests: 803 passed, 1 skipped (`tests/unit/chrona/presentation`, `tests/integration`, `tests/cli`); `tests/acceptance`: 170 passed, 19 skipped (unrelated).
 - Public materializers: `tools.regenerate_public_examples --write` then `--check`, 22/22 slides reproduce byte-for-byte against the newly written evidence. Every one of the 12 changed slides was structurally diffed against its pre-change evidence: zero non-legend primitive, bound, paint value, or diagnostic differs in any of them (see the [I427-1 review](issue-427-legend-swatches-i427-1-review-2026-09-26.md) for the full attribution, including the correction that the change's blast radius is wider than phase 1 estimated — every committed example with a `legend` slot, not only `halcyon-1`'s).
 - Conformance: `conformance/run_conformance.py` — PASS, 32/32 checks.
-- CI: pending (the lead fills in the run link after publication).
+- CI: [four-job CI run 36252576297](https://github.com/tya5/chrona/actions/runs/36252576297) on `4de0e2ae`, green.
 
 ## Architecture conclusion
 

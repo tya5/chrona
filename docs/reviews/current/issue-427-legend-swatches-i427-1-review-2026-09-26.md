@@ -1,6 +1,6 @@
 # I427-1 Review — Legend Swatches as Miniatures of Their Own Mark
 
-**Implementation:** `f8e97c64` on this worktree's branch (pending publication to `main`). **Public base:** `cd07bcd4`. **Design, review and plan:** [design](../../design/issue-427-legend-swatches-design-2026-09-26.md), [amendment](../../design/issue-427-legend-swatches-design-amendment-2026-09-26.md), [architecture review](issue-427-legend-swatches-architecture-review-2026-09-26.md), [implementation plan](../../planning/active/issue-427-legend-swatches-implementation-plan-2026-09-26.md). This is the only implementation slice; the [acceptance review](issue-427-legend-swatches-acceptance-review-2026-09-26.md) follows it. **CI: pending.**
+**Implementation:** `16064c81` on `main` (branch commit `f8e97c64`, cherry-picked; evidence regenerated on the integrated corpus). **Public base:** `cd07bcd4`. **Design, review and plan:** [design](../../design/issue-427-legend-swatches-design-2026-09-26.md), [amendment](../../design/issue-427-legend-swatches-design-amendment-2026-09-26.md), [architecture review](issue-427-legend-swatches-architecture-review-2026-09-26.md), [implementation plan](../../planning/active/issue-427-legend-swatches-implementation-plan-2026-09-26.md). This is the only implementation slice; the [acceptance review](issue-427-legend-swatches-acceptance-review-2026-09-26.md) follows it. **CI:** [four-job CI run 36252576297](https://github.com/tya5/chrona/actions/runs/36252576297) on `4de0e2ae`, green.
 
 ## Scope versus the approved plan
 
