@@ -145,6 +145,11 @@ def _emit_render_warnings(rendered: RenderedReview) -> None:
             "deltaE": collision.delta_e,
             "message": f"{collision.first} and {collision.second} are not separable under {collision.vision} vision",
         }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+    for attached in rendered.attachment_warnings:
+        print(json.dumps({"code": attached.code, "severity": "warning", "sourceRef": attached.object_id,
+                          "host": attached.host_id,
+                          "message": f"{attached.object_id} is dated outside the planned span of {attached.host_id}"},
+                         ensure_ascii=False, sort_keys=True), file=sys.stderr)
     for info in rendered.info_diagnostics:
         if isinstance(info, SuppressedPlotLabels):
             print(json.dumps({"code": info.code, "severity": "info", "surfaceId": info.surface_id,

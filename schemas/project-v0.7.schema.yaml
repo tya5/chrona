@@ -108,6 +108,7 @@ $defs:
       calendar: {description: "Replacement calendar identifier, or null to clear it.", type: [string, 'null']}
       fields: {description: "Replacement field map, or null to clear it.", examples: [{risk: "high"}, null], oneOf: [{description: "Replacement field map.", type: object}, {description: "Clear the field map.", type: 'null'}]}
       parent: {description: "Replacement parent identifier, or null to clear it.", type: [string, 'null']}
+      attachesTo: {description: "Replacement attachment host, or null to clear it.", type: [string, 'null']}
       wbsCode: {description: "Replacement WBS code, or null to clear it.", examples: ["1.2", null], oneOf: [{$ref: "#/$defs/wbsCode"}, {description: "Clear the WBS code.", type: 'null'}]}
       plannedProgress: {description: "Replacement planned completion fraction, or null to clear it.", type: [number, 'null'], minimum: 0, maximum: 1}
       deadline: {description: "Replacement deadline, or null to clear it.", examples: ["2026-09-23", null], oneOf: [{$ref: "#/$defs/date"}, {description: "Clear the deadline.", type: 'null'}]}
@@ -166,6 +167,7 @@ $defs:
       calendar: {description: "Calendar identifier overriding the Project default.", type: string}
       fields: {description: "Object-type-specific field map.", type: object}
       parent: {description: "Parent object identifier.", type: string, minLength: 1}
+      attachesTo: {description: "Span object on whose row this point is drawn; presentation metadata, never a scheduling edge.", type: string, minLength: 1}
       wbsCode: {description: "Work-breakdown identifier.", $ref: "#/$defs/wbsCode"}
       plannedProgress: {description: "Planned completion fraction from zero through one.", type: number, minimum: 0, maximum: 1}
       deadline: {description: "Desired completion date.", $ref: "#/$defs/date"}

@@ -270,6 +270,19 @@ deadline: 2026-11-30
 
 A parser MUST NOT normalize a deadline into an upper scheduling bound.
 
+### 9.1 Attachment
+
+A fixed point MAY name the span it belongs to for presentation:
+
+```yaml
+campaign-readiness:
+  type: gate
+  attachesTo: campaign
+  schedule: {mode: fixed-point, at: 2027-10-01}
+```
+
+`attachesTo` is presentation metadata, not a scheduling edge. Like a deadline, it MUST NOT move or constrain either object. It is independent of `parent`. The host MUST exist, MUST NOT be the point itself, and MUST be a span (`E_PROJECT_ATTACH_TARGET_UNKNOWN`, `E_PROJECT_ATTACH_SELF`, `E_PROJECT_ATTACH_TARGET_NOT_SPAN`). Only a fixed point may attach (`E_PROJECT_ATTACH_SOURCE_NOT_POINT`). A point dated outside its host's planned span is valid and is reported as `W_PROJECT_ATTACHED_OUTSIDE_HOST`. The field is optional and additive in `timeline/v0.7` (§16).
+
 ## 10. Entities and typed references
 
 Example:

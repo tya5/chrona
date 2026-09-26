@@ -31,6 +31,7 @@ from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
+from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
@@ -107,6 +108,7 @@ class RenderedReview:
     perceptibility_warnings: tuple["ScenePerceptibilityWarning", ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     scale_collisions: tuple[ScaleCollision, ...] = ()
+    attachment_warnings: tuple[AttachmentWarning, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -190,7 +192,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
-    projection, scenario_provenance = _project_review(project, view, render_closure, manifests, request.scheduler)
+    projection, scenario_provenance, attachments = _project_review(project, view, render_closure, manifests, request.scheduler)
     try:
         color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                           theme["body"].get("categorySlots"),
@@ -325,7 +327,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings,
-                          surface.info_diagnostics, collisions)
+                          surface.info_diagnostics, collisions, attachments)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
@@ -452,7 +454,7 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         scenarios=scenarios,
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
-    ), tuple(provenance)
+    ), tuple(provenance), attachment_warnings(project, result.placements)
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path) -> Any:
