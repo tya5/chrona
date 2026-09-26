@@ -9,7 +9,8 @@
 Add seven complete, independently renderable Project YAML files under one
 `examples/onboarding/` source directory. The sequence introduces spans,
 gates, relations/lag, calendars, constraints/deadlines, hierarchy/rollup,
-then Actuals/progress. Include an Actual Set only for the last stage. Avoid
+then Actuals/progress. Include an Actual Set and a minimal progress-selecting
+View only for the last stage. Avoid
 copying large corpus sources. Acceptance: each fixture passes the Project
 contract and Draft render; an edit to a task title changes its SVG; the final
 stage shows observed progress.
