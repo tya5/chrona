@@ -283,6 +283,12 @@ remains blocked. This handles floating representations of the same completed
 port/mark edge without changing clearance or route policy. See the [#466
 boundary-precision correction](../design/issue-466-general-placement-boundary-precision-correction-2026-09-26.md).
 
+After a bounded visibility-grid route search cannot complete, Layout may test
+at most eight deterministic outer-envelope orthogonal escape candidates
+against the same obstacle inventory and route bounds. The caller's declared
+bend/detour quality limits still apply; an escape is not an exemption. See the
+[#466 bounded-escape correction](../design/issue-466-general-placement-bounded-escape-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
