@@ -109,11 +109,27 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/marker")
         return value
 
-    def symbol(self, role: str = "milestoneSymbol") -> str:
+    def symbol(self, role: str = "milestoneSymbol") -> Mapping[str, Any]:
+        """Resolve one role's full symbol value (a built-in shape or a glyph)."""
         value = self.token(role, "symbol", "symbol")
         if not isinstance(value, Mapping) or not isinstance(value.get("shape"), str):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
-        return value["shape"]
+        return value
+
+    _VARIANT_SYMBOL_ROLES = {"planned": "milestoneSymbol", "actual": "milestoneSymbolActual",
+                             "baseline": "milestoneSymbolBaseline"}
+
+    def variant_symbol(self, variant: str) -> Mapping[str, Any]:
+        """Resolve a planned/actual/baseline gate's symbol, falling back to milestoneSymbol.
+
+        `milestoneSymbolActual`/`milestoneSymbolBaseline` are optional roles; a
+        Theme that does not declare one keeps that variant on `milestoneSymbol`,
+        so an existing Theme's rendering is unaffected by their existence.
+        """
+        role = self._VARIANT_SYMBOL_ROLES[variant]
+        if role != "milestoneSymbol" and not self.has_role(role):
+            role = "milestoneSymbol"
+        return self.symbol(role)
 
     def optional_color(self, role: str, property_name: str) -> str | None:
         """Resolve an optional concrete colour without introducing a fallback."""

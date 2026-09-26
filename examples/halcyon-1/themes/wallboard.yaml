@@ -83,6 +83,9 @@ body:
     milestone-symbol:
       type: symbol
       value: {shape: diamond}
+    milestone-symbol-baseline:
+      type: symbol
+      value: {shape: diamond}
     stroke-width:
       type: number
       value: 1
@@ -325,6 +328,10 @@ body:
       iconGap: icon-gap
     milestoneSymbol:
       symbol: milestone-symbol
+    milestoneSymbolActual:
+      symbol: milestone-symbol
+    milestoneSymbolBaseline:
+      symbol: milestone-symbol-baseline
     relationSourceTerminal:
       marker: relation-source-terminal
     relationTargetTerminal:

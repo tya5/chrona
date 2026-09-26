@@ -65,5 +65,5 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
         }
         closures.append(resolve_render_context(context_reference, config))
     assert closures[0].context.identity.id == "halcyon-1-01-mission-brief"
-    assert len(closures) == 11
+    assert len(closures) == 12
     assert tuple((destination / ".chrona" / "store").glob("revision-*"))

@@ -87,6 +87,38 @@ def test_summary_bar_height_resolves_its_theme_owned_value():
     assert ThemeTokenView(theme).summary_bar_height("summary-bar") == Decimal("0.25")
 
 
+def test_symbol_resolves_the_full_value_mapping_not_only_the_shape():
+    theme = _theme()
+    theme["body"]["values"]["gate"] = {"type": "symbol", "value": {
+        "shape": "glyph", "viewBox": [10, 10], "parts": [{"d": "M0 0L10 0L10 10L0 10Z", "paint": "fill"}]}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "gate"}
+    value = ThemeTokenView(theme).symbol()
+    assert value["shape"] == "glyph"
+    assert value["viewBox"] == [10, 10]
+
+
+def test_variant_symbol_falls_back_to_milestone_symbol_when_a_variant_role_is_unset():
+    theme = _theme()
+    theme["body"]["values"]["gate"] = {"type": "symbol", "value": {"shape": "diamond"}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "gate"}
+    tokens = ThemeTokenView(theme)
+    assert tokens.variant_symbol("planned") == {"shape": "diamond"}
+    assert tokens.variant_symbol("actual") == {"shape": "diamond"}
+    assert tokens.variant_symbol("baseline") == {"shape": "diamond"}
+
+
+def test_variant_symbol_uses_its_own_role_when_declared():
+    theme = _theme()
+    theme["body"]["values"]["gate"] = {"type": "symbol", "value": {"shape": "diamond"}}
+    theme["body"]["values"]["ghost"] = {"type": "symbol", "value": {"shape": "circle"}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "gate"}
+    theme["body"]["roles"]["milestoneSymbolBaseline"] = {"symbol": "ghost"}
+    tokens = ThemeTokenView(theme)
+    assert tokens.variant_symbol("planned") == {"shape": "diamond"}
+    assert tokens.variant_symbol("actual") == {"shape": "diamond"}
+    assert tokens.variant_symbol("baseline") == {"shape": "circle"}
+
+
 @pytest.mark.parametrize(("inset", "radius", "expected"), [
     (None, None, (Decimal(0), Decimal(0))),
     (0.2, 0.5, (Decimal("0.2"), Decimal("0.5"))),

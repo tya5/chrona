@@ -64,6 +64,16 @@ def test_mark_ground_uses_highest_earlier_opaque_panel_and_reports_its_identity(
     assert (finding.sample_inline, finding.sample_block) == (20, 15)
 
 
+def test_a_multi_part_glyph_part_grounds_against_the_earlier_part_beneath_it():
+    """#464: a later Symbol part's ground is the earlier same-bounds Symbol part, not the canvas."""
+    findings = evaluate_scene_contrast(_scene(
+        _primitive("body", "planned", "planned", "#5FA8FF", kind="Symbol", order=100),
+        _primitive("band", "planned", "planned", "#1B1B1B", kind="Symbol", order=101),
+    ))
+    finding = next(item for item in findings if item.primitive_id == "band")
+    assert (finding.ground_id, finding.ground_color, finding.paint_channel) == ("body", "#5FA8FF", "fill")
+
+
 def test_stroke_only_rect_samples_painted_edge_not_unpainted_centre():
     findings = evaluate_scene_contrast(_scene(
         _primitive("left", "unclassified", "panel", "#222222", order=10,

@@ -795,6 +795,83 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
     assert any(node.scene_id == "annotation-leader:gate-note" for node in surface.primitives)
 
 
+def _glyph_theme():
+    theme = _theme()
+    theme["body"]["values"]["milestone-symbol"] = {"type": "symbol", "value": {
+        "shape": "glyph", "viewBox": [10, 10],
+        "parts": [{"d": "M0 0L10 0L10 10L0 10Z", "paint": "fill"},
+                  {"d": "M3 3L7 3L7 7L3 7Z", "paint": "fill", "color": "#1B1B1B"}]}}
+    theme["body"]["values"]["milestone-symbol-baseline"] = {"type": "symbol", "value": {
+        "shape": "glyph", "viewBox": [10, 10],
+        "parts": [{"d": "M0 0L10 0L10 10L0 10Z", "paint": "fill"},
+                  {"d": "M3 3L7 3L7 7L3 7Z", "paint": "stroke"}]}}
+    theme["body"]["roles"]["milestoneSymbolActual"] = {"symbol": "milestone-symbol"}
+    theme["body"]["roles"]["milestoneSymbolBaseline"] = {"symbol": "milestone-symbol-baseline"}
+    return theme
+
+
+def _glyph_fixture():
+    span = ReviewItem("task", "Task", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)},
+                      None, None, (), group_id="fw", group_label="Firmware team", item_id="task")
+    point = ReviewItem("gate", "Release gate", "point", {"at": date(2026, 1, 5)},
+                       {"at": date(2026, 1, 6)}, None, (), group_id="fw", group_label="Firmware team",
+                       item_id="gate", source_kind="combined", track="shared")
+    scenario = ReviewItem("gate", "Baseline gate", "point", {"at": date(2026, 1, 4)},
+                          None, None, (), group_id="fw", group_label="Firmware team",
+                          item_id="scenario:baseline:gate", source_kind="scenario", track="shared")
+    row = ReviewRowProjection("fw-row", "Task", "fw", "task", (span,))
+    projection = ReviewProjection((span, point), (date(2026, 1, 1), date(2026, 1, 6)), (), (), (row,),
+                                  folded_points=(FoldedPointProjection(point, "fw", members=(scenario,)),))
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
+        "timeline.groupHeader.blockSize": Decimal(20),
+    })
+    viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(400))
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", viewport, (
+        LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(40)), "title"),
+        LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(40), Decimal(100), Decimal(160)), "table"),
+        LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(60), Decimal(700), Decimal(140)), "timeline"),
+        LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(200), Decimal(700), Decimal(40)), "timeline-axis"),
+    ), row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
+    value = build_scene_input(projection=projection, surface_content=surface_content(
+        table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),
+        group_presentation="header",
+    ), layout_manifest=manifest, resolved_theme=_glyph_theme(), font_metrics=_Font(), measured_sources=measurement,
+        capabilities={"svg": True})
+    return compose_review_surface(value)
+
+
+def test_a_theme_bound_multi_part_glyph_renders_every_part_of_a_planned_gate():
+    surface = _glyph_fixture()
+    parts = [node for node in surface.primitives if node.scene_id.startswith("planned:group-header:fw:gate:part")]
+    assert len(parts) == 2
+    assert parts[0].paint.fill != "#1B1B1B"  # body: the role's own colour
+    assert parts[1].paint.fill == "#1B1B1B"  # band: the asset's literal colour
+    assert all(node.kind == "Symbol" and node.purpose == "planned" for node in parts)
+
+
+def test_a_theme_bound_multi_part_glyph_renders_every_part_of_an_actual_gate():
+    surface = _glyph_fixture()
+    parts = [node for node in surface.primitives if node.scene_id.startswith("actual:group-header:fw:gate:part")]
+    assert len(parts) == 2
+    assert parts[1].paint.fill == "#1B1B1B"
+
+
+def test_baseline_gate_glyph_distinguishes_its_band_by_treatment_not_colour():
+    surface = _glyph_fixture()
+    baseline_parts = [node for node in surface.primitives
+                      if node.scene_id.startswith("planned:group-header:fw:scenario:baseline:gate:part")]
+    assert len(baseline_parts) == 2
+    body, band = baseline_parts
+    assert body.paint.fill is not None and body.paint.stroke is None
+    assert band.paint.fill is None and band.paint.stroke is not None  # hollow band, not a literal colour
+    planned_parts = [node for node in surface.primitives if node.scene_id.startswith("planned:group-header:fw:gate:part")]
+    # Baseline and planned share the asset's body/band shapes but differ in the band's paint mode,
+    # so the two variants are distinguishable without relying on either's colour.
+    assert planned_parts[1].paint.fill is not None and planned_parts[1].paint.stroke is None
+
+
 def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 10)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 10)), (), ())

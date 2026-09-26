@@ -167,12 +167,17 @@ class ScenePrimitive:
     clip_source_id: str | None = None
     end_treatment: str = "closed"
     contrast_treatment: str | None = None
+    glyph_paint_mode: str | None = None
+    glyph_paint_color: str | None = None
 
     def __post_init__(self) -> None:
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
                 or (self.symbol is not None and self.kind != "Symbol")
                 or (self.kind == "Symbol" and self.symbol is None)
+                or (self.glyph_paint_mode is not None and self.kind != "Symbol")
+                or (self.glyph_paint_mode not in (None, "fill", "stroke"))
+                or (self.glyph_paint_color is not None and self.glyph_paint_mode is None)
                 or (self.purpose == "table-cell" and self.table_row_id is None)
                 or (self.purpose == "table-cell" and self.table_column_id is None)
                 or (self.purpose != "table-cell" and self.table_row_id is not None)

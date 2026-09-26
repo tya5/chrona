@@ -67,18 +67,36 @@ properties:
                     oneOf:
                       - {type: object, additionalProperties: false, required: [kind], properties: {kind: {const: outline}}}
                       - {type: object, additionalProperties: false, required: [kind, tileInlineSize, tileBlockSize, angle, strokeWidth], properties: {kind: {const: diagonal-hatch}, tileInlineSize: {type: number, exclusiveMinimum: 0}, tileBlockSize: {type: number, exclusiveMinimum: 0}, angle: {type: number, minimum: 0, exclusiveMaximum: 360}, strokeWidth: {type: number, exclusiveMinimum: 0}}}
-            - description: "Point-symbol selection is finite Theme data resolved into a Scene outline."
-              examples: [{type: symbol, value: {shape: diamond}}]
+            - description: "Point-symbol selection is finite Theme data resolved into a Scene outline: a built-in shape, or a multi-part glyph fitted contain/centred into the mark's bounds. Each glyph part paints from the milestone role's own colour unless it declares a fixed color; an outline-treatment role overrides every part to stroke regardless."
+              examples: [{type: symbol, value: {shape: diamond}}, {type: symbol, value: {shape: glyph, viewBox: [100, 100], parts: [{d: "M0 0L100 0L100 100L0 100Z", paint: fill}]}}]
               if:
                 properties: {type: {const: symbol}}
               required: [type]
               then:
                 properties:
                   value:
-                    type: object
-                    additionalProperties: false
-                    required: [shape]
-                    properties: {shape: {enum: [diamond, circle, square, chevron]}}
+                    oneOf:
+                      - type: object
+                        additionalProperties: false
+                        required: [shape]
+                        properties: {shape: {enum: [diamond, circle, square, chevron]}}
+                      - type: object
+                        additionalProperties: false
+                        required: [shape, viewBox, parts]
+                        properties:
+                          shape: {const: glyph}
+                          viewBox: {type: array, minItems: 2, maxItems: 2, items: {type: number, exclusiveMinimum: 0}}
+                          parts:
+                            type: array
+                            minItems: 1
+                            items:
+                              type: object
+                              additionalProperties: false
+                              required: [d, paint]
+                              properties:
+                                d: {type: string, minLength: 1}
+                                paint: {enum: [fill, stroke, none]}
+                                color: {type: string, pattern: "^#[0-9A-Fa-f]{6}$"}
             - description: "Text transforms are finite so Layout measures the painted form."
               examples: [{type: textTransform, value: uppercase}]
               if:

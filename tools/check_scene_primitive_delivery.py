@@ -36,7 +36,7 @@ OWNERS = {
     "SymbolGeometry": (_owner("inspection", "scene/serialization.py", "outline"),),
     "ScenePrimitive": (
         _owner("inspection", "scene/serialization.py", "scene_id kind source_ref source_kind purpose visual_role bounds slot_id text baseline text_layout marker_start marker_end pattern symbol paint corner_radius path_commands points href link_title icon_kind icon_asset_identity icon_viewport icon_paths icon_alternative icon_decorative table_row_id table_column_id paint_order host_placement_id clip_source_id end_treatment contrast_treatment"),
-        _owner("derived", "scene/v05_builder.py", "icon_vector icon_stroke_scale"),
+        _owner("derived", "scene/v05_builder.py", "icon_vector icon_stroke_scale glyph_paint_mode glyph_paint_color"),
         _owner("adapter", "renderers/v05_svg.py", "icon_raster"),
         _owner("derived", "scene/visual_capabilities.py", "visual_capability_source_ref"),
     ),

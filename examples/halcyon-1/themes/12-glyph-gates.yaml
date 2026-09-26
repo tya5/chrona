@@ -1,0 +1,26 @@
+version: chrona/theme/v0.12
+kind: theme
+id: glyph-gates
+body:
+  extends:
+    id: wallboard
+    path: wallboard.yaml
+    sourceContentIdentity: 'sha256:fc79d56b2c65caf522a33bbc9492f34ba6f75c980999adc68682b5b3d37c3d28'
+    contentIdentity: 'sha256:662e257acd4b102d420e7067326118f88e0d4e3fd1a3129ee962187b08fd0d5a'
+  values:
+    milestone-symbol:
+      type: symbol
+      value:
+        shape: glyph
+        viewBox: [100, 100]
+        parts:
+          - {d: "M25 0L75 0L100 50L75 100L25 100L0 50Z", paint: fill}
+          - {d: "M15 42L85 42L85 58L15 58Z", paint: fill, color: "#1B1B1B"}
+    milestone-symbol-baseline:
+      type: symbol
+      value:
+        shape: glyph
+        viewBox: [100, 100]
+        parts:
+          - {d: "M25 0L75 0L100 50L75 100L25 100L0 50Z", paint: fill}
+          - {d: "M15 42L85 42L85 58L15 58Z", paint: stroke}

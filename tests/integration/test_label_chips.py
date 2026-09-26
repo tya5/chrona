@@ -79,7 +79,7 @@ def test_themes_without_a_chip_role_draw_no_chip():
         primitives = _primitives(json.loads(path.read_text(encoding="utf-8")))
         chips = [key for key in primitives if key.startswith("chip:")]
         if path.parent.parent.name == "halcyon-1" and path.stem.split(".")[0] in {
-                "02-programme-board", "04-tvac-slip", "07-replan-baseline", "11-overlay-briefing"}:
+                "02-programme-board", "04-tvac-slip", "07-replan-baseline", "11-overlay-briefing", "12-glyph-gates"}:
             assert chips == ["chip:as-of-label"], path
         else:
             assert chips == [], path

@@ -58,3 +58,8 @@ slides:
     context: contexts/11-overlay-briefing.yaml
     expectedSvg: generated/11-overlay-briefing.svg
     expectedScene: generated/11-overlay-briefing.scene.json
+  - id: glyph-gates
+    evidence: "Programme board gates drawn as a two-part Theme glyph instead of the built-in diamond."
+    context: contexts/12-glyph-gates.yaml
+    expectedSvg: generated/12-glyph-gates.svg
+    expectedScene: generated/12-glyph-gates.scene.json

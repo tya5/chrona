@@ -11,7 +11,7 @@ def _root() -> Path:
 
 def test_presentation_coverage_is_deterministic_and_complete():
     root = _root()
-    assert len(discover(root)) == 22
+    assert len(discover(root)) == 23
     report = render(root)
     assert report == render(root)
     assert "## Layout slot evidence" in report
@@ -38,6 +38,14 @@ def test_presentation_vocabulary_follows_nested_conditional_schema_values():
     }
 
 
+def test_presentation_coverage_accepts_a_live_derived_theme_resource():
+    root = _root()
+    glyph_gates = next(slide for slide in discover(root) if slide.identifier == "halcyon-1/glyph-gates")
+    kind, path, document = next(item for item in glyph_gates.resources if item[0] == "theme")
+    assert document.get("version") == "chrona/theme/v0.12"
+    _validate_resource_versions((glyph_gates,), live_schemas(root), root)
+
+
 def test_presentation_coverage_rejects_non_live_resource_versions():
     root = _root()
     slide = discover(root)[0]
@@ -45,7 +53,7 @@ def test_presentation_coverage_rejects_non_live_resource_versions():
     stale = dict(document, version="chrona/not-live")
     changed = slide.__class__(slide.identifier, slide.root, ((kind, path, stale), *slide.resources[1:]), slide.scene)
     with pytest.raises(PresentationCoverageError, match="E_PRESENTATION_COVERAGE_VERSION"):
-        _validate_resource_versions((changed,), live_schemas(root))
+        _validate_resource_versions((changed,), live_schemas(root), root)
 
 
 def test_presentation_coverage_is_not_a_renderer_or_svg_reader():

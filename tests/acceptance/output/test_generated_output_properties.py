@@ -18,6 +18,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.font_metrics import resolve_font_metrics
+from chrona.presentation.model.theme_inheritance import resolve_draft_theme
 
 ROOT = Path(__file__).resolve().parents[3]
 RESOURCES = ROOT / "src/chrona/resources"
@@ -81,7 +82,10 @@ def _load(svg_path: Path, context_path: Path):
     body = yaml.safe_load(context_path.read_text(encoding="utf-8"))["body"]
     viewport = (float(body["environment"]["viewport"]["inlineSize"]),
                 float(body["environment"]["viewport"]["blockSize"]))
-    theme = _bound(context_path, body, "theme")
+    # A theme reference may address an ordinary v0.11 Theme or a v0.12 Theme that
+    # extends one by inheritance; resolve_draft_theme returns the raw document
+    # unchanged in the ordinary case, so this always yields a complete body.
+    theme = resolve_draft_theme(context_path.parents[1] / body["theme"]["address"])
     stack = next(v["value"] for v in theme["body"]["values"].values() if v.get("type") == "fontFamily")
     weights = {int(v["value"]) for v in theme["body"]["values"].values() if v.get("type") == "fontWeight"}
     metrics = {weight: resolve_font_metrics(stack, body["environment"]["fontMetrics"], weight=weight, asset_root=RESOURCES)

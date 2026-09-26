@@ -19,8 +19,8 @@ from chrona.presentation.model.semantic_registry import ContrastClass, Primitive
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.scene.mark_geometry import pattern_geometry, pattern_kind, symbol_geometry
-from chrona.presentation.scene.model import DecorationDisposition, SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.mark_geometry import glyph_parts, pattern_geometry, pattern_kind, symbol_geometry
+from chrona.presentation.scene.model import DecorationDisposition, SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
 
@@ -76,6 +76,55 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
     return PaintFamily.SOLID
 
 
+def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose: str, visual_role: str,
+                       bounds: tuple[float, float, float, float], tokens: ThemeTokenView, variant: str,
+                       layout_outline: tuple[Any, ...] = (), **shared: Any) -> list[ScenePrimitive]:
+    """Emit one milestone's Symbol primitive(s): one for a built-in shape, several sibling
+
+    primitives (one per painted part, ascending paint order) for a Theme-bound glyph.
+    ``variant`` selects which of ``milestoneSymbol``/``milestoneSymbolActual``/
+    ``milestoneSymbolBaseline`` resolves the shape; see `ThemeTokenView.variant_symbol`.
+
+    A glyph shape always wins over ``layout_outline``: that Layout-completed
+    outline only ever rounds a built-in diamond's corners (`markCornerRadius`),
+    which is meaningless once the shape is a glyph — the asset already defines
+    its own corners, and Layout still owns only the shared bounding box.
+    """
+    value = tokens.variant_symbol(variant)
+    if value.get("shape") != "glyph":
+        return [ScenePrimitive(scene_id, PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
+                               bounds, symbol=symbol_geometry(value, bounds, layout_outline), **shared)]
+    base_paint_order = shared.pop("paint_order", 0)
+    return [ScenePrimitive(f"{scene_id}:part{index}", PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
+                          bounds, symbol=SymbolGeometry(part.outline), paint_order=base_paint_order + index,
+                          glyph_paint_mode=part.paint, glyph_paint_color=part.color, **shared)
+           for index, part in enumerate(glyph_parts(value, bounds))]
+
+
+def _glyph_part_paint(role_paint: "ScenePaint", family: PaintFamily, mode: str, color: str | None,
+                      role: str) -> "ScenePaint":
+    """Compose one glyph part's paint from its own paint mode/colour and the role's paint.
+
+    An outline-family role (typically a baseline ghost's ``pattern: outline``)
+    always wins: every part strokes with the role's own colour and dash,
+    ignoring the part's own mode and any literal colour it declares, so a
+    baseline stays distinguishable from planned/actual by treatment, not only
+    by colour. Otherwise each part follows its own declared mode, using its
+    literal colour when the asset fixes one and the role's colour otherwise.
+    """
+    if family == PaintFamily.OUTLINE:
+        return replace(role_paint, fill=None)
+    if mode == "fill":
+        fill = color if color is not None else role_paint.fill
+        if fill is None:
+            raise SceneBuildError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
+        return replace(role_paint, fill=fill, stroke=None, stroke_width=None, dash=())
+    stroke = color if color is not None else role_paint.stroke
+    if stroke is None or role_paint.stroke_width is None:
+        raise SceneBuildError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/stroke")
+    return replace(role_paint, fill=None, stroke=stroke)
+
+
 def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
                             viewport: tuple[float, float] = (0.0, 0.0),
                             *, scale_target_role: str | None = None,
@@ -112,17 +161,23 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
                               scale_target_role: str | None, scale_paints: Mapping[str, str],
                               scale_legend_paints: Mapping[str, str]) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
-    resolution = resolve_scene_paint(tokens, primitive.visual_role, _paint_family(primitive, tokens),
+    family = _paint_family(primitive, tokens)
+    resolution = resolve_scene_paint(tokens, primitive.visual_role, family,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds)
     paint = resolution.paint
-    override = (scale_paints.get(primitive.source_ref)
-                if primitive.visual_role == scale_target_role else None)
-    if primitive.source_kind == "legend":
-        override = scale_legend_paints.get(primitive.source_ref, override)
-    completed = replace(paint, fill=override) if override is not None else paint
+    if primitive.glyph_paint_mode is not None:
+        completed = _glyph_part_paint(paint, family, primitive.glyph_paint_mode, primitive.glyph_paint_color,
+                                      primitive.visual_role)
+    else:
+        override = (scale_paints.get(primitive.source_ref)
+                    if primitive.visual_role == scale_target_role else None)
+        if primitive.source_kind == "legend":
+            override = scale_legend_paints.get(primitive.source_ref, override)
+        completed = replace(paint, fill=override) if override is not None else paint
     treatment = tokens.optional_pattern(primitive.visual_role)
     result = replace(primitive, paint=completed,
-                     pattern=pattern_geometry(treatment) if treatment is not None else None)
+                     pattern=pattern_geometry(treatment) if treatment is not None else None,
+                     glyph_paint_mode=None, glyph_paint_color=None)
     if result.kind == "Icon" and result.icon_kind == "vector":
         return (replace(result, icon_paths=_complete_icon_paths(result, completed),
                         icon_vector=None, icon_stroke_scale=None), resolution.omissions)
@@ -353,12 +408,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                       float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
             if item.source_type == "point":
-                primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", planned_binding.purpose, planned_role,
-                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, planned_mark.path_commands),
-                                                 corner_radius=planned_mark.corner_radius,
-                                                 path_commands=planned_mark.path_commands,
-                                                 href=href, link_title=link_title, slot_id=planned_mark.slot_id,
-                                                 paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
+                variant = "baseline" if source_kind in {"snapshot", "scenario"} else "planned"
+                primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object", planned_binding.purpose, planned_role,
+                                                    bounds, value.theme_tokens, variant, planned_mark.path_commands,
+                                                    corner_radius=planned_mark.corner_radius,
+                                                    path_commands=planned_mark.path_commands,
+                                                    href=href, link_title=link_title, slot_id=planned_mark.slot_id,
+                                                    paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
             else:
                 primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds,
@@ -373,19 +429,19 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                       float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
             if item.source_type == "span":
                 if actual_mark.mark_shape == "open-span":
-                    primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                     bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands),
-                                                     corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
-                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                    primitives.extend(_symbol_primitives(f"actual:{instance_id}", item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                                        bounds, value.theme_tokens, "actual", actual_mark.path_commands,
+                                                        corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
+                                                        paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
                 else:
                     primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                      bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
                                                      paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
             else:
-                primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
-                                                 bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands), corner_radius=actual_mark.corner_radius,
-                                                 path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
-                                                 paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                primitives.extend(_symbol_primitives(f"actual:{instance_id}", item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                                                    bounds, value.theme_tokens, "actual", actual_mark.path_commands, corner_radius=actual_mark.corner_radius,
+                                                    path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
+                                                    paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
@@ -414,22 +470,23 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 binding = semantic_binding("snapshot" if source_kind in {"snapshot", "scenario"} else "planned")
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
-                primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
-                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, planned_mark.path_commands),
-                                                 corner_radius=planned_mark.corner_radius,
-                                                 path_commands=planned_mark.path_commands, href=href, link_title=link_title,
-                                                 slot_id=planned_mark.slot_id, paint_order=planned_mark.paint_order,
-                                                 end_treatment=planned_mark.end_treatment))
+                variant = "baseline" if source_kind in {"snapshot", "scenario"} else "planned"
+                primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object",
+                                                    binding.purpose, binding.scene_role, bounds, value.theme_tokens, variant, planned_mark.path_commands,
+                                                    corner_radius=planned_mark.corner_radius,
+                                                    path_commands=planned_mark.path_commands, href=href, link_title=link_title,
+                                                    slot_id=planned_mark.slot_id, paint_order=planned_mark.paint_order,
+                                                    end_treatment=planned_mark.end_treatment))
             actual_mark = mark_placements.get(f"actual:{instance_id}")
             if actual_mark is not None:
                 binding = semantic_binding("actual")
                 bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                           float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
-                primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.SYMBOL, item.object_id, "object",
-                                                 binding.purpose, binding.scene_role, bounds, symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, actual_mark.path_commands),
-                                                 corner_radius=actual_mark.corner_radius,
-                                                 path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
-                                                 paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                primitives.extend(_symbol_primitives(f"actual:{instance_id}", item.object_id, "object",
+                                                    binding.purpose, binding.scene_role, bounds, value.theme_tokens, "actual", actual_mark.path_commands,
+                                                    corner_radius=actual_mark.corner_radius,
+                                                    path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
+                                                    paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
         label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"
         if label_id in layout_text:
             semantic_id = (inside_member_label_semantic(folded.item.source_kind)
@@ -465,10 +522,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         bounds = (float(mark.bounds.inline), float(mark.bounds.block),
                   float(mark.bounds.inline_size), float(mark.bounds.block_size))
         if mark.mark_shape == "point":
-            primitives.append(ScenePrimitive(mark.placement_id, PrimitiveKind.SYMBOL, mark.source_ref, "legend",
-                                             legend_binding.purpose, mark.source_ref, bounds,
-                                             symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, mark.path_commands),
-                                             corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order))
+            # A legend key is a miniature of the chart's own gate, including a
+            # Theme-bound multi-part glyph (#427, #464).
+            variant = ("actual" if mark.source_ref == "actual"
+                       else "baseline" if mark.source_ref in {"snapshot", "baseline"} else "planned")
+            primitives.extend(_symbol_primitives(mark.placement_id, mark.source_ref, "legend", legend_binding.purpose,
+                                                 mark.source_ref, bounds, value.theme_tokens, variant, mark.path_commands,
+                                                 corner_radius=mark.corner_radius, slot_id=mark.slot_id,
+                                                 paint_order=mark.paint_order))
         else:
             primitives.append(ScenePrimitive(mark.placement_id, PrimitiveKind.RECT, mark.source_ref, "legend",
                                              legend_binding.purpose, mark.source_ref, bounds,
@@ -570,8 +631,17 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})
     ownership.update({item.relation_id: item.slot_id for item in placed_surface.relations})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.icons})
+    def owning_slot(scene_id: str) -> str:
+        if scene_id in ownership:
+            return ownership[scene_id]
+        # A multi-part glyph's sibling Symbol primitives share their one mark
+        # placement's slot; only the mark's own placement_id is in `ownership`.
+        base, separator, suffix = scene_id.rpartition(":part")
+        if separator and suffix.isdigit() and base in ownership:
+            return ownership[base]
+        raise KeyError(scene_id)
     try:
-        completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
+        completed_primitives = tuple(replace(item, slot_id=owning_slot(item.scene_id)) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
     canvas = placed_surface.canvas_bounds

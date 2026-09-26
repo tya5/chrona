@@ -159,7 +159,11 @@ def _ground_under(primitive: Mapping[str, Any], primitives: list[Any], index: in
     order = primitive.get("paintOrder", 0)
     candidates: list[tuple[int, int, Mapping[str, Any]]] = []
     for prior_index, prior in enumerate(primitives):
-        if not isinstance(prior, Mapping) or prior.get("kind") != "Rect":
+        # A Rect is an ordinary painted ground. A Symbol is also accepted: a multi-part
+        # glyph gate (#464) paints several sibling Symbol primitives over the same
+        # bounds, and a later part's true ground is the earlier part beneath it, not
+        # the canvas or the band underneath the whole mark.
+        if not isinstance(prior, Mapping) or prior.get("kind") not in {"Rect", "Symbol"}:
             continue
         prior_order = prior.get("paintOrder", 0)
         if not isinstance(prior_order, int) or (prior_order, prior_index) >= (order, index):
