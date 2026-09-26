@@ -10,6 +10,7 @@ import yaml
 from PIL import Image
 
 from chrona.presentation.model.closure import ClosureError, resolve_render_context
+from chrona.core.identity import content_identity
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.revision_store import ProjectSnapshot
@@ -43,6 +44,41 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
     for manifest in manifests:
         for slide in yaml.safe_load(manifest.read_text(encoding="utf-8"))["slides"]:
             materialize(manifest, slide["id"], tmp_path / manifest.parent.name / slide["id"], write=False)
+
+
+def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp_path):
+    example = tmp_path / "aster-ssd"
+    shutil.copytree(ROOT / "examples/aster-ssd", example)
+    base_path = example / "themes/executive-light.yaml"
+    base_source = base_path.read_bytes()
+    base = yaml.safe_load(base_source)
+    derived = {"version": "chrona/theme/v0.12", "kind": "theme", "id": "executive-light",
+               "body": {"extends": {"id": "executive-light", "path": "executive-light.yaml",
+                                    "sourceContentIdentity": "sha256:" + sha256(base_source).hexdigest(),
+                                    "contentIdentity": content_identity(base)},
+                        "values": {"spacing.s": {"type": "number", "value": 12}}}}
+    derived_source = yaml.safe_dump(derived, sort_keys=False).encode()
+    (example / "themes/derived-light.yaml").write_bytes(derived_source)
+    context_path = example / "contexts/01-overview.yaml"
+    context = yaml.safe_load(context_path.read_bytes())
+    context["body"]["theme"]["address"] = "themes/derived-light.yaml"
+    context["body"]["theme"]["contentIdentity"] = "sha256:" + sha256(derived_source).hexdigest()
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+
+    snapshot = tmp_path / "snapshot"
+    reference, _ = copy_context_closure(example, context_path, snapshot)
+    revision = context["body"]["theme"]["revision"]["token"]
+    assert (snapshot_directory(snapshot, revision) / "themes/executive-light.yaml").read_bytes() == base_source
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "aster-ssd-example"))
+    assert closure.resolved_theme is not None
+    theme_resource = closure.resource("theme")
+    assert theme_resource is not None
+    assert theme_resource.contract.version == "chrona/theme/v0.11"
+    assert theme_resource.content_identity != context["body"]["theme"]["contentIdentity"]
+    materialize(example / "manifest.yaml", "overview", tmp_path / "derived-output", write=True)
+    base_path.write_bytes(base_source + b"\n# tampered\n")
+    with pytest.raises(ValueError, match="E_THEME_INHERITANCE_SOURCE_IDENTITY"):
+        copy_context_closure(example, context_path, tmp_path / "tampered-snapshot")
 
 
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):

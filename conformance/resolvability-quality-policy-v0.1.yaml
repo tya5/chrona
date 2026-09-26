@@ -81,7 +81,7 @@ declaredComputedValues:
     classification: pinned-deliberately
     producer: chrona identity bytes
   - path: src/chrona/presentation/model/theme_inheritance.py
-    function: resolve_draft_theme
+    function: _resolve
     field: contentIdentity
     classification: pinned-deliberately
     producer: chrona identity document

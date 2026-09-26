@@ -14,6 +14,7 @@ import yaml
 
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
+from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, is_derived_theme, theme_base_reference
 from chrona.resources import safe_load
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.scheduling.scheduler import ReferenceScheduler
@@ -78,7 +79,8 @@ def _reference_payload(example: Path, reference: dict[str, Any]) -> bytes:
     return _inside(example, address).read_bytes()
 
 
-def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *, target_token: str | None = None) -> None:
+def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *, target_token: str | None = None,
+                    theme_stack: tuple[str, ...] = ()) -> None:
     token, address = reference.get("revision", {}).get("token"), reference.get("address")
     if not isinstance(token, str) or not isinstance(address, str):
         raise _context_error("reference", "string revision token and address", {"token": token, "address": address})
@@ -88,6 +90,23 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
     target = _inside(snapshot_directory(snapshot, target_token or token), address)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(payload)
+    if reference.get("kind") == "theme":
+        value = safe_load(payload)
+        if is_derived_theme(value):
+            if address in theme_stack:
+                raise ValueError("E_THEME_INHERITANCE_CYCLE")
+            try:
+                base = theme_base_reference(reference, value)
+            except ThemeInheritanceError as error:
+                raise ValueError(error.code) from error
+            try:
+                _copy_reference(example, base, snapshot, theme_stack=(*theme_stack, address))
+            except ValueError as error:
+                if str(error) == "E_CONTENT_IDENTITY":
+                    raise ValueError("E_THEME_INHERITANCE_SOURCE_IDENTITY") from error
+                raise
+            except FileNotFoundError as error:
+                raise ValueError("E_THEME_INHERITANCE_BASE_MISSING") from error
     if reference.get("kind") == "snapshot-ref":
         nested = safe_load(payload).get("body", {}).get("project")
         if not isinstance(nested, dict):
