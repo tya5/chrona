@@ -1,5 +1,7 @@
 # Design — One Layout Placement Model and Shared Obstacles (#466)
 
+**Phase-order correction:** the optional-label-before-relation order below is superseded by the [semantic route-priority correction](issue-466-general-placement-route-priority-correction-2026-09-26.md). Other sections remain in force.
+
 **Status:** the shared-obstacle prerequisite is design-complete. Candidate
 schema, nearest-free search and tail treatment below are an architectural
 direction, not approved for product implementation until a later design

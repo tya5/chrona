@@ -1,0 +1,9 @@
+# Architecture Review — Semantic Route Priority (#466)
+
+**Decision:** approve the [route-priority correction](../../design/issue-466-general-placement-route-priority-correction-2026-09-26.md) for the obstacle-only O2 slice, before continuing product code.
+
+The [intent-oriented Layout specification](../../specification/33-intent-oriented-layout.md) assigns completed geometry and collision policy to Layout; it does not require optional label coordinates to precede semantic routes. Project relation identity and Review-row identity do not change. View still declares label candidates and overflow; Theme still paints text/markers; Scene projects completed primitives; SVG and other adapters do not repair overlap. The single monotone obstacle inventory is retained, and every route/label queries it at its declared phase. The [comparison-host egress correction](../../design/issue-466-general-placement-comparison-egress-correction-2026-09-26.md) remains valid and its exemption remains endpoint-local.
+
+The [#467 lane design](../../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md) needs measured name/delta dimensions for lane allocation, not a premature final label position. Its implementation plan must test route/label priority on packed rows; if a route reservation is needed for lane choice, it requires a separate bounded design slice. This review does not claim #467 feasibility.
+
+Risk: optional labels can move or become suppressed under their existing overflow contract. Acceptance must compare the complete public Scene/SVG batch, inspect rendered output, and ensure dependency visibility is not accidentally traded for unreadable labels. HALCYON 03 dependency count is a focused characterization, not the only gate. The route-quality profile and `automatic` behavior remain unchanged.

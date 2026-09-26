@@ -258,6 +258,14 @@ date and may use a finite, recorded corridor to the comparison-host boundary.
 Only those named siblings are exempt on that corridor; the route after egress
 queries the entire inventory. See the [#466 comparison-egress correction](../design/issue-466-general-placement-comparison-egress-correction-2026-09-26.md).
 
+Text measurement precedes allocation, but optional plot-label *placement*
+follows semantic dependency routing. Required text and rule labels enter the
+shared obstacle inventory before relations. Accepted relation segments then
+constrain optional plot/item/delta labels, followed by relation labels and
+annotations. This finite monotone phase order prioritizes visible semantic
+connections without allowing label/route overlap or changing declared route
+quality and overflow limits. See the [#466 route-priority correction](../design/issue-466-general-placement-route-priority-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
