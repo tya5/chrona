@@ -1,0 +1,7 @@
+# Design Correction — Numerical Boundary Contact in Obstacle Geometry (#466)
+
+**Discovery:** `controller-z/annotations` computes an exposed comparison-host port at `690.8479999999998` while the missing-actual mark's mathematically identical right edge is `690.848`. A strict segment/rectangle interior test treats the 2e-13 difference as penetration. Every initial orthogonal step is blocked, causing a visible direct fallback despite a finite unobstructed route.
+
+Obstacle geometry distinguishes a true positive-length interior crossing from numerical boundary contact. A segment touching or departing a rectangle boundary within an absolute `1e-9` layout-unit tolerance does not collide merely because binary floating-point operations represented the same boundary differently. An interior overlap longer than the tolerance remains a collision. The tolerance is not clearance and cannot make a route pass through a visible mark, label, or box. The rule applies symmetrically to every segment/rectangle collision query, including annotation leaders, semantic relations and diagonal fallbacks; no caller gets a special exemption.
+
+The index remains renderer-neutral and Layout-owned. Port identity and coordinates are not rounded differently for Scene, and the declared bend/detour limits and route fallback policy do not change. Tests must cover exact boundary contact, sub-tolerance representation noise, and a real small interior crossing; the controller-z leader must regain an orthogonal route without new suppression or adapter repair.

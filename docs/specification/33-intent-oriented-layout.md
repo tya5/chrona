@@ -277,6 +277,12 @@ Layout outputs. If the index cannot fit, Layout diagnoses and omits only the
 index; the accepted annotation box/text and purpose-required leader remain.
 See the [#466 index/leader correction](../design/issue-466-general-placement-note-index-leader-correction-2026-09-26.md).
 
+Segment/rectangle obstacle tests treat a `1e-9` layout-unit boundary contact
+as contact, not interior penetration; a longer positive interior crossing
+remains blocked. This handles floating representations of the same completed
+port/mark edge without changing clearance or route policy. See the [#466
+boundary-precision correction](../design/issue-466-general-placement-boundary-precision-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
