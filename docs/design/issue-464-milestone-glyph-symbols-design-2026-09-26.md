@@ -147,6 +147,22 @@ Because Contract 3's outline-mode rule already forces every part to stroke-only 
 - **Specification 07 §5.2 (Tokens):** state that a `symbol` value may be a built-in shape or a multi-part glyph (`viewBox` + `parts`, each part painted from the role or a literal asset colour), that a role's outline-mode paint treatment overrides every part's colour, and that `milestoneSymbolActual`/`milestoneSymbolBaseline` are optional roles falling back to `milestoneSymbol`.
 - **Specification 08 §5.3 (Public-surface primitive closure):** correct the stale "`Symbol` carries a closed `shape` identifier" sentence to state that a `Symbol` primitive carries one completed outline and paint, that one semantic gate may be represented by several sibling `Symbol` primitives sharing `sourceRef`/`purpose` when its shape is a multi-part glyph, and that contrast/perceptibility evaluation treats a prior `Symbol` as possible ground for a later primitive at the same bounds.
 
+## Implementation correction: Contract 4's "no Scene model change" claim
+
+Implementation (`5951dccd`) found that per-part paint (Contract 3) cannot be composed
+purely inside `_complete_primitive_paint` without somewhere to carry a part's own
+paint plan (mode and optional literal colour) from emission time to paint-completion
+time, because that function's only input is the primitive itself plus the shared
+Theme tokens. `ScenePrimitive` therefore gains two additional fields,
+`glyph_paint_mode: str | None` and `glyph_paint_color: str | None`, set only on a
+glyph part's primitive at emission and cleared (`None`) once its paint is composed.
+They are never read by `scene/serialization.py`, so `schemas/scene-v0.6.schema.yaml`
+and the wire format are unchanged, matching this document's `SceneIconPath`-style
+precedent (`icon_vector`/`icon_stroke_scale`, the icon capability's own
+builder-internal, non-serialized fields) rather than inventing a new pattern. This
+is recorded as a correction, not silently folded into Contract 4's text above,
+because Contract 4 explicitly claimed no Scene-model field was needed.
+
 ## Open risks named for the lead/owner
 
 1. **Port-at-visual-edge (Contract 6)** is met by an authoring constraint (full-bleed `viewBox`), not by Layout computing the glyph's true painted extent. Every approved target satisfies it today; a future glyph with internal padding would not, and nothing enforces the constraint at load time. Flagged rather than solved, because enforcing or computing it exactly is a materially larger Layout change than any of the six targets requires.
