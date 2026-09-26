@@ -25,3 +25,26 @@ def test_report_aggregates_per_purpose_and_retains_all_policy_errors(tmp_path):
     assert report["rows"][0]["minimumContrast"] == 1
     assert report["corpusErrors"] == ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
     assert "`row-band`" in render_markdown(report)
+
+
+def test_report_names_measured_primitive_ground_and_channel(tmp_path):
+    path = tmp_path / "examples/demo/generated/slide.scene.json"
+    path.parent.mkdir(parents=True)
+    host = {"id": "host", "kind": "Rect", "bounds": {
+        "inline": 0, "block": 0, "inlineSize": 100, "blockSize": 20,
+    }, "paint": {"fill": "#FFFFFF", "opacity": 1}}
+    mark = {"id": "planned", "kind": "Rect", "visualRole": "planned",
+            "purpose": "task-state", "bounds": {
+                "inline": 10, "block": 5, "inlineSize": 30, "blockSize": 10,
+            }, "paint": {"fill": "#000000", "opacity": 1}}
+    path.write_text(json.dumps(_scene(host, mark)), encoding="utf-8")
+
+    report = report_document(evaluate_committed_scenes((path,), root=tmp_path))
+    finding = next(item["finding"] for item in report["findings"]
+                   if item["finding"]["primitiveId"] == "planned")
+
+    assert finding["groundId"] == "host"
+    assert finding["groundKind"] == "flat"
+    assert finding["groundColor"] == "#FFFFFF"
+    assert finding["paintChannel"] == "fill"
+    assert "`planned` | `planned` | 25.000, 10.000 | `host` | flat | `#FFFFFF` | fill" in render_markdown(report)

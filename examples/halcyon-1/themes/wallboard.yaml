@@ -310,6 +310,7 @@ body:
       marker: arrow
       strokeWidth: stroke-width
     missing-actual:
+      strokeWidth: stroke-width
       pattern: hatch
       strokeWidth: stroke-width
       markHeight: mark-height-content
@@ -326,7 +327,7 @@ body:
       strokeWidth: stroke-width
     variance-behind:
       strokeWidth: stroke-width
-      contrastTreatment: deemphasized
+      contrastTreatment: required
     variance-ahead:
       contrastTreatment: deemphasized
     variance-on-track:
@@ -340,6 +341,7 @@ body:
     as-of:
       strokeWidth: stroke-width
     snapshot:
+      strokeWidth: stroke-width
       markHeight: mark-height-container
       markOffset: mark-offset-start
       markPaintOrder: mark-paint-back
@@ -350,15 +352,21 @@ body:
       markPaintOrder: mark-paint-back
       markCornerRadius: mark-radius-square
     planned:
+      strokeWidth: stroke-width
       markHeight: mark-height-container
       markOffset: mark-offset-start
       markPaintOrder: mark-paint-middle
       markCornerRadius: mark-radius-square
     actual:
+      strokeWidth: stroke-width
       markHeight: mark-height-content
       markOffset: mark-offset-nested
       markPaintOrder: mark-paint-front
       markCornerRadius: mark-radius-rounded
+    network-node:
+      strokeWidth: stroke-width
+    progress-fill:
+      strokeWidth: stroke-width
     summary-bar:
       markHeight: summary-bar-height
     icon-mark:
@@ -395,15 +403,19 @@ body:
     group:launch.fill: category:launch
     group:ops.fill: category:ops
     planned.fill: accent
+    planned.stroke: text
     network-node.fill: surfaceRaised
+    network-node.stroke: text
     network-edge.stroke: textMuted
     critical-edge.stroke: negative
     snapshot.fill: neutral
+    snapshot.stroke: text
     summary-bar.fill: accent
     actual.fill: positive
+    actual.stroke: surface
     milestone.fill: accent
     missing-actual.fill: neutral
-    missing-actual.stroke: neutral
+    missing-actual.stroke: text
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
@@ -413,12 +425,13 @@ body:
     groupHeader.fill: surfaceRaised
     baseline.stroke: neutral
     calendar-closed.fill: surfaceRaised
-    calendar-closed.stroke: surfaceRaised
+    calendar-closed.stroke: neutral
     calendar-exception.fill: warning
     range.fill: warning
     asOf.stroke: warning
     as-of.stroke: warning
     progress-fill.fill: warning
+    progress-fill.stroke: surface
     icon-mark.fill: surface
   metrics:
     text.body.size: size.body

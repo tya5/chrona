@@ -58,6 +58,8 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
         treatment = declared.get("contrastTreatment") if isinstance(declared, Mapping) else None
         if treatment not in _STATE_TEXT_CONTRAST_FLOORS:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
+        if role == "variance-behind" and treatment != "required":
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
         resolved = resolved_roles.get(role)
         token = resolved.get("fill") if isinstance(resolved, Mapping) else None
         value = values.get(token) if isinstance(token, str) else None

@@ -30,6 +30,7 @@ class ContrastClass(str, Enum):
 
     STATE_TEXT = "state-text"
     DECORATION = "decoration"
+    MARK = "mark"
 
 
 class Slot(str, Enum):
@@ -71,12 +72,12 @@ def _binding(semantic_id: str, primitive_kind: str, purpose: str,
 
 _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for binding in (
     # Comparison marks.
-    _binding("planned", "mark", "planned", "planned", "planned"),
-    _binding("actual", "mark", "actual", "actual", "actual"),
-    _binding("snapshot", "mark", "snapshot", "snapshot", "snapshot"),
-    _binding("missingActual", "mark", "missingActual", "missing-actual", "missing-actual"),
-    _binding("summaryBar", "mark", "summary-bar", "summary-bar", "summaryBar"),
-    _binding("progressFill", "mark", "progress-fill", "progress-fill", "progressFill"),
+    _binding("planned", "mark", "planned", "planned", "planned", ContrastClass.MARK),
+    _binding("actual", "mark", "actual", "actual", "actual", ContrastClass.MARK),
+    _binding("snapshot", "mark", "snapshot", "snapshot", "snapshot", ContrastClass.MARK),
+    _binding("missingActual", "mark", "missingActual", "missing-actual", "missing-actual", ContrastClass.MARK),
+    _binding("summaryBar", "mark", "summary-bar", "summary-bar", "summaryBar", ContrastClass.MARK),
+    _binding("progressFill", "mark", "progress-fill", "progress-fill", "progressFill", ContrastClass.MARK),
     _binding("iconMark", "icon", "icon-mark", "icon-mark", "icon-mark"),
     _binding("labelVisual", "icon", "label-visual", "text", "text"),
     # Time decorations.
@@ -118,7 +119,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
     _binding("dependency-critical", "line", "dependency", "dependency-critical", "dependency-critical"),
     _binding("relationLabel", "label", "relation-label", "annotation", "annotation"),
-    _binding("networkNode", "mark", "network-node", "network-node", "network-node"),
+    _binding("networkNode", "mark", "network-node", "network-node", "network-node", ContrastClass.MARK),
     _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
     # Legend, notes and annotations.

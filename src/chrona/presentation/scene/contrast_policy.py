@@ -6,10 +6,11 @@ from math import isfinite
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
-from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
+from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color, sample_linear_gradient
 
 
 DECORATION_FLOOR = 1.10
+MARK_FLOOR = 3.0
 STATE_TEXT_FLOORS = {"required": 4.5, "deemphasized": 3.0}
 
 
@@ -30,6 +31,12 @@ class SceneContrastFinding:
     contrast_ratio: float | None
     floor: float | None
     disposition: str
+    ground_id: str | None = None
+    ground_color: str | None = None
+    paint_channel: str | None = None
+    sample_inline: float | None = None
+    sample_block: float | None = None
+    ground_kind: str | None = None
 
     def as_mapping(self) -> dict[str, Any]:
         return {
@@ -37,6 +44,10 @@ class SceneContrastFinding:
             "purpose": self.purpose, "visualRole": self.visual_role,
             "primitiveId": self.primitive_id, "contrastRatio": self.contrast_ratio,
             "floor": self.floor, "disposition": self.disposition,
+            "groundId": self.ground_id, "groundColor": self.ground_color,
+            "paintChannel": self.paint_channel,
+            "sampleInline": self.sample_inline, "sampleBlock": self.sample_block,
+            "groundKind": self.ground_kind,
         }
 
 
@@ -57,14 +68,15 @@ def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastF
         _require(isinstance(primitives, list), f"missing primitives at {scene_path}")
         for index, primitive in enumerate(primitives):
             _require(isinstance(primitive, Mapping), f"invalid primitive {index} at {scene_path}")
-            findings.extend(_primitive_findings(scene_path, primitive, ground))
+            findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index))
         findings.extend(_absence_findings(scene_path, raw_surface.get("decorationDispositions", [])))
     return tuple(sorted(findings, key=lambda item: (
         item.scene_path, item.purpose, item.visual_role, item.disposition, item.primitive_id or "", item.code,
     )))
 
 
-def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], ground: str | None) -> tuple[SceneContrastFinding, ...]:
+def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,
+                        primitives: list[Any], index: int) -> tuple[SceneContrastFinding, ...]:
     role = primitive.get("visualRole")
     if not isinstance(role, str):
         return ()
@@ -76,28 +88,111 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], ground: s
     if binding.contrast_class == ContrastClass.DECORATION:
         floor, disposition = DECORATION_FLOOR, "enabled"
         code = "E_SCENE_DECORATION_CONTRAST"
+    elif binding.contrast_class == ContrastClass.MARK:
+        floor, disposition = MARK_FLOOR, "required"
+        code = "E_SCENE_MARK_CONTRAST"
     else:
         treatment = primitive.get("contrastTreatment")
-        if treatment not in STATE_TEXT_FLOORS:
+        if treatment not in STATE_TEXT_FLOORS or (role == "variance-behind" and treatment != "required"):
             return (SceneContrastFinding("E_SCENE_STATE_TEXT_CONTRAST_TREATMENT", "error", scene_path,
                                          purpose, role, primitive_id, None, None, "invalid-treatment"),)
         floor, disposition = STATE_TEXT_FLOORS[treatment], treatment
         code = "E_SCENE_STATE_TEXT_CONTRAST"
-    if ground is None:
-        return (SceneContrastFinding("E_SCENE_CONTRAST_GROUND", "error", scene_path, purpose, role,
-                                     primitive_id, None, floor, disposition),)
     paint = primitive.get("paint")
     if not isinstance(paint, Mapping):
         return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose, role,
                                      primitive_id, None, floor, disposition),)
-    color = paint.get("fill") if binding.contrast_class == ContrastClass.STATE_TEXT else (paint.get("fill") or paint.get("stroke"))
     opacity = paint.get("opacity", 1.0)
-    if not is_hex_color(color) or not _opacity(opacity):
+    if not _opacity(opacity):
         return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose, role,
                                      primitive_id, None, floor, disposition),)
-    ratio = composited_contrast(fill=color, opacity=float(opacity), ground=ground)
+    channels = ("fill",) if binding.contrast_class == ContrastClass.STATE_TEXT else ("fill", "stroke")
+    candidates = []
+    unsupported_host: str | None = None
+    for channel in channels:
+        if not is_hex_color(paint.get(channel)):
+            continue
+        if channel == "stroke" and (not isinstance(paint.get("strokeWidth"), (int, float))
+                                    or paint["strokeWidth"] <= 0):
+            continue
+        sample = _sample_point(primitive, channel)
+        ground_id, ground, unsupported, ground_kind = _ground_under(primitive, primitives, index, canvas, sample)
+        if unsupported:
+            unsupported_host = ground_id
+            continue
+        if ground is None:
+            continue
+        ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ground)
+        candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
+    if not candidates:
+        error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_host else "E_SCENE_CONTRAST_PAINT"
+        return (SceneContrastFinding(error_code, "error", scene_path, purpose, role,
+                                     primitive_id, None, floor, disposition, unsupported_host),)
+    ratio, channel, ground_id, ground, sample, ground_kind = max(candidates, key=lambda item: item[0])
     severity = "error" if ratio < floor else "info"
-    return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor, disposition),)
+    return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor,
+                                 disposition, ground_id, ground, channel, *sample, ground_kind),)
+
+
+def _sample_point(primitive: Mapping[str, Any], channel: str) -> tuple[float | None, float | None]:
+    bounds = primitive.get("bounds")
+    if not isinstance(bounds, Mapping):
+        return None, None
+    try:
+        inline = float(bounds["inline"])
+        block = float(bounds["block"])
+        width = float(bounds["inlineSize"])
+        height = float(bounds["blockSize"])
+    except (KeyError, TypeError, ValueError):
+        return None, None
+    if channel == "stroke" and primitive.get("kind") in {"Rect", "Symbol"}:
+        return (inline, block + height / 2) if width else (inline + width / 2, block)
+    return inline + width / 2, block + height / 2
+
+
+def _ground_under(primitive: Mapping[str, Any], primitives: list[Any], index: int,
+                  canvas: str | None,
+                  sample: tuple[float | None, float | None]) -> tuple[str | None, str | None, bool, str]:
+    if sample[0] is None or sample[1] is None:
+        return "canvas", canvas, False, "canvas"
+    x, y = sample
+    order = primitive.get("paintOrder", 0)
+    candidates: list[tuple[int, int, Mapping[str, Any]]] = []
+    for prior_index, prior in enumerate(primitives):
+        if not isinstance(prior, Mapping) or prior.get("kind") != "Rect":
+            continue
+        prior_order = prior.get("paintOrder", 0)
+        if not isinstance(prior_order, int) or (prior_order, prior_index) >= (order, index):
+            continue
+        box, paint = prior.get("bounds"), prior.get("paint")
+        if not isinstance(box, Mapping) or not isinstance(paint, Mapping) or paint.get("fill") is None:
+            continue
+        try:
+            inside = (float(box["inline"]) <= x < float(box["inline"]) + float(box["inlineSize"])
+                      and float(box["block"]) <= y < float(box["block"]) + float(box["blockSize"]))
+        except (KeyError, TypeError, ValueError):
+            inside = False
+        if inside:
+            candidates.append((prior_order, prior_index, prior))
+    if not candidates:
+        return "canvas", canvas, False, "canvas"
+    host = max(candidates, key=lambda item: item[:2])[2]
+    paint = host["paint"]
+    host_id = host.get("id") if isinstance(host.get("id"), str) else None
+    if paint.get("opacity", 1.0) != 1.0:
+        return host_id, None, True, "unsupported"
+    gradient = paint.get("gradient")
+    if gradient is not None:
+        if not isinstance(gradient, Mapping):
+            return host_id, None, True, "unsupported"
+        try:
+            sampled = sample_linear_gradient(gradient, (x, y))
+        except ValueError:
+            return host_id, None, True, "unsupported"
+        return host_id, sampled, False, "gradient-sample"
+    if not is_hex_color(paint.get("fill")):
+        return host_id, None, True, "unsupported"
+    return host_id, str(paint["fill"]), False, "flat"
 
 
 def _absence_findings(scene_path: str, raw: Any) -> tuple[SceneContrastFinding, ...]:

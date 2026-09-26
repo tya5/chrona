@@ -10,7 +10,7 @@ body:
     accent: "#3986E6"
     positive: "#269D79"
     negative: "#B91C1C"
-    warning: "#C8762B"
+    warning: "#8D530F"
     neutral: "#C9CED8"
     insideLabelPlanned: "#000000"
     insideLabelActual: "#000000"

@@ -35,6 +35,9 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tu
                 "code": "E_SCENE_CONTRAST_DOCUMENT", "severity": "error", "scenePath": "/",
                 "purpose": "-", "visualRole": "-", "primitiveId": None,
                 "contrastRatio": None, "floor": None, "disposition": str(error),
+                "groundId": None, "groundColor": None, "paintChannel": None,
+                "sampleInline": None, "sampleBlock": None,
+                "groundKind": None,
             }})
             continue
         records.extend({"scene": relative, "finding": finding.as_mapping()} for finding in findings)
@@ -70,6 +73,7 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     witnesses = sorted(scene for scene, roles in by_scene.items() if roles == decoration_roles)
     corpus_errors = ([] if witnesses else ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"])
     return {"version": "chrona/presentation-contrast/v1", "rows": rows,
+            "findings": ordered,
             "witnessScenes": witnesses, "corpusErrors": corpus_errors,
             "errorCount": sum(item["finding"]["severity"] == "error" for item in ordered) + len(corpus_errors),
             "findingCount": len(ordered)}
@@ -77,17 +81,33 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
 
 def render_markdown(report: Mapping[str, Any]) -> str:
     """Render a reviewable report without hiding failed or absent classifications."""
+    def number(value: float | None) -> str:
+        return "—" if value is None else f"{value:.3f}"
     lines = ["# Presentation Contrast", "", "Generated from committed public Scene evidence by `tools/presentation_contrast.py`.", "",
              "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |",
              "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in report["rows"]:
-        def number(value: float | None) -> str:
-            return "—" if value is None else f"{value:.3f}"
         display = dict(row)
         display.update(floor=number(row["floor"]), minimum=number(row["minimumContrast"]),
                        median=number(row["medianContrast"]))
         lines.append("| {purpose} | `{visualRole}` | {disposition} | {floor} | {slideCount} | {primitiveCount} | {minimum} | {median} | {errorCount} |".format(
             **display))
+    lines.extend(("", "## Per-primitive grounds", "",
+                  "| Scene | Primitive | Role | Sample | Ground | Ground kind | Ground colour | Channel | Ratio | Floor | Severity |",
+                  "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |"))
+    for record in report["findings"]:
+        finding = record["finding"]
+        if finding["primitiveId"] is None:
+            continue
+        sample = (f"{finding['sampleInline']:.3f}, {finding['sampleBlock']:.3f}"
+                  if finding.get("sampleInline") is not None and finding.get("sampleBlock") is not None else "—")
+        lines.append("| `{scene}` | `{primitive}` | `{role}` | {sample} | `{ground}` | {ground_kind} | `{color}` | {channel} | {ratio} | {floor} | {severity} |".format(
+            scene=record["scene"], primitive=finding["primitiveId"], role=finding["visualRole"],
+            sample=sample,
+            ground=finding.get("groundId") or "—", color=finding.get("groundColor") or "—",
+            ground_kind=finding.get("groundKind") or "—",
+            channel=finding.get("paintChannel") or "—", ratio=number(finding["contrastRatio"]),
+            floor=number(finding["floor"]), severity=finding["severity"]))
     lines.extend(("", "## Five-decoration witness", "",
                   *(f"- `{scene}`" for scene in report["witnessScenes"]),
                   *(f"- ERROR `{code}`" for code in report["corpusErrors"]),

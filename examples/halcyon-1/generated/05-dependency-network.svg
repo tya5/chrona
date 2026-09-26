@@ -11,22 +11,22 @@
 <path data-scene-id="network-edge:pdr-structure" data-source-ref="pdr-structure" data-purpose="network-edge" d="M242.325 137.1L266.325 137.1" opacity="1" fill="none" stroke="#5B6B7F" stroke-width="1"/>
 <path data-scene-id="network-edge:structure-avionics" data-source-ref="structure-avionics" data-purpose="network-edge" d="M470.265 137.1L494.265 137.1" opacity="1" fill="none" stroke="#5B6B7F" stroke-width="1"/>
 <path data-scene-id="network-edge:tvac-delivery" data-source-ref="tvac-delivery" data-purpose="network-edge" d="M235.905 257.1L235.905 197.1L266.325 197.1" opacity="1" fill="none" stroke="#5B6B7F" stroke-width="1"/>
-<rect data-scene-id="network-node:pdr" data-source-ref="pdr" data-purpose="network-node" x="60" y="119.1" width="182.325" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:optics" data-source-ref="optics" data-purpose="network-node" x="60" y="179.1" width="172.995" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:payload-tvac" data-source-ref="payload-tvac" data-purpose="network-node" x="60" y="239.1" width="175.905" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:tvac" data-source-ref="tvac" data-purpose="network-node" x="60" y="299.1" width="171.15" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:psr" data-source-ref="psr" data-purpose="network-node" x="60" y="359.1" width="120" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:campaign" data-source-ref="campaign" data-purpose="network-node" x="60" y="419.1" width="124.83" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:structure" data-source-ref="structure" data-purpose="network-node" x="266.325" y="119.1" width="203.94" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:payload-delivery" data-source-ref="payload-delivery" data-purpose="network-node" x="266.325" y="179.1" width="125.01" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:frr" data-source-ref="frr" data-purpose="network-node" x="266.325" y="239.1" width="161.895" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:avionics" data-source-ref="avionics" data-purpose="network-node" x="494.265" y="119.1" width="140.055" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:launch" data-source-ref="launch" data-purpose="network-node" x="494.265" y="179.1" width="157.32" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:bus-test" data-source-ref="bus-test" data-purpose="network-node" x="675.585" y="119.1" width="131.295" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:cdr" data-source-ref="cdr" data-purpose="network-node" x="675.585" y="179.1" width="149.745" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:leop" data-source-ref="leop" data-purpose="network-node" x="675.585" y="239.1" width="178.845" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:integration" data-source-ref="integration" data-purpose="network-node" x="878.43" y="119.1" width="156.3" height="36" opacity="1" fill="#EEF2F7"/>
-<rect data-scene-id="network-node:first-light" data-source-ref="first-light" data-purpose="network-node" x="878.43" y="179.1" width="120" height="36" opacity="1" fill="#EEF2F7"/>
+<rect data-scene-id="network-node:pdr" data-source-ref="pdr" data-purpose="network-node" x="60" y="119.1" width="182.325" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:optics" data-source-ref="optics" data-purpose="network-node" x="60" y="179.1" width="172.995" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:payload-tvac" data-source-ref="payload-tvac" data-purpose="network-node" x="60" y="239.1" width="175.905" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:tvac" data-source-ref="tvac" data-purpose="network-node" x="60" y="299.1" width="171.15" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:psr" data-source-ref="psr" data-purpose="network-node" x="60" y="359.1" width="120" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:campaign" data-source-ref="campaign" data-purpose="network-node" x="60" y="419.1" width="124.83" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:structure" data-source-ref="structure" data-purpose="network-node" x="266.325" y="119.1" width="203.94" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:payload-delivery" data-source-ref="payload-delivery" data-purpose="network-node" x="266.325" y="179.1" width="125.01" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:frr" data-source-ref="frr" data-purpose="network-node" x="266.325" y="239.1" width="161.895" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:avionics" data-source-ref="avionics" data-purpose="network-node" x="494.265" y="119.1" width="140.055" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:launch" data-source-ref="launch" data-purpose="network-node" x="494.265" y="179.1" width="157.32" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:bus-test" data-source-ref="bus-test" data-purpose="network-node" x="675.585" y="119.1" width="131.295" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:cdr" data-source-ref="cdr" data-purpose="network-node" x="675.585" y="179.1" width="149.745" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:leop" data-source-ref="leop" data-purpose="network-node" x="675.585" y="239.1" width="178.845" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:integration" data-source-ref="integration" data-purpose="network-node" x="878.43" y="119.1" width="156.3" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
+<rect data-scene-id="network-node:first-light" data-source-ref="first-light" data-purpose="network-node" x="878.43" y="179.1" width="120" height="36" opacity="1" fill="#EEF2F7" stroke="#101828" stroke-width="1"/>
 <text data-scene-id="title" data-source-ref="title" data-purpose="title-text" x="36" y="74.896" font-family="Noto Sans, sans-serif" font-weight="700" font-size="34" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">HALCYON-1</text>
 <text data-scene-id="network-label:pdr" data-source-ref="pdr" data-purpose="title-text" x="60" y="145.635" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">Preliminary design review</text>
 <text data-scene-id="network-label:optics" data-source-ref="optics" data-purpose="title-text" x="60" y="205.635" font-family="Noto Sans, sans-serif" font-weight="400" font-size="15" font-variant-numeric="proportional-nums" opacity="1" fill="#101828">Imager optics alignment</text>

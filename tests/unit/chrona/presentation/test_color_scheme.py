@@ -27,7 +27,7 @@ def test_theme_validates_each_inside_label_role_against_its_host_mark():
         "values": {}, "roles": {
             "variance-ahead": {"contrastTreatment": "deemphasized"},
             "variance-on-track": {"contrastTreatment": "required"},
-            "variance-behind": {"contrastTreatment": "deemphasized"},
+            "variance-behind": {"contrastTreatment": "required"},
             "missing-actual-cell": {"contrastTreatment": "required"},
         }, "colorBindings": {
             "planned.fill": "accent", "actual.fill": "positive", "snapshot.fill": "neutral",
@@ -51,7 +51,7 @@ def test_theme_state_text_requires_declared_treatment_and_composited_floor():
         "values": {}, "roles": {
             "variance-ahead": {"contrastTreatment": "deemphasized"},
             "variance-on-track": {"contrastTreatment": "required"},
-            "variance-behind": {"contrastTreatment": "deemphasized"},
+            "variance-behind": {"contrastTreatment": "required"},
             "missing-actual-cell": {"contrastTreatment": "required"},
         }, "colorBindings": {
             "variance-ahead.fill": "positive", "variance-on-track.fill": "textMuted",
@@ -59,6 +59,10 @@ def test_theme_state_text_requires_declared_treatment_and_composited_floor():
         }, "metrics": {},
     }}
     resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    theme["body"]["roles"]["variance-behind"]["contrastTreatment"] = "deemphasized"
+    with pytest.raises(ColorSchemeError, match="E_SCHEME_STATE_TEXT_TREATMENT"):
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    theme["body"]["roles"]["variance-behind"]["contrastTreatment"] = "required"
     del theme["body"]["roles"]["variance-ahead"]["contrastTreatment"]
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
