@@ -2,7 +2,7 @@
 
 # Release Review — Committed Capability Slides (#434)
 
-**Reviewed product:** I434-1 `3a3d549b` (reports) and I434-2 `a3edf7ab` (slides) on `main`. **Design:** [design](../../design/issue-434-committed-capability-slides-design-2026-09-27.md), [architecture review](issue-434-committed-capability-slides-architecture-review-2026-09-27.md). This review also serves as both slice reviews.
+**Reviewed product:** I434-1 `3a3d549b` (reports), I434-2 `a3edf7ab` (slides), and fixes `fb9edf53` (report refresh) and `5919646e` (a contrast-valid group-band fill, via a new Controller Z `capabilities-band` category) on `main`. **Design:** [design](../../design/issue-434-committed-capability-slides-design-2026-09-27.md), [architecture review](issue-434-committed-capability-slides-architecture-review-2026-09-27.md). This review also serves as both slice reviews.
 
 ## Evidence and byte review
 
@@ -18,6 +18,7 @@
 - **Tests:** [`test_capability_slides.py`](../../../tests/integration/test_capability_slides.py) has one test per capability, read from the committed Scenes. The date-column test re-renders with a 54-character title and asserts `column:Finish` does not move. [`test_presentation_coverage.py`](../../../tests/unit/tools/test_presentation_coverage.py) and [`test_corpus_coverage.py`](../../../tests/unit/tools/test_corpus_coverage.py) cover the reports.
 - **Test-helper correction:** `test_no_text_leaves_the_viewport` measured every SVG text with the Theme's *first* font family. With a monospace token first it mis-measured Noto Sans labels. It now keys metrics by each text's own family and weight.
 - **Corpus counts:** 24 slides, 200 axis labels and 8 hosted DVT labels, updated deliberately.
+- **Corrections after the first CI run:** the committed contrast report was stale, and it also carried 7 decoration contrast errors from the first group-band colour: orange was 1.087 against the canvas and 1.027 under the stripes, and a neutral grey failed the slip-delta text floor at 3.94. The final `#D8DDE6` band clears all three, and `presentation_contrast --check` is PASS.
 - **Checks:** full `pytest` 1244 passed, 22 skipped; conformance PASS; PNG of the new slide inspected.
 
 ## Literal issue acceptance
@@ -35,7 +36,7 @@
 
 ## Programme-level criteria (optional)
 
-- CI: pending.
+- CI: [four-job CI run 36255206852](https://github.com/tya5/chrona/actions/runs/36255206852) on `2aa0debc`, green.
 
 ## Architecture conclusion
 
