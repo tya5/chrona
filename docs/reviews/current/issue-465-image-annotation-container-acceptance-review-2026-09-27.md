@@ -9,11 +9,11 @@ and its [amendment](issue-465-image-annotation-container-architecture-review-ame
 [implementation plan](../../planning/active/issue-465-image-annotation-container-implementation-plan-2026-09-27.md)
 and its [amendment](../../planning/active/issue-465-image-annotation-container-implementation-plan-amendment-2026-09-27.md).
 **Base:** `origin/main` at `3aa616c3` (rebased before implementation; contains
-#488). **Commits:** `908c6ca3` (Theme token, closure fix, Layout nine-slice
-geometry), `9bd5bb10` (Scene `ScenePaint.image`, adapters), `267232bd`
+#488). **Commits:** `cfeabd39` (Theme token, closure fix, Layout nine-slice
+geometry), `eafaf587` (Scene `ScenePaint.image`, adapters), `350205a9`
 (closure read-ledger fix, Scene delivery ownership, contrast/perceptibility
-unit proofs), `733d7f83` (evidence corpus counts). **CI:** pending (the lead
-fills in the run link after push).
+unit proofs), `286ec456` (evidence corpus counts). **CI:** [run 36274657510](https://github.com/tya5/chrona/actions/runs/36274657510)
+on `1457f80f` (which adds the PNG reproducibility test), green.
 
 ## Literal issue acceptance
 
@@ -44,8 +44,6 @@ fills in the run link after push).
 - **Scene:** the container is exactly the `Rect`/`Symbol` primitive it was before #465; `ScenePaint.image` is additive, parallel to the existing `gradient` fill mode. Contrast and perceptibility policy modules are byte-unchanged.
 - **Adapters:** SVG paints each completed tile as one nested clipping `<svg>`/`<image>` pair, reusing the existing raster-icon base64 embedding; PNG stays derived from SVG via resvg. No adapter computes a tile boundary or stretch ratio.
 - **Closure:** one real gap was found and fixed during implementation — `RenderClosure.icon_assets` was selected only from a View's `visuals`, which would have made a Theme-only container-image reference always fail even inside a correctly pinned Context. `_theme_container_image_references` (both the immutable-Context and Draft resolution paths) closes this without widening what a View can select.
-- **Release gates:** focused tests (`tests/unit/chrona/presentation`, `tests/integration`, `tests/cli`, `tests/acceptance`): 1105 passed, 24 skipped, 0 failed. `conformance/run_conformance.py`: PASS (all checks, including `scene-primitive-delivery`, `semantic-realization-coverage`, `presentation-coverage`, `diagnostic-inventory`, `declared-value-inventory`, all refreshed for this change). `tools.regenerate_public_examples --write` then `--check`: 26 slides, reproducible, only the one new slide's bytes are new.
+- **Release gates:** focused tests (`tests/unit/chrona/presentation`, `tests/integration`, `tests/cli`, `tests/acceptance`): 1105 passed, 24 skipped, 0 failed. `conformance/run_conformance.py`: PASS (all checks, including `scene-primitive-delivery`, `semantic-realization-coverage`, `presentation-coverage`, `diagnostic-inventory`, `declared-value-inventory`, all refreshed for this change). `tools.regenerate_public_examples --check`: 28 slides after integration, reproducible; only the new slide's bytes are new.
 
-This review supports closing #465 pending the lead's disposition on the
-named #466 contrast-classification gap (a follow-up, not a blocker to this
-issue's own literal rows) and CI.
+Lead disposition: all five rows met; #465 closes. The #466 contrast-classification gap for `annotation-note-box`/`annotation-note-text` is tracked by #466's own remaining C3/C4 work.
