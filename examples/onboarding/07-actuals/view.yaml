@@ -1,0 +1,21 @@
+version: chrona/view/v0.21
+kind: view
+id: onboarding-progress
+body:
+  surface: table-timeline
+  rows: {mode: automatic}
+  selection: {include: {types: [span, point]}}
+  grouping: {by: none}
+  ordering: {by: plannedStart, direction: ascending, tieBreak: id}
+  window: {mode: selected-planned}
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets: [planned, actual, progress]
+  progressFill: {source: actual}
+  visibility:
+    labels: {placement: plot, content: [title], side: auto, overflow: suppress}
+    relations: {mode: semantic, overflow: suppress}
+    annotations: none

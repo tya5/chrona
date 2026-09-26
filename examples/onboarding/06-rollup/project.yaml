@@ -1,0 +1,12 @@
+version: timeline/v0.7
+project: {id: onboarding-rollup, title: 6 - Hierarchy and rollup, calendar: team-week}
+calendars:
+  team-week: {working_days: [mon, tue, wed, thu, fri], exceptions: [{date: '2026-10-12', working: false}]}
+objects:
+  phase: {type: group, title: Delivery phase, schedule: {mode: rollup}}
+  design: {type: task, title: Design, parent: phase, schedule: {mode: fixed-span, start: '2026-10-01', end: '2026-10-05'}}
+  build: {type: task, title: Build, parent: phase, schedule: {mode: scheduled, amount: 5wd, constraints: {end: {max: '2026-10-19'}}}}
+  release: {type: gate, title: Release, deadline: '2026-10-21', schedule: {mode: fixed-point, at: '2026-10-20'}}
+relations:
+  - {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 2wd}
+  - {id: build-to-release, type: dependency, from: {object: build, endpoint: end}, to: {object: release, endpoint: at}, lag: 0d}

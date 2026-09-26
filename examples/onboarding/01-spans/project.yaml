@@ -1,0 +1,6 @@
+version: timeline/v0.7
+project: {id: onboarding-spans, title: 1 - Fixed spans}
+objects:
+  design: {type: task, title: Design, schedule: {mode: fixed-span, start: '2026-10-01', end: '2026-10-05'}}
+  build: {type: task, title: Build, schedule: {mode: fixed-span, start: '2026-10-08', end: '2026-10-16'}}
+relations: []

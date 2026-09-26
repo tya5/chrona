@@ -59,6 +59,30 @@ def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
 
 
+def test_five_line_derived_theme_changes_visible_draft_and_closes_as_ordinary_theme():
+    root = _root() / "examples/aster-ssd"
+    inputs = {"project_path": root / "project.yaml", "view_path": root / "views/01-overview.yaml",
+              "scheme_path": root / "schemes/executive-light.yaml", "layout_path": root / "layouts/executive-review.yaml",
+              "actual_path": root / "actual.yaml"}
+    base = resolve_draft_render(**inputs, theme_path=root / "themes/executive-light.yaml")
+    derived = resolve_draft_render(**inputs, theme_path=root / "themes/onboarding-variation.yaml")
+    assert derived.closure.resource("theme").contract.version == "chrona/theme/v0.11"
+    assert derived.closure.resource("theme").content_identity != base.closure.resource("theme").content_identity
+
+    def rendered(draft):
+        return render_review(RenderRequest(draft.closure, draft.asset_root, ReferenceScheduler(),
+                                           asset_root=draft.asset_root, draft_auto_block=draft.auto_block))
+
+    base_result, derived_result = rendered(base), rendered(derived)
+    assert base_result.artifact.content != derived_result.artifact.content
+    base_scene, derived_scene = (json.loads(serialize_scene(result.scene)) for result in (base_result, derived_result))
+    def font_sizes(scene):
+        return {item["id"]: item["textLayout"]["fontSize"] for item in scene["surfaces"][0]["primitives"]
+                if item["id"] in {"title", "column:Work package / gate"}}
+    assert font_sizes(base_scene) == {"title": 24.0, "column:Work package / gate": 14.0}
+    assert font_sizes(derived_scene) == {"title": 30.0, "column:Work package / gate": 16.0}
+
+
 def test_draft_scene_records_only_real_draft_resource_identities():
     scene = render_review(_draft_request()).scene
     document = json.loads(serialize_scene(scene))

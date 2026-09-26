@@ -1,0 +1,9 @@
+version: timeline/v0.7
+project: {id: onboarding-relations, title: 3 - Dependency and lag}
+objects:
+  design: {type: task, title: Design, schedule: {mode: fixed-span, start: '2026-10-01', end: '2026-10-05'}}
+  build: {type: task, title: Build, schedule: {mode: fixed-span, start: '2026-10-08', end: '2026-10-16'}}
+  release: {type: gate, title: Release, schedule: {mode: fixed-point, at: '2026-10-20'}}
+relations:
+  - {id: design-to-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 2d}
+  - {id: build-to-release, type: dependency, from: {object: build, endpoint: end}, to: {object: release, endpoint: at}, lag: 0d}

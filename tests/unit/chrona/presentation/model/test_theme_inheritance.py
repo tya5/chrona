@@ -4,7 +4,7 @@ import yaml
 import pytest
 
 from chrona.core.identity import content_identity
-from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, resolve_draft_theme, resolve_snapshot_theme
+from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, _resolve, resolve_draft_theme, resolve_snapshot_theme
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.snapshot_paths import snapshot_directory
 
@@ -64,3 +64,32 @@ def test_derived_theme_resolves_from_same_immutable_snapshot(tmp_path: Path):
     (root / "themes/base.yaml").write_text("changed", encoding="utf-8")
     with pytest.raises(ThemeInheritanceError) as error: resolve_snapshot_theme(derived, reference, reader)
     assert error.value.code == "E_THEME_INHERITANCE_SOURCE_IDENTITY"
+
+
+def test_recursive_derived_theme_uses_effective_base_identity(tmp_path: Path):
+    base = _base(); source = yaml.safe_dump(base).encode(); (tmp_path / "base.yaml").write_bytes(source)
+    middle = _derived(base, source); middle_source = yaml.safe_dump(middle).encode()
+    (tmp_path / "middle.yaml").write_bytes(middle_source)
+    effective_middle = resolve_draft_theme(tmp_path / "middle.yaml")
+    top = _derived(effective_middle, middle_source, path="middle.yaml")
+    top["id"] = "top"; top["body"]["extends"]["id"] = "derived"
+    top["body"]["values"]["spacing.m"]["value"] = 30
+    (tmp_path / "top.yaml").write_text(yaml.safe_dump(top), encoding="utf-8")
+    assert resolve_draft_theme(tmp_path / "top.yaml")["body"]["values"]["spacing.m"]["value"] == 30
+
+
+def test_theme_source_cycle_rejects_before_attempting_an_untrusted_pin():
+    source = _base(); raw = yaml.safe_dump(source).encode()
+    derived = _derived(source, raw)
+    with pytest.raises(ThemeInheritanceError) as error:
+        _resolve(derived, "derived.yaml", lambda _key, _declaration: (derived, _pin(raw), "derived.yaml"))
+    assert error.value.code == "E_THEME_INHERITANCE_CYCLE"
+
+
+def test_draft_theme_rejects_symlink_escape(tmp_path: Path):
+    inside = tmp_path / "inside"; inside.mkdir()
+    outside = tmp_path / "outside.yaml"; base = _base(); source = yaml.safe_dump(base).encode()
+    outside.write_bytes(source); (inside / "base.yaml").symlink_to(outside)
+    (inside / "derived.yaml").write_text(yaml.safe_dump(_derived(base, source)), encoding="utf-8")
+    with pytest.raises(ThemeInheritanceError) as error: resolve_draft_theme(inside / "derived.yaml")
+    assert error.value.code == "E_THEME_INHERITANCE_PATH"
