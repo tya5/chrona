@@ -8,5 +8,6 @@ body:
     theme: {id: chrona-builtin-editorial, kind: theme, path: themes/editorial.yaml}
     colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, path: schemes/editorial.yaml}
     layout: {id: chrona-builtin-editorial, kind: layout-profile, path: layouts/editorial.yaml}
+    detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, path: profiles/editorial-detail.yaml}
   compatibleColorSchemes:
     - {id: chrona-builtin-editorial, kind: color-scheme, path: schemes/editorial.yaml}

@@ -42,3 +42,10 @@ entries:
       theme: {id: chrona-builtin-editorial, kind: theme, sourceRoot: presets/bundles/editorial, sourcePath: theme.yaml}
       colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, sourceRoot: presets/bundles/editorial, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}
+  - id: technical-print
+    gallerySet: generated-design-directions
+    members:
+      view: {id: chrona-preset-technical-print, kind: view, sourceRoot: presets/bundles/technical-print, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-technical-print, kind: theme, sourceRoot: presets/bundles/technical-print, sourcePath: theme.yaml}
+      colorScheme: {id: chrona-builtin-technical-print, kind: color-scheme, sourceRoot: presets/bundles/technical-print, sourcePath: scheme.yaml}
+      layout: {id: chrona-builtin-technical-print, kind: layout-profile, sourceRoot: presets/bundles/technical-print, sourcePath: layout.yaml}

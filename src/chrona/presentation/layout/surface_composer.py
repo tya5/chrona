@@ -2631,6 +2631,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 max(0.0, float(timeline_end - row.bounds.block)),
             ))
     for mark in marks:
+        # A legend swatch drawn as the real point-shaped primitive (#427) lives in
+        # the legend slot below the plot by construction, not in the timeline; it
+        # is never meant to fit inside `timeline_end` and checking it here always
+        # reports a spurious overflow with `available` clamped to 0. The legend's
+        # own row-height accounting is the swatch's actual containment check.
+        if mark.placement_id.startswith("legend-swatch:"):
+            continue
         if mark.bounds.block + mark.bounds.block_size > timeline_end + GEOMETRY_TOLERANCE:
             fit_warnings.append(FitWarning(
                 "W_LAYOUT_MARK_OVERFLOW", mark.placement_id, mark.source_ref,

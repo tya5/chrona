@@ -1,8 +1,11 @@
 from hashlib import sha256
+import json
 from pathlib import Path
+import sys
 
 import yaml
 
+from chrona.app.cli import main
 from chrona.presentation.contracts import ClosureIdentity, PresentationPresetContract, parse_contract
 
 
@@ -39,6 +42,28 @@ def test_editorial_corpus_copy_is_byte_identical_to_the_packaged_bundle():
         bundle_path = bundle / bundle_name
         assert bundle_path.is_file() and corpus_path.is_file()
         assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
+
+
+def test_legend_swatch_marks_are_never_checked_against_the_timeline_bottom(tmp_path, monkeypatch, capsys):
+    """A legend swatch drawn as a point-shaped mark (#427, e.g. a milestone diamond)
+    lives in the legend slot below the plot by construction. It must never be
+    checked against the timeline's own bottom edge, which always reports a
+    spurious W_LAYOUT_MARK_OVERFLOW with available block clamped to 0 -- found
+    building the Editorial and Technical print presets' legends (I429-2)."""
+    output = tmp_path / "editorial.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(ROOT / "examples/halcyon-1/project.yaml"),
+        "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"),
+        "--view", str(ROOT / "examples/halcyon-1/views/editorial.yaml"),
+        "--theme", str(ROOT / "examples/halcyon-1/themes/editorial.yaml"),
+        "--scheme", str(ROOT / "examples/halcyon-1/schemes/editorial.yaml"),
+        "--layout", str(ROOT / "examples/halcyon-1/layouts/editorial.yaml"),
+        "--detail", str(ROOT / "examples/halcyon-1/profiles/editorial-detail.yaml"),
+        "--output", str(output),
+    ])
+    main()
+    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    assert not [item for item in warnings if item.get("code") == "W_LAYOUT_MARK_OVERFLOW"]
 
 
 def test_editorial_library_entry_matches_the_bundle_resources():

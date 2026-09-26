@@ -68,3 +68,8 @@ slides:
     context: contexts/13-gallery-editorial.yaml
     expectedSvg: generated/13-gallery-editorial.svg
     expectedScene: generated/13-gallery-editorial.scene.json
+  - id: gallery-technical-print
+    evidence: "Mission brief under the packaged Technical print preset (#429): black-on-white ground, numbered rows, square-ended outline bars with a solid inner actual bar, and a hairline two-tier axis band."
+    context: contexts/14-gallery-technical-print.yaml
+    expectedSvg: generated/14-gallery-technical-print.svg
+    expectedScene: generated/14-gallery-technical-print.scene.json
