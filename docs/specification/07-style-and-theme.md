@@ -187,6 +187,15 @@ the *selected profile* is governed by Specification 63's omission/fidelity
 contract instead of this load-time error. The complete selected contract and
 resource migration are recorded in the [#478 design](../design/issue-478-declared-treatment-visibility-design-2026-09-26.md).
 
+The [#478 role-admission correction](../design/issue-478-role-admission-rebase-correction-2026-09-27.md)
+applies that contract to the current finite role vocabulary. Applicability of
+an `annotationContainer` binding is checked on its annotation-box role; the
+finite token value and image-catalog asset still follow the existing Theme
+schema, `ThemeTokenView`, and Specification 64 closure rules. This admission
+gate does not reparse the nested token or move Layout geometry into Scene.
+Direct role declarations and Scheme-inserted colour targets retain their
+respective exact source pointers when applicability fails.
+
 ### 5.3 Inheritance and resolution
 
 Theme composition is deterministic:

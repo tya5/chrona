@@ -1,5 +1,9 @@
 # Design — Declared Treatment Visibility (#478)
 
+**I478-3 rebase:** the [2026-09-27 correction](issue-478-role-admission-rebase-correction-2026-09-27.md)
+supersedes the historical 15-Theme/21-slide census and specifies the now-live
+annotation-container consumer boundary. Other decisions below remain in force.
+
 **Status:** accepted for implementation planning in the [whole-architecture review](../reviews/current/issue-478-declared-treatment-visibility-architecture-review-2026-09-26.md). **Predecessors:** [design plan](../planning/active/issue-478-declared-treatment-visibility-design-plan-2026-09-26.md), [reproduction](../research/presentation/issue-478-declared-treatment-visibility-reproduction-2026-09-26.md). **Related:** Specifications 07, 08, 50, 63 and 64; #400/#449's no-silent-loss rule. This issue does not make presets select a visual profile (#479).
 
 ## Use cases and accepted distinctions

@@ -1,5 +1,10 @@
 # Architecture Review — Declared Treatment Visibility (#478)
 
+**Later I478-3 review:** the [2026-09-27 architecture review](issue-478-role-admission-rebase-architecture-review-2026-09-27.md)
+replaces the historical public-resource count and checks #465/#466's newer
+annotation-container and role contracts. This earlier review remains the
+record for I478-1/2 and the original design decision.
+
 **Decision:** design approved for implementation planning, subject to the atomic resource migration and structural coverage gates below. **Reviewed design:** [#478 contract](../../design/issue-478-declared-treatment-visibility-design-2026-09-26.md). **Evidence:** [reproduction](../../research/presentation/issue-478-declared-treatment-visibility-reproduction-2026-09-26.md). This is a design review, not issue acceptance.
 
 ## Whole-system consistency
