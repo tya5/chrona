@@ -1,6 +1,6 @@
 # Slice Review — I488-1 Member Labels in Their Own Row Band (#488)
 
-**Design:** [#488 design](../../design/issue-488-member-label-row-band-design-2026-09-27.md). **CI:** pending.
+**Design:** [#488 design](../../design/issue-488-member-label-row-band-design-2026-09-27.md). **CI:** [run 36269962926](https://github.com/tya5/chrona/actions/runs/36269962926) on `bac5a6c7`, green.
 
 ## Change
 
