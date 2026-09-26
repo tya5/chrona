@@ -246,12 +246,15 @@ Obsolete conformance fixtures and tests are rewritten, not kept as compatibility
 3. Row/column/grid/flow/overlay examples contain no authoritative coordinates.
 4. Built-in examples contain no literal routine spacing.
 5. One stable-ID override leaves all unspecified base nodes unchanged.
-6. Constraint cycles, missing measurements, unknown tokens/references, contradictory
-   bounds, and required overflow diagnose before Scene claims completion.
+6. Constraint cycles, missing measurements, unknown tokens/references, and
+   structurally contradictory bounds diagnose before Scene claims completion.
+   A shortage against an otherwise valid measured allocation completes a
+   visible placement and warning under the fit-completion rule below.
 7. Layout changes do not alter Project/Schedule/Actual/View facts.
 8. Human and AI proposals use the same schema, resolver, solver, and manifest.
 9. No old layout schema/runtime/settings authority remains reachable.
-# Fit completion (Issue #457)
+
+## 13. Fit completion (Issue #457)
 
 For a valid Layout Profile and positive viewport, normal-flow measurement and
 arrangement MUST complete finite placements even when fixed tracks, content
