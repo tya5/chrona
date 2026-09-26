@@ -16,16 +16,21 @@ from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, for
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
-    nearest_box_port, place_annotation_rail, project_annotation_box,
+    annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
     resolve_annotation_anchor, route_annotation_leader,
 )
+from chrona.presentation.layout.annotation_topology import (
+    AnnotationRouteTrial, local_route_bounds, route_annotation_candidate, visible_segments,
+)
 from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import LabelObstacle, LabelRect, LabelRequest, place_label
+from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
-    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
 )
 
@@ -1319,6 +1324,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             LabelRect(x, timeline_bounds[1], 0.0, body_size), ("end", "start", "below"),
             "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
             visible_fallback_side="above",
+            rule_host_obstacle_id="as-of",
         ))
     if contract.labels.enabled:
         for review_row in review_rows:
@@ -1393,99 +1399,142 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
                                                    request.surface_content.label_overflow))
 
+    # One monotonically growing Layout inventory is shared by labels, semantic
+    # routes and annotations. Background bands deliberately do not enter it.
+    surface_obstacles = SurfaceObstacleIndex()
+
+    def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
+        inline, block, inline_size, block_size = _bounds(bounds)
+        if inline_size > 0 and block_size > 0:
+            surface_obstacles.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
+                                                  ObstacleRect(inline, block, inline + inline_size, block + block_size)))
+
+    def register_path(placement_id: str, obstacle_class: str, region_id: str,
+                      points: tuple[tuple[float, float], ...], *, stroke_width: float = 0.0) -> None:
+        for index, (source, target) in enumerate(zip(points, points[1:])):
+            if source != target:
+                surface_obstacles.add(SurfaceObstacle(f"{placement_id}:segment:{index}", obstacle_class,
+                                                      region_id, ObstacleSegment(source, target, stroke_width)))
+
+    def register_port(placement_id: str, point: tuple[float, float], region_id: str) -> None:
+        surface_obstacles.add(SurfaceObstacle(placement_id, "port", region_id,
+                                              ObstacleRect(point[0] - 0.01, point[1] - 0.01,
+                                                           point[0] + 0.01, point[1] + 0.01)))
+
+    for mark in marks:
+        register_rect(mark.placement_id, "mark", "timeline", mark.bounds)
+    for placed_text in text:
+        if placed_text.required and placed_text.overflow != "suppressed":
+            register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
+    for shape in shapes:
+        if shape.placement_id == "as-of" and len(shape.points) >= 2:
+            surface_obstacles.add(SurfaceObstacle(shape.placement_id, "rule", "timeline",
+                                                  ObstacleSegment(shape.points[0], shape.points[1])))
+
     timeline_rect = LabelRect(*timeline_bounds)
-    for label_request in label_requests:
-        label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
-        label_metrics = metric_for(label_request.typography_role)
-        font_size, line_height = label_treatment.font_size, label_treatment.line_height
-        visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
-        handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
-        leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
-        trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
-        available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
-        lines = (wrap_text(label_request.content, available_inline=available,
-                           font_size=float(font_size), font_metrics=label_metrics,
-                           letter_spacing=float(label_treatment.letter_spacing),
-                           text_transform=label_treatment.transform)
-                 if label_request.wrap == "allow" else (label_request.content,))
-        placement_bounds = label_request.bounds or timeline_rect
-        text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
-                                            letter_spacing=float(label_treatment.letter_spacing),
-                                            text_transform=label_treatment.transform) for line in lines)
-        label_size = (leading + text_width + trailing,
-                      float(font_size) * float(line_height) * len(lines))
-        # Mark labels remain subject to every completed mark.  ``place_label``
-        # alone exempts this request's declared host for an ``inside``
-        # candidate; a comparison sibling or another row is never an implicit
-        # host.
-        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
-        obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
-                         if item.required and item.overflow != "suppressed")
-        candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
-                                 obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                 inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                                 required=label_request.overflow == "diagnose", overflow=label_request.overflow,
-                                 visible_fallback_side=label_request.visible_fallback_side)
-                     if label_request.candidates else None)
-        provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
-                                 content=label_request.content, inline=0, baseline_block=float(font_size),
-                                 typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
-                                 font_metrics=request.font_metrics, collision_region=label_request.collision_region,
-                                 collision_domain=label_request.collision_domain)
-        fallback_ladder = label_request.candidates + (
-            (label_request.visible_fallback_side,)
-            if label_request.visible_fallback_side is not None
-            and label_request.visible_fallback_side not in label_request.candidates else ())
-        if candidate is None:
-            ladder = fallback_ladder + (("suppress",) if label_request.overflow == "suppress" else ())
-            if not ladder:
-                raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
-            text.append(replace(provisional, overflow="suppressed", required=False,
-                                fallback_ladder=ladder,
-                                selected_rung="suppress"))
-            placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
-                                                         ladder, "suppress", "suppressed"))
-            diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
-        else:
-            host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
-            slot = by_source.get(label_request.collision_domain.slot)
-            slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
-            crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y
-                            or candidate.bounds.right > slot_bounds.right
-                            or candidate.bounds.bottom > slot_bounds.bottom)
-            visible_overflow = candidate.visible_overflow or crosses_slot
-            placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
-                                   content=provisional.content, inline=candidate.bounds.x + leading,
-                                   baseline_block=candidate.bounds.y + float(font_size),
-                                   typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
-                                   font_metrics=request.font_metrics, collision_region=provisional.collision_region,
-                                   collision_domain=provisional.collision_domain,
-                                   overflow="visible-overflow" if visible_overflow else "fit",
-                                   lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
-                                  host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
-                                  paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
-                                  if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
-            text.append(placed_text)
-            if visible_overflow:
-                visible_label_overflows.append((placed_text, slot_bounds))
-            if visuals:
-                if not hasattr(label_metrics, "cap_height_at"):
-                    raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
-                cap_height = float(label_metrics.cap_height_at(float(font_size)))
-                for visual, icon, width, gap in visuals:
-                    inline = (candidate.bounds.x if visual.side == "leading"
-                              else candidate.bounds.x + leading + text_width + trailing - gap - width)
-                    bounds = Rect(Decimal(str(inline)), Decimal(str(placed_text.baseline[1] - cap_height
-                                                                       + (cap_height - float(font_size)) / 2)),
-                                  Decimal(str(width)), Decimal(str(float(font_size))))
-                    candidate_icons.append(IconPlacement(f"visual:{placed_text.placement_id}:{visual.side}",
-                                                         placed_text.source_ref, visual.source_ref, icon.icon_id,
-                                                         icon.kind, icon.content_identity, icon.viewport, icon.payload,
-                                                         icon.alternative, visual.decorative, bounds, "labelVisual",
-                                                         width / icon.viewport[0], text_slot(placed_text),
-                                                         paint_order=placed_text.paint_order))
-            placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
-                                                         fallback_ladder, candidate.side, "placed"))
+    def place_requested_labels(requests: tuple[LabelRequest, ...]) -> None:
+        for label_request in requests:
+            label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
+            label_metrics = metric_for(label_request.typography_role)
+            font_size, line_height = label_treatment.font_size, label_treatment.line_height
+            visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
+            handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
+            leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
+            trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
+            available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
+            lines = (wrap_text(label_request.content, available_inline=available,
+                               font_size=float(font_size), font_metrics=label_metrics,
+                               letter_spacing=float(label_treatment.letter_spacing),
+                               text_transform=label_treatment.transform)
+                     if label_request.wrap == "allow" else (label_request.content,))
+            placement_bounds = label_request.bounds or timeline_rect
+            text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
+                                                letter_spacing=float(label_treatment.letter_spacing),
+                                                text_transform=label_treatment.transform) for line in lines)
+            label_size = (leading + text_width + trailing,
+                          float(font_size) * float(line_height) * len(lines))
+            # Mark labels remain subject to every completed mark.  ``place_label``
+            # alone exempts this request's declared host for an ``inside``
+            # candidate; a comparison sibling or another row is never an implicit
+            # host.
+            candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
+                                     obstacles=surface_obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                     inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                                     required=label_request.overflow == "diagnose", overflow=label_request.overflow,
+                                     visible_fallback_side=label_request.visible_fallback_side,
+                                     rule_host_obstacle_id=label_request.rule_host_obstacle_id,
+                                     search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
+                                     classes=(("mark", "text", "label-visual", "rule")
+                                              if label_request.rule_host_obstacle_id is not None
+                                              else ("mark", "text", "label-visual", "dependency-route")))
+                         if label_request.candidates else None)
+            provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
+                                     content=label_request.content, inline=0, baseline_block=float(font_size),
+                                     typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
+                                     font_metrics=request.font_metrics, collision_region=label_request.collision_region,
+                                     collision_domain=label_request.collision_domain)
+            fallback_ladder = label_request.candidates + (
+                (label_request.visible_fallback_side,)
+                if label_request.visible_fallback_side is not None
+                and label_request.visible_fallback_side not in label_request.candidates else ())
+            if candidate is None:
+                ladder = fallback_ladder + (("suppress",) if label_request.overflow == "suppress" else ())
+                if not ladder:
+                    raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
+                text.append(replace(provisional, overflow="suppressed", required=False,
+                                    fallback_ladder=ladder,
+                                    selected_rung="suppress"))
+                placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
+                                                             ladder, "suppress", "suppressed"))
+                diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
+            else:
+                host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
+                slot = by_source.get(label_request.collision_domain.slot)
+                slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
+                crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y
+                                or candidate.bounds.right > slot_bounds.right
+                                or candidate.bounds.bottom > slot_bounds.bottom)
+                visible_overflow = candidate.visible_overflow or crosses_slot
+                placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
+                                       content=provisional.content, inline=candidate.bounds.x + leading,
+                                       baseline_block=candidate.bounds.y + float(font_size),
+                                       typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
+                                       font_metrics=request.font_metrics, collision_region=provisional.collision_region,
+                                       collision_domain=provisional.collision_domain,
+                                       overflow="visible-overflow" if visible_overflow else "fit",
+                                       lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
+                                      host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
+                                      paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
+                                      if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
+                text.append(placed_text)
+                register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
+                surface_obstacles.add(SurfaceObstacle(f"label-footprint:{placed_text.placement_id}", "label-visual",
+                                                      placed_text.collision_domain.slot,
+                                                      ObstacleRect(candidate.bounds.x, candidate.bounds.y,
+                                                                   candidate.bounds.right, candidate.bounds.bottom)))
+                if visible_overflow:
+                    visible_label_overflows.append((placed_text, slot_bounds))
+                if visuals:
+                    if not hasattr(label_metrics, "cap_height_at"):
+                        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
+                    cap_height = float(label_metrics.cap_height_at(float(font_size)))
+                    for visual, icon, width, gap in visuals:
+                        inline = (candidate.bounds.x if visual.side == "leading"
+                                  else candidate.bounds.x + leading + text_width + trailing - gap - width)
+                        bounds = Rect(Decimal(str(inline)), Decimal(str(placed_text.baseline[1] - cap_height
+                                                                           + (cap_height - float(font_size)) / 2)),
+                                      Decimal(str(width)), Decimal(str(float(font_size))))
+                        candidate_icons.append(IconPlacement(f"visual:{placed_text.placement_id}:{visual.side}",
+                                                             placed_text.source_ref, visual.source_ref, icon.icon_id,
+                                                             icon.kind, icon.content_identity, icon.viewport, icon.payload,
+                                                             icon.alternative, visual.decorative, bounds, "labelVisual",
+                                                             width / icon.viewport[0], text_slot(placed_text),
+                                                             paint_order=placed_text.paint_order))
+                placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
+                                                             fallback_ladder, candidate.side, "placed",
+                                                             candidate.search_count))
+
+    place_requested_labels(tuple(item for item in label_requests if item.rule_host_obstacle_id is not None))
 
     relations: list[RelationPlacement] = []
     visible_route_fallbacks: list[RelationPlacement] = []
@@ -1497,15 +1546,31 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for item in review_row.items:
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}" if projection.rows else item.object_id
             instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
-            instance_rows[instance_id] = row.row_id
+            instance_rows[instance_id] = review_row.row_id
     for folded in getattr(projection, "folded_points", ()):
         instance_id = _folded_instance_id(folded, folded.item)
         mark = next((item for item in marks if item.placement_id == f"planned:{instance_id}"), None)
         if mark is not None:
             instance_anchors.setdefault(folded.item.object_id, []).append((instance_id, mark.end_port))
             instance_rows[instance_id] = f"group-header:{folded.group_id}"
-    mark_ports = {mark.placement_id.removeprefix("planned:"): (mark.start_port, mark.end_port)
-                  for mark in marks if mark.placement_id.startswith("planned:")}
+    relation_marks = {mark.placement_id.removeprefix("planned:"): mark
+                      for mark in marks if mark.placement_id.startswith("planned:")}
+    comparison_clusters: dict[tuple[str, str], tuple[MarkPlacement, ...]] = {}
+    for mark in marks:
+        instance_id = mark.placement_id.split(":", 1)[1]
+        row_id = instance_rows.get(instance_id)
+        if row_id is not None:
+            key = (mark.source_ref, row_id)
+            comparison_clusters[key] = (*comparison_clusters.get(key, ()), mark)
+
+    def combined_connector_points(source: ConnectorEgress, middle: tuple[tuple[float, float], ...],
+                                  target: ConnectorEgress) -> tuple[tuple[float, float], ...]:
+        pieces = (*source.corridor, *middle, *reversed(target.corridor))
+        completed: list[tuple[float, float]] = []
+        for point in pieces:
+            if not completed or completed[-1] != point:
+                completed.append(point)
+        return tuple(completed)
     route_top = min((float(group.header_bounds.block) for group in groups if group.header_bounds is not None),
                     default=timeline_bounds[1])
     route_bottom = max((timeline_bounds[1] + timeline_bounds[3],
@@ -1515,55 +1580,79 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         for source_id, source_anchor in instance_anchors.get(str(source), ()):
             for target_id, target_anchor in instance_anchors.get(str(target), ()):
-                source_ports = mark_ports.get(source_id, (source_anchor, source_anchor))
-                target_ports = mark_ports.get(target_id, (target_anchor, target_anchor))
-                source_port = source_ports[0] if relation.source_endpoint in {"start", "at"} else source_ports[1]
-                target_port = target_ports[0] if relation.target_endpoint in {"start", "at"} else target_ports[1]
+                source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
+                source_nominal = (source_mark.start_port if relation.source_endpoint in {"start", "at"}
+                                  else source_mark.end_port) if source_mark is not None else source_anchor
+                target_nominal = (target_mark.start_port if relation.target_endpoint in {"start", "at"}
+                                  else target_mark.end_port) if target_mark is not None else target_anchor
                 scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
-                source_port_id = f"{source_id}:{relation.source_endpoint}"
-                target_port_id = f"{target_id}:{relation.target_endpoint}"
-                if source_port == target_port:
-                    if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
-                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
-                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                source_candidates = (connector_egress_candidates(
+                    source_mark, relation.source_endpoint, target_nominal,
+                    comparison_clusters.get((source_mark.source_ref, instance_rows[source_id]), ()))
+                    if source_mark is not None else (ConnectorEgress(relation.source_endpoint, source_nominal,
+                                                                    source_nominal, ()),))
+                target_candidates = (connector_egress_candidates(
+                    target_mark, relation.target_endpoint, source_nominal,
+                    comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()))
+                    if target_mark is not None else (ConnectorEgress(relation.target_endpoint, target_nominal,
+                                                                    target_nominal, ()),))
+                port_pairs = tuple((source_candidate, target_candidate)
+                                   for source_candidate in source_candidates
+                                   for target_candidate in target_candidates)
+                selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
+                points: tuple[tuple[float, float], ...] = ()
+                # Semantic relation variants may share/cross a path; their
+                # routes remain obstacles for later annotations, not peers.
+                route_classes = ("mark", "text", "label-visual")
+                for source_egress, target_egress in port_pairs:
+                    if any(surface_obstacles.egress_collisions(
+                            ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+                            classes=route_classes, regions=("timeline", "group-header"))
+                           for egress in (source_egress, target_egress) if egress.corridor):
                         continue
-                    # A direct zero-length path is not inspectable, so retain
-                    # a deterministic one-point inline stub for coincident
-                    # endpoints.  Scene still receives completed geometry.
-                    fallback = (source_port, (source_port[0] + 1.0, source_port[1]))
-                    placed = RelationPlacement(scene_id, source_port_id, target_port_id, fallback,
-                                               semantic_id=relation.semantic_id, source_ref=relation_id)
-                    relations.append(placed)
-                    visible_route_fallbacks.append(placed)
-                    continue
-                endpoint_rows = {instance_rows.get(source_id), instance_rows.get(target_id)}
-                obstacles = tuple((float(row.bounds.inline), float(row.bounds.block),
-                                   float(row.bounds.inline + row.bounds.inline_size),
-                                   float(row.bounds.block + row.bounds.block_size))
-                                  for row in rows if row.row_id not in endpoint_rows)
-                fallback = False
-                try:
-                    points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=obstacles,
-                                                  bounds=(timeline_bounds[0], route_top,
-                                                          timeline_bounds[0] + timeline_bounds[2], route_bottom))
-                except ValueError as error:
-                    if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
-                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
-                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                    source_port, target_port = source_egress.exposed_port, target_egress.exposed_port
+                    source_obstacle_id = f"port:{source_mark.placement_id if source_mark else scene_id}:{source_egress.side}"
+                    target_obstacle_id = f"port:{target_mark.placement_id if target_mark else scene_id}:{target_egress.side}"
+                    existing_ports = tuple(port_id for port_id in (source_obstacle_id, target_obstacle_id)
+                                           if surface_obstacles.has(port_id))
+                    try:
+                        middle = ((source_port,) if source_port == target_port else place_relation_route(
+                            source_port=source_port, target_port=target_port, obstacles=surface_obstacles,
+                            regions=("timeline", "group-header"), classes=route_classes,
+                            port_ids=existing_ports,
+                            bounds=(timeline_bounds[0], route_top,
+                                    timeline_bounds[0] + timeline_bounds[2], route_bottom)))
+                    except ValueError:
                         continue
-                    points = (source_port, target_port)
-                    fallback = True
-                if not relation_route_quality(tuple(points), max_bends=layout_manifest.relation_max_bends,
+                    candidate_points = combined_connector_points(source_egress, middle, target_egress)
+                    if len(candidate_points) < 2:
+                        continue
+                    if relation_route_quality(candidate_points, max_bends=layout_manifest.relation_max_bends,
                                               max_detour_ratio=layout_manifest.relation_max_detour_ratio):
+                        selected_pair, points = (source_egress, target_egress), candidate_points
+                        break
+                fallback = selected_pair is None
+                if fallback:
                     if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
+                        relations.append(RelationPlacement(scene_id, f"{source_id}:{relation.source_endpoint}",
+                                                           f"{target_id}:{relation.target_endpoint}",
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
-                    points = (source_port, target_port)
-                    fallback = True
+                    selected_pair = port_pairs[0]
+                    first_source, first_target = selected_pair
+                    points = ((first_source.semantic_port, first_target.semantic_port)
+                              if first_source.semantic_port != first_target.semantic_port
+                              else (first_source.semantic_port,
+                                    (first_source.semantic_port[0] + 1.0, first_source.semantic_port[1])))
+                source_egress, target_egress = selected_pair
+                source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
+                target_port_id = f"{target_id}:{relation.target_endpoint}:{target_egress.side}"
+                for mark, side, port in ((source_mark, source_egress.side, source_egress.exposed_port),
+                                         (target_mark, target_egress.side, target_egress.exposed_port)):
+                    obstacle_id = f"port:{mark.placement_id if mark else scene_id}:{side}"
+                    if not surface_obstacles.has(obstacle_id):
+                        register_port(obstacle_id, port, "timeline")
                 relation_radius = float(metric_values.get("timeline.relation.cornerRadius", 0))
                 placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
                                            semantic_id=relation.semantic_id,
@@ -1574,11 +1663,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                            marker_end=marker_geometry(request.theme_tokens.marker("relationTargetTerminal")),
                                            label_content=relation_label_content(relation), source_ref=relation_id)
                 relations.append(placed)
+                dependency_role = semantic_binding(placed.semantic_id).theme_role
+                register_path(scene_id, "dependency-route", "timeline", placed.points,
+                              stroke_width=float(request.theme_tokens.number(dependency_role, "strokeWidth")))
                 if fallback:
                     visible_route_fallbacks.append(placed)
 
     # Relation labels are routed facts, not a Scene or adapter policy.  They run
     # after relation paths exist so their anchor is a stable completed segment.
+    place_requested_labels(tuple(item for item in label_requests if item.rule_host_obstacle_id is None))
+
     for placed_relation in relations:
         if placed_relation.suppressed:
             continue
@@ -1593,12 +1687,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    text_transform=relation_treatment.transform),
                 float(font_size) * float(line_height))
         relation_text_id = f"relation-label:{placed_relation.relation_id.removeprefix('relation:')}"
-        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
-        obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
-                         if item.required and item.overflow != "suppressed")
         candidate = place_label(relation_label_anchor(placed_relation.points), size, ("above", "below", "start", "end"),
-                                bounds=timeline_rect, obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                required=False, overflow=request.surface_content.relation_overflow)
+                                bounds=timeline_rect, obstacles=surface_obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                required=False, overflow=request.surface_content.relation_overflow,
+                                classes=("mark", "text", "label-visual", "dependency-route"))
         if candidate is None:
             diagnostics.append(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:{placed_relation.relation_id}")
             continue
@@ -1609,6 +1701,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        collision_region="relation-label", collision_domain=CollisionDomain("timeline", "overlay")),
                             fallback_ladder=("above", "below", "start", "end"), selected_rung=candidate.side)
         text.append(placed_text)
+        register_rect(placed_text.placement_id, "text", "timeline", placed_text.bounds)
         if candidate.visible_overflow:
             visible_label_overflows.append((placed_text, timeline_rect))
 
@@ -1696,7 +1789,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     annotation_slot = by_source.get("annotations")
     if annotation_slot:
         annotation_marks = _comparison_marks(projection)
-        placed_boxes: list[LabelRect] = []
         for index, annotation in enumerate(request.surface_content.annotations):
             presentation = annotation_presentation(annotation.purpose)
             annotation_id, content = annotation.annotation_id, annotation.content
@@ -1748,6 +1840,90 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 letter_spacing=float(annotation_treatment.letter_spacing), text_transform=annotation_treatment.transform)))
             width = annotation_leading + text_width + annotation_trailing
             annotation_lines = (content,)
+            annotation_search_count = 0
+            selected_leader: tuple[ConnectorEgress, AnnotationRouteTrial,
+                                   tuple[tuple[float, float], ...],
+                                   tuple[tuple[float, float], ...]] | None = None
+
+            def trial_leader(candidate_box: Any, rung: str
+                             ) -> tuple[ConnectorEgress, AnnotationRouteTrial,
+                                        tuple[tuple[float, float], ...],
+                                        tuple[tuple[float, float], ...]] | None:
+                nonlocal annotation_search_count
+                if not candidate_box.leader_required or presentation.leader_semantic_id is None:
+                    return None
+                if anchor_host is None:
+                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                candidate_bounds = candidate_box.placement.bounds
+                target = nearest_box_port(candidate_bounds,
+                                          (anchor_bounds.x + anchor_bounds.width / 2,
+                                           anchor_bounds.y + anchor_bounds.height / 2))
+                anchor_instance = anchor_host.placement_id.split(":", 1)[1]
+                anchor_row = instance_rows.get(anchor_instance)
+                source_candidates = connector_egress_candidates(
+                    anchor_host, resolved.endpoint, target,
+                    comparison_clusters.get((anchor_host.source_ref, anchor_row), (anchor_host,)))
+                viewport = request.layout_manifest.viewport
+                content_extent = (float(viewport.inline), float(viewport.block),
+                                  max(float(viewport.inline + viewport.inline_size), candidate_bounds.right),
+                                  max(float(viewport.block + viewport.block_size), candidate_bounds.bottom))
+                route_bounds = local_route_bounds(
+                    _bounds(anchor_host.bounds),
+                    (candidate_bounds.x, candidate_bounds.y, candidate_bounds.width, candidate_bounds.height),
+                    target, content_extent)
+                connector_stroke_width = float(request.theme_tokens.number(
+                    semantic_binding(presentation.leader_semantic_id).theme_role, "strokeWidth"))
+                route_specs: list[tuple[ConnectorEgress, tuple[tuple[float, float], ...], tuple[str, ...]]] = []
+                for source_egress in source_candidates:
+                    source_port_id = f"port:{anchor_host.placement_id}:{source_egress.side}"
+                    known_ports = coincident_endpoint_port_ids(
+                        surface_obstacles, source_egress.exposed_port, source_egress.host_ids)
+                    known_ports = tuple(dict.fromkeys((*known_ports, *coincident_endpoint_port_ids(
+                        surface_obstacles, source_egress.semantic_port, source_egress.host_ids))))
+                    if surface_obstacles.has(source_port_id) and source_port_id not in known_ports:
+                        known_ports = (*known_ports, source_port_id)
+                    if source_egress.corridor and surface_obstacles.egress_collisions(
+                            ObstacleSegment(*source_egress.corridor), host_ids=source_egress.host_ids,
+                            port_ids=known_ports):
+                        continue
+                    base_prefix = (source_egress.corridor if source_egress.corridor
+                                   else (source_egress.semantic_port,))
+                    # Clear the entire possible bridge gap before turning
+                    # back across a dependency from the same endpoint.
+                    fanout_deltas = ((6.0, 0.0), (-6.0, 0.0), (0.0, 6.0), (0.0, -6.0))
+                    prefixes = (base_prefix, *(tuple((*base_prefix,
+                                                      (source_egress.exposed_port[0] + dx,
+                                                       source_egress.exposed_port[1] + dy)))
+                                                for dx, dy in fanout_deltas))
+                    for prefix in prefixes:
+                        if len(prefix) > len(base_prefix):
+                            stub = ObstacleSegment(source_egress.exposed_port, prefix[-1])
+                            if (surface_obstacles.egress_collisions(
+                                    stub, host_ids=source_egress.host_ids, port_ids=known_ports)
+                                    or any(item.placement_id in source_egress.host_ids
+                                           for item in surface_obstacles.collisions(stub, classes=("mark",)))):
+                                continue
+                        route_specs.append((source_egress, tuple(prefix), known_ports))
+                # Probe every finite sparse endpoint before spending the
+                # dense-grid budget on any one poor endpoint.
+                for dense_search, candidates in ((False, route_specs), (True, route_specs[:2])):
+                    for source_egress, prefix, known_ports in candidates:
+                        annotation_search_count += 1
+                        trial = route_annotation_candidate(
+                            prefix[-1], target, surface_obstacles,
+                            bounds=route_bounds, port_ids=known_ports,
+                            max_bends=layout_manifest.annotation_max_bends,
+                            max_detour_ratio=layout_manifest.annotation_max_detour_ratio,
+                            allow_bridge=rung == "rail", dense=dense_search,
+                            connector_stroke_width=connector_stroke_width)
+                        if trial is None:
+                            continue
+                        full_points = (*prefix[:-1], *trial.points)
+                        if relation_route_quality(full_points, max_bends=layout_manifest.annotation_max_bends,
+                                                  max_detour_ratio=layout_manifest.annotation_max_detour_ratio):
+                            return source_egress, trial, tuple(full_points), tuple(prefix)
+                return None
+
             try:
                 if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
@@ -1769,22 +1945,30 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     box, selected_rung = None, None
                     for rung in (rung for rung in ladder if rung != "suppress"):
                         if rung == "rail":
-                            candidate_box = place_annotation_rail(
+                            candidate_boxes = annotation_rail_candidates(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
                                 text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="clip-optional", required=False)
+                                obstacles=surface_obstacles)
                         else:
-                            candidate_box = project_annotation_box(
+                            candidate = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
                                 candidate_sides=(rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="clip-optional", required=False)
-                        if candidate_box is not None:
-                            box, selected_rung = candidate_box, rung
+                                obstacles=surface_obstacles, overflow="clip-optional", required=False)
+                            candidate_boxes = (candidate,) if candidate is not None else ()
+                        for candidate_box in candidate_boxes:
+                            annotation_search_count += 1
+                            leader_trial = trial_leader(candidate_box, rung)
+                            if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
+                                continue
+                            box, selected_rung, selected_leader = candidate_box, rung, leader_trial
+                            break
+                        if box is not None:
                             break
                     if box is None:
                         if "suppress" in ladder:
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
-                                                                         tuple(ladder), "suppress", "suppressed"))
+                                                                         tuple(ladder), "suppress", "suppressed",
+                                                                         search_count=annotation_search_count))
                             diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
                             continue
                         # A normal annotation is never silently suppressed or
@@ -1796,31 +1980,38 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                             box = place_annotation_rail(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
                                 text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="visible-overflow", required=True)
+                                obstacles=surface_obstacles, overflow="visible-overflow", required=True)
                         else:
                             box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
                                 candidate_sides=(selected_rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="visible-overflow", required=True)
+                                obstacles=surface_obstacles, overflow="visible-overflow", required=True)
                         if box is None:  # Defensive: visible-overflow is a total Layout policy.
                             raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/annotations/{index}")
                     placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
-                                                                 tuple(ladder), selected_rung, "placed"))
+                                                                 tuple(ladder), selected_rung, "placed",
+                                                                 search_count=annotation_search_count,
+                                                                 selected_topology=(selected_leader[1].topology
+                                                                                    if selected_leader else None),
+                                                                 crossing_ids=(selected_leader[1].crossing_ids
+                                                                               if selected_leader else ())))
                 else:
                     box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, size * line_height),
                                                  candidate_sides=(annotation.side,),
-                                                 viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=placed_boxes,
+                                                 viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=surface_obstacles,
                                                  overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
             except ValueError as error:
                 raise LayoutError(str(error), f"/annotations/{index}") from error
             if box is None:
                 continue
-            placed_boxes.append(box.placement.bounds)
             bounds = box.placement.bounds
+            annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
+                                     Decimal(str(bounds.width)), Decimal(str(bounds.height)))
             shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
-                                         Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)), Decimal(str(bounds.width)), Decimal(str(bounds.height))),
+                                         annotation_bounds,
                                          semantic_id=presentation.box_semantic_id, annotation=presentation,
                                          paint_order=ANNOTATION_PAINT_ORDER))
+            register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                            inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
@@ -1829,6 +2020,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                            annotation=presentation)
             placed_annotation = replace(placed_annotation, paint_order=ANNOTATION_PAINT_ORDER + 1)
             text.append(placed_annotation)
+            register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
             if box.placement.visible_overflow:
                 visible_label_overflows.append((placed_annotation, LabelRect(*_bounds(annotation_slot.bounds))))
             if annotation_visuals:
@@ -1859,66 +2051,88 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                       letter_spacing=float(annotation_treatment.letter_spacing),
                                                       text_transform=annotation_treatment.transform)
                 note_index_size = (note_index_leading + note_index_width + note_index_trailing, size * line_height)
-                note_index_obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds)))
-                                        for item in text
-                                        if item.required and item.overflow != "suppressed"
-                                        and item.collision_domain == CollisionDomain("timeline", "overlay")]
                 note_index = place_label(
                     anchor_bounds, note_index_size, ("end", "start", "above", "below"),
-                    bounds=LabelRect(*timeline_bounds), obstacles=note_index_obstacles,
+                    bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
                     gap=max(1.0, size * 0.25), required=False, overflow="suppress",
                 )
                 if note_index is None:
                     diagnostics.append(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}")
-                    continue
-                note_index_inline = note_index.bounds.x
-                note_index_text = place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
-                                             content=note_index_content, inline=note_index_inline + note_index_leading,
-                                             baseline_block=note_index.bounds.y + size, typography_role="annotation",
-                                             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                             collision_region="annotations",
-                                             collision_domain=CollisionDomain("timeline", "overlay"),
-                                             semantic_id="noteIndex")
-                if anchor_host is not None:
-                    note_index_text = replace(note_index_text, host_placement_id=anchor_host.placement_id,
-                                              paint_order=max(HOSTED_TEXT_PAINT_ORDER, anchor_host.paint_order + 1))
-                text.append(note_index_text)
-                if note_index_visuals:
-                    if not hasattr(annotation_metrics, "cap_height_at"):
-                        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in note_index_visuals))
-                    cap_height = float(annotation_metrics.cap_height_at(size))
-                    for visual, icon, icon_width, gap in note_index_visuals:
-                        inline = (note_index.bounds.x if visual.side == "leading"
-                                  else note_index.bounds.x + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
-                        icon_bounds = Rect(Decimal(str(inline)), Decimal(str(note_index_text.baseline[1] - cap_height
-                                                                              + (cap_height - size) / 2)),
-                                           Decimal(str(icon_width)), Decimal(str(size)))
-                        candidate_icons.append(IconPlacement(f"visual:note-index:{annotation_id}:{visual.side}",
-                                                             annotation_id, visual.source_ref, icon.icon_id, icon.kind,
-                                                             icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                                             visual.decorative, icon_bounds, "labelVisual",
-                                                             icon_width / icon.viewport[0], annotation_slot.slot_id,
-                                                             paint_order=note_index_text.paint_order))
+                else:
+                    note_index_inline = note_index.bounds.x
+                    note_index_text = place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
+                                                 content=note_index_content, inline=note_index_inline + note_index_leading,
+                                                 baseline_block=note_index.bounds.y + size, typography_role="annotation",
+                                                 theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                                 collision_region="annotations",
+                                                 collision_domain=CollisionDomain("timeline", "overlay"),
+                                                 semantic_id="noteIndex")
+                    if anchor_host is not None:
+                        note_index_text = replace(note_index_text, host_placement_id=anchor_host.placement_id,
+                                                  paint_order=max(HOSTED_TEXT_PAINT_ORDER, anchor_host.paint_order + 1))
+                    text.append(note_index_text)
+                    register_rect(note_index_text.placement_id, "text", "timeline", note_index_text.bounds)
+                    if note_index_visuals:
+                        if not hasattr(annotation_metrics, "cap_height_at"):
+                            raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in note_index_visuals))
+                        cap_height = float(annotation_metrics.cap_height_at(size))
+                        for visual, icon, icon_width, gap in note_index_visuals:
+                            inline = (note_index.bounds.x if visual.side == "leading"
+                                      else note_index.bounds.x + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
+                            icon_bounds = Rect(Decimal(str(inline)), Decimal(str(note_index_text.baseline[1] - cap_height
+                                                                                  + (cap_height - size) / 2)),
+                                               Decimal(str(icon_width)), Decimal(str(size)))
+                            candidate_icons.append(IconPlacement(f"visual:note-index:{annotation_id}:{visual.side}",
+                                                                 annotation_id, visual.source_ref, icon.icon_id, icon.kind,
+                                                                 icon.content_identity, icon.viewport, icon.payload, icon.alternative,
+                                                                 visual.decorative, icon_bounds, "labelVisual",
+                                                                 icon_width / icon.viewport[0], annotation_slot.slot_id,
+                                                                 paint_order=note_index_text.paint_order))
             if box.leader_required and presentation.leader_semantic_id is not None:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
-                source = (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2)
-                leader_fallback = False
-                try:
-                    points = route_annotation_leader(source, target, obstacles=placed_boxes[:-1], limit=1024)
-                except ValueError:
-                    points, leader_fallback = (source, target), True
-                if not relation_route_quality(tuple(points), max_bends=layout_manifest.annotation_max_bends,
-                                              max_detour_ratio=layout_manifest.annotation_max_detour_ratio):
-                    points, leader_fallback = (source, target), True
+                if anchor_host is None:
+                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
+                leader_fallback = selected_leader is None
+                if leader_fallback:
+                    anchor_instance_id = anchor_host.placement_id.split(":", 1)[1]
+                    anchor_row_id = instance_rows.get(anchor_instance_id)
+                    selected_source = connector_egress_candidates(
+                        anchor_host, resolved.endpoint, target,
+                        comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)))[0]
+                    points = (selected_source.semantic_port, target)
+                    path_commands = ()
+                    visible_route_segments = tuple(zip(points, points[1:]))
+                else:
+                    selected_source, route_trial, points, prefix = selected_leader
+                    path_commands = ((PathCommand("move", (prefix[0],)),
+                                      *(PathCommand("line", (point,)) for point in prefix[1:]),
+                                      *route_trial.commands[1:])
+                                     if route_trial.commands else ())
+                    visible_route_segments = tuple(zip(prefix, prefix[1:])) + visible_segments(route_trial)
+                source_side = selected_source.side
+                source_port_obstacle_id = f"port:{anchor_host.placement_id}:{source_side}"
+                if not surface_obstacles.has(source_port_obstacle_id):
+                    register_port(source_port_obstacle_id, selected_source.exposed_port, "timeline")
+                if not surface_obstacles.has(target_port_obstacle_id):
+                    register_port(target_port_obstacle_id, target, "annotations")
                 leader_semantic_id = presentation.leader_semantic_id
+                leader_stroke_width = float(request.theme_tokens.number(
+                    semantic_binding(leader_semantic_id).theme_role, "strokeWidth"))
                 marker_end = (marker_geometry(request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role))
                               if presentation.purpose == "explanatory-arrow" else None)
                 placed_leader = RelationPlacement(f"annotation-leader:{annotation_id}",
-                                                  f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
+                                                  f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}:{source_side}",
                                                   f"annotation-box:{annotation_id}", tuple(points),
                                                   semantic_id=leader_semantic_id, marker_end=marker_end,
+                                                  path_commands=path_commands,
                                                   annotation=presentation, source_ref=annotation_id)
                 relations.append(placed_leader)
+                for segment_index, (segment_start, segment_end) in enumerate(visible_route_segments):
+                    if segment_start != segment_end:
+                        surface_obstacles.add(SurfaceObstacle(
+                            f"{placed_leader.relation_id}:segment:{segment_index}", "leader-route", "annotations",
+                            ObstacleSegment(segment_start, segment_end, leader_stroke_width)))
                 if leader_fallback:
                     visible_route_fallbacks.append(placed_leader)
     text = [replace(item, slot_id=text_slot(item)) for item in text]

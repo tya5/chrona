@@ -8,10 +8,13 @@ from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacl
 
 
 def place_relation_route(*, source_port: tuple[float, float], target_port: tuple[float, float],
-                         obstacles: tuple[tuple[float, float, float, float], ...],
-                         bounds: tuple[float, float, float, float]) -> tuple[tuple[float, float], ...]:
+                         obstacles: tuple[tuple[float, float, float, float], ...] | SurfaceObstacleIndex,
+                         bounds: tuple[float, float, float, float],
+                         port_ids: tuple[str, ...] = (), regions: tuple[str, ...] | None = None,
+                         classes: tuple[str, ...] | None = None) -> tuple[tuple[float, float], ...]:
     """Complete one dependency route before Scene projects a path primitive."""
-    return route_orthogonal(source_port, target_port, obstacles, bounds=bounds)
+    return route_orthogonal(source_port, target_port, obstacles, bounds=bounds,
+                            port_ids=port_ids, regions=regions, classes=classes)
 
 
 def relation_route_quality(points: tuple[tuple[float, float], ...], *,
@@ -31,10 +34,12 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      grid_offset: float = 2.0, bend_penalty: float = 12.0,
                      limit: int = 4096,
                      bounds: tuple[float, float, float, float] | None = None,
-                     port_ids: tuple[str, ...] = ()) -> tuple[tuple[float, float], ...]:
+                     port_ids: tuple[str, ...] = (),
+                     classes: tuple[str, ...] | None = None,
+                     regions: tuple[str, ...] | None = None) -> tuple[tuple[float, float], ...]:
     """Return the stable shortest orthogonal route on a finite visibility grid."""
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
-    boxes = (tuple(obstacle_envelope(item.geometry) for item in index.all())
+    boxes = (tuple(obstacle_envelope(item.geometry) for item in index.select(classes=classes, regions=regions))
              if index is not None else obstacles)
     xs_set = {start[0], end[0], *(value for box in boxes for value in (box[0] - grid_offset, box[2] + grid_offset))}
     ys_set = {start[1], end[1], *(value for box in boxes for value in (box[1] - grid_offset, box[3] + grid_offset))}
@@ -48,7 +53,8 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
 
     def clear(a: tuple[float, float], b: tuple[float, float]) -> bool:
         if index is not None:
-            return not index.collisions(ObstacleSegment(a, b), port_ids=port_ids)
+            return not index.collisions(ObstacleSegment(a, b), port_ids=port_ids,
+                                        classes=classes, regions=regions)
         for left, top, right, bottom in boxes:
             if a[1] == b[1] and top < a[1] < bottom and max(a[0], b[0]) > left and min(a[0], b[0]) < right:
                 return False
@@ -56,19 +62,43 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                 return False
         return True
 
+    if index is not None:
+        # The two Manhattan shortest paths are the first finite candidates.
+        # Most sparse relations need no visibility-grid expansion at all.
+        simple = set()
+        for via in ((end[0], start[1]), (start[0], end[1])):
+            path = tuple(point for point in (start, via, end)
+                         if not (point == start and point == via) and not (point == via and point == end))
+            if start == end:
+                continue
+            if len(path) == 1:
+                path = (start, end)
+            elif path[0] != start:
+                path = (start, *path)
+            simple.add(path)
+        for path in sorted(simple):
+            if all(clear(a, b) for a, b in zip(path, path[1:])):
+                return path
+
     def heuristic(state: tuple[int, int, int]) -> float:
         return abs(xs[state[0]] - end[0]) + abs(ys[state[1]] - end[1])
 
-    costs, parents, queue = {source: 0.0}, {}, [(heuristic(source), 0.0, source)]
+    costs, parents = {source: 0.0}, {}
+    source_heuristic = heuristic(source)
+    # Among equal f-costs, expand the state nearer the target. This preserves
+    # A*'s shortest-path ordering while avoiding a source-side grid flood.
+    queue = [(source_heuristic, source_heuristic, 0.0, source)]
     finish = None
     visited = 0
+    limited = False
     while queue:
-        _, cost, state = heappop(queue)
+        _, _, cost, state = heappop(queue)
         if cost != costs[state]:
             continue
         visited += 1
         if visited > limit:
-            raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+            limited = True
+            break
         i, j, direction = state
         if (i, j) == target:
             finish = state
@@ -83,9 +113,10 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
             new_state = (ni, nj, next_direction)
             if new_cost < costs.get(new_state, float("inf")):
                 costs[new_state], parents[new_state] = new_cost, state
-                heappush(queue, (new_cost + heuristic(new_state), new_cost, new_state))
+                next_heuristic = heuristic(new_state)
+                heappush(queue, (new_cost + next_heuristic, next_heuristic, new_cost, new_state))
     if finish is None:
-        raise ValueError("E_CONNECTOR_UNROUTABLE")
+        raise ValueError("E_PRESENTATION_ROUTE_LIMIT" if limited else "E_CONNECTOR_UNROUTABLE")
     path = []
     while True:
         path.append((xs[finish[0]], ys[finish[1]]))

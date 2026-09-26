@@ -284,6 +284,14 @@ class PlacementDecision:
     requested_ladder: tuple[str, ...]
     selected_rung: str | None
     outcome: str
+    search_count: int = 0
+    selected_topology: str | None = None
+    crossing_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if (self.search_count < 0 or self.selected_topology not in {None, "strict", "bridge"}
+                or (self.crossing_ids and self.selected_topology != "bridge")):
+            raise ValueError("E_LAYOUT_PLACEMENT_DECISION_INVALID")
 
 
 @dataclass(frozen=True)

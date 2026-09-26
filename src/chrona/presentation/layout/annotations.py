@@ -7,7 +7,8 @@ from typing import Iterable
 
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelPlacement, LabelRect, place_label
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope
+from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
+from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.model.surface_content import AnnotationIntent
 
 
@@ -42,10 +43,9 @@ def route_annotation_leader(source: tuple[float, float], target: tuple[float, fl
     if limit < 1:
         raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
-    boxes = (tuple(LabelRect(left, top, right - left, bottom - top)
-                   for item in index.all()
-                   for left, top, right, bottom in (obstacle_envelope(item.geometry),))
-             if index is not None else tuple(obstacles))
+    if index is not None:
+        return route_orthogonal(source, target, index, limit=limit, port_ids=port_ids)
+    boxes = tuple(obstacles)
     xs = sorted({source[0], target[0], *(value for box in boxes for value in (box.x, box.right))})
     ys = sorted({source[1], target[1], *(value for box in boxes for value in (box.y, box.bottom))})
     start, end = (xs.index(source[0]), ys.index(source[1])), (xs.index(target[0]), ys.index(target[1]))
@@ -60,11 +60,10 @@ def route_annotation_leader(source: tuple[float, float], target: tuple[float, fl
             if not (0 <= nxt[0] < len(xs) and 0 <= nxt[1] < len(ys)) or nxt in seen:
                 continue
             a, b = (xs[node[0]], ys[node[1]]), (xs[nxt[0]], ys[nxt[1]])
-            blocked = (bool(index.collisions(ObstacleSegment(a, b), port_ids=port_ids)) if index is not None
-                       else any(
-                           (a[1] == b[1] and box.y < a[1] < box.bottom and max(a[0], b[0]) > box.x and min(a[0], b[0]) < box.right)
-                           or (a[0] == b[0] and box.x < a[0] < box.right and max(a[1], b[1]) > box.y and min(a[1], b[1]) < box.bottom)
-                           for box in boxes))
+            blocked = any(
+                (a[1] == b[1] and box.y < a[1] < box.bottom and max(a[0], b[0]) > box.x and min(a[0], b[0]) < box.right)
+                or (a[0] == b[0] and box.x < a[0] < box.right and max(a[1], b[1]) > box.y and min(a[1], b[1]) < box.bottom)
+                for box in boxes)
             if blocked:
                 continue
             seen.add(nxt); parents[nxt] = node
@@ -152,27 +151,37 @@ def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnch
                           obstacles: Iterable[LabelRect] | SurfaceObstacleIndex, overflow: str,
                           required: bool) -> AnnotationBox | None:
     """Place an object-anchored callout in a dedicated annotation rail."""
+    candidates = annotation_rail_candidates(annotation, resolved, anchor_y=anchor_y,
+                                            text_size=text_size, rail=rail, obstacles=obstacles)
+    if candidates:
+        return candidates[0]
+    if overflow != "visible-overflow":
+        return None
+    width, height = text_size
+    box = LabelRect(rail.x, anchor_y - height / 2, width, height)
+    return AnnotationBox(resolved, LabelPlacement("rail", box, True), True)
+
+
+def annotation_rail_candidates(annotation: AnnotationIntent, resolved: AnnotationAnchor, *,
+                               anchor_y: float, text_size: tuple[float, float], rail: LabelRect,
+                               obstacles: Iterable[LabelRect] | SurfaceObstacleIndex) -> tuple[AnnotationBox, ...]:
+    """Enumerate finite, box-fit rail positions before connector commitment."""
     width, height = text_size
     if width > rail.width or height > rail.height:
-        if overflow != "visible-overflow":
-            return None
-        box = LabelRect(rail.x, anchor_y - height / 2, width, height)
-        return AnnotationBox(resolved, LabelPlacement("rail", box, True), True)
+        return ()
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     occupied = () if index is not None else tuple(obstacles)
-    y = min(max(anchor_y - height / 2, rail.y), rail.bottom - height)
-    candidates = [y]
+    aligned = min(max(anchor_y - height / 2, rail.y), rail.bottom - height)
+    positions = [aligned]
     for step in range(1, int(rail.height // max(1.0, height)) + 1):
-        candidates.extend((y + step * height, y - step * height))
-    for candidate in candidates:
-        box = LabelRect(rail.x, candidate, width, height)
+        positions.extend((aligned + step * height, aligned - step * height))
+    candidates = []
+    for position in positions:
+        box = LabelRect(rail.x, position, width, height)
         collides = (bool(index.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom)))
                     if index is not None else any(
                         box.x < item.right and item.x < box.right and box.y < item.bottom and item.y < box.bottom
                         for item in occupied))
         if rail.y <= box.y and box.bottom <= rail.bottom and not collides:
-            return AnnotationBox(resolved, LabelPlacement("rail", box), True)
-    if overflow != "visible-overflow":
-        return None
-    box = LabelRect(rail.x, anchor_y - height / 2, width, height)
-    return AnnotationBox(resolved, LabelPlacement("rail", box, True), True)
+            candidates.append(AnnotationBox(resolved, LabelPlacement("rail", box), True))
+    return tuple(candidates)

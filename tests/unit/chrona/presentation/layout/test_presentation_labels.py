@@ -1,6 +1,7 @@
 import pytest
 
 from chrona.presentation.layout.labels import LabelObstacle, LabelRect, place_label
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.text import wrap_text
 
 
@@ -64,6 +65,45 @@ def test_declared_visible_fallback_side_is_used_only_after_legal_candidates_fail
 def test_label_candidates_are_bounded_and_unique():
     with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_INPUT"):
         place_label(LabelRect(1, 1, 1, 1), (1, 1), ["above"] * 17, bounds=LabelRect(0, 0, 10, 10))
+
+
+def test_optional_side_search_preserves_canonical_first_and_avoids_route_stroke():
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("route:1", "dependency-route", "timeline",
+                              ObstacleSegment((30, 45), (90, 45))))
+    anchor = LabelRect(50, 50, 10, 10)
+    original = place_label(anchor, (20, 8), ("above",), bounds=LabelRect(0, 0, 120, 100),
+                           obstacles=index, classes=("dependency-route",), overflow="suppress", required=False)
+    assert original is None
+    moved = place_label(anchor, (20, 8), ("above",), bounds=LabelRect(0, 0, 120, 100),
+                        obstacles=index, classes=("dependency-route",), overflow="suppress", required=False,
+                        search_side_neighborhood=True)
+    assert moved is not None and moved.side == "above" and moved.search_count > 0
+    assert moved.bounds.bottom <= anchor.y
+    assert not index.collisions(ObstacleRect(moved.bounds.x, moved.bounds.y,
+                                             moved.bounds.right, moved.bounds.bottom))
+    canonical = place_label(anchor, (20, 8), ("below",), bounds=LabelRect(0, 0, 120, 100),
+                            obstacles=index, classes=("dependency-route",), search_side_neighborhood=True)
+    assert canonical is not None and canonical.search_count == 0
+
+
+def test_optional_side_search_has_a_finite_512_candidate_cap(monkeypatch):
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("blocked", "mark", "timeline", ObstacleRect(0, 0, 3000, 3000)))
+    count = 0
+    original = index.collisions
+
+    def counted(*args, **kwargs):
+        nonlocal count
+        count += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(index, "collisions", counted)
+    result = place_label(LabelRect(1000, 1000, 10, 10), (600, 80), ("above", "below", "start", "end"),
+                         bounds=LabelRect(0, 0, 3000, 3000), obstacles=index, classes=("mark",),
+                         overflow="suppress", required=False, search_side_neighborhood=True)
+    assert result is None
+    assert count == 4 + 512
 
 
 def test_wrap_uses_measured_words_and_never_splits_a_token():

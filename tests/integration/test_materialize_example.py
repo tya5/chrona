@@ -153,6 +153,8 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
     assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact
     leader = re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]* d="([^"]+)"', artifact)
     assert leader is not None and leader.group(1).count("L") >= 5
+    assert leader.group(1).count("M") >= 2  # completed bridge gaps, not adapter-inferred crossings
+    assert "22 26.056" not in leader.group(1)  # rejected slide-perimeter detour
     assert re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]*marker-end="url\(#marker-[^"]+\)"', artifact)
     scene_source = (ROOT / "src/chrona/presentation/scene/v05_builder.py").read_text(encoding="utf-8")
     adapter_source = (ROOT / "src/chrona/presentation/renderers/v05_svg.py").read_text(encoding="utf-8")

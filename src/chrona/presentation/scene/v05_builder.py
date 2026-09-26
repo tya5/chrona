@@ -529,7 +529,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         leader = semantic_binding(relation.semantic_id)
         purpose, role, layer = leader.purpose, leader.scene_role, "annotation"
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, layer, purpose, role, (0, 0, 0, 0),
-                                         points=relation.points, marker_end=relation.marker_end,
+                                         points=relation.points, path_commands=relation.path_commands,
+                                         marker_end=relation.marker_end,
                                          paint_order=relation.paint_order))
     ownership = {item.placement_id: item.slot_id for item in placed_surface.text}
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.marks})
