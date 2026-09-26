@@ -233,7 +233,9 @@ and exhaustion are bounded and recorded in the placement decision. If all
 declared candidates fail, an explicit suppress outcome or the visible
 fallback policy applies; fallback MUST NOT be reported as a collision-free
 fit. The later candidate grammar will specify the public spelling of these
-policies.
+policies. The local corridor is based on the source mark and selected box
+attachment point, not the full box extent; see the
+[#466 corridor amendment](../design/issue-466-connector-corridor-amendment-2026-09-26.md).
 
 ## 9. Diagnostics
 

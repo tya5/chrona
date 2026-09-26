@@ -1,0 +1,5 @@
+# Design Amendment — Connector Corridor Uses the Attachment Point (#466)
+
+**Amends:** [connector topology correction](issue-466-annotation-connector-topology-correction-2026-09-26.md), specifically its local-corridor definition. The first implementation fixture exposed a geometric error: inflating the bounding rectangle of an entire wide rail box admits the slide's outer edge, reproducing the route that the corridor was intended to exclude.
+
+The local connector corridor instead bounds the **source mark and the selected box attachment point**, not the whole box. Inflate that rectangle on each side by half the measured box width (at least two route clearances), then clip to the content bounds. For the controller-z `bringup-risk` example, a box beginning near `x=24` with attachment near `x=336` gives a left corridor bound near `x=180`; the rejected perimeter route at `x=22` is outside it. The box remains separately subject to its region/obstacle fit. This correction changes no View/Theme authority, candidate order, crossing permission, Scene primitive, or adapter rule. The implementation plan's local-corridor gate uses this corrected definition.
