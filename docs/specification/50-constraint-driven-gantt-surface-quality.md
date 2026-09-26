@@ -49,6 +49,15 @@ visibility:
 
 `plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice.
 
+Before any row, mark, table cell or note placement, Layout applies the
+measured table-timeline content requirement to the complete Layout Profile
+allocation. A known row-density requirement grows its table/timeline host and
+moves later normal-flow slots when that profile can grow. `visible-overflow`
+remains the fallback for a valid profile whose host is fixed/capped or for a
+different placement collision; it is not permission to leave notes over a
+known growable table. The completed canvas still contains every emitted
+primitive.
+
 The timeline as-of label uses this visible-overflow fallback beside its marker
 line. A Layout text placement with `suppressed` disposition is non-drawable:
 Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named

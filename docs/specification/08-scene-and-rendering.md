@@ -549,6 +549,15 @@ An explicitly optional primitive may be omitted only by its selected Layout
 policy; omission is whole-primitive, not coordinate clipping. In-bounds
 primitives are identical under either disposition.
 
+For measured table-timeline row/track requirements, Layout first enlarges
+and re-solves the **whole** normal-flow allocation when possible, including
+the table and timeline host slots and later siblings such as notes. Scene
+MUST NOT carry a canvas-only expansion as a substitute for this known host
+allocation. A starter Draft render is part of the release perceptibility
+evidence: it is serialized and evaluated by the same pure Scene evaluator
+used for committed Scenes. Any text-text intersection error fails that gate;
+warning transport in an interactive Draft does not waive release failure.
+
 ## 10. Out of scope
 
 This document does not define:

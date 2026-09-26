@@ -272,3 +272,23 @@ as well as geometry beyond its requested end; the adapter uses that completed
 viewBox without independently repositioning primitives.
 Malformed profile constraints and invalid references remain errors. Scene and
 adapters MUST NOT resolve this shortage independently.
+
+### 13.1 Content-coherent table-timeline allocation (#468)
+
+For a table-timeline surface whose measured row/track content has a finite
+required block extent, Layout MUST apply that requirement to the normal-flow
+allocation before composing surface placements. The requested viewport is a
+minimum. Layout re-solves the complete profile at a sufficient finite block
+extent so the review-surface, table and timeline hosts grow together and
+later siblings such as notes move below them. Merely expanding the completed
+canvas around rows while leaving their known hosts and later siblings at the
+old positions is not a valid completion. If an otherwise valid profile fixes
+or caps a host so it cannot grow, Layout retains natural visible fallback and
+typed shortage warnings under Section 13; it MUST NOT claim that host grew.
+This rule applies equally to Draft and immutable table-timeline closures.
+
+Draft ingress defaults to an inline extent of 1600 and a content-resolved
+block extent (`1600xauto` in the CLI). Draft closure still carries a finite
+seed before Layout resolves the final allocation; no `auto` value is stored
+in an immutable Render Context. Explicit finite Draft extents and immutable
+Context extents remain valid minimum requests.
