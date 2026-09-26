@@ -14,8 +14,11 @@ The same principle governs one label tier's own thinning: a candidate whose own 
 ## 1.2 Axis tier appearance (#426)
 
 An axis tier's `role` decides what it draws; a new optional `typographyRole`
-(next View version after v0.23) decides what Theme role sizes and, for a
-`labels` tier, paints it. Layout keeps one independent, monotonic lane cursor
+(introduced after View v0.23) decides what Theme role measures its text and
+sizes its lane. A `labels` tier's colour is resolved separately through its
+ordinal Scene visual role (`axisLabel`, `axisLabel2` or `axisLabel3`), not through
+the arbitrary `typographyRole`; see the [#478 admission amendment](../design/issue-478-axis-typography-role-admission-amendment-2026-09-27.md).
+Layout keeps one independent, monotonic lane cursor
 per role among `band` and `labels` tiers (`grid-major`/`grid-minor` remain
 full-height and outside any cursor, unchanged): the Nth `band`-role tier
 occupies the Nth band lane, the Nth `labels`-role tier occupies the Nth label

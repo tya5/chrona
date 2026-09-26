@@ -1,5 +1,9 @@
 # Design Correction — Current Role/Property Admission Boundary (#478)
 
+**Axis-role amendment:** the [View-named typography rule](issue-478-axis-typography-role-admission-amendment-2026-09-27.md)
+adds a bounded producer family for arbitrary axis-tier measurement roles; it
+does not admit arbitrary Scene paint.
+
 **Amends:** [declared-treatment design](issue-478-declared-treatment-visibility-design-2026-09-26.md).
 **Plan:** [rebase design plan](../planning/active/issue-478-role-admission-rebase-design-plan-2026-09-27.md).
 **Scope:** I478-3 admission, resource migration and evidence only. I478-1/2
