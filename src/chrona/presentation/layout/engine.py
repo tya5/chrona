@@ -7,6 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.layout.model import (
     LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, ResolvedLayoutProfile,
 )
+from chrona.presentation.layout.surface_quality import FitWarning
 
 
 getcontext().prec = 28
@@ -89,10 +90,11 @@ def _allocate(specs: list[Any], available: Decimal, measurements: list[Measureme
     bases = [_spec_base(spec, axis=axis, measurement=measure, profile=profile, path=path) for spec, measure, path in zip(specs, measurements, paths)]
     sizes = [target if target is not None and weight == ZERO else minimum for minimum, target, weight in bases]
     remaining = available - sum(sizes, ZERO)
-    if remaining < ZERO:
-        raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY")
+    # A valid profile with too little space still has a finite natural
+    # placement.  The caller records its typed overflow and the composition
+    # layer expands the completed canvas around the resulting bounds.
     flex = sum((weight for _, _, weight in bases), ZERO)
-    if flex:
+    if flex and remaining > ZERO:
         for index, (_, maximum, weight) in enumerate(bases):
             if weight:
                 addition = remaining * weight / flex
@@ -148,8 +150,7 @@ def _distributed_start(kind: str, extra: Decimal, count: int, gap: Decimal) -> t
 def _cross_position(align: str, start: Decimal, available: Decimal, size: Decimal, safety: str = "strict") -> tuple[Decimal, Decimal]:
     if align == "stretch": return start, available
     if size > available:
-        if safety == "safe": return start, size
-        raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW")
+        return start, size
     if align == "center": return start + (available - size) / 2, size
     if align == "end": return start + available - size, size
     return start, size
@@ -159,6 +160,16 @@ class _Arranger:
     def __init__(self, profile: ResolvedLayoutProfile, measurements: Mapping[str, Measurement]):
         self.profile, self.measurements = profile, measurements
         self.decisions: list[LayoutDecision] = []
+        self.fit_warnings: list[FitWarning] = []
+
+    def _warn(self, node: Mapping[str, Any], path: str, *, required_inline: Decimal,
+              required_block: Decimal, available_inline: Decimal, available_block: Decimal) -> None:
+        self.fit_warnings.append(FitWarning(
+            "W_LAYOUT_VISIBLE_OVERFLOW", str(node["id"]), str(node.get("source") or path),
+            "layout-track", "visible-overflow", float(max(ZERO, required_inline)),
+            float(max(ZERO, required_block)), float(max(ZERO, available_inline)),
+            float(max(ZERO, available_block)),
+        ))
 
     def arrange(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
         kind, node_id = str(node["kind"]), str(node["id"])
@@ -167,8 +178,10 @@ class _Arranger:
                                              node.get("overflow") if kind == "slot" else None))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)
-            if node["overflow"] == "diagnose" and (rect.inline_size < measure.min_inline or rect.block_size < measure.min_block):
-                raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", path, node_id)
+            if rect.inline_size < measure.min_inline or rect.block_size < measure.min_block:
+                self._warn(node, path, required_inline=measure.min_inline,
+                           required_block=measure.min_block, available_inline=rect.inline_size,
+                           available_block=rect.block_size)
             return
         if kind == "overlay":
             self._overlay(node, path, rect); return
@@ -180,7 +193,11 @@ class _Arranger:
 
     def _content(self, node: Mapping[str, Any], path: str, rect: Rect) -> tuple[Decimal, Decimal, Decimal, Decimal]:
         i0, i1, b0, b1 = _padding(self.profile, node, path)
-        return rect.inline + i0, rect.block + b0, rect.inline_size - i0 - i1, rect.block_size - b0 - b1
+        inline_size, block_size = rect.inline_size - i0 - i1, rect.block_size - b0 - b1
+        if inline_size < ZERO or block_size < ZERO:
+            self._warn(node, path, required_inline=i0 + i1, required_block=b0 + b1,
+                       available_inline=rect.inline_size, available_block=rect.block_size)
+        return rect.inline + i0, rect.block + b0, max(ZERO, inline_size), max(ZERO, block_size)
 
     def _linear(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
         inline, block, inline_size, block_size = self._content(node, path, rect)
@@ -197,6 +214,11 @@ class _Arranger:
         paths = [f"{path}/children/{i}/{'inlineSize' if row else 'blockSize'}" for i, _ in children]
         sizes = _allocate(specs, main - gap * max(0, len(children)-1), measured, axis="inline" if row else "block", profile=self.profile, paths=paths)
         used = sum(sizes, ZERO) + gap * max(0, len(children)-1)
+        if used > main:
+            self._warn(node, path, required_inline=used if row else cross,
+                       required_block=cross if row else used,
+                       available_inline=main if row else cross,
+                       available_block=cross if row else main)
         cursor_delta, actual_gap = _distributed_start(node["justifyContent"], main-used, len(children), gap)
         cursor = (inline if row else block) + cursor_delta
         baseline = None
@@ -216,6 +238,11 @@ class _Arranger:
             align = child.get("place", {}).get("block" if row else "inline", node["alignItems"])
             safety = child.get("place", {}).get("safety", "strict")
             cross_start, cross_used = _cross_position(align, block if row else inline, cross, cross_used, safety)
+            if cross_used > cross:
+                self._warn(child, child_path, required_inline=main_size if row else cross_used,
+                           required_block=cross_used if row else main_size,
+                           available_inline=main_size if row else cross,
+                           available_block=cross if row else main_size)
             if baseline is not None:
                 own = child_measure.first_baseline if node["alignItems"] == "first-baseline" else child_measure.last_baseline
                 cross_start = block + baseline - own  # type: ignore[operator]
@@ -232,6 +259,11 @@ class _Arranger:
             if cell.get("rowSpan",1)==1: row_measures[cell["row"]-1]=measure
         col_sizes=_allocate(cols,inline_size-gap*(len(cols)-1),col_measures,axis="inline",profile=self.profile,paths=[f"{path}/columnTracks/{i}" for i in range(len(cols))])
         row_sizes=_allocate(rows,block_size-gap*(len(rows)-1),row_measures,axis="block",profile=self.profile,paths=[f"{path}/rowTracks/{i}" for i in range(len(rows))])
+        required_inline = sum(col_sizes, ZERO) + gap * max(0, len(cols)-1)
+        required_block = sum(row_sizes, ZERO) + gap * max(0, len(rows)-1)
+        if required_inline > inline_size or required_block > block_size:
+            self._warn(node, path, required_inline=required_inline, required_block=required_block,
+                       available_inline=inline_size, available_block=block_size)
         col_starts=[]; cursor=inline
         for size in col_sizes: col_starts.append(cursor); cursor+=size+gap
         row_starts=[]; cursor=block
@@ -257,7 +289,10 @@ class _Arranger:
         cursor_b=block
         for line in lines:
             line_height=max((item[4] for item in line),default=ZERO)
-            if cursor_b+line_height>block+block_size: raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW",path,node["id"])
+            if cursor_b+line_height>block+block_size:
+                self._warn(node, path, required_inline=inline_size,
+                           required_block=cursor_b + line_height - block,
+                           available_inline=inline_size, available_block=block_size)
             total=sum((item[3] for item in line),ZERO)+gap*max(0,len(line)-1)
             delta,actual_gap=_distributed_start(node["justifyContent"],inline_size-total,len(line),gap); cursor_i=inline+delta
             baseline=None
@@ -268,6 +303,10 @@ class _Arranger:
             for i,child,measure,width,height in line:
                 child_path=f"{path}/children/{i}"; align=child.get("place",{}).get("block",node["alignItems"]); safety=child.get("place",{}).get("safety","strict")
                 child_block,height=_cross_position(align,cursor_b,line_height,height,safety)
+                if height > line_height:
+                    self._warn(child, child_path, required_inline=width,
+                               required_block=height, available_inline=width,
+                               available_block=line_height)
                 if baseline is not None:
                     own=measure.first_baseline if node["alignItems"]=="first-baseline" else measure.last_baseline; child_block=cursor_b+baseline-own  # type: ignore[operator]
                 self.arrange(child,child_path,Rect(cursor_i,child_block,width,height)); cursor_i+=width+actual_gap
@@ -301,6 +340,10 @@ class _Arranger:
             start_inline, used_inline = _cross_position(place.get("inline", "start"), inline, inline_size, used_inline, place.get("safety", "strict"))
             start_block, used_block = _cross_position(place.get("block", "start"), block, block_size, used_block, place.get("safety", "strict"))
             child_rect = Rect(start_inline, start_block, used_inline, used_block)
+            if used_inline > inline_size or used_block > block_size:
+                self._warn(child, child_path, required_inline=used_inline,
+                           required_block=used_block, available_inline=inline_size,
+                           available_block=block_size)
             bounds[child_id] = child_rect
             self.arrange(child, child_path, child_rect)
 
@@ -378,10 +421,16 @@ class _Arranger:
                 child_rect = Rect(coordinates["inline"], coordinates["block"], used_inline, used_block)
                 safety = child.get("place", {}).get("safety", "strict")
                 outside = (child_rect.inline < inline or child_rect.block < block or child_rect.inline + used_inline > inline + inline_size or child_rect.block + used_block > block + block_size)
-                if outside and safety == "strict":
-                    raise LayoutError("E_LAYOUT_REQUIRED_OVERFLOW", child_path, child_id)
+                if outside:
+                    self._warn(child, child_path, required_inline=used_inline,
+                               required_block=used_block, available_inline=inline_size,
+                               available_block=block_size)
                 if outside and safety == "safe":
-                    child_rect = Rect(min(max(child_rect.inline, inline), inline + inline_size - used_inline), min(max(child_rect.block, block), block + block_size - used_block), used_inline, used_block)
+                    child_rect = Rect(
+                        inline if used_inline > inline_size else min(max(child_rect.inline, inline), inline + inline_size - used_inline),
+                        block if used_block > block_size else min(max(child_rect.block, block), block + block_size - used_block),
+                        used_inline, used_block,
+                    )
                 references = tuple(anchor["target"][axis]["ref"] for axis in ("inline", "block"))
                 bounds[child_id] = child_rect
                 self.arrange(child, child_path, child_rect, references)
@@ -412,6 +461,7 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         annotation_max_detour_ratio=float(annotation_routing["maxDetourRatio"]),
         row_distribution=str(profile.profile["reviewSurface"]["rowDistribution"]),
         background_extents=dict(profile.profile["reviewSurface"]["backgroundExtents"]),
+        fit_warnings=tuple(arranger.fit_warnings),
     )
 
 

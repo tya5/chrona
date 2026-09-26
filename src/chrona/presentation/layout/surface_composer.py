@@ -939,8 +939,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 if tier.label.overflow == "thin-with-record":
                     try:
                         schedule = thinning_schedule(fits)
-                    except ValueError as error:
-                        interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
+                    except ValueError:
+                        # A declared thinning policy cannot remove every
+                        # interval. Keep the complete visible result and its
+                        # measured reason instead of constructing an invalid
+                        # placed outcome for a non-fitting label.
+                        interval_outcomes = tuple(replace(
+                            item, disposition="placed",
+                            reason=None if item.label_fits else "visible-overflow",
+                        ) for item in interval_outcomes)
                     else:
                         retained = set(schedule.retained_positions)
                         resolved_outcomes: list[AxisIntervalOutcome] = []
@@ -1905,7 +1912,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     # Complete the observable fallback records at the same point as completed
     # geometry.  Neither Scene nor an adapter gets a policy question to answer.
-    fit_warnings: list[FitWarning] = [*detail_panel_warnings, *side_content_warnings]
+    fit_warnings: list[FitWarning] = [*layout_manifest.fit_warnings, *detail_panel_warnings, *side_content_warnings]
     warned_placement_ids: set[str] = set()
     timeline_end = timeline.bounds.block + timeline.bounds.block_size
     header_start = Decimal(str(table_bounds[1]))

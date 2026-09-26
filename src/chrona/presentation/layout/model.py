@@ -6,7 +6,10 @@ from decimal import Decimal
 from math import fsum
 from collections.abc import Iterable
 import json
-from typing import Any, Mapping
+from typing import Any, Mapping, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from chrona.presentation.layout.surface_quality import FitWarning
 
 
 class LayoutError(ValueError):
@@ -89,6 +92,7 @@ class LayoutManifest:
     annotation_max_detour_ratio: float = 2.0
     row_distribution: str = "pack"
     background_extents: Mapping[str, str] = field(default_factory=dict)
+    fit_warnings: tuple[FitWarning, ...] = ()
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
         quantum = Decimal(1).scaleb(-precision)
@@ -137,4 +141,11 @@ class LayoutManifest:
             "flowDirection": self.flow_direction,
             "dependencyNetworkFlowDirection": self.dependency_network_flow_direction,
         }
+        if self.fit_warnings:
+            payload["fitWarnings"] = [
+                {"code": item.code, "placementId": item.placement_id,
+                 "requiredInline": item.required_inline, "requiredBlock": item.required_block,
+                 "availableInline": item.available_inline, "availableBlock": item.available_block}
+                for item in self.fit_warnings
+            ]
         return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()

@@ -55,12 +55,15 @@ def test_content_change_recenters_title():
     assert after.inline < before.inline and after.inline_size > before.inline_size
 
 
-def test_missing_measurement_and_required_overflow_is_reported_by_the_arranger():
+def test_missing_measurement_rejects_but_valid_shortage_completes_with_warning():
     missing=dict(MEASUREMENTS); del missing["title"]
     with pytest.raises(LayoutError,match="E_LAYOUT_MEASUREMENT_REQUIRED"):
         solve_layout(profile(),viewport_inline=1600,viewport_block=900,measurements=missing)
-    with pytest.raises(LayoutError,match="E_LAYOUT_CONSTRAINT_CONTRADICTORY"):
-        solve_layout(profile(),viewport_inline=300,viewport_block=100,measurements=MEASUREMENTS)
+    narrow = solve_layout(profile(), viewport_inline=300, viewport_block=100, measurements=MEASUREMENTS)
+    assert narrow.fit_warnings
+    assert all(warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" for warning in narrow.fit_warnings)
+    assert any(warning.required_inline > warning.available_inline or
+               warning.required_block > warning.available_block for warning in narrow.fit_warnings)
 
 
 def test_layout_token_requirement_contract_is_exact_and_theme_checked():
@@ -119,6 +122,11 @@ def test_grid_and_distribution_are_deterministic():
     result=decisions(solve_layout(resolved,viewport_inline=1000,viewport_block=100,measurements={"legend":MEASUREMENTS["legend"],"notes":MEASUREMENTS["notes"]}))
     assert result["legend"].inline_size == result["notes"].inline_size == Decimal(492)
     assert result["notes"].inline == Decimal(508)
+    narrow = solve_layout(resolved, viewport_inline=200, viewport_block=20,
+                          measurements={"legend": MEASUREMENTS["legend"], "notes": MEASUREMENTS["notes"]})
+    assert any(warning.placement_id == "root" and warning.required_block > warning.available_block
+               for warning in narrow.fit_warnings)
+    assert all(item.bounds.inline_size >= 0 and item.bounds.block_size >= 0 for item in narrow.decisions)
 
 
 def test_review_surface_requires_the_closed_background_extent_mapping():
@@ -211,3 +219,12 @@ def test_relative_manifest_is_deterministic():
     first = solve_layout(relative_profile(), viewport_inline=1000, viewport_block=500, measurements=RELATIVE_MEASUREMENTS)
     second = solve_layout(relative_profile(), viewport_inline=1000, viewport_block=500, measurements=RELATIVE_MEASUREMENTS)
     assert first.canonical_bytes() == second.canonical_bytes()
+
+
+def test_narrow_relative_overlay_preserves_child_placement_and_warns():
+    manifest = solve_layout(relative_profile(), viewport_inline=200, viewport_block=100,
+                            measurements=RELATIVE_MEASUREMENTS)
+    placed = decisions(manifest)
+    assert "milestones" in placed
+    assert manifest.fit_warnings
+    assert any(warning.placement_id == "milestones" for warning in manifest.fit_warnings)
