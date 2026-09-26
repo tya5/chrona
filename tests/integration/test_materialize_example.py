@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import xml.etree.ElementTree as ET
 
 import pytest
 import yaml
@@ -44,6 +45,38 @@ def test_declared_examples_reproduce_by_public_cli(tmp_path):
     for manifest in manifests:
         for slide in yaml.safe_load(manifest.read_text(encoding="utf-8"))["slides"]:
             materialize(manifest, slide["id"], tmp_path / manifest.parent.name / slide["id"], write=False)
+
+
+@pytest.mark.parametrize("context_locale,table_id,form,expected", [
+    ("ja-JP", "en-US", "short-month", "Jan"),
+    ("ja-JP", "en-US", "long-month", "January"),
+    ("ja-JP", "ja-JP", "short-month", "1月"),
+    ("ja-JP", "ja-JP", "numeric-month", "01"),
+    ("en-US", "ja-JP", "short-month", "1月"),
+])
+def test_public_svg_renders_axis_table_independently_of_context_locale(tmp_path, context_locale, table_id, form, expected):
+    _require_cjk_provider()
+    example = tmp_path / "controller-z-ja"
+    shutil.copytree(ROOT / "examples/controller-z-ja", example)
+    context_path = example / "contexts/executive.yaml"
+    context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    context["body"]["environment"]["locale"] = context_locale
+    context_path.write_text(yaml.safe_dump(context, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    view_path = example / "views/executive.yaml"
+    view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+    view["body"]["window"]["start"] = "2026-01-01"
+    label_tier = next(tier for tier in view["body"]["axis"]["tiers"]
+                      if tier["role"] == "labels" and tier["unit"] in {"month", "auto"})
+    label_tier["unit"] = "month"
+    label_tier["label"] = {"form": form, "nameTable": table_id,
+                           "align": "start", "overflow": "visible-overflow", "orientation": "horizontal"}
+    view_path.write_text(yaml.safe_dump(view, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+    materialize(example / "manifest.yaml", "executive", tmp_path / "output", write=True)
+    svg = ET.fromstring((example / "generated/executive.svg").read_bytes())
+    labels = ["".join(node.itertext()) for node in svg.iter()
+              if node.attrib.get("data-scene-id") == "axis-label:3:0"]
+    assert labels == [expected]
 
 
 def test_immutable_context_completes_narrow_programme_board_with_visible_warning(tmp_path):

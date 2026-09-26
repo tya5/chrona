@@ -804,7 +804,7 @@ def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
     value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=(
                                   AxisTier("quarter", 1, "band"), AxisTier("quarter", 1, "grid-major"),
                                   AxisTier("month", 1, "grid-minor"),
-                                  AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow")),
+                                  AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
                               )),
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
                               resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
@@ -823,6 +823,49 @@ def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
                for node in grids)
 
 
+@pytest.mark.parametrize("table_id,form,expected", [
+    ("en-US", "short-month", "Jan"),
+    ("en-US", "long-month", "January"),
+    ("ja-JP", "short-month", "1月"),
+    ("ja-JP", "numeric-month", "01"),
+])
+def test_completed_axis_text_uses_selected_table(table_id, form, expected):
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 31)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 2, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
+                                   "timeline.mark.blockSize": Decimal(8)})
+    content = surface_content(axis_tiers=(AxisTier("month", 1, "labels",
+        AxisLabelIntent(form, (), "start", "visible-overflow", "horizontal", table_id)),))
+    value = build_scene_input(projection=projection, surface_content=content,
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    labels = [node.text for node in compose_review_surface(value).primitives
+              if node.scene_id.startswith("axis-label:")]
+    assert labels == [expected]
+
+
+def test_selected_noncanonical_may_form_is_reported_by_layout():
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 5, 1), "end": date(2026, 5, 31)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 5, 1), date(2026, 6, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
+                                   "timeline.mark.blockSize": Decimal(8)})
+    content = surface_content(axis_tiers=(AxisTier("month", 1, "labels",
+        AxisLabelIntent("long-month", (), "start", "visible-overflow", "horizontal", "en-US")),))
+    value = build_scene_input(projection=projection, surface_content=content,
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    assert any(warning.startswith("W_LAYOUT_AXIS_FORM_EQUIVALENT:axis-label:0:0:table=en-US:"
+                                  "form=long-month:canonical=short-month:month=5")
+               for warning in surface.diagnostics)
+
+
 def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 7, 1)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 7, 1)), (), ())
@@ -831,7 +874,7 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
     content = surface_content(axis_tiers=(
         AxisTier("quarter", 1, "band"),
-        AxisTier("auto", 2, "labels", AxisLabelIntent(None, (("month", "short-month"), ("quarter", "year-quarter")), "center", "thin-with-record")),
+        AxisTier("auto", 2, "labels", AxisLabelIntent(None, (("month", "short-month"), ("quarter", "year-quarter")), "center", "thin-with-record", "horizontal", "ja-JP")),
     ))
     value = build_scene_input(projection=projection, surface_content=content,
                               layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
@@ -840,7 +883,7 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
     composition = compose_surface_layout(SurfaceLayoutRequest(
         projection=value.projection, presentation_contract=normalize_presentation_input(content),
         surface_content=content, layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
-        theme_tokens=value.theme_tokens, font_metrics=value.font_metrics, locale=value.locale,
+        theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
         capabilities=dict(value.capabilities),
     ))
 
@@ -849,6 +892,8 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
     assert (labels.requested_units, labels.selected_unit, labels.every, labels.label_form) == (
         ("month", "quarter"), "month", 2, "short-month")
     assert [item.candidate_id for item in labels.intervals] == ["axis-label:1:0", "axis-label:1:2", "axis-label:1:4"]
+    assert labels.name_table_id == "ja-JP"
+    assert [item.label for item in labels.intervals] == ["1月", "3月", "5月"]
     assert all(item.label is not None and item.label_fits and item.disposition == "placed" for item in labels.intervals)
 
 

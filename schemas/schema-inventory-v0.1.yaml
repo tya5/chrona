@@ -1,5 +1,6 @@
 version: chrona/schema-inventory/v0.1
 schemas:
+  - {file: axis-name-tables-v0.1.schema.yaml, kind: builtin-axis-name-tables, state: live, consumers: [src/chrona/presentation/model/axis_names.py]}
   - {file: actual-intake-batch-v0.2.schema.yaml, kind: actual-intake-batch, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: actual-set-v0.2.schema.yaml, kind: actual-set, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: actual-set-v0.3.schema.yaml, removalSlice: I398-1}
   - {file: actual-set-v0.3.schema.yaml, kind: actual-set, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
@@ -57,4 +58,5 @@ schemas:
   - {file: view-v0.18.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.19.schema.yaml, removalSlice: I449-1}
   - {file: view-v0.19.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.20.schema.yaml, removalSlice: I435-1}
   - {file: view-v0.20.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.21.schema.yaml, removalSlice: I431-2}
-  - {file: view-v0.21.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: view-v0.21.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.22.schema.yaml, removalSlice: I432-1}
+  - {file: view-v0.22.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

@@ -263,7 +263,6 @@ def render_review(request: RenderRequest) -> RenderedReview:
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,
         capabilities={name: True for name in render_closure.context.target.capabilities},
-        locale=environment.locale,
         visual_profile=visual_profile,
         viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
         icon_assets=icon_assets,

@@ -13,6 +13,7 @@ from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.model.color_scale import ResolvedColorScale
+from chrona.presentation.model.axis_names import axis_name_table
 
 
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
@@ -81,7 +82,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
     temporal = view.time_presentation or {}
     axis = view.axis or {}
-    axis_tiers = tuple(_axis_tier(item) for item in axis.get("tiers", ()))
+    axis_tiers = tuple(_axis_tier(item, locale=locale) for item in axis.get("tiers", ()))
     project_body = project.get("project", {})
     calendar_id = project_body.get("calendar") if isinstance(project_body, Mapping) else None
     calendars = project.get("calendars", {})
@@ -169,7 +170,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                group_decoration=view.background_decoration[1])
 
 
-def _axis_tier(value: Mapping[str, Any]) -> AxisTier:
+def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
     """Detach one schema-validated View tier into Layout-owned typed intent."""
     role, unit = str(value["role"]), str(value["unit"])
     raw_label = value.get("label")
@@ -177,10 +178,12 @@ def _axis_tier(value: Mapping[str, Any]) -> AxisTier:
         return AxisTier(unit, int(value["every"]), role)
     candidates = raw_label.get("forms", {})
     candidate_forms = tuple((str(candidate), str(form)) for candidate, form in candidates.items()) if isinstance(candidates, Mapping) else ()
+    table_id = str(raw_label.get("nameTable", locale))
+    axis_name_table(table_id)
     return AxisTier(unit, int(value["every"]), role,
                     AxisLabelIntent(str(raw_label["form"]) if "form" in raw_label else None,
                                     candidate_forms, str(raw_label["align"]), str(raw_label["overflow"]),
-                                    str(raw_label["orientation"])))
+                                    str(raw_label["orientation"]), table_id))
 
 
 def _column_width(value: object) -> TableColumnWidth:

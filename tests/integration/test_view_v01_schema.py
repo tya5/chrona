@@ -25,7 +25,7 @@ def _json_value(value: Any) -> Any:
 
 
 def _validator() -> jsonschema.Draft202012Validator:
-    schema = yaml.safe_load(schema_resource("view-v0.21.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("view-v0.22.schema.yaml").read_text(encoding="utf-8"))
     foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
     return jsonschema.Draft202012Validator(
         schema, resolver=jsonschema.RefResolver.from_schema(schema, store={foundation["$id"]: foundation})
@@ -35,7 +35,7 @@ def _validator() -> jsonschema.Draft202012Validator:
 @pytest.mark.parametrize("path", reachable_view_paths(ROOT))
 def test_declared_public_v03_view_validates(path: Path):
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    assert value.get("version") == "chrona/view/v0.21", path
+    assert value.get("version") == "chrona/view/v0.22", path
     assert next(_validator().iter_errors(_json_value(value)), None) is None, path
 
 
@@ -58,7 +58,7 @@ def test_view_admits_inside_at_each_member_label_side_ingress():
     }
     value["body"]["visibility"]["fallback"] = {"labels": ["inside", "end", "suppress"]}
     assert next(_validator().iter_errors(_json_value(value)), None) is None
-    schema = yaml.safe_load(schema_resource("view-v0.21.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("view-v0.22.schema.yaml").read_text(encoding="utf-8"))
     assert "inside" in schema["$defs"]["presentationIntent"]["properties"]["label"]["properties"]["side"]["enum"]
 
 
@@ -76,6 +76,33 @@ def test_v018_requires_closed_axis_and_table_header_orientation():
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
     value["body"]["tableColumns"][0]["headerOrientation"] = "diagonal"
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
+
+
+def test_v022_axis_name_table_is_only_a_finite_labels_tier_choice():
+    source = yaml.safe_load((ROOT / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    value = deepcopy(source)
+    labels = next(tier for tier in value["body"]["axis"]["tiers"] if tier["role"] == "labels")
+    labels["label"]["nameTable"] = "ja-JP"
+    assert next(_validator().iter_errors(_json_value(value)), None) is None
+
+    labels["label"]["nameTable"] = "fr-FR"
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
+
+    value = deepcopy(source)
+    non_label = next(tier for tier in value["body"]["axis"]["tiers"] if tier["role"] != "labels")
+    non_label["label"] = {"form": "short-month", "align": "start", "overflow": "visible-overflow",
+                          "orientation": "horizontal", "nameTable": "ja-JP"}
+    assert next(_validator().iter_errors(_json_value(value)), None) is not None
+
+    value = deepcopy(source)
+    labels = next(tier for tier in value["body"]["axis"]["tiers"] if tier["role"] == "labels")
+    labels["unit"] = "auto"
+    labels["label"] = {"forms": {"month": "short-month"}, "align": "start",
+                       "overflow": "visible-overflow", "orientation": "horizontal", "nameTable": "ja-JP"}
+    assert next(_validator().iter_errors(_json_value(value)), None) is None
+
+    value["version"] = "chrona/view/v0.21"
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
 
 

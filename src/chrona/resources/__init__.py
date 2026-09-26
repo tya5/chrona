@@ -80,6 +80,14 @@ def builtin_preset_library_resource() -> Traversable:
     return resource
 
 
+def axis_name_tables_resource() -> Traversable:
+    """Return the finite, wheel-owned axis vocabulary catalog."""
+    resource = files(__package__).joinpath("axis-name-tables-v0.1.yaml")
+    if not resource.is_file():
+        raise ValueError("E_AXIS_NAME_TABLE_RESOURCE")
+    return resource
+
+
 def builtin_preset_source_root(address: str) -> Traversable:
     """Resolve one safe builtin-library source root in wheel or source authority."""
     path = PurePosixPath(address)

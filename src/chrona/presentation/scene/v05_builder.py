@@ -46,7 +46,6 @@ class SceneBuildInput:
     measured_sources: MeasuredSources
     capabilities: Mapping[str, bool]
     visual_profile: VisualProfile | None = None
-    locale: str = "en-US"
     viewport: tuple[float, float] = (0.0, 0.0)
     icon_assets: dict[str, Any] | None = None
     visual_requests: tuple[Any, ...] = ()
@@ -152,7 +151,7 @@ def _complete_icon_paths(primitive: ScenePrimitive, paint: Any) -> tuple[SceneIc
 def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       layout_manifest: LayoutManifest, resolved_theme: Mapping[str, Any],
                       font_metrics: Any, measured_sources: MeasuredSources,
-                      capabilities: Mapping[str, bool], locale: str = "en-US",
+                      capabilities: Mapping[str, bool],
                       visual_profile: VisualProfile | None = None,
                       viewport: tuple[float, float] = (0.0, 0.0),
                       icon_assets: dict[str, Any] | None = None,
@@ -178,7 +177,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), visual_profile, locale, viewport, icon_assets, visual_requests)
+                           dict(capabilities), visual_profile, viewport, icon_assets, visual_requests)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -208,7 +207,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             projection=projection, presentation_contract=contract,
             surface_content=value.surface_content, layout_manifest=value.layout_manifest,
             measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
-            font_metrics=value.font_metrics, locale=value.locale,
+            font_metrics=value.font_metrics,
             capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
             visual_requests=value.visual_requests,
         ))

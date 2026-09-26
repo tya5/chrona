@@ -1,4 +1,4 @@
-version: chrona/view/v0.21
+version: chrona/view/v0.22
 kind: view
 id: controller-z-ja-executive
 body:
@@ -77,6 +77,7 @@ body:
       role: labels
       label:
         forms: {month: short-month, quarter: year-quarter, half: half-year}
+        nameTable: ja-JP
         align: center
         overflow: thin-with-record
         orientation: horizontal

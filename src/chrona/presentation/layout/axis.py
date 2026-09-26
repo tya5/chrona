@@ -6,6 +6,7 @@ font choice and SVG emission remain later Scene/adapter responsibilities.
 from __future__ import annotations
 
 from chrona.presentation.layout.text import measure_text_width
+from chrona.presentation.model.axis_names import AxisNameTable
 
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -135,64 +136,35 @@ def _fiscal_year(value: date, fiscal_start_month: int) -> int:
     return value.year if fiscal_start_month == 1 or value.month >= fiscal_start_month else value.year - 1
 
 
-_SHORT_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-_LONG_MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+_FORMS_BY_LEVEL = {
+    "year": frozenset({"year"}),
+    "half": frozenset({"half-year"}),
+    "quarter": frozenset({"quarter", "year-quarter", "quarter-year"}),
+    "month": frozenset({"short-month", "long-month", "numeric-month", "short-month-year",
+                        "long-month-year", "numeric-year-month"}),
+    "week": frozenset({"iso-week"}),
+    "day": frozenset({"localized-date"}),
+}
 
 
-def format_axis_label(interval: AxisInterval, formatting: dict, locale: str) -> str:
-    """Format one natural bucket without consulting the process locale."""
-    value, level = interval.natural_start, interval.level
-    language = locale.split("-", 1)[0].lower()
-    if level == "year":
-        return interval.label
-    if level == "quarter":
-        quarter = interval.label.rsplit("-", 1)[-1]
-        style = formatting["quarter"]
-        if style == "quarter":
-            return quarter
-        if style == "year-quarter":
-            return f"{interval.label.split('-', 1)[0]}年{quarter}" if language == "ja" else f"{interval.label.split('-', 1)[0]} {quarter}"
-        if style == "quarter-year":
-            return f"{quarter} {interval.label.split('-', 1)[0]}年" if language == "ja" else f"{quarter} {interval.label.split('-', 1)[0]}"
+def format_axis_tier_label(interval: AxisInterval, form: str, table: AxisNameTable) -> str:
+    """Format a natural bucket from a selected table, never from a locale code."""
+    if form not in _FORMS_BY_LEVEL[interval.level]:
         raise ValueError("E_PRESENTATION_AXIS_FORMAT")
-    if level == "month":
-        style = formatting["month"]
-        if language == "ja":
-            month = f"{value.month}月"
-            return month if style in {"short-month", "long-month", "numeric-month"} else f"{value.year}年{month}"
-        short, long = _SHORT_MONTHS[value.month - 1], _LONG_MONTHS[value.month - 1]
-        return {
-            "short-month-year": f"{short} {value.year}",
-            "long-month-year": f"{long} {value.year}",
-            "numeric-year-month": f"{value.year}-{value.month:02d}",
-            "short-month": short,
-            "long-month": long,
-            "numeric-month": f"{value.month:02d}",
-        }[style]
-    if level == "day" and formatting["date"] == "localized-date":
-        if language == "ja":
-            return f"{value.year}/{value.month:02d}/{value.day:02d}"
-        return f"{_SHORT_MONTHS[value.month - 1]} {value.day}, {value.year}"
-    return interval.label
-
-
-def format_axis_tier_label(interval: AxisInterval, form: str, locale: str) -> str:
-    """Format one selected tier without a cross-tier formatting map."""
-    if interval.level == "half":
-        return interval.label if form == "half-year" else _raise_format()
-    if interval.level == "week":
-        return interval.label if form == "iso-week" else _raise_format()
-    if interval.level == "year":
-        return interval.label if form == "year" else _raise_format()
-    if interval.level == "day":
-        return format_axis_label(interval, {"date": form}, locale)
-    if interval.level == "month":
-        return format_axis_label(interval, {"month": form}, locale)
-    return format_axis_label(interval, {"quarter": form}, locale)
-
-
-def _raise_format() -> str:
-    raise ValueError("E_PRESENTATION_AXIS_FORMAT")
+    value = interval.natural_start
+    iso_year, iso_week, _ = value.isocalendar()
+    fiscal_year = int(interval.label.split("-", 1)[0])
+    components = {
+        "year": value.year, "fiscalYear": fiscal_year,
+        "half": interval.label.rsplit("H", 1)[-1] if interval.level == "half" else "",
+        "quarter": interval.label.rsplit("Q", 1)[-1] if interval.level == "quarter" else "",
+        "monthShort": table.month_short[value.month - 1],
+        "monthLong": table.month_long[value.month - 1],
+        "monthNumber": value.month, "monthNumeric": f"{value.month:02d}",
+        "day": value.day, "dayNumeric": f"{value.day:02d}",
+        "isoYear": iso_year, "isoWeek": f"{iso_week:02d}",
+    }
+    return table.format(form, components)
 
 
 def axis_label_fits(*, content: str, available_inline: float, font_size: float,

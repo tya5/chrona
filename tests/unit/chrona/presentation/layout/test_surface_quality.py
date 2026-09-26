@@ -195,7 +195,7 @@ def test_surface_placement_closes_axis_outcomes_for_later_failure_policy():
                                    date(2026, 1, 1), date(2026, 2, 1), "Jan", True, "placed")
     SurfacePlacement(axis_tier_outcomes=(
         AxisTierOutcome(0, "/view/body/axis/tiers/0", "labels", ("month", "quarter"), "month", 1,
-                        "short-month", (interval,)),
+                        "short-month", (interval,), "en-US"),
     )).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_AXIS_OUTCOME_INVALID:0"):
         SurfacePlacement(axis_tier_outcomes=(

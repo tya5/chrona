@@ -110,7 +110,8 @@ class AxisLabelIntent:
     candidate_forms: tuple[tuple[str, str], ...]
     align: str
     overflow: str
-    orientation: str = "horizontal"
+    orientation: str
+    name_table_id: str
 
 
 @dataclass(frozen=True)

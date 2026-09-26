@@ -2,7 +2,8 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation.layout.axis import axis_intervals, format_axis_label
+from chrona.presentation.layout.axis import axis_intervals, format_axis_tier_label
+from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.surface_content import display_value
 
 
@@ -36,7 +37,18 @@ def test_year_intervals_keep_the_natural_bucket_at_clipped_edges():
 ])
 def test_month_format_catalog_is_closed_and_process_locale_independent(style, expected):
     interval = axis_intervals(date(2027, 1, 15), date(2027, 2, 1), "month")[0]
-    assert format_axis_label(interval, {"month": style, "quarter": "quarter-year", "date": "iso-date"}, "en-US") == expected
+    assert format_axis_tier_label(interval, style, axis_name_table("en-US")) == expected
+
+
+@pytest.mark.parametrize("table_id,form,expected", [
+    ("en-US", "short-month", "Jan"),
+    ("en-US", "long-month", "January"),
+    ("ja-JP", "short-month", "1月"),
+    ("ja-JP", "numeric-month", "01"),
+])
+def test_selected_axis_table_outputs_finite_month_forms(table_id, form, expected):
+    interval = axis_intervals(date(2026, 1, 1), date(2026, 2, 1), "month")[0]
+    assert format_axis_tier_label(interval, form, axis_name_table(table_id)) == expected
 
 
 def test_compact_date_range_is_deterministic_for_each_declared_context_locale():
@@ -52,7 +64,7 @@ def test_compact_date_range_is_deterministic_for_each_declared_context_locale():
 ])
 def test_quarter_format_catalog_is_closed(style, expected):
     interval = axis_intervals(date(2027, 1, 15), date(2027, 2, 1), "quarter")[0]
-    assert format_axis_label(interval, {"month": "short-month-year", "quarter": style, "date": "iso-date"}, "en-US") == expected
+    assert format_axis_tier_label(interval, style, axis_name_table("en-US")) == expected
     assert interval_values(axis_intervals(date(2027, 1, 15), date(2027, 4, 2), "quarter")) == [
         (date(2027, 1, 15), date(2027, 4, 1), "2027-Q1", 0),
         (date(2027, 4, 1), date(2027, 4, 2), "2027-Q2", 1),

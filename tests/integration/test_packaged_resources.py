@@ -6,7 +6,7 @@ from time import perf_counter
 
 import yaml
 
-from chrona.resources import minimal_template_resource, schema_resource, template_resource
+from chrona.resources import axis_name_tables_resource, minimal_template_resource, schema_resource, template_resource
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
 
@@ -14,6 +14,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "pyproject.toml").is_file())
 RESOURCES = files("chrona.resources")
 SCHEMAS = (
+    "axis-name-tables-v0.1.schema.yaml",
     "project-v0.7.schema.yaml",
     "profile-v0.3.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",
@@ -24,7 +25,7 @@ SCHEMAS = (
     "view-v0.15.schema.yaml",
     "view-v0.19.schema.yaml",
     "view-v0.20.schema.yaml",
-    "view-v0.21.schema.yaml",
+    "view-v0.22.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",
     "layout-profile-v0.5.schema.yaml",
@@ -54,6 +55,10 @@ def test_init_template_resolves_to_the_single_source_authority():
     template = template_resource("halcyon-1")
 
     assert template.joinpath("manifest.yaml").read_bytes() == (ROOT / "examples" / "halcyon-1" / "manifest.yaml").read_bytes()
+
+
+def test_axis_name_table_catalog_is_packaged_from_one_source_authority():
+    assert axis_name_tables_resource().read_bytes() == (ROOT / "src/chrona/resources/axis-name-tables-v0.1.yaml").read_bytes()
 
 
 def test_minimal_init_template_is_a_wheel_owned_non_corpus_resource():

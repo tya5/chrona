@@ -1,4 +1,4 @@
-version: chrona/view/v0.21
+version: chrona/view/v0.22
 kind: view
 id: controller-z-executive
 body:
@@ -80,6 +80,7 @@ body:
       role: labels
       label:
         form: short-month
+        nameTable: en-US
         align: start
         overflow: thin-with-record
         orientation: horizontal

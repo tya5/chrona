@@ -340,6 +340,7 @@ class AxisTierOutcome:
     every: int
     label_form: str | None
     intervals: tuple[AxisIntervalOutcome, ...]
+    name_table_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -353,7 +354,6 @@ class SurfaceLayoutRequest:
     measured_sources: Any = None
     theme_tokens: Any = None
     font_metrics: Any = None
-    locale: str = "en-US"
     capabilities: dict[str, bool] = field(default_factory=dict)
     icon_assets: dict[str, Any] = field(default_factory=dict)
     visual_requests: tuple[VisualRequest, ...] = ()
@@ -495,7 +495,7 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
             tier_indices.add(outcome.tier_index)
             if outcome.role == "labels":
-                if outcome.label_form is None or any(item.label is None or item.label_fits is None
+                if outcome.label_form is None or outcome.name_table_id is None or any(item.label is None or item.label_fits is None
                                                      for item in outcome.intervals):
                     raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
                 for item in outcome.intervals:
@@ -507,7 +507,7 @@ class SurfacePlacement:
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
                     if item.disposition == "thinned" and item.reason not in {"label-does-not-fit", "thinning-stride"}:
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
-            elif outcome.label_form is not None or any(item.label is not None or item.label_fits is not None
+            elif outcome.label_form is not None or outcome.name_table_id is not None or any(item.label is not None or item.label_fits is not None
                                                        or item.disposition != "not-applicable" or item.reason is not None
                                                        for item in outcome.intervals):
                 raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")

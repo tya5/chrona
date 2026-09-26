@@ -1,0 +1,42 @@
+version: chrona/axis-name-tables/v0.1
+tables:
+  en-US:
+    monthShort: [Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
+    monthLong: [January, February, March, April, May, June, July, August, September, October, November, December]
+    templates:
+      year: "{fiscalYear}"
+      half-year: "{fiscalYear}-H{half}"
+      quarter: "Q{quarter}"
+      year-quarter: "{fiscalYear} Q{quarter}"
+      quarter-year: "Q{quarter} {fiscalYear}"
+      short-month: "{monthShort}"
+      long-month: "{monthLong}"
+      numeric-month: "{monthNumeric}"
+      short-month-year: "{monthShort} {year}"
+      long-month-year: "{monthLong} {year}"
+      numeric-year-month: "{year}-{monthNumeric}"
+      iso-week: "{isoYear}-W{isoWeek}"
+      localized-date: "{monthShort} {day}, {year}"
+    coincidences:
+      - {alias: long-month, canonical: short-month, months: [5]}
+      - {alias: long-month-year, canonical: short-month-year, months: [5]}
+  ja-JP:
+    monthShort: [1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
+    monthLong: [1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
+    templates:
+      year: "{fiscalYear}"
+      half-year: "{fiscalYear}-H{half}"
+      quarter: "Q{quarter}"
+      year-quarter: "{fiscalYear}年Q{quarter}"
+      quarter-year: "Q{quarter} {fiscalYear}年"
+      short-month: "{monthShort}"
+      long-month: "{monthLong}"
+      numeric-month: "{monthNumeric}"
+      short-month-year: "{year}年{monthShort}"
+      long-month-year: "{year}年{monthLong}"
+      numeric-year-month: "{year}-{monthNumeric}"
+      iso-week: "{isoYear}-W{isoWeek}"
+      localized-date: "{year}/{monthNumeric}/{dayNumeric}"
+    coincidences:
+      - {alias: long-month, canonical: short-month, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+      - {alias: long-month-year, canonical: short-month-year, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}

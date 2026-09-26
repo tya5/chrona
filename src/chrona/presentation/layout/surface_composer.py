@@ -13,6 +13,7 @@ from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
+from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     nearest_box_port, place_annotation_rail, project_annotation_box,
@@ -909,6 +910,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     label_lane_offset = 0.0
     for tier_index, tier in enumerate(request.surface_content.axis_tiers):
         form = tier.label.form if tier.label else None
+        name_table = axis_name_table(tier.label.name_table_id) if tier.label else None
         requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
                            if tier.unit == "auto" and tier.label else (tier.unit,))
         try:
@@ -920,7 +922,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         continue
                     trial = axis_intervals(start, end, candidate, tick_step=tier.every,
                                            fiscal_start_month=request.surface_content.axis_fiscal_start_month)
-                    fits_trial = all(axis_label_fits(content=format_axis_tier_label(item, forms[candidate], request.locale),
+                    fits_trial = all(axis_label_fits(content=format_axis_tier_label(item, forms[candidate], name_table),
                                                       available_inline=(item.end - item.start).days * scale.unit_ratio,
                                                       font_size=axis_size, font_metrics=axis_metrics,
                                                       letter_spacing=float(axis_treatment.letter_spacing),
@@ -950,8 +952,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             interval_outcomes = tuple(
                 AxisIntervalOutcome(f"axis-label:{tier_index}:{interval.index}", interval.start, interval.end,
                                     interval.natural_start, interval.natural_end,
-                                    format_axis_tier_label(interval, form, request.locale),
-                                    axis_label_fits(content=format_axis_tier_label(interval, form, request.locale),
+                                    format_axis_tier_label(interval, form, name_table),
+                                    axis_label_fits(content=format_axis_tier_label(interval, form, name_table),
                                                    available_inline=max(0.0, _coordinate(interval.end, scale) - _coordinate(interval.start, scale)),
                                                    font_size=axis_size, font_metrics=axis_metrics,
                                                    letter_spacing=float(axis_treatment.letter_spacing),
@@ -1002,10 +1004,18 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                     interval.natural_start, interval.natural_end)
                 for interval in intervals
             )
+        if tier.role == "labels" and form is not None:
+            for interval, outcome in zip(intervals, interval_outcomes, strict=True):
+                if outcome.disposition != "placed":
+                    continue
+                for canonical in name_table.coincident_canonicals(form, interval.natural_start.month):
+                    diagnostics.append(
+                        f"W_LAYOUT_AXIS_FORM_EQUIVALENT:{outcome.candidate_id}:table={name_table.table_id}:"
+                        f"form={form}:canonical={canonical}:month={interval.natural_start.month}")
         axis_tier_outcomes.append(AxisTierOutcome(
             tier_index, f"/view/body/axis/tiers/{tier_index}", tier.role, requested_units,
             intervals[0].level if intervals else (tier.unit if tier.unit != "auto" else ""), tier.every, form,
-            interval_outcomes,
+            interval_outcomes, name_table.table_id if name_table else None,
         ))
         if tier.role == "band":
             for interval in intervals:

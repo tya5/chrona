@@ -77,6 +77,24 @@ def test_table_column_intent_is_normalized_before_layout_ingress():
                                                     ("Title", "start", "content", "fill", 1.0)]
 
 
+def test_axis_name_table_override_is_normalized_independently_of_context_locale():
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 2, 1)), (), ())
+    label = {"form": "short-month", "align": "start", "overflow": "visible-overflow",
+             "orientation": "horizontal", "nameTable": "en-US"}
+    view = typed_view({"body": {"axis": {"tiers": [
+        {"unit": "month", "every": 1, "role": "labels", "label": label},
+    ]}, "visibility": {"relations": "none", "annotations": "none"}}})
+    value = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY, locale="ja-JP")
+    assert value.axis_tiers[0].label.name_table_id == "en-US"
+
+    label.pop("nameTable")
+    view = typed_view({"body": {"axis": {"tiers": [
+        {"unit": "month", "every": 1, "role": "labels", "label": label},
+    ]}, "visibility": {"relations": "none", "annotations": "none"}}})
+    value = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY, locale="ja-JP")
+    assert value.axis_tiers[0].label.name_table_id == "ja-JP"
+
+
 def test_table_cell_semantics_follow_declared_source_not_item_role_order():
     ahead = ReviewItem("ahead", "Ahead", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, -2, ("planned", "variance-ahead"))
     on_plan = ReviewItem("plan", "Plan", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, 0, ("variance-behind",))

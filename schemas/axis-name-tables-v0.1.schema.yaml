@@ -1,0 +1,70 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: chrona/axis-name-tables-v0.1
+description: Finite wheel-owned axis vocabulary catalog.
+type: object
+required: [version, tables]
+additionalProperties: false
+properties:
+  version: {description: Catalog contract version., const: chrona/axis-name-tables/v0.1}
+  tables:
+    description: Complete built-in table registry.
+    type: object
+    required: [en-US, ja-JP]
+    additionalProperties: false
+    properties:
+      en-US: {$ref: '#/$defs/table'}
+      ja-JP: {$ref: '#/$defs/table'}
+$defs:
+  table:
+    description: One validated named axis vocabulary table.
+    type: object
+    required: [monthShort, monthLong, templates, coincidences]
+    additionalProperties: false
+    properties:
+      monthShort: {$ref: '#/$defs/months'}
+      monthLong: {$ref: '#/$defs/months'}
+      templates:
+        description: Closed formatting templates for every axis label form.
+        type: object
+        required: [year, half-year, quarter, year-quarter, quarter-year, short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month, iso-week, localized-date]
+        additionalProperties: false
+        properties:
+          year: {$ref: '#/$defs/template'}
+          half-year: {$ref: '#/$defs/template'}
+          quarter: {$ref: '#/$defs/template'}
+          year-quarter: {$ref: '#/$defs/template'}
+          quarter-year: {$ref: '#/$defs/template'}
+          short-month: {$ref: '#/$defs/template'}
+          long-month: {$ref: '#/$defs/template'}
+          numeric-month: {$ref: '#/$defs/template'}
+          short-month-year: {$ref: '#/$defs/template'}
+          long-month-year: {$ref: '#/$defs/template'}
+          numeric-year-month: {$ref: '#/$defs/template'}
+          iso-week: {$ref: '#/$defs/template'}
+          localized-date: {$ref: '#/$defs/template'}
+      coincidences:
+        description: Exact reported month-specific coincidences between distinct forms.
+        type: array
+        uniqueItems: true
+        items:
+          description: One alias, canonical form and exact coincident month set.
+          type: object
+          required: [alias, canonical, months]
+          additionalProperties: false
+          properties:
+            alias: {$ref: '#/$defs/monthForm'}
+            canonical: {$ref: '#/$defs/monthForm'}
+            months:
+              description: Sorted unique month numbers where the forms produce identical output.
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: {description: Calendar month number., type: integer, minimum: 1, maximum: 12}
+  months:
+    description: Names for January through December in calendar order.
+    type: array
+    minItems: 12
+    maxItems: 12
+    items: {description: Nonempty month name., type: string, minLength: 1}
+  template: {description: Built-in closed-placeholder axis label template., type: string, minLength: 1}
+  monthForm: {description: Finite month label form., enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]}
