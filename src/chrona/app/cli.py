@@ -169,7 +169,8 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
 
 
 def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
-    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), default="svg")
+    command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"),
+                         help="output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)")
     command.add_argument("--visual-profile", default="chrona-output/visual/v0.5-baseline",
                          choices=("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png", "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png"),
                          help="exact visual capability profile (default: baseline)")
@@ -178,9 +179,33 @@ def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--typesetter-adapter-grammar", help="required adapter grammar with --format typst or tikz")
 
 
-def _draft_typesetter_identity(args: argparse.Namespace) -> TypesetterIdentity | None:
+_OUTPUT_SUFFIX_TARGETS = {".svg": "svg", ".png": "png", ".pdf": "pdf", ".typ": "typst", ".tex": "tikz"}
+
+
+def _resolve_output_target(output: str, requested: str | None) -> str:
+    """Negotiate a CLI filename against a declared target before rendering."""
+    suffix = Path(output).suffix.lower()
+    if not suffix:
+        return requested or "svg"
+    inferred = _OUTPUT_SUFFIX_TARGETS.get(suffix)
+    if inferred is None:
+        raise CliFailure(
+            "E_RENDER_OUTPUT_EXTENSION",
+            f"output suffix {suffix} is unknown; use one of {', '.join(_OUTPUT_SUFFIX_TARGETS)} or no suffix",
+            "cli", "/output", 2,
+        )
+    if requested is not None and inferred != requested:
+        raise CliFailure(
+            "E_RENDER_OUTPUT_FORMAT_MISMATCH",
+            f"output suffix {suffix} selects {inferred}, but the target is {requested}",
+            "cli", "/output", 2,
+        )
+    return requested or inferred
+
+
+def _draft_typesetter_identity(args: argparse.Namespace, target_kind: str) -> TypesetterIdentity | None:
     values = (args.typesetter_engine, args.typesetter_version, args.typesetter_adapter_grammar)
-    is_typeset = args.format in {"typst", "tikz"}
+    is_typeset = target_kind in {"typst", "tikz"}
     if is_typeset and not all(values):
         raise CliFailure(
             "E_RENDER_TYPESETTER_DESCRIPTOR",
@@ -380,6 +405,7 @@ def _run_render_review(args: argparse.Namespace) -> None:
     reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
     closure = resolve_render_context(load_yaml(args.context_reference), reader)
     _assert_context_format(closure, args.format)
+    _resolve_output_target(args.output, closure.context.target.kind)
     rendered = _render_review(closure, args)
     _write_render_outputs(rendered, args)
     _emit_render_warnings(rendered)
@@ -414,6 +440,7 @@ def _assert_context_format(closure: RenderClosure, format_name: str | None) -> N
 
 
 def _run_draft_render(args: argparse.Namespace) -> None:
+    target_kind = _resolve_output_target(args.output, args.format)
     default = default_preset_resource() if not args.preset else None
     closure = resolve_draft_render(
         project_path=Path(args.project), preset_path=Path(args.preset) if args.preset else Path(str(default)),
@@ -426,9 +453,9 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
         font_metrics_path=Path(args.font_metrics) if args.font_metrics else None,
         system_fonts=args.system_fonts,
-        viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=args.format,
+        viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=target_kind,
         visual_profile=args.visual_profile,
-        typesetter=_draft_typesetter_identity(args),
+        typesetter=_draft_typesetter_identity(args, target_kind),
     )
     args.draft_auto_block = closure.auto_block
     rendered = _render_review(closure.closure, args, asset_root=closure.asset_root,
@@ -460,10 +487,11 @@ def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) ->
 
 
 def _run_guided_draft_render(args: argparse.Namespace) -> None:
+    target_kind = _resolve_output_target(args.output, args.format)
     draft = resolve_guided_draft_render(
         workspace_path=Path(args.workspace), viewport=_parse_viewport(args.viewport),
-        locale=args.locale, target_kind=args.format, visual_profile=args.visual_profile,
-        typesetter=_draft_typesetter_identity(args),
+        locale=args.locale, target_kind=target_kind, visual_profile=args.visual_profile,
+        typesetter=_draft_typesetter_identity(args, target_kind),
     )
     args.draft_auto_block = draft.auto_block
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)

@@ -15,6 +15,11 @@ identifiers.  The command uses Chrona's packaged `chrona-default-draft`
 presentation preset.  The SVG is a Draft review artifact, not immutable
 materializer evidence. The omitted viewport uses the Draft `1600xauto`
 default; use an explicit finite viewport when its minimum size matters.
+The output filename also selects the format: `.svg`, `.png`, `.pdf`, `.typ`
+and `.tex` select SVG, PNG, PDF, Typst and TikZ respectively. Without a
+suffix, Draft defaults to SVG. An explicit `--format` must match a recognized
+suffix; unknown suffixes are rejected before writing output. Typst and TikZ
+still require their typesetter descriptor flags.
 
 To select a supplied appearance explicitly, copy one into your own source tree
 and render through its ordinary local preset.  Available ids are

@@ -194,9 +194,83 @@ def test_cli_render_parser_advertises_the_bundled_default_preset():
     parser = cli._parser()
     render = parser.parse_args(["render", "project.yaml", "--output", "timeline.svg"])
     assert render.preset is None
+    assert render.format is None
     assert render.viewport == "1600xauto"
-    assert parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"]).viewport == "1600xauto"
+    workspace = parser.parse_args(["render-workspace", "workspace.yaml", "--output", "out.svg"])
+    assert workspace.viewport == "1600xauto" and workspace.format is None
     assert "chrona-default-draft" in parser._subparsers._group_actions[0].choices["render"].format_help()
+
+
+@pytest.mark.parametrize(("suffix", "target"), [
+    (".svg", "svg"), (".png", "png"), (".pdf", "pdf"),
+    (".typ", "typst"), (".tex", "tikz"),
+])
+def test_cli_output_target_infers_every_known_suffix(suffix, target):
+    parsed = cli._parser().parse_args(["render", "project.yaml", "--output", f"board{suffix}"])
+    assert cli._resolve_output_target(parsed.output, parsed.format) == target
+    assert cli._resolve_output_target(f"board{suffix.upper()}", None) == target
+    assert cli._resolve_output_target(f"board{suffix}", target) == target
+
+
+def test_cli_output_target_extensionless_and_unknown_contract():
+    assert cli._resolve_output_target("board", None) == "svg"
+    assert cli._resolve_output_target("board", "pdf") == "pdf"
+    with pytest.raises(CliFailure) as failed:
+        cli._resolve_output_target("board.xyz", None)
+    assert failed.value.code == "E_RENDER_OUTPUT_EXTENSION"
+    assert ".xyz" in failed.value.message and ".png" in failed.value.message
+    with pytest.raises(CliFailure, match="E_RENDER_OUTPUT_EXTENSION"):
+        cli._resolve_output_target("board.typst", "typst")
+
+
+def test_cli_output_target_explicit_mismatch_names_both_targets():
+    with pytest.raises(CliFailure) as failed:
+        cli._resolve_output_target("board.png", "svg")
+    assert failed.value.code == "E_RENDER_OUTPUT_FORMAT_MISMATCH"
+    assert ".png" in failed.value.message and "png" in failed.value.message and "svg" in failed.value.message
+
+
+def test_cli_inferred_typeset_target_still_requires_descriptor(tmp_path, monkeypatch, capsys):
+    for suffix in (".typ", ".tex"):
+        output = tmp_path / f"board{suffix}"
+        monkeypatch.setattr(sys, "argv", ["chrona", "render", "missing.yaml", "--output", str(output)])
+        with pytest.raises(SystemExit) as failed:
+            main()
+        assert failed.value.code == 2
+        assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_TYPESETTER_DESCRIPTOR"
+        assert not output.exists()
+
+
+def test_cli_infers_png_bytes_and_rejects_explicit_svg_png_mismatch(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    output = tmp_path / "board.png"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/halcyon-1/project.yaml"), "--output", str(output),
+    ])
+    main()
+    assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
+    mismatch = tmp_path / "mismatch.png"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/halcyon-1/project.yaml"),
+        "--format", "svg", "--output", str(mismatch),
+    ])
+    with pytest.raises(SystemExit) as failed:
+        main()
+    assert failed.value.code == 2 and not mismatch.exists()
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_RENDER_OUTPUT_FORMAT_MISMATCH"
+    assert diagnostic["sourceRef"] == "/output"
+    assert ".png" in diagnostic["message"] and "svg" in diagnostic["message"]
+
+    unknown = tmp_path / "unknown.xyz"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/halcyon-1/project.yaml"), "--output", str(unknown),
+    ])
+    with pytest.raises(SystemExit) as failed:
+        main()
+    assert failed.value.code == 2 and not unknown.exists()
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_OUTPUT_EXTENSION"
 
 
 @pytest.mark.parametrize("viewport", (None, "1600x900"))
@@ -357,6 +431,23 @@ def test_cli_guided_draft_typesetter_descriptor_contract(tmp_path, monkeypatch, 
     ])
     main()
     assert output.read_bytes().startswith(b"% chrona-tikz/v0.1")
+
+
+def test_cli_guided_draft_infers_png_and_rejects_mismatch(tmp_path, monkeypatch, capsys):
+    workspace = _guided_workspace(tmp_path)
+    output = tmp_path / "guided.png"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render-workspace", str(workspace), "--output", str(output)])
+    main()
+    assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
+    mismatch = tmp_path / "mismatch.png"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render-workspace", str(workspace), "--format", "svg", "--output", str(mismatch),
+    ])
+    with pytest.raises(SystemExit) as failed:
+        main()
+    assert failed.value.code == 2 and not mismatch.exists()
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_OUTPUT_FORMAT_MISMATCH"
 
 
 def test_cli_renders_the_plan_only_example_without_an_actual_set(tmp_path, monkeypatch):
@@ -810,7 +901,7 @@ def test_cli_does_not_expose_the_legacy_raw_path_propose_set_command(monkeypatch
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_COMMAND_SYNTAX"
 
 
-def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypatch):
+def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     token = "snapshot-render"
     project = yaml.safe_load((root / "examples/controller-z/project.yaml").read_text(encoding="utf-8"))
@@ -866,6 +957,16 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     rendered = output.read_text(encoding="utf-8")
     assert 'data-source-ref="firmware"' in rendered
     assert 'data-presentation-adapter="legacy-v0.1"' not in rendered
+
+    mismatch = tmp_path / "immutable.png"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render-review", "--context-reference", str(reference_path),
+        "--snapshot-root", str(tmp_path), "--store-identity", "cli-test", "--output", str(mismatch),
+    ])
+    with pytest.raises(SystemExit) as failed:
+        main()
+    assert failed.value.code == 2 and not mismatch.exists()
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_RENDER_OUTPUT_FORMAT_MISMATCH"
 
     draft_output = tmp_path / "draft.svg"
     monkeypatch.setattr(sys, "argv", [
