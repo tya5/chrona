@@ -1,0 +1,5 @@
+# Implementation Amendment — Candidate Normalization Owner (#466 C1)
+
+**Base:** [implementation plan](issue-466-candidate-placement-implementation-plan-2026-09-26.md). **Design correction:** [ownership](../../design/issue-466-candidate-normalization-ownership-correction-2026-09-26.md) and [whole-architecture review](../../reviews/current/issue-466-candidate-normalization-architecture-review-2026-09-26.md).
+
+For C1, replace the planned `layout/placement_candidates.py` normalization helper with pure dataclasses and legacy expansion in `model/placement_candidates.py`. `review/v05_content.py` calls that expansion and passes typed `AnnotationIntent.candidates`; `layout/surface_composer.py` reads those candidates, with a pure legacy expansion only for lower-level direct inputs and declared preferred-rung insertion. Add a structural import test that Review normalization does not import a Layout candidate helper. No other C1 owner, test, byte-identity or publication gate changes. Publish this amendment before resuming C1 product code.
