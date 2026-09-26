@@ -1,0 +1,117 @@
+version: chrona/view/v0.23
+kind: view
+id: controller-z-capabilities
+body:
+  surface: table-timeline
+  selection:
+    include:
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - fw-team
+    - validation-team
+    - factory-team
+    presentation: band
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-02-01'
+    end: '2026-07-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - atDelta
+    - progress
+    - missingActual
+    - unmatchedActual
+  progressFill:
+    source: actual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      side: inside
+      overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+      content:
+      - lag
+      - endpointPair
+    annotations: none
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        nameTable: en-US
+        align: start
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: alternate
+    groups: all
+  tableColumns:
+  - id: Workstream
+    source: title
+    missing: em-dash
+    align: start
+    width: {fr: 1}
+    headerOrientation: horizontal
+  - id: Finish
+    source:
+      facet: planned
+    format: dateRange
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash
+    align: end
+    width: content
+    headerOrientation: horizontal
+  rows:
+    mode: automatic

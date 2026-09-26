@@ -17,7 +17,7 @@ from xml.etree import ElementTree
 import pytest
 import yaml
 
-from chrona.presentation.model.font_metrics import resolve_font_metrics
+from chrona.presentation.model.font_metrics import FontMetricsError, resolve_font_metrics
 from chrona.presentation.model.theme_inheritance import resolve_draft_theme
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -86,11 +86,26 @@ def _load(svg_path: Path, context_path: Path):
     # extends one by inheritance; resolve_draft_theme returns the raw document
     # unchanged in the ordinary case, so this always yields a complete body.
     theme = resolve_draft_theme(context_path.parents[1] / body["theme"]["address"])
-    stack = next(v["value"] for v in theme["body"]["values"].values() if v.get("type") == "fontFamily")
+    stacks = [v["value"] for v in theme["body"]["values"].values() if v.get("type") == "fontFamily"]
     weights = {int(v["value"]) for v in theme["body"]["values"].values() if v.get("type") == "fontWeight"}
-    metrics = {weight: resolve_font_metrics(stack, body["environment"]["fontMetrics"], weight=weight, asset_root=RESOURCES)
-               for weight in weights}
+    # Key by the SVG text's own family and weight; a Theme may declare several
+    # families (for example a monospace numeric role, #434).
+    metrics = {}
+    for stack in dict.fromkeys(stacks):
+        for weight in sorted(weights):
+            try:
+                metrics[(stack, weight)] = resolve_font_metrics(stack, body["environment"]["fontMetrics"],
+                                                                weight=weight, asset_root=RESOURCES)
+            except FontMetricsError:
+                continue  # a declared family is not necessarily available at every declared weight
     return tree, viewport, metrics
+
+
+def _font_for(metrics, node):
+    weight = int(node.get("font-weight", 400))
+    return (metrics.get((node.get("font-family"), weight))
+            or next((value for (_stack, key), value in metrics.items() if key == weight), None)
+            or next(iter(metrics.values())))
 
 
 def _serialized_canvas(tree, requested: tuple[float, float]) -> tuple[float, float]:
@@ -159,7 +174,7 @@ def _declared_slots(layout: dict) -> set[str]:
 def _texts(tree, metrics):
     for node in tree.iter(SVG + "text"):
         size = float(node.get("font-size"))
-        font = metrics.get(int(node.get("font-weight", 400))) or next(iter(metrics.values()))
+        font = _font_for(metrics, node)
         x, baseline, content = float(node.get("x")), float(node.get("y")), node.text or ""
         yield node.get("data-purpose"), content, (x, baseline - size, x + font.width(content, size), baseline)
 
@@ -212,7 +227,7 @@ def test_no_text_is_drawn_over_a_mark(slide, context_path, svg_path, request):
         if purpose not in PLOT_TEXT_PURPOSES:
             continue
         size = float(node.get("font-size"))
-        font = metrics.get(int(node.get("font-weight", 400))) or next(iter(metrics.values()))
+        font = _font_for(metrics, node)
         content, x, baseline = node.text or "", float(node.get("x")), float(node.get("y"))
         box = (x, baseline - size, x + font.width(content, size), baseline)
         host_ids = {prefix + scene_id.removeprefix("member-label:") for prefix in ("planned:", "actual:")}

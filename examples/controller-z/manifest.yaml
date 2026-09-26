@@ -42,3 +42,8 @@ slides:
     context: contexts/progress-track.yaml
     expectedSvg: generated/progress-track.svg
     expectedScene: generated/progress-track.scene.json
+  - id: capabilities
+    evidence: "Row stripes across table and timeline, fill row distribution, band grouping, a fixed-position date column after an fr title column, an uppercase letter-spaced legend and a Noto Sans Mono delta column (#434)."
+    context: contexts/capabilities.yaml
+    expectedSvg: generated/capabilities.svg
+    expectedScene: generated/capabilities.scene.json

@@ -1,11 +1,17 @@
 version: chrona/theme/v0.11
 kind: theme
-id: executive-light
+id: capabilities
 body:
   values:
-    dash.leader:
-      type: dashPattern
-      value: [3, 2]
+    monospace:
+      type: fontFamily
+      value: Noto Sans Mono, monospace
+    legend-letter-spacing:
+      type: number
+      value: 0.12
+    legend-text-transform:
+      type: textTransform
+      value: uppercase
     opacity.axis-band:
       type: number
       value: 1
@@ -227,6 +233,16 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    numeric:
+      fontFamily: monospace
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
     groupHeader:
       fontFamily: editorial
       fontWeight: text-weight
@@ -262,8 +278,8 @@ body:
       fontWeight: text-weight
       fontSize: legend-size
       lineHeight: legend-line-height
-      letterSpacing: letter-spacing
-      textTransform: text-transform
+      letterSpacing: legend-letter-spacing
+      textTransform: legend-text-transform
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
@@ -300,7 +316,6 @@ body:
       numericSpacing: numeric-spacing
     annotation-callout-leader:
       strokeWidth: stroke-width
-      dash: dash.leader
     annotation-highlight-box:
       strokeWidth: stroke-width
     annotation-highlight-text:
@@ -406,6 +421,7 @@ body:
   colorBindings:
     background.fill: surface
     text.fill: text
+    numeric.fill: text
     groupHeader.fill: text
     member-label-inside-planned.fill: insideLabelPlanned
     member-label-inside-actual.fill: insideLabelActual
@@ -415,7 +431,7 @@ body:
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: neutral
     table-header.fill: surfaceRaised
-    group-band.fill: category:default
+    group-band.fill: category:ground
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
     group:factory-team.fill: category:factory-team
@@ -449,7 +465,7 @@ body:
     annotation-callout-box.fill: surfaceRaised
     annotation-callout-box.stroke: neutral
     annotation-callout-text.fill: text
-    annotation-callout-leader.stroke: textMuted
+    annotation-callout-leader.stroke: neutral
     annotation-highlight-box.fill: surface
     annotation-highlight-box.stroke: accent
     annotation-highlight-text.fill: text
