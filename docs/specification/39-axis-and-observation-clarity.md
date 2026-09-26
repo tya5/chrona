@@ -7,6 +7,10 @@
 
 Axis level selection evaluates each candidate interval by its natural calendar bucket width, before the View window clips its first or last bucket. Rendering geometry remains clipped to the View window. A clipped edge label that cannot fit is omitted; it does not reject an otherwise fitting level. Interior labels continue to require measured fit. The Axis formatter is the sole source of label text.
 
+### 1.1 `thin-with-record` disposition (#482)
+
+The same principle governs one label tier's own thinning: a candidate whose own clipped interval cannot hold its measured label is omitted, on that reason alone, and never causes another candidate to be omitted. `thin-with-record` disposition depends only on each candidate's own measured fit; it does not select a periodic stride or phase across the tier, because axis buckets are contiguous and half-open, so a candidate that fits inside its own bucket cannot reach a neighbour's bucket regardless of any other candidate's disposition. One collision removes exactly one label.
+
 ## 2. Missing Actual
 
 A missing-actual primitive exists only when `comparison.facets` includes
@@ -26,6 +30,7 @@ Dependency paths remain Scene-owned. Their stroke token is Theme-owned by the `d
 
 - a clipped tail cannot downgrade an otherwise fitting axis level;
 - edge labels are omitted only when their clipped geometry cannot fit;
+- `thin-with-record` omits only a label whose own clipped interval cannot hold it, never a label that fits because another candidate does not;
 - missing-actual is absent when the facet is not selected or the item is not yet due, and otherwise follows its planned mark;
 - dependency primitives consume the declared dependency role; and
 - no Project, Snapshot, Actual, legacy Settings, or legacy Theme contract changes.
