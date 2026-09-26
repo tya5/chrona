@@ -64,6 +64,14 @@ A leaf has `kind: slot` and consumes one declared presentation source. Closed in
 sources are `title`, `table`, `timeline`, `timeline-axis`, `summary`, `legend`,
 `group-details`, `observations`, `milestones`, `annotations`, and `notes`.
 
+A `legend` slot additionally declares `direction` (`block` stacks entries; `inline`
+flows them along the inline axis) and `gap` (space between entries, and between a
+swatch and its own label), and may declare `itemMinInlineSize` when `direction:
+inline`, wrapping exactly as a `flow` container wraps its children (#427). Each
+entry's swatch is constructed by the same geometry its role's `primitive_kind`
+already uses for an object mark, relation, or decoration; Layout never derives a
+swatch's shape or size from the legend label's typography role.
+
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
 
