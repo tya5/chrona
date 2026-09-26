@@ -66,14 +66,26 @@ def test_slot_tolerance_and_suppressed_disposition_do_not_emit_escape():
     assert "I_SCENE_DECLARED_VISIBLE_OVERFLOW" not in _codes(_scene(_primitive("text", bounds=_bounds(inline_size=11)), overflow="suppressed"))
 
 
-def test_suppressed_layout_identity_must_not_be_emitted_as_text():
+def test_suppressed_layout_identity_must_not_be_emitted():
     document = _scene(_primitive("as-of-label"))
     document["diagnostics"] = ["W_LAYOUT_LABEL_SUPPRESSED:as-of-label"]
     finding = next(item for item in evaluate_scene_perceptibility(document)
-                   if item.code == "E_SCENE_SUPPRESSED_TEXT_EMITTED")
+                   if item.code == "E_SCENE_SUPPRESSED_PRIMITIVE_EMITTED")
     assert finding.primitive_ids == ("as-of-label",)
     document["surfaces"][0]["primitives"] = []
-    assert "E_SCENE_SUPPRESSED_TEXT_EMITTED" not in _codes(document)
+    assert "E_SCENE_SUPPRESSED_PRIMITIVE_EMITTED" not in _codes(document)
+
+
+@pytest.mark.parametrize(("diagnostic", "primitive_id"), [
+    ("W_LAYOUT_RELATION_SUPPRESSED:relation:one:a:b", "relation:one:a:b"),
+    ("W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:one:a:b", "relation-label:one:a:b"),
+])
+def test_suppressed_relation_and_relation_label_identity(diagnostic, primitive_id):
+    document = _scene(_primitive(primitive_id, kind="Path" if primitive_id.startswith("relation:") else "Text"))
+    document["diagnostics"] = [diagnostic]
+    assert "E_SCENE_SUPPRESSED_PRIMITIVE_EMITTED" in _codes(document)
+    document["surfaces"][0]["primitives"][0]["id"] = "unrelated"
+    assert "E_SCENE_SUPPRESSED_PRIMITIVE_EMITTED" not in _codes(document)
 
 
 def test_text_intersection_has_strict_area_threshold_and_canonical_ids():

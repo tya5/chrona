@@ -56,18 +56,22 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
     findings: list[ScenePerceptibilityFinding] = []
     diagnostics = document.get("diagnostics", [])
     _require(isinstance(diagnostics, list), "invalid scene diagnostics")
-    suppressed_ids = set()
+    suppressed_ids: set[str] = set()
     for diagnostic in diagnostics:
         _require(isinstance(diagnostic, str), "invalid scene diagnostic")
         if diagnostic.startswith("W_LAYOUT_LABEL_SUPPRESSED:"):
             suppressed_ids.add(diagnostic.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:"))
+        elif diagnostic.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:"):
+            suppressed_ids.add("relation-label:" + diagnostic.removeprefix("W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:"))
+        elif diagnostic.startswith("W_LAYOUT_RELATION_SUPPRESSED:"):
+            suppressed_ids.add(diagnostic.removeprefix("W_LAYOUT_RELATION_SUPPRESSED:"))
     for surface_index, raw_surface in enumerate(surfaces):
         surface = _mapping(raw_surface, f"surfaces[{surface_index}]")
         surface_id = _string(surface.get("id"), f"surfaces[{surface_index}].id")
         scene_path = f"/surfaces/{surface_index}:{surface_id}"
         slots = _slots(surface.get("slots"), scene_path)
         primitives = _primitives(surface.get("primitives"), scene_path)
-        findings.extend(_suppressed_text_findings(scene_path, primitives, suppressed_ids))
+        findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -75,11 +79,11 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
     return tuple(sorted(findings, key=lambda item: (item.scene_path, item.code, item.primitive_ids)))
 
 
-def _suppressed_text_findings(scene_path: str, primitives: Sequence[_Primitive],
-                              suppressed_ids: set[str]) -> list[ScenePerceptibilityFinding]:
-    return [_finding("E_SCENE_SUPPRESSED_TEXT_EMITTED", "error", scene_path,
+def _suppressed_primitive_findings(scene_path: str, primitives: Sequence[_Primitive],
+                                   suppressed_ids: set[str]) -> list[ScenePerceptibilityFinding]:
+    return [_finding("E_SCENE_SUPPRESSED_PRIMITIVE_EMITTED", "error", scene_path,
                      (item.primitive_id,), item.slot_id, (), "suppressed")
-            for item in primitives if item.kind == "Text" and item.primitive_id in suppressed_ids]
+            for item in primitives if item.primitive_id in suppressed_ids]
 
 
 def _slots(raw_slots: Any, scene_path: str) -> dict[str, tuple[Rect, str]]:
