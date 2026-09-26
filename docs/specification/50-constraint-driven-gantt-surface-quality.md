@@ -49,6 +49,11 @@ visibility:
 
 `plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice.
 
+The timeline as-of label uses this visible-overflow fallback beside its marker
+line. A Layout text placement with `suppressed` disposition is non-drawable:
+Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
+by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
+
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
 ### 3.3 Relations

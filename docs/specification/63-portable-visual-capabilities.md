@@ -68,6 +68,12 @@ Each requested gradient, shadow, and stroke finish independently declares either
 `required` or `decorative-optional`; it is not one role-wide value. A baseline
 profile permits deterministic omission only for an unsupported
 `decorative-optional` treatment.
+
+Shipped Draft preset-library entries must render a fresh starter project under
+the default Draft target/profile. An unsupported decorative effect may be
+`decorative-optional` only when the flat fallback is a complete visible
+treatment. A preset may not silently select or upgrade the target profile;
+rich-profile output remains explicitly selectable.
 Required unsupported capability fails before serialization with
 `E_VISUAL_CAPABILITY_UNSUPPORTED`, its exact Theme role property or View icon
 binding pointer, and a capability-specific message. Optional omission is performed by the Scene
