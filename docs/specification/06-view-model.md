@@ -202,10 +202,21 @@ Comparison alignment MUST use stable IDs. A renamed title, regrouped object, or 
 | point `A` | point `at` | `atDelta` | Signed calendar-day difference |
 | span | point | start/finish delta | Absent facet and `VIEW-COMPARISON-ENDPOINT-KIND` |
 | point | interval | `atDelta` | Absent facet and `VIEW-COMPARISON-ENDPOINT-KIND` |
-| any | no resolved observation | `missingActual` | `true`; Actual/delta facets absent |
+| span with planned exclusive `end` on/before Actual `asOf` | no resolved observation | `missingActual` | `true`; Actual/delta facets absent |
+| point with planned `at` on/before Actual `asOf` | no resolved observation | `missingActual` | `true`; Actual/delta facets absent |
+| planned due endpoint after Actual `asOf` | no resolved observation | `missingActual` | unavailable, not `false` or `true`; no missing-Actual mark |
+| any | selected observation exists | `missingActual` | `false`, including an incomplete observation |
+| any | no Actual `asOf` available | `missingActual` | unavailable; no due-state inference from the local clock |
 | any | multiple observations | any | Greatest `sequence`; duplicate sequence is invalid |
 
 `finishDelta` uses the canonical exclusive endpoint; display inclusivity never changes it.
+The View derives one typed observation state (`recorded`, `due-unobserved`,
+`not-yet-due`, or `unavailable`) from the selected observation, canonical
+planned due endpoint and explicit Actual `asOf`. Equality with `asOf` is due.
+All table, summary and Layout missing-Actual consumers use this projected
+state; a future unobserved item must not be called “Recorded”. An observed but
+incomplete Actual remains recorded, not missing. A start-based obligation or
+separate not-yet-due treatment requires a future versioned View policy.
 
 ## 9. Annotations and Layout Intent
 

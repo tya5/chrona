@@ -338,9 +338,10 @@ removed; `day` has no finer level. The remaining `minor-tick` Paths use `axisMin
 carry no label. This is display subdivision only and does not change the temporal
 window or Date-only semantics.
 
-Missing Actual is an explicit conditional Scene family. A span lacks its required
-Actual facet unless its Actual mapping contains both a valid start and finish. The
-family uses the planned Rect's left edge and the row's resolved Actual-bar band. A
+Missing Actual is an explicit conditional Scene family selected only by the
+View-projected `due-unobserved` state. An incomplete but present observation
+is not missing; a future unobserved item is not yet due. The family uses the
+planned mark's due endpoint and the row's resolved Actual-bar band. A
 pattern Rect is centered vertically in that band and uses the Theme-owned width and
 height. A label's preferred x begins after that Rect plus
 `layout.missingActual.gap`, or at the planned left edge when no pattern is requested,
@@ -356,7 +357,8 @@ Finish variance is also a closed conditional family. A complete Actual finish yi
 `variance-ahead` for a negative calendar-day delta, `variance-on-track` for zero, and
 `variance-behind` for a positive delta. A non-empty but incomplete Actual mapping
 yields `variance-unknown`, anchored at the planned finish; a wholly absent/empty Actual
-mapping has no variance family and is represented only by Missing Actual. The marker's
+mapping has no variance family; it receives Missing Actual only when the
+View-projected state is `due-unobserved`. The marker's
 x coordinate is the later of planned and complete-Actual right edges plus
 `layout.variance.offset`; its width is `theme.varianceMarkerWidth`, and its vertical
 bounds are the union of the planned and complete-Actual bar bands (the planned band for

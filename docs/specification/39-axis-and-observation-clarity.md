@@ -9,7 +9,14 @@ Axis level selection evaluates each candidate interval by its natural calendar b
 
 ## 2. Missing Actual
 
-A missing-actual primitive exists only when `comparison.facets` includes `missingActual` and the item has no selected Actual observation. Its geometry is anchored to the item's planned mark: a span attaches at the planned end; a point attaches at the planned point. Scene owns this geometry. The primitive remains optional and has no scheduling effect.
+A missing-actual primitive exists only when `comparison.facets` includes
+`missingActual` and the View-projected observation state is `due-unobserved`:
+no selected Actual observation exists and the planned exclusive span end or
+point `at` is on or before the Actual set's explicit `asOf`. Work after that
+date has no missing-Actual mark. An incomplete but present observation is
+`recorded`, not missing. Layout anchors completed geometry to the planned end
+or point and Scene projects it; neither recomputes the due predicate. The
+primitive remains optional and has no scheduling effect.
 
 ## 3. Dependencies
 
@@ -19,6 +26,6 @@ Dependency paths remain Scene-owned. Their stroke token is Theme-owned by the `d
 
 - a clipped tail cannot downgrade an otherwise fitting axis level;
 - edge labels are omitted only when their clipped geometry cannot fit;
-- missing-actual is absent when the facet is not selected and otherwise follows its planned mark;
+- missing-actual is absent when the facet is not selected or the item is not yet due, and otherwise follows its planned mark;
 - dependency primitives consume the declared dependency role; and
 - no Project, Snapshot, Actual, legacy Settings, or legacy Theme contract changes.
