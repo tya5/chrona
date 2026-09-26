@@ -1,6 +1,6 @@
 # ADR-0032: A flexible track's `minmax` minimum is a floor, not an addend
 
-- Status: Accepted
+- Status: Accepted (amended same day, before implementation — see below)
 - Date: 2026-09-26
 - Scope: Issue #487
 
@@ -28,17 +28,38 @@ flexible tracks with a nonzero minimum are these table slots — every `fill`/pl
 
 ## Decision
 
-`_allocate`'s flexible-track used size becomes `max(minimum, share)`, where `share` is
-computed from the space available to all flexible tracks before any of their own
-minimums are subtracted (not from "whatever is left after minimums," which is what
-made the old rule additive). A flexible track's `minmax` minimum is a guarantee — the
-track is never smaller than it — not a base the flex share is layered on top of.
+`_allocate`'s flexible-track used size is resolved by CSS Grid's own iterative
+"find the size of an fr" algorithm, not a single-pass `max(minimum, share)`. A flexible
+track's `minmax` minimum is a guarantee — the track is never smaller than it — not a base
+the flex share is layered on top of. Concretely:
+
+1. Compute `fr` as the remaining space divided by the remaining flexible tracks' total
+   weight, where "remaining" starts as all flexible tracks and shrinks each round.
+2. Any track whose minimum exceeds `fr × its weight` is frozen at that minimum, removed
+   from the flexible set, and its minimum is subtracted from the remaining space.
+3. Repeat from step 1 until no track violates its minimum at the current `fr`.
+4. Any remaining track whose declared maximum is smaller than `fr × its weight` is frozen
+   at that maximum the same way, and step 1 repeats again for what is left.
+5. Every track still in the flexible set once no minimum or maximum is violated gets
+   `fr × its weight`.
 
 This is the standards-aligned reading of the vocabulary Specification 33 §5 already
 names. It also does not change any flexible track in the current public corpus other
 than the nine table layouts already in scope for #487: the isolation check in the
 evidence confirms no zero-minimum flexible track's resolved size differs under the new
 rule.
+
+**Amendment (2026-09-26, same day, before implementation):** this ADR's first accepted
+text specified a single pass — one `share` per flexible track computed once against the
+whole free space, then `max(minimum, share)` independently per track. The lead identified
+that this oversubscribes `available`: when one track's minimum exceeds its one-shot share,
+it takes its minimum while every *other* track still takes its own one-shot share, so the
+total can exceed `available` — silently growing the canvas or overflowing a sibling. The
+iterative procedure above is the fix: each round's `fr` is recomputed over only the space
+and tracks not yet frozen, so the total, once every track is resolved, is exactly
+`available` whenever `Σ minimum_i ≤ available`, and never less than every non-frozen
+track's fair share of what remains. This is the correction, not a new decision; the
+"Consequences" and "Rejected alternatives" below apply to the corrected algorithm.
 
 ## Consequences
 
@@ -75,12 +96,19 @@ rule.
    specified") without addressing why it was raised: it reproduces the exact
    uncontrolled-growth pattern the issue's summary calls out, and offers no corpus-impact
    benefit over switching rules (the same 18 slides change either way).
-2. **Scope the new rule to table slots only (e.g. a table-specific allocator).** Rejected:
+2. **A single-pass `max(minimum, share)` per track (this ADR's own first draft).**
+   Rejected after the lead's review: it is not what CSS Grid's `fr` resolution actually
+   does, and it oversubscribes `available` whenever more than one flexible track's
+   minimum needs correcting relative to its one-shot share — exactly the situation #487
+   introduces across 18 public slides. The iterative procedure above costs one bounded
+   `while` loop and is the only option that keeps the total at `available` whenever the
+   profile's minima allow it.
+3. **Scope the new rule to table slots only (e.g. a table-specific allocator).** Rejected:
    the engine has one `_allocate` function for every node kind and axis by design
    (Specification 33 §8); a source-specific carve-out would duplicate the flex-resolution
    algorithm for no corpus benefit, since the isolation check shows the general rule
    already only affects the table slots in practice.
-3. **A new size keyword (e.g. `minmax-strict`) that opts into `max(min, share)` while
-   leaving existing `minmax` additive.** Rejected: it doubles the vocabulary for a
+4. **A new size keyword (e.g. `minmax-strict`) that opts into the iterative resolution
+   while leaving existing `minmax` additive.** Rejected: it doubles the vocabulary for a
    behavior CSS Grid's own `minmax` already implies, and every public profile would need
    a syntax migration instead of a semantics one, for the same corpus-wide byte impact.

@@ -98,15 +98,33 @@ Each node declares `inlineSize` and `blockSize`. A size is one of:
 variants require intrinsic measurements. `fill` participates in equal distribution of
 remaining space after fixed, intrinsic, bounded, gap and padding requirements.
 
-A flexible track's (`fr` or `fill`) used size is `max(minimum, share)` (#487), where
-`minimum` is that track's own resolved minimum (`0` unless it declares
-`{minmax: {min: …}}` with a nonzero minimum) and `share` is its proportional part of the
-space available to all flexible tracks in the same container, computed **before** any
-flexible track's own minimum is subtracted from that space. The minimum is a floor a
-track's share must clear, never an amount its share is added underneath. A `minmax`
-maximum still clips the resolved size afterward. This matches CSS Grid's `fr`-track
-resolution for a `minmax` track, and it leaves every flexible track whose minimum is `0`
-unaffected, since `max(0, share)` equals the sum a purely additive rule would have given.
+A flexible track's (`fr` or `fill`) used size is resolved by CSS Grid's own iterative
+"find the size of an `fr`" procedure (#487, ADR-0032), not a single-pass formula: a
+flexible track's `minmax` minimum is a floor its share must clear, never an amount its
+share is added underneath.
+
+1. `fr` is the space available to the flexible tracks in the same container, still
+   unassigned, divided by the total weight of the flexible tracks still unresolved. This
+   set starts as every flexible track and the full flexible-track space (computed once,
+   before any flexible track's own minimum is subtracted from it) and shrinks each round.
+2. Any unresolved track whose own resolved minimum (`0` unless it declares
+   `{minmax: {min: …}}` with a nonzero minimum) exceeds `fr` times its weight is fixed at
+   that minimum, removed from the unresolved set, and its minimum is subtracted from the
+   unassigned space.
+3. Step 1 repeats until no unresolved track's minimum is violated at the recomputed `fr`.
+4. Any unresolved track whose declared `minmax` maximum is smaller than `fr` times its
+   weight is fixed at that maximum the same way, and step 1 repeats again for what is
+   left unassigned.
+5. Every track still unresolved once no minimum or maximum is violated gets `fr` times
+   its weight.
+
+This resolves the total unassigned space exactly, never oversubscribing the container:
+a single-pass `max(minimum, share)` computed once per track independently is **not**
+equivalent, because a track fixed at a minimum larger than its one-shot share does not
+reduce what the *other* tracks still take, and the total can then exceed what is
+available. It leaves every flexible track whose minimum is `0` unaffected, since it can
+never violate a minimum (`0 > fr × weight` is false for `fr ≥ 0`) and so always reaches
+step 5 with the same result a purely additive rule would have given.
 
 A distance is either a non-negative finite number or `{token: name}`. Built-in and
 acceptance profiles MUST use token references for margins, padding, gaps, and ordinary
