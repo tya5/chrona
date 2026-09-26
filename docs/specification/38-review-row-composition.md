@@ -1,6 +1,6 @@
 # Review Row Composition
 
-**Status:** M28 base contract; supplemented by #467 lane-row design for View v0.23.
+**Status:** M28 base contract; supplemented by the #467 lane-row design for the lane View version (the next free View version at landing; see the [#467 phase and version correction](../design/issue-467-lane-rows-phase-and-version-correction-2026-09-27.md)).
 **Depends on:** Specifications 06, 08, 24, 36, 37 and ADR-0029.
 **Owns:** View-local Review row membership and its semantic projection boundary.
 
@@ -116,7 +116,7 @@ no title or nearest-geometry match is permitted.
 
 ### 3.1 Collision-aware lanes (#467)
 
-View v0.23 adds `rows.mode: lanes` for non-hierarchy table-timeline selection.
+The lane View version adds `rows.mode: lanes` for non-hierarchy table-timeline selection. In lane mode, every packed item's name and selected delta is required text: it is measured and reserved by lane allocation, and placed inside its own lane in Layout's first closure phase, before semantic dependencies (Specification 50 phase contract, #466). In other modes item labels remain optional and follow dependencies.
 View supplies selected items, grouping, ordering and required plot-label intent;
 Layout composes group-local lane membership from measured mark and required
 name/delta footprints. A row is a lane with a stable group/representative
