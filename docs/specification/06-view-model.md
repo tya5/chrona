@@ -209,7 +209,7 @@ Comparison alignment MUST use stable IDs. A renamed title, regrouped object, or 
 
 ## 9. Annotations and Layout Intent
 
-Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Scene and Rendering own any concrete relative offset or coordinate. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.
+Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Layout owns every concrete offset, coordinate, collision decision, and connector route. Scene projects completed Layout geometry and Rendering serializes it. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.
 
 ### 9.1 v0.1 presentation annotation intent
 
@@ -231,7 +231,7 @@ projected with source kind `explanatory-arrow` and can never satisfy, replace, o
 a semantic dependency. A missing anchor produces a View diagnostic; no title or
 geometry-based recovery is allowed.
 
-View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. Annotation placement tries requested side, then `above`, `below`, `end`, `start`; failure emits a diagnostic. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
+View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. Current v0.22 annotation placement uses a finite named fallback ladder. The accepted [#466 shared-obstacle prerequisite](../design/issue-466-general-placement-design-2026-09-26.md) centralizes Layout collision facts; the later candidate grammar remains subject to a design completion and cannot move geometry authority out of Layout. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
 ## 10. Diagnostics
 

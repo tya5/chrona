@@ -189,6 +189,22 @@ the implementation's specified decimal context; manifest coordinates are quantiz
 once at the declared Scene precision. Hashes use canonical JSON key ordering, never
 Python `repr` or YAML presentation order.
 
+### 8.1 Accepted prerequisite: one surface obstacle contract
+
+The [#466 design](../design/issue-466-general-placement-design-2026-09-26.md)
+defines the successor for annotation and plot-label placement. Layout creates
+one typed surface obstacle inventory and grows it monotonically as marks,
+routes, labels, annotation boxes and connectors are completed in declared
+finite phases. Every placement and leader query names the same inventory,
+relevant obstacle classes, a finite region and only explicit host/port
+exemptions. Dependency paths are stroke-segment obstacles, not their broad
+enclosing rectangles. Scene receives completed decisions and geometry, never
+an obstacle query. A later design completion must define the exact candidate
+grammar, chosen-candidate evidence and bounded search before legacy rungs
+are normalized to candidate data. The obstacle-only prerequisite may publish
+before nearest-free and tail support; those remain incomplete until their own
+design and release gates pass.
+
 ## 9. Diagnostics
 
 The implementation exposes at least:
