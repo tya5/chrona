@@ -546,3 +546,53 @@ def test_materializer_records_selected_scenario_evidence_and_omits_unselected_sc
     materialize(copied / "manifest.yaml", "tvac-slip", tmp_path / "changed-output", write=True)
     changed_evidence = yaml.safe_load((tmp_path / "changed-output/closure.yaml").read_text(encoding="utf-8"))
     assert changed_evidence["scenarios"][0]["contentIdentity"] != evidence["scenarios"][0]["contentIdentity"]
+
+
+def _segment_intersects_rect(p0, p1, rect, tolerance: float = 0.5) -> bool:
+    """Whether an axis-aligned or diagonal segment crosses a rect's interior.
+
+    ``rect`` is deflated by ``tolerance`` on every side: a route running
+    exactly along a label's edge is a measurement artefact, not a crossing.
+    """
+    left, top = rect["inline"] + tolerance, rect["block"] + tolerance
+    right, bottom = rect["inline"] + rect["inlineSize"] - tolerance, rect["block"] + rect["blockSize"] - tolerance
+    if right <= left or bottom <= top:
+        return False
+    x0, y0 = p0
+    x1, y1 = p1
+    low, high = 0.0, 1.0
+    dx, dy = x1 - x0, y1 - y0
+    for value, delta, start, end in ((x0, dx, left, right), (y0, dy, top, bottom)):
+        if delta == 0:
+            if not start < value < end:
+                return False
+            continue
+        a, b = sorted(((start - value) / delta, (end - value) / delta))
+        low, high = max(low, a), min(high, b)
+    return low < high
+
+
+@pytest.mark.parametrize("slide_id", ("programme-board", "overlay-briefing", "glyph-gates"))
+def test_lane_relation_routes_never_cross_a_required_lane_label(tmp_path, slide_id):
+    """#467 routing correction guard: every relation that does route on a
+    lanes slide must clear every required lane name, including its own
+    endpoints'. A mark-egress clearance exemption was measured and rejected
+    (docs/design/issue-467-lane-rows-routing-egress-correction-2026-09-27.md
+    #3) precisely because it let a route's full path, not only its initial
+    egress stub, legally cross its own endpoint's own name; this test is the
+    regression guard against shipping that or an equivalent unsafe variant."""
+    out = tmp_path / slide_id
+    materialize(ROOT / "examples/halcyon-1/manifest.yaml", slide_id, out, write=False)
+    scene = json.loads((out / "review.scene.json").read_text(encoding="utf-8"))
+    primitives = scene["surfaces"][0]["primitives"]
+    routes = [item for item in primitives if item.get("purpose") in ("dependency", "dependency-critical")]
+    labels = [item for item in primitives if item["id"].startswith("member-label:")]
+    assert routes and labels
+    crossings = []
+    for route in routes:
+        points = [tuple(point) for point in route["points"]]
+        for label in labels:
+            for p0, p1 in zip(points, points[1:]):
+                if _segment_intersects_rect(p0, p1, label["bounds"]):
+                    crossings.append((route["id"], label["id"]))
+    assert crossings == []

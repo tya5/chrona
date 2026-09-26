@@ -58,12 +58,22 @@ Tested: add a flat 12px to each lane row's required block extent (independent of
 
 A gutter is not rejected in principle — a *targeted* dedicated routing lane between groups, decoupled from per-row height, could still help the remaining 9 — but a naive uniform version measured net negative and needs its own design and measurement before being proposed. I am not proposing one in this correction.
 
-## 5. Recommendation
+## 5. Addendum — §3 fails the visual-integrity test; not shipped
 
-Adopt the mark-egress clearance exemption (§3) as the #467 L3/L4 fix: it is additive, scoped, measured, stays inside the published phase contract, and halves suppression on the hardest committed fixture with no visual-quality regression. The remaining 9 suppressions on `02`/`11`/`12` are recorded here with their measured cause and are accepted as `narrowed` for L4, each cited individually with this document, unless a follow-up routing-gutter design (§4) is separately proposed, measured and accepted.
+Review of this correction (conditionally approved pending two conditions) asked for the exemption's scope to cover only the egress stub (mark port to the edge of the label it clears), never the routed segments beyond it, and for an integration test asserting that no rendered relation path segment intersects any member-label text box, own or other, with a small tolerance.
 
-## 6. Acceptance target
+**Scoping the exemption to the egress stub only** (`egress_collisions`, not the full-route `collisions` search): re-measured at **17 of 24 suppressed — identical to baseline, zero relations fixed**. The stub alone is too short to matter: an item's own label sits directly against the mark's own top edge, so clearing the initial hop still leaves the full orthogonal search blocked by the same obstacle immediately afterward.
 
-- No relation on `02` (or `11`/`12`) is suppressed for `egress-collision` against its *own* endpoint's own required name once §3 lands.
-- Every relation still suppressed after §3 is listed in the L4 acceptance review with its measured cause (`no-route-found` or residual cross-item `egress-collision`), citing this document.
+**Alternative inside the same principle** (drop the `above`/`below` egress candidate entirely for an endpoint whose own label occupies a stagger row, so the connector only ever offers to leave by `end`/`start`): re-measured at **18 of 24 suppressed — worse than baseline** (removing a candidate side forces fallback pairs with worse detour/quality outcomes, newly suppressing `campaign-frr`, which had routed at baseline).
+
+**The full exemption (§3, both egress and the whole route search)** was then checked against the requested test (`tests/integration/test_materialize_example.py::test_lane_relation_routes_never_cross_a_required_lane_label`, added in this correction): it **fails**. E.g. `relation:pdr-structure` — a relation that already routed at baseline — now runs its full path straight through `member-label:lane:bus:pdr:pdr` (`pdr`'s own name, one of its own endpoints), because the exemption makes the direct path through that box legal for that endpoint. This is exactly the defect flagged in review: an endpoint's own name struck through is the same reading problem as a bystander's.
+
+**Conclusion: no variant of the mark-egress clearance idea is shipped.** §3's "Result: 9 of 24" and §5 (original)'s recommendation are superseded by this addendum. The test above is kept as a permanent regression guard (it passes at baseline, since a suppressed relation draws no path and a routed one inherently avoided every obstacle already) and must keep passing if any future routing change is proposed for lanes.
+
+**Disposition:** baseline stands — **17 of 24 suppressed** on `02`, `11` and `12`, cited individually by measured cause (§1) in the L4 acceptance review as `narrowed`. A follow-up issue is warranted for a properly designed, separately measured fix (e.g. a targeted inter-group routing gutter, §4, or a route search that actively routes *around* its own label rather than through it) — filed by the issue owner, out of scope for #467 L3/L4.
+
+## 6. Acceptance target (superseded by §5 addendum)
+
+- ~~No relation on `02` (or `11`/`12`) is suppressed for `egress-collision` against its *own* endpoint's own required name once §3 lands.~~ Not adopted; see §5.
+- Every relation suppressed at baseline is listed in the L4 acceptance review with its measured cause (§1), citing this document.
 - No change to lane count, chain narrowing, or any other #467 literal acceptance row.
