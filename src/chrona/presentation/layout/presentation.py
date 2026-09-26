@@ -6,7 +6,7 @@ from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import measure_text_width
-from chrona.presentation.model.projection import shared_track_member_key
+from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
 
 
@@ -192,9 +192,12 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                 stacked_index += 1
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             source_kind = getattr(item, "source_kind", "primary")
-            roles = ("actual",) if source_kind == "actual" else ("snapshot" if source_kind in {"snapshot", "scenario"} else "planned",)
-            if source_kind in {"primary", "combined"}:
-                roles += ("actual" if has_actual(item) else "missing-actual",)
+            roles = (("actual",) if has_actual(item) else ()) if source_kind == "actual" else (
+                "snapshot" if source_kind in {"snapshot", "scenario"} else "planned",)
+            if source_kind == "combined" and has_actual(item):
+                roles += ("actual",)
+            elif source_kind in {"primary", "combined"} and item.observation_state == ObservationState.DUE_UNOBSERVED:
+                roles += ("missing-actual",)
             slot_size = mark_block_size
             for role in roles:
                 geometry = geometries[role]

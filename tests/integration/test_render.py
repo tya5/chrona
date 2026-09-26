@@ -183,6 +183,46 @@ def test_fixed_draft_reallocates_table_timeline_and_notes_together():
     assert svg_height >= surface["canvasBounds"]["blockSize"] - 0.001 > 900
 
 
+def test_halcyon_missing_actual_is_due_only_and_tvac_boundary_is_inclusive(tmp_path):
+    example = _root() / "examples/halcyon-1"
+    inputs = dict(project_path=example / "project.yaml", view_path=example / "views/01-mission-brief.yaml",
+                  theme_path=example / "themes/briefing.yaml", scheme_path=example / "schemes/mission-light.yaml",
+                  layout_path=example / "layouts/briefing.yaml", actual_path=example / "actual.yaml",
+                  summary_path=example / "profiles/summary.yaml")
+    shipped = render_review(_draft_request(**inputs))
+    shipped_ids = {primitive.scene_id for primitive in shipped.surface.primitives}
+    shipped_by_id = {primitive.scene_id: primitive for primitive in shipped.surface.primitives}
+    future = {"psr", "campaign", "frr", "launch", "leop", "first-light"}
+    assert not {f"missing-actual:{object_id}:{object_id}" for object_id in future} & shipped_ids
+    assert "missing-actual:tvac:tvac" not in shipped_ids
+    assert "W_LAYOUT_ACTUAL_INCOMPLETE:tvac" in shipped.scene.diagnostics
+    assert shipped_by_id["cell:tvac:Obs"].text == "Recorded"
+    assert all(shipped_by_id[f"cell:{object_id}:Obs"].text == "—" for object_id in future)
+    assert 'data-scene-id="missing-actual:tvac:tvac"' not in shipped.artifact.content.decode()
+
+    actual = yaml.safe_load((example / "actual.yaml").read_text(encoding="utf-8"))
+    actual["body"]["observations"] = [entry for entry in actual["body"]["observations"]
+                                        if entry.get("projectObjectId") != "tvac"]
+    actual_path = tmp_path / "actual-without-tvac.yaml"
+    actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
+    boundary = render_review(_draft_request(**{**inputs, "actual_path": actual_path}))
+    boundary_ids = {primitive.scene_id for primitive in boundary.surface.primitives}
+    boundary_by_id = {primitive.scene_id: primitive for primitive in boundary.surface.primitives}
+    assert "missing-actual:tvac:tvac" in boundary_ids
+    assert boundary_by_id["cell:tvac:Obs"].text == "Missing"
+    assert 'data-scene-id="missing-actual:tvac:tvac"' in boundary.artifact.content.decode()
+    assert "W_LAYOUT_ACTUAL_INCOMPLETE:tvac" not in boundary.scene.diagnostics
+
+    board = render_review(_draft_request(**{**inputs,
+        "view_path": example / "views/02-programme-board.yaml",
+        "theme_path": example / "themes/wallboard.yaml",
+        "scheme_path": example / "schemes/control-room-dark.yaml",
+        "layout_path": example / "layouts/wallboard.yaml"}))
+    board_ids = {primitive.scene_id for primitive in board.surface.primitives}
+    all_future = {"shipment", "campaign", "frr", "launch", "rehearsals", "leop", "first-light", "emc", "psr"}
+    assert not {f"missing-actual:{object_id}:{object_id}" for object_id in all_future} & board_ids
+
+
 def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
     root = _root()
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))

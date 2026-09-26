@@ -3,7 +3,7 @@ from dataclasses import replace
 import inspect
 import pytest
 
-from chrona.presentation.model.projection import ReviewItem, _roles, build_review_projection, shared_track_member_key
+from chrona.presentation.model.projection import ObservationState, ReviewItem, _observation_state, _roles, build_review_projection, shared_track_member_key
 from chrona.presentation.model.surface_content import table_value
 from chrona.presentation.contracts.resources import (
     ViewComparison, ViewGrouping, ViewInput, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
@@ -46,12 +46,28 @@ def typed_view(value):
 
 def test_projection_exposes_only_fact_derived_role_inputs() -> None:
     assert set(inspect.signature(build_review_projection).parameters).isdisjoint({"style", "theme"})
-    assert _roles(None, None) == ("planned", "missing-actual")
-    assert _roles({"start": date(2026, 1, 1)}, 3, critical=True) == (
+    assert _roles(ObservationState.DUE_UNOBSERVED, None) == ("planned", "missing-actual")
+    assert _roles(ObservationState.NOT_YET_DUE, None) == ("planned",)
+    assert _roles(ObservationState.UNAVAILABLE, None) == ("planned",)
+    assert _roles(ObservationState.RECORDED, 3, critical=True) == (
         "planned", "actual", "variance-behind", "critical",
     )
-    assert _roles({"at": date(2026, 1, 1)}, -2) == ("planned", "actual", "variance-ahead")
-    assert _roles({"at": date(2026, 1, 1)}, 0) == ("planned", "actual", "variance-on-plan")
+    assert _roles(ObservationState.RECORDED, -2) == ("planned", "actual", "variance-ahead")
+    assert _roles(ObservationState.RECORDED, 0) == ("planned", "actual", "variance-on-plan")
+
+
+@pytest.mark.parametrize("planned", (
+    {"start": date(2027, 8, 1), "end": date(2027, 8, 20)},
+    {"at": date(2027, 8, 20)},
+))
+def test_observation_state_uses_inclusive_planned_due_endpoint(planned):
+    as_of = date(2027, 8, 20)
+    assert _observation_state(planned, None, as_of) == ObservationState.DUE_UNOBSERVED
+    later = {key: (date(2027, 8, 21) if key in {"end", "at"} else value)
+             for key, value in planned.items()}
+    assert _observation_state(later, None, as_of) == ObservationState.NOT_YET_DUE
+    assert _observation_state(planned, None, None) == ObservationState.UNAVAILABLE
+    assert _observation_state(planned, {"actual": {"start": "2027-08-09", "progress": 0.5}}, as_of) == ObservationState.RECORDED
 
 
 def test_explicit_row_composes_serial_task_and_milestone_under_one_owner():
@@ -93,10 +109,12 @@ def test_explicit_row_resolves_named_snapshot_item():
             {"id": "old", "source": {"kind": "snapshot", "object": "task"}},
             {"id": "now", "source": {"kind": "primary", "object": "task"}}]}]}}}
     projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}},
-        typed_view(view), None, snapshot_project=historic,
+        typed_view(view), {"body": {"asOf": "2026-02-02", "observations": []}}, snapshot_project=historic,
         snapshot_placements={"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}})
     assert [(item.source_kind, item.title, item.planned["start"]) for item in projection.rows[0].items] == [
         ("snapshot", "Historic", date(2026, 1, 1)), ("primary", "Current", date(2026, 2, 1))]
+    assert [item.observation_state for item in projection.rows[0].items] == [
+        ObservationState.UNAVAILABLE, ObservationState.DUE_UNOBSERVED]
 
 
 def test_explicit_row_selects_each_named_scenario_by_its_declared_id():
@@ -119,7 +137,8 @@ def test_automatic_rows_overlay_the_selected_scenario_on_the_shared_track():
     view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
         ViewComparison("scenario", "optional", None, None, (), scenario_id="recovery"),
         ViewVisibility(False, "none", "none"), (), (), ViewRows("automatic", ()), None, (), None, None, None)
-    projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}}, view, None,
+    projection = build_review_projection(project, {"task": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)}}, view,
+        {"body": {"asOf": "2026-02-02", "observations": []}},
         scenarios={"recovery": (
             {"objects": {"task": {"title": "Recovery", "fields": {}}}},
             {"task": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}},
@@ -129,6 +148,8 @@ def test_automatic_rows_overlay_the_selected_scenario_on_the_shared_track():
         ("task", "combined", None, "shared", "Current"),
         ("scenario:recovery:task", "scenario", "recovery", "shared", "Recovery"),
     ]
+    assert [item.observation_state for item in projection.rows[0].items] == [
+        ObservationState.DUE_UNOBSERVED, ObservationState.UNAVAILABLE]
 
 
 def test_automatic_predecessor_policy_folds_a_point_with_one_selected_span_predecessor():

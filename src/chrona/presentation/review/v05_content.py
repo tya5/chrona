@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Any, Mapping
 
-from chrona.presentation.model.projection import ReviewProjection
+from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, display_value, table_value,
@@ -38,7 +38,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         if facet == "finishDelta" or (isinstance(source, Mapping) and source.get("facet") == "finishDelta"):
             delta = item.finish_delta
             return "tableVarianceBehind" if isinstance(delta, int) and delta > 0 else ("tableVarianceAhead" if isinstance(delta, int) and delta < 0 else ("tableVarianceOnTrack" if delta == 0 else "tableCell"))
-        if facet == "missingActual" and not item.actual:
+        if facet == "missingActual" and item.observation_state == ObservationState.DUE_UNOBSERVED:
             return "missingActualCell"
         return "tableCell"
     def cell_typography_role(column: Any) -> str:
@@ -283,7 +283,8 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
         "actual.asOf": date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else None,
         "planned.nextPoint": points[0] if points else None,
         "count.selected": len(projection.items),
-        "count.missingActual": sum(not bool(item.actual) for item in projection.items),
+        "count.missingActual": (sum(item.observation_state == ObservationState.DUE_UNOBSERVED
+                                    for item in projection.items) if as_of_value is not None else None),
         "count.knownFinishVariance": sum(item.finish_delta is not None for item in projection.items),
     }
     panels: list[SummaryPanel] = []

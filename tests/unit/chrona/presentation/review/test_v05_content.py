@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.model.projection import ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.surface_content import SummaryContent, TableCellContent
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
@@ -115,7 +115,7 @@ def test_table_cell_semantics_follow_declared_source_not_item_role_order():
     on_plan = ReviewItem("plan", "Plan", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, 0, ("variance-behind",))
     behind = ReviewItem("behind", "Behind", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, 4, ("variance-ahead",))
     unknown = ReviewItem("unknown", "Unknown", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, None, ("variance-behind",))
-    missing = ReviewItem("missing", "Missing", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    missing = ReviewItem("missing", "Missing", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (), observation_state=ObservationState.DUE_UNOBSERVED)
     projection = ReviewProjection((ahead, on_plan, behind, unknown, missing), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
     view = {"body": {"tableColumns": (
         {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "em-dash"},
@@ -128,6 +128,20 @@ def test_table_cell_semantics_follow_declared_source_not_item_role_order():
     assert [selected[(item, "Delta")] for item in ("ahead", "plan", "behind", "unknown")] == ["tableVarianceAhead", "tableVarianceOnTrack", "tableVarianceBehind", "tableCell"]
     assert selected[("missing", "Missing")] == "missingActualCell"
     assert all(selected[(item, "Title")] == "tableCell" for item in ("ahead", "plan", "behind", "unknown", "missing"))
+
+
+def test_missing_actual_summary_counts_due_absences_and_requires_as_of():
+    projection = ReviewProjection(tuple(
+        ReviewItem(state.value, state.value, "span", {"start": date(2027, 8, 1), "end": date(2027, 8, 20)},
+                   None, None, (), observation_state=state)
+        for state in ObservationState), (date(2027, 8, 1), date(2027, 8, 21)), (), ())
+    summary = typed_summary({"body": {"panels": [{"id": "facts", "metrics": {
+        "missing": {"label": "Missing", "source": "count.missingActual", "format": "count"},
+    }}]}})
+    present = normalize_summary_content(summary, projection, {"body": {"asOf": "2027-08-20"}})
+    absent = normalize_summary_content(summary, projection, None)
+    assert "Missing: 1" in tuple(run.content for run in present.runs)
+    assert "Missing: unknown" in tuple(run.content for run in absent.runs)
 
 
 def test_critical_relation_mode_uses_only_scheduler_driving_relations():

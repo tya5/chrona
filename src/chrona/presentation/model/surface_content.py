@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from chrona.presentation.model.placement_candidates import PlacementCandidate
-from chrona.presentation.model.projection import ReviewItem
+from chrona.presentation.model.projection import ObservationState, ReviewItem
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
@@ -209,7 +209,9 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
         declared = project.get("scenarios", {}).get(item.scenario_id, {})
         return declared.get("title") if isinstance(declared, dict) else None
     facet = source["comparisonFacet"]
-    return {"finishDelta": item.finish_delta, "missingActual": not bool(item.actual),
+    missing_actual = (True if item.observation_state == ObservationState.DUE_UNOBSERVED else
+                      False if item.observation_state == ObservationState.RECORDED else None)
+    return {"finishDelta": item.finish_delta, "missingActual": missing_actual,
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 

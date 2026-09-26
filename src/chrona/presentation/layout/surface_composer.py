@@ -10,7 +10,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
-from chrona.presentation.model.projection import shared_track_member_key
+from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.model.axis_names import axis_name_table
@@ -1202,7 +1202,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                               Decimal(str(actual_size)), Decimal(str(actual_size)))
                 port = (x, actual_block + actual_size / 2)
                 marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id="actual"))
-            elif source_kind in {"actual", "combined"}:
+            elif source_kind in {"actual", "combined", "primary"}:
+                # An explicit primary member only projects its planned mark;
+                # a companion Actual member owns any observed-state diagnostic.
+                if source_kind == "primary" and item.observation_state == ObservationState.RECORDED:
+                    continue
                 if (actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
                         and contract.time.as_of is None):
                     diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:{item.object_id}")
@@ -1214,7 +1218,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
                     continue
                 anchor = planned.get("end", planned.get("at"))
-                if isinstance(anchor, date):
+                if item.observation_state == ObservationState.DUE_UNOBSERVED and isinstance(anchor, date):
                     x = _coordinate(anchor, scale)
                     bounds = Rect(Decimal(str(x)), Decimal(str(missing_block)),
                                   Decimal(str(max(1.0, missing_size * 1.5))), Decimal(str(missing_size)))

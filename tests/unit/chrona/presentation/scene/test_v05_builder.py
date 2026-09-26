@@ -12,7 +12,7 @@ from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun,
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
-from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.model.projection import FoldedPointProjection, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
 from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
@@ -265,7 +265,8 @@ class _Font:
 
 
 def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
-    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None, ("planned",)),),
+    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None,
+                                              ("planned", "missing-actual"), observation_state=ObservationState.DUE_UNOBSERVED),),
                                   (date(2026, 1, 1), date(2026, 2, 1)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})

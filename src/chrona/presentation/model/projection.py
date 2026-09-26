@@ -5,6 +5,7 @@ from copy import deepcopy
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
+from enum import StrEnum
 from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
@@ -12,6 +13,15 @@ from chrona.presentation.contracts.resources import ViewInput
 
 
 _SHARED_TRACK_SOURCE_ORDER = {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}
+
+
+class ObservationState(StrEnum):
+    """One View-owned Actual availability fact at the declared as-of date."""
+
+    RECORDED = "recorded"
+    DUE_UNOBSERVED = "due-unobserved"
+    NOT_YET_DUE = "not-yet-due"
+    UNAVAILABLE = "unavailable"
 
 
 def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, int]:
@@ -48,6 +58,7 @@ class ReviewItem:
     link: dict[str, str] | None = None
     scenario_id: str | None = None
     planned_progress: float | None = None
+    observation_state: ObservationState = ObservationState.UNAVAILABLE
 
 
 @dataclass(frozen=True)
@@ -162,6 +173,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         raise ValueError("E_ACTUAL_REQUIRED")
     latest, unmatched = _latest_observations(
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
+    as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
+    as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else as_of_value
     explicit = view.rows.mode == "explicit"
     ids = set(view.selection.ids) if view.selection and view.selection.ids else set(placements)
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
@@ -182,6 +195,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if hierarchy and object_id in ids and source_type in types and (not object_types or project_type in object_types) and project_type not in excluded_object_types:
             hierarchy_root_ids.add(object_id)
         actual = _actual(latest.get(object_id))
+        observation_state = _observation_state(planned, latest.get(object_id), as_of)
         finish_delta = _finish_delta(planned, actual)
         total_float = analysis.total_float.get(object_id) if analysis is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
@@ -190,7 +204,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         group_id = _group_id(project, object_id, source_type, grouping)
         selected.append(ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, actual, finish_delta, _roles(actual, finish_delta, critical),
+            planned, actual, finish_delta, _roles(observation_state, finish_delta, critical),
             group_id, str(project.get("entities", {}).get(group_id, {}).get("title", group_id)),
             dict(project["objects"][object_id].get("fields", {})), object_id, "primary",
             parent_id=entry.parent_id if entry else None,
@@ -199,7 +213,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             hierarchy_path=entry.path if entry else (),
             is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
             total_float=total_float, critical=critical, link=link,
-            planned_progress=project["objects"][object_id].get("plannedProgress")))
+            planned_progress=project["objects"][object_id].get("plannedProgress"),
+            observation_state=observation_state))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY")
     if hierarchy and not explicit:
@@ -400,7 +415,7 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
         critical = object_id in analysis.critical if analysis is not None else False
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, None, None, _roles(None, None, critical), "", "",
+            planned, None, None, _roles(ObservationState.UNAVAILABLE, None, critical), "", "",
             dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
             total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")))
     return result
@@ -504,10 +519,27 @@ def _date_or_number(value: Any) -> date | float:
     return value if isinstance(value, date) else date.fromisoformat(value) if isinstance(value, str) else float(value)
 
 
-def _roles(actual: dict[str, Any] | None, finish_delta: int | None,
+def _observation_state(planned: dict[str, date], observation: dict[str, Any] | None,
+                       as_of: date | None) -> ObservationState:
+    """Classify one selected observation without reading the local clock."""
+    if observation is not None:
+        return ObservationState.RECORDED
+    if as_of is None:
+        return ObservationState.UNAVAILABLE
+    due = planned.get("end", planned.get("at"))
+    if due is None:
+        return ObservationState.UNAVAILABLE
+    return ObservationState.DUE_UNOBSERVED if due <= as_of else ObservationState.NOT_YET_DUE
+
+
+def _roles(observation_state: ObservationState, finish_delta: int | None,
            critical: bool = False) -> tuple[str, ...]:
     """Map selected facts to the closed semantic-role vocabulary."""
-    roles = ["planned", "actual" if actual else "missing-actual"]
+    roles = ["planned"]
+    if observation_state == ObservationState.RECORDED:
+        roles.append("actual")
+    elif observation_state == ObservationState.DUE_UNOBSERVED:
+        roles.append("missing-actual")
     if finish_delta is not None:
         roles.append("variance-behind" if finish_delta > 0 else "variance-ahead" if finish_delta < 0 else "variance-on-plan")
     if critical:
