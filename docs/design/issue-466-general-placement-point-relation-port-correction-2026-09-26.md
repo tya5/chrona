@@ -1,0 +1,10 @@
+# Design Correction — Point-Glyph Ports for Semantic Relations (#466)
+
+**Predecessors:** [shared-obstacle design](issue-466-general-placement-design-2026-09-26.md), [annotation-port correction](issue-466-general-placement-anchor-port-correction-2026-09-26.md).
+**Discovery:** the first common-index composition suppressed the aster-ssd `qual-exit → pilot` relation. The point glyph's existing `start_port`/`end_port` are its geometric center; the new mark obstacle correctly blocks a route starting there. Suppression would be a user-visible regression, not an acceptable obstacle correction.
+
+For each semantic relation endpoint, Layout resolves a *route-specific boundary port* from the completed mark, before routing. A span's declared start/finish uses its existing edge port. A point glyph's `at` endpoint chooses one of its finite cardinal outline tips nearest the other relation endpoint, with deterministic `end, start, above, below` tie order; both source and target are resolved from the closed original mark geometry, never iteratively from a tentative route. The point's stored central semantic anchor remains available for marks/labels; it is not a routable egress. An actual/snapshot comparison mark has its own completed bounds and cannot borrow a primary port by title or nearest row.
+
+The selected source/target point ports receive stable Layout port identities. The one shared inventory records their finite port obstacles and exempts only those exact IDs while routing this relation. It does not exempt the entire point glyph, its comparison sibling, or the destination row. All other obstacles remain active. The chosen route may differ from the old center-to-edge path, but a path is not suppressed merely because the old center lay inside its host. A route-quality or crowding fallback still follows its declared policy and diagnostic.
+
+No View/Project/Theme schema changes. Scene receives the completed path and port IDs. Neutral fixtures and the public aster-ssd relation must prove route visibility, obstacle avoidance and stable deterministic bytes after intended migration.

@@ -1,0 +1,5 @@
+# Implementation Amendment — Point Relation Boundary Ports (#466)
+
+**Amends:** [obstacle-only implementation plan](issue-466-shared-obstacle-prerequisite-implementation-plan-2026-09-26.md) after the [point-port correction](../../design/issue-466-general-placement-point-relation-port-correction-2026-09-26.md) and [architecture review](../../reviews/current/issue-466-general-placement-point-relation-port-architecture-review-2026-09-26.md).
+
+O2 must resolve route-specific point ports before querying the shared inventory. Implement one Layout-owned finite boundary-port helper reused by semantic relations and annotation leaders; retain span edge ports. Register port identities and pass only the two endpoint IDs as router exemptions. Test point→span, span→point, point→point, comparison siblings, unrelated-mark avoidance and insertion-stable tie order. Reproduce the public aster-ssd relation without a suppression diagnostic, then inspect its intended path byte change with all other generated Scene/SVG diffs. Do not hide center-port collisions by exempting the entire host mark or row.

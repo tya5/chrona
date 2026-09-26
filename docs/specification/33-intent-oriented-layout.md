@@ -242,6 +242,11 @@ A measured rule label may exempt only its own named rule stroke during its
 placement; the rule remains an obstacle for other labels and annotations.
 See the [#466 rule-label correction](../design/issue-466-general-placement-rule-label-correction-2026-09-26.md).
 
+Semantic relations also use completed route-specific boundary ports. A point
+glyph's central mark anchor is not a routable port; Layout chooses a finite
+outline tip toward the other endpoint and exempts only that named port when
+routing. See the [#466 point-relation-port correction](../design/issue-466-general-placement-point-relation-port-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
