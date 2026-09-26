@@ -4,6 +4,10 @@ Each Layout source that renders text declares its semantic typography role. The 
 
 At minimum, title uses `heading`; table text uses `text`; axis labels use `axis`; legend uses `legend`; notes and annotations use `annotation`. A missing or invalid role token fails through the resolved Theme token diagnostics; it never falls back to body text metrics.
 
-A required slot with `overflow: diagnose` is rejected with `E_LAYOUT_REQUIRED_OVERFLOW` whenever its assigned rectangle is smaller than this typography-aware minimum measurement. This check occurs in Layout before Scene composition.
+A required slot whose assigned rectangle is smaller than this typography-aware
+minimum retains its measured natural geometry. Layout records the placement
+and required/available extents as a visible-overflow warning and completes the
+canvas under Specification 33 Section 13. The historical `overflow: diagnose`
+spelling does not turn a valid fit shortage into an error.
 
 This policy changes no resource closure, no legacy Settings/Theme contract, and no renderer-specific geometry. The measured baseline is an immutable Layout input consumed by the Scene builder.

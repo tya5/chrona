@@ -327,11 +327,11 @@ family uses the planned Rect's left edge and the row's resolved Actual-bar band.
 pattern Rect is centered vertically in that band and uses the Theme-owned width and
 height. A label's preferred x begins after that Rect plus
 `layout.missingActual.gap`, or at the planned left edge when no pattern is requested,
-and is vertically centered using the `missingActual` typography. Scene measures it
-against the viewport's horizontal margin box. If its preferred right edge exceeds that
-box, Scene shifts the complete measured label left until its right edge equals the box;
-if the measured label itself is wider than the box, it diagnoses
-`E_LAYOUT_REQUIRED_OVERFLOW:text`. `label`, `pattern`, and `label-and-pattern` emit exactly the
+and is vertically centered using the `missingActual` typography. For current
+review surfaces, Layout measures it against the requested margin box, retains
+its natural visible placement when no position fits, records the required and
+available extents, and expands the completed canvas. Scene does not measure or
+repair it. `label`, `pattern`, and `label-and-pattern` emit exactly the
 families named by their modes. Label text is `detail.missingActualLabel`. It never
 fabricates Actual semantics.
 
@@ -345,7 +345,7 @@ x coordinate is the later of planned and complete-Actual right edges plus
 bounds are the union of the planned and complete-Actual bar bands (the planned band for
 unknown). The label's preferred x begins after the marker plus
 `layout.variance.labelGap` and uses the `variance` typography. It follows the same
-measured right-edge shift and overflow diagnostic as Missing Actual. `labelAlign`
+Layout-owned measured placement and visible overflow fallback as Missing Actual. `labelAlign`
 aligns its measured top, center, or bottom to the marker bounds. Known text uses
 `positiveSign` and `signedDaysSuffix`; unknown text uses
 `detail.formatting.unknown`. `showZero=false` suppresses the on-track family.
@@ -359,10 +359,11 @@ placement of the authored annotation text box. Date labels use
 `detail.formatting.date`, never host locale formatting. Rule array order breaks ties;
 the first rule for an identical `(source, facet, endpoint)` target wins.
 
-`required=true` makes an unplaceable applicable label
-`E_PRESENTATION_LABEL_UNPLACEABLE`. `required=false` permits omission only when
-`layout.labelPlacement.overflow=clip-optional`; under `diagnose` it produces the same
-diagnostic. A rule whose facet/endpoint is absent is inapplicable, not an overflow.
+`required=true` retains an applicable label at a deterministic visible
+fallback position if no preferred candidate fits; Layout records its overflow.
+`required=false` permits omission only when an explicit optional clipping or
+suppression policy selects it. A rule whose facet/endpoint is absent is
+inapplicable, not an overflow.
 Item/date/annotation labels use the declared finite candidate order and obstacle set.
 Variance retains its conditional-family placement above; its measured margin overflow
 uses the same required/optional decision. Absence of a rule does not delete authored
@@ -541,12 +542,12 @@ unrounded. SVG currently supports `fontPolicy=reference`. `embed` and `outline` 
 with `E_PRESENTATION_OUTPUT_CAPABILITY` until an output-capability profile supplies the
 required font operation; they never fall back to reference silently.
 
-Before serialization, each primitive bound is checked against the logical viewport.
-With `overflow=diagnose`, any out-of-bounds primitive fails with
-`E_PRESENTATION_OUTPUT_OVERFLOW`. With `clip-optional`, an out-of-bounds primitive may
-be omitted only when Scene carries `optional=true`; a required primitive still fails.
-Omission is whole-primitive, not coordinate clipping. In-bounds primitives are
-identical under both overflow policies.
+For current review surfaces, Layout completes a canvas containing every
+required primitive, including negative-origin and beyond-viewport geometry.
+Scene and the adapter project that canvas without an out-of-bounds fit refusal.
+An explicitly optional primitive may be omitted only by its selected Layout
+policy; omission is whole-primitive, not coordinate clipping. In-bounds
+primitives are identical under either disposition.
 
 ## 10. Out of scope
 

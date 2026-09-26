@@ -62,8 +62,10 @@ presentation emphasis values. They map to existing Theme roles `body`,
 
 Panel geometry reuses Layout slots and Theme metric bindings rather than introducing
 adapter constants. If content cannot fit its slot, the declared
-slot overflow policy applies. Required overflow yields `E_LAYOUT_REQUIRED_OVERFLOW`
-with the source suffix.
+slot overflow policy applies where its compact representation is feasible.
+Required content that cannot fit completes at measured natural size with a
+Layout warning and expanded canvas under Specification 33 Section 13; it does
+not yield a fit refusal.
 
 ## Input and Scene boundary
 

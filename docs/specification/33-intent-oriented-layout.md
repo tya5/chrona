@@ -207,9 +207,9 @@ The implementation exposes at least:
 | `E_LAYOUT_REFERENCE_UNKNOWN` | Anchor, guide, barrier, or member reference is unknown. |
 | `E_LAYOUT_REFERENCE_SCOPE` | Relative reference crosses its overlay scope. |
 | `E_LAYOUT_CONSTRAINT_CYCLE` | Anchor/barrier dependency cycle. |
-| `E_LAYOUT_CONSTRAINT_CONTRADICTORY` | Fixed/bounded requirements cannot fit. |
+| `E_LAYOUT_CONSTRAINT_CONTRADICTORY` | Authored constraints are structurally contradictory independently of viewport size. |
 | `E_LAYOUT_BASELINE_UNAVAILABLE` | Baseline alignment lacks compatible baseline data. |
-| `E_LAYOUT_REQUIRED_OVERFLOW` | Required content cannot be placed under its policy. |
+| `E_LAYOUT_REQUIRED_OVERFLOW` | Retired for a valid current fit shortage; historical diagnostic only. |
 
 Diagnostics include profile ID, node ID when applicable, and a resource path. They do
 not include renderer-selected recovery coordinates.
