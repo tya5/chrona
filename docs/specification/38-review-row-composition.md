@@ -1,6 +1,6 @@
 # Review Row Composition
 
-**Status:** Design complete — M28
+**Status:** M28 base contract; supplemented by #467 lane-row design for View v0.23.
 **Depends on:** Specifications 06, 08, 24, 36, 37 and ADR-0029.
 **Owns:** View-local Review row membership and its semantic projection boundary.
 
@@ -90,10 +90,14 @@ guesses from a title or mark position.
 
 ## 3. Scene, Layout, and accessibility
 
-The Layout Manifest allocates one `SceneRow` for every row projection, never every
-item. Its row bounds are shared by the row's item primitives. The Scene assigns items
-deterministic non-overlapping subtracks within the row by `member_index`; the minimum
-row height is the declared row metric times the item count. An item's primitive ID
+For M28 automatic and explicit composition, Layout allocates one `SceneRow`
+for every row projection, never every item. In `lanes` mode, Layout derives the
+lane rows from selected item projections. Row bounds are shared by their item
+primitives. Layout assigns items
+deterministic completed subtracks within the row; for the original M28 explicit
+contract, this was a `member_index` stack, while the versioned collision opt-in
+and generated lanes are defined below. Layout owns the measured row height.
+An item's primitive ID
 incorporates `row_id` and item ID; its `source_ref` remains the stable source/object ID
 and its `projection_instance_id` identifies the View row/item instance.
 
@@ -110,14 +114,35 @@ once, the View annotation must add `rowId` and `itemId`; otherwise composition f
 instances render one connector per unambiguous pair in deterministic row/member order;
 no title or nearest-geometry match is permitted.
 
+### 3.1 Collision-aware lanes (#467)
+
+View v0.23 adds `rows.mode: lanes` for non-hierarchy table-timeline selection.
+View supplies selected items, grouping, ordering and required plot-label intent;
+Layout composes group-local lane membership from measured mark and required
+name/delta footprints. A row is a lane with a stable group/representative
+identity, not a Project object or an authored View row. Source/item identity
+never depends on lane ordinal. A predecessor lane is preferred only when dates
+and measured geometry permit; otherwise deterministic first-fit opens another
+lane. A name cannot be suppressed; no fitting candidate opens a new lane or
+uses a recorded visible-overflow terminal placement. The left table has
+declared group/lane summary and optional count, not one arbitrary member's
+facts. Versioned explicit rows may opt into collision allocation while
+retaining authored row/member IDs and table subject. The exact contract,
+admitted domain and migration are in the [#467 design](../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md).
+
+`automatic` is still the exact per-object row behavior, including its original
+table cells, points policy and output. `rows.points: key-row` is not created by
+lane mode. Hierarchical rows remain `automatic` or authored `explicit` until a
+separate ancestry-preserving lane design exists.
+
 ## 4. Diagnostics and validation
 
 The v0.2 View validator diagnoses empty/duplicate rows, unknown source objects,
 unavailable Snapshot/Actual sources, invalid table subjects, `automatic` items,
 `explicit` omission of items, and mixed explicit/automatic selection authority.
-Projection diagnoses an empty resolved row and ambiguous annotation anchoring. Scene
-diagnoses insufficient measured row height or an unplaceable required label before SVG
-output.
+Projection diagnoses an empty resolved row and ambiguous annotation anchoring.
+Layout diagnoses insufficient measured row height or an unplaceable required
+label before Scene/SVG output, subject to the declared visible-overflow policy.
 
 ## 5. Boundary review
 
@@ -125,9 +150,9 @@ output.
 |---|---|
 | Project / Schedule | unchanged; items identify existing stable source objects only |
 | Snapshot / Actual | unchanged; each is an explicit Review Item source |
-| View | owns row identity, item source/membership, label, group, and table subject |
-| Layout Manifest | owns one row's bounds and overflow; no member coordinates |
-| Scene | owns subtrack geometry, primitive identity, relation/annotation expansion |
+| View | owns authored explicit row identity/membership and selected item/group intent; generated lane membership is Layout-owned |
+| Layout | owns row/lane assignment, subtrack and label geometry, measured bounds, ports and routes |
+| Scene | projects completed placement to primitive identity and paint order; no geometric search |
 | Theme / Color Scheme | roles only; no row-membership policy |
 | SVG | serializes completed primitives only |
 
