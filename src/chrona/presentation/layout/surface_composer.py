@@ -93,6 +93,13 @@ def _validate_background_shapes(shapes: list[ShapePlacement], theme_tokens: Any)
             translucent.append(shape)
     for index, shape in enumerate(translucent):
         for other in translucent[index + 1:]:
+            # A group's own band intentionally includes its own header row
+            # (Specification 45, Specification 50 §3.4), so its groupBand and
+            # groupHeaderBand shapes are one group's two decoration layers,
+            # not two conflicting decorations, and may legitimately overlap.
+            if (shape.source_ref == other.source_ref
+                    and {shape.semantic_id, other.semantic_id} == {"groupBand", "groupHeaderBand"}):
+                continue
             if intersects(shape.bounds, other.bounds):
                 raise LayoutError("E_LAYOUT_BACKGROUND_OVERLAP", "/layoutManifest/reviewSurface/backgroundExtents",
                                   detail=f"{shape.placement_id}:{other.placement_id}")
@@ -765,11 +772,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             groups[-1] = GroupPlacement(previous.group_id, content, previous.header_bounds)
         else:
             header = None
+            content = row.bounds
             if row.group_id and group_header_size:
                 header = Rect(Decimal(str(table_bounds[0])), row.bounds.block - Decimal(str(group_header_size)),
                               Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
                               Decimal(str(group_header_size)))
-            groups.append(GroupPlacement(row.group_id, row.bounds, header))
+                # A group's own band includes its own header row, so the
+                # header is never painted as if it belonged to the group
+                # before it (Specification 45, Specification 50 §3.4).
+                content = Rect(row.bounds.inline, header.block, row.bounds.inline_size,
+                               row.bounds.block_size + Decimal(str(group_header_size)))
+            groups.append(GroupPlacement(row.group_id, content, header))
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     def metric_for(typography_role: str) -> Any:
@@ -878,15 +891,18 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    available_inline_size=available, semantic_id=cell.semantic_id))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
+    group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
+                              if any(group.header_bounds is not None for group in groups) else body_size)
     for group in groups:
         if group.header_bounds is not None:
             text.append(place_text(placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
                                        content=labels[group.group_id], inline=float(group.header_bounds.inline),
-                                       baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
+                                       baseline_block=float(group.header_bounds.block) + group_header_font_size,
+                                       typography_role="groupHeader",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region=f"group:{group.group_id}",
                                    collision_domain=CollisionDomain("group-header", group.group_id),
-                                   source_content=labels[group.group_id],
+                                   source_content=labels[group.group_id], semantic_id="groupHeader",
                                    available_inline_start=float(group.header_bounds.inline),
                                    available_inline_size=float(group.header_bounds.inline_size)))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
@@ -918,22 +934,37 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     row_decoration = request.surface_content.row_decoration
     group_decoration = request.surface_content.group_decoration
+    # Group bands are emitted before row stripes so that, at the same
+    # declared Theme backgroundPaintOrder (the default in every shipped
+    # preset), a row stripe is the later/topmost primitive and remains
+    # visible over an opaque group band (Specification 50 §3.4).
+    for index, group in enumerate(groups):
+        banded = group_decoration in {"all", "alternate"} and (group_decoration == "all" or index % 2 == 0)
+        group_shape = None
+        if banded:
+            group_shape = background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds)
+            if group_shape is not None:
+                shapes.append(group_shape)
+        # A group's own band already includes its own header row (see the
+        # group-building loop above), so a group the body decoration painted
+        # needs no separate header accent: painting one would double-tint the
+        # header row under its own band, at a contrast ratio the band's own
+        # colour was never chosen against. The header-only band (`groups:
+        # none`, or a selected group whose Theme suppresses the body fill)
+        # remains the sole source of header decoration in those cases; an
+        # unselected `alternate` group gets neither, so its header is never
+        # painted as an extension of the group before it.
+        if group.header_bounds is not None and (group_decoration == "none" or (banded and group_shape is None)):
+            shape = background_shape(f"group-header-band:{group.group_id}", group.group_id,
+                                     "groupHeaderBand", group.header_bounds)
+            if shape is not None:
+                shapes.append(shape)
     if row_decoration == "alternate":
         for index, row in enumerate(rows):
             if index % 2 == 0:
                 shape = background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds)
                 if shape is not None:
                     shapes.append(shape)
-    for index, group in enumerate(groups):
-        if group_decoration in {"all", "alternate"} and (group_decoration == "all" or index % 2 == 0):
-            shape = background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds)
-            if shape is not None:
-                shapes.append(shape)
-        if group.header_bounds is not None:
-            shape = background_shape(f"group-header-band:{group.group_id}", group.group_id,
-                                     "groupHeaderBand", group.header_bounds)
-            if shape is not None:
-                shapes.append(shape)
     label_lane_offset = 0.0
     for tier_index, tier in enumerate(request.surface_content.axis_tiers):
         form = tier.label.form if tier.label else None

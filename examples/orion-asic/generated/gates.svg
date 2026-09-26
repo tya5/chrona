@@ -6,17 +6,14 @@
 <rect data-scene-id="legend-swatch:scale:revision:A0" data-source-ref="scale:revision:A0" data-purpose="legend-swatch" x="806.493" y="832.338" width="9.6" height="9.6" opacity="1" fill="#3B6FB6" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:scale:revision:A1" data-source-ref="scale:revision:A1" data-purpose="legend-swatch" x="806.493" y="850.338" width="9.6" height="9.6" opacity="1" fill="#2E8B6E" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:scale:revision:B0" data-source-ref="scale:revision:B0" data-purpose="legend-swatch" x="806.493" y="868.338" width="9.6" height="9.6" opacity="1" fill="#B5651D" stroke="#172033" stroke-width="1"/>
-<rect data-scene-id="group:design" data-source-ref="design" data-purpose="group-decoration" x="506.4" y="136.8" width="1069.6" height="192" opacity="1" fill="#EEF3F8"/>
-<rect data-scene-id="group:product" data-source-ref="product" data-purpose="group-decoration" x="506.4" y="348.8" width="1069.6" height="192" opacity="1" fill="#EEF3F8"/>
-<rect data-scene-id="group:validation" data-source-ref="validation" data-purpose="group-decoration" x="506.4" y="560.8" width="1069.6" height="192" opacity="1" fill="#EEF3F8"/>
+<rect data-scene-id="group:design" data-source-ref="design" data-purpose="group-decoration" x="506.4" y="116.8" width="1069.6" height="212" opacity="1" fill="#EEF3F8"/>
+<rect data-scene-id="group:product" data-source-ref="product" data-purpose="group-decoration" x="506.4" y="328.8" width="1069.6" height="212" opacity="1" fill="#EEF3F8"/>
+<rect data-scene-id="group:validation" data-source-ref="validation" data-purpose="group-decoration" x="506.4" y="540.8" width="1069.6" height="212" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="506.4" y="68.8" width="105.571" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="611.971" y="68.8" width="255.593" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="867.564" y="68.8" width="250.036" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1117.6" y="68.8" width="252.815" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1370.415" y="68.8" width="205.585" height="48" opacity="1" fill="#C9CED8"/>
-<rect data-scene-id="group-header-band:design" data-source-ref="design" data-purpose="group-header-band" x="24" y="116.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
-<rect data-scene-id="group-header-band:product" data-source-ref="product" data-purpose="group-header-band" x="24" y="328.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
-<rect data-scene-id="group-header-band:validation" data-source-ref="validation" data-purpose="group-header-band" x="24" y="540.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M506.4 116.8L506.4 770" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M611.971 116.8L611.971 770" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M867.564 116.8L867.564 770" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>

@@ -255,6 +255,16 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    groupHeader:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
     heading:
       fontFamily: editorial
       fontWeight: text-weight
@@ -386,6 +396,7 @@ body:
   colorBindings:
     background.fill: surface
     text.fill: text
+    groupHeader.fill: text
     member-label-inside-planned.fill: insideLabelPlanned
     member-label-inside-actual.fill: insideLabelActual
     member-label-inside-snapshot.fill: insideLabelSnapshot

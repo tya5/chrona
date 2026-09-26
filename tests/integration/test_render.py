@@ -18,7 +18,7 @@ from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
-from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 from chrona.app.cli import _emit_render_warnings
@@ -433,6 +433,119 @@ def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
         label = by_id[placement_id]
         assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
         assert icon.slot_id == label.slot_id
+
+
+def test_row_stripes_paint_above_group_bands_across_the_whole_surface(tmp_path):
+    """Issue #481 criterion 1: stripes and group bands combine across the whole surface."""
+    root = _root()
+    layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    layout["reviewSurface"]["backgroundExtents"]["rowBand"] = "both"
+    layout["reviewSurface"]["backgroundExtents"]["groupBand"] = "both"
+    layout_path = tmp_path / "layout.yaml"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+
+    # examples/controller-z/views/executive.yaml already declares rows: alternate, groups: all.
+    rendered = render_review(_draft_request(layout_path=layout_path))
+    primitives = rendered.surface.primitives
+    index_by_id = {item.scene_id: index for index, item in enumerate(primitives)}
+    groups = {item.scene_id: item for item in primitives if item.scene_id.startswith("group:")}
+    rows = {item.scene_id: item for item in primitives if item.scene_id.startswith("row-band:")}
+    assert groups and rows
+    timeline_slot = next(item for item in rendered.surface.slots if item.slot_id == "timeline")
+    timeline_end = timeline_slot.bounds[0] + timeline_slot.bounds[2]
+
+    def block_contains(outer, inner) -> bool:
+        return outer.bounds[1] <= inner.bounds[1] + 1e-6 and (
+            inner.bounds[1] + inner.bounds[3] <= outer.bounds[1] + outer.bounds[3] + 1e-6)
+
+    overlapping_pairs = 0
+    for group in groups.values():
+        for row in rows.values():
+            if not block_contains(group, row):
+                continue
+            overlapping_pairs += 1
+            # The stripe is a real Scene primitive reaching the timeline's far
+            # edge (visible in the timeline region of a grouped row), not just
+            # an SVG-serialization artifact.
+            assert row.bounds[0] + row.bounds[2] >= timeline_end - 1e-6
+            # The stripe paints on top of the group band it overlaps: either a
+            # strictly higher Scene paint_order, or the same paint_order and a
+            # later position in the Scene primitive list (the renderer's tie
+            # break, `renderers/v05_svg.py`).
+            assert (row.paint_order > group.paint_order
+                    or (row.paint_order == group.paint_order
+                        and index_by_id[row.scene_id] > index_by_id[group.scene_id]))
+    assert overlapping_pairs > 0
+
+
+def test_group_band_includes_its_own_header_row_under_all_and_alternate(tmp_path):
+    """Issue #481 criterion 2: a group's band includes its own header row."""
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    for decoration in ("all", "alternate"):
+        view["body"]["backgroundDecoration"]["groups"] = decoration
+        view_path = tmp_path / f"view-{decoration}.yaml"
+        view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+        rendered = render_review(_draft_request(view_path=view_path))
+        by_id = {item.scene_id: item for item in rendered.surface.primitives}
+        groups = [group for group in rendered.surface.groups if group.header_bounds is not None]
+        assert len(groups) >= 3, "the fixture needs at least one unselected alternate group"
+
+        banded_count, unbanded_count = 0, 0
+        for group in groups:
+            band = by_id.get(f"group:{group.group_id}")
+            header_band = by_id.get(f"group-header-band:{group.group_id}")
+            if band is None:
+                # No band is drawn for an unselected group's header: neither
+                # its own body band nor a separate header accent.
+                assert header_band is None
+                unbanded_count += 1
+                continue
+            banded_count += 1
+            # The drawn group band's bounds contain its own header row. A
+            # banded group paints no separate header-band primitive (it would
+            # only double-tint the header row its own band already covers,
+            # see the design correction), so the containment is checked
+            # against Layout's own recorded header_bounds geometry, which is
+            # always present once a group has a header.
+            assert header_band is None
+            header_block, header_block_size = group.header_bounds[1], group.header_bounds[3]
+            assert band.bounds[1] <= header_block + 1e-6
+            assert header_block + header_block_size <= band.bounds[1] + band.bounds[3] + 1e-6
+        assert banded_count > 0
+        if decoration == "alternate":
+            assert unbanded_count > 0
+
+
+def test_group_header_text_uses_the_groupheader_theme_role(tmp_path):
+    """Issue #481 criterion 3: group-header text uses the Theme's groupHeader role."""
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme["body"]["values"]["group-header-test-weight"] = {"type": "fontWeight", "value": 700}
+    theme["body"]["roles"]["groupHeader"] = {**theme["body"]["roles"]["groupHeader"],
+                                             "fontWeight": "group-header-test-weight"}
+    theme_path = tmp_path / "theme.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+
+    rendered = render_review(_draft_request(theme_path=theme_path))
+    by_id = {item.scene_id: item for item in rendered.surface.primitives}
+    header = by_id["group-header:fw-team"]
+    body_text = by_id["cell:firmware:Workstream"]
+    assert header.text_layout.weight == 700
+    assert header.text_layout.weight != body_text.text_layout.weight
+
+
+def test_group_header_text_requires_a_declared_groupheader_role(tmp_path):
+    """A Theme missing the required groupHeader role fails closed, never a silent text-role fallback."""
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    del theme["body"]["roles"]["groupHeader"]
+    theme_path = tmp_path / "theme.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(RenderFailed, match="E_THEME_ROLE_REQUIRED"):
+        render_review(_draft_request(theme_path=theme_path))
 
 
 def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):

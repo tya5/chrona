@@ -66,12 +66,30 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
         })
     decoration_roles = {binding.scene_role for binding in contrast_bindings(ContrastClass.DECORATION)}
     by_scene: dict[str, set[str]] = {}
+    corpus_roles: set[str] = set()
     for record in ordered:
         finding = record["finding"]
         if finding["visualRole"] in decoration_roles and finding["disposition"] == "enabled":
             by_scene.setdefault(record["scene"], set()).add(finding["visualRole"])
+            corpus_roles.add(finding["visualRole"])
+    # A single scene need not carry every decoration role at once, and two
+    # roles are never both required: Issue #481 makes groupBand and
+    # groupHeaderBand mutually exclusive by design (a group's own band
+    # already includes its own header row, so painting a separate header
+    # accent under it would only double-tint that row at a contrast the two
+    # colours were never chosen against — see the #481 design correction).
+    # The witness is corpus-wide (every decoration role evaluated with
+    # disposition "enabled" somewhere in the committed public evidence, not
+    # all in one scene), and treats {group-band, group-header-band} as one
+    # required concept (a group's decoration, painted as a body band or a
+    # header-only accent) rather than two independently required roles.
+    mutually_exclusive_groups = ({"group-band", "group-header-band"},)
+    exclusive_members = frozenset().union(*mutually_exclusive_groups)
+    required_singly = decoration_roles - exclusive_members
     witnesses = sorted(scene for scene, roles in by_scene.items() if roles == decoration_roles)
-    corpus_errors = ([] if witnesses else ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"])
+    corpus_errors = [] if (required_singly <= corpus_roles
+                          and all(group & corpus_roles for group in mutually_exclusive_groups)) else [
+        "E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
     return {"version": "chrona/presentation-contrast/v1", "rows": rows,
             "findings": ordered,
             "witnessScenes": witnesses, "corpusErrors": corpus_errors,

@@ -308,7 +308,7 @@ body:
     groupHeader:
       fontFamily: editorial
       fontWeight: weight.bold
-      fontSize: size.axis
+      fontSize: size.body
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
