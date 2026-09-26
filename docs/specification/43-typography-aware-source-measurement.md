@@ -11,3 +11,12 @@ canvas under Specification 33 Section 13. The historical `overflow: diagnose`
 spelling does not turn a valid fit shortage into an error.
 
 This policy changes no resource closure, no legacy Settings/Theme contract, and no renderer-specific geometry. The measured baseline is an immutable Layout input consumed by the Scene builder.
+
+For an explicit draft system-font render, `numericSpacing: tabular` is a
+request. If the exact selected face lacks tabular advances but has complete
+proportional advances, draft closure resolves that role to proportional
+spacing and emits `W_FONT_TABULAR_UNAVAILABLE` with role and face identity.
+Layout measures and Scene/adapter paint the same effective mode. Missing
+proportional digits, missing faces, and immutable metrics-contract violations
+remain errors. The declared Theme is not rewritten and immutable public
+contexts do not use this degradation path (#463).

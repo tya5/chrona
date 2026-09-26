@@ -115,3 +115,16 @@ imports from renderer modules.
 This is an intentional clean-boundary migration. Callers constructing old
 role-only `ScenePrimitive` values must migrate; no adapter preserves the
 incomplete contract.
+
+## 7. Completed contrast evidence (#459)
+
+For finite classified text, decoration and data-mark roles, contrast is
+measured against the topmost earlier opaque, flat-filled Rect covering the
+primitive's completed bounds centre; if none covers it, the opaque canvas is
+the ground. The finding records the ground primitive identity or `canvas`,
+ground colour, evaluated paint channel and ratio. A classified mark has a
+3.0:1 visibility floor; a required state-text role has a 4.5:1 floor.
+`variance-behind` is always required. A translucent or non-flat overlapping
+host cannot be treated as an opaque ground by assumption. The evaluator is a
+Scene observer, not a Theme or adapter paint selector. This supersedes the
+canvas-only ground rule of the initial #431 design.
