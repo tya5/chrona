@@ -6,6 +6,7 @@ authoring inputs enter the same review pipeline as immutable evidence renders.
 from pathlib import Path
 from copy import deepcopy
 from dataclasses import replace
+from hashlib import sha256
 import json
 import re
 
@@ -67,6 +68,8 @@ def test_five_line_derived_theme_changes_visible_draft_and_closes_as_ordinary_th
     base = resolve_draft_render(**inputs, theme_path=root / "themes/executive-light.yaml")
     derived = resolve_draft_render(**inputs, theme_path=root / "themes/onboarding-variation.yaml")
     assert derived.closure.resource("theme").contract.version == "chrona/theme/v0.11"
+    assert base.closure.resource("theme").content_identity == (
+        "sha256:" + sha256((root / "themes/executive-light.yaml").read_bytes()).hexdigest())
     assert derived.closure.resource("theme").content_identity != base.closure.resource("theme").content_identity
 
     def rendered(draft):

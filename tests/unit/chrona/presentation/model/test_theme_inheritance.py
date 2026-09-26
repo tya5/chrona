@@ -93,3 +93,16 @@ def test_draft_theme_rejects_symlink_escape(tmp_path: Path):
     (inside / "derived.yaml").write_text(yaml.safe_dump(_derived(base, source)), encoding="utf-8")
     with pytest.raises(ThemeInheritanceError) as error: resolve_draft_theme(inside / "derived.yaml")
     assert error.value.code == "E_THEME_INHERITANCE_PATH"
+
+
+def test_draft_theme_distinguishes_missing_and_wrong_kind_base(tmp_path: Path):
+    base = _base(); source = yaml.safe_dump(base).encode()
+    path = tmp_path / "derived.yaml"
+    path.write_text(yaml.safe_dump(_derived(base, source)), encoding="utf-8")
+    with pytest.raises(ThemeInheritanceError) as error: resolve_draft_theme(path)
+    assert error.value.code == "E_THEME_INHERITANCE_BASE_MISSING"
+    wrong = {**base, "kind": "color-scheme"}; wrong_source = yaml.safe_dump(wrong).encode()
+    (tmp_path / "base.yaml").write_bytes(wrong_source)
+    path.write_text(yaml.safe_dump(_derived(wrong, wrong_source)), encoding="utf-8")
+    with pytest.raises(ThemeInheritanceError) as error: resolve_draft_theme(path)
+    assert error.value.code == "E_THEME_INHERITANCE_BASE_KIND"

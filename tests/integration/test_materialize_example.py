@@ -79,6 +79,9 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
     base_path.write_bytes(base_source + b"\n# tampered\n")
     with pytest.raises(ValueError, match="E_THEME_INHERITANCE_SOURCE_IDENTITY"):
         copy_context_closure(example, context_path, tmp_path / "tampered-snapshot")
+    base_path.unlink()
+    with pytest.raises(ValueError, match="E_THEME_INHERITANCE_BASE_MISSING"):
+        copy_context_closure(example, context_path, tmp_path / "missing-snapshot")
 
 
 def test_controller_executive_public_evidence_exercises_inside_and_fallback_labels(tmp_path):
