@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from chrona.presentation.layout.engine import solve_layout
+from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.profile import resolve_layout_profile
 
@@ -46,6 +46,34 @@ def test_center_fraction_content_and_baseline_reflow_without_author_coordinates(
     assert a["timeline-stack"].inline_size > a["table"].inline_size
     assert a["legend"].block + 24 == a["notes"].block + 20
     assert first.canonical_bytes() == solve_layout(profile(), viewport_inline=1600, viewport_block=900, measurements=MEASUREMENTS).canonical_bytes()
+
+
+def test_content_requirement_reallocates_the_whole_normal_flow_profile():
+    resolved = profile()
+    required = Decimal(850)
+    extent = resolve_content_block_extent(resolved, viewport_inline=1600, seed_block=900,
+                                          measurements=MEASUREMENTS,
+                                          required_blocks={"timeline": required})
+    assert extent > 900
+    placed = decisions(solve_layout(resolved, viewport_inline=1600, viewport_block=extent,
+                                    measurements=MEASUREMENTS))
+    assert placed["timeline"].block_size >= required
+    assert placed["table"].block + placed["table"].block_size == (
+        placed["timeline"].block + placed["timeline"].block_size)
+    assert placed["notes"].block >= placed["table"].block + placed["table"].block_size
+
+
+def test_content_requirement_does_not_inflate_a_fixed_timeline_host():
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    raw["root"]["children"][1]["children"][1]["children"][1]["blockSize"] = {"fixed": 800}
+    values = {name: {"type": "number", "value": value} for name, value in {
+        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24,
+        "panel.minimum": 180,
+    }.items()}
+    resolved = resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
+    assert resolve_content_block_extent(resolved, viewport_inline=1600, seed_block=900,
+                                        measurements=MEASUREMENTS,
+                                        required_blocks={"timeline": Decimal(850)}) == 900
 
 
 def test_content_change_recenters_title():

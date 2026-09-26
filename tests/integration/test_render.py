@@ -19,6 +19,8 @@ from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 from chrona.presentation.scene.serialization import serialize_scene
+from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
+from chrona.resources import default_preset_resource, default_preset_root
 
 
 def _root() -> Path:
@@ -113,10 +115,12 @@ def test_draft_auto_block_resolves_large_public_scale_inputs(tmp_path, row_count
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
     fixed = render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, 900)))
-    assert any(item.code == "W_LAYOUT_ROW_DENSITY" for item in fixed.surface.fit_warnings)
+    assert not {"W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"} & {item.code for item in fixed.surface.fit_warnings}
     assert fixed.surface.canvas_bounds[3] > 900
-    scene_warnings = json.loads(serialize_scene(fixed.scene))["surfaces"][0]["fitWarnings"]
-    assert any(item["code"] == "W_LAYOUT_ROW_DENSITY" for item in scene_warnings)
+    surface = json.loads(serialize_scene(fixed.scene))["surfaces"][0]
+    timeline = next(slot["bounds"] for slot in surface["slots"] if slot["source"] == "timeline")
+    assert all(row["bounds"]["block"] + row["bounds"]["blockSize"] <=
+               timeline["block"] + timeline["blockSize"] + 0.001 for row in surface["rows"])
     rendered = render_review(_draft_request(project_path=project_path, view_path=view_path, viewport=(1600, None)))
     height = int(re.search(r'height="(\d+)"', rendered.artifact.content.decode()).group(1))
     assert height >= row_count * 72
@@ -135,11 +139,11 @@ def test_draft_auto_block_closes_the_public_multi_lane_milestone_fixture():
         actual_path=root / "actual.yaml", viewport=(1600, 180),
     ))
     assert fixed.surface.canvas_bounds[3] > 180
-    assert {item.code for item in fixed.surface.fit_warnings} >= {"W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"}
+    assert not {"W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"} & {item.code for item in fixed.surface.fit_warnings}
 
 
-def test_immutable_context_overflow_has_no_render_ingress_viewport_remedy(tmp_path):
-    """The renderer does not prescribe a Draft-only repair before Layout fallback."""
+def test_immutable_context_uses_the_same_coherent_content_allocation(tmp_path):
+    """Immutable viewport remains finite input; Layout grows its normal-flow hosts."""
     root = _root()
     request = _draft_request(project_path=root / "examples/controller-z/curriculum/scale-30.yaml",
                              viewport=(1600, 900))
@@ -148,7 +152,35 @@ def test_immutable_context_overflow_has_no_render_ingress_viewport_remedy(tmp_pa
     request = replace(request, closure=replace(request.closure, context=context))
     rendered = render_review(request)
     assert rendered.surface.canvas_bounds[3] > 900
-    assert any(item.code == "W_LAYOUT_ROW_DENSITY" for item in rendered.surface.fit_warnings)
+    assert not {"W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"} & {item.code for item in rendered.surface.fit_warnings}
+
+
+def test_fixed_draft_reallocates_table_timeline_and_notes_together():
+    root = _root()
+    draft = resolve_draft_render(
+        project_path=root / "examples/halcyon-1/project.yaml",
+        preset_path=Path(str(default_preset_resource())),
+        preset_root=Path(str(default_preset_root())), viewport=(1600, 900),
+    )
+    rendered = render_review(RenderRequest(draft.closure, draft.asset_root, ReferenceScheduler(),
+                                           renderer=V05SvgRenderer(), asset_root=draft.asset_root,
+                                           draft_auto_block=draft.auto_block))
+    assert not {"W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"} & {item.code for item in rendered.surface.fit_warnings}
+    scene = json.loads(serialize_scene(rendered.scene))
+    surface = scene["surfaces"][0]
+    slots = {slot["source"]: slot["bounds"] for slot in surface["slots"]}
+    timeline_end = slots["timeline"]["block"] + slots["timeline"]["blockSize"]
+    table_end = slots["table"]["block"] + slots["table"]["blockSize"]
+    assert abs(timeline_end - table_end) < 0.001
+    assert slots["notes"]["block"] >= table_end
+    assert all(row["bounds"]["block"] + row["bounds"]["blockSize"] <= timeline_end + 0.001
+               for row in surface["rows"])
+    assert all(item["bounds"]["block"] + item["bounds"]["blockSize"] <= table_end + 0.001
+               for item in surface["primitives"] if item["id"].startswith("cell:"))
+    assert not [item for item in evaluate_scene_perceptibility(scene)
+                if item.code == "E_SCENE_TEXT_INTERSECTION"]
+    svg_height = float(re.search(rb'<svg[^>]* height="([0-9.]+)"', rendered.artifact.content).group(1))
+    assert svg_height >= surface["canvasBounds"]["blockSize"] - 0.001 > 900
 
 
 def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):

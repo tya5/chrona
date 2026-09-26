@@ -465,15 +465,25 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
     )
 
 
-def resolve_draft_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
-                               seed_block: int, measurements: Mapping[str, Measurement],
-                               required_blocks: Mapping[str, Decimal]) -> int:
-    """Resolve Draft ``auto`` to one finite Layout-owned block extent.
+def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
+                                 seed_block: int, measurements: Mapping[str, Measurement],
+                                 required_blocks: Mapping[str, Decimal]) -> int:
+    """Resolve measured content hosts against one coherent finite profile.
 
     The probe is a normal finite arrangement.  Each declared content
     requirement contributes only its deficit from its allocated slot, so the
-    final value preserves profile chrome and the fixed inline extent.
+    final value preserves profile chrome and the fixed inline extent. Both
+    fixed and Draft-auto requests use this same Layout decision; the requested
+    block extent is a minimum, not a clipping boundary.
     """
+    requested = solve_layout(profile, viewport_inline=viewport_inline,
+                             viewport_block=seed_block, measurements=measurements)
+    requested_allocated = {item.source: item.bounds.block_size for item in requested.decisions if item.source}
+    missing = sorted(set(required_blocks) - set(requested_allocated))
+    if missing:
+        raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
+    if all(requested_allocated[source] >= required for source, required in required_blocks.items()):
+        return seed_block
     # A source's ordinary slot minimum may itself exceed the default Draft
     # canvas (for example, a 100-row table).  Probe at a finite extent that is
     # safely at least one requested content requirement, then measure chrome
@@ -482,9 +492,17 @@ def resolve_draft_block_extent(profile: ResolvedLayoutProfile, *, viewport_inlin
     manifest = solve_layout(profile, viewport_inline=viewport_inline,
                             viewport_block=probe_block, measurements=measurements)
     allocated = {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
-    missing = sorted(set(required_blocks) - set(allocated))
-    if missing:
-        raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
     extent = max((_d(seed_block), *(probe_block - allocated[source] + required
                                     for source, required in required_blocks.items())))
-    return int(extent.to_integral_value(rounding=ROUND_CEILING))
+    candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
+    if candidate == seed_block:
+        return candidate
+    # A fixed/max/anchored source may not gain capacity from a taller page.
+    # Do not enlarge or translate the entire profile unless the final normal-
+    # flow arrangement truly closes every declared content requirement.
+    final = solve_layout(profile, viewport_inline=viewport_inline,
+                         viewport_block=candidate, measurements=measurements)
+    final_allocated = {item.source: item.bounds.block_size for item in final.decisions if item.source}
+    if any(final_allocated[source] < required for source, required in required_blocks.items()):
+        return seed_block
+    return candidate

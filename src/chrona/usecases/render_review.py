@@ -18,7 +18,7 @@ from typing import Any, Mapping
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
-from chrona.presentation.layout.engine import resolve_draft_block_extent, solve_layout
+from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
@@ -230,16 +230,16 @@ def render_review(request: RenderRequest) -> RenderedReview:
                 metric_values=measured.metric_values,
                 role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
             )
-            required_block = resolve_draft_block_extent(
+            required_block = resolve_content_block_extent(
                 resolved_layout, viewport_inline=viewport["inlineSize"],
                 seed_block=viewport["blockSize"], measurements=measurements,
                 required_blocks={"timeline": timeline_requirement},
             )
+            viewport["blockSize"] = required_block
         if request.draft_auto_block:
             if required_block is None:
                 raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
                                   detail=f"surface={view.surface}")
-            viewport["blockSize"] = required_block
         manifest = solve_layout(
             resolved_layout, viewport_inline=viewport["inlineSize"],
             viewport_block=viewport["blockSize"], measurements=measurements,
