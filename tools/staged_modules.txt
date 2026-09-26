@@ -2,5 +2,4 @@
 # and deliberately kept. Every entry needs a reason and an owning issue; anything
 # not listed here and not reachable fails tools/check_module_reachability.py.
 #
-# There are currently no staged modules. A future entry must name its owning
-# issue, why it cannot yet be product-reachable, and its planned removal date.
+chrona.presentation.layout.lane_allocation  # #467 L2: the collision-aware lane allocation engine is committed schema-free, before the lane View schema (#467 L1) exists to select it from the composer. Wired into layout/presentation.py and layout/surface_composer.py in the #467 L3 slice that migrates real Views to lanes. Remove this line in that slice.
