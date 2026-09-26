@@ -3,10 +3,10 @@ entries:
   - id: mission-light
     gallerySet: halcyon-mission-brief-appearance
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: briefing, kind: theme, sourceRoot: examples/halcyon-1, sourcePath: themes/briefing.yaml}
+      view: {id: chrona-preset-mission-light, kind: view, sourceRoot: presets/bundles/mission-light, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-mission-light, kind: theme, sourceRoot: presets/bundles/mission-light, sourcePath: theme.yaml}
       colorScheme: {id: mission-light, kind: color-scheme, sourceRoot: examples/halcyon-1, sourcePath: schemes/mission-light.yaml}
-      layout: {id: briefing, kind: layout-profile, sourceRoot: examples/halcyon-1, sourcePath: layouts/briefing.yaml}
+      layout: {id: chrona-builtin-mission-light, kind: layout-profile, sourceRoot: presets/bundles/mission-light, sourcePath: layout.yaml}
   - id: control-room-dark
     gallerySet: halcyon-mission-brief-appearance
     members:
