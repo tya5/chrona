@@ -1,6 +1,6 @@
 # 43. Typography-aware source measurement
 
-Each Layout source that renders text declares its semantic typography role. The Source Adapter resolves that role from the resolved Theme and measures inline extent, block extent, and first/last baseline with that role's font size and line height. Scene composition MUST draw the source with the same role and place its baseline at slot block-start plus the measured first baseline.
+Each Layout source that renders text declares its semantic typography role. The Source Adapter resolves that role from the resolved Theme and measures inline extent, block extent, and first/last baseline with that role's font size and line height. Layout places the source with the same role and completes its baseline from the measured first baseline; Scene projects that completed text without measuring or choosing a coordinate.
 
 At minimum, title uses `heading`; table text uses `text`; axis labels use `axis`; legend uses `legend`; notes and annotations use `annotation`. A missing or invalid role token fails through the resolved Theme token diagnostics; it never falls back to body text metrics.
 
