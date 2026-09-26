@@ -5,9 +5,9 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 import yaml
+from jsonschema import Draft202012Validator
 
-from chrona.operational.resources import OperationalResourceError, parse_document
-from chrona.resources import builtin_preset_library_resource, builtin_preset_source_root, safe_load
+from chrona.resources import builtin_preset_library_resource, builtin_preset_source_root, safe_load, schema_document
 
 
 def _safe(address: object) -> str:
@@ -22,9 +22,12 @@ def _safe(address: object) -> str:
 
 def _library() -> list[dict[str, Any]]:
     try:
-        value = parse_document(builtin_preset_library_resource().read_bytes(), "preset-library-v0.1.schema.yaml")
-    except OperationalResourceError as error:
+        value = safe_load(builtin_preset_library_resource().read_bytes())
+    except (OSError, yaml.YAMLError) as error:
         raise ValueError("E_BUILTIN_PRESET_LIBRARY") from error
+    schema = schema_document("preset-library-v0.1.schema.yaml")
+    if not isinstance(value, dict) or tuple(Draft202012Validator(schema).iter_errors(value)):
+        raise ValueError("E_BUILTIN_PRESET_LIBRARY")
     entries = value["entries"]
     if not isinstance(entries, list) or len({item.get("id") for item in entries if isinstance(item, dict)}) != len(entries):
         raise ValueError("E_BUILTIN_PRESET_LIBRARY")

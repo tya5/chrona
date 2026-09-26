@@ -1,25 +1,29 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "urn:chrona:theme-v0.12"
 title: "Chrona derived Theme v0.12"
+description: "Bounded author-source Theme inheritance resolved before ordinary Theme closure."
 type: object
 required: [version, kind, id, body]
 additionalProperties: false
 properties:
-  version: {const: "chrona/theme/v0.12"}
-  kind: {const: theme}
-  id: {type: string, minLength: 1}
+  version: {description: "Derived Theme source contract version.", const: "chrona/theme/v0.12"}
+  kind: {description: "Presentation resource kind.", const: theme}
+  id: {description: "Id assigned to the complete effective Theme.", type: string, minLength: 1}
   body:
+    description: "Pinned base reference and finite whole-entry replacements."
     type: object
     required: [extends]
     additionalProperties: false
     properties:
       extends:
+        description: "Exact local base source and effective Theme identity."
         type: object
-        required: [id, path, contentIdentity]
+        required: [id, path, sourceContentIdentity, contentIdentity]
         additionalProperties: false
         properties:
-          id: {type: string, minLength: 1}
-          path: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
-          contentIdentity: {type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-      values: {type: object}
-      roles: {type: object}
+          id: {description: "Declared base Theme id.", type: string, minLength: 1}
+          path: {description: "Safe relative path from this source to its base source.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [base.yaml]}
+          sourceContentIdentity: {description: "SHA-256 of exact base source bytes for the snapshot reader.", type: string, pattern: "^sha256:[0-9a-f]{64}$", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
+          contentIdentity: {description: "Canonical identity of the resolved complete base Theme.", type: string, pattern: "^sha256:[0-9a-f]{64}$", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
+      values: {description: "Whole replacements for existing base value entries.", type: object}
+      roles: {description: "Whole replacements for existing base role entries.", type: object}

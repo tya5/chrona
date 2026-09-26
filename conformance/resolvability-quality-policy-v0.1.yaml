@@ -80,6 +80,11 @@ declaredComputedValues:
     field: contentIdentity
     classification: pinned-deliberately
     producer: chrona identity bytes
+  - path: src/chrona/presentation/model/theme_inheritance.py
+    function: resolve_draft_theme
+    field: contentIdentity
+    classification: pinned-deliberately
+    producer: chrona identity document
   - path: src/chrona/presentation/model/font_metrics.py
     function: resolve_font_files
     field: contentIdentity

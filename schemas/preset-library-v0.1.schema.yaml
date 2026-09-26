@@ -1,44 +1,52 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "chrona/preset-library-v0.1"
 title: "Chrona builtin preset library v0.1"
+description: "Package-owned catalogue of complete, copyable presentation preset bundles."
 type: object
 required: [version, entries]
 additionalProperties: false
 properties:
-  version: {const: chrona/preset-library/v0.1}
+  version: {description: "Catalogue contract version.", const: chrona/preset-library/v0.1}
   entries:
+    description: "Finite list of builtin preset choices."
     type: array
     minItems: 1
     uniqueItems: true
     items:
+      description: "One named appearance and its complete source bundle."
       type: object
       required: [id, gallerySet, members]
       additionalProperties: false
       properties:
-        id: {type: string, pattern: "^[a-z][a-z0-9-]*$"}
-        gallerySet: {type: string, minLength: 1}
+        id: {description: "Stable CLI selection id.", type: string, pattern: "^[a-z][a-z0-9-]*$", examples: [mission-light]}
+        gallerySet: {description: "Gallery set used as visual evidence.", type: string, minLength: 1}
         members:
+          description: "The four ordinary presentation sources copied as one bundle."
           type: object
           required: [view, theme, colorScheme, layout]
           additionalProperties: false
           properties:
             view:
+              description: "The generic View source."
               type: object
               required: [id, kind, sourceRoot, sourcePath]
               additionalProperties: false
-              properties: {id: {type: string, minLength: 1}, kind: {const: view}, sourceRoot: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}, sourcePath: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}}
+              properties: {id: {description: "Declared View id.", type: string, minLength: 1}, kind: {description: "Expected resource kind.", const: view}, sourceRoot: {description: "Safe packaged source root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [controller-z]}, sourcePath: {description: "Safe source path within the root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [views/executive.yaml]}}
             theme:
+              description: "The Theme source."
               type: object
               required: [id, kind, sourceRoot, sourcePath]
               additionalProperties: false
-              properties: {id: {type: string, minLength: 1}, kind: {const: theme}, sourceRoot: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}, sourcePath: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}}
+              properties: {id: {description: "Declared Theme id.", type: string, minLength: 1}, kind: {description: "Expected resource kind.", const: theme}, sourceRoot: {description: "Safe packaged source root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [halcyon-1]}, sourcePath: {description: "Safe source path within the root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [themes/briefing.yaml]}}
             colorScheme:
+              description: "The Color Scheme source."
               type: object
               required: [id, kind, sourceRoot, sourcePath]
               additionalProperties: false
-              properties: {id: {type: string, minLength: 1}, kind: {const: color-scheme}, sourceRoot: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}, sourcePath: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}}
+              properties: {id: {description: "Declared Color Scheme id.", type: string, minLength: 1}, kind: {description: "Expected resource kind.", const: color-scheme}, sourceRoot: {description: "Safe packaged source root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [halcyon-1]}, sourcePath: {description: "Safe source path within the root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [schemes/briefing.yaml]}}
             layout:
+              description: "The Layout Profile source."
               type: object
               required: [id, kind, sourceRoot, sourcePath]
               additionalProperties: false
-              properties: {id: {type: string, minLength: 1}, kind: {const: layout-profile}, sourceRoot: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}, sourcePath: {type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}}
+              properties: {id: {description: "Declared Layout Profile id.", type: string, minLength: 1}, kind: {description: "Expected resource kind.", const: layout-profile}, sourceRoot: {description: "Safe packaged source root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [controller-z]}, sourcePath: {description: "Safe source path within the root.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [layouts/executive.yaml]}}
