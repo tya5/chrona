@@ -27,7 +27,7 @@ from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.fonts.system import DraftFontResolution
-from chrona.presentation.model.theme_tokens import ThemeTokenView, effective_draft_numeric_theme
+from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent
@@ -38,6 +38,7 @@ from chrona.presentation.scene.model import (
     SceneSurface,
 )
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding, evaluate_scene_perceptibility
+from chrona.presentation.scene.paint import ScenePaintError
 from chrona.presentation.scene.serialization import scene_document
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 from chrona.presentation.scene.visual_capabilities import (
@@ -161,6 +162,15 @@ class ClosureReadLedger:
 
 
 def render_review(request: RenderRequest) -> RenderedReview:
+    """Transport detector-owned presentation pointers across the use-case boundary."""
+    try:
+        return _render_review(request)
+    except (LayoutError, ThemeTokenError, ScenePaintError) as error:
+        raise RenderFailed(error.diagnostic_id, getattr(error, "detail", None) or error.diagnostic_id,
+                           "presentation", error.path or "/") from error
+
+
+def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
@@ -221,32 +231,28 @@ def render_review(request: RenderRequest) -> RenderedReview:
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
-    try:
-        required_block = None
-        if view.surface == "table-timeline":
-            timeline_requirement = timeline_content_block_requirement(
-                projection=projection,
-                group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
-                metric_values=measured.metric_values,
-                role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
-            )
-            required_block = resolve_content_block_extent(
-                resolved_layout, viewport_inline=viewport["inlineSize"],
-                seed_block=viewport["blockSize"], measurements=measurements,
-                required_blocks={"timeline": timeline_requirement},
-            )
-            viewport["blockSize"] = required_block
-        if request.draft_auto_block:
-            if required_block is None:
-                raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
-                                  detail=f"surface={view.surface}")
-        manifest = solve_layout(
-            resolved_layout, viewport_inline=viewport["inlineSize"],
-            viewport_block=viewport["blockSize"], measurements=measurements,
+    required_block = None
+    if view.surface == "table-timeline":
+        timeline_requirement = timeline_content_block_requirement(
+            projection=projection,
+            group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
+            metric_values=measured.metric_values,
+            role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
         )
-    except LayoutError as error:
-        raise RenderFailed(error.diagnostic_id, error.detail or error.diagnostic_id,
-                           "presentation", error.path) from error
+        required_block = resolve_content_block_extent(
+            resolved_layout, viewport_inline=viewport["inlineSize"],
+            seed_block=viewport["blockSize"], measurements=measurements,
+            required_blocks={"timeline": timeline_requirement},
+        )
+        viewport["blockSize"] = required_block
+    if request.draft_auto_block:
+        if required_block is None:
+            raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
+                              detail=f"surface={view.surface}")
+    manifest = solve_layout(
+        resolved_layout, viewport_inline=viewport["inlineSize"],
+        viewport_block=viewport["blockSize"], measurements=measurements,
+    )
 
     surface_content = normalize_v05_surface_content(
         projection, project, view,

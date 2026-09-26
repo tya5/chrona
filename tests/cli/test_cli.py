@@ -625,6 +625,46 @@ def test_cli_draft_schema_diagnostics_report_all_known_resources_with_provenance
     ]
 
 
+@pytest.mark.parametrize(("missing", "code", "pointer"), [
+    ("group-header-metric", "E_THEME_METRIC_REQUIRED", "/body/metrics/timeline.groupHeader.blockSize"),
+    ("numeric-role", "E_THEME_ROLE_REQUIRED", "/body/roles/numeric/fontFamily"),
+])
+def test_cli_render_keeps_detector_owned_theme_pointer(tmp_path, monkeypatch, capsys, missing, code, pointer):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    if missing == "group-header-metric":
+        assert view["body"]["grouping"]["presentation"] == "header"
+        theme["body"]["metrics"].pop("timeline.groupHeader.blockSize")
+    else:
+        view["body"]["tableColumns"].append({
+            "id": "Δ", "source": {"facet": "finishDelta"}, "format": "signedDays",
+            "missing": "em-dash", "align": "end", "width": "content",
+            "headerOrientation": "horizontal",
+        })
+        assert "numeric" not in theme["body"]["roles"]
+    view_path, theme_path = tmp_path / "view.yaml", tmp_path / "theme.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    output = tmp_path / "ignored.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(view_path), "--theme", str(theme_path),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--output", str(output),
+    ])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1 and not output.exists()
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert (diagnostic["code"], diagnostic["component"], diagnostic["sourceRef"]) == (
+        code, "presentation", pointer)
+
+
 def test_cli_baseline_rejection_keeps_visual_capability_pointer_and_message(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     required_theme = yaml.safe_load((root / "examples/controller-z/themes/elevated-light.yaml").read_text(encoding="utf-8"))

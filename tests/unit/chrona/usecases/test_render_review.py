@@ -7,12 +7,16 @@ from pathlib import Path
 
 import pytest
 
+import chrona.usecases.render_review as render_usecase
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
+from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.presentation.scene.paint import ScenePaintError
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import (
-    RenderRequest, _font_warnings, _warnings_from_findings, render_review,
+    RenderFailed, RenderRequest, _font_warnings, _warnings_from_findings, render_review,
 )
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
@@ -67,6 +71,23 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert rendered.scene.provenance.mode == "immutable"
     assert rendered.scene.manifest.visual_role_counts
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
+
+
+@pytest.mark.parametrize("error", [
+    LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/example", detail="missing metric"),
+    ThemeTokenError("E_THEME_ROLE_REQUIRED", "/body/roles/example/fontFamily"),
+    ScenePaintError("E_PRESENTATION_PAINT_INVALID", "/body/roles/example/strokeWidth", "invalid width"),
+])
+def test_render_review_transports_typed_presentation_failure_pointer(monkeypatch, error):
+    def fail(_request):
+        raise error
+
+    monkeypatch.setattr(render_usecase, "_render_review", fail)
+    with pytest.raises(RenderFailed) as failed:
+        render_review(None)
+    assert failed.value.code == error.diagnostic_id
+    assert failed.value.source_ref == error.path
+    assert failed.value.component == "presentation"
 
 
 def test_completed_scene_serializes_deterministically_with_typed_table_links():
