@@ -4,9 +4,11 @@
 **Owns:** local Iconify collection ingestion, normalized monochrome icon
 catalogs, catalog-set closure, label/mark visual selection, completed Icon
 primitives, icon accessibility, and SVG/PNG target capability.
-**Does not own:** Project facts, arbitrary images/artwork, raw SVG at render
-time, concrete colours, Layout coordinates, package acquisition, network
-fetching, target fallback, or PDF rich-paint fidelity.
+**Does not own:** Project facts, arbitrary images/artwork (§7 records the one
+narrow exception: a purpose-built PNG entry reused as Theme-bound container
+artwork), raw SVG at render time, concrete colours, Layout coordinates,
+package acquisition, network fetching, target fallback, or PDF rich-paint
+fidelity.
 
 ## 1. Contract and authority
 
@@ -98,12 +100,8 @@ The importer rejects `style`, class, transform in SVG body, opacity, literal
 colour, gradient, filter, mask, clip, image, text, `use`, `defs`, URL, external
 reference, script/event/foreign content, unsupported element, non-finite value,
 or any configured depth/path/command/coordinate/tolerance limit. A future
-multicolour logo or image belongs to a separately designed asset family.
-[Specification 65](65-container-image-assets.md) is that family, for a
-Theme-bound, nine-slice-stretchable annotation-container backdrop (#465); it
-reuses this specification's identity/closure engineering as a sibling
-resource kind, not as a new icon-catalog entry type, so a View's `visuals`
-grammar still cannot reach it.
+multicolour logo or image belongs to a separately designed asset family; §7
+records the one narrow exception #465 makes to that boundary.
 
 ## 4. Context closure and public authoring
 
@@ -173,7 +171,39 @@ that complete SVG through the pinned resvg route. PDF, Typst, and TikZ remain
 rejection-only until independently designed and evidenced. Neither adapter
 selects a fallback, imports a catalog, reopens a path, or decides omission.
 
-## 7. Acceptance and evolution
+## 7. Container artwork exception (#465)
+
+A normalized `chrona/icon-catalog/v0.3` raster PNG entry (§2's "optional
+identity-closed purpose-built PNG entry bytes") MAY additionally serve as
+the backdrop artwork for a Theme `annotationContainer` binding
+(Specification 07, `outline: image`). This is the one narrow exception to
+this specification's "does not own... arbitrary images/artwork" boundary:
+the entry's identity, licence, and closure discipline are unchanged, and
+the same `set:name` reference form is reused, but the *consumer* differs.
+
+- **View still cannot bind a container.** A View's `visuals` grammar
+  resolves the same catalog entry only as an ordinary icon (a companion
+  beside a label or over a mark, with its own alternative text and
+  decorative/meaningful classification). Binding an entry as container
+  artwork happens only through the Theme's `annotationContainer.image`
+  field, naming the same `<set>:<name>` reference; nothing about the entry
+  itself marks it as "container-only" or "icon-only" — the two are
+  independent selections of the same closed asset, one by View, one by
+  Theme, exactly as an ordinary icon reference is independent of any other
+  View field that might name the same entry.
+- **Nine-slice and content insets are Theme facts, not catalog facts.** The
+  entry contributes only its identity, pixel viewport, and PNG payload,
+  exactly as it does for an icon. `sliceInsetsEm` and `contentInsetEm` are
+  declared on the Theme binding (Specification 07), not on the catalog
+  entry, so the same artwork could in principle be bound with different
+  insets by different Themes.
+- **Arbitrary artwork otherwise stays excluded.** This exception widens
+  *use* of an already-admitted PNG entry; it does not widen §2's or §3's
+  ingestion rules. A new PNG entry for container use is imported and
+  licensed exactly as any other purpose-built PNG entry is today — no new
+  import path, catalog resource kind, or Context input is introduced.
+
+## 8. Acceptance and evolution
 
 Release evidence must include real Material Symbols, Lucide, and Tabler import
 fixtures; a packaged Material default; user-owned import; direct and encoded
