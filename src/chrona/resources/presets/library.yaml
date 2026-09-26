@@ -3,35 +3,35 @@ entries:
   - id: mission-light
     gallerySet: halcyon-mission-brief-appearance
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: briefing, kind: theme, sourceRoot: examples/halcyon-1, sourcePath: themes/briefing.yaml}
+      view: {id: chrona-preset-mission-light, kind: view, sourceRoot: presets/bundles/mission-light, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-mission-light, kind: theme, sourceRoot: presets/bundles/mission-light, sourcePath: theme.yaml}
       colorScheme: {id: mission-light, kind: color-scheme, sourceRoot: examples/halcyon-1, sourcePath: schemes/mission-light.yaml}
-      layout: {id: briefing, kind: layout-profile, sourceRoot: examples/halcyon-1, sourcePath: layouts/briefing.yaml}
+      layout: {id: chrona-builtin-mission-light, kind: layout-profile, sourceRoot: presets/bundles/mission-light, sourcePath: layout.yaml}
   - id: control-room-dark
     gallerySet: halcyon-mission-brief-appearance
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: briefing, kind: theme, sourceRoot: examples/halcyon-1, sourcePath: themes/briefing.yaml}
+      view: {id: chrona-preset-control-room-dark, kind: view, sourceRoot: presets/bundles/control-room-dark, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-control-room-dark, kind: theme, sourceRoot: presets/bundles/control-room-dark, sourcePath: theme.yaml}
       colorScheme: {id: control-room-dark, kind: color-scheme, sourceRoot: examples/halcyon-1, sourcePath: schemes/control-room-dark.yaml}
-      layout: {id: briefing, kind: layout-profile, sourceRoot: examples/halcyon-1, sourcePath: layouts/briefing.yaml}
+      layout: {id: chrona-builtin-control-room-dark, kind: layout-profile, sourceRoot: presets/bundles/control-room-dark, sourcePath: layout.yaml}
   - id: print-mono
     gallerySet: halcyon-mission-brief-appearance
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: print, kind: theme, sourceRoot: examples/halcyon-1, sourcePath: themes/print.yaml}
+      view: {id: chrona-preset-print-mono, kind: view, sourceRoot: presets/bundles/print-mono, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-print-mono, kind: theme, sourceRoot: presets/bundles/print-mono, sourcePath: theme.yaml}
       colorScheme: {id: print-mono, kind: color-scheme, sourceRoot: examples/halcyon-1, sourcePath: schemes/print-mono.yaml}
       layout: {id: chrona-builtin-print-mono, kind: layout-profile, sourceRoot: presets/bundles/print-mono, sourcePath: layout.yaml}
   - id: executive-light
     gallerySet: controller-z-treatment-ladder
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: executive-light, kind: theme, sourceRoot: examples/controller-z, sourcePath: themes/executive-light.yaml}
+      view: {id: chrona-preset-executive-light, kind: view, sourceRoot: presets/bundles/executive-light, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-executive-light, kind: theme, sourceRoot: presets/bundles/executive-light, sourcePath: theme.yaml}
       colorScheme: {id: executive-light, kind: color-scheme, sourceRoot: examples/controller-z, sourcePath: schemes/executive-light.yaml}
-      layout: {id: executive-review, kind: layout-profile, sourceRoot: examples/controller-z, sourcePath: layouts/executive-review.yaml}
+      layout: {id: chrona-builtin-executive-light, kind: layout-profile, sourceRoot: presets/bundles/executive-light, sourcePath: layout.yaml}
   - id: elevated-light
     gallerySet: controller-z-treatment-ladder
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: elevated-light, kind: theme, sourceRoot: examples/controller-z, sourcePath: themes/elevated-light.yaml}
+      view: {id: chrona-preset-elevated-light, kind: view, sourceRoot: presets/bundles/elevated-light, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-elevated-light, kind: theme, sourceRoot: presets/bundles/elevated-light, sourcePath: theme.yaml}
       colorScheme: {id: executive-light, kind: color-scheme, sourceRoot: examples/controller-z, sourcePath: schemes/executive-light.yaml}
-      layout: {id: executive-review, kind: layout-profile, sourceRoot: examples/controller-z, sourcePath: layouts/executive-review.yaml}
+      layout: {id: chrona-builtin-elevated-light, kind: layout-profile, sourceRoot: presets/bundles/elevated-light, sourcePath: layout.yaml}

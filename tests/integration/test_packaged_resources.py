@@ -82,7 +82,21 @@ def test_package_owned_runtime_resources_exist():
         "fonts/draft-substitute-font-metrics.yaml",
         "fonts/NotoColorEmoji.LICENSE",
         "presets/library.yaml",
+        "presets/bundles/control-room-dark/layout.yaml",
+        "presets/bundles/control-room-dark/theme.yaml",
+        "presets/bundles/control-room-dark/view.yaml",
+        "presets/bundles/elevated-light/layout.yaml",
+        "presets/bundles/elevated-light/theme.yaml",
+        "presets/bundles/elevated-light/view.yaml",
+        "presets/bundles/executive-light/layout.yaml",
+        "presets/bundles/executive-light/theme.yaml",
+        "presets/bundles/executive-light/view.yaml",
+        "presets/bundles/mission-light/layout.yaml",
+        "presets/bundles/mission-light/theme.yaml",
+        "presets/bundles/mission-light/view.yaml",
         "presets/bundles/print-mono/layout.yaml",
+        "presets/bundles/print-mono/theme.yaml",
+        "presets/bundles/print-mono/view.yaml",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 

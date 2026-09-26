@@ -1,0 +1,446 @@
+version: chrona/theme/v0.11
+kind: theme
+id: chrona-builtin-elevated-light
+body:
+  values:
+    editorial:
+      type: fontFamily
+      value: Noto Sans, sans-serif
+    text-weight:
+      type: fontWeight
+      value: 400
+    letter-spacing:
+      type: number
+      value: 0
+    text-transform:
+      type: textTransform
+      value: none
+    numeric-spacing:
+      type: numericSpacing
+      value: proportional
+    spacing.none:
+      type: number
+      value: 0
+    spacing.s:
+      type: number
+      value: 8
+    spacing.m:
+      type: number
+      value: 16
+    spacing.l:
+      type: number
+      value: 24
+    panel.minimum:
+      type: number
+      value: 180
+    text-size:
+      type: number
+      value: 14
+    text-line-height:
+      type: number
+      value: 1.4
+    icon-scale:
+      type: number
+      value: 1
+    icon-gap:
+      type: number
+      value: 0.25
+    heading-size:
+      type: number
+      value: 24
+    heading-line-height:
+      type: number
+      value: 1.2
+    axis-size:
+      type: number
+      value: 12
+    axis-line-height:
+      type: number
+      value: 1.2
+    legend-size:
+      type: number
+      value: 12
+    legend-line-height:
+      type: number
+      value: 1.4
+    summary-size:
+      type: number
+      value: 14
+    summary-line-height:
+      type: number
+      value: 1.4
+    annotation-size:
+      type: number
+      value: 14
+    annotation-line-height:
+      type: number
+      value: 1.4
+    dependency-marker:
+      type: marker
+      value:
+        shape: triangle
+        headLength: 10
+        headWidth: 10
+        attachmentOffset: 1
+    milestone-symbol:
+      type: symbol
+      value:
+        shape: diamond
+    stroke-width:
+      type: number
+      value: 1
+    timeline-day-width:
+      type: number
+      value: 12
+    timeline-row-height:
+      type: number
+      value: 40
+    timeline-row-padding:
+      type: number
+      value: 8
+    timeline-mark-size:
+      type: number
+      value: 16
+    timeline-group-header-size:
+      type: number
+      value: 20
+    timeline-axis-height:
+      type: number
+      value: 48
+    network-node-min-inline:
+      type: number
+      value: 120
+    network-node-min-block:
+      type: number
+      value: 36
+    network-rank-gap:
+      type: number
+      value: 24
+    table-column-width:
+      type: number
+      value: 120
+    table-column-gutter:
+      type: number
+      value: 10
+    table-indent:
+      type: number
+      value: 16
+    table-header-height:
+      type: number
+      value: 44
+    opacity.group-band:
+      type: number
+      value: 1
+    opacity.group-header-band:
+      type: number
+      value: 1
+    opacity.calendar-closed:
+      type: number
+      value: 1
+    elevated.gradient-angle:
+      type: number
+      value: 90
+    elevated.shadow-offset-x:
+      type: number
+      value: 1
+    elevated.shadow-offset-y:
+      type: number
+      value: 3
+    elevated.shadow-blur:
+      type: number
+      value: 3
+    elevated.shadow-opacity:
+      type: number
+      value: 0.4
+    elevated.fidelity:
+      type: fidelity
+      value: decorative-optional
+    mark-height-container:
+      type: number
+      value: 1
+    mark-height-content:
+      type: number
+      value: 0.6
+    summary-bar-height:
+      type: number
+      value: 0.3333333333333333
+    mark-offset-start:
+      type: number
+      value: 0
+    mark-offset-nested:
+      type: number
+      value: 0.2
+    mark-paint-back:
+      type: number
+      value: 0
+    mark-paint-middle:
+      type: number
+      value: 1
+    mark-paint-front:
+      type: number
+      value: 2
+    mark-radius-square:
+      type: number
+      value: 0
+    mark-radius-rounded:
+      type: number
+      value: 0.25
+    icon-mark-scale:
+      type: number
+      value: 0.55
+    icon-mark-gap:
+      type: number
+      value: 0
+    weight.regular:
+      type: fontWeight
+      value: '400'
+    size.body:
+      type: number
+      value: 15
+    leading.body:
+      type: number
+      value: 1.4
+    tabular-spacing:
+      type: numericSpacing
+      value: tabular
+    dependency-origin:
+      type: marker
+      value:
+        shape: circle
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
+    opacity.axis-band:
+      type: number
+      value: 1
+  roles:
+    group-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.group-band
+      gradientAngle: elevated.gradient-angle
+      shadowOffsetX: elevated.shadow-offset-x
+      shadowOffsetY: elevated.shadow-offset-y
+      shadowBlur: elevated.shadow-blur
+      shadowOpacity: elevated.shadow-opacity
+      gradientFidelity: elevated.fidelity
+      shadowFidelity: elevated.fidelity
+    row-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.group-band
+    group-header-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 11
+      opacity: opacity.group-header-band
+    calendar-closed:
+      backgroundTreatment: outline
+      backgroundPaintOrder: 12
+      strokeWidth: stroke-width
+      opacity: opacity.calendar-closed
+    axis-band-decoration:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.axis-band
+    text:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    heading:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: heading-size
+      lineHeight: heading-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    axis:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: axis-size
+      lineHeight: axis-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    legend:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: legend-size
+      lineHeight: legend-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    summary:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: summary-size
+      lineHeight: summary-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    annotation:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: annotation-size
+      lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      strokeWidth: stroke-width
+    axis-major:
+      strokeWidth: stroke-width
+    axis-minor:
+      strokeWidth: stroke-width
+    network-edge:
+      strokeWidth: stroke-width
+    critical-edge:
+      strokeWidth: stroke-width
+    as-of:
+      strokeWidth: stroke-width
+    variance-behind:
+      strokeWidth: stroke-width
+      contrastTreatment: required
+    variance-ahead:
+      contrastTreatment: deemphasized
+    variance-on-track:
+      contrastTreatment: required
+    missing-actual-cell:
+      contrastTreatment: required
+    milestoneSymbol:
+      symbol: milestone-symbol
+    relationSourceTerminal:
+      marker: dependency-origin
+    relationTargetTerminal:
+      marker: dependency-marker
+    dependency:
+      marker: dependency-marker
+      strokeWidth: stroke-width
+    snapshot:
+      strokeWidth: stroke-width
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-back
+      markCornerRadius: mark-radius-square
+    scenario:
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-back
+      markCornerRadius: mark-radius-square
+    planned:
+      strokeWidth: stroke-width
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-middle
+      markCornerRadius: mark-radius-square
+    actual:
+      strokeWidth: stroke-width
+      markHeight: mark-height-content
+      markOffset: mark-offset-nested
+      markPaintOrder: mark-paint-front
+      markCornerRadius: mark-radius-rounded
+    missing-actual:
+      strokeWidth: stroke-width
+      markHeight: mark-height-content
+      markOffset: mark-offset-nested
+      markPaintOrder: mark-paint-front
+      markCornerRadius: mark-radius-rounded
+    network-node:
+      strokeWidth: stroke-width
+    progress-fill:
+      strokeWidth: stroke-width
+    summary-bar:
+      markHeight: summary-bar-height
+    icon-mark:
+      iconScale: icon-mark-scale
+      iconGap: icon-mark-gap
+    numeric:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.body
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: tabular-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+  colorBindings:
+    background.fill: surface
+    text.fill: text
+    member-label-inside-planned.fill: insideLabelPlanned
+    member-label-inside-actual.fill: insideLabelActual
+    member-label-inside-snapshot.fill: insideLabelSnapshot
+    member-label-inside-scenario.fill: insideLabelScenario
+    axis-major.stroke: neutral
+    axis-minor.stroke: surfaceRaised
+    axis-band-decoration.fill: neutral
+    table-header.fill: surfaceRaised
+    group-band.fill: category:default
+    row-band.fill: category:default
+    group-header-band.fill: surfaceRaised
+    group:factory-team.fill: category:factory-team
+    group:fw-team.fill: category:fw-team
+    group:validation-team.fill: category:validation-team
+    planned.fill: accent
+    planned.stroke: text
+    group-band.gradientStart: surfaceRaised
+    group-band.gradientEnd: surface
+    group-band.shadowColor: neutral
+    network-node.fill: surfaceRaised
+    network-node.stroke: text
+    network-edge.stroke: textMuted
+    critical-edge.stroke: negative
+    summary-bar.fill: accent
+    snapshot.fill: neutral
+    snapshot.stroke: text
+    actual.fill: positive
+    actual.stroke: text
+    as-of.stroke: warning
+    calendar-closed.fill: surfaceRaised
+    calendar-closed.stroke: neutral
+    missing-actual.fill: textMuted
+    missing-actual.stroke: text
+    variance-ahead.fill: positive
+    variance-on-track.fill: textMuted
+    variance-behind.fill: warning
+    missing-actual-cell.fill: textMuted
+    variance-behind.stroke: warning
+    dependency.stroke: textMuted
+    annotation.fill: surfaceRaised
+    annotation-text.fill: text
+    note-index.fill: accent
+    annotation.stroke: neutral
+    progress-fill.fill: warning
+    progress-fill.stroke: text
+    icon-mark.fill: surface
+  metrics:
+    text.body.size: text-size
+    text.body.lineHeight: text-line-height
+    timeline.dayWidth: timeline-day-width
+    timeline.row.minBlockSize: timeline-row-height
+    timeline.row.paddingBlock: timeline-row-padding
+    timeline.mark.blockSize: timeline-mark-size
+    timeline.groupHeader.blockSize: timeline-group-header-size
+    timeline.axis.blockSize: timeline-axis-height
+    network.node.minInlineSize: network-node-min-inline
+    network.node.minBlockSize: network-node-min-block
+    network.rank.gap: network-rank-gap
+    table.column.minInlineSize: table-column-width
+    table.column.gutter.inlineSize: table-column-gutter
+    table.indent.inlineSize: table-indent
+    table.header.blockSize: table-header-height
