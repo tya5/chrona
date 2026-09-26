@@ -3,7 +3,8 @@
 **Base:** `0a1b2c770dfabc31452d639300ad5009dc5328a2`.
 **Design:** [selected contract](../../design/issue-459-surface-aware-contrast-design-2026-09-26.md),
 [architecture review](../../reviews/current/issue-459-surface-contrast-architecture-review-2026-09-26.md),
-[mark-role correction](../../design/issue-459-mark-role-normalization-correction-2026-09-26.md).
+[mark-role correction](../../design/issue-459-mark-role-normalization-correction-2026-09-26.md),
+[painted-sample correction](../../design/issue-459-painted-sample-and-hosted-mark-correction-2026-09-26.md).
 
 ## Literal acceptance gates
 
@@ -18,12 +19,15 @@
    `tools/presentation_contrast.py`. Tests in
    `tests/unit/chrona/presentation/scene/test_contrast_policy.py` and
    `tests/unit/tools/test_presentation_contrast.py` cover overlapping
-   paint-order Rects, canvas fallback, stroke-only marks, and per-primitive
+   paint-order Rects, canvas fallback, painted-edge stroke-only Rects, hosted
+   progress fills, and per-primitive
    ground evidence. Publish with no corpus gate enabled until the atomic
    resource migration below is ready; do not leave a public red main.
 2. **Atomic policy/resource migration.** Change all affected Theme
    `variance-behind` treatments and Scheme amber/mark colours, including
-   controller-z and HALCYON variants. Regenerate
+   controller-z, HALCYON, orion and every other affected public variant.
+   The probe's 954 initial failures are a resource-audit worklist, not a
+   baseline to suppress. Regenerate
    `docs/diagnostics/presentation-contrast.md` and all affected public
    Scene/SVG materializer outputs in the same publication unit. Verify every
    classified finding and inspect generated SVG in one batch, paying special

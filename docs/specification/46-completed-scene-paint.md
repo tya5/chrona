@@ -120,7 +120,7 @@ incomplete contract.
 
 For finite classified text, decoration and data-mark roles, contrast is
 measured against the topmost earlier opaque, flat-filled Rect covering the
-primitive's completed bounds centre; if none covers it, the opaque canvas is
+primitive's painted sample point; if none covers it, the opaque canvas is
 the ground. The finding records the ground primitive identity or `canvas`,
 ground colour, evaluated paint channel and ratio. A classified mark has a
 3.0:1 visibility floor; a required state-text role has a 4.5:1 floor.
@@ -128,3 +128,9 @@ ground colour, evaluated paint channel and ratio. A classified mark has a
 host cannot be treated as an opaque ground by assumption. The evaluator is a
 Scene observer, not a Theme or adapter paint selector. This supersedes the
 canvas-only ground rule of the initial #431 design.
+
+A stroke-only Rect is sampled at its painted left-edge midpoint rather than
+the unpainted bounds centre; the exact sample coordinate is part of the
+finding. A hosted progress-fill is independently tested against its earlier
+host and is not exempt from the mark floor. See the #459 painted-sample
+correction for the finite geometry rule.
