@@ -25,3 +25,7 @@ These are verified again in the acceptance review:
 - row 6 (the Theme balloon; none renders as today).
 
 Row 7 (the specification) is part of C4.
+
+## Added to C4 (2026-09-27, from #465)
+
+`annotation-note-box` and `annotation-note-text`, the candidate-mechanism roles, have no `ContrastClass` in `semantic_registry.py`. As a result, `tools/presentation_contrast.py` does not evaluate note text for any container kind. C4 classifies both roles and migrates the Themes that bind them.
