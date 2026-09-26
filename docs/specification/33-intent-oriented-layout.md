@@ -238,6 +238,10 @@ toward the selected annotation box with a deterministic side tie order.
 Visible direct-route fallback is a stroked segment obstacle even if diagonal;
 later placements must account for it. See the [#466 anchor-port correction](../design/issue-466-general-placement-anchor-port-correction-2026-09-26.md).
 
+A measured rule label may exempt only its own named rule stroke during its
+placement; the rule remains an obstacle for other labels and annotations.
+See the [#466 rule-label correction](../design/issue-466-general-placement-rule-label-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
