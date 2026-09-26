@@ -23,6 +23,34 @@ class ScenePaint:
     gradient: "LinearGradient | None" = None
     shadow: "DropShadow | None" = None
     stroke_finish: "StrokeFinish | None" = None
+    image: "ImageFill | None" = None
+
+
+@dataclass(frozen=True)
+class ImageTile:
+    """One completed nine-slice tile: a source rect stretched to a destination rect (#465)."""
+
+    source: tuple[float, float, float, float]
+    destination: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class ImageFill:
+    """A container's completed nine-slice raster fill; adapters only serialize it.
+
+    ``payload`` is the verified PNG bytes -- carried in memory only, exactly
+    as an Icon's raster payload is (never part of the serialized Scene
+    document; see ``icon_asset_identity`` for the identity that is).
+    """
+
+    asset_identity: str
+    viewport: tuple[int, int]
+    payload: bytes
+    tiles: tuple[ImageTile, ...]
+
+    def __post_init__(self) -> None:
+        if not self.tiles or self.viewport[0] <= 0 or self.viewport[1] <= 0:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
 @dataclass(frozen=True)
@@ -169,10 +197,12 @@ class ScenePrimitive:
     contrast_treatment: str | None = None
     glyph_paint_mode: str | None = None
     glyph_paint_color: str | None = None
+    image_fill_pending: "ImageFill | None" = None
 
     def __post_init__(self) -> None:
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
+                or (self.image_fill_pending is not None and self.kind not in {"Rect", "Symbol"})
                 or (self.symbol is not None and self.kind != "Symbol")
                 or (self.kind == "Symbol" and self.symbol is None)
                 or (self.glyph_paint_mode is not None and self.kind != "Symbol")

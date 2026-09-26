@@ -269,8 +269,17 @@ def _paint(value: ScenePaint) -> dict[str, Any]:
                     "dash": list(value.dash), "opacity": value.opacity,
                     "gradient": _gradient(value.gradient) if value.gradient is not None else None,
                     "shadow": _shadow(value.shadow) if value.shadow is not None else None,
-                    "strokeFinish": _finish(value.stroke_finish) if value.stroke_finish is not None else None})
+                    "strokeFinish": _finish(value.stroke_finish) if value.stroke_finish is not None else None,
+                    "image": _image(value.image) if value.image is not None else None})
     return result
+
+
+def _image(value: Any) -> dict[str, Any]:
+    """Serialize identity, viewport, and completed tiles only -- never raw bytes."""
+    return {"assetIdentity": value.asset_identity,
+            "viewport": {"inlineSize": value.viewport[0], "blockSize": value.viewport[1]},
+            "tiles": [{"source": _bounds(tile.source), "destination": _bounds(tile.destination)}
+                      for tile in value.tiles]}
 
 
 def _gradient(value: LinearGradient) -> dict[str, Any]:

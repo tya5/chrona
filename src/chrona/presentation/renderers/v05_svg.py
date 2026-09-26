@@ -6,7 +6,7 @@ from hashlib import sha256
 from base64 import b64encode
 
 from chrona.core.ports import RenderArtifact
-from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface
+from chrona.presentation.scene.model import ImageFill, ScenePaint, ScenePrimitive, SceneSurface
 
 
 def render_v05_svg(surface: SceneSurface) -> str:
@@ -136,6 +136,32 @@ def render_v05_svg(surface: SceneSurface) -> str:
             return (f'fill="none" opacity="{number(path.opacity)}" stroke="{escape(path.stroke, quote=True)}" '
                     f'stroke-width="{number(path.stroke_width)}" stroke-linecap="{path.line_cap}" stroke-linejoin="{path.line_join}"')
         raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+    def image_tiles_markup(node: ScenePrimitive, image: ImageFill) -> str:
+        """One nested clipping ``<svg>`` per completed nine-slice tile (#465).
+
+        Each tile's source rect becomes that nested viewport's ``viewBox``;
+        its destination rect becomes the nested viewport's own position and
+        size. ``preserveAspectRatio="none"`` makes the stretch exact, and the
+        inner ``<image>`` is drawn at the asset's own native pixel size so the
+        viewBox coordinates match the source rect one-to-one. No tile
+        boundary, crop, or stretch ratio is computed here -- every number is
+        already resolved by Layout/Scene.
+        """
+        encoded = b64encode(image.payload).decode("ascii")
+        view_width, view_height = image.viewport
+        tiles = []
+        for tile in image.tiles:
+            sx, sy, sw, sh = tile.source
+            dx, dy, dw, dh = tile.destination
+            tiles.append(
+                f'<svg x="{number(dx)}" y="{number(dy)}" width="{number(dw)}" height="{number(dh)}" '
+                f'viewBox="{number(sx)} {number(sy)} {number(sw)} {number(sh)}" preserveAspectRatio="none">'
+                f'<image x="0" y="0" width="{number(view_width)}" height="{number(view_height)}" '
+                f'href="data:image/png;base64,{encoded}"/></svg>')
+        return (f'<g data-scene-id="{escape(node.scene_id)}-image" '
+                f'data-asset-identity="{escape(image.asset_identity, quote=True)}">' + "".join(tiles) + "</g>")
+
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
@@ -145,7 +171,11 @@ def render_v05_svg(surface: SceneSurface) -> str:
                           if node.pattern is not None else attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
             radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
             clip = f' clip-path="url(#clip-{escape(node.clip_source_id, quote=True)})"' if node.clip_source_id else ""
-            append(node, f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}{clip} {appearance}/>')
+            rect_markup = f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}{clip} {appearance}/>'
+            if paint.image is not None:
+                append(node, rect_markup + image_tiles_markup(node, paint.image))
+            else:
+                append(node, rect_markup)
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             lines = node.text_layout.lines
@@ -161,7 +191,7 @@ def render_v05_svg(surface: SceneSurface) -> str:
                          if node.text_layout.rotation_degrees else "")
             append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{transform}{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')
         elif node.kind == "Symbol":
-            if node.symbol is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if node.symbol is None or paint.image is not None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)
             append(node, f'<path {common} d="{commands_data(node.symbol.outline)}" {appearance}/>')
         elif node.kind == "Path":

@@ -22,7 +22,7 @@ from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.mark_geometry import glyph_parts, pattern_geometry, pattern_kind, symbol_geometry
-from chrona.presentation.scene.model import DecorationDisposition, SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
+from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, SceneIconPath, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
 
@@ -176,10 +176,12 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         if primitive.source_kind == "legend":
             override = scale_legend_paints.get(primitive.source_ref, override)
         completed = replace(paint, fill=override) if override is not None else paint
+    if primitive.image_fill_pending is not None:
+        completed = replace(completed, image=primitive.image_fill_pending)
     treatment = tokens.optional_pattern(primitive.visual_role)
     result = replace(primitive, paint=completed,
                      pattern=pattern_geometry(treatment) if treatment is not None else None,
-                     glyph_paint_mode=None, glyph_paint_color=None)
+                     glyph_paint_mode=None, glyph_paint_color=None, image_fill_pending=None)
     if result.kind == "Icon" and result.icon_kind == "vector":
         return (replace(result, icon_paths=_complete_icon_paths(result, completed),
                         icon_vector=None, icon_stroke_scale=None), resolution.omissions)
@@ -579,14 +581,21 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              paint_order=placed.paint_order))
         elif placed.annotation is not None:
             annotation_box = semantic_binding(placed.semantic_id)
+            image_fill_pending = (ImageFill(placed.image_fill.asset_identity, placed.image_fill.viewport,
+                                            placed.image_fill.payload,
+                                            tuple(ImageTile(source, destination)
+                                                  for source, destination in placed.image_fill.tiles))
+                                  if placed.image_fill is not None else None)
             if placed.kind == "Balloon":
                 primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.SYMBOL, placed.source_ref, "annotation",
                                                  annotation_box.purpose, annotation_box.scene_role, bounds,
-                                                 symbol=SymbolGeometry(placed.path_commands), paint_order=placed.paint_order))
+                                                 symbol=SymbolGeometry(placed.path_commands), paint_order=placed.paint_order,
+                                                 image_fill_pending=image_fill_pending))
             else:
                 primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
                                                  annotation_box.purpose, annotation_box.scene_role,
-                                                 bounds, paint_order=placed.paint_order))
+                                                 bounds, paint_order=placed.paint_order,
+                                                 image_fill_pending=image_fill_pending))
     for placed in placed_surface.icons:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
