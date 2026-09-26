@@ -1,0 +1,15 @@
+# Search-ignore file for ripgrep and ripgrep-based tools, including the
+# code search in coding agents such as Claude Code and Codex. It does NOT
+# affect git: these paths stay tracked and are part of every checkout.
+#
+# docs/archive/ holds the plans and reviews of closed issues. It is history,
+# not current authority, so it is left out of default searches to keep old or
+# rejected designs from being read as current decisions. See "Archiving plans
+# and reviews" in AGENTS.md.
+#
+# Search it deliberately when you need history. Naming the path searches it
+# even though it is ignored; --no-ignore includes it in a whole-repo search:
+#   rg <pattern> docs/archive/
+#   rg --no-ignore <pattern>
+# Plain `grep -r` and `git grep` do not read this file.
+docs/archive/
