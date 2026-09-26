@@ -67,6 +67,12 @@ at `inlineSize: content` receives the larger of this extent and
 `column count × table.column.minInlineSize`. The metric is a per-column floor for
 a content-sized slot, not a column minimum. Any surplus goes to flexible columns.
 
+A table slot at `inlineSize: {minmax: {min: content, …}}` uses this same measured
+content extent as its minimum (#487): the slot is never narrower than its measured
+columns and gutters, regardless of a flexible track's allocated share. See
+Specification 33 §5 for how a flexible track resolves a `minmax` minimum against its
+share.
+
 A review row's block requirement is the largest of: `timeline.row.minBlockSize`;
 its mark-track extent plus `timeline.row.paddingBlock`; and the largest line block
 (`fontSize × lineHeight`) among its table cell roles plus

@@ -98,6 +98,16 @@ Each node declares `inlineSize` and `blockSize`. A size is one of:
 variants require intrinsic measurements. `fill` participates in equal distribution of
 remaining space after fixed, intrinsic, bounded, gap and padding requirements.
 
+A flexible track's (`fr` or `fill`) used size is `max(minimum, share)` (#487), where
+`minimum` is that track's own resolved minimum (`0` unless it declares
+`{minmax: {min: …}}` with a nonzero minimum) and `share` is its proportional part of the
+space available to all flexible tracks in the same container, computed **before** any
+flexible track's own minimum is subtracted from that space. The minimum is a floor a
+track's share must clear, never an amount its share is added underneath. A `minmax`
+maximum still clips the resolved size afterward. This matches CSS Grid's `fr`-track
+resolution for a `minmax` track, and it leaves every flexible track whose minimum is `0`
+unaffected, since `max(0, share)` equals the sum a purely additive rule would have given.
+
 A distance is either a non-negative finite number or `{token: name}`. Built-in and
 acceptance profiles MUST use token references for margins, padding, gaps, and ordinary
 clearance. A numeric distance is permitted only as an explicit optical/export bound and
