@@ -24,10 +24,10 @@ entries:
   - id: executive-light
     gallerySet: controller-z-treatment-ladder
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: executive-light, kind: theme, sourceRoot: examples/controller-z, sourcePath: themes/executive-light.yaml}
+      view: {id: chrona-preset-executive-light, kind: view, sourceRoot: presets/bundles/executive-light, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-executive-light, kind: theme, sourceRoot: presets/bundles/executive-light, sourcePath: theme.yaml}
       colorScheme: {id: executive-light, kind: color-scheme, sourceRoot: examples/controller-z, sourcePath: schemes/executive-light.yaml}
-      layout: {id: executive-review, kind: layout-profile, sourceRoot: examples/controller-z, sourcePath: layouts/executive-review.yaml}
+      layout: {id: chrona-builtin-executive-light, kind: layout-profile, sourceRoot: presets/bundles/executive-light, sourcePath: layout.yaml}
   - id: elevated-light
     gallerySet: controller-z-treatment-ladder
     members:
