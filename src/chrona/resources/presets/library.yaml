@@ -10,10 +10,10 @@ entries:
   - id: control-room-dark
     gallerySet: halcyon-mission-brief-appearance
     members:
-      view: {id: chrona-default-draft, kind: view, sourceRoot: examples/halcyon-1, sourcePath: views/default-draft.yaml}
-      theme: {id: briefing, kind: theme, sourceRoot: examples/halcyon-1, sourcePath: themes/briefing.yaml}
+      view: {id: chrona-preset-control-room-dark, kind: view, sourceRoot: presets/bundles/control-room-dark, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-control-room-dark, kind: theme, sourceRoot: presets/bundles/control-room-dark, sourcePath: theme.yaml}
       colorScheme: {id: control-room-dark, kind: color-scheme, sourceRoot: examples/halcyon-1, sourcePath: schemes/control-room-dark.yaml}
-      layout: {id: briefing, kind: layout-profile, sourceRoot: examples/halcyon-1, sourcePath: layouts/briefing.yaml}
+      layout: {id: chrona-builtin-control-room-dark, kind: layout-profile, sourceRoot: presets/bundles/control-room-dark, sourcePath: layout.yaml}
   - id: print-mono
     gallerySet: halcyon-mission-brief-appearance
     members:

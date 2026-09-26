@@ -1,0 +1,111 @@
+version: chrona/view/v0.22
+kind: view
+id: chrona-preset-control-room-dark
+body:
+  surface: table-timeline
+  selection:
+    include:
+      types:
+      - span
+      - point
+    exclude:
+      objectTypes:
+      - group
+  grouping:
+    by: field
+    field: owner
+    missing: Other
+    presentation: header
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: selected-planned
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      side: auto
+      overflow: suppress
+    fallback:
+      labels:
+      - inside
+      - above
+      - suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations: none
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: visible-overflow
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: visible-overflow
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: none
+    groups: all
+  tableColumns:
+  - id: Work item
+    source: title
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Finish
+    source:
+      facet: planned
+    format: dateRange
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash
+    align: end
+    width: content
+    headerOrientation: horizontal
+  rows:
+    mode: automatic
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+  shading:
+    nonWorking: true
+    exceptions: true

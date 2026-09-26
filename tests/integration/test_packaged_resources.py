@@ -81,6 +81,9 @@ def test_package_owned_runtime_resources_exist():
         "font_metrics/noto-color-emoji-check-v1.json",
         "fonts/draft-substitute-font-metrics.yaml",
         "fonts/NotoColorEmoji.LICENSE",
+        "presets/bundles/control-room-dark/view.yaml",
+        "presets/bundles/control-room-dark/theme.yaml",
+        "presets/bundles/control-room-dark/layout.yaml",
         "presets/library.yaml",
         "presets/bundles/print-mono/layout.yaml",
     ):
