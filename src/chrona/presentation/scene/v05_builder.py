@@ -283,6 +283,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                          href: str | None = None, link_title: str | None = None,
                          table_row_id: str | None = None, table_column_id: str | None = None) -> None:
         placed = layout_text[scene_id]
+        if placed.overflow == "suppressed":
+            return
         layout = TextLayout((float(placed.bounds.inline), float(placed.bounds.block),
                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),

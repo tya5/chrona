@@ -1307,7 +1307,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         label_requests.append(LabelRequest(
             "as-of-label", "actual-set", content,
             LabelRect(x, timeline_bounds[1], 0.0, body_size), ("end", "start", "below"),
-            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "suppress",
+            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
         ))
     if contract.labels.enabled:
         for review_row in review_rows:
