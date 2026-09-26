@@ -1,5 +1,9 @@
 # Implementation Plan — Declared Treatment Visibility (#478)
 
+**I478-3/4 rebase:** see the [2026-09-27 implementation amendment](issue-478-role-admission-implementation-amendment-2026-09-27.md)
+for the current 24-Theme/28-slide census, #465/#466 consumer boundary and
+atomic release gates. The counts and resource list below are historical.
+
 **Public design base:** `9ccbf961` on `main`. **Authority:** [design](../../design/issue-478-declared-treatment-visibility-design-2026-09-26.md), [whole-architecture review](../../reviews/current/issue-478-declared-treatment-visibility-architecture-review-2026-09-26.md), Specifications 07/50/63, [Issue #478](https://github.com/tya5/chrona/issues/478). Do not treat this plan as permission to introduce a View marker or preset profile selection; #479 owns the latter.
 
 ## Literal acceptance ledger
