@@ -1820,7 +1820,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 selected_items = tuple(item for item in matching[0][0].items
                                        if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id))
                 anchor_item = selected_items[0] if selected_items else None
-                anchor_instance_id = (f"{matching[0][0].row_id}:{anchor_item.item_id or anchor_item.object_id}"
+                anchor_instance_id = ((f"{matching[0][0].row_id}:{anchor_item.item_id or anchor_item.object_id}"
+                                       if projection.rows else anchor_item.object_id)
                                       if anchor_item is not None else "")
                 anchor_host = mark_by_id.get(f"{resolved.facet}:{anchor_instance_id}")
             elif folded_matches and folded_matches[0][1] is not None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import (
     ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope,
 )
@@ -64,8 +65,8 @@ def route_annotation_candidate(start: tuple[float, float], end: tuple[float, flo
             if commands is None:
                 continue
             crossing_ids = tuple(item[2] for item in crossings)
-            length = sum(abs(b[0] - a[0]) + abs(b[1] - a[1])
-                         for a, b in zip(points, points[1:]))
+            length = geometry_sum(abs(b[0] - a[0]) + abs(b[1] - a[1])
+                                  for a, b in zip(points, points[1:]))
             rank = (len(crossings), length, len(points) - 2, points)
             candidate = AnnotationRouteTrial(points, commands, topology, crossing_ids)
             if best is None or rank < best[0]:
