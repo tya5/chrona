@@ -48,7 +48,8 @@ def _slug(family: str, weight: int) -> str:
     return f"{stem[:180]}-{weight}"
 
 
-def _numeric_advances(font: TTFont, cmap: dict[int, str], hmtx: dict[str, tuple[int, int]]) -> dict[str, dict[str, int]]:
+def _numeric_advances(font: TTFont, cmap: dict[int, str], hmtx: dict[str, tuple[int, int]],
+                      *, allow_partial: bool = False) -> dict[str, dict[str, int]]:
     """Extract the exact pnum/tnum digit glyph advances from one selected face."""
     features: dict[str, dict[str, str]] = {"proportional": {}, "tabular": {}}
     tags = {"pnum": "proportional", "tnum": "tabular"}
@@ -78,11 +79,14 @@ def _numeric_advances(font: TTFont, cmap: dict[int, str], hmtx: dict[str, tuple[
             advances[str(codepoint)] = advance
         result[mode] = advances
     if len(set(result["tabular"].values())) != 1:
-        raise FontImportError("E_FONT_IMPORT_FORMAT", "/numericAdvances/tabular")
+        if not allow_partial:
+            raise FontImportError("E_FONT_IMPORT_FORMAT", "/numericAdvances/tabular")
+        del result["tabular"]
     return result
 
 
-def font_metrics_document(font: TTFont, payload: bytes, family: str, weight: int) -> bytes:
+def font_metrics_document(font: TTFont, payload: bytes, family: str, weight: int,
+                          *, allow_partial_numeric: bool = False) -> bytes:
     """Build the canonical v3 metrics document for exactly ``payload``.
 
     Both local import and draft system discovery use this function.  Keeping
@@ -105,7 +109,7 @@ def font_metrics_document(font: TTFont, payload: bytes, family: str, weight: int
         "unitsPerEm": units, "ascent": ascent, "descent": descent, "capHeight": cap_height,
         "defaultAdvance": int(hmtx.get(".notdef", (units, 0))[0]),
         "advances": {str(code): int(hmtx[name][0]) for code, name in sorted(cmap.items()) if name in hmtx},
-        "numericAdvances": _numeric_advances(font, cmap, hmtx),
+        "numericAdvances": _numeric_advances(font, cmap, hmtx, allow_partial=allow_partial_numeric),
     }
     return (json.dumps(table, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
 

@@ -1,5 +1,7 @@
 """The system bridge is tested without assuming a CI host font."""
 from pathlib import Path
+import platform
+import shutil
 from types import SimpleNamespace
 
 import pytest
@@ -21,8 +23,9 @@ def _bold_face() -> Path:
 
 def _runner(path: Path):
     def run(command, **_kwargs):
-        assert command[:2] == ["fc-match", "--format=%{file}\\n%{family}\\n%{weight}\\n"]
-        return SimpleNamespace(stdout=f"{path}\nNoto Sans\n80\n")
+        assert command[:2] == ["fc-match", "--format=%{file}\\n%{family}\\n%{weight}\\n%{index}\\n"]
+        assert command[2].endswith("weight=80") or command[2].endswith("weight=200")
+        return SimpleNamespace(stdout=f"{path}\nNoto Sans\n80\n0\n")
     return run
 
 
@@ -59,8 +62,34 @@ def test_system_font_reports_an_unavailable_bridge():
     def unavailable(*_args, **_kwargs):
         raise FileNotFoundError("fc-match")
 
-    with pytest.raises(SystemFontError, match="E_FONT_SYSTEM_UNAVAILABLE"):
+    with pytest.raises(SystemFontError, match="E_FONT_SYSTEM_UNAVAILABLE") as error:
         resolve_system_font("Noto Sans", 400, runner=unavailable)
+    assert "install fontconfig" in error.value.detail.lower()
+
+
+def test_real_fontconfig_resolves_regular_and_bold_face_when_host_has_bridge():
+    if not shutil.which("fc-match") or platform.system() == "Windows":
+        pytest.skip("fontconfig is not installed on this host")
+    family = "Helvetica Neue" if platform.system() == "Darwin" else "DejaVu Sans"
+    regular = resolve_system_font(family, 400)
+    bold = resolve_system_font(family, 700)
+    assert regular.weight == 400 and bold.weight == 700
+    assert regular.path.is_file() and bold.path.is_file()
+    assert (regular.path, regular.index) != (bold.path, bold.index)
+    catalog = resolve_draft_fonts((regular, bold))
+    assert catalog.metrics.select(family, 400).content_identity == regular.content_identity
+    assert catalog.metrics.select(family, 700).content_identity == bold.content_identity
+
+
+def test_real_hiragino_english_name_and_partial_numeric_capability_on_macos():
+    if platform.system() != "Darwin" or not shutil.which("fc-match"):
+        pytest.skip("macOS fontconfig bridge and Hiragino Sans required")
+    face = resolve_system_font("Hiragino Sans", 400)
+    assert face.path.suffix == ".ttc"
+    metrics = resolve_draft_font(face).metrics.select("Hiragino Sans", 400)
+    assert metrics.numeric_advances is not None
+    assert "proportional" in metrics.numeric_advances
+    assert "tabular" not in metrics.numeric_advances
 
 
 def test_system_font_reports_a_missing_face_and_malformed_resolved_file(tmp_path):

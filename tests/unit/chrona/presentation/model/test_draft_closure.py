@@ -128,8 +128,8 @@ def _system_resolver(root: Path):
     }
 
     def runner(command, **_kwargs):
-        weight = 700 if "weight=700" in command[-1] else 400
-        return type("Result", (), {"stdout": f"{faces[weight]}\nNoto Sans\n80\n"})()
+        weight = 700 if "weight=200" in command[-1] else 400
+        return type("Result", (), {"stdout": f"{faces[weight]}\nNoto Sans\n80\n0\n"})()
 
     return lambda family, weight: resolve_system_font(family, weight, runner=runner)
 

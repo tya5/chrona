@@ -136,6 +136,7 @@ class FontFile:
     content_identity: str
     family: str
     weight: int
+    index: int = 0
 
 
 def _families(font_stack: str) -> list[str]:
@@ -168,17 +169,22 @@ def font_metrics_from_document(document: bytes, *, metrics_path: Path, family: s
         advances = {int(code): int(value) for code, value in table["advances"].items()}
         raw_numeric = table.get("numericAdvances")
         numeric_advances = ({
-            mode: {int(code): int(value) for code, value in raw_numeric[mode].items()}
-            for mode in ("proportional", "tabular")
+            mode: {int(code): int(value) for code, value in values.items()}
+            for mode, values in raw_numeric.items()
         } if isinstance(raw_numeric, dict) else None)
         digits = set(range(ord("0"), ord("9") + 1))
         if (units <= 0 or cap_height <= 0 or cap_height > units
                 or any(code < 0 or value < 0 for code, value in advances.items())
-                or (numeric_advances is None and require_numeric)
+                or (require_numeric and (numeric_advances is None
+                                         or set(numeric_advances) != {"proportional", "tabular"}))
                 or (numeric_advances is not None and (
+                    not numeric_advances or not set(numeric_advances) <= {"proportional", "tabular"}
+                    or "proportional" not in numeric_advances
+                    or
                     any(set(values) != digits or any(value <= 0 for value in values.values())
                         for values in numeric_advances.values())
-                    or len(set(numeric_advances["tabular"].values())) != 1))):
+                    or ("tabular" in numeric_advances
+                        and len(set(numeric_advances["tabular"].values())) != 1)))):
             raise ValueError("invalid metrics")
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE") from error

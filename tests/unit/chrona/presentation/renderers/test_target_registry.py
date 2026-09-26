@@ -41,7 +41,7 @@ def _fixture_system_resolver(root: Path):
     face = root / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf"
 
     def runner(_command, **_kwargs):
-        return type("Result", (), {"stdout": f"{face}\nNoto Sans\n80\n"})()
+        return type("Result", (), {"stdout": f"{face}\nNoto Sans\n80\n0\n"})()
 
     return lambda family, weight: resolve_system_font(family, weight, runner=runner)
 
