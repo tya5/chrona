@@ -480,6 +480,89 @@ def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, mo
         assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == expected
 
 
+def test_cli_preset_list_reports_every_catalogue_entry_in_order(monkeypatch, capsys):
+    """#429: the available presets can be listed by id."""
+    expected = yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]
+
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "list"])
+    main()
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "ok"
+    assert payload["presets"] == [{"id": entry["id"], "gallerySet": entry["gallerySet"]} for entry in expected]
+
+
+@pytest.mark.parametrize(
+    "preset_id",
+    [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
+)
+def test_cli_render_preset_by_name_is_byte_identical_to_copy_then_path(tmp_path, monkeypatch, preset_id):
+    """#429: a preset can be selected by name, and it renders exactly what copying it and
+    pointing --preset at the copy would render."""
+    project = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
+    main()
+
+    by_name = tmp_path / f"{preset_id}-by-name.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"), "--actual", str(project / "actual.yaml"),
+        "--preset", preset_id, "--output", str(by_name),
+    ])
+    main()
+
+    copied = tmp_path / f"{preset_id}-copy"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(copied)])
+    main()
+    by_path = tmp_path / f"{preset_id}-by-path.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"), "--actual", str(project / "actual.yaml"),
+        "--preset", str(copied / "preset.yaml"), "--output", str(by_path),
+    ])
+    main()
+
+    assert by_name.read_bytes() == by_path.read_bytes()
+
+
+def test_cli_render_preset_by_name_rejects_unknown_id(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
+    main()
+
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"),
+        "--preset", "not-a-preset", "--output", str(tmp_path / "out.svg"),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 1
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_BUILTIN_PRESET_UNKNOWN"
+    assert not (tmp_path / "out.svg").exists()
+
+
+def test_cli_render_preset_path_is_never_looked_up_as_a_builtin_id(tmp_path, monkeypatch):
+    """A preset file path is always distinguishable from a catalogue id (#429): it always
+    contains a path separator or a YAML suffix, neither of which a library.yaml id can hold."""
+    project = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
+    main()
+    copied = tmp_path / "mission-light"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(copied)])
+    main()
+
+    # A bare filename with no "/" but a YAML suffix must still resolve as a path, not a name;
+    # copy every sibling file the preset manifest points at, not just the manifest.
+    for item in copied.iterdir():
+        (tmp_path / item.name).write_bytes(item.read_bytes())
+    output = tmp_path / "out.svg"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"),
+        "--preset", "preset.yaml", "--output", str(output),
+    ])
+    main()
+    assert output.read_bytes().startswith(b"<svg")
+
+
 @pytest.mark.parametrize(
     ("format_name", "extra", "expected"),
     [

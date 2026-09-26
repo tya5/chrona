@@ -68,6 +68,16 @@ def _copy_member(member: dict[str, Any], destination: Path, output: str) -> dict
     return {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
 
 
+def list_builtin_presets() -> list[dict[str, str]]:
+    """Return the finite catalogue's id/gallerySet pairs, in `library.yaml` order (#429)."""
+    return [{"id": str(entry["id"]), "gallerySet": str(entry["gallerySet"])} for entry in _library()]
+
+
+def is_builtin_preset_id(identifier: str) -> bool:
+    """Return whether `identifier` names a catalogue entry, without loading its members (#429)."""
+    return any(entry.get("id") == identifier for entry in _library())
+
+
 def copy_builtin_preset(identifier: str, destination: Path) -> Path:
     """Materialize one project-generic builtin preset as editable local files."""
     entry = next((item for item in _library() if item.get("id") == identifier), None)
