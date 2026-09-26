@@ -124,3 +124,10 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 - Project `scenarios.*.relations.add[].from.endpoint` = `"end"`
 - Project `scenarios.*.relations.add[].to.endpoint` = `"at"`
 - Project `scenarios.*.relations.add[].to.endpoint` = `"end"`
+
+## Unreferenced example presentation files
+
+View, Theme, Layout, Scheme and profile files under `examples/` that no Context or packaged preset renders, each with its declared reason.
+
+- `examples/aster-ssd/themes/onboarding-variation.yaml`: derived-Theme (v0.12 inheritance) example used by `docs/guides/first-project.md` and `tests/integration/test_render.py`
+- `examples/controller-z/profiles/summary.yaml`: Summary Profile input exercised by `tests/integration/test_render.py` and the contract-resource tests, not by a committed slide

@@ -76,3 +76,9 @@ def test_run_local_loader_reuses_only_one_report_operation(tmp_path):
     path.write_text("value: second\n", encoding="utf-8")
     assert first_run.load(path) == {"value": "first"}
     assert RunLocalYamlLoader().load(path) == {"value": "second"}
+
+
+def test_non_default_integer_vocabulary_names_the_every_slide():
+    """#434: a non-default `every` is derived into the report with its slide."""
+    content = (Path(__file__).resolve().parents[3] / "docs/gallery/presentation-coverage.md").read_text(encoding="utf-8")
+    assert "| view | `body.axis.tiers[].every` | `2` | orion-asic/gates |" in content

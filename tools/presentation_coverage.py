@@ -146,6 +146,34 @@ def _schema_values(schema: Mapping[str, Any], node: Mapping[str, Any] | None = N
             yield from _schema_values(schema, child, path, seen)
 
 
+def _integer_minimums(schema: Mapping[str, Any], node: Mapping[str, Any] | None = None,
+                      path: tuple[str, ...] = (), seen: frozenset[str] = frozenset()) -> Iterable[tuple[tuple[str, ...], int]]:
+    """Yield instance paths whose schema is an integer with a declared minimum (#434)."""
+    node = schema if node is None else node
+    reference = node.get("$ref")
+    if isinstance(reference, str) and reference not in seen:
+        target = _pointer(schema, reference)
+        if target is not None:
+            yield from _integer_minimums(schema, target, path, seen | {reference})
+    if node.get("type") == "integer" and isinstance(node.get("minimum"), int):
+        yield path, node["minimum"]
+    for key, child in (node.get("properties") or {}).items():
+        if isinstance(key, str) and isinstance(child, Mapping):
+            yield from _integer_minimums(schema, child, path + (key,), seen)
+    for key, component in (("additionalProperties", "*"), ("items", "[]")):
+        child = node.get(key)
+        if isinstance(child, Mapping):
+            yield from _integer_minimums(schema, child, path + (component,), seen)
+    for key in ("allOf", "anyOf", "oneOf", "prefixItems"):
+        for child in node.get(key, ()):
+            if isinstance(child, Mapping):
+                yield from _integer_minimums(schema, child, path, seen)
+    for key in ("if", "then", "else"):
+        child = node.get(key)
+        if isinstance(child, Mapping):
+            yield from _integer_minimums(schema, child, path, seen)
+
+
 def _values_at(value: Any, path: tuple[str, ...]) -> Iterable[Any]:
     if not path:
         yield value
@@ -277,6 +305,24 @@ def render(root: Path) -> str:
         evidence = [slide.identifier for slide in slides if any(kind == row.kind and json.loads(row.value) in _values_at(document, row.path) for kind, _path, document in slide.resources)]
         if not evidence: uncovered.append(row)
         lines.append(f"| {row.kind} | `{_label(row.path)}` | `{row.value}` | {', '.join(evidence) or '—'} |")
+    lines.extend(["", "## Non-default integer vocabulary", "",
+                  "Integer values above their schema minimum that a committed slide declares (for example an axis tier's `every`).", "",
+                  "| Contract | Schema path | Value | Declared slides |", "| --- | --- | --- | --- |"])
+    numeric: dict[tuple[str, tuple[str, ...], int], list[str]] = {}
+    for kind, schema in schemas.items():
+        for path, minimum in sorted(set(_integer_minimums(schema))):
+            for slide in slides:
+                for resource_kind, _path, document in slide.resources:
+                    if resource_kind != kind:
+                        continue
+                    for value in _values_at(document, path):
+                        if isinstance(value, int) and not isinstance(value, bool) and value > minimum:
+                            numeric.setdefault((kind, path, value), [])
+                            if slide.identifier not in numeric[(kind, path, value)]:
+                                numeric[(kind, path, value)].append(slide.identifier)
+    for (kind, path, value), identifiers in sorted(numeric.items()):
+        lines.append(f"| {kind} | `{_label(path)}` | `{value}` | {', '.join(identifiers)} |")
+    if not numeric: lines.append("| — | — | — | None. |")
     lines.extend(["", "## Uncovered presentation vocabulary", ""])
     lines.extend(f"- {row.kind} `{_label(row.path)}` = `{row.value}`" for row in uncovered)
     if not uncovered: lines.append("None.")
