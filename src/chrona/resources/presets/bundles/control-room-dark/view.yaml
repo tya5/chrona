@@ -33,15 +33,15 @@ body:
     - finishDelta
   visibility:
     labels:
-      placement: table
+      placement: plot
       content:
       - title
-      side: auto
+      side: end
       overflow: suppress
     fallback:
       labels:
-      - inside
-      - above
+      - end
+      - start
       - suppress
     relations:
       mode: semantic
@@ -75,7 +75,7 @@ body:
       every: 1
       role: grid-minor
   backgroundDecoration:
-    rows: none
+    rows: alternate
     groups: all
   tableColumns:
   - id: Work item

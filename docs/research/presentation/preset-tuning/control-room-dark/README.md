@@ -38,3 +38,15 @@ HALCYON-1 renders with no warnings at 1600 × 900. The starter keeps its one pre
 
 - **Missing-actual marks appear on work that is not due yet.** With `missingActual` in the facets, every item without an observation gets a hollow capsule at its bar end, including items planned to finish after the as-of date. Those are not missing; they are in the future. The preset leaves the facet out; the mark should only apply to items whose planned finish is on or before as-of.
 - **Dependency lines start with an arrowhead by default.** In 10 of the 11 shipped Themes, `relationSourceTerminal` is bound to the same filled triangle as the target end: `briefing`, which the bare `chrona render` default uses, plus `print`, `wallboard`, `elevated-light` and the other corpus themes. Only `controller-z/executive-light` uses a circle. A small circle or no mark at the source is the common convention; an arrowhead at both ends reads as a two-way relation.
+
+## Update: row guides and a visible axis boundary
+
+Added after review feedback. On a wide timeline, a bar on the right could only be matched to its task by following the row back to the table, and the axis blended into the plot.
+
+| Member | Change | Vocabulary used |
+| --- | --- | --- |
+| View + Layout | alternating row stripes run from the table to the timeline's right edge; group bands are kept to the table | `backgroundDecoration.rows: alternate`, `backgroundExtents.rowBand: both, groupBand: table` |
+| View | each bar is labelled with its name at its end, in its own row, as well as in the table | `visibility.labels.placement: plot, side: end`, fallback `[end, start, suppress]` |
+| Theme | the axis band is painted in `neutral` at full opacity, not the group-band colour, so the axis ends visibly where the plot begins | `colorBindings.axis-band-decoration.fill`, `roles.axis-band-decoration.opacity` |
+
+HALCYON-1 still renders with no warnings. The limits met while doing this are recorded in the `executive-light` README (items 2 and 4–6) and in #470: no axis baseline rule, labels not avoiding dependency lines, suppressed labels leaving no trace, and plot-and-table labels not being a declared choice.

@@ -3,7 +3,7 @@ id: chrona-builtin-control-room-dark
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [spacing.l, spacing.m, spacing.none]
-reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
+reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: both, groupBand: table, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 2}
 root:
   id: page
