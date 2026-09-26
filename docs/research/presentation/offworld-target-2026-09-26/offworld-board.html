@@ -1,0 +1,348 @@
+<title>Off-World Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=DotGothic16&family=Monoton&family=Share+Tech+Mono&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --void:#05070D; --panel:#0B1220; --cyan:#2FE6FF; --magenta:#FF2E88; --amber:#FFB000; --smog:#C4541A;
+  --steel:#5B6B80; --text:#CFE7F2; --muted:#7F93A8; --slip:#FF4D6D; --ahead:#3DDC97;
+  --neon:"Monoton","Chakra Petch",Impact,sans-serif;
+  --hud:"Chakra Petch","Eurostile","Arial Narrow",Arial,sans-serif;
+  --mono:"Share Tech Mono",ui-monospace,Menlo,monospace;
+  --dot:"DotGothic16","Hiragino Sans","Noto Sans JP",sans-serif;
+}
+html,body{background:var(--void)}
+body{color:var(--text);font-family:var(--hud);font-size:17px;line-height:1.55;margin:0;padding-block:40px 56px;padding-inline:20px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:36px}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+h1{font-family:var(--hud);font-weight:600;font-size:clamp(32px,4.6vw,52px);line-height:1.08;margin:10px 0 0;text-wrap:balance}
+h1 .neon{color:var(--magenta);text-shadow:0 0 12px rgba(255,46,136,.65)}
+.kana{font-family:var(--dot);color:var(--cyan);font-size:20px;letter-spacing:.2em;margin-top:6px}
+.lede{max-width:64ch;margin:14px 0 0;color:var(--text)}
+.lede em{font-style:normal;color:var(--amber)}
+.stage-scroll{overflow-x:auto;background:var(--void);border:1px solid rgba(47,230,255,.35);box-shadow:0 0 28px -6px rgba(47,230,255,.35)}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{font-family:var(--mono);color:var(--muted);font-size:14px;margin-top:10px}
+h2{font-family:var(--hud);font-weight:700;font-size:22px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 16px;max-width:66ch}
+.map-wrap{overflow-x:auto}
+.map{width:100%;border-collapse:collapse;font-size:16px}
+.map th{font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid rgba(47,230,255,.5)}
+.map td{padding:10px 12px;border-bottom:1px solid rgba(47,230,255,.14);vertical-align:top}
+.map td:first-child{font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);white-space:nowrap}
+.map code{font-family:var(--mono);font-size:13px;color:var(--cyan);background:var(--panel);padding:1px 6px}
+.gap{color:var(--slip);font-weight:600;white-space:nowrap}
+.ok{color:var(--ahead);font-weight:600;white-space:nowrap}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.sw{display:grid;gap:6px}
+.sw i{display:block;height:54px;border:1px solid rgba(207,231,242,.18)}
+.sw b{font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:14px}
+.sw span{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.faces{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.face{border-top:1px solid rgba(47,230,255,.4);padding-top:10px}
+.face .spec{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.face .demo{margin-top:6px}
+.flicker{animation:flicker 7s linear infinite}
+@keyframes flicker{0%,93%,100%{opacity:1}94%{opacity:.55}95%{opacity:1}96.5%{opacity:.7}97%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.flicker{animation:none}}
+</style>
+<main>
+  <header>
+    <div class="eyebrow">Preset direction study · chrona · target B data</div>
+    <h1>The Programme Board, <span class="neon">After the Rain</span></h1>
+    <div class="kana">ハルシオン・ワン　計画表</div>
+    <p class="lede">HALCYON-1's programme board as a street-level readout from a rain-soaked neon city: a tube-light sign in two scripts, a terminal for the table, six <em>sectors</em> for the teams, a targeting reticle for today, an <em>off-world</em> launch window and photo-analysis printouts for the notes. Same data as target B, Marquee and Montmartre.</p>
+  </header>
+
+  <section>
+    <div class="stage-scroll"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board drawn as a neon terminal readout: 26 work packages in six sectors, baseline, plan and actual bars, gates, dependencies, a reticle at 20 August 2027 and three analysis printouts"></svg></div>
+    <p class="caption">// hand-drawn direction mock, not chrona output · 1600 × 900, the same canvas as target B</p>
+  </section>
+
+  <section>
+    <h2>From the street to chrona</h2>
+    <p class="sub">Each element of the scene, the chrona role it would bind to, and whether today's vocabulary can express it.</p>
+    <div class="map-wrap"><table class="map">
+      <thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead>
+      <tbody>
+        <tr><td>Neon sign</td><td>Title slot in a tube-light face with glow, and a katakana subtitle in a dot-matrix face</td><td class="gap">glow is a shadow treatment, untested for this use; no subtitle slot</td></tr>
+        <tr><td>Terminal</td><td>Table set monospace: <code>SUBJECT</code>, <code>PHASE</code>, <code>Δ FINISH</code></td><td class="ok">expressible with the packaged mono (#410)</td></tr>
+        <tr><td>Sectors</td><td>Group headers as <code>SECTOR 01</code> to <code>SECTOR 06</code> with a bracket mark</td><td class="gap">per-group prefix (#453)</td></tr>
+        <tr><td>HUD ruler</td><td>Axis: outlined quarter tier, month tier, week ticks</td><td class="gap">tier appearance (#426)</td></tr>
+        <tr><td>Neon tubes</td><td>Plan as a glowing cyan tube, baseline dashed magenta ghost, actual amber phosphor line</td><td class="ok">shapes expressible (#398, dash #423); glow as above</td></tr>
+        <tr><td>Reticle</td><td>As-of marker: line with a targeting bracket and <code>NOW · 2027.08.20</code></td><td class="gap">no reticle shape; label (#428)</td></tr>
+        <tr><td>Off-world window</td><td>Launch window as a named, labelled date-range band</td><td class="gap">no named ranges (#453)</td></tr>
+        <tr><td>Analysis printouts</td><td>Annotation rail of bracketed terminal cards, row-aligned, leaders ending in an arrowhead at the mark</td><td class="gap">rail and row alignment (#453)</td></tr>
+        <tr><td>Status bar</td><td>Horizontal legend with true swatches</td><td class="gap">square swatches only (#427)</td></tr>
+        <tr><td>Rain and scanlines</td><td>Canvas texture over the whole slide, plus a smog glow at the horizon</td><td class="gap">no canvas texture treatment</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Palette</h2>
+    <p class="sub">Everything sits in the dark. Cyan is the plan, amber is what actually happened, magenta marks what matters, and the smog carries the city's fire.</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#05070D"></i><b>Night</b><span>#05070D · ground</span></div>
+      <div class="sw"><i style="background:#2FE6FF"></i><b>Neon cyan</b><span>#2FE6FF · plan, structure</span></div>
+      <div class="sw"><i style="background:#FFB000"></i><b>Phosphor</b><span>#FFB000 · actual, today</span></div>
+      <div class="sw"><i style="background:#FF2E88"></i><b>Neon magenta</b><span>#FF2E88 · gates, sign</span></div>
+      <div class="sw"><i style="background:#C4541A"></i><b>Smog</b><span>#C4541A · horizon glow</span></div>
+      <div class="sw"><i style="background:#FF4D6D"></i><b>Slip</b><span>#FF4D6D · 6.4:1 on night</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Typefaces</h2>
+    <div class="faces">
+      <div class="face"><div class="spec">Sign · Monoton</div><div class="demo" style="font-family:var(--neon);font-size:34px;color:var(--magenta);text-shadow:0 0 10px rgba(255,46,136,.6)">HALCYON-1</div></div>
+      <div class="face"><div class="spec">Street script · DotGothic16</div><div class="demo" style="font-family:var(--dot);font-size:24px;color:var(--cyan);letter-spacing:.14em">ハルシオン・ワン</div></div>
+      <div class="face"><div class="spec">Terminal · Share Tech Mono</div><div class="demo" style="font-family:var(--mono);font-size:20px;color:var(--amber)">SUBJECT  Payload thermal-vacuum  +10D</div></div>
+      <div class="face"><div class="spec">HUD · Chakra Petch</div><div class="demo" style="font-weight:600;font-size:22px;letter-spacing:.14em">SECTOR 03 · ASSEMBLY</div></div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  const svg = document.getElementById('stage');
+  const NS = 'http://www.w3.org/2000/svg';
+  const C = {void:'#05070D', panel:'#0B1220', panel2:'#0E1828', cyan:'#2FE6FF', cyanDim:'#1B6F82', magenta:'#FF2E88', amber:'#FFB000',
+    smog:'#C4541A', steel:'#5B6B80', text:'#CFE7F2', muted:'#7F93A8', slip:'#FF4D6D', ahead:'#3DDC97'};
+  const F = {neon:'Monoton, "Chakra Petch", Impact, sans-serif', hud:'"Chakra Petch", "Arial Narrow", Arial, sans-serif', mono:'"Share Tech Mono", Menlo, monospace', dot:'DotGothic16, "Hiragino Sans", sans-serif'};
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20';
+  const sectors = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const prints = [
+    {id:'payload-tvac', kind:'risk', tag:'ANALYSIS // ALERT', head:'PAYLOAD TVAC +7D', text:'Margin to integration: zero.'},
+    {id:'station', kind:'note', tag:'ANALYSIS // NOTE', head:'GROUND STATION EARLY', text:'Link test can move up.'},
+    {id:'launch', kind:'note', tag:'OFF-WORLD // NOTE', head:'WINDOW 22 OCT – 05 NOV', text:'Miss it and the launch slips to Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+
+  const M = {left:44, right:40};
+  const colT = 262, colP = 86, colD = 52;
+  const x0 = M.left + colT + colP + colD + 18;
+  const rail = 262;
+  const x1 = W - M.right - rail - 22;
+  const plotW = x1 - x0;
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * plotW;
+  const dayW = plotW / totalDays;
+  const Xe = d => X(d) + dayW;
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const axisTop = 150, rowTop = 204, rowH = 18, headH = 22;
+
+  // defs
+  const defs = el('defs', {});
+  const glow = el('filter', {id:'glow', filterUnits:'userSpaceOnUse', x:'0', y:'0', width:'1600', height:'900'}, defs);
+  el('feGaussianBlur', {stdDeviation:'2.6', result:'b'}, glow);
+  const mg = el('feMerge', {}, glow); el('feMergeNode', {in:'b'}, mg); el('feMergeNode', {in:'b'}, mg); el('feMergeNode', {in:'SourceGraphic'}, mg);
+  const soft = el('filter', {id:'soft', filterUnits:'userSpaceOnUse', x:'0', y:'0', width:'1600', height:'900'}, defs);
+  el('feGaussianBlur', {stdDeviation:'1.4', result:'b'}, soft);
+  const mg2 = el('feMerge', {}, soft); el('feMergeNode', {in:'b'}, mg2); el('feMergeNode', {in:'SourceGraphic'}, mg2);
+  const haze = el('linearGradient', {id:'haze', x1:'0', y1:'0', x2:'0', y2:'1'}, defs);
+  el('stop', {offset:'.55', 'stop-color':C.smog, 'stop-opacity':'0'}, haze);
+  el('stop', {offset:'1', 'stop-color':C.smog, 'stop-opacity':'.22'}, haze);
+  const scan = el('pattern', {id:'scan', width:'4', height:'3', patternUnits:'userSpaceOnUse'}, defs);
+  el('rect', {width:'4', height:'1', fill:'#FFFFFF', opacity:'.035'}, scan);
+  const hatch = el('pattern', {id:'hatch', width:'6', height:'6', patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)'}, defs);
+  el('rect', {width:'6', height:'6', fill:C.panel}, hatch);
+  el('line', {x1:'0', y1:'0', x2:'0', y2:'6', stroke:C.cyan, 'stroke-width':'2'}, hatch);
+  const arrow = el('marker', {id:'arrow', viewBox:'0 0 8 8', refX:'7', refY:'4', markerWidth:'6', markerHeight:'6', orient:'auto'}, defs);
+  el('path', {d:'M0,0 L8,4 L0,8 z', fill:C.steel}, arrow);
+  const hudArrow = el('marker', {id:'hud-arrow', viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'8', markerHeight:'8', orient:'auto'}, defs);
+  el('path', {d:'M0,0 L10,5 L0,10 z', fill:C.cyan}, hudArrow);
+  const hudArrowR = el('marker', {id:'hud-arrow-r', viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'8', markerHeight:'8', orient:'auto'}, defs);
+  el('path', {d:'M0,0 L10,5 L0,10 z', fill:C.slip}, hudArrowR);
+
+  // night, rain, horizon smog
+  el('rect', {x:0, y:0, width:W, height:H, fill:C.void});
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const rain = el('g', {stroke:'#9FD8FF', 'stroke-width':'.7', opacity:'.10'});
+  for (let i = 0; i < 260; i++) { const x = rnd() * (W + 200) - 100, y = rnd() * H, l = 14 + rnd() * 26; el('line', {x1:x, y1:y, x2:x - l * .28, y2:y + l}, rain); }
+  el('rect', {x:0, y:0, width:W, height:H, fill:'url(#haze)'});
+
+  // neon sign
+  const sg = {x:44, y:36, w:440, h:96};
+  el('rect', {x:sg.x, y:sg.y, width:sg.w, height:sg.h, rx:6, fill:C.panel, stroke:C.magenta, 'stroke-width':1.6, filter:'url(#soft)', opacity:.95});
+  tx(sg.x + 22, sg.y + 62, 'HALCYON-1', {'font-family':F.neon, 'font-size':40, fill:C.magenta, filter:'url(#glow)', class:'flicker', 'letter-spacing':'.02em'});
+  tx(sg.x + 24, sg.y + 84, 'ハルシオン・ワン　計画表', {'font-family':F.dot, 'font-size':15, fill:C.cyan, 'letter-spacing':'.24em', filter:'url(#soft)'});
+  tx(sg.x + sg.w + 28, 70, 'PROGRAMME BOARD // SECTOR REPORT', {'font-family':F.hud, 'font-weight':700, 'font-size':24, fill:C.text, 'letter-spacing':'.16em'});
+  tx(sg.x + sg.w + 28, 96, '26 subjects · 6 sectors · baseline, plan, observed · calendar: engineering', {'font-family':F.mono, 'font-size':15, fill:C.muted});
+  tx(W - M.right - 6, 56, '// DIRECTION STUDY · NOT RENDERER OUTPUT', {'text-anchor':'end', 'font-family':F.mono, 'font-size':12, fill:C.steel});
+
+  // rows
+  const rows = []; let y = rowTop;
+  sectors.forEach((a, i) => { rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } });
+  const plotTop = rowTop - 4, plotBot = y + 2;
+
+  // calendar: weekends, holidays, off-world window
+  for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) {
+    const iso = d.toISOString().slice(0, 10), w = d.getUTCDay();
+    if (w === 0 || w === 6) el('rect', {x:X(iso), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.cyan, opacity:.035});
+  }
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.amber, opacity:.22});
+  const owx0 = X('2027-10-22'), owx1 = Xe('2027-11-05');
+  el('rect', {x:owx0, y:plotTop, width:owx1 - owx0, height:plotBot - plotTop, fill:C.magenta, opacity:.08});
+  el('line', {x1:owx0, x2:owx0, y1:plotTop, y2:plotBot, stroke:C.magenta, 'stroke-width':1, opacity:.5, 'stroke-dasharray':'2 4'});
+  el('line', {x1:owx1, x2:owx1, y1:plotTop, y2:plotBot, stroke:C.magenta, 'stroke-width':1, opacity:.5, 'stroke-dasharray':'2 4'});
+
+  // HUD axis
+  const quarters = [['2027-03-01','2027-04-01','Q1'],['2027-04-01','2027-07-01','Q2'],['2027-07-01','2027-10-01','Q3'],['2027-10-01','2027-12-01','Q4']];
+  for (const [a, b, l] of quarters) {
+    const xa = X(a) + 2, xb = X(b) - 2;
+    el('path', {d:`M${xa + 8},${axisTop} H${xb - 8} L${xb},${axisTop + 8} V${axisTop + 22} H${xa} V${axisTop + 8} Z`, fill:C.panel2, stroke:C.cyanDim, 'stroke-width':1});
+    tx((xa + xb)/2, axisTop + 16, l + ' · 2027', {'text-anchor':'middle', 'font-family':F.hud, 'font-weight':600, 'font-size':13.5, fill:C.cyan, 'letter-spacing':'.24em'});
+  }
+  const months = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const mName = ['03 MAR','04 APR','05 MAY','06 JUN','07 JUL','08 AUG','09 SEP','10 OCT','11 NOV'];
+  months.forEach((m, i) => {
+    el('line', {x1:X(m), x2:X(m), y1:axisTop + 26, y2:plotBot, stroke:C.cyan, 'stroke-width':1, opacity:.12});
+    if (i < mName.length) tx((X(m) + X(months[i+1]))/2, axisTop + 42, mName[i], {'text-anchor':'middle', 'font-family':F.mono, 'font-size':12.5, fill:C.muted, 'letter-spacing':'.06em'});
+  });
+  for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + 7 * dayMs)) el('line', {x1:X(d.toISOString().slice(0,10)), x2:X(d.toISOString().slice(0,10)), y1:axisTop + 23, y2:axisTop + 27, stroke:C.cyanDim, 'stroke-width':1});
+
+  // terminal header
+  const hy = axisTop + 42;
+  tx(M.left + 4, hy, 'SUBJECT', {'font-family':F.mono, 'font-size':13, fill:C.muted, 'letter-spacing':'.14em'});
+  tx(M.left + colT, hy, 'PHASE', {'font-family':F.mono, 'font-size':13, fill:C.muted, 'letter-spacing':'.14em'});
+  tx(M.left + colT + colP + colD - 4, hy, 'Δ FIN', {'text-anchor':'end', 'font-family':F.mono, 'font-size':13, fill:C.muted, 'letter-spacing':'.1em'});
+  el('line', {x1:M.left, x2:x1, y1:hy + 8, y2:hy + 8, stroke:C.cyan, 'stroke-width':1, opacity:.7});
+
+  // sectors and rows
+  for (const r of rows) {
+    if (r.kind === 'head') {
+      el('rect', {x:M.left, y:r.y + 2, width:x1 - M.left, height:headH - 3, fill:C.panel2});
+      el('path', {d:`M${M.left + 2},${r.y + 5} V${r.y + headH - 4} H${M.left + 8} M${M.left + 2},${r.y + 5} H${M.left + 8}`, fill:'none', stroke:C.cyan, 'stroke-width':1.4});
+      tx(M.left + 14, r.y + 16.5, 'SECTOR 0' + (r.i + 1), {'font-family':F.mono, 'font-size':13, fill:C.amber, 'letter-spacing':'.08em'});
+      tx(M.left + 104, r.y + 16.5, r.a.title.toUpperCase(), {'font-family':F.hud, 'font-weight':600, 'font-size':13.5, fill:C.text, 'letter-spacing':'.14em'});
+    } else {
+      const it = r.it;
+      tx(M.left + 14, r.y + 13.5, it.t, {'font-family':F.mono, 'font-size':13, fill:C.text});
+      tx(M.left + colT, r.y + 13, it.ph.toUpperCase(), {'font-family':F.mono, 'font-size':11.5, fill:C.muted, 'letter-spacing':'.06em'});
+      if (it.ae && it.e) {
+        const d = D(it.e, it.ae);
+        tx(M.left + colT + colP + colD - 4, r.y + 13.5, (d > 0 ? '+' : '') + d + 'D', {'text-anchor':'end', 'font-family':F.mono, 'font-size':13.5, fill:d > 0 ? C.slip : d < 0 ? C.ahead : C.muted});
+      } else if (it.missing) {
+        tx(M.left + colT + colP + colD - 4, r.y + 13.5, '—', {'text-anchor':'end', 'font-family':F.mono, 'font-size':13.5, fill:C.muted});
+      }
+      el('line', {x1:M.left, x2:x1, y1:r.y + rowH, y2:r.y + rowH, stroke:C.cyan, 'stroke-width':.5, opacity:.08});
+    }
+  }
+  tx(owx1 - 4, rows[0].y + 16.5, 'OFF-WORLD WINDOW', {'text-anchor':'end', 'font-family':F.hud, 'font-weight':600, 'font-size':11.5, fill:C.magenta, 'letter-spacing':'.18em', filter:'url(#soft)'});
+
+  // marks
+  const anchor = {};
+  const marks = el('g', {});
+  for (const it of items) {
+    const cy = it.y + rowH/2;
+    if (it.at) {
+      const x = X(it.at) + dayW/2;
+      if (it.bat) { const bx = X(it.bat) + dayW/2; el('path', {d:`M${bx},${cy-6} l6,6 l-6,6 l-6,-6 z`, fill:'none', stroke:C.magenta, 'stroke-width':1.2, opacity:.6}, marks); }
+      el('path', {d:`M${x},${cy-6.5} l6.5,6.5 l-6.5,6.5 l-6.5,-6.5 z`, fill:C.magenta, filter:'url(#glow)'}, marks);
+      anchor[it.id] = {x:x + 7, y:cy, xl:x - 7};
+      continue;
+    }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 7, width:Xe(it.be) - X(it.bs), height:13, rx:1, fill:'none', stroke:C.magenta, 'stroke-width':1, 'stroke-dasharray':'3 3', opacity:.7}, marks);
+    el('rect', {x:X(it.s), y:cy - 5, width:Xe(it.e) - X(it.s), height:7, rx:3.5, fill:it.missing ? 'url(#hatch)' : C.cyan, stroke:it.missing ? C.cyan : 'none', 'stroke-width':1, filter:it.missing ? '' : 'url(#glow)'}, marks);
+    if (it.as) el('rect', {x:X(it.as), y:cy + 3.5, width:Xe(it.ae) - X(it.as), height:2.4, rx:1, fill:C.amber, filter:'url(#soft)'}, marks);
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s)};
+  }
+
+  // dependencies in steel
+  const dg = el('g', {fill:'none', stroke:C.steel, 'stroke-width':1, opacity:.85});
+  svg.insertBefore(dg, marks);
+  for (const [a, b] of deps) {
+    const A = anchor[a], B = anchor[b]; if (!A || !B) continue;
+    const d = (B.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${B.xl - 6} V${B.y} H${B.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${B.y - (B.y > A.y ? rowH/2 : -rowH/2)} H${B.xl - 6} V${B.y} H${B.xl - 1}`;
+    el('path', {d, 'marker-end':'url(#arrow)'}, dg);
+  }
+
+  // reticle at today
+  const ax = X(ASOF) + dayW/2;
+  el('line', {x1:ax, x2:ax, y1:plotTop, y2:plotBot, stroke:C.amber, 'stroke-width':1.2, 'stroke-dasharray':'6 3 1 3', filter:'url(#soft)'});
+  const ry = plotBot + 18;
+  el('circle', {cx:ax, cy:ry, r:9, fill:'none', stroke:C.amber, 'stroke-width':1.2});
+  el('path', {d:`M${ax - 15},${ry} H${ax - 5} M${ax + 5},${ry} H${ax + 15} M${ax},${ry - 15} V${ry - 5} M${ax},${ry + 5} V${ry + 13}`, stroke:C.amber, 'stroke-width':1.2});
+  tx(ax + 22, ry + 5, 'NOW · 2027.08.20', {'font-family':F.mono, 'font-size':14, fill:C.amber, 'letter-spacing':'.08em', filter:'url(#soft)'});
+
+  // analysis printouts
+  const rx0 = x1 + 24;
+  tx(rx0, axisTop + 16, 'ANALYSIS // 3 RECORDS', {'font-family':F.mono, 'font-size':13, fill:C.cyan, 'letter-spacing':'.12em'});
+  let lastBottom = axisTop + 30;
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  prints.forEach(c => {
+    const A = anchor[c.id]; const head = wrap(c.head, 22); const body = wrap(c.text, 28);
+    const bh = 44 + head.length * 18 + body.length * 17;
+    const by = Math.max(A.y - bh/2, lastBottom + 16); lastBottom = by + bh;
+    const col = c.kind === 'risk' ? C.slip : C.cyan;
+    el('rect', {x:rx0, y:by, width:rail, height:bh, fill:C.panel, opacity:.92});
+    el('rect', {x:rx0, y:by, width:rail, height:bh, fill:'url(#scan)'});
+    const b = 10;
+    el('path', {d:`M${rx0},${by + b} V${by} H${rx0 + b} M${rx0 + rail - b},${by} H${rx0 + rail} V${by + b} M${rx0 + rail},${by + bh - b} V${by + bh} H${rx0 + rail - b} M${rx0 + b},${by + bh} H${rx0} V${by + bh - b}`, fill:'none', stroke:col, 'stroke-width':1.6});
+    tx(rx0 + 14, by + 20, c.tag, {'font-family':F.mono, 'font-size':11.5, fill:col, 'letter-spacing':'.12em'});
+    head.forEach((l, k) => tx(rx0 + 14, by + 40 + k * 18, l, {'font-family':F.hud, 'font-weight':700, 'font-size':16, fill:C.text, 'letter-spacing':'.06em'}));
+    body.forEach((l, k) => tx(rx0 + 14, by + 42 + head.length * 18 + k * 17, l, {'font-family':F.mono, 'font-size':13, fill:C.muted}));
+    el('path', {d:`M${rx0 - 2},${by + bh/2} H${x1 + 10} V${A.y} H${A.x + 8}`, fill:'none', stroke:col, 'stroke-width':1, opacity:.85, 'marker-end':c.kind === 'risk' ? 'url(#hud-arrow-r)' : 'url(#hud-arrow)'});
+  });
+
+  // HUD status-bar legend
+  const ly = H - 30;
+  el('line', {x1:M.left, x2:W - M.right, y1:ly - 20, y2:ly - 20, stroke:C.cyan, 'stroke-width':1, opacity:.35});
+  tx(M.left, ly + 4, 'STATUS //', {'font-family':F.mono, 'font-size':12.5, fill:C.cyan, 'letter-spacing':'.1em'});
+  let lx = M.left + 96;
+  const entry = (label, draw) => { draw(lx); tx(lx + 30, ly + 4, label, {'font-family':F.hud, 'font-weight':600, 'font-size':12.5, fill:C.muted, 'letter-spacing':'.16em'}); lx += 30 + label.length * 8 + 30; };
+  entry('BASELINE', x => el('rect', {x, y:ly - 6, width:22, height:12, rx:1, fill:'none', stroke:C.magenta, 'stroke-width':1, 'stroke-dasharray':'3 3', opacity:.7}));
+  entry('PLAN', x => el('rect', {x, y:ly - 3.5, width:22, height:7, rx:3.5, fill:C.cyan, filter:'url(#glow)'}));
+  entry('OBSERVED', x => el('rect', {x, y:ly - 1.2, width:22, height:2.4, rx:1, fill:C.amber}));
+  entry('NOT YET OBSERVED', x => el('rect', {x, y:ly - 3.5, width:22, height:7, rx:3.5, fill:'url(#hatch)', stroke:C.cyan}));
+  entry('GATE', x => el('path', {d:`M${x + 11},${ly - 6.5} l6.5,6.5 l-6.5,6.5 l-6.5,-6.5 z`, fill:C.magenta}));
+  entry('HOLIDAY', x => el('rect', {x, y:ly - 6, width:22, height:12, fill:C.amber, opacity:.35}));
+  entry('DEPENDENCY', x => el('path', {d:`M${x},${ly} H${x + 20}`, stroke:C.steel, 'stroke-width':1, 'marker-end':'url(#arrow)'}));
+  entry('NOW', x => el('line', {x1:x + 11, x2:x + 11, y1:ly - 8, y2:ly + 8, stroke:C.amber, 'stroke-width':1.2, 'stroke-dasharray':'6 3 1 3'}));
+
+  // scanlines over everything
+  el('rect', {x:0, y:0, width:W, height:H, fill:'url(#scan)', 'pointer-events':'none'});
+})();
+</script>

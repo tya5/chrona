@@ -1,0 +1,333 @@
+<title>Montmartre Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Caveat:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --paper:#F2E4C4; --paper-2:#FBF3DC; --ink:#22170F; --sepia:#7A6A55; --muted:#6B5D4A;
+  --green:#2F5D3A; --green-band:#E1E2C0; --red:#B32A2E; --amber:#E0A23A; --enamel:#1E4D8C; --brown:#6B4A2B;
+  --garamond:"EB Garamond",Garamond,"Times New Roman",serif;
+  --plaque:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --hand:"Caveat","Bradley Hand","Segoe Print",cursive;
+}
+html,body{background:var(--paper)}
+body{color:var(--ink);font-family:var(--garamond);font-size:18px;line-height:1.55;margin:0;padding-block:40px 56px;padding-inline:20px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:36px}
+.eyebrow{font-family:var(--plaque);font-weight:600;font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--green)}
+h1{font-family:var(--garamond);font-weight:500;font-size:clamp(34px,5vw,54px);line-height:1.08;margin:8px 0 0;text-wrap:balance}
+h1 em{font-family:var(--hand);font-style:normal;font-weight:700;color:var(--red);font-size:1.12em}
+.lede{max-width:64ch;margin:14px 0 0}
+.lede em{color:var(--green)}
+.stage-scroll{overflow-x:auto;background:var(--paper);border:1px solid rgba(34,23,15,.25);box-shadow:0 18px 40px -24px rgba(107,74,43,.55)}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{font-style:italic;color:var(--muted);font-size:16px;margin-top:10px}
+h2{font-family:var(--plaque);font-weight:700;font-size:24px;letter-spacing:.12em;text-transform:uppercase;color:var(--enamel);margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 16px;max-width:66ch}
+.map-wrap{overflow-x:auto}
+.map{width:100%;border-collapse:collapse;font-size:17px}
+.map th{font-family:var(--plaque);font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1.5px solid var(--ink)}
+.map td{padding:10px 12px;border-bottom:1px solid rgba(34,23,15,.14);vertical-align:top}
+.map td:first-child{font-family:var(--plaque);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);white-space:nowrap}
+.map code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13px;background:var(--paper-2);padding:1px 6px}
+.gap{color:var(--red);font-weight:600;white-space:nowrap}
+.ok{color:var(--green);font-weight:600;white-space:nowrap}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.sw{display:grid;gap:6px}
+.sw i{display:block;height:54px;border:1px solid rgba(34,23,15,.2)}
+.sw b{font-family:var(--plaque);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:15px}
+.sw span{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;color:var(--muted)}
+.faces{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.face{border-top:1.5px solid var(--ink);padding-top:10px}
+.face .spec{font-family:var(--plaque);font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.face .demo{margin-top:6px}
+</style>
+<main>
+  <header>
+    <div class="eyebrow">Preset direction study · chrona · target B data</div>
+    <h1>The Programme Board, <em>à Montmartre</em></h1>
+    <p class="lede">HALCYON-1's programme board in the golden light of a Montmartre film world: a Paris street plaque for the title, the six teams as <em>arrondissements</em>, French months on the axis, a red thread and luggage tag for today, handwritten notes found by following blue chalk arrows, and a Métro ticket for the legend. Same data as target B and the Marquee target.</p>
+  </header>
+
+  <section>
+    <div class="stage-scroll"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board drawn in a warm Montmartre style: 26 work packages in six arrondissements, baseline, plan and actual bars, gates, dependencies, a red thread at 20 August 2027 and three handwritten notes"></svg></div>
+    <p class="caption">Hand-drawn direction mock, not chrona output. 1600 × 900, the same canvas as target B.</p>
+  </section>
+
+  <section>
+    <h2>From Montmartre to chrona</h2>
+    <p class="sub">Each element of the scene, the chrona role it would bind to, and whether today's vocabulary can express it.</p>
+    <div class="map-wrap"><table class="map">
+      <thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead>
+      <tbody>
+        <tr><td>Street plaque</td><td>Title slot as a blue enamel plate in a green frame, with a small <code>18e ARRt</code> header</td><td class="gap">no framed or plaque treatment for a slot</td></tr>
+        <tr><td>Arrondissements</td><td>Group headers with a numbered plaque prefix, <code>1er ARRT</code> to <code>6e ARRT</code></td><td class="gap">per-group prefix and tint (#453)</td></tr>
+        <tr><td>French axis</td><td>Quarter tier <code>T1 · 2027</code>, month tier <code>MARS … AOÛT</code></td><td class="gap">tier appearance (#426); French names need a name table (#432)</td></tr>
+        <tr><td>Ledger</td><td>Table in Garamond: <code>LE CHANTIER</code>, <code>ÉTAPE</code>, <code>Δ FIN</code></td><td class="ok">expressible (#410)</td></tr>
+        <tr><td>Cherry bars</td><td>Plan red, baseline dashed green ghost, actual ink line, unobserved work hatched</td><td class="ok">expressible (#398, dash #423)</td></tr>
+        <tr><td>Red thread</td><td>As-of marker: thin red line with a hanging luggage tag, <code>aujourd'hui · 20 août</code></td><td class="gap">tag shape and bare label (#428)</td></tr>
+        <tr><td>Le grand départ</td><td>Launch window as a named, labelled date-range band</td><td class="gap">no named ranges (#453)</td></tr>
+        <tr><td>Little notes</td><td>Handwritten, pinned, slightly tilted cards; blue chalk arrows point at the mark</td><td class="gap">rail, rotation, arrowhead at the subject (#453)</td></tr>
+        <tr><td>Métro ticket</td><td>Horizontal legend with true swatches, on a ticket with a magnetic stripe</td><td class="gap">square swatches only (#427)</td></tr>
+        <tr><td>Film light</td><td>Warm vignette and grain over the whole slide</td><td class="gap">no canvas texture or vignette treatment</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Palette</h2>
+    <p class="sub">Warm paper under golden light. Red is the plan, bottle green is structure, enamel blue is the city's own signage, amber is time.</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#F2E4C4"></i><b>Paper</b><span>#F2E4C4 · ground</span></div>
+      <div class="sw"><i style="background:#B32A2E"></i><b>Cherry</b><span>#B32A2E · plan, slip</span></div>
+      <div class="sw"><i style="background:#2F5D3A"></i><b>Bottle green</b><span>#2F5D3A · structure</span></div>
+      <div class="sw"><i style="background:#1E4D8C"></i><b>Enamel blue</b><span>#1E4D8C · plaques, arrows</span></div>
+      <div class="sw"><i style="background:#E0A23A"></i><b>Amber</b><span>#E0A23A · time, light</span></div>
+      <div class="sw"><i style="background:#22170F"></i><b>Ink</b><span>#22170F · text, actual</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Typefaces</h2>
+    <div class="faces">
+      <div class="face"><div class="spec">Plaques and axis · Barlow Condensed</div><div class="demo" style="font-family:var(--plaque);font-weight:700;font-size:26px;letter-spacing:.08em;color:var(--enamel)">1er ARRT · SPACECRAFT BUS</div></div>
+      <div class="face"><div class="spec">Ledger · EB Garamond</div><div class="demo" style="font-size:22px">Primary structure fabrication</div></div>
+      <div class="face"><div class="spec">Notes · Caveat</div><div class="demo" style="font-family:var(--hand);font-size:28px;color:var(--ink)">aujourd'hui · 20 août</div></div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  const svg = document.getElementById('stage');
+  const NS = 'http://www.w3.org/2000/svg';
+  const C = {paper:'#F2E4C4', paper2:'#FBF3DC', ink:'#22170F', sepia:'#7A6A55', muted:'#6B5D4A', green:'#2F5D3A', band:'#E1E2C0',
+    red:'#B32A2E', amber:'#E0A23A', enamel:'#1E4D8C', brown:'#6B4A2B', white:'#FFFDF6', ahead:'#2F5D3A'};
+  const F = {garamond:'"EB Garamond", Garamond, "Times New Roman", serif', plaque:'"Barlow Condensed", "Arial Narrow", Arial, sans-serif', hand:'Caveat, "Bradley Hand", cursive'};
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20';
+  const arrs = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const arrLabel = ['1er ARRT','2e ARRT','3e ARRT','4e ARRT','5e ARRT','6e ARRT'];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const notes = [
+    {id:'payload-tvac', kind:'risk', head:'Attention!', text:'Payload TVAC ran 7 days late. Margin is now zero.'},
+    {id:'station', kind:'note', head:'Bonne nouvelle', text:'Ground station done early. The link test can move up.'},
+    {id:'launch', kind:'note', head:'Le grand départ', text:'Window 22 Oct – 5 Nov. Missing it means Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+
+  const M = {left:44, right:40};
+  const colT = 262, colP = 86, colD = 52;
+  const x0 = M.left + colT + colP + colD + 18;
+  const rail = 262;
+  const x1 = W - M.right - rail - 22;
+  const plotW = x1 - x0;
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * plotW;
+  const dayW = plotW / totalDays;
+  const Xe = d => X(d) + dayW;
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const axisTop = 150, rowTop = 204, rowH = 18, headH = 22;
+
+  // defs: vignette, grain, chalk, hatch, arrows
+  const defs = el('defs', {});
+  const vg = el('radialGradient', {id:'vignette', cx:'.5', cy:'.45', r:'.78'}, defs);
+  el('stop', {offset:'.55', 'stop-color':C.amber, 'stop-opacity':'0'}, vg);
+  el('stop', {offset:'1', 'stop-color':'#A8661F', 'stop-opacity':'.34'}, vg);
+  const grain = el('filter', {id:'grain', x:'0', y:'0', width:'100%', height:'100%'}, defs);
+  el('feTurbulence', {type:'fractalNoise', baseFrequency:'.85', numOctaves:'2', stitchTiles:'stitch'}, grain);
+  el('feColorMatrix', {type:'saturate', values:'0'}, grain);
+  const ct = el('feComponentTransfer', {}, grain); el('feFuncA', {type:'table', tableValues:'0 .09'}, ct);
+  const chalk = el('filter', {id:'chalk', filterUnits:'userSpaceOnUse', x:'0', y:'0', width:'1600', height:'900'}, defs);
+  el('feTurbulence', {type:'fractalNoise', baseFrequency:'.9', numOctaves:'2', result:'n'}, chalk);
+  el('feDisplacementMap', {in:'SourceGraphic', in2:'n', scale:'2.2', xChannelSelector:'R', yChannelSelector:'G'}, chalk);
+  const hatch = el('pattern', {id:'hatch', width:'6', height:'6', patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)'}, defs);
+  el('rect', {width:'6', height:'6', fill:C.paper2}, hatch);
+  el('line', {x1:'0', y1:'0', x2:'0', y2:'6', stroke:C.red, 'stroke-width':'2.4'}, hatch);
+  const arrow = el('marker', {id:'arrow', viewBox:'0 0 8 8', refX:'7', refY:'4', markerWidth:'6', markerHeight:'6', orient:'auto'}, defs);
+  el('path', {d:'M0,0 L8,4 L0,8 z', fill:C.sepia}, arrow);
+  const blue = el('marker', {id:'chalk-arrow', viewBox:'0 0 10 10', refX:'8', refY:'5', markerWidth:'9', markerHeight:'9', orient:'auto'}, defs);
+  el('path', {d:'M0,1 L9,5 L0,9', fill:'none', stroke:C.enamel, 'stroke-width':'2', 'stroke-linecap':'round', 'stroke-linejoin':'round'}, blue);
+
+  el('rect', {x:0, y:0, width:W, height:H, fill:C.paper});
+
+  // street plaque title
+  const pq = {x:48, y:36, w:400, h:96};
+  el('rect', {x:pq.x, y:pq.y, width:pq.w, height:pq.h, rx:12, fill:C.green});
+  el('rect', {x:pq.x + 6, y:pq.y + 6, width:pq.w - 12, height:pq.h - 12, rx:8, fill:C.enamel});
+  el('rect', {x:pq.x + 11, y:pq.y + 11, width:pq.w - 22, height:pq.h - 22, rx:5, fill:'none', stroke:C.white, 'stroke-width':1.4});
+  tx(pq.x + pq.w/2, pq.y + 29, '18e ARRt', {'text-anchor':'middle', 'font-family':F.plaque, 'font-weight':600, 'font-size':13, fill:C.white, 'letter-spacing':'.12em'});
+  el('line', {x1:pq.x + 60, x2:pq.x + pq.w - 60, y1:pq.y + 35, y2:pq.y + 35, stroke:C.white, 'stroke-width':1, opacity:.8});
+  tx(pq.x + pq.w/2, pq.y + 74, 'HALCYON-1', {'text-anchor':'middle', 'font-family':F.plaque, 'font-weight':700, 'font-size':40, fill:C.white, 'letter-spacing':'.1em'});
+  tx(pq.x + pq.w + 28, 72, 'Programme board', {'font-family':F.garamond, 'font-weight':500, 'font-size':30, fill:C.ink});
+  tx(pq.x + pq.w + 28, 100, 'Twenty-six work packages, six arrondissements · baseline, plan and what really happened · calendar: engineering', {'font-family':F.garamond, 'font-style':'italic', 'font-size':16, fill:C.muted});
+  tx(W - M.right - 6, 56, 'direction study · not renderer output', {'text-anchor':'end', 'font-family':F.hand, 'font-size':19, fill:C.sepia});
+
+  // rows
+  const rows = []; let y = rowTop;
+  arrs.forEach((a, i) => { rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } });
+  const plotTop = rowTop - 4, plotBot = y + 2;
+
+  // calendar: weekends, holidays, le grand départ
+  for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) {
+    const iso = d.toISOString().slice(0, 10), w = d.getUTCDay();
+    if (w === 0 || w === 6) el('rect', {x:X(iso), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.green, opacity:.06});
+  }
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.amber, opacity:.45});
+  el('rect', {x:X('2027-10-22'), y:plotTop, width:Xe('2027-11-05') - X('2027-10-22'), height:plotBot - plotTop, fill:C.amber, opacity:.16});
+
+  // axis: enamel quarter plates, French months
+  const quarters = [['2027-03-01','2027-04-01','T1'],['2027-04-01','2027-07-01','T2'],['2027-07-01','2027-10-01','T3'],['2027-10-01','2027-12-01','T4']];
+  for (const [a, b, l] of quarters) {
+    el('rect', {x:X(a) + 2, y:axisTop, width:X(b) - X(a) - 4, height:24, rx:4, fill:C.green});
+    el('rect', {x:X(a) + 4.5, y:axisTop + 2.5, width:X(b) - X(a) - 9, height:19, rx:2.5, fill:C.enamel});
+    tx((X(a) + X(b))/2, axisTop + 17, l + ' · 2027', {'text-anchor':'middle', 'font-family':F.plaque, 'font-weight':700, 'font-size':14.5, fill:C.white, 'letter-spacing':'.14em'});
+  }
+  const months = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const mName = ['MARS','AVR','MAI','JUIN','JUIL','AOÛT','SEPT','OCT','NOV'];
+  months.forEach((m, i) => {
+    el('line', {x1:X(m), x2:X(m), y1:axisTop + 26, y2:plotBot, stroke:C.sepia, 'stroke-width':1, opacity:.22});
+    if (i < mName.length) tx((X(m) + X(months[i+1]))/2, axisTop + 42, mName[i], {'text-anchor':'middle', 'font-family':F.plaque, 'font-weight':600, 'font-size':14, fill:C.muted, 'letter-spacing':'.12em'});
+  });
+
+  // ledger header
+  const hy = axisTop + 42;
+  tx(M.left + 4, hy, 'LE CHANTIER', {'font-family':F.plaque, 'font-weight':600, 'font-size':14, fill:C.muted, 'letter-spacing':'.18em'});
+  tx(M.left + colT, hy, 'ÉTAPE', {'font-family':F.plaque, 'font-weight':600, 'font-size':14, fill:C.muted, 'letter-spacing':'.18em'});
+  tx(M.left + colT + colP + colD - 4, hy, 'Δ FIN', {'text-anchor':'end', 'font-family':F.plaque, 'font-weight':600, 'font-size':14, fill:C.muted, 'letter-spacing':'.14em'});
+  el('line', {x1:M.left, x2:x1, y1:hy + 8, y2:hy + 8, stroke:C.ink, 'stroke-width':1.2});
+
+  // arrondissements and rows
+  for (const r of rows) {
+    if (r.kind === 'head') {
+      el('rect', {x:M.left, y:r.y + 2, width:x1 - M.left, height:headH - 3, fill:C.band});
+      el('rect', {x:M.left + 4, y:r.y + 4, width:64, height:headH - 7, rx:3, fill:C.green});
+      el('rect', {x:M.left + 6, y:r.y + 6, width:60, height:headH - 11, rx:2, fill:C.enamel});
+      tx(M.left + 36, r.y + 15.5, arrLabel[r.i], {'text-anchor':'middle', 'font-family':F.plaque, 'font-weight':700, 'font-size':10.5, fill:C.white, 'letter-spacing':'.08em'});
+      tx(M.left + 78, r.y + 16.5, r.a.title.toUpperCase(), {'font-family':F.plaque, 'font-weight':700, 'font-size':14, fill:C.green, 'letter-spacing':'.1em'});
+    } else {
+      const it = r.it;
+      tx(M.left + 14, r.y + 13.5, it.t, {'font-family':F.garamond, 'font-size':15, fill:C.ink});
+      tx(M.left + colT, r.y + 13, it.ph.toUpperCase(), {'font-family':F.plaque, 'font-weight':500, 'font-size':12, fill:C.muted, 'letter-spacing':'.12em'});
+      if (it.ae && it.e) {
+        const d = D(it.e, it.ae);
+        tx(M.left + colT + colP + colD - 4, r.y + 13.5, (d > 0 ? '+' : '') + d + 'd', {'text-anchor':'end', 'font-family':F.garamond, 'font-weight':600, 'font-size':15, fill:d > 0 ? C.red : d < 0 ? C.ahead : C.muted, style:'font-variant-numeric:tabular-nums lining-nums'});
+      } else if (it.missing) {
+        tx(M.left + colT + colP + colD - 4, r.y + 13.5, '—', {'text-anchor':'end', 'font-family':F.garamond, 'font-size':15, fill:C.muted});
+      }
+      el('line', {x1:M.left, x2:x1, y1:r.y + rowH, y2:r.y + rowH, stroke:C.sepia, 'stroke-width':.5, opacity:.25});
+    }
+  }
+  tx(X('2027-10-22') + 4, rows[0].y + 16.5, 'LE GRAND DÉPART', {'font-family':F.plaque, 'font-weight':700, 'font-size':12, fill:C.brown, 'letter-spacing':'.12em'});
+
+  // marks
+  const anchor = {};
+  for (const it of items) {
+    const cy = it.y + rowH/2;
+    if (it.at) {
+      const x = X(it.at) + dayW/2;
+      if (it.bat) { const bx = X(it.bat) + dayW/2; el('path', {d:`M${bx},${cy-6} l6,6 l-6,6 l-6,-6 z`, fill:'none', stroke:C.green, 'stroke-width':1.3}); }
+      el('path', {d:`M${x},${cy-7} l7,7 l-7,7 l-7,-7 z`, fill:C.green, stroke:C.paper, 'stroke-width':1.5});
+      anchor[it.id] = {x:x + 7, y:cy, xl:x - 7};
+      continue;
+    }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 7, width:Xe(it.be) - X(it.bs), height:13, rx:2, fill:'none', stroke:C.green, 'stroke-width':1.2, 'stroke-dasharray':'4 3'});
+    el('rect', {x:X(it.s), y:cy - 5.5, width:Xe(it.e) - X(it.s), height:8, rx:2, fill:it.missing ? 'url(#hatch)' : C.red, stroke:it.missing ? C.red : 'none', 'stroke-width':1});
+    if (it.as) el('rect', {x:X(it.as), y:cy + 3.5, width:Xe(it.ae) - X(it.as), height:2.6, rx:1, fill:C.ink});
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s)};
+  }
+
+  // dependencies in sepia ink
+  const dg = el('g', {fill:'none', stroke:C.sepia, 'stroke-width':1, opacity:.85});
+  for (const [a, b] of deps) {
+    const A = anchor[a], B = anchor[b]; if (!A || !B) continue;
+    const d = (B.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${B.xl - 6} V${B.y} H${B.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${B.y - (B.y > A.y ? rowH/2 : -rowH/2)} H${B.xl - 6} V${B.y} H${B.xl - 1}`;
+    el('path', {d, 'marker-end':'url(#arrow)'}, dg);
+  }
+
+  // the red thread and its luggage tag
+  const ax = X(ASOF) + dayW/2;
+  el('line', {x1:ax, x2:ax, y1:plotTop - 2, y2:plotBot + 6, stroke:C.red, 'stroke-width':1.6});
+  const tg = {x:ax - 92, y:plotBot + 8, w:184, h:26};
+  el('path', {d:`M${tg.x + 12},${tg.y} H${tg.x + tg.w} V${tg.y + tg.h} H${tg.x + 12} L${tg.x},${tg.y + tg.h/2} Z`, fill:C.paper2, stroke:C.brown, 'stroke-width':1});
+  el('circle', {cx:tg.x + 13, cy:tg.y + tg.h/2, r:2.6, fill:C.paper, stroke:C.brown, 'stroke-width':1});
+  tx(tg.x + 12 + (tg.w - 12)/2, tg.y + 19, "aujourd'hui · 20 août", {'text-anchor':'middle', 'font-family':F.hand, 'font-weight':700, 'font-size':19, fill:C.red});
+
+  // handwritten notes, found by following blue chalk arrows
+  const rx0 = x1 + 24;
+  tx(rx0, axisTop + 18, 'petits mots', {'font-family':F.hand, 'font-weight':700, 'font-size':26, fill:C.enamel});
+  let lastBottom = axisTop + 34;
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  notes.forEach((c, i) => {
+    const A = anchor[c.id]; const body = wrap(c.text, 27);
+    const bh = 52 + body.length * 21;
+    const by = Math.max(A.y - bh/2, lastBottom + 16); lastBottom = by + bh;
+    const tilt = [-1.8, 1.4, -1.0][i];
+    const g = el('g', {transform:`rotate(${tilt} ${rx0 + rail/2} ${by + bh/2})`});
+    el('rect', {x:rx0, y:by, width:rail, height:bh, fill:C.paper2, stroke:'rgba(34,23,15,.18)', 'stroke-width':1}, g);
+    for (let k = 1; k <= body.length; k++) el('line', {x1:rx0 + 10, x2:rx0 + rail - 10, y1:by + 34 + k * 21, y2:by + 34 + k * 21, stroke:C.enamel, 'stroke-width':.6, opacity:.25}, g);
+    tx(rx0 + 16, by + 30, c.head, {'font-family':F.hand, 'font-weight':700, 'font-size':23, fill:c.kind === 'risk' ? C.red : C.green}, g);
+    body.forEach((l, k) => tx(rx0 + 16, by + 51 + k * 21, l, {'font-family':F.hand, 'font-weight':500, 'font-size':19.5, fill:C.ink}, g));
+    el('circle', {cx:rx0 + rail/2, cy:by + 6, r:5, fill:C.red, stroke:'#7E1A1E', 'stroke-width':1}, g);
+    el('path', {d:`M${rx0 - 4},${by + bh/2} H${x1 + 10} V${A.y} H${A.x + 6}`, fill:'none', stroke:C.enamel, 'stroke-width':2.2, 'stroke-linecap':'round', 'stroke-linejoin':'round', 'marker-end':'url(#chalk-arrow)', filter:'url(#chalk)', opacity:.9});
+  });
+
+  // Métro ticket legend
+  const ly = H - 32, tk = {x:M.left, y:ly - 22, w:W - M.left - M.right, h:36};
+  el('rect', {x:tk.x, y:tk.y, width:tk.w, height:tk.h, rx:4, fill:C.paper2, stroke:'rgba(34,23,15,.22)'});
+  el('rect', {x:tk.x, y:tk.y + tk.h - 7, width:tk.w, height:7, fill:C.brown, opacity:.85});
+  tx(tk.x + tk.w - 14, tk.y + 17, 'TICKET · 2e CLASSE', {'text-anchor':'end', 'font-family':F.plaque, 'font-weight':600, 'font-size':11.5, fill:C.muted, 'letter-spacing':'.16em'});
+  let lx = tk.x + 16; const lyy = tk.y + 14;
+  const entry = (label, draw) => { draw(lx); tx(lx + 30, lyy + 4.5, label, {'font-family':F.plaque, 'font-weight':600, 'font-size':13, fill:C.ink, 'letter-spacing':'.1em'}); lx += 30 + label.length * 7.4 + 30; };
+  entry('BASELINE', x => el('rect', {x, y:lyy - 6, width:22, height:12, rx:2, fill:'none', stroke:C.green, 'stroke-width':1.2, 'stroke-dasharray':'4 3'}));
+  entry('PLAN', x => el('rect', {x, y:lyy - 4, width:22, height:8, rx:2, fill:C.red}));
+  entry('ACTUAL', x => el('rect', {x, y:lyy - 1.3, width:22, height:2.6, rx:1, fill:C.ink}));
+  entry('NOT YET OBSERVED', x => el('rect', {x, y:lyy - 4, width:22, height:8, rx:2, fill:'url(#hatch)', stroke:C.red}));
+  entry('GATE', x => el('path', {d:`M${x + 11},${lyy - 7} l7,7 l-7,7 l-7,-7 z`, fill:C.green}));
+  entry('JOUR FÉRIÉ', x => el('rect', {x, y:lyy - 6, width:22, height:12, fill:C.amber, opacity:.6}));
+  entry('DEPENDENCY', x => el('path', {d:`M${x},${lyy} H${x + 20}`, stroke:C.sepia, 'stroke-width':1, 'marker-end':'url(#arrow)'}));
+  entry('AUJOURD’HUI', x => el('line', {x1:x + 11, x2:x + 11, y1:lyy - 8, y2:lyy + 8, stroke:C.red, 'stroke-width':1.6}));
+
+  // film light: vignette and grain over everything
+  el('rect', {x:0, y:0, width:W, height:H, fill:'url(#vignette)', 'pointer-events':'none'});
+  el('rect', {x:0, y:0, width:W, height:H, fill:'#000', filter:'url(#grain)', 'pointer-events':'none', opacity:.9});
+})();
+</script>

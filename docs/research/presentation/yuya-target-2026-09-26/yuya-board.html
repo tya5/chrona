@@ -1,0 +1,380 @@
+<title>Yuya Programme Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@500;700&family=Shippori+Mincho+B1:wght@400;600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --night:#0E2B31; --night2:#15393F; --washi:#EFE3C8; --ink:#231A14; --muted:#6B5A48; --lacquer:#B22D1B; --lantern:#E0512F; --gold:#D6A444; --roof:#2F6F5E; --indigo:#203A6B; --mist:#A9C3C0;
+  --deco:"Kaisei Decol","Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --mincho:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --goth:"Zen Kaku Gothic New","Hiragino Sans",sans-serif;
+}
+html,body{background:var(--night)}
+body{color:var(--washi);font-family:var(--mincho);font-size:17px;line-height:1.65;margin:0;padding-block:40px 56px;padding-inline:20px}
+main{max-width:1240px;margin:0 auto;display:grid;gap:36px}
+.eyebrow{font-family:var(--goth);font-weight:500;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+h1{font-family:var(--deco);font-weight:700;font-size:clamp(30px,4.4vw,48px);line-height:1.15;margin:10px 0 0;text-wrap:balance}
+h1 span{color:var(--lantern)}
+.lede{max-width:64ch;margin:14px 0 0;color:#E4DCCB}
+.lede em{font-style:normal;color:var(--gold)}
+.stage-scroll{overflow-x:auto;border:1px solid rgba(214,164,68,.45)}
+.stage-scroll svg{display:block;width:100%;min-width:880px;height:auto}
+.caption{font-family:var(--goth);color:var(--mist);font-size:14px;margin-top:10px}
+h2{font-family:var(--deco);font-weight:700;font-size:24px;margin:0 0 4px;color:var(--gold)}
+.sub{color:var(--mist);margin:0 0 16px;max-width:66ch}
+.map-wrap{overflow-x:auto;background:var(--washi);color:var(--ink);border-top:6px solid var(--lacquer);border-bottom:6px solid var(--lacquer)}
+.map{width:100%;border-collapse:collapse;font-size:16px}
+.map th{font-family:var(--goth);font-weight:700;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--ink)}
+.map td{padding:10px 12px;border-bottom:1px solid rgba(35,26,20,.18);vertical-align:top}
+.map td:first-child{font-family:var(--deco);font-weight:700;white-space:nowrap}
+.map code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:rgba(35,26,20,.07);padding:1px 5px}
+.gap{color:var(--lacquer);font-weight:600}
+.ok{color:var(--roof);font-weight:600}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.sw{display:grid;gap:6px}
+.sw i{display:block;height:54px;border:1px solid rgba(239,227,200,.25)}
+.sw b{font-family:var(--deco);font-size:16px}
+.sw span{font-family:var(--goth);font-size:12.5px;color:var(--mist)}
+.faces{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.face{border-top:1px solid rgba(214,164,68,.5);padding-top:10px}
+.face .spec{font-family:var(--goth);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist)}
+.face .demo{margin-top:6px}
+</style>
+<main>
+  <header>
+    <div class="eyebrow">Preset direction study · chrona · target B data</div>
+    <h1>The Programme Board, <span>Posted at the Bathhouse</span></h1>
+    <p class="lede">HALCYON-1's programme board as the notice board of an old bathhouse on the far side of the river: a lacquered plaque for the title, hanging wooden tags for the six teams, months in kanji, <em>lanterns</em> for milestones, a paper lantern for tonight, a sea of waves for the launch window, and hanging scrolls for the notes. Same data as target B and the other four targets.</p>
+  </header>
+
+  <section>
+    <div class="stage-scroll"><svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="HALCYON-1 programme board drawn as a bathhouse notice board: 26 work packages under six hanging tags, baseline, plan and actual bars, lantern-shaped gates, dependencies, today at 20 August 2027 and three hanging scrolls"></svg></div>
+    <p class="caption">Hand-drawn direction mock, not chrona output · 1600 × 900, the same canvas as target B</p>
+  </section>
+
+  <section>
+    <h2>湯屋から chrona へ</h2>
+    <p class="sub">Each element of the board, the chrona role it would bind to, and whether today's vocabulary can express it.</p>
+    <div class="map-wrap"><table class="map">
+      <thead><tr><th>Element</th><th>chrona role</th><th>Today</th></tr></thead>
+      <tbody>
+        <tr><td>扁額 plaque</td><td>Title in lacquer and gold, a Japanese title over a Latin one</td><td class="gap">no framed slot; no second-script subtitle</td></tr>
+        <tr><td>木札 tags</td><td>Group label set <em>vertically</em> in a column that spans the group's rows, numbered 壱 to 陸</td><td class="gap">no vertical text; no row-spanning group column</td></tr>
+        <tr><td>Kanji axis</td><td><code>三月 … 十一月</code> and <code>第一四半期</code>, chosen by the design</td><td class="gap">vocabulary follows locale (#432); tier appearance (#426)</td></tr>
+        <tr><td>提灯 lanterns</td><td>Every gate drawn as a lantern glyph by rule; the baseline gate as its outline</td><td class="gap">icons lay over one named bar only</td></tr>
+        <tr><td>Bars</td><td>Plan in roof-tile green, baseline dashed ghost, actual lacquer line, unobserved hatched</td><td class="ok">expressible (#398, dash #423)</td></tr>
+        <tr><td>Paper lantern</td><td>As-of: indigo line with a lantern on the axis and a bilingual label</td><td class="gap">marker shape; label (#428)</td></tr>
+        <tr><td>青海波 sea</td><td>Launch window as a named band filled with a wave pattern</td><td class="gap">no named ranges (#453); no pattern fill for a range</td></tr>
+        <tr><td>掛軸 scrolls</td><td>Annotations as hanging scrolls, a seal stamp marking the kind (危 risk, 記 note)</td><td class="gap">rail (#453); no stamp mark</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>色</h2>
+    <p class="sub">A night river around a lit wooden board. Green from the roof tiles carries the plan, lacquer red what happened, gold and lantern light the things that matter.</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#0E2B31"></i><b>夜の川 night river</b><span>#0E2B31 · backdrop</span></div>
+      <div class="sw"><i style="background:#EFE3C8"></i><b>檜 hinoki</b><span>#EFE3C8 · board</span></div>
+      <div class="sw"><i style="background:#2F6F5E"></i><b>瓦 roof tile</b><span>#2F6F5E · plan, 5.2:1</span></div>
+      <div class="sw"><i style="background:#B22D1B"></i><b>漆 lacquer</b><span>#B22D1B · actual, frame</span></div>
+      <div class="sw"><i style="background:#E0512F"></i><b>提灯 lantern</b><span>#E0512F · gates</span></div>
+      <div class="sw"><i style="background:#203A6B"></i><b>藍 indigo</b><span>#203A6B · today</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>書体</h2>
+    <div class="faces">
+      <div class="face"><div class="spec">Plaque · Kaisei Decol</div><div class="demo" style="font-family:var(--deco);font-weight:700;font-size:30px;color:var(--gold)">計画表 HALCYON-1</div></div>
+      <div class="face"><div class="spec">Board · Shippori Mincho B1</div><div class="demo" style="font-size:20px">Payload thermal-vacuum　八月</div></div>
+      <div class="face"><div class="spec">Small print · Zen Kaku Gothic New</div><div class="demo" style="font-family:var(--goth);font-weight:700;font-size:16px;letter-spacing:.14em">凡例 · LEGEND</div></div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  const svg = document.getElementById('stage');
+  const NS = 'http://www.w3.org/2000/svg';
+  const C = {night:'#0E2B31', night2:'#15393F', washi:'#EFE3C8', paper:'#F8F1DF', ink:'#231A14', muted:'#6B5A48', lacquer:'#B22D1B', lantern:'#E0512F',
+    gold:'#D6A444', goldD:'#9A6B16', roof:'#2F6F5E', indigo:'#203A6B', mist:'#A9C3C0', wood:'#8A5A2B', woodL:'#C89A5E', ghost:'#9C8B74', sea:'#3E7F86'};
+  const F = {deco:'"Kaisei Decol", "Shippori Mincho B1", "Hiragino Mincho ProN", serif', mincho:'"Shippori Mincho B1", "Hiragino Mincho ProN", serif', goth:'"Zen Kaku Gothic New", "Hiragino Sans", sans-serif'};
+  const W = 1600, H = 900;
+  const win0 = new Date('2027-03-01T00:00:00Z'), win1 = new Date('2027-12-01T00:00:00Z');
+  const ASOF = '2027-08-20';
+  const sectors = [
+    {id:'bus', title:'Spacecraft bus'}, {id:'payload', title:'Imaging payload'}, {id:'ait', title:'Assembly, integration and test'},
+    {id:'ground', title:'Ground segment'}, {id:'launch', title:'Launch and range'}, {id:'ops', title:'Mission operations'}];
+  const items = [
+    {g:'bus', id:'pdr', t:'Preliminary design review', ph:'Design', at:'2027-03-05'},
+    {g:'bus', id:'structure', t:'Primary structure fabrication', ph:'Build', s:'2027-03-08', e:'2027-04-06', as:'2027-03-08', ae:'2027-04-06'},
+    {g:'bus', id:'avionics', t:'Avionics integration', ph:'Build', s:'2027-04-06', e:'2027-04-27', as:'2027-04-07', ae:'2027-04-30', bs:'2027-04-06', be:'2027-04-23'},
+    {g:'bus', id:'eps', t:'Power system qualification', ph:'Qualify', s:'2027-03-22', e:'2027-04-08', as:'2027-03-22', ae:'2027-04-05'},
+    {g:'bus', id:'bus-test', t:'Bus functional test', ph:'Qualify', s:'2027-04-29', e:'2027-05-13', as:'2027-05-17', ae:'2027-05-28', bs:'2027-04-26', be:'2027-05-07'},
+    {g:'bus', id:'cdr', t:'Critical design review', ph:'Design', at:'2027-05-07'},
+    {g:'payload', id:'optics', t:'Imager optics alignment', ph:'Build', s:'2027-03-08', e:'2027-04-01', as:'2027-03-08', ae:'2027-04-02'},
+    {g:'payload', id:'detector', t:'Detector calibration', ph:'Qualify', s:'2027-04-05', e:'2027-04-19', as:'2027-04-12', ae:'2027-04-21'},
+    {g:'payload', id:'payload-tvac', t:'Payload thermal-vacuum', ph:'Qualify', s:'2027-04-19', e:'2027-04-27', as:'2027-04-22', ae:'2027-05-07', bs:'2027-04-19', be:'2027-04-27'},
+    {g:'payload', id:'payload-delivery', t:'Payload delivered', ph:'Qualify', at:'2027-07-02', bat:'2027-06-25'},
+    {g:'ait', id:'integration', t:'Spacecraft integration', ph:'Integrate', s:'2027-07-06', e:'2027-07-27', as:'2027-07-06', ae:'2027-07-27', bs:'2027-06-28', be:'2027-07-19'},
+    {g:'ait', id:'vibration', t:'Vibration and shock', ph:'Verify', s:'2027-07-28', e:'2027-08-04', as:'2027-07-28', ae:'2027-08-04', bs:'2027-07-20', be:'2027-07-27'},
+    {g:'ait', id:'tvac', t:'System thermal-vacuum', ph:'Verify', s:'2027-08-06', e:'2027-08-20', bs:'2027-07-29', be:'2027-08-12', missing:true},
+    {g:'ait', id:'emc', t:'EMC and RF compatibility', ph:'Verify', s:'2027-08-23', e:'2027-08-30', bs:'2027-08-16', be:'2027-08-23'},
+    {g:'ait', id:'psr', t:'Pre-ship review', ph:'Verify', at:'2027-09-10', bat:'2027-09-03'},
+    {g:'ground', id:'mcs', t:'Mission control software', ph:'Build', s:'2027-03-08', e:'2027-05-11', as:'2027-03-08', ae:'2027-05-14'},
+    {g:'ground', id:'station', t:'Ground station upgrade', ph:'Build', s:'2027-04-19', e:'2027-06-01', as:'2027-04-19', ae:'2027-05-21'},
+    {g:'ground', id:'comms-test', t:'End-to-end link test', ph:'Verify', s:'2027-06-01', e:'2027-06-08', as:'2027-05-24', ae:'2027-05-28'},
+    {g:'launch', id:'launch-contract', t:'Launch services confirmed', ph:'Design', at:'2027-04-16'},
+    {g:'launch', id:'shipment', t:'Ship to range', ph:'Campaign', s:'2027-09-14', e:'2027-09-20'},
+    {g:'launch', id:'campaign', t:'Launch campaign', ph:'Campaign', s:'2027-09-21', e:'2027-10-08'},
+    {g:'launch', id:'frr', t:'Flight readiness review', ph:'Campaign', at:'2027-10-15'},
+    {g:'launch', id:'launch', t:'Launch window opens', ph:'Campaign', at:'2027-10-22'},
+    {g:'ops', id:'rehearsals', t:'Operations rehearsals', ph:'Verify', s:'2027-08-30', e:'2027-09-14'},
+    {g:'ops', id:'leop', t:'LEOP and commissioning', ph:'Operate', s:'2027-10-22', e:'2027-11-12'},
+    {g:'ops', id:'first-light', t:'First light', ph:'Operate', at:'2027-11-19'},
+  ];
+  const deps = [['pdr','structure'],['structure','avionics'],['eps','bus-test'],['avionics','bus-test'],['avionics','cdr'],
+    ['optics','detector'],['detector','payload-tvac'],['payload-tvac','payload-delivery'],['bus-test','integration'],['payload-delivery','integration'],
+    ['integration','vibration'],['vibration','tvac'],['tvac','emc'],['emc','psr'],['mcs','comms-test'],['station','comms-test'],['comms-test','rehearsals'],
+    ['psr','shipment'],['shipment','campaign'],['campaign','frr'],['frr','launch'],['launch','leop'],['leop','first-light'],['rehearsals','launch']];
+  const prints_unused = [
+    {id:'payload-tvac', kind:'risk', tag:'ANALYSIS // ALERT', head:'PAYLOAD TVAC +7D', text:'Margin to integration: zero.'},
+    {id:'station', kind:'note', tag:'ANALYSIS // NOTE', head:'GROUND STATION EARLY', text:'Link test can move up.'},
+    {id:'launch', kind:'note', tag:'OFF-WORLD // NOTE', head:'WINDOW 22 OCT – 05 NOV', text:'Miss it and the launch slips to Q1.'},
+  ];
+  const holidays = ['2027-04-02','2027-05-31','2027-07-05','2027-09-06','2027-10-09','2027-10-16'];
+
+  const kanjiGroup = {bus:['壱','機体'], payload:['弐','観測器'], ait:['参','組立試験'], ground:['肆','地上系'], launch:['伍','打上げ'], ops:['陸','運用']};
+  const notes = [
+    {id:'payload-tvac', kind:'risk', seal:'危', head:'Payload TVAC ten days late', text:'Margin to integration is now zero.'},
+    {id:'station', kind:'note', seal:'記', head:'Ground station early', text:'The link test can move up a week.'},
+    {id:'launch', kind:'note', seal:'記', head:'Window 22 Oct – 5 Nov', text:'Miss it and launch slips to Q1.'},
+  ];
+
+  const el = (n, a, p) => { const x = document.createElementNS(NS, n); for (const k in a) x.setAttribute(k, a[k]); (p || svg).appendChild(x); return x; };
+  const tx = (x, y, s, a, p) => { const t = el('text', Object.assign({x, y}, a), p); t.textContent = s; return t; };
+
+  const B = {x:30, y:142, w:W - 60, h:H - 142 - 22};
+  const tagW = 34;
+  const M = {left:B.x + 22 + tagW + 8, right:B.x + B.w - 22};
+  const colT = 236, colP = 78, colD = 50;
+  const x0 = M.left + colT + colP + colD + 16;
+  const rail = 236;
+  const x1 = M.right - rail - 28;
+  const plotW = x1 - x0;
+  const dayMs = 86400000, totalDays = (win1 - win0) / dayMs;
+  const X = d => x0 + ((new Date(d + 'T00:00:00Z') - win0) / dayMs) / totalDays * plotW;
+  const dayW = plotW / totalDays;
+  const Xe = d => X(d) + dayW;
+  const D = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / dayMs);
+  const axisTop = 162, rowTop = 218, rowH = 18, headH = 22;
+
+  // defs
+  const defs = el('defs', {});
+  const glow = el('filter', {id:'glow', filterUnits:'userSpaceOnUse', x:'0', y:'0', width:'1600', height:'900'}, defs);
+  el('feGaussianBlur', {stdDeviation:'6', result:'b'}, glow);
+  const gm = el('feMerge', {}, glow); el('feMergeNode', {in:'b'}, gm); el('feMergeNode', {in:'SourceGraphic'}, gm);
+  const hatch = el('pattern', {id:'hatch', width:'5', height:'5', patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)'}, defs);
+  el('rect', {width:'5', height:'5', fill:C.paper}, hatch);
+  el('line', {x1:'0', y1:'0', x2:'0', y2:'5', stroke:C.roof, 'stroke-width':'2'}, hatch);
+  // seigaiha
+  const wave = el('pattern', {id:'wave', width:'20', height:'10', patternUnits:'userSpaceOnUse'}, defs);
+  for (const [cx, cy] of [[0,10],[20,10],[10,5]]) for (const r of [10, 7, 4]) el('circle', {cx, cy, r, fill:r === 10 ? C.washi : 'none', stroke:C.sea, 'stroke-width':'.8', opacity:'.9'}, wave);
+  const arrow = el('marker', {id:'arrow', viewBox:'0 0 8 8', refX:'7', refY:'4', markerWidth:'6', markerHeight:'6', orient:'auto'}, defs);
+  el('path', {d:'M0,0 L8,4 L0,8 z', fill:C.ghost}, arrow);
+  const inkArrow = el('marker', {id:'ink-arrow', viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'8', markerHeight:'8', orient:'auto'}, defs);
+  el('path', {d:'M0,0 L10,5 L0,10 z', fill:C.ink}, inkArrow);
+  const redArrow = el('marker', {id:'red-arrow', viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'8', markerHeight:'8', orient:'auto'}, defs);
+  el('path', {d:'M0,0 L10,5 L0,10 z', fill:C.lacquer}, redArrow);
+  const sky = el('linearGradient', {id:'sky', x1:'0', y1:'0', x2:'0', y2:'1'}, defs);
+  el('stop', {offset:'0', 'stop-color':'#23304F'}, sky); el('stop', {offset:'.18', 'stop-color':C.night}, sky); el('stop', {offset:'1', 'stop-color':'#0A2226'}, sky);
+
+  // night river backdrop, lantern string
+  el('rect', {x:0, y:0, width:W, height:H, fill:'url(#sky)'});
+  const cordY = x => 28 + 16 * Math.sin(Math.PI * (x - 560) / 1000);
+  el('path', {d:`M560,28 Q1060,60 1570,28`, fill:'none', stroke:C.wood, 'stroke-width':1.4});
+  const lanternGlyph = (cx, cy, s, p, solid = true) => {
+    const g = el('g', {transform:`translate(${cx},${cy}) scale(${s})`}, p);
+    if (solid) {
+      el('rect', {x:-4.2, y:-8, width:8.4, height:2.4, rx:.6, fill:C.ink}, g);
+      el('rect', {x:-4.2, y:5.6, width:8.4, height:2.4, rx:.6, fill:C.ink}, g);
+      el('ellipse', {cx:0, cy:0, rx:6.4, ry:6.4, fill:C.lantern}, g);
+      for (const yy of [-3.2, 0, 3.2]) el('path', {d:`M${-Math.sqrt(41 - yy*yy)},${yy} H${Math.sqrt(41 - yy*yy)}`, stroke:'#8E2414', 'stroke-width':.6}, g);
+    } else {
+      el('path', {d:'M-4.2,-6.8 H4.2 M-4.2,6.8 H4.2', stroke:C.ghost, 'stroke-width':1.2}, g);
+      el('ellipse', {cx:0, cy:0, rx:6.4, ry:6.4, fill:'none', stroke:C.ghost, 'stroke-width':1, 'stroke-dasharray':'2 1.6'}, g);
+    }
+    return g;
+  };
+  for (let x = 600; x < 1560; x += 64) {
+    const yy = 28 + (60 - 28) * 4 * ((x - 560) / 1010) * (1 - (x - 560) / 1010) * 0.5 + 10;
+    el('line', {x1:x, x2:x, y1:yy - 12, y2:yy - 6, stroke:C.wood, 'stroke-width':1});
+    el('circle', {cx:x, cy:yy + 4, r:12, fill:C.lantern, opacity:.35, filter:'url(#glow)'});
+    lanternGlyph(x, yy + 4, 1.3);
+  }
+  tx(W - 44, 120, 'DIRECTION STUDY · NOT RENDERER OUTPUT', {'text-anchor':'end', 'font-family':F.goth, 'font-size':11.5, fill:C.mist, 'letter-spacing':'.16em'});
+
+  // 扁額 plaque
+  el('rect', {x:34, y:22, width:500, height:108, fill:C.lacquer});
+  el('rect', {x:42, y:30, width:484, height:92, fill:'#1B1512'});
+  el('rect', {x:47, y:35, width:474, height:82, fill:'none', stroke:C.gold, 'stroke-width':1});
+  tx(64, 78, '計画表', {'font-family':F.deco, 'font-weight':700, 'font-size':38, fill:C.gold, 'letter-spacing':'.12em'});
+  tx(222, 76, 'HALCYON-1', {'font-family':F.deco, 'font-weight':700, 'font-size':34, fill:C.washi, 'letter-spacing':'.04em'});
+  tx(66, 106, 'PROGRAMME BOARD · 二〇二七年 · 工学暦', {'font-family':F.goth, 'font-weight':500, 'font-size':13, fill:C.gold, 'letter-spacing':'.2em'});
+
+  // board
+  el('rect', {x:B.x, y:B.y, width:B.w, height:B.h, fill:C.lacquer});
+  el('rect', {x:B.x + 8, y:B.y + 8, width:B.w - 16, height:B.h - 16, fill:C.washi});
+  el('rect', {x:B.x + 12, y:B.y + 12, width:B.w - 24, height:B.h - 24, fill:'none', stroke:C.goldD, 'stroke-width':.8});
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const grain = el('g', {stroke:C.woodL, 'stroke-width':.6, opacity:.35, fill:'none'});
+  for (let i = 0; i < 46; i++) { const yy = B.y + 16 + rnd() * (B.h - 32), a = rnd() * 6; el('path', {d:`M${B.x + 14},${yy} C${B.x + 400},${yy - a} ${B.x + 1000},${yy + a} ${B.x + B.w - 14},${yy - a / 2}`}, grain); }
+
+  // rows
+  const rows = []; let y = rowTop;
+  const spans = [];
+  sectors.forEach((a, i) => { const s = y; rows.push({kind:'head', a, i, y}); y += headH; for (const it of items.filter(t => t.g === a.id)) { rows.push({kind:'item', it, y}); it.y = y; y += rowH; } spans.push({a, i, y0:s, y1:y}); });
+  const plotTop = rowTop - 2, plotBot = y + 2;
+
+  // calendar
+  for (let d = new Date(win0); d < win1; d = new Date(d.getTime() + dayMs)) {
+    const iso = d.toISOString().slice(0, 10), w = d.getUTCDay();
+    if (w === 0 || w === 6) el('rect', {x:X(iso), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.ink, opacity:.035});
+  }
+  for (const h of holidays) el('rect', {x:X(h), y:plotTop, width:dayW, height:plotBot - plotTop, fill:C.gold, opacity:.35});
+
+  // launch window: a sea of waves
+  const lw0 = X('2027-10-22'), lw1 = Xe('2027-11-05');
+  el('rect', {x:lw0, y:plotTop, width:lw1 - lw0, height:plotBot - plotTop, fill:'url(#wave)', opacity:.42});
+  el('line', {x1:lw0, x2:lw0, y1:plotTop, y2:plotBot, stroke:C.sea, 'stroke-width':1});
+  el('line', {x1:lw1, x2:lw1, y1:plotTop, y2:plotBot, stroke:C.sea, 'stroke-width':1});
+
+  // axis
+  const quarters = [['2027-03-01','2027-04-01','第一四半期'],['2027-04-01','2027-07-01','第二四半期'],['2027-07-01','2027-10-01','第三四半期'],['2027-10-01','2027-12-01','第四四半期']];
+  for (const [a, b, l] of quarters) {
+    el('rect', {x:X(a) + 1, y:axisTop, width:X(b) - X(a) - 2, height:20, fill:'#1B1512'});
+    tx((X(a) + X(b))/2, axisTop + 15, l, {'text-anchor':'middle', 'font-family':F.deco, 'font-weight':700, 'font-size':13, fill:C.gold, 'letter-spacing':'.18em'});
+  }
+  const months = ['2027-03-01','2027-04-01','2027-05-01','2027-06-01','2027-07-01','2027-08-01','2027-09-01','2027-10-01','2027-11-01','2027-12-01'];
+  const mName = ['三月','四月','五月','六月','七月','八月','九月','十月','十一月'];
+  months.forEach((m, i) => {
+    el('line', {x1:X(m), x2:X(m), y1:axisTop + 22, y2:plotBot, stroke:C.ink, 'stroke-width':.8, opacity:.2});
+    if (i < mName.length) tx(X(m) + 7, axisTop + 42, mName[i], {'font-family':F.mincho, 'font-weight':700, 'font-size':15, fill:C.ink, 'letter-spacing':'.06em'});
+  });
+
+  // table header
+  const hy = axisTop + 42;
+  tx(M.left + 4, hy, '作業 · WORK', {'font-family':F.goth, 'font-weight':700, 'font-size':12, fill:C.muted, 'letter-spacing':'.14em'});
+  tx(M.left + colT, hy, '段階', {'font-family':F.goth, 'font-weight':700, 'font-size':12, fill:C.muted, 'letter-spacing':'.14em'});
+  tx(M.left + colT + colP + colD - 4, hy, '差 Δ', {'text-anchor':'end', 'font-family':F.goth, 'font-weight':700, 'font-size':12, fill:C.muted, 'letter-spacing':'.1em'});
+  el('line', {x1:M.left - tagW - 8, x2:x1, y1:rowTop - 5, y2:rowTop - 5, stroke:C.ink, 'stroke-width':1.4});
+
+  // 木札 hanging tags, vertical text spanning each group
+  for (const s of spans) {
+    const tx0 = M.left - tagW - 8, [num, name] = kanjiGroup[s.a.id];
+    el('path', {d:`M${tx0 + tagW/2},${s.y0 - 3} V${s.y0 + 4}`, stroke:C.ink, 'stroke-width':1});
+    el('path', {d:`M${tx0 + 4},${s.y0 + 4} L${tx0 + tagW/2},${s.y0 + 1} L${tx0 + tagW - 4},${s.y0 + 4} V${s.y1 - 4} H${tx0 + 4} Z`, fill:C.woodL, stroke:C.wood, 'stroke-width':1});
+    const label = num + '・' + name, fs = Math.min(14.5, (s.y1 - s.y0 - 18) / (label.length * 1.12));
+    tx(tx0 + tagW/2, s.y0 + 10, label, {'writing-mode':'vertical-rl', 'font-family':F.deco, 'font-weight':700, 'font-size':fs.toFixed(1), fill:C.ink, 'letter-spacing':'.1em'});
+  }
+
+  // group heads and rows
+  for (const r of rows) {
+    if (r.kind === 'head') {
+      el('rect', {x:M.left, y:r.y + 2, width:x1 - M.left, height:headH - 3, fill:C.roof, opacity:.14});
+      el('line', {x1:M.left, x2:x1, y1:r.y + headH - 1, y2:r.y + headH - 1, stroke:C.roof, 'stroke-width':1, opacity:.6});
+      tx(M.left + 6, r.y + 16.5, r.a.title, {'font-family':F.deco, 'font-weight':700, 'font-size':14.5, fill:C.ink, 'letter-spacing':'.03em'});
+    } else {
+      const it = r.it;
+      tx(M.left + 10, r.y + 13.5, it.t, {'font-family':F.mincho, 'font-size':13, fill:C.ink});
+      tx(M.left + colT, r.y + 13, it.ph, {'font-family':F.goth, 'font-weight':500, 'font-size':11.5, fill:C.muted, 'letter-spacing':'.04em'});
+      if (it.ae && it.e) {
+        const d = D(it.e, it.ae);
+        tx(M.left + colT + colP + colD - 4, r.y + 13.5, (d > 0 ? '+' : '') + d + '日', {'text-anchor':'end', 'font-family':F.mincho, 'font-weight':700, 'font-size':13, fill:d > 0 ? C.lacquer : d < 0 ? C.roof : C.muted});
+      } else if (it.missing) {
+        tx(M.left + colT + colP + colD - 4, r.y + 13.5, '—', {'text-anchor':'end', 'font-family':F.mincho, 'font-size':13, fill:C.muted});
+      }
+      el('line', {x1:M.left, x2:x1, y1:r.y + rowH, y2:r.y + rowH, stroke:C.ink, 'stroke-width':.5, opacity:.12});
+    }
+  }
+  const lwl = el('g', {});
+  el('rect', {x:lw1 - 176, y:rows[0].y + 3, width:172, height:16, fill:C.paper, opacity:.95}, lwl);
+  tx(lw1 - 8, rows[0].y + 15.5, '出航の窓 · LAUNCH WINDOW', {'text-anchor':'end', 'font-family':F.deco, 'font-weight':700, 'font-size':12, fill:C.sea, 'letter-spacing':'.06em'}, lwl);
+
+  // marks
+  const anchor = {};
+  const marks = el('g', {});
+  for (const it of items) {
+    const cy = it.y + rowH/2;
+    if (it.at) {
+      const x = X(it.at) + dayW/2;
+      if (it.bat) lanternGlyph(X(it.bat) + dayW/2, cy, 1, marks, false);
+      lanternGlyph(x, cy, 1, marks, true);
+      anchor[it.id] = {x:x + 7, y:cy, xl:x - 7};
+      continue;
+    }
+    if (it.bs && (it.bs !== it.s || it.be !== it.e)) el('rect', {x:X(it.bs), y:cy - 7, width:Xe(it.be) - X(it.bs), height:13, rx:2, fill:'none', stroke:C.ghost, 'stroke-width':1, 'stroke-dasharray':'3 2'}, marks);
+    el('rect', {x:X(it.s), y:cy - 5, width:Xe(it.e) - X(it.s), height:8, rx:2, fill:it.missing ? 'url(#hatch)' : C.roof, stroke:it.missing ? C.roof : 'none', 'stroke-width':1}, marks);
+    if (it.as) el('rect', {x:X(it.as), y:cy + 4, width:Xe(it.ae) - X(it.as), height:2.6, fill:C.lacquer}, marks);
+    anchor[it.id] = {x:Xe(it.e), y:cy, xl:X(it.s)};
+  }
+  const dg = el('g', {fill:'none', stroke:C.ghost, 'stroke-width':1});
+  svg.insertBefore(dg, marks);
+  for (const [a, b] of deps) {
+    const A = anchor[a], Bn = anchor[b]; if (!A || !Bn) continue;
+    const d = (Bn.xl - 6 >= A.x + 4)
+      ? `M${A.x},${A.y} H${Bn.xl - 6} V${Bn.y} H${Bn.xl - 1}`
+      : `M${A.x},${A.y} H${A.x + 6} V${Bn.y - (Bn.y > A.y ? rowH/2 : -rowH/2)} H${Bn.xl - 6} V${Bn.y} H${Bn.xl - 1}`;
+    el('path', {d, 'marker-end':'url(#arrow)'}, dg);
+  }
+
+  // today: indigo line, paper lantern on the axis
+  const ax = X(ASOF) + dayW/2;
+  el('line', {x1:ax, x2:ax, y1:axisTop + 26, y2:plotBot, stroke:C.indigo, 'stroke-width':1.6});
+  const ly0 = axisTop + 36;
+  el('circle', {cx:ax, cy:ly0, r:14, fill:C.gold, opacity:.35, filter:'url(#glow)'});
+  el('rect', {x:ax - 5, y:ly0 - 12, width:10, height:3, rx:1, fill:C.ink});
+  el('rect', {x:ax - 5, y:ly0 + 9, width:10, height:3, rx:1, fill:C.ink});
+  el('ellipse', {cx:ax, cy:ly0, rx:8, ry:9.5, fill:C.paper, stroke:C.indigo, 'stroke-width':1});
+  tx(ax, ly0 + 4.5, '今', {'text-anchor':'middle', 'font-family':F.deco, 'font-weight':700, 'font-size':11, fill:C.indigo});
+  el('rect', {x:ax - 74, y:plotBot + 6, width:148, height:20, fill:C.indigo});
+  tx(ax, plotBot + 20.5, '本日 八月二十日 · AS OF', {'text-anchor':'middle', 'font-family':F.goth, 'font-weight':700, 'font-size':11.5, fill:C.paper, 'letter-spacing':'.08em'});
+
+  // 掛軸 hanging scrolls
+  const rx0 = x1 + 28;
+  tx(rx0 + rail/2, axisTop + 15, '掲示 · NOTICES', {'text-anchor':'middle', 'font-family':F.deco, 'font-weight':700, 'font-size':14, fill:C.ink, 'letter-spacing':'.16em'});
+  let lastBottom = axisTop + 26;
+  const wrap = (s, n) => { const out = []; let line = ''; for (const w of s.split(' ')) { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; } out.push(line.trim()); return out; };
+  notes.forEach(c => {
+    const A = anchor[c.id]; const head = wrap(c.head, 17); const body = wrap(c.text, 26);
+    const bh = 46 + head.length * 21 + body.length * 18;
+    const by = Math.max(A.y - bh/2, lastBottom + 34); lastBottom = by + bh;
+    const sx = rx0 + 10, sw = rail - 20;
+    el('path', {d:`M${rx0 + rail/2 - 26},${by - 6} L${rx0 + rail/2},${by - 16} L${rx0 + rail/2 + 26},${by - 6}`, fill:'none', stroke:C.ink, 'stroke-width':.8});
+    el('rect', {x:sx, y:by - 4, width:sw, height:bh + 8, fill:C.roof});
+    el('rect', {x:sx + 7, y:by + 6, width:sw - 14, height:bh - 12, fill:C.paper});
+    el('rect', {x:sx - 6, y:by - 8, width:sw + 12, height:6, rx:3, fill:C.wood});
+    el('rect', {x:sx - 8, y:by + bh + 3, width:sw + 16, height:7, rx:3.5, fill:C.wood});
+    const sealCol = c.kind === 'risk' ? C.lacquer : C.indigo;
+    el('rect', {x:sx + sw - 38, y:by + 14, width:22, height:22, rx:2, fill:sealCol});
+    tx(sx + sw - 27, by + 30.5, c.seal, {'text-anchor':'middle', 'font-family':F.deco, 'font-weight':700, 'font-size':15, fill:C.paper});
+    head.forEach((l, k) => tx(sx + 18, by + 32 + k * 21, l, {'font-family':F.deco, 'font-weight':700, 'font-size':16.5, fill:C.ink}));
+    body.forEach((l, k) => tx(sx + 18, by + 36 + head.length * 21 + k * 18, l, {'font-family':F.mincho, 'font-size':13.5, fill:C.muted}));
+    el('path', {d:`M${sx - 2},${by + bh/2} H${x1 + 12} V${A.y} H${A.x + 8}`, fill:'none', stroke:sealCol, 'stroke-width':1.1, 'marker-end':c.kind === 'risk' ? 'url(#red-arrow)' : 'url(#ink-arrow)'});
+  });
+
+  // legend
+  const lgy = B.y + B.h - 20;
+  tx(M.left - tagW - 8, lgy + 4.5, '凡例', {'font-family':F.deco, 'font-weight':700, 'font-size':14, fill:C.ink, 'letter-spacing':'.2em'});
+  let lx = M.left + 20;
+  const entry = (label, draw) => { draw(lx); tx(lx + 30, lgy + 4.5, label, {'font-family':F.goth, 'font-weight':500, 'font-size':12, fill:C.ink, 'letter-spacing':'.06em'}); lx += 30 + label.length * 7.4 + 30; };
+  entry('基準 baseline', x => el('rect', {x, y:lgy - 6, width:22, height:12, rx:2, fill:'none', stroke:C.ghost, 'stroke-dasharray':'3 2'}));
+  entry('計画 plan', x => el('rect', {x, y:lgy - 4, width:22, height:8, rx:2, fill:C.roof}));
+  entry('実績 actual', x => el('rect', {x, y:lgy - 1.3, width:22, height:2.6, fill:C.lacquer}));
+  entry('未観測 not yet observed', x => el('rect', {x, y:lgy - 4, width:22, height:8, rx:2, fill:'url(#hatch)', stroke:C.roof}));
+  entry('関門 gate', x => lanternGlyph(x + 11, lgy, 1, svg, true));
+  entry('休日 holiday', x => el('rect', {x, y:lgy - 7, width:22, height:14, fill:C.gold, opacity:.5}));
+  entry('依存 dependency', x => el('path', {d:`M${x},${lgy} H${x + 20}`, stroke:C.ghost, 'marker-end':'url(#arrow)'}));
+})();
+</script>
