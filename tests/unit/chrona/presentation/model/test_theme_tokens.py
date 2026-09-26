@@ -140,3 +140,56 @@ def test_progress_track_is_optional_and_range_checked(inset, radius, expected):
         assert raised.value.path.endswith(expected)
     else:
         assert view.progress_track("progress-fill") == expected
+
+
+def _theme_with_annotation_container(value):
+    theme = _theme()
+    theme["body"]["values"]["container"] = {"type": "annotationContainer", "value": value}
+    theme["body"]["roles"]["annotation"] = {"annotationContainer": "container"}
+    return theme
+
+
+def test_annotation_container_is_none_without_the_binding():
+    assert ThemeTokenView(_theme()).annotation_container("annotation") is None
+
+
+def test_annotation_container_rectangle_and_balloon_are_unchanged_by_465():
+    rectangle = ThemeTokenView(_theme_with_annotation_container(
+        {"outline": "rectangle", "cornerRadius": 0.2})).annotation_container("annotation")
+    assert rectangle.outline == "rectangle" and rectangle.corner_radius == Decimal("0.2")
+    assert rectangle.tail_base is None and rectangle.image_ref is None
+
+    balloon = ThemeTokenView(_theme_with_annotation_container(
+        {"outline": "balloon", "cornerRadius": 0.1, "tailBaseEm": 0.6})).annotation_container("annotation")
+    assert balloon.outline == "balloon" and balloon.tail_base == Decimal("0.6")
+    assert balloon.image_ref is None
+
+
+def test_annotation_container_image_round_trips_reference_and_insets():
+    value = {"outline": "image", "image": "chrona:frame", "cornerRadius": 0,
+            "sliceInsetsEm": {"top": 0.9, "right": 0.6, "bottom": 0.9, "left": 0.6},
+            "contentInsetEm": {"top": 1.1, "right": 0.8, "bottom": 1.1, "left": 0.8}}
+    container = ThemeTokenView(_theme_with_annotation_container(value)).annotation_container("annotation")
+    assert container.outline == "image"
+    assert container.image_ref == "chrona:frame"
+    assert container.tail_base is None
+    assert container.slice_insets_em == (Decimal("0.9"), Decimal("0.6"), Decimal("0.9"), Decimal("0.6"))
+    assert container.content_insets_em == (Decimal("1.1"), Decimal("0.8"), Decimal("1.1"), Decimal("0.8"))
+
+
+@pytest.mark.parametrize("mutation,expected_suffix", [
+    (lambda value: value.pop("image"), "annotationContainer/image"),
+    (lambda value: value.update(image=""), "annotationContainer/image"),
+    (lambda value: value.update(cornerRadius=0.1), "annotationContainer/cornerRadius"),
+    (lambda value: value.pop("sliceInsetsEm"), "annotationContainer/sliceInsetsEm"),
+    (lambda value: value["sliceInsetsEm"].update(top=-1), "annotationContainer/sliceInsetsEm"),
+    (lambda value: value.pop("contentInsetEm"), "annotationContainer/contentInsetEm"),
+])
+def test_annotation_container_image_rejects_missing_or_invalid_fields(mutation, expected_suffix):
+    value = {"outline": "image", "image": "chrona:frame", "cornerRadius": 0,
+            "sliceInsetsEm": {"top": 0.9, "right": 0.6, "bottom": 0.9, "left": 0.6},
+            "contentInsetEm": {"top": 1.1, "right": 0.8, "bottom": 1.1, "left": 0.8}}
+    mutation(value)
+    with pytest.raises(ThemeTokenError) as raised:
+        ThemeTokenView(_theme_with_annotation_container(value)).annotation_container("annotation")
+    assert raised.value.path.endswith(expected_suffix)

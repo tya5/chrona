@@ -37,8 +37,9 @@ from chrona.presentation.layout.routing import place_relation_route, relation_ro
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
+    IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
 )
+from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 
 
 @dataclass(frozen=True)
@@ -2249,6 +2250,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 return None
 
             tail_tip: tuple[float, float] | None = None
+            container = None
+            content_top = content_right = content_bottom = content_left = 0.0
             try:
                 if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
@@ -2271,12 +2274,21 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                         letter_spacing=float(annotation_treatment.letter_spacing),
                                                         text_transform=annotation_treatment.transform)
                                      for line in annotation_lines)
-                    annotation_size = (annotation_leading + text_width + annotation_trailing,
-                                       size * line_height * len(annotation_lines))
-                    candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
-                                                          annotation.fallback_ladder, preferred)
                     annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
                     container = request.theme_tokens.annotation_container(annotation_box_role)
+                    # An image-backed container (#465) declares a content
+                    # inset: Layout measures text into that smaller box, then
+                    # expands it by the inset to the paint box the search and
+                    # collision below actually use -- the box a rectangle or
+                    # balloon container already uses today, unchanged.
+                    content_top = content_right = content_bottom = content_left = 0.0
+                    if container is not None and container.outline == "image":
+                        content_top, content_right, content_bottom, content_left = (
+                            float(value) * size for value in container.content_insets_em)
+                    annotation_size = (annotation_leading + text_width + annotation_trailing + content_left + content_right,
+                                       size * line_height * len(annotation_lines) + content_top + content_bottom)
+                    candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
+                                                          annotation.fallback_ladder, preferred)
                     box, selected_rung, tail_tip = None, None, None
                     for candidate in candidates:
                         rung = candidate.candidate_id
@@ -2296,9 +2308,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                             region_bounds = LabelRect(*_bounds(timeline.bounds))
                             host_id = anchor_host.placement_id if anchor_host is not None else None
                             if candidate.connector.kind == "tail":
-                                if container is None or container[0] != "balloon":
+                                if container is None or container.outline != "balloon":
                                     raise LayoutError("E_LAYOUT_ANNOTATION_TAIL_REQUIRES_BALLOON", f"/annotations/{index}")
-                                corner_radius, tail_base = float(container[1]) * size, float(container[2]) * size
+                                corner_radius, tail_base = float(container.corner_radius) * size, float(container.tail_base) * size
                                 free_box, trial_tip, trials = nearest_free_tail_box(
                                     region=region_bounds, anchor=anchor_bounds, box_size=annotation_size,
                                     max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
@@ -2398,12 +2410,25 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             if tail_tip is not None:
                 container = request.theme_tokens.annotation_container(
                     semantic_binding(presentation.box_semantic_id).theme_role)
-                corner_radius, tail_base = float(container[1]) * size, float(container[2]) * size
+                corner_radius, tail_base = float(container.corner_radius) * size, float(container.tail_base) * size
                 outline = balloon_outline(bounds, tail_tip, corner_radius=corner_radius, tail_base=tail_base)
                 shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Balloon",
                                              annotation_bounds, path_commands=outline,
                                              semantic_id=presentation.box_semantic_id, annotation=presentation,
                                              paint_order=ANNOTATION_PAINT_ORDER))
+            elif container is not None and container.outline == "image":
+                icon = request.icon_assets.get(container.image_ref)
+                if icon is None or icon.kind != "raster":
+                    raise LayoutError("E_LAYOUT_ANNOTATION_IMAGE_UNRESOLVED", f"/annotations/{index}")
+                slice_insets_px = tuple(float(value) * size for value in container.slice_insets_em)
+                tiles = image_slice_tiles((bounds.x, bounds.y, bounds.width, bounds.height),
+                                          viewport=icon.viewport, slice_insets=slice_insets_px)
+                shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
+                                             annotation_bounds,
+                                             semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                             paint_order=ANNOTATION_PAINT_ORDER,
+                                             image_fill=LayoutImageFill(icon.content_identity, icon.viewport,
+                                                                        icon.payload, tiles)))
             else:
                 shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
                                              annotation_bounds,
@@ -2412,7 +2437,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
             annotation_text_slot = "annotations" if annotation_slot is not None else timeline.slot_id
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
-                                           inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role=annotation_text_role,
+                                           inline=bounds.x + annotation_leading + content_left,
+                                           baseline_block=bounds.y + content_top + size, typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                            collision_region="annotations", collision_domain=CollisionDomain(annotation_text_slot, "content"),
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,

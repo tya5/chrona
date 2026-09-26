@@ -113,8 +113,11 @@ properties:
               then:
                 properties:
                   value: {enum: [proportional, tabular]}
-            - description: "Annotation-container geometry is finite structured Theme data resolved before adapter invocation (#466)."
-              examples: [{type: annotationContainer, value: {outline: balloon, cornerRadius: 0.2, tailBaseEm: 0.6}}]
+            - description: "Annotation-container geometry is finite structured Theme data resolved before adapter invocation (#466, #465)."
+              examples: [{type: annotationContainer, value: {outline: balloon, cornerRadius: 0.2, tailBaseEm: 0.6}},
+                        {type: annotationContainer, value: {outline: image, image: "chrona:frame", cornerRadius: 0,
+                                                             sliceInsetsEm: {top: 0.6, right: 0.6, bottom: 0.6, left: 0.6},
+                                                             contentInsetEm: {top: 0.8, right: 0.8, bottom: 0.8, left: 0.8}}}]
               if:
                 properties: {type: {const: annotationContainer}}
               required: [type]
@@ -125,15 +128,46 @@ properties:
                     additionalProperties: false
                     required: [outline, cornerRadius]
                     properties:
-                      outline: {enum: [rectangle, balloon]}
+                      outline: {enum: [rectangle, balloon, image]}
                       cornerRadius: {type: number, minimum: 0}
                       tailBaseEm: {type: number, exclusiveMinimum: 0}
+                      image:
+                        description: "An icon-catalog raster entry bound as this container's backdrop artwork (#465); a View's visuals grammar can never select this use."
+                        type: string
+                        pattern: "^[A-Za-z][A-Za-z0-9-]*:[A-Za-z][A-Za-z0-9._-]*$"
+                      sliceInsetsEm:
+                        description: "The nine-slice fixed border (top/right/bottom/left, in em): each corner tile keeps this size while the middle stretches (#465)."
+                        type: object
+                        additionalProperties: false
+                        required: [top, right, bottom, left]
+                        properties:
+                          top: {type: number, minimum: 0}
+                          right: {type: number, minimum: 0}
+                          bottom: {type: number, minimum: 0}
+                          left: {type: number, minimum: 0}
+                      contentInsetEm:
+                        description: "The box Layout measures note text into (top/right/bottom/left, in em); the image is stretched to the resulting paint box (#465)."
+                        type: object
+                        additionalProperties: false
+                        required: [top, right, bottom, left]
+                        properties:
+                          top: {type: number, minimum: 0}
+                          right: {type: number, minimum: 0}
+                          bottom: {type: number, minimum: 0}
+                          left: {type: number, minimum: 0}
                     allOf:
                       - if:
                           properties: {outline: {const: balloon}}
                           required: [outline]
                         then:
                           required: [outline, cornerRadius, tailBaseEm]
+                      - if:
+                          properties: {outline: {const: image}}
+                          required: [outline]
+                        then:
+                          required: [outline, cornerRadius, image, sliceInsetsEm, contentInsetEm]
+                          properties:
+                            cornerRadius: {const: 0}
       roles:
         type: object
         description: "Semantic role bindings to named non-color tokens."

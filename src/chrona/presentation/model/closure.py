@@ -249,7 +249,7 @@ def resolve_draft_render(
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths,
-                                                                            _draft_view(resources)),
+                                                                            _draft_view(resources), _draft_theme_refs(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver)
@@ -333,7 +333,7 @@ def resolve_guided_draft_render(
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths,
-                                                                            _draft_view(resources)))
+                                                                            _draft_view(resources), _draft_theme_refs(resources)))
 
 
 def _declared_child(root: Path, relative: str) -> Path:
@@ -348,6 +348,25 @@ def _draft_view(resources: list[ClosureResource]) -> ViewContract:
     if not isinstance(view, ViewContract):
         raise _closure_kind_error("draft resources", "ViewContract", view)
     return view
+
+
+def _draft_theme_refs(resources: list[ClosureResource]) -> frozenset[str]:
+    """Resolve the draft Theme early enough to select its container-image refs (#465).
+
+    This mirrors the resolution `_draft_render_from_resources` performs
+    again later for the completed closure; both calls are pure and
+    deterministic, so resolving twice costs nothing beyond CPU.
+    """
+    by_kind = {item.kind: item for item in resources}
+    theme, scheme = by_kind.get("theme"), by_kind.get("color-scheme")
+    if theme is None or scheme is None:
+        return frozenset()
+    try:
+        resolved = resolve_theme(theme.contract.theme_input, scheme.contract.scheme_input,
+                                 scheme_content_identity=scheme.content_identity)
+    except ColorSchemeError:
+        return frozenset()  # The real error surfaces later, from the authoritative resolution.
+    return _theme_container_image_references(resolved)
 
 
 def _plain_value(value: Any) -> Any:
@@ -677,7 +696,8 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         view_contract = resources[1].contract
         if not isinstance(view_contract, ViewContract):
             raise _closure_kind_error("resolved View resource", "ViewContract", view_contract)
-        icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract)
+        icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract,
+                                        _theme_container_image_references(value))
     else:
         icon_assets = ()
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
@@ -702,14 +722,39 @@ def _safe_icon_address(address: str) -> bool:
                 and all(part not in {"", ".", ".."} for part in path.parts))
 
 
-def _selected_icon_references(view: ViewContract) -> set[str]:
-    selected: set[str] = set()
+def _selected_icon_references(view: ViewContract, extra: frozenset[str] = frozenset()) -> set[str]:
+    selected: set[str] = set(extra)
     for visual in view.view.visuals:
         if visual.ref is not None:
             selected.add(visual.ref)
         if visual.encoding is not None:
             selected.update(str(item) for item in visual.encoding.get("domain", {}).values())
     return selected
+
+
+def _theme_container_image_references(resolved_theme: Mapping[str, Any]) -> frozenset[str]:
+    """Return every icon-catalog reference a Theme binds as container artwork (#465).
+
+    A View's `visuals` grammar never selects these (Specification 64 §7);
+    without this, an entry named only by `annotationContainer.image` would
+    never be closed into `RenderClosure.icon_assets`, and Theme/Layout
+    resolution would fail with a stable ingress error for an entry the
+    pinned Context can actually supply.
+    """
+    body = resolved_theme.get("body")
+    roles = body.get("roles") if isinstance(body, Mapping) else None
+    if not isinstance(roles, Mapping):
+        return frozenset()
+    tokens = ThemeTokenView(resolved_theme)
+    references: set[str] = set()
+    for role in roles:
+        try:
+            container = tokens.annotation_container(str(role))
+        except ThemeTokenError:
+            continue  # Malformed tokens are diagnosed later, when the role is actually used.
+        if container is not None and container.outline == "image" and container.image_ref:
+            references.add(container.image_ref)
+    return frozenset(references)
 
 
 def _selected_icon_entry(catalog: IconCatalogContract, name: str) -> IconEntry:
@@ -738,9 +783,10 @@ def _selected_icon_entry(catalog: IconCatalogContract, name: str) -> IconEntry:
                      str(raw["alternative"]), normalized, source)
 
 
-def _selected_catalog_entries(catalog: IconCatalogContract, view: ViewContract) -> tuple[IconEntry, ...]:
+def _selected_catalog_entries(catalog: IconCatalogContract, view: ViewContract,
+                              theme_refs: frozenset[str] = frozenset()) -> tuple[IconEntry, ...]:
     names: set[str] = set()
-    for reference in _selected_icon_references(view):
+    for reference in _selected_icon_references(view, theme_refs):
         if reference.count(":") != 1:
             continue
         set_name, name = reference.split(":", 1)
@@ -752,7 +798,8 @@ def _selected_catalog_entries(catalog: IconCatalogContract, view: ViewContract) 
 
 
 def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[ClosureResource, ...],
-                      reader: SnapshotReader, view: ViewContract) -> tuple[IconAsset, ...]:
+                      reader: SnapshotReader, view: ViewContract,
+                      theme_refs: frozenset[str] = frozenset()) -> tuple[IconAsset, ...]:
     if not catalog_resources:
         return ()
     assets: list[IconAsset] = []
@@ -764,7 +811,7 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
         if reference is None:
             raise _closure_kind_error(f"icon catalog resource id={catalog_resource.id}", "declared Context icon catalog reference", reference)
         catalog = catalog_resource.contract
-        entries = _selected_catalog_entries(catalog, view)
+        entries = _selected_catalog_entries(catalog, view, theme_refs)
         for entry in entries:
             icon_id = f"{catalog_resource.contract.set_name}:{entry.name}"
             if entry.kind == "vector":
@@ -799,7 +846,8 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
 
 
 def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
-                            catalog_paths: tuple[Path, ...], view: ViewContract) -> tuple[IconAsset, ...]:
+                            catalog_paths: tuple[Path, ...], view: ViewContract,
+                            theme_refs: frozenset[str] = frozenset()) -> tuple[IconAsset, ...]:
     """Close exactly the explicit local Draft catalog files and their raster bytes."""
     paths_by_identity = {resource.content_identity: path for resource, path in zip(catalog_resources, catalog_paths)}
     assets: list[IconAsset] = []
@@ -809,7 +857,7 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
         catalog = resource.contract
         catalog_path = paths_by_identity[resource.content_identity]
         root = catalog_path.parent.resolve()
-        for entry in _selected_catalog_entries(catalog, view):
+        for entry in _selected_catalog_entries(catalog, view, theme_refs):
             icon_id = f"{catalog.set_name}:{entry.name}"
             if entry.kind == "vector":
                 paths = tuple(NormalizedIconPath(tuple(IconPathCommand(command.kind, command.points)

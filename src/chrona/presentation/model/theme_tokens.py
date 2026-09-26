@@ -41,6 +41,18 @@ class TextTreatment:
 
 
 @dataclass(frozen=True)
+class AnnotationContainerToken:
+    """One declared annotation-box outline (#466 rectangle/balloon, #465 image)."""
+
+    outline: str
+    corner_radius: Decimal
+    tail_base: Decimal | None = None
+    image_ref: str | None = None
+    slice_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
+    content_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
+
+
+@dataclass(frozen=True)
 class ThemeTokenView:
     """Non-persistent, typed view derived solely from resolved Theme v0.2.
 
@@ -252,8 +264,8 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
         return padding, radius
 
-    def annotation_container(self, role: str) -> tuple[str, Decimal, Decimal | None] | None:
-        """Return a declared annotation container's outline/tail geometry (#466).
+    def annotation_container(self, role: str) -> "AnnotationContainerToken | None":
+        """Return a declared annotation container's outline geometry (#466, #465).
 
         Absence (or a plain rectangle binding) means the role keeps today's
         plain rectangle box, byte-identical to a Theme without this token.
@@ -262,18 +274,40 @@ class ThemeTokenView:
         if not isinstance(binding, Mapping) or "annotationContainer" not in binding:
             return None
         value = self.token(role, "annotationContainer", "annotationContainer")
-        if not isinstance(value, Mapping) or value.get("outline") not in {"rectangle", "balloon"}:
+        if not isinstance(value, Mapping) or value.get("outline") not in {"rectangle", "balloon", "image"}:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer")
         outline = value["outline"]
         corner_radius = self._decimal(value.get("cornerRadius"), role, "annotationContainer/cornerRadius")
         if corner_radius is None or corner_radius < 0:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/cornerRadius")
         if outline == "rectangle":
-            return outline, corner_radius, None
-        tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
-        if tail_base is None or tail_base <= 0:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/tailBaseEm")
-        return outline, corner_radius, tail_base
+            return AnnotationContainerToken(outline, corner_radius, None, None, None, None)
+        if outline == "balloon":
+            tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
+            if tail_base is None or tail_base <= 0:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/tailBaseEm")
+            return AnnotationContainerToken(outline, corner_radius, tail_base, None, None, None)
+        # outline == "image" (#465): a nine-slice-stretchable icon-catalog
+        # raster entry bound as the container's backdrop. cornerRadius must
+        # be exactly 0 -- the artwork supplies its own corner treatment.
+        if corner_radius != 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/cornerRadius")
+        image_ref = value.get("image")
+        if not isinstance(image_ref, str) or not image_ref or image_ref.count(":") != 1:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/image")
+        slice_insets = self._insets(value.get("sliceInsetsEm"), role, "annotationContainer/sliceInsetsEm")
+        content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
+        return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets)
+
+    def _insets(self, value: Any, role: str, property_name: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
+        """Return a validated (top, right, bottom, left) em-relative inset quadruple."""
+        if not isinstance(value, Mapping):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        sides = tuple(self._decimal(value.get(side), role, f"{property_name}/{side}")
+                      for side in ("top", "right", "bottom", "left"))
+        if any(side is None or side < 0 for side in sides):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        return sides  # type: ignore[return-value]
 
     def _decimal(self, value: Any, role: str, property_name: str) -> Decimal | None:
         if value is None:

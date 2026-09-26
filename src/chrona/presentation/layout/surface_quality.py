@@ -171,6 +171,24 @@ class MarkPlacement:
 
 
 @dataclass(frozen=True)
+class LayoutImageFill:
+    """One completed nine-slice image fill for an annotation container (#465).
+
+    ``tiles`` pairs each source rect (in the raster asset's own pixel space)
+    with its destination rect (absolute Layout coordinates); Scene carries
+    this unchanged, and adapters only serialize it.
+    """
+
+    asset_identity: str
+    viewport: tuple[int, int]
+    payload: bytes
+    # Plain (x, y, width, height) float tuples, not the Decimal-based Rect:
+    # `image_slice_geometry.image_slice_tiles` works in the same float space
+    # as the rest of the annotation candidate search (LabelRect/floats).
+    tiles: tuple[tuple[tuple[float, float, float, float], tuple[float, float, float, float]], ...]
+
+
+@dataclass(frozen=True)
 class ShapePlacement:
     """Renderer-neutral completed non-text geometry for Scene projection."""
 
@@ -187,6 +205,7 @@ class ShapePlacement:
     annotation: AnnotationPresentation | None = None
     corner_radius: float = 0.0
     path_commands: tuple[PathCommand, ...] = ()
+    image_fill: LayoutImageFill | None = None
 
 
 @dataclass(frozen=True)
