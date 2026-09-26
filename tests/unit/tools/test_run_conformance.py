@@ -58,10 +58,12 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
     ids = [item.check_id for item in runner.CHECKS]
 
     assert ids.count("scene-perceptibility") == 1
+    assert ids.count("svg-explicit-fill") == 1
     assert ids.count("presentation-contrast") == 1
     assert ids.count("presentation-font-identity") == 1
     assert ids.count("example-reachability") == 1
-    assert (ids.index("example-inventory") < ids.index("example-reachability") < ids.index("scene-perceptibility")
+    assert (ids.index("example-inventory") < ids.index("example-reachability") < ids.index("svg-explicit-fill")
+            < ids.index("scene-perceptibility")
             < ids.index("presentation-contrast") < ids.index("presentation-font-identity")
             < ids.index("diagnostic-inventory"))
 

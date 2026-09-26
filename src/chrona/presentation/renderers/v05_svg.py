@@ -29,14 +29,17 @@ def render_v05_svg(surface: SceneSurface) -> str:
             elif command.kind == "quadratic": parts.append("Q" + " ".join(number(value) for point in command.points for value in point))
             else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         return "".join(parts)
-    def attrs(paint: ScenePaint, *, fill: bool, stroke: bool) -> str:
+    def attrs(paint: ScenePaint, *, fill: bool, stroke: bool,
+              fill_override: str | None = None) -> str:
         result = [f'opacity="{number(paint.opacity)}"']
         if fill:
             if paint.fill is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
             value = paint.fill
             if paint.gradient is not None:
                 value = f"url(#{gradient_id(paint)})"
-            result.append(f'fill="{escape(value, quote=True)}"')
+        else:
+            value = fill_override if fill_override is not None else "none"
+        result.append(f'fill="{escape(value, quote=True)}"')
         if stroke:
             if paint.stroke is None or paint.stroke_width is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
             result.extend((f'stroke="{escape(paint.stroke, quote=True)}"', f'stroke-width="{number(paint.stroke_width)}"'))
@@ -137,7 +140,8 @@ def render_v05_svg(surface: SceneSurface) -> str:
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
         if node.kind == "Rect":
-            appearance = (f'fill="url(#{pattern_id(node.pattern, paint)})" ' + attrs(paint, fill=False, stroke=True)
+            appearance = (attrs(paint, fill=False, stroke=True,
+                                fill_override=f"url(#{pattern_id(node.pattern, paint)})")
                           if node.pattern is not None else attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
             radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
             clip = f' clip-path="url(#clip-{escape(node.clip_source_id, quote=True)})"' if node.clip_source_id else ""
@@ -164,7 +168,7 @@ def render_v05_svg(surface: SceneSurface) -> str:
             if len(node.points) < 2 or paint.stroke is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             start = f' marker-start="url(#{marker_id(paint.stroke, node.marker_start)})"' if node.marker_start else ""
             end = f' marker-end="url(#{marker_id(paint.stroke, node.marker_end)})"' if node.marker_end else ""
-            append(node, f'<path {common} d="{path_data(node)}" fill="none" {attrs(paint, fill=False, stroke=True)}{start}{end}/>')
+            append(node, f'<path {common} d="{path_data(node)}" {attrs(paint, fill=False, stroke=True)}{start}{end}/>')
         elif node.kind == "Icon":
             if node.icon_kind not in {"vector", "raster"} or node.icon_asset_identity is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

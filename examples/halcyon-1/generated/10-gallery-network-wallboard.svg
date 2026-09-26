@@ -1,16 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img">
 <rect width="1920" height="1080" opacity="1" fill="#0B1220"/>
-<path data-scene-id="network-edge:avionics-bustest" data-source-ref="avionics-bustest" data-purpose="network-edge" d="M638.32 152L679.585 152" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
-<path data-scene-id="network-edge:avionics-cdr" data-source-ref="avionics-cdr" data-purpose="network-edge" d="M638.32 152L679.585 152L679.585 212" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
-<path data-scene-id="network-edge:bustest-integration" data-source-ref="bustest-integration" data-purpose="network-edge" d="M810.88 152L882.43 152" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
-<path data-scene-id="network-edge:campaign-frr" data-source-ref="campaign-frr" data-purpose="network-edge" d="M188.83 452L270.325 452L270.325 272" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
-<path data-scene-id="network-edge:delivery-integration" data-source-ref="delivery-integration" data-purpose="network-edge" d="M395.335 212L395.335 172L882.43 172L882.43 152" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
-<path data-scene-id="network-edge:frr-launch" data-source-ref="frr-launch" data-purpose="critical-edge" d="M432.22 272L432.22 212L498.265 212" fill="none" opacity="1" stroke="#FF6B6B" stroke-width="1"/>
-<path data-scene-id="network-edge:launch-leop" data-source-ref="launch-leop" data-purpose="critical-edge" d="M655.585 212L655.585 272L679.585 272" fill="none" opacity="1" stroke="#FF6B6B" stroke-width="1"/>
-<path data-scene-id="network-edge:leop-firstlight" data-source-ref="leop-firstlight" data-purpose="critical-edge" d="M858.43 272L858.43 212L882.43 212" fill="none" opacity="1" stroke="#FF6B6B" stroke-width="1"/>
-<path data-scene-id="network-edge:pdr-structure" data-source-ref="pdr-structure" data-purpose="network-edge" d="M246.325 152L270.325 152" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
-<path data-scene-id="network-edge:structure-avionics" data-source-ref="structure-avionics" data-purpose="network-edge" d="M474.265 152L498.265 152" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
-<path data-scene-id="network-edge:tvac-delivery" data-source-ref="tvac-delivery" data-purpose="network-edge" d="M239.905 272L239.905 212L270.325 212" fill="none" opacity="1" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:avionics-bustest" data-source-ref="avionics-bustest" data-purpose="network-edge" d="M638.32 152L679.585 152" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:avionics-cdr" data-source-ref="avionics-cdr" data-purpose="network-edge" d="M638.32 152L679.585 152L679.585 212" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:bustest-integration" data-source-ref="bustest-integration" data-purpose="network-edge" d="M810.88 152L882.43 152" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:campaign-frr" data-source-ref="campaign-frr" data-purpose="network-edge" d="M188.83 452L270.325 452L270.325 272" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:delivery-integration" data-source-ref="delivery-integration" data-purpose="network-edge" d="M395.335 212L395.335 172L882.43 172L882.43 152" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:frr-launch" data-source-ref="frr-launch" data-purpose="critical-edge" d="M432.22 272L432.22 212L498.265 212" opacity="1" fill="none" stroke="#FF6B6B" stroke-width="1"/>
+<path data-scene-id="network-edge:launch-leop" data-source-ref="launch-leop" data-purpose="critical-edge" d="M655.585 212L655.585 272L679.585 272" opacity="1" fill="none" stroke="#FF6B6B" stroke-width="1"/>
+<path data-scene-id="network-edge:leop-firstlight" data-source-ref="leop-firstlight" data-purpose="critical-edge" d="M858.43 272L858.43 212L882.43 212" opacity="1" fill="none" stroke="#FF6B6B" stroke-width="1"/>
+<path data-scene-id="network-edge:pdr-structure" data-source-ref="pdr-structure" data-purpose="network-edge" d="M246.325 152L270.325 152" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:structure-avionics" data-source-ref="structure-avionics" data-purpose="network-edge" d="M474.265 152L498.265 152" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
+<path data-scene-id="network-edge:tvac-delivery" data-source-ref="tvac-delivery" data-purpose="network-edge" d="M239.905 272L239.905 212L270.325 212" opacity="1" fill="none" stroke="#8EA0BA" stroke-width="1"/>
 <rect data-scene-id="network-node:pdr" data-source-ref="pdr" data-purpose="network-node" x="64" y="134" width="182.325" height="36" opacity="1" fill="#16213A"/>
 <rect data-scene-id="network-node:optics" data-source-ref="optics" data-purpose="network-node" x="64" y="194" width="172.995" height="36" opacity="1" fill="#16213A"/>
 <rect data-scene-id="network-node:payload-tvac" data-source-ref="payload-tvac" data-purpose="network-node" x="64" y="254" width="175.905" height="36" opacity="1" fill="#16213A"/>
