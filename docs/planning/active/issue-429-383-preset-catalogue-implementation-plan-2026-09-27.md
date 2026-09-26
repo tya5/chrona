@@ -19,10 +19,12 @@ I429-1 and I383-1 can run in parallel once both are approved; I383-1 is #383's w
 
 ## Open decisions requiring sign-off before their slice
 
-- **D1** (before I383-2): rename `chrona-default-draft` → `chrona-default`, or keep the id and only repoint resources. This plan proceeds assuming the rename; §"I383-2" lists every file touched either way.
-- **D2** (informational, no slice gates on it): milestones stay free-row marks, not nested in the duration capsule; named as a gap in I383-1's acceptance review.
-- **D3** (before I429-3): Muted executive's `grouping.order` is authored as an explicit list of HALCYON-1's own fixture values, not a project-generic capability; named as a gap against #479 in I429-3's acceptance review.
-- **D4** (before I383-1 finalizes evidence): use HALCYON-1 as the shared fixture project for all four new corpus contexts, consistent with the five existing catalogue entries.
+- **D1 — decided by the lead 2026-09-27: KEEP the id `chrona-default-draft`.** Only its `body.resources` repoint to the Editorial bundle; no rename. Minimises blast radius against the tests and docs that assert on the id string. §"I383-2" below is updated to this decision; its file list no longer includes id-string edits.
+- **D2 — accepted:** milestones stay free-row marks, not nested in the duration capsule; named as a gap in I383-1's acceptance review.
+- **D3 — accepted for now:** Muted executive's `grouping.order` is authored as an explicit list of HALCYON-1's own fixture values, not a project-generic capability; named as a gap in I429-3's acceptance review, cross-referencing #479 explicitly, including the note that #479's own I479-1 will later add `grouping.order: {by: earliestPlannedStart}` as the project-generic successor to this scoped list.
+- **D4 — accepted:** HALCYON-1 is the shared fixture project for all four new corpus contexts, consistent with the five existing catalogue entries.
+
+**New on `main` since this plan was written — I479-2 (`550f88a5`):** a preset may declare `resources.detailProfile` (kind `review-detail-profile`) and `body.visualProfile: {preferred: <profile>}`, applied unless `--detail`/`--visual-profile` are given. Not required by any of #429/#383's literal bullets, but Editorial's legend is a plausible user of a declared detail profile; each bundle slice below evaluates whether declaring one helps that preset's own corpus evidence and adds it only where it demonstrably does, rather than as an unused schema decoration.
 
 ## I429-1 — `chrona preset list` and `render --preset <name>`
 
@@ -65,14 +67,14 @@ I429-1 and I383-1 can run in parallel once both are approved; I383-1 is #383's w
 
 ## I383-2 — Repoint the bundled default to Editorial
 
-**Owned files (assuming D1's rename):**
-- `src/chrona/resources/presets/default.yaml` — `id: chrona-default`; `body.resources` all point at `presets/bundles/editorial/*` (reuse the bundle directly; the default is not a separate copy).
-- `src/chrona/resources/__init__.py` — remove `default_preset_root()`; `default_preset_resource()` unchanged in shape (still resolves `presets/default.yaml`), but its callers no longer need a separate root because `default.yaml`'s members are now `sourceRoot`-relative like a library entry, resolved through the same helper `resolve_named_preset_members`'s loader uses.
-- `src/chrona/app/cli.py:465-468` — simplify the `_run_render` default branch now that it no longer needs `default_preset_root()`.
-- `tools/check_starter_perceptibility.py` — update its two `default_preset_root()` call sites to the new resolution.
-- `tests/unit/chrona/presentation/model/test_draft_closure.py`, `tests/integration/test_onboarding_tutorial.py`, `tests/integration/test_render.py` — update `default_preset_resource()`/`default_preset_root()` usage and any assertion on the id `chrona-default-draft`.
-- `docs/guides/first-project.md`, `docs/design/issue-376-minimal-init-design-2026-09-26.md`, `docs/design/issue-468-coherent-draft-allocation-design-2026-09-26.md`, `docs/planning/active/issue-483-readable-defaults-design-plan-2026-09-26.md`, `docs/reviews/current/issue-377-draft-preset-ingress-acceptance-review-2026-09-25.md` — update the id string where these documents assert on it as fact; do not silently rewrite their historical narrative, add a dated note where the referenced id no longer matches current `main` if the doc is a historical record rather than a living guide.
-- `examples/halcyon-1/views/default-draft.yaml` — no longer referenced by the default preset; decide whether it stays as a plain corpus View (it may still be used directly by some existing context) or is removed. Check every `examples/halcyon-1/contexts/*.yaml` for `address: views/default-draft.yaml` before removing it.
+**Owned files (D1: id unchanged, resources only):**
+- `src/chrona/resources/presets/default.yaml` — `id: chrona-default-draft` unchanged; `body.resources` all repointed at `presets/bundles/editorial/*` (reuse the bundle directly; the default is not a separate copy).
+- `src/chrona/resources/__init__.py` — `default_preset_root()` retired only if nothing else needs an `examples/halcyon-1` root once the default no longer resolves there; `default_preset_resource()` unchanged in shape (still resolves `presets/default.yaml`). No id-string edits anywhere — only the resource addresses inside `default.yaml` change, so `default_preset_resource()`'s callers are unaffected in signature.
+- `src/chrona/app/cli.py:465-468` — simplify the `_run_render` default branch's root resolution now that `default.yaml`'s members are `sourceRoot`-relative like a library entry.
+- `tools/check_starter_perceptibility.py` — update its `default_preset_root()` call site only if that function's return value changes; the id it renders against does not change.
+- `tests/unit/chrona/presentation/model/test_draft_closure.py`, `tests/integration/test_onboarding_tutorial.py`, `tests/integration/test_render.py` — update `default_preset_resource()`/`default_preset_root()` *resolution* expectations (new resource paths/bytes), not any id assertion — the id stays `chrona-default-draft`.
+- Docs that state the id as fact (`docs/guides/first-project.md`, `docs/design/issue-376-...`, `docs/design/issue-468-...`, `docs/planning/active/issue-483-...`, `docs/reviews/current/issue-377-...`) need **no id edit**; only docs that additionally describe the default's *appearance* (e.g. "the briefing theme") need a note that its resources changed under #383, without touching the id.
+- `examples/halcyon-1/views/default-draft.yaml` — no longer referenced by the default preset; check every `examples/halcyon-1/contexts/*.yaml` for `address: views/default-draft.yaml` before deciding whether it stays as a plain corpus View or is removed.
 
 **Every corpus/test render that omits `--preset` changes its rendered appearance.** Before touching code:
 1. Enumerate every such call site (`grep -rn "default_preset_resource\|default_preset_root" --include="*.py"` — already enumerated in the design plan's baseline section).
