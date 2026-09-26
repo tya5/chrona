@@ -91,6 +91,23 @@ A Scene contains:
 
 A Scene MAY be serialized as a cache or inspection artifact, but that serialization is not the canonical Project format.
 
+### 3.2.1 CLI output filename and target identity
+
+For `render` and `render-workspace`, the CLI MUST resolve one target before
+Draft closure construction. If `--format` is absent, a recognized output
+suffix selects the target: `.svg` → `svg`, `.png` → `png`, `.pdf` → `pdf`,
+`.typ` → `typst`, and `.tex` → `tikz` (case-insensitive). An extensionless
+Draft output defaults to `svg`. An explicit `--format` MUST agree with a
+recognized suffix. Unknown non-empty suffixes and recognized suffix/target
+mismatches MUST be rejected before output creation, with diagnostics naming
+the offending suffix and either its conflicting target or the recognized
+suffix set. For `render-review`, the immutable Context
+remains the sole target authority; `--format` may assert it, and the output
+suffix MUST agree with it. An extensionless immutable output is allowed.
+This filename convention is CLI ingress policy, never Scene or adapter
+authority. The exact migration and diagnostic contract are recorded in the
+[issue #469 design](../design/issue-469-output-extension-design-2026-09-26.md).
+
 ### 3.3 Resolved presentation input and identity boundary
 
 The Scene Builder receives one immutable **ResolvedPresentationInput**.  It is derived
