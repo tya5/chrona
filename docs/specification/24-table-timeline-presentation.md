@@ -56,6 +56,25 @@ and annotations route deterministically around the table, headers, group surface
 bars. A collision that cannot be routed produces a diagnostic and a text alternative;
 routes never become View coordinates.
 
+### 2.1 Table and row metrics (#480)
+
+Layout measures a table once. The same measure sizes the `table` source and
+places its columns. A column's natural width is its widest header or cell text,
+measured in that text's own typography role, plus the cell inset. For the
+hierarchy column, each cell's extent includes its row's indent. The table content
+extent is the sum of natural widths and the gutters between columns. A table slot
+at `inlineSize: content` receives the larger of this extent and
+`column count × table.column.minInlineSize`. The metric is a per-column floor for
+a content-sized slot, not a column minimum. Any surplus goes to flexible columns.
+
+A review row's block requirement is the largest of: `timeline.row.minBlockSize`;
+its mark-track extent plus `timeline.row.paddingBlock`; and the largest line block
+(`fontSize × lineHeight`) among its table cell roles plus
+`timeline.row.paddingBlock`. `paddingBlock` is the row's total block padding,
+added once. The pre-layout content requirement and row placement use this one
+rule. A table cell's line box is centred in its row using the cell's own role.
+Plot labels are not row-held text under this rule.
+
 Axis intervals are natural calendar intervals from the resolved View window. The
 declared axis formatting and explicit Render Context locale determine each label. Scene
 measures labels before emission; if a required label does not fit its resolved axis
