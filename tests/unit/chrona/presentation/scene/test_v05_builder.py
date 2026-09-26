@@ -588,6 +588,124 @@ def test_legend_entries_emit_role_derived_swatches():
     assert swatch.visual_role == "planned"
 
 
+def _legend_measurement():
+    return MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                           {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                            "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
+                            "timeline.mark.blockSize": Decimal(8)})
+
+
+def _legend_surface(entries, theme):
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    value = build_scene_input(projection=projection,
+                              surface_content=surface_content(legend_entries=entries),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
+                              resolved_theme=theme, font_metrics=_Font(), measured_sources=_legend_measurement(),
+                              capabilities={"svg": True})
+    return compose_review_surface(value)
+
+
+def test_legend_milestone_entry_renders_as_the_bound_symbol_at_chart_size():
+    # #427: a milestone legend entry is the same diamond, at the same size, a
+    # real milestone point mark draws on this chart -- never a square.
+    theme = _theme()
+    theme["body"]["roles"]["milestone"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
+    surface = _legend_surface((("milestone", "Milestone"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:milestone")
+    assert swatch.kind == "Symbol"
+    assert swatch.visual_role == "milestone"
+    # planned's own markHeight ratio (mark-full = 1) times timeline.mark.blockSize (8).
+    assert swatch.bounds[2] == pytest.approx(8.0)
+    assert swatch.bounds[3] == pytest.approx(8.0)
+
+
+def test_legend_outline_pattern_role_swatch_has_no_fill():
+    # #427: an outline-only mark has a legend key that shows it as hollow, not
+    # a solid block of its stroke colour.
+    theme = _theme()
+    theme["body"]["values"]["outline-pattern"] = {"type": "pattern", "value": {"kind": "outline"}}
+    theme["body"]["roles"]["planned"]["pattern"] = "outline-pattern"
+    surface = _legend_surface((("planned", "Baseline"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
+    assert swatch.kind == "Rect"
+    assert swatch.paint.fill is None
+    assert swatch.paint.stroke is not None
+
+
+def test_legend_dependency_entry_renders_as_a_stroke_with_its_terminal():
+    # #427: a relation-terminal role has a legend key that is a stroke with
+    # the role's own marker, not a filled rect.
+    theme = _theme()
+    theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
+    surface = _legend_surface((("dependency", "Dependency"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:dependency")
+    assert swatch.kind == "Path"
+    assert swatch.visual_role == "dependency"
+    assert swatch.marker_end is not None
+    assert swatch.paint.stroke is not None
+
+
+def test_legend_as_of_entry_renders_as_a_dashed_stroke():
+    # #427: a dashed-line role has a legend key that carries the role's own dash.
+    theme = _theme()
+    theme["body"]["values"]["as-of-dash"] = {"type": "dashPattern", "value": [4, 3]}
+    theme["body"]["roles"]["as-of"]["dash"] = "as-of-dash"
+    surface = _legend_surface((("asOf", "As of"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:asOf")
+    assert swatch.kind == "Path"
+    assert swatch.paint.dash == (4.0, 3.0)
+
+
+def test_legend_unrecognized_role_keeps_the_fixed_square_fallback():
+    # #427: a role this dispatch table does not recognize keeps today's fixed
+    # square, rather than failing or guessing a shape.
+    theme = _theme()
+    theme["body"]["roles"]["custom-note"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
+    surface = _legend_surface((("custom-note", "Custom"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:custom-note")
+    assert swatch.kind == "Rect"
+    # legend_size(axis-size=12) * 0.8, today's exact formula.
+    assert swatch.bounds[2] == pytest.approx(9.6)
+    assert swatch.bounds[3] == pytest.approx(9.6)
+
+
+def test_legend_inline_direction_flows_entries_left_to_right():
+    # #427: a Layout Profile can declare a horizontal legend.
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
+    bounds = {"table": Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(1000)),
+             "timeline-axis": Rect(Decimal(500), Decimal(0), Decimal(500), Decimal(48)),
+             "timeline": Rect(Decimal(500), Decimal(48), Decimal(500), Decimal(952)),
+             "legend": Rect(Decimal(0), Decimal(900), Decimal(1000), Decimal(20))}
+    decisions = tuple(
+        LayoutDecision(source, "slot", bounds.get(source, rect), source,
+                       direction="inline" if source == "legend" else None,
+                       gap=Decimal(10) if source == "legend" else None)
+        for source in ("title", "table", "timeline", "timeline-axis", "legend")
+    )
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect, decisions,
+                              row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
+    value = build_scene_input(projection=projection,
+                              surface_content=surface_content(legend_entries=(("planned", "Plan"), ("actual", "Act"))),
+                              layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
+                              measured_sources=_legend_measurement(), capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    planned = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
+    actual = next(node for node in surface.primitives if node.scene_id == "legend-swatch:actual")
+    # Both entries sit on the same row (block-axis position unchanged) and
+    # `actual` is to the right of `planned`, not stacked below it.
+    assert planned.bounds[1] == actual.bounds[1]
+    assert actual.bounds[0] > planned.bounds[0]
+
+
 def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
     snapshot = ReviewItem("a", "Baseline", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, (), item_id="snapshot", source_kind="snapshot", track="shared")
     primary = ReviewItem("a", "Plan", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 7)}, {"start": date(2026, 1, 3), "finish": date(2026, 1, 8)}, None, (), item_id="planned", source_kind="primary", track="shared")

@@ -197,6 +197,9 @@ class SlotPlacement:
     priority: str = "required"
     overflow: str = "visible-overflow"
     scale_id: str | None = None
+    direction: str = "block"
+    gap: Decimal | None = None
+    item_min_inline_size: Decimal | None = None
 
 
 @dataclass(frozen=True)

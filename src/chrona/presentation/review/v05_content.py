@@ -157,7 +157,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                              for item in projection.items if item.source_kind in {"primary", "combined"})
         used = {item.fields.get(color_scale.source_field) for item in projection.items
                 if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
-        scale_entries = tuple((f"scale:{color_scale.scale_id}:{value}", value)
+        scale_entries = tuple((f"scale:{color_scale.scale_id}:{value}",
+                               str(project.get("entities", {}).get(value, {}).get("title", value)))
                               for value in color_scale.domain if value in used)
         legend += scale_entries
         scale_legend_paints = tuple((f"scale:{color_scale.scale_id}:{value}", dict(color_scale.colors)[value])

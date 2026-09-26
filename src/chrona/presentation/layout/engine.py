@@ -211,9 +211,15 @@ class _Arranger:
 
     def arrange(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
         kind, node_id = str(node["kind"]), str(node["id"])
-        self.decisions.append(LayoutDecision(node_id, kind, rect, node.get("source"), node.get("place", {}), references,
-                                             node.get("priority") if kind == "slot" else None,
-                                             node.get("overflow") if kind == "slot" else None))
+        is_slot = kind == "slot"
+        self.decisions.append(LayoutDecision(
+            node_id, kind, rect, node.get("source"), node.get("place", {}), references,
+            node.get("priority") if is_slot else None,
+            node.get("overflow") if is_slot else None,
+            node.get("direction") if is_slot else None,
+            (_distance(self.profile, f"{path}/gap") if is_slot and "gap" in node else None),
+            (_distance(self.profile, f"{path}/itemMinInlineSize") if is_slot and "itemMinInlineSize" in node else None),
+        ))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)
             if rect.inline_size < measure.min_inline or rect.block_size < measure.min_block:

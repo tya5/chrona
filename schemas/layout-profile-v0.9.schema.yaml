@@ -364,6 +364,9 @@ $defs:
       priority: {description: "Importance used during constrained layout allocation.", enum: [required, preferred, optional]}
       overflow: {description: "Declared behavior when this slot cannot fit.", enum: [visible-overflow, ellipsize-with-source, clip-optional]}
       cell: {$ref: "#/$defs/cell"}
+      direction: {description: "Entry-flow direction for a legend slot's own content; meaningful only when source is legend. Absent means block, today's stacked order (#427).", enum: [block, inline]}
+      gap: {description: "Space between a legend slot's own entries, and between a swatch and its label; meaningful only when source is legend. Absent means today's fixed label-derived spacing (#427).", $ref: "#/$defs/distance"}
+      itemMinInlineSize: {description: "Wrap threshold for a legend slot's own entries when direction is inline, reusing the flow container's wrapping semantics; meaningless and ignored otherwise (#427).", $ref: "#/$defs/distance"}
   override:
     type: object
     description: "Partial replacement of a named node's layout settings."

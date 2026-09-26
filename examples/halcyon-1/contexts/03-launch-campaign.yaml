@@ -66,6 +66,15 @@ body:
       address: profiles/summary.yaml
       revision:
         token: example-v1
+    detailProfile:
+      id: halcyon-launch-legend
+      kind: review-detail-profile
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: profiles/launch-legend.yaml
+      revision:
+        token: example-v1
   environment:
     viewport:
       inlineSize: 1200

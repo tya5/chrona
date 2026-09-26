@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.projection import ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.surface_content import SummaryContent, TableCellContent
 from chrona.presentation.table_presentation import BooleanPresencePresentation
@@ -52,6 +53,26 @@ def typed_summary(value):
         )
         panels.append(SummaryPanelInput(panel["id"], panel.get("title"), panel.get("presentation", "lines"), metrics))
     return SummaryProfileInput(tuple(panels))
+
+
+def test_scale_legend_entry_label_prefers_the_entitys_declared_title():
+    # #427: a colour-scale legend entry shows entities.<id>.title when the
+    # project declares one, falling back to the raw field value otherwise.
+    projection = ReviewProjection(
+        (ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (),
+                    fields={"owner": "bus"}, source_kind="primary"),
+         ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (),
+                    fields={"owner": "ground"}, source_kind="primary")),
+        (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    project = {"relations": (), "annotations": {}, "entities": {"bus": {"title": "Spacecraft bus"}}}
+    view = {"body": {"tableColumns": (), "visibility": {}}}
+    color_scale = ResolvedColorScale("owner", "planned", "owner", ("bus", "ground"),
+                                     (("bus", "#111111"), ("ground", "#222222")))
+    value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY,
+                                          color_scale=color_scale)
+    legend = dict(value.legend_entries)
+    assert legend["scale:owner:bus"] == "Spacecraft bus"
+    assert legend["scale:owner:ground"] == "ground"
 
 
 def test_optional_content_is_selected_only_from_current_project_and_view():

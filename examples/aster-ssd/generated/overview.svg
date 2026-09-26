@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img">
 <rect width="1600" height="900" opacity="1" fill="#FFFFFF"/>
 <defs><marker id="marker-0529b66119d9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0L10 5L0 10L0 0" fill="#4B5563"/></marker><marker id="marker-03edcbbf6484" viewBox="0 0 5 5" refX="5" refY="2.5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2.5 0Q5 0 5 2.5Q5 5 2.5 5Q0 5 0 2.5Q0 0 2.5 0" fill="#4B5563"/></marker></defs>
-<rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="24" y="852.138" width="9.6" height="9.6" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>
-<rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="24" y="868.938" width="9.6" height="9.6" opacity="1" fill="#269D79" stroke="#172033" stroke-width="1"/>
+<rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="24" y="849.338" width="9.6" height="8" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>
+<rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="24" y="872.538" width="9.6" height="4.8" rx="1.2" ry="1.2" opacity="1" fill="#269D79" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="row-band:board" data-source-ref="board" data-purpose="row-decoration" x="24" y="116.8" width="458.4" height="40" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="row-band:fw-freeze" data-source-ref="fw-freeze" data-purpose="row-decoration" x="24" y="196.8" width="458.4" height="40" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="row-band:perf-exit" data-source-ref="perf-exit" data-purpose="row-decoration" x="24" y="276.8" width="458.4" height="40" opacity="1" fill="#EEF3F8"/>
@@ -140,6 +140,6 @@
 <text data-scene-id="member-label:pilot:pilot" data-source-ref="pilot" data-purpose="member-label" x="1371.359" y="363.7" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">Pilot build</text>
 <text data-scene-id="member-label:release:release" data-source-ref="release" data-purpose="member-label" x="1391.906" y="421" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">Production release</text>
 <text data-scene-id="as-of-label" data-source-ref="actual-set" data-purpose="as-of-label" x="1240.981" y="148.3" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">As of Jun 30, 2027</text>
-<text data-scene-id="legend:planned" data-source-ref="planned" data-purpose="legend-label" x="38.4" y="861.738" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">Planned</text>
+<text data-scene-id="legend:planned" data-source-ref="planned" data-purpose="legend-label" x="38.4" y="856.938" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">Planned</text>
 <text data-scene-id="legend:actual" data-source-ref="actual" data-purpose="legend-label" x="38.4" y="878.538" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">Actual</text>
 </svg>

@@ -75,6 +75,9 @@ class LayoutDecision:
     references: tuple[str, ...] = ()
     priority: str | None = None
     overflow: str | None = None
+    direction: str | None = None
+    gap: Decimal | None = None
+    item_min_inline_size: Decimal | None = None
 
 
 @dataclass(frozen=True)

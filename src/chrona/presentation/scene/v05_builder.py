@@ -459,15 +459,32 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              points=placed.points, paint_order=placed.paint_order))
             emit_semantic_text("as-of-label", "asOfLabel")
     legend_binding = semantic_binding("legendEntry")
+    for mark in placed_surface.marks:
+        if not mark.placement_id.startswith("legend-swatch:"):
+            continue
+        bounds = (float(mark.bounds.inline), float(mark.bounds.block),
+                  float(mark.bounds.inline_size), float(mark.bounds.block_size))
+        if mark.mark_shape == "point":
+            primitives.append(ScenePrimitive(mark.placement_id, PrimitiveKind.SYMBOL, mark.source_ref, "legend",
+                                             legend_binding.purpose, mark.source_ref, bounds,
+                                             symbol=symbol_geometry(value.theme_tokens.symbol(), bounds, mark.path_commands),
+                                             corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order))
+        else:
+            primitives.append(ScenePrimitive(mark.placement_id, PrimitiveKind.RECT, mark.source_ref, "legend",
+                                             legend_binding.purpose, mark.source_ref, bounds,
+                                             corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order))
     for relation in placed_surface.relations:
         if relation.suppressed or relation.relation_id.startswith("annotation-leader:"):
             continue
-        source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
+        if relation.relation_id.startswith("legend-swatch:"):
+            source = relation.relation_id.removeprefix("legend-swatch:")
+        else:
+            source = relation.relation_id.removeprefix("relation:").split(":", 1)[0]
         dependency = semantic_binding(relation.semantic_id)
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          (0, 0, 0, 0), marker_start=relation.marker_start, marker_end=relation.marker_end,
                                          points=relation.points, path_commands=relation.path_commands,
-                                         paint_order=relation.paint_order))
+                                         paint_order=relation.paint_order, slot_id=relation.slot_id))
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
@@ -475,7 +492,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             role = (semantic_binding("scaleLegendEntry").scene_role
                     if placed.source_ref.startswith("scale:") else placed.source_ref)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "legend",
-                                             legend_binding.purpose, role, bounds, paint_order=placed.paint_order))
+                                             legend_binding.purpose, role, bounds, paint_order=placed.paint_order,
+                                             slot_id=placed.slot_id, corner_radius=placed.corner_radius or None))
         elif placed.placement_id.startswith("progress-fill:"):
             progress = semantic_binding("progressFill")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "object",

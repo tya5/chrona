@@ -128,7 +128,10 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
     # Legend, notes and annotations.
-    _binding("legendEntry", "decoration", "legend-swatch", "legend-swatch", "legend"),
+    # The swatch's own theme role is "legend-swatch" (size/spacing), separate
+    # from "legendLabel"'s "legend" (text) role; its drawn primitive is
+    # dispatched per entry role by Layout, not fixed by this binding (#427).
+    _binding("legendEntry", "decoration", "legend-swatch", "legend-swatch", "legend-swatch"),
     _binding("scaleLegendEntry", "decoration", "legend-swatch", "planned", "planned"),
     _binding("legendLabel", "label", "legend-label", "text", "legend"),
     _binding("projectNote", "label", "project-note", "text", "annotation"),

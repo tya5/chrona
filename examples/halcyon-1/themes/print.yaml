@@ -80,6 +80,9 @@ body:
     stroke-width:
       type: number
       value: 1
+    legend-swatch-inline-size:
+      type: number
+      value: 20
     outline:
       type: pattern
       value: {kind: outline}
@@ -185,6 +188,8 @@ body:
       type: number
       value: 0
   roles:
+    legend-swatch:
+      swatchInlineSize: legend-swatch-inline-size
     group-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
