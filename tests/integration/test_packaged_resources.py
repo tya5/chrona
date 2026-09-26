@@ -89,6 +89,8 @@ def test_package_owned_runtime_resources_exist():
         "presets/bundles/mission-light/view.yaml",
         "presets/bundles/mission-light/theme.yaml",
         "presets/bundles/mission-light/layout.yaml",
+        "presets/bundles/print-mono/view.yaml",
+        "presets/bundles/print-mono/theme.yaml",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 
