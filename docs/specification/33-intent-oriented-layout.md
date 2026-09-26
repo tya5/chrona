@@ -253,6 +253,11 @@ order and accepts the first bounded quality route. Failed port candidates do
 not suppress the relation or enter the obstacle inventory. See the [#466
 point-port-candidate correction](../design/issue-466-general-placement-point-port-candidate-correction-2026-09-26.md).
 
+A semantic endpoint covered by its own same-row comparison marks retains its
+date and may use a finite, recorded corridor to the comparison-host boundary.
+Only those named siblings are exempt on that corridor; the route after egress
+queries the entire inventory. See the [#466 comparison-egress correction](../design/issue-466-general-placement-comparison-egress-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
