@@ -54,6 +54,12 @@ line. A Layout text placement with `suppressed` disposition is non-drawable:
 Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
 by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
 
+The as-of label's finite candidate ladder may use the adjacent axis/timeline
+seam as a mark-clear fallback. Layout declares that fallback explicitly and
+must not place the label over a data mark merely because earlier beside-line
+candidates are blocked. Ordinary label requests retain their first-ranked
+visible-overflow fallback.
+
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
 ### 3.3 Relations
