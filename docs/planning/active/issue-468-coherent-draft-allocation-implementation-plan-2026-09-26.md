@@ -6,6 +6,9 @@
 Specifications [33](../../specification/33-intent-oriented-layout.md),
 [08](../../specification/08-scene-and-rendering.md) and
 [50](../../specification/50-constraint-driven-gantt-surface-quality.md).
+The [fixed-host correction](../../design/issue-468-fixed-host-allocation-correction-2026-09-26.md)
+and [review](../../reviews/current/issue-468-fixed-host-allocation-correction-review-2026-09-26.md)
+amend I468-1 before product publication.
 
 ## Literal issue acceptance
 
@@ -31,6 +34,11 @@ canvas. Regenerate affected public materializers with
 diffs as a batch, including unintended paint/geometry effects. Run focused
 tests, public byte check and conformance, then fetch/check/publish this
 coherent code-and-evidence unit. CI full matrix gates its acceptance.
+The resolver must prove its final candidate satisfies every declared host;
+otherwise retain the original finite request and #449 visible fallback.
+Specifically characterize fixed-host `03-launch-campaign` and anchored
+`11-overlay-briefing`: neither may acquire an unhelpful extra canvas or
+translation just because the content requirement exceeds a fixed slot.
 
 ## I468-2 — Draft default and axis resource
 

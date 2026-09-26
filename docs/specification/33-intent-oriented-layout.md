@@ -286,6 +286,11 @@ old positions is not a valid completion. If an otherwise valid profile fixes
 or caps a host so it cannot grow, Layout retains natural visible fallback and
 typed shortage warnings under Section 13; it MUST NOT claim that host grew.
 This rule applies equally to Draft and immutable table-timeline closures.
+An attempted larger extent is committed only if its final LayoutManifest
+actually satisfies every declared content-host requirement. A fixed/capped
+profile that cannot do so retains the requested finite allocation and the
+ordinary visible fallback; a speculative larger canvas without added host
+capacity is not a valid reallocation.
 
 Draft ingress defaults to an inline extent of 1600 and a content-resolved
 block extent (`1600xauto` in the CLI). Draft closure still carries a finite
