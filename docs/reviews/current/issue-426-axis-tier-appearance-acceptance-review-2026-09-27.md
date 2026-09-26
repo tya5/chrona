@@ -24,14 +24,14 @@
 
 | Item | Disposition | Evidence | Successor |
 | --- | --- | --- | --- |
-| A band tier can resolve a different fill per interval (alternating, or a wallboard-style per-coarser-interval domain) from a declared Theme colour scale. | deferred | Design §6: the band loop already resolves its Theme fill once per interval (not once per tier), so the lookup point exists; only the role/scale selection on each iteration would need to become data-driven. Specification 60's declared colour scales are currently eligible only for `planned` member marks with a Project-field-tagged domain, not axis bands keyed by interval ordinal — a genuinely new eligible-target case. | A new issue extending Specification 60's eligible-target list to axis bands, keyed by interval ordinal rather than a Project field. Not filed by this session, per the lead's direction (2026-09-26: "File nothing; I will record it."). |
+| A band tier can resolve a different fill per interval (alternating, or a wallboard-style per-coarser-interval domain) from a declared Theme colour scale. | deferred | Design §6: the band loop already resolves its Theme fill once per interval (not once per tier), so the lookup point exists; only the role/scale selection on each iteration would need to become data-driven. Specification 60's declared colour scales are currently eligible only for `planned` member marks with a Project-field-tagged domain, not axis bands keyed by interval ordinal — a genuinely new eligible-target case. | [#490](https://github.com/tya5/chrona/issues/490), filed by the lead: extend Specification 60's eligible targets to axis bands keyed by interval. |
 
 ## Programme-level criteria (optional)
 
 - Focused tests: `.venv/bin/python -m pytest -q -n 6 -p no:cacheprovider tests/unit/chrona/presentation tests/integration tests/cli tests/acceptance` — 984 passed, 21 skipped.
 - `conformance/run_conformance.py` — PASS, all 31 checks (including `semantic-registry-reachability`, `layout-float-accumulation` and `presentation-coverage`, each touched by this issue's implementation).
 - `tools.regenerate_public_examples --write --jobs 6` then `--check` — PASS, 23 slides; every changed `generated/*.scene.json` differs from its prior committed version only in the View provenance resource's `contentIdentity` hash (the required View v0.24 migration), structurally verified by stripping that one field; no committed SVG changed; the new `controller-z/axis-tiers` slide is the only evidence that differs beyond that hash.
-- CI: pending (the lead fills in the run link).
+- CI: [four-job CI run 36255206852](https://github.com/tya5/chrona/actions/runs/36255206852) on `2aa0debc`, green.
 
 ## Architecture conclusion
 
