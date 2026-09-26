@@ -207,10 +207,10 @@ def test_controller_elevated_public_evidence_uses_only_portable_completed_treatm
 def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "programme-board", tmp_path / "board", write=False)
     svg = (tmp_path / "board/review.svg").read_text(encoding="utf-8")
-    assert 'data-scene-id="planned:payload-tvac:payload-tvac"' in svg
+    assert 'data-scene-id="planned:lane:payload:payload-tvac:payload-tvac"' in svg
     assert 'data-scene-id="legend-swatch:scale:owner:payload"' in svg
     assert 'data-scene-id="legend:scale:owner:payload"' in svg
-    assert 'data-scene-id="progress-fill:planned:campaign:campaign"' in svg
+    assert 'data-scene-id="progress-fill:planned:lane:launch:launch-contract:campaign"' in svg
     assert 'data-purpose="progress-fill"' in svg
     scene = json.loads((tmp_path / "board/review.scene.json").read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]

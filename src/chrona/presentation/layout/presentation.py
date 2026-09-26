@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
+from chrona.presentation.layout.lane_allocation import LaneCandidate, LaneMark, LanePlacement, allocate_lanes
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
-from chrona.presentation.model.projection import ObservationState, shared_track_member_key
+from chrona.presentation.model.projection import ObservationState, ReviewItem, ReviewRowProjection, shared_track_member_key
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
 
 
@@ -153,22 +155,123 @@ def table_text_line_block(theme_tokens: Any, typography_roles: Any) -> float:
                 for role in sorted(set(typography_roles))), default=0.0)
 
 
+@dataclass(frozen=True)
+class LaneRowsResult:
+    """Group-local collision-packed rows for `rows.mode: lanes` (#467).
+
+    ``rows`` are synthetic :class:`ReviewRowProjection` values Layout derives
+    (never a View or Projection fact); ``text_line_blocks`` is each row's own
+    reserved label-row footprint, for :func:`required_row_block_extents`.
+    ``placements`` is keyed by item object ID and holds the lane-local ladder
+    decision (level and lane-local rect) that Scene never re-derives.
+    """
+
+    rows: tuple[ReviewRowProjection, ...]
+    text_line_blocks: tuple[float, ...]
+    placements: Mapping[str, LanePlacement]
+    mark_row_height: float
+    label_row_height: float
+
+
+def lane_label_content(item: ReviewItem, label_content: tuple[str, ...]) -> str:
+    """Return one lane item's required label text: title, plus a selected delta.
+
+    Combined in exactly one string so packing measures the same text Layout
+    later places (#467): items without a delta show a title only.
+    """
+    parts = [item.title] if "title" in label_content else []
+    if "finishDelta" in label_content and item.finish_delta is not None:
+        parts.append(f"{item.finish_delta:+d}d")
+    return " ".join(parts) or item.title
+
+
+def build_lane_rows(*, items: tuple[ReviewItem, ...], relations: tuple[Any, ...],
+                    coordinate: Callable[[date], float], label_text_width: Callable[[str], float],
+                    label_content: tuple[str, ...], mark_row_height: float, label_row_height: float,
+                    clearance: float = 0.0, canvas_left: float | None = None,
+                    canvas_right: float | None = None) -> LaneRowsResult:
+    """Pack selected primary items into group-local lanes (#467 L2 engine).
+
+    Predecessor preference uses only immediate finish-to-start relations
+    (``source_endpoint == "end"`` and ``target_endpoint == "start"``); every
+    other relation kind is ignored for packing, matching the selected design.
+    A point item (``start == end``) gets a minimal finite mark width for
+    packing purposes only (its own square glyph footprint approximation);
+    real mark geometry is unaffected, since Scene projects it independently.
+    """
+    by_object_id = {item.object_id: item for item in items}
+    predecessors: dict[str, list[tuple[str, str]]] = {item.object_id: [] for item in items}
+    for relation in relations:
+        if (relation.source_endpoint == "end" and relation.target_endpoint == "start"
+                and relation.target_object_id in predecessors):
+            predecessors[relation.target_object_id].append((relation.relation_id, relation.source_object_id))
+    candidates: list[LaneCandidate] = []
+    for item in items:
+        planned = item.planned
+        start_at = planned.get("start", planned.get("at"))
+        end_at = planned.get("end", planned.get("at"))
+        if not isinstance(start_at, date) or not isinstance(end_at, date):
+            continue
+        # The admitted footprint is the union of planned and actual bounds
+        # (#467 design, "Identity, grouping and stable assignment"): an
+        # actual observation that overruns its plan is a real geometric fact
+        # the packer must not silently under-measure. Ordering stays planned
+        # only, per the design's declared traversal key.
+        actual = item.actual or {}
+        actual_start = actual.get("start", actual.get("at"))
+        actual_end = actual.get("finish", actual.get("at"))
+        footprint_start = min(start_at, actual_start) if isinstance(actual_start, date) else start_at
+        footprint_end = max(end_at, actual_end) if isinstance(actual_end, date) else end_at
+        left, right = coordinate(footprint_start), coordinate(footprint_end)
+        if right <= left:
+            right = left + mark_row_height
+        label_width = label_text_width(lane_label_content(item, label_content))
+        candidates.append(LaneCandidate(item.object_id, item.group_id, (start_at, end_at, item.object_id, item.object_id),
+                                        LaneMark(left, right), label_width, None,
+                                        tuple(predecessors.get(item.object_id, ()))))
+    result = allocate_lanes(candidates, mark_row_height=mark_row_height, label_row_height=label_row_height,
+                            clearance=clearance, canvas_left=canvas_left, canvas_right=canvas_right)
+    rows: list[ReviewRowProjection] = []
+    text_line_blocks: list[float] = []
+    placements: dict[str, LanePlacement] = {}
+    for lane in result.lanes:
+        member_items = tuple(by_object_id[member_id] for member_id in lane.members)
+        rows.append(ReviewRowProjection(lane.lane_id, "", lane.group_key, lane.representative_id, member_items))
+        # The label rows stack ABOVE the mark row (#467); a lane's own
+        # required extent is their sum, not the larger of the two
+        # alternatives `required_row_block_extents` otherwise assumes (an
+        # automatic/explicit row's text and mark share one band).
+        text_line_blocks.append(lane.label_rows_used * label_row_height + mark_row_height)
+        placements.update(lane.placements)
+    return LaneRowsResult(tuple(rows), tuple(text_line_blocks), placements, mark_row_height, label_row_height)
+
+
 def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: float,
                                row_padding: float, mark_block_size: float,
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
-                               text_line_block: float = 0.0) -> tuple[float, ...]:
+                               text_line_block: float = 0.0,
+                               text_line_blocks: tuple[float, ...] | None = None) -> tuple[float, ...]:
     """Close each row's minimum before any surplus distribution occurs.
 
     ``row_padding`` is the row's total block padding.  It is added once to the
     mark tracks and once to the table text line the row holds (Specification
-    24 section 2.1).
+    24 section 2.1). ``text_line_block`` is the one table-wide value every row
+    shares (the original #480 contract). ``text_line_blocks`` is an optional
+    per-row override (#467 lane rows: each lane's own reserved label-row
+    footprint differs); when given, it replaces ``text_line_block`` row by
+    row and must have one entry per ``review_rows`` member.
     """
     if row_minimum <= 0 or row_padding < 0 or text_line_block < 0:
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/measuredSources/metricValues/timeline.row")
-    text_requirement = text_line_block + row_padding if text_line_block else 0.0
-    return tuple(max(row_minimum, text_requirement, minimum_track_block_extent(
+    if text_line_blocks is not None and (len(text_line_blocks) != len(review_rows)
+                                         or any(value < 0 for value in text_line_blocks)):
+        raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/measuredSources/metricValues/timeline.row")
+    def text_requirement(index: int) -> float:
+        value = text_line_blocks[index] if text_line_blocks is not None else text_line_block
+        return value + row_padding if value else 0.0
+    return tuple(max(row_minimum, text_requirement(index), minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
-    ) + row_padding) for row in review_rows)
+    ) + row_padding) for index, row in enumerate(review_rows))
 
 
 def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, float, float, float],

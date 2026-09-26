@@ -11,3 +11,7 @@
   - the lane table goes through `measure_table_columns` (#487).
 - **L3:** the migration adds `default-draft.yaml` and the five catalogue preset Views (acceptance row 5), alongside `01`, `02` and a non-hierarchy third slide (`03` or `04`). Every changed route and label is attributed.
 - **L4:** unchanged.
+
+## Implementation note: the lane table is Layout-synthesized, not pre-normalized
+
+`rows.mode: lanes` forbids `tableColumns` at the schema/contract boundary (#467 L1), so the lane `Lane`/`Items` columns cannot be produced the way an authored table cell is today: upstream `review/v05_content.py` normalization runs before Layout ever packs a lane, and lane membership is a Layout decision (Specification 38 §3.1), not a View or Projection fact. `compose_surface_layout` therefore synthesizes the lane table's columns and cells itself, from the same completed rows the mark/label geometry uses, immediately before feeding them through the unchanged `measure_table_columns`/`place_table_columns` path every other table cell uses (#487). This is a deliberate, reviewed exception to "Layout only measures text a caller supplies": for lanes, Layout is also the source of that text, because only Layout knows the packing. `automatic` and `explicit` table content is unaffected; their columns/cells still come from `review/v05_content.py` exactly as before.

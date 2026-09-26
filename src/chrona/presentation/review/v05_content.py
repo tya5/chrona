@@ -218,7 +218,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                progress_fill_source=view.progress_fill,
                                table_hierarchy_column=view.hierarchy_column,
                                row_decoration=view.background_decoration[0],
-                               group_decoration=view.background_decoration[1])
+                               group_decoration=view.background_decoration[1],
+                               rows_mode=view.rows.mode,
+                               lane_table=((view.rows.lane_table.label, view.rows.lane_table.count)
+                                          if view.rows.lane_table is not None else None))
 
 
 def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: str) -> str:

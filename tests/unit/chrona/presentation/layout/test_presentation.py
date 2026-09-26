@@ -1,14 +1,15 @@
+from datetime import date
 from types import SimpleNamespace
 from decimal import Decimal
 
 import pytest
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
-from chrona.presentation.layout.presentation import RowPlacement, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
+from chrona.presentation.layout.presentation import RowPlacement, build_lane_rows, lane_label_content, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
 from chrona.presentation.layout.text import ellipsize_text
 from chrona.presentation.layout.surface_composer import _centred_cell_baseline, _contains_block_interval
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
-from chrona.presentation.model.projection import ObservationState
+from chrona.presentation.model.projection import ObservationState, ReviewItem
 
 
 class FixedMetrics:
@@ -298,6 +299,79 @@ def test_row_requirement_holds_one_table_text_line_plus_total_padding() -> None:
                                       mark_block_size=12.0, text_line_block=21.0) == (40.0,)
     assert required_row_block_extents(review_rows=(row,), row_minimum=10.0, row_padding=6.0,
                                       mark_block_size=12.0) == (18.0,)
+
+
+def _lane_item(object_id: str, start: date, end: date, *, group_id: str = "g", finish_delta: int | None = None,
+               actual: dict | None = None, title: str | None = None) -> ReviewItem:
+    return ReviewItem(object_id, title or object_id.title(), "span", {"start": start, "end": end}, actual,
+                      finish_delta, (), group_id=group_id, group_label=group_id.title())
+
+
+def _relation(relation_id: str, source_object_id: str, target_object_id: str,
+             source_endpoint: str = "end", target_endpoint: str = "start") -> SimpleNamespace:
+    return SimpleNamespace(relation_id=relation_id, source_object_id=source_object_id,
+                           target_object_id=target_object_id, source_endpoint=source_endpoint,
+                           target_endpoint=target_endpoint)
+
+
+def test_lane_label_content_combines_title_and_selected_delta() -> None:
+    item = _lane_item("a", date(2027, 1, 1), date(2027, 1, 5), finish_delta=3)
+    assert lane_label_content(item, ("title",)) == "A"
+    assert lane_label_content(item, ("title", "finishDelta")) == "A +3d"
+    assert lane_label_content(item, ("finishDelta",)) == "+3d"
+    no_delta = _lane_item("b", date(2027, 1, 1), date(2027, 1, 5))
+    assert lane_label_content(no_delta, ("title", "finishDelta")) == "B"
+
+
+def test_build_lane_rows_packs_by_group_and_reserves_the_mark_and_label_rows() -> None:
+    items = (_lane_item("a", date(2027, 1, 1), date(2027, 1, 11)),
+             _lane_item("b", date(2027, 1, 21), date(2027, 1, 31)))
+    result = build_lane_rows(items=items, relations=(), coordinate=lambda d: (d - date(2027, 1, 1)).days * 2.0,
+                             label_text_width=lambda text: len(text) * 6.0, label_content=("title",),
+                             mark_row_height=10.0, label_row_height=10.0)
+    assert len(result.rows) == 1
+    assert {item.object_id for item in result.rows[0].items} == {"a", "b"}
+    assert result.mark_row_height == 10.0
+    assert result.text_line_blocks[0] >= result.mark_row_height
+
+
+def test_build_lane_rows_widens_the_footprint_with_an_overrunning_actual() -> None:
+    """#467 L0: an actual that overruns its plan is part of the admitted footprint."""
+    predecessor = _lane_item("structure", date(2027, 3, 8), date(2027, 4, 6),
+                             actual={"start": date(2027, 3, 8), "finish": date(2027, 4, 6)})
+    overrun = _lane_item("avionics", date(2027, 4, 7), date(2027, 4, 27),
+                         actual={"start": date(2027, 4, 7), "finish": date(2027, 4, 30)})
+    successor = _lane_item("bus-test", date(2027, 4, 29), date(2027, 5, 20))
+    relations = (_relation("r1", "structure", "avionics"), _relation("r2", "avionics", "bus-test"))
+    result = build_lane_rows(items=(predecessor, overrun, successor), relations=relations,
+                             coordinate=lambda d: (d - date(2027, 3, 8)).days * 2.0,
+                             label_text_width=lambda text: len(text) * 6.0, label_content=("title",),
+                             mark_row_height=10.0, label_row_height=10.0)
+    by_object_id = {member.object_id: row.row_id for row in result.rows for member in row.items}
+    assert by_object_id["structure"] == by_object_id["avionics"]
+    assert by_object_id["bus-test"] != by_object_id["avionics"]
+
+
+def test_build_lane_rows_skips_items_without_a_resolvable_date() -> None:
+    incomplete = ReviewItem("x", "X", "span", {}, None, None, ())
+    result = build_lane_rows(items=(incomplete,), relations=(), coordinate=lambda d: 0.0,
+                             label_text_width=lambda text: 0.0, label_content=("title",),
+                             mark_row_height=10.0, label_row_height=10.0)
+    assert result.rows == ()
+
+
+def test_row_requirement_accepts_a_per_row_text_line_block_override() -> None:
+    """#467: lane rows reserve a different label-row footprint per lane."""
+    rows = (SimpleNamespace(row_id="a", group_id=None, items=()),
+           SimpleNamespace(row_id="b", group_id=None, items=()))
+    assert required_row_block_extents(review_rows=rows, row_minimum=10.0, row_padding=6.0,
+                                      mark_block_size=12.0, text_line_blocks=(0.0, 40.0)) == (18.0, 46.0)
+    with pytest.raises(LayoutError, match="E_LAYOUT_ROW_REQUIREMENT"):
+        required_row_block_extents(review_rows=rows, row_minimum=10.0, row_padding=6.0,
+                                   mark_block_size=12.0, text_line_blocks=(0.0,))
+    with pytest.raises(LayoutError, match="E_LAYOUT_ROW_REQUIREMENT"):
+        required_row_block_extents(review_rows=rows, row_minimum=10.0, row_padding=6.0,
+                                   mark_block_size=12.0, text_line_blocks=(0.0, -1.0))
 
 
 def test_table_text_line_block_is_the_tallest_cell_role() -> None:

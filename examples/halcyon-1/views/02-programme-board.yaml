@@ -4,7 +4,10 @@ id: halcyon-02-programme-board
 body:
   surface: table-timeline
   rows:
-    mode: automatic
+    mode: lanes
+    laneTable:
+      label: group
+      count: true
   selection:
     include:
       ids:
@@ -84,11 +87,12 @@ body:
     - unmatchedActual
   visibility:
     labels:
-      placement: table
+      placement: plot
       content:
       - title
+      - finishDelta
       side: auto
-      overflow: suppress
+      overflow: visible-overflow
     relations:
       mode: semantic
       overflow: suppress
@@ -135,25 +139,3 @@ body:
   backgroundDecoration:
     rows: none
     groups: all
-  tableColumns:
-  - id: Work package
-    source: title
-    missing: em-dash
-    align: start
-    width: {minmax: {min: content, max: {fr: 1}}}
-    headerOrientation: horizontal
-  - id: Phase
-    source:
-      field: phase
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
-  - id: Δ
-    source:
-      facet: finishDelta
-    format: signedDays
-    missing: em-dash
-    align: end
-    width: content
-    headerOrientation: horizontal

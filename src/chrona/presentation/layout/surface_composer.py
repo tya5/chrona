@@ -12,7 +12,8 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, 
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
-from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
+from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
+from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, build_lane_rows, lane_label_content, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
@@ -366,6 +367,45 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
         height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
         result[role] = MarkGeometry(float(height), float(offset), paint_order, float(corner_radius))
     return result
+
+
+_LANE_UNGROUPED_LABEL = "Ungrouped"
+
+
+def _lane_table_content(*, review_rows: tuple[Any, ...], rows: tuple[RowPlacement, ...],
+                        lane_table: tuple[str, bool] | None) -> tuple[tuple[TableColumnContent, ...], tuple[TableCellContent, ...]]:
+    """Synthesize the lane table's `Lane` (and optional `Items`) columns.
+
+    Lane membership is a Layout decision (#467), so this content cannot be
+    normalized upstream of Layout the way an authored `tableColumns` cell is:
+    it is generated here, from the same completed rows the mark/label
+    geometry uses, and fed through the identical ``place_table_columns``
+    measurement every other table cell uses.
+    """
+    if lane_table is None:
+        raise LayoutError("E_LAYOUT_LANE_TABLE_REQUIRED", "/surfaceContent/laneTable")
+    label_kind, show_count = lane_table
+    columns = [TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content"))]
+    if show_count:
+        columns.append(TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content")))
+    seen_groups: set[str] = set()
+    cells: list[TableCellContent] = []
+    for review_row, row in zip(review_rows, rows, strict=True):
+        if label_kind == "group":
+            group_key = row.group_id or ""
+            if group_key not in seen_groups:
+                seen_groups.add(group_key)
+                group_title = next((item.group_label for item in review_row.items if item.group_label), None)
+                text_value = group_title or (group_key if group_key else _LANE_UNGROUPED_LABEL)
+            else:
+                text_value = ""
+        else:
+            representative = next(item for item in review_row.items if item.object_id == row.object_id)
+            text_value = representative.title
+        cells.append(TableCellContent(row.row_id, "Lane", text_value, "tableCell", "text"))
+        if show_count:
+            cells.append(TableCellContent(row.row_id, "Items", str(len(review_row.items)), "tableCell", "numeric"))
+    return tuple(columns), tuple(cells)
 
 
 def _centred_cell_baseline(row: Rect, treatment: Any) -> float:
@@ -750,12 +790,48 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             return table.slot_id
         raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
 
-    review_rows = projection.rows or tuple(
-        type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
-                            "table_subject_id": item.object_id, "items": (item,)})()
-        for item in projection.items
-    )
     timeline_bounds = _bounds(timeline.bounds)
+    if request.theme_tokens is None or request.font_metrics is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
+    def metric_for(typography_role: str) -> Any:
+        return metric_for_role(request.theme_tokens, typography_role, request.font_metrics)
+    body_treatment = request.theme_tokens.text_treatment("text")
+    body_metrics = metric_for("text")
+    body_size = float(body_treatment.font_size)
+    scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
+                           timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
+                           timeline_bounds[2] / max(1, (end - start).days))
+    is_lanes = request.surface_content.rows_mode == "lanes"
+    lane_result = None
+    if is_lanes:
+        label_row_height = float(body_treatment.font_size) * float(body_treatment.line_height)
+        # The lane engine's own "mark row" band is a packing/label-row-sizing
+        # concept, not the rendered mark's true block size (drawn separately
+        # by `place_mark_tracks`): an `end`/`start` ladder level sits at that
+        # same level, so the band must be at least as tall as one label line,
+        # or its text would spill into the next lane's reserved rows.
+        mark_row_height = max(float(metric_values["timeline.mark.blockSize"]), label_row_height)
+        label_content = request.surface_content.label_content
+
+        def lane_label_text_width(content: str) -> float:
+            return measure_text_width(content, font_size=float(body_treatment.font_size), font_metrics=body_metrics,
+                                      letter_spacing=float(body_treatment.letter_spacing),
+                                      text_transform=body_treatment.transform)
+
+        lane_result = build_lane_rows(
+            items=projection.items, relations=request.surface_content.relations,
+            coordinate=lambda value: _coordinate(value, scale),
+            label_text_width=lane_label_text_width, label_content=label_content,
+            mark_row_height=mark_row_height, label_row_height=label_row_height,
+            canvas_left=timeline_bounds[0], canvas_right=timeline_bounds[0] + timeline_bounds[2],
+        )
+        review_rows = lane_result.rows
+    else:
+        review_rows = projection.rows or tuple(
+            type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
+                                "table_subject_id": item.object_id, "items": (item,)})()
+            for item in projection.items
+        )
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
                          if request.surface_content.group_presentation == "header" else 0.0)
     role_geometries = resolve_mark_geometries(request.theme_tokens)
@@ -763,8 +839,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
         row_padding=float(metric_values["timeline.row.paddingBlock"]),
         mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
-        text_line_block=table_text_line_block(
+        text_line_block=0.0 if is_lanes else table_text_line_block(
             request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells)),
+        text_line_blocks=lane_result.text_line_blocks if is_lanes else None,
     )
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
@@ -796,13 +873,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 content = Rect(row.bounds.inline, header.block, row.bounds.inline_size,
                                row.bounds.block_size + Decimal(str(group_header_size)))
             groups.append(GroupPlacement(row.group_id, content, header))
-    if request.theme_tokens is None or request.font_metrics is None:
-        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    def metric_for(typography_role: str) -> Any:
-        return metric_for_role(request.theme_tokens, typography_role, request.font_metrics)
-    body_treatment = request.theme_tokens.text_treatment("text")
-    body_metrics = metric_for("text")
-    body_size = float(body_treatment.font_size)
     title_input = measured_sources.inputs.get("title")
     title_measurement = measured_sources.measurements.get("title")
     if title_measurement is None:
@@ -821,8 +891,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     )
     by_source = {slot.source_ref: slot for slot in slots}
     text.extend(detail_panel_text)
-    table_columns = request.surface_content.table_columns
-    table_cells = request.surface_content.table_cells
+    if is_lanes:
+        table_columns, table_cells = _lane_table_content(
+            review_rows=review_rows, rows=rows, lane_table=request.surface_content.lane_table)
+    else:
+        table_columns = request.surface_content.table_columns
+        table_cells = request.surface_content.table_cells
     measure_table_text = table_text_measurer(request.theme_tokens, request.font_metrics)
     indent_token = metric_values.get("table.indent.inlineSize")
     cell_indents: dict[str, float] = {}
@@ -918,9 +992,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    source_content=labels[group.group_id], semantic_id="groupHeader",
                                    available_inline_start=float(group.header_bounds.inline),
                                    available_inline_size=float(group.header_bounds.inline_size)))
-    scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
-                           timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
-                           timeline_bounds[2] / max(1, (end - start).days))
     axis = by_source["timeline-axis"]
     shapes: list[ShapePlacement] = []
     axis_tier_outcomes: list[AxisTierOutcome] = []
@@ -1516,7 +1587,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     row_band_by_id = {row.row_id: LabelRect(float(timeline.bounds.inline), float(row.bounds.block),
                                            float(timeline.bounds.inline_size), float(row.bounds.block_size))
                       for row in rows}
-    if contract.labels.enabled:
+    if contract.labels.enabled and not is_lanes:
         for review_row in review_rows:
             for item in review_row.items:
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
@@ -1575,7 +1646,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel"))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
-    for review_row in review_rows:
+    # Lane mode never shows an independent variance label: a selected delta is
+    # combined with the title in the one required lane label (#467).
+    for review_row in (() if is_lanes else review_rows):
         for item in review_row.items:
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             instance_id = layout_id if projection.rows else item.object_id
@@ -1626,6 +1699,45 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if shape.placement_id == "as-of" and len(shape.points) >= 2:
             surface_obstacles.add(SurfaceObstacle(shape.placement_id, "rule", "timeline",
                                                   ObstacleSegment(shape.points[0], shape.points[1])))
+
+    # Lane names and deltas are phase-1 required text (#467, #466 route-priority
+    # correction): placed inside their own lane's reserved footprint, registered
+    # in the one obstacle index, and completed before any dependency route is
+    # searched. The ladder decision (level, lane-local rect) was already made by
+    # the #467 L2 allocator; this only translates it once to absolute Layout
+    # coordinates and never re-searches or re-ranks it.
+    if is_lanes and lane_result is not None:
+        for index, (review_row, row) in enumerate(zip(review_rows, rows, strict=True)):
+            mark_band_top = float(row.bounds.block) + lane_result.text_line_blocks[index] - lane_result.mark_row_height
+            for item in review_row.items:
+                placement = lane_result.placements[item.object_id]
+                local = placement.rect
+                content = lane_label_content(item, request.surface_content.label_content)
+                # Scene addresses every lane member the same way marks do:
+                # `{row_id}:{item_id or object_id}` (Specification 38 §3),
+                # since `projection.rows` is populated for every non-explicit
+                # mode and this is the one instance-id convention it selects.
+                instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+                placement_id = f"member-label:{instance_id}"
+                placed_text = place_text(
+                    placement_id=placement_id, source_ref=item.object_id, content=content,
+                    inline=local.left, baseline_block=mark_band_top + local.top + float(body_treatment.font_size),
+                    typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                    overflow="visible-overflow" if placement.visible_overflow else "fit",
+                    collision_region="plot-label", collision_domain=CollisionDomain("timeline", "overlay"),
+                    source_content=content, semantic_id="memberLabel")
+                text.append(placed_text)
+                register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
+                surface_obstacles.add(SurfaceObstacle(
+                    f"label-footprint:{placed_text.placement_id}", "label-visual",
+                    placed_text.collision_domain.slot, ObstacleRect(
+                        float(placed_text.bounds.inline), float(placed_text.bounds.block),
+                        float(placed_text.bounds.inline + placed_text.bounds.inline_size),
+                        float(placed_text.bounds.block + placed_text.bounds.block_size))))
+                placement_decisions.append(PlacementDecision(
+                    placement_id, item.object_id, (placement.level,), placement.level, "placed"))
+                if placement.visible_overflow:
+                    visible_label_overflows.append((placed_text, LabelRect(*timeline_bounds)))
 
     timeline_rect = LabelRect(*timeline_bounds)
     def place_requested_labels(requests: tuple[LabelRequest, ...]) -> None:

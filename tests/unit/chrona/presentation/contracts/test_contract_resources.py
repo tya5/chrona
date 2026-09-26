@@ -128,12 +128,8 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
 
 
 def test_lanes_mode_detaches_the_typed_lane_table_intent():
+    # 02-programme-board.yaml is the committed lanes migration (#467 L3).
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
-    body = value["body"]
-    body.pop("tableColumns")
-    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True}}
-    body["visibility"]["labels"] = {"placement": "plot", "content": ["title", "finishDelta"], "side": "auto",
-                                    "overflow": "visible-overflow"}
     contract = _view_contract(value)
     assert contract.view.rows.mode == "lanes"
     assert contract.view.rows.lane_table.label == "group"
@@ -143,7 +139,7 @@ def test_lanes_mode_detaches_the_typed_lane_table_intent():
 
 
 def test_automatic_mode_leaves_lane_table_absent_and_track_allocation_at_its_default():
-    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
     contract = _view_contract(value)
     assert contract.view.rows.mode == "automatic"
     assert contract.view.rows.lane_table is None

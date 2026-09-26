@@ -119,7 +119,7 @@ def test_view_visual_target_selectors_and_encoding_eligibility_are_closed():
 
 
 def test_v07_scenario_table_source_is_closed_to_id_or_title():
-    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
     value["body"]["tableColumns"][0]["source"] = {"scenario": "title"}
     assert next(_validator().iter_errors(_json_value(value)), None) is None
     value["body"]["tableColumns"][0]["source"] = {"scenario": "unknown"}
@@ -173,14 +173,8 @@ def test_dependency_network_keeps_common_window_and_rejects_timeline_authoring()
 
 
 def _lane_view() -> dict:
-    """A minimal valid `rows.mode: lanes` View derived from a real fixture (#467)."""
-    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
-    body = value["body"]
-    body.pop("tableColumns")
-    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True}}
-    body["visibility"]["labels"] = {"placement": "plot", "content": ["title", "finishDelta"], "side": "auto",
-                                    "overflow": "visible-overflow"}
-    return value
+    """The committed `rows.mode: lanes` migration (#467 L3: 02-programme-board)."""
+    return yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
 
 
 def test_lanes_mode_accepts_the_minimal_valid_shape():
@@ -260,10 +254,10 @@ def test_lanes_mode_lane_table_label_is_closed_to_group_or_lane():
 
 
 def test_automatic_and_explicit_rows_reject_the_lane_only_fields():
-    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
     value["body"]["rows"]["laneTable"] = {"label": "group"}
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
 
-    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
     value["body"]["rows"]["trackAllocation"] = "collision"
     assert next(_validator().iter_errors(_json_value(value)), None) is not None

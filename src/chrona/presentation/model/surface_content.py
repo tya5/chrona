@@ -195,6 +195,12 @@ class SurfaceContentInput:
     table_hierarchy_column: str | None = None
     row_decoration: str = "none"
     group_decoration: str = "all"
+    # #467: `rows.mode` intent, detached from the View so Layout knows whether
+    # to derive rows one-per-item (automatic), from authored membership
+    # (explicit), or by group-local collision packing (lanes). `lane_table`
+    # is the finite row-summary declaration; it is None outside lanes mode.
+    rows_mode: str = "automatic"
+    lane_table: tuple[str, bool] | None = None
 
 
 @dataclass(frozen=True)
