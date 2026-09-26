@@ -136,6 +136,22 @@ flight. Everything else goes to the existing archive.
 | **How** | `git mv` the files. In the same commit, update every relative link that points to them from documents that stay: an archived review linking `../../planning/active/x.md` becomes `../planning/x.md`, and a current document linking to an archived one points into `docs/archive/`. Then run `python conformance/run_conformance.py`. The literal-acceptance gate scans `docs/reviews/current/` and resolves local links, so a missed link fails it. |
 | **Links from issues and PRs** | Link documents by commit permalink (`/blob/<sha>/docs/...`), never by `/blob/main/...`, so that archiving never breaks an issue's evidence trail. |
 
+### The archive is history, and it is search-ignored
+
+`docs/archive/` is not current authority. Do not cite an archived plan or review as the rule for new work. The current rule is in `docs/specification/`, `docs/decisions/`, `docs/design/` and the active plans.
+
+To keep old and rejected designs out of everyday context, the repository-root file `.ignore` lists `docs/archive/`. ripgrep and ripgrep-based code search, including the search in coding agents, skip it in any search that does not name the path. It remains tracked by git and present in every checkout; plain `grep -r` and `git grep` still see it.
+
+Search the archive deliberately when you need it: name the path (`rg <pattern> docs/archive/`, which searches it although it is ignored), use `rg --no-ignore <pattern>` for a whole-repository search, or open the file. Do this when:
+
+- tracing **why** a current rule exists, or which alternatives were rejected, from a link in a current design, specification or ADR;
+- **post-reviewing or reopening** a closed issue, whose plans and reviews are archived;
+- **archiving** documents or fixing links into `docs/archive/`;
+- investigating a **regression** whose earlier fix is recorded there;
+- the owner asks about past work.
+
+Do not remove `docs/archive/` from `.ignore` to make it permanently searchable. If a document in it is needed as current authority, move its content into the specification or a current design instead.
+
 The existing backlog is several hundred plans and reviews of closed issues. Archive it once, in its own commit or pull request, following the same rules, before relying on `active/` as a list of open work.
 
 ## Publication and CI discipline
