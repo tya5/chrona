@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
-from chrona.presentation.layout.text import measure_text_width
+from chrona.presentation.layout.text import measure_text_width, metric_for_role
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
 
@@ -53,22 +53,68 @@ def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, f
     return track.block + track.block_size * geometry.offset, track.block_size * geometry.height
 
 
+def table_cell_indent(*, grouped: bool, depth: int, inset: float, indent: float | None) -> float:
+    """Return the hierarchy-column indent that a table row's cell occupies."""
+    if depth and indent is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues/table.indent.inlineSize")
+    return (inset if grouped else 0.0) + float(indent or 0) * depth
+
+
+def table_text_measurer(theme_tokens: Any, font_metrics: Any) -> Callable[[str, str, str], float]:
+    """Measure table header and cell text in its own typography role."""
+    def measure(content: str, typography_role: str, orientation: str = "horizontal") -> float:
+        treatment = theme_tokens.text_treatment(typography_role)
+        if orientation != "horizontal":
+            return float(treatment.font_size * treatment.line_height)
+        return measure_text_width(content, font_size=float(treatment.font_size),
+                                  font_metrics=metric_for_role(theme_tokens, typography_role, font_metrics),
+                                  letter_spacing=float(treatment.letter_spacing),
+                                  text_transform=treatment.transform,
+                                  numeric_spacing=treatment.numeric_spacing)
+    return measure
+
+
+def measure_table_columns(*, columns: tuple[TableColumnContent, ...],
+                          cells: tuple[TableCellContent, ...],
+                          measure_text: Callable[[str, str, str], float], minimum_inline: float,
+                          hierarchy_column: str | None = None,
+                          cell_indents: Mapping[str, float] | None = None) -> tuple[float, ...]:
+    """Return each column's natural width; the one measure for slot and columns.
+
+    A hierarchy-column cell's extent includes its row's indent, because that
+    indent is consumed from the same column allocation at placement.
+    """
+    indents = cell_indents or {}
+    content_by_column: dict[str, list[tuple[str, str, str, float]]] = {
+        column.column_id: [(column.header, "text", column.header_orientation, 0.0)] for column in columns}
+    for cell in cells:
+        indent = indents.get(cell.object_id, 0.0) if cell.column_id == hierarchy_column else 0.0
+        content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role, "horizontal", indent))
+    return tuple(
+        max(minimum_inline, max((measure_text(item, role, orientation) + indent
+                                 for item, role, orientation, indent in content_by_column[column.column_id]),
+                                default=minimum_inline) + minimum_inline)
+        for column in columns
+    )
+
+
+def table_content_inline_size(natural_widths: tuple[float, ...], gutter: float) -> float:
+    """Return the inline extent of measured columns and the gutters between them."""
+    return geometry_sum(natural_widths) + gutter * max(0, len(natural_widths) - 1)
+
+
 def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         cells: tuple[TableCellContent, ...],
                         bounds: tuple[float, float, float, float],
                         measure_text: Callable[[str, str, str], float], minimum_inline: float,
                         overflow: str = "visible-overflow", gutter: float = 0.0,
+                        hierarchy_column: str | None = None,
+                        cell_indents: Mapping[str, float] | None = None,
                         ) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
-    content_by_column = {column.column_id: [(column.header, "text", column.header_orientation)] for column in columns}
-    for cell in cells:
-        content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role, "horizontal"))
-    natural_widths = tuple(
-        max(minimum_inline, max((measure_text(item, role, orientation)
-                                 for item, role, orientation in content_by_column.get(column.column_id, ((column.header, "text", column.header_orientation),))),
-                                default=minimum_inline) + minimum_inline)
-        for column in columns
-    )
+    natural_widths = measure_table_columns(columns=columns, cells=cells, measure_text=measure_text,
+                                           minimum_inline=minimum_inline, hierarchy_column=hierarchy_column,
+                                           cell_indents=cell_indents)
     if gutter < 0:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)

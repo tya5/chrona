@@ -11,7 +11,7 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
-from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
+from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
@@ -776,17 +776,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     text.extend(detail_panel_text)
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
-    def measure_table_text(content: str, typography_role: str, orientation: str = "horizontal") -> float:
-        treatment = request.theme_tokens.text_treatment(typography_role)
-        return (measure_text_width(content, font_size=float(treatment.font_size), font_metrics=metric_for(typography_role),
-                                   letter_spacing=float(treatment.letter_spacing),
-                                   text_transform=treatment.transform,
-                                   numeric_spacing=treatment.numeric_spacing)
-                if orientation == "horizontal" else float(treatment.font_size * treatment.line_height))
+    measure_table_text = table_text_measurer(request.theme_tokens, request.font_metrics)
+    indent_token = metric_values.get("table.indent.inlineSize")
+    cell_indents: dict[str, float] = {}
+    for row in rows:
+        row_indent = table_cell_indent(grouped=bool(row.group_id), depth=row.depth, inset=body_size,
+                                       indent=float(indent_token) if indent_token is not None else None)
+        cell_indents[row.row_id] = cell_indents[row.object_id] = row_indent
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
                                   measure_text=measure_table_text, minimum_inline=body_size,
                                   overflow=table.overflow,
-                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)))
+                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)),
+                                  hierarchy_column=request.surface_content.table_hierarchy_column,
+                                  cell_indents=cell_indents)
     positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
     column_widths = {item.column_id: item.inline_size for item in columns}
     column_intents = {item.column_id: item for item in table_columns}
@@ -841,10 +843,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         row = row_by_subject.get(object_id)
         position = positions.get(column_id)
         if row is not None and position is not None and column_id in column_intents:
-            indent_token = metric_values.get("table.indent.inlineSize")
-            if row.depth and indent_token is None:
-                raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues/table.indent.inlineSize")
-            indent = ((body_size if row.group_id else 0) + float(indent_token or 0) * row.depth
+            indent = (cell_indents[object_id]
                       if column_id == request.surface_content.table_hierarchy_column else 0)
             available = max(0.0, column_widths[column_id] - indent - body_size)
             resolved, overflow = table_text(content, available, typography_role)

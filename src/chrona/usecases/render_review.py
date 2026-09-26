@@ -31,9 +31,9 @@ from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.model.surface_content import SummaryContent
+from chrona.presentation.model.surface_content import SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
-from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
+from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -218,11 +218,14 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                             for index, visual in enumerate(render_closure.view.view.visuals))
     if visual_requests:
         ledger.icons()
+    actual_observations = render_closure.actual_set.observations_input if render_closure.actual_set else None
+    table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
+                                                locale=environment.locale)
     source_inputs = _source_inputs(project, view, projection, summary,
                                    render_closure.detail_profile.detail if render_closure.detail_profile else None,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
-                                   color_scale=color_scale)
+                                   color_scale=color_scale, table=table_content)
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
     try:
@@ -258,12 +261,13 @@ def _render_review(request: RenderRequest) -> RenderedReview:
 
     surface_content = normalize_v05_surface_content(
         projection, project, view,
-        actual_set=render_closure.actual_set.observations_input if render_closure.actual_set else None,
+        actual_set=actual_observations,
         detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
         summary=summary,
         layout_manifest=manifest,
         locale=environment.locale,
         color_scale=color_scale,
+        table=table_content,
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
@@ -455,7 +459,8 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, detail: ReviewDetailInput | None = None,
-                   annotation_input: SourceInput | None = None, *, color_scale: Any = None) -> dict[str, SourceInput]:
+                   annotation_input: SourceInput | None = None, *, color_scale: Any = None,
+                   table: TableContent | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
@@ -472,7 +477,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
             tuple(row.label for row in rows) or tuple(item.title for item in projection.items),
-            row_count, len(view.table_columns) or 1),
+            row_count, len(view.table_columns) or 1, table=table),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
         "network": SourceInput(

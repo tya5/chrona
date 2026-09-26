@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -17,12 +17,15 @@ from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
 
 
-def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
-                                  *, actual_set: Mapping[str, Any] | None = None,
-                                  detail: ReviewDetailInput | None = None, summary: SummaryContent,
-                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
-                                  color_scale: ResolvedColorScale | None = None) -> SurfaceContentInput:
-    """Normalize current Project/View/profile facts without legacy Settings."""
+def cell_typography_role(column: Any) -> str:
+    """Return the typography role in which one View table column's cells are set."""
+    return "numeric" if column.format == "signedDays" else "text"
+
+
+def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
+                                *, actual_set: Mapping[str, Any] | None = None,
+                                locale: str = "en-US") -> TableContent:
+    """Normalize the table once so measurement and composition read the same cells."""
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation)
                     for column in view.table_columns)
@@ -41,8 +44,6 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         if facet == "missingActual" and item.observation_state == ObservationState.DUE_UNOBSERVED:
             return "missingActualCell"
         return "tableCell"
-    def cell_typography_role(column: Any) -> str:
-        return "numeric" if column.format == "signedDays" else "text"
     if projection.rows:
         cells = tuple(
             TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column))
@@ -52,11 +53,28 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
              next(item for item in row.items if item.item_id == row.table_subject_id).object_id,
              next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"})
             for row in projection.rows for column in view.table_columns)
+        row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
+                           for row in projection.rows)
     else:
         cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)
+        row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
+    return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels)
+
+
+def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
+                                  *, actual_set: Mapping[str, Any] | None = None,
+                                  detail: ReviewDetailInput | None = None, summary: SummaryContent,
+                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
+                                  color_scale: ResolvedColorScale | None = None,
+                                  table: TableContent | None = None) -> SurfaceContentInput:
+    """Normalize current Project/View/profile facts without legacy Settings."""
+    if table is None:
+        table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
+    actual_body = _resource_body(actual_set, "ACTUAL_SET")
+    columns, cells, table_cell_objects = table.columns, table.cells, table.cell_objects
     visible = view.visibility
     group_presentation = view.grouping.presentation if view.grouping and view.grouping.presentation else "band"
     labels = visible.labels

@@ -90,6 +90,26 @@ class TableCellContent:
 
 
 @dataclass(frozen=True)
+class TableRowLevel:
+    """One table row's hierarchy facts, addressed by the keys its cells use."""
+
+    keys: tuple[str, ...]
+    grouped: bool
+    depth: int = 0
+
+
+@dataclass(frozen=True)
+class TableContent:
+    """Typed table facts normalized once, before measurement and composition."""
+
+    columns: tuple[TableColumnContent, ...]
+    cells: tuple[TableCellContent, ...]
+    cell_objects: tuple[tuple[str, str, str, bool], ...]
+    hierarchy_column: str | None
+    row_levels: tuple[TableRowLevel, ...]
+
+
+@dataclass(frozen=True)
 class AnnotationIntent:
     """One schema-validated annotation fact detached before Layout ingress."""
 

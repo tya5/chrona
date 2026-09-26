@@ -346,6 +346,44 @@ def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path
         assert "<linearGradient" not in svg and "<filter" not in svg
 
 
+def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_path, monkeypatch, capsys):
+    """#480: the table slot and its columns use one measure, so `Δ` stays inside."""
+    preset = tmp_path / "print-mono"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
+    main()
+    layout_path = preset / "layout.yaml"
+    layout = yaml.safe_load(layout_path.read_text(encoding="utf-8"))
+    review = next(child for child in layout["root"]["children"] if child["id"] == "review")
+    table = next(child for child in review["children"] if child["id"] == "table")
+    table["inlineSize"] = "content"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    scene_path, output = tmp_path / "scene.json", tmp_path / "halcyon.svg"
+    capsys.readouterr()
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", "examples/halcyon-1/project.yaml", "--actual", "examples/halcyon-1/actual.yaml",
+        "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
+    ])
+    main()
+
+    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    assert not [item for item in warnings if item["code"] == "W_LAYOUT_VISIBLE_OVERFLOW"]
+    primitives = {}
+
+    def collect(value):
+        if isinstance(value, dict):
+            if "id" in value and "bounds" in value:
+                primitives[value["id"]] = value["bounds"]
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(json.loads(scene_path.read_text(encoding="utf-8")))
+    table_bounds, delta = primitives["table"], primitives["column:Δ"]
+    assert delta["inline"] + delta["inlineSize"] <= table_bounds["inline"] + table_bounds["inlineSize"] + 1e-6
+
+
 def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, monkeypatch, capsys):
     occupied = tmp_path / "occupied"
     occupied.mkdir()

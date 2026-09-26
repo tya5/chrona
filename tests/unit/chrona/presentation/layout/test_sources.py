@@ -3,7 +3,12 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.presentation import place_table_columns, table_text_measurer
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
+from chrona.presentation.model.surface_content import (
+    TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel,
+)
+from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
 def theme():
@@ -113,3 +118,37 @@ def test_mixed_typography_runs_measure_their_actual_cumulative_height():
     summary = measured.measurements["summary"]
     assert summary.preferred_block == Decimal("80.0")
     assert summary.preferred_inline == Decimal(170)
+
+
+def _table_metrics():
+    class Metrics:
+        content_identity = "sha256:test"
+        def width(self, value, size): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size
+    return Metrics()
+
+
+def _table(cell_text: str) -> TableContent:
+    width = TableColumnWidth("content", "content")
+    columns = (TableColumnContent("name", "Name", "start", width), TableColumnContent("delta", "Δ", "end", width))
+    cells = (TableCellContent("a", "name", cell_text, "tableCell"), TableCellContent("a", "delta", "+12", "tableCell"))
+    return TableContent(columns, cells, (), None, (TableRowLevel(("a",), False),))
+
+
+def test_content_sized_table_slot_is_its_measured_columns_and_gutters():
+    """#480: the slot measure and column placement are one computation."""
+    table = _table("A work package name much wider than the column floor")
+    measured = measure_sources({"table": SourceInput(("A",), 1, 2, table=table)}, theme(), font_metrics=_table_metrics())
+    preferred = measured.measurements["table"].preferred_inline
+    assert preferred > Decimal(240)  # wider than 2 x table.column.minInlineSize
+    placed = place_table_columns(columns=table.columns, cells=table.cells, bounds=(0.0, 0.0, float(preferred), 20.0),
+                                 measure_text=table_text_measurer(ThemeTokenView(theme()), _table_metrics()),
+                                 minimum_inline=14.0, gutter=8.0)
+    assert placed[-1].inline + placed[-1].inline_size == pytest.approx(float(preferred))
+    # `min: content` keeps its floor-and-label basis until #487.
+    assert measured.measurements["table"].min_inline == min(Decimal(240), Decimal(7))
+
+
+def test_table_column_floor_binds_when_the_measured_columns_are_narrower():
+    measured = measure_sources({"table": SourceInput(("A",), 1, 2, table=_table("A"))}, theme(), font_metrics=_table_metrics())
+    assert measured.measurements["table"].preferred_inline == Decimal(240)

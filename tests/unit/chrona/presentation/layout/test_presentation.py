@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
-from chrona.presentation.layout.presentation import RowPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
+from chrona.presentation.layout.presentation import RowPlacement, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent
 from chrona.presentation.layout.text import ellipsize_text
 from chrona.presentation.layout.surface_composer import _contains_block_interval
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
@@ -270,3 +270,20 @@ def test_row_allocation_retains_infeasible_requirements_for_visible_canvas_growt
     placed = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 19.0), group_header_size=0.0,
                         required_block_sizes=(20.0,), distribution="pack")
     assert placed[0].bounds == (0.0, 0.0, 100.0, 20.0)
+
+
+def test_hierarchy_column_natural_width_includes_the_widest_cell_indent() -> None:
+    """#480: the indent placement consumes is part of the column's measure."""
+    columns = table_columns(("name", "Name"), ("owner", "Owner"))
+    cells = table_cells(("root", "name", "Root"), ("leaf", "name", "Leaf"), ("leaf", "owner", "Ops"))
+    indents = {"root": 0.0, "leaf": table_cell_indent(grouped=True, depth=2, inset=10.0, indent=16.0)}
+    plain = measure_table_columns(columns=columns, cells=cells, measure_text=fixed_measure, minimum_inline=10.0)
+    indented = measure_table_columns(columns=columns, cells=cells, measure_text=fixed_measure, minimum_inline=10.0,
+                                     hierarchy_column="name", cell_indents=indents)
+    assert indents["leaf"] == 42.0
+    assert indented[0] == plain[0] + 42.0
+    assert indented[1] == plain[1]
+    placed = place_table_columns(columns=columns, cells=cells, bounds=(0.0, 0.0, 1.0, 20.0),
+                                 measure_text=fixed_measure, minimum_inline=10.0,
+                                 hierarchy_column="name", cell_indents=indents)
+    assert tuple(item.natural_inline_size for item in placed) == indented

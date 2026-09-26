@@ -6,7 +6,11 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError, Measurement
+from chrona.presentation.layout.presentation import (
+    measure_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
+)
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
+from chrona.presentation.model.surface_content import TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
@@ -50,6 +54,7 @@ class SourceInput:
     span_days: int = 1
     typography_role: str = "text"
     runs: tuple[SourceTextRun, ...] = ()
+    table: TableContent | None = None
 
     def text_runs(self) -> tuple[SourceTextRun, ...]:
         if self.runs:
@@ -162,7 +167,15 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             text_block = text_line
         text_inline = max(average_advance, measured_width)
         if source == "table":
-            preferred_inline = Decimal(max(1, value.column_count)) * metric["table.column.minInlineSize"]
+            # One measure sizes the slot and places its columns (Specification 24 section 2.1).
+            # The metric is a per-column floor for a content-sized slot.
+            # Its minimum keeps the floor-and-label basis; #487 owns `min: content`.
+            column_floor = Decimal(max(1, value.column_count)) * metric["table.column.minInlineSize"]
+            minimum_inline = min(column_floor, text_inline)
+            preferred_inline = column_floor
+            if value.table is not None:
+                preferred_inline = max(column_floor, _table_content_inline(value.table, typography, font_metrics,
+                                                                           metric, float(body_size)))
             preferred_block = metric["table.header.blockSize"] + Decimal(max(1, value.item_count)) * metric["timeline.row.minBlockSize"]
         elif source == "timeline":
             preferred_inline = Decimal(max(1, value.span_days)) * metric["timeline.dayWidth"]
@@ -172,10 +185,28 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             preferred_block = metric["timeline.axis.blockSize"]
         else:
             preferred_inline, preferred_block = text_inline, text_block
+        if source != "table":
+            minimum_inline = min(preferred_inline, text_inline)
         result[source] = Measurement(
-            min(preferred_inline, text_inline), preferred_inline, preferred_inline * 2,
+            minimum_inline, preferred_inline, preferred_inline * 2,
             min(preferred_block, text_block), preferred_block, preferred_block * 2,
             Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
             Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
         )
     return MeasuredSources(result, dict(inputs), metric, run_measurements)
+
+
+def _table_content_inline(table: TableContent, typography: ThemeTokenView, font_metrics: Any,
+                          metric: Mapping[str, Decimal], inset: float) -> Decimal:
+    """Measure the table exactly as Layout will place its columns."""
+    indent = metric.get("table.indent.inlineSize")
+    cell_indents = {
+        key: table_cell_indent(grouped=level.grouped, depth=level.depth, inset=inset,
+                               indent=float(indent) if indent is not None else None)
+        for level in table.row_levels for key in level.keys
+    }
+    natural = measure_table_columns(columns=table.columns, cells=table.cells,
+                                    measure_text=table_text_measurer(typography, font_metrics),
+                                    minimum_inline=inset, hierarchy_column=table.hierarchy_column,
+                                    cell_indents=cell_indents)
+    return Decimal(str(table_content_inline_size(natural, float(metric["table.column.gutter.inlineSize"]))))

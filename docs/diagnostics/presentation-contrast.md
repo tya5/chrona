@@ -1144,10 +1144,10 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `planned:tvac:tvac` | `planned` | 1194.281, 191.000 | `group:` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `planned:vibration:vibration` | `planned` | 1133.177, 161.000 | `group:` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `summary-bar:spacecraft-ait` | `summary-bar` | 1207.859, 87.667 | `canvas` | canvas | `#0B1220` | fill | 7.607 | 3.000 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:integration:Baseline finish` | `variance-on-track` | 805.920, 134.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:integration:Δ` | `variance-on-track` | 861.305, 134.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Baseline finish` | `variance-on-track` | 805.920, 164.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Δ` | `variance-on-track` | 861.305, 164.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:integration:Baseline finish` | `variance-on-track` | 811.887, 134.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:integration:Δ` | `variance-on-track` | 867.272, 134.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Baseline finish` | `variance-on-track` | 811.887, 164.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `cell:vibration:Δ` | `variance-on-track` | 867.272, 164.375 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
 | `examples/halcyon-1/generated/08-gallery-dark.scene.json` | `actual:avionics:avionics` | `actual` | 955.951, 242.100 | `planned:avionics:avionics` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/08-gallery-dark.scene.json` | `actual:bus-test:bus-test` | `actual` | 1058.144, 302.100 | `group:` | flat | `#16213A` | stroke | 13.973 | 3.000 | info |
 | `examples/halcyon-1/generated/08-gallery-dark.scene.json` | `actual:cdr:cdr` | `actual` | 1029.595, 332.100 | `group:` | flat | `#16213A` | stroke | 13.973 | 3.000 | info |
