@@ -28,11 +28,15 @@ claiming “Recorded.”
 - Source: [Issue #476](https://github.com/tya5/chrona/issues/476)
 - Observed: 2026-09-26
 
-| # | Literal acceptance criterion | Disposition | Direct evidence | Successor |
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | On HALCYON-1 at as-of 2027-08-20, items planned to finish after 2027-08-20 carry no missing-actual mark. | met | `test_halcyon_missing_actual_is_due_only_and_tvac_boundary_is_inclusive`; public `02-programme-board.scene.json` removes all nine named future marks while retaining due `pdr` and `launch-contract`; SVG raster review. | — |
-| 2 | Items due on or before as-of with no observation still carry it. `tvac` (planned finish 08-20, no observation) is the boundary case, and a test covers it. | deferred | Inclusive span/point unit tests and a test-only HALCYON Actual copy with only `tvac-in-progress` removed prove the due-day mark in Scene and SVG. The **published** `examples/halcyon-1/actual.yaml` has `tvac-in-progress`, so shipped TVAC correctly remains `recorded` with `W_LAYOUT_ACTUAL_INCOMPLETE:tvac` and no missing mark. The literal parenthetical remains factually false for shipped HALCYON. | [Owner clarification request](https://github.com/tya5/chrona/issues/476#issuecomment-5845498008) and [fixture-plan amendment](../../planning/active/issue-476-missing-actual-due-state-design-plan-amendment-2026-09-26.md). |
-| 3 | The `missingActual` table cell follows the same rule. | met | HALCYON `01-mission-brief.scene.json` shows future rows as `—`, shipped observed TVAC as `Recorded`, and the test-only no-TVAC boundary as `Missing`; `test_missing_actual_table_fact_follows_observation_state` covers all four states. | — |
+| 1 | On HALCYON-1 at as-of 2027-08-20, items planned to finish after 2027-08-20 carry no missing-actual mark. | met | [HALCYON integration test](../../../tests/integration/test_render.py); public [02-programme-board Scene](../../../examples/halcyon-1/generated/02-programme-board.scene.json) removes all nine named future marks while retaining due `pdr` and `launch-contract`; SVG raster review. | — |
+| 2 | Items due on or before as-of with no observation still carry it. `tvac` (planned finish 08-20, no observation) is the boundary case, and a test covers it. | deferred | Inclusive span/point unit tests and a [test-only HALCYON Actual copy](../../../tests/integration/test_render.py) with only `tvac-in-progress` removed prove the due-day mark in Scene and SVG. The **published** [HALCYON Actual](../../../examples/halcyon-1/actual.yaml) has `tvac-in-progress`, so shipped TVAC correctly remains `recorded` with `W_LAYOUT_ACTUAL_INCOMPLETE:tvac` and no missing mark. The literal parenthetical remains factually false for shipped HALCYON. | [Owner clarification request](https://github.com/tya5/chrona/issues/476#issuecomment-5845498008) and [fixture-plan amendment](../../planning/active/issue-476-missing-actual-due-state-design-plan-amendment-2026-09-26.md). |
+| 3 | The `missingActual` table cell follows the same rule. | met | [HALCYON mission-brief Scene](../../../examples/halcyon-1/generated/01-mission-brief.scene.json) shows future rows as `—`, shipped observed TVAC as `Recorded`, and the test-only no-TVAC boundary as `Missing`; [table-state test](../../../tests/unit/chrona/presentation/model/test_surface_content.py) covers all four states. | — |
+
+## Programme-level criteria (optional)
+
+None; this review covers only Issue #476's literal acceptance criteria.
 
 ## Architecture and release disposition
 
