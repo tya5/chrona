@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from chrona.presentation.layout.surface_quality import CollisionDomain
+from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
 
 
 @dataclass(frozen=True)
@@ -92,7 +93,7 @@ def _visible_candidate(anchor: LabelRect, size: tuple[float, float], side: str, 
 
 
 def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterable[str], *,
-                bounds: LabelRect, obstacles: Iterable[LabelObstacle | LabelRect] = (), gap: float = 0,
+                bounds: LabelRect, obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex = (), gap: float = 0,
                 inside_host_obstacle_id: str | None = None,
                 required: bool = True, overflow: str = "visible-overflow",
                 visible_fallback_side: str | None = None) -> LabelPlacement | None:
@@ -104,7 +105,8 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                 and (overflow != "visible-overflow"
                      or visible_fallback_side not in {"above", "below", "start", "end", "inside"}))):
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
-    blocked = tuple(obstacles)
+    index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
+    blocked = () if index is not None else tuple(obstacles)
     for side in sides:
         try:
             candidate = _candidate(anchor, size, side, gap)
@@ -114,11 +116,17 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             raise
         if candidate.x < bounds.x or candidate.y < bounds.y or candidate.right > bounds.right or candidate.bottom > bounds.bottom:
             continue
-        active_obstacles = (obstacle for obstacle in blocked
-                            if not (side == "inside" and isinstance(obstacle, LabelObstacle)
-                                    and obstacle.placement_id == inside_host_obstacle_id))
-        if not any(_intersects(candidate, obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle)
-                   for obstacle in active_obstacles):
+        if index is not None:
+            collides = bool(index.collisions(
+                ObstacleRect(candidate.x, candidate.y, candidate.right, candidate.bottom),
+                host_id=inside_host_obstacle_id if side == "inside" else None))
+        else:
+            active_obstacles = (obstacle for obstacle in blocked
+                                if not (side == "inside" and isinstance(obstacle, LabelObstacle)
+                                        and obstacle.placement_id == inside_host_obstacle_id))
+            collides = any(_intersects(candidate, obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle)
+                           for obstacle in active_obstacles)
+        if not collides:
             return LabelPlacement(side, candidate)
     if overflow == "visible-overflow":
         # Ordinary requests retain their first ranked side. A separately

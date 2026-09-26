@@ -4,6 +4,7 @@ from __future__ import annotations
 from heapq import heappop, heappush
 
 from chrona.presentation.layout.model import geometry_sum
+from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope
 
 
 def place_relation_route(*, source_port: tuple[float, float], target_port: tuple[float, float],
@@ -26,13 +27,17 @@ def relation_route_quality(points: tuple[tuple[float, float], ...], *,
 
 
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
-                     obstacles: tuple[tuple[float, float, float, float], ...], *,
+                     obstacles: tuple[tuple[float, float, float, float], ...] | SurfaceObstacleIndex, *,
                      grid_offset: float = 2.0, bend_penalty: float = 12.0,
                      limit: int = 4096,
-                     bounds: tuple[float, float, float, float] | None = None) -> tuple[tuple[float, float], ...]:
+                     bounds: tuple[float, float, float, float] | None = None,
+                     port_ids: tuple[str, ...] = ()) -> tuple[tuple[float, float], ...]:
     """Return the stable shortest orthogonal route on a finite visibility grid."""
-    xs_set = {start[0], end[0], *(value for box in obstacles for value in (box[0] - grid_offset, box[2] + grid_offset))}
-    ys_set = {start[1], end[1], *(value for box in obstacles for value in (box[1] - grid_offset, box[3] + grid_offset))}
+    index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
+    boxes = (tuple(obstacle_envelope(item.geometry) for item in index.all())
+             if index is not None else obstacles)
+    xs_set = {start[0], end[0], *(value for box in boxes for value in (box[0] - grid_offset, box[2] + grid_offset))}
+    ys_set = {start[1], end[1], *(value for box in boxes for value in (box[1] - grid_offset, box[3] + grid_offset))}
     if bounds is not None:
         left, top, right, bottom = bounds
         xs_set = {value for value in xs_set if left <= value <= right} | {left, right, start[0], end[0]}
@@ -42,7 +47,9 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
     target = (xs.index(end[0]), ys.index(end[1]))
 
     def clear(a: tuple[float, float], b: tuple[float, float]) -> bool:
-        for left, top, right, bottom in obstacles:
+        if index is not None:
+            return not index.collisions(ObstacleSegment(a, b), port_ids=port_ids)
+        for left, top, right, bottom in boxes:
             if a[1] == b[1] and top < a[1] < bottom and max(a[0], b[0]) > left and min(a[0], b[0]) < right:
                 return False
             if a[0] == b[0] and left < a[0] < right and max(a[1], b[1]) > top and min(a[1], b[1]) < bottom:
