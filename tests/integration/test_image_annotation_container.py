@@ -156,3 +156,27 @@ def test_a_theme_binding_an_unresolved_catalog_reference_raises_a_stable_diagnos
             assert error.code == "E_LAYOUT_ANNOTATION_IMAGE_UNRESOLVED"
         else:
             raise AssertionError("expected an unresolved-catalog-reference diagnostic")
+
+
+def test_the_image_notes_slide_rasterizes_reproducibly_with_its_image_tiles(tmp_path, monkeypatch) -> None:
+    """#465 row 4: the committed slide's inputs give byte-identical PNGs, and the SVG paints the tiles."""
+    import sys
+
+    from chrona.app.cli import main
+
+    example = _root() / "examples/halcyon-1"
+    outputs = []
+    for name in ("a.png", "b.png", "c.svg"):
+        output = tmp_path / name
+        monkeypatch.setattr(sys, "argv", [
+            "chrona", "render", str(example / "project.yaml"), "--actual", str(example / "actual.yaml"),
+            "--view", str(example / "views/15-gallery-image-notes.yaml"),
+            "--theme", str(example / "themes/wallboard-image-notes.yaml"),
+            "--scheme", str(example / "schemes/control-room-dark.yaml"),
+            "--layout", str(example / "layouts/wallboard.yaml"),
+            "--icon-catalog", str(example / "icons.yaml"), "--output", str(output),
+        ])
+        main()
+        outputs.append(output.read_bytes())
+    assert outputs[0].startswith(b"\x89PNG") and outputs[0] == outputs[1]
+    assert outputs[2].count(b"<image") >= 9  # nine-slice tiles of at least one note container
