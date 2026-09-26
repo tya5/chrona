@@ -231,7 +231,7 @@ projected with source kind `explanatory-arrow` and can never satisfy, replace, o
 a semantic dependency. A missing anchor produces a View diagnostic; no title or
 geometry-based recovery is allowed.
 
-View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. Current v0.22 annotation placement uses a finite named fallback ladder. The accepted [#466 shared-obstacle prerequisite](../design/issue-466-general-placement-design-2026-09-26.md) centralizes Layout collision facts; the later candidate grammar remains subject to a design completion and cannot move geometry authority out of Layout. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
+View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. v0.22 annotation placement uses a finite named fallback ladder. The [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md) defines v0.23 annotations with one source (`text` or a stable Project annotation reference), a typed anchor, and an ordered candidate list. A Project reference inherits narrative text and object identity; View owns facet, endpoint, purpose and placement. A referenced Project note is not duplicated in the notes slot. Each candidate declares region, search, obstacle classes and connector; no View field contains concrete coordinates. v0.22 rungs normalize to the same typed model without changing their public output. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
 ## 10. Diagnostics
 

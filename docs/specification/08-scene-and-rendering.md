@@ -425,10 +425,8 @@ and an adapter serializes both token values without choosing a fallback opacity.
 The remaining I3 families are closed as follows.  `table-timeline` owns table frame,
 header band, column-label Text, group surface/header, alternating row surface, row
 rule, and one measured table-cell Text per selected `(objectId,columnId)`.  A selected
-semantic relation owns exactly one `dependency-connector` Path with two Scene-owned
-ports.  A visible View annotation owns a box Rect, optional measured Text, and only
-when its declared purpose requires it a leader Path.  Project notes own measured Text
-in the notes slot.  A present legend slot owns its swatches, measured labels, and
+semantic relation owns exactly one `dependency-connector` Path with two Layout-completed
+ports. A visible View annotation owns a completed box Rect or balloon Path, measured Text, and its declared completed connector, if any. A Project annotation selected by stable View reference supplies text and object identity to that View annotation; it is not duplicated in the notes slot. Unselected Project notes still own measured Text in the notes slot. Layout, not Scene, owns all ports and geometry under the [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md). A present legend slot owns its swatches, measured labels, and
 coverage Text.  A present summary slot owns a panel Rect, measured header Text, and
 one measured metric Text per declared metric. `review` receives its remaining
 connector, annotation, and summary families only in I3-F. `minimal` receives its

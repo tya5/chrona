@@ -191,12 +191,10 @@ Python `repr` or YAML presentation order.
 
 ### 8.1 Accepted prerequisite: one surface obstacle contract
 
-**Publication status:** this subsection is the accepted successor contract,
-not a claim that all behavior is implemented on current `main`. O1 publishes
-the typed obstacle inventory; O2 composer/annotation wiring is under the
-[#466 topology design plan](../planning/active/issue-466-annotation-route-topology-design-plan-2026-09-26.md)
-and has not passed its public artifact gate. Current behavior must be checked
-against the actual published code and evidence.
+**Publication status:** the O1/O2 shared-obstacle prerequisite passed its
+[public artifact and CI gate](../reviews/current/issue-466-shared-obstacle-prerequisite-acceptance-review-2026-09-26.md).
+The later candidate search and balloon behavior is a separate successor
+contract, not a claim that it has already been implemented.
 
 The [#466 design](../design/issue-466-general-placement-design-2026-09-26.md)
 defines the successor for annotation and plot-label placement. Layout creates
@@ -206,11 +204,25 @@ finite phases. Every placement and leader query names the same inventory,
 relevant obstacle classes, a finite region and only explicit host/port
 exemptions. Dependency paths are stroke-segment obstacles, not their broad
 enclosing rectangles. Scene receives completed decisions and geometry, never
-an obstacle query. A later design completion must define the exact candidate
-grammar, chosen-candidate evidence and bounded search before legacy rungs
-are normalized to candidate data. The obstacle-only prerequisite may publish
-before nearest-free and tail support; those remain incomplete until their own
-design and release gates pass.
+an obstacle query. The [#466 candidate design](../design/issue-466-candidate-placement-design-2026-09-26.md)
+defines the successor grammar, chosen-candidate evidence and bounded joint
+box/connector search. Legacy rungs normalize to that data without a visual
+change; nearest-free and tail support require their own release gates.
+
+### 8.1a Candidate model
+
+A candidate has exactly the four declared parts `region`, `search`, `obstacles`,
+and `connector`, plus a stable ID. Layout resolves a finite region after slot
+allocation and tests measured box and connector together against the one
+monotone obstacle inventory. Plot search MUST avoid marks, text, label visuals,
+dependency and earlier leader strokes, annotation boxes, ports and rules; an
+as-of rule partitions plot search on the anchor side. Search is deterministic
+and bounded. The decision records the chosen candidate ID and joint-trial
+count. A later candidate fit warns with its chosen ID. Exhaustion follows
+explicit suppression or the existing visible-overflow completion, never a
+hidden new placement mode. The exact versioned View grammar and tail Theme
+treatment are in the linked design; Scene and adapters only project completed
+geometry.
 
 ### 8.2 Annotation connector topology after the shared inventory
 
