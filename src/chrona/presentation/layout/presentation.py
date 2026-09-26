@@ -173,6 +173,10 @@ class LaneRowsResult:
     label_row_height: float
 
 
+_UNGROUPED_LANE_GROUP_KEY = "lane-ungrouped"
+"""Canonical #467 packing key for `grouping.by: none` (never a View group id)."""
+
+
 def lane_label_content(item: ReviewItem, label_content: tuple[str, ...]) -> str:
     """Return one lane item's required label text: title, plus a selected delta.
 
@@ -226,7 +230,12 @@ def build_lane_rows(*, items: tuple[ReviewItem, ...], relations: tuple[Any, ...]
         if right <= left:
             right = left + mark_row_height
         label_width = label_text_width(lane_label_content(item, label_content))
-        candidates.append(LaneCandidate(item.object_id, item.group_id, (start_at, end_at, item.object_id, item.object_id),
+        # `grouping.by: none` leaves `group_id` as "" (no group header); the
+        # lane allocator itself requires a non-empty, collision-free group
+        # key (#467's canonical ungrouped sentinel), translated back to ""
+        # below so downstream group-header logic is unaffected.
+        group_key = item.group_id or _UNGROUPED_LANE_GROUP_KEY
+        candidates.append(LaneCandidate(item.object_id, group_key, (start_at, end_at, item.object_id, item.object_id),
                                         LaneMark(left, right), label_width, None,
                                         tuple(predecessors.get(item.object_id, ()))))
     result = allocate_lanes(candidates, mark_row_height=mark_row_height, label_row_height=label_row_height,
@@ -236,7 +245,8 @@ def build_lane_rows(*, items: tuple[ReviewItem, ...], relations: tuple[Any, ...]
     placements: dict[str, LanePlacement] = {}
     for lane in result.lanes:
         member_items = tuple(by_object_id[member_id] for member_id in lane.members)
-        rows.append(ReviewRowProjection(lane.lane_id, "", lane.group_key, lane.representative_id, member_items))
+        group_id = "" if lane.group_key == _UNGROUPED_LANE_GROUP_KEY else lane.group_key
+        rows.append(ReviewRowProjection(lane.lane_id, "", group_id, lane.representative_id, member_items))
         # The label rows stack ABOVE the mark row (#467); a lane's own
         # required extent is their sum, not the larger of the two
         # alternatives `required_row_block_extents` otherwise assumes (an

@@ -360,6 +360,19 @@ def test_build_lane_rows_skips_items_without_a_resolvable_date() -> None:
     assert result.rows == ()
 
 
+def test_build_lane_rows_accepts_ungrouped_items_without_crashing() -> None:
+    """`grouping.by: none` leaves `group_id` == "" (#467); the lane allocator
+    needs a non-empty internal key but must not leak it into row.group_id,
+    since an empty group_id is what suppresses an unwanted group header."""
+    items = (_lane_item("a", date(2027, 1, 1), date(2027, 1, 11), group_id=""),
+             _lane_item("b", date(2027, 1, 21), date(2027, 1, 31), group_id=""))
+    result = build_lane_rows(items=items, relations=(), coordinate=lambda d: (d - date(2027, 1, 1)).days * 2.0,
+                             label_text_width=lambda text: 6.0, label_content=("title",),
+                             mark_row_height=10.0, label_row_height=10.0)
+    assert len(result.rows) == 1
+    assert result.rows[0].group_id == ""
+
+
 def test_row_requirement_accepts_a_per_row_text_line_block_override() -> None:
     """#467: lane rows reserve a different label-row footprint per lane."""
     rows = (SimpleNamespace(row_id="a", group_id=None, items=()),
