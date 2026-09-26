@@ -43,6 +43,40 @@ not from an editable Draft Project. An extension is declared in the
 The public materializer follows each immutable closure and reproduces its
 committed SVG/Scene bytes:
 
+The distinctive source snippets are small even when their complete corpus
+Projects are not. HALCYON's Project declares a scenario, while its View
+selects that scenario for comparison:
+
+```yaml
+scenarios:
+  tvac-slip:
+    title: System TVAC slips one week
+    objects: {tvac: {schedule: {amount: 21d}}}
+# The selecting View also declares:
+comparison: {baseline: scenario, scenario: tvac-slip, actual: required, observationSelection: latest, deltaUnit: calendar-days, facets: [planned, actual]}
+```
+
+The snapshot stage is a Context input, not another Project field; its View
+selects `baseline: snapshot`:
+
+```yaml
+inputs:
+  snapshot: {id: halcyon-1-baseline-2027-06, kind: snapshot-ref, store: {provider: local, identity: halcyon-1-example}, address: snapshots/baseline-2027-06.yaml, revision: {token: example-v1}}
+```
+
+ORION's Project declares an immutable profile-package resource, rather than
+inventing custom object types at render time:
+
+```yaml
+extensions:
+  - packageId: semiconductor-development
+    resource: {id: semiconductor-development, kind: profile-package, store: {provider: local, identity: orion-asic-example}, address: extensions/semiconductor-development.yaml, revision: {token: example-v1}, contentIdentity: sha256:20d989ebfbc40215e7024e07c74e4db73138e95406c1751a1aa5f787fe05265d}
+```
+
+These are excerpts for learning; the linked full sources are the runnable
+documents. In particular, do not treat the Context excerpt as a standalone
+unversioned reference.
+
 ```bash
 chrona materialize examples/halcyon-1/manifest.yaml --slide flight-readiness --output tutorial-scenario
 chrona materialize examples/halcyon-1/manifest.yaml --slide replan-baseline --output tutorial-snapshot

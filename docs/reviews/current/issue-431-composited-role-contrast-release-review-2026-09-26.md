@@ -31,3 +31,21 @@ paint/absence/treatment facts, and the report observes only those facts.  The
 adapter receives no contrast decision.  The release is acceptable once the
 public materializer and multi-platform CI evidence for this exact commit are
 green.
+
+## Adapter-output re-review after #456
+
+The original review inspected completed Scene paint. #456 exposed that an
+unfilled SVG shape used SVG's implicit black fill, so Scene-only contrast
+evidence was insufficient for closed-day stripes. The adapter now emits
+`fill="none"`; the [all-SVG gate](../../../tools/check_svg_explicit_fill.py)
+passes 21 committed slides. XML inspection found all 844 closed-day shapes
+explicitly unfilled and stroked. The [HALCYON hero](../../../examples/halcyon-1/generated/01-mission-brief.svg)
+and [print slide](../../../examples/halcyon-1/generated/03-launch-campaign.svg)
+were raster-inspected without black bars; print outline marks are hollow.
+The [contrast report](../../diagnostics/presentation-contrast.md) still has
+zero errors and a minimum decoration ratio above 1.10:1. Thus the five
+decoration witnesses and state-text floor are now checked against actual
+adapter output as well as Scene intent. The
+[5b909ce8 CI matrix](https://github.com/tya5/chrona/actions/runs/36207540414)
+passed across Ubuntu, macOS, Windows and newest-Python reproduction. The
+final review commit CI remains the release gate.
