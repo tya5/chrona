@@ -191,15 +191,16 @@ def test_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(
     edges = {round(stripe["block"], 3) for stripe in stripes} | {round(stripe["block"] + stripe["blockSize"], 3) for stripe in stripes}
     assert all(round(bounds["block"], 3) in edges or round(bounds["block"] + bounds["blockSize"], 3) in edges
                for bounds in rows.values())
-    placed_at_end_in_row = 0
-    member_labels = [key for key in primitives if key.startswith("member-label:")]
+    # #488: every member label is at its bar's end or start inside its own
+    # row band, or it is reported suppressed; none reads as the adjacent row's.
+    suppressed = [item for item in scene["diagnostics"] if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")]
+    member_labels = [key for key in primitives if key.startswith("member-label:")
+                     and f"W_LAYOUT_LABEL_SUPPRESSED:{key}" not in suppressed]
     for key in member_labels:
         object_id = key.split(":")[1]
         label, row = primitives[key]["bounds"], rows[object_id]
         host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
-        if (row["block"] <= label["block"] and label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
-                and label["inline"] >= host["inline"] + host["inlineSize"] - 0.5):
-            placed_at_end_in_row += 1
-    # Measured at the I483-2 commit: 20 of 28; the rest are the plot-edge start
-    # fallback (3) and side-search displacement out of the row (5), tracked by #488.
-    assert placed_at_end_in_row >= 20 and len(member_labels) == 28
+        assert row["block"] - 0.01 <= label["block"] and label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01, key
+        assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5
+                or label["inline"] + label["inlineSize"] <= host["inline"] + 0.5), key
+    assert len(member_labels) + len(suppressed) == 29  # every selected item: 28 named before #488, 1 suppressed

@@ -81,14 +81,15 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys):
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
               if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
-    assert len(per_id) == 1
+    # Two since #488 keeps member labels inside their own row band.
+    assert len(per_id) == 2
     assert not per_id & visible_labels
     assert rendered.scene.diagnostics.count(
-        "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1") == 1
+        f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={len(per_id)}") == 1
     _emit_render_warnings(rendered)
     info = [json.loads(line) for line in capsys.readouterr().err.splitlines()
             if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
-    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": 1,
+    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": 2,
                      "severity": "info", "surfaceId": "table-timeline"}]
 
 
@@ -120,7 +121,9 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count():
     tuned = render_review(_draft_request(**inputs, view_path=preset / "view.yaml",
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
-    assert "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1" in tuned.scene.diagnostics
+    member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
+    assert member_suppressed >= 1  # the variance suppression above is not counted
+    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
     ordinary = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
                                             theme_path=example / "themes/briefing.yaml",
                                             layout_path=example / "layouts/briefing.yaml",

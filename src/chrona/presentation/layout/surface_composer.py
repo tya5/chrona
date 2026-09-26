@@ -1513,6 +1513,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             rule_host_obstacle_id="as-of",
             semantic_id="asOfLabel",
         ))
+    row_band_by_id = {row.row_id: LabelRect(float(timeline.bounds.inline), float(row.bounds.block),
+                                           float(timeline.bounds.inline_size), float(row.bounds.block_size))
+                      for row in rows}
     if contract.labels.enabled:
         for review_row in review_rows:
             for item in review_row.items:
@@ -1545,10 +1548,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 ladder = ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
                           if preferred_side else default_ladder)
                 sides = tuple(side for side in ladder if side != "suppress")
+                # A member label's placement region is its own row band (#488):
+                # every candidate, including the side-neighbourhood search,
+                # stays inside it so a name never reads as the adjacent row's.
+                row_band = row_band_by_id.get(review_row.row_id)
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
-                                                   wrap, inside_host_obstacle_id=host_mark_id if mark is not None else None,
+                                                   wrap, bounds=row_band,
+                                                   inside_host_obstacle_id=host_mark_id if mark is not None else None,
                                                    semantic_id="memberLabel"))
         for folded in getattr(projection, "folded_points", ()):
             instance_id = _folded_instance_id(folded, folded.item)
@@ -1650,6 +1658,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             chip_pad = ((float(chip[0]) * float(font_size), float(chip[0]) * float(font_size) / 2)
                         if chip is not None else (0.0, 0.0))
             label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
+            if label_request.bounds is not None and chip is not None:
+                # A declared region contains the text; its chip is decoration
+                # drawn around it and may reach past the region by its padding.
+                placement_bounds = LabelRect(placement_bounds.x - chip_pad[0], placement_bounds.y - chip_pad[1],
+                                             placement_bounds.width + 2 * chip_pad[0],
+                                             placement_bounds.height + 2 * chip_pad[1])
             # Mark labels remain subject to every completed mark.  ``place_label``
             # alone exempts this request's declared host for an ``inside``
             # candidate; a comparison sibling or another row is never an implicit

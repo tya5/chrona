@@ -49,7 +49,9 @@ def test_a_label_chip_is_not_specific_to_the_as_of_marker(tmp_path, monkeypatch)
     """The same Theme role naming gives member labels chips; no as-of code path is involved."""
     theme = yaml.safe_load((ROOT / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
     body = theme["body"]
-    body["values"]["chip-padding"] = {"type": "number", "value": 0.4}
+    # A small padding: a member label (text, not chip) must stay inside its
+    # own row band (#488), and Controller Z's labels sit just above their bars.
+    body["values"]["chip-padding"] = {"type": "number", "value": 0.1}
     body["roles"]["member-label-chip"] = {"backgroundTreatment": "fill", "chipPadding": "chip-padding"}
     body["colorBindings"]["member-label-chip.fill"] = "surfaceRaised"
     theme_path = tmp_path / "theme.yaml"

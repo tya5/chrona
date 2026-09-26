@@ -1342,8 +1342,8 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `calendar-closed:2027-11-07` | `calendar-closed` | 1826.027, 563.000 | `canvas` | canvas | `#0B1220` | stroke | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `calendar-closed:2027-11-13` | `calendar-closed` | 1866.507, 563.000 | `canvas` | canvas | `#0B1220` | stroke | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `calendar-closed:2027-11-14` | `calendar-closed` | 1873.253, 563.000 | `canvas` | canvas | `#0B1220` | stroke | 1.773 | 1.100 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `variance:integration:integration` | `variance-on-track` | 1147.016, 131.000 | `group:` | flat | `#142642` | fill | 5.692 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `variance:vibration:vibration` | `variance-on-track` | 1161.479, 177.650 | `group:` | flat | `#142642` | fill | 5.692 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `variance:integration:integration` | `variance-on-track` | 1060.279, 147.650 | `group:` | flat | `#142642` | fill | 5.692 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `variance:vibration:vibration` | `variance-on-track` | 1161.479, 144.350 | `group:` | flat | `#142642` | fill | 5.692 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `group:` | `group-band` | 1407.733, 206.000 | `canvas` | canvas | `#0B1220` | fill | 1.235 | 1.100 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `planned:campaign:campaign` | `planned` | 1508.933, 311.000 | `group:` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `planned:emc:emc` | `planned` | 1313.279, 221.000 | `group:` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
