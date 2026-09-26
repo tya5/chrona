@@ -70,6 +70,11 @@ plot/relation surface gaining or losing room as the table's width changes — no
 independent regression. **No slide gained a `W_LAYOUT_VISIBLE_OVERFLOW` it did not
 already have** (checked programmatically across all 21 slides).
 
+**Integration note (lead, at `908f9d69`).** The slice was cherry-picked onto `main` after #430 (`dd8e5b0d`) added the Controller Z `progress-track` slide and #482 (`1dee7f1e`) changed axis thinning. The public evidence was regenerated on the integrated tree.
+- The corpus now has 22 slides, of which 19 changed. The extra one is `controller-z/progress-track`, 542.40 → 458.40. It shares Controller Z `executive`'s View, Layout and data, so it has the same width change and the same diagnostic change: `member-label:ga` is no longer suppressed, and `relation:bringup-to-performance` becomes suppressed.
+- Every table width in the table above was re-measured between `1dee7f1e` and `908f9d69` and matches within 0.01 px.
+- No slide gains a `W_LAYOUT_VISIBLE_OVERFLOW`, checked programmatically across all 22.
+
 **Correction from the design-phase prototype:** the rejected single-pass formula's
 evidence reported `halcyon-1/replan-baseline` losing its `W_LAYOUT_AXIS_DENSITY` and
 three `W_LAYOUT_AXIS_LABEL_THINNED` diagnostics, and several slides' relation-label
