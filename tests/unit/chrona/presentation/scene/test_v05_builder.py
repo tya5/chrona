@@ -185,6 +185,7 @@ def _theme():
                   "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 11},
                   "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity", "backgroundTreatment": "outline", "backgroundPaintOrder": 12},
                   "axis-band-decoration": {"fill": "ink", "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
+                  "axis-band-decoration2": {"fill": "ink", "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
                   "milestoneSymbol": {"symbol": "milestone-symbol"}}, "metrics": {}}}
 
 
@@ -1017,6 +1018,106 @@ def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
     assert {node.visual_role for node in grids} == {"axis-major", "axis-minor"}
     assert all(node.points[0][1] == next(slot.bounds[1] for slot in surface.slots if slot.source == "timeline")
                for node in grids)
+
+
+def test_a_single_band_tier_keeps_spanning_the_whole_axis_slot():
+    # Issue #426 design §2.2: the byte-identity carve-out. Every committed
+    # View today declares exactly one band tier, and its rect must keep
+    # spanning the whole axis slot (not a one-line lane) so no existing
+    # Scene output changes.
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=(
+                                  AxisTier("quarter", 1, "band"),
+                                  AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+                              )),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    bands = [node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:")]
+    assert bands
+    axis_slot = next(slot for slot in surface.slots if slot.source == "timeline-axis")
+    assert all(node.bounds[1] == axis_slot.bounds[1] and node.bounds[3] == axis_slot.bounds[3] for node in bands)
+
+
+def _axis_tiers_scene(axis_tiers, theme=None):
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=axis_tiers),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=theme or _theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    return compose_review_surface(value)
+
+
+def test_two_band_tiers_each_render_in_their_own_non_overlapping_lane():
+    # Issue #426, literal criterion 1: a View can declare two band tiers and
+    # both render, each in its own lane, neither covering the other.
+    surface = _axis_tiers_scene((
+        AxisTier("quarter", 1, "band"), AxisTier("month", 1, "band"),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+    ))
+    bands = [node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:")]
+    assert bands, "expected at least one band primitive"
+    first_tier_bands = [node for node in bands if node.scene_id.startswith("axis-band-rect:0:")]
+    second_tier_bands = [node for node in bands if node.scene_id.startswith("axis-band-rect:1:")]
+    assert first_tier_bands and second_tier_bands
+    first_block, first_size = first_tier_bands[0].bounds[1], first_tier_bands[0].bounds[3]
+    second_block, second_size = second_tier_bands[0].bounds[1], second_tier_bands[0].bounds[3]
+    assert first_block != second_block
+    # The two lanes are disjoint on the block axis: one entirely precedes the other.
+    assert (first_block + first_size <= second_block) or (second_block + second_size <= first_block)
+
+
+def test_two_band_tiers_resolve_different_fills_from_the_theme():
+    # Issue #426, literal criterion 2: two band tiers can take different
+    # fills from the Theme.
+    theme = _theme()
+    theme["body"]["values"]["second-band-ink"] = {"type": "color", "value": "#204060"}
+    theme["body"]["roles"]["axis-band-decoration2"] = {
+        **theme["body"]["roles"]["axis-band-decoration2"], "fill": "second-band-ink",
+    }
+    surface = _axis_tiers_scene((
+        AxisTier("quarter", 1, "band"), AxisTier("month", 1, "band"),
+    ), theme=theme)
+    first_band = next(node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:0:"))
+    second_band = next(node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:1:"))
+    assert first_band.visual_role == "axis-band-decoration"
+    assert second_band.visual_role == "axis-band-decoration2"
+    assert first_band.paint.fill != second_band.paint.fill
+
+
+def test_two_labels_tiers_resolve_different_sizes_weights_and_colours():
+    # Issue #426, literal criterion 3: two labels tiers can take different
+    # sizes, weights and colours from the Theme.
+    theme = _theme()
+    theme["body"]["values"]["emphatic-size"] = {"type": "number", "value": 20}
+    theme["body"]["values"]["emphatic-weight"] = {"type": "fontWeight", "value": 700}
+    theme["body"]["values"]["emphatic-ink"] = {"type": "color", "value": "#B00000"}
+    theme["body"]["roles"]["axisQuarter"] = {
+        **theme["body"]["roles"]["axis"], "fontSize": "emphatic-size", "fontWeight": "emphatic-weight",
+    }
+    theme["body"]["roles"]["axis-label2"] = {**theme["body"]["roles"]["axis-label2"], "fill": "emphatic-ink"}
+    surface = _axis_tiers_scene((
+        AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US"),
+                 typography_role="axisQuarter"),
+        AxisTier("month", 1, "labels", AxisLabelIntent("short-month", (), "start", "visible-overflow", "horizontal", "en-US")),
+    ), theme=theme)
+    labels = [node for node in surface.primitives if node.scene_id.startswith("axis-label:")]
+    quarter_label = next(node for node in labels if node.text == "2026 Q1")
+    month_label = next(node for node in labels if node.text == "Jan")
+    assert quarter_label.visual_role == "axis-label2"
+    assert month_label.visual_role == "text"
+    assert quarter_label.text_layout.font_size != month_label.text_layout.font_size
+    assert quarter_label.text_layout.weight != month_label.text_layout.weight
+    assert quarter_label.paint.fill != month_label.paint.fill
 
 
 @pytest.mark.parametrize("table_id,form,expected", [

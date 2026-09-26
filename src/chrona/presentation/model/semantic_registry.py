@@ -94,6 +94,27 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
     _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),
     _binding("axisLabel", "label", "axis-label", "text", "axis"),
+    # Second band tier (#426): a View may declare a second band tier, each
+    # in its own Layout-assigned lane; the second ordinal resolves through
+    # its own semantic id so a Theme can bind it a distinct fill. Two
+    # ordinals meet the literal two-band-tier acceptance; a third is a
+    # small, visible follow-up if a View ever needs it. (A third band id is
+    # deliberately not pre-registered: the corpus-wide decoration contrast
+    # witness in tools/presentation_contrast.py requires every registered
+    # DECORATION-classified role to be painted somewhere in committed public
+    # evidence, and no committed slide needs a third band.)
+    _binding("axisBandDecoration2", "decoration", "axis-band", "axis-band-decoration2", "axis-band-decoration2", ContrastClass.DECORATION),
+    # Second and third labels tier (#426, not contrast-classified, so the
+    # decoration witness above does not constrain how many are registered):
+    # distinct scene roles (not the shared "text" role axisLabel uses), so a
+    # Theme can bind a labels tier its own colour, not only its own font
+    # (font already varies per tier through the typographyRole passed
+    # explicitly to place_text, independent of scene role). A tier that
+    # leaves typographyRole at its default keeps the shared "axisLabel" id
+    # every committed View already uses, so two fully-styled tiers (neither
+    # left at the default) need both of these ordinals at once.
+    _binding("axisLabel2", "label", "axis-label", "axis-label2", "axis2"),
+    _binding("axisLabel3", "label", "axis-label", "axis-label3", "axis3"),
     _binding("axisGrid", "line", "axis-grid", "axis-major", "axis-major"),
     _binding("axisGridMinor", "line", "axis-grid", "axis-minor", "axis-minor"),
     # Grouping.
@@ -153,6 +174,26 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("summaryFigureValue", "label", "summary-figure-value", "metric", "metric"),
     _binding("summaryFigureCaption", "label", "summary-figure-caption", "subtitle", "subtitle"),
 )}
+
+
+def axis_band_semantic_ids() -> tuple[str, ...]:
+    """Closed, ordinal-ordered axis band semantic ids (#426).
+
+    A View's Nth declared band-role tier resolves through the Nth entry
+    here; Layout, surface-quality validation and Scene construction all
+    call this rather than repeating the literal strings.
+    """
+    return ("axisBandDecoration", "axisBandDecoration2")
+
+
+def axis_label_semantic_ids() -> tuple[str, ...]:
+    """Closed, ordinal-ordered axis label semantic ids (#426).
+
+    A labels tier that leaves ``typographyRole`` at its default resolves to
+    the first (shared) entry; a tier that names a role claims the next one,
+    in declaration order among such tiers.
+    """
+    return ("axisLabel", "axisLabel2", "axisLabel3")
 
 
 def label_chip_semantic(label_semantic_id: str) -> str | None:

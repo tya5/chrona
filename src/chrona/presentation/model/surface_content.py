@@ -144,6 +144,7 @@ class AxisTier:
     every: int
     role: str
     label: AxisLabelIntent | None = None
+    typography_role: str | None = None
 
 
 @dataclass(frozen=True)

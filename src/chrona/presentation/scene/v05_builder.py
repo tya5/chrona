@@ -15,7 +15,9 @@ from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.semantic_registry import ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings, inside_member_label_semantic, semantic_binding
+from chrona.presentation.model.semantic_registry import (
+    axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
+    inside_member_label_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -493,10 +495,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                            if layout_text[label_id].selected_rung == "inside" else "memberLabel")
             emit_semantic_text(label_id, semantic_id)
     for placed in placed_surface.text:
-        if placed.semantic_id in {"axisBand", "axisLabel"}:
-            emit_semantic_text(placed.placement_id, placed.semantic_id, "text")
+        if placed.semantic_id == "axisBand" or placed.semantic_id in axis_label_semantic_ids():
+            # No role override: each id's own registered scene role resolves
+            # its paint, so a second/third labels tier (#426) can take a
+            # colour distinct from the shared "text" role axisLabel keeps.
+            emit_semantic_text(placed.placement_id, placed.semantic_id)
     for placed in placed_surface.shapes:
-        if placed.semantic_id == "axisBandDecoration":
+        if placed.semantic_id in axis_band_semantic_ids():
             band = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "timeline-axis", "axis", band.purpose,
                                              band.scene_role,

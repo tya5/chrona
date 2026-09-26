@@ -8,6 +8,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
+from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
 
 @dataclass(frozen=True)
@@ -477,8 +478,8 @@ class SurfacePlacement:
             if (host is None or host.slot_id != item.slot_id
                     or host.paint_order >= item.paint_order):
                 raise ValueError(f"E_LAYOUT_TEXT_HOST_INVALID:{item.placement_id}")
-            if item.semantic_id == "axisLabel":
-                allowed = isinstance(host, ShapePlacement) and host.semantic_id == "axisBandDecoration"
+            if item.semantic_id in axis_label_semantic_ids():
+                allowed = isinstance(host, ShapePlacement) and host.semantic_id in axis_band_semantic_ids()
             elif item.semantic_id == "noteIndex" or item.selected_rung == "inside":
                 allowed = isinstance(host, MarkPlacement) and host.semantic_id in {
                     "planned", "actual", "snapshot", "scenario", "missing-actual",

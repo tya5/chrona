@@ -9,7 +9,8 @@ import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
-from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, label_chip_semantic, semantic_binding
+from chrona.presentation.model.semantic_registry import (
+    axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
@@ -47,7 +48,7 @@ class SurfaceLayoutComposition:
 
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
-BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed", "axisBandDecoration"})
+BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed", *axis_band_semantic_ids()})
 BACKGROUND_PAINT_ORDER = 10
 MARK_PAINT_ORDER_BASE = 100
 HOSTED_TEXT_PAINT_ORDER = 200
@@ -910,9 +911,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
     axis = by_source["timeline-axis"]
-    axis_treatment = request.theme_tokens.text_treatment("axis")
-    axis_metrics = metric_for("axis")
-    axis_size = float(axis_treatment.font_size)
     shapes: list[ShapePlacement] = []
     axis_tier_outcomes: list[AxisTierOutcome] = []
     axis_decisions: list[PlacementDecision] = []
@@ -966,10 +964,23 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 shape = background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds)
                 if shape is not None:
                     shapes.append(shape)
+    # Band and labels tiers each stack in their own independent, monotonic
+    # lane cursor (#426): the Nth declared tier of a role occupies the Nth
+    # lane of that role, sized from that tier's own bound typography. A View
+    # with exactly one band tier keeps its historical whole-axis-slot rect
+    # (Specification 39 §1.2), so band_lane_offset/band_ordinal are only
+    # consulted once a second band tier is declared.
     label_lane_offset = 0.0
+    band_lane_offset = 0.0
+    band_ordinal = 0
+    label_ordinal = 0
+    band_tier_count = sum(item.role == "band" for item in request.surface_content.axis_tiers)
     for tier_index, tier in enumerate(request.surface_content.axis_tiers):
         form = tier.label.form if tier.label else None
         name_table = axis_name_table(tier.label.name_table_id) if tier.label else None
+        axis_treatment = request.theme_tokens.text_treatment(tier.typography_role or "axis")
+        axis_metrics = metric_for(tier.typography_role or "axis")
+        axis_size = float(axis_treatment.font_size)
         requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
                            if tier.unit == "auto" and tier.label else (tier.unit,))
         try:
@@ -1076,17 +1087,36 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             interval_outcomes, name_table.table_id if name_table else None,
         ))
         if tier.role == "band":
+            if band_ordinal >= len(axis_band_semantic_ids()):
+                raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
+                                  detail=f"too many band tiers:{band_ordinal + 1}")
+            band_semantic_id = axis_band_semantic_ids()[band_ordinal]
+            if band_tier_count == 1:
+                # The sole band tier keeps its historical whole-axis-slot
+                # rect (Specification 39 §1.2); this is the only branch that
+                # keeps every committed View's Scene output byte-identical.
+                band_block, band_block_size = axis.bounds.block, axis.bounds.block_size
+            else:
+                band_lane_size = axis_size * float(axis_treatment.line_height) + float(GEOMETRY_TOLERANCE)
+                if band_lane_offset + band_lane_size > float(axis.bounds.block_size) + float(GEOMETRY_TOLERANCE):
+                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
+                                      detail=f"band-lane:{band_ordinal}")
+                band_block = axis.bounds.block + Decimal(str(band_lane_offset))
+                band_block_size = Decimal(str(band_lane_size))
             for interval in intervals:
                 x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
                 placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
                 treatment, paint_order = request.theme_tokens.background(
-                    semantic_binding("axisBandDecoration").scene_role)
+                    semantic_binding(band_semantic_id).scene_role)
                 if treatment != "none":
                     axis_band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
                     shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
-                                                  Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(max(0.0, x2 - x))), axis.bounds.block_size),
-                                                  semantic_id="axisBandDecoration",
+                                                  Rect(Decimal(str(x)), band_block, Decimal(str(max(0.0, x2 - x))), band_block_size),
+                                                  semantic_id=band_semantic_id,
                                                   paint_order=paint_order))
+            if band_tier_count > 1:
+                band_lane_offset += band_lane_size
+            band_ordinal += 1
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
             for interval in intervals:
@@ -1097,6 +1127,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                               semantic_id=semantic_id,
                                               paint_order=BACKGROUND_PAINT_ORDER + 1))
         elif tier.role == "labels" and form is not None:
+            # A tier that leaves typographyRole at its default keeps the
+            # single shared "axisLabel" id every committed View already
+            # uses (byte-identical), no matter how many such default tiers
+            # exist; only a tier that explicitly names a role claims one of
+            # the ordinal ids, in declaration order among such tiers.
+            if tier.typography_role is None:
+                label_semantic_id = axis_label_semantic_ids()[0]
+            else:
+                label_ordinal += 1
+                if label_ordinal >= len(axis_label_semantic_ids()):
+                    raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
+                                      detail=f"too many typography-role labels tiers:{label_ordinal}")
+                label_semantic_id = axis_label_semantic_ids()[label_ordinal]
+            resolved_typography_role = tier.typography_role or "axis"
             orientation = tier.label.orientation
             label_widths = tuple(
                 measure_text_width(outcome.label or "", font_size=axis_size, font_metrics=axis_metrics,
@@ -1128,28 +1172,34 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
                                     content=label, inline=inline, baseline_block=baseline,
-                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                    typography_role=resolved_typography_role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                     collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", "labels"),
                                     source_content=label, available_inline_start=x, available_inline_size=available,
                                     orientation=orientation,
                                     overflow="visible-overflow" if not outcome.label_fits or lane_overflow else "fit")
-                placed = replace(placed, semantic_id="axisLabel")
+                placed = replace(placed, semantic_id=label_semantic_id)
                 text.append(placed)
                 if not outcome.label_fits or lane_overflow:
                     visible_label_overflows.append((placed, LabelRect(*_bounds(axis.bounds))))
             label_lane_offset += lane_size
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
-    axis_bands = tuple(item for item in shapes if item.semantic_id == "axisBandDecoration")
+    axis_bands = tuple(item for item in shapes if item.semantic_id in axis_band_semantic_ids())
 
     def axis_band_host(item: TextPlacement) -> str | None:
+        # A label's host is the band occupying its own lane, not merely a
+        # band whose columns happen to span the label's x-position (#426:
+        # multiple band lanes can differ in width and no longer all span the
+        # whole axis slot, so the inline test alone is no longer sufficient).
         centre = item.bounds.inline + item.bounds.inline_size / 2
+        lane_centre = item.bounds.block + item.bounds.block_size / 2
         candidates = tuple(band for band in axis_bands
-                           if band.bounds.inline <= centre <= band.bounds.inline + band.bounds.inline_size)
+                           if band.bounds.inline <= centre <= band.bounds.inline + band.bounds.inline_size
+                           and band.bounds.block <= lane_centre <= band.bounds.block + band.bounds.block_size)
         return min(candidates, key=lambda band: band.placement_id).placement_id if candidates else None
 
     text = [replace(item, host_placement_id=axis_band_host(item), paint_order=HOSTED_TEXT_PAINT_ORDER)
-            if item.semantic_id == "axisLabel" else item
+            if item.semantic_id in axis_label_semantic_ids() else item
             for item in text]
     contract = request.presentation_contract
     minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
@@ -2320,7 +2370,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     # projection receives the relation verbatim and must never reconstruct it
     # from primitive purpose, identity, or containment.
     def shape_slot(item: Any) -> str:
-        if item.semantic_id == "axisBandDecoration":
+        if item.semantic_id in axis_band_semantic_ids():
             return axis.slot_id
         if item.semantic_id in BACKGROUND_SEMANTIC_IDS:
             return item.slot_id

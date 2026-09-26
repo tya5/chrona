@@ -213,9 +213,10 @@ def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: s
 def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
     """Detach one schema-validated View tier into Layout-owned typed intent."""
     role, unit = str(value["role"]), str(value["unit"])
+    typography_role = str(value["typographyRole"]) if "typographyRole" in value else None
     raw_label = value.get("label")
     if role != "labels" or not isinstance(raw_label, Mapping):
-        return AxisTier(unit, int(value["every"]), role)
+        return AxisTier(unit, int(value["every"]), role, typography_role=typography_role)
     candidates = raw_label.get("forms", {})
     candidate_forms = tuple((str(candidate), str(form)) for candidate, form in candidates.items()) if isinstance(candidates, Mapping) else ()
     table_id = str(raw_label.get("nameTable", locale))
@@ -223,7 +224,8 @@ def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
     return AxisTier(unit, int(value["every"]), role,
                     AxisLabelIntent(str(raw_label["form"]) if "form" in raw_label else None,
                                     candidate_forms, str(raw_label["align"]), str(raw_label["overflow"]),
-                                    str(raw_label["orientation"]), table_id))
+                                    str(raw_label["orientation"]), table_id),
+                    typography_role=typography_role)
 
 
 def _column_width(value: object) -> TableColumnWidth:
