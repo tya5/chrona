@@ -5,8 +5,8 @@ body:
   extends:
     id: wallboard
     path: wallboard.yaml
-    sourceContentIdentity: 'sha256:fc79d56b2c65caf522a33bbc9492f34ba6f75c980999adc68682b5b3d37c3d28'
-    contentIdentity: 'sha256:662e257acd4b102d420e7067326118f88e0d4e3fd1a3129ee962187b08fd0d5a'
+    sourceContentIdentity: 'sha256:849840e450f6a864b80416ac1d946c3e2922472f98962c57e2b09c55686f5d1d'
+    contentIdentity: 'sha256:a161c5b06edf743d96f0e1fc5389bffe4588a3b437edbd38966868fc48d7bdd8'
   values:
     milestone-symbol:
       type: symbol

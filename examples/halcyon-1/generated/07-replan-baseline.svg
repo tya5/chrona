@@ -77,6 +77,7 @@
 <rect data-scene-id="calendar-closed:2027-11-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1826.027" y="86" width="6.747" height="954" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1866.507" y="86" width="6.747" height="954" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1873.253" y="86" width="6.747" height="954" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
+<path data-scene-id="axis-rule" data-source-ref="timeline-axis" data-purpose="axis-rule" d="M935.465 86L1880 86" opacity="1" fill="none" stroke="#EAF0FA" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1293.039 86L1293.039 1040" opacity="1" fill="none" stroke="#FFC857" stroke-width="1" stroke-dasharray="4 3"/>
 <rect data-scene-id="planned:spacecraft-ait:spacecraft-ait" data-source-ref="spacecraft-ait" data-purpose="planned" x="989.438" y="96" width="445.281" height="10" opacity="1" fill="#5FA8FF" stroke="#EAF0FA" stroke-width="1"/>
 <rect data-scene-id="planned:integration:integration" data-source-ref="integration" data-purpose="planned" x="989.438" y="126" width="141.68" height="10" opacity="1" fill="#5FA8FF" stroke="#EAF0FA" stroke-width="1"/>

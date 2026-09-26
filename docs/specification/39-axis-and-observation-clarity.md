@@ -95,3 +95,11 @@ it on the block axis) and optional `markCornerRadius` (a ratio of the chip's
 block size). Layout inflates the label's footprint by the padding before
 candidate search, and completes the chip Rect under the text. Contrast is
 checked against the chip as the text's ground.
+
+## Axis lanes, cells and rule (#426)
+
+- A labels tier whose typography role declares `laneBlockSize` is a declared lane. Lanes stack from the top of the axis slot in labels-tier order, and each label's line box is centred in its lane. A band tier with the same `unit` fills exactly that lane.
+- A band role's `cellGap` insets each cell by half the gap at both inline ends. A bound `axis-cell-separator` role draws a separator at each interval start inside the axis, spanning the declared lanes or the whole slot.
+- A bound `axis-rule` role draws the axis/plot boundary along the bottom of the axis slot; every shipped Theme binds it.
+- An axis label role's `labelInset`, a ratio of its font size, insets start-aligned labels from their cell edge.
+- A Theme that declares none of these renders the axis as before.

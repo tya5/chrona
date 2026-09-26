@@ -58,6 +58,7 @@
 <rect data-scene-id="calendar-closed:2026-06-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1504.693" y="116.8" width="7.131" height="704" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2026-06-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1547.477" y="116.8" width="7.131" height="704" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2026-06-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1554.608" y="116.8" width="7.131" height="704" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
+<path data-scene-id="axis-rule" data-source-ref="timeline-axis" data-purpose="axis-rule" d="M506.4 116.8L1576 116.8" opacity="1" fill="none" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="planned:architecture:architecture" data-source-ref="architecture" data-purpose="planned" x="513.531" y="160.8" width="78.437" height="24" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="planned:firmware:firmware" data-source-ref="firmware" data-purpose="planned" x="591.968" y="232.8" width="399.317" height="24" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="planned:silicon-bringup:silicon-bringup" data-source-ref="silicon-bringup" data-purpose="planned" x="1062.592" y="304.8" width="128.352" height="24" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>

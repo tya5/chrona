@@ -3,6 +3,18 @@ kind: theme
 id: chrona-builtin-executive-light
 body:
   values:
+    axis-lane-quarter:
+      type: number
+      value: 24
+    axis-lane-month:
+      type: number
+      value: 22
+    axis-cell-gap:
+      type: number
+      value: 2
+    axis-label-inset:
+      type: number
+      value: 0.5
     dash.as-of:
       type: dashPattern
       value: [4, 3]
@@ -123,7 +135,7 @@ body:
       value: 20
     timeline-axis-height:
       type: number
-      value: 48
+      value: 46
     network-node-min-inline:
       type: number
       value: 120
@@ -234,6 +246,7 @@ body:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
       opacity: opacity.axis-band
+      cellGap: axis-cell-gap
     text:
       fontFamily: editorial
       fontWeight: text-weight
@@ -274,6 +287,40 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    axisQuarter:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: axis-size
+      lineHeight: axis-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      laneBlockSize: axis-lane-quarter
+    axisMonth:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: axis-size
+      lineHeight: axis-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      laneBlockSize: axis-lane-month
+      labelInset: axis-label-inset
+    axis-band-decoration2:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.axis-band
+      cellGap: axis-cell-gap
+    axis-label2: {}
+    axis-label3: {}
+    axis-cell-separator:
+      strokeWidth: stroke-width
+    axis-rule:
+      strokeWidth: stroke-width
     legend:
       fontFamily: editorial
       fontWeight: text-weight
@@ -430,6 +477,11 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
   colorBindings:
+    axis-band-decoration2.fill: surfaceRaised
+    axis-label2.fill: surface
+    axis-label3.fill: text
+    axis-cell-separator.stroke: surfaceRaised
+    axis-rule.stroke: text
     background.fill: surface
     text.fill: text
     groupHeader.fill: text
@@ -439,7 +491,7 @@ body:
     member-label-inside-scenario.fill: insideLabelScenario
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: neutral
+    axis-band-decoration.fill: accent
     table-header.fill: surfaceRaised
     group-band.fill: category:default
     row-band.fill: category:default

@@ -81,6 +81,7 @@
 <rect data-scene-id="calendar-closed:2027-11-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1813.791" y="86" width="6.621" height="954" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1853.516" y="86" width="6.621" height="954" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1860.137" y="86" width="6.621" height="954" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
+<path data-scene-id="axis-rule" data-source-ref="timeline-axis" data-purpose="axis-rule" d="M866.995 86L1880 86" opacity="1" fill="none" stroke="#EAF0FA" stroke-width="1"/>
 <rect data-scene-id="planned:tvac:scenario:tvac-slip:tvac" data-source-ref="tvac" data-purpose="snapshot" x="1078.865" y="116" width="139.04" height="10" opacity="1" fill="#2E3F5E" stroke="#EAF0FA" stroke-width="1"/>
 <rect data-scene-id="planned:emc:scenario:tvac-slip:emc" data-source-ref="emc" data-purpose="snapshot" x="1224.526" y="146" width="46.347" height="10" opacity="1" fill="#2E3F5E" stroke="#EAF0FA" stroke-width="1"/>
 <rect data-scene-id="planned:shipment:scenario:tvac-slip:shipment" data-source-ref="shipment" data-purpose="snapshot" x="1363.566" y="196" width="39.726" height="10" opacity="1" fill="#2E3F5E" stroke="#EAF0FA" stroke-width="1"/>

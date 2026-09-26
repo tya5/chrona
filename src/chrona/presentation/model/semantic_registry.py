@@ -117,6 +117,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("axisLabel3", "label", "axis-label", "axis-label3", "axis3"),
     _binding("axisGrid", "line", "axis-grid", "axis-major", "axis-major"),
     _binding("axisGridMinor", "line", "axis-grid", "axis-minor", "axis-minor"),
+    # Axis cells and the axis/plot boundary (#426 rows 6-7).
+    _binding("axisRule", "line", "axis-rule", "axis-rule", "axis-rule"),
+    _binding("axisCellSeparator", "line", "axis-cell-separator", "axis-cell-separator", "axis-cell-separator"),
     # Grouping.
     _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band", ContrastClass.DECORATION),
     _binding("rowBand", "decoration", "row-decoration", "row-band", "row-band", ContrastClass.DECORATION),

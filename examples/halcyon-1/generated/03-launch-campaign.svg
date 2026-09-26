@@ -81,6 +81,7 @@
 <rect data-scene-id="calendar-closed:2027-11-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1108.497" y="156.2" width="2.75" height="800" opacity="1" fill="none" stroke="#BDBDBD" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1124.999" y="156.2" width="2.75" height="800" opacity="1" fill="none" stroke="#BDBDBD" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1127.749" y="156.2" width="2.75" height="800" opacity="1" fill="none" stroke="#BDBDBD" stroke-width="1"/>
+<path data-scene-id="axis-rule" data-source-ref="timeline-axis" data-purpose="axis-rule" d="M715.2 156.2L1136 156.2" opacity="1" fill="none" stroke="#111111" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M852.716 156.2L852.716 956.2" opacity="1" fill="none" stroke="#444444" stroke-width="1" stroke-dasharray="4 3"/>
 <rect data-scene-id="planned:integration:integration" data-source-ref="integration" data-purpose="planned" x="728.952" y="172.2" width="57.757" height="12" opacity="1" fill="none" stroke="#111111" stroke-width="1"/>
 <rect data-scene-id="planned:vibration:vibration" data-source-ref="vibration" data-purpose="planned" x="789.459" y="216.2" width="19.252" height="12" opacity="1" fill="none" stroke="#111111" stroke-width="1"/>

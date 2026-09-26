@@ -508,7 +508,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              (float(placed.bounds.inline), float(placed.bounds.block),
                                               float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                                              paint_order=placed.paint_order))
-        if placed.semantic_id in {"axisGrid", "axisGridMinor"}:
+        if placed.semantic_id in {"axisGrid", "axisGridMinor", "axisRule", "axisCellSeparator"}:
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             axis_grid = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.PATH, "timeline-axis", "axis", axis_grid.purpose, axis_grid.scene_role,

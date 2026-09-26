@@ -61,6 +61,20 @@ identity (`E_PACKAGE_IDENTITY_CONFLICT`), incompatible target/version
 (`E_PACKAGE_FORBIDDEN_MEMBER`). Final spellings and semantics require a
 separate accepted implementation design.
 
+This specification's predecessor already shipped and is not itself the
+package resolver above. `presentation-preset-v0.1` (one View/Theme/Color
+Scheme/Layout Profile bundle) and `preset-library-v0.1` (a finite,
+wheel-owned catalogue of such bundles, resolved by `chrona preset copy
+<id>`, `chrona preset list`, and `render --preset <name-or-path>`) are the
+declarative, wheel-only, no-registry, no-lock predecessor this
+specification's future resolver must migrate cleanly under §6's promise. As
+of #429/#383, `library.yaml` carries entries across two unrelated catalogues
+— a "preset tuning" set produced by tuning corpus-project resources, and a
+"generated design directions" set produced against #425's externally
+generated references — distinguished only by the entry's `gallerySet`
+field, which is catalog-internal bookkeeping and is not the Design Space
+discovery classification §2.1 describes for a future registry candidate.
+
 `profile-v0.2` is a Project semantic-profile package with fields and semantic
 constraints; it is not a generic package envelope. A future Presentation
 Package may not silently duplicate its identity/lifecycle vocabulary. The

@@ -188,6 +188,8 @@ body:
       type: number
       value: 0
   roles:
+    axis-rule:
+      strokeWidth: stroke-width
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
     group-band:
@@ -389,6 +391,7 @@ body:
       iconScale: icon-mark-scale
       iconGap: icon-mark-gap
   colorBindings:
+    axis-rule.stroke: text
     background.fill: surface
     text.fill: text
     member-label-inside-planned.fill: insideLabelPlanned

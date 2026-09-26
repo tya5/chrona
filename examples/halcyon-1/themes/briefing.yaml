@@ -200,6 +200,8 @@ body:
       type: number
       value: 0
   roles:
+    axis-rule:
+      strokeWidth: stroke-width
     group-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
@@ -399,6 +401,7 @@ body:
       iconScale: icon-mark-scale
       iconGap: icon-mark-gap
   colorBindings:
+    axis-rule.stroke: text
     background.fill: surface
     text.fill: text
     member-label-inside-planned.fill: insideLabelPlanned
