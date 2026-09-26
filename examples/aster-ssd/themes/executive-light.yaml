@@ -3,6 +3,19 @@ kind: theme
 id: executive-light
 body:
   values:
+    opacity.axis-band:
+      type: number
+      value: 1
+    relation-source-terminal:
+      type: marker
+      value:
+        shape: circle
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
+    dash.as-of:
+      type: dashPattern
+      value: [4, 3]
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -193,7 +206,7 @@ body:
     axis-band-decoration:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
-      opacity: opacity.group-band
+      opacity: opacity.axis-band
     text:
       fontFamily: editorial
       fontWeight: text-weight
@@ -265,6 +278,7 @@ body:
       strokeWidth: stroke-width
     as-of:
       strokeWidth: stroke-width
+      dash: dash.as-of
     variance-behind:
       strokeWidth: stroke-width
       contrastTreatment: required
@@ -277,7 +291,7 @@ body:
     milestoneSymbol:
       symbol: milestone-symbol
     relationSourceTerminal:
-      marker: dependency-marker
+      marker: relation-source-terminal
     relationTargetTerminal:
       marker: dependency-marker
     dependency:
@@ -330,7 +344,7 @@ body:
     member-label-inside-scenario.fill: insideLabelScenario
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: surfaceRaised
+    axis-band-decoration.fill: neutral
     table-header.fill: surfaceRaised
     group-band.fill: category:default
     row-band.fill: category:default

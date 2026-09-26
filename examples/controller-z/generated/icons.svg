@@ -6,8 +6,8 @@
 <rect data-scene-id="group:fw-team" data-source-ref="fw-team" data-purpose="group-decoration" x="590.4" y="136.8" width="985.6" height="216" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="group:validation-team" data-source-ref="validation-team" data-purpose="group-decoration" x="590.4" y="372.8" width="985.6" height="216" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="group:factory-team" data-source-ref="factory-team" data-purpose="group-decoration" x="590.4" y="608.8" width="985.6" height="144" opacity="1" fill="#EEF3F8"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="590.4" y="68.8" width="387.669" height="48" opacity="1" fill="#EAF0F8"/>
-<rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="978.069" y="68.8" width="597.931" height="48" opacity="1" fill="#EAF0F8"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="590.4" y="68.8" width="387.669" height="48" opacity="1" fill="#C9CED8"/>
+<rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="978.069" y="68.8" width="597.931" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="group-header-band:fw-team" data-source-ref="fw-team" data-purpose="group-header-band" x="24" y="116.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
 <rect data-scene-id="group-header-band:validation-team" data-source-ref="validation-team" data-purpose="group-header-band" x="24" y="352.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
 <rect data-scene-id="group-header-band:factory-team" data-source-ref="factory-team" data-purpose="group-header-band" x="24" y="588.8" width="1552" height="20" opacity="1" fill="#EAF0F8"/>
@@ -66,7 +66,7 @@
 <rect data-scene-id="calendar-closed:2026-06-21" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1510.293" y="116.8" width="6.571" height="704" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2026-06-27" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1549.717" y="116.8" width="6.571" height="704" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2026-06-28" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1556.288" y="116.8" width="6.571" height="704" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
-<path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1300.032 116.8L1300.032 820.8" opacity="1" fill="none" stroke="#8D530F" stroke-width="1"/>
+<path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1300.032 116.8L1300.032 820.8" opacity="1" fill="none" stroke="#8D530F" stroke-width="1" stroke-dasharray="4 3"/>
 <rect data-scene-id="planned:architecture:architecture" data-source-ref="architecture" data-purpose="planned" x="596.971" y="160.8" width="72.277" height="24" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="planned:firmware:firmware" data-source-ref="firmware" data-purpose="planned" x="669.248" y="232.8" width="367.957" height="24" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>
 <rect data-scene-id="planned:silicon-bringup:silicon-bringup" data-source-ref="silicon-bringup" data-purpose="planned" x="1102.912" y="304.8" width="118.272" height="24" opacity="1" fill="#3986E6" stroke="#172033" stroke-width="1"/>

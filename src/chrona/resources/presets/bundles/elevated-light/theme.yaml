@@ -3,6 +3,9 @@ kind: theme
 id: chrona-builtin-elevated-light
 body:
   values:
+    dash.as-of:
+      type: dashPattern
+      value: [4, 3]
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -313,6 +316,7 @@ body:
       strokeWidth: stroke-width
     as-of:
       strokeWidth: stroke-width
+      dash: dash.as-of
     variance-behind:
       strokeWidth: stroke-width
       contrastTreatment: required

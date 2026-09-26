@@ -3,6 +3,9 @@ kind: theme
 id: chrona-builtin-print-mono
 body:
   values:
+    dash.as-of:
+      type: dashPattern
+      value: [4, 3]
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -343,8 +346,10 @@ body:
       strokeWidth: stroke-width
     asOf:
       strokeWidth: stroke-width
+      dash: dash.as-of
     as-of:
       strokeWidth: stroke-width
+      dash: dash.as-of
     network-edge:
       strokeWidth: stroke-width
     critical-edge:

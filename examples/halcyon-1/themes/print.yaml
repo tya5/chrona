@@ -3,6 +3,19 @@ kind: theme
 id: print
 body:
   values:
+    opacity.axis-band:
+      type: number
+      value: 1
+    relation-source-terminal:
+      type: marker
+      value:
+        shape: circle
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
+    dash.as-of:
+      type: dashPattern
+      value: [4, 3]
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -192,7 +205,7 @@ body:
     axis-band-decoration:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
-      opacity: opacity.group-band
+      opacity: opacity.axis-band
     text:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -297,7 +310,7 @@ body:
     milestoneSymbol:
       symbol: milestone-symbol
     relationSourceTerminal:
-      marker: arrow
+      marker: relation-source-terminal
     relationTargetTerminal:
       marker: arrow
     dependency:
@@ -327,8 +340,10 @@ body:
       strokeWidth: stroke-width
     asOf:
       strokeWidth: stroke-width
+      dash: dash.as-of
     as-of:
       strokeWidth: stroke-width
+      dash: dash.as-of
     network-edge:
       strokeWidth: stroke-width
     critical-edge:
@@ -386,7 +401,7 @@ body:
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: surfaceRaised
+    axis-band-decoration.fill: neutral
     group-band.fill: surfaceRaised
     row-band.fill: surfaceRaised
     group-header-band.fill: surfaceRaised
