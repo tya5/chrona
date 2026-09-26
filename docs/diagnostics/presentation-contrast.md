@@ -184,7 +184,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/annotations.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1549.717, 470.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1556.288, 470.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1079.301, 244.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
-| `examples/controller-z/generated/annotations.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1263.280, 316.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1178.475, 345.300 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `group:factory-team` | `group-band` | 1083.200, 680.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `group:fw-team` | `group-band` | 1083.200, 244.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `group:validation-team` | `group-band` | 1083.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
@@ -263,7 +263,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/composition-compact.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1557.269, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1563.952, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1078.565, 228.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
-| `examples/controller-z/generated/composition-compact.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1265.680, 300.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/composition-compact.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1179.699, 329.300 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `group:factory-team` | `group-band` | 1082.800, 664.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `group:fw-team` | `group-band` | 1082.800, 228.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/composition-compact.scene.json` | `group:validation-team` | `group-band` | 1082.800, 464.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
@@ -346,7 +346,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/elevated.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1549.717, 468.800 | `group:validation-team` | gradient-sample | `#FDFEFE` | stroke | 1.562 | 1.100 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1556.288, 468.800 | `group:validation-team` | gradient-sample | `#FDFEFE` | stroke | 1.562 | 1.100 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1079.301, 244.800 | `group:fw-team` | gradient-sample | `#F4F7FB` | fill | 5.788 | 4.500 | info |
-| `examples/controller-z/generated/elevated.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1263.280, 316.800 | `group:fw-team` | gradient-sample | `#F9FBFD` | fill | 5.995 | 4.500 | info |
+| `examples/controller-z/generated/elevated.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1178.475, 345.300 | `group:fw-team` | gradient-sample | `#F8FAFD` | fill | 5.948 | 4.500 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `group:factory-team` | `group-band` | 1083.200, 680.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `group:fw-team` | `group-band` | 1083.200, 244.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/elevated.scene.json` | `group:validation-team` | `group-band` | 1083.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
@@ -429,7 +429,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/executive.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1549.717, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/executive.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1556.288, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/executive.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1079.301, 244.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
-| `examples/controller-z/generated/executive.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1263.280, 316.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/executive.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1178.475, 345.300 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/controller-z/generated/executive.scene.json` | `group:factory-team` | `group-band` | 1083.200, 680.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/executive.scene.json` | `group:fw-team` | `group-band` | 1083.200, 244.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/executive.scene.json` | `group:validation-team` | `group-band` | 1083.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
@@ -512,7 +512,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/icons.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1549.717, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/icons.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1556.288, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/icons.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1079.301, 244.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
-| `examples/controller-z/generated/icons.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1263.280, 316.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/icons.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1178.475, 345.300 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/controller-z/generated/icons.scene.json` | `group:factory-team` | `group-band` | 1083.200, 680.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/icons.scene.json` | `group:fw-team` | `group-band` | 1083.200, 244.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/icons.scene.json` | `group:validation-team` | `group-band` | 1083.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
@@ -588,7 +588,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/material-icons.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1549.717, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1556.288, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1079.301, 244.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
-| `examples/controller-z/generated/material-icons.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1263.280, 316.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/material-icons.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1178.475, 345.300 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `group:factory-team` | `group-band` | 1083.200, 680.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `group:fw-team` | `group-band` | 1083.200, 244.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/material-icons.scene.json` | `group:validation-team` | `group-band` | 1083.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
@@ -876,7 +876,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:comms-test:comms-test` | `variance-ahead` | 1241.178, 707.650 | `group-header-band:launch` | flat | `#16213A` | fill | 8.137 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:eps:eps` | `variance-ahead` | 1045.137, 197.650 | `group:bus` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:station:station` | `variance-ahead` | 1170.197, 677.650 | `group:ground` | flat | `#142642` | fill | 7.708 | 3.000 | info |
-| `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:avionics:avionics` | `variance-behind` | 1114.427, 194.350 | `group:bus` | flat | `#142642` | fill | 5.461 | 4.500 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:avionics:avionics` | `variance-behind` | 1114.427, 227.650 | `group:bus` | flat | `#142642` | fill | 5.461 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:bus-test:bus-test` | `variance-behind` | 1229.347, 224.350 | `group:bus` | flat | `#142642` | fill | 5.461 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:detector:detector` | `variance-behind` | 1107.667, 334.350 | `group:payload` | flat | `#142642` | fill | 5.461 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `variance:mcs:mcs` | `variance-behind` | 1087.387, 614.350 | `group-header-band:ground` | flat | `#16213A` | fill | 5.765 | 4.500 | info |
@@ -1006,7 +1006,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `calendar-closed:2027-11-27` | `calendar-closed` | 1126.744, 556.200 | `group:` | flat | `#F1F1F1` | stroke | 1.663 | 1.100 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `calendar-closed:2027-11-28` | `calendar-closed` | 1129.058, 556.200 | `group:` | flat | `#F1F1F1` | stroke | 1.663 | 1.100 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `variance:integration:integration` | `variance-on-track` | 817.835, 194.800 | `group:` | flat | `#F1F1F1` | fill | 6.600 | 4.500 | info |
-| `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `variance:vibration:vibration` | `variance-on-track` | 852.544, 205.600 | `group:` | flat | `#F1F1F1` | fill | 6.600 | 4.500 | info |
+| `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `variance:vibration:vibration` | `variance-on-track` | 829.683, 222.200 | `group:` | flat | `#F1F1F1` | fill | 6.600 | 4.500 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `group:` | `group-band` | 958.984, 420.200 | `canvas` | canvas | `#FFFFFF` | fill | 1.129 | 1.100 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `planned:campaign:campaign` | `planned` | 971.711, 486.200 | `group:` | flat | `#F1F1F1` | stroke | 16.718 | 3.000 | info |
 | `examples/halcyon-1/generated/03-launch-campaign.scene.json` | `planned:emc:emc` | `planned` | 904.607, 310.200 | `group:` | flat | `#F1F1F1` | stroke | 16.718 | 3.000 | info |
@@ -1187,7 +1187,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `calendar-closed:2027-11-13` | `calendar-closed` | 1866.421, 563.000 | `canvas` | canvas | `#0B1220` | stroke | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `calendar-closed:2027-11-14` | `calendar-closed` | 1873.211, 563.000 | `canvas` | canvas | `#0B1220` | stroke | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `variance:integration:integration` | `variance-on-track` | 1142.284, 131.000 | `group:` | flat | `#142642` | fill | 5.692 | 4.500 | info |
-| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `variance:vibration:vibration` | `variance-on-track` | 1196.599, 161.000 | `group:` | flat | `#142642` | fill | 5.692 | 4.500 | info |
+| `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `variance:vibration:vibration` | `variance-on-track` | 1156.939, 177.650 | `group:` | flat | `#142642` | fill | 5.692 | 4.500 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `group:` | `group-band` | 1404.749, 206.000 | `canvas` | canvas | `#0B1220` | fill | 1.235 | 1.100 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `missing-actual:campaign:campaign` | `missing-actual` | 1622.007, 311.000 | `group:` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/07-replan-baseline.scene.json` | `missing-actual:emc:emc` | `missing-actual` | 1357.224, 221.000 | `group:` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -1510,7 +1510,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:comms-test:comms-test` | `variance-ahead` | 1482.000, 892.650 | `group-header-band:launch` | flat | `#16213A` | fill | 8.137 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:eps:eps` | `variance-ahead` | 1250.000, 382.650 | `group:bus` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:station:station` | `variance-ahead` | 1398.000, 862.650 | `group:ground` | flat | `#142642` | fill | 7.708 | 3.000 | info |
-| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:avionics:avionics` | `variance-behind` | 1332.000, 379.350 | `group:bus` | flat | `#142642` | fill | 5.461 | 4.500 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:avionics:avionics` | `variance-behind` | 1332.000, 412.650 | `group:bus` | flat | `#142642` | fill | 5.461 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:bus-test:bus-test` | `variance-behind` | 1468.000, 409.350 | `group:bus` | flat | `#142642` | fill | 5.461 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:detector:detector` | `variance-behind` | 1324.000, 519.350 | `group:payload` | flat | `#142642` | fill | 5.461 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `variance:mcs:mcs` | `variance-behind` | 1300.000, 799.350 | `group-header-band:ground` | flat | `#16213A` | fill | 5.765 | 4.500 | info |
@@ -1594,7 +1594,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/orion-asic/generated/gates.scene.json` | `calendar-closed:2026-11-23` | `calendar-closed` | 874.859, 443.400 | `group:product` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `calendar-closed:2026-12-25` | `calendar-closed` | 951.174, 443.400 | `group:product` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `calendar-closed:2027-01-01` | `calendar-closed` | 967.868, 443.400 | `group:product` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
-| `examples/orion-asic/generated/gates.scene.json` | `variance:fab-a0:fab-a0` | `variance-behind` | 1016.641, 380.800 | `group:product` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/orion-asic/generated/gates.scene.json` | `variance:fab-a0:fab-a0` | `variance-behind` | 896.323, 353.500 | `group:product` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `variance:rtl-freeze:rtl-freeze` | `variance-behind` | 792.894, 168.800 | `group:design` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `group:design` | `group-band` | 1116.920, 232.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `group:product` | `group-band` | 1116.920, 444.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
