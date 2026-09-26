@@ -112,12 +112,16 @@ container's item alignment on that axis.
 
 `stretch` changes only an `auto`/`fill`-compatible used size; it never violates a fixed,
 intrinsic minimum, or maximum. `safe` placement falls back from center/end to start when
-that avoids unreachable overflow. `strict` placement diagnoses rather than changing the
-requested alignment.
+that avoids unreachable overflow. `strict` retains the requested alignment when it
+fits. If valid measured content cannot fit, both modes complete visible natural
+placement and warn under Section 13; neither turns a fit shortage into an error.
 
 Required content may use only `diagnose` or `ellipsize-with-source` overflow. Optional
 content may additionally use `clip-optional`. Ellipsized or omitted output retains full
 source text and the decision in Scene metadata.
+The legacy `diagnose` slot spelling does not override Section 13 for a valid
+fit shortage. Exact text-plus-icon compositions keep both components and
+grow visibly if even a declared compact representation cannot fit.
 
 ## 7. Anchors, guides, and barriers
 
@@ -263,5 +267,8 @@ keeps measured natural sizes, records typed `W_LAYOUT_VISIBLE_OVERFLOW`
 warnings with placement identity and required/available extents, and grows the
 completed canvas as necessary. A fit shortage is not
 `E_LAYOUT_CONSTRAINT_CONTRADICTORY` or `E_LAYOUT_REQUIRED_OVERFLOW`.
+The completed canvas includes any emitted geometry before its requested origin
+as well as geometry beyond its requested end; the adapter uses that completed
+viewBox without independently repositioning primitives.
 Malformed profile constraints and invalid references remain errors. Scene and
 adapters MUST NOT resolve this shortage independently.
