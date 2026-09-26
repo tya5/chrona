@@ -35,3 +35,10 @@ entries:
       theme: {id: chrona-builtin-elevated-light, kind: theme, sourceRoot: presets/bundles/elevated-light, sourcePath: theme.yaml}
       colorScheme: {id: executive-light, kind: color-scheme, sourceRoot: examples/controller-z, sourcePath: schemes/executive-light.yaml}
       layout: {id: chrona-builtin-elevated-light, kind: layout-profile, sourceRoot: presets/bundles/elevated-light, sourcePath: layout.yaml}
+  - id: editorial
+    gallerySet: generated-design-directions
+    members:
+      view: {id: chrona-preset-editorial, kind: view, sourceRoot: presets/bundles/editorial, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-editorial, kind: theme, sourceRoot: presets/bundles/editorial, sourcePath: theme.yaml}
+      colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, sourceRoot: presets/bundles/editorial, sourcePath: scheme.yaml}
+      layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}

@@ -1,0 +1,29 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: chrona-builtin-editorial
+body:
+  colors:
+    surface: "#F5F5F1"
+    surfaceRaised: "#E3E5E9"
+    text: "#293E56"
+    textMuted: "#5B6675"
+    accent: "#E2603D"
+    positive: "#3B7D5A"
+    negative: "#B4432E"
+    warning: "#C77A12"
+    neutral: "#C9CDD3"
+    insideLabelPlanned: "#293E56"
+    insideLabelActual: "#FFFFFF"
+    insideLabelSnapshot: "#293E56"
+    insideLabelScenario: "#293E56"
+  categories:
+    default: "#EFE7DE"
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: print-friendly
+  provenance:
+    kind: chrona-authored
+    source: Chrona preset catalogue, Editorial direction (#425, #429, #383)
+    license: MIT

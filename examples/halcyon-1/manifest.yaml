@@ -63,3 +63,8 @@ slides:
     context: contexts/12-glyph-gates.yaml
     expectedSvg: generated/12-glyph-gates.svg
     expectedScene: generated/12-glyph-gates.scene.json
+  - id: gallery-editorial
+    evidence: "Mission brief under the packaged Editorial preset (#383, #429): warm-paper ground, two-tier navy/grey axis band, capsule bars with an inset progress fill, and a horizontal real-primitive legend."
+    context: contexts/13-gallery-editorial.yaml
+    expectedSvg: generated/13-gallery-editorial.svg
+    expectedScene: generated/13-gallery-editorial.scene.json
