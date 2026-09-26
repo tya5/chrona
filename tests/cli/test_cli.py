@@ -18,6 +18,7 @@ import chrona.storage.publication as publication
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.materialize import MaterializationError
 from chrona.core.identity import content_identity
+from chrona.resources import builtin_preset_library_resource
 
 
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
@@ -198,16 +199,10 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
 
 
 @pytest.mark.parametrize(
-    ("preset_id", "visual_profile"),
-    [
-        ("mission-light", None),
-        ("control-room-dark", None),
-        ("print-mono", None),
-        ("executive-light", None),
-        ("elevated-light", "chrona-output/visual/v0.7-svg"),
-    ],
+    "preset_id",
+    [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
 )
-def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path, monkeypatch, preset_id, visual_profile):
+def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path, monkeypatch, preset_id):
     project = tmp_path / "starter"
     preset = tmp_path / preset_id
     output = tmp_path / f"{preset_id}.svg"
@@ -217,11 +212,9 @@ def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
     main()
     command = [
-        "chrona", "render", str(project / "project.yaml"), "--actual", str(project / "actual.yaml"),
+        "chrona", "render", str(project / "project.yaml"),
         "--preset", str(preset / "preset.yaml"), "--output", str(output),
     ]
-    if visual_profile is not None:
-        command.extend(["--visual-profile", visual_profile])
     monkeypatch.setattr(sys, "argv", command)
     main()
 
@@ -229,6 +222,9 @@ def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path
     assert output.read_bytes().startswith(b"<svg")
     for object_id in ("design", "build", "release"):
         assert f'data-source-ref="{object_id}"' in svg
+    if preset_id == "elevated-light":
+        assert 'data-purpose="group-decoration"' in svg
+        assert "<linearGradient" not in svg and "<filter" not in svg
 
 
 def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, monkeypatch, capsys):
@@ -495,10 +491,14 @@ def test_cli_draft_schema_diagnostics_report_all_known_resources_with_provenance
 
 def test_cli_baseline_rejection_keeps_visual_capability_pointer_and_message(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    required_theme = yaml.safe_load((root / "examples/controller-z/themes/elevated-light.yaml").read_text(encoding="utf-8"))
+    required_theme["body"]["values"]["elevated.fidelity"]["value"] = "required"
+    theme_path = tmp_path / "required-elevated.yaml"
+    theme_path.write_text(yaml.safe_dump(required_theme), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(root / "examples/controller-z/project.yaml"),
         "--view", str(root / "examples/controller-z/views/executive.yaml"),
-        "--theme", str(root / "examples/controller-z/themes/elevated-light.yaml"),
+        "--theme", str(theme_path),
         "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
         "--actual", str(root / "examples/controller-z/actual.yaml"),

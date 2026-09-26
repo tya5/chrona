@@ -29,9 +29,10 @@ chrona render my-first-chrona-project/project.yaml \
 ```
 
 The copied `preset.yaml`, `view.yaml`, `theme.yaml`, `scheme.yaml`, and
-`layout.yaml` are ordinary editable files.  `elevated-light` uses the explicit
-`chrona-output/visual/v0.7-svg` profile because that appearance requests a
-v0.7 treatment; the other supplied looks use the default SVG profile.
+`layout.yaml` are ordinary editable files. All five supplied looks render
+with the default SVG profile. `elevated-light` uses a visible flat fallback
+there; select `--visual-profile chrona-output/visual/v0.7-svg` explicitly
+when you want its gradient and shadow treatment.
 
 To learn Project capabilities in small independent steps, follow the
 [progressive Project tutorial](progressive-project-tutorial.md).

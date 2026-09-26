@@ -153,7 +153,7 @@ body:
       value: 0.28
     elevated.fidelity:
       type: fidelity
-      value: required
+      value: decorative-optional
     mark-height-container:
       type: number
       value: 1
