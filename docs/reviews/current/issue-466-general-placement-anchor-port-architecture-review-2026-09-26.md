@@ -1,0 +1,7 @@
+# Architecture Review — Annotation Leader Port Correction (#466)
+
+**Reviewed:** [correction](../../design/issue-466-general-placement-anchor-port-correction-2026-09-26.md) against Specifications 06, 08, 33, 38, 44 and 50, current `surface_composer.py`, annotation anchors, mark ports, the #466 shared index and #467 lane dependency.
+
+The correction keeps View anchor identity and purpose unchanged. Layout already owns completed mark ports and leader routes, so resolving a boundary egress there is consistent with the Layout/Scene seam. The old synthetic anchor midpoint is presentation geometry, not an authority that must be preserved. A whole-host exemption would hide collisions with the host's actual/baseline siblings and violate the one-index design; a named endpoint port plus boundary egress avoids that breach. The `body` tie order is deterministic and font-independent. Generic stroked segments are required because a visible direct fallback can be diagonal; a route bounding rectangle is not a valid substitute.
+
+Accepted for the obstacle-only implementation stage. No public resource migration is required. Focused tests must cover start/finish/point/body ports, exact dependency-line avoidance, no unrelated-mark exemption, direct-fallback registration and stable output. Generated Scene/SVG coordinate differences must be explained before acceptance. If the current mark model lacks enough port geometry for a point-glyph boundary, amend this design before inventing a Scene-side offset.

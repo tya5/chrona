@@ -230,6 +230,14 @@ The implementation exposes at least:
 Diagnostics include profile ID, node ID when applicable, and a resource path. They do
 not include renderer-selected recovery coordinates.
 
+Annotation leaders resolve their View-owned object/facet/endpoint anchors to
+completed mark-boundary ports before routing against the shared surface
+obstacle inventory. A route may exempt its specifically named endpoint port,
+not its entire host mark or row. `body` chooses the nearest outline point
+toward the selected annotation box with a deterministic side tie order.
+Visible direct-route fallback is a stroked segment obstacle even if diagonal;
+later placements must account for it. See the [#466 anchor-port correction](../design/issue-466-general-placement-anchor-port-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:

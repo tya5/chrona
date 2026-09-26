@@ -1,0 +1,7 @@
+# Implementation Amendment — Annotation Leader Ports (#466)
+
+**Amends:** [obstacle-only implementation plan](issue-466-shared-obstacle-prerequisite-implementation-plan-2026-09-26.md) after the [anchor-port correction](../../design/issue-466-general-placement-anchor-port-correction-2026-09-26.md) and [architecture review](../../reviews/current/issue-466-general-placement-anchor-port-architecture-review-2026-09-26.md).
+
+Before O2 composer wiring is accepted, extend the typed inventory to arbitrary stroked segments (including diagonal direct fallbacks); keep exact segment collision tests in `tests/unit/chrona/presentation/layout/test_obstacles.py`. In O2, resolve annotation leader egress from the completed mark's start/finish/point/body boundary port in `surface_composer.py` or a Layout-owned helper, with neutral tests for all four endpoints. Register a port obstacle only for its actual endpoint and permit only that named port exemption during routing. Register every accepted dependency and leader segment, including visible fallbacks, before later annotation requests.
+
+The O2 evidence gate additionally compares annotation leader coordinates and downstream Scene/SVG changes in a batch. The #466 issue remains open after O3 because candidate normalization, nearest-free search and Theme treatment are not in this amendment. No extra compatibility branch or Scene-side route repair is authorized.
