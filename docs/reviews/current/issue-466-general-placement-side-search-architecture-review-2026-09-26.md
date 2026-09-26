@@ -1,0 +1,7 @@
+# Architecture Review — Bounded Side-Relative Label Search (#466)
+
+**Decision:** approve the [side-search correction](../../design/issue-466-general-placement-side-search-correction-2026-09-26.md) as a narrow O2 adjunct to preserve plot-name visibility after semantic-route priority.
+
+Layout alone owns measured bounds, candidate ordering and obstacle queries; Scene and adapters still receive only completed text geometry. The View-declared side ladder is preserved, and no Theme, Project, resource schema or relation identity changes. The one surface inventory remains monotone: the search only queries it and registers its selected text/visual footprint once. It does not implement or pre-empt the general data-declared `nearest-free` search in the [#466 design](../../design/issue-466-general-placement-design-2026-09-26.md). The [#467 lane design](../../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md) must use measured footprints and test association/readability independently.
+
+Review risks are deterministic ordering, excessive displacement and additional materializer changes. Focused tests must prove the exact candidate cap, side containment, canonical-first behavior, no mark/label/route overlap, and repeated-run byte identity. Batch Scene/SVG review must verify HALCYON 03 route and name visibility, not just diagnostic counts. If a label can only be saved at an ambiguous distance, stop instead of widening the bound without design review.

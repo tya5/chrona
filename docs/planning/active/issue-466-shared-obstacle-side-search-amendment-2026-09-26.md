@@ -1,0 +1,5 @@
+# Implementation Amendment — Bounded Side Search (#466)
+
+**Amends:** [route-priority amendment](issue-466-shared-obstacle-route-priority-amendment-2026-09-26.md) after the [selected design](../../design/issue-466-general-placement-side-search-correction-2026-09-26.md) and [architecture review](../../reviews/current/issue-466-general-placement-side-search-architecture-review-2026-09-26.md).
+
+Add a finite private fallback to `labels.py` for optional plot/item/delta requests only. Keep canonical `place_label` behavior for required text, as-of/rule labels, relation labels and annotations. Return the selected completed bounds, side, and attempt count from Layout; do not re-run placement in Scene. Add focused tests for canonical-first, side containment, deterministic tie-breaks, cap exhaustion and route-stroke avoidance. Add a HALCYON 03 characterization showing no newly suppressed visible dependency and no newly suppressed public name compared with the published base. Run the public materializer diff batch and inspect SVG readability before O2 acceptance. If the bounded search cannot preserve both, stop and return to design.

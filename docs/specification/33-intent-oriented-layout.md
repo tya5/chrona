@@ -266,6 +266,12 @@ annotations. This finite monotone phase order prioritizes visible semantic
 connections without allowing label/route overlap or changing declared route
 quality and overflow limits. See the [#466 route-priority correction](../design/issue-466-general-placement-route-priority-correction-2026-09-26.md).
 
+After canonical side candidates fail, optional plot/item/delta labels may use
+a finite side-relative displacement bounded by their measured footprint and
+512 collision queries. This fallback never changes the declared side, never
+ignores accepted route strokes, and leaves required and annotation placement
+unchanged. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
+
 ## 10. Layout Manifest
 
 The canonical manifest records:
