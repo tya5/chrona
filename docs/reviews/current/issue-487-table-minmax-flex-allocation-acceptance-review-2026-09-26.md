@@ -8,7 +8,7 @@ implementation `8f7ae47d`). **Design:** [design](../../design/issue-487-table-mi
 Specification 24 §2.1, Specification 33 §5, [ADR-0032](../../decisions/ADR-0032-flexible-track-minimum-is-a-floor.md).
 **Slice review:** [I487-1](issue-487-table-minmax-flex-allocation-i487-1-review-2026-09-26.md).
 
-**CI:** pending.
+**CI:** [four-job CI run 36248123399](https://github.com/tya5/chrona/actions/runs/36248123399) on `908f9d69`, green: Ubuntu, Windows and macOS conformance/full pytest/wheel, and newest-Python public materializer reproduction.
 
 ## Literal issue acceptance
 
@@ -33,7 +33,7 @@ Specification 24 §2.1, Specification 33 §5, [ADR-0032](../../decisions/ADR-003
   No slide gained a new `W_LAYOUT_VISIBLE_OVERFLOW`.
 - Focused tests: `tests/unit/chrona/presentation`, `tests/integration`, `tests/cli` — 771
   passed, 1 skipped. `conformance/run_conformance.py`: all 31 checks PASS.
-- CI: pending — the lead fills in the run links once pushed.
+- CI: [four-job CI run 36248123399](https://github.com/tya5/chrona/actions/runs/36248123399) on `908f9d69`, green: Ubuntu, Windows and macOS conformance/full pytest/wheel, and newest-Python public materializer reproduction.
 
 ## Architecture conclusion
 
@@ -47,4 +47,4 @@ Layout owns both contracts:
 No Scene, adapter, schema, View, Theme, or metric-name change. `table.column.minInlineSize`
 keeps its #480 meaning unchanged.
 
-Release disposition: both literal rows are met, pending CI.
+Release disposition: both literal rows are met.

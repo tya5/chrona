@@ -4,7 +4,7 @@
 tests, regenerated evidence). **Design:** [design](../../design/issue-487-table-minmax-flex-allocation-design-2026-09-26.md),
 as amended. **Authorities:** Specification 24 §2.1, Specification 33 §5,
 [ADR-0032](../../decisions/ADR-0032-flexible-track-minimum-is-a-floor.md).
-**CI:** pending.
+**CI:** [four-job CI run 36248123399](https://github.com/tya5/chrona/actions/runs/36248123399) on `908f9d69`, green: Ubuntu, Windows and macOS conformance/full pytest/wheel, and newest-Python public materializer reproduction.
 
 Contracts 1 and 2 were implemented and published together, not as separate I487-1/I487-2
 commits, per the implementation plan's own caution: I487-1 alone (raising the minimum

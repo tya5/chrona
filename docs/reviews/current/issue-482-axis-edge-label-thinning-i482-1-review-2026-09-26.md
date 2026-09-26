@@ -20,7 +20,7 @@
   - PNG crops of the axis band confirm this visually: before shows only `2027年Q3`; after shows `2027年Q3` and `2027年Q4`.
 - **Generated reports:** `docs/diagnostics/inventory.md` changed only line numbers (the `axis.py`/`surface_composer.py` edits shifted later definitions). `docs/diagnostics/presentation-font-identity.md` changed only placement counts (1167→1173 weight-400, 101→104 weight-700 — the 6+3 new axis-label placements across the two fixtures). `docs/diagnostics/presentation-contrast.md` is unchanged (it does not evaluate axis-label contrast against new placements differently; `--check` passes without regeneration).
 - **Conformance:** `conformance/run_conformance.py` — **PASS**, all 31 checks, including `diagnostic-inventory`, `presentation-font-identity`, `presentation-contrast`, `scene-perceptibility`, `axis-name-tables`, `literal-issue-acceptance`.
-- **CI:** pending — the lead fills in the run link after push.
+- **CI:** [four-job CI run 36248123399](https://github.com/tya5/chrona/actions/runs/36248123399) on `908f9d69`, green: Ubuntu, Windows and macOS conformance/full pytest/wheel, and newest-Python public materializer reproduction.
 
 ## Architecture review
 
@@ -34,4 +34,4 @@
 | 2 | A partial edge cell narrower than its label does not collide with its neighbour. | met | `test_replan_baseline_records_the_nonfitting_partial_quarter_label`'s no-intersection assertion (all placed axis labels, pairwise); the ja-JP and English before/after renders show the clipped candidate is thinned rather than drawn overlapping. |
 | 3 | `marginDays` can be used by the presets without an axis warning. | met | `test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset`, all five catalogue presets, both HALCYON-1 and the `chrona init` starter: no `W_LAYOUT_LABEL_OVERFLOW` or `W_SCENE_TEXT_INTERSECTION` naming an axis label. |
 
-This slice is accepted pending CI. The next public base is this review's commit; the literal acceptance review may be published once CI is green.
+This slice is accepted.

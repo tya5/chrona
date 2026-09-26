@@ -25,10 +25,10 @@
 - Public evidence changed only as attributed in the [slice review](issue-482-axis-edge-label-thinning-i482-1-review-2026-09-26.md): `examples/orion-asic/generated/gates.{svg,scene.json}` and `examples/halcyon-1/generated/07-replan-baseline.{svg,scene.json}` each show their previously-dropped, actually-fitting axis labels, with identical geometry for every label already placed. `docs/diagnostics/inventory.md` (line numbers only) and `docs/diagnostics/presentation-font-identity.md` (placement counts) were refreshed; `docs/diagnostics/presentation-contrast.md` was unaffected.
 - `conformance/run_conformance.py`: PASS, all 31 checks.
 - Focused tests: `tests/unit/chrona/presentation tests/integration tests/cli` — 772 passed, 1 skipped (pre-existing).
-- CI: pending — the lead fills in the run link.
+- CI: [four-job CI run 36248123399](https://github.com/tya5/chrona/actions/runs/36248123399) on `908f9d69`, green: Ubuntu, Windows and macOS conformance/full pytest/wheel, and newest-Python public materializer reproduction. The implementation landed as `1dee7f1e` (cherry-picked; the axis-label count constant became 180 after integrating the new #430 slide).
 
 ## Architecture conclusion
 
 `thin-with-record` remains a deterministic Layout policy over completed interval outcomes (unchanged layer ownership from the accepted [axis thinning record amendment](../../design/issues-405-406-407-408-400-axis-thinning-record-design-amendment-2026-09-25.md)). The correction replaces a whole-tier periodic stride/phase search with a direct per-candidate filter, since one candidate's measured fit against its own clipped, contiguous interval never depends on any other candidate's disposition. `AxisThinningSchedule`'s `stride`/`phase` fields and the `"thinning-stride"` outcome reason are retired as dead concepts; `surface_quality.py`'s `AxisTierOutcome` invariant was tightened in the same commit. Specification 39 gained §1.1 stating the corrected rule normatively. No View, Theme, Scene, adapter or schema change; #426 (axis tier appearance) is untouched, as named in the design and confirmed by the diff touching only `thinning_schedule`'s selection rule and its two call sites.
 
-Release disposition: all three literal rows are met, pending CI.
+Release disposition: all three literal rows are met.
