@@ -525,7 +525,7 @@ class SurfacePlacement:
                             (item.label_fits and item.reason is not None)
                             or (not item.label_fits and item.reason != "visible-overflow")):
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
-                    if item.disposition == "thinned" and item.reason not in {"label-does-not-fit", "thinning-stride"}:
+                    if item.disposition == "thinned" and item.reason != "label-does-not-fit":
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
             elif outcome.label_form is not None or outcome.name_table_id is not None or any(item.label is not None or item.label_fits is not None
                                                        or item.disposition != "not-applicable" or item.reason is not None

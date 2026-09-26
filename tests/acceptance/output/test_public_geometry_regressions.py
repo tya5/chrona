@@ -31,7 +31,7 @@ def test_all_public_axis_labels_and_independent_notes_have_no_positive_area_inte
             for index, left in enumerate(notes):
                 assert all(left["slotId"] != right["slotId"] or not _overlap(left["bounds"], right["bounds"])
                            for right in notes[index + 1:]), path
-    assert axis_count == 171
+    assert axis_count == 180
 
 
 def test_all_public_ellipsized_legends_stay_in_slot_and_boolean_cells_are_readable():
@@ -73,5 +73,5 @@ def test_every_public_svg_axis_label_is_after_its_band_and_hosted_dvt_label_is_a
         if host is not None and label is not None:
             hosted += 1
             assert label > host, path
-    assert axis_count == 171
+    assert axis_count == 180
     assert hosted == 7

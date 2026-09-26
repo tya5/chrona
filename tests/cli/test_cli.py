@@ -346,6 +346,49 @@ def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path
         assert "<linearGradient" not in svg and "<filter" not in svg
 
 
+@pytest.mark.parametrize(
+    "preset_id",
+    [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
+)
+def test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset(tmp_path, monkeypatch, capsys, preset_id):
+    """#482: a window margin must not make thin-with-record collide or over-thin."""
+    preset = tmp_path / preset_id
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
+    main()
+    view_path = preset / "view.yaml"
+    view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+    view["body"]["window"] = {"mode": "selected-planned", "marginDays": 7}
+    for tier in view["body"]["axis"]["tiers"]:
+        if tier.get("unit") == "month" and tier.get("role") == "labels":
+            tier["label"]["overflow"] = "thin-with-record"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+
+    for label, project, actual in (
+        ("halcyon-1", Path("examples/halcyon-1/project.yaml"), Path("examples/halcyon-1/actual.yaml")),
+        ("starter", starter / "project.yaml", starter / "actual.yaml"),
+    ):
+        output = tmp_path / f"{preset_id}-{label}.svg"
+        scene_path = tmp_path / f"{preset_id}-{label}.scene.json"
+        monkeypatch.setattr(sys, "argv", [
+            "chrona", "render", str(project), "--actual", str(actual),
+            "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
+        ])
+        capsys.readouterr()
+        main()
+        warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+        axis_overflow = [item for item in warnings if item.get("code") == "W_LAYOUT_LABEL_OVERFLOW"
+                          and (item.get("sourceRef") == "timeline-axis" or str(item.get("placementId", "")).startswith("axis-label:"))]
+        assert not axis_overflow, (preset_id, label, axis_overflow)
+
+        intersections = [item for item in warnings if item.get("code") == "W_SCENE_TEXT_INTERSECTION"
+                          and any(str(primitive_id).startswith("axis-label:") for primitive_id in item.get("primitiveIds", ()))]
+        assert not intersections, (preset_id, label, intersections)
+
+
 def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_path, monkeypatch, capsys):
     """#480: the table slot and its columns use one measure, so `Δ` stays inside."""
     preset = tmp_path / "print-mono"

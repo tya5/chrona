@@ -1011,13 +1011,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                             if position in retained:
                                 resolved_outcomes.append(replace(outcome, disposition="placed"))
                             else:
-                                reason = "label-does-not-fit" if not outcome.label_fits else "thinning-stride"
-                                resolved_outcomes.append(replace(outcome, disposition="thinned", reason=reason))
-                                diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:{reason}")
+                                resolved_outcomes.append(replace(outcome, disposition="thinned", reason="label-does-not-fit"))
+                                diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:label-does-not-fit")
                                 axis_decisions.append(PlacementDecision(outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
                                                                         ("thin-with-record", "suppress"), "suppress", "suppressed"))
                         interval_outcomes = tuple(resolved_outcomes)
-                        diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:stride={schedule.stride}:phase={schedule.phase}")
+                        diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned={len(schedule.thinned_positions)}")
                 else:
                     interval_outcomes = tuple(replace(
                         item, disposition="placed",

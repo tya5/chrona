@@ -898,6 +898,46 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
     assert all(item.label is not None and item.label_fits and item.disposition == "placed" for item in labels.intervals)
 
 
+def test_thin_with_record_drops_only_one_disproportionately_wide_label():
+    """#482: a single wide label (for example, a locale that widens one quarter's
+    text) must not thin any other, otherwise-fitting label in the tier."""
+
+    class _WideQ1Font:
+        content_identity = "sha256:test"
+
+        def width(self, value, size):
+            if value == "2026年Q1":
+                return 10_000.0
+            return len(value) * size / 2
+
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
+    content = surface_content(axis_tiers=(
+        AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "thin-with-record", "horizontal", "ja-JP")),
+    ))
+    value = build_scene_input(projection=projection, surface_content=content,
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_WideQ1Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    composition = compose_surface_layout(SurfaceLayoutRequest(
+        projection=value.projection, presentation_contract=normalize_presentation_input(content),
+        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
+        theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
+        capabilities=dict(value.capabilities),
+    ))
+
+    (labels,) = composition.placement.axis_tier_outcomes
+    assert [item.label for item in labels.intervals] == ["2026年Q1", "2026年Q2", "2026年Q3", "2026年Q4"]
+    # Only the one disproportionately wide label is thinned; every fitting
+    # label -- including the ones sharing its residue class -- is placed.
+    assert [(item.disposition, item.reason) for item in labels.intervals] == [
+        ("thinned", "label-does-not-fit"), ("placed", None), ("placed", None), ("placed", None),
+    ]
+
+
 def test_table_columns_use_measured_non_overlapping_origins():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),),
                                   (date(2026, 1, 1), date(2026, 1, 2)), (), ())

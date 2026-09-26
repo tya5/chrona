@@ -245,15 +245,26 @@ def test_orion_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     assert 'data-purpose="progress-fill"' in svg
     scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
     assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit" in scene["diagnostics"]
-    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:stride=2:phase=1" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:thinned=1" in scene["diagnostics"]
+    assert not any(diagnostic.startswith("W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:") and diagnostic != "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit"
+                   for diagnostic in scene["diagnostics"])
+    axis_labels = {primitive["id"] for primitive in scene["surfaces"][0]["primitives"] if primitive.get("purpose") == "axis-label"}
+    # Only the one clipped candidate is thinned; every other month label in the tier is placed.
+    assert "axis-label:3:2" in axis_labels and "axis-label:3:4" in axis_labels
 
 
 def test_replan_baseline_records_the_nonfitting_partial_quarter_label(tmp_path):
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "replan-baseline", tmp_path / "replan", write=False)
     scene = json.loads((tmp_path / "replan/review.scene.json").read_text(encoding="utf-8"))
     assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit" in scene["diagnostics"]
-    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:2:stride=2:phase=1" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1" in scene["diagnostics"]
     assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:thinned=1" in scene["diagnostics"]
+    # Only the one clipped candidate per tier is thinned; the next quarter/month label
+    # in each tier, which used to be dropped for sharing its residue, is now placed.
+    axis_labels = {primitive["id"] for primitive in scene["surfaces"][0]["primitives"] if primitive.get("purpose") == "axis-label"}
+    assert "axis-label:2:2" in axis_labels
+    assert "axis-label:3:2" in axis_labels
     labels = [primitive["bounds"] for primitive in scene["surfaces"][0]["primitives"]
               if primitive["purpose"] == "axis-label"]
     assert all(not (left["inline"] < right["inline"] + right["inlineSize"] - 0.000001
