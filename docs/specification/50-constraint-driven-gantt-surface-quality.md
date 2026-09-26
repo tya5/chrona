@@ -60,6 +60,10 @@ must not place the label over a data mark merely because earlier beside-line
 candidates are blocked. Ordinary label requests retain their first-ranked
 visible-overflow fallback.
 
+The seam side is a terminal fallback-only rung: it is not considered until
+all ordinary as-of candidates fail. Its identity is recorded in the completed
+placement decision so previously fitting labels remain stable.
+
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
 ### 3.3 Relations
