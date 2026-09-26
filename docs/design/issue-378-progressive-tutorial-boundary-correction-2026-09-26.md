@@ -6,10 +6,17 @@ The onboarding guide remains one ordered learning path, but not one universal
 Project-file workflow. Stages for fixed spans, gates, dependencies/lag,
 calendars, constraints/deadlines, hierarchy/rollup, and Actuals/progress use
 small independent Draft fixtures and `chrona render`. Each fixture is a
-complete valid Project (plus Actual Set only when introduced), so readers may
+complete valid Project (plus Actual Set and progress-selecting View only when
+introduced), so readers may
 copy or edit that stage alone. A structural test requires each stage's own
 declared concept and verifies that all listed commands render. A deliberate
 edit/re-render proof demonstrates that source changes affect output.
+
+The seventh Draft stage needs that minimal View because an Actual Set owns
+the observation while View owns its visible progress facet and fill. The
+packaged default View does not select either. The stage-7 View declares
+`comparison.actual: required`, the `progress` facet, and
+`progressFill.source: actual`; it is not hidden data in Project or Actual.
 
 Scenario learning uses Project `scenarios` **and** a View selecting the
 scenario; adding an unselected scenario to a Project and rendering a default
@@ -34,7 +41,7 @@ not repackaged, for the advanced stages.
 
 The documentation gate executes every non-skipped guide command in a
 disposable workspace. A separate tutorial test checks the seven compact
-Project/Actual fixtures, the introduced concepts, the edit/re-render change,
+Project/Actual/View fixtures, the introduced concepts, the edit/re-render change,
 the selected-scenario Project/View pair, and the named snapshot/extension
 closure edges. Public materializer byte reproduction remains the final check
 for those advanced examples. The #378 acceptance review maps every literal

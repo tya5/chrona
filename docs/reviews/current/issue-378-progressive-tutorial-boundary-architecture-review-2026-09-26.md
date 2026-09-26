@@ -5,6 +5,8 @@
 - Project v0.7 owns objects, calendars, relations, hierarchy, scenarios, and
   extension declarations; it does not own immutable baseline selection.
 - Actual Set owns observed dates and progress, independently of Project.
+- View must select the progress facet and fill for an observed fraction to
+  appear in Scene. The stage-7 View owns presentation selection, not data.
 - View owns comparison and scenario selection. A scenario declaration without
   a selecting View is not observable evidence.
 - Render Context owns snapshot input references; the snapshot-ref and baseline
