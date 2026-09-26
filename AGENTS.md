@@ -1,11 +1,56 @@
 # Chrona development workflow
 
 This file is the working procedure for repository contributors and coding
-agents. Follow it for issue work, including fixes and refactors. The current
-GitHub `main`, issue text, and published repository documents are the source
-of truth; handoff notes and unpushed local work are leads to verify.
+agents. It is tool-neutral, and Claude Code and Codex both read it directly.
+Follow it for issue work, including fixes and refactors.
+The current GitHub `main`, issue text, and published repository documents are
+the source of truth; handoff notes and unpushed local work are leads to verify.
+Do not rely on any tool's private memory for project state. Anything a
+successor needs must be in the repository or on the issue.
+
+## Setup and everyday commands
+
+```bash
+python -m venv .venv && . .venv/bin/activate
+python -m pip install -e '.[dev,render]'
+python -m pytest -q tests/<focused path>          # during a slice
+python conformance/run_conformance.py             # before accepting a slice
+python tools/materialize_example.py <manifest> --slide <id> --output <dir>   # public evidence
+```
+
+Always run Python through the project environment. A different interpreter on
+`PATH` silently tests another checkout. `CONTRIBUTING.md` has the repository
+map.
+
+## Choosing and claiming work
+
+- **What to take next:** the pinned issue #454 is the reviewer-maintained
+  priority board. Read it; do not edit or close it.
+- **Claim before you start:** comment on the issue with the tool (Claude Code
+  or Codex), the intended first slice, and the public base commit. Two agents
+  never work on the same issue at once. If an issue carries a claim newer than
+  a few hours with no later status, ask the owner before taking it.
+- **Parallel agents:** each agent works in its own worktree and on a
+  different issue. Only one agent pushes to `main` at a time: fetch, rebase
+  and verify immediately before each push, and stop on any unexpected remote
+  change.
+- **Reviewer pull requests:** the reviewer publishes YAML and documentation
+  changes as pull requests that reference an issue. They are independent of
+  in-flight code work unless the PR says otherwise. Merge one after its CI
+  passes and its scope matches the PR description. Post-review findings arrive
+  as new issues, not as edits to closed ones.
 
 ## Required sequence
+
+The full sequence below is for work that changes semantics, public schemas,
+layer ownership or compatibility, or that spans several modules. **For a
+local defect**, meaning one owner module with no schema, specification or
+compatibility change and a fix that is obvious once the cause is known,
+combine steps 1–4 into a single short plan document and keep step 6's
+literal acceptance review. Prefer landing an independently useful slice
+over refining a large design for hours without code. If a design has gone
+through several published corrections without a slice landing, stop, publish
+the smallest slice that is already agreed, and continue from it.
 
 1. **Establish the baseline.** Read the issue body and later comments, current
    `main`, active plans, relevant specifications/ADRs, code, tests, and public
@@ -71,7 +116,9 @@ and successor documents so a fresh contributor can reconstruct the decision.
 | At each slice or issue release | `docs/reviews/current/` | Implementation or acceptance review with exact commit, commands, CI run/PR links, artifact diffs, architectural findings, and a row for **every literal issue acceptance criterion** (`met`, `deferred`, or `not met`) with direct evidence. Use `docs/reviews/issue-acceptance-review-template.md` where appropriate. A deferred criterion keeps the issue open unless an explicit successor disposition is approved. |
 
 Keep active plans under `docs/planning/active/` while they are the working
-record. Do not mistake a document's `Accepted` heading or an old green run for
+record, and move them to `docs/planning/archive/` when their issue closes, so
+that `active/` lists only work in flight. A successor should be able to read
+`active/` and see what is open. Do not mistake a document's `Accepted` heading or an old green run for
 proof that the current public artifact meets an issue's criteria. Check actual
 rendered output when the criterion concerns what a user sees; a Scene-only
 report cannot prove adapter output is correct.
@@ -92,3 +139,27 @@ report cannot prove adapter output is correct.
   introduced by the slice from independent failures, and record the disposition
   before declaring release acceptance. Do not close a ticket while its required
   release gate or user-visible acceptance remains unverified.
+
+## Handing off and resuming
+
+Work may stop at any time, for example when a rate limit ends a session, and
+be resumed by another agent or another tool. At every slice boundary, and
+before stopping for any reason:
+
+1. Publish completed units. Do not leave finished work unpushed.
+2. Put unfinished code on a branch named `wip/issue-<n>-<topic>` and push it,
+   or discard it. Never leave uncommitted changes in a shared checkout.
+3. Comment on the issue with a status block:
+
+   ```text
+   Status (<tool>, <date> <time> UTC)
+   Public base: <main commit>   WIP branch: <branch or none>
+   Done: <published slices with commits>
+   Next: <the next slice, its plan document, first concrete step>
+   Open questions / risks: <...>
+   ```
+
+A resuming agent reads the issue comments from the newest status block,
+checks the named commits and branch against `origin/main`, re-reads the
+active plan and design documents, and continues from "Next". It treats the
+status block as a lead to verify, not as proof.
