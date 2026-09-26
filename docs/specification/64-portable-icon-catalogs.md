@@ -99,6 +99,11 @@ colour, gradient, filter, mask, clip, image, text, `use`, `defs`, URL, external
 reference, script/event/foreign content, unsupported element, non-finite value,
 or any configured depth/path/command/coordinate/tolerance limit. A future
 multicolour logo or image belongs to a separately designed asset family.
+[Specification 65](65-container-image-assets.md) is that family, for a
+Theme-bound, nine-slice-stretchable annotation-container backdrop (#465); it
+reuses this specification's identity/closure engineering as a sibling
+resource kind, not as a new icon-catalog entry type, so a View's `visuals`
+grammar still cannot reach it.
 
 ## 4. Context closure and public authoring
 
