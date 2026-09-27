@@ -8,6 +8,9 @@ chrona.presentation.layout.lane_projection
 #467: Typed Review-to-lane candidate mapper is verified independently; B2
 # will import it from the render use case before lane mode is enabled.
 chrona.presentation.layout.lane_bundle_mapper
+#467: Object-level visual selectors fan out to typed lane occurrences; the
+# mapper imports this staged binder until the render use case enables B2.
+chrona.presentation.layout.lane_visual_binding
 #467: Seed-scale adapter is tested independently until render_review invokes
 # preflight after its finite inline solve.
 chrona.presentation.layout.lane_seed
