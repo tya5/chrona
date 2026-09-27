@@ -371,6 +371,12 @@ annotations. This finite monotone phase order prioritizes visible semantic
 connections without allowing label/route overlap or changing declared route
 quality and overflow limits. See the [#466 route-priority correction](../design/issue-466-general-placement-route-priority-correction-2026-09-26.md).
 
+Fixed-lane member names and selected deltas are the route-independent
+exception: their finite candidates resolve after lane geometry but before
+semantic relations, and only accepted labels enter the route obstacle set.
+Their terminal suppression is counted without altering membership (Specs 38
+and 50). Relation labels still follow their completed routes.
+
 After canonical side candidates fail, optional plot/item/delta labels may use
 a finite side-relative displacement bounded by their measured footprint and
 512 collision queries. This fallback never changes the declared side, never

@@ -206,17 +206,21 @@ a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous
 pairwise non-redundancy and footprint-concurrency gate is retired.
 
-Every packed item has a candidate name and finish delta when one exists.
-Lane-mode Views MUST declare plot labels containing both `title` and
-`finishDelta`, with `side: auto` and `overflow: suppress`; a table-only, disabled, one-sided, or
-visible-overflow member-label policy is invalid for lanes. This is an
-intentional v0.28 migration constraint, not a silent override of View intent.
-Layout places labels after membership using the common #466/#488 obstacle
-model: end, start, stagger and a short offset leader are deterministic
-candidate phases. The leader is completed geometry owned by Layout, not an
-adapter decoration. If no candidate fits, Layout suppresses the name,
-records its source and increments the suppression count; it never opens a
-lane or silently drops the item. Non-lane label policies do not change.
+Every packed item has a plot-name request; the lane table has no item row to
+carry it. A lane-mode `visibility.labels` object MUST select plot placement
+and `title`; omitted `content` means `[title, finishDelta]`, while a declared
+list may omit `finishDelta`. Omitted `side` means `auto`, and an authored
+`side` and `visibility.fallback.labels` order (including `inside`) are honored.
+With no declared fallback, `auto` tries end, start and the bounded
+side-neighborhood stagger; an explicit side tries that side and its bounded
+neighborhood. A declared fallback supplies its finite candidate order after
+the preferred side. `inside` may exempt only its own host mark, not a
+comparison sibling or another item. Every lane ladder terminates in
+suppression: if no legal candidate fits, Layout records the source, increments
+the surface count and emits no name; it never changes lane membership. Omitted
+`overflow` means `suppress`; explicit `visible-overflow` is invalid for a lane
+name because it contradicts this terminal outcome. These are v0.28 ingress
+rules, not silent overrides. Non-lane label policies do not change.
 Mark, comparison, icon and text footprints remain relevant to this later
 placement and to #494 route avoidance. Required visible labels are obstacles
 before routes; a route cannot cross a required lane/member label. The
