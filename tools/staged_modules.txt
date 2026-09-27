@@ -2,14 +2,9 @@
 # and deliberately kept. Every entry needs a reason and an owning issue; anything
 # not listed here and not reachable fails tools/check_module_reachability.py.
 #
-#467: Neutral Layout lane allocator is tested independently while render-review
-# remains fail-closed for lanes. Remove this entry when L3b imports the module
-# into the composer; planned removal: 2026-10-04.
-chrona.presentation.layout.lane_allocation
-#467: Direct Layout preflight kernel is tested independently while public
-# lanes remain fail-closed. Remove when B1b/B2 connects projection closure
-# and render_review to the plan; planned removal: 2026-10-04.
-chrona.presentation.layout.lane_preflight
 #467: Source-keyed lane projection closure is independently tested while B2
 # still keeps public lane rendering fail-closed. Remove when B2 imports it.
 chrona.presentation.layout.lane_projection
+#467: Typed Review-to-lane candidate mapper is verified independently; B2
+# will import it from the render use case before lane mode is enabled.
+chrona.presentation.layout.lane_bundle_mapper
