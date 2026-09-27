@@ -323,16 +323,21 @@ def test_facet_overlay_exemption_must_be_explicit_and_member_ids_are_globally_un
         allocate_lanes([unexempted, duplicate])
 
 
-def test_facet_overlay_must_name_the_same_stable_source_object() -> None:
-    host = facet("host", ObstacleRect(0, 0, 10, 10), source_ref="project:host")
-    unrelated = facet("unrelated", ObstacleRect(0, 0, 10, 10),
-                      source_ref="project:other", overlay_with=("host",))
-    host_mark = LaneMark(0, 10, (host,))
-    unrelated_mark = LaneMark(0, 10, (unrelated,))
-    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
-        LaneCandidate("host", "g", (0,), host_mark, 5.0,
-                      bundle=(LaneMember("host", host_mark, 5.0),
-                              LaneMember("other", unrelated_mark, 5.0)))
+def test_attached_point_may_explicitly_overlay_its_host_mark() -> None:
+    host_facet = facet("host:planned", ObstacleRect(0, 0, 10, 10),
+                       source_item_id="host", source_ref="project:host")
+    point_facet = facet("point:planned", ObstacleRect(0, 0, 10, 10),
+                        source_item_id="point", source_ref="project:point",
+                        purpose="attached-point", overlay_with=("host:planned",))
+    host_mark = LaneMark(0, 10, (host_facet,))
+    point_mark = LaneMark(0, 10, (point_facet,))
+    candidate_bundle = LaneCandidate(
+        "host", "g", (0,), host_mark, 5.0,
+        bundle=(LaneMember("host", host_mark, 5.0),
+                LaneMember("point", point_mark, 5.0)),
+    )
+    result = allocate_lanes([candidate_bundle], mark_row_height=10, label_row_height=10)
+    assert result.lanes[0].members == ("host", "point")
 
 
 def test_facets_keep_repeated_source_instances_and_typed_ports_distinct_and_countable() -> None:
@@ -399,8 +404,10 @@ def test_closed_candidate_requires_facets_and_preserves_unexpanded_primitive_bou
     assert path.visible_footprint.stroke_width > 0
     assert raster.primitive_bounds == (3.0, 2.0, 7.0, 9.0)
     assert raster.visible_footprint == ObstacleRect(2.0, 1.0, 8.0, 10.0)
-    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
-        replace(path, primitive_bounds=(1.0, 5.0, 8.0, 5.0))
+    # Primitive bounds may include a completed layout slot beyond this part's
+    # command envelope; commands must remain contained in the retained bounds.
+    assert replace(path, primitive_bounds=(1.0, 4.0, 9.0, 6.0)).primitive_bounds == (
+        1.0, 4.0, 9.0, 6.0)
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
         LaneMarkFacet(
             "item:bad-port", "row:item", "item", "project:item", "primary", "planned",
@@ -461,10 +468,29 @@ def test_vector_icon_projection_rejects_missing_or_duplicate_path_indices(indice
         LaneMark(0, 10, facets)
 
 
+def test_vector_icon_paths_must_share_path_count() -> None:
+    facets = (
+        facet("p0", ObstacleRect(0, 0, 1, 1), primitive_id="placed-icon",
+              primitive_type="Icon", icon_projection=icon_projection(path_index=0, path_count=2)),
+        facet("p1", ObstacleRect(1, 0, 2, 1), primitive_id="placed-icon",
+              primitive_type="Icon", icon_projection=icon_projection(path_index=1, path_count=3)),
+    )
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMark(0, 10, facets)
+
+
 def test_icon_projection_rejects_non_icon_primitive_type() -> None:
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
         facet("path", ObstacleRect(0, 0, 1, 1), primitive_id="placed-icon",
               primitive_type="Path", icon_projection=icon_projection(path_index=0))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        facet("icon-without-projection", ObstacleRect(0, 0, 1, 1),
+              primitive_id="placed-icon", primitive_type="Icon")
+
+
+def test_stroked_icon_path_requires_stroke_width() -> None:
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        icon_projection(path_index=0, paint="stroke")
 
 
 def test_icon_projection_rejects_shared_asset_mismatch_and_preserves_raster_bytes() -> None:

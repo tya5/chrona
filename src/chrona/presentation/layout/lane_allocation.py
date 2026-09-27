@@ -135,6 +135,8 @@ class LaneIconProjection:
                 and (self.stroke_width is None or (
                     isinstance(self.stroke_width, (int, float)) and not isinstance(self.stroke_width, bool)
                     and isfinite(self.stroke_width) and self.stroke_width >= 0))
+                and (self.paint != "stroke" or (self.stroke_width is not None
+                     and self.stroke_width > 0))
                 and (self.line_cap is None or (isinstance(self.line_cap, str)
                                                and self.line_cap in {"butt", "round", "square"}))
                 and (self.line_join is None or (isinstance(self.line_join, str)
@@ -156,7 +158,7 @@ class LaneIconProjection:
         return (self.placement_id, self.icon_id, self.kind, self.asset_identity,
                 self.viewport, self.bounds, self.visual_capability_source_ref,
                 self.alternative, self.decorative, self.slot_id, self.paint_order,
-                self.stroke_scale)
+                self.path_count, self.stroke_scale)
 
 
 @dataclass(frozen=True)
@@ -239,18 +241,6 @@ class LaneMarkFacet:
         if any(not (bounds_left - tolerance <= point[0] <= bounds_right + tolerance
                     and bounds_top - tolerance <= point[1] <= bounds_bottom + tolerance) for point in points):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
-        # Primitive bounds are the exact unexpanded command envelope. Stroke
-        # growth belongs only to visible_footprint, so accepting a broader
-        # primitive envelope here would let downstream projection invent geometry.
-        all_points = tuple(point for _, command_points in self.completed_geometry
-                           for point in command_points)
-        command_bounds = (min(point[0] for point in all_points),
-                          min(point[1] for point in all_points),
-                          max(point[0] for point in all_points),
-                          max(point[1] for point in all_points))
-        if any(abs(actual - expected) > tolerance
-               for actual, expected in zip(self.primitive_bounds, command_bounds)):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
         host = self.port_host_bounds
         if any(not (host[0] - tolerance <= port.position[0] <= host[2] + tolerance
                     and host[1] - tolerance <= port.position[1] <= host[3] + tolerance)
@@ -272,6 +262,8 @@ class LaneMarkFacet:
                         or (self.visible_footprint.left, self.visible_footprint.top,
                             self.visible_footprint.right, self.visible_footprint.bottom) != expected):
                     raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        elif self.primitive_type == "Icon":
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
 
 @dataclass(frozen=True)
@@ -381,20 +373,14 @@ class LaneCandidate:
         members = self.members_for_placement
         facets = tuple(facet for member in members for facet in member.mark.facets)
         facet_ids = {facet.facet_id for facet in facets}
-        facets_by_id = {facet.facet_id: facet for facet in facets}
         port_ids = [port.port_id for facet in facets for port in facet.ports]
         if len(facet_ids) != len(facets) or any(
                 target not in facet_ids for facet in facets for target in facet.overlay_with
         ) or len(set(port_ids)) != len(port_ids) or any(not member.mark.facets for member in members):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
-        # An overlay is an explicit exemption for two facets of the same
-        # stable source object. Their projection/item identities may differ
-        # (for example primary and Snapshot members of one comparison bundle).
-        for facet_value in facets:
-            for target in facet_value.overlay_with:
-                other = facets_by_id[target]
-                if facet_value.source_ref != other.source_ref:
-                    raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        # The explicit facet IDs are the overlay authority. Source references
+        # may differ for a host and its attached point; target closure above
+        # ensures an exemption cannot escape this atomic candidate bundle.
 
     @property
     def members_for_placement(self) -> tuple[LaneMember, ...]:
