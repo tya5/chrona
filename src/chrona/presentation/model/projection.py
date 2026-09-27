@@ -59,6 +59,7 @@ class ReviewItem:
     scenario_id: str | None = None
     planned_progress: float | None = None
     observation_state: ObservationState = ObservationState.UNAVAILABLE
+    attached_to: str | None = None
 
 
 @dataclass(frozen=True)
@@ -217,6 +218,10 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             observation_state=observation_state))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY")
+    if (grouping is not None and grouping.by == "field" and grouping.presentation == "header"
+            and all(grouping.field not in (item.fields or {}) for item in selected)):
+        # A header that distinguishes nothing is not drawn (Specification 45).
+        selected = [replace(item, group_id="", group_label="") for item in selected]
     if hierarchy and not explicit:
         selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view)
     elif not explicit:
@@ -344,12 +349,16 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
     """Apply View-owned automatic point policy without exposing relation facts to Layout."""
     if view.rows.points == "own-row":
         return rows, ()
+    if view.rows.points in {"attached", "predecessor"}:
+        rows = _attach_points(rows, project)
+    if view.rows.points == "attached":
+        return rows, ()
     if view.rows.points == "group-header":
         if view.grouping is None or view.grouping.presentation != "header":
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED")
         labels = view.visibility.labels
         has_title_label = (labels is True or
-                           (isinstance(labels, Mapping) and labels.get("placement") == "plot"
+                           (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
                             and "title" in labels.get("content", ())))
         if not has_title_label:
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED")
@@ -382,6 +391,26 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
         replacements[candidates[0]] = replace(target, items=target.items + tuple(
             replace(item, track="shared") for item in row.items))
     return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in folded), ()
+
+
+def _attach_points(rows: tuple[ReviewRowProjection, ...], project: dict[str, Any]) -> tuple[ReviewRowProjection, ...]:
+    """Move each point that attachesTo a selected span onto that span's row (#486)."""
+    objects = project.get("objects", {})
+    by_object = {row.table_subject_id: row for row in rows}
+    moved: set[str] = set()
+    replacements: dict[str, ReviewRowProjection] = {}
+    for row in rows:
+        subject = row.items[0] if row.items else None
+        host = objects.get(subject.object_id, {}).get("attachesTo") if subject is not None else None
+        if subject is None or subject.source_type != "point" or host not in by_object:
+            continue
+        target = replacements.get(host, by_object[host])
+        if not target.items or target.items[0].source_type != "span":
+            continue
+        moved.add(row.row_id)
+        replacements[host] = replace(target, items=target.items + tuple(
+            replace(item, track="shared", attached_to=host) for item in row.items))
+    return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in moved)
 
 
 def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
@@ -464,6 +493,14 @@ def _order(rows: list[ReviewItem], view: ViewInput) -> None:
         ordering_by, tie_break, direction = ordering.by, ordering.tie_break, ordering.direction
     rows.sort(key=lambda item: value(item, tie_break))
     rows.sort(key=lambda item: value(item, ordering_by), reverse=direction == "descending")
+    if view.grouping is not None and view.grouping.order_by == "earliestPlannedStart":
+        earliest: dict[str, Any] = {}
+        for item in rows:
+            start = item.planned.get("start", item.planned.get("at"))
+            if start is not None and (item.group_id not in earliest or start < earliest[item.group_id]):
+                earliest[item.group_id] = start
+        rows.sort(key=lambda item: (item.group_id not in earliest, earliest.get(item.group_id, date.min), item.group_id))
+        return
     group_order = view.grouping.order if view.grouping is not None else ()
     rows.sort(key=lambda item: (group_order.index(item.group_id) if item.group_id in group_order else len(group_order), item.group_id))
 

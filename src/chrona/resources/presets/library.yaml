@@ -28,13 +28,16 @@ entries:
       theme: {id: chrona-builtin-executive-light, kind: theme, sourceRoot: presets/bundles/executive-light, sourcePath: theme.yaml}
       colorScheme: {id: executive-light, kind: color-scheme, sourceRoot: examples/controller-z, sourcePath: schemes/executive-light.yaml}
       layout: {id: chrona-builtin-executive-light, kind: layout-profile, sourceRoot: presets/bundles/executive-light, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-legend, kind: review-detail-profile, sourceRoot: presets/bundles/executive-light, sourcePath: detail.yaml}
   - id: elevated-light
     gallerySet: controller-z-treatment-ladder
+    visualProfile: {preferred: chrona-output/visual/v0.7-svg}
     members:
       view: {id: chrona-preset-elevated-light, kind: view, sourceRoot: presets/bundles/elevated-light, sourcePath: view.yaml}
       theme: {id: chrona-builtin-elevated-light, kind: theme, sourceRoot: presets/bundles/elevated-light, sourcePath: theme.yaml}
       colorScheme: {id: executive-light, kind: color-scheme, sourceRoot: examples/controller-z, sourcePath: schemes/executive-light.yaml}
       layout: {id: chrona-builtin-elevated-light, kind: layout-profile, sourceRoot: presets/bundles/elevated-light, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-legend, kind: review-detail-profile, sourceRoot: presets/bundles/elevated-light, sourcePath: detail.yaml}
   - id: editorial
     gallerySet: generated-design-directions
     members:
@@ -42,6 +45,7 @@ entries:
       theme: {id: chrona-builtin-editorial, kind: theme, sourceRoot: presets/bundles/editorial, sourcePath: theme.yaml}
       colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, sourceRoot: presets/bundles/editorial, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, sourceRoot: presets/bundles/editorial, sourcePath: detail.yaml}
   - id: technical-print
     gallerySet: generated-design-directions
     members:
@@ -49,3 +53,4 @@ entries:
       theme: {id: chrona-builtin-technical-print, kind: theme, sourceRoot: presets/bundles/technical-print, sourcePath: theme.yaml}
       colorScheme: {id: chrona-builtin-technical-print, kind: color-scheme, sourceRoot: presets/bundles/technical-print, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-technical-print, kind: layout-profile, sourceRoot: presets/bundles/technical-print, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-technical-print-detail, kind: review-detail-profile, sourceRoot: presets/bundles/technical-print, sourcePath: detail.yaml}

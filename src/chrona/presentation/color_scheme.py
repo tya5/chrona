@@ -152,6 +152,13 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     resolved_scales: dict[str, dict[str, dict[str, str]]] = {}
     for scale_id, declaration in declared_scales.items():
         slots = declaration.get("slots") if isinstance(declaration, Mapping) else None
+        palette = declaration.get("palette") if isinstance(declaration, Mapping) else None
+        if isinstance(scale_id, str) and isinstance(palette, (list, tuple)) and palette:
+            resolved_palette = [str(slot) for slot in palette]
+            if any(f"category:{slot}" not in colors for slot in resolved_palette):
+                raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
+            resolved_scales[scale_id] = {"palette": resolved_palette}
+            continue
         if not isinstance(scale_id, str) or not isinstance(slots, Mapping):
             raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
         resolved_slots = {str(value): str(slot) for value, slot in slots.items()}

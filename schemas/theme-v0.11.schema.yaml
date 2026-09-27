@@ -236,10 +236,16 @@ properties:
         description: "Named explicit value-to-Scheme-slot maps consumed by View colour encodings."
         additionalProperties:
           type: object
-          description: "One scale's declared slot map."
-          required: [slots]
+          description: "One scale's declared slot map, or an ordered palette for a data-derived domain."
+          oneOf: [{description: "An explicit value-to-slot map.", required: [slots]}, {description: "A cyclic palette for a derived domain.", required: [palette]}]
+          examples: [{slots: {fw-team: fw-team}}, {palette: [series-1, series-2, series-3]}]
           additionalProperties: false
           properties:
+            palette:
+              type: array
+              description: "Ordered Scheme category slots; the n-th derived domain value takes palette[n mod length]."
+              minItems: 1
+              items: {description: "One named Scheme category slot identifier.", type: string, minLength: 1}
             slots:
               type: object
               description: "Exact domain-value to named Scheme category slot mapping."

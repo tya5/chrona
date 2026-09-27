@@ -196,7 +196,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     try:
         color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                           theme["body"].get("categorySlots"),
-                                          color_vision=tuple(theme["body"].get("colorVision", ())))
+                                          color_vision=tuple(theme["body"].get("colorVision", ())),
+                                          observed=_observed_scale_values(view.color_encoding, projection))
     except ColorScaleError as error:
         raise RenderFailed(str(error), str(error), "presentation") from error
     if render_closure.actual_set is not None:
@@ -396,6 +397,16 @@ def _warnings_from_findings(findings: tuple[ScenePerceptibilityFinding, ...]) ->
         "W_" + finding.code.removeprefix("E_"), finding.code, finding.scene_path,
         finding.primitive_ids, finding.slot_id, finding.measured_facts, finding.disposition,
     ) for finding in findings if finding.severity == "error")
+
+
+def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:
+    """Source values of the selected primary items, in projection order, for a derived domain."""
+    source = encoding.get("source") if isinstance(encoding, Mapping) else None
+    field = source.get("field") if isinstance(source, Mapping) else None
+    if not isinstance(field, str):
+        return ()
+    return tuple(str(item.fields[field]) for item in projection.items
+                 if item.fields is not None and item.fields.get(field) is not None)
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:

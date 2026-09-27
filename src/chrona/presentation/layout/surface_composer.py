@@ -1517,7 +1517,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     row_band_by_id = {row.row_id: LabelRect(float(timeline.bounds.inline), float(row.bounds.block),
                                            float(timeline.bounds.inline_size), float(row.bounds.block_size))
                       for row in rows}
-    if contract.labels.enabled:
+    attached_labels = dict(request.surface_content.attached_labels)
+    if contract.labels.enabled or attached_labels:
         for review_row in review_rows:
             for item in review_row.items:
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
@@ -1526,10 +1527,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
                 if not isinstance(start_at, date) and not isinstance(end_at, date):
                     continue
+                attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
                 parts = []
-                if "title" in contract.labels.content:
+                if attached is not None:
+                    parts.append(attached)  # required: an attached point's facts are never dropped (#486)
+                elif not contract.labels.enabled:
+                    continue
+                if attached is None and "title" in contract.labels.content:
                     parts.append(item.title)
-                if "finishDelta" in contract.labels.content and item.finish_delta is not None:
+                if attached is None and "finishDelta" in contract.labels.content and item.finish_delta is not None:
                     parts.append(f"{item.finish_delta:+d}d")
                 if not parts:
                     continue
@@ -1555,6 +1561,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 row_band = row_band_by_id.get(review_row.row_id)
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
+                                                   "visible-overflow" if attached is not None else
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
                                                    wrap, bounds=row_band,
                                                    inside_host_obstacle_id=host_mark_id if mark is not None else None,

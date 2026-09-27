@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -92,7 +92,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         if "members" in labels:
             label_placement, label_content = ("plot", ("title",)) if labels["members"] else ("none", ())
         else:
-            label_placement = str(labels["placement"])
+            # ``both`` is ``plot`` plus a table title column the View validator already required.
+            label_placement = "plot" if labels["placement"] == "both" else str(labels["placement"])
             label_content = tuple(str(item) for item in labels["content"])
             label_side = str(labels["side"])
             label_overflow = str(labels.get("overflow", "visible-overflow"))
@@ -184,7 +185,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     if color_scale is not None:
         scale_paints = tuple((item.object_id, color_scale.color_for(item.object_id, item.fields))
-                             for item in projection.items if item.source_kind in {"primary", "combined"})
+                             for item in projection.items if item.source_kind in {"primary", "combined"}
+                             and color_scale.covers(item.fields))
         used = {item.fields.get(color_scale.source_field) for item in projection.items
                 if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
         scale_entries = tuple((f"scale:{color_scale.scale_id}:{value}",
@@ -212,6 +214,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                observation_rows=resolved_detail.observation_rows if resolved_detail else (),
                                label_fallback=label_fallback, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
+                               attached_labels=_attached_labels(projection, locale),
                                table_cell_objects=table_cell_objects,
                                scale_target_role=color_scale.target_role if color_scale else None,
                                scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
@@ -219,6 +222,21 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                table_hierarchy_column=view.hierarchy_column,
                                row_decoration=view.background_decoration[0],
                                group_decoration=view.background_decoration[1])
+
+
+def _attached_labels(projection: ReviewProjection, locale: str) -> tuple[tuple[str, str], ...]:
+    """Title, planned date and delta of each attached point, in its View locale (#486)."""
+    labels = []
+    for row in projection.rows:
+        for item in row.items:
+            at = item.planned.get("at")
+            if item.attached_to is None or not isinstance(at, date):
+                continue
+            parts = [item.title, _format_compact_date(at, include_year=False, locale=locale)]
+            if item.finish_delta is not None:
+                parts.append(f"{item.finish_delta:+d}d")
+            labels.append((item.object_id, " · ".join(parts)))
+    return tuple(labels)
 
 
 def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: str) -> str:

@@ -26,6 +26,13 @@ class ResolvedColorScale:
     domain: tuple[str, ...]
     colors: tuple[tuple[str, str], ...]
     collisions: tuple[ScaleCollision, ...] = ()
+    # A firstAppearance domain admits only observed values; an item without
+    # the field keeps its role's own paint instead of failing.
+    derived: bool = False
+
+    def covers(self, fields: Mapping[str, object] | None) -> bool:
+        """Whether this scale paints an item: always for a closed domain."""
+        return not self.derived or (isinstance(fields, Mapping) and fields.get(self.source_field) is not None)
 
     def color_for(self, object_id: str, fields: Mapping[str, object] | None) -> str:
         """Resolve one selected object's declared scalar value without fallback."""
@@ -38,11 +45,14 @@ class ResolvedColorScale:
 def resolve_color_scale(encoding: Mapping[str, object] | None,
                         scales: Mapping[str, object] | None,
                         categories: Mapping[str, object] | None,
-                        *, color_vision: tuple[str, ...] = ()) -> ResolvedColorScale | None:
+                        *, color_vision: tuple[str, ...] = (),
+                        observed: tuple[str, ...] = ()) -> ResolvedColorScale | None:
     """Resolve one View encoding against exact Theme and Scheme declarations.
 
     Domain values whose colours a reader cannot separate, under normal vision
     or a vision the Scheme claims, are returned as non-fatal collisions.
+    A ``firstAppearance`` domain is the distinct ``observed`` source values in
+    projection order; a Theme ``palette`` assigns them slots cyclically.
     """
     if encoding is None:
         return None
@@ -51,13 +61,21 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
     scale_id, target = encoding.get("scale"), encoding.get("target")
     source = encoding.get("source")
     domain = encoding.get("domain")
+    derived = domain == "firstAppearance"
+    if derived:
+        domain = tuple(dict.fromkeys(observed))
+        if not domain:
+            return None
     if (not isinstance(scale_id, str) or not isinstance(target, str)
             or not isinstance(source, Mapping) or not isinstance(source.get("field"), str)
             or not isinstance(domain, (list, tuple)) or not domain
             or any(not isinstance(value, str) for value in domain) or len(set(domain)) != len(domain)):
         raise ColorScaleError("E_PRESENTATION_SCALE_MAPPING")
     declared = scales.get(scale_id)
-    slots = declared.get("slots") if isinstance(declared, Mapping) else None
+    palette = declared.get("palette") if isinstance(declared, Mapping) else None
+    slots = ({value: palette[index % len(palette)] for index, value in enumerate(domain)}
+             if isinstance(palette, (list, tuple)) and palette else
+             declared.get("slots") if isinstance(declared, Mapping) else None)
     if not isinstance(slots, Mapping) or set(slots) != set(domain):
         raise ColorScaleError("E_PRESENTATION_SCALE_MAPPING")
     colors: list[tuple[str, str]] = []
@@ -68,4 +86,4 @@ def resolve_color_scale(encoding: Mapping[str, object] | None,
             raise ColorScaleError("E_PRESENTATION_SCALE_MAPPING")
         colors.append((value, color))
     return ResolvedColorScale(scale_id, target, source["field"], tuple(domain), tuple(colors),
-                              scale_collisions(scale_id, tuple(colors), color_vision))
+                              scale_collisions(scale_id, tuple(colors), color_vision), derived)

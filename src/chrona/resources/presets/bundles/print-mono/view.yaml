@@ -11,10 +11,18 @@ body:
     exclude:
       objectTypes:
       - group
+  colorEncoding:
+    scale: series
+    target: planned
+    source:
+      field: owner
+    domain: firstAppearance
   grouping:
     by: field
     field: owner
     missing: Other
+    order:
+      by: earliestPlannedStart
     presentation: header
   ordering:
     by: plannedStart
@@ -33,7 +41,7 @@ body:
     - finishDelta
   visibility:
     labels:
-      placement: plot
+      placement: both
       content:
       - title
       side: end

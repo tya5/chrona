@@ -195,6 +195,9 @@ class SurfaceContentInput:
     table_hierarchy_column: str | None = None
     row_decoration: str = "none"
     group_decoration: str = "all"
+    # Required plot-label text of each point drawn on the row of the span it
+    # attaches to (#486): title, planned date and finish delta, never dropped.
+    attached_labels: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)

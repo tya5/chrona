@@ -345,7 +345,7 @@ def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path
         assert f'data-source-ref="{object_id}"' in svg
     if preset_id == "elevated-light":
         assert 'data-purpose="group-decoration"' in svg
-        assert "<linearGradient" not in svg and "<filter" not in svg
+        assert "<linearGradient" in svg  # the preset's preferred v0.7-svg profile applies without a flag (#479)
 
 
 @pytest.mark.parametrize(

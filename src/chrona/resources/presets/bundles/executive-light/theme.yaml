@@ -493,9 +493,6 @@ body:
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
-    group:factory-team.fill: category:factory-team
-    group:fw-team.fill: category:fw-team
-    group:validation-team.fill: category:validation-team
     planned.fill: accent
     planned.stroke: text
     network-node.fill: surfaceRaised

@@ -162,7 +162,7 @@ class ViewRow:
 class ViewRows:
     mode: str
     items: tuple[ViewRow, ...]
-    points: str = "own-row"
+    points: str = "attached"
 
 
 @dataclass(frozen=True)
@@ -182,6 +182,7 @@ class ViewGrouping:
     presentation: str | None
     depth: int | None
     rollup: str | None
+    order_by: str | None = None
 
 
 @dataclass(frozen=True)
@@ -688,11 +689,13 @@ def _view_input(body: FrozenDict) -> ViewInput:
                               tuple(str(item) for item in raw_exclude.get("objectTypes", ()))) if raw_selection else None
     raw_grouping = body.get("grouping")
     grouping = (ViewGrouping(str(raw_grouping["by"]), str(raw_grouping["field"]) if "field" in raw_grouping else None,
-                             tuple(str(item) for item in raw_grouping.get("order", ())),
+                             tuple(str(item) for item in raw_grouping.get("order", ()))
+                             if not isinstance(raw_grouping.get("order"), FrozenDict) else (),
                              str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
                              str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
                              int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
-                             str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None)
+                             str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
+                             str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None)
                 if raw_grouping else None)
     raw_ordering = body.get("ordering")
     ordering = (ViewOrdering(str(raw_ordering["by"]), str(raw_ordering["direction"]), str(raw_ordering["tieBreak"]))
@@ -727,10 +730,14 @@ def _view_input(body: FrozenDict) -> ViewInput:
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
+    labels = visibility.labels
+    if (isinstance(labels, Mapping) and labels.get("placement") == "both"
+            and not any(column.source == "title" for column in table_columns)):
+        raise ContractError("E_VIEW_LABELS_BOTH_TABLE_TITLE")
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
-        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row"))), body.get("axis"),
+        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "attached"))), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]), body.get("colorEncoding"),
