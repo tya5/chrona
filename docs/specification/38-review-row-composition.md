@@ -197,6 +197,10 @@ may put that point on another subtrack of the **same lane**. An overlay grants
 permission to intersect, not a requirement to share a subtrack. Comparison
 instances declared `shared` keep their explicit pairwise overlay relation;
 other comparison/Actual instances do not gain one by common object identity.
+The `combined` primary instance deliberately composes its planned facet
+with its recorded Actual facet (or the missing-Actual marker) in one mark
+band; those exact planned↔Actual/missing-Actual facet pairs are declared
+overlays. This does not exempt either facet from another instance's marks.
 Scene projects completed primitives and serializes the same membership for
 a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous
