@@ -129,9 +129,10 @@ produce identical membership under every Theme and renderer.
 View v0.28 adds `rows.packing`, a duplicate-free subsequence of
 `[explicit, attached, chain, dates]`, defaulting to
 `[explicit, attached]`. The subsequence preserves this order; `chain` and
-`dates` are never implicit. `rows.laneKeys` may declare a Project object
-field name and an object-ID-to-key map. For an object present in both, the
-View map wins. The field is ordinary Project domain data; only the View
+`dates` are never implicit. `rows.laneKeys` has optional `field` (a Project
+object `fields` key) and `byObject` (a map of selected object IDs to keys);
+at least one is required when `laneKeys` is present. For an object present
+in both, `byObject` wins. The field is ordinary Project domain data; only the View
 interprets it as presentation membership. Keys are nonempty strings scoped
 to one resolved View group; a key is not a numeric lane index. Unknown
 object IDs in the View map, non-string field values and conflicting explicit
