@@ -1,0 +1,14 @@
+# Architecture Review — Unsupported Resource Version Diagnostics (#489)
+
+**Reviewed design:** [#489 design](../../design/issue-489-resource-version-diagnostics-design-2026-09-27.md) against Specifications 09, 34, 56, 62, [#477 pointer transport](issue-477-presentation-error-pointer-acceptance-review-2026-09-26.md), the current contract parser/collector, draft closure and CLI. **Decision:** approved for implementation planning; no product code is authorized by this review alone.
+
+| Boundary | Finding |
+| --- | --- |
+| Schema registry → contract | The registry already knows the supported `(kind, version)` pairs. A typed unsupported-string-version finding applies to every registered kind without accepting a stale schema or duplicating version constants; the focused public CLI cases cover the three issue-named kinds. Missing/non-string declarations are out of this diagnostic change. |
+| Contract → collector | Current collection calls schema explanation before its `ContractError` catch; the design explicitly requires capturing this typed failure and continuing with siblings. This preserves Specification 56's structured multi-resource ingress. |
+| Contract/collector → closure | Both draft copied-member parsing and normal collection currently drop `/version` or report `found dict`. Snapshot Layout Profile and Review Detail Profile loading also hard-code versions before the parser. The design transports the pointer and version fields and lets the parser own supported-version selection for declared string versions, but leaves identity, ordinary schema and semantic errors distinct. |
+| Closure → CLI | Only the CLI can know whether `chrona preset copy` is the right command. Provenance must identify the failed declared member; matching a resource id or merely seeing `--preset` is insufficient because an override may fail. No CLI wording enters contracts or Scene. |
+| Versioning and compatibility | Specification 34's no-implicit-upgrade boundary is preserved. The new diagnostic improves refusal, not acceptance. Old files are not rewritten; the suggested copy uses a new directory. |
+| Domain/presentation/render | Scheduling, Projection, Theme, Layout, Scene and adapters do not need behavior changes. Public SVG/Scene bytes should remain identical; the materializer check is a release gate, not assumed evidence. |
+
+**Risk and test focus:** stale-member provenance can be lost when errors are converted to generic `ClosureError`; direct override and multi-resource cases must be tested. Missing or non-string `version` must not be misreported as a historical incompatibility, and the generic detector needs a unit probe across registered kinds. Diagnostic inventory generation may change when the new code is added and must be reviewed with the source change. No unresolved architectural decision remains for implementation planning.
