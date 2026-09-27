@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import tempfile
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,7 @@ from chrona.usecases.render_review import (
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
 from chrona.presentation.scene.serialization import SceneSerializationError, scene_document, serialize_scene, validate_scene_document
+from chrona.presentation.scene.model import ScenePrimitive, SceneRow, SceneSurface
 
 
 def test_font_substitution_warning_only_claims_raster_draw_result():
@@ -128,6 +130,58 @@ def test_scene_validation_requires_layout_completed_canvas_bounds():
         closure, snapshot = _closure(Path(temporary))
         document = scene_document(render_review(_request(closure, snapshot)).scene)
     document["surfaces"][0].pop("canvasBounds")
+    with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
+        validate_scene_document(document)
+
+
+def test_scene_lane_anchor_and_primitive_identity_are_optional_and_serialized_typed():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        scene = render_review(_request(closure, snapshot)).scene
+    original = serialize_scene(scene)
+    surface = scene.surfaces[0]
+    row = surface.rows[0]
+    anchored = replace(row, lane_mark_band_block=row.bounds[1] + row.bounds[3] / 2)
+    rows = (anchored, *surface.rows[1:])
+    primitive = surface.primitives[0]
+    marked = replace(primitive, lane_row_id=anchored.row_id, lane_member_id="member-1")
+    projected = replace(scene, surfaces=(replace(surface, rows=rows,
+                                                  primitives=(marked, *surface.primitives[1:])),))
+
+    document = json.loads(serialize_scene(projected))
+    projected_surface = document["surfaces"][0]
+    assert projected_surface["rows"][0]["laneMarkBandBlock"] == anchored.lane_mark_band_block
+    assert projected_surface["primitives"][0]["laneRowId"] == anchored.row_id
+    assert projected_surface["primitives"][0]["laneMemberId"] == "member-1"
+    assert "laneMarkBandBlock" not in scene_document(scene)["surfaces"][0]["rows"][0]
+    assert "laneRowId" not in scene_document(scene)["surfaces"][0]["primitives"][0]
+    assert original == serialize_scene(scene)
+
+
+def test_scene_lane_carrier_rejects_partial_or_unanchored_references():
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1),
+                       lane_row_id="row")
+    primitive = ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1),
+                               lane_row_id="missing", lane_member_id="member")
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneSurface("s", (), (SceneRow("a", "g", (0, 0, 10, 10), "row"),), (), None, (primitive,))
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneRow("a", "g", (0, 0, 10, 10), "row", float("nan"))
+
+
+def test_scene_document_lane_reference_requires_an_in_bounds_anchor():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        document = scene_document(render_review(_request(closure, snapshot)).scene)
+    surface = document["surfaces"][0]
+    row = surface["rows"][0]
+    row["laneMarkBandBlock"] = row["bounds"]["block"] + row["bounds"]["blockSize"] / 2
+    primitive = surface["primitives"][0]
+    primitive["laneRowId"] = row["id"]
+    primitive["laneMemberId"] = "member-1"
+    validate_scene_document(document)
+    row["laneMarkBandBlock"] = row["bounds"]["block"] + row["bounds"]["blockSize"] + 1
     with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
         validate_scene_document(document)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import math
 from typing import Any
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
@@ -197,6 +198,8 @@ class ScenePrimitive:
     glyph_paint_mode: str | None = None
     glyph_paint_color: str | None = None
     image_fill_pending: "ImageFill | None" = None
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
 
     def __post_init__(self) -> None:
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
@@ -212,6 +215,9 @@ class ScenePrimitive:
                 or (self.purpose != "table-cell" and self.table_row_id is not None)
                 or (self.purpose not in {"table-cell", "table-column-label"}
                     and self.table_column_id is not None)
+                or ((self.lane_row_id is None) != (self.lane_member_id is None))
+                or (self.lane_row_id is not None and not self.lane_row_id)
+                or (self.lane_member_id is not None and not self.lane_member_id)
                 or (self.kind == "Icon" and (self.icon_kind not in {"vector", "raster"}
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))
@@ -248,6 +254,16 @@ class SceneRow:
     group_id: str
     bounds: tuple[float, float, float, float]
     row_id: str = ""
+    lane_mark_band_block: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.lane_mark_band_block is not None:
+            inline, block, _inline_size, block_size = self.bounds
+            if (not math.isfinite(self.lane_mark_band_block)
+                    or not math.isfinite(block) or not math.isfinite(block_size)
+                    or self.lane_mark_band_block < block
+                    or self.lane_mark_band_block > block + block_size):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
 @dataclass(frozen=True)
@@ -345,7 +361,12 @@ class SceneSurface:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if len({item.visual_role for item in self.decoration_dispositions}) != len(self.decoration_dispositions):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        lane_rows = {item.row_id: item for item in self.rows if item.row_id}
         for index, item in enumerate(self.primitives):
+            if item.lane_row_id is not None:
+                row = lane_rows.get(item.lane_row_id)
+                if row is None or row.lane_mark_band_block is None:
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             if item.host_placement_id is not None:
                 host = by_id.get(item.host_placement_id)
                 if (item.kind != "Text" or host is None or host[1].slot_id != item.slot_id

@@ -94,7 +94,19 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         if not isinstance(surface, Mapping):
             return False
         slots = {item.get("id") for item in surface.get("slots", ()) if isinstance(item, Mapping)}
-        rows = {item.get("id") for item in surface.get("rows", ()) if isinstance(item, Mapping)}
+        row_items = surface.get("rows", ())
+        rows = {item.get("id") for item in row_items if isinstance(item, Mapping)}
+        lane_rows = {item.get("id") for item in row_items
+                     if isinstance(item, Mapping) and "laneMarkBandBlock" in item}
+        for row_item in row_items:
+            if not isinstance(row_item, Mapping) or "laneMarkBandBlock" not in row_item:
+                continue
+            bounds = row_item.get("bounds")
+            anchor = row_item.get("laneMarkBandBlock")
+            if (not isinstance(bounds, Mapping) or not isinstance(anchor, (int, float))
+                    or anchor < bounds.get("block", math.inf)
+                    or anchor > bounds.get("block", -math.inf) + bounds.get("blockSize", -math.inf)):
+                return False
         columns = {item.get("id") for item in surface.get("columns", ()) if isinstance(item, Mapping)}
         if (None in slots or None in rows or None in columns or len(slots) != len(surface.get("slots", ()))
                 or len(rows) != len(surface.get("rows", ())) or len(columns) != len(surface.get("columns", ()) )):
@@ -108,6 +120,10 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
             if not isinstance(primitive, Mapping):
                 return False
             row, column, purpose = primitive.get("tableRowId"), primitive.get("tableColumnId"), primitive.get("purpose")
+            lane_row, lane_member = primitive.get("laneRowId"), primitive.get("laneMemberId")
+            if ((lane_row is None) != (lane_member is None)
+                    or (lane_row is not None and (lane_row not in lane_rows or not lane_row or not lane_member))):
+                return False
             if primitive.get("slotId") not in slots:
                 return False
             if purpose == "table-cell":
@@ -155,8 +171,9 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
                    "bounds": _bounds(item.bounds), "priority": item.priority,
                    "overflow": item.overflow}) for item in surface.slots
         ],
-        "rows": [{"id": item.row_id, "objectId": item.object_id, "groupId": item.group_id,
-                  "bounds": _bounds(item.bounds)} for item in surface.rows],
+        "rows": [_omit({"id": item.row_id, "objectId": item.object_id, "groupId": item.group_id,
+                        "bounds": _bounds(item.bounds),
+                        "laneMarkBandBlock": item.lane_mark_band_block}) for item in surface.rows],
         "columns": [{"id": item.column_id, "label": item.label, "bounds": _bounds(item.bounds)}
                     for item in surface.columns],
         "groups": [_omit({"id": item.group_id, "headerBounds": _bounds(item.header_bounds)
@@ -212,6 +229,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "points": [_point(point) for point in item.points] if item.points else None,
         "href": item.href, "linkTitle": item.link_title, "tableRowId": item.table_row_id,
         "tableColumnId": item.table_column_id,
+        "laneRowId": item.lane_row_id, "laneMemberId": item.lane_member_id,
         "markerStart": _marker(item.marker_start) if item.marker_start is not None else None,
         "markerEnd": _marker(item.marker_end) if item.marker_end is not None else None,
         "pattern": _pattern(item.pattern) if item.pattern is not None else None,
