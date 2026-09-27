@@ -95,6 +95,27 @@ def test_immutable_context_completes_narrow_programme_board_with_visible_warning
     assert any(warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" for warning in rendered.surface.fit_warnings)
 
 
+def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tmp_path):
+    example = tmp_path / "halcyon-1"
+    shutil.copytree(ROOT / "examples/halcyon-1", example)
+    context_path = example / "contexts/02-programme-board.yaml"
+    context = yaml.safe_load(context_path.read_bytes())
+    context["body"]["project"]["revision"]["token"] = "example-v2"
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+
+    snapshot = tmp_path / "snapshot"
+    reference, revision = copy_context_closure(example, context_path, snapshot)
+    assert revision == "example-v2"
+    assert context["body"]["theme"]["revision"]["token"] == "example-v1"
+    metric = "font_metrics/noto-sans-regular-v2.json"
+    assert (snapshot_directory(snapshot, revision) / metric).is_file()
+    assert not (snapshot_directory(snapshot, "example-v1") / metric).exists()
+
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example"))
+    rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
+    assert rendered.artifact.content.startswith(b"<svg ")
+
+
 def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp_path):
     example = tmp_path / "aster-ssd"
     shutil.copytree(ROOT / "examples/aster-ssd", example)

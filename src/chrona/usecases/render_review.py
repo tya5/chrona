@@ -206,7 +206,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.snapshot()
 
     environment = render_closure.context.environment
-    asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.theme.revision_token)
+    asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.identity.revision)
     resolution = request.draft_font_resolution
     if resolution is not None and render_closure.context.identity.revision != "draft":
         raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render immutable Context", "presentation")
