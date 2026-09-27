@@ -180,6 +180,13 @@ those cells in one solve, then owns final row height, internal mark tracks,
 text/icon bounds, label placement, visible obstacles and routes. If authored
 members overlap on one lane, Layout may add internal mark tracks or grow that
 lane's block extent but cannot create another lane or change its member IDs.
+Within a fixed lane, Layout assigns deterministic first-compatible internal
+mark subtracks from completed visible mark facets, including comparison,
+Actual, glyph strokes and mark icons; only explicitly declared overlays
+within one member or its atomic attached bundle are exempt. Labels are
+placed afterwards and do not select subtracks. A Theme or Actual change may
+alter subtracks and row height, never
+the lane IDs, membership or lane-table counts.
 Scene projects completed primitives and serializes the same membership for
 a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous

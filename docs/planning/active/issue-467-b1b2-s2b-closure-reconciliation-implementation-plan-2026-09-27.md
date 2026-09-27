@@ -31,6 +31,8 @@ Against Specs 09/24/38/46/50/64: schedule and View selection remain upstream of 
 
 **B1 label clarification:** `laneTable.label: lane` uses an authored explicit key or `Lane <founding View-item ID>`. `group` uses the group title only on its first lane. This preserves identity under unrelated insertion and never borrows an arbitrary member's title or table facts; Spec 38 is the normative rule. Schema and Project remain unchanged.
 
+**B2 subtrack review:** Fixed membership does not imply overlapping marks may paint illegibly. Layout assigns first-compatible internal subtracks from completed mark facets (including Actual/comparison/icons/strokes), with only declared intra-member or attached-bundle overlays exempt. This can change row height across Themes, never lane identity/count. Labels follow the shared obstacle search afterwards; they cannot create a subtrack or lane. This preserves Spec 38's predictable membership and Specs 24/46/50's measured geometry and paint boundaries. The old allocator's facet closure can be reused, but its candidate-to-lane selection and label-driven lane opening cannot.
+
 ## Implementation and publication units
 
 | Unit | Owners and migration | Acceptance before serial push |
