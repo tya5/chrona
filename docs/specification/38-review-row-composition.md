@@ -149,6 +149,13 @@ lower bound; full-footprint inline concurrency and concrete collision witnesses
 explain any gap. Scene lane-mode primitives MUST retain typed lane-row and
 countable-member provenance for this audit without adding placement policy to
 Scene. See the [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
+For this read-only Scene audit, each lane Scene row carries the completed
+absolute block coordinate of its shared mark-band top. The checker aligns
+source and target mark-band coordinates in both directions; it MUST NOT infer
+the anchor from the row's full bounds, a glyph part, or semantic port-host
+bounds. Lane primitives carry typed row and countable-member provenance.
+The [Scene anchor correction](../design/issue-467-494-scene-lane-anchor-correction-2026-09-27.md)
+defines the lane-only v0.6 schema fields and checker cases.
 
 Required lane names remain obstacles before semantic routing. Routes retain the
 declared quality bounds and may be suppressed when no candidate meets them.
