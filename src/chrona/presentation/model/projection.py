@@ -80,6 +80,15 @@ class ReviewRowProjection:
 
 
 @dataclass(frozen=True)
+class ReviewLaneRowProjection:
+    """One immutable View table/timeline row for a generated lane."""
+
+    lane_id: str
+    group_id: str
+    items: tuple[ReviewItem, ...]
+
+
+@dataclass(frozen=True)
 class FoldedPointProjection:
     """A selected point whose target is a real group header, never a table row."""
 
@@ -137,6 +146,7 @@ class ReviewProjection:
     driving_relations: frozenset[str] = frozenset()
     folded_points: tuple[FoldedPointProjection, ...] = ()
     lane_membership: LaneMembership | None = None
+    lane_rows: tuple[ReviewLaneRowProjection, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -236,6 +246,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                       for scenario_id, value in (scenarios or {}).items()}
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
+    lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     dates += [v for point in folded_points for v in point.item.planned.values()]
     if view.window.mode == "selected-comparison":
@@ -253,7 +264,39 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
         frozenset(getattr(analysis, "driving_relations", ()),), folded_points,
-        lane_membership)
+        lane_membership, lane_rows)
+
+
+def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership
+                       ) -> tuple[ReviewLaneRowProjection, ...]:
+    """Project each countable membership exactly once while retaining its facets."""
+    source_rows: dict[str, ReviewRowProjection] = {}
+    for row in rows:
+        if not row.items:
+            continue
+        member_id = row.items[0].item_id or row.items[0].object_id
+        if member_id in source_rows:
+            raise ValueError("E_REVIEW_LANE_ROW_DUPLICATE_MEMBER")
+        source_rows[member_id] = row
+    assigned = [assignment.item_id for assignment in membership.assignments]
+    if len(assigned) != len(set(assigned)) or set(assigned) != set(source_rows):
+        raise ValueError("E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH")
+    output = []
+    for lane in membership.lanes:
+        members = []
+        for member_id in lane.member_item_ids:
+            row = source_rows.get(member_id)
+            if row is None:
+                raise ValueError("E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH")
+            assignment = membership.assignment_for(member_id)
+            for item in row.items:
+                attached_to = (source_rows.get(assignment.source_id).items[0].object_id
+                               if assignment.rule == "attached" and assignment.source_id in source_rows
+                               else item.attached_to)
+                members.append(replace(item, group_id=assignment.group_id,
+                                       attached_to=attached_to))
+        output.append(ReviewLaneRowProjection(lane.lane_id, lane.group_id, tuple(members)))
+    return tuple(output)
 
 
 def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProjection, ...],

@@ -206,6 +206,13 @@ def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry
     assert membership.assignment_for("gate").group_id == "bus"
     assert membership.assignment_for("gate").rule == "attached"
     assert membership.assignment_for("bus-test").rule == "chain"
+    assert sum(len(row.items) for row in projection.lane_rows) == 4
+    assert {item.object_id for row in projection.lane_rows for item in row.items} == {
+        "structure", "avionics", "bus-test", "gate",
+    }
+    gate_row = next(row for row in projection.lane_rows if any(item.object_id == "gate" for item in row.items))
+    gate = next(item for item in gate_row.items if item.object_id == "gate")
+    assert (gate_row.group_id, gate.group_id, gate.attached_to) == ("bus", "bus", "avionics")
 
 
 def test_lane_projection_object_key_wins_over_field_and_unknown_target_fails():
