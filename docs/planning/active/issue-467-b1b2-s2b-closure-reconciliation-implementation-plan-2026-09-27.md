@@ -4,18 +4,27 @@
 
 ## B2 architecture decision
 
-Layout derives one immutable plan and completed geometry. Scene projects its
-primitives and checks a lane-only member inventory against their tags; adapters
-serialize it. The read-only rule audit uses the closed Scene. Scene v0.6 adds
-optional lane fields without changing automatic/explicit bytes. B2 tests reject
-missing, extra, or untagged member primitives. Spec 38 owns the detailed rule.
+Layout derives one immutable plan, completed geometry, and visible obstacles.
+Scene projects its primitives and carries lane-only member/obstacle inventories;
+adapters serialize them. The read-only rule audit uses those Scene obstacles
+with Layout's shared collision predicate. No chain-separation exception is
+currently enforced. Scene v0.6 adds optional lane fields without changing
+automatic/explicit bytes. B2 tests reject missing, extra, or untagged
+primitives/obstacles. This preserves Layout geometry ownership and makes the
+Scene audit independent of guessed paint extents. Spec 38 owns the detailed rule.
+Architecture review: Project/View still select intent; Theme still selects
+appearance; Layout alone closes obstacles and clearance; Scene carries and
+validates evidence; adapters only serialize. Deriving obstacles from Scene
+paint was rejected because compound icons and conservative stroke envelopes
+cannot be reconstructed exactly. The optional lane-only v0.6 fields require
+schema/serializer migration, not automatic/explicit output changes.
 
 | Publishable slice | Files/owners and migration | Focused acceptance and evidence |
 | --- | --- | --- |
 | **S2b-1 shared frame extraction** | `layout/surface_composer.py`, shared Layout mark-geometry module, `layout/presentation.py`, focused Layout tests. Introduce `MarkBandFrame` and one placement composer; automatic/explicit pass their existing track frames, lanes pass zero-origin mark band. No schema/resource change. | Characterize planned, snapshot, Actual/open Actual, point/glyph/icon, progress, ports and symbols before/after extraction. Exact automatic/explicit Scene/SVG bytes, local-frame bounds/ports and one-translation tests. Publish with guard closed. |
 | **S2b-2 typed closure and validation** | `layout/lane_allocation.py`, `layout/lane_preflight.py`, typed facet/label projection records and tests. Add expected-emission inventory, canonical instance/member/primitive identities, symbol/progress/plain-mark payloads, icon group cardinality and stroke validation, exact attached host resolution, pairwise overlay compatibility. No View schema change. | Missing/duplicate facets, stack-vs-shared comparison, glyph paint order, icon vector/raster payload, progress clip, attached/repeated source, unsupported folded point and unknown required primitive fail closed. Complete local payload and port/footprint checks pass. Publish independently. |
 | **S2b-3 mapper and immutable preflight** | New Layout mapper and `lane_preflight.py`, View/normalized projection adapters only for selected facts, tests. Retain exact candidate/facet/required-label closure, `as_of`, seed frame and Theme/font/scale identities; preflight allocates once. | Planned/comparison/Actual/open/point/progress/icon/labelVisual fixtures, missing-placement diagnostics, same-plan and cutoff mismatch tests. No silent omission; all countable member IDs biject with allocation. Batch public materializers once for S2b-1..3 and compare generated Scene/SVG/diagnostics; automatic bytes unchanged. Publish/review with guard closed. |
-| **B2 one-plan realization** | Layout request/result, `surface_composer.py`, table/group/row solve, Scene model/projection/serialization and v0.6 schema, `usecases/render_review.py`, tests. Consume the exact plan; translate local closure once through lane mark-band anchor; emit one Scene primitive per expected non-icon facet and one ICON per complete icon group. Populate lane-only surface mode and member/primary-mark primitive inventory from that same plan. | Direct hidden 02 composition, exact chain, names/deltas/icons, lane table/group extents, seed/final frame and cutoff identity. Scene rejects missing/extra/untagged inventory primitives; then a read-only Scene checker proves pairwise non-redundancy and reports each group's primary-mark lower bound. Test insertion stability and automatic bytes. Publish with public guard closed. |
+| **B2 one-plan realization** | Layout request/result, `surface_composer.py`, table/group/row solve, Scene model/projection/serialization and v0.6 schema, `usecases/render_review.py`, tests. Consume the exact plan; translate local closure once through lane mark-band anchor; emit one Scene primitive per expected non-icon facet and one ICON per complete icon group. Populate lane-only member and final-visible-obstacle inventories from that plan; share the neutral collision predicate with the read-only audit. | Direct hidden 02 composition, exact chain, names/deltas/icons, lane table/group extents, seed/final frame and cutoff identity. Scene rejects missing/extra/untagged inventory primitives or obstacles; the Scene audit proves bidirectional pairwise non-redundancy and reports each group's primary-mark lower bound with concrete gap witnesses. Test insertion stability and automatic bytes. Publish with public guard closed. |
 | **B3 and L3c release** | Follow the [rule-based L3 implementation plan](issue-467-494-rule-based-lane-acceptance-implementation-plan-2026-09-27.md). B3 proves route causes/non-crossing. L3c migrates defaults/presets/three committed slides and generated mirrors atomically. | Batch affected public materializers and SVG/Scene visual diffs. CI supplies planned full three-OS pytest/conformance, wheel/smoke and newest-Python materializer evidence. No issue closure until every literal criterion below has direct public evidence and acceptance review. |
 
 If any extraction reveals a changed formula, unexpected output, missing semantic role or Scene-side geometry decision, stop that slice, publish a design correction/whole-architecture review and amend this plan before resuming. For every publication: focused local tests, diagnostic inventory where changed, fetch `origin/main`, inspect staged/generated diff and ahead/behind, push serially without force, verify remote commit, then inspect one material CI run without busy polling.

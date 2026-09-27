@@ -148,7 +148,21 @@ overlap concurrency is reported beside final lane count as an explanatory
 lower bound; full-footprint inline concurrency and concrete collision witnesses
 explain any gap. Scene lane-mode primitives MUST retain typed lane-row and
 countable-member provenance for this audit without adding placement policy to
-Scene. See the [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
+Scene. The lane-only surface also carries final-coordinate visible obstacles
+copied from the same completed Layout plan: stable facet/primitive/member IDs,
+mark-or-required-label class, rect or stroked-segment geometry, and one
+nonnegative collision clearance. One primitive may own several path obstacles;
+every inventoried emitted primitive must own at least one. Scene validates
+identity coverage and finite geometry but neither recomputes footprints from
+paint nor makes collision decisions. A read-only audit uses the same neutral
+obstacle predicate as Layout, checks merges in both directions, and reports
+concrete colliding member/primitive pairs. The present design declares no
+enforced chain-separation exceptions: predecessor preference is not one, so
+any non-colliding same-group lane pair fails. Primary-mark obstacle inline
+overlap gives each group's reported lower bound; concrete full-footprint
+witnesses explain a gap to the lane count. This avoids inferring stroke/miter,
+compound icons, or label extents from adapter-oriented primitive bounds. See
+the [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
 The lane-only Scene surface also carries a closed member inventory: each
 countable member's row/member IDs, exact emitted primitive IDs, and primary
 mark IDs. Layout derives it from the same immutable plan that emitted those
