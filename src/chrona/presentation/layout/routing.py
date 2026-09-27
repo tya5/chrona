@@ -8,6 +8,7 @@ from math import isfinite
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope
+from chrona.presentation.layout.ports import ConnectorEgress
 
 
 class RouteSearchFailure(ValueError):
@@ -138,6 +139,81 @@ def route_quality_attempt(
                                 "accepted" if accepted else "quality-rejected",
                                 length=length, direct_length=direct, bends=bends,
                                 max_bends=max_bends, max_detour_ratio=max_detour_ratio)
+
+
+@dataclass(frozen=True)
+class LaneRouteSelection:
+    """One deterministic lane-only port-pair search and its complete evidence."""
+
+    selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None
+    points: tuple[tuple[float, float], ...]
+    attempts: tuple[RouteAttemptEvidence, ...]
+
+    def __post_init__(self) -> None:
+        accepted = tuple(item for item in self.attempts if item.outcome == "accepted")
+        if (not self.attempts or len(accepted) > 1
+                or (self.selected_pair is None) != (not accepted)
+                or (self.selected_pair is None and self.points)
+                or (self.selected_pair is not None and len(self.points) < 2)):
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+
+
+def select_lane_relation_route(
+    port_pairs: tuple[tuple[ConnectorEgress, ConnectorEgress], ...], *,
+    obstacles: SurfaceObstacleIndex, bounds: tuple[float, float, float, float],
+    source_host_id: str | None, target_host_id: str | None, relation_scene_id: str,
+    max_bends: int, max_detour_ratio: float,
+    classes: tuple[str, ...] = ("mark", "text", "label-visual"),
+    regions: tuple[str, ...] = ("timeline", "group-header"),
+) -> LaneRouteSelection:
+    """Measure every attempted port pair until an accepted route is found.
+
+    The order is the caller's declared deterministic candidate order. A
+    search failure is distinguished from unrelated invalid input; endpoint
+    labels are never exempted from either corridor or body collisions.
+    """
+    if not port_pairs or not relation_scene_id:
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+    attempts: list[RouteAttemptEvidence] = []
+    for source, target in port_pairs:
+        blockers = tuple(sorted({item.placement_id for egress in (source, target)
+                                 if egress.corridor
+                                 for item in obstacles.egress_collisions(
+                                     ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+                                     classes=classes, regions=regions)}))
+        if blockers:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision",
+                                                 blocker_ids=blockers))
+            continue
+        source_port, target_port = source.exposed_port, target.exposed_port
+        port_ids = tuple(
+            port_id for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
+            for port_id in (f"port:{host_id or relation_scene_id}:{side}",)
+            if obstacles.has(port_id)
+        )
+        try:
+            middle = ((source_port,) if source_port == target_port else place_relation_route(
+                source_port=source_port, target_port=target_port, obstacles=obstacles,
+                bounds=bounds, port_ids=port_ids, classes=classes, regions=regions))
+        except RouteSearchFailure as error:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                 search_failure=str(error)))
+            continue
+        pieces = (*source.corridor, *middle, *reversed(target.corridor))
+        points: list[tuple[float, float]] = []
+        for point in pieces:
+            if not points or points[-1] != point:
+                points.append(point)
+        if len(points) < 2:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                 search_failure="E_CONNECTOR_UNROUTABLE"))
+            continue
+        measured = route_quality_attempt(source.side, target.side, tuple(points),
+                                         max_bends=max_bends, max_detour_ratio=max_detour_ratio)
+        attempts.append(measured)
+        if measured.outcome == "accepted":
+            return LaneRouteSelection((source, target), tuple(points), tuple(attempts))
+    return LaneRouteSelection(None, (), tuple(attempts))
 
 
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],

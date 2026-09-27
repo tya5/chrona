@@ -4,8 +4,10 @@ import pytest
 
 from chrona.presentation.layout.routing import (
     RouteAttemptEvidence, RouteSuppressionEvidence, place_relation_route,
-    relation_route_quality, route_quality_attempt,
+    relation_route_quality, route_quality_attempt, select_lane_relation_route,
 )
+from chrona.presentation.layout.obstacles import SurfaceObstacleIndex
+from chrona.presentation.layout.ports import ConnectorEgress
 
 
 def test_place_relation_route_returns_completed_orthogonal_points():
@@ -50,3 +52,19 @@ def test_route_attempt_rejects_unmeasured_or_falsely_classified_quality():
     with pytest.raises(ValueError, match="E_LAYOUT_ROUTE_ATTEMPT_INVALID"):
         RouteSuppressionEvidence("r1", (route_quality_attempt(
             "top", "bottom", ((0, 0), (10, 0)), max_bends=1, max_detour_ratio=1.0),))
+
+
+def test_lane_port_pair_search_retains_rejected_and_accepted_measured_attempts():
+    source = ConnectorEgress("end", (0, 0), (0, 0), ())
+    target = ConnectorEgress("start", (10, 10), (10, 10), ())
+    inputs = dict(port_pairs=((source, target),), obstacles=SurfaceObstacleIndex(),
+                  bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
+                  relation_scene_id="relation:r1", max_detour_ratio=1.0)
+    rejected = select_lane_relation_route(**inputs, max_bends=0)
+    assert rejected.selected_pair is None
+    assert rejected.attempts[0].outcome == "quality-rejected"
+    assert RouteSuppressionEvidence("r1", rejected.attempts).primary_cause == "quality-rejected"
+    accepted = select_lane_relation_route(**inputs, max_bends=1)
+    assert accepted.selected_pair == (source, target)
+    assert accepted.points[0] == (0, 0) and accepted.points[-1] == (10, 10)
+    assert accepted.attempts[0].outcome == "accepted"
