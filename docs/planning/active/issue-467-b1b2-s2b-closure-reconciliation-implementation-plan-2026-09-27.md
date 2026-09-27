@@ -25,13 +25,14 @@ object-level visual selectors fan out to matching typed occurrences; no match
 or duplicate side fails. Only generated lanes change; no View schema change.
 Specs 38/64 own the details.
 
-B2 publication order: (1) add the typed lane obstacle carrier, v0.6 schema,
-serializer, and missing/extra/untagged tests; (2) project final translated
-obstacles and primitives from the one Layout plan, then check 02 and unchanged
-automatic bytes; (3) run the read-only bidirectional Scene audit and lower-
-bound report on committed lane slides. Each unit gets focused tests and a
-separate push. The third unit cannot substitute Layout-only footprints for
-the serialized Scene evidence.
+B2 remaining order: (1) close typed visual target fan-out, label-icon
+payload/obstacles and group-title facts in the immutable preflight plan;
+test repeated objects, comparison roles, attached points, vector/raster icons,
+unknown targets and duplicate sides. (2) Project final translated obstacles
+and primitives from that one plan; check 02 and unchanged automatic bytes.
+(3) Run the read-only bidirectional Scene audit and lower-bound report on
+committed lane slides. Each unit gets focused tests and a separate push; the
+audit uses serialized Scene evidence, not Layout-only footprints.
 
 | Publishable slice | Files/owners and migration | Focused acceptance and evidence |
 | --- | --- | --- |
