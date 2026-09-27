@@ -139,21 +139,16 @@ per-project branch. Project schedule corrections for individual acceptance
 cases remain data migrations, not layout policy; historical Actual
 observations and immutable baseline schedules are not rewritten to satisfy
 layout. The third row is an available candidate, not an acceptance prerequisite
-for a particular lane count. The owner-amended 02 gate is at most fourteen
-lanes, with every lane beyond ten attributed to measured mark/required-label
-collision or chain rule. The ten-lane reference is the sum of the issue's six
-per-group mark-only estimates, not a global row ordinal. Layout retains
-source-keyed rejected-attempt evidence for every group-local lane opened beyond
-its reference estimate; an unmeasured or unclassified opening cannot satisfy
-the gate. Predecessor preference alone is not a `chain-rule` cause. See the
-[lane-count acceptance correction](../design/issue-467-494-lane-count-acceptance-correction-2026-09-27.md)
-and [cause-evidence amendment](../design/issue-467-494-lane-excess-cause-evidence-amendment-2026-09-27.md).
-The historical group estimates remain the ten-lane acceptance reference;
-a separate current-Project mark-only vector is measured with the same selected
-items and mark geometry to distinguish changed-date/mark pressure from required
-text pressure. It is evidence only and cannot replace the one final composition
-plan. Record both vectors and explain any departure of the current mark-only
-sum from ten. See the [current-data baseline amendment](../design/issue-467-494-current-data-baseline-evidence-amendment-2026-09-27.md).
+for a particular lane count. No numerical lane-count target is an acceptance
+gate. On completed 02 Scene geometry, every same-group lane pair MUST resist
+merging in both directions through a measured cross-member visible-footprint
+collision, unless an approved enforced chain-separation rule names that pair.
+The current predecessor preference is not such a rule. Per-group primary-mark
+overlap concurrency is reported beside final lane count as an explanatory
+lower bound; full-footprint inline concurrency and concrete collision witnesses
+explain any gap. Scene lane-mode primitives MUST retain typed lane-row and
+countable-member provenance for this audit without adding placement policy to
+Scene. See the [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
 
 Required lane names remain obstacles before semantic routing. Routes retain the
 declared quality bounds and may be suppressed when no candidate meets them.
@@ -262,10 +257,11 @@ half the stroke width from its centerline. For a stroked path represented by
 a control-point envelope, Layout expands that envelope by ten times the
 stroke width on every side. This target-independent conservative bound
 accommodates admitted miter limits up to ten without changing adapter output
-or introducing a Scene paint policy. It is deliberately loose; the 02 ≤14
-feasibility criterion and above-ten cause inventory remain hard gates. If the
-bound fails either gate, return to design rather than weakening it or using target-specific
-lane allocation. `ScenePaint` does not carry a miter-limit field, and Layout
+or introducing a Scene paint policy. It is deliberately loose; the completed
+Scene's pairwise non-redundancy audit and required-text/route gates decide
+acceptance, not a numeric lane ceiling. A failed rule check returns to design
+rather than target-specific allocation. `ScenePaint` does not carry a
+miter-limit field, and Layout
 MUST NOT invent paint conversion or a miter-limit override. See the
 [miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md).
 

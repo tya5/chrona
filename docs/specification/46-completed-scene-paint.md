@@ -141,10 +141,12 @@ envelope expands that envelope by ten times its stroke width on every side.
 This target-independent bound accommodates admitted miter limits up to ten
 without changing adapter output or adding Scene paint policy. Because
 `ScenePaint` has no miter-limit member, Layout cannot set renderer paint
-policy to make the footprint fit. The bound may increase collisions: the 02
-≤14 feasibility criterion and attribution of every lane above ten remain hard
-gates, and a failure returns to design rather than weakening either gate or introducing target-specific
-lane allocation. See the [miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md).
+policy to make the footprint fit. The bound may increase collisions. On 02,
+completed-Scene pairwise lane non-redundancy and required-content/route criteria
+remain hard gates, without a numerical lane ceiling. A failure returns to
+design rather than introducing target-specific lane allocation. See the
+[miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md)
+and [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
 
 Layout returns completed point-symbol and icon path geometry before Scene
 construction. This includes Theme-selected built-in shape geometry, Theme
