@@ -148,6 +148,12 @@ its reference estimate; an unmeasured or unclassified opening cannot satisfy
 the gate. Predecessor preference alone is not a `chain-rule` cause. See the
 [lane-count acceptance correction](../design/issue-467-494-lane-count-acceptance-correction-2026-09-27.md)
 and [cause-evidence amendment](../design/issue-467-494-lane-excess-cause-evidence-amendment-2026-09-27.md).
+The historical group estimates remain the ten-lane acceptance reference;
+a separate current-Project mark-only vector is measured with the same selected
+items and mark geometry to distinguish changed-date/mark pressure from required
+text pressure. It is evidence only and cannot replace the one final composition
+plan. Record both vectors and explain any departure of the current mark-only
+sum from ten. See the [current-data baseline amendment](../design/issue-467-494-current-data-baseline-evidence-amendment-2026-09-27.md).
 
 Required lane names remain obstacles before semantic routing. Routes retain the
 declared quality bounds and may be suppressed when no candidate meets them.
