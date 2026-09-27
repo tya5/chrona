@@ -116,6 +116,57 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                  if isinstance(item, Mapping)}
         if len(by_id) != len(primitives):
             return False
+        lane_mode = surface.get("laneMode")
+        lane_members = surface.get("laneMembers", ())
+        if lane_mode is None:
+            if lane_members:
+                return False
+        else:
+            if lane_mode != "lanes" or not lane_members:
+                return False
+            if (len(lane_rows) != len(row_items)
+                    or any(not isinstance(item, Mapping) or "laneMarkBandBlock" not in item
+                           for item in row_items)):
+                return False
+            inventory: dict[str, tuple[str, str]] = {}
+            member_keys: set[tuple[str, str]] = set()
+            primary_ids: set[str] = set()
+            member_row_ids: set[str] = set()
+            for member in lane_members:
+                if not isinstance(member, Mapping):
+                    return False
+                row_id, member_id = member.get("rowId"), member.get("memberId")
+                emitted = member.get("emittedPrimitiveIds")
+                primary = member.get("primaryMarkIds")
+                if (row_id not in lane_rows or not isinstance(member_id, str) or not member_id
+                        or not isinstance(emitted, list) or not emitted
+                        or not isinstance(primary, list) or not primary
+                        or not set(primary) <= set(emitted)):
+                    return False
+                key = (row_id, member_id)
+                if key in member_keys or len(set(emitted)) != len(emitted) or len(set(primary)) != len(primary):
+                    return False
+                member_keys.add(key)
+                member_row_ids.add(row_id)
+                for primitive_id in emitted:
+                    if primitive_id in inventory:
+                        return False
+                    inventory[primitive_id] = key
+                primary_ids.update(primary)
+            tagged_inventory = {primitive.get("id"): (primitive.get("laneRowId"), primitive.get("laneMemberId"))
+                                for primitive in primitives if primitive.get("laneRowId") is not None}
+            if inventory != tagged_inventory or any(item not in by_id for item in inventory):
+                return False
+            if member_row_ids != lane_rows:
+                return False
+            if any(by_id[item][1].get("purpose") not in {"planned", "baseline", "snapshot"}
+                   for item in primary_ids):
+                return False
+            membership_purposes = {"planned", "actual", "missing-actual", "snapshot", "progress",
+                                   "member-label", "finish-delta"}
+            if any((item.get("kind") == "Icon" or item.get("purpose") in membership_purposes)
+                   and item.get("laneRowId") is None for item in primitives):
+                return False
         for index, primitive in enumerate(primitives):
             if not isinstance(primitive, Mapping):
                 return False
@@ -196,6 +247,14 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
         result["decorationDispositions"] = [
             {"visualRole": item.visual_role, "disposition": item.disposition}
             for item in surface.decoration_dispositions
+        ]
+    if surface.lane_mode is not None:
+        result["laneMode"] = surface.lane_mode
+        result["laneMembers"] = [
+            {"rowId": item.row_id, "memberId": item.member_id,
+             "emittedPrimitiveIds": list(item.emitted_primitive_ids),
+             "primaryMarkIds": list(item.primary_mark_ids)}
+            for item in surface.lane_members
         ]
     return result
 

@@ -7,6 +7,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import jsonschema
 
 import chrona.usecases.render_review as render_usecase
 from chrona.presentation.layout.model import LayoutError
@@ -21,8 +22,9 @@ from chrona.usecases.render_review import (
 )
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
-from chrona.presentation.scene.serialization import SceneSerializationError, scene_document, serialize_scene, validate_scene_document
-from chrona.presentation.scene.model import ScenePrimitive, SceneRow, SceneSurface
+from chrona.presentation.scene.serialization import SceneSerializationError, _references_are_closed, _surface, scene_document, serialize_scene, validate_scene_document
+from chrona.presentation.scene.model import SceneLaneMember, ScenePrimitive, SceneRow, SceneSlot, SceneSurface
+from chrona.resources import schema_document
 
 
 def test_font_substitution_warning_only_claims_raster_draw_result():
@@ -184,6 +186,54 @@ def test_scene_document_lane_reference_requires_an_in_bounds_anchor():
     row["laneMarkBandBlock"] = row["bounds"]["block"] + row["bounds"]["blockSize"] + 1
     with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
         validate_scene_document(document)
+
+
+def test_lane_surface_carries_closed_member_emission_inventory():
+    row = SceneRow("object", "group", (0, 0, 20, 12), "lane-1", 2)
+    mark = ScenePrimitive("mark-1", "Rect", "object", "object", "planned", "planned",
+                          (1, 2, 4, 2), slot_id="slot", lane_row_id="lane-1", lane_member_id="member-1")
+    label = ScenePrimitive("label-1", "Text", "object", "review", "member-label", "taskTitle",
+                           (2, 5, 6, 2), slot_id="slot", lane_row_id="lane-1", lane_member_id="member-1")
+    member = SceneLaneMember("lane-1", "member-1", ("mark-1", "label-1"), ("mark-1",))
+    surface = SceneSurface("s", (SceneSlot("slot", "timeline", None, (0, 0, 20, 12)),),
+                           (row,), (), None, (mark, label), lane_mode="lanes",
+                           canvas_bounds=(0, 0, 20, 12),
+                           lane_members=(member,))
+
+    document = _surface(surface)
+    schema = schema_document("scene-v0.6.schema.yaml")
+    jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(document)
+    assert _references_are_closed({"surfaces": [document]})
+    assert document["laneMode"] == "lanes"
+    assert document["laneMembers"] == [{
+        "rowId": "lane-1", "memberId": "member-1",
+        "emittedPrimitiveIds": ["mark-1", "label-1"], "primaryMarkIds": ["mark-1"],
+    }]
+
+
+@pytest.mark.parametrize("broken", [
+    "inventory-omits-tagged", "inventory-mismatched-tags", "untagged-member-purpose",
+    "unknown-primary-mark",
+])
+def test_lane_surface_rejects_incomplete_or_inconsistent_member_inventory(broken):
+    row = SceneRow("object", "group", (0, 0, 20, 12), "lane-1", 2)
+    mark = ScenePrimitive("mark-1", "Rect", "object", "object", "planned", "planned",
+                          (1, 2, 4, 2), lane_row_id="lane-1", lane_member_id="member-1")
+    label = ScenePrimitive("label-1", "Text", "object", "review", "member-label", "taskTitle",
+                           (2, 5, 6, 2), lane_row_id="lane-1", lane_member_id="member-1")
+    primitives = (mark, label)
+    member = SceneLaneMember("lane-1", "member-1", ("mark-1", "label-1"), ("mark-1",))
+    if broken == "inventory-omits-tagged":
+        member = replace(member, emitted_primitive_ids=("mark-1",))
+    elif broken == "inventory-mismatched-tags":
+        primitives = (replace(mark, lane_member_id="other"), label)
+    elif broken == "untagged-member-purpose":
+        primitives = (mark, replace(label, lane_row_id=None, lane_member_id=None))
+    elif broken == "unknown-primary-mark":
+        member = replace(member, primary_mark_ids=("label-1",))
+
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneSurface("s", (), (row,), (), None, primitives, lane_mode="lanes", lane_members=(member,))
 
 
 def test_scene_serializer_does_not_reopen_layout_theme_or_renderer_policy():

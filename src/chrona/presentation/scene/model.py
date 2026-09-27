@@ -283,6 +283,29 @@ class SceneGroup:
 
 
 @dataclass(frozen=True)
+class SceneLaneMember:
+    """Closed lane membership and primitive-emission inventory for one member."""
+
+    row_id: str
+    member_id: str
+    emitted_primitive_ids: tuple[str, ...]
+    primary_mark_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.row_id, str) or not self.row_id
+                or not isinstance(self.member_id, str) or not self.member_id
+                or not isinstance(self.emitted_primitive_ids, tuple)
+                or not isinstance(self.primary_mark_ids, tuple)
+                or not self.emitted_primitive_ids or not self.primary_mark_ids
+                or any(not isinstance(item, str) or not item
+                       for item in (*self.emitted_primitive_ids, *self.primary_mark_ids))
+                or len(set(self.emitted_primitive_ids)) != len(self.emitted_primitive_ids)
+                or len(set(self.primary_mark_ids)) != len(self.primary_mark_ids)
+                or not set(self.primary_mark_ids) <= set(self.emitted_primitive_ids)):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
 class SurfaceScaleManifest:
     """Closed temporal scale evidence carried by one completed surface."""
 
@@ -351,6 +374,8 @@ class SceneSurface:
     fit_warnings: tuple[FitWarning, ...] = ()
     decoration_dispositions: tuple[DecorationDisposition, ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
+    lane_mode: str | None = None
+    lane_members: tuple[SceneLaneMember, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
@@ -362,6 +387,47 @@ class SceneSurface:
         if len({item.visual_role for item in self.decoration_dispositions}) != len(self.decoration_dispositions):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         lane_rows = {item.row_id: item for item in self.rows if item.row_id}
+        if self.lane_mode not in (None, "lanes"):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        if self.lane_mode is None:
+            if self.lane_members:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        else:
+            if not self.lane_members or any(
+                    not member.row_id or member.row_id not in lane_rows
+                    or lane_rows[member.row_id].lane_mark_band_block is None
+                    for member in self.lane_members):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if (len(lane_rows) != len(self.rows)
+                    or any(row.lane_mark_band_block is None for row in self.rows)):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            member_keys = [(member.row_id, member.member_id) for member in self.lane_members]
+            emitted_ids = [primitive_id for member in self.lane_members
+                           for primitive_id in member.emitted_primitive_ids]
+            if len(set(member_keys)) != len(member_keys) or len(set(emitted_ids)) != len(emitted_ids):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if {row_id for row_id, _member_id in member_keys} != set(lane_rows):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            expected = {primitive_id: (member.row_id, member.member_id)
+                        for member in self.lane_members
+                        for primitive_id in member.emitted_primitive_ids}
+            tagged = {item.scene_id: (item.lane_row_id, item.lane_member_id)
+                      for item in self.primitives if item.lane_row_id is not None}
+            if expected != tagged or any(
+                    primitive_id not in by_id for primitive_id in expected):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            primary_ids = {primitive_id for member in self.lane_members
+                           for primitive_id in member.primary_mark_ids}
+            if any(by_id[primitive_id][1].purpose not in {"planned", "baseline", "snapshot"}
+                   for primitive_id in primary_ids):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            membership_purposes = {
+                "planned", "actual", "missing-actual", "snapshot", "progress",
+                "member-label", "finish-delta",
+            }
+            if any((item.kind == "Icon" or item.purpose in membership_purposes)
+                   and item.lane_row_id is None for item in self.primitives):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         for index, item in enumerate(self.primitives):
             if item.lane_row_id is not None:
                 row = lane_rows.get(item.lane_row_id)
