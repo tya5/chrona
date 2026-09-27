@@ -55,7 +55,7 @@ def test_review_projection_closes_candidate_and_preflight_with_measured_title_de
     )
     instance = LaneProjectionInstance("row-1", "work-view", "work", "primary")
     visual = VisualRequest(
-        "plot-label", (("id", instance.placement_key),), ref="task-icon",
+        "plot-label", (("id", "work"),), ref="task-icon",
         side="leading", source_ref="/body/visuals/0",
     )
     icon = SimpleNamespace(
@@ -76,7 +76,8 @@ def test_review_projection_closes_candidate_and_preflight_with_measured_title_de
     mapped, plan = preflight_review_lanes(
         projection, frame=frame, as_of=None, theme_tokens=_LaneTheme(), slot_id="lane-slot",
         measurement_identity=identity, font_metrics=_Metrics(),
-        label_visual_requests={instance: (visual,)}, icon_assets={"task-icon": icon},
+        label_visual_requests={}, view_visual_requests=(visual,),
+        icon_assets={"task-icon": icon},
         include_finish_delta=True, label_typography_role="text",
         seed_inline_frame=LaneInlineFrame(
             Decimal("0"), Decimal("30"), Decimal("30"), Decimal("100"), Decimal("2"),

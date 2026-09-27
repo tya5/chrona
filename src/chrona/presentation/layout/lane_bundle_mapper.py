@@ -22,6 +22,7 @@ from chrona.presentation.layout.lane_projection import (
     ExpectedLaneMark, LaneProjectionClosure, LaneProjectionInstance,
     close_lane_projection,
 )
+from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleGeometry, ObstacleRect, ObstacleSegment
@@ -76,6 +77,7 @@ def map_lane_candidates(
     label_typography_role: str,
     progress_fill_source: str | None = None,
     mark_visual_requests: Mapping[tuple[LaneProjectionInstance, str], VisualRequest] | None = None,
+    view_visual_requests: Sequence[VisualRequest] = (),
     predecessor_relations: Mapping[str, tuple[tuple[str, str], ...]] | None = None,
 ) -> LaneCandidateMapping:
     """Compose marks in a zero-origin frame and close every candidate payload.
@@ -91,6 +93,12 @@ def map_lane_candidates(
     if not slot_id or progress_fill_source not in {None, "actual", "planned"}:
         raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/body/progressFill")
     closure = close_lane_projection(projection, as_of=as_of)
+    if view_visual_requests:
+        bound_labels, bound_marks = bind_lane_visual_requests(
+            projection, closure, view_visual_requests,
+        )
+        label_visual_requests = _merge_label_visual_requests(label_visual_requests, bound_labels)
+        mark_visual_requests = _merge_mark_visual_requests(mark_visual_requests or {}, bound_marks)
     items = _item_by_instance(projection, closure)
     group_order: dict[str, int] = {}
     for row in projection.rows:
@@ -273,6 +281,7 @@ def preflight_review_lanes(
     mark_row_height: float, label_row_height: float,
     progress_fill_source: str | None = None,
     mark_visual_requests: Mapping[tuple[LaneProjectionInstance, str], VisualRequest] | None = None,
+    view_visual_requests: Sequence[VisualRequest] = (),
     candidate_titles: Mapping[str, str] | None = None,
     predecessor_relations: Mapping[str, tuple[tuple[str, str], ...]] | None = None,
     clearance: float = 0.0, canvas_left: float | None = None, canvas_right: float | None = None,
@@ -284,6 +293,7 @@ def preflight_review_lanes(
         label_visual_requests=label_visual_requests, icon_assets=icon_assets,
         include_finish_delta=include_finish_delta, label_typography_role=label_typography_role,
         progress_fill_source=progress_fill_source, mark_visual_requests=mark_visual_requests,
+        view_visual_requests=view_visual_requests,
         predecessor_relations=predecessor_relations,
     )
     group_header = group_header_block_size if group_header_block_size is not None else Decimal(0)
@@ -333,6 +343,34 @@ def _instance_for_item(item: Any, variants: Sequence[LaneProjectionInstance],
 
 def _member_id(instance: LaneProjectionInstance) -> str:
     return f"member:{instance.placement_key}"
+
+
+def _merge_label_visual_requests(
+    existing: Mapping[LaneProjectionInstance, tuple[VisualRequest, ...]],
+    bound: Mapping[LaneProjectionInstance, tuple[VisualRequest, ...]],
+) -> dict[LaneProjectionInstance, tuple[VisualRequest, ...]]:
+    result = {instance: tuple(values) for instance, values in existing.items()}
+    for instance, values in bound.items():
+        combined = result.get(instance, ()) + tuple(values)
+        sides = [request.side for request in combined]
+        if len(set(sides)) != len(sides):
+            duplicate = next(request for request in values
+                             if sum(item.side == request.side for item in combined) > 1)
+            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", duplicate.source_ref)
+        result[instance] = combined
+    return result
+
+
+def _merge_mark_visual_requests(
+    existing: Mapping[tuple[LaneProjectionInstance, str], VisualRequest],
+    bound: Mapping[tuple[LaneProjectionInstance, str], VisualRequest],
+) -> dict[tuple[LaneProjectionInstance, str], VisualRequest]:
+    result = dict(existing)
+    for key, request in bound.items():
+        if key in result:
+            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", request.source_ref)
+        result[key] = request
+    return result
 
 
 def _measure_required_label(item: Any, instance: LaneProjectionInstance,
