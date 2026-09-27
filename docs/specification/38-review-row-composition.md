@@ -194,7 +194,7 @@ pairwise non-redundancy and footprint-concurrency gate is retired.
 
 Every packed item has a candidate name and finish delta when one exists.
 Lane-mode Views MUST declare plot labels containing both `title` and
-`finishDelta`, with `overflow: suppress`; a table-only, disabled, or
+`finishDelta`, with `side: auto` and `overflow: suppress`; a table-only, disabled, one-sided, or
 visible-overflow member-label policy is invalid for lanes. This is an
 intentional v0.28 migration constraint, not a silent override of View intent.
 Layout places labels after membership using the common #466/#488 obstacle

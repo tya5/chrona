@@ -50,7 +50,7 @@ visibility:
 `plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice.
 
 Generated lanes are the stricter Spec 38 case: View v0.28 requires plot
-`title` and `finishDelta` content with `overflow: suppress`. Layout tries
+`title` and `finishDelta` content with `side: auto` and `overflow: suppress`. Layout tries
 end/start, then displaced/staggered candidates and a short leader, and
 counts any unplaceable name. This lane-specific policy never changes lane
 membership; the general visible-overflow policy remains available to
