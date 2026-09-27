@@ -328,11 +328,14 @@ def test_build_lane_rows_packs_by_group_and_reserves_the_mark_and_label_rows() -
              _lane_item("b", date(2027, 1, 21), date(2027, 1, 31)))
     result = build_lane_rows(items=items, relations=(), coordinate=lambda d: (d - date(2027, 1, 1)).days * 2.0,
                              label_text_width=lambda text: len(text) * 6.0, label_content=("title",),
-                             mark_row_height=10.0, label_row_height=10.0)
+                             mark_row_height=10.0, label_row_height=10.0, true_mark_block_size=8.0)
     assert len(result.rows) == 1
     assert {item.object_id for item in result.rows[0].items} == {"a", "b"}
     assert result.mark_row_height == 10.0
-    assert result.text_line_blocks[0] >= result.mark_row_height
+    assert result.text_line_blocks[0] >= 8.0
+    # `place_mark_tracks` must not stack lane members into separate
+    # subtracks: every member of a lane shares one mark level (#467).
+    assert all(item.track == "shared" for item in result.rows[0].items)
 
 
 def test_build_lane_rows_widens_the_footprint_with_an_overrunning_actual() -> None:
@@ -346,7 +349,7 @@ def test_build_lane_rows_widens_the_footprint_with_an_overrunning_actual() -> No
     result = build_lane_rows(items=(predecessor, overrun, successor), relations=relations,
                              coordinate=lambda d: (d - date(2027, 3, 8)).days * 2.0,
                              label_text_width=lambda text: len(text) * 6.0, label_content=("title",),
-                             mark_row_height=10.0, label_row_height=10.0)
+                             mark_row_height=10.0, label_row_height=10.0, true_mark_block_size=8.0)
     by_object_id = {member.object_id: row.row_id for row in result.rows for member in row.items}
     assert by_object_id["structure"] == by_object_id["avionics"]
     assert by_object_id["bus-test"] != by_object_id["avionics"]
@@ -356,7 +359,7 @@ def test_build_lane_rows_skips_items_without_a_resolvable_date() -> None:
     incomplete = ReviewItem("x", "X", "span", {}, None, None, ())
     result = build_lane_rows(items=(incomplete,), relations=(), coordinate=lambda d: 0.0,
                              label_text_width=lambda text: 0.0, label_content=("title",),
-                             mark_row_height=10.0, label_row_height=10.0)
+                             mark_row_height=10.0, label_row_height=10.0, true_mark_block_size=8.0)
     assert result.rows == ()
 
 
@@ -368,7 +371,7 @@ def test_build_lane_rows_accepts_ungrouped_items_without_crashing() -> None:
              _lane_item("b", date(2027, 1, 21), date(2027, 1, 31), group_id=""))
     result = build_lane_rows(items=items, relations=(), coordinate=lambda d: (d - date(2027, 1, 1)).days * 2.0,
                              label_text_width=lambda text: 6.0, label_content=("title",),
-                             mark_row_height=10.0, label_row_height=10.0)
+                             mark_row_height=10.0, label_row_height=10.0, true_mark_block_size=8.0)
     assert len(result.rows) == 1
     assert result.rows[0].group_id == ""
 

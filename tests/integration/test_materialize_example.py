@@ -596,3 +596,53 @@ def test_lane_relation_routes_never_cross_a_required_lane_label(tmp_path, slide_
                 if _segment_intersects_rect(p0, p1, label["bounds"]):
                     crossings.append((route["id"], label["id"]))
     assert crossings == []
+
+
+def _rect_overlap_area(a: dict, b: dict) -> float:
+    left = max(a["inline"], b["inline"])
+    right = min(a["inline"] + a["inlineSize"], b["inline"] + b["inlineSize"])
+    top = max(a["block"], b["block"])
+    bottom = min(a["block"] + a["blockSize"], b["block"] + b["blockSize"])
+    return max(0.0, right - left) * max(0.0, bottom - top)
+
+
+@pytest.mark.parametrize("slide_id", ("programme-board", "overlay-briefing", "glyph-gates"))
+def test_lane_member_labels_never_overlap_a_mark_and_share_one_mark_level(tmp_path, slide_id):
+    """#467 geometry correction: a lane's label ladder is translated onto the
+    exact absolute band its shared mark actually renders at (`place_mark_tracks`
+    centers a `track: shared` mark within the row, splitting slack evenly
+    above and below it), and every member of a lane shares that one mark
+    level rather than being stacked into separate subtracks. Missed by
+    `tools/check_scene_perceptibility.py`'s occlusion check, which only
+    flags a later-painted opaque shape covering >=50% of an earlier text run
+    (`_occlusion_findings`, OCCLUSION_RATIO); member-label text paints after
+    (on top of) marks, so a labelled crossing a neighbour's mark never
+    reached that check at all."""
+    out = tmp_path / slide_id
+    materialize(ROOT / "examples/halcyon-1/manifest.yaml", slide_id, out, write=False)
+    scene = json.loads((out / "review.scene.json").read_text(encoding="utf-8"))
+    primitives = scene["surfaces"][0]["primitives"]
+    labels = [item for item in primitives if item["id"].startswith("member-label:")]
+    marks = [item for item in primitives if item.get("kind") in ("Rect", "Symbol")
+             and item.get("sourceKind") == "object"]
+    assert labels and marks
+    overlaps = [(label["id"], mark["id"]) for label in labels for mark in marks
+                if _rect_overlap_area(label["bounds"], mark["bounds"]) > 4.0]
+    assert overlaps == []
+
+    rows = scene["surfaces"][0]["rows"]
+    # Restrict the "one mark level per lane" check to each item's primary
+    # (`planned`) mark: a `missingActual` badge is an intentional small
+    # decoration nested against its own item's mark, offset on purpose, not
+    # a second lane member landing on a different level.
+    primary_marks = [mark for mark in marks if mark.get("purpose") == "planned"]
+    marks_by_row: dict[str, set[float]] = {}
+    for mark in primary_marks:
+        # Marks are addressed `{planned|actual|...}:{row_id}:{object_id}`, and
+        # a lane's own row_id is itself colon-separated (`lane:<group>:<rep>`),
+        # so match by which declared row bounds contain the mark's block.
+        for row in rows:
+            if row["bounds"]["block"] <= mark["bounds"]["block"] < row["bounds"]["block"] + row["bounds"]["blockSize"]:
+                marks_by_row.setdefault(row["id"], set()).add(round(mark["bounds"]["block"], 3))
+    multi_level_rows = {row_id: levels for row_id, levels in marks_by_row.items() if len(levels) > 1}
+    assert multi_level_rows == {}

@@ -147,7 +147,11 @@ class _Lane:
     def try_place(self, candidate: LaneCandidate) -> LanePlacement | None:
         """Return the first ladder placement that fits, or ``None``."""
         mark_rect = ObstacleRect(candidate.mark.left, 0.0, candidate.mark.right, self._mark_row_height)
-        if self._index.collisions(mark_rect, classes=(_MARK_CLASS,), clearance=self._clearance):
+        # A new mark shares its band with any earlier item's already-accepted
+        # `end`/`start` label (the same two-way check `try_place` applies to
+        # a new `end`/`start` candidate against earlier marks, below): a
+        # later mark must not land inside an earlier inline label either.
+        if self._index.collisions(mark_rect, classes=(_MARK_CLASS, "lane-label-inline"), clearance=self._clearance):
             return None
         for level in LADDER:
             rect = self._candidate_rect(candidate, level)
@@ -156,7 +160,14 @@ class _Lane:
             if self._canvas_right is not None and rect.right > self._canvas_right:
                 continue
             obstacle_class = _LABEL_CLASS_BY_LEVEL[level]
-            if not self._index.collisions(rect, classes=(obstacle_class,), clearance=self._clearance):
+            # An `end`/`start` candidate shares the mark's own vertical band
+            # (unlike a stagger row, which sits entirely above it), so it
+            # must also clear every OTHER item's mark already accepted in
+            # this lane -- not only same-level labels. Its own mark is
+            # exempt (checked once, above); a stagger row never shares a
+            # band with any mark, so it is unaffected.
+            classes = (obstacle_class, _MARK_CLASS) if level in ("end", "start") else (obstacle_class,)
+            if not self._index.collisions(rect, classes=classes, clearance=self._clearance):
                 return LanePlacement(candidate.candidate_id, level, rect)
         return None
 

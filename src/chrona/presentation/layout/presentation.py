@@ -1,7 +1,7 @@
 """Measured presentation geometry handed from Layout to Scene."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any, Callable, Mapping
 
@@ -192,6 +192,7 @@ def lane_label_content(item: ReviewItem, label_content: tuple[str, ...]) -> str:
 def build_lane_rows(*, items: tuple[ReviewItem, ...], relations: tuple[Any, ...],
                     coordinate: Callable[[date], float], label_text_width: Callable[[str], float],
                     label_content: tuple[str, ...], mark_row_height: float, label_row_height: float,
+                    true_mark_block_size: float,
                     clearance: float = 0.0, canvas_left: float | None = None,
                     canvas_right: float | None = None) -> LaneRowsResult:
     """Pack selected primary items into group-local lanes (#467 L2 engine).
@@ -202,6 +203,17 @@ def build_lane_rows(*, items: tuple[ReviewItem, ...], relations: tuple[Any, ...]
     A point item (``start == end``) gets a minimal finite mark width for
     packing purposes only (its own square glyph footprint approximation);
     real mark geometry is unaffected, since Scene projects it independently.
+
+    ``mark_row_height`` sizes the packing/ladder decision only (#467 L2); the
+    rendered mark uses ``true_mark_block_size`` (the same
+    ``timeline.mark.blockSize`` metric `place_mark_tracks` centers within a
+    row). `place_mark_tracks` always *centers* a shared mark within its
+    row's full block extent, splitting the row's slack evenly above and
+    below it — so each lane's own required extent must reserve *twice* its
+    label rows' height (``2 * label_rows_used * label_row_height``) plus the
+    true mark size, or that even split pushes a lane's own label rows into
+    the row above it. This is exactly what keeps the label ladder's
+    lane-local frame aligned with where the mark actually renders.
     """
     by_object_id = {item.object_id: item for item in items}
     predecessors: dict[str, list[tuple[str, str]]] = {item.object_id: [] for item in items}
@@ -244,14 +256,18 @@ def build_lane_rows(*, items: tuple[ReviewItem, ...], relations: tuple[Any, ...]
     text_line_blocks: list[float] = []
     placements: dict[str, LanePlacement] = {}
     for lane in result.lanes:
-        member_items = tuple(by_object_id[member_id] for member_id in lane.members)
+        # Every member of a lane shares one mark level (#467): the allocator
+        # already guarantees their marks do not overlap horizontally, so
+        # `place_mark_tracks` must not additionally stack them into separate
+        # subtracks the way default `track: stacked` items are.
+        member_items = tuple(replace(by_object_id[member_id], track="shared") for member_id in lane.members)
         group_id = "" if lane.group_key == _UNGROUPED_LANE_GROUP_KEY else lane.group_key
         rows.append(ReviewRowProjection(lane.lane_id, "", group_id, lane.representative_id, member_items))
-        # The label rows stack ABOVE the mark row (#467); a lane's own
-        # required extent is their sum, not the larger of the two
-        # alternatives `required_row_block_extents` otherwise assumes (an
-        # automatic/explicit row's text and mark share one band).
-        text_line_blocks.append(lane.label_rows_used * label_row_height + mark_row_height)
+        # `place_mark_tracks` centers the shared mark within the row's full
+        # extent, splitting slack evenly above and below it (see the
+        # docstring above): reserve twice the label-row height so the half
+        # that lands above the mark still fully covers them.
+        text_line_blocks.append(2 * lane.label_rows_used * label_row_height + true_mark_block_size)
         placements.update(lane.placements)
     return LaneRowsResult(tuple(rows), tuple(text_line_blocks), placements, mark_row_height, label_row_height)
 

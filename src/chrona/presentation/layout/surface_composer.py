@@ -823,6 +823,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             coordinate=lambda value: _coordinate(value, scale),
             label_text_width=lane_label_text_width, label_content=label_content,
             mark_row_height=mark_row_height, label_row_height=label_row_height,
+            true_mark_block_size=float(metric_values["timeline.mark.blockSize"]),
             canvas_left=timeline_bounds[0], canvas_right=timeline_bounds[0] + timeline_bounds[2],
         )
         review_rows = lane_result.rows
@@ -1707,8 +1708,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     # the #467 L2 allocator; this only translates it once to absolute Layout
     # coordinates and never re-searches or re-ranks it.
     if is_lanes and lane_result is not None:
+        true_mark_block_size = float(metric_values["timeline.mark.blockSize"])
         for index, (review_row, row) in enumerate(zip(review_rows, rows, strict=True)):
-            mark_band_top = float(row.bounds.block) + lane_result.text_line_blocks[index] - lane_result.mark_row_height
+            # This must match `place_mark_tracks`' own centering exactly
+            # (`lane_origin`, presentation.py): every member of this lane
+            # shares that one mark level, so the label ladder's lane-local
+            # frame is translated onto the same absolute band the marks
+            # actually land on, not a separate, only-approximately-aligned
+            # band (#467 routing/geometry correction).
+            mark_band_top = float(row.bounds.block) + (float(row.bounds.block_size) - true_mark_block_size) / 2
             for item in review_row.items:
                 placement = lane_result.placements[item.object_id]
                 local = placement.rect
