@@ -92,6 +92,10 @@ registered as obstacles before semantic routes. A route body or endpoint
 egress MUST NOT cross any required lane/member label; the named host-mark
 egress exemption does not exempt text. Relation labels anchored to a completed
 path are placed after that path, not misclassified as pre-route item labels.
+Lane membership is already fixed from Project/View data (Spec 38) before this
+placement phase. A label that cannot fit is suppressed with a source-keyed
+count; its absence does not add, merge or split lanes. Only labels actually
+placed become route obstacles.
 
 For a suppressed lane relation, Layout retains one typed result per candidate
 port pair in deterministic order: `egress-collision` with blocker identities,

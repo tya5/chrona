@@ -1,6 +1,6 @@
 # Current work record — data-only lane membership (#467, #494)
 
-**Status:** design plan. This record supersedes its geometry-first content; Git retains the earlier text. Public `main` at `ec3e339f` accepts `rows.mode: lanes` but keeps rendering guarded. The issue's 2026-09-27 10:58 UTC owner decision is the current acceptance authority. Specs 38/46/50/64 and the v0.27 View schema still contain geometry-first assumptions and must be reconciled before product code changes.
+**Status:** design complete; implementation plan pending. This record supersedes its geometry-first content; Git retains the earlier text. Public `main` accepts `rows.mode: lanes` but keeps rendering guarded. The issue's 2026-09-27 10:58 UTC owner decision is the current acceptance authority. The next View contract will be v0.28; older v0.27 resources are migrated explicitly.
 
 ## Literal #467 acceptance
 
@@ -28,6 +28,12 @@ On lane-mode 02, no relation is suppressed for `egress-collision`; every remaini
 3. Separate a data-only membership result from Layout's later measured row height, mark, label/icon, obstacle and relation placement. Scene carries membership provenance; adapters serialize only. Decide whether existing footprint/facet inventories remain for label and #494 diagnostics, and remove obsolete pairwise non-redundancy acceptance.
 4. Define label suppression/count, delta behavior, lane table cells and group headers after membership. Preserve `automatic` bytes; choose the next View schema version and resource migration. Existing unpushed geometry-first helper and YAML candidate are not release evidence.
 5. Review against Specs 09/24/38/46/50/64, #486 attachment semantics, #466/#488 placement and #494 routing. Record intentional incompatibilities, failure diagnostics and extension points in living specs, not repeated here.
+
+## Selected design and whole-architecture review
+
+Spec 38 now owns the exact key, interval, precedence, identity, suppression and migration rules. The View chooses a Project object field and/or target-specific keys; its explicit map wins. This supports Project-supplied domain data without adding presentation policy to the Project schema. Packing is a canonical-order subset, so attachment closure precedes chain/date placement. Planned half-open intervals alone decide compatibility; Actual, comparison and Theme never decide membership. Explicit overlap is authored intent and may require inner Layout tracks. Unknown targets, malformed keys and conflicting attached keys fail closed.
+
+Against Specs 09/24/38/46/50/64: schedule and View selection remain upstream of a pure Review membership result; Layout receives fixed membership and owns all measured geometry, labels, obstacles and routes; Scene transports membership and completed primitives; adapters serialize. Existing mark/icon footprint work remains useful only after membership. The Scene pairwise non-redundancy audit is removed from #467 acceptance, while Scene membership identity and #494 obstacle/route evidence remain. No renderer, Theme or Project scheduling contract changes. The deliberate incompatibility is View v0.28's new `rows.packing`/`rows.laneKeys`; automatic/explicit outputs stay byte-identical. The main risk is dense authored keys: verify internal track height, label suppression counts and route corridors without feeding any of them back into membership.
 
 ## Design and publication order
 

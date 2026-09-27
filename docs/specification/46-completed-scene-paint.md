@@ -116,17 +116,17 @@ This is an intentional clean-boundary migration. Callers constructing old
 role-only `ScenePrimitive` values must migrate; no adapter preserves the
 incomplete contract.
 
-## 7. Layout-only visible stroke extents for lane footprints (#467)
+## 7. Layout-only visible stroke extents after lane membership (#467)
 
-For lane candidate footprints and all final mark/icon placement, Layout
+For post-membership label obstacles and all final mark/icon placement, Layout
 derives geometry-only visible extents from validated resolved Theme geometry
 metrics and normalized icon closure. This does not make Layout a paint
 resolver. `ScenePaintResolver` remains the sole conversion of Theme/Scheme
 paint policy into completed `ScenePaint`; Layout MUST NOT resolve color, paint
 family, opacity, dash, gradient, shadow, or a replacement stroke style, and
-it MUST NOT construct or pass `ScenePaint` as a candidate footprint input.
+it MUST NOT construct or pass `ScenePaint` as a membership input.
 
-The geometry footprint uses the same concrete mark role, selected glyph
+The post-membership geometry footprint uses the same concrete mark role, selected glyph
 variant, Theme geometry metrics, temporal scale, and icon stroke scale as final
 Layout/Scene composition. An `ObstacleSegment` stores its unexpanded
 centerline and stroke width; an `ObstacleRect` stores already expanded
@@ -141,12 +141,8 @@ envelope expands that envelope by ten times its stroke width on every side.
 This target-independent bound accommodates admitted miter limits up to ten
 without changing adapter output or adding Scene paint policy. Because
 `ScenePaint` has no miter-limit member, Layout cannot set renderer paint
-policy to make the footprint fit. The bound may increase collisions. On 02,
-completed-Scene pairwise lane non-redundancy and required-content/route criteria
-remain hard gates, without a numerical lane ceiling. A failure returns to
-design rather than introducing target-specific lane allocation. See the
-[miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md)
-and [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
+policy to make the footprint fit. The bound may affect later label and route
+placement, but MUST NOT change the data-only lane membership (Spec 38).
 
 Layout returns completed point-symbol and icon path geometry before Scene
 construction. This includes Theme-selected built-in shape geometry, Theme
@@ -166,7 +162,7 @@ ICON with paths in declared order. Raster icon facets retain the exact asset
 identity, viewport and bytes. Neither B2 nor Scene may reload an icon asset,
 retransform paths, or rescale its stroke. See the [S2b icon emission
 correction](../design/issue-467-b1b2-s2b-icon-emission-closure-correction-2026-09-27.md).
-The expected-emission inventory fixes icon cardinality before allocation:
+The expected-emission inventory fixes icon cardinality before Scene projection:
 vector path indices are unique, contiguous and complete against one declared
 path count, all common group metadata agree, and exactly one Scene ICON is
 emitted per completed icon placement. Stroke paths require a finite completed
@@ -189,8 +185,8 @@ move before acceptance.
 These are Layout extents only. Scene still resolves paint after geometry is
 complete, and SVG/PNG/TikZ adapters still serialize or reject the completed
 Scene value according to this specification. No renderer may repair or
-reinterpret a lane candidate footprint. See the
-[#467 B1b-2 correction](../design/issue-467-l3b-b1b-2-stroke-aware-footprint-correction-2026-09-27.md).
+reinterpret a completed obstacle, and no obstacle may feed back into lane
+membership.
 
 ## 8. Completed contrast evidence (#459)
 
