@@ -27,6 +27,7 @@ from chrona.presentation.layout.surface_composer import resolve_label_visual_adv
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
+from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
@@ -91,6 +92,7 @@ class RenderRequest:
     renderer: Renderer | None = None
     require_all_inputs_read: bool = False
     asset_root: Path | None = None
+    asset_resolver: FontAssetResolver | None = None
     draft_auto_block: bool = False
     draft_font_resolution: DraftFontResolution | None = None
 
@@ -214,7 +216,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render this target", "presentation")
     if resolution is not None and resolution.tabular_warnings:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
-    font_metrics = resolution.metrics if resolution is not None else _font_metrics(theme, environment.font_metrics, asset_root)
+    font_metrics = resolution.metrics if resolution is not None else _font_metrics(
+        theme, environment.font_metrics, asset_root, request.asset_resolver)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project)
@@ -321,6 +324,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         environment.renderer_environment(),
         asset_root=asset_root,
         font_files=resolution.font_files if resolution is not None else None,
+        asset_resolver=request.asset_resolver,
     )
     try:
         artifact = renderer.render(surface)
@@ -472,9 +476,10 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     ), tuple(provenance), attachment_warnings(project, result.placements)
 
 
-def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path) -> Any:
+def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path,
+                  asset_resolver: FontAssetResolver | None = None) -> Any:
     try:
-        return resolve_font_metrics_catalog(font_metrics, asset_root=asset_root)
+        return resolve_font_metrics_catalog(font_metrics, asset_root=asset_root, asset_resolver=asset_resolver)
     except FontMetricsError as error:
         raise _font_failure(error) from error
 

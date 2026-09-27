@@ -14,10 +14,11 @@ from chrona.presentation.model.closure import ClosureError, resolve_render_conte
 from chrona.core.identity import content_identity
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.core.ports import SnapshotReadError
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
-from chrona.usecases.materialize import copy_context_closure
+from chrona.usecases.materialize import _OverlayBuilder, _reference_key, copy_context_closure
 from chrona.usecases.render_review import RenderRequest, render_review
 from tools.materialize_example import _copy_context_closure, materialize
 
@@ -325,20 +326,90 @@ def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_p
         materialize(manifest_path, "executive", tmp_path / "missing-evidence", write=False)
 
 
-def test_materializer_rewrites_provider_font_locators_to_a_self_contained_snapshot(tmp_path):
+def test_materializer_preserves_authored_context_bytes_and_font_locator_identity(tmp_path):
     example = ROOT / "examples/aster-ssd"
     context_path = example / "contexts/01-overview.yaml"
     snapshot = tmp_path / "snapshot"
     snapshot.mkdir()
 
+    source_bytes = context_path.read_bytes()
+    source_tree = yaml.safe_load(source_bytes)
     reference, revision = _copy_context_closure(example, context_path, snapshot)
 
     copied = snapshot_directory(snapshot, revision) / "contexts/01-overview.yaml"
     copied_context = yaml.safe_load(copied.read_text(encoding="utf-8"))
-    source_context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     assert reference["contentIdentity"] == "sha256:" + sha256(copied.read_bytes()).hexdigest()
-    assert copied_context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]["locator"]["provider"] == "context"
-    assert source_context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]["locator"]["provider"] == "package"
+    assert copied.read_bytes() == source_bytes
+    assert copied_context == source_tree
+
+
+def test_materialized_overlay_requires_complete_reference_and_asset_identity(tmp_path):
+    example = ROOT / "examples/aster-ssd"
+    context_path = example / "contexts/01-overview.yaml"
+    builder = _OverlayBuilder(tmp_path)
+    reference, revision = copy_context_closure(example, context_path, tmp_path / "snapshot",
+                                               overlay_builder=builder)
+    overlay = builder.finish()
+    copied = snapshot_directory(tmp_path / "snapshot", revision) / "contexts/01-overview.yaml"
+    assert overlay.read(reference) == copied.read_bytes() == context_path.read_bytes()
+    context = yaml.safe_load(context_path.read_bytes())
+    project_ref = context["body"]["project"]
+    project_copy = snapshot_directory(tmp_path / "snapshot", project_ref["revision"]["token"]) / project_ref["address"]
+    assert project_copy.read_bytes() == overlay.read(project_ref)
+    assert overlay._references[_reference_key(project_ref)][0] == project_copy
+    metric = context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]
+    resolved = overlay.resolve_asset(metric["locator"], metric["contentIdentity"])
+    assert resolved.read_bytes() == (ROOT / "src/chrona/resources" / metric["locator"]["address"]).read_bytes()
+    assert resolved.is_relative_to(tmp_path / "materialized-overlay")
+    assert not list((tmp_path / "snapshot").rglob(metric["locator"]["address"]))
+    wrong_revision = {**reference, "revision": {"token": "other-revision"}}
+    with pytest.raises(SnapshotReadError, match="E_STORE_REFERENCE"):
+        overlay.read(wrong_revision)
+    wrong_provider = {**metric["locator"], "identity": "other.package"}
+    with pytest.raises(KeyError):
+        overlay.resolve_asset(wrong_provider, metric["contentIdentity"])
+
+
+def test_package_icon_catalog_is_staged_outside_revision_paths_and_served_by_authored_key(tmp_path):
+    example = ROOT / "examples/controller-z"
+    context_path = example / "contexts/material-icons.yaml"
+    raw_context = context_path.read_bytes()
+    authored = yaml.safe_load(raw_context)
+    context_reference = authored["body"]["inputs"]["iconCatalogs"][0]
+    snapshot = tmp_path / "snapshot"
+    builder = _OverlayBuilder(tmp_path)
+    copied_reference, _ = copy_context_closure(example, context_path, snapshot, overlay_builder=builder)
+    overlay = builder.finish()
+    copied_context = snapshot_directory(snapshot, copied_reference["revision"]["token"]) / copied_reference["address"]
+    assert copied_context.read_bytes() == raw_context
+    assert yaml.safe_load(copied_context.read_bytes()) == authored
+    assert overlay.read(context_reference) == (ROOT / "src/chrona/resources" / context_reference["address"]).read_bytes()
+    assert not list(snapshot.rglob(context_reference["address"]))
+    assert overlay._references[_reference_key(context_reference)][0].is_relative_to(tmp_path / "materialized-overlay")
+
+
+def test_materialized_overlay_separates_same_address_providers_and_rechecks_unpinned_bytes(tmp_path):
+    builder = _OverlayBuilder(tmp_path)
+    package = {"id": "resource", "kind": "view", "store": {"provider": "package", "identity": "pack.one"},
+               "address": "same.yaml", "revision": {"token": "v1"}, "contentIdentity": "sha256:" + sha256(b"package").hexdigest()}
+    local = {**package, "store": {"provider": "local", "identity": "example"},
+             "contentIdentity": "sha256:" + sha256(b"local").hexdigest()}
+    builder.add_reference(package, b"package")
+    builder.add_reference(local, b"local")
+    unpinned = {"id": "optional", "kind": "view", "store": {"provider": "local", "identity": "example"},
+                "address": "optional.yaml", "revision": {"token": "v1"}}
+    builder.add_reference(unpinned, b"original")
+    overlay = builder.finish()
+    assert overlay.read(package) == b"package"
+    assert overlay.read(local) == b"local"
+    package_path = list(overlay._references.values())[0][0]
+    package_path.unlink()
+    with pytest.raises(SnapshotReadError, match="E_STORE_REFERENCE"):
+        overlay.read(package)
+    optional_path = list(overlay._references.values())[2][0]
+    optional_path.write_bytes(b"changed")
+    with pytest.raises(SnapshotReadError, match="E_CONTENT_IDENTITY"):
+        overlay.read(unpinned)
 
 
 def test_baseline_capture_materializes_a_context_through_its_windows_safe_token(tmp_path):
@@ -505,8 +576,14 @@ def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_f
                  "metrics": {"locator": {"provider": "context", "address": "assets/metrics.json"}, "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
                  "font": {"locator": {"provider": "context", "address": "assets/font.ttf"}, "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()}}]
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
-    reference, revision = _copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
+    snapshot = tmp_path / "snapshot"
+    builder = _OverlayBuilder(tmp_path)
+    reference, revision = copy_context_closure(copied_example, context_path, snapshot,
+                                              overlay_builder=builder)
+    overlay = builder.finish()
     assert (snapshot_directory(tmp_path / "snapshot", revision) / "assets/metrics.json").read_bytes() == metrics_target.read_bytes()
+    assert overlay.resolve_asset(asset[0]["metrics"]["locator"], asset[0]["metrics"]["contentIdentity"]) == (
+        snapshot_directory(snapshot, revision) / "assets/metrics.json")
     assert not (snapshot_directory(tmp_path / "snapshot", revision) / "assets/font.ttf").exists()
     assert reference["id"] == "controller-z-executive"
 

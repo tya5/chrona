@@ -4,14 +4,20 @@ from __future__ import annotations
 from importlib.metadata import entry_points
 from importlib.resources import files
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Protocol
 
 
 class FontResourceError(ValueError):
     """A declared font locator cannot be resolved safely."""
 
 
-def resolve_font_resource(locator: Any, *, asset_root: Path | None) -> Path:
+class FontAssetResolver(Protocol):
+    def resolve_asset(self, locator: dict[str, Any], expected_identity: str | None) -> Path: ...
+
+
+def resolve_font_resource(locator: Any, *, asset_root: Path | None,
+                          asset_resolver: FontAssetResolver | None = None,
+                          expected_identity: str | None = None) -> Path:
     """Resolve one schema-validated local or registered-package asset locator."""
     if not isinstance(locator, dict):
         raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
@@ -22,6 +28,11 @@ def resolve_font_resource(locator: Any, *, asset_root: Path | None) -> Path:
     if (not address or relative.is_absolute() or address != relative.as_posix()
             or any(part in {"", ".", ".."} for part in relative.parts)):
         raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
+    if asset_resolver is not None:
+        try:
+            return asset_resolver.resolve_asset(locator, expected_identity)
+        except (KeyError, OSError, ValueError) as error:
+            raise FontResourceError("E_FONT_METRICS_UNAVAILABLE") from error
     if provider == "context":
         if asset_root is None:
             raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")

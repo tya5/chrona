@@ -8,6 +8,7 @@ from typing import Any
 
 from chrona.core.ports import RenderArtifact, Renderer
 from chrona.presentation.model.font_metrics import FontFile, FontMetricsError, resolve_font_files
+from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.renderers.v05_typeset import V05TikzRenderer, V05TypstRenderer
 
@@ -16,16 +17,19 @@ class ResvgPngRenderer:
     """PNG serialization with the bundled resvg engine only."""
 
     def __init__(self, target_kind: str, descriptor: dict[str, Any], font_metrics: dict[str, Any] | None,
-                 asset_root: Path | None, font_files: tuple[FontFile, ...] | None = None):
+                 asset_root: Path | None, font_files: tuple[FontFile, ...] | None = None,
+                 asset_resolver: FontAssetResolver | None = None):
         self.target_kind = target_kind
         self._descriptor = descriptor
         self._font_metrics = font_metrics
         self._asset_root = asset_root
         self._font_files_override = font_files
+        self._asset_resolver = asset_resolver
 
     def render(self, surface: object) -> RenderArtifact:
         _verify_resvg(self._descriptor)
-        files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override)
+        files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override,
+                                        self._asset_resolver)
         svg = V05SvgRenderer().render(surface).content
         try:
             import resvg_py
@@ -43,14 +47,17 @@ class ReportLabPdfRenderer:
 
     target_kind = "pdf"
 
-    def __init__(self, descriptor: dict[str, Any], font_metrics: dict[str, Any] | None, asset_root: Path | None):
+    def __init__(self, descriptor: dict[str, Any], font_metrics: dict[str, Any] | None, asset_root: Path | None,
+                 asset_resolver: FontAssetResolver | None = None):
         self._descriptor = descriptor
         self._font_metrics = font_metrics
         self._asset_root = asset_root
+        self._asset_resolver = asset_resolver
 
     def render(self, surface: object) -> RenderArtifact:
         _verify_reportlab(self._descriptor)
-        files, identities = _font_files(self._font_metrics, self._asset_root)
+        files, identities = _font_files(self._font_metrics, self._asset_root,
+                                        asset_resolver=self._asset_resolver)
         svg = V05SvgRenderer().render(surface).content
         try:
             from reportlab import rl_config
@@ -75,7 +82,8 @@ class ReportLabPdfRenderer:
 
 
 def renderer_for(target: dict[str, Any], environment: dict[str, Any], *, asset_root: Path | None = None,
-                 font_files: tuple[FontFile, ...] | None = None) -> Renderer:
+                 font_files: tuple[FontFile, ...] | None = None,
+                 asset_resolver: FontAssetResolver | None = None) -> Renderer:
     kind = target["kind"]
     supported = {
         "svg": {"accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"},
@@ -92,12 +100,13 @@ def renderer_for(target: dict[str, Any], environment: dict[str, Any], *, asset_r
         descriptor = environment.get("rasterizer")
         if not isinstance(descriptor, dict):
             raise ValueError("E_RENDER_RASTERIZER_IDENTITY")
-        return ResvgPngRenderer(kind, descriptor, environment.get("fontMetrics"), asset_root, font_files)
+        return ResvgPngRenderer(kind, descriptor, environment.get("fontMetrics"), asset_root, font_files,
+                                asset_resolver)
     if kind == "pdf":
         descriptor = environment.get("rasterizer")
         if not isinstance(descriptor, dict):
             raise ValueError("E_RENDER_RASTERIZER_IDENTITY")
-        return ReportLabPdfRenderer(descriptor, environment.get("fontMetrics"), asset_root)
+        return ReportLabPdfRenderer(descriptor, environment.get("fontMetrics"), asset_root, asset_resolver)
     if kind in {"typst", "tikz"}:
         descriptor = environment.get("typesetter")
         expected = ("typst", "chrona-typst/v0.1") if kind == "typst" else ("tectonic", "chrona-tikz/v0.1")
@@ -108,12 +117,13 @@ def renderer_for(target: dict[str, Any], environment: dict[str, Any], *, asset_r
 
 
 def _font_files(descriptor: dict[str, Any] | None, asset_root: Path | None,
-                override: tuple[FontFile, ...] | None = None):
+                override: tuple[FontFile, ...] | None = None,
+                asset_resolver: FontAssetResolver | None = None):
     if override is not None:
         return override, tuple(sorted(item.content_identity for item in override))
     if not isinstance(descriptor, dict):
         raise ValueError("E_RENDER_FONT_CLOSURE")
-    return resolve_font_files(descriptor, asset_root=asset_root)
+    return resolve_font_files(descriptor, asset_root=asset_root, asset_resolver=asset_resolver)
 
 
 def _reportlab_font_name(family: str, weight: int) -> str:

@@ -7,7 +7,7 @@ from importlib.resources import files
 import json
 from pathlib import Path
 
-from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
+from chrona.presentation.model.font_resources import FontAssetResolver, FontResourceError, resolve_font_resource
 from chrona.resources import safe_load
 
 
@@ -205,7 +205,8 @@ def font_metrics_from_document(document: bytes, *, metrics_path: Path, family: s
 
 def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400,
                          asset_root: Path | None = None, _allow_substitute: bool = True,
-                         _require_numeric: bool = True) -> FontMetrics:
+                         _require_numeric: bool = True,
+                         asset_resolver: FontAssetResolver | None = None) -> FontMetrics:
     """Resolve one exact metrics/font pair from a declared Context closure."""
     if descriptor.get("algorithm") != "declared-metrics-v3":
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
@@ -223,7 +224,9 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
         if not isinstance(metrics, dict):
             continue
         try:
-            metrics_path = resolve_font_resource(metrics.get("locator"), asset_root=asset_root)
+            metrics_path = resolve_font_resource(metrics.get("locator"), asset_root=asset_root,
+                                                 asset_resolver=asset_resolver,
+                                                 expected_identity=metrics.get("contentIdentity"))
         except FontResourceError:
             continue
         metrics_identity = _identity(metrics_path)
@@ -246,7 +249,8 @@ def resolve_font_metrics(font_stack: str, descriptor: dict, *, weight: int = 400
     raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
 
 
-def resolve_font_metrics_catalog(descriptor: dict, *, asset_root: Path | None = None) -> FontMetricsCatalog:
+def resolve_font_metrics_catalog(descriptor: dict, *, asset_root: Path | None = None,
+                                asset_resolver: FontAssetResolver | None = None) -> FontMetricsCatalog:
     """Validate every declared face before Layout can select a Theme treatment."""
     assets = descriptor.get("assets")
     if descriptor.get("algorithm") != "declared-metrics-v3" or not isinstance(assets, list) or not assets:
@@ -261,7 +265,8 @@ def resolve_font_metrics_catalog(descriptor: dict, *, asset_root: Path | None = 
             raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
         # A one-family stack makes this exact asset selection, while retaining
         # the established descriptor validation and glyph-substitute policy.
-        resolved[key] = resolve_font_metrics(family, descriptor, weight=weight, asset_root=asset_root)
+        resolved[key] = resolve_font_metrics(family, descriptor, weight=weight, asset_root=asset_root,
+                                             asset_resolver=asset_resolver)
     return FontMetricsCatalog(resolved)
 
 
@@ -283,7 +288,8 @@ def _declared_substitute_family(descriptor: dict) -> str:
     return family
 
 
-def resolve_font_files(descriptor: dict, *, asset_root: Path | None) -> tuple[tuple[FontFile, ...], tuple[str, ...]]:
+def resolve_font_files(descriptor: dict, *, asset_root: Path | None,
+                       asset_resolver: FontAssetResolver | None = None) -> tuple[tuple[FontFile, ...], tuple[str, ...]]:
     """Return the unique, identity-checked font files declared by one Context."""
     if descriptor.get("algorithm") != "declared-metrics-v3":
         raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
@@ -297,7 +303,9 @@ def resolve_font_files(descriptor: dict, *, asset_root: Path | None) -> tuple[tu
             raise FontMetricsError("E_FONT_METRICS_UNAVAILABLE")
         family = asset.get("family") if isinstance(asset, dict) else None
         try:
-            path = resolve_font_resource(font.get("locator"), asset_root=asset_root)
+            path = resolve_font_resource(font.get("locator"), asset_root=asset_root,
+                                         asset_resolver=asset_resolver,
+                                         expected_identity=font.get("contentIdentity"))
         except FontResourceError as error:
             locator = font.get("locator")
             address = locator.get("address") if isinstance(locator, dict) else None
