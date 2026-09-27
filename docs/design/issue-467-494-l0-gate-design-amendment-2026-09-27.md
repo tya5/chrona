@@ -1,0 +1,30 @@
+# Design Amendment — L0 Gate Scope and Lane Acceptance Sequencing (#467, #494)
+
+**Amends:** [lane feasibility and route correction](issue-467-494-lane-feasibility-route-correction-2026-09-27.md) and its linked [recompletion design plan](../planning/active/issue-467-494-lane-feasibility-recompletion-design-plan-2026-09-27.md). **Evidence:** [current-main L0 gate](../research/presentation/issue-467-494-l0-current-main-feasibility-2026-09-27.md). **Architecture review:** [L0 gate review amendment](../reviews/current/issue-467-494-l0-gate-architecture-review-amendment-2026-09-27.md). **Implementation plan:** [sequencing amendment](../planning/active/issue-467-494-l0-gate-implementation-plan-amendment-2026-09-27.md).
+
+## Finding and correction
+
+The published baseline for this gate, `68f487a6beaa1c47da430e5b39dd571f7423595f`, contains no executable lane allocator or lane-mode composition path. The live View v0.26 schema admits `automatic` and `explicit`; the current composer creates one row per selected object except for authored explicit rows. The approved third stagger row exists as a design rule, not as code that can place labels, size lanes, or feed lane obstacles to routing.
+
+Accordingly, a read-only L0 run cannot faithfully establish a lane count, lane membership, the named chain, candidate label/delta placement, no-crossing behavior, or cause-specific route suppressions on this baseline. The prior L0 implementation-plan amendment required those results before any product slice, although its own L3 slice introduces the allocator, lane geometry, and route-cause instrumentation. That is a circular gate. The [current-main evidence](../research/presentation/issue-467-494-l0-current-main-feasibility-2026-09-27.md) therefore reports only what the current scheduler and automatic-mode Scene can verify.
+
+Replace that sequence as follows:
+
+1. **L0 is the read-only scheduler/date gate.** On published current main, test the in-memory 2wd, 3wd, and 4wd `avionics-bustest` lag variants through the ordinary scheduler. Publish the exact date/float result and existing Scene overlap constraint. Do not call this a pass of lane feasibility.
+2. **L1 applies the approved current-Project data correction.** Change only the current HALCYON Project relation lag from 2wd to 4wd, keep Actual and the frozen June baseline unchanged, and atomically regenerate every dependent current-Project schedule artifact discovered through resource/context closure.
+3. **L2 publishes the v0.27 View contract** from the then-live schema, subject to the version and resource migration rules already recorded. Do not switch public defaults or package presets to lanes here.
+4. **L3 implements the generic Layout lane allocator and route-cause evidence, then measures all lane-dependent acceptance criteria** against the L1 current Project and L2 View contract. L3 owns the first valid measurement of lane count/membership, chain placement, required labels/deltas, route crossings, and per-relation route causes.
+
+This re-sequencing does not weaken or reinterpret any literal issue criterion. The hard outcomes remain: 02 has at most 12 lanes and the `structure → avionics → bus-test` chain on one lane; packed names and selected deltas remain visible; assignment is deterministic; required-label crossings are absent; 02 has no egress-collision suppression and every other suppression is measured and listed; and any membership change is attributed. The exact literal rows remain in the amended implementation plan.
+
+If any L3 result fails a literal criterion, or if a route cause cannot be represented and measured distinctly, stop that slice and publish the required design correction, whole-architecture review, normative update if semantics/ownership change, and implementation-plan amendment before continuing. Do not narrow acceptance, infer results from a WIP branch, or add an unreviewed ladder rung or project-specific policy.
+
+## Ownership and cross-issue sequencing
+
+Project owns the 4wd dependency datum and scheduler-derived planned dates. Actual observations and the frozen baseline remain immutable. View owns selection and lane intent in v0.27. Layout owns measured group-local lane identity and membership, required label/delta placement, row extents through the #480 `text_line_block` path, shared obstacles, routes, and route-cause results. Scene projects completed geometry and diagnostics; adapters serialize it. #481 group bands, #486 attached milestone host placement, #487 table measurement, and #488 containment retain their existing owners.
+
+The published #466 C3 sequencing correction remains dependent on a successful #467 L3 result. L0's scheduler-only outcome does not satisfy that dependency. After L3 passes the relevant lane geometry gates, #466 C3 must be remeasured and published as its own issue-owned slice against lane-based 02; a failed or paused L3 leaves C3 pending and invokes #466's own design-return rule if needed.
+
+The #498 bundled-default readability implementation landed at `e732c1c1`; its closure-inventory fix landed at `2031b319`. Its default-owned View is now an explicit L2/L3 migration input, not a hypothetical future resource. Re-read its then-published contract and migrate it with the other live View resources. L3 may move that View to lanes only in the complete materializable engine/default publication, with the #498 bare-render and `chrona init` starter checks, row-guide coverage, visible-or-reported name disposition, separate variance-label behavior, perceptibility evidence, and side-by-side Editorial comparison rerun. Keep the named `editorial` catalogue bundle and `13-gallery-editorial` unchanged. If lane defaults cannot meet these obligations, stop for a coordinated design correction; do not bypass #498 by leaving a future bundled default on unsupported lanes or changing its acceptance.
+
+No additional semantic behavior is selected by this amendment. Specification 38 §3.1 remains normative for the approved lane design and the unchanged acceptance contract; this amendment corrects when those behaviors can first be measured.
