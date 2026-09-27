@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_preflight import LaneMeasurementIdentity, SurfaceLanePlan
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
@@ -133,6 +134,9 @@ class TextPlacement:
     annotation: AnnotationPresentation | None = None
     paint_order: int = 300
     host_placement_id: str | None = None
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
+    lane_source_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -171,6 +175,9 @@ class MarkPlacement:
     paint_order: int = 0
     end_treatment: str = "closed"
     symbol_parts: tuple[Any, ...] = ()
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
+    lane_source_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -209,6 +216,8 @@ class ShapePlacement:
     corner_radius: float = 0.0
     path_commands: tuple[PathCommand, ...] = ()
     image_fill: LayoutImageFill | None = None
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -235,6 +244,14 @@ class RowPlacement:
     group_id: str
     bounds: Rect
     depth: int = 0
+    lane_mark_band_block: Decimal | None = None
+
+    def __post_init__(self) -> None:
+        anchor = self.lane_mark_band_block
+        if anchor is not None and (not anchor.is_finite()
+                                   or anchor < self.bounds.block
+                                   or anchor > self.bounds.block + self.bounds.block_size):
+            raise ValueError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID")
 
 
 @dataclass(frozen=True)
@@ -417,6 +434,50 @@ class IconPlacement:
     slot_id: str = ""
     paint_order: int = 300
     completed_paths: tuple[Any, ...] = ()
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
+    host_placement_id: str | None = None
+
+
+@dataclass(frozen=True)
+class LaneEmissionFacet:
+    """One completed Scene primitive's Layout-owned visible obstacle."""
+
+    facet_id: str
+    placement_type: str
+    placement_id: str
+    primitive_id: str
+    obstacle: ObstacleGeometry
+    obstacle_class: str
+    part_index: int | None = None
+
+    def __post_init__(self) -> None:
+        from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
+        if (not self.facet_id or not self.placement_id or not self.primitive_id
+                or self.placement_type not in {"mark", "shape", "icon", "text"}
+                or self.obstacle_class not in {"mark", "required-label"}
+                or not isinstance(self.obstacle, (ObstacleRect, ObstacleSegment))
+                or (self.part_index is not None and self.part_index < 0)):
+            raise ValueError("E_LAYOUT_LANE_EMISSION_INVALID")
+
+
+@dataclass(frozen=True)
+class LaneEmissionPlacement:
+    """Typed owner and exact primitive/facet projection for one Layout placement."""
+
+    placement_type: str
+    placement_id: str
+    row_id: str
+    member_id: str
+    purpose: str
+    facets: tuple[LaneEmissionFacet, ...]
+
+    def __post_init__(self) -> None:
+        if (self.placement_type not in {"mark", "text", "icon", "shape"}
+                or not all(isinstance(value, str) and value for value in
+                           (self.placement_id, self.row_id, self.member_id, self.purpose))
+                or not isinstance(self.facets, tuple) or not self.facets):
+            raise ValueError("E_LAYOUT_LANE_EMISSION_INVALID")
 
 
 @dataclass(frozen=True)
@@ -440,6 +501,7 @@ class SurfacePlacement:
     canvas_bounds: Rect | None = None
     fit_warnings: tuple[FitWarning, ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
+    lane_emissions: tuple[LaneEmissionPlacement, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""

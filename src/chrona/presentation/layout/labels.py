@@ -60,6 +60,9 @@ class LabelRequest:
     visible_fallback_side: str | None = None
     rule_host_obstacle_id: str | None = None
     semantic_id: str = ""
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
+    lane_source_kind: str | None = None
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:

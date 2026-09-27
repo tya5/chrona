@@ -50,9 +50,14 @@ from chrona.presentation.layout.routing import (
 from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks, symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
+from chrona.presentation.layout.lane_bundle_mapper import (
+    _mark_facets, _overlay_compound_facets, _with_mark_visuals,
+)
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, TextPlacement, annotation_presentation, intersects,
+    IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
+    TextPlacement, LaneEmissionFacet, LaneEmissionPlacement, annotation_presentation, intersects,
 )
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 
@@ -106,6 +111,128 @@ def _review_rows(projection: Any) -> tuple[Any, ...]:
         return tuple(_LaneLayoutRow(row.lane_id, row.group_id, row.items, row.member_item_ids,
                                     table_subject_id=row.lane_id) for row in lane_rows)
     return projection.rows or ()
+
+
+def _lane_owner(review_row: Any, item: Any) -> tuple[str, str] | None:
+    """Join one row item to its immutable member ID by typed projection facts."""
+    member_ids = getattr(review_row, "member_item_ids", ())
+    if not member_ids:
+        return None
+    matches = [member_id for candidate, member_id in zip(review_row.items, member_ids, strict=True)
+               if ((candidate.item_id or candidate.object_id, candidate.object_id, candidate.source_kind)
+                   == (item.item_id or item.object_id, item.object_id, item.source_kind))]
+    if len(matches) != 1:
+        raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"/projection/laneRows/{review_row.row_id}")
+    return review_row.row_id, matches[0]
+
+
+def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
+                    text: list[Any], shapes: list[ShapePlacement], icons: tuple[IconPlacement, ...],
+                    theme_tokens: Any) -> tuple[LaneEmissionPlacement, ...]:
+    """Close the typed Layout-to-Scene member inventory after all geometry is final."""
+    if projection.lane_membership is None:
+        return ()
+    items: dict[tuple[str, str, str, str], Any] = {}
+    for row in review_rows:
+        for item, member_id in zip(row.items, row.member_item_ids, strict=True):
+            key = (row.row_id, member_id, item.source_kind, item.object_id)
+            if key in items:
+                raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", f"/projection/laneRows/{row.row_id}")
+            items[key] = item
+    icons_by_host: dict[str, list[IconPlacement]] = {}
+    for icon in icons:
+        if icon.host_placement_id is not None:
+            icons_by_host.setdefault(icon.host_placement_id, []).append(icon)
+    progress_by_host: dict[str, list[ShapePlacement]] = {}
+    for shape in shapes:
+        if shape.clip_host_id is not None and shape.semantic_id == "progressFill":
+            progress_by_host.setdefault(shape.clip_host_id, []).append(shape)
+
+    grouped: dict[tuple[str, str, str, str, str], list[LaneEmissionFacet]] = {}
+
+    def add(placement_type: str, placement_id: str, row_id: str, member_id: str,
+            purpose: str, facet: LaneEmissionFacet) -> None:
+        grouped.setdefault((placement_type, placement_id, row_id, member_id, purpose), []).append(facet)
+
+    for mark in marks:
+        if mark.lane_row_id is None:
+            continue
+        if mark.lane_member_id is None or mark.lane_source_kind is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", mark.placement_id)
+        item = items.get((mark.lane_row_id, mark.lane_member_id,
+                          mark.lane_source_kind, mark.source_ref))
+        if item is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", mark.placement_id)
+        instance = LaneProjectionInstance(mark.lane_row_id, item.item_id or item.object_id,
+                                          item.object_id, item.source_kind)
+        facets = _overlay_compound_facets(_mark_facets(item, instance, mark, theme_tokens))
+        facets = _with_mark_visuals(item, instance, mark, facets,
+                                    icons_by_host.get(mark.placement_id, ()),
+                                    progress_by_host.get(mark.placement_id, ()), theme_tokens)
+        for facet in facets:
+            if facet.icon_projection is not None:
+                placement_type = "icon"
+                placement_id = facet.icon_projection.placement_id
+            elif facet.progress_projection is not None:
+                placement_type = "shape"
+                placement_id = facet.primitive_id
+            else:
+                placement_type = "mark"
+                placement_id = mark.placement_id
+            add(placement_type, placement_id, mark.lane_row_id, mark.lane_member_id,
+                facet.purpose,
+                LaneEmissionFacet(facet.facet_id, placement_type, placement_id,
+                                  facet.primitive_id, facet.visible_footprint, "mark",
+                                  (facet.glyph_part_projection.part_index
+                                   if facet.glyph_part_projection is not None else
+                                   facet.icon_projection.path_index
+                                   if facet.icon_projection is not None else None)))
+
+    for placed in text:
+        if (placed.lane_row_id is None or placed.overflow == "suppressed"
+                or placed.semantic_id not in {"memberLabel", "finishDelta"}):
+            continue
+        if placed.lane_member_id is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", placed.placement_id)
+        left, top, width, height = _bounds(placed.bounds)
+        if width <= 0 or height <= 0:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", placed.placement_id)
+        obstacle = ObstacleRect(left, top, left + width, top + height)
+        purpose = semantic_binding(placed.semantic_id).purpose
+        add("text", placed.placement_id, placed.lane_row_id, placed.lane_member_id,
+            purpose, LaneEmissionFacet(f"label:{placed.placement_id}", "text", placed.placement_id,
+                                       placed.placement_id, obstacle, "required-label"))
+
+    # Text-associated icons and chips are independent Scene primitives but
+    # retain the same typed owner and Layout-completed viewport/box footprint.
+    for icon in icons:
+        if icon.lane_row_id is None or icon.semantic_id == "iconMark":
+            continue
+        if icon.lane_member_id is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", icon.placement_id)
+        left, top, width, height = _bounds(icon.bounds)
+        obstacle = ObstacleRect(left, top, left + width, top + height)
+        purpose = semantic_binding(icon.semantic_id).purpose
+        add("icon", icon.placement_id, icon.lane_row_id, icon.lane_member_id,
+            purpose, LaneEmissionFacet(f"icon:{icon.placement_id}", "icon", icon.placement_id,
+                                       icon.placement_id, obstacle, "required-label"))
+    for shape in shapes:
+        if shape.lane_row_id is None or shape.clip_host_id is not None:
+            continue
+        if shape.lane_member_id is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", shape.placement_id)
+        left, top, width, height = _bounds(shape.bounds)
+        if width <= 0 or height <= 0:
+            continue
+        purpose = semantic_binding(shape.semantic_id).purpose
+        add("shape", shape.placement_id, shape.lane_row_id, shape.lane_member_id,
+            purpose, LaneEmissionFacet(f"shape:{shape.placement_id}", "shape", shape.placement_id,
+                                       shape.placement_id,
+                                       ObstacleRect(left, top, left + width, top + height),
+                                       "required-label"))
+    return tuple(LaneEmissionPlacement(kind, placement_id, row_id, member_id, purpose,
+                                       tuple(facets))
+                 for (kind, placement_id, row_id, member_id, purpose), facets in grouped.items())
 
 
 def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
@@ -716,7 +843,9 @@ def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest,
             icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
                                        icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                        visual.decorative, bounds, "labelVisual", icon_width / icon.viewport[0], item.slot_id,
-                                       paint_order=item.paint_order))
+                                       paint_order=item.paint_order, lane_row_id=item.lane_row_id,
+                                       lane_member_id=item.lane_member_id,
+                                       host_placement_id=item.placement_id))
     if requested:
         raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
     return text, icons, warnings
@@ -756,7 +885,9 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
         icons.append(IconPlacement(f"visual:{host.placement_id}", host.source_ref, visual.source_ref,
                                    icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                    visual.decorative, bounds, "iconMark", width / icon.viewport[0], host.slot_id,
-                                   paint_order=host.paint_order + 1))
+                                   paint_order=host.paint_order + 1, lane_row_id=host.lane_row_id,
+                                   lane_member_id=host.lane_member_id,
+                                   host_placement_id=host.placement_id))
     return icons
 
 
@@ -1434,6 +1565,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         )
         for _, item in members:
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+            lane_owner = _lane_owner(review_row, item) if projection.lane_membership is not None else None
             instance_id = layout_id if projection.rows else item.object_id
             track = track_by_id[layout_id]
             frame = MarkBandFrame.from_track(track, scale, role_geometries)
@@ -1443,7 +1575,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
                 slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
             )
-            marks.extend(composition.marks)
+            marks.extend(replace(mark, lane_row_id=lane_owner[0], lane_member_id=lane_owner[1],
+                                 lane_source_kind=source_kind)
+                         if lane_owner is not None else mark for mark in composition.marks)
             diagnostics.extend(composition.diagnostics)
             mark_absences.extend(composition.absences)
     # A group-header target is a real GroupPlacement extent, not a synthetic table row.
@@ -1510,6 +1644,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 if not isinstance(fraction, (int, float)) or isinstance(fraction, bool) or not 0 <= fraction <= 1:
                     continue
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+                lane_owner = _lane_owner(review_row, item) if projection.lane_membership is not None else None
                 instance_id = layout_id if projection.rows else item.object_id
                 host = mark_by_id.get(f"{host_prefix}:{instance_id}")
                 if host is None or fraction == 0:
@@ -1521,7 +1656,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                  "Rect", bounds, required=False, slot_id=host.slot_id,
                                                  clip_host_id=host.placement_id,
                                                  paint_order=host.paint_order + 1,
-                                                 corner_radius=fill_radius))
+                                                 corner_radius=fill_radius,
+                                                 semantic_id="progressFill",
+                                                 lane_row_id=lane_owner[0] if lane_owner else None,
+                                                 lane_member_id=lane_owner[1] if lane_owner else None))
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
             continue
@@ -1564,6 +1702,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for review_row in review_rows:
             for item in review_row.items:
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
+                lane_owner = _lane_owner(review_row, item) if projection.lane_membership is not None else None
                 instance_id = layout_id if projection.rows else item.object_id
                 planned = item.planned
                 start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
@@ -1614,7 +1753,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
                                                    wrap, bounds=row_band,
                                                    inside_host_obstacle_id=host_mark_id if mark is not None else None,
-                                                   semantic_id="memberLabel"))
+                                                   semantic_id="memberLabel",
+                                                   lane_row_id=lane_owner[0] if lane_owner else None,
+                                                   lane_member_id=lane_owner[1] if lane_owner else None,
+                                                   lane_source_kind=item.source_kind if lane_owner else None))
         for folded in getattr(projection, "folded_points", ()):
             instance_id = _folded_instance_id(folded, folded.item)
             host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
@@ -1741,7 +1883,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      content=label_request.content, inline=0, baseline_block=float(font_size),
                                      typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
                                      font_metrics=request.font_metrics, collision_region=label_request.collision_region,
-                                     collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id)
+                                     collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id,
+                                     lane_row_id=label_request.lane_row_id,
+                                     lane_member_id=label_request.lane_member_id,
+                                     lane_source_kind=label_request.lane_source_kind)
             fallback_ladder = label_request.candidates + (
                 (label_request.visible_fallback_side,)
                 if label_request.visible_fallback_side is not None
@@ -1775,6 +1920,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
                                        font_metrics=request.font_metrics, collision_region=provisional.collision_region,
                                        collision_domain=provisional.collision_domain, semantic_id=provisional.semantic_id,
+                                       lane_row_id=provisional.lane_row_id,
+                                       lane_member_id=provisional.lane_member_id,
+                                       lane_source_kind=provisional.lane_source_kind,
                                        overflow="visible-overflow" if visible_overflow else "fit",
                                        lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
                                       host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
@@ -1794,7 +1942,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         required=False, slot_id=text_slot(placed_text),
                         paint_order=placed_text.paint_order - 1,
                         semantic_id=chip_semantic,
-                        corner_radius=float(chip[1]) * chip_box.height))
+                        corner_radius=float(chip[1]) * chip_box.height,
+                        lane_row_id=placed_text.lane_row_id,
+                        lane_member_id=placed_text.lane_member_id))
                 if visible_overflow:
                     visible_label_overflows.append((placed_text, slot_bounds))
                 if visuals:
@@ -1812,7 +1962,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                              icon.kind, icon.content_identity, icon.viewport, icon.payload,
                                                              icon.alternative, visual.decorative, bounds, "labelVisual",
                                                              width / icon.viewport[0], text_slot(placed_text),
-                                                             paint_order=placed_text.paint_order))
+                                                             paint_order=placed_text.paint_order,
+                                                             lane_row_id=placed_text.lane_row_id,
+                                                             lane_member_id=placed_text.lane_member_id,
+                                                             host_placement_id=placed_text.placement_id))
                 placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                                              fallback_ladder, candidate.side, "placed",
                                                              candidate.search_count))
@@ -2793,6 +2946,21 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         icon.payload, (float(icon.bounds.inline), float(icon.bounds.block),
                        float(icon.bounds.inline_size), float(icon.bounds.block_size)), icon.stroke_scale))
         if icon.kind == "vector" else icon for icon in icons)
+    if projection.lane_membership is not None:
+        lane_mark_blocks: dict[str, Decimal] = {}
+        for mark in marks:
+            if mark.lane_row_id is not None:
+                lane_mark_blocks[mark.lane_row_id] = min(
+                    lane_mark_blocks.get(mark.lane_row_id, mark.bounds.block), mark.bounds.block)
+        if any(row.row_id not in lane_mark_blocks for row in rows):
+            raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows")
+        try:
+            rows = tuple(replace(row, lane_mark_band_block=lane_mark_blocks[row.row_id]) for row in rows)
+        except ValueError as error:
+            raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows",
+                              "completed lane mark band falls outside its row bounds") from error
+    lane_emissions = _lane_emissions(projection, tuple(review_rows), marks, text,
+                                     shapes, completed_icons, request.theme_tokens)
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
@@ -2801,7 +2969,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                  diagnostics=tuple(diagnostics), icons=completed_icons,
                                  canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
                                  info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
-                                                   if suppressed_plot_labels else ()))
+                                                   if suppressed_plot_labels else ()),
+                                 lane_emissions=lane_emissions)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
 

@@ -144,6 +144,8 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                available_inline_size: float | None = None,
                slot_id: str | None = None, semantic_id: str = "",
                annotation: AnnotationPresentation | None = None,
+               lane_row_id: str | None = None, lane_member_id: str | None = None,
+               lane_source_kind: str | None = None,
                orientation: str = "horizontal") -> TextPlacement:
     """Measure one text run before Scene turns it into a primitive."""
     treatment = theme_tokens.text_treatment(typography_role)
@@ -186,4 +188,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         slot_id=slot_id or collision_domain.slot,
         semantic_id=semantic_id,
         annotation=annotation,
+        lane_row_id=lane_row_id,
+        lane_member_id=lane_member_id,
+        lane_source_kind=lane_source_kind,
     )

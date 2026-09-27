@@ -151,18 +151,93 @@ def test_hidden_lane_layout_projects_fixed_membership_before_public_activation(c
         resources = tuple(replace(resource, contract=contract) if resource.kind == "view" else resource
                           for resource in closure.resources)
         lane_closure = replace(closure, resources=resources)
+        render_request = _request(lane_closure, snapshot)
         with pytest.raises(RenderFailed, match="E_REVIEW_LANE_ENGINE_UNAVAILABLE"):
-            render_review(_request(lane_closure, snapshot))
-        rendered = render_usecase._render_review(_request(lane_closure, snapshot))
+            render_review(render_request)
+        rendered = render_usecase._render_review(render_request)
+        validate_scene_document(scene_document(rendered.scene))
+        manifests = {item.package_id: item.profile_input for item in lane_closure.profile_packages}
+        oracle, _, _ = render_usecase._project_review(
+            lane_closure.project.scheduler_input, lane_closure.view.view,
+            lane_closure, manifests, render_request.scheduler,
+        )
 
     assert rendered.surface.primitives
     assert rendered.scene.surfaces == (rendered.surface,)
     assert 0 < len(rendered.surface.rows) < 26
     assert all(row.row_id.startswith("review-lane:") for row in rendered.surface.rows)
+    oracle_members = {
+        (row.lane_id, member_id)
+        for row in oracle.lane_rows
+        for member_id in row.member_item_ids
+    }
+    scene_members = {(member.row_id, member.member_id) for member in rendered.surface.lane_members}
+    assert scene_members == oracle_members
+    primitive_by_id = {item.scene_id: item for item in rendered.surface.primitives}
+    inventory_owners = {
+        primitive_id: (member.row_id, member.member_id)
+        for member in rendered.surface.lane_members
+        for primitive_id in member.emitted_primitive_ids
+    }
+    assert set(inventory_owners) == {
+        item.scene_id for item in rendered.surface.primitives if item.lane_row_id is not None
+    }
+    assert all((primitive.lane_row_id, primitive.lane_member_id) == inventory_owners[primitive_id]
+               for primitive_id, primitive in primitive_by_id.items()
+               if primitive_id in inventory_owners)
+    assert {(item.row_id, item.member_id) for item in rendered.surface.lane_obstacles} == set(inventory_owners.values())
+    assert {item.primitive_id for item in rendered.surface.lane_obstacles} == set(inventory_owners)
+    progress_ids = {item.scene_id for item in rendered.surface.primitives
+                    if item.scene_id.startswith("progress-fill:")}
+    if context_name == "02-programme-board":
+        # This fixture has non-zero planned progress. Clipped fills are separate
+        # Scene primitives, but their identity/owner must come from the typed
+        # Layout handoff just like the host mark.
+        assert progress_ids
+    assert progress_ids <= set(inventory_owners)
+    assert progress_ids <= {item.primitive_id for item in rendered.surface.lane_obstacles}
     timeline_slot = next(slot for slot in rendered.surface.slots if slot.source == "timeline")
     assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
         timeline_slot.bounds[1] + timeline_slot.bounds[3]
     )
+
+
+def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
+    outputs = []
+    for context_name in ("02-programme-board", "12-glyph-gates"):
+        with tempfile.TemporaryDirectory() as temporary:
+            closure, snapshot = _closure(Path(temporary), context_name)
+            value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
+            value["version"] = "chrona/view/v0.28"
+            body = value["body"]
+            body.pop("tableColumns", None)
+            body["rows"] = {"mode": "lanes", "packing": ["explicit", "attached", "chain", "dates"],
+                            "laneTable": {"label": "group", "count": True}}
+            body["visibility"]["labels"] = {"placement": "plot"}
+            contract = parse_contract(closure.view.identity, value)
+            resources = tuple(replace(resource, contract=contract) if resource.kind == "view" else resource
+                              for resource in closure.resources)
+            lane_closure = replace(closure, resources=resources)
+            request = _request(lane_closure, snapshot)
+            rendered = render_usecase._render_review(request)
+            manifests = {item.package_id: item.profile_input for item in lane_closure.profile_packages}
+            oracle, _, _ = render_usecase._project_review(
+                lane_closure.project.scheduler_input, lane_closure.view.view,
+                lane_closure, manifests, request.scheduler,
+            )
+            expected = {(row.lane_id, member_id) for row in oracle.lane_rows
+                        for member_id in row.member_item_ids}
+            observed = {(member.row_id, member.member_id) for member in rendered.surface.lane_members}
+            outputs.append((closure, rendered, expected, observed))
+
+    standard, glyph = outputs
+    assert standard[0].project.identity == glyph[0].project.identity
+    assert standard[0].view.identity == glyph[0].view.identity
+    assert standard[0].resource("theme").id != glyph[0].resource("theme").id
+    assert standard[2] == standard[3] == glyph[2] == glyph[3]
+    standard_glyphs = tuple(item.symbol.outline for item in standard[1].surface.primitives if item.symbol is not None)
+    themed_glyphs = tuple(item.symbol.outline for item in glyph[1].surface.primitives if item.symbol is not None)
+    assert standard_glyphs != themed_glyphs
     assert any(item.scene_id.startswith("member-label:") for item in rendered.surface.primitives)
     suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
                      for item in rendered.surface.diagnostics)

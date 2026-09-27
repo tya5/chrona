@@ -244,6 +244,14 @@ def test_zero_progress_inset_is_the_published_full_height_fill():
         Decimal(3), Decimal(5), Decimal(20), Decimal(16))
 
 
+def test_layout_row_lane_anchor_is_completed_and_bounded():
+    row = RowPlacement("row", "object", "group", Rect(Decimal(0), Decimal(10), Decimal(80), Decimal(20)),
+                       lane_mark_band_block=Decimal(12))
+    assert row.lane_mark_band_block == Decimal(12)
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_ROW_ANCHOR_INVALID"):
+        RowPlacement("row", "object", "group", row.bounds, lane_mark_band_block=Decimal(31))
+
+
 def test_committed_progress_track_example_draws_inset_capsules_at_several_lengths():
     import json
     from pathlib import Path
