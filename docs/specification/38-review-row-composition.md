@@ -220,6 +220,10 @@ primitive or obstacle. Decorative non-member paint has no lane owner. A
 missing, duplicated or mismatched emitted lane primitive fails closed. This
 handoff is absent for automatic and explicit rows and changes no adapter
 schema. See the [B3 correction](../design/issue-467-b3-typed-lane-scene-handoff-correction-2026-09-27.md).
+For lane mode, View-selected comparison facets also close the Layout mark
+inventory: an unselected `missingActual` facet creates neither a Layout mark
+nor a preflight obstacle, Scene primitive, or lane handoff entry. Scene does
+not make a second visibility decision. Non-lane output remains unchanged.
 
 Every packed item has a plot-name request; the lane table has no item row to
 carry it. A lane-mode `visibility.labels` object MUST select plot placement
