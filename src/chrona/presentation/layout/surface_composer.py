@@ -9,6 +9,9 @@ import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
+from chrona.presentation.layout.label_visual_measurement import (
+    resolve_label_visual_advances, visual_target_placement_id,
+)
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
@@ -643,65 +646,6 @@ def candidate_label_visuals(placement_id: str, typography_role: str,
         placement_id, typography_role, visual_requests=request.visual_requests,
         icon_assets=request.icon_assets, theme_tokens=request.theme_tokens,
     )
-
-
-def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
-                                  visual_requests: tuple[Any, ...], icon_assets: dict[str, Any],
-                                  theme_tokens: Any) -> tuple[tuple[Any, Any, float, float], ...]:
-    """Resolve the closed inline advance of label visuals in Layout.
-
-    Source measurement and final placement call this same resolver. That keeps
-    an icon's aspect ratio, role scale, and role gap out of the render use case
-    and prevents a solver from allocating text bounds that final composition
-    cannot honor.
-    """
-    matching = []
-    for visual in visual_requests:
-        if visual.target_kind in {"mark", "axis-band", "axis-label"}:
-            continue
-        target = visual_target_placement_id(visual.target_kind, dict(visual.selector))
-        if placement_id == target or placement_id.startswith(target + ":"):
-            matching.append(visual)
-    if not matching:
-        return ()
-    found: dict[str, tuple[Any, Any, float, float]] = {}
-    size = theme_tokens.text_treatment(typography_role).font_size
-    try:
-        scale, gap_ratio = theme_tokens.icon_ratios(typography_role)
-    except Exception as error:
-        raise LayoutError("E_THEME_ICON_RATIO", "/body/visuals") from error
-    for visual in matching:
-        if visual.side in found:
-            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
-        icon = icon_assets.get(visual.ref or "")
-        if icon is None or icon.viewport[1] <= 0:
-            raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
-        height = float(size * scale)
-        if height <= 0:
-            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref)
-        found[visual.side] = (visual, icon, height * icon.viewport[0] / icon.viewport[1], float(size * gap_ratio))
-    return tuple(found[side] for side in ("leading", "trailing") if side in found)
-
-
-def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
-    """Map the closed View target vocabulary to one Layout placement identity."""
-    if kind == "title": return "title"
-    if kind == "column" and "id" in selector: return f"column:{selector['id']}"
-    if kind == "cell" and {"object", "column"} <= selector.keys(): return f"cell:{selector['object']}:{selector['column']}"
-    if kind == "group-header" and "id" in selector: return f"group-header:{selector['id']}"
-    if kind == "plot-label" and "id" in selector: return f"member-label:{selector['id']}"
-    if kind == "annotation" and "id" in selector: return f"annotation-text:{selector['id']}"
-    if kind == "note" and "id" in selector: return f"note:{selector['id']}"
-    if kind == "note-index" and "id" in selector: return f"note-index:{selector['id']}"
-    if kind == "group-detail" and "id" in selector: return f"group-detail:{selector['id']}"
-    if kind == "legend" and "role" in selector: return f"legend:{selector['role']}"
-    if kind == "summary" and "panel" in selector and "metric" not in selector: return f"summary:{selector['panel']}"
-    if kind == "summary" and {"panel", "metric", "part"} <= selector.keys(): return f"summary:{selector['panel']}:{selector['metric']}:{selector['part']}"
-    if kind == "milestone" and "id" in selector: return f"milestone:{selector['id']}"
-    if kind == "as-of-label": return "as-of-label"
-    if kind == "variance-label" and "object" in selector: return f"variance:{selector['object']}"
-    if kind == "mark" and {"object", "facet"} <= selector.keys(): return f"{selector['facet']}:{selector['object']}"
-    raise LayoutError("E_LAYOUT_VISUAL_TARGET", "/body/visuals")
 
 
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
