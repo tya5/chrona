@@ -9,7 +9,33 @@ from typing import Any
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
-from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
+
+
+LANE_MEMBER_BINDING_IDS = (
+    "planned", "actual", "snapshot", "missingActual", "summaryBar", "progressFill",
+    "memberLabel", "memberLabelInsidePlanned", "memberLabelInsideActual",
+    "memberLabelInsideSnapshot", "memberLabelInsideScenario", "finishDelta",
+    "varianceAhead", "varianceBehind", "iconMark", "labelVisual",
+)
+LANE_MEMBER_PURPOSES = frozenset(semantic_binding(identifier).purpose
+                                 for identifier in LANE_MEMBER_BINDING_IDS)
+PRIMARY_LANE_MARK_PURPOSES = frozenset(
+    semantic_binding(identifier).purpose for identifier in ("planned", "snapshot")
+)
+_LANE_PURPOSE_KINDS = frozenset(
+    (scene_kind, semantic_binding(identifier).purpose)
+    for identifier in LANE_MEMBER_BINDING_IDS
+    for scene_kind in ({"Rect", "Symbol", "Path"} if semantic_binding(identifier).primitive_kind == "mark"
+                       else {"Text"} if semantic_binding(identifier).primitive_kind == "label"
+                       else {"Icon"})
+)
+
+
+def requires_lane_member_provenance(kind: str, purpose: str) -> bool:
+    """Whether current semantic bindings make a completed Scene primitive lane-owned."""
+    return kind == "Icon" or (purpose in LANE_MEMBER_PURPOSES
+                               and (kind, purpose) in _LANE_PURPOSE_KINDS)
 
 
 @dataclass(frozen=True)
@@ -418,14 +444,10 @@ class SceneSurface:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             primary_ids = {primitive_id for member in self.lane_members
                            for primitive_id in member.primary_mark_ids}
-            if any(by_id[primitive_id][1].purpose not in {"planned", "baseline", "snapshot"}
+            if any(by_id[primitive_id][1].purpose not in PRIMARY_LANE_MARK_PURPOSES
                    for primitive_id in primary_ids):
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            membership_purposes = {
-                "planned", "actual", "missing-actual", "snapshot", "progress",
-                "member-label", "finish-delta",
-            }
-            if any((item.kind == "Icon" or item.purpose in membership_purposes)
+            if any(requires_lane_member_provenance(item.kind, item.purpose)
                    and item.lane_row_id is None for item in self.primitives):
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         for index, item in enumerate(self.primitives):

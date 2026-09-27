@@ -8,8 +8,9 @@ from typing import Any, Mapping
 import jsonschema
 
 from chrona.presentation.scene.model import (
-    DecorationDisposition, InspectionScene, LinearGradient, PatternGeometry, SceneIconPath,
-    ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, TextLayout,
+    LANE_MEMBER_PURPOSES, PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
+    PatternGeometry, SceneIconPath, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
+    TextLayout, requires_lane_member_provenance,
 )
 from chrona.resources import schema_document
 
@@ -159,12 +160,12 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                 return False
             if member_row_ids != lane_rows:
                 return False
-            if any(by_id[item][1].get("purpose") not in {"planned", "baseline", "snapshot"}
+            if any(by_id[item][1].get("purpose") not in PRIMARY_LANE_MARK_PURPOSES
                    for item in primary_ids):
                 return False
-            membership_purposes = {"planned", "actual", "missing-actual", "snapshot", "progress",
-                                   "member-label", "finish-delta"}
-            if any((item.get("kind") == "Icon" or item.get("purpose") in membership_purposes)
+            if any((item.get("kind") == "Icon"
+                    or (item.get("purpose") in LANE_MEMBER_PURPOSES
+                        and requires_lane_member_provenance(item.get("kind"), item.get("purpose"))))
                    and item.get("laneRowId") is None for item in primitives):
                 return False
         for index, primitive in enumerate(primitives):

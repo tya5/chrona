@@ -209,11 +209,19 @@ def test_lane_surface_carries_closed_member_emission_inventory():
         "rowId": "lane-1", "memberId": "member-1",
         "emittedPrimitiveIds": ["mark-1", "label-1"], "primaryMarkIds": ["mark-1"],
     }]
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(
+            {key: value for key, value in document.items() if key != "laneMode"})
+    without_inventory = {key: value for key, value in document.items() if key != "laneMembers"}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(
+            without_inventory)
 
 
 @pytest.mark.parametrize("broken", [
     "inventory-omits-tagged", "inventory-mismatched-tags", "untagged-member-purpose",
-    "unknown-primary-mark",
+    "unknown-primary-mark", "untagged-missing-actual", "untagged-progress-fill",
+    "untagged-summary-bar", "comparison-primary",
 ])
 def test_lane_surface_rejects_incomplete_or_inconsistent_member_inventory(broken):
     row = SceneRow("object", "group", (0, 0, 20, 12), "lane-1", 2)
@@ -231,6 +239,20 @@ def test_lane_surface_rejects_incomplete_or_inconsistent_member_inventory(broken
         primitives = (mark, replace(label, lane_row_id=None, lane_member_id=None))
     elif broken == "unknown-primary-mark":
         member = replace(member, primary_mark_ids=("label-1",))
+    elif broken.startswith("untagged-"):
+        purpose = {
+            "untagged-missing-actual": "missingActual",
+            "untagged-progress-fill": "progress-fill",
+            "untagged-summary-bar": "summary-bar",
+        }[broken]
+        extra = ScenePrimitive("extra", "Rect", "object", "object", purpose, purpose, (3, 3, 2, 2))
+        primitives = (*primitives, extra)
+    elif broken == "comparison-primary":
+        actual = ScenePrimitive("actual", "Rect", "object", "object", "actual", "actual",
+                                (2, 2, 4, 2), lane_row_id="lane-1", lane_member_id="member-1")
+        primitives = (*primitives, actual)
+        member = replace(member, emitted_primitive_ids=("mark-1", "label-1", "actual"),
+                         primary_mark_ids=("actual",))
 
     with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
         SceneSurface("s", (), (row,), (), None, primitives, lane_mode="lanes", lane_members=(member,))
