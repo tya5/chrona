@@ -1,7 +1,11 @@
 import pytest
+from datetime import date
+from types import SimpleNamespace
 
-from chrona.presentation.layout.mark_geometry import glyph_parts, symbol_parts
-from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks, glyph_parts, symbol_parts
+from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
+from chrona.presentation.layout.surface_quality import PathCommand, ScalePlacement
+from chrona.presentation.model.projection import ObservationState
 
 
 def _glyph(*parts):
@@ -68,3 +72,48 @@ def test_built_in_mark_uses_layout_completed_outline_while_glyph_owns_its_outlin
     glyph = symbol_parts(_glyph({"d": "M0 0L10 0L10 10Z", "paint": "fill"}),
                          (0, 0, 10, 10), completed)[0]
     assert glyph.commands != completed
+
+
+def test_item_composer_closes_planned_open_actual_missing_actual_and_absences():
+    scale = ScalePlacement("surface", "primary", date(2026, 1, 1), date(2026, 2, 1),
+                           100.0, 162.0, 100.0, 2.0)
+    roles = {
+        "planned": MarkGeometry(0.5, 0.25, 0, 0.0),
+        "snapshot": MarkGeometry(0.5, 0.25, 0, 0.0),
+        "actual": MarkGeometry(0.4, 0.6, 1, 0.0),
+        "missing-actual": MarkGeometry(0.4, 0.6, 2, 0.0),
+    }
+    frame = MarkBandFrame.zero_origin(scale, 10.0, roles)
+    theme = SimpleNamespace(variant_symbol=lambda _role: {"shape": "circle"})
+    item = SimpleNamespace(
+        object_id="task", source_type="span",
+        planned={"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+        actual={"start": date(2026, 1, 2), "openUntil": "asOf"},
+        observation_state=ObservationState.RECORDED,
+    )
+
+    completed = compose_item_marks(item=item, instance_id="row:task", source_kind="combined",
+                                   frame=frame, as_of=date(2026, 1, 5), theme_tokens=theme,
+                                   slot_id="timeline")
+    planned, actual = completed.marks
+    assert (planned.bounds.inline, planned.bounds.inline_size) == (100, 8)
+    assert planned.start_port == (100.0, 5.0)
+    assert (actual.bounds.inline, actual.bounds.inline_size) == (102, 6)
+    assert actual.end_port == (108.0, 8.0)
+    assert actual.end_treatment == "open"
+    assert completed.diagnostics == ()
+    assert completed.absences == ()
+
+    missing_item = SimpleNamespace(
+        object_id="gate", source_type="point", planned={"at": date(2026, 1, 3)},
+        actual=None, observation_state=ObservationState.DUE_UNOBSERVED,
+    )
+    missing = compose_item_marks(item=missing_item, instance_id="row:gate", source_kind="combined",
+                                 frame=frame, as_of=None, theme_tokens=theme, slot_id="timeline")
+    assert [mark.placement_id for mark in missing.marks] == ["planned:row:gate", "missing-actual:row:gate"]
+    assert missing.marks[1].bounds.inline == 104
+
+    as_of_required = compose_item_marks(item=item, instance_id="row:task", source_kind="combined",
+                                        frame=frame, as_of=None, theme_tokens=theme, slot_id="timeline")
+    assert as_of_required.diagnostics == ("W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:task",)
+    assert as_of_required.absences == (MarkFacetAbsence("actual", "as-of-required"),)

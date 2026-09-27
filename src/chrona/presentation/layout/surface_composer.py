@@ -14,7 +14,7 @@ from chrona.presentation.layout.label_visual_measurement import (
 )
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
-from chrona.presentation.model.projection import ObservationState, shared_track_member_key
+from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.model.axis_names import axis_name_table
@@ -38,7 +38,7 @@ from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import RouteSearchFailure, place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
-from chrona.presentation.layout.mark_geometry import compose_mark_placement, symbol_parts
+from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks, symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
@@ -54,6 +54,7 @@ class SurfaceLayoutComposition:
     placement: SurfacePlacement
     review_rows: tuple[Any, ...]
     track_placements: tuple[TrackPlacement, ...]
+    mark_absences: tuple[MarkFacetAbsence, ...] = ()
 
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
@@ -1247,15 +1248,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     track_by_id = {item.instance_id: item for item in tracks}
     marks: list[MarkPlacement] = []
 
-    def place_mark(placement_id: str, source_ref: str, bounds: Rect,
-                   start_port: tuple[float, float], end_port: tuple[float, float], *, shape: str,
-                   semantic_id: str, end_treatment: str = "closed") -> MarkPlacement:
-        return compose_mark_placement(frame=frame,
-                                      placement_id=placement_id, source_ref=source_ref, bounds=bounds,
-                                      start_port=start_port, end_port=end_port, shape=shape,
-                                      semantic_id=semantic_id, theme_tokens=request.theme_tokens,
-                                      slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
-                                      end_treatment=end_treatment)
+    mark_absences: list[MarkFacetAbsence] = []
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -1267,76 +1260,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             track = track_by_id[layout_id]
             frame = MarkBandFrame.from_track(track, scale, role_geometries)
             source_kind = item.source_kind if projection.rows else "combined"
-            planned = item.planned
-            planned_semantic = "snapshot" if source_kind in {"snapshot", "scenario"} else "planned"
-            planned_block, planned_size = frame.role_bounds(planned_semantic)
-            actual_block, actual_size = frame.role_bounds("actual")
-            missing_block, missing_size = frame.role_bounds("missing-actual")
-            if source_kind != "actual" and item.source_type == "point":
-                x = _coordinate(planned["at"], scale)
-                bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)),
-                              Decimal(str(planned_size)), Decimal(str(planned_size)))
-                port = (x, planned_block + planned_size / 2)
-                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point",
-                                        semantic_id=planned_semantic))
-            elif source_kind != "actual":
-                x1, x2 = _coordinate(planned["start"], scale), _coordinate(planned["end"], scale)
-                bounds = Rect(Decimal(str(x1)), Decimal(str(planned_block)),
-                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(planned_size)))
-                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds,
-                                        (x1, planned_block + planned_size / 2),
-                                        (x2, planned_block + planned_size / 2), shape="span", semantic_id=planned_semantic))
-            actual = item.actual or {}
-            open_actual = (source_kind in {"actual", "combined"} and item.source_type == "span"
-                           and actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
-                           and contract.time.as_of is not None)
-            if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
-                x1, x2 = _coordinate(actual["start"], scale), _coordinate(actual["finish"], scale)
-                bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
-                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(actual_size)))
-                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds,
-                                        (x1, actual_block + actual_size / 2),
-                                        (x2, actual_block + actual_size / 2), shape="span", semantic_id="actual"))
-            elif open_actual:
-                x1, x2 = _coordinate(actual["start"], scale), _coordinate(contract.time.as_of, scale)
-                if x2 <= x1:
-                    diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_INVALID:{item.object_id}")
-                else:
-                    bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
-                                  Decimal(str(x2 - x1)), Decimal(str(actual_size)))
-                    mark = place_mark(f"actual:{instance_id}", item.object_id, bounds,
-                                      (x1, actual_block + actual_size / 2),
-                                      (x2, actual_block + actual_size / 2), shape="open-span", semantic_id="actual",
-                                      end_treatment="open")
-                    marks.append(mark)
-            elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
-                x = _coordinate(actual["at"], scale)
-                bounds = Rect(Decimal(str(x - actual_size / 2)), Decimal(str(actual_block)),
-                              Decimal(str(actual_size)), Decimal(str(actual_size)))
-                port = (x, actual_block + actual_size / 2)
-                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id="actual"))
-            elif source_kind in {"actual", "combined", "primary"}:
-                # An explicit primary member only projects its planned mark;
-                # a companion Actual member owns any observed-state diagnostic.
-                if source_kind == "primary" and item.observation_state == ObservationState.RECORDED:
-                    continue
-                if (actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
-                        and contract.time.as_of is None):
-                    diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:{item.object_id}")
-                    continue
-                # An observation that is incomplete for this mark policy is
-                # still an observation.  A missing-actual treatment is only
-                # truthful when the projection has no actual object at all.
-                if actual:
-                    diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
-                    continue
-                anchor = planned.get("end", planned.get("at"))
-                if item.observation_state == ObservationState.DUE_UNOBSERVED and isinstance(anchor, date):
-                    x = _coordinate(anchor, scale)
-                    bounds = Rect(Decimal(str(x)), Decimal(str(missing_block)),
-                                  Decimal(str(max(1.0, missing_size * 1.5))), Decimal(str(missing_size)))
-                    marks.append(place_mark(f"missing-actual:{instance_id}", item.object_id, bounds,
-                                            (x, missing_block), (x, missing_block), shape="span", semantic_id="missing-actual"))
+            composition = compose_item_marks(
+                item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
+                as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
+                slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
+            )
+            marks.extend(composition.marks)
+            diagnostics.extend(composition.diagnostics)
+            mark_absences.extend(composition.absences)
     # A group-header target is a real GroupPlacement extent, not a synthetic table row.
     group_by_id = {group.group_id: group for group in groups}
     visible_group_header_overflows: list[tuple[str, Rect, float]] = []
@@ -1373,24 +1304,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                              key=lambda pair: shared_track_member_key(pair[1], pair[0]))
             for _, item in members:
                 instance_id = _folded_instance_id(folded, item)
-                planned_at = item.planned.get("at")
-                planned_semantic = "snapshot" if item.source_kind in {"snapshot", "scenario"} else "planned"
                 # Folded marks occupy a real group-header band, so make that
                 # band the frame origin while retaining its exact role offsets.
                 frame = MarkBandFrame(scale, block, block_size, role_geometries)
-                planned_block, planned_size = frame.role_bounds(planned_semantic)
-                actual_block, actual_size = frame.role_bounds("actual")
-                if item.source_kind != "actual" and isinstance(planned_at, date):
-                    x = _coordinate(planned_at, scale)
-                    bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)), Decimal(str(planned_size)), Decimal(str(planned_size)))
-                    port = (x, planned_block + planned_size / 2)
-                    marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id=planned_semantic))
-                actual_at = (item.actual or {}).get("at")
-                if item.source_kind in {"actual", "combined"} and isinstance(actual_at, date):
-                    x = _coordinate(actual_at, scale)
-                    bounds = Rect(Decimal(str(x - actual_size / 2)), Decimal(str(actual_block)), Decimal(str(actual_size)), Decimal(str(actual_size)))
-                    port = (x, actual_block + actual_size / 2)
-                    marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id="actual"))
+                composition = compose_item_marks(
+                    item=item, instance_id=instance_id,
+                    source_kind=item.source_kind, frame=frame, as_of=contract.time.as_of,
+                    theme_tokens=request.theme_tokens, slot_id=timeline.slot_id,
+                    paint_order_base=MARK_PAINT_ORDER_BASE, emit_missing_actual=False,
+                    emit_diagnostics=False,
+                )
+                marks.extend(composition.marks)
+                diagnostics.extend(composition.diagnostics)
+                mark_absences.extend(composition.absences)
     mark_by_id = {item.placement_id: item for item in marks}
     progress_source = request.surface_content.progress_fill_source
     if progress_source is not None:
@@ -2662,7 +2588,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                  info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
                                                    if suppressed_plot_labels else ()))
     placement.assert_valid()
-    return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
+    return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
 
 
 def _rect(bounds: tuple[float, float, float, float]) -> Rect:
