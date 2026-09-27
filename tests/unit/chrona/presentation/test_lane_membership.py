@@ -21,7 +21,7 @@ def item(item_id, object_id, planned, *, key=None, host=None, group="g"):
     return LaneItem(item_id, object_id, group, planned, key, host)
 
 
-def test_chain_uses_selected_fs_fact_and_planned_end_to_start_only():
+def test_chain_uses_selected_fs_fact_across_a_gap():
     predecessor = item("i-a", "a", PlannedSpan(d(1), d(3)))
     successor = item("i-b", "b", PlannedSpan(d(3), d(5)))
     result = derive_lane_membership(LanePackingInput(
@@ -31,6 +31,32 @@ def test_chain_uses_selected_fs_fact_and_planned_end_to_start_only():
     assert result.assignment_for("i-a").lane_id == result.assignment_for("i-b").lane_id
     assert result.assignment_for("i-b").rule == "chain"
     assert result.assignment_for("i-b").source_id == "rel-a-b"
+
+
+def test_halcyon_02_named_chain_stays_together_across_planned_gap():
+    structure = item("row-structure", "structure", PlannedSpan(date(2026, 4, 1), date(2026, 4, 10)), group="")
+    avionics = item("row-avionics", "avionics", PlannedSpan(date(2026, 4, 10), date(2026, 4, 27)), group="")
+    bus_test = item("row-bus-test", "bus-test", PlannedSpan(date(2026, 5, 3), date(2026, 5, 17)), group="")
+    result = derive_lane_membership(LanePackingInput(
+        (structure, avionics, bus_test), ("chain",),
+        (SelectedFSRelation("structure-avionics", "structure", "avionics"),
+         SelectedFSRelation("avionics-bustest", "avionics", "bus-test")),
+    ))
+    ids = {result.assignment_for(row.item_id).lane_id for row in (structure, avionics, bus_test)}
+    assert len(ids) == 1
+    assert next(iter(result.lanes)).group_id == ""
+
+
+def test_chain_checks_every_interval_already_in_predecessor_lane():
+    predecessor = item("pred", "pred", PlannedSpan(d(1), d(3)), key="authored")
+    other_authored_member = item("other", "other", PlannedSpan(d(5), d(7)), key="authored")
+    successor = item("succ", "succ", PlannedSpan(d(6), d(8)))
+    result = derive_lane_membership(LanePackingInput(
+        (predecessor, other_authored_member, successor), ("explicit", "chain"),
+        (SelectedFSRelation("pred-succ", "pred", "succ"),),
+    ))
+    assert result.assignment_for("pred").lane_id == result.assignment_for("other").lane_id
+    assert result.assignment_for("succ").lane_id != result.assignment_for("pred").lane_id
 
 
 def test_dates_allows_touching_half_open_spans():

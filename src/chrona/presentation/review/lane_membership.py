@@ -157,7 +157,7 @@ def _validate_input(value: LanePackingInput) -> None:
         raise LaneMembershipError("E_REVIEW_LANE_DUPLICATE_ITEM")
     for item in value.items:
         if (not isinstance(item, LaneItem) or not isinstance(item.object_id, str) or not item.object_id
-                or not isinstance(item.group_id, str) or not item.group_id
+                or not isinstance(item.group_id, str)
                 or not isinstance(item.planned, (PlannedSpan, PlannedPoint))):
             raise LaneMembershipError("E_REVIEW_LANE_ITEM_IDENTITY")
         if item.explicit_key is not None and (not isinstance(item.explicit_key, str) or not item.explicit_key):
@@ -248,13 +248,12 @@ def derive_lane_membership(value: LanePackingInput) -> LaneMembership:
             for relation, predecessor_bundle in relations_by_successor.get(bundle.root.item_id, ()):
                 predecessor_assignment = assignments.get(predecessor_bundle.root.item_id)
                 predecessor = predecessor_bundle.root
-                if predecessor_assignment is None or _interval_end(predecessor) != _interval_start(bundle.root):
+                if predecessor_assignment is None or _interval_end(predecessor) > _interval_start(bundle.root):
                     continue
                 candidate_lane = predecessor_assignment[0]
                 if candidate_lane.group_id != group_id or any(
-                    existing.root.item_id != predecessor_bundle.root.item_id
-                    and any(_overlaps(existing_item.planned, new_item.planned)
-                            for existing_item in existing.members for new_item in bundle.members)
+                    any(_overlaps(existing_item.planned, new_item.planned)
+                        for existing_item in existing.members for new_item in bundle.members)
                     for existing in candidate_lane.bundles
                 ):
                     continue
