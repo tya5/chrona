@@ -205,6 +205,16 @@ Scene projects completed primitives and serializes the same membership for
 a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous
 pairwise non-redundancy and footprint-concurrency gate is retired.
+Layout also completes a typed per-placement lane emission handoff: placement
+type and ID, immutable row/member owner, and final visible obstacle facets,
+including an explicit ordinal for each part of a multi-part mark. Scene
+projects this handoff to its primitive IDs and verifies exact inventory and
+obstacle correspondence; it never decodes membership from placement-ID text
+or reconstructs visible geometry from Scene bounds. Suppressed text emits no
+primitive or obstacle. Decorative non-member paint has no lane owner. A
+missing, duplicated or mismatched emitted lane primitive fails closed. This
+handoff is absent for automatic and explicit rows and changes no adapter
+schema. See the [B3 correction](../design/issue-467-b3-typed-lane-scene-handoff-correction-2026-09-27.md).
 
 Every packed item has a plot-name request; the lane table has no item row to
 carry it. A lane-mode `visibility.labels` object MUST select plot placement

@@ -1,0 +1,7 @@
+# Issue #467 B3 typed lane handoff — architecture review
+
+Decision: accept the [B3 correction](../../design/issue-467-b3-typed-lane-scene-handoff-correction-2026-09-27.md) and update [Spec 38](../../specification/38-review-row-composition.md) before B3 product code. The published B2 engine has data-only Review membership and exact Layout subtracks, but lacks a typed Layout-to-Scene owner map; the public lane guard correctly remains closed.
+
+Cross-check: Specs 09/24/33/38/46/50/64 keep Project dates and View packing upstream, Theme as measured input, Layout as the owner of placement and visible footprint, Scene as a projection/paint carrier, and SVG/adapters as serializers. The handoff adds no membership decision in Layout or Scene and no geometry search in Scene. Scene v0.6's existing member/primitive/obstacle invariants remain the downstream validation boundary. Automatic and explicit paths do not receive a handoff and must retain their bytes. The only intended incompatibility remains View v0.28 lane syntax already declared in Spec 38.
+
+Risk and gate: glyph part identity and label-associated icon/chip emission are one-to-many; B3 must prove the typed inventory exactly matches Scene emission and reject gaps. Required text obstacle geometry must precede #494 routes. This correction does not authorize changing the #467 lane-count or route-cause gates. No unresolved semantic choice is needed for B3; implementation planning follows this publication.
