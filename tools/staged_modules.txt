@@ -11,3 +11,6 @@ chrona.presentation.layout.lane_bundle_mapper
 #467: Seed-scale adapter is tested independently until render_review invokes
 # preflight after its finite inline solve.
 chrona.presentation.layout.lane_seed
+#467: Read-only Scene lane audit is tested independently until lane-mode
+# artifacts are emitted and the acceptance/release gate invokes it.
+chrona.presentation.scene.lane_audit
