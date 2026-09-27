@@ -148,6 +148,29 @@ quality-rejected route is not reported as rendered. The #494 acceptance allows
 non-egress suppressions when every remaining suppression is listed with its
 measured cause.
 
+Lane membership and required block size are closed by one Layout-owned
+preflight after a finite seed arrangement supplies the table/timeline inline
+bounds and before the content-height solve. This preflight is final-block-
+coordinate-free, not inline-geometry-free: it measures the selected marks,
+comparison/actual/attached-point footprints, required titles and deltas, and
+their finite ladder in the seed inline scale. Its immutable plan is the sole
+authority for lane identity/order, selected rung and natural row extent.
+Content-height resolution and final composition consume that same plan; the
+composer MUST NOT reallocate lanes. The final arrangement MUST preserve the
+plan's lane-driving inline bounds and scale, or lane mode fails with
+`E_LAYOUT_LANE_INLINE_UNSTABLE` before output. This excludes silent coupling
+from a block-dependent aspect-ratio constraint. `automatic` and `explicit`
+retain their existing path and bytes.
+
+The lane table's measured width is reserved before membership from the finite
+candidate set: all possible group/representative labels and the maximum
+selected-item count bound the `Lane`/optional `Items` columns. The completed
+plan supplies exact one-per-lane cells and actual lane row count. The measured
+envelope is intentionally conservative; final cells MUST fit it. The timeline
+and table block requirement uses the completed lane count and natural lane
+heights, never the original per-item row count. Group bands include those
+expanded rows and their own headers. See the [L3b preflight correction](../design/issue-467-494-l3b-prelayout-route-evidence-correction-2026-09-27.md).
+
 `automatic` is still the exact per-object row behavior, including its original
 table cells, points policy and output. `rows.points: key-row` is not created by
 lane mode. Hierarchical rows remain `automatic` or authored `explicit` until a

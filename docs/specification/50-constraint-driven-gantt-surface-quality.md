@@ -87,6 +87,25 @@ View relation intent becomes `none` or an object with `mode: semantic` and `over
 
 Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. It ranks candidates by crossings, length, bends, then lexicographic points. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
 
+Required, route-independent lane item names and deltas are measured and
+registered as obstacles before semantic routes. A route body or endpoint
+egress MUST NOT cross any required lane/member label; the named host-mark
+egress exemption does not exempt text. Relation labels anchored to a completed
+path are placed after that path, not misclassified as pre-route item labels.
+
+For a suppressed lane relation, Layout retains one typed result per candidate
+port pair in deterministic order: `egress-collision` with blocker identities,
+`no-route-found` from a typed bounded-search outcome, or `quality-rejected`
+with measured length/direct length/bends and the declared limits. A generic
+`ValueError` is not a no-route result. The primary cause is the furthest stage
+reached by any pair (`quality-rejected`, then `no-route-found`, otherwise
+`egress-collision`); all mixed attempts remain inspectable. A suppressed
+placement has no path or accepted attempt; an accepted route has a completed
+path and no suppression evidence. Layout retains the existing generic
+suppression diagnostic and emits lane-specific, stable cause evidence; Scene
+projects it without inferring or rerouting. Existing non-lane diagnostics and
+Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../design/issue-467-494-l3b-prelayout-route-evidence-correction-2026-09-27.md).
+
 ### 3.4 Groups and legend
 
 View grouping gains `presentation: band | header`; `header` requires a non-zero resolved `timeline.groupHeader.blockSize`. Layout reserves one header block before the group's first row and supplies measured header text bounds spanning the selected table/timeline surface. Missing capacity completes visible stacked geometry and `W_LAYOUT_GROUP_HEADER_OVERFLOW`.
