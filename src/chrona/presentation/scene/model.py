@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
-from chrona.presentation.icons import NormalizedVectorIcon
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
@@ -181,12 +181,11 @@ class ScenePrimitive:
     icon_kind: str | None = None
     icon_asset_identity: str | None = None
     icon_viewport: tuple[int, int] | None = None
-    icon_vector: NormalizedVectorIcon | None = None
     icon_paths: tuple[SceneIconPath, ...] = ()
+    icon_path_geometry: tuple[Any, ...] = ()
     icon_raster: bytes | None = None
     icon_alternative: str | None = None
     icon_decorative: bool = True
-    icon_stroke_scale: float | None = None
     visual_capability_source_ref: str = "/"
     table_row_id: str | None = None
     table_column_id: str | None = None

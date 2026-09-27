@@ -1,14 +1,14 @@
 """One-way resolution of Theme/Scheme policy into completed Scene paint."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from math import cos, radians, sin
 from typing import Mapping
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.model.info_diagnostics import PaintOmission
-from chrona.presentation.scene.model import DropShadow, LinearGradient, ScenePaint, StrokeFinish
+from chrona.presentation.scene.model import DropShadow, LinearGradient, SceneIconPath, ScenePaint, StrokeFinish
 from chrona.presentation.scene.visual_capabilities import (
     DROP_SHADOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN,
     VisualProfile, first_supporting_visual_profile,
@@ -42,7 +42,8 @@ class PaintResolution:
 
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_profile: VisualProfile | None = None,
-                        gradient_bounds: tuple[float, float, float, float] | None = None) -> PaintResolution:
+                        gradient_bounds: tuple[float, float, float, float] | None = None,
+                        part_mode: str | None = None, part_color: str | None = None) -> PaintResolution:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
     fill_required = family in {PaintFamily.TEXT, PaintFamily.SOLID, PaintFamily.CANVAS}
     stroke_required = family in {PaintFamily.OUTLINE, PaintFamily.HATCH, PaintFamily.PATH}
@@ -80,6 +81,21 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         fill = None
     paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
                        1.0 if opacity is None else float(opacity), gradient, shadow, finish)
+    if part_mode is not None:
+        if part_mode not in {"fill", "stroke"}:
+            raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
+        if family == PaintFamily.OUTLINE:
+            paint = replace(paint, fill=None)
+        elif part_mode == "fill":
+            part_fill = part_color if part_color is not None else paint.fill
+            if part_fill is None:
+                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
+            paint = replace(paint, fill=part_fill, stroke=None, stroke_width=None, dash=())
+        else:
+            part_stroke = part_color if part_color is not None else paint.stroke
+            if part_stroke is None or paint.stroke_width is None:
+                raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
+            paint = replace(paint, fill=None, stroke=part_stroke)
     omissions = tuple(_omission(role, treatment, property_name, visual_profile, required)
                       for omitted, treatment, property_name, required in (
                           (gradient_omitted, "linear-gradient", "gradientAngle", frozenset((LINEAR_GRADIENT,))),
@@ -87,6 +103,27 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                           (finish_omitted, "stroke-finish", "strokeLineCap", frozenset((LINE_CAP, LINE_JOIN))),
                       ) if omitted)
     return PaintResolution(paint, omissions)
+
+
+def complete_icon_path_paints(role_paint: ScenePaint, path_intents: tuple[object, ...],
+                              role: str) -> tuple[SceneIconPath, ...]:
+    """Convert Layout path paint modes into completed icon paints."""
+    if role_paint.fill is None:
+        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}/fill")
+    paths = []
+    for path in path_intents:
+        mode = getattr(path, "paint", None)
+        if mode == "fill":
+            paths.append(SceneIconPath(path.commands, role_paint.fill, None, None,
+                                       opacity=role_paint.opacity))
+        elif (mode == "stroke" and path.stroke_width is not None
+              and path.line_cap in {"butt", "round", "square"}
+              and path.line_join in {"miter", "round", "bevel"}):
+            paths.append(SceneIconPath(path.commands, None, role_paint.fill, path.stroke_width,
+                                       path.line_cap, path.line_join, role_paint.opacity))
+        else:
+            raise ScenePaintError("E_PRESENTATION_PRIMITIVE_INVALID", role)
+    return tuple(paths)
 
 
 def _omission(role: str, treatment: str, property_name: str, profile: VisualProfile | None,

@@ -35,6 +35,8 @@ from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
+from chrona.presentation.layout.mark_geometry import symbol_parts
+from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
@@ -1313,11 +1315,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
                                          inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                     if shape == "point" and radius > 0 else ())
+        completed_symbols = ()
+        if shape in {"point", "open-span"}:
+            variant = "baseline" if semantic_id in {"snapshot", "scenario"} else semantic_id
+            token = request.theme_tokens.variant_symbol(variant)
+            try:
+                completed_symbols = symbol_parts(token, (float(bounds.inline), float(bounds.block),
+                                                          float(bounds.inline_size), float(bounds.block_size)), commands)
+            except ValueError as error:
+                raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE", placement_id) from error
         return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
                              mark_shape=shape, corner_radius=radius, path_commands=commands,
                              slot_id=timeline.slot_id, semantic_id=semantic_id,
                              paint_order=MARK_PAINT_ORDER_BASE + geometry.paint_order,
-                             end_treatment=end_treatment)
+                             end_treatment=end_treatment, symbol_parts=completed_symbols)
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -1978,10 +1989,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
         def emit_swatch(role: str, x: float, y: float, width: float, height: float, bucket: str) -> None:
             if bucket == "point":
+                bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
+                parts = symbol_parts(request.theme_tokens.variant_symbol("planned"), (x, y, width, height))
                 marks.append(MarkPlacement(f"legend-swatch:{role}", role,
-                                           Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
+                                           bounds,
                                            (x + width / 2, y + height / 2), (x + width / 2, y + height / 2),
-                                           mark_shape="point", slot_id=legend.slot_id, semantic_id="planned"))
+                                           mark_shape="point", slot_id=legend.slot_id, semantic_id="planned",
+                                           symbol_parts=parts))
             elif bucket == "mark":
                 height_ratio, offset_ratio, paint_order, corner_ratio = request.theme_tokens.mark_geometry(role)
                 corner_radius = min(float(corner_ratio) * min(width, height), min(width, height) / 2)
@@ -2707,12 +2721,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         paths=tuple(item.points for item in relations),
     )
     suppressed_plot_labels = sum(item.semantic_id == "memberLabel" and item.overflow == "suppressed" for item in text)
+    completed_icons = tuple(replace(icon, completed_paths=complete_icon_paths(
+        icon.payload, (float(icon.bounds.inline), float(icon.bounds.block),
+                       float(icon.bounds.inline_size), float(icon.bounds.block_size)), icon.stroke_scale))
+        if icon.kind == "vector" else icon for icon in icons)
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
                                  axis_tier_outcomes=tuple(axis_tier_outcomes),
-                                 diagnostics=tuple(diagnostics), icons=tuple(icons),
+                                 diagnostics=tuple(diagnostics), icons=completed_icons,
                                  canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
                                  info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
                                                    if suppressed_plot_labels else ()))

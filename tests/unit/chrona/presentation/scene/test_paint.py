@@ -42,6 +42,19 @@ def test_resolver_completes_absent_opacity_before_adapter_invocation():
     assert paint.opacity == 1.0
 
 
+def test_resolver_is_the_only_glyph_part_paint_conversion_point():
+    tokens = _tokens({"fill": "fill", "stroke": "stroke", "strokeWidth": "width"})
+    filled = resolve_scene_paint(tokens, "role", PaintFamily.SOLID,
+                                 part_mode="fill", part_color="#abcdef").paint
+    stroked = resolve_scene_paint(tokens, "role", PaintFamily.SOLID,
+                                  part_mode="stroke", part_color="#fedcba").paint
+    assert (filled.fill, filled.stroke, filled.stroke_width, filled.dash) == ("#abcdef", None, None, ())
+    assert (stroked.fill, stroked.stroke, stroked.stroke_width) == (None, "#fedcba", 1.5)
+    outline = resolve_scene_paint(tokens, "role", PaintFamily.OUTLINE,
+                                  part_mode="fill", part_color="#abcdef").paint
+    assert outline.fill is None and outline.stroke == "#445566"
+
+
 def test_resolver_completes_bounded_gradient_shadow_and_stroke_finish():
     values = {"fill": {"type": "color", "value": "#112233"}, "start": {"type": "color", "value": "#112233"}, "end": {"type": "color", "value": "#445566"}, "shadow": {"type": "color", "value": "#000000"}, "angle": {"type": "number", "value": 45}, "x": {"type": "number", "value": 1}, "y": {"type": "number", "value": 2}, "blur": {"type": "number", "value": 3}, "alpha": {"type": "number", "value": 0.4}, "cap": {"type": "lineCap", "value": "round"}, "join": {"type": "lineJoin", "value": "bevel"}}
     role = {"fill": "fill", "gradientStart": "start", "gradientEnd": "end", "shadowColor": "shadow", "gradientAngle": "angle", "shadowOffsetX": "x", "shadowOffsetY": "y", "shadowBlur": "blur", "shadowOpacity": "alpha", "strokeLineCap": "cap", "strokeLineJoin": "join"}

@@ -168,6 +168,7 @@ class MarkPlacement:
     semantic_id: str = "planned"
     paint_order: int = 0
     end_treatment: str = "closed"
+    symbol_parts: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -410,6 +411,7 @@ class IconPlacement:
     stroke_scale: float = 1.0
     slot_id: str = ""
     paint_order: int = 300
+    completed_paths: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True)

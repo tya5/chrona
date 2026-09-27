@@ -1,6 +1,7 @@
 import pytest
 
-from chrona.presentation.scene.mark_geometry import glyph_parts, symbol_geometry
+from chrona.presentation.layout.mark_geometry import glyph_parts, symbol_parts
+from chrona.presentation.layout.surface_quality import PathCommand
 
 
 def _glyph(*parts):
@@ -51,11 +52,19 @@ def test_glyph_parts_rejects_empty_parts():
         glyph_parts({"shape": "glyph", "viewBox": [10, 10], "parts": []}, (0, 0, 10, 10))
 
 
-def test_symbol_geometry_still_resolves_built_in_shapes_from_the_full_value_mapping():
-    geometry = symbol_geometry({"shape": "diamond"}, (0, 0, 10, 10))
-    assert geometry.outline
+def test_symbol_geometry_is_completed_in_layout_from_the_full_value_mapping():
+    geometry = symbol_parts({"shape": "diamond"}, (0, 0, 10, 10))
+    assert geometry[0].commands
 
 
-def test_symbol_geometry_rejects_a_glyph_shape_reaching_it_directly():
-    with pytest.raises(ValueError, match="E_THEME_TOKEN_TYPE"):
-        symbol_geometry(_glyph({"d": "M0 0L1 1Z", "paint": "fill"}), (0, 0, 10, 10))
+def test_layout_symbol_geometry_keeps_glyph_parts_as_typed_paint_intents():
+    parts = symbol_parts(_glyph({"d": "M0 0L1 1Z", "paint": "fill"}), (0, 0, 10, 10))
+    assert parts[0].paint_mode == "fill"
+
+
+def test_built_in_mark_uses_layout_completed_outline_while_glyph_owns_its_outline():
+    completed = (PathCommand("move", ((1.0, 2.0),)), PathCommand("line", ((3.0, 4.0),)))
+    assert symbol_parts({"shape": "diamond"}, (0, 0, 10, 10), completed)[0].commands == completed
+    glyph = symbol_parts(_glyph({"d": "M0 0L10 0L10 10Z", "paint": "fill"}),
+                         (0, 0, 10, 10), completed)[0]
+    assert glyph.commands != completed
