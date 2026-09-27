@@ -9,6 +9,7 @@ from typing import Any, Mapping
 from chrona.presentation.layout.obstacles import (
     ObstacleGeometry, ObstacleRect, ObstacleSegment, obstacle_envelope, obstacles_intersect,
 )
+from chrona.presentation.scene.model import requires_lane_member_provenance
 
 
 class SceneLaneAuditError(ValueError):
@@ -47,6 +48,7 @@ class LaneGroupAudit:
     group_id: str
     lane_count: int
     primary_mark_lower_bound: int
+    full_footprint_inline_concurrency: int
     lane_gap: int
     gap_witnesses: tuple[LaneCollisionWitness, ...]
 
@@ -100,7 +102,13 @@ def audit_serialized_lane_surface(surface: Mapping[str, Any]) -> SceneLaneAudit:
             pair_audits.append(LanePairAudit(group_id, lane_a, lane_b, a_witness, b_witness))
 
     primary_bounds: dict[str, int] = {
-        group_id: _primary_mark_concurrency(group_lanes, members, obstacles_by_member)
+        group_id: _member_inline_concurrency(group_lanes, members, obstacles_by_member,
+                                             primary_marks_only=True)
+        for group_id, group_lanes in lane_rows_by_group.items()
+    }
+    full_footprint_concurrency = {
+        group_id: _member_inline_concurrency(group_lanes, members, obstacles_by_member,
+                                             primary_marks_only=False)
         for group_id, group_lanes in lane_rows_by_group.items()
     }
     lane_counts = {group_id: len(lanes) for group_id, lanes in lane_rows_by_group.items()}
@@ -111,7 +119,8 @@ def audit_serialized_lane_surface(surface: Mapping[str, Any]) -> SceneLaneAudit:
             for witness in (pair.a_into_b, pair.b_into_a) if witness is not None
         )
         count, lower_bound = lane_counts[group_id], primary_bounds[group_id]
-        groups.append(LaneGroupAudit(group_id, count, lower_bound, count - lower_bound,
+        groups.append(LaneGroupAudit(group_id, count, lower_bound,
+                                     full_footprint_concurrency[group_id], count - lower_bound,
                                      pair_witnesses))
     return SceneLaneAudit(tuple(groups), tuple(pair_audits))
 
@@ -123,9 +132,11 @@ def _closed_inputs(surface: Mapping[str, Any]) -> tuple[
     clearance = surface.get("laneClearance")
     if not _number(clearance) or clearance < 0:
         raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
-    rows_doc, members_doc, obstacles_doc = (surface.get("rows"), surface.get("laneMembers"),
-                                            surface.get("laneObstacles"))
-    if not all(isinstance(value, list) and value for value in (rows_doc, members_doc, obstacles_doc)):
+    rows_doc, members_doc, obstacles_doc, primitives_doc = (
+        surface.get("rows"), surface.get("laneMembers"), surface.get("laneObstacles"),
+        surface.get("primitives"))
+    if not all(isinstance(value, list) and value for value in
+               (rows_doc, members_doc, obstacles_doc, primitives_doc)):
         raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
 
     rows: dict[str, dict[str, Any]] = {}
@@ -165,6 +176,31 @@ def _closed_inputs(surface: Mapping[str, Any]) -> tuple[
     if rows_with_members != set(rows):
         raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
 
+    primitive_by_id: dict[str, Mapping[str, Any]] = {}
+    tagged_primitive_ids: set[str] = set()
+    for primitive in primitives_doc:
+        if not isinstance(primitive, Mapping):
+            raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
+        primitive_id = primitive.get("id")
+        if not _identity(primitive_id) or primitive_id in primitive_by_id:
+            raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
+        primitive_by_id[primitive_id] = primitive
+        lane_row, lane_member = primitive.get("laneRowId"), primitive.get("laneMemberId")
+        if lane_row is not None or lane_member is not None:
+            if (not _identity(lane_row) or not _identity(lane_member)
+                    or expected_primitives.get(primitive_id) != (lane_row, lane_member)):
+                raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
+            tagged_primitive_ids.add(primitive_id)
+        elif requires_lane_member_provenance(primitive.get("kind"), primitive.get("purpose")):
+            raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
+    if (not set(expected_primitives) <= set(primitive_by_id)
+            or tagged_primitive_ids != set(expected_primitives)):
+        raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
+    if any((primitive_by_id[primitive_id].get("laneRowId"),
+            primitive_by_id[primitive_id].get("laneMemberId")) != key
+           for primitive_id, key in expected_primitives.items()):
+        raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
+
     obstacles: list[_Obstacle] = []
     facets: set[str] = set()
     covered_primitives: set[str] = set()
@@ -194,10 +230,6 @@ def _closed_inputs(surface: Mapping[str, Any]) -> tuple[
             primary_obstacle_ids.add(primitive_id)
     if covered_primitives != set(expected_primitives) or primary_obstacle_ids != primary_ids:
         raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
-    for obstacle in obstacles:
-        obstacles_by_key = expected_primitives.get(obstacle.primitive_id)
-        if obstacles_by_key is None:
-            raise SceneLaneAuditError("E_SCENE_LANE_AUDIT_INVALID")
     return rows, members, tuple(obstacles), float(clearance)
 
 
@@ -248,9 +280,10 @@ def _translate_block(geometry: ObstacleGeometry, delta: float) -> ObstacleGeomet
                            (geometry.end[0], geometry.end[1] + delta), geometry.stroke_width)
 
 
-def _primary_mark_concurrency(group_lanes: list[tuple[str, float]],
-                              members: Mapping[tuple[str, str], Mapping[str, Any]],
-                              obstacles_by_member: Mapping[tuple[str, str], list[_Obstacle]]) -> int:
+def _member_inline_concurrency(group_lanes: list[tuple[str, float]],
+                               members: Mapping[tuple[str, str], Mapping[str, Any]],
+                               obstacles_by_member: Mapping[tuple[str, str], list[_Obstacle]],
+                               *, primary_marks_only: bool) -> int:
     lane_ids = {row_id for row_id, _ in group_lanes}
     intervals_by_member: dict[tuple[str, str], list[tuple[float, float]]] = {}
     for key, member in members.items():
@@ -260,7 +293,7 @@ def _primary_mark_concurrency(group_lanes: list[tuple[str, float]],
         intervals: list[tuple[float, float]] = []
         primary_ids = set(member["primaryMarkIds"])
         for obstacle in obstacles_by_member.get(key, ()):
-            if obstacle.primitive_id not in primary_ids:
+            if primary_marks_only and obstacle.primitive_id not in primary_ids:
                 continue
             left, _top, right, _bottom = obstacle_envelope(obstacle.geometry)
             if left < right:
