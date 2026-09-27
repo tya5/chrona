@@ -240,7 +240,9 @@ the surface count and emits no name; it never changes lane membership. An
 attached point's required plot label is a distinct exception: View content
 normalization reads the active composition (`rows` for automatic rows,
 `lane_rows` for generated lanes) and provides its title, planned date and
-available finish delta as one request to Layout. Layout measures that request.
+available point `atDelta` (Spec 06 §8) as one request to Layout. Projection
+derives that delta only from matching planned and Actual point endpoints;
+Layout measures the completed content request.
 After its bounded fit ladder fails, Layout emits that whole label with a
 `visible-overflow` outcome and warning rather than silently suppressing facts.
 This changes neither lane membership nor Scene's projection-only role.
