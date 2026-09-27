@@ -29,7 +29,7 @@ Each entry has a canonical `semantic_id`, a source owner, and a required Scene p
 2. A member identity is `rowId:itemId` whenever View projects explicit rows; it is never re-derived by Scene.
 3. An `asOf` fact comes only from Actual; calendar closure comes only from Project; View only selects their presentation.
 4. A table column has one measured origin and width before text primitives are emitted.
-5. A legend entry and a primitive role are declared from the same semantic registry entry.
+5. A legend entry and a primitive role are declared from the same semantic registry entry. From #427, a legend entry's swatch is dispatched by that entry's own registry `primitive_kind` (`mark`, `line`, or `decoration`), not by a legend-specific shape.
 6. A missing required semantic binding fails before rendering.
 
 ## 2. Ingress adapter
@@ -57,7 +57,8 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `calendarClosed` | Rect | `calendar-closed` | `calendarClosed` |
 | `axisBand` | Text | `axis-band` | `axis` |
-| `legendEntry` | Rect/Text | `legend-swatch`, `legend-label` | entry role |
+| `legendEntry` | dispatched by the entry's own role `primitive_kind` (Rect, Symbol, or Path) | `legend-swatch` | entry's own role, sized against `legend-swatch.swatchInlineSize` (#427) |
+| `legendLabel` | Text | `legend-label` | `legend` |
 | `annotation` | Rect/Text/Path | `annotation-*` | `annotation` |
 
 The renderer keeps stable primitive role strings where needed for public Scene compatibility (for example `as-of`). They are declared by the registry rather than handwritten in composition. Theme lookup accepts explicitly declared ingress aliases only and resolves to the canonical binding before Scene construction.

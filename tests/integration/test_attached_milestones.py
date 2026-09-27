@@ -1,0 +1,68 @@
+"""Attached points are drawn on their host's row with their facts visible (#486 A486-2)."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import yaml
+
+from chrona.app.cli import main
+
+ROOT = Path(__file__).resolve().parents[2]
+HALCYON = ROOT / "examples/halcyon-1"
+GATES = {"campaign-readiness": ("Campaign readiness review", "2027-09-24"),
+         "range-safety": ("Range safety review", "2027-10-01")}
+
+
+def _render(tmp_path: Path, monkeypatch, points: str | None = None) -> dict:
+    project = yaml.safe_load((HALCYON / "project.yaml").read_text(encoding="utf-8"))
+    for object_id, (title, at) in GATES.items():
+        project["objects"][object_id] = {"type": "gate", "title": title, "attachesTo": "campaign",
+                                         "schedule": {"mode": "fixed-point", "at": at}}
+    project_path = tmp_path / "project.yaml"
+    project_path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
+    preset = tmp_path / "preset"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(preset)])
+    main()
+    if points is not None:
+        view_path = preset / "view.yaml"
+        view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+        view["body"]["rows"]["points"] = points
+        view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    scene = tmp_path / "scene.json"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project_path), "--actual", str(HALCYON / "actual.yaml"),
+                                      "--preset", str(preset / "preset.yaml"), "--output", str(tmp_path / "out.svg"),
+                                      "--emit-scene", str(scene)])
+    main()
+    return json.loads(scene.read_text(encoding="utf-8"))["surfaces"][0]
+
+
+def _row_of(surface: dict, object_id: str) -> str:
+    return next(row["id"] for row in surface["rows"] if object_id in {item.split(":")[-1] for item in row.get("items", ())}
+                or row["id"].split(":")[-1] == object_id or row["id"] == object_id)
+
+
+def _primitive(surface: dict, prefix: str) -> dict:
+    return next(item for item in surface["primitives"] if item["id"].startswith(prefix))
+
+
+def test_attached_gates_sit_on_the_host_row_with_title_and_date(tmp_path, monkeypatch):
+    surface = _render(tmp_path, monkeypatch)
+    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
+    host = next(bounds for row_id, bounds in rows.items() if row_id.endswith("campaign"))
+    assert not any(row_id.endswith(gate) for row_id in rows for gate in GATES)  # no row of their own
+    for object_id, (title, at) in GATES.items():
+        mark = _primitive(surface, f"planned:campaign:{object_id}")["bounds"]
+        centre = mark["block"] + mark["blockSize"] / 2
+        assert host["block"] <= centre <= host["block"] + host["blockSize"]
+        label = _primitive(surface, f"member-label:campaign:{object_id}")
+        day, month = at[8:], {"09": "Sep", "10": "Oct"}[at[5:7]]
+        assert label["text"].startswith(f"{title} · {day} {month}")
+
+
+def test_own_row_restores_a_row_per_point(tmp_path, monkeypatch):
+    surface = _render(tmp_path, monkeypatch, points="own-row")
+    rows = [row["id"] for row in surface["rows"]]
+    for gate in GATES:
+        assert any(row_id.endswith(gate) for row_id in rows)

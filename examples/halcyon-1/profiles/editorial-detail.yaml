@@ -1,0 +1,10 @@
+version: chrona/review-detail-profile/v0.1
+id: chrona-builtin-editorial-detail
+body:
+  legend:
+    - {role: planned, label: Task duration}
+    - {role: actual, label: Progress}
+    - {role: milestone, label: Milestone}
+    - {role: dependency, label: Dependency}
+    - {role: asOf, label: Today}
+    - {role: calendar-closed, label: Weekend}

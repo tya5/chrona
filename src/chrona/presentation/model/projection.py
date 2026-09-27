@@ -5,6 +5,7 @@ from copy import deepcopy
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
+from enum import StrEnum
 from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
@@ -12,6 +13,15 @@ from chrona.presentation.contracts.resources import ViewInput
 
 
 _SHARED_TRACK_SOURCE_ORDER = {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}
+
+
+class ObservationState(StrEnum):
+    """One View-owned Actual availability fact at the declared as-of date."""
+
+    RECORDED = "recorded"
+    DUE_UNOBSERVED = "due-unobserved"
+    NOT_YET_DUE = "not-yet-due"
+    UNAVAILABLE = "unavailable"
 
 
 def shared_track_member_key(member: Any, source_index: int) -> tuple[int, int, int]:
@@ -48,6 +58,8 @@ class ReviewItem:
     link: dict[str, str] | None = None
     scenario_id: str | None = None
     planned_progress: float | None = None
+    observation_state: ObservationState = ObservationState.UNAVAILABLE
+    attached_to: str | None = None
 
 
 @dataclass(frozen=True)
@@ -162,6 +174,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         raise ValueError("E_ACTUAL_REQUIRED")
     latest, unmatched = _latest_observations(
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
+    as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
+    as_of = date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else as_of_value
     explicit = view.rows.mode == "explicit"
     ids = set(view.selection.ids) if view.selection and view.selection.ids else set(placements)
     types = set(view.selection.types) if view.selection and view.selection.types else {"span", "point"}
@@ -182,6 +196,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         if hierarchy and object_id in ids and source_type in types and (not object_types or project_type in object_types) and project_type not in excluded_object_types:
             hierarchy_root_ids.add(object_id)
         actual = _actual(latest.get(object_id))
+        observation_state = _observation_state(planned, latest.get(object_id), as_of)
         finish_delta = _finish_delta(planned, actual)
         total_float = analysis.total_float.get(object_id) if analysis is not None else None
         critical = object_id in analysis.critical if analysis is not None else False
@@ -190,7 +205,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         group_id = _group_id(project, object_id, source_type, grouping)
         selected.append(ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, actual, finish_delta, _roles(actual, finish_delta, critical),
+            planned, actual, finish_delta, _roles(observation_state, finish_delta, critical),
             group_id, str(project.get("entities", {}).get(group_id, {}).get("title", group_id)),
             dict(project["objects"][object_id].get("fields", {})), object_id, "primary",
             parent_id=entry.parent_id if entry else None,
@@ -199,9 +214,14 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             hierarchy_path=entry.path if entry else (),
             is_rollup=project["objects"][object_id].get("schedule", {}).get("mode") == "rollup",
             total_float=total_float, critical=critical, link=link,
-            planned_progress=project["objects"][object_id].get("plannedProgress")))
+            planned_progress=project["objects"][object_id].get("plannedProgress"),
+            observation_state=observation_state))
     if not selected:
         raise ValueError("E_REVIEW_EMPTY")
+    if (grouping is not None and grouping.by == "field" and grouping.presentation == "header"
+            and all(grouping.field not in (item.fields or {}) for item in selected)):
+        # A header that distinguishes nothing is not drawn (Specification 45).
+        selected = [replace(item, group_id="", group_label="") for item in selected]
     if hierarchy and not explicit:
         selected = _expand_hierarchy_roots(selected, hierarchy_entries, hierarchy_root_ids, view)
     elif not explicit:
@@ -329,12 +349,16 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
     """Apply View-owned automatic point policy without exposing relation facts to Layout."""
     if view.rows.points == "own-row":
         return rows, ()
+    if view.rows.points in {"attached", "predecessor"}:
+        rows = _attach_points(rows, project)
+    if view.rows.points == "attached":
+        return rows, ()
     if view.rows.points == "group-header":
         if view.grouping is None or view.grouping.presentation != "header":
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED")
         labels = view.visibility.labels
         has_title_label = (labels is True or
-                           (isinstance(labels, Mapping) and labels.get("placement") == "plot"
+                           (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
                             and "title" in labels.get("content", ())))
         if not has_title_label:
             raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED")
@@ -369,6 +393,26 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
     return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in folded), ()
 
 
+def _attach_points(rows: tuple[ReviewRowProjection, ...], project: dict[str, Any]) -> tuple[ReviewRowProjection, ...]:
+    """Move each point that attachesTo a selected span onto that span's row (#486)."""
+    objects = project.get("objects", {})
+    by_object = {row.table_subject_id: row for row in rows}
+    moved: set[str] = set()
+    replacements: dict[str, ReviewRowProjection] = {}
+    for row in rows:
+        subject = row.items[0] if row.items else None
+        host = objects.get(subject.object_id, {}).get("attachesTo") if subject is not None else None
+        if subject is None or subject.source_type != "point" or host not in by_object:
+            continue
+        target = replacements.get(host, by_object[host])
+        if not target.items or target.items[0].source_type != "span":
+            continue
+        moved.add(row.row_id)
+        replacements[host] = replace(target, items=target.items + tuple(
+            replace(item, track="shared", attached_to=host) for item in row.items))
+    return tuple(replacements.get(row.row_id, row) for row in rows if row.row_id not in moved)
+
+
 def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
     """Validate only asserted View row edges against the Project-owned hierarchy."""
     by_id = {row.row_id: row for row in rows}
@@ -400,7 +444,7 @@ def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[s
         critical = object_id in analysis.critical if analysis is not None else False
         result[object_id] = ReviewItem(
             object_id, str(project["objects"][object_id].get("title", object_id)), source_type,
-            planned, None, None, _roles(None, None, critical), "", "",
+            planned, None, None, _roles(ObservationState.UNAVAILABLE, None, critical), "", "",
             dict(project["objects"][object_id].get("fields", {})), object_id, source_kind,
             total_float=total_float, critical=critical, link=_object_link(project["objects"][object_id].get("link")))
     return result
@@ -449,6 +493,14 @@ def _order(rows: list[ReviewItem], view: ViewInput) -> None:
         ordering_by, tie_break, direction = ordering.by, ordering.tie_break, ordering.direction
     rows.sort(key=lambda item: value(item, tie_break))
     rows.sort(key=lambda item: value(item, ordering_by), reverse=direction == "descending")
+    if view.grouping is not None and view.grouping.order_by == "earliestPlannedStart":
+        earliest: dict[str, Any] = {}
+        for item in rows:
+            start = item.planned.get("start", item.planned.get("at"))
+            if start is not None and (item.group_id not in earliest or start < earliest[item.group_id]):
+                earliest[item.group_id] = start
+        rows.sort(key=lambda item: (item.group_id not in earliest, earliest.get(item.group_id, date.min), item.group_id))
+        return
     group_order = view.grouping.order if view.grouping is not None else ()
     rows.sort(key=lambda item: (group_order.index(item.group_id) if item.group_id in group_order else len(group_order), item.group_id))
 
@@ -504,10 +556,27 @@ def _date_or_number(value: Any) -> date | float:
     return value if isinstance(value, date) else date.fromisoformat(value) if isinstance(value, str) else float(value)
 
 
-def _roles(actual: dict[str, Any] | None, finish_delta: int | None,
+def _observation_state(planned: dict[str, date], observation: dict[str, Any] | None,
+                       as_of: date | None) -> ObservationState:
+    """Classify one selected observation without reading the local clock."""
+    if observation is not None:
+        return ObservationState.RECORDED
+    if as_of is None:
+        return ObservationState.UNAVAILABLE
+    due = planned.get("end", planned.get("at"))
+    if due is None:
+        return ObservationState.UNAVAILABLE
+    return ObservationState.DUE_UNOBSERVED if due <= as_of else ObservationState.NOT_YET_DUE
+
+
+def _roles(observation_state: ObservationState, finish_delta: int | None,
            critical: bool = False) -> tuple[str, ...]:
     """Map selected facts to the closed semantic-role vocabulary."""
-    roles = ["planned", "actual" if actual else "missing-actual"]
+    roles = ["planned"]
+    if observation_state == ObservationState.RECORDED:
+        roles.append("actual")
+    elif observation_state == ObservationState.DUE_UNOBSERVED:
+        roles.append("missing-actual")
     if finish_delta is not None:
         roles.append("variance-behind" if finish_delta > 0 else "variance-ahead" if finish_delta < 0 else "variance-on-plan")
     if critical:

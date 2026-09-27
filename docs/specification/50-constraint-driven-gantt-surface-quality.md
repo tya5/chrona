@@ -62,6 +62,12 @@ The timeline as-of label uses this visible-overflow fallback beside its marker
 line. A Layout text placement with `suppressed` disposition is non-drawable:
 Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
 by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
+For suppressed plot member labels, Layout MUST also count completed
+`memberLabel` text placements with `overflow: suppressed` once per surface.
+When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface-id>;count=<positive-integer>`
+inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
+number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.
+Scene projects the completed fact; adapters neither recount nor draw a marker.
 
 The as-of label's finite candidate ladder may use the adjacent axis/timeline
 seam as a mark-clear fallback. Layout declares that fallback explicitly and
@@ -81,9 +87,30 @@ View relation intent becomes `none` or an object with `mode: semantic` and `over
 
 Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. It ranks candidates by crossings, length, bends, then lexicographic points. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
 
+Required, route-independent lane item names and deltas are measured and
+registered as obstacles before semantic routes. A route body or endpoint
+egress MUST NOT cross any required lane/member label; the named host-mark
+egress exemption does not exempt text. Relation labels anchored to a completed
+path are placed after that path, not misclassified as pre-route item labels.
+
+For a suppressed lane relation, Layout retains one typed result per candidate
+port pair in deterministic order: `egress-collision` with blocker identities,
+`no-route-found` from a typed bounded-search outcome, or `quality-rejected`
+with measured length/direct length/bends and the declared limits. A generic
+`ValueError` is not a no-route result. The primary cause is the furthest stage
+reached by any pair (`quality-rejected`, then `no-route-found`, otherwise
+`egress-collision`); all mixed attempts remain inspectable. A suppressed
+placement has no path or accepted attempt; an accepted route has a completed
+path and no suppression evidence. Layout retains the existing generic
+suppression diagnostic and emits lane-specific, stable cause evidence; Scene
+projects it without inferring or rerouting. Existing non-lane diagnostics and
+Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../design/issue-467-494-l3b-prelayout-route-evidence-correction-2026-09-27.md).
+
 ### 3.4 Groups and legend
 
 View grouping gains `presentation: band | header`; `header` requires a non-zero resolved `timeline.groupHeader.blockSize`. Layout reserves one header block before the group's first row and supplies measured header text bounds spanning the selected table/timeline surface. Missing capacity completes visible stacked geometry and `W_LAYOUT_GROUP_HEADER_OVERFLOW`.
+
+A group's background band and its header band share one selection decision under `backgroundDecoration.groups: all | alternate`: a group selected for a band is banded from its own header row through its own last content row; a group not selected carries neither band, so an unselected group's header is never painted as an extension of a neighboring group's band. `backgroundDecoration.groups: none` is the sole unconditional case: every group's header band still paints (the header-only decoration), independent of body selection. A row-decoration stripe (`backgroundDecoration.rows: alternate`) and a group band may cover the same extent; Layout paints row stripes after group bands so an opaque stripe is not hidden by an opaque band at the same declared Theme paint order.
 
 A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
 

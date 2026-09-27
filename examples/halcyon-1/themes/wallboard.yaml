@@ -3,6 +3,25 @@ kind: theme
 id: wallboard
 body:
   values:
+    chip-padding:
+      type: number
+      value: 0.5
+    chip-radius:
+      type: number
+      value: 0.5
+    opacity.axis-band:
+      type: number
+      value: 1
+    relation-source-terminal:
+      type: marker
+      value:
+        shape: circle
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
+    dash.as-of:
+      type: dashPattern
+      value: [4, 3]
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -62,6 +81,9 @@ body:
         headWidth: 10
         attachmentOffset: 1
     milestone-symbol:
+      type: symbol
+      value: {shape: diamond}
+    milestone-symbol-baseline:
       type: symbol
       value: {shape: diamond}
     stroke-width:
@@ -178,6 +200,12 @@ body:
       type: number
       value: 0
   roles:
+    axis-rule:
+      strokeWidth: stroke-width
+    as-of-label-chip:
+      backgroundTreatment: fill
+      chipPadding: chip-padding
+      markCornerRadius: chip-radius
     group-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
@@ -198,7 +226,7 @@ body:
     axis-band-decoration:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
-      opacity: opacity.group-band
+      opacity: opacity.axis-band
     text:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -269,7 +297,6 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
-      strokeWidth: stroke-width
     summary:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -302,8 +329,12 @@ body:
       iconGap: icon-gap
     milestoneSymbol:
       symbol: milestone-symbol
+    milestoneSymbolActual:
+      symbol: milestone-symbol
+    milestoneSymbolBaseline:
+      symbol: milestone-symbol-baseline
     relationSourceTerminal:
-      marker: arrow
+      marker: relation-source-terminal
     relationTargetTerminal:
       marker: arrow
     dependency:
@@ -326,7 +357,6 @@ body:
     critical-edge:
       strokeWidth: stroke-width
     variance-behind:
-      strokeWidth: stroke-width
       contrastTreatment: required
     variance-ahead:
       contrastTreatment: deemphasized
@@ -334,12 +364,12 @@ body:
       contrastTreatment: required
     missing-actual-cell:
       contrastTreatment: required
-    baseline:
-      strokeWidth: stroke-width
     asOf:
       strokeWidth: stroke-width
+      dash: dash.as-of
     as-of:
       strokeWidth: stroke-width
+      dash: dash.as-of
     snapshot:
       strokeWidth: stroke-width
       markHeight: mark-height-container
@@ -373,26 +403,22 @@ body:
       iconScale: icon-mark-scale
       iconGap: icon-mark-gap
   colorBindings:
+    axis-rule.stroke: text
     background.fill: surface
     text.fill: text
     member-label-inside-planned.fill: insideLabelPlanned
     member-label-inside-actual.fill: insideLabelActual
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
-    heading.fill: text
     subtitle.fill: textMuted
-    axis.fill: textMuted
-    legend.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
     note-index.fill: accent
-    annotation.stroke: neutral
-    summary.fill: text
     metric.fill: text
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: surfaceRaised
+    axis-band-decoration.fill: neutral
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
@@ -420,16 +446,13 @@ body:
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
-    variance-behind.stroke: negative
     dependency.stroke: textMuted
-    groupHeader.fill: surfaceRaised
-    baseline.stroke: neutral
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
     calendar-exception.fill: warning
     range.fill: warning
-    asOf.stroke: warning
     as-of.stroke: warning
+    as-of-label-chip.fill: neutral
     progress-fill.fill: warning
     progress-fill.stroke: surface
     icon-mark.fill: surface

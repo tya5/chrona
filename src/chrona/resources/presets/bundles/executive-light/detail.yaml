@@ -1,0 +1,6 @@
+version: chrona/review-detail-profile/v0.1
+id: chrona-builtin-legend
+body:
+  legend:
+    - {role: planned, label: Planned}
+    - {role: actual, label: Actual}

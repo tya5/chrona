@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
-from chrona.presentation.layout.text import measure_text_width
-from chrona.presentation.model.projection import shared_track_member_key
+from chrona.presentation.layout.text import measure_text_width, metric_for_role
+from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
 
 
@@ -48,9 +49,96 @@ class MarkGeometry:
                               detail=f"height={self.height}; offset={self.offset}")
 
 
+@dataclass(frozen=True)
+class MarkBandFrame:
+    """One completed mark band in a caller-owned block coordinate frame.
+
+    ``inline_scale`` is retained with the frame so every mark projection uses
+    the same temporal scale as its track allocation.  Automatic and explicit
+    rows use ``from_track``; lane projections use ``zero_origin`` and translate
+    the completed result only after composition.
+    """
+
+    inline_scale: Any
+    block_origin: float
+    block_size: float
+    role_geometries: Mapping[str, MarkGeometry]
+
+    def __post_init__(self) -> None:
+        if (not math.isfinite(self.block_origin) or not math.isfinite(self.block_size)
+                or self.block_size <= 0):
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layout/markBandFrame")
+
+    @classmethod
+    def from_track(cls, track: TrackPlacement, inline_scale: Any,
+                   role_geometries: Mapping[str, MarkGeometry]) -> "MarkBandFrame":
+        return cls(inline_scale, track.block, track.block_size, role_geometries)
+
+    @classmethod
+    def zero_origin(cls, inline_scale: Any, block_size: float,
+                    role_geometries: Mapping[str, MarkGeometry]) -> "MarkBandFrame":
+        return cls(inline_scale, 0.0, block_size, role_geometries)
+
+    def role_bounds(self, role: str) -> tuple[float, float]:
+        """Return the role's block start and extent without changing formula order."""
+        geometry = self.role_geometries[role]
+        return (self.block_origin + self.block_size * geometry.offset,
+                self.block_size * geometry.height)
+
+
 def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, float]:
     """Return one completed block coordinate and extent within an assigned slot."""
     return track.block + track.block_size * geometry.offset, track.block_size * geometry.height
+
+
+def table_cell_indent(*, grouped: bool, depth: int, inset: float, indent: float | None) -> float:
+    """Return the hierarchy-column indent that a table row's cell occupies."""
+    if depth and indent is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues/table.indent.inlineSize")
+    return (inset if grouped else 0.0) + float(indent or 0) * depth
+
+
+def table_text_measurer(theme_tokens: Any, font_metrics: Any) -> Callable[[str, str, str], float]:
+    """Measure table header and cell text in its own typography role."""
+    def measure(content: str, typography_role: str, orientation: str = "horizontal") -> float:
+        treatment = theme_tokens.text_treatment(typography_role)
+        if orientation != "horizontal":
+            return float(treatment.font_size * treatment.line_height)
+        return measure_text_width(content, font_size=float(treatment.font_size),
+                                  font_metrics=metric_for_role(theme_tokens, typography_role, font_metrics),
+                                  letter_spacing=float(treatment.letter_spacing),
+                                  text_transform=treatment.transform,
+                                  numeric_spacing=treatment.numeric_spacing)
+    return measure
+
+
+def measure_table_columns(*, columns: tuple[TableColumnContent, ...],
+                          cells: tuple[TableCellContent, ...],
+                          measure_text: Callable[[str, str, str], float], minimum_inline: float,
+                          hierarchy_column: str | None = None,
+                          cell_indents: Mapping[str, float] | None = None) -> tuple[float, ...]:
+    """Return each column's natural width; the one measure for slot and columns.
+
+    A hierarchy-column cell's extent includes its row's indent, because that
+    indent is consumed from the same column allocation at placement.
+    """
+    indents = cell_indents or {}
+    content_by_column: dict[str, list[tuple[str, str, str, float]]] = {
+        column.column_id: [(column.header, "text", column.header_orientation, 0.0)] for column in columns}
+    for cell in cells:
+        indent = indents.get(cell.object_id, 0.0) if cell.column_id == hierarchy_column else 0.0
+        content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role, "horizontal", indent))
+    return tuple(
+        max(minimum_inline, max((measure_text(item, role, orientation) + indent
+                                 for item, role, orientation, indent in content_by_column[column.column_id]),
+                                default=minimum_inline) + minimum_inline)
+        for column in columns
+    )
+
+
+def table_content_inline_size(natural_widths: tuple[float, ...], gutter: float) -> float:
+    """Return the inline extent of measured columns and the gutters between them."""
+    return geometry_sum(natural_widths) + gutter * max(0, len(natural_widths) - 1)
 
 
 def place_table_columns(*, columns: tuple[TableColumnContent, ...],
@@ -58,17 +146,13 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         bounds: tuple[float, float, float, float],
                         measure_text: Callable[[str, str, str], float], minimum_inline: float,
                         overflow: str = "visible-overflow", gutter: float = 0.0,
+                        hierarchy_column: str | None = None,
+                        cell_indents: Mapping[str, float] | None = None,
                         ) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
-    content_by_column = {column.column_id: [(column.header, "text", column.header_orientation)] for column in columns}
-    for cell in cells:
-        content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role, "horizontal"))
-    natural_widths = tuple(
-        max(minimum_inline, max((measure_text(item, role, orientation)
-                                 for item, role, orientation in content_by_column.get(column.column_id, ((column.header, "text", column.header_orientation),))),
-                                default=minimum_inline) + minimum_inline)
-        for column in columns
-    )
+    natural_widths = measure_table_columns(columns=columns, cells=cells, measure_text=measure_text,
+                                           minimum_inline=minimum_inline, hierarchy_column=hierarchy_column,
+                                           cell_indents=cell_indents)
     if gutter < 0:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
@@ -101,13 +185,26 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
     return tuple(placements)
 
 
+def table_text_line_block(theme_tokens: Any, typography_roles: Any) -> float:
+    """Return the tallest line block among the table cell roles a row holds."""
+    return max((float(theme_tokens.text_treatment(role).font_size * theme_tokens.text_treatment(role).line_height)
+                for role in sorted(set(typography_roles))), default=0.0)
+
+
 def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: float,
                                row_padding: float, mark_block_size: float,
-                               role_geometries: Mapping[str, MarkGeometry] | None = None) -> tuple[float, ...]:
-    """Close each row's minimum before any surplus distribution occurs."""
-    if row_minimum <= 0 or row_padding < 0:
+                               role_geometries: Mapping[str, MarkGeometry] | None = None,
+                               text_line_block: float = 0.0) -> tuple[float, ...]:
+    """Close each row's minimum before any surplus distribution occurs.
+
+    ``row_padding`` is the row's total block padding.  It is added once to the
+    mark tracks and once to the table text line the row holds (Specification
+    24 section 2.1).
+    """
+    if row_minimum <= 0 or row_padding < 0 or text_line_block < 0:
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/measuredSources/metricValues/timeline.row")
-    return tuple(max(row_minimum, minimum_track_block_extent(
+    text_requirement = text_line_block + row_padding if text_line_block else 0.0
+    return tuple(max(row_minimum, text_requirement, minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
     ) + row_padding) for row in review_rows)
 
@@ -192,9 +289,12 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                 stacked_index += 1
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             source_kind = getattr(item, "source_kind", "primary")
-            roles = ("actual",) if source_kind == "actual" else ("snapshot" if source_kind in {"snapshot", "scenario"} else "planned",)
-            if source_kind in {"primary", "combined"}:
-                roles += ("actual" if has_actual(item) else "missing-actual",)
+            roles = (("actual",) if has_actual(item) else ()) if source_kind == "actual" else (
+                "snapshot" if source_kind in {"snapshot", "scenario"} else "planned",)
+            if source_kind == "combined" and has_actual(item):
+                roles += ("actual",)
+            elif source_kind in {"primary", "combined"} and item.observation_state == ObservationState.DUE_UNOBSERVED:
+                roles += ("missing-actual",)
             slot_size = mark_block_size
             for role in roles:
                 geometry = geometries[role]

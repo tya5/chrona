@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
+from chrona.presentation.scene.capabilities import theme_role_property_consumer
 from chrona.presentation.scene.paint_analysis import composited_contrast
 
 
@@ -113,6 +114,11 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     colors = resolve_color_scheme(scheme, content_identity=scheme_content_identity)
     values = dict(body.get("values", {}))
     roles = {name: dict(binding) for name, binding in body.get("roles", {}).items() if isinstance(binding, Mapping)}
+    for role, binding in roles.items():
+        for property_name in binding:
+            if theme_role_property_consumer(role, property_name) is None:
+                raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                       f"/body/roles/{role}/{property_name}")
     for target, intent in body["colorBindings"].items():
         if (not isinstance(target, str) or "." not in target or not isinstance(intent, str)
                 or (intent not in _INTENTS and intent not in colors)):
@@ -120,6 +126,8 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         role, property_name = target.rsplit(".", 1)
         if property_name not in {"fill", "stroke", "gradientStart", "gradientEnd", "shadowColor"}:
             raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+        if theme_role_property_consumer(role, property_name) is None:
+            raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/colorBindings/{target}")
         token = f"__scheme.{intent}.{target}"
         color = colors[intent]
         values[token] = {"type": "color", "value": color}
@@ -144,10 +152,20 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     resolved_scales: dict[str, dict[str, dict[str, str]]] = {}
     for scale_id, declaration in declared_scales.items():
         slots = declaration.get("slots") if isinstance(declaration, Mapping) else None
+        palette = declaration.get("palette") if isinstance(declaration, Mapping) else None
+        if isinstance(scale_id, str) and isinstance(palette, (list, tuple)) and palette:
+            resolved_palette = [str(slot) for slot in palette]
+            if any(f"category:{slot}" not in colors for slot in resolved_palette):
+                raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
+            resolved_scales[scale_id] = {"palette": resolved_palette}
+            continue
         if not isinstance(scale_id, str) or not isinstance(slots, Mapping):
             raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
         resolved_slots = {str(value): str(slot) for value, slot in slots.items()}
         if any(f"category:{slot}" not in colors for slot in resolved_slots.values()):
             raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
         resolved_scales[scale_id] = {"slots": resolved_slots}
-    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}}}
+    suitability = scheme.get("body", {}).get("suitability", {}) if isinstance(scheme.get("body"), Mapping) else {}
+    claimed = suitability.get("colorVision", ()) if isinstance(suitability, Mapping) else ()
+    color_vision = [str(item) for item in claimed if item != "none-claimed"]
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}, "colorVision": color_vision}}

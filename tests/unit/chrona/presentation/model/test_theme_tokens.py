@@ -85,3 +85,111 @@ def test_summary_bar_height_resolves_its_theme_owned_value():
     theme["body"]["values"]["height"] = {"type": "number", "value": "0.25"}
     theme["body"]["roles"]["summary-bar"] = {"markHeight": "height"}
     assert ThemeTokenView(theme).summary_bar_height("summary-bar") == Decimal("0.25")
+
+
+def test_symbol_resolves_the_full_value_mapping_not_only_the_shape():
+    theme = _theme()
+    theme["body"]["values"]["gate"] = {"type": "symbol", "value": {
+        "shape": "glyph", "viewBox": [10, 10], "parts": [{"d": "M0 0L10 0L10 10L0 10Z", "paint": "fill"}]}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "gate"}
+    value = ThemeTokenView(theme).symbol()
+    assert value["shape"] == "glyph"
+    assert value["viewBox"] == [10, 10]
+
+
+def test_variant_symbol_falls_back_to_milestone_symbol_when_a_variant_role_is_unset():
+    theme = _theme()
+    theme["body"]["values"]["gate"] = {"type": "symbol", "value": {"shape": "diamond"}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "gate"}
+    tokens = ThemeTokenView(theme)
+    assert tokens.variant_symbol("planned") == {"shape": "diamond"}
+    assert tokens.variant_symbol("actual") == {"shape": "diamond"}
+    assert tokens.variant_symbol("baseline") == {"shape": "diamond"}
+
+
+def test_variant_symbol_uses_its_own_role_when_declared():
+    theme = _theme()
+    theme["body"]["values"]["gate"] = {"type": "symbol", "value": {"shape": "diamond"}}
+    theme["body"]["values"]["ghost"] = {"type": "symbol", "value": {"shape": "circle"}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "gate"}
+    theme["body"]["roles"]["milestoneSymbolBaseline"] = {"symbol": "ghost"}
+    tokens = ThemeTokenView(theme)
+    assert tokens.variant_symbol("planned") == {"shape": "diamond"}
+    assert tokens.variant_symbol("actual") == {"shape": "diamond"}
+    assert tokens.variant_symbol("baseline") == {"shape": "circle"}
+
+
+@pytest.mark.parametrize(("inset", "radius", "expected"), [
+    (None, None, (Decimal(0), Decimal(0))),
+    (0.2, 0.5, (Decimal("0.2"), Decimal("0.5"))),
+    (0.5, None, "progressInset"),
+    (0.1, 0.6, "markCornerRadius"),
+])
+def test_progress_track_is_optional_and_range_checked(inset, radius, expected):
+    theme = _theme()
+    role = {}
+    for name, value, token in (("progressInset", inset, "inset"), ("markCornerRadius", radius, "radius")):
+        if value is not None:
+            theme["body"]["values"][token] = {"type": "number", "value": value}
+            role[name] = token
+    theme["body"]["roles"]["progress-fill"] = role
+    view = ThemeTokenView(theme)
+    if isinstance(expected, str):
+        with pytest.raises(ThemeTokenError) as raised:
+            view.progress_track("progress-fill")
+        assert raised.value.path.endswith(expected)
+    else:
+        assert view.progress_track("progress-fill") == expected
+
+
+def _theme_with_annotation_container(value):
+    theme = _theme()
+    theme["body"]["values"]["container"] = {"type": "annotationContainer", "value": value}
+    theme["body"]["roles"]["annotation"] = {"annotationContainer": "container"}
+    return theme
+
+
+def test_annotation_container_is_none_without_the_binding():
+    assert ThemeTokenView(_theme()).annotation_container("annotation") is None
+
+
+def test_annotation_container_rectangle_and_balloon_are_unchanged_by_465():
+    rectangle = ThemeTokenView(_theme_with_annotation_container(
+        {"outline": "rectangle", "cornerRadius": 0.2})).annotation_container("annotation")
+    assert rectangle.outline == "rectangle" and rectangle.corner_radius == Decimal("0.2")
+    assert rectangle.tail_base is None and rectangle.image_ref is None
+
+    balloon = ThemeTokenView(_theme_with_annotation_container(
+        {"outline": "balloon", "cornerRadius": 0.1, "tailBaseEm": 0.6})).annotation_container("annotation")
+    assert balloon.outline == "balloon" and balloon.tail_base == Decimal("0.6")
+    assert balloon.image_ref is None
+
+
+def test_annotation_container_image_round_trips_reference_and_insets():
+    value = {"outline": "image", "image": "chrona:frame", "cornerRadius": 0,
+            "sliceInsetsEm": {"top": 0.9, "right": 0.6, "bottom": 0.9, "left": 0.6},
+            "contentInsetEm": {"top": 1.1, "right": 0.8, "bottom": 1.1, "left": 0.8}}
+    container = ThemeTokenView(_theme_with_annotation_container(value)).annotation_container("annotation")
+    assert container.outline == "image"
+    assert container.image_ref == "chrona:frame"
+    assert container.tail_base is None
+    assert container.slice_insets_em == (Decimal("0.9"), Decimal("0.6"), Decimal("0.9"), Decimal("0.6"))
+    assert container.content_insets_em == (Decimal("1.1"), Decimal("0.8"), Decimal("1.1"), Decimal("0.8"))
+
+
+@pytest.mark.parametrize("mutation,expected_suffix", [
+    (lambda value: value.pop("image"), "annotationContainer/image"),
+    (lambda value: value.update(image=""), "annotationContainer/image"),
+    (lambda value: value.update(cornerRadius=0.1), "annotationContainer/cornerRadius"),
+    (lambda value: value.pop("sliceInsetsEm"), "annotationContainer/sliceInsetsEm"),
+    (lambda value: value["sliceInsetsEm"].update(top=-1), "annotationContainer/sliceInsetsEm"),
+    (lambda value: value.pop("contentInsetEm"), "annotationContainer/contentInsetEm"),
+])
+def test_annotation_container_image_rejects_missing_or_invalid_fields(mutation, expected_suffix):
+    value = {"outline": "image", "image": "chrona:frame", "cornerRadius": 0,
+            "sliceInsetsEm": {"top": 0.9, "right": 0.6, "bottom": 0.9, "left": 0.6},
+            "contentInsetEm": {"top": 1.1, "right": 0.8, "bottom": 1.1, "left": 0.8}}
+    mutation(value)
+    with pytest.raises(ThemeTokenError) as raised:
+        ThemeTokenView(_theme_with_annotation_container(value)).annotation_container("annotation")
+    assert raised.value.path.endswith(expected_suffix)

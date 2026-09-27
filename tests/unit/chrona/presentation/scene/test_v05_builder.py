@@ -12,7 +12,7 @@ from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun,
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
-from chrona.presentation.model.projection import FoldedPointProjection, ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.model.projection import FoldedPointProjection, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
 from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
@@ -185,6 +185,7 @@ def _theme():
                   "group-header-band": {**roles["group-header-band"], "opacity": "group-header-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 11},
                   "calendar-closed": {**roles["calendar-closed"], "opacity": "calendar-opacity", "backgroundTreatment": "outline", "backgroundPaintOrder": 12},
                   "axis-band-decoration": {"fill": "ink", "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
+                  "axis-band-decoration2": {"fill": "ink", "opacity": "group-opacity", "backgroundTreatment": "fill", "backgroundPaintOrder": 10},
                   "milestoneSymbol": {"symbol": "milestone-symbol"}}, "metrics": {}}}
 
 
@@ -265,7 +266,8 @@ class _Font:
 
 
 def test_core_surface_uses_frozen_slots_measurements_and_normalized_cells():
-    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None, ("planned",)),),
+    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)}, None, None,
+                                              ("planned", "missing-actual"), observation_state=ObservationState.DUE_UNOBSERVED),),
                                   (date(2026, 1, 1), date(2026, 2, 1)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"), "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
@@ -587,6 +589,124 @@ def test_legend_entries_emit_role_derived_swatches():
     assert swatch.visual_role == "planned"
 
 
+def _legend_measurement():
+    return MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                           {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                            "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
+                            "timeline.mark.blockSize": Decimal(8)})
+
+
+def _legend_surface(entries, theme):
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    value = build_scene_input(projection=projection,
+                              surface_content=surface_content(legend_entries=entries),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis", "legend"),
+                              resolved_theme=theme, font_metrics=_Font(), measured_sources=_legend_measurement(),
+                              capabilities={"svg": True})
+    return compose_review_surface(value)
+
+
+def test_legend_milestone_entry_renders_as_the_bound_symbol_at_chart_size():
+    # #427: a milestone legend entry is the same diamond, at the same size, a
+    # real milestone point mark draws on this chart -- never a square.
+    theme = _theme()
+    theme["body"]["roles"]["milestone"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
+    surface = _legend_surface((("milestone", "Milestone"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:milestone")
+    assert swatch.kind == "Symbol"
+    assert swatch.visual_role == "milestone"
+    # planned's own markHeight ratio (mark-full = 1) times timeline.mark.blockSize (8).
+    assert swatch.bounds[2] == pytest.approx(8.0)
+    assert swatch.bounds[3] == pytest.approx(8.0)
+
+
+def test_legend_outline_pattern_role_swatch_has_no_fill():
+    # #427: an outline-only mark has a legend key that shows it as hollow, not
+    # a solid block of its stroke colour.
+    theme = _theme()
+    theme["body"]["values"]["outline-pattern"] = {"type": "pattern", "value": {"kind": "outline"}}
+    theme["body"]["roles"]["planned"]["pattern"] = "outline-pattern"
+    surface = _legend_surface((("planned", "Baseline"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
+    assert swatch.kind == "Rect"
+    assert swatch.paint.fill is None
+    assert swatch.paint.stroke is not None
+
+
+def test_legend_dependency_entry_renders_as_a_stroke_with_its_terminal():
+    # #427: a relation-terminal role has a legend key that is a stroke with
+    # the role's own marker, not a filled rect.
+    theme = _theme()
+    theme["body"]["roles"]["dependency"] = {**theme["body"]["roles"]["dependency"], "marker": "dependency-marker"}
+    surface = _legend_surface((("dependency", "Dependency"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:dependency")
+    assert swatch.kind == "Path"
+    assert swatch.visual_role == "dependency"
+    assert swatch.marker_end is not None
+    assert swatch.paint.stroke is not None
+
+
+def test_legend_as_of_entry_renders_as_a_dashed_stroke():
+    # #427: a dashed-line role has a legend key that carries the role's own dash.
+    theme = _theme()
+    theme["body"]["values"]["as-of-dash"] = {"type": "dashPattern", "value": [4, 3]}
+    theme["body"]["roles"]["as-of"]["dash"] = "as-of-dash"
+    surface = _legend_surface((("asOf", "As of"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:asOf")
+    assert swatch.kind == "Path"
+    assert swatch.paint.dash == (4.0, 3.0)
+
+
+def test_legend_unrecognized_role_keeps_the_fixed_square_fallback():
+    # #427: a role this dispatch table does not recognize keeps today's fixed
+    # square, rather than failing or guessing a shape.
+    theme = _theme()
+    theme["body"]["roles"]["custom-note"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
+    surface = _legend_surface((("custom-note", "Custom"),), theme)
+
+    swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:custom-note")
+    assert swatch.kind == "Rect"
+    # legend_size(axis-size=12) * 0.8, today's exact formula.
+    assert swatch.bounds[2] == pytest.approx(9.6)
+    assert swatch.bounds[3] == pytest.approx(9.6)
+
+
+def test_legend_inline_direction_flows_entries_left_to_right():
+    # #427: a Layout Profile can declare a horizontal legend.
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    rect = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(1000))
+    bounds = {"table": Rect(Decimal(0), Decimal(0), Decimal(500), Decimal(1000)),
+             "timeline-axis": Rect(Decimal(500), Decimal(0), Decimal(500), Decimal(48)),
+             "timeline": Rect(Decimal(500), Decimal(48), Decimal(500), Decimal(952)),
+             "legend": Rect(Decimal(0), Decimal(900), Decimal(1000), Decimal(20))}
+    decisions = tuple(
+        LayoutDecision(source, "slot", bounds.get(source, rect), source,
+                       direction="inline" if source == "legend" else None,
+                       gap=Decimal(10) if source == "legend" else None)
+        for source in ("title", "table", "timeline", "timeline-axis", "legend")
+    )
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", rect, decisions,
+                              row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
+    value = build_scene_input(projection=projection,
+                              surface_content=surface_content(legend_entries=(("planned", "Plan"), ("actual", "Act"))),
+                              layout_manifest=manifest, resolved_theme=_theme(), font_metrics=_Font(),
+                              measured_sources=_legend_measurement(), capabilities={"svg": True})
+    surface = compose_review_surface(value)
+
+    planned = next(node for node in surface.primitives if node.scene_id == "legend-swatch:planned")
+    actual = next(node for node in surface.primitives if node.scene_id == "legend-swatch:actual")
+    # Both entries sit on the same row (block-axis position unchanged) and
+    # `actual` is to the right of `planned`, not stacked below it.
+    assert planned.bounds[1] == actual.bounds[1]
+    assert actual.bounds[0] > planned.bounds[0]
+
+
 def test_shared_track_overlays_snapshot_planned_and_actual_in_stable_order():
     snapshot = ReviewItem("a", "Baseline", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, (), item_id="snapshot", source_kind="snapshot", track="shared")
     primary = ReviewItem("a", "Plan", "span", {"start": date(2026, 1, 2), "end": date(2026, 1, 7)}, {"start": date(2026, 1, 3), "finish": date(2026, 1, 8)}, None, (), item_id="planned", source_kind="primary", track="shared")
@@ -674,6 +794,83 @@ def test_header_fold_projects_mark_label_route_and_annotation_without_a_point_ta
                for node in surface.primitives)
     assert any(node.scene_id.startswith("relation:task-gate:") for node in surface.primitives)
     assert any(node.scene_id == "annotation-leader:gate-note" for node in surface.primitives)
+
+
+def _glyph_theme():
+    theme = _theme()
+    theme["body"]["values"]["milestone-symbol"] = {"type": "symbol", "value": {
+        "shape": "glyph", "viewBox": [10, 10],
+        "parts": [{"d": "M0 0L10 0L10 10L0 10Z", "paint": "fill"},
+                  {"d": "M3 3L7 3L7 7L3 7Z", "paint": "fill", "color": "#1B1B1B"}]}}
+    theme["body"]["values"]["milestone-symbol-baseline"] = {"type": "symbol", "value": {
+        "shape": "glyph", "viewBox": [10, 10],
+        "parts": [{"d": "M0 0L10 0L10 10L0 10Z", "paint": "fill"},
+                  {"d": "M3 3L7 3L7 7L3 7Z", "paint": "stroke"}]}}
+    theme["body"]["roles"]["milestoneSymbolActual"] = {"symbol": "milestone-symbol"}
+    theme["body"]["roles"]["milestoneSymbolBaseline"] = {"symbol": "milestone-symbol-baseline"}
+    return theme
+
+
+def _glyph_fixture():
+    span = ReviewItem("task", "Task", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)},
+                      None, None, (), group_id="fw", group_label="Firmware team", item_id="task")
+    point = ReviewItem("gate", "Release gate", "point", {"at": date(2026, 1, 5)},
+                       {"at": date(2026, 1, 6)}, None, (), group_id="fw", group_label="Firmware team",
+                       item_id="gate", source_kind="combined", track="shared")
+    scenario = ReviewItem("gate", "Baseline gate", "point", {"at": date(2026, 1, 4)},
+                          None, None, (), group_id="fw", group_label="Firmware team",
+                          item_id="scenario:baseline:gate", source_kind="scenario", track="shared")
+    row = ReviewRowProjection("fw-row", "Task", "fw", "task", (span,))
+    projection = ReviewProjection((span, point), (date(2026, 1, 1), date(2026, 1, 6)), (), (), (row,),
+                                  folded_points=(FoldedPointProjection(point, "fw", members=(scenario,)),))
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+        "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
+        "timeline.groupHeader.blockSize": Decimal(20),
+    })
+    viewport = Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(400))
+    manifest = LayoutManifest("review", "sha256:test", "horizontal", "horizontal", viewport, (
+        LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(1000), Decimal(40)), "title"),
+        LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(40), Decimal(100), Decimal(160)), "table"),
+        LayoutDecision("timeline", "slot", Rect(Decimal(100), Decimal(60), Decimal(700), Decimal(140)), "timeline"),
+        LayoutDecision("axis", "slot", Rect(Decimal(100), Decimal(200), Decimal(700), Decimal(40)), "timeline-axis"),
+    ), row_distribution="fill", background_extents=BACKGROUND_EXTENTS)
+    value = build_scene_input(projection=projection, surface_content=surface_content(
+        table_columns=(("name", "Name"),), table_cells=(("task", "name", "Task"),),
+        group_presentation="header",
+    ), layout_manifest=manifest, resolved_theme=_glyph_theme(), font_metrics=_Font(), measured_sources=measurement,
+        capabilities={"svg": True})
+    return compose_review_surface(value)
+
+
+def test_a_theme_bound_multi_part_glyph_renders_every_part_of_a_planned_gate():
+    surface = _glyph_fixture()
+    parts = [node for node in surface.primitives if node.scene_id.startswith("planned:group-header:fw:gate:part")]
+    assert len(parts) == 2
+    assert parts[0].paint.fill != "#1B1B1B"  # body: the role's own colour
+    assert parts[1].paint.fill == "#1B1B1B"  # band: the asset's literal colour
+    assert all(node.kind == "Symbol" and node.purpose == "planned" for node in parts)
+
+
+def test_a_theme_bound_multi_part_glyph_renders_every_part_of_an_actual_gate():
+    surface = _glyph_fixture()
+    parts = [node for node in surface.primitives if node.scene_id.startswith("actual:group-header:fw:gate:part")]
+    assert len(parts) == 2
+    assert parts[1].paint.fill == "#1B1B1B"
+
+
+def test_baseline_gate_glyph_distinguishes_its_band_by_treatment_not_colour():
+    surface = _glyph_fixture()
+    baseline_parts = [node for node in surface.primitives
+                      if node.scene_id.startswith("planned:group-header:fw:scenario:baseline:gate:part")]
+    assert len(baseline_parts) == 2
+    body, band = baseline_parts
+    assert body.paint.fill is not None and body.paint.stroke is None
+    assert band.paint.fill is None and band.paint.stroke is not None  # hollow band, not a literal colour
+    planned_parts = [node for node in surface.primitives if node.scene_id.startswith("planned:group-header:fw:gate:part")]
+    # Baseline and planned share the asset's body/band shapes but differ in the band's paint mode,
+    # so the two variants are distinguishable without relying on either's colour.
+    assert planned_parts[1].paint.fill is not None and planned_parts[1].paint.stroke is None
 
 
 def test_declared_actual_cutoff_emits_as_of_marker_only_within_window():
@@ -823,6 +1020,106 @@ def test_declared_axis_tiers_emit_their_own_band_grid_and_label_primitives():
                for node in grids)
 
 
+def test_a_single_band_tier_keeps_spanning_the_whole_axis_slot():
+    # Issue #426 design §2.2: the byte-identity carve-out. Every committed
+    # View today declares exactly one band tier, and its rect must keep
+    # spanning the whole axis slot (not a one-line lane) so no existing
+    # Scene output changes.
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=(
+                                  AxisTier("quarter", 1, "band"),
+                                  AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+                              )),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    surface = compose_review_surface(value)
+    bands = [node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:")]
+    assert bands
+    axis_slot = next(slot for slot in surface.slots if slot.source == "timeline-axis")
+    assert all(node.bounds[1] == axis_slot.bounds[1] and node.bounds[3] == axis_slot.bounds[3] for node in bands)
+
+
+def _axis_tiers_scene(axis_tiers, theme=None):
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
+    value = build_scene_input(projection=projection, surface_content=surface_content(axis_tiers=axis_tiers),
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=theme or _theme(), font_metrics=_Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    return compose_review_surface(value)
+
+
+def test_two_band_tiers_each_render_in_their_own_non_overlapping_lane():
+    # Issue #426, literal criterion 1: a View can declare two band tiers and
+    # both render, each in its own lane, neither covering the other.
+    surface = _axis_tiers_scene((
+        AxisTier("quarter", 1, "band"), AxisTier("month", 1, "band"),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+    ))
+    bands = [node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:")]
+    assert bands, "expected at least one band primitive"
+    first_tier_bands = [node for node in bands if node.scene_id.startswith("axis-band-rect:0:")]
+    second_tier_bands = [node for node in bands if node.scene_id.startswith("axis-band-rect:1:")]
+    assert first_tier_bands and second_tier_bands
+    first_block, first_size = first_tier_bands[0].bounds[1], first_tier_bands[0].bounds[3]
+    second_block, second_size = second_tier_bands[0].bounds[1], second_tier_bands[0].bounds[3]
+    assert first_block != second_block
+    # The two lanes are disjoint on the block axis: one entirely precedes the other.
+    assert (first_block + first_size <= second_block) or (second_block + second_size <= first_block)
+
+
+def test_two_band_tiers_resolve_different_fills_from_the_theme():
+    # Issue #426, literal criterion 2: two band tiers can take different
+    # fills from the Theme.
+    theme = _theme()
+    theme["body"]["values"]["second-band-ink"] = {"type": "color", "value": "#204060"}
+    theme["body"]["roles"]["axis-band-decoration2"] = {
+        **theme["body"]["roles"]["axis-band-decoration2"], "fill": "second-band-ink",
+    }
+    surface = _axis_tiers_scene((
+        AxisTier("quarter", 1, "band"), AxisTier("month", 1, "band"),
+    ), theme=theme)
+    first_band = next(node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:0:"))
+    second_band = next(node for node in surface.primitives if node.scene_id.startswith("axis-band-rect:1:"))
+    assert first_band.visual_role == "axis-band-decoration"
+    assert second_band.visual_role == "axis-band-decoration2"
+    assert first_band.paint.fill != second_band.paint.fill
+
+
+def test_two_labels_tiers_resolve_different_sizes_weights_and_colours():
+    # Issue #426, literal criterion 3: two labels tiers can take different
+    # sizes, weights and colours from the Theme.
+    theme = _theme()
+    theme["body"]["values"]["emphatic-size"] = {"type": "number", "value": 20}
+    theme["body"]["values"]["emphatic-weight"] = {"type": "fontWeight", "value": 700}
+    theme["body"]["values"]["emphatic-ink"] = {"type": "color", "value": "#B00000"}
+    theme["body"]["roles"]["axisQuarter"] = {
+        **theme["body"]["roles"]["axis"], "fontSize": "emphatic-size", "fontWeight": "emphatic-weight",
+    }
+    theme["body"]["roles"]["axis-label2"] = {**theme["body"]["roles"]["axis-label2"], "fill": "emphatic-ink"}
+    surface = _axis_tiers_scene((
+        AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "visible-overflow", "horizontal", "en-US"),
+                 typography_role="axisQuarter"),
+        AxisTier("month", 1, "labels", AxisLabelIntent("short-month", (), "start", "visible-overflow", "horizontal", "en-US")),
+    ), theme=theme)
+    labels = [node for node in surface.primitives if node.scene_id.startswith("axis-label:")]
+    quarter_label = next(node for node in labels if node.text == "2026 Q1")
+    month_label = next(node for node in labels if node.text == "Jan")
+    assert quarter_label.visual_role == "axis-label2"
+    assert month_label.visual_role == "text"
+    assert quarter_label.text_layout.font_size != month_label.text_layout.font_size
+    assert quarter_label.text_layout.weight != month_label.text_layout.weight
+    assert quarter_label.paint.fill != month_label.paint.fill
+
+
 @pytest.mark.parametrize("table_id,form,expected", [
     ("en-US", "short-month", "Jan"),
     ("en-US", "long-month", "January"),
@@ -895,6 +1192,46 @@ def test_layout_records_auto_candidate_and_completed_axis_label_measurements():
     assert labels.name_table_id == "ja-JP"
     assert [item.label for item in labels.intervals] == ["1月", "3月", "5月"]
     assert all(item.label is not None and item.label_fits and item.disposition == "placed" for item in labels.intervals)
+
+
+def test_thin_with_record_drops_only_one_disproportionately_wide_label():
+    """#482: a single wide label (for example, a locale that widens one quarter's
+    text) must not thin any other, otherwise-fitting label in the tier."""
+
+    class _WideQ1Font:
+        content_identity = "sha256:test"
+
+        def width(self, value, size):
+            if value == "2026年Q1":
+                return 10_000.0
+            return len(value) * size / 2
+
+    item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
+    measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
+                                  {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
+                                   "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8)})
+    content = surface_content(axis_tiers=(
+        AxisTier("quarter", 1, "labels", AxisLabelIntent("year-quarter", (), "center", "thin-with-record", "horizontal", "ja-JP")),
+    ))
+    value = build_scene_input(projection=projection, surface_content=content,
+                              layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=_theme(), font_metrics=_WideQ1Font(), measured_sources=measurement,
+                              capabilities={"svg": True})
+    composition = compose_surface_layout(SurfaceLayoutRequest(
+        projection=value.projection, presentation_contract=normalize_presentation_input(content),
+        surface_content=content, layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
+        theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
+        capabilities=dict(value.capabilities),
+    ))
+
+    (labels,) = composition.placement.axis_tier_outcomes
+    assert [item.label for item in labels.intervals] == ["2026年Q1", "2026年Q2", "2026年Q3", "2026年Q4"]
+    # Only the one disproportionately wide label is thinned; every fitting
+    # label -- including the ones sharing its residue class -- is placed.
+    assert [(item.disposition, item.reason) for item in labels.intervals] == [
+        ("thinned", "label-does-not-fit"), ("placed", None), ("placed", None), ("placed", None),
+    ]
 
 
 def test_table_columns_use_measured_non_overlapping_origins():

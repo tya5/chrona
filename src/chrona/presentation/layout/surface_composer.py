@@ -9,25 +9,43 @@ import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
-from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS, semantic_binding
+from chrona.presentation.layout.label_visual_measurement import (
+    resolve_label_visual_advances, visual_target_placement_id,
+)
+from chrona.presentation.layout.lane_preflight import SurfaceLanePlan
+from chrona.presentation.model.semantic_registry import (
+    axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
-from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
+from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
-    nearest_box_port, place_annotation_rail, project_annotation_box,
+    AnnotationBox, annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
     resolve_annotation_anchor, route_annotation_leader,
 )
-from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import LabelObstacle, LabelRect, LabelRequest, place_label
-from chrona.presentation.layout.relation_terminals import marker_geometry
-from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
-from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
-from chrona.presentation.layout.surface_quality import (
-    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
+from chrona.presentation.layout.annotation_search import lattice_positions, nearest_free_box, nearest_free_tail_box
+from chrona.presentation.layout.balloon_geometry import balloon_outline
+from chrona.presentation.layout.labels import LabelPlacement
+from chrona.presentation.layout.annotation_topology import (
+    AnnotationRouteTrial, local_route_bounds, route_annotation_candidate, visible_segments,
 )
+from chrona.presentation.layout.comparison_marks import ComparisonMark
+from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
+from chrona.presentation.model.placement_candidates import candidate_order
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
+from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.layout.routing import RouteSearchFailure, place_relation_route, relation_route_quality
+from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
+from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks, symbol_parts
+from chrona.presentation.layout.icon_geometry import complete_icon_paths
+from chrona.presentation.layout.surface_quality import (
+    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
+)
+from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 
 
 @dataclass(frozen=True)
@@ -37,10 +55,11 @@ class SurfaceLayoutComposition:
     placement: SurfacePlacement
     review_rows: tuple[Any, ...]
     track_placements: tuple[TrackPlacement, ...]
+    mark_absences: tuple[MarkFacetAbsence, ...] = ()
 
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
-BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed", "axisBandDecoration"})
+BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed", *axis_band_semantic_ids()})
 BACKGROUND_PAINT_ORDER = 10
 MARK_PAINT_ORDER_BASE = 100
 HOSTED_TEXT_PAINT_ORDER = 200
@@ -86,6 +105,13 @@ def _validate_background_shapes(shapes: list[ShapePlacement], theme_tokens: Any)
             translucent.append(shape)
     for index, shape in enumerate(translucent):
         for other in translucent[index + 1:]:
+            # A group's own band intentionally includes its own header row
+            # (Specification 45, Specification 50 §3.4), so its groupBand and
+            # groupHeaderBand shapes are one group's two decoration layers,
+            # not two conflicting decorations, and may legitimately overlap.
+            if (shape.source_ref == other.source_ref
+                    and {shape.semantic_id, other.semantic_id} == {"groupBand", "groupHeaderBand"}):
+                continue
             if intersects(shape.bounds, other.bounds):
                 raise LayoutError("E_LAYOUT_BACKGROUND_OVERLAP", "/layoutManifest/reviewSurface/backgroundExtents",
                                   detail=f"{shape.placement_id}:{other.placement_id}")
@@ -350,9 +376,27 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
     return result
 
 
+def _centred_cell_baseline(row: Rect, treatment: Any) -> float:
+    """Centre a table cell's line box in its row, in the cell's own role."""
+    line_block = float(treatment.font_size * treatment.line_height)
+    return float(row.block) + (float(row.block_size) - line_block) / 2 + float(treatment.font_size)
+
+
+def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
+    """Return a start-aligned axis label's declared inset from its cell edge (#426 row 8)."""
+    if tier.label is None or tier.label.align != "start":
+        return 0.0
+    ratio = theme_tokens.optional_number(tier.typography_role or "axis", "labelInset")
+    return float(ratio) * font_size if ratio is not None else 0.0
+
+
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
-                                       metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None) -> Decimal:
+                                       metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
+                                       text_line_block: float = 0.0,
+                                       lane_plan: SurfaceLanePlan | None = None) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
+    if lane_plan is not None:
+        return lane_plan.natural_block_requirement
     rows = projection.rows or tuple(
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
@@ -361,6 +405,7 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         review_rows=tuple(rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
         row_padding=float(metric_values["timeline.row.paddingBlock"]),
         mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
+        text_line_block=text_line_block,
     )
     headers = 0
     previous = object()
@@ -371,13 +416,24 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
-def progress_fill_bounds(host: Rect, fraction: float) -> Rect | None:
-    """Return the optional completed progress submark bounds for one host mark."""
+def progress_fill_bounds(host: Rect, fraction: float, inset_ratio: Decimal = Decimal(0)) -> Rect | None:
+    """Return the optional completed progress submark bounds for one host mark.
+
+    The host is the track.  A declared inset deflates it by ``inset_ratio`` of
+    its block size (inline inset capped at a quarter of the host's inline size)
+    and the fraction is measured against that inner track, so 0 is empty and 1
+    fills the inner track edge to edge at every bar length (#430).
+    """
     if not 0 <= fraction <= 1:
         raise LayoutError("E_PRESENTATION_PROGRESS_INVALID", "/progressFill")
     if fraction == 0:
         return None
-    return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
+    if inset_ratio == 0:
+        return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
+    block_inset = host.block_size * inset_ratio
+    inline_inset = min(block_inset, host.inline_size / 4)
+    return Rect(host.inline + inline_inset, host.block + block_inset,
+                (host.inline_size - 2 * inline_inset) * Decimal(str(fraction)), host.block_size - 2 * block_inset)
 
 
 def relation_label_content(relation: Any) -> str:
@@ -597,65 +653,6 @@ def candidate_label_visuals(placement_id: str, typography_role: str,
     )
 
 
-def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
-                                  visual_requests: tuple[Any, ...], icon_assets: dict[str, Any],
-                                  theme_tokens: Any) -> tuple[tuple[Any, Any, float, float], ...]:
-    """Resolve the closed inline advance of label visuals in Layout.
-
-    Source measurement and final placement call this same resolver. That keeps
-    an icon's aspect ratio, role scale, and role gap out of the render use case
-    and prevents a solver from allocating text bounds that final composition
-    cannot honor.
-    """
-    matching = []
-    for visual in visual_requests:
-        if visual.target_kind in {"mark", "axis-band", "axis-label"}:
-            continue
-        target = visual_target_placement_id(visual.target_kind, dict(visual.selector))
-        if placement_id == target or placement_id.startswith(target + ":"):
-            matching.append(visual)
-    if not matching:
-        return ()
-    found: dict[str, tuple[Any, Any, float, float]] = {}
-    size = theme_tokens.text_treatment(typography_role).font_size
-    try:
-        scale, gap_ratio = theme_tokens.icon_ratios(typography_role)
-    except Exception as error:
-        raise LayoutError("E_THEME_ICON_RATIO", "/body/visuals") from error
-    for visual in matching:
-        if visual.side in found:
-            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
-        icon = icon_assets.get(visual.ref or "")
-        if icon is None or icon.viewport[1] <= 0:
-            raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
-        height = float(size * scale)
-        if height <= 0:
-            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref)
-        found[visual.side] = (visual, icon, height * icon.viewport[0] / icon.viewport[1], float(size * gap_ratio))
-    return tuple(found[side] for side in ("leading", "trailing") if side in found)
-
-
-def visual_target_placement_id(kind: str, selector: dict[str, str]) -> str:
-    """Map the closed View target vocabulary to one Layout placement identity."""
-    if kind == "title": return "title"
-    if kind == "column" and "id" in selector: return f"column:{selector['id']}"
-    if kind == "cell" and {"object", "column"} <= selector.keys(): return f"cell:{selector['object']}:{selector['column']}"
-    if kind == "group-header" and "id" in selector: return f"group-header:{selector['id']}"
-    if kind == "plot-label" and "id" in selector: return f"member-label:{selector['id']}"
-    if kind == "annotation" and "id" in selector: return f"annotation-text:{selector['id']}"
-    if kind == "note" and "id" in selector: return f"note:{selector['id']}"
-    if kind == "note-index" and "id" in selector: return f"note-index:{selector['id']}"
-    if kind == "group-detail" and "id" in selector: return f"group-detail:{selector['id']}"
-    if kind == "legend" and "role" in selector: return f"legend:{selector['role']}"
-    if kind == "summary" and "panel" in selector and "metric" not in selector: return f"summary:{selector['panel']}"
-    if kind == "summary" and {"panel", "metric", "part"} <= selector.keys(): return f"summary:{selector['panel']}:{selector['metric']}:{selector['part']}"
-    if kind == "milestone" and "id" in selector: return f"milestone:{selector['id']}"
-    if kind == "as-of-label": return "as-of-label"
-    if kind == "variance-label" and "object" in selector: return f"variance:{selector['object']}"
-    if kind == "mark" and {"object", "facet"} <= selector.keys(): return f"{selector['facet']}:{selector['object']}"
-    raise LayoutError("E_LAYOUT_VISUAL_TARGET", "/body/visuals")
-
-
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
     projection = request.projection
@@ -680,7 +677,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
     slots = tuple(
         SlotPlacement(source, source, item.bounds, item.priority or "required",
-                      item.overflow or "visible-overflow", "primary" if source in {"timeline", "timeline-axis"} else None)
+                      item.overflow or "visible-overflow", "primary" if source in {"timeline", "timeline-axis"} else None,
+                      item.direction or "block", item.gap, item.item_min_inline_size)
         for source, item in sorted(decisions.items())
     )
     by_source = {slot.source_ref: slot for slot in slots}
@@ -717,6 +715,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
         row_padding=float(metric_values["timeline.row.paddingBlock"]),
         mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
+        text_line_block=table_text_line_block(
+            request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells)),
     )
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
@@ -737,11 +737,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             groups[-1] = GroupPlacement(previous.group_id, content, previous.header_bounds)
         else:
             header = None
+            content = row.bounds
             if row.group_id and group_header_size:
                 header = Rect(Decimal(str(table_bounds[0])), row.bounds.block - Decimal(str(group_header_size)),
                               Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
                               Decimal(str(group_header_size)))
-            groups.append(GroupPlacement(row.group_id, row.bounds, header))
+                # A group's own band includes its own header row, so the
+                # header is never painted as if it belonged to the group
+                # before it (Specification 45, Specification 50 §3.4).
+                content = Rect(row.bounds.inline, header.block, row.bounds.inline_size,
+                               row.bounds.block_size + Decimal(str(group_header_size)))
+            groups.append(GroupPlacement(row.group_id, content, header))
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     def metric_for(typography_role: str) -> Any:
@@ -769,17 +775,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     text.extend(detail_panel_text)
     table_columns = request.surface_content.table_columns
     table_cells = request.surface_content.table_cells
-    def measure_table_text(content: str, typography_role: str, orientation: str = "horizontal") -> float:
-        treatment = request.theme_tokens.text_treatment(typography_role)
-        return (measure_text_width(content, font_size=float(treatment.font_size), font_metrics=metric_for(typography_role),
-                                   letter_spacing=float(treatment.letter_spacing),
-                                   text_transform=treatment.transform,
-                                   numeric_spacing=treatment.numeric_spacing)
-                if orientation == "horizontal" else float(treatment.font_size * treatment.line_height))
+    measure_table_text = table_text_measurer(request.theme_tokens, request.font_metrics)
+    indent_token = metric_values.get("table.indent.inlineSize")
+    cell_indents: dict[str, float] = {}
+    for row in rows:
+        row_indent = table_cell_indent(grouped=bool(row.group_id), depth=row.depth, inset=body_size,
+                                       indent=float(indent_token) if indent_token is not None else None)
+        cell_indents[row.row_id] = cell_indents[row.object_id] = row_indent
     columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
                                   measure_text=measure_table_text, minimum_inline=body_size,
                                   overflow=table.overflow,
-                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)))
+                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)),
+                                  hierarchy_column=request.surface_content.table_hierarchy_column,
+                                  cell_indents=cell_indents)
     positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
     column_widths = {item.column_id: item.inline_size for item in columns}
     column_intents = {item.column_id: item for item in table_columns}
@@ -834,16 +842,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         row = row_by_subject.get(object_id)
         position = positions.get(column_id)
         if row is not None and position is not None and column_id in column_intents:
-            indent_token = metric_values.get("table.indent.inlineSize")
-            if row.depth and indent_token is None:
-                raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues/table.indent.inlineSize")
-            indent = ((body_size if row.group_id else 0) + float(indent_token or 0) * row.depth
+            indent = (cell_indents[object_id]
                       if column_id == request.surface_content.table_hierarchy_column else 0)
             available = max(0.0, column_widths[column_id] - indent - body_size)
             resolved, overflow = table_text(content, available, typography_role)
             text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                                    inline=aligned_inline(resolved, column_id, position[0] + indent, available, typography_role),
-                                   baseline_block=float(row.bounds.block + row.bounds.block_size / 2) + body_size / 2,
+                                   baseline_block=_centred_cell_baseline(row.bounds, request.theme_tokens.text_treatment(typography_role)),
                                    typography_role=typography_role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    overflow=overflow, collision_region="table",
                                    collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
@@ -851,24 +856,24 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    available_inline_size=available, semantic_id=cell.semantic_id))
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
+    group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
+                              if any(group.header_bounds is not None for group in groups) else body_size)
     for group in groups:
         if group.header_bounds is not None:
             text.append(place_text(placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
                                        content=labels[group.group_id], inline=float(group.header_bounds.inline),
-                                       baseline_block=float(group.header_bounds.block) + body_size, typography_role="text",
+                                       baseline_block=float(group.header_bounds.block) + group_header_font_size,
+                                       typography_role="groupHeader",
                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                    collision_region=f"group:{group.group_id}",
                                    collision_domain=CollisionDomain("group-header", group.group_id),
-                                   source_content=labels[group.group_id],
+                                   source_content=labels[group.group_id], semantic_id="groupHeader",
                                    available_inline_start=float(group.header_bounds.inline),
                                    available_inline_size=float(group.header_bounds.inline_size)))
     scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                            timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                            timeline_bounds[2] / max(1, (end - start).days))
     axis = by_source["timeline-axis"]
-    axis_treatment = request.theme_tokens.text_treatment("axis")
-    axis_metrics = metric_for("axis")
-    axis_size = float(axis_treatment.font_size)
     shapes: list[ShapePlacement] = []
     axis_tier_outcomes: list[AxisTierOutcome] = []
     axis_decisions: list[PlacementDecision] = []
@@ -891,26 +896,73 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     row_decoration = request.surface_content.row_decoration
     group_decoration = request.surface_content.group_decoration
+    # Group bands are emitted before row stripes so that, at the same
+    # declared Theme backgroundPaintOrder (the default in every shipped
+    # preset), a row stripe is the later/topmost primitive and remains
+    # visible over an opaque group band (Specification 50 §3.4).
+    for index, group in enumerate(groups):
+        banded = group_decoration in {"all", "alternate"} and (group_decoration == "all" or index % 2 == 0)
+        group_shape = None
+        if banded:
+            group_shape = background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds)
+            if group_shape is not None:
+                shapes.append(group_shape)
+        # A group's own band already includes its own header row (see the
+        # group-building loop above), so a group the body decoration painted
+        # needs no separate header accent: painting one would double-tint the
+        # header row under its own band, at a contrast ratio the band's own
+        # colour was never chosen against. The header-only band (`groups:
+        # none`, or a selected group whose Theme suppresses the body fill)
+        # remains the sole source of header decoration in those cases; an
+        # unselected `alternate` group gets neither, so its header is never
+        # painted as an extension of the group before it.
+        if group.header_bounds is not None and (group_decoration == "none" or (banded and group_shape is None)):
+            shape = background_shape(f"group-header-band:{group.group_id}", group.group_id,
+                                     "groupHeaderBand", group.header_bounds)
+            if shape is not None:
+                shapes.append(shape)
     if row_decoration == "alternate":
         for index, row in enumerate(rows):
             if index % 2 == 0:
                 shape = background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds)
                 if shape is not None:
                     shapes.append(shape)
-    for index, group in enumerate(groups):
-        if group_decoration in {"all", "alternate"} and (group_decoration == "all" or index % 2 == 0):
-            shape = background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds)
-            if shape is not None:
-                shapes.append(shape)
-        if group.header_bounds is not None:
-            shape = background_shape(f"group-header-band:{group.group_id}", group.group_id,
-                                     "groupHeaderBand", group.header_bounds)
-            if shape is not None:
-                shapes.append(shape)
+    # Band and labels tiers each stack in their own independent, monotonic
+    # lane cursor (#426): the Nth declared tier of a role occupies the Nth
+    # lane of that role, sized from that tier's own bound typography. A View
+    # with exactly one band tier keeps its historical whole-axis-slot rect
+    # (Specification 39 §1.2), so band_lane_offset/band_ordinal are only
+    # consulted once a second band tier is declared.
     label_lane_offset = 0.0
+    band_lane_offset = 0.0
+    band_ordinal = 0
+    label_ordinal = 0
+    band_tier_count = sum(item.role == "band" for item in request.surface_content.axis_tiers)
+    # Declared lanes (#426 rows 5-6): a labels tier whose typography role
+    # declares laneBlockSize has a fixed lane; lanes stack in labels-tier
+    # order, and a band tier of the same unit fills exactly that lane.
+    declared_lanes: dict[int, tuple[float, float]] = {}
+    lane_by_unit: dict[str, tuple[float, float]] = {}
+    lane_cursor = 0.0
+    for tier_index, tier in enumerate(request.surface_content.axis_tiers):
+        if tier.role != "labels" or tier.label is None:
+            continue
+        role = tier.typography_role or "axis"
+        declared = request.theme_tokens.optional_number(role, "laneBlockSize")
+        treatment = request.theme_tokens.text_treatment(role)
+        if declared is not None and float(declared) > 0 and tier.label.orientation == "horizontal":
+            declared_lanes[tier_index] = (lane_cursor, float(declared))
+            lane_by_unit.setdefault(tier.unit, (lane_cursor, float(declared)))
+            lane_cursor += float(declared)
+        else:
+            lane_cursor += float(treatment.font_size * treatment.line_height) + float(GEOMETRY_TOLERANCE)
+    separator_marks: list[tuple[float, float, float]] = []
     for tier_index, tier in enumerate(request.surface_content.axis_tiers):
         form = tier.label.form if tier.label else None
         name_table = axis_name_table(tier.label.name_table_id) if tier.label else None
+        axis_treatment = request.theme_tokens.text_treatment(tier.typography_role or "axis")
+        axis_metrics = metric_for(tier.typography_role or "axis")
+        axis_size = float(axis_treatment.font_size)
         requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
                            if tier.unit == "auto" and tier.label else (tier.unit,))
         try:
@@ -954,7 +1006,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                     interval.natural_start, interval.natural_end,
                                     format_axis_tier_label(interval, form, name_table),
                                     axis_label_fits(content=format_axis_tier_label(interval, form, name_table),
-                                                   available_inline=max(0.0, _coordinate(interval.end, scale) - _coordinate(interval.start, scale)),
+                                                   available_inline=max(0.0, _coordinate(interval.end, scale) - _coordinate(interval.start, scale)
+                                                                        - _axis_label_inset(request.theme_tokens, tier, axis_size)),
                                                    font_size=axis_size, font_metrics=axis_metrics,
                                                    letter_spacing=float(axis_treatment.letter_spacing),
                                                    text_transform=axis_treatment.transform,
@@ -984,13 +1037,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                             if position in retained:
                                 resolved_outcomes.append(replace(outcome, disposition="placed"))
                             else:
-                                reason = "label-does-not-fit" if not outcome.label_fits else "thinning-stride"
-                                resolved_outcomes.append(replace(outcome, disposition="thinned", reason=reason))
-                                diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:{reason}")
+                                resolved_outcomes.append(replace(outcome, disposition="thinned", reason="label-does-not-fit"))
+                                diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:label-does-not-fit")
                                 axis_decisions.append(PlacementDecision(outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
                                                                         ("thin-with-record", "suppress"), "suppress", "suppressed"))
                         interval_outcomes = tuple(resolved_outcomes)
-                        diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:stride={schedule.stride}:phase={schedule.phase}")
+                        diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned={len(schedule.thinned_positions)}")
                 else:
                     interval_outcomes = tuple(replace(
                         item, disposition="placed",
@@ -1018,17 +1070,44 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             interval_outcomes, name_table.table_id if name_table else None,
         ))
         if tier.role == "band":
+            if band_ordinal >= len(axis_band_semantic_ids()):
+                raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
+                                  detail=f"too many band tiers:{band_ordinal + 1}")
+            band_semantic_id = axis_band_semantic_ids()[band_ordinal]
+            if tier.unit in lane_by_unit:
+                lane_offset, lane_size = lane_by_unit[tier.unit]
+                band_block = axis.bounds.block + Decimal(str(lane_offset))
+                band_block_size = Decimal(str(lane_size))
+            elif band_tier_count == 1:
+                # The sole band tier keeps its historical whole-axis-slot
+                # rect (Specification 39 §1.2); this is the only branch that
+                # keeps every committed View's Scene output byte-identical.
+                band_block, band_block_size = axis.bounds.block, axis.bounds.block_size
+            else:
+                band_lane_size = axis_size * float(axis_treatment.line_height) + float(GEOMETRY_TOLERANCE)
+                if band_lane_offset + band_lane_size > float(axis.bounds.block_size) + float(GEOMETRY_TOLERANCE):
+                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
+                                      detail=f"band-lane:{band_ordinal}")
+                band_block = axis.bounds.block + Decimal(str(band_lane_offset))
+                band_block_size = Decimal(str(band_lane_size))
+            cell_gap = float(request.theme_tokens.optional_number(
+                semantic_binding(band_semantic_id).scene_role, "cellGap") or 0)
             for interval in intervals:
                 x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
+                if cell_gap:
+                    x, x2 = x + cell_gap / 2, max(x + cell_gap / 2, x2 - cell_gap / 2)
                 placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
                 treatment, paint_order = request.theme_tokens.background(
-                    semantic_binding("axisBandDecoration").scene_role)
+                    semantic_binding(band_semantic_id).scene_role)
                 if treatment != "none":
                     axis_band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
                     shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
-                                                  Rect(Decimal(str(x)), axis.bounds.block, Decimal(str(max(0.0, x2 - x))), axis.bounds.block_size),
-                                                  semantic_id="axisBandDecoration",
+                                                  Rect(Decimal(str(x)), band_block, Decimal(str(max(0.0, x2 - x))), band_block_size),
+                                                  semantic_id=band_semantic_id,
                                                   paint_order=paint_order))
+            if band_tier_count > 1 and tier.unit not in lane_by_unit:
+                band_lane_offset += band_lane_size
+            band_ordinal += 1
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
             for interval in intervals:
@@ -1039,6 +1118,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                               semantic_id=semantic_id,
                                               paint_order=BACKGROUND_PAINT_ORDER + 1))
         elif tier.role == "labels" and form is not None:
+            # A tier that leaves typographyRole at its default keeps the
+            # single shared "axisLabel" id every committed View already
+            # uses (byte-identical), no matter how many such default tiers
+            # exist; only a tier that explicitly names a role claims one of
+            # the ordinal ids, in declaration order among such tiers.
+            if tier.typography_role is None:
+                label_semantic_id = axis_label_semantic_ids()[0]
+            else:
+                label_ordinal += 1
+                if label_ordinal >= len(axis_label_semantic_ids()):
+                    raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
+                                      detail=f"too many typography-role labels tiers:{label_ordinal}")
+                label_semantic_id = axis_label_semantic_ids()[label_ordinal]
+            resolved_typography_role = tier.typography_role or "axis"
             orientation = tier.label.orientation
             label_widths = tuple(
                 measure_text_width(outcome.label or "", font_size=axis_size, font_metrics=axis_metrics,
@@ -1049,12 +1142,22 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             )
             lane_size = (axis_size * float(axis_treatment.line_height) + float(GEOMETRY_TOLERANCE)
                          if orientation == "horizontal" else max(label_widths, default=0.0))
+            if tier_index in declared_lanes:
+                label_lane_offset, lane_size = declared_lanes[tier_index]
+            inset = _axis_label_inset(request.theme_tokens, tier, axis_size)
             lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)
             for interval, outcome in zip(intervals, interval_outcomes, strict=True):
                 if outcome.disposition == "thinned":
                     continue
                 axis_label_targets[("axis-label", interval.level, str(interval.index))] = outcome.candidate_id
                 x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
+                if interval.index > 0 or x > _coordinate(start, scale) + float(GEOMETRY_TOLERANCE):
+                    separator_marks.append((x, *((float(axis.bounds.block) + label_lane_offset,
+                                                  float(axis.bounds.block) + label_lane_offset + lane_size)
+                                                 if tier_index in declared_lanes else
+                                                 (float(axis.bounds.block), float(axis.bounds.block + axis.bounds.block_size)))))
+                if tier.label.align == "start" and inset:
+                    x = x + inset
                 available = max(0.0, x2 - x)
                 label = outcome.label
                 if label is None or outcome.disposition != "placed":
@@ -1066,32 +1169,60 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                            numeric_spacing=axis_treatment.numeric_spacing)
                 occupied_inline = width if orientation == "horizontal" else axis_size * float(axis_treatment.line_height)
                 inline = x if tier.label.align == "start" else x + (available - occupied_inline) / 2
-                baseline = float(axis.bounds.block) + label_lane_offset + (
-                    axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
+                if tier_index in declared_lanes:
+                    line_block = axis_size * float(axis_treatment.line_height)
+                    baseline = float(axis.bounds.block) + label_lane_offset + (lane_size - line_block) / 2 + axis_size
+                else:
+                    baseline = float(axis.bounds.block) + label_lane_offset + (
+                        axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
                                     content=label, inline=inline, baseline_block=baseline,
-                                    typography_role="axis", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                    typography_role=resolved_typography_role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                     collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", "labels"),
                                     source_content=label, available_inline_start=x, available_inline_size=available,
                                     orientation=orientation,
                                     overflow="visible-overflow" if not outcome.label_fits or lane_overflow else "fit")
-                placed = replace(placed, semantic_id="axisLabel")
+                placed = replace(placed, semantic_id=label_semantic_id)
                 text.append(placed)
                 if not outcome.label_fits or lane_overflow:
                     visible_label_overflows.append((placed, LabelRect(*_bounds(axis.bounds))))
             label_lane_offset += lane_size
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
-    axis_bands = tuple(item for item in shapes if item.semantic_id == "axisBandDecoration")
+    if request.theme_tokens.has_role("axis-cell-separator"):
+        merged: dict[float, tuple[float, float]] = {}
+        for x, top, bottom in separator_marks:
+            key = round(x, 6)
+            low, high = merged.get(key, (top, bottom))
+            merged[key] = (min(low, top), max(high, bottom))
+        for index, (x, (top, bottom)) in enumerate(sorted(merged.items())):
+            shapes.append(ShapePlacement(f"axis-separator:{index}", "timeline-axis", "Path",
+                                         Rect(Decimal(str(x)), Decimal(str(top)), Decimal(0), Decimal(str(bottom - top))),
+                                         ((x, top), (x, bottom)), semantic_id="axisCellSeparator",
+                                         paint_order=BACKGROUND_PAINT_ORDER + 2))
+    if request.theme_tokens.has_role("axis-rule"):
+        rule_y = float(axis.bounds.block + axis.bounds.block_size)
+        left, right = float(timeline.bounds.inline), float(timeline.bounds.inline + timeline.bounds.inline_size)
+        shapes.append(ShapePlacement("axis-rule", "timeline-axis", "Path",
+                                     Rect(Decimal(str(left)), Decimal(str(rule_y)), Decimal(str(right - left)), Decimal(0)),
+                                     ((left, rule_y), (right, rule_y)), semantic_id="axisRule",
+                                     paint_order=BACKGROUND_PAINT_ORDER + 2))
+    axis_bands = tuple(item for item in shapes if item.semantic_id in axis_band_semantic_ids())
 
     def axis_band_host(item: TextPlacement) -> str | None:
+        # A label's host is the band occupying its own lane, not merely a
+        # band whose columns happen to span the label's x-position (#426:
+        # multiple band lanes can differ in width and no longer all span the
+        # whole axis slot, so the inline test alone is no longer sufficient).
         centre = item.bounds.inline + item.bounds.inline_size / 2
+        lane_centre = item.bounds.block + item.bounds.block_size / 2
         candidates = tuple(band for band in axis_bands
-                           if band.bounds.inline <= centre <= band.bounds.inline + band.bounds.inline_size)
+                           if band.bounds.inline <= centre <= band.bounds.inline + band.bounds.inline_size
+                           and band.bounds.block <= lane_centre <= band.bounds.block + band.bounds.block_size)
         return min(candidates, key=lambda band: band.placement_id).placement_id if candidates else None
 
     text = [replace(item, host_placement_id=axis_band_host(item), paint_order=HOSTED_TEXT_PAINT_ORDER)
-            if item.semantic_id == "axisLabel" else item
+            if item.semantic_id in axis_label_semantic_ids() else item
             for item in text]
     contract = request.presentation_contract
     minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
@@ -1115,29 +1246,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
                                      ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
                                      paint_order=MARK_PAINT_ORDER_BASE))
-        as_of_label = (x, f"{contract.time.as_of_label} {contract.time.as_of.isoformat()}")
+        as_of_label = (x, contract.time.as_of_label) if contract.time.as_of_label else None
     tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
                                mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
     track_by_id = {item.instance_id: item for item in tracks}
     marks: list[MarkPlacement] = []
 
-    def place_mark(placement_id: str, source_ref: str, bounds: Rect,
-                   start_port: tuple[float, float], end_port: tuple[float, float], *, shape: str,
-                   semantic_id: str, end_treatment: str = "closed") -> MarkPlacement:
-        geometry = role_geometries[semantic_id]
-        radius = min(geometry.corner_radius * float(min(bounds.inline_size, bounds.block_size)),
-                     float(min(bounds.inline_size, bounds.block_size)) / 2)
-        commands = (open_span_path(inline=float(bounds.inline), block=float(bounds.block),
-                                   inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
-                    if shape == "open-span" else
-                    rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
-                                         inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
-                    if shape == "point" and radius > 0 else ())
-        return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
-                             mark_shape=shape, corner_radius=radius, path_commands=commands,
-                             slot_id=timeline.slot_id, semantic_id=semantic_id,
-                             paint_order=MARK_PAINT_ORDER_BASE + geometry.paint_order,
-                             end_treatment=end_treatment)
+    mark_absences: list[MarkFacetAbsence] = []
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -1147,73 +1262,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             instance_id = layout_id if projection.rows else item.object_id
             track = track_by_id[layout_id]
+            frame = MarkBandFrame.from_track(track, scale, role_geometries)
             source_kind = item.source_kind if projection.rows else "combined"
-            planned = item.planned
-            planned_semantic = "snapshot" if source_kind in {"snapshot", "scenario"} else "planned"
-            planned_block, planned_size = mark_bounds(track, role_geometries[planned_semantic])
-            actual_block, actual_size = mark_bounds(track, role_geometries["actual"])
-            missing_block, missing_size = mark_bounds(track, role_geometries["missing-actual"])
-            if source_kind != "actual" and item.source_type == "point":
-                x = _coordinate(planned["at"], scale)
-                bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)),
-                              Decimal(str(planned_size)), Decimal(str(planned_size)))
-                port = (x, planned_block + planned_size / 2)
-                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point",
-                                        semantic_id=planned_semantic))
-            elif source_kind != "actual":
-                x1, x2 = _coordinate(planned["start"], scale), _coordinate(planned["end"], scale)
-                bounds = Rect(Decimal(str(x1)), Decimal(str(planned_block)),
-                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(planned_size)))
-                marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds,
-                                        (x1, planned_block + planned_size / 2),
-                                        (x2, planned_block + planned_size / 2), shape="span", semantic_id=planned_semantic))
-            actual = item.actual or {}
-            open_actual = (source_kind in {"actual", "combined"} and item.source_type == "span"
-                           and actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
-                           and contract.time.as_of is not None)
-            if source_kind in {"actual", "combined"} and item.source_type == "span" and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date):
-                x1, x2 = _coordinate(actual["start"], scale), _coordinate(actual["finish"], scale)
-                bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
-                              Decimal(str(max(1.0, x2 - x1))), Decimal(str(actual_size)))
-                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds,
-                                        (x1, actual_block + actual_size / 2),
-                                        (x2, actual_block + actual_size / 2), shape="span", semantic_id="actual"))
-            elif open_actual:
-                x1, x2 = _coordinate(actual["start"], scale), _coordinate(contract.time.as_of, scale)
-                if x2 <= x1:
-                    diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_INVALID:{item.object_id}")
-                else:
-                    bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
-                                  Decimal(str(x2 - x1)), Decimal(str(actual_size)))
-                    mark = place_mark(f"actual:{instance_id}", item.object_id, bounds,
-                                      (x1, actual_block + actual_size / 2),
-                                      (x2, actual_block + actual_size / 2), shape="open-span", semantic_id="actual",
-                                      end_treatment="open")
-                    marks.append(mark)
-            elif source_kind in {"actual", "combined"} and item.source_type == "point" and isinstance(actual.get("at"), date):
-                x = _coordinate(actual["at"], scale)
-                bounds = Rect(Decimal(str(x - actual_size / 2)), Decimal(str(actual_block)),
-                              Decimal(str(actual_size)), Decimal(str(actual_size)))
-                port = (x, actual_block + actual_size / 2)
-                marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id="actual"))
-            elif source_kind in {"actual", "combined"}:
-                if (actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
-                        and contract.time.as_of is None):
-                    diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:{item.object_id}")
-                    continue
-                # An observation that is incomplete for this mark policy is
-                # still an observation.  A missing-actual treatment is only
-                # truthful when the projection has no actual object at all.
-                if actual:
-                    diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
-                    continue
-                anchor = planned.get("end", planned.get("at"))
-                if isinstance(anchor, date):
-                    x = _coordinate(anchor, scale)
-                    bounds = Rect(Decimal(str(x)), Decimal(str(missing_block)),
-                                  Decimal(str(max(1.0, missing_size * 1.5))), Decimal(str(missing_size)))
-                    marks.append(place_mark(f"missing-actual:{instance_id}", item.object_id, bounds,
-                                            (x, missing_block), (x, missing_block), shape="span", semantic_id="missing-actual"))
+            composition = compose_item_marks(
+                item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
+                as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
+                slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
+            )
+            marks.extend(composition.marks)
+            diagnostics.extend(composition.diagnostics)
+            mark_absences.extend(composition.absences)
     # A group-header target is a real GroupPlacement extent, not a synthetic table row.
     group_by_id = {group.group_id: group for group in groups}
     visible_group_header_overflows: list[tuple[str, Rect, float]] = []
@@ -1250,28 +1308,23 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                              key=lambda pair: shared_track_member_key(pair[1], pair[0]))
             for _, item in members:
                 instance_id = _folded_instance_id(folded, item)
-                planned_at = item.planned.get("at")
-                planned_semantic = "snapshot" if item.source_kind in {"snapshot", "scenario"} else "planned"
-                planned_geometry = role_geometries[planned_semantic]
-                planned_block = block + block_size * planned_geometry.offset
-                planned_size = block_size * planned_geometry.height
-                actual_geometry = role_geometries["actual"]
-                actual_block = block + block_size * actual_geometry.offset
-                actual_size = block_size * actual_geometry.height
-                if item.source_kind != "actual" and isinstance(planned_at, date):
-                    x = _coordinate(planned_at, scale)
-                    bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)), Decimal(str(planned_size)), Decimal(str(planned_size)))
-                    port = (x, planned_block + planned_size / 2)
-                    marks.append(place_mark(f"planned:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id=planned_semantic))
-                actual_at = (item.actual or {}).get("at")
-                if item.source_kind in {"actual", "combined"} and isinstance(actual_at, date):
-                    x = _coordinate(actual_at, scale)
-                    bounds = Rect(Decimal(str(x - actual_size / 2)), Decimal(str(actual_block)), Decimal(str(actual_size)), Decimal(str(actual_size)))
-                    port = (x, actual_block + actual_size / 2)
-                    marks.append(place_mark(f"actual:{instance_id}", item.object_id, bounds, port, port, shape="point", semantic_id="actual"))
+                # Folded marks occupy a real group-header band, so make that
+                # band the frame origin while retaining its exact role offsets.
+                frame = MarkBandFrame(scale, block, block_size, role_geometries)
+                composition = compose_item_marks(
+                    item=item, instance_id=instance_id,
+                    source_kind=item.source_kind, frame=frame, as_of=contract.time.as_of,
+                    theme_tokens=request.theme_tokens, slot_id=timeline.slot_id,
+                    paint_order_base=MARK_PAINT_ORDER_BASE, emit_missing_actual=False,
+                    emit_diagnostics=False,
+                )
+                marks.extend(composition.marks)
+                diagnostics.extend(composition.diagnostics)
+                mark_absences.extend(composition.absences)
     mark_by_id = {item.placement_id: item for item in marks}
     progress_source = request.surface_content.progress_fill_source
     if progress_source is not None:
+        progress_inset, progress_radius = request.theme_tokens.progress_track("progress-fill")
         for review_row in review_rows:
             for item in review_row.items:
                 if progress_source == "actual":
@@ -1287,12 +1340,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 host = mark_by_id.get(f"{host_prefix}:{instance_id}")
                 if host is None or fraction == 0:
                     continue
-                bounds = progress_fill_bounds(host.bounds, float(fraction))
+                bounds = progress_fill_bounds(host.bounds, float(fraction), progress_inset)
                 if bounds is not None and bounds.inline_size > 0:
+                    fill_radius = float(progress_radius) * float(min(bounds.inline_size, bounds.block_size))
                     shapes.append(ShapePlacement(f"progress-fill:{host.placement_id}", item.object_id,
                                                  "Rect", bounds, required=False, slot_id=host.slot_id,
                                                  clip_host_id=host.placement_id,
-                                                 paint_order=host.paint_order + 1))
+                                                 paint_order=host.paint_order + 1,
+                                                 corner_radius=fill_radius))
     for review_row, row in zip(review_rows, rows, strict=True):
         if getattr(review_row, "rollup_presentation", "none") != "bar":
             continue
@@ -1314,13 +1369,24 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     handled_candidate_visuals: set[str] = set()
     if as_of_label is not None:
         x, content = as_of_label
+        # A chip's block padding extends the anchor too, so a side candidate
+        # keeps the chipped label's top where the bare label's top is (#428).
+        as_of_chip = request.theme_tokens.label_chip(semantic_binding("asOfLabelChip").theme_role)
+        as_of_anchor_block = (body_size if as_of_chip is None else
+                              body_size * float(body_treatment.line_height) + float(as_of_chip[0]) * body_size)
         label_requests.append(LabelRequest(
             "as-of-label", "actual-set", content,
-            LabelRect(x, timeline_bounds[1], 0.0, body_size), ("end", "start", "below"),
+            LabelRect(x, timeline_bounds[1], 0.0, as_of_anchor_block), ("end", "start", "below"),
             "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
             visible_fallback_side="above",
+            rule_host_obstacle_id="as-of",
+            semantic_id="asOfLabel",
         ))
-    if contract.labels.enabled:
+    row_band_by_id = {row.row_id: LabelRect(float(timeline.bounds.inline), float(row.bounds.block),
+                                           float(timeline.bounds.inline_size), float(row.bounds.block_size))
+                      for row in rows}
+    attached_labels = dict(request.surface_content.attached_labels)
+    if contract.labels.enabled or attached_labels:
         for review_row in review_rows:
             for item in review_row.items:
                 layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
@@ -1329,10 +1395,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
                 if not isinstance(start_at, date) and not isinstance(end_at, date):
                     continue
+                attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
                 parts = []
-                if "title" in contract.labels.content:
+                if attached is not None:
+                    parts.append(attached)  # required: an attached point's facts are never dropped (#486)
+                elif not contract.labels.enabled:
+                    continue
+                if attached is None and "title" in contract.labels.content:
                     parts.append(item.title)
-                if "finishDelta" in contract.labels.content and item.finish_delta is not None:
+                if attached is None and "finishDelta" in contract.labels.content and item.finish_delta is not None:
                     parts.append(f"{item.finish_delta:+d}d")
                 if not parts:
                     continue
@@ -1352,10 +1423,17 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 ladder = ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
                           if preferred_side else default_ladder)
                 sides = tuple(side for side in ladder if side != "suppress")
+                # A member label's placement region is its own row band (#488):
+                # every candidate, including the side-neighbourhood search,
+                # stays inside it so a name never reads as the adjacent row's.
+                row_band = row_band_by_id.get(review_row.row_id)
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
+                                                   "visible-overflow" if attached is not None else
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
-                                                   wrap, inside_host_obstacle_id=host_mark_id if mark is not None else None))
+                                                   wrap, bounds=row_band,
+                                                   inside_host_obstacle_id=host_mark_id if mark is not None else None,
+                                                   semantic_id="memberLabel"))
         for folded in getattr(projection, "folded_points", ()):
             instance_id = _folded_instance_id(folded, folded.item)
             host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
@@ -1370,7 +1448,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 f"member-label:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
                 folded.item.title, LabelRect(*_bounds(mark.bounds)), default_ladder, "groupHeader", "group-header-point",
                 CollisionDomain("group-header", folded.group_id), "visible-overflow", bounds=LabelRect(*_bounds(group.header_bounds)),
-                inside_host_obstacle_id=mark.placement_id))
+                inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel"))
     # The remaining text and routes are part of the same completed Layout closure.
     # Scene may select their semantic roles, but it must never remeasure or route them.
     for review_row in review_rows:
@@ -1391,101 +1469,173 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 label_requests.append(LabelRequest(f"variance:{instance_id}", item.object_id, f"{item.finish_delta:+d}d",
                                                    anchor_bounds, ("above", "below", "end", "start"), "summary",
                                                    f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
-                                                   request.surface_content.label_overflow))
+                                                   request.surface_content.label_overflow, semantic_id="finishDelta"))
+
+    # One monotonically growing Layout inventory is shared by labels, semantic
+    # routes and annotations. Background bands deliberately do not enter it.
+    surface_obstacles = SurfaceObstacleIndex()
+
+    def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
+        inline, block, inline_size, block_size = _bounds(bounds)
+        if inline_size > 0 and block_size > 0:
+            surface_obstacles.add(SurfaceObstacle(placement_id, obstacle_class, region_id,
+                                                  ObstacleRect(inline, block, inline + inline_size, block + block_size)))
+
+    def register_path(placement_id: str, obstacle_class: str, region_id: str,
+                      points: tuple[tuple[float, float], ...], *, stroke_width: float = 0.0) -> None:
+        for index, (source, target) in enumerate(zip(points, points[1:])):
+            if source != target:
+                surface_obstacles.add(SurfaceObstacle(f"{placement_id}:segment:{index}", obstacle_class,
+                                                      region_id, ObstacleSegment(source, target, stroke_width)))
+
+    def register_port(placement_id: str, point: tuple[float, float], region_id: str) -> None:
+        surface_obstacles.add(SurfaceObstacle(placement_id, "port", region_id,
+                                              ObstacleRect(point[0] - 0.01, point[1] - 0.01,
+                                                           point[0] + 0.01, point[1] + 0.01)))
+
+    for mark in marks:
+        register_rect(mark.placement_id, "mark", "timeline", mark.bounds)
+    for placed_text in text:
+        if placed_text.required and placed_text.overflow != "suppressed":
+            register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
+    for shape in shapes:
+        if shape.placement_id == "as-of" and len(shape.points) >= 2:
+            surface_obstacles.add(SurfaceObstacle(shape.placement_id, "rule", "timeline",
+                                                  ObstacleSegment(shape.points[0], shape.points[1])))
 
     timeline_rect = LabelRect(*timeline_bounds)
-    for label_request in label_requests:
-        label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
-        label_metrics = metric_for(label_request.typography_role)
-        font_size, line_height = label_treatment.font_size, label_treatment.line_height
-        visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
-        handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
-        leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
-        trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
-        available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
-        lines = (wrap_text(label_request.content, available_inline=available,
-                           font_size=float(font_size), font_metrics=label_metrics,
-                           letter_spacing=float(label_treatment.letter_spacing),
-                           text_transform=label_treatment.transform)
-                 if label_request.wrap == "allow" else (label_request.content,))
-        placement_bounds = label_request.bounds or timeline_rect
-        text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
-                                            letter_spacing=float(label_treatment.letter_spacing),
-                                            text_transform=label_treatment.transform) for line in lines)
-        label_size = (leading + text_width + trailing,
-                      float(font_size) * float(line_height) * len(lines))
-        # Mark labels remain subject to every completed mark.  ``place_label``
-        # alone exempts this request's declared host for an ``inside``
-        # candidate; a comparison sibling or another row is never an implicit
-        # host.
-        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
-        obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
-                         if item.required and item.overflow != "suppressed")
-        candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
-                                 obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                 inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                                 required=label_request.overflow == "diagnose", overflow=label_request.overflow,
-                                 visible_fallback_side=label_request.visible_fallback_side)
-                     if label_request.candidates else None)
-        provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
-                                 content=label_request.content, inline=0, baseline_block=float(font_size),
-                                 typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
-                                 font_metrics=request.font_metrics, collision_region=label_request.collision_region,
-                                 collision_domain=label_request.collision_domain)
-        fallback_ladder = label_request.candidates + (
-            (label_request.visible_fallback_side,)
-            if label_request.visible_fallback_side is not None
-            and label_request.visible_fallback_side not in label_request.candidates else ())
-        if candidate is None:
-            ladder = fallback_ladder + (("suppress",) if label_request.overflow == "suppress" else ())
-            if not ladder:
-                raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
-            text.append(replace(provisional, overflow="suppressed", required=False,
-                                fallback_ladder=ladder,
-                                selected_rung="suppress"))
-            placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
-                                                         ladder, "suppress", "suppressed"))
-            diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
-        else:
-            host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
-            slot = by_source.get(label_request.collision_domain.slot)
-            slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
-            crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y
-                            or candidate.bounds.right > slot_bounds.right
-                            or candidate.bounds.bottom > slot_bounds.bottom)
-            visible_overflow = candidate.visible_overflow or crosses_slot
-            placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
-                                   content=provisional.content, inline=candidate.bounds.x + leading,
-                                   baseline_block=candidate.bounds.y + float(font_size),
-                                   typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
-                                   font_metrics=request.font_metrics, collision_region=provisional.collision_region,
-                                   collision_domain=provisional.collision_domain,
-                                   overflow="visible-overflow" if visible_overflow else "fit",
-                                   lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
-                                  host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
-                                  paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
-                                  if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
-            text.append(placed_text)
-            if visible_overflow:
-                visible_label_overflows.append((placed_text, slot_bounds))
-            if visuals:
-                if not hasattr(label_metrics, "cap_height_at"):
-                    raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
-                cap_height = float(label_metrics.cap_height_at(float(font_size)))
-                for visual, icon, width, gap in visuals:
-                    inline = (candidate.bounds.x if visual.side == "leading"
-                              else candidate.bounds.x + leading + text_width + trailing - gap - width)
-                    bounds = Rect(Decimal(str(inline)), Decimal(str(placed_text.baseline[1] - cap_height
-                                                                       + (cap_height - float(font_size)) / 2)),
-                                  Decimal(str(width)), Decimal(str(float(font_size))))
-                    candidate_icons.append(IconPlacement(f"visual:{placed_text.placement_id}:{visual.side}",
-                                                         placed_text.source_ref, visual.source_ref, icon.icon_id,
-                                                         icon.kind, icon.content_identity, icon.viewport, icon.payload,
-                                                         icon.alternative, visual.decorative, bounds, "labelVisual",
-                                                         width / icon.viewport[0], text_slot(placed_text),
-                                                         paint_order=placed_text.paint_order))
-            placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
-                                                         fallback_ladder, candidate.side, "placed"))
+    def place_requested_labels(requests: tuple[LabelRequest, ...]) -> None:
+        for label_request in requests:
+            label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
+            label_metrics = metric_for(label_request.typography_role)
+            font_size, line_height = label_treatment.font_size, label_treatment.line_height
+            visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
+            handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
+            leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
+            trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
+            available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
+            lines = (wrap_text(label_request.content, available_inline=available,
+                               font_size=float(font_size), font_metrics=label_metrics,
+                               letter_spacing=float(label_treatment.letter_spacing),
+                               text_transform=label_treatment.transform)
+                     if label_request.wrap == "allow" else (label_request.content,))
+            placement_bounds = label_request.bounds or timeline_rect
+            text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
+                                                letter_spacing=float(label_treatment.letter_spacing),
+                                                text_transform=label_treatment.transform) for line in lines)
+            label_size = (leading + text_width + trailing,
+                          float(font_size) * float(line_height) * len(lines))
+            # A declared ``<purpose>-chip`` Theme role draws a background from
+            # this label's own measured box; its padding is part of the footprint
+            # every candidate negotiates (#428).  Nothing here names a purpose.
+            chip_semantic = label_chip_semantic(label_request.semantic_id) or ""
+            chip = (request.theme_tokens.label_chip(semantic_binding(chip_semantic).theme_role)
+                    if chip_semantic else None)
+            chip_pad = ((float(chip[0]) * float(font_size), float(chip[0]) * float(font_size) / 2)
+                        if chip is not None else (0.0, 0.0))
+            label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
+            if label_request.bounds is not None and chip is not None:
+                # A declared region contains the text; its chip is decoration
+                # drawn around it and may reach past the region by its padding.
+                placement_bounds = LabelRect(placement_bounds.x - chip_pad[0], placement_bounds.y - chip_pad[1],
+                                             placement_bounds.width + 2 * chip_pad[0],
+                                             placement_bounds.height + 2 * chip_pad[1])
+            # Mark labels remain subject to every completed mark.  ``place_label``
+            # alone exempts this request's declared host for an ``inside``
+            # candidate; a comparison sibling or another row is never an implicit
+            # host.
+            candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
+                                     obstacles=surface_obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                     inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                                     required=label_request.overflow == "diagnose", overflow=label_request.overflow,
+                                     visible_fallback_side=label_request.visible_fallback_side,
+                                     rule_host_obstacle_id=label_request.rule_host_obstacle_id,
+                                     search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
+                                     classes=(("mark", "text", "label-visual", "rule")
+                                              if label_request.rule_host_obstacle_id is not None
+                                              else ("mark", "text", "label-visual", "dependency-route")))
+                         if label_request.candidates else None)
+            provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
+                                     content=label_request.content, inline=0, baseline_block=float(font_size),
+                                     typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
+                                     font_metrics=request.font_metrics, collision_region=label_request.collision_region,
+                                     collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id)
+            fallback_ladder = label_request.candidates + (
+                (label_request.visible_fallback_side,)
+                if label_request.visible_fallback_side is not None
+                and label_request.visible_fallback_side not in label_request.candidates else ())
+            if candidate is None:
+                ladder = fallback_ladder + (("suppress",) if label_request.overflow == "suppress" else ())
+                if not ladder:
+                    raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
+                text.append(replace(provisional, overflow="suppressed", required=False,
+                                    fallback_ladder=ladder,
+                                    selected_rung="suppress"))
+                placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
+                                                             ladder, "suppress", "suppressed"))
+                diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
+            else:
+                chip_box = candidate.bounds
+                if chip is not None:
+                    candidate = replace(candidate, bounds=LabelRect(
+                        chip_box.x + chip_pad[0], chip_box.y + chip_pad[1],
+                        chip_box.width - 2 * chip_pad[0], chip_box.height - 2 * chip_pad[1]))
+                host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
+                slot = by_source.get(label_request.collision_domain.slot)
+                slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
+                crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y
+                                or candidate.bounds.right > slot_bounds.right
+                                or candidate.bounds.bottom > slot_bounds.bottom)
+                visible_overflow = candidate.visible_overflow or crosses_slot
+                placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
+                                       content=provisional.content, inline=candidate.bounds.x + leading,
+                                       baseline_block=candidate.bounds.y + float(font_size),
+                                       typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
+                                       font_metrics=request.font_metrics, collision_region=provisional.collision_region,
+                                       collision_domain=provisional.collision_domain, semantic_id=provisional.semantic_id,
+                                       overflow="visible-overflow" if visible_overflow else "fit",
+                                       lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
+                                      host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
+                                      paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
+                                      if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
+                text.append(placed_text)
+                register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
+                surface_obstacles.add(SurfaceObstacle(f"label-footprint:{placed_text.placement_id}", "label-visual",
+                                                      placed_text.collision_domain.slot,
+                                                      ObstacleRect(chip_box.x, chip_box.y,
+                                                                   chip_box.right, chip_box.bottom)))
+                if chip is not None:
+                    shapes.append(ShapePlacement(
+                        f"chip:{placed_text.placement_id}", placed_text.source_ref, "Rect",
+                        Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)),
+                             Decimal(str(chip_box.width)), Decimal(str(chip_box.height))),
+                        required=False, slot_id=text_slot(placed_text),
+                        paint_order=placed_text.paint_order - 1,
+                        semantic_id=chip_semantic,
+                        corner_radius=float(chip[1]) * chip_box.height))
+                if visible_overflow:
+                    visible_label_overflows.append((placed_text, slot_bounds))
+                if visuals:
+                    if not hasattr(label_metrics, "cap_height_at"):
+                        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
+                    cap_height = float(label_metrics.cap_height_at(float(font_size)))
+                    for visual, icon, width, gap in visuals:
+                        inline = (candidate.bounds.x if visual.side == "leading"
+                                  else candidate.bounds.x + leading + text_width + trailing - gap - width)
+                        bounds = Rect(Decimal(str(inline)), Decimal(str(placed_text.baseline[1] - cap_height
+                                                                           + (cap_height - float(font_size)) / 2)),
+                                      Decimal(str(width)), Decimal(str(float(font_size))))
+                        candidate_icons.append(IconPlacement(f"visual:{placed_text.placement_id}:{visual.side}",
+                                                             placed_text.source_ref, visual.source_ref, icon.icon_id,
+                                                             icon.kind, icon.content_identity, icon.viewport, icon.payload,
+                                                             icon.alternative, visual.decorative, bounds, "labelVisual",
+                                                             width / icon.viewport[0], text_slot(placed_text),
+                                                             paint_order=placed_text.paint_order))
+                placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
+                                                             fallback_ladder, candidate.side, "placed",
+                                                             candidate.search_count))
+
+    place_requested_labels(tuple(item for item in label_requests if item.rule_host_obstacle_id is not None))
 
     relations: list[RelationPlacement] = []
     visible_route_fallbacks: list[RelationPlacement] = []
@@ -1497,15 +1647,31 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for item in review_row.items:
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}" if projection.rows else item.object_id
             instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
-            instance_rows[instance_id] = row.row_id
+            instance_rows[instance_id] = review_row.row_id
     for folded in getattr(projection, "folded_points", ()):
         instance_id = _folded_instance_id(folded, folded.item)
         mark = next((item for item in marks if item.placement_id == f"planned:{instance_id}"), None)
         if mark is not None:
             instance_anchors.setdefault(folded.item.object_id, []).append((instance_id, mark.end_port))
             instance_rows[instance_id] = f"group-header:{folded.group_id}"
-    mark_ports = {mark.placement_id.removeprefix("planned:"): (mark.start_port, mark.end_port)
-                  for mark in marks if mark.placement_id.startswith("planned:")}
+    relation_marks = {mark.placement_id.removeprefix("planned:"): mark
+                      for mark in marks if mark.placement_id.startswith("planned:")}
+    comparison_clusters: dict[tuple[str, str], tuple[MarkPlacement, ...]] = {}
+    for mark in marks:
+        instance_id = mark.placement_id.split(":", 1)[1]
+        row_id = instance_rows.get(instance_id)
+        if row_id is not None:
+            key = (mark.source_ref, row_id)
+            comparison_clusters[key] = (*comparison_clusters.get(key, ()), mark)
+
+    def combined_connector_points(source: ConnectorEgress, middle: tuple[tuple[float, float], ...],
+                                  target: ConnectorEgress) -> tuple[tuple[float, float], ...]:
+        pieces = (*source.corridor, *middle, *reversed(target.corridor))
+        completed: list[tuple[float, float]] = []
+        for point in pieces:
+            if not completed or completed[-1] != point:
+                completed.append(point)
+        return tuple(completed)
     route_top = min((float(group.header_bounds.block) for group in groups if group.header_bounds is not None),
                     default=timeline_bounds[1])
     route_bottom = max((timeline_bounds[1] + timeline_bounds[3],
@@ -1515,55 +1681,79 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         for source_id, source_anchor in instance_anchors.get(str(source), ()):
             for target_id, target_anchor in instance_anchors.get(str(target), ()):
-                source_ports = mark_ports.get(source_id, (source_anchor, source_anchor))
-                target_ports = mark_ports.get(target_id, (target_anchor, target_anchor))
-                source_port = source_ports[0] if relation.source_endpoint in {"start", "at"} else source_ports[1]
-                target_port = target_ports[0] if relation.target_endpoint in {"start", "at"} else target_ports[1]
+                source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
+                source_nominal = (source_mark.start_port if relation.source_endpoint in {"start", "at"}
+                                  else source_mark.end_port) if source_mark is not None else source_anchor
+                target_nominal = (target_mark.start_port if relation.target_endpoint in {"start", "at"}
+                                  else target_mark.end_port) if target_mark is not None else target_anchor
                 scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
-                source_port_id = f"{source_id}:{relation.source_endpoint}"
-                target_port_id = f"{target_id}:{relation.target_endpoint}"
-                if source_port == target_port:
-                    if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
-                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
-                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                source_candidates = (connector_egress_candidates(
+                    source_mark, relation.source_endpoint, target_nominal,
+                    comparison_clusters.get((source_mark.source_ref, instance_rows[source_id]), ()))
+                    if source_mark is not None else (ConnectorEgress(relation.source_endpoint, source_nominal,
+                                                                    source_nominal, ()),))
+                target_candidates = (connector_egress_candidates(
+                    target_mark, relation.target_endpoint, source_nominal,
+                    comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()))
+                    if target_mark is not None else (ConnectorEgress(relation.target_endpoint, target_nominal,
+                                                                    target_nominal, ()),))
+                port_pairs = tuple((source_candidate, target_candidate)
+                                   for source_candidate in source_candidates
+                                   for target_candidate in target_candidates)
+                selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
+                points: tuple[tuple[float, float], ...] = ()
+                # Semantic relation variants may share/cross a path; their
+                # routes remain obstacles for later annotations, not peers.
+                route_classes = ("mark", "text", "label-visual")
+                for source_egress, target_egress in port_pairs:
+                    if any(surface_obstacles.egress_collisions(
+                            ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+                            classes=route_classes, regions=("timeline", "group-header"))
+                           for egress in (source_egress, target_egress) if egress.corridor):
                         continue
-                    # A direct zero-length path is not inspectable, so retain
-                    # a deterministic one-point inline stub for coincident
-                    # endpoints.  Scene still receives completed geometry.
-                    fallback = (source_port, (source_port[0] + 1.0, source_port[1]))
-                    placed = RelationPlacement(scene_id, source_port_id, target_port_id, fallback,
-                                               semantic_id=relation.semantic_id, source_ref=relation_id)
-                    relations.append(placed)
-                    visible_route_fallbacks.append(placed)
-                    continue
-                endpoint_rows = {instance_rows.get(source_id), instance_rows.get(target_id)}
-                obstacles = tuple((float(row.bounds.inline), float(row.bounds.block),
-                                   float(row.bounds.inline + row.bounds.inline_size),
-                                   float(row.bounds.block + row.bounds.block_size))
-                                  for row in rows if row.row_id not in endpoint_rows)
-                fallback = False
-                try:
-                    points = place_relation_route(source_port=source_port, target_port=target_port, obstacles=obstacles,
-                                                  bounds=(timeline_bounds[0], route_top,
-                                                          timeline_bounds[0] + timeline_bounds[2], route_bottom))
-                except ValueError as error:
-                    if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
-                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
-                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                    source_port, target_port = source_egress.exposed_port, target_egress.exposed_port
+                    source_obstacle_id = f"port:{source_mark.placement_id if source_mark else scene_id}:{source_egress.side}"
+                    target_obstacle_id = f"port:{target_mark.placement_id if target_mark else scene_id}:{target_egress.side}"
+                    existing_ports = tuple(port_id for port_id in (source_obstacle_id, target_obstacle_id)
+                                           if surface_obstacles.has(port_id))
+                    try:
+                        middle = ((source_port,) if source_port == target_port else place_relation_route(
+                            source_port=source_port, target_port=target_port, obstacles=surface_obstacles,
+                            regions=("timeline", "group-header"), classes=route_classes,
+                            port_ids=existing_ports,
+                            bounds=(timeline_bounds[0], route_top,
+                                    timeline_bounds[0] + timeline_bounds[2], route_bottom)))
+                    except RouteSearchFailure:
                         continue
-                    points = (source_port, target_port)
-                    fallback = True
-                if not relation_route_quality(tuple(points), max_bends=layout_manifest.relation_max_bends,
+                    candidate_points = combined_connector_points(source_egress, middle, target_egress)
+                    if len(candidate_points) < 2:
+                        continue
+                    if relation_route_quality(candidate_points, max_bends=layout_manifest.relation_max_bends,
                                               max_detour_ratio=layout_manifest.relation_max_detour_ratio):
+                        selected_pair, points = (source_egress, target_egress), candidate_points
+                        break
+                fallback = selected_pair is None
+                if fallback:
                     if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, source_port_id, target_port_id,
+                        relations.append(RelationPlacement(scene_id, f"{source_id}:{relation.source_endpoint}",
+                                                           f"{target_id}:{relation.target_endpoint}",
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         continue
-                    points = (source_port, target_port)
-                    fallback = True
+                    selected_pair = port_pairs[0]
+                    first_source, first_target = selected_pair
+                    points = ((first_source.semantic_port, first_target.semantic_port)
+                              if first_source.semantic_port != first_target.semantic_port
+                              else (first_source.semantic_port,
+                                    (first_source.semantic_port[0] + 1.0, first_source.semantic_port[1])))
+                source_egress, target_egress = selected_pair
+                source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
+                target_port_id = f"{target_id}:{relation.target_endpoint}:{target_egress.side}"
+                for mark, side, port in ((source_mark, source_egress.side, source_egress.exposed_port),
+                                         (target_mark, target_egress.side, target_egress.exposed_port)):
+                    obstacle_id = f"port:{mark.placement_id if mark else scene_id}:{side}"
+                    if not surface_obstacles.has(obstacle_id):
+                        register_port(obstacle_id, port, "timeline")
                 relation_radius = float(metric_values.get("timeline.relation.cornerRadius", 0))
                 placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
                                            semantic_id=relation.semantic_id,
@@ -1574,11 +1764,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                            marker_end=marker_geometry(request.theme_tokens.marker("relationTargetTerminal")),
                                            label_content=relation_label_content(relation), source_ref=relation_id)
                 relations.append(placed)
+                dependency_role = semantic_binding(placed.semantic_id).theme_role
+                register_path(scene_id, "dependency-route", "timeline", placed.points,
+                              stroke_width=float(request.theme_tokens.number(dependency_role, "strokeWidth")))
                 if fallback:
                     visible_route_fallbacks.append(placed)
 
     # Relation labels are routed facts, not a Scene or adapter policy.  They run
     # after relation paths exist so their anchor is a stable completed segment.
+    place_requested_labels(tuple(item for item in label_requests if item.rule_host_obstacle_id is None))
+
     for placed_relation in relations:
         if placed_relation.suppressed:
             continue
@@ -1593,12 +1788,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    text_transform=relation_treatment.transform),
                 float(font_size) * float(line_height))
         relation_text_id = f"relation-label:{placed_relation.relation_id.removeprefix('relation:')}"
-        obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in marks]
-        obstacles.extend(LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds))) for item in text
-                         if item.required and item.overflow != "suppressed")
         candidate = place_label(relation_label_anchor(placed_relation.points), size, ("above", "below", "start", "end"),
-                                bounds=timeline_rect, obstacles=obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                required=False, overflow=request.surface_content.relation_overflow)
+                                bounds=timeline_rect, obstacles=surface_obstacles, gap=max(1.0, float(font_size) * 0.25),
+                                required=False, overflow=request.surface_content.relation_overflow,
+                                classes=("mark", "text", "label-visual", "dependency-route"))
         if candidate is None:
             diagnostics.append(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:{placed_relation.relation_id}")
             continue
@@ -1609,6 +1802,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        collision_region="relation-label", collision_domain=CollisionDomain("timeline", "overlay")),
                             fallback_ladder=("above", "below", "start", "end"), selected_rung=candidate.side)
         text.append(placed_text)
+        register_rect(placed_text.placement_id, "text", "timeline", placed_text.bounds)
         if candidate.visible_overflow:
             visible_label_overflows.append((placed_text, timeline_rect))
 
@@ -1618,43 +1812,128 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         legend_treatment = request.theme_tokens.text_treatment("legend")
         legend_size = float(legend_treatment.font_size)
         legend_step = legend_size * float(legend_treatment.line_height)
-        swatch_size = max(2.0, legend_size * 0.8)
-        text_inline = float(legend.bounds.inline) + swatch_size * 1.5
-        text_available = max(0.0, float(legend.bounds.inline_size) - swatch_size * 1.5)
-        final_legend_end = legend.bounds.block
-        for index, (role, label) in enumerate(request.surface_content.legend_entries):
-            baseline = float(legend.bounds.block) + (index + 1) * legend_step
-            shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
-                                         Rect(legend.bounds.inline, Decimal(str(baseline - swatch_size)),
-                                              Decimal(str(swatch_size)), Decimal(str(swatch_size)))))
+        text_line_block = legend_size * float(legend_treatment.line_height)
+        mark_block_size = float(metric_values["timeline.mark.blockSize"])
+        legacy_swatch_size = max(2.0, legend_size * 0.8)
+        declared_inline = request.theme_tokens.optional_number("legend-swatch", "swatchInlineSize")
+        fallback_inline = float(declared_inline) if declared_inline is not None else legacy_swatch_size
+        # Today's fixed swatch->label offset was `swatch_size * 1.5`, i.e. one
+        # swatch width plus a "gap" of exactly half a swatch; reproduce that
+        # split so an unmigrated (no declared `gap`) legend slot lays out
+        # byte-identically to before this change (#427).
+        gap = float(legend.gap) if legend.gap is not None else legacy_swatch_size * 0.5
+        direction = legend.direction
+        item_min_inline = float(legend.item_min_inline_size) if legend.item_min_inline_size is not None else None
+
+        def swatch_geometry(role: str) -> tuple[float, float, str]:
+            """Return one legend entry's (inline size, block size, dispatch bucket) (#427).
+
+            The size is the role's own mark geometry against the document's own
+            `timeline.mark.blockSize` for a `mark`/`point` role -- literally the
+            size the chart draws it -- or `legend-swatch.swatchInlineSize` (or its
+            documented fallback) for a role with no single on-chart length. A
+            role this table does not recognize keeps today's fixed square.
+            """
+            if role == "milestone":
+                height_ratio, *_ = request.theme_tokens.mark_geometry("planned")
+                side = float(height_ratio) * mark_block_size
+                return side, side, "point"
+            if role in MARK_GEOMETRY_ROLES:
+                return fallback_inline, float(request.theme_tokens.mark_geometry(role)[0]) * mark_block_size, "mark"
+            if role in ("asOf", "dependency", "dependency-critical"):
+                return fallback_inline, text_line_block, "line"
+            return legacy_swatch_size, legacy_swatch_size, "legacy"
+
+        def emit_swatch(role: str, x: float, y: float, width: float, height: float, bucket: str) -> None:
+            if bucket == "point":
+                bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
+                parts = symbol_parts(request.theme_tokens.variant_symbol("planned"), (x, y, width, height))
+                marks.append(MarkPlacement(f"legend-swatch:{role}", role,
+                                           bounds,
+                                           (x + width / 2, y + height / 2), (x + width / 2, y + height / 2),
+                                           mark_shape="point", slot_id=legend.slot_id, semantic_id="planned",
+                                           symbol_parts=parts))
+            elif bucket == "mark":
+                height_ratio, offset_ratio, paint_order, corner_ratio = request.theme_tokens.mark_geometry(role)
+                corner_radius = min(float(corner_ratio) * min(width, height), min(width, height) / 2)
+                shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
+                                             Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
+                                             slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
+            elif bucket == "line":
+                marker_token = request.theme_tokens.optional_token(role, "marker", "marker")
+                relations.append(RelationPlacement(f"legend-swatch:{role}", f"legend-swatch:{role}:start",
+                                                   f"legend-swatch:{role}:end",
+                                                   points=((x, y + height / 2), (x + width, y + height / 2)),
+                                                   semantic_id=role, slot_id=legend.slot_id, source_ref=role,
+                                                   marker_end=marker_geometry(marker_token) if marker_token else None))
+            else:
+                shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
+                                             Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
+                                             slot_id=legend.slot_id))
+
+        def emit_label(role: str, label: str, x: float, baseline: float, available: float) -> float:
             natural_width = measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
                                                letter_spacing=float(legend_treatment.letter_spacing),
                                                text_transform=legend_treatment.transform,
                                                numeric_spacing=legend_treatment.numeric_spacing)
             content = label
             disposition = "fit"
-            if natural_width > text_available and legend.overflow == "ellipsize-with-source":
-                content = ellipsize_text(label, available_inline=text_available, font_size=legend_size,
+            if natural_width > available and legend.overflow == "ellipsize-with-source":
+                content = ellipsize_text(label, available_inline=available, font_size=legend_size,
                                          font_metrics=metric_for("legend"),
                                          letter_spacing=float(legend_treatment.letter_spacing),
                                          text_transform=legend_treatment.transform,
                                          numeric_spacing=legend_treatment.numeric_spacing)
                 disposition = "ellipsized"
-            elif natural_width > text_available and legend.overflow == "visible-overflow":
+            elif natural_width > available and legend.overflow == "visible-overflow":
                 disposition = "visible-overflow"
             placed = place_text(placement_id=f"legend:{role}", source_ref=role, content=content,
-                                inline=text_inline, baseline_block=baseline, typography_role="legend",
+                                inline=x, baseline_block=baseline, typography_role="legend",
                                 theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                 overflow=disposition, collision_region="legend",
                                 collision_domain=CollisionDomain("legend", "content"), source_content=label,
-                                available_inline_start=text_inline, available_inline_size=text_available)
+                                available_inline_start=x, available_inline_size=available)
             text.append(placed)
-            final_legend_end = max(final_legend_end, placed.bounds.block + placed.bounds.block_size)
             if disposition == "visible-overflow":
                 side_content_warnings.append(FitWarning(
                     "W_LAYOUT_VISIBLE_OVERFLOW", placed.placement_id, role, "legend-text", "visible-overflow",
-                    natural_width, float(placed.bounds.block_size), text_available, float(legend.bounds.block_size),
+                    natural_width, float(placed.bounds.block_size), available, float(legend.bounds.block_size),
                 ))
+            return placed.bounds.block + placed.bounds.block_size
+
+        final_legend_end = legend.bounds.block
+        if direction == "inline":
+            x = float(legend.bounds.inline)
+            y = float(legend.bounds.block)
+            row_height = 0.0
+            slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
+            for role, label in request.surface_content.legend_entries:
+                width, height, bucket = swatch_geometry(role)
+                if item_min_inline is not None and x > float(legend.bounds.inline) and slot_end - x < item_min_inline:
+                    y += row_height + gap
+                    x = float(legend.bounds.inline)
+                    row_height = 0.0
+                emit_swatch(role, x, y, width, height, bucket)
+                label_end = emit_label(role, label, x + width + gap, y + legend_size, max(0.0, slot_end - (x + width + gap)))
+                row_height = max(row_height, height, text_line_block)
+                final_legend_end = max(final_legend_end, Decimal(str(label_end)), Decimal(str(y + row_height)))
+                x += width + gap + measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
+                                                       letter_spacing=float(legend_treatment.letter_spacing),
+                                                       text_transform=legend_treatment.transform,
+                                                       numeric_spacing=legend_treatment.numeric_spacing) + gap
+        else:
+            cursor = float(legend.bounds.block)
+            for role, label in request.surface_content.legend_entries:
+                width, height, bucket = swatch_geometry(role)
+                row_height = max(height, text_line_block)
+                swatch_top = cursor + (row_height - height) / 2.0
+                baseline = cursor + (row_height - text_line_block) / 2.0 + legend_size
+                text_inline = float(legend.bounds.inline) + width + gap
+                text_available = max(0.0, float(legend.bounds.inline_size) - width - gap)
+                emit_swatch(role, float(legend.bounds.inline), swatch_top, width, height, bucket)
+                label_end = emit_label(role, label, text_inline, baseline, text_available)
+                final_legend_end = max(final_legend_end, Decimal(str(label_end)))
+                cursor += row_height + gap
         final_size = max(legend.bounds.block_size, final_legend_end - legend.bounds.block)
         replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
                                                    legend.bounds.inline_size, final_size))
@@ -1694,9 +1973,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             cursor += float(font_size) * float(line_height)
 
     annotation_slot = by_source.get("annotations")
-    if annotation_slot:
+    annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
+    if annotation_slot or request.surface_content.annotations:
         annotation_marks = _comparison_marks(projection)
-        placed_boxes: list[LabelRect] = []
         for index, annotation in enumerate(request.surface_content.annotations):
             presentation = annotation_presentation(annotation.purpose)
             annotation_id, content = annotation.annotation_id, annotation.content
@@ -1728,7 +2007,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 selected_items = tuple(item for item in matching[0][0].items
                                        if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id))
                 anchor_item = selected_items[0] if selected_items else None
-                anchor_instance_id = (f"{matching[0][0].row_id}:{anchor_item.item_id or anchor_item.object_id}"
+                anchor_instance_id = ((f"{matching[0][0].row_id}:{anchor_item.item_id or anchor_item.object_id}"
+                                       if projection.rows else anchor_item.object_id)
                                       if anchor_item is not None else "")
                 anchor_host = mark_by_id.get(f"{resolved.facet}:{anchor_instance_id}")
             elif folded_matches and folded_matches[0][1] is not None:
@@ -1738,22 +2018,133 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 anchor_host = mark
             else:
                 raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+            as_of_side_constraint: tuple[float, str] | None = None
+            if contract.time.as_of is not None and start <= contract.time.as_of < end:
+                as_of_x = _coordinate(contract.time.as_of, scale)
+                as_of_side_constraint = (as_of_x, "start" if anchor_bounds.x < as_of_x else "end")
             annotation_text_role = semantic_binding(presentation.text_semantic_id).theme_role
             annotation_treatment = request.theme_tokens.text_treatment(annotation_text_role)
             annotation_metrics = metric_for(annotation_text_role)
             size, line_height = float(annotation_treatment.font_size), float(annotation_treatment.line_height)
-            text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
+            if annotation_slot is not None:
+                text_available = max(1.0, float(annotation_slot.bounds.inline_size) - annotation_leading - annotation_trailing)
+            else:
+                # A plot/content-only candidate list declares its own text
+                # width bound (#466); an annotation with no annotations slot
+                # must declare at least one bounded nearest-free/adjacent
+                # candidate.
+                declared_max_em = max((candidate.search.max_inline_em for candidate in annotation.candidates
+                                       if candidate.search.max_inline_em is not None), default=None)
+                if declared_max_em is None:
+                    raise LayoutError("E_LAYOUT_ANNOTATION_WIDTH_UNBOUNDED", f"/annotations/{index}")
+                text_available = max(1.0, declared_max_em * size - annotation_leading - annotation_trailing)
             text_width = min(text_available, max(size * 4, measure_text_width(
                 content, font_size=size, font_metrics=annotation_metrics,
                 letter_spacing=float(annotation_treatment.letter_spacing), text_transform=annotation_treatment.transform)))
             width = annotation_leading + text_width + annotation_trailing
             annotation_lines = (content,)
+            annotation_search_count = 0
+            selected_leader: tuple[ConnectorEgress, AnnotationRouteTrial,
+                                   tuple[tuple[float, float], ...],
+                                   tuple[tuple[float, float], ...]] | None = None
+
+            def trial_leader(candidate_box: Any, rung: str
+                             ) -> tuple[ConnectorEgress, AnnotationRouteTrial,
+                                        tuple[tuple[float, float], ...],
+                                        tuple[tuple[float, float], ...]] | None:
+                nonlocal annotation_search_count
+                if not candidate_box.leader_required or presentation.leader_semantic_id is None:
+                    return None
+                if anchor_host is None:
+                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                candidate_bounds = candidate_box.placement.bounds
+                target = nearest_box_port(candidate_bounds,
+                                          (anchor_bounds.x + anchor_bounds.width / 2,
+                                           anchor_bounds.y + anchor_bounds.height / 2))
+                anchor_instance = anchor_host.placement_id.split(":", 1)[1]
+                anchor_row = instance_rows.get(anchor_instance)
+                source_candidates = connector_egress_candidates(
+                    anchor_host, resolved.endpoint, target,
+                    comparison_clusters.get((anchor_host.source_ref, anchor_row), (anchor_host,)))
+                viewport = request.layout_manifest.viewport
+                content_extent = (float(viewport.inline), float(viewport.block),
+                                  max(float(viewport.inline + viewport.inline_size), candidate_bounds.right),
+                                  max(float(viewport.block + viewport.block_size), candidate_bounds.bottom))
+                route_bounds = local_route_bounds(
+                    _bounds(anchor_host.bounds),
+                    (candidate_bounds.x, candidate_bounds.y, candidate_bounds.width, candidate_bounds.height),
+                    target, content_extent)
+                connector_stroke_width = float(request.theme_tokens.number(
+                    semantic_binding(presentation.leader_semantic_id).theme_role, "strokeWidth"))
+                route_specs: list[tuple[ConnectorEgress, tuple[tuple[float, float], ...], tuple[str, ...]]] = []
+                for source_egress in source_candidates:
+                    source_port_id = f"port:{anchor_host.placement_id}:{source_egress.side}"
+                    known_ports = coincident_endpoint_port_ids(
+                        surface_obstacles, source_egress.exposed_port, source_egress.host_ids)
+                    known_ports = tuple(dict.fromkeys((*known_ports, *coincident_endpoint_port_ids(
+                        surface_obstacles, source_egress.semantic_port, source_egress.host_ids))))
+                    if surface_obstacles.has(source_port_id) and source_port_id not in known_ports:
+                        known_ports = (*known_ports, source_port_id)
+                    if source_egress.corridor and surface_obstacles.egress_collisions(
+                            ObstacleSegment(*source_egress.corridor), host_ids=source_egress.host_ids,
+                            port_ids=known_ports):
+                        continue
+                    base_prefix = (source_egress.corridor if source_egress.corridor
+                                   else (source_egress.semantic_port,))
+                    # Clear the entire possible bridge gap before turning
+                    # back across a dependency from the same endpoint.
+                    fanout_deltas = ((6.0, 0.0), (-6.0, 0.0), (0.0, 6.0), (0.0, -6.0))
+                    prefixes = (base_prefix, *(tuple((*base_prefix,
+                                                      (source_egress.exposed_port[0] + dx,
+                                                       source_egress.exposed_port[1] + dy)))
+                                                for dx, dy in fanout_deltas))
+                    for prefix in prefixes:
+                        if len(prefix) > len(base_prefix):
+                            stub = ObstacleSegment(source_egress.exposed_port, prefix[-1])
+                            if (surface_obstacles.egress_collisions(
+                                    stub, host_ids=source_egress.host_ids, port_ids=known_ports)
+                                    or any(item.placement_id in source_egress.host_ids
+                                           for item in surface_obstacles.collisions(stub, classes=("mark",)))):
+                                continue
+                        route_specs.append((source_egress, tuple(prefix), known_ports))
+                # Probe every finite sparse endpoint before spending the
+                # dense-grid budget on any one poor endpoint.
+                for dense_search, candidates in ((False, route_specs), (True, route_specs[:2])):
+                    for source_egress, prefix, known_ports in candidates:
+                        annotation_search_count += 1
+                        trial = route_annotation_candidate(
+                            prefix[-1], target, surface_obstacles,
+                            bounds=route_bounds, port_ids=known_ports,
+                            max_bends=layout_manifest.annotation_max_bends,
+                            max_detour_ratio=layout_manifest.annotation_max_detour_ratio,
+                            allow_bridge=rung == "rail", dense=dense_search,
+                            connector_stroke_width=connector_stroke_width)
+                        if trial is None:
+                            continue
+                        full_points = (*prefix[:-1], *trial.points)
+                        if relation_route_quality(full_points, max_bends=layout_manifest.annotation_max_bends,
+                                                  max_detour_ratio=layout_manifest.annotation_max_detour_ratio):
+                            return source_egress, trial, tuple(full_points), tuple(prefix)
+                return None
+
+            tail_tip: tuple[float, float] | None = None
+            container = None
+            content_top = content_right = content_bottom = content_left = 0.0
             try:
                 if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
-                    annotation_lines = (wrap_text(content, available_inline=text_available, font_size=size, font_metrics=annotation_metrics,
+                    # A declared candidate's maxInlineEm is a text-width bound
+                    # for a plot/content search (#466): it forces wrapping so
+                    # a long note becomes a narrow, tall box rather than one
+                    # too wide to fit any free lattice position.
+                    plot_wrap_em = max((candidate.search.max_inline_em for candidate in annotation.candidates
+                                        if candidate.search.max_inline_em is not None), default=None)
+                    wrap_available = float(plot_wrap_em) * size if plot_wrap_em is not None else text_available
+                    if plot_wrap_em is not None:
+                        wrap = "allow"
+                    annotation_lines = (wrap_text(content, available_inline=wrap_available, font_size=size, font_metrics=annotation_metrics,
                                                   letter_spacing=float(annotation_treatment.letter_spacing),
                                                   text_transform=annotation_treatment.transform)
                                         if wrap == "allow" else (content,))
@@ -1761,30 +2152,87 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                         letter_spacing=float(annotation_treatment.letter_spacing),
                                                         text_transform=annotation_treatment.transform)
                                      for line in annotation_lines)
-                    annotation_size = (annotation_leading + text_width + annotation_trailing,
-                                       size * line_height * len(annotation_lines))
-                    default_ladder = annotation.fallback_ladder or ("rail",)
-                    ladder = ((preferred,) + tuple(rung for rung in default_ladder if rung != preferred)
-                              if preferred else default_ladder)
-                    box, selected_rung = None, None
-                    for rung in (rung for rung in ladder if rung != "suppress"):
-                        if rung == "rail":
-                            candidate_box = place_annotation_rail(
+                    annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
+                    container = request.theme_tokens.annotation_container(annotation_box_role)
+                    # An image-backed container (#465) declares a content
+                    # inset: Layout measures text into that smaller box, then
+                    # expands it by the inset to the paint box the search and
+                    # collision below actually use -- the box a rectangle or
+                    # balloon container already uses today, unchanged.
+                    content_top = content_right = content_bottom = content_left = 0.0
+                    if container is not None and container.outline == "image":
+                        content_top, content_right, content_bottom, content_left = (
+                            float(value) * size for value in container.content_insets_em)
+                    annotation_size = (annotation_leading + text_width + annotation_trailing + content_left + content_right,
+                                       size * line_height * len(annotation_lines) + content_top + content_bottom)
+                    candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
+                                                          annotation.fallback_ladder, preferred)
+                    box, selected_rung, tail_tip = None, None, None
+                    for candidate in candidates:
+                        rung = candidate.candidate_id
+                        if candidate.search.kind == "row-aligned":
+                            candidate_boxes = annotation_rail_candidates(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
                                 text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="clip-optional", required=False)
+                                obstacles=surface_obstacles)
+                            for candidate_box in candidate_boxes:
+                                annotation_search_count += 1
+                                leader_trial = trial_leader(candidate_box, rung)
+                                if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
+                                    continue
+                                box, selected_rung, selected_leader = candidate_box, rung, leader_trial
+                                break
+                        elif candidate.search.kind == "nearest-free":
+                            region_bounds = LabelRect(*_bounds(timeline.bounds))
+                            host_id = anchor_host.placement_id if anchor_host is not None else None
+                            if candidate.connector.kind == "tail":
+                                if container is None or container.outline != "balloon":
+                                    raise LayoutError("E_LAYOUT_ANNOTATION_TAIL_REQUIRES_BALLOON", f"/annotations/{index}")
+                                corner_radius, tail_base = float(container.corner_radius) * size, float(container.tail_base) * size
+                                free_box, trial_tip, trials = nearest_free_tail_box(
+                                    region=region_bounds, anchor=anchor_bounds, box_size=annotation_size,
+                                    max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
+                                    obstacle_classes=candidate.obstacles.classes, corner_radius=corner_radius,
+                                    tail_base=tail_base, host_id=host_id, side_of_as_of=as_of_side_constraint)
+                                annotation_search_count += trials
+                                if free_box is not None:
+                                    box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), False)
+                                    selected_rung, tail_tip = rung, trial_tip
+                            else:
+                                anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
+                                                 anchor_bounds.y + anchor_bounds.height / 2)
+                                free_box, trials = nearest_free_box(
+                                    region=region_bounds, anchor_center=anchor_center, box_size=annotation_size,
+                                    max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
+                                    obstacle_classes=candidate.obstacles.classes, host_id=host_id,
+                                    side_of_as_of=as_of_side_constraint)
+                                annotation_search_count += trials
+                                if free_box is not None:
+                                    leader_required = candidate.connector.kind == "leader"
+                                    candidate_box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), leader_required)
+                                    leader_trial = trial_leader(candidate_box, rung) if leader_required else None
+                                    if not (leader_required and presentation.leader_semantic_id is not None and leader_trial is None):
+                                        box, selected_rung, selected_leader = candidate_box, rung, leader_trial
                         else:
                             candidate_box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
                                 candidate_sides=(rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="clip-optional", required=False)
-                        if candidate_box is not None:
-                            box, selected_rung = candidate_box, rung
+                                obstacles=surface_obstacles, overflow="clip-optional", required=False)
+                            candidate_boxes = (candidate_box,) if candidate_box is not None else ()
+                            for candidate_box in candidate_boxes:
+                                annotation_search_count += 1
+                                leader_trial = trial_leader(candidate_box, rung)
+                                if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
+                                    continue
+                                box, selected_rung, selected_leader = candidate_box, rung, leader_trial
+                                break
+                        if box is not None:
                             break
                     if box is None:
                         if "suppress" in ladder:
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
-                                                                         tuple(ladder), "suppress", "suppressed"))
+                                                                         tuple(ladder), "suppress", "suppressed",
+                                                                         search_count=annotation_search_count))
                             diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
                             continue
                         # A normal annotation is never silently suppressed or
@@ -1792,45 +2240,94 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         # visible-overflow mode after the explicit fit ladder
                         # has been exhausted.
                         selected_rung = next(rung for rung in ladder if rung != "suppress")
+                        first_candidate = next((item for item in candidates if item.candidate_id == selected_rung), None)
                         if selected_rung == "rail":
                             box = place_annotation_rail(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
                                 text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="visible-overflow", required=True)
+                                obstacles=surface_obstacles, overflow="visible-overflow", required=True)
+                        elif first_candidate is not None and first_candidate.search.kind == "nearest-free":
+                            # #449 never refuses: complete the first declared
+                            # candidate's own region at its nearest lattice
+                            # position, visibly overflowing any obstacle.
+                            region_bounds = LabelRect(*_bounds(timeline.bounds))
+                            anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
+                                             anchor_bounds.y + anchor_bounds.height / 2)
+                            width, height = annotation_size
+                            forced = LabelRect(min(max(anchor_center[0] - width / 2, region_bounds.x),
+                                                   region_bounds.right - width),
+                                               min(max(anchor_center[1] - height / 2, region_bounds.y),
+                                                   region_bounds.bottom - height), width, height)
+                            box = AnnotationBox(resolved, LabelPlacement(selected_rung, forced, True), False)
                         else:
                             box = project_annotation_box(
                                 annotation, resolved, anchor_bounds=anchor_bounds, text_size=annotation_size,
                                 candidate_sides=(selected_rung,), viewport=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=placed_boxes, overflow="visible-overflow", required=True)
+                                obstacles=surface_obstacles, overflow="visible-overflow", required=True)
                         if box is None:  # Defensive: visible-overflow is a total Layout policy.
                             raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/annotations/{index}")
                     placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
-                                                                 tuple(ladder), selected_rung, "placed"))
+                                                                 tuple(ladder), selected_rung, "placed",
+                                                                 search_count=annotation_search_count,
+                                                                 selected_topology=(selected_leader[1].topology
+                                                                                    if selected_leader else None),
+                                                                 crossing_ids=(selected_leader[1].crossing_ids
+                                                                               if selected_leader else ())))
                 else:
                     box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, size * line_height),
                                                  candidate_sides=(annotation.side,),
-                                                 viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=placed_boxes,
+                                                 viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=surface_obstacles,
                                                  overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
             except ValueError as error:
                 raise LayoutError(str(error), f"/annotations/{index}") from error
             if box is None:
                 continue
-            placed_boxes.append(box.placement.bounds)
             bounds = box.placement.bounds
-            shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
-                                         Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)), Decimal(str(bounds.width)), Decimal(str(bounds.height))),
-                                         semantic_id=presentation.box_semantic_id, annotation=presentation,
-                                         paint_order=ANNOTATION_PAINT_ORDER))
+            annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
+                                     Decimal(str(bounds.width)), Decimal(str(bounds.height)))
+            if tail_tip is not None:
+                container = request.theme_tokens.annotation_container(
+                    semantic_binding(presentation.box_semantic_id).theme_role)
+                corner_radius, tail_base = float(container.corner_radius) * size, float(container.tail_base) * size
+                outline = balloon_outline(bounds, tail_tip, corner_radius=corner_radius, tail_base=tail_base)
+                shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Balloon",
+                                             annotation_bounds, path_commands=outline,
+                                             semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                             paint_order=ANNOTATION_PAINT_ORDER))
+            elif container is not None and container.outline == "image":
+                icon = request.icon_assets.get(container.image_ref)
+                if icon is None or icon.kind != "raster":
+                    raise LayoutError("E_LAYOUT_ANNOTATION_IMAGE_UNRESOLVED", f"/annotations/{index}")
+                slice_insets_px = tuple(float(value) * size for value in container.slice_insets_em)
+                tiles = image_slice_tiles((bounds.x, bounds.y, bounds.width, bounds.height),
+                                          viewport=icon.viewport, slice_insets=slice_insets_px)
+                shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
+                                             annotation_bounds,
+                                             semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                             paint_order=ANNOTATION_PAINT_ORDER,
+                                             image_fill=LayoutImageFill(icon.content_identity, icon.viewport,
+                                                                        icon.payload, tiles)))
+            else:
+                shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
+                                             annotation_bounds,
+                                             semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                             paint_order=ANNOTATION_PAINT_ORDER))
+            register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            annotation_text_slot = "annotations" if annotation_slot is not None else timeline.slot_id
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
-                                           inline=bounds.x + annotation_leading, baseline_block=bounds.y + size, typography_role=annotation_text_role,
+                                           inline=bounds.x + annotation_leading + content_left,
+                                           baseline_block=bounds.y + content_top + size, typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                           collision_region="annotations", collision_domain=CollisionDomain("annotations", "content"),
+                                           collision_region="annotations", collision_domain=CollisionDomain(annotation_text_slot, "content"),
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,
                                            annotation=presentation)
             placed_annotation = replace(placed_annotation, paint_order=ANNOTATION_PAINT_ORDER + 1)
             text.append(placed_annotation)
+            register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
             if box.placement.visible_overflow:
-                visible_label_overflows.append((placed_annotation, LabelRect(*_bounds(annotation_slot.bounds))))
+                overflow_viewport = (LabelRect(*_bounds(annotation_slot.bounds)) if annotation_slot is not None
+                                     else LabelRect(*_bounds(timeline.bounds)))
+                visible_label_overflows.append((placed_annotation, overflow_viewport))
             if annotation_visuals:
                 if not hasattr(annotation_metrics, "cap_height_at"):
                     raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in annotation_visuals))
@@ -1845,7 +2342,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          annotation_id, visual.source_ref, icon.icon_id, icon.kind,
                                                          icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                          visual.decorative, icon_bounds, "labelVisual",
-                                                         icon_width / icon.viewport[0], annotation_slot.slot_id,
+                                                         icon_width / icon.viewport[0], annotation_slot_id,
                                                          paint_order=placed_annotation.paint_order))
             if annotation.number is not None:
                 note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
@@ -1859,66 +2356,88 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                       letter_spacing=float(annotation_treatment.letter_spacing),
                                                       text_transform=annotation_treatment.transform)
                 note_index_size = (note_index_leading + note_index_width + note_index_trailing, size * line_height)
-                note_index_obstacles = [LabelObstacle(item.placement_id, LabelRect(*_bounds(item.bounds)))
-                                        for item in text
-                                        if item.required and item.overflow != "suppressed"
-                                        and item.collision_domain == CollisionDomain("timeline", "overlay")]
                 note_index = place_label(
                     anchor_bounds, note_index_size, ("end", "start", "above", "below"),
-                    bounds=LabelRect(*timeline_bounds), obstacles=note_index_obstacles,
+                    bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
                     gap=max(1.0, size * 0.25), required=False, overflow="suppress",
                 )
                 if note_index is None:
                     diagnostics.append(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}")
-                    continue
-                note_index_inline = note_index.bounds.x
-                note_index_text = place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
-                                             content=note_index_content, inline=note_index_inline + note_index_leading,
-                                             baseline_block=note_index.bounds.y + size, typography_role="annotation",
-                                             theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                             collision_region="annotations",
-                                             collision_domain=CollisionDomain("timeline", "overlay"),
-                                             semantic_id="noteIndex")
-                if anchor_host is not None:
-                    note_index_text = replace(note_index_text, host_placement_id=anchor_host.placement_id,
-                                              paint_order=max(HOSTED_TEXT_PAINT_ORDER, anchor_host.paint_order + 1))
-                text.append(note_index_text)
-                if note_index_visuals:
-                    if not hasattr(annotation_metrics, "cap_height_at"):
-                        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in note_index_visuals))
-                    cap_height = float(annotation_metrics.cap_height_at(size))
-                    for visual, icon, icon_width, gap in note_index_visuals:
-                        inline = (note_index.bounds.x if visual.side == "leading"
-                                  else note_index.bounds.x + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
-                        icon_bounds = Rect(Decimal(str(inline)), Decimal(str(note_index_text.baseline[1] - cap_height
-                                                                              + (cap_height - size) / 2)),
-                                           Decimal(str(icon_width)), Decimal(str(size)))
-                        candidate_icons.append(IconPlacement(f"visual:note-index:{annotation_id}:{visual.side}",
-                                                             annotation_id, visual.source_ref, icon.icon_id, icon.kind,
-                                                             icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                                             visual.decorative, icon_bounds, "labelVisual",
-                                                             icon_width / icon.viewport[0], annotation_slot.slot_id,
-                                                             paint_order=note_index_text.paint_order))
+                else:
+                    note_index_inline = note_index.bounds.x
+                    note_index_text = place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
+                                                 content=note_index_content, inline=note_index_inline + note_index_leading,
+                                                 baseline_block=note_index.bounds.y + size, typography_role="annotation",
+                                                 theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                                 collision_region="annotations",
+                                                 collision_domain=CollisionDomain("timeline", "overlay"),
+                                                 semantic_id="noteIndex")
+                    if anchor_host is not None:
+                        note_index_text = replace(note_index_text, host_placement_id=anchor_host.placement_id,
+                                                  paint_order=max(HOSTED_TEXT_PAINT_ORDER, anchor_host.paint_order + 1))
+                    text.append(note_index_text)
+                    register_rect(note_index_text.placement_id, "text", "timeline", note_index_text.bounds)
+                    if note_index_visuals:
+                        if not hasattr(annotation_metrics, "cap_height_at"):
+                            raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in note_index_visuals))
+                        cap_height = float(annotation_metrics.cap_height_at(size))
+                        for visual, icon, icon_width, gap in note_index_visuals:
+                            inline = (note_index.bounds.x if visual.side == "leading"
+                                      else note_index.bounds.x + note_index_leading + note_index_width + note_index_trailing - gap - icon_width)
+                            icon_bounds = Rect(Decimal(str(inline)), Decimal(str(note_index_text.baseline[1] - cap_height
+                                                                                  + (cap_height - size) / 2)),
+                                               Decimal(str(icon_width)), Decimal(str(size)))
+                            candidate_icons.append(IconPlacement(f"visual:note-index:{annotation_id}:{visual.side}",
+                                                                 annotation_id, visual.source_ref, icon.icon_id, icon.kind,
+                                                                 icon.content_identity, icon.viewport, icon.payload, icon.alternative,
+                                                                 visual.decorative, icon_bounds, "labelVisual",
+                                                                 icon_width / icon.viewport[0], annotation_slot_id,
+                                                                 paint_order=note_index_text.paint_order))
             if box.leader_required and presentation.leader_semantic_id is not None:
                 target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
-                source = (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2)
-                leader_fallback = False
-                try:
-                    points = route_annotation_leader(source, target, obstacles=placed_boxes[:-1], limit=1024)
-                except ValueError:
-                    points, leader_fallback = (source, target), True
-                if not relation_route_quality(tuple(points), max_bends=layout_manifest.annotation_max_bends,
-                                              max_detour_ratio=layout_manifest.annotation_max_detour_ratio):
-                    points, leader_fallback = (source, target), True
+                if anchor_host is None:
+                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
+                leader_fallback = selected_leader is None
+                if leader_fallback:
+                    anchor_instance_id = anchor_host.placement_id.split(":", 1)[1]
+                    anchor_row_id = instance_rows.get(anchor_instance_id)
+                    selected_source = connector_egress_candidates(
+                        anchor_host, resolved.endpoint, target,
+                        comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)))[0]
+                    points = (selected_source.semantic_port, target)
+                    path_commands = ()
+                    visible_route_segments = tuple(zip(points, points[1:]))
+                else:
+                    selected_source, route_trial, points, prefix = selected_leader
+                    path_commands = ((PathCommand("move", (prefix[0],)),
+                                      *(PathCommand("line", (point,)) for point in prefix[1:]),
+                                      *route_trial.commands[1:])
+                                     if route_trial.commands else ())
+                    visible_route_segments = tuple(zip(prefix, prefix[1:])) + visible_segments(route_trial)
+                source_side = selected_source.side
+                source_port_obstacle_id = f"port:{anchor_host.placement_id}:{source_side}"
+                if not surface_obstacles.has(source_port_obstacle_id):
+                    register_port(source_port_obstacle_id, selected_source.exposed_port, "timeline")
+                if not surface_obstacles.has(target_port_obstacle_id):
+                    register_port(target_port_obstacle_id, target, "annotations")
                 leader_semantic_id = presentation.leader_semantic_id
+                leader_stroke_width = float(request.theme_tokens.number(
+                    semantic_binding(leader_semantic_id).theme_role, "strokeWidth"))
                 marker_end = (marker_geometry(request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role))
                               if presentation.purpose == "explanatory-arrow" else None)
                 placed_leader = RelationPlacement(f"annotation-leader:{annotation_id}",
-                                                  f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}",
+                                                  f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}:{source_side}",
                                                   f"annotation-box:{annotation_id}", tuple(points),
                                                   semantic_id=leader_semantic_id, marker_end=marker_end,
+                                                  path_commands=path_commands,
                                                   annotation=presentation, source_ref=annotation_id)
                 relations.append(placed_leader)
+                for segment_index, (segment_start, segment_end) in enumerate(visible_route_segments):
+                    if segment_start != segment_end:
+                        surface_obstacles.add(SurfaceObstacle(
+                            f"{placed_leader.relation_id}:segment:{segment_index}", "leader-route", "annotations",
+                            ObstacleSegment(segment_start, segment_end, leader_stroke_width)))
                 if leader_fallback:
                     visible_route_fallbacks.append(placed_leader)
     text = [replace(item, slot_id=text_slot(item)) for item in text]
@@ -1933,7 +2452,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     # projection receives the relation verbatim and must never reconstruct it
     # from primitive purpose, identity, or containment.
     def shape_slot(item: Any) -> str:
-        if item.semantic_id == "axisBandDecoration":
+        if item.semantic_id in axis_band_semantic_ids():
             return axis.slot_id
         if item.semantic_id in BACKGROUND_SEMANTIC_IDS:
             return item.slot_id
@@ -1942,14 +2461,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if item.placement_id.startswith("summary-bar:"):
             return by_source.get("summary", timeline).slot_id
         if item.placement_id.startswith("annotation-box:"):
-            return by_source["annotations"].slot_id
+            return by_source.get("annotations", timeline).slot_id
         if item.source_ref == "timeline-axis":
             return axis.slot_id
         return timeline.slot_id
     shapes = [replace(item, slot_id=shape_slot(item)) for item in shapes]
     icons.extend(resolve_axis_band_visual_requests(shapes, request, axis_band_targets))
-    relations = [replace(item, slot_id=(by_source["annotations"].slot_id
+    relations = [replace(item, slot_id=(by_source.get("annotations", timeline).slot_id
                                         if item.relation_id.startswith("annotation-leader:")
+                                        else by_source["legend"].slot_id
+                                        if item.relation_id.startswith("legend-swatch:")
                                         else timeline.slot_id)) for item in relations]
     column_placements = tuple(
         ColumnPlacement(item.column_id, column.header,
@@ -2014,6 +2535,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 max(0.0, float(timeline_end - row.bounds.block)),
             ))
     for mark in marks:
+        # A legend swatch drawn as the real point-shaped primitive (#427) lives in
+        # the legend slot below the plot by construction, not in the timeline; it
+        # is never meant to fit inside `timeline_end` and checking it here always
+        # reports a spurious overflow with `available` clamped to 0. The legend's
+        # own row-height accounting is the swatch's actual containment check.
+        if mark.placement_id.startswith("legend-swatch:"):
+            continue
         if mark.bounds.block + mark.bounds.block_size > timeline_end + GEOMETRY_TOLERANCE:
             fit_warnings.append(FitWarning(
                 "W_LAYOUT_MARK_OVERFLOW", mark.placement_id, mark.source_ref,
@@ -2049,15 +2577,22 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     + tuple(item.bounds for item in shapes) + tuple(item.bounds for item in icons)),
         paths=tuple(item.points for item in relations),
     )
+    suppressed_plot_labels = sum(item.semantic_id == "memberLabel" and item.overflow == "suppressed" for item in text)
+    completed_icons = tuple(replace(icon, completed_paths=complete_icon_paths(
+        icon.payload, (float(icon.bounds.inline), float(icon.bounds.block),
+                       float(icon.bounds.inline_size), float(icon.bounds.block_size)), icon.stroke_scale))
+        if icon.kind == "vector" else icon for icon in icons)
     placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
                                  axis_tier_outcomes=tuple(axis_tier_outcomes),
-                                 diagnostics=tuple(diagnostics), icons=tuple(icons),
-                                 canvas_bounds=canvas, fit_warnings=tuple(fit_warnings))
+                                 diagnostics=tuple(diagnostics), icons=completed_icons,
+                                 canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
+                                 info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
+                                                   if suppressed_plot_labels else ()))
     placement.assert_valid()
-    return SurfaceLayoutComposition(placement, tuple(review_rows), tracks)
+    return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
 
 
 def _rect(bounds: tuple[float, float, float, float]) -> Rect:

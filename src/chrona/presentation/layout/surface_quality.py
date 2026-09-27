@@ -7,6 +7,8 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
+from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
 
 @dataclass(frozen=True)
@@ -166,6 +168,25 @@ class MarkPlacement:
     semantic_id: str = "planned"
     paint_order: int = 0
     end_treatment: str = "closed"
+    symbol_parts: tuple[Any, ...] = ()
+
+
+@dataclass(frozen=True)
+class LayoutImageFill:
+    """One completed nine-slice image fill for an annotation container (#465).
+
+    ``tiles`` pairs each source rect (in the raster asset's own pixel space)
+    with its destination rect (absolute Layout coordinates); Scene carries
+    this unchanged, and adapters only serialize it.
+    """
+
+    asset_identity: str
+    viewport: tuple[int, int]
+    payload: bytes
+    # Plain (x, y, width, height) float tuples, not the Decimal-based Rect:
+    # `image_slice_geometry.image_slice_tiles` works in the same float space
+    # as the rest of the annotation candidate search (LabelRect/floats).
+    tiles: tuple[tuple[tuple[float, float, float, float], tuple[float, float, float, float]], ...]
 
 
 @dataclass(frozen=True)
@@ -183,6 +204,9 @@ class ShapePlacement:
     paint_order: int = 0
     semantic_id: str = ""
     annotation: AnnotationPresentation | None = None
+    corner_radius: float = 0.0
+    path_commands: tuple[PathCommand, ...] = ()
+    image_fill: LayoutImageFill | None = None
 
 
 @dataclass(frozen=True)
@@ -195,6 +219,9 @@ class SlotPlacement:
     priority: str = "required"
     overflow: str = "visible-overflow"
     scale_id: str | None = None
+    direction: str = "block"
+    gap: Decimal | None = None
+    item_min_inline_size: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -284,6 +311,14 @@ class PlacementDecision:
     requested_ladder: tuple[str, ...]
     selected_rung: str | None
     outcome: str
+    search_count: int = 0
+    selected_topology: str | None = None
+    crossing_ids: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if (self.search_count < 0 or self.selected_topology not in {None, "strict", "bridge"}
+                or (self.crossing_ids and self.selected_topology != "bridge")):
+            raise ValueError("E_LAYOUT_PLACEMENT_DECISION_INVALID")
 
 
 @dataclass(frozen=True)
@@ -376,6 +411,7 @@ class IconPlacement:
     stroke_scale: float = 1.0
     slot_id: str = ""
     paint_order: int = 300
+    completed_paths: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -398,9 +434,19 @@ class SurfacePlacement:
     icons: tuple[IconPlacement, ...] = ()
     canvas_bounds: Rect | None = None
     fit_warnings: tuple[FitWarning, ...] = ()
+    info_diagnostics: tuple[PresentationInfo, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
+        suppressed_members = {item.placement_id for item in self.text
+                              if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
+        reported_suppressions = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in self.diagnostics
+                                 if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
+        counts = tuple(item for item in self.info_diagnostics if isinstance(item, SuppressedPlotLabels))
+        if (not suppressed_members.issubset(reported_suppressions)
+                or len(counts) != (1 if suppressed_members else 0)
+                or (counts and counts[0].count != len(suppressed_members))):
+            raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID")
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         if self.canvas_bounds is not None and (self.canvas_bounds.inline_size <= 0 or self.canvas_bounds.block_size <= 0):
             raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")
@@ -454,8 +500,8 @@ class SurfacePlacement:
             if (host is None or host.slot_id != item.slot_id
                     or host.paint_order >= item.paint_order):
                 raise ValueError(f"E_LAYOUT_TEXT_HOST_INVALID:{item.placement_id}")
-            if item.semantic_id == "axisLabel":
-                allowed = isinstance(host, ShapePlacement) and host.semantic_id == "axisBandDecoration"
+            if item.semantic_id in axis_label_semantic_ids():
+                allowed = isinstance(host, ShapePlacement) and host.semantic_id in axis_band_semantic_ids()
             elif item.semantic_id == "noteIndex" or item.selected_rung == "inside":
                 allowed = isinstance(host, MarkPlacement) and host.semantic_id in {
                     "planned", "actual", "snapshot", "scenario", "missing-actual",
@@ -505,7 +551,7 @@ class SurfacePlacement:
                             (item.label_fits and item.reason is not None)
                             or (not item.label_fits and item.reason != "visible-overflow")):
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
-                    if item.disposition == "thinned" and item.reason not in {"label-does-not-fit", "thinning-stride"}:
+                    if item.disposition == "thinned" and item.reason != "label-does-not-fit":
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
             elif outcome.label_form is not None or outcome.name_table_id is not None or any(item.label is not None or item.label_fits is not None
                                                        or item.disposition != "not-applicable" or item.reason is not None

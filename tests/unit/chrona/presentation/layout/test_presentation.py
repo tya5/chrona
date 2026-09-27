@@ -3,11 +3,12 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.model import LayoutError, geometry_sum
-from chrona.presentation.layout.presentation import RowPlacement, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
+from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, RowPlacement, TrackPlacement, mark_bounds, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
 from chrona.presentation.layout.text import ellipsize_text
-from chrona.presentation.layout.surface_composer import _contains_block_interval
+from chrona.presentation.layout.surface_composer import _centred_cell_baseline, _contains_block_interval
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
+from chrona.presentation.model.projection import ObservationState
 
 
 class FixedMetrics:
@@ -204,6 +205,7 @@ def test_track_placements_reject_completed_mark_extent_outside_its_row(track, so
     item = SimpleNamespace
     rows = (item(row_id="row", group_id=None, items=(item(
         item_id="member", object_id="member", track=track, source_kind=source_kind, actual=actual,
+        observation_state=ObservationState.DUE_UNOBSERVED if actual is None else ObservationState.RECORDED,
     ),)),)
     row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 9.0), group_header_size=0.0,
                                 required_block_sizes=(9.0,), distribution="pack")
@@ -218,6 +220,7 @@ def test_track_placements_accept_mark_extents_at_the_row_boundary() -> None:
     item = SimpleNamespace
     rows = (item(row_id="row", group_id=None, items=(item(
         item_id="member", object_id="member", track="stacked", source_kind="combined", actual=None,
+        observation_state=ObservationState.DUE_UNOBSERVED,
     ),)),)
     row_placements = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 30.0), group_header_size=0.0,
                                 required_block_sizes=(30.0,), distribution="pack")
@@ -228,11 +231,30 @@ def test_track_placements_accept_mark_extents_at_the_row_boundary() -> None:
     assert tracks[0].block_size == 10.0
 
 
+def test_mark_band_frame_preserves_track_formula_and_supports_zero_origin() -> None:
+    roles = {
+        "planned": MarkGeometry(0.5, 0.25, 0, 0.0),
+        "actual": MarkGeometry(0.4, 0.6, 1, 0.0),
+    }
+    track = TrackPlacement("item", 12.0, 99.0, 8.0)
+    scale = object()
+    frame = MarkBandFrame.from_track(track, scale, roles)
+
+    assert frame.inline_scale is scale
+    assert frame.role_bounds("planned") == mark_bounds(track, roles["planned"]) == (14.0, 4.0)
+    assert frame.role_bounds("actual") == (16.8, 3.2)
+    local = MarkBandFrame.zero_origin(scale, 8.0, roles)
+    assert local.role_bounds("planned") == (2.0, 4.0)
+    assert local.role_bounds("actual") == (4.8, 3.2)
+
+
 def test_track_minimum_uses_the_completed_multi_lane_milestone_placement() -> None:
     item = SimpleNamespace
     row = item(row_id="milestone-lanes", group_id=None, items=(
-        item(item_id="gate-a", object_id="gate-a", track="stacked", source_kind="combined", actual=None),
-        item(item_id="gate-b", object_id="gate-b", track="stacked", source_kind="combined", actual=None),
+        item(item_id="gate-a", object_id="gate-a", track="stacked", source_kind="combined", actual=None,
+             observation_state=ObservationState.DUE_UNOBSERVED),
+        item(item_id="gate-b", object_id="gate-b", track="stacked", source_kind="combined", actual=None,
+             observation_state=ObservationState.DUE_UNOBSERVED),
     ))
     assert minimum_track_block_extent(review_row=row, mark_block_size=10.0) == 20.0
     with pytest.raises(LayoutError, match="E_LAYOUT_MARK_OVERFLOW"):
@@ -244,10 +266,10 @@ def test_track_minimum_uses_the_completed_multi_lane_milestone_placement() -> No
 def test_row_requirements_are_per_row_and_fill_only_distributes_surplus() -> None:
     item = SimpleNamespace
     rows = (
-        item(row_id="one-lane", group_id=None, items=(item(item_id="one", object_id="one", track="stacked", source_kind="primary"),)),
+        item(row_id="one-lane", group_id=None, items=(item(item_id="one", object_id="one", track="stacked", source_kind="primary", observation_state=ObservationState.UNAVAILABLE),)),
         item(row_id="two-lane", group_id=None, items=(
-            item(item_id="two-a", object_id="two-a", track="stacked", source_kind="primary"),
-            item(item_id="two-b", object_id="two-b", track="stacked", source_kind="primary"),
+            item(item_id="two-a", object_id="two-a", track="stacked", source_kind="primary", observation_state=ObservationState.UNAVAILABLE),
+            item(item_id="two-b", object_id="two-b", track="stacked", source_kind="primary", observation_state=ObservationState.UNAVAILABLE),
         )),
     )
     required = required_row_block_extents(review_rows=rows, row_minimum=12.0, row_padding=4.0, mark_block_size=10.0)
@@ -265,3 +287,47 @@ def test_row_allocation_retains_infeasible_requirements_for_visible_canvas_growt
     placed = place_rows(review_rows=rows, timeline_bounds=(0.0, 0.0, 100.0, 19.0), group_header_size=0.0,
                         required_block_sizes=(20.0,), distribution="pack")
     assert placed[0].bounds == (0.0, 0.0, 100.0, 20.0)
+
+
+def test_hierarchy_column_natural_width_includes_the_widest_cell_indent() -> None:
+    """#480: the indent placement consumes is part of the column's measure."""
+    columns = table_columns(("name", "Name"), ("owner", "Owner"))
+    cells = table_cells(("root", "name", "Root"), ("leaf", "name", "Leaf"), ("leaf", "owner", "Ops"))
+    indents = {"root": 0.0, "leaf": table_cell_indent(grouped=True, depth=2, inset=10.0, indent=16.0)}
+    plain = measure_table_columns(columns=columns, cells=cells, measure_text=fixed_measure, minimum_inline=10.0)
+    indented = measure_table_columns(columns=columns, cells=cells, measure_text=fixed_measure, minimum_inline=10.0,
+                                     hierarchy_column="name", cell_indents=indents)
+    assert indents["leaf"] == 42.0
+    assert indented[0] == plain[0] + 42.0
+    assert indented[1] == plain[1]
+    placed = place_table_columns(columns=columns, cells=cells, bounds=(0.0, 0.0, 1.0, 20.0),
+                                 measure_text=fixed_measure, minimum_inline=10.0,
+                                 hierarchy_column="name", cell_indents=indents)
+    assert tuple(item.natural_inline_size for item in placed) == indented
+
+
+def test_row_requirement_holds_one_table_text_line_plus_total_padding() -> None:
+    """#480: paddingBlock is added once to the text line the row holds."""
+    row = SimpleNamespace(row_id="a", group_id=None, items=())
+    assert required_row_block_extents(review_rows=(row,), row_minimum=26.0, row_padding=6.0,
+                                      mark_block_size=12.0, text_line_block=21.0) == (27.0,)
+    assert required_row_block_extents(review_rows=(row,), row_minimum=40.0, row_padding=6.0,
+                                      mark_block_size=12.0, text_line_block=21.0) == (40.0,)
+    assert required_row_block_extents(review_rows=(row,), row_minimum=10.0, row_padding=6.0,
+                                      mark_block_size=12.0) == (18.0,)
+
+
+def test_table_text_line_block_is_the_tallest_cell_role() -> None:
+    treatments = {"text": SimpleNamespace(font_size=14, line_height=1.5),
+                  "numeric": SimpleNamespace(font_size=16, line_height=1.5)}
+    tokens = SimpleNamespace(text_treatment=treatments.__getitem__)
+    assert table_text_line_block(tokens, ("text", "text")) == 21.0
+    assert table_text_line_block(tokens, ("text", "numeric")) == 24.0
+    assert table_text_line_block(tokens, ()) == 0.0
+
+
+def test_table_cell_line_box_is_centred_in_its_row_in_its_own_role() -> None:
+    row = Rect(Decimal(0), Decimal(100), Decimal(10), Decimal(27))
+    baseline = _centred_cell_baseline(row, SimpleNamespace(font_size=14, line_height=1.5))
+    top = baseline - 14
+    assert top - 100 == pytest.approx(100 + 27 - (top + 21))

@@ -3,20 +3,28 @@ from __future__ import annotations
 
 import tempfile
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import jsonschema
 
+import chrona.usecases.render_review as render_usecase
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
+from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.presentation.scene.paint import ScenePaintError
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.usecases.render_review import (
-    RenderRequest, _font_warnings, _warnings_from_findings, render_review,
+    RenderFailed, RenderRequest, _font_warnings, _warnings_from_findings, render_review,
 )
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution
-from chrona.presentation.scene.serialization import SceneSerializationError, scene_document, serialize_scene, validate_scene_document
+from chrona.presentation.scene.serialization import SceneSerializationError, _references_are_closed, _surface, scene_document, serialize_scene, validate_scene_document
+from chrona.presentation.scene.model import SceneLaneMember, ScenePrimitive, SceneRow, SceneSlot, SceneSurface
+from chrona.resources import schema_document
 
 
 def test_font_substitution_warning_only_claims_raster_draw_result():
@@ -69,6 +77,23 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
 
 
+@pytest.mark.parametrize("error", [
+    LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/example", detail="missing metric"),
+    ThemeTokenError("E_THEME_ROLE_REQUIRED", "/body/roles/example/fontFamily"),
+    ScenePaintError("E_PRESENTATION_PAINT_INVALID", "/body/roles/example/strokeWidth", "invalid width"),
+])
+def test_render_review_transports_typed_presentation_failure_pointer(monkeypatch, error):
+    def fail(_request):
+        raise error
+
+    monkeypatch.setattr(render_usecase, "_render_review", fail)
+    with pytest.raises(RenderFailed) as failed:
+        render_review(None)
+    assert failed.value.code == error.diagnostic_id
+    assert failed.value.source_ref == error.path
+    assert failed.value.component == "presentation"
+
+
 def test_completed_scene_serializes_deterministically_with_typed_table_links():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
@@ -109,6 +134,128 @@ def test_scene_validation_requires_layout_completed_canvas_bounds():
     document["surfaces"][0].pop("canvasBounds")
     with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
         validate_scene_document(document)
+
+
+def test_scene_lane_anchor_and_primitive_identity_are_optional_and_serialized_typed():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        scene = render_review(_request(closure, snapshot)).scene
+    original = serialize_scene(scene)
+    surface = scene.surfaces[0]
+    row = surface.rows[0]
+    anchored = replace(row, lane_mark_band_block=row.bounds[1] + row.bounds[3] / 2)
+    rows = (anchored, *surface.rows[1:])
+    primitive = surface.primitives[0]
+    marked = replace(primitive, lane_row_id=anchored.row_id, lane_member_id="member-1")
+    projected = replace(scene, surfaces=(replace(surface, rows=rows,
+                                                  primitives=(marked, *surface.primitives[1:])),))
+
+    document = json.loads(serialize_scene(projected))
+    projected_surface = document["surfaces"][0]
+    assert projected_surface["rows"][0]["laneMarkBandBlock"] == anchored.lane_mark_band_block
+    assert projected_surface["primitives"][0]["laneRowId"] == anchored.row_id
+    assert projected_surface["primitives"][0]["laneMemberId"] == "member-1"
+    assert "laneMarkBandBlock" not in scene_document(scene)["surfaces"][0]["rows"][0]
+    assert "laneRowId" not in scene_document(scene)["surfaces"][0]["primitives"][0]
+    assert original == serialize_scene(scene)
+
+
+def test_scene_lane_carrier_rejects_partial_or_unanchored_references():
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1),
+                       lane_row_id="row")
+    primitive = ScenePrimitive("p", "Rect", "a", "object", "planned", "planned", (0, 0, 1, 1),
+                               lane_row_id="missing", lane_member_id="member")
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneSurface("s", (), (SceneRow("a", "g", (0, 0, 10, 10), "row"),), (), None, (primitive,))
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneRow("a", "g", (0, 0, 10, 10), "row", float("nan"))
+
+
+def test_scene_document_lane_reference_requires_an_in_bounds_anchor():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        document = scene_document(render_review(_request(closure, snapshot)).scene)
+    surface = document["surfaces"][0]
+    row = surface["rows"][0]
+    row["laneMarkBandBlock"] = row["bounds"]["block"] + row["bounds"]["blockSize"] / 2
+    primitive = surface["primitives"][0]
+    primitive["laneRowId"] = row["id"]
+    primitive["laneMemberId"] = "member-1"
+    validate_scene_document(document)
+    row["laneMarkBandBlock"] = row["bounds"]["block"] + row["bounds"]["blockSize"] + 1
+    with pytest.raises(SceneSerializationError, match="E_SCENE_SERIALIZATION"):
+        validate_scene_document(document)
+
+
+def test_lane_surface_carries_closed_member_emission_inventory():
+    row = SceneRow("object", "group", (0, 0, 20, 12), "lane-1", 2)
+    mark = ScenePrimitive("mark-1", "Rect", "object", "object", "planned", "planned",
+                          (1, 2, 4, 2), slot_id="slot", lane_row_id="lane-1", lane_member_id="member-1")
+    label = ScenePrimitive("label-1", "Text", "object", "review", "member-label", "taskTitle",
+                           (2, 5, 6, 2), slot_id="slot", lane_row_id="lane-1", lane_member_id="member-1")
+    member = SceneLaneMember("lane-1", "member-1", ("mark-1", "label-1"), ("mark-1",))
+    surface = SceneSurface("s", (SceneSlot("slot", "timeline", None, (0, 0, 20, 12)),),
+                           (row,), (), None, (mark, label), lane_mode="lanes",
+                           canvas_bounds=(0, 0, 20, 12),
+                           lane_members=(member,))
+
+    document = _surface(surface)
+    schema = schema_document("scene-v0.6.schema.yaml")
+    jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(document)
+    assert _references_are_closed({"surfaces": [document]})
+    assert document["laneMode"] == "lanes"
+    assert document["laneMembers"] == [{
+        "rowId": "lane-1", "memberId": "member-1",
+        "emittedPrimitiveIds": ["mark-1", "label-1"], "primaryMarkIds": ["mark-1"],
+    }]
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(
+            {key: value for key, value in document.items() if key != "laneMode"})
+    without_inventory = {key: value for key, value in document.items() if key != "laneMembers"}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(
+            without_inventory)
+
+
+@pytest.mark.parametrize("broken", [
+    "inventory-omits-tagged", "inventory-mismatched-tags", "untagged-member-purpose",
+    "unknown-primary-mark", "untagged-missing-actual", "untagged-progress-fill",
+    "untagged-summary-bar", "comparison-primary",
+])
+def test_lane_surface_rejects_incomplete_or_inconsistent_member_inventory(broken):
+    row = SceneRow("object", "group", (0, 0, 20, 12), "lane-1", 2)
+    mark = ScenePrimitive("mark-1", "Rect", "object", "object", "planned", "planned",
+                          (1, 2, 4, 2), lane_row_id="lane-1", lane_member_id="member-1")
+    label = ScenePrimitive("label-1", "Text", "object", "review", "member-label", "taskTitle",
+                           (2, 5, 6, 2), lane_row_id="lane-1", lane_member_id="member-1")
+    primitives = (mark, label)
+    member = SceneLaneMember("lane-1", "member-1", ("mark-1", "label-1"), ("mark-1",))
+    if broken == "inventory-omits-tagged":
+        member = replace(member, emitted_primitive_ids=("mark-1",))
+    elif broken == "inventory-mismatched-tags":
+        primitives = (replace(mark, lane_member_id="other"), label)
+    elif broken == "untagged-member-purpose":
+        primitives = (mark, replace(label, lane_row_id=None, lane_member_id=None))
+    elif broken == "unknown-primary-mark":
+        member = replace(member, primary_mark_ids=("label-1",))
+    elif broken.startswith("untagged-"):
+        purpose = {
+            "untagged-missing-actual": "missingActual",
+            "untagged-progress-fill": "progress-fill",
+            "untagged-summary-bar": "summary-bar",
+        }[broken]
+        extra = ScenePrimitive("extra", "Rect", "object", "object", purpose, purpose, (3, 3, 2, 2))
+        primitives = (*primitives, extra)
+    elif broken == "comparison-primary":
+        actual = ScenePrimitive("actual", "Rect", "object", "object", "actual", "actual",
+                                (2, 2, 4, 2), lane_row_id="lane-1", lane_member_id="member-1")
+        primitives = (*primitives, actual)
+        member = replace(member, emitted_primitive_ids=("mark-1", "label-1", "actual"),
+                         primary_mark_ids=("actual",))
+
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        SceneSurface("s", (), (row,), (), None, primitives, lane_mode="lanes", lane_members=(member,))
 
 
 def test_scene_serializer_does_not_reopen_layout_theme_or_renderer_policy():

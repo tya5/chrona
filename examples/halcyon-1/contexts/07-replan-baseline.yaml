@@ -10,7 +10,8 @@ body:
       identity: halcyon-1-example
     address: project.yaml
     revision:
-      token: example-v1
+      token: example-v2
+    contentIdentity: sha256:e196a21b0162e28d318f7e6512ada534cc1b6cdc35edb8fad6d84926bc4ca840
   view:
     id: halcyon-07-replan-baseline
     kind: view

@@ -1,4 +1,4 @@
-version: chrona/view/v0.22
+version: chrona/view/v0.27
 kind: view
 id: onboarding-progress
 body:

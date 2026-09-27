@@ -64,6 +64,22 @@ A leaf has `kind: slot` and consumes one declared presentation source. Closed in
 sources are `title`, `table`, `timeline`, `timeline-axis`, `summary`, `legend`,
 `group-details`, `observations`, `milestones`, `annotations`, and `notes`.
 
+A `legend` slot additionally declares `direction` (`block` stacks entries; `inline`
+flows them along the inline axis) and `gap` (space between entries, and between a
+swatch and its own label), and may declare `itemMinInlineSize` when `direction:
+inline`, wrapping exactly as a `flow` container wraps its children (#427). Each
+entry's swatch is constructed by the same geometry its role's `primitive_kind`
+already uses for an object mark, relation, or decoration; Layout never derives a
+swatch's shape or size from the legend label's typography role.
+The [#427 dispatch amendment](../design/issue-427-legend-swatches-design-amendment-2026-09-26.md)
+qualifies this rule: known mark/line/decoration roles use the closed
+chart-matching dispatch, while an otherwise unregistered legend role retains
+a fixed-square Rect swatch painted by its own role. The [#478 admission
+amendment](../design/issue-478-legend-role-admission-amendment-2026-09-27.md)
+therefore admits only portable Rect paint for an otherwise unregistered
+legend-only name; it cannot make an unsupported property on a known text or
+relation role valid.
+
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
 
@@ -97,6 +113,34 @@ Each node declares `inlineSize` and `blockSize`. A size is one of:
 `fr` is a proportion of remaining space, not an absolute coordinate. `content` and its
 variants require intrinsic measurements. `fill` participates in equal distribution of
 remaining space after fixed, intrinsic, bounded, gap and padding requirements.
+
+A flexible track's (`fr` or `fill`) used size is resolved by CSS Grid's own iterative
+"find the size of an `fr`" procedure (#487, ADR-0032), not a single-pass formula: a
+flexible track's `minmax` minimum is a floor its share must clear, never an amount its
+share is added underneath.
+
+1. `fr` is the space available to the flexible tracks in the same container, still
+   unassigned, divided by the total weight of the flexible tracks still unresolved. This
+   set starts as every flexible track and the full flexible-track space (computed once,
+   before any flexible track's own minimum is subtracted from it) and shrinks each round.
+2. Any unresolved track whose own resolved minimum (`0` unless it declares
+   `{minmax: {min: …}}` with a nonzero minimum) exceeds `fr` times its weight is fixed at
+   that minimum, removed from the unresolved set, and its minimum is subtracted from the
+   unassigned space.
+3. Step 1 repeats until no unresolved track's minimum is violated at the recomputed `fr`.
+4. Any unresolved track whose declared `minmax` maximum is smaller than `fr` times its
+   weight is fixed at that maximum the same way, and step 1 repeats again for what is
+   left unassigned.
+5. Every track still unresolved once no minimum or maximum is violated gets `fr` times
+   its weight.
+
+This resolves the total unassigned space exactly, never oversubscribing the container:
+a single-pass `max(minimum, share)` computed once per track independently is **not**
+equivalent, because a track fixed at a minimum larger than its one-shot share does not
+reduce what the *other* tracks still take, and the total can then exceed what is
+available. It leaves every flexible track whose minimum is `0` unaffected, since it can
+never violate a minimum (`0 > fr × weight` is false for `fr ≥ 0`) and so always reaches
+step 5 with the same result a purely additive rule would have given.
 
 A distance is either a non-negative finite number or `{token: name}`. Built-in and
 acceptance profiles MUST use token references for margins, padding, gaps, and ordinary
@@ -191,12 +235,10 @@ Python `repr` or YAML presentation order.
 
 ### 8.1 Accepted prerequisite: one surface obstacle contract
 
-**Publication status:** this subsection is the accepted successor contract,
-not a claim that all behavior is implemented on current `main`. O1 publishes
-the typed obstacle inventory; O2 composer/annotation wiring is under the
-[#466 topology design plan](../planning/active/issue-466-annotation-route-topology-design-plan-2026-09-26.md)
-and has not passed its public artifact gate. Current behavior must be checked
-against the actual published code and evidence.
+**Publication status:** the O1/O2 shared-obstacle prerequisite passed its
+[public artifact and CI gate](../reviews/current/issue-466-shared-obstacle-prerequisite-acceptance-review-2026-09-26.md).
+The later candidate search and balloon behavior is a separate successor
+contract, not a claim that it has already been implemented.
 
 The [#466 design](../design/issue-466-general-placement-design-2026-09-26.md)
 defines the successor for annotation and plot-label placement. Layout creates
@@ -206,11 +248,25 @@ finite phases. Every placement and leader query names the same inventory,
 relevant obstacle classes, a finite region and only explicit host/port
 exemptions. Dependency paths are stroke-segment obstacles, not their broad
 enclosing rectangles. Scene receives completed decisions and geometry, never
-an obstacle query. A later design completion must define the exact candidate
-grammar, chosen-candidate evidence and bounded search before legacy rungs
-are normalized to candidate data. The obstacle-only prerequisite may publish
-before nearest-free and tail support; those remain incomplete until their own
-design and release gates pass.
+an obstacle query. The [#466 candidate design](../design/issue-466-candidate-placement-design-2026-09-26.md)
+defines the successor grammar, chosen-candidate evidence and bounded joint
+box/connector search. Legacy rungs normalize to that data without a visual
+change; nearest-free and tail support require their own release gates.
+
+### 8.1a Candidate model
+
+A candidate has exactly the four declared parts `region`, `search`, `obstacles`,
+and `connector`, plus a stable ID. Layout resolves a finite region after slot
+allocation and tests measured box and connector together against the one
+monotone obstacle inventory. Plot search MUST avoid marks, text, label visuals,
+dependency and earlier leader strokes, annotation boxes, ports and rules; an
+as-of rule partitions plot search on the anchor side. Search is deterministic
+and bounded. The decision records the chosen candidate ID and joint-trial
+count. A later candidate fit warns with its chosen ID. Exhaustion follows
+explicit suppression or the existing visible-overflow completion, never a
+hidden new placement mode. The exact versioned View grammar and tail Theme
+treatment are in the linked design; Scene and adapters only project completed
+geometry.
 
 ### 8.2 Annotation connector topology after the shared inventory
 
@@ -281,6 +337,11 @@ Annotation connectors first test a bounded sparse elbow family before the
 bounded dense visibility grid. Both use the same obstacle inventory, local
 corridor, and route-quality policy; the first feasible path is deterministic
 but need not be globally shortest. See the [sparse-search amendment](../design/issue-466-sparse-elbow-route-search-amendment-2026-09-26.md).
+Resolved Theme line widths contribute to registered stroke obstacles and
+Layout-completed bridge gaps. Endpoint-only opposite-direction contact is
+legal; positive-length collinear overlap is not. Sparse/dense bounds and
+internal search accounting are specified in the [clearance precision
+amendment](../design/issue-466-connector-clearance-precision-amendment-2026-09-26.md).
 
 A measured rule label may exempt only its own named rule stroke during its
 placement; the rule remains an obstacle for other labels and annotations.

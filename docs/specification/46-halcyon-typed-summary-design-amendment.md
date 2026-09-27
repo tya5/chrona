@@ -17,6 +17,9 @@ metrics:
 ```
 
 Typed `source` values are `actual.asOf`, `planned.nextPoint`, `count.selected`, `count.missingActual`, and `count.knownFinishVariance`. Typed `format` values are `text`, `date`, `count`, and `signedDays`.
+`count.missingActual` follows Specification 25's due-unobserved definition;
+it is unavailable without an Actual as-of rather than counting every absent
+observation.
 
 ## Validation and compatibility
 

@@ -45,3 +45,12 @@ def test_magnitude_counts_declared_semantic_facts_only(tmp_path):
     }),))
 
     assert magnitude(project) == CorpusMagnitude(objects=2, rows=2, relations=1, segments=1)
+
+
+def test_every_unreferenced_example_presentation_file_has_a_declared_reason():
+    """#434: an example View/Theme/Layout nobody renders is listed with a reason, or fails."""
+    from pathlib import Path as _Path
+    from tools.corpus_coverage import UNREFERENCED_REASONS, unreferenced_presentation_files, validate_unreferenced
+    root = _Path(__file__).resolve().parents[3]
+    validate_unreferenced(root)
+    assert set(unreferenced_presentation_files(root)) == set(UNREFERENCED_REASONS)

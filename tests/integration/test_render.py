@@ -14,12 +14,14 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
 from chrona.scheduling.scheduler import ReferenceScheduler
-from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
+from chrona.app.cli import _emit_render_warnings
 from chrona.resources import default_preset_resource, default_preset_root
 
 
@@ -60,6 +62,136 @@ def test_draft_render_materializes_the_review_surface():
 
 def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
+
+
+def test_suppressed_plot_labels_have_one_completed_info_count(capsys):
+    # #487 corrected the table's `minmax`/content-minimum and its flex-allocation
+    # basis (ADR-0032), which changes which member label this `elevated-light`
+    # draft suppresses (`structure:structure` before #487, `launch:launch`
+    # after) because the table's corrected width gives the plot different room.
+    # The mechanism under test here -- exactly one completed info count and its
+    # JSON emission -- is unaffected; only the specific suppressed label id is.
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    rendered = render_review(_draft_request(
+        project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+        scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
+        view_path=preset / "view.yaml", theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
+    visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
+    per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
+              if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
+    # Two since #488 keeps member labels inside their own row band.
+    assert len(per_id) == 2
+    assert not per_id & visible_labels
+    assert rendered.scene.diagnostics.count(
+        f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={len(per_id)}") == 1
+    _emit_render_warnings(rendered)
+    info = [json.loads(line) for line in capsys.readouterr().err.splitlines()
+            if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
+    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": 2,
+                     "severity": "info", "surfaceId": "table-timeline"}]
+
+
+def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_487():
+    # Direct evidence of the #487 attribution above: the same draft request that
+    # used to suppress `member-label:ga:ga` (and report
+    # `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1`) now fits
+    # it, because the corrected table minimum is narrower than the old
+    # widest-row-label basis for this view under the CSS-Grid flex allocation
+    # (ADR-0032). Two relation labels are suppressed instead, because the
+    # narrower table gives the plot/relation surface different, not more, room
+    # to route through.
+    rendered = render_review(_draft_request())
+    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in rendered.scene.diagnostics)
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
+    assert {item for item in rendered.scene.diagnostics if item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:")} == {
+        "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
+        "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance",
+    }
+    assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
+
+
+def test_suppression_count_excludes_other_plot_text_and_absent_count():
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/mission-light"
+    inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+                  scheme_path=example / "schemes/mission-light.yaml")
+    tuned = render_review(_draft_request(**inputs, view_path=preset / "view.yaml",
+                                         theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
+    assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
+    member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
+    assert member_suppressed >= 1  # the variance suppression above is not counted
+    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
+    # The L1 HALCYON schedule correction moves the CDR label into the existing
+    # containment policy's suppression path; it must be reported exactly once.
+    halcyon = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
+                                           theme_path=example / "themes/briefing.yaml",
+                                           layout_path=example / "layouts/briefing.yaml",
+                                           summary_path=example / "profiles/summary.yaml"))
+    assert "W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr" in halcyon.scene.diagnostics
+    assert "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1" in halcyon.scene.diagnostics
+    ordinary = render_review(_draft_request())
+    assert not ordinary.info_diagnostics
+    assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
+
+
+def test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_them(capsys):
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+                  view_path=preset / "view.yaml", theme_path=preset / "theme.yaml",
+                  layout_path=preset / "layout.yaml",
+                  scheme_path=root / "examples/controller-z/schemes/executive-light.yaml")
+    baseline = render_review(_draft_request(**inputs))
+    omissions = [item for item in baseline.info_diagnostics if item.code == "I_VISUAL_TREATMENT_OMITTED"]
+    assert {(item.role, item.treatment, item.paintable_profile) for item in omissions} == {
+        ("group-band", "linear-gradient", "chrona-output/visual/v0.6-svg"),
+        ("group-band", "drop-shadow", "chrona-output/visual/v0.6-svg"),
+    }
+    assert all(item.source_ref.startswith("/body/roles/group-band/") for item in omissions)
+    assert sum(item.startswith("I_VISUAL_TREATMENT_OMITTED:") for item in baseline.scene.diagnostics) == 2
+    assert len([item for item in baseline.surface.primitives if item.visual_role == "group-band"]) == 6
+    _emit_render_warnings(baseline)
+    notices = [json.loads(line) for line in capsys.readouterr().err.splitlines()
+               if '"I_VISUAL_TREATMENT_OMITTED"' in line]
+    assert len(notices) == 2
+    assert all(item["severity"] == "info" and item["paintableProfile"] == "chrona-output/visual/v0.6-svg"
+               for item in notices)
+
+    rich = render_review(_draft_request(**inputs, visual_profile="chrona-output/visual/v0.6-svg"))
+    assert not any(item.startswith("I_VISUAL_TREATMENT_OMITTED:") for item in rich.scene.diagnostics)
+    assert all(item.paint.gradient is not None and item.paint.shadow is not None
+               for item in rich.surface.primitives if item.visual_role == "group-band")
+    assert b"<linearGradient" in rich.artifact.content and b"<filter" in rich.artifact.content
+
+
+def test_planned_mark_shadow_is_supported_but_optional_under_baseline(tmp_path):
+    root = _root()
+    example = root / "examples/halcyon-1"
+    preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    theme = yaml.safe_load((preset / "theme.yaml").read_text(encoding="utf-8"))
+    shadow = {key: value for key, value in theme["body"]["roles"]["group-band"].items()
+              if key.startswith("shadow")}
+    theme["body"]["roles"]["planned"].update(shadow)
+    theme["body"]["colorBindings"]["planned.shadowColor"] = "neutral"
+    theme_path = tmp_path / "planned-shadow.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
+                  view_path=preset / "view.yaml", theme_path=theme_path,
+                  layout_path=preset / "layout.yaml",
+                  scheme_path=root / "examples/controller-z/schemes/executive-light.yaml")
+    baseline = render_review(_draft_request(**inputs))
+    rich = render_review(_draft_request(**inputs, visual_profile="chrona-output/visual/v0.6-svg"))
+    assert any(isinstance(item, PaintOmission) and item.role == "planned" and item.treatment == "drop-shadow"
+               for item in baseline.info_diagnostics)
+    assert all(item.paint.shadow is None for item in baseline.surface.primitives
+               if item.visual_role == "planned")
+    assert all(item.paint.shadow is not None for item in rich.surface.primitives
+               if item.visual_role == "planned")
+    assert re.search(rb'<rect[^>]*data-purpose="planned"[^>]*filter="url\(#shadow-', rich.artifact.content)
 
 
 def test_five_line_derived_theme_changes_visible_draft_and_closes_as_ordinary_theme():
@@ -183,6 +315,46 @@ def test_fixed_draft_reallocates_table_timeline_and_notes_together():
     assert svg_height >= surface["canvasBounds"]["blockSize"] - 0.001 > 900
 
 
+def test_halcyon_missing_actual_is_due_only_and_tvac_boundary_is_inclusive(tmp_path):
+    example = _root() / "examples/halcyon-1"
+    inputs = dict(project_path=example / "project.yaml", view_path=example / "views/01-mission-brief.yaml",
+                  theme_path=example / "themes/briefing.yaml", scheme_path=example / "schemes/mission-light.yaml",
+                  layout_path=example / "layouts/briefing.yaml", actual_path=example / "actual.yaml",
+                  summary_path=example / "profiles/summary.yaml")
+    shipped = render_review(_draft_request(**inputs))
+    shipped_ids = {primitive.scene_id for primitive in shipped.surface.primitives}
+    shipped_by_id = {primitive.scene_id: primitive for primitive in shipped.surface.primitives}
+    future = {"psr", "campaign", "frr", "launch", "leop", "first-light"}
+    assert not {f"missing-actual:{object_id}:{object_id}" for object_id in future} & shipped_ids
+    assert "missing-actual:tvac:tvac" not in shipped_ids
+    assert "W_LAYOUT_ACTUAL_INCOMPLETE:tvac" in shipped.scene.diagnostics
+    assert shipped_by_id["cell:tvac:Obs"].text == "Recorded"
+    assert all(shipped_by_id[f"cell:{object_id}:Obs"].text == "—" for object_id in future)
+    assert 'data-scene-id="missing-actual:tvac:tvac"' not in shipped.artifact.content.decode()
+
+    actual = yaml.safe_load((example / "actual.yaml").read_text(encoding="utf-8"))
+    actual["body"]["observations"] = [entry for entry in actual["body"]["observations"]
+                                        if entry.get("projectObjectId") != "tvac"]
+    actual_path = tmp_path / "actual-without-tvac.yaml"
+    actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
+    boundary = render_review(_draft_request(**{**inputs, "actual_path": actual_path}))
+    boundary_ids = {primitive.scene_id for primitive in boundary.surface.primitives}
+    boundary_by_id = {primitive.scene_id: primitive for primitive in boundary.surface.primitives}
+    assert "missing-actual:tvac:tvac" in boundary_ids
+    assert boundary_by_id["cell:tvac:Obs"].text == "Missing"
+    assert 'data-scene-id="missing-actual:tvac:tvac"' in boundary.artifact.content.decode()
+    assert "W_LAYOUT_ACTUAL_INCOMPLETE:tvac" not in boundary.scene.diagnostics
+
+    board = render_review(_draft_request(**{**inputs,
+        "view_path": example / "views/02-programme-board.yaml",
+        "theme_path": example / "themes/wallboard.yaml",
+        "scheme_path": example / "schemes/control-room-dark.yaml",
+        "layout_path": example / "layouts/wallboard.yaml"}))
+    board_ids = {primitive.scene_id for primitive in board.surface.primitives}
+    all_future = {"shipment", "campaign", "frr", "launch", "rehearsals", "leop", "first-light", "emc", "psr"}
+    assert not {f"missing-actual:{object_id}:{object_id}" for object_id in all_future} & board_ids
+
+
 def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
     root = _root()
     view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
@@ -198,7 +370,7 @@ def test_draft_visual_ref_reaches_layout_and_scene_icon(tmp_path):
     surface = render_review(_draft_request(view_path=path, icon_catalog_paths=(root / "examples/controller-z/icons.yaml",),
                                            visual_profile="chrona-output/visual/v0.7-svg")).surface
     icon = next(item for item in surface.primitives if item.kind == "Icon")
-    assert icon.icon_vector is None and icon.icon_stroke_scale is None and icon.icon_paths
+    assert icon.icon_path_geometry == () and icon.icon_paths
 
 
 def test_draft_mark_visual_reaches_the_selected_completed_mark(tmp_path):
@@ -269,6 +441,119 @@ def test_draft_slot_visuals_reserve_their_declared_layout_extents(tmp_path):
         label = by_id[placement_id]
         assert icon.bounds[0] + icon.bounds[2] <= label.bounds[0]
         assert icon.slot_id == label.slot_id
+
+
+def test_row_stripes_paint_above_group_bands_across_the_whole_surface(tmp_path):
+    """Issue #481 criterion 1: stripes and group bands combine across the whole surface."""
+    root = _root()
+    layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    layout["reviewSurface"]["backgroundExtents"]["rowBand"] = "both"
+    layout["reviewSurface"]["backgroundExtents"]["groupBand"] = "both"
+    layout_path = tmp_path / "layout.yaml"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+
+    # examples/controller-z/views/executive.yaml already declares rows: alternate, groups: all.
+    rendered = render_review(_draft_request(layout_path=layout_path))
+    primitives = rendered.surface.primitives
+    index_by_id = {item.scene_id: index for index, item in enumerate(primitives)}
+    groups = {item.scene_id: item for item in primitives if item.scene_id.startswith("group:")}
+    rows = {item.scene_id: item for item in primitives if item.scene_id.startswith("row-band:")}
+    assert groups and rows
+    timeline_slot = next(item for item in rendered.surface.slots if item.slot_id == "timeline")
+    timeline_end = timeline_slot.bounds[0] + timeline_slot.bounds[2]
+
+    def block_contains(outer, inner) -> bool:
+        return outer.bounds[1] <= inner.bounds[1] + 1e-6 and (
+            inner.bounds[1] + inner.bounds[3] <= outer.bounds[1] + outer.bounds[3] + 1e-6)
+
+    overlapping_pairs = 0
+    for group in groups.values():
+        for row in rows.values():
+            if not block_contains(group, row):
+                continue
+            overlapping_pairs += 1
+            # The stripe is a real Scene primitive reaching the timeline's far
+            # edge (visible in the timeline region of a grouped row), not just
+            # an SVG-serialization artifact.
+            assert row.bounds[0] + row.bounds[2] >= timeline_end - 1e-6
+            # The stripe paints on top of the group band it overlaps: either a
+            # strictly higher Scene paint_order, or the same paint_order and a
+            # later position in the Scene primitive list (the renderer's tie
+            # break, `renderers/v05_svg.py`).
+            assert (row.paint_order > group.paint_order
+                    or (row.paint_order == group.paint_order
+                        and index_by_id[row.scene_id] > index_by_id[group.scene_id]))
+    assert overlapping_pairs > 0
+
+
+def test_group_band_includes_its_own_header_row_under_all_and_alternate(tmp_path):
+    """Issue #481 criterion 2: a group's band includes its own header row."""
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    for decoration in ("all", "alternate"):
+        view["body"]["backgroundDecoration"]["groups"] = decoration
+        view_path = tmp_path / f"view-{decoration}.yaml"
+        view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+        rendered = render_review(_draft_request(view_path=view_path))
+        by_id = {item.scene_id: item for item in rendered.surface.primitives}
+        groups = [group for group in rendered.surface.groups if group.header_bounds is not None]
+        assert len(groups) >= 3, "the fixture needs at least one unselected alternate group"
+
+        banded_count, unbanded_count = 0, 0
+        for group in groups:
+            band = by_id.get(f"group:{group.group_id}")
+            header_band = by_id.get(f"group-header-band:{group.group_id}")
+            if band is None:
+                # No band is drawn for an unselected group's header: neither
+                # its own body band nor a separate header accent.
+                assert header_band is None
+                unbanded_count += 1
+                continue
+            banded_count += 1
+            # The drawn group band's bounds contain its own header row. A
+            # banded group paints no separate header-band primitive (it would
+            # only double-tint the header row its own band already covers,
+            # see the design correction), so the containment is checked
+            # against Layout's own recorded header_bounds geometry, which is
+            # always present once a group has a header.
+            assert header_band is None
+            header_block, header_block_size = group.header_bounds[1], group.header_bounds[3]
+            assert band.bounds[1] <= header_block + 1e-6
+            assert header_block + header_block_size <= band.bounds[1] + band.bounds[3] + 1e-6
+        assert banded_count > 0
+        if decoration == "alternate":
+            assert unbanded_count > 0
+
+
+def test_group_header_text_uses_the_groupheader_theme_role(tmp_path):
+    """Issue #481 criterion 3: group-header text uses the Theme's groupHeader role."""
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    theme["body"]["values"]["group-header-test-weight"] = {"type": "fontWeight", "value": 700}
+    theme["body"]["roles"]["groupHeader"] = {**theme["body"]["roles"]["groupHeader"],
+                                             "fontWeight": "group-header-test-weight"}
+    theme_path = tmp_path / "theme.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+
+    rendered = render_review(_draft_request(theme_path=theme_path))
+    by_id = {item.scene_id: item for item in rendered.surface.primitives}
+    header = by_id["group-header:fw-team"]
+    body_text = by_id["cell:firmware:Workstream"]
+    assert header.text_layout.weight == 700
+    assert header.text_layout.weight != body_text.text_layout.weight
+
+
+def test_group_header_text_requires_a_declared_groupheader_role(tmp_path):
+    """A Theme missing the required groupHeader role fails closed, never a silent text-role fallback."""
+    root = _root()
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    del theme["body"]["roles"]["groupHeader"]
+    theme_path = tmp_path / "theme.yaml"
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(RenderFailed, match="E_THEME_ROLE_REQUIRED"):
+        render_review(_draft_request(theme_path=theme_path))
 
 
 def test_draft_wallboard_visual_inventory_reaches_completed_slots(tmp_path):

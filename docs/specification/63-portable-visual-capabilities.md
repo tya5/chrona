@@ -85,6 +85,19 @@ role property pointer. `VALUE` identifies incomplete or malformed treatment
 binding; `FIDELITY` identifies an invalid treatment fidelity; `LIMIT` identifies
 a finite out-of-range angle, blur, opacity, or declared stop count.
 
+When Scene omits a `decorative-optional` treatment, it MUST retain a typed
+disposition naming the authoring role, treatment, selected profile, target,
+Theme property pointer, and the first same-target profile that could paint it
+(if one exists). Repeated primitives with the same role/treatment/profile/target
+produce one info diagnostic, not one per primitive. Inspection Scene diagnostics
+carry `I_VISUAL_TREATMENT_OMITTED:role=<role>;treatment=<treatment>;profile=<selected>;paintable=<same-target-profile-or-none>`;
+the CLI emits the same fact at `info` severity. This is not a layout failure.
+The profile registry, not the adapter or preset, chooses the suggestion. No
+profile is selected or upgraded on the author's behalf. The Theme role/property
+admission rule in Specification 07 is evaluated first; it distinguishes a
+supported treatment omitted by this profile from a property no consumer can
+carry under any profile.
+
 ## 4. Accessibility, security, and determinism
 
 A treatment is decorative unless its non-colour distinction is separately

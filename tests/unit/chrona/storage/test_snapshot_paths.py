@@ -32,7 +32,8 @@ def test_materializer_copies_baseline_token_under_the_same_encoded_directory(tmp
     example = tmp_path / "example"; example.mkdir()
     (example / "project.yaml").write_text("version: timeline/v0.7\n", encoding="utf-8")
     token = "baseline:abc"
-    reference = {"revision": {"token": token}, "address": "project.yaml", "kind": "project"}
+    reference = {"store": {"provider": "local", "identity": "test"},
+                 "revision": {"token": token}, "address": "project.yaml", "kind": "project"}
     snapshot = tmp_path / "snapshot"; snapshot.mkdir()
     _copy_reference(example, reference, snapshot)
     assert (snapshot_directory(snapshot, token) / "project.yaml").is_file()

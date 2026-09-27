@@ -41,6 +41,18 @@ class TextTreatment:
 
 
 @dataclass(frozen=True)
+class AnnotationContainerToken:
+    """One declared annotation-box outline (#466 rectangle/balloon, #465 image)."""
+
+    outline: str
+    corner_radius: Decimal
+    tail_base: Decimal | None = None
+    image_ref: str | None = None
+    slice_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
+    content_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
+
+
+@dataclass(frozen=True)
 class ThemeTokenView:
     """Non-persistent, typed view derived solely from resolved Theme v0.2.
 
@@ -109,11 +121,27 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/marker")
         return value
 
-    def symbol(self, role: str = "milestoneSymbol") -> str:
+    def symbol(self, role: str = "milestoneSymbol") -> Mapping[str, Any]:
+        """Resolve one role's full symbol value (a built-in shape or a glyph)."""
         value = self.token(role, "symbol", "symbol")
         if not isinstance(value, Mapping) or not isinstance(value.get("shape"), str):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
-        return value["shape"]
+        return value
+
+    _VARIANT_SYMBOL_ROLES = {"planned": "milestoneSymbol", "actual": "milestoneSymbolActual",
+                             "baseline": "milestoneSymbolBaseline"}
+
+    def variant_symbol(self, variant: str) -> Mapping[str, Any]:
+        """Resolve a planned/actual/baseline gate's symbol, falling back to milestoneSymbol.
+
+        `milestoneSymbolActual`/`milestoneSymbolBaseline` are optional roles; a
+        Theme that does not declare one keeps that variant on `milestoneSymbol`,
+        so an existing Theme's rendering is unaffected by their existence.
+        """
+        role = self._VARIANT_SYMBOL_ROLES[variant]
+        if role != "milestoneSymbol" and not self.has_role(role):
+            role = "milestoneSymbol"
+        return self.symbol(role)
 
     def optional_color(self, role: str, property_name: str) -> str | None:
         """Resolve an optional concrete colour without introducing a fallback."""
@@ -203,6 +231,94 @@ class ThemeTokenView:
         if height <= 0 or offset < 0 or offset + height > 1 or corner_radius < 0 or corner_radius > Decimal("0.5") or order != order.to_integral_value():
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
         return height, offset, int(order), corner_radius
+
+    def progress_track(self, role: str) -> tuple[Decimal, Decimal]:
+        """Return the optional track inset and fill corner-radius ratios (#430).
+
+        Both are absent by default, which keeps the fill full-height and square.
+        """
+        binding = self._body["roles"].get(role)
+        declared = binding if isinstance(binding, Mapping) else {}
+        inset = self.number(role, "progressInset") if "progressInset" in declared else Decimal(0)
+        radius = self.number(role, "markCornerRadius") if "markCornerRadius" in declared else Decimal(0)
+        if not Decimal(0) <= inset < Decimal("0.5"):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/progressInset")
+        if not Decimal(0) <= radius <= Decimal("0.5"):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
+        return inset, radius
+
+    def label_chip(self, role: str) -> tuple[Decimal, Decimal] | None:
+        """Return a declared label chip's padding and corner-radius ratios (#428).
+
+        A chip exists only when the Theme declares ``role`` with a fill
+        background; padding is a ratio of the label's font size.
+        """
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or binding.get("backgroundTreatment") != "fill":
+            return None
+        padding = self.number(role, "chipPadding") if "chipPadding" in binding else Decimal(0)
+        radius = self.number(role, "markCornerRadius") if "markCornerRadius" in binding else Decimal(0)
+        if not Decimal(0) <= padding <= Decimal(2):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/chipPadding")
+        if not Decimal(0) <= radius <= Decimal("0.5"):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
+        return padding, radius
+
+    def annotation_container(self, role: str) -> "AnnotationContainerToken | None":
+        """Return a declared annotation container's outline geometry (#466, #465).
+
+        Absence (or a plain rectangle binding) means the role keeps today's
+        plain rectangle box, byte-identical to a Theme without this token.
+        """
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or "annotationContainer" not in binding:
+            return None
+        value = self.token(role, "annotationContainer", "annotationContainer")
+        if not isinstance(value, Mapping) or value.get("outline") not in {"rectangle", "balloon", "image"}:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer")
+        outline = value["outline"]
+        corner_radius = self._decimal(value.get("cornerRadius"), role, "annotationContainer/cornerRadius")
+        if corner_radius is None or corner_radius < 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/cornerRadius")
+        if outline == "rectangle":
+            return AnnotationContainerToken(outline, corner_radius, None, None, None, None)
+        if outline == "balloon":
+            tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
+            if tail_base is None or tail_base <= 0:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/tailBaseEm")
+            return AnnotationContainerToken(outline, corner_radius, tail_base, None, None, None)
+        # outline == "image" (#465): a nine-slice-stretchable icon-catalog
+        # raster entry bound as the container's backdrop. cornerRadius must
+        # be exactly 0 -- the artwork supplies its own corner treatment.
+        if corner_radius != 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/cornerRadius")
+        image_ref = value.get("image")
+        if not isinstance(image_ref, str) or not image_ref or image_ref.count(":") != 1:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/image")
+        slice_insets = self._insets(value.get("sliceInsetsEm"), role, "annotationContainer/sliceInsetsEm")
+        content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
+        return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets)
+
+    def _insets(self, value: Any, role: str, property_name: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
+        """Return a validated (top, right, bottom, left) em-relative inset quadruple."""
+        if not isinstance(value, Mapping):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        sides = tuple(self._decimal(value.get(side), role, f"{property_name}/{side}")
+                      for side in ("top", "right", "bottom", "left"))
+        if any(side is None or side < 0 for side in sides):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        return sides  # type: ignore[return-value]
+
+    def _decimal(self, value: Any, role: str, property_name: str) -> Decimal | None:
+        if value is None:
+            return None
+        try:
+            number = Decimal(str(value))
+        except (InvalidOperation, ValueError) as error:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}") from error
+        if not number.is_finite():
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        return number
 
     def summary_bar_height(self, role: str) -> Decimal:
         """Return the positive lane-relative block-size ratio for a summary bar."""

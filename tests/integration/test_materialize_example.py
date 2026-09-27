@@ -12,12 +12,13 @@ from PIL import Image
 
 from chrona.presentation.model.closure import ClosureError, resolve_render_context
 from chrona.core.identity import content_identity
-from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.scheduling.scheduler import ReferenceScheduler, schedule
 from chrona.storage.revision_store import LocalSnapshotReader
+from chrona.core.ports import SnapshotReadError
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
-from chrona.usecases.materialize import copy_context_closure
+from chrona.usecases.materialize import _OverlayBuilder, _reference_key, copy_context_closure
 from chrona.usecases.render_review import RenderRequest, render_review
 from tools.materialize_example import _copy_context_closure, materialize
 
@@ -95,6 +96,35 @@ def test_immutable_context_completes_narrow_programme_board_with_visible_warning
     assert any(warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" for warning in rendered.surface.fit_warnings)
 
 
+def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tmp_path):
+    example = tmp_path / "halcyon-1"
+    shutil.copytree(ROOT / "examples/halcyon-1", example)
+    context_path = example / "contexts/02-programme-board.yaml"
+    context = yaml.safe_load(context_path.read_bytes())
+    context["body"]["project"]["revision"]["token"] = "font-root-probe-v2"
+    for asset in context["body"]["environment"]["fontMetrics"]["assets"]:
+        locator = asset["metrics"]["locator"]
+        source = ROOT / "src/chrona/resources" / locator["address"]
+        target = example / locator["address"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        locator["provider"] = "context"
+        locator.pop("identity", None)
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
+
+    snapshot = tmp_path / "snapshot"
+    reference, revision = copy_context_closure(example, context_path, snapshot)
+    assert revision == "font-root-probe-v2"
+    assert context["body"]["theme"]["revision"]["token"] == "example-v1"
+    metric = "font_metrics/noto-sans-regular-v2.json"
+    assert (snapshot_directory(snapshot, revision) / metric).is_file()
+    assert not (snapshot_directory(snapshot, "example-v1") / metric).exists()
+
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example"))
+    rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
+    assert rendered.artifact.content.startswith(b"<svg ")
+
+
 def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp_path):
     example = tmp_path / "aster-ssd"
     shutil.copytree(ROOT / "examples/aster-ssd", example)
@@ -153,6 +183,8 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
     assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact
     leader = re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]* d="([^"]+)"', artifact)
     assert leader is not None and leader.group(1).count("L") >= 5
+    assert leader.group(1).count("M") >= 2  # completed bridge gaps, not adapter-inferred crossings
+    assert "22 26.056" not in leader.group(1)  # rejected slide-perimeter detour
     assert re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]*marker-end="url\(#marker-[^"]+\)"', artifact)
     scene_source = (ROOT / "src/chrona/presentation/scene/v05_builder.py").read_text(encoding="utf-8")
     adapter_source = (ROOT / "src/chrona/presentation/renderers/v05_svg.py").read_text(encoding="utf-8")
@@ -243,15 +275,26 @@ def test_orion_gates_measures_the_colour_scale_legend_before_layout(tmp_path):
     assert 'data-purpose="progress-fill"' in svg
     scene = json.loads((tmp_path / "gates/review.scene.json").read_text(encoding="utf-8"))
     assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit" in scene["diagnostics"]
-    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:stride=2:phase=1" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:thinned=1" in scene["diagnostics"]
+    assert not any(diagnostic.startswith("W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:") and diagnostic != "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit"
+                   for diagnostic in scene["diagnostics"])
+    axis_labels = {primitive["id"] for primitive in scene["surfaces"][0]["primitives"] if primitive.get("purpose") == "axis-label"}
+    # Only the one clipped candidate is thinned; every other month label in the tier is placed.
+    assert "axis-label:3:2" in axis_labels and "axis-label:3:4" in axis_labels
 
 
 def test_replan_baseline_records_the_nonfitting_partial_quarter_label(tmp_path):
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "replan-baseline", tmp_path / "replan", write=False)
     scene = json.loads((tmp_path / "replan/review.scene.json").read_text(encoding="utf-8"))
     assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:2:0:label-does-not-fit" in scene["diagnostics"]
-    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:2:stride=2:phase=1" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:2:thinned=1" in scene["diagnostics"]
     assert "W_LAYOUT_AXIS_LABEL_THINNED:axis-label:3:0:label-does-not-fit" in scene["diagnostics"]
+    assert "W_LAYOUT_AXIS_DENSITY:axis-tier:3:thinned=1" in scene["diagnostics"]
+    # Only the one clipped candidate per tier is thinned; the next quarter/month label
+    # in each tier, which used to be dropped for sharing its residue, is now placed.
+    axis_labels = {primitive["id"] for primitive in scene["surfaces"][0]["primitives"] if primitive.get("purpose") == "axis-label"}
+    assert "axis-label:2:2" in axis_labels
+    assert "axis-label:3:2" in axis_labels
     labels = [primitive["bounds"] for primitive in scene["surfaces"][0]["primitives"]
               if primitive["purpose"] == "axis-label"]
     assert all(not (left["inline"] < right["inline"] + right["inlineSize"] - 0.000001
@@ -291,20 +334,90 @@ def test_materializer_requires_declared_regression_role_and_slide_evidence(tmp_p
         materialize(manifest_path, "executive", tmp_path / "missing-evidence", write=False)
 
 
-def test_materializer_rewrites_provider_font_locators_to_a_self_contained_snapshot(tmp_path):
+def test_materializer_preserves_authored_context_bytes_and_font_locator_identity(tmp_path):
     example = ROOT / "examples/aster-ssd"
     context_path = example / "contexts/01-overview.yaml"
     snapshot = tmp_path / "snapshot"
     snapshot.mkdir()
 
+    source_bytes = context_path.read_bytes()
+    source_tree = yaml.safe_load(source_bytes)
     reference, revision = _copy_context_closure(example, context_path, snapshot)
 
     copied = snapshot_directory(snapshot, revision) / "contexts/01-overview.yaml"
     copied_context = yaml.safe_load(copied.read_text(encoding="utf-8"))
-    source_context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     assert reference["contentIdentity"] == "sha256:" + sha256(copied.read_bytes()).hexdigest()
-    assert copied_context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]["locator"]["provider"] == "context"
-    assert source_context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]["locator"]["provider"] == "package"
+    assert copied.read_bytes() == source_bytes
+    assert copied_context == source_tree
+
+
+def test_materialized_overlay_requires_complete_reference_and_asset_identity(tmp_path):
+    example = ROOT / "examples/aster-ssd"
+    context_path = example / "contexts/01-overview.yaml"
+    builder = _OverlayBuilder(tmp_path)
+    reference, revision = copy_context_closure(example, context_path, tmp_path / "snapshot",
+                                               overlay_builder=builder)
+    overlay = builder.finish()
+    copied = snapshot_directory(tmp_path / "snapshot", revision) / "contexts/01-overview.yaml"
+    assert overlay.read(reference) == copied.read_bytes() == context_path.read_bytes()
+    context = yaml.safe_load(context_path.read_bytes())
+    project_ref = context["body"]["project"]
+    project_copy = snapshot_directory(tmp_path / "snapshot", project_ref["revision"]["token"]) / project_ref["address"]
+    assert project_copy.read_bytes() == overlay.read(project_ref)
+    assert overlay._references[_reference_key(project_ref)][0] == project_copy
+    metric = context["body"]["environment"]["fontMetrics"]["assets"][0]["metrics"]
+    resolved = overlay.resolve_asset(metric["locator"], metric["contentIdentity"])
+    assert resolved.read_bytes() == (ROOT / "src/chrona/resources" / metric["locator"]["address"]).read_bytes()
+    assert resolved.is_relative_to(tmp_path / "materialized-overlay")
+    assert not list((tmp_path / "snapshot").rglob(metric["locator"]["address"]))
+    wrong_revision = {**reference, "revision": {"token": "other-revision"}}
+    with pytest.raises(SnapshotReadError, match="E_STORE_REFERENCE"):
+        overlay.read(wrong_revision)
+    wrong_provider = {**metric["locator"], "identity": "other.package"}
+    with pytest.raises(KeyError):
+        overlay.resolve_asset(wrong_provider, metric["contentIdentity"])
+
+
+def test_package_icon_catalog_is_staged_outside_revision_paths_and_served_by_authored_key(tmp_path):
+    example = ROOT / "examples/controller-z"
+    context_path = example / "contexts/material-icons.yaml"
+    raw_context = context_path.read_bytes()
+    authored = yaml.safe_load(raw_context)
+    context_reference = authored["body"]["inputs"]["iconCatalogs"][0]
+    snapshot = tmp_path / "snapshot"
+    builder = _OverlayBuilder(tmp_path)
+    copied_reference, _ = copy_context_closure(example, context_path, snapshot, overlay_builder=builder)
+    overlay = builder.finish()
+    copied_context = snapshot_directory(snapshot, copied_reference["revision"]["token"]) / copied_reference["address"]
+    assert copied_context.read_bytes() == raw_context
+    assert yaml.safe_load(copied_context.read_bytes()) == authored
+    assert overlay.read(context_reference) == (ROOT / "src/chrona/resources" / context_reference["address"]).read_bytes()
+    assert not list(snapshot.rglob(context_reference["address"]))
+    assert overlay._references[_reference_key(context_reference)][0].is_relative_to(tmp_path / "materialized-overlay")
+
+
+def test_materialized_overlay_separates_same_address_providers_and_rechecks_unpinned_bytes(tmp_path):
+    builder = _OverlayBuilder(tmp_path)
+    package = {"id": "resource", "kind": "view", "store": {"provider": "package", "identity": "pack.one"},
+               "address": "same.yaml", "revision": {"token": "v1"}, "contentIdentity": "sha256:" + sha256(b"package").hexdigest()}
+    local = {**package, "store": {"provider": "local", "identity": "example"},
+             "contentIdentity": "sha256:" + sha256(b"local").hexdigest()}
+    builder.add_reference(package, b"package")
+    builder.add_reference(local, b"local")
+    unpinned = {"id": "optional", "kind": "view", "store": {"provider": "local", "identity": "example"},
+                "address": "optional.yaml", "revision": {"token": "v1"}}
+    builder.add_reference(unpinned, b"original")
+    overlay = builder.finish()
+    assert overlay.read(package) == b"package"
+    assert overlay.read(local) == b"local"
+    package_path = list(overlay._references.values())[0][0]
+    package_path.unlink()
+    with pytest.raises(SnapshotReadError, match="E_STORE_REFERENCE"):
+        overlay.read(package)
+    optional_path = list(overlay._references.values())[2][0]
+    optional_path.write_bytes(b"changed")
+    with pytest.raises(SnapshotReadError, match="E_CONTENT_IDENTITY"):
+        overlay.read(unpinned)
 
 
 def test_baseline_capture_materializes_a_context_through_its_windows_safe_token(tmp_path):
@@ -349,6 +462,44 @@ def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
     context.write_text(yaml.safe_dump(value, sort_keys=False))
     with pytest.raises(ValueError, match="E_CONTENT_IDENTITY"):
         materialize(copied_example / "manifest.yaml", "mission-brief", tmp_path / "out", write=True)
+
+
+def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
+    copied_example = tmp_path / "halcyon"
+    shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
+    context_path = copied_example / "contexts/02-programme-board.yaml"
+    project_reference = yaml.safe_load(context_path.read_bytes())["body"]["project"]
+    project_path = copied_example / "project.yaml"
+    assert project_reference["revision"]["token"] == "example-v2"
+    assert project_reference["contentIdentity"] == "sha256:" + sha256(project_path.read_bytes()).hexdigest()
+
+    project_path.write_bytes(project_path.read_bytes() + b"\n# stale Project bytes\n")
+    with pytest.raises(ValueError, match="E_CONTENT_IDENTITY"):
+        copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
+
+
+def test_every_halcyon_context_pins_current_project_without_repinning_theme():
+    example = ROOT / "examples/halcyon-1"
+    expected_identity = "sha256:e196a21b0162e28d318f7e6512ada534cc1b6cdc35edb8fad6d84926bc4ca840"
+    assert "sha256:" + sha256((example / "project.yaml").read_bytes()).hexdigest() == expected_identity
+    contexts = sorted((example / "contexts").glob("*.yaml"))
+    assert len(contexts) == 15
+    for path in contexts:
+        body = yaml.safe_load(path.read_bytes())["body"]
+        assert body["project"]["revision"]["token"] == "example-v2", path.name
+        assert body["project"]["contentIdentity"] == expected_identity, path.name
+        assert body["theme"]["revision"]["token"] == "example-v1", path.name
+
+
+def test_halcyon_four_workday_lag_places_bus_test_on_may_third():
+    example = ROOT / "examples/halcyon-1"
+    project = yaml.safe_load((example / "project.yaml").read_bytes())
+    relation = next(item for item in project["relations"] if item["id"] == "avionics-bustest")
+    assert relation["lag"] == "4wd"
+    result = schedule(project)
+    assert result.placements["bus-test"]["start"].isoformat() == "2027-05-03"
+    assert result.placements["bus-test"]["end"].isoformat() == "2027-05-17"
+    assert result.analysis.total_float["bus-test"] == 39
 
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"
@@ -471,8 +622,14 @@ def test_svg_materializer_closes_declared_local_metrics_without_copying_unused_f
                  "metrics": {"locator": {"provider": "context", "address": "assets/metrics.json"}, "contentIdentity": "sha256:" + sha256(metrics_target.read_bytes()).hexdigest()},
                  "font": {"locator": {"provider": "context", "address": "assets/font.ttf"}, "contentIdentity": "sha256:" + sha256(font_target.read_bytes()).hexdigest()}}]
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
-    reference, revision = _copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
+    snapshot = tmp_path / "snapshot"
+    builder = _OverlayBuilder(tmp_path)
+    reference, revision = copy_context_closure(copied_example, context_path, snapshot,
+                                              overlay_builder=builder)
+    overlay = builder.finish()
     assert (snapshot_directory(tmp_path / "snapshot", revision) / "assets/metrics.json").read_bytes() == metrics_target.read_bytes()
+    assert overlay.resolve_asset(asset[0]["metrics"]["locator"], asset[0]["metrics"]["contentIdentity"]) == (
+        snapshot_directory(snapshot, revision) / "assets/metrics.json")
     assert not (snapshot_directory(tmp_path / "snapshot", revision) / "assets/font.ttf").exists()
     assert reference["id"] == "controller-z-executive"
 
@@ -530,6 +687,11 @@ def test_materializer_records_selected_scenario_evidence_and_omits_unselected_sc
     changed = yaml.safe_load(project.read_text(encoding="utf-8"))
     changed["scenarios"]["tvac-slip"]["objects"]["tvac"]["schedule"]["amount"] = "20d"
     project.write_text(yaml.safe_dump(changed, sort_keys=False))
+    context_path = copied / "contexts/04-tvac-slip.yaml"
+    context = yaml.safe_load(context_path.read_bytes())
+    context["body"]["project"]["revision"]["token"] = "scenario-probe-v3"
+    context["body"]["project"]["contentIdentity"] = "sha256:" + sha256(project.read_bytes()).hexdigest()
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
     materialize(copied / "manifest.yaml", "tvac-slip", tmp_path / "changed-output", write=True)
     changed_evidence = yaml.safe_load((tmp_path / "changed-output/closure.yaml").read_text(encoding="utf-8"))
     assert changed_evidence["scenarios"][0]["contentIdentity"] != evidence["scenarios"][0]["contentIdentity"]

@@ -83,7 +83,7 @@ def normalize_svg(payload: bytes, viewport: tuple[int, int]) -> NormalizedVector
         if any(key not in permitted for key in node.attrib):
             raise IconNormalizationError("E_ICON_SVG_UNSAFE")
         if _local(node.tag) == "path":
-            paths.append(NormalizedIconPath(_path(node.attrib.get("d", ""))))
+            paths.append(NormalizedIconPath(parse_path_commands(node.attrib.get("d", ""))))
         for child in node:
             visit(child, depth + 1)
     visit(root)
@@ -95,7 +95,13 @@ def normalize_svg(payload: bytes, viewport: tuple[int, int]) -> NormalizedVector
 def _local(tag: str) -> str: return tag.rsplit("}", 1)[-1]
 
 
-def _path(value: str) -> tuple[IconPathCommand, ...]:
+def parse_path_commands(value: str) -> tuple[IconPathCommand, ...]:
+    """Tokenize one SVG path `d` string into normalized absolute commands.
+
+    Shared by the icon normalizer and the Theme glyph symbol geometry
+    (`scene/mark_geometry.py`), so there is exactly one SVG path-data grammar
+    in the codebase.
+    """
     tokens = [command or number for command, number in _TOKEN.findall(value)]
     if not tokens or "".join(tokens) != re.sub(r"[\s,]+", "", value):
         raise IconNormalizationError("E_ICON_SVG_UNSAFE")

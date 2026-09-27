@@ -289,7 +289,9 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, m
         "W_LAYOUT_MARK_OVERFLOW", "W_LAYOUT_ROW_DENSITY", "W_SCENE_TEXT_INTERSECTION"))
     svg = output.read_text(encoding="utf-8")
     assert 'data-scene-id="axis-label:2:' in svg
-    assert ">Mar</text>" in svg
+    # #383/#429: the bundled default is now the Editorial preset, whose axis
+    # role transforms month labels to uppercase (letterSpacing.wide, #410).
+    assert ">MAR</text>" in svg
     scene = json.loads(scene_path.read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     slots = {slot["source"]: slot["bounds"] for slot in surface["slots"]}
@@ -343,7 +345,195 @@ def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path
         assert f'data-source-ref="{object_id}"' in svg
     if preset_id == "elevated-light":
         assert 'data-purpose="group-decoration"' in svg
-        assert "<linearGradient" not in svg and "<filter" not in svg
+        assert "<linearGradient" in svg  # the preset's preferred v0.7-svg profile applies without a flag (#479)
+
+
+@pytest.mark.parametrize(("kind", "filename", "stale_version"), [
+    ("view", "view.yaml", "chrona/view/v0.22"),
+    ("theme", "theme.yaml", "chrona/theme/v0.1"),
+    ("layout-profile", "layout.yaml", "chrona/layout-profile/v0.1"),
+])
+def test_cli_copied_builtin_preset_rejects_unsupported_member_version(
+    tmp_path, monkeypatch, capsys, kind, filename, stale_version,
+):
+    preset_id = "mission-light"
+    preset = tmp_path / "copied-preset"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
+    main()
+
+    member = preset / filename
+    resource = yaml.safe_load(member.read_text(encoding="utf-8"))
+    supported_version = resource["version"]
+    resource["version"] = stale_version
+    member.write_text(yaml.safe_dump(resource, sort_keys=False), encoding="utf-8")
+
+    output = tmp_path / "unsupported-version.svg"
+    project = Path("examples/halcyon-1/project.yaml")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project), "--preset", str(preset / "preset.yaml"), "--output", str(output),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_RESOURCE_VERSION_UNSUPPORTED"
+    assert diagnostic["sourceRef"] == "/version"
+    assert kind in diagnostic["message"]
+    assert "chrona-preset-mission-light" in diagnostic["message"] or "chrona-builtin-mission-light" in diagnostic["message"]
+    assert stale_version in diagnostic["message"]
+    assert supported_version in diagnostic["message"]
+    assert "chrona preset copy mission-light --output" in diagnostic["message"]
+    assert not output.exists()
+
+
+def test_cli_stale_explicit_override_with_current_preset_has_no_copy_remedy(tmp_path, monkeypatch, capsys):
+    preset_id = "mission-light"
+    preset = tmp_path / "copied-preset"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
+    main()
+
+    override = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
+    override["version"] = "chrona/view/v0.22"
+    override_path = tmp_path / "stale-override.yaml"
+    override_path.write_text(yaml.safe_dump(override, sort_keys=False), encoding="utf-8")
+
+    output = tmp_path / "stale-override.svg"
+    project = Path("examples/halcyon-1/project.yaml")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project), "--preset", str(preset / "preset.yaml"),
+        "--view", str(override_path), "--output", str(output),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_RESOURCE_VERSION_UNSUPPORTED"
+    assert diagnostic["sourceRef"] == "/version"
+    assert "chrona/view/v0.22" in diagnostic["message"]
+    assert "chrona/view/v0.26" in diagnostic["message"]
+    assert "chrona preset copy" not in diagnostic["message"]
+    assert not output.exists()
+
+
+@pytest.mark.parametrize(
+    "preset_id",
+    [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
+)
+def test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset(tmp_path, monkeypatch, capsys, preset_id):
+    """#482: a window margin must not make thin-with-record collide or over-thin."""
+    preset = tmp_path / preset_id
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
+    main()
+    view_path = preset / "view.yaml"
+    view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+    view["body"]["window"] = {"mode": "selected-planned", "marginDays": 7}
+    for tier in view["body"]["axis"]["tiers"]:
+        if tier.get("unit") == "month" and tier.get("role") == "labels":
+            tier["label"]["overflow"] = "thin-with-record"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+
+    for label, project, actual in (
+        ("halcyon-1", Path("examples/halcyon-1/project.yaml"), Path("examples/halcyon-1/actual.yaml")),
+        ("starter", starter / "project.yaml", starter / "actual.yaml"),
+    ):
+        output = tmp_path / f"{preset_id}-{label}.svg"
+        scene_path = tmp_path / f"{preset_id}-{label}.scene.json"
+        monkeypatch.setattr(sys, "argv", [
+            "chrona", "render", str(project), "--actual", str(actual),
+            "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
+        ])
+        capsys.readouterr()
+        main()
+        warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+        axis_overflow = [item for item in warnings if item.get("code") == "W_LAYOUT_LABEL_OVERFLOW"
+                          and (item.get("sourceRef") == "timeline-axis" or str(item.get("placementId", "")).startswith("axis-label:"))]
+        assert not axis_overflow, (preset_id, label, axis_overflow)
+
+        intersections = [item for item in warnings if item.get("code") == "W_SCENE_TEXT_INTERSECTION"
+                          and any(str(primitive_id).startswith("axis-label:") for primitive_id in item.get("primitiveIds", ()))]
+        assert not intersections, (preset_id, label, intersections)
+
+
+def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_path, monkeypatch, capsys):
+    """#480: the table slot and its columns use one measure, so `Δ` stays inside."""
+    preset = tmp_path / "print-mono"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
+    main()
+    layout_path = preset / "layout.yaml"
+    layout = yaml.safe_load(layout_path.read_text(encoding="utf-8"))
+    review = next(child for child in layout["root"]["children"] if child["id"] == "review")
+    table = next(child for child in review["children"] if child["id"] == "table")
+    table["inlineSize"] = "content"
+    layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+    scene_path, output = tmp_path / "scene.json", tmp_path / "halcyon.svg"
+    capsys.readouterr()
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", "examples/halcyon-1/project.yaml", "--actual", "examples/halcyon-1/actual.yaml",
+        "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
+    ])
+    main()
+
+    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    assert not [item for item in warnings if item["code"] == "W_LAYOUT_VISIBLE_OVERFLOW"]
+    primitives = {}
+
+    def collect(value):
+        if isinstance(value, dict):
+            if "id" in value and "bounds" in value:
+                primitives[value["id"]] = value["bounds"]
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(json.loads(scene_path.read_text(encoding="utf-8")))
+    table_bounds, delta = primitives["table"], primitives["column:Δ"]
+    assert delta["inline"] + delta["inlineSize"] <= table_bounds["inline"] + table_bounds["inlineSize"] + 1e-6
+
+
+def test_cli_row_height_is_derived_from_the_table_text_it_holds(tmp_path, monkeypatch, capsys):
+    """#480: 26 px rows with 6 px padding hold a 14 x 1.5 line as 27 px rows."""
+    preset = tmp_path / "print-mono"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
+    main()
+    theme_path = preset / "theme.yaml"
+    theme = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
+    theme["body"]["values"]["timeline-row-height"]["value"] = 26
+    theme["body"]["values"]["timeline-row-padding"]["value"] = 6
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    scene_path, output = tmp_path / "scene.json", tmp_path / "halcyon.svg"
+    capsys.readouterr()
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", "examples/halcyon-1/project.yaml", "--actual", "examples/halcyon-1/actual.yaml",
+        "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
+    ])
+    main()
+
+    codes = {json.loads(line)["code"] for line in capsys.readouterr().err.splitlines() if line.startswith("{")}
+    assert not codes & {"W_LAYOUT_VISIBLE_OVERFLOW", "W_SCENE_TEXT_INTERSECTION", "W_LAYOUT_ROW_DENSITY",
+                        "W_LAYOUT_MARK_OVERFLOW"}
+    scene = scene_path.read_text(encoding="utf-8")
+    bands = []
+
+    def collect(value):
+        if isinstance(value, dict):
+            if str(value.get("id", "")).startswith("row-band:"):
+                bands.append(value["bounds"]["blockSize"])
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(json.loads(scene))
+    assert bands and min(bands) == pytest.approx(27.0)
 
 
 def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, monkeypatch, capsys):
@@ -359,6 +549,89 @@ def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, mo
             main()
         assert exited.value.code == 1
         assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == expected
+
+
+def test_cli_preset_list_reports_every_catalogue_entry_in_order(monkeypatch, capsys):
+    """#429: the available presets can be listed by id."""
+    expected = yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]
+
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "list"])
+    main()
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["status"] == "ok"
+    assert payload["presets"] == [{"id": entry["id"], "gallerySet": entry["gallerySet"]} for entry in expected]
+
+
+@pytest.mark.parametrize(
+    "preset_id",
+    [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
+)
+def test_cli_render_preset_by_name_is_byte_identical_to_copy_then_path(tmp_path, monkeypatch, preset_id):
+    """#429: a preset can be selected by name, and it renders exactly what copying it and
+    pointing --preset at the copy would render."""
+    project = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
+    main()
+
+    by_name = tmp_path / f"{preset_id}-by-name.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"), "--actual", str(project / "actual.yaml"),
+        "--preset", preset_id, "--output", str(by_name),
+    ])
+    main()
+
+    copied = tmp_path / f"{preset_id}-copy"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(copied)])
+    main()
+    by_path = tmp_path / f"{preset_id}-by-path.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"), "--actual", str(project / "actual.yaml"),
+        "--preset", str(copied / "preset.yaml"), "--output", str(by_path),
+    ])
+    main()
+
+    assert by_name.read_bytes() == by_path.read_bytes()
+
+
+def test_cli_render_preset_by_name_rejects_unknown_id(tmp_path, monkeypatch, capsys):
+    project = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
+    main()
+
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"),
+        "--preset", "not-a-preset", "--output", str(tmp_path / "out.svg"),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+    assert exited.value.code == 1
+    assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_BUILTIN_PRESET_UNKNOWN"
+    assert not (tmp_path / "out.svg").exists()
+
+
+def test_cli_render_preset_path_is_never_looked_up_as_a_builtin_id(tmp_path, monkeypatch):
+    """A preset file path is always distinguishable from a catalogue id (#429): it always
+    contains a path separator or a YAML suffix, neither of which a library.yaml id can hold."""
+    project = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
+    main()
+    copied = tmp_path / "mission-light"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(copied)])
+    main()
+
+    # A bare filename with no "/" but a YAML suffix must still resolve as a path, not a name;
+    # copy every sibling file the preset manifest points at, not just the manifest.
+    for item in copied.iterdir():
+        (tmp_path / item.name).write_bytes(item.read_bytes())
+    output = tmp_path / "out.svg"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project / "project.yaml"),
+        "--preset", "preset.yaml", "--output", str(output),
+    ])
+    main()
+    assert output.read_bytes().startswith(b"<svg")
 
 
 @pytest.mark.parametrize(
@@ -623,6 +896,46 @@ def test_cli_draft_schema_diagnostics_report_all_known_resources_with_provenance
         ("E_VIEW_SCHEMA", "view", "controller-z-executive", "/body/tableColumns/0/missing"),
         ("E_THEME_SCHEMA", "theme", "executive-light", "/body/values/text-weight/type"),
     ]
+
+
+@pytest.mark.parametrize(("missing", "code", "pointer"), [
+    ("group-header-metric", "E_THEME_METRIC_REQUIRED", "/body/metrics/timeline.groupHeader.blockSize"),
+    ("numeric-role", "E_THEME_ROLE_REQUIRED", "/body/roles/numeric/fontFamily"),
+])
+def test_cli_render_keeps_detector_owned_theme_pointer(tmp_path, monkeypatch, capsys, missing, code, pointer):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = yaml.safe_load((root / "examples/controller-z/themes/executive-light.yaml").read_text(encoding="utf-8"))
+    if missing == "group-header-metric":
+        assert view["body"]["grouping"]["presentation"] == "header"
+        theme["body"]["metrics"].pop("timeline.groupHeader.blockSize")
+    else:
+        view["body"]["tableColumns"].append({
+            "id": "Δ", "source": {"facet": "finishDelta"}, "format": "signedDays",
+            "missing": "em-dash", "align": "end", "width": "content",
+            "headerOrientation": "horizontal",
+        })
+        assert "numeric" not in theme["body"]["roles"]
+    view_path, theme_path = tmp_path / "view.yaml", tmp_path / "theme.yaml"
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    output = tmp_path / "ignored.svg"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(root / "examples/controller-z/project.yaml"),
+        "--view", str(view_path), "--theme", str(theme_path),
+        "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
+        "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--output", str(output),
+    ])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1 and not output.exists()
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert (diagnostic["code"], diagnostic["component"], diagnostic["sourceRef"]) == (
+        code, "presentation", pointer)
 
 
 def test_cli_baseline_rejection_keeps_visual_capability_pointer_and_message(tmp_path, monkeypatch, capsys):

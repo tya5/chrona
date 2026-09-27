@@ -41,17 +41,33 @@ def test_draft_closure_accepts_optional_review_inputs():
 
 def test_draft_closure_aggregates_every_schema_finding_in_the_known_resource_set(tmp_path):
     invalid_view = tmp_path / "view.yaml"
-    invalid_view.write_text("version: chrona/view/v0.22\nkind: view\nid: bad\nbody: {}\n", encoding="utf-8")
+    invalid_view.write_text("version: chrona/view/v0.26\nkind: view\nid: bad\nbody: {}\n", encoding="utf-8")
     with pytest.raises(PresentationIngressRejected) as error:
         resolve_draft_render(**(_paths(_root()) | {"view_path": invalid_view}))
     assert {item.pointer for item in error.value.diagnostics} >= {"/body"}
     assert {item.resource_kind for item in error.value.diagnostics} == {"view"}
 
 
+def test_draft_closure_reports_unsupported_view_version_at_version_pointer(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["version"] = "chrona/view/v0.22"
+    stale_view = tmp_path / "stale-view.yaml"
+    stale_view.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ClosureError) as error:
+        resolve_draft_render(**(_paths(root) | {"view_path": stale_view}))
+
+    assert (error.value.diagnostic_id, error.value.source_ref) == (
+        "E_RESOURCE_VERSION_UNSUPPORTED", "/version")
+    assert "chrona/view/v0.22" in error.value.detail
+    assert "chrona/view/v0.26" in error.value.detail
+
+
 def test_draft_preset_resolves_the_same_typed_resources_as_explicit_inputs():
     root = _root() / "examples/controller-z"
     preset = root / "executive-light.preset.yaml"
-    draft = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset)
+    draft = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root)
     explicit = resolve_draft_render(
         project_path=root / "project.yaml", view_path=root / "views/executive.yaml",
         theme_path=root / "themes/executive-light.yaml", scheme_path=root / "schemes/executive-light.yaml",
@@ -70,7 +86,9 @@ def test_bundled_default_preset_resolves_a_non_halcyon_project_with_or_without_a
     }
     without_actual = resolve_draft_render(**values)
     with_actual = resolve_draft_render(**values, actual_path=root / "examples/controller-z/actual.yaml")
-    assert without_actual.closure.resource("view").id == with_actual.closure.resource("view").id == "chrona-default-draft"
+    # #383/#429: the bundled default's own top-level id stays chrona-default-draft
+    # (D1: no rename); its View is the readable Editorial-derived default.
+    assert without_actual.closure.resource("view").id == with_actual.closure.resource("view").id == "chrona-preset-editorial-readable-default"
     assert without_actual.closure.actual_set is None
     assert with_actual.closure.actual_set is not None
     assert without_actual.auto_block is with_actual.auto_block is True
@@ -232,6 +250,16 @@ def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provena
     assert draft.closure.guided_provenance.normalizer_version == "chrona/authoring-normalizer/v0.1"
     assert draft.closure.context.environment.typesetter == TypesetterIdentity("tectonic", "0.15.0", "chrona-tikz/v0.1")
 
+    resources["view.yaml"]["version"] = "chrona/view/v0.22"
+    (preset_root / "view.yaml").write_text(yaml.safe_dump(resources["view.yaml"], sort_keys=False), encoding="utf-8")
+    with pytest.raises(ClosureError) as error:
+        resolve_guided_draft_render(
+            workspace_path=workspace_path, target_kind="tikz",
+            typesetter=TypesetterIdentity("tectonic", "0.15.0", "chrona-tikz/v0.1"),
+        )
+    assert (error.value.diagnostic_id, error.value.source_ref) == (
+        "E_RESOURCE_VERSION_UNSUPPORTED", "/version")
+
 
 def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
     root = _root()
@@ -273,3 +301,48 @@ def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
     assert draft.closure.icon_catalogs[0].set_name == "preset"
     assert draft.closure.icon_catalogs[0].entry_names == ("check",)
     assert draft.auto_block is True
+
+
+@pytest.fixture
+def preset_with(tmp_path):
+    """Write a Controller Z preset variant outside the example; resources resolve from the example root."""
+    root = _root() / "examples/controller-z"
+
+    def make(**body: object) -> Path:
+        preset = yaml.safe_load((root / "executive-light.preset.yaml").read_text(encoding="utf-8"))
+        for key, value in body.items():
+            (preset["body"]["resources"] if key == "detailProfile" else preset["body"])[key] = value
+        path = tmp_path / "variant.preset.yaml"
+        path.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
+        return path
+    return make
+
+
+def test_preset_detail_profile_applies_unless_an_explicit_detail_is_given(preset_with):
+    root = _root() / "examples/controller-z"
+    preset = preset_with(detailProfile={"id": "controller-z-review-detail", "kind": "review-detail-profile",
+                                        "path": "profiles/review-detail.yaml"})
+    draft = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml", preset_path=preset, preset_root=root)
+    assert draft.closure.detail_profile is not None
+    plain = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml",
+                                 preset_path=root / "executive-light.preset.yaml")
+    assert plain.closure.detail_profile is None
+    explicit_theme = resolve_draft_render(project_path=root / "project.yaml", actual_path=root / "actual.yaml",
+                                          preset_path=preset, preset_root=root,
+                                          theme_path=root / "themes/executive-light.yaml")
+    assert explicit_theme.closure.detail_profile is None  # the legend belongs to the preset's own Theme
+
+
+def test_preset_preferred_visual_profile_applies_unless_a_flag_is_given(preset_with):
+    root = _root() / "examples/controller-z"
+    preset = preset_with(visualProfile={"preferred": "chrona-output/visual/v0.7-svg"})
+    preferred = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root)
+    assert preferred.closure.context.target.visual_profile == "chrona-output/visual/v0.7-svg"
+    explicit = resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root,
+                                    visual_profile="chrona-output/visual/v0.5-baseline")
+    assert explicit.closure.context.target.visual_profile == "chrona-output/visual/v0.5-baseline"
+    default = resolve_draft_render(project_path=root / "project.yaml", preset_path=root / "executive-light.preset.yaml")
+    assert default.closure.context.target.visual_profile == "chrona-output/visual/v0.5-baseline"
+    with pytest.raises(ClosureError) as error:
+        resolve_draft_render(project_path=root / "project.yaml", preset_path=preset, preset_root=root, target_kind="png")
+    assert error.value.diagnostic_id == "E_PRESET_VISUAL_PROFILE_TARGET"

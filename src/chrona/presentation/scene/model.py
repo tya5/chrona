@@ -3,11 +3,39 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import math
+from typing import Any
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
-from chrona.presentation.icons import NormalizedVectorIcon
 from chrona.presentation.model.font_metrics import FontTabularWarning
-from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
+from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
+
+
+LANE_MEMBER_BINDING_IDS = (
+    "planned", "actual", "snapshot", "missingActual", "summaryBar", "progressFill",
+    "memberLabel", "memberLabelInsidePlanned", "memberLabelInsideActual",
+    "memberLabelInsideSnapshot", "memberLabelInsideScenario", "finishDelta",
+    "varianceAhead", "varianceBehind", "iconMark", "labelVisual",
+)
+LANE_MEMBER_PURPOSES = frozenset(semantic_binding(identifier).purpose
+                                 for identifier in LANE_MEMBER_BINDING_IDS)
+PRIMARY_LANE_MARK_PURPOSES = frozenset(
+    semantic_binding(identifier).purpose for identifier in ("planned", "snapshot")
+)
+_LANE_PURPOSE_KINDS = frozenset(
+    (scene_kind, semantic_binding(identifier).purpose)
+    for identifier in LANE_MEMBER_BINDING_IDS
+    for scene_kind in ({"Rect", "Symbol", "Path"} if semantic_binding(identifier).primitive_kind == "mark"
+                       else {"Text"} if semantic_binding(identifier).primitive_kind == "label"
+                       else {"Icon"})
+)
+
+
+def requires_lane_member_provenance(kind: str, purpose: str) -> bool:
+    """Whether current semantic bindings make a completed Scene primitive lane-owned."""
+    return kind == "Icon" or (purpose in LANE_MEMBER_PURPOSES
+                               and (kind, purpose) in _LANE_PURPOSE_KINDS)
 
 
 @dataclass(frozen=True)
@@ -22,6 +50,34 @@ class ScenePaint:
     gradient: "LinearGradient | None" = None
     shadow: "DropShadow | None" = None
     stroke_finish: "StrokeFinish | None" = None
+    image: "ImageFill | None" = None
+
+
+@dataclass(frozen=True)
+class ImageTile:
+    """One completed nine-slice tile: a source rect stretched to a destination rect (#465)."""
+
+    source: tuple[float, float, float, float]
+    destination: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class ImageFill:
+    """A container's completed nine-slice raster fill; adapters only serialize it.
+
+    ``payload`` is the verified PNG bytes -- carried in memory only, exactly
+    as an Icon's raster payload is (never part of the serialized Scene
+    document; see ``icon_asset_identity`` for the identity that is).
+    """
+
+    asset_identity: str
+    viewport: tuple[int, int]
+    payload: bytes
+    tiles: tuple[ImageTile, ...]
+
+    def __post_init__(self) -> None:
+        if not self.tiles or self.viewport[0] <= 0 or self.viewport[1] <= 0:
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
 @dataclass(frozen=True)
@@ -152,12 +208,11 @@ class ScenePrimitive:
     icon_kind: str | None = None
     icon_asset_identity: str | None = None
     icon_viewport: tuple[int, int] | None = None
-    icon_vector: NormalizedVectorIcon | None = None
     icon_paths: tuple[SceneIconPath, ...] = ()
+    icon_path_geometry: tuple[Any, ...] = ()
     icon_raster: bytes | None = None
     icon_alternative: str | None = None
     icon_decorative: bool = True
-    icon_stroke_scale: float | None = None
     visual_capability_source_ref: str = "/"
     table_row_id: str | None = None
     table_column_id: str | None = None
@@ -166,17 +221,29 @@ class ScenePrimitive:
     clip_source_id: str | None = None
     end_treatment: str = "closed"
     contrast_treatment: str | None = None
+    glyph_paint_mode: str | None = None
+    glyph_paint_color: str | None = None
+    image_fill_pending: "ImageFill | None" = None
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
 
     def __post_init__(self) -> None:
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
+                or (self.image_fill_pending is not None and self.kind not in {"Rect", "Symbol"})
                 or (self.symbol is not None and self.kind != "Symbol")
                 or (self.kind == "Symbol" and self.symbol is None)
+                or (self.glyph_paint_mode is not None and self.kind != "Symbol")
+                or (self.glyph_paint_mode not in (None, "fill", "stroke"))
+                or (self.glyph_paint_color is not None and self.glyph_paint_mode is None)
                 or (self.purpose == "table-cell" and self.table_row_id is None)
                 or (self.purpose == "table-cell" and self.table_column_id is None)
                 or (self.purpose != "table-cell" and self.table_row_id is not None)
                 or (self.purpose not in {"table-cell", "table-column-label"}
                     and self.table_column_id is not None)
+                or ((self.lane_row_id is None) != (self.lane_member_id is None))
+                or (self.lane_row_id is not None and not self.lane_row_id)
+                or (self.lane_member_id is not None and not self.lane_member_id)
                 or (self.kind == "Icon" and (self.icon_kind not in {"vector", "raster"}
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))
@@ -213,6 +280,16 @@ class SceneRow:
     group_id: str
     bounds: tuple[float, float, float, float]
     row_id: str = ""
+    lane_mark_band_block: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.lane_mark_band_block is not None:
+            inline, block, _inline_size, block_size = self.bounds
+            if (not math.isfinite(self.lane_mark_band_block)
+                    or not math.isfinite(block) or not math.isfinite(block_size)
+                    or self.lane_mark_band_block < block
+                    or self.lane_mark_band_block > block + block_size):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
 @dataclass(frozen=True)
@@ -229,6 +306,29 @@ class SceneGroup:
     group_id: str
     header_bounds: tuple[float, float, float, float] | None
     content_bounds: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class SceneLaneMember:
+    """Closed lane membership and primitive-emission inventory for one member."""
+
+    row_id: str
+    member_id: str
+    emitted_primitive_ids: tuple[str, ...]
+    primary_mark_ids: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.row_id, str) or not self.row_id
+                or not isinstance(self.member_id, str) or not self.member_id
+                or not isinstance(self.emitted_primitive_ids, tuple)
+                or not isinstance(self.primary_mark_ids, tuple)
+                or not self.emitted_primitive_ids or not self.primary_mark_ids
+                or any(not isinstance(item, str) or not item
+                       for item in (*self.emitted_primitive_ids, *self.primary_mark_ids))
+                or len(set(self.emitted_primitive_ids)) != len(self.emitted_primitive_ids)
+                or len(set(self.primary_mark_ids)) != len(self.primary_mark_ids)
+                or not set(self.primary_mark_ids) <= set(self.emitted_primitive_ids)):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
 @dataclass(frozen=True)
@@ -299,6 +399,9 @@ class SceneSurface:
     canvas_bounds: tuple[float, float, float, float] | None = None
     fit_warnings: tuple[FitWarning, ...] = ()
     decoration_dispositions: tuple[DecorationDisposition, ...] = ()
+    info_diagnostics: tuple[PresentationInfo, ...] = ()
+    lane_mode: str | None = None
+    lane_members: tuple[SceneLaneMember, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
@@ -309,7 +412,49 @@ class SceneSurface:
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if len({item.visual_role for item in self.decoration_dispositions}) != len(self.decoration_dispositions):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        lane_rows = {item.row_id: item for item in self.rows if item.row_id}
+        if self.lane_mode not in (None, "lanes"):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        if self.lane_mode is None:
+            if self.lane_members:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        else:
+            if not self.lane_members or any(
+                    not member.row_id or member.row_id not in lane_rows
+                    or lane_rows[member.row_id].lane_mark_band_block is None
+                    for member in self.lane_members):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if (len(lane_rows) != len(self.rows)
+                    or any(row.lane_mark_band_block is None for row in self.rows)):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            member_keys = [(member.row_id, member.member_id) for member in self.lane_members]
+            emitted_ids = [primitive_id for member in self.lane_members
+                           for primitive_id in member.emitted_primitive_ids]
+            if len(set(member_keys)) != len(member_keys) or len(set(emitted_ids)) != len(emitted_ids):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if {row_id for row_id, _member_id in member_keys} != set(lane_rows):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            expected = {primitive_id: (member.row_id, member.member_id)
+                        for member in self.lane_members
+                        for primitive_id in member.emitted_primitive_ids}
+            tagged = {item.scene_id: (item.lane_row_id, item.lane_member_id)
+                      for item in self.primitives if item.lane_row_id is not None}
+            if expected != tagged or any(
+                    primitive_id not in by_id for primitive_id in expected):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            primary_ids = {primitive_id for member in self.lane_members
+                           for primitive_id in member.primary_mark_ids}
+            if any(by_id[primitive_id][1].purpose not in PRIMARY_LANE_MARK_PURPOSES
+                   for primitive_id in primary_ids):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if any(requires_lane_member_provenance(item.kind, item.purpose)
+                   and item.lane_row_id is None for item in self.primitives):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         for index, item in enumerate(self.primitives):
+            if item.lane_row_id is not None:
+                row = lane_rows.get(item.lane_row_id)
+                if row is None or row.lane_mark_band_block is None:
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             if item.host_placement_id is not None:
                 host = by_id.get(item.host_placement_id)
                 if (item.kind != "Text" or host is None or host[1].slot_id != item.slot_id

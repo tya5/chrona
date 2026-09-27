@@ -1,17 +1,111 @@
 """Deterministic renderer-neutral routing used while building a presentation Scene."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from heapq import heappop, heappush
+import json
+from math import isfinite
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope
+from chrona.presentation.layout.ports import ConnectorEgress
+
+
+class RouteSearchFailure(ValueError):
+    """A bounded orthogonal search found no route; unrelated ValueErrors propagate."""
+
+
+@dataclass(frozen=True)
+class RouteAttemptEvidence:
+    source_side: str
+    target_side: str
+    outcome: str
+    blocker_ids: tuple[str, ...] = ()
+    search_failure: str | None = None
+    length: float | None = None
+    direct_length: float | None = None
+    bends: int | None = None
+    max_bends: int | None = None
+    max_detour_ratio: float | None = None
+
+    def __post_init__(self) -> None:
+        if (self.outcome not in {"egress-collision", "no-route-found", "quality-rejected", "accepted"}
+                or not self.source_side or not self.target_side):
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        if self.outcome == "egress-collision":
+            if (not self.blocker_ids or self.search_failure is not None
+                    or any(value is not None for value in self._quality_values())):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        elif self.outcome == "no-route-found":
+            if (self.blocker_ids or self.search_failure not in {
+                    "E_PRESENTATION_ROUTE_LIMIT", "E_CONNECTOR_UNROUTABLE"}
+                    or any(value is not None for value in self._quality_values())):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        else:
+            values = self._quality_values()
+            if (self.blocker_ids or self.search_failure is not None
+                    or any(value is None for value in values)
+                    or not all(isfinite(value) for value in (self.length, self.direct_length, self.max_detour_ratio))
+                    or self.length < 0 or self.direct_length < 0 or self.bends < 0
+                    or self.max_bends < 0 or self.max_detour_ratio <= 0):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            within = self.bends <= self.max_bends and (
+                self.direct_length == 0 or self.length <= self.direct_length * self.max_detour_ratio)
+            if within != (self.outcome == "accepted"):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+
+    def _quality_values(self) -> tuple[float | int | None, ...]:
+        return (self.length, self.direct_length, self.bends, self.max_bends, self.max_detour_ratio)
+
+
+@dataclass(frozen=True)
+class RouteSuppressionEvidence:
+    relation_id: str
+    attempts: tuple[RouteAttemptEvidence, ...]
+
+    def __post_init__(self) -> None:
+        if not self.relation_id or not self.attempts or any(
+                attempt.outcome == "accepted" for attempt in self.attempts):
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+
+    @property
+    def primary_cause(self) -> str:
+        outcomes = {attempt.outcome for attempt in self.attempts}
+        if "quality-rejected" in outcomes:
+            return "quality-rejected"
+        if "no-route-found" in outcomes:
+            return "no-route-found"
+        return "egress-collision"
+
+    @property
+    def diagnostic(self) -> str:
+        """Stable lane-only evidence, including each measured rejected port pair."""
+        attempts = []
+        for attempt in self.attempts:
+            record = {"sourceSide": attempt.source_side, "targetSide": attempt.target_side,
+                      "outcome": attempt.outcome}
+            if attempt.blocker_ids:
+                record["blockerIds"] = list(attempt.blocker_ids)
+            if attempt.search_failure is not None:
+                record["searchFailure"] = attempt.search_failure
+            if attempt.length is not None:
+                record.update(length=attempt.length, directLength=attempt.direct_length,
+                              bends=attempt.bends, maxBends=attempt.max_bends,
+                              maxDetourRatio=attempt.max_detour_ratio)
+            attempts.append(record)
+        payload = {"relationId": self.relation_id, "primaryCause": self.primary_cause,
+                   "attempts": attempts}
+        return "I_LAYOUT_LANE_ROUTE_CAUSE:" + json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
 def place_relation_route(*, source_port: tuple[float, float], target_port: tuple[float, float],
-                         obstacles: tuple[tuple[float, float, float, float], ...],
-                         bounds: tuple[float, float, float, float]) -> tuple[tuple[float, float], ...]:
+                         obstacles: tuple[tuple[float, float, float, float], ...] | SurfaceObstacleIndex,
+                         bounds: tuple[float, float, float, float],
+                         port_ids: tuple[str, ...] = (), regions: tuple[str, ...] | None = None,
+                         classes: tuple[str, ...] | None = None) -> tuple[tuple[float, float], ...]:
     """Complete one dependency route before Scene projects a path primitive."""
-    return route_orthogonal(source_port, target_port, obstacles, bounds=bounds)
+    return route_orthogonal(source_port, target_port, obstacles, bounds=bounds,
+                            port_ids=port_ids, regions=regions, classes=classes)
 
 
 def relation_route_quality(points: tuple[tuple[float, float], ...], *,
@@ -19,11 +113,107 @@ def relation_route_quality(points: tuple[tuple[float, float], ...], *,
     """Evaluate a completed route against the explicit Layout Profile limits."""
     if len(points) < 2:
         return False
+    length, direct, bends = route_quality_metrics(points)
+    return bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
+
+
+def route_quality_metrics(points: tuple[tuple[float, float], ...]) -> tuple[float, float, int]:
+    """Return the exact metrics used by the route-quality decision and evidence."""
+    if len(points) < 2:
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
     bends = max(0, len(points) - 2)
     length = geometry_sum(abs(right[0] - left[0]) + abs(right[1] - left[1])
                           for left, right in zip(points, points[1:]))
     direct = abs(points[-1][0] - points[0][0]) + abs(points[-1][1] - points[0][1])
-    return bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
+    return length, direct, bends
+
+
+def route_quality_attempt(
+    source_side: str, target_side: str, points: tuple[tuple[float, float], ...], *,
+    max_bends: int, max_detour_ratio: float,
+) -> RouteAttemptEvidence:
+    """Close a measured attempt using the same metrics as the quality predicate."""
+    length, direct, bends = route_quality_metrics(points)
+    accepted = bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
+    return RouteAttemptEvidence(source_side, target_side,
+                                "accepted" if accepted else "quality-rejected",
+                                length=length, direct_length=direct, bends=bends,
+                                max_bends=max_bends, max_detour_ratio=max_detour_ratio)
+
+
+@dataclass(frozen=True)
+class LaneRouteSelection:
+    """One deterministic lane-only port-pair search and its complete evidence."""
+
+    selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None
+    points: tuple[tuple[float, float], ...]
+    attempts: tuple[RouteAttemptEvidence, ...]
+
+    def __post_init__(self) -> None:
+        accepted = tuple(item for item in self.attempts if item.outcome == "accepted")
+        if (not self.attempts or len(accepted) > 1
+                or (self.selected_pair is None) != (not accepted)
+                or (self.selected_pair is None and self.points)
+                or (self.selected_pair is not None and len(self.points) < 2)):
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+
+
+def select_lane_relation_route(
+    port_pairs: tuple[tuple[ConnectorEgress, ConnectorEgress], ...], *,
+    obstacles: SurfaceObstacleIndex, bounds: tuple[float, float, float, float],
+    source_host_id: str | None, target_host_id: str | None, relation_scene_id: str,
+    max_bends: int, max_detour_ratio: float,
+    classes: tuple[str, ...] = ("mark", "text", "label-visual"),
+    regions: tuple[str, ...] = ("timeline", "group-header"),
+) -> LaneRouteSelection:
+    """Measure every attempted port pair until an accepted route is found.
+
+    The order is the caller's declared deterministic candidate order. A
+    search failure is distinguished from unrelated invalid input; endpoint
+    labels are never exempted from either corridor or body collisions.
+    """
+    if not port_pairs or not relation_scene_id:
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+    attempts: list[RouteAttemptEvidence] = []
+    for source, target in port_pairs:
+        blockers = tuple(sorted({item.placement_id for egress in (source, target)
+                                 if egress.corridor
+                                 for item in obstacles.egress_collisions(
+                                     ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+                                     classes=classes, regions=regions)}))
+        if blockers:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "egress-collision",
+                                                 blocker_ids=blockers))
+            continue
+        source_port, target_port = source.exposed_port, target.exposed_port
+        port_ids = tuple(
+            port_id for host_id, side in ((source_host_id, source.side), (target_host_id, target.side))
+            for port_id in (f"port:{host_id or relation_scene_id}:{side}",)
+            if obstacles.has(port_id)
+        )
+        try:
+            middle = ((source_port,) if source_port == target_port else place_relation_route(
+                source_port=source_port, target_port=target_port, obstacles=obstacles,
+                bounds=bounds, port_ids=port_ids, classes=classes, regions=regions))
+        except RouteSearchFailure as error:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                 search_failure=str(error)))
+            continue
+        pieces = (*source.corridor, *middle, *reversed(target.corridor))
+        points: list[tuple[float, float]] = []
+        for point in pieces:
+            if not points or points[-1] != point:
+                points.append(point)
+        if len(points) < 2:
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                 search_failure="E_CONNECTOR_UNROUTABLE"))
+            continue
+        measured = route_quality_attempt(source.side, target.side, tuple(points),
+                                         max_bends=max_bends, max_detour_ratio=max_detour_ratio)
+        attempts.append(measured)
+        if measured.outcome == "accepted":
+            return LaneRouteSelection((source, target), tuple(points), tuple(attempts))
+    return LaneRouteSelection(None, (), tuple(attempts))
 
 
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
@@ -31,10 +221,12 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      grid_offset: float = 2.0, bend_penalty: float = 12.0,
                      limit: int = 4096,
                      bounds: tuple[float, float, float, float] | None = None,
-                     port_ids: tuple[str, ...] = ()) -> tuple[tuple[float, float], ...]:
+                     port_ids: tuple[str, ...] = (),
+                     classes: tuple[str, ...] | None = None,
+                     regions: tuple[str, ...] | None = None) -> tuple[tuple[float, float], ...]:
     """Return the stable shortest orthogonal route on a finite visibility grid."""
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
-    boxes = (tuple(obstacle_envelope(item.geometry) for item in index.all())
+    boxes = (tuple(obstacle_envelope(item.geometry) for item in index.select(classes=classes, regions=regions))
              if index is not None else obstacles)
     xs_set = {start[0], end[0], *(value for box in boxes for value in (box[0] - grid_offset, box[2] + grid_offset))}
     ys_set = {start[1], end[1], *(value for box in boxes for value in (box[1] - grid_offset, box[3] + grid_offset))}
@@ -48,7 +240,8 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
 
     def clear(a: tuple[float, float], b: tuple[float, float]) -> bool:
         if index is not None:
-            return not index.collisions(ObstacleSegment(a, b), port_ids=port_ids)
+            return not index.collisions(ObstacleSegment(a, b), port_ids=port_ids,
+                                        classes=classes, regions=regions)
         for left, top, right, bottom in boxes:
             if a[1] == b[1] and top < a[1] < bottom and max(a[0], b[0]) > left and min(a[0], b[0]) < right:
                 return False
@@ -56,19 +249,43 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                 return False
         return True
 
+    if index is not None:
+        # The two Manhattan shortest paths are the first finite candidates.
+        # Most sparse relations need no visibility-grid expansion at all.
+        simple = set()
+        for via in ((end[0], start[1]), (start[0], end[1])):
+            path = tuple(point for point in (start, via, end)
+                         if not (point == start and point == via) and not (point == via and point == end))
+            if start == end:
+                continue
+            if len(path) == 1:
+                path = (start, end)
+            elif path[0] != start:
+                path = (start, *path)
+            simple.add(path)
+        for path in sorted(simple):
+            if all(clear(a, b) for a, b in zip(path, path[1:])):
+                return path
+
     def heuristic(state: tuple[int, int, int]) -> float:
         return abs(xs[state[0]] - end[0]) + abs(ys[state[1]] - end[1])
 
-    costs, parents, queue = {source: 0.0}, {}, [(heuristic(source), 0.0, source)]
+    costs, parents = {source: 0.0}, {}
+    source_heuristic = heuristic(source)
+    # Among equal f-costs, expand the state nearer the target. This preserves
+    # A*'s shortest-path ordering while avoiding a source-side grid flood.
+    queue = [(source_heuristic, source_heuristic, 0.0, source)]
     finish = None
     visited = 0
+    limited = False
     while queue:
-        _, cost, state = heappop(queue)
+        _, _, cost, state = heappop(queue)
         if cost != costs[state]:
             continue
         visited += 1
         if visited > limit:
-            raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+            limited = True
+            break
         i, j, direction = state
         if (i, j) == target:
             finish = state
@@ -83,9 +300,10 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
             new_state = (ni, nj, next_direction)
             if new_cost < costs.get(new_state, float("inf")):
                 costs[new_state], parents[new_state] = new_cost, state
-                heappush(queue, (new_cost + heuristic(new_state), new_cost, new_state))
+                next_heuristic = heuristic(new_state)
+                heappush(queue, (new_cost + next_heuristic, next_heuristic, new_cost, new_state))
     if finish is None:
-        raise ValueError("E_CONNECTOR_UNROUTABLE")
+        raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT" if limited else "E_CONNECTOR_UNROUTABLE")
     path = []
     while True:
         path.append((xs[finish[0]], ys[finish[1]]))

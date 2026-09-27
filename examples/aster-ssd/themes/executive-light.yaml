@@ -3,6 +3,19 @@ kind: theme
 id: executive-light
 body:
   values:
+    opacity.axis-band:
+      type: number
+      value: 1
+    relation-source-terminal:
+      type: marker
+      value:
+        shape: circle
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
+    dash.as-of:
+      type: dashPattern
+      value: [4, 3]
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -173,6 +186,8 @@ body:
       type: number
       value: 0
   roles:
+    axis-rule:
+      strokeWidth: stroke-width
     group-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
@@ -193,8 +208,18 @@ body:
     axis-band-decoration:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
-      opacity: opacity.group-band
+      opacity: opacity.axis-band
     text:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    groupHeader:
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: text-size
@@ -254,7 +279,6 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
-      strokeWidth: stroke-width
     axis-major:
       strokeWidth: stroke-width
     axis-minor:
@@ -265,8 +289,8 @@ body:
       strokeWidth: stroke-width
     as-of:
       strokeWidth: stroke-width
+      dash: dash.as-of
     variance-behind:
-      strokeWidth: stroke-width
       contrastTreatment: required
     variance-ahead:
       contrastTreatment: deemphasized
@@ -277,7 +301,7 @@ body:
     milestoneSymbol:
       symbol: milestone-symbol
     relationSourceTerminal:
-      marker: dependency-marker
+      marker: relation-source-terminal
     relationTargetTerminal:
       marker: dependency-marker
     dependency:
@@ -322,6 +346,7 @@ body:
       iconScale: icon-mark-scale
       iconGap: icon-mark-gap
   colorBindings:
+    axis-rule.stroke: text
     background.fill: surface
     text.fill: text
     member-label-inside-planned.fill: insideLabelPlanned
@@ -330,7 +355,7 @@ body:
     member-label-inside-scenario.fill: insideLabelScenario
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: surfaceRaised
+    axis-band-decoration.fill: neutral
     table-header.fill: surfaceRaised
     group-band.fill: category:default
     row-band.fill: category:default
@@ -358,12 +383,10 @@ body:
     variance-on-track.fill: textMuted
     variance-behind.fill: warning
     missing-actual-cell.fill: textMuted
-    variance-behind.stroke: warning
     dependency.stroke: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
     note-index.fill: accent
-    annotation.stroke: neutral
     progress-fill.fill: warning
     progress-fill.stroke: text
     icon-mark.fill: surface

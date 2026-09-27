@@ -1,0 +1,27 @@
+version: chrona/icon-catalog/v0.3
+kind: icon-catalog
+id: halcyon-1-icons
+body:
+  set: halcyon
+  aliases: []
+  provenance:
+    sourceKind: iconify-json
+    sourcePrefix: halcyon
+    sourceContentIdentity: sha256:2d3acf6d566fe59a15b9e14f4781a08c09ab10ed25d0335e71243b8af89cf41c
+    sourceVersion: halcyon-1-v1
+    license:
+      spdx: CC0-1.0
+      notice: 'HALCYON-1 purpose-built annotation-container artwork.
+
+        Released under CC0-1.0.'
+  icons:
+    annotation-container:
+      kind: raster
+      source:
+        address: assets/annotation-container.png
+        contentIdentity: sha256:03f8c4d495b031937f9d52d3780375e3cdcb694070553e2b6f64c1a37195387d
+      viewport:
+        inlineSize: 40
+        blockSize: 40
+      alternative: Annotation container frame
+  entryAliases: {}

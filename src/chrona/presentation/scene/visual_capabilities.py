@@ -49,6 +49,7 @@ class VisualCapabilityError(ValueError):
 @dataclass(frozen=True)
 class VisualProfile:
     identifier: str
+    target_kind: str
     capabilities: frozenset[str]
     optional_omission: bool
 
@@ -63,17 +64,27 @@ def visual_capability_message(diagnostic_id: str, capability: str | None = None)
 def resolve_visual_profile(identifier: str, target_kind: str) -> VisualProfile:
     """Resolve one Context-selected profile and verify its target route."""
     if identifier == BASELINE_PROFILE:
-        return VisualProfile(identifier, MARK_GEOMETRY_CAPABILITIES, True)
+        return VisualProfile(identifier, target_kind, MARK_GEOMETRY_CAPABILITIES, True)
     if identifier == SVG_PROFILE and target_kind == "svg":
-        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES, False)
+        return VisualProfile(identifier, target_kind, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES, False)
     if identifier == PNG_PROFILE and target_kind == "png":
-        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES, False)
+        return VisualProfile(identifier, target_kind, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES, False)
     if identifier == SVG_ICON_PROFILE and target_kind == "svg":
-        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
+        return VisualProfile(identifier, target_kind, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
     if identifier == PNG_ICON_PROFILE and target_kind == "png":
-        return VisualProfile(identifier, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
+        return VisualProfile(identifier, target_kind, RICH_CAPABILITIES | MARK_GEOMETRY_CAPABILITIES | ICON_CAPABILITIES, False)
     raise VisualCapabilityError("E_VISUAL_CAPABILITY_PROFILE", "/body/target/visualProfile",
                                 f"{identifier} is not available for {target_kind}")
+
+
+def first_supporting_visual_profile(target_kind: str, required: frozenset[str]) -> str | None:
+    """Suggest the earliest exact same-target profile admitting a treatment."""
+    profiles = {"svg": (SVG_PROFILE, SVG_ICON_PROFILE), "png": (PNG_PROFILE, PNG_ICON_PROFILE)}
+    for identifier in profiles.get(target_kind, ()):
+        profile = resolve_visual_profile(identifier, target_kind)
+        if required.issubset(profile.capabilities):
+            return identifier
+    return None
 
 
 def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfile) -> None:

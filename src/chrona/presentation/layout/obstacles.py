@@ -35,6 +35,7 @@ class ObstacleSegment:
 
 
 ObstacleGeometry = ObstacleRect | ObstacleSegment
+BOUNDARY_CONTACT_TOLERANCE = 1e-9
 
 
 def obstacle_envelope(geometry: ObstacleGeometry) -> tuple[float, float, float, float]:
@@ -112,12 +113,12 @@ def _segment_crosses_rect_interior(segment: ObstacleSegment, rect: ObstacleRect)
     for value, delta, start, end in ((x1, x2 - x1, rect.left, rect.right),
                                      (y1, y2 - y1, rect.top, rect.bottom)):
         if delta == 0:
-            if not start < value < end:
+            if not start + BOUNDARY_CONTACT_TOLERANCE < value < end - BOUNDARY_CONTACT_TOLERANCE:
                 return False
             continue
         a, b = sorted(((start - value) / delta, (end - value) / delta))
         low, high = max(low, a), min(high, b)
-    return low < high
+    return low < high and hypot(x2 - x1, y2 - y1) * (high - low) > BOUNDARY_CONTACT_TOLERANCE
 
 
 def _cross(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:
@@ -150,38 +151,89 @@ class SurfaceObstacleIndex:
 
     def __init__(self) -> None:
         self._by_id: dict[str, SurfaceObstacle] = {}
+        self._ordered: tuple[SurfaceObstacle, ...] | None = None
 
     def add(self, obstacle: SurfaceObstacle) -> None:
         if obstacle.placement_id in self._by_id:
             raise ValueError("E_LAYOUT_OBSTACLE_ID_DUPLICATE")
         self._by_id[obstacle.placement_id] = obstacle
+        self._ordered = None
 
     def extend(self, obstacles: Iterable[SurfaceObstacle]) -> None:
         for obstacle in obstacles:
             self.add(obstacle)
 
     def all(self) -> tuple[SurfaceObstacle, ...]:
-        return tuple(self._by_id[key] for key in sorted(self._by_id))
+        if self._ordered is None:
+            self._ordered = tuple(self._by_id[key] for key in sorted(self._by_id))
+        return self._ordered
+
+    def has(self, placement_id: str) -> bool:
+        return placement_id in self._by_id
+
+    def select(self, *, classes: Iterable[str] | None = None,
+               regions: Iterable[str] | None = None) -> tuple[SurfaceObstacle, ...]:
+        selected_classes = None if classes is None else frozenset(classes)
+        selected_regions = None if regions is None else frozenset(regions)
+        return tuple(item for item in self.all()
+                     if (selected_classes is None or item.obstacle_class in selected_classes)
+                     and (selected_regions is None or item.region_id in selected_regions))
 
     def collisions(self, geometry: ObstacleGeometry, *, classes: Iterable[str] | None = None,
                    regions: Iterable[str] | None = None, host_id: str | None = None,
+                   rule_host_id: str | None = None,
                    port_ids: Iterable[str] = (),
                    clearance: float = 0.0) -> tuple[SurfaceObstacle, ...]:
         if not isfinite(clearance) or clearance < 0:
             raise ValueError("E_LAYOUT_OBSTACLE_INPUT")
-        selected_classes = None if classes is None else frozenset(classes)
-        selected_regions = None if regions is None else frozenset(regions)
         exemptions = frozenset(port_ids)
         if host_id is not None:
             host = self._by_id.get(host_id)
             if host is None or host.obstacle_class != "mark":
                 raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
             exemptions |= {host_id}
+        if rule_host_id is not None:
+            rule = self._by_id.get(rule_host_id)
+            if rule is None or rule.obstacle_class != "rule":
+                raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
+            exemptions |= {rule_host_id}
         if any(port_id not in self._by_id or self._by_id[port_id].obstacle_class != "port"
-               for port_id in exemptions.difference({host_id} if host_id is not None else set())):
+               for port_id in exemptions.difference({item for item in (host_id, rule_host_id) if item is not None})):
             raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
-        return tuple(item for item in self.all()
+        candidate_box = obstacle_envelope(geometry)
+        return tuple(item for item in self.select(classes=classes, regions=regions)
                      if item.placement_id not in exemptions
-                     and (selected_classes is None or item.obstacle_class in selected_classes)
-                     and (selected_regions is None or item.region_id in selected_regions)
+                     and _envelopes_overlap(candidate_box, obstacle_envelope(item.geometry),
+                                            clearance + item.clearance)
                      and _intersects(geometry, item.geometry, clearance + item.clearance))
+
+    def egress_collisions(self, segment: ObstacleSegment, *, host_ids: Iterable[str],
+                          classes: Iterable[str] | None = None,
+                          regions: Iterable[str] | None = None,
+                          port_ids: Iterable[str] = ()) -> tuple[SurfaceObstacle, ...]:
+        """Exempt named comparison marks on one endpoint corridor only."""
+        hosts = frozenset(host_ids)
+        if not hosts or any(host not in self._by_id or self._by_id[host].obstacle_class != "mark"
+                            for host in hosts):
+            raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
+        def shared_endpoint_branch(item: SurfaceObstacle) -> bool:
+            other = item.geometry
+            if (item.obstacle_class not in {"dependency-route", "leader-route"}
+                    or not isinstance(other, ObstacleSegment)
+                    or segment.start not in (other.start, other.end)):
+                return False
+            far = other.end if segment.start == other.start else other.start
+            cross = _cross(segment.start, segment.end, far)
+            dot = ((segment.end[0] - segment.start[0]) * (far[0] - segment.start[0])
+                   + (segment.end[1] - segment.start[1]) * (far[1] - segment.start[1]))
+            return abs(cross) > BOUNDARY_CONTACT_TOLERANCE or dot < 0
+
+        return tuple(item for item in self.collisions(segment, classes=classes, regions=regions,
+                                                       port_ids=port_ids)
+                     if item.placement_id not in hosts and not shared_endpoint_branch(item))
+
+
+def _envelopes_overlap(left: tuple[float, float, float, float],
+                       right: tuple[float, float, float, float], clearance: float) -> bool:
+    return (left[0] <= right[2] + clearance and right[0] - clearance <= left[2]
+            and left[1] <= right[3] + clearance and right[1] - clearance <= left[3])

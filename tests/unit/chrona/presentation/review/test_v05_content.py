@@ -2,7 +2,8 @@ from datetime import date
 
 import pytest
 
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.model.color_scale import ResolvedColorScale
+from chrona.presentation.model.projection import ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.surface_content import SummaryContent, TableCellContent
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
@@ -54,6 +55,26 @@ def typed_summary(value):
     return SummaryProfileInput(tuple(panels))
 
 
+def test_scale_legend_entry_label_prefers_the_entitys_declared_title():
+    # #427: a colour-scale legend entry shows entities.<id>.title when the
+    # project declares one, falling back to the raw field value otherwise.
+    projection = ReviewProjection(
+        (ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (),
+                    fields={"owner": "bus"}, source_kind="primary"),
+         ReviewItem("b", "B", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (),
+                    fields={"owner": "ground"}, source_kind="primary")),
+        (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    project = {"relations": (), "annotations": {}, "entities": {"bus": {"title": "Spacecraft bus"}}}
+    view = {"body": {"tableColumns": (), "visibility": {}}}
+    color_scale = ResolvedColorScale("owner", "planned", "owner", ("bus", "ground"),
+                                     (("bus", "#111111"), ("ground", "#222222")))
+    value = normalize_v05_surface_content(projection, project, typed_view(view), summary=EMPTY_SUMMARY,
+                                          color_scale=color_scale)
+    legend = dict(value.legend_entries)
+    assert legend["scale:owner:bus"] == "Spacecraft bus"
+    assert legend["scale:owner:ground"] == "ground"
+
+
 def test_optional_content_is_selected_only_from_current_project_and_view():
     projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ()),), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
     project = {"relations": ({"id": "r", "from": {"object": "a"}, "to": {"object": "a"}},), "annotations": {"n": {"text": "note"}}}
@@ -62,6 +83,21 @@ def test_optional_content_is_selected_only_from_current_project_and_view():
     assert value.table_cells == (TableCellContent("a", "Name", "A", "tableCell"),)
     assert value.relations[0].relation_id == "r"
     assert value.notes == (("n", "note"),)
+
+
+def test_view_annotation_ladder_normalizes_to_typed_candidates() -> None:
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    view = typed_view({"body": {
+        "visibility": {"relations": "none", "annotations": "all"},
+        "annotations": ({"id": "callout", "purpose": "callout",
+                         "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "at"},
+                         "placement": {"side": "above", "alignment": "center"}, "text": "Check"},),
+    }})
+    value = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY)
+    assert value.annotations[0].fallback_ladder == ("rail",)
+    assert value.annotations[0].candidates[0].region.kind == "slot"
+    assert value.annotations[0].candidates[0].search.kind == "row-aligned"
+    assert value.annotations[0].candidates[0].connector.kind == "leader"
 
 
 def test_table_column_intent_is_normalized_before_layout_ingress():
@@ -100,7 +136,7 @@ def test_table_cell_semantics_follow_declared_source_not_item_role_order():
     on_plan = ReviewItem("plan", "Plan", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, 0, ("variance-behind",))
     behind = ReviewItem("behind", "Behind", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, 4, ("variance-ahead",))
     unknown = ReviewItem("unknown", "Unknown", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, {}, None, ("variance-behind",))
-    missing = ReviewItem("missing", "Missing", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
+    missing = ReviewItem("missing", "Missing", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, (), observation_state=ObservationState.DUE_UNOBSERVED)
     projection = ReviewProjection((ahead, on_plan, behind, unknown, missing), (date(2026, 1, 1), date(2026, 1, 3)), (), ())
     view = {"body": {"tableColumns": (
         {"id": "Delta", "source": {"comparisonFacet": "finishDelta"}, "format": "signedDays", "missing": "em-dash"},
@@ -113,6 +149,20 @@ def test_table_cell_semantics_follow_declared_source_not_item_role_order():
     assert [selected[(item, "Delta")] for item in ("ahead", "plan", "behind", "unknown")] == ["tableVarianceAhead", "tableVarianceOnTrack", "tableVarianceBehind", "tableCell"]
     assert selected[("missing", "Missing")] == "missingActualCell"
     assert all(selected[(item, "Title")] == "tableCell" for item in ("ahead", "plan", "behind", "unknown", "missing"))
+
+
+def test_missing_actual_summary_counts_due_absences_and_requires_as_of():
+    projection = ReviewProjection(tuple(
+        ReviewItem(state.value, state.value, "span", {"start": date(2027, 8, 1), "end": date(2027, 8, 20)},
+                   None, None, (), observation_state=state)
+        for state in ObservationState), (date(2027, 8, 1), date(2027, 8, 21)), (), ())
+    summary = typed_summary({"body": {"panels": [{"id": "facts", "metrics": {
+        "missing": {"label": "Missing", "source": "count.missingActual", "format": "count"},
+    }}]}})
+    present = normalize_summary_content(summary, projection, {"body": {"asOf": "2027-08-20"}})
+    absent = normalize_summary_content(summary, projection, None)
+    assert "Missing: 1" in tuple(run.content for run in present.runs)
+    assert "Missing: unknown" in tuple(run.content for run in absent.runs)
 
 
 def test_critical_relation_mode_uses_only_scheduler_driving_relations():
@@ -334,3 +384,46 @@ def test_actual_set_requires_the_current_body_envelope():
     with pytest.raises(ValueError, match="E_PRESENTATION_ACTUAL_SET_SHAPE"):
         normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                       summary=EMPTY_SUMMARY, actual_set={"asOf": "2026-03-04"})
+
+
+def test_project_annotation_reference_selects_text_once_and_leaves_notes_slot() -> None:
+    """#466: a selected Project note is consumed once, not duplicated."""
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    project = {"annotations": {"window": {"text": "Launch window closes soon."},
+                                "other": {"text": "Unrelated note."}}}
+    view = typed_view({"body": {
+        "visibility": {"relations": "none", "annotations": "all"},
+        "annotations": ({"id": "window-note", "purpose": "note",
+                         "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "at"},
+                         "placement": {"side": "above", "alignment": "center"},
+                         "projectAnnotation": "window"},),
+    }})
+    value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+    assert value.annotations[0].content == "Launch window closes soon."
+    assert value.notes == (("other", "Unrelated note."),)
+
+
+def test_project_annotation_reference_to_a_missing_id_is_a_stable_ingress_error() -> None:
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    view = typed_view({"body": {
+        "visibility": {"relations": "none", "annotations": "all"},
+        "annotations": ({"id": "window-note", "purpose": "note",
+                         "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": "at"},
+                         "placement": {"side": "above", "alignment": "center"},
+                         "projectAnnotation": "missing"},),
+    }})
+    with pytest.raises(ValueError, match="E_PRESENTATION_ANNOTATION_REFERENCE_MISSING"):
+        normalize_v05_surface_content(projection, {"annotations": {}}, view, summary=EMPTY_SUMMARY)
+
+
+def test_as_of_label_is_the_declared_text_and_a_date_only_in_a_declared_form():
+    """#428: no date is appended unless the View states its form."""
+    from datetime import date as _date
+    from chrona.presentation.review.v05_content import _as_of_label
+    as_of = _date(2027, 8, 20)
+    assert _as_of_label({"kind": "asOf", "source": "actual", "label": "Today"}, as_of, "en-US") == "Today"
+    dated = {"kind": "asOf", "source": "actual", "label": "as of", "date": {"form": "localized-date"}}
+    assert _as_of_label(dated, as_of, "en-US") == "as of Aug 20, 2027"
+    assert _as_of_label(dated, as_of, "ja-JP") == "as of 2027/08/20"
+    assert _as_of_label({**dated, "date": {"form": "localized-date", "nameTable": "ja-JP"}}, as_of, "en-US") == "as of 2027/08/20"
+    assert _as_of_label(None, as_of, "en-US") == "As of Aug 20, 2027"

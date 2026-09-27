@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from enum import StrEnum
 from functools import cache
 import math
 import re
@@ -19,10 +20,28 @@ from chrona.presentation.table_presentation import BooleanPresencePresentation
 class ContractError(ValueError):
     """A decoded resource cannot become a runtime contract."""
 
-    def __init__(self, diagnostic_id: str, detail: str = "") -> None:
+    def __init__(self, diagnostic_id: str, detail: str = "", source_ref: str = "/") -> None:
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.detail = detail
+        self.source_ref = source_ref
+
+
+class UnsupportedResourceVersionError(ContractError):
+    """One declared string version has no contract schema for its known kind."""
+
+    def __init__(self, identity: ClosureIdentity, found_version: str, supported_versions: tuple[str, ...]) -> None:
+        self.resource_kind = identity.kind
+        self.resource_id = identity.id
+        self.found_version = found_version
+        self.supported_versions = supported_versions
+        # Version and identity are unvalidated input at this boundary. Keep the
+        # author-facing message useful without echoing an unbounded scalar.
+        found = found_version if len(found_version) <= 160 else found_version[:157] + "..."
+        identifier = identity.id if len(identity.id) <= 160 else identity.id[:157] + "..."
+        detail = (f"{identity.kind} id={identifier} declares version {found}; "
+                  f"supported: {', '.join(supported_versions)}")
+        super().__init__("E_RESOURCE_VERSION_UNSUPPORTED", detail, "/version")
 
 
 def _closure_kind_error(identity: ClosureIdentity, expected: str, found: object) -> ContractError:
@@ -146,6 +165,35 @@ class ViewRowItem:
     scenario_id: str | None = None
 
 
+class ViewRowMode(StrEnum):
+    """Closed row-composition vocabulary accepted by the live View contract."""
+
+    AUTOMATIC = "automatic"
+    EXPLICIT = "explicit"
+    LANES = "lanes"
+
+
+class ViewLaneLabel(StrEnum):
+    """Meaning of the generated lane table's first column."""
+
+    GROUP = "group"
+    LANE = "lane"
+
+
+class ViewTrackAllocation(StrEnum):
+    """Explicit-row subtrack policy accepted by View v0.27."""
+
+    COLLISION = "collision"
+
+
+@dataclass(frozen=True)
+class ViewLaneTable:
+    """Finite aggregate summary intent for generated lane rows."""
+
+    label: ViewLaneLabel
+    count: bool = False
+
+
 @dataclass(frozen=True)
 class ViewRow:
     id: str
@@ -160,9 +208,11 @@ class ViewRow:
 
 @dataclass(frozen=True)
 class ViewRows:
-    mode: str
+    mode: ViewRowMode
     items: tuple[ViewRow, ...]
-    points: str = "own-row"
+    points: str = "attached"
+    track_allocation: ViewTrackAllocation | None = None
+    lane_table: ViewLaneTable | None = None
 
 
 @dataclass(frozen=True)
@@ -182,6 +232,7 @@ class ViewGrouping:
     presentation: str | None
     depth: int | None
     rollup: str | None
+    order_by: str | None = None
 
 
 @dataclass(frozen=True)
@@ -443,6 +494,7 @@ class PresentationPresetContract(ResourceContract):
     package_version: str
     resources: FrozenDict
     compatible_color_schemes: tuple[FrozenDict, ...]
+    preferred_visual_profile: str | None = None
 
 
 @dataclass(frozen=True)
@@ -543,7 +595,8 @@ class ResolvedThemeContract:
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
-    ("view", "chrona/view/v0.22"): "view-v0.22.schema.yaml",
+    ("view", "chrona/view/v0.26"): "view-v0.26.schema.yaml",
+    ("view", "chrona/view/v0.27"): "view-v0.27.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
@@ -558,6 +611,17 @@ _SCHEMAS = {
 }
 
 
+def _schema_for_version(identity: ClosureIdentity, version: object) -> str:
+    """Select one registered schema, distinguishing stale strings from bad framing."""
+    supported = tuple(sorted(candidate for kind, candidate in _SCHEMAS if kind == identity.kind))
+    if not supported or not isinstance(version, str):
+        raise _closure_kind_error(identity, "supported resource kind/version", version)
+    schema_name = _SCHEMAS.get((identity.kind, version))
+    if schema_name is None:
+        raise UnsupportedResourceVersionError(identity, version, supported)
+    return schema_name
+
+
 @cache
 def _registry() -> Registry:
     names = ("presentation-resource-v0.1.schema.yaml", "revision-store-resource-ref-v0.1.schema.yaml")
@@ -570,9 +634,7 @@ def _registry() -> Registry:
 
 def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) -> str:
     version = value.get("version")
-    schema_name = _SCHEMAS.get((kind, version)) if isinstance(version, str) else None
-    if schema_name is None:
-        raise _closure_kind_error(identity, "supported resource kind/version", {"kind": kind, "version": version})
+    schema_name = _schema_for_version(identity, version)
     if kind == "icon-catalog":
         body = value.get("body")
         icons = body.get("icons") if isinstance(body, Mapping) else None
@@ -614,9 +676,7 @@ def explain_resource_schema_errors(identity: ClosureIdentity, value: Mapping[str
 def _resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> tuple[ValidationError, ...]:
     """Evaluate one resource schema without constructing a runtime contract."""
     version = value.get("version")
-    schema_name = _SCHEMAS.get((identity.kind, version)) if isinstance(version, str) else None
-    if schema_name is None:
-        raise _closure_kind_error(identity, "supported resource kind/version", {"kind": identity.kind, "version": version})
+    schema_name = _schema_for_version(identity, version)
     schema = schema_document(schema_name)
     candidate = _icon_catalog_envelope(value) if identity.kind == "icon-catalog" else _schema_value(value)
     return tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))
@@ -687,11 +747,13 @@ def _view_input(body: FrozenDict) -> ViewInput:
                               tuple(str(item) for item in raw_exclude.get("objectTypes", ()))) if raw_selection else None
     raw_grouping = body.get("grouping")
     grouping = (ViewGrouping(str(raw_grouping["by"]), str(raw_grouping["field"]) if "field" in raw_grouping else None,
-                             tuple(str(item) for item in raw_grouping.get("order", ())),
+                             tuple(str(item) for item in raw_grouping.get("order", ()))
+                             if not isinstance(raw_grouping.get("order"), FrozenDict) else (),
                              str(raw_grouping["missing"]) if "missing" in raw_grouping else None,
                              str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
                              int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
-                             str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None)
+                             str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
+                             str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None)
                 if raw_grouping else None)
     raw_ordering = body.get("ordering")
     ordering = (ViewOrdering(str(raw_ordering["by"]), str(raw_ordering["direction"]), str(raw_ordering["tieBreak"]))
@@ -726,10 +788,19 @@ def _view_input(body: FrozenDict) -> ViewInput:
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
+    labels = visibility.labels
+    if (isinstance(labels, Mapping) and labels.get("placement") == "both"
+            and not any(column.source == "title" for column in table_columns)):
+        raise ContractError("E_VIEW_LABELS_BOTH_TABLE_TITLE")
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
-        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "own-row"))), body.get("axis"),
+        tuple(body.get("annotations", ())), ViewRows(
+            ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
+            ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
+            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)))
+             if "laneTable" in rows else None),
+        ), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]), body.get("colorEncoding"),
@@ -886,7 +957,9 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             raise _closure_kind_error(identity, "preset resources object", resources)
         if not isinstance(schemes, (FrozenList, tuple)) or not all(isinstance(item, FrozenDict) for item in schemes):
             raise _closure_kind_error(identity, "preset compatible color-scheme object list", schemes)
-        return PresentationPresetContract(identity, version, str(package["version"]), resources, tuple(schemes))
+        preference = body.get("visualProfile")
+        preferred = str(preference["preferred"]) if isinstance(preference, FrozenDict) else None
+        return PresentationPresetContract(identity, version, str(package["version"]), resources, tuple(schemes), preferred)
     if identity.kind == "authoring-workspace":
         project, presentation = body["project"], body["presentation"]
         actuals = body.get("actuals", ())

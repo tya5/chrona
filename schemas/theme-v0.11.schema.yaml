@@ -24,7 +24,7 @@ properties:
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing]}
+            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer]}
             value: {}
           allOf:
             - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
@@ -67,18 +67,36 @@ properties:
                     oneOf:
                       - {type: object, additionalProperties: false, required: [kind], properties: {kind: {const: outline}}}
                       - {type: object, additionalProperties: false, required: [kind, tileInlineSize, tileBlockSize, angle, strokeWidth], properties: {kind: {const: diagonal-hatch}, tileInlineSize: {type: number, exclusiveMinimum: 0}, tileBlockSize: {type: number, exclusiveMinimum: 0}, angle: {type: number, minimum: 0, exclusiveMaximum: 360}, strokeWidth: {type: number, exclusiveMinimum: 0}}}
-            - description: "Point-symbol selection is finite Theme data resolved into a Scene outline."
-              examples: [{type: symbol, value: {shape: diamond}}]
+            - description: "Point-symbol selection is finite Theme data resolved into a Scene outline: a built-in shape, or a multi-part glyph fitted contain/centred into the mark's bounds. Each glyph part paints from the milestone role's own colour unless it declares a fixed color; an outline-treatment role overrides every part to stroke regardless."
+              examples: [{type: symbol, value: {shape: diamond}}, {type: symbol, value: {shape: glyph, viewBox: [100, 100], parts: [{d: "M0 0L100 0L100 100L0 100Z", paint: fill}]}}]
               if:
                 properties: {type: {const: symbol}}
               required: [type]
               then:
                 properties:
                   value:
-                    type: object
-                    additionalProperties: false
-                    required: [shape]
-                    properties: {shape: {enum: [diamond, circle, square, chevron]}}
+                    oneOf:
+                      - type: object
+                        additionalProperties: false
+                        required: [shape]
+                        properties: {shape: {enum: [diamond, circle, square, chevron]}}
+                      - type: object
+                        additionalProperties: false
+                        required: [shape, viewBox, parts]
+                        properties:
+                          shape: {const: glyph}
+                          viewBox: {type: array, minItems: 2, maxItems: 2, items: {type: number, exclusiveMinimum: 0}}
+                          parts:
+                            type: array
+                            minItems: 1
+                            items:
+                              type: object
+                              additionalProperties: false
+                              required: [d, paint]
+                              properties:
+                                d: {type: string, minLength: 1}
+                                paint: {enum: [fill, stroke, none]}
+                                color: {type: string, pattern: "^#[0-9A-Fa-f]{6}$"}
             - description: "Text transforms are finite so Layout measures the painted form."
               examples: [{type: textTransform, value: uppercase}]
               if:
@@ -95,6 +113,61 @@ properties:
               then:
                 properties:
                   value: {enum: [proportional, tabular]}
+            - description: "Annotation-container geometry is finite structured Theme data resolved before adapter invocation (#466, #465)."
+              examples: [{type: annotationContainer, value: {outline: balloon, cornerRadius: 0.2, tailBaseEm: 0.6}},
+                        {type: annotationContainer, value: {outline: image, image: "chrona:frame", cornerRadius: 0,
+                                                             sliceInsetsEm: {top: 0.6, right: 0.6, bottom: 0.6, left: 0.6},
+                                                             contentInsetEm: {top: 0.8, right: 0.8, bottom: 0.8, left: 0.8}}}]
+              if:
+                properties: {type: {const: annotationContainer}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    type: object
+                    additionalProperties: false
+                    required: [outline, cornerRadius]
+                    properties:
+                      outline: {enum: [rectangle, balloon, image]}
+                      cornerRadius: {type: number, minimum: 0}
+                      tailBaseEm: {type: number, exclusiveMinimum: 0}
+                      image:
+                        description: "An icon-catalog raster entry bound as this container's backdrop artwork (#465); a View's visuals grammar can never select this use."
+                        type: string
+                        pattern: "^[A-Za-z][A-Za-z0-9-]*:[A-Za-z][A-Za-z0-9._-]*$"
+                      sliceInsetsEm:
+                        description: "The nine-slice fixed border (top/right/bottom/left, in em): each corner tile keeps this size while the middle stretches (#465)."
+                        type: object
+                        additionalProperties: false
+                        required: [top, right, bottom, left]
+                        properties:
+                          top: {type: number, minimum: 0}
+                          right: {type: number, minimum: 0}
+                          bottom: {type: number, minimum: 0}
+                          left: {type: number, minimum: 0}
+                      contentInsetEm:
+                        description: "The box Layout measures note text into (top/right/bottom/left, in em); the image is stretched to the resulting paint box (#465)."
+                        type: object
+                        additionalProperties: false
+                        required: [top, right, bottom, left]
+                        properties:
+                          top: {type: number, minimum: 0}
+                          right: {type: number, minimum: 0}
+                          bottom: {type: number, minimum: 0}
+                          left: {type: number, minimum: 0}
+                    allOf:
+                      - if:
+                          properties: {outline: {const: balloon}}
+                          required: [outline]
+                        then:
+                          required: [outline, cornerRadius, tailBaseEm]
+                      - if:
+                          properties: {outline: {const: image}}
+                          required: [outline]
+                        then:
+                          required: [outline, cornerRadius, image, sliceInsetsEm, contentInsetEm]
+                          properties:
+                            cornerRadius: {const: 0}
       roles:
         type: object
         description: "Semantic role bindings to named non-color tokens."
@@ -119,6 +192,13 @@ properties:
             markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
             markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
             markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
+            laneBlockSize: {description: "Named axis-lane block size in px for a labels tier's typography role; the tier becomes a declared lane with vertically centred labels (#426).", type: string, minLength: 1}
+            cellGap: {description: "Named gap in px between adjacent cells of an axis band tier (#426).", type: string, minLength: 1}
+            labelInset: {description: "Named inset, as a ratio of the role's font size, of a start-aligned axis label from its cell edge (#426).", type: string, minLength: 1}
+            chipPadding: {description: "Named label-chip padding ratio of the label's font size (inline; half on the block axis) for a <purpose>-chip role.", type: string, minLength: 1}
+            progressInset: {description: "Named progress-track inset ratio of the host mark's block size; the fill sits inside the track with this gap (0 <= ratio < 0.5).", type: string, minLength: 1}
+            annotationContainer: {description: "Named outline/tail-geometry token for an annotation-box role (#466); absent keeps today's plain rectangle.", type: string, minLength: 1}
+            swatchInlineSize: {description: "Named absolute inline length for a legend swatch whose on-chart length has no single value (a span, line, or decoration key); absent means Layout falls back to the legend label's own font size (#427).", type: string, minLength: 1}
             backgroundTreatment: {description: "Finite treatment for a completed review-surface background role; none is an explicit non-drawable disposition.", enum: [fill, outline, none]}
             contrastTreatment: {description: "Finite contrast-floor treatment for a classified state-text role.", enum: [required, deemphasized]}
             backgroundPaintOrder: {description: "Finite completed ordering key for a review-surface background role.", type: integer, minimum: 0, maximum: 1000}
@@ -156,10 +236,16 @@ properties:
         description: "Named explicit value-to-Scheme-slot maps consumed by View colour encodings."
         additionalProperties:
           type: object
-          description: "One scale's declared slot map."
-          required: [slots]
+          description: "One scale's declared slot map, or an ordered palette for a data-derived domain."
+          oneOf: [{description: "An explicit value-to-slot map.", required: [slots]}, {description: "A cyclic palette for a derived domain.", required: [palette]}]
+          examples: [{slots: {fw-team: fw-team}}, {palette: [series-1, series-2, series-3]}]
           additionalProperties: false
           properties:
+            palette:
+              type: array
+              description: "Ordered Scheme category slots; the n-th derived domain value takes palette[n mod length]."
+              minItems: 1
+              items: {description: "One named Scheme category slot identifier.", type: string, minLength: 1}
             slots:
               type: object
               description: "Exact domain-value to named Scheme category slot mapping."

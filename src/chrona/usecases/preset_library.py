@@ -59,13 +59,23 @@ def _copy_member(member: dict[str, Any], destination: Path, output: str) -> dict
     value = safe_load(item.read_bytes())
     if not isinstance(value, dict) or value.get("id") != member.get("id"):
         raise ValueError("E_BUILTIN_PRESET_RESOURCE")
-    # Layout Profile documents intentionally identify their contract through
-    # `version`, unlike presentation resources which also carry `kind`.
-    if member.get("kind") != "layout-profile" and value.get("kind") != member.get("kind"):
+    # Layout Profile and review-detail documents intentionally identify their
+    # contract through `version`, unlike presentation resources which also carry `kind`.
+    if member.get("kind") not in {"layout-profile", "review-detail-profile"} and value.get("kind") != member.get("kind"):
         raise ValueError("E_BUILTIN_PRESET_RESOURCE")
     target = destination / output
     target.write_bytes(item.read_bytes())
     return {"id": str(member["id"]), "kind": str(member["kind"]), "path": output}
+
+
+def list_builtin_presets() -> list[dict[str, str]]:
+    """Return the finite catalogue's id/gallerySet pairs, in `library.yaml` order (#429)."""
+    return [{"id": str(entry["id"]), "gallerySet": str(entry["gallerySet"])} for entry in _library()]
+
+
+def is_builtin_preset_id(identifier: str) -> bool:
+    """Return whether `identifier` names a catalogue entry, without loading its members (#429)."""
+    return any(entry.get("id") == identifier for entry in _library())
 
 
 def copy_builtin_preset(identifier: str, destination: Path) -> Path:
@@ -80,8 +90,10 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
         name: _copy_member(_member(entry, name), destination, output)
         for name, output in _MEMBER_OUTPUTS.items()
     }
+    if isinstance(entry.get("members"), dict) and "detailProfile" in entry["members"]:
+        resources["detailProfile"] = _copy_member(_member(entry, "detailProfile"), destination, "detail.yaml")
     scheme = resources["colorScheme"]
-    preset = {
+    preset: dict[str, Any] = {
         "version": "chrona/presentation-preset/v0.1",
         "kind": "presentation-preset",
         "id": f"chrona-builtin-{identifier}",
@@ -91,6 +103,8 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
             "compatibleColorSchemes": [scheme],
         },
     }
+    if isinstance(entry.get("visualProfile"), dict):
+        preset["body"]["visualProfile"] = {"preferred": str(entry["visualProfile"]["preferred"])}
     preset_target = destination / "preset.yaml"
     preset_target.write_text(yaml.safe_dump(preset, sort_keys=False), encoding="utf-8")
     return preset_target

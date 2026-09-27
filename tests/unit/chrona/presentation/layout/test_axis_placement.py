@@ -2,6 +2,8 @@ from datetime import date
 import ast
 import inspect
 
+import pytest
+
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.model.axis_names import axis_name_table
@@ -43,7 +45,21 @@ def test_every_n_retains_natural_interval_index_without_changing_the_window():
     ]
 
 
-def test_thinning_schedule_uses_the_smallest_stride_then_phase_with_fitting_labels():
-    assert thinning_schedule((False, True, False, True)).stride == 2
-    assert thinning_schedule((False, True, False, True)).phase == 1
-    assert thinning_schedule((False, True, False, True)).retained_positions == (1, 3)
+def test_thinning_schedule_retains_every_fitting_candidate_and_thins_the_rest():
+    schedule = thinning_schedule((False, True, False, True))
+    assert schedule.retained_positions == (1, 3)
+    assert schedule.thinned_positions == (0, 2)
+
+
+def test_thinning_schedule_keeps_every_fitting_label_for_one_colliding_edge_label():
+    # One colliding candidate at the window edge must not force any other
+    # fitting candidate to be dropped, however many candidates there are.
+    fits = (False,) + (True,) * 8
+    schedule = thinning_schedule(fits)
+    assert schedule.retained_positions == (1, 2, 3, 4, 5, 6, 7, 8)
+    assert schedule.thinned_positions == (0,)
+
+
+def test_thinning_schedule_raises_when_nothing_fits():
+    with pytest.raises(ValueError):
+        thinning_schedule((False, False, False))

@@ -108,6 +108,27 @@ Operational resource, command, and authoring ingress boundaries use the same
 reducer before mapping to their stable existing error codes. They may retain a
 smaller public error record, but must not expose raw `jsonschema` wording.
 
+### 3.1 Unsupported presentation resource versions (#489)
+
+For any resource kind registered by the presentation contract schema registry whose declared string `version` is not
+registered, ingress MUST refuse the resource with `E_RESOURCE_VERSION_UNSUPPORTED`,
+resource-local `sourceRef: /version`, and an author-facing message naming the
+resource kind, established id when available, found complete version, and all currently supported complete
+versions in stable order. The supported set comes from the contract schema
+registry. Missing and non-string versions retain their existing malformed-envelope
+diagnostic; they are not labeled as unsupported historical versions in this
+change. Unsupported kinds and supported-version body schema faults also keep
+their separate diagnostics. No stale version is silently
+upgraded or rendered with a fallback contract.
+
+For a declared member of a locally copied builtin preset, the CLI additionally
+names the catalogue preset id and instructs a new `chrona preset copy <id>` into
+a new directory followed by re-applying edits. This command-specific remedy
+belongs to the CLI and only applies when member provenance is established; a
+stale explicit override or standalone resource does not inherit it. The
+contract and closure layers preserve typed version evidence and the pointer,
+including in multi-resource ingress findings, without carrying command text.
+
 ## 4. Union policy and Project v0.6
 
 Use a discriminator only where a stable author-owned tag already expresses a

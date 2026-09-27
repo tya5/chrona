@@ -295,8 +295,15 @@ optional non-negative `cornerRadius`. `cornerRadius` is logical Scene geometry: 
 present on span comparison marks, is bounded to half the smaller Rect dimension, and
 is absent on Rect families that do not declare rounding. An SVG adapter serializes it
 as equal `rx`/`ry` and never re-reads `theme.bar.radius`.
-`Text` carries `text` plus exactly one `TextLayout`. `Symbol` carries a closed `shape`
-identifier and its concrete `bounds`. `Path` carries at least two ordered logical
+`Text` carries `text` plus exactly one `TextLayout`. `Symbol` carries one completed
+outline and its concrete `bounds`, painted by exactly one resolved `ScenePaint`; a
+milestone whose Theme-bound shape is a multi-part glyph is represented as several
+sibling `Symbol` primitives sharing `sourceRef`/`purpose`/`visualRole`/`bounds`, one
+per painted part, in ascending paint order — not as one primitive with several
+paints. Contrast and perceptibility evaluation treat a prior `Symbol` primitive at
+the same bounds as possible ground for a later primitive's paint, exactly as they
+already do for a `Rect`, so a glyph part painted over another part is checked
+against that part's colour rather than against the canvas. `Path` carries at least two ordered logical
 `points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
 tick may omit both port identifiers. `Path.bounds` is the exact union of its points,
 and `Icon` carries exactly one completed normalized vector payload or immutable raster
@@ -308,6 +315,32 @@ by Specification 46; `visualRole` is retained only as semantic provenance. Adapt
 serialize completed paint but never re-open Theme/Scheme tokens or calculate a paint
 property. A kind/payload mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an
 adapter must not repair it.
+
+### Annotation note contrast ground
+
+The semantic registry classifies `annotation-note-text` as state text and
+`annotation-note-box` as decoration. In the completed paired annotation,
+Layout/Scene paint order places the box before its text. Contrast evaluation
+uses the topmost prior opaque Rect or Symbol containing the text's policy sample
+point as its ground; this is the note box when paired. The box fill is the
+Theme-declared representative content-area color, including when its
+`annotationContainer.outline` is `image`, as defined in Specification 07 and
+the [#465 image-container design](../design/issue-465-image-annotation-container-design-2026-09-27.md).
+Perceptibility consumes the same completed fill. It does not sample the image
+payload, and the image's pixels do not replace the declared representative
+ground. Findings identify the selected ground primitive and color.
+
+For `annotation-note-text`, the generic ground search is not sufficient by
+itself: a prior Rect with no fill is skipped and generic search may then select
+a lower host or canvas. C4 therefore requires a prior `annotation-note-box`
+with the same `sourceRef`, containing the note text's sample point and carrying
+opaque flat fill. Missing pair/fill or non-opaque fill yields
+`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; it cannot fall through to another host
+or the canvas. This pairs the reported ground with the declared content area
+and prevents a plausible but false contrast result. SVG, PNG, and typeset adapters
+serialize the completed box/image/text paints without inspecting pixels,
+selecting a ground, or repairing contrast. Geometry and image tile placement
+remain Layout/Scene facts.
 
 `optional` defaults to false. It is true only for a label or annotation family whose
 applicable Detail rule has `required=false`; generated children of that optional
@@ -338,9 +371,10 @@ removed; `day` has no finer level. The remaining `minor-tick` Paths use `axisMin
 carry no label. This is display subdivision only and does not change the temporal
 window or Date-only semantics.
 
-Missing Actual is an explicit conditional Scene family. A span lacks its required
-Actual facet unless its Actual mapping contains both a valid start and finish. The
-family uses the planned Rect's left edge and the row's resolved Actual-bar band. A
+Missing Actual is an explicit conditional Scene family selected only by the
+View-projected `due-unobserved` state. An incomplete but present observation
+is not missing; a future unobserved item is not yet due. The family uses the
+planned mark's due endpoint and the row's resolved Actual-bar band. A
 pattern Rect is centered vertically in that band and uses the Theme-owned width and
 height. A label's preferred x begins after that Rect plus
 `layout.missingActual.gap`, or at the planned left edge when no pattern is requested,
@@ -356,7 +390,8 @@ Finish variance is also a closed conditional family. A complete Actual finish yi
 `variance-ahead` for a negative calendar-day delta, `variance-on-track` for zero, and
 `variance-behind` for a positive delta. A non-empty but incomplete Actual mapping
 yields `variance-unknown`, anchored at the planned finish; a wholly absent/empty Actual
-mapping has no variance family and is represented only by Missing Actual. The marker's
+mapping has no variance family; it receives Missing Actual only when the
+View-projected state is `due-unobserved`. The marker's
 x coordinate is the later of planned and complete-Actual right edges plus
 `layout.variance.offset`; its width is `theme.varianceMarkerWidth`, and its vertical
 bounds are the union of the planned and complete-Actual bar bands (the planned band for
@@ -425,10 +460,8 @@ and an adapter serializes both token values without choosing a fallback opacity.
 The remaining I3 families are closed as follows.  `table-timeline` owns table frame,
 header band, column-label Text, group surface/header, alternating row surface, row
 rule, and one measured table-cell Text per selected `(objectId,columnId)`.  A selected
-semantic relation owns exactly one `dependency-connector` Path with two Scene-owned
-ports.  A visible View annotation owns a box Rect, optional measured Text, and only
-when its declared purpose requires it a leader Path.  Project notes own measured Text
-in the notes slot.  A present legend slot owns its swatches, measured labels, and
+semantic relation owns exactly one `dependency-connector` Path with two Layout-completed
+ports. A visible View annotation owns a completed box Rect or balloon Path, measured Text, and its declared completed connector, if any. A Project annotation selected by stable View reference supplies text and object identity to that View annotation; it is not duplicated in the notes slot. Unselected Project notes still own measured Text in the notes slot. Layout, not Scene, owns all ports and geometry under the [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md). A present legend slot owns its swatches, measured labels, and
 coverage Text.  A present summary slot owns a panel Rect, measured header Text, and
 one measured metric Text per declared metric. `review` receives its remaining
 connector, annotation, and summary families only in I3-F. `minimal` receives its

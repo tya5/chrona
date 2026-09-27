@@ -4,24 +4,28 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Any, Mapping
 
-from chrona.presentation.model.projection import ReviewProjection
+from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
+from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
 
 
-def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
-                                  *, actual_set: Mapping[str, Any] | None = None,
-                                  detail: ReviewDetailInput | None = None, summary: SummaryContent,
-                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
-                                  color_scale: ResolvedColorScale | None = None) -> SurfaceContentInput:
-    """Normalize current Project/View/profile facts without legacy Settings."""
+def cell_typography_role(column: Any) -> str:
+    """Return the typography role in which one View table column's cells are set."""
+    return "numeric" if column.format == "signedDays" else "text"
+
+
+def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
+                                *, actual_set: Mapping[str, Any] | None = None,
+                                locale: str = "en-US") -> TableContent:
+    """Normalize the table once so measurement and composition read the same cells."""
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation)
                     for column in view.table_columns)
@@ -37,11 +41,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         if facet == "finishDelta" or (isinstance(source, Mapping) and source.get("facet") == "finishDelta"):
             delta = item.finish_delta
             return "tableVarianceBehind" if isinstance(delta, int) and delta > 0 else ("tableVarianceAhead" if isinstance(delta, int) and delta < 0 else ("tableVarianceOnTrack" if delta == 0 else "tableCell"))
-        if facet == "missingActual" and not item.actual:
+        if facet == "missingActual" and item.observation_state == ObservationState.DUE_UNOBSERVED:
             return "missingActualCell"
         return "tableCell"
-    def cell_typography_role(column: Any) -> str:
-        return "numeric" if column.format == "signedDays" else "text"
     if projection.rows:
         cells = tuple(
             TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column))
@@ -51,11 +53,28 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
              next(item for item in row.items if item.item_id == row.table_subject_id).object_id,
              next(item for item in row.items if item.item_id == row.table_subject_id).source_kind in {"primary", "combined"})
             for row in projection.rows for column in view.table_columns)
+        row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
+                           for row in projection.rows)
     else:
         cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)
+        row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
+    return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels)
+
+
+def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
+                                  *, actual_set: Mapping[str, Any] | None = None,
+                                  detail: ReviewDetailInput | None = None, summary: SummaryContent,
+                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
+                                  color_scale: ResolvedColorScale | None = None,
+                                  table: TableContent | None = None) -> SurfaceContentInput:
+    """Normalize current Project/View/profile facts without legacy Settings."""
+    if table is None:
+        table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
+    actual_body = _resource_body(actual_set, "ACTUAL_SET")
+    columns, cells, table_cell_objects = table.columns, table.cells, table.cell_objects
     visible = view.visibility
     group_presentation = view.grouping.presentation if view.grouping and view.grouping.presentation else "band"
     labels = visible.labels
@@ -73,7 +92,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         if "members" in labels:
             label_placement, label_content = ("plot", ("title",)) if labels["members"] else ("none", ())
         else:
-            label_placement = str(labels["placement"])
+            # ``both`` is ``plot`` plus a table title column the View validator already required.
+            label_placement = "plot" if labels["placement"] == "both" else str(labels["placement"])
             label_content = tuple(str(item) for item in labels["content"])
             label_side = str(labels["side"])
             label_overflow = str(labels.get("overflow", "visible-overflow"))
@@ -117,15 +137,46 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     else:
         relations = ()
     raw_annotations = view.annotations if annotation_mode != "none" else ()
-    annotations = tuple(
-        AnnotationIntent(str(annotation["id"]), str(annotation["purpose"]),
-                         {str(key): str(value) for key, value in annotation["anchor"].items()},
-                         str(annotation["placement"]["side"]), str(annotation["placement"]["alignment"]),
-                         str(annotation["text"]), index + 1 if annotation_numbered else None,
-                         annotation_fallback)
-        for index, annotation in enumerate(raw_annotations)
-    )
-    notes = tuple((str(key), str(value.get("text", ""))) for key, value in project.get("annotations", {}).items())
+    project_notes = project.get("annotations", {})
+    consumed_note_ids: set[str] = set()
+
+    def _annotation_text(annotation: Mapping[str, Any]) -> str:
+        reference = annotation.get("projectAnnotation")
+        if reference is None:
+            return str(annotation["text"])
+        # A Project reference selects text once (#466): the Project note is
+        # the sole narrative authority, and a missing or empty selection is a
+        # stable ingress error, never a skipped note or guessed target.
+        source = project_notes.get(reference) if isinstance(project_notes, Mapping) else None
+        text = source.get("text") if isinstance(source, Mapping) else None
+        if not isinstance(text, str) or not text:
+            raise ValueError(f"E_PRESENTATION_ANNOTATION_REFERENCE_MISSING:{reference}")
+        consumed_note_ids.add(str(reference))
+        return text
+
+    def _annotation(index: int, annotation: Mapping[str, Any]) -> AnnotationIntent:
+        anchor = {str(key): str(value) for key, value in annotation["anchor"].items()}
+        purpose = str(annotation["purpose"])
+        number = index + 1 if annotation_numbered else None
+        content = _annotation_text(annotation)
+        declared_candidates = annotation.get("candidates")
+        if declared_candidates is not None:
+            # The declared candidate-list spelling (#466): no legacy fallback
+            # ladder applies, and Layout falls back to visible-overflow on
+            # the first declared candidate if every one is exhausted.
+            return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
+                                    content, number, (), parse_candidates(declared_candidates))
+        placement = annotation["placement"]
+        return AnnotationIntent(str(annotation["id"]), purpose, anchor,
+                                str(placement["side"]), str(placement["alignment"]),
+                                content, number, annotation_fallback or ("rail",),
+                                legacy_candidate_order(purpose, annotation_fallback)[0])
+
+    annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
+    # A selected Project annotation is consumed once: it is presented through
+    # its View annotation and no longer duplicated into the notes slot (#466).
+    notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
+                 if key not in consumed_note_ids)
     resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
                                                           profile_is_validated=True)
                        if layout_manifest is not None else None)
@@ -134,10 +185,12 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     if color_scale is not None:
         scale_paints = tuple((item.object_id, color_scale.color_for(item.object_id, item.fields))
-                             for item in projection.items if item.source_kind in {"primary", "combined"})
+                             for item in projection.items if item.source_kind in {"primary", "combined"}
+                             and color_scale.covers(item.fields))
         used = {item.fields.get(color_scale.source_field) for item in projection.items
                 if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
-        scale_entries = tuple((f"scale:{color_scale.scale_id}:{value}", value)
+        scale_entries = tuple((f"scale:{color_scale.scale_id}:{value}",
+                               str(project.get("entities", {}).get(value, {}).get("title", value)))
                               for value in color_scale.domain if value in used)
         legend += scale_entries
         scale_legend_paints = tuple((f"scale:{color_scale.scale_id}:{value}", dict(color_scale.colors)[value])
@@ -149,7 +202,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                label_overflow=label_overflow, relation_overflow=relation_overflow,
                                group_presentation=group_presentation,
                                axis_tiers=axis_tiers, axis_fiscal_start_month=fiscal_start_month,
-                               as_of=as_of, as_of_label=str(as_of_marker.get("label", "As of")) if as_of_marker else "As of",
+                               as_of=as_of, as_of_label=_as_of_label(as_of_marker, as_of, locale),
                                annotation_numbered=annotation_numbered,
                                calendar_closed=calendar_closed, calendar_exceptions=calendar_exceptions,
                                    notes=notes, legend_entries=legend, coverage_text="",
@@ -161,6 +214,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                observation_rows=resolved_detail.observation_rows if resolved_detail else (),
                                label_fallback=label_fallback, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
+                               attached_labels=_attached_labels(projection, locale),
                                table_cell_objects=table_cell_objects,
                                scale_target_role=color_scale.target_role if color_scale else None,
                                scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
@@ -170,12 +224,47 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                group_decoration=view.background_decoration[1])
 
 
+def _attached_labels(projection: ReviewProjection, locale: str) -> tuple[tuple[str, str], ...]:
+    """Title, planned date and delta of each attached point, in its View locale (#486)."""
+    labels = []
+    for row in projection.rows:
+        for item in row.items:
+            at = item.planned.get("at")
+            if item.attached_to is None or not isinstance(at, date):
+                continue
+            parts = [item.title, _format_compact_date(at, include_year=False, locale=locale)]
+            if item.finish_delta is not None:
+                parts.append(f"{item.finish_delta:+d}d")
+            labels.append((item.object_id, " · ".join(parts)))
+    return tuple(labels)
+
+
+def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: str) -> str:
+    """Return the as-of label exactly as declared, plus a date only in a declared form (#428).
+
+    A View without an as-of marker keeps the implicit "As of <localized date>"
+    label; a declared marker is its own text unless it names a date form.
+    """
+    date_form = {"form": "localized-date"} if marker is None else marker.get("date")
+    label = "As of" if marker is None else str(marker.get("label", ""))
+    if not isinstance(date_form, Mapping) or as_of is None:
+        return label
+    table = axis_name_table(str(date_form.get("nameTable", locale)))
+    formatted = table.format(str(date_form["form"]), {
+        "year": as_of.year, "monthShort": table.month_short[as_of.month - 1],
+        "monthLong": table.month_long[as_of.month - 1], "monthNumber": as_of.month,
+        "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
+    })
+    return f"{label} {formatted}" if label else formatted
+
+
 def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
     """Detach one schema-validated View tier into Layout-owned typed intent."""
     role, unit = str(value["role"]), str(value["unit"])
+    typography_role = str(value["typographyRole"]) if "typographyRole" in value else None
     raw_label = value.get("label")
     if role != "labels" or not isinstance(raw_label, Mapping):
-        return AxisTier(unit, int(value["every"]), role)
+        return AxisTier(unit, int(value["every"]), role, typography_role=typography_role)
     candidates = raw_label.get("forms", {})
     candidate_forms = tuple((str(candidate), str(form)) for candidate, form in candidates.items()) if isinstance(candidates, Mapping) else ()
     table_id = str(raw_label.get("nameTable", locale))
@@ -183,7 +272,8 @@ def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
     return AxisTier(unit, int(value["every"]), role,
                     AxisLabelIntent(str(raw_label["form"]) if "form" in raw_label else None,
                                     candidate_forms, str(raw_label["align"]), str(raw_label["overflow"]),
-                                    str(raw_label["orientation"]), table_id))
+                                    str(raw_label["orientation"]), table_id),
+                    typography_role=typography_role)
 
 
 def _column_width(value: object) -> TableColumnWidth:
@@ -281,7 +371,8 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
         "actual.asOf": date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else None,
         "planned.nextPoint": points[0] if points else None,
         "count.selected": len(projection.items),
-        "count.missingActual": sum(not bool(item.actual) for item in projection.items),
+        "count.missingActual": (sum(item.observation_state == ObservationState.DUE_UNOBSERVED
+                                    for item in projection.items) if as_of_value is not None else None),
         "count.knownFinishVariance": sum(item.finish_delta is not None for item in projection.items),
     }
     panels: list[SummaryPanel] = []

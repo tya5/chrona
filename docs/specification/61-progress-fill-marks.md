@@ -53,6 +53,18 @@ semantic are separate axes.
 
 ## 4. Non-goals
 
+## Progress track inset (#430)
+
+The `progress-fill` Theme role may declare `progressInset`, a number token
+`0 <= r < 0.5`, and `markCornerRadius`, a ratio `0-0.5` of the fill's
+smaller side. Both are absent by default. The host mark is the track. Layout
+deflates it by `r x host block size` on the block axis and by
+`min(r x host block size, host inline size / 4)` on the inline axis. The fill
+is that inner track's inline origin plus `inner width x fraction`: 0 draws
+nothing and 1 fills the inner track edge to edge at every bar length. With
+`r = 0` this is the full-height fill. The completed radius is carried on the
+fill Rect; the clip to the host is kept.
+
 This does not add a state/disposition rule engine, gradients, arbitrary nested
 bar layers, progress-based scheduling, progress aggregation, or a target-local
 draw callback.  #310 already supplies inside labels and #314 supplies declared

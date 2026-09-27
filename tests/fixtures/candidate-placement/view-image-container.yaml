@@ -1,0 +1,99 @@
+version: chrona/view/v0.27
+kind: view
+id: candidate-placement-image-fixture
+body:
+  surface: table-timeline
+  selection:
+    include:
+      ids:
+      - silicon-bringup
+      - performance
+      - dvt
+      types:
+      - span
+      - point
+  grouping:
+    by: none
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2026-02-01'
+    end: '2026-07-01'
+  comparison:
+    baseline: primary
+    actual: optional
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
+  annotations:
+  - id: performance-note
+    purpose: note
+    anchor:
+      kind: object
+      id: performance
+      facet: planned
+      endpoint: finish
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 512, maxInlineEm: 18}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
+    text: Under review.
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: thin-with-record
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+  backgroundDecoration:
+    rows: none
+    groups: all
+  tableColumns:
+  - id: Workstream
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  rows:
+    mode: automatic

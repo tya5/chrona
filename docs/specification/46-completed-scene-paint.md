@@ -116,7 +116,83 @@ This is an intentional clean-boundary migration. Callers constructing old
 role-only `ScenePrimitive` values must migrate; no adapter preserves the
 incomplete contract.
 
-## 7. Completed contrast evidence (#459)
+## 7. Layout-only visible stroke extents for lane footprints (#467)
+
+For lane candidate footprints and all final mark/icon placement, Layout
+derives geometry-only visible extents from validated resolved Theme geometry
+metrics and normalized icon closure. This does not make Layout a paint
+resolver. `ScenePaintResolver` remains the sole conversion of Theme/Scheme
+paint policy into completed `ScenePaint`; Layout MUST NOT resolve color, paint
+family, opacity, dash, gradient, shadow, or a replacement stroke style, and
+it MUST NOT construct or pass `ScenePaint` as a candidate footprint input.
+
+The geometry footprint uses the same concrete mark role, selected glyph
+variant, Theme geometry metrics, temporal scale, and icon stroke scale as final
+Layout/Scene composition. An `ObstacleSegment` stores its unexpanded
+centerline and stroke width; an `ObstacleRect` stores already expanded
+visible bounds. Stroke and collision clearance remain separate. A primitive's
+visible stroke is represented exactly once, and an implementation MUST test
+that segment and rectangle paths do not double-expand or omit it.
+
+Rectangles expand by half their resolved stroke width on each side. Segment
+geometry carries its stroke width and the obstacle collision machinery
+accounts for its extent. A path represented by a conservative control-point
+envelope expands that envelope by ten times its stroke width on every side.
+This target-independent bound accommodates admitted miter limits up to ten
+without changing adapter output or adding Scene paint policy. Because
+`ScenePaint` has no miter-limit member, Layout cannot set renderer paint
+policy to make the footprint fit. The bound may increase collisions. On 02,
+completed-Scene pairwise lane non-redundancy and required-content/route criteria
+remain hard gates, without a numerical lane ceiling. A failure returns to
+design rather than introducing target-specific lane allocation. See the
+[miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md)
+and [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
+
+Layout returns completed point-symbol and icon path geometry before Scene
+construction. This includes Theme-selected built-in shape geometry, Theme
+glyph-part paths, point legend swatches, and normalized vector icon paths
+transformed into their placed viewport with per-path stroke widths scaled
+once. Theme glyphs retain contain-center fitting, `paint: none` omission,
+part order/IDs, the built-in diamond outline override rule, and deterministic
+path closure/arithmetic. Vector icons retain normalized path commands and
+asset cap/join. Raster icons reserve the complete placed viewport, without
+alpha-based geometry inference. Theme color/Scheme changes alone cannot
+affect these footprints; changes to geometry-bearing Theme metrics or
+normalized icon assets may.
+In lane mode, per-path vector collision facets carry a typed common icon
+emission group and the exact per-path paint/cap/join/already-scaled stroke
+facts. B2 groups them by completed placement identity and projects one Scene
+ICON with paths in declared order. Raster icon facets retain the exact asset
+identity, viewport and bytes. Neither B2 nor Scene may reload an icon asset,
+retransform paths, or rescale its stroke. See the [S2b icon emission
+correction](../design/issue-467-b1b2-s2b-icon-emission-closure-correction-2026-09-27.md).
+The expected-emission inventory fixes icon cardinality before allocation:
+vector path indices are unique, contiguous and complete against one declared
+path count, all common group metadata agree, and exactly one Scene ICON is
+emitted per completed icon placement. Stroke paths require a finite completed
+width; commands and bounds must agree with the completed viewport/footprint.
+An absent or extra path/ICON is a closed-plan failure, not a reason to reload
+or infer icon data at projection time. See the [S2b closure correction](../design/issue-467-b1b2-s2b-closure-reconciliation-correction-2026-09-27.md).
+
+The Scene builder receives those completed path values and does not resolve
+Theme symbol variants, construct glyph outlines, transform normalized icon
+commands, or scale icon strokes. It supplies each completed primitive/path's
+typed paint intent to `ScenePaintResolver`, which returns completed paint.
+That resolver is the only location permitted to convert glyph-part or
+icon-path fill/stroke modes and authored colors into `ScenePaint`; a helper
+MUST NOT modify a `ScenePaint` after resolution. This keeps paint conversion
+after geometry without giving Scene a second geometry or paint authority.
+Implementations characterize existing automatic/explicit Scene/SVG bytes,
+point legend swatches, and material-icon SVG/materializer outputs across this
+move before acceptance.
+
+These are Layout extents only. Scene still resolves paint after geometry is
+complete, and SVG/PNG/TikZ adapters still serialize or reject the completed
+Scene value according to this specification. No renderer may repair or
+reinterpret a lane candidate footprint. See the
+[#467 B1b-2 correction](../design/issue-467-l3b-b1b-2-stroke-aware-footprint-correction-2026-09-27.md).
+
+## 8. Completed contrast evidence (#459)
 
 For finite classified text, decoration and data-mark roles, contrast is
 measured against the topmost earlier opaque, flat-filled Rect covering the

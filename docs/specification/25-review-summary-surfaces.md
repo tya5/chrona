@@ -20,3 +20,10 @@ Theme supplies only declared panel roles and tokens.
 A dark delivery-control composition is also a user-editable resource set. The adapter
 MUST interpret only declared metrics and panels; it MUST NOT contain a dashboard-specific
 score, panel list, or title-based branch.
+
+`missingActualCount` (and its typed `count.missingActual` source) counts only
+selected Primary items whose View-projected observation state is
+`due-unobserved` at the explicit Actual `asOf`. Without an Actual as-of the
+metric is unavailable, not zero. An incomplete but selected observation and
+future work are not counted. Summary formatting does not independently
+interpret planned or Actual dates.

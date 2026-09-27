@@ -7,6 +7,7 @@ from typing import Any
 import jsonschema
 import yaml
 
+from chrona.core.attachments import attachment_diagnostics
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
                        parse_amount, requires_working_calendar)
@@ -113,6 +114,7 @@ def validate_project(
                         diagnostics.append(Diagnostic("E_CALENDAR_REQUIRED", "WorkPeriod lag has no calendar", path + "/lag"))
             except TemporalError as exc:
                 diagnostics.append(Diagnostic("E_INVALID_AMOUNT", str(exc), path + "/lag"))
+    diagnostics.extend(attachment_diagnostics(objects))
     if any(isinstance(item, str) for item in project.get("extensions", [])):
         diagnostics.append(Diagnostic(
             "E_PACKAGE_RESOLUTION_REQUIRED",

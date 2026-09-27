@@ -1,0 +1,7 @@
+version: chrona/review-detail-profile/v0.1
+id: halcyon-launch-legend
+body:
+  legend:
+    - {role: planned, label: Baseline}
+    - {role: dependency, label: Dependency}
+    - {role: asOf, label: As of}

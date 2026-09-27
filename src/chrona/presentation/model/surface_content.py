@@ -1,11 +1,12 @@
 """Normalized presentation content inputs."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date
+from dataclasses import dataclass
 from typing import Any
 
-from chrona.presentation.model.projection import ReviewItem
+from chrona.presentation.model.placement_candidates import PlacementCandidate
+from chrona.presentation.model.projection import ObservationState, ReviewItem
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
@@ -89,6 +90,26 @@ class TableCellContent:
 
 
 @dataclass(frozen=True)
+class TableRowLevel:
+    """One table row's hierarchy facts, addressed by the keys its cells use."""
+
+    keys: tuple[str, ...]
+    grouped: bool
+    depth: int = 0
+
+
+@dataclass(frozen=True)
+class TableContent:
+    """Typed table facts normalized once, before measurement and composition."""
+
+    columns: tuple[TableColumnContent, ...]
+    cells: tuple[TableCellContent, ...]
+    cell_objects: tuple[tuple[str, str, str, bool], ...]
+    hierarchy_column: str | None
+    row_levels: tuple[TableRowLevel, ...]
+
+
+@dataclass(frozen=True)
 class AnnotationIntent:
     """One schema-validated annotation fact detached before Layout ingress."""
 
@@ -100,6 +121,7 @@ class AnnotationIntent:
     content: str
     number: int | None = None
     fallback_ladder: tuple[str, ...] = ()
+    candidates: tuple[PlacementCandidate, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -122,6 +144,7 @@ class AxisTier:
     every: int
     role: str
     label: AxisLabelIntent | None = None
+    typography_role: str | None = None
 
 
 @dataclass(frozen=True)
@@ -172,6 +195,9 @@ class SurfaceContentInput:
     table_hierarchy_column: str | None = None
     row_decoration: str = "none"
     group_decoration: str = "all"
+    # Required plot-label text of each point drawn on the row of the span it
+    # attaches to (#486): title, planned date and finish delta, never dropped.
+    attached_labels: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -207,7 +233,9 @@ def table_value(item: ReviewItem, project: dict[str, Any], source: Any, row_inde
         declared = project.get("scenarios", {}).get(item.scenario_id, {})
         return declared.get("title") if isinstance(declared, dict) else None
     facet = source["comparisonFacet"]
-    return {"finishDelta": item.finish_delta, "missingActual": not bool(item.actual),
+    missing_actual = (True if item.observation_state == ObservationState.DUE_UNOBSERVED else
+                      False if item.observation_state == ObservationState.RECORDED else None)
+    return {"finishDelta": item.finish_delta, "missingActual": missing_actual,
             "progress": (item.actual or {}).get("progress")}.get(facet)
 
 

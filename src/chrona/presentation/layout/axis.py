@@ -33,11 +33,10 @@ class AxisInterval:
 
 @dataclass(frozen=True)
 class AxisThinningSchedule:
-    """Deterministic retained positions for one measured label sequence."""
+    """Deterministic retained/thinned positions for one measured label sequence."""
 
-    stride: int
-    phase: int
     retained_positions: tuple[int, ...]
+    thinned_positions: tuple[int, ...]
 
 
 def axis_intervals(start: date, end: date, level: AxisLevel, *, tick_step: int = 1,
@@ -77,13 +76,19 @@ def axis_intervals(start: date, end: date, level: AxisLevel, *, tick_step: int =
 
 
 def thinning_schedule(label_fits: tuple[bool, ...]) -> AxisThinningSchedule:
-    """Select the least periodic schedule containing only measured-fitting labels."""
-    for stride in range(1, len(label_fits) + 1):
-        for phase in range(stride):
-            retained = tuple(index for index in range(phase, len(label_fits), stride))
-            if retained and all(label_fits[index] for index in retained):
-                return AxisThinningSchedule(stride, phase, retained)
-    raise ValueError("E_PRESENTATION_AXIS_OVERFLOW")
+    """Retain exactly the candidates whose own measured label fits.
+
+    Each candidate's fit is measured against its own clipped interval and does
+    not depend on any other candidate's disposition, so a fitting candidate is
+    never thinned to keep a uniform pattern, and a non-fitting candidate is
+    always thinned.  Thinning may not remove every candidate; a tier with no
+    fitting candidate at all diagnoses instead, as before.
+    """
+    retained = tuple(index for index, fits in enumerate(label_fits) if fits)
+    if not retained:
+        raise ValueError("E_PRESENTATION_AXIS_OVERFLOW")
+    thinned = tuple(index for index, fits in enumerate(label_fits) if not fits)
+    return AxisThinningSchedule(retained, thinned)
 
 
 def _shift_months(value: date, months: int) -> date:

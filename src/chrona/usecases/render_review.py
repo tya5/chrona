@@ -20,24 +20,30 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.presentation import table_text_line_block
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
 from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, resolve_mark_geometries, timeline_content_block_requirement
 from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
+from chrona.presentation.model.font_resources import FontAssetResolver
+from chrona.presentation.model.color_separability import ScaleCollision
+from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
-from chrona.presentation.model.theme_tokens import ThemeTokenView, effective_draft_numeric_theme
+from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
+from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
-from chrona.presentation.model.surface_content import SummaryContent
-from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
-from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
+from chrona.presentation.model.surface_content import SummaryContent, TableContent
+from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
+from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
 )
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding, evaluate_scene_perceptibility
+from chrona.presentation.scene.paint import ScenePaintError
 from chrona.presentation.scene.serialization import scene_document
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 from chrona.presentation.scene.visual_capabilities import (
@@ -86,6 +92,7 @@ class RenderRequest:
     renderer: Renderer | None = None
     require_all_inputs_read: bool = False
     asset_root: Path | None = None
+    asset_resolver: FontAssetResolver | None = None
     draft_auto_block: bool = False
     draft_font_resolution: DraftFontResolution | None = None
 
@@ -101,6 +108,9 @@ class RenderedReview:
     scenario_provenance: tuple[ScenarioProvenance, ...] = ()
     font_warnings: tuple["FontGlyphWarning", ...] = ()
     perceptibility_warnings: tuple["ScenePerceptibilityWarning", ...] = ()
+    info_diagnostics: tuple[PresentationInfo, ...] = ()
+    scale_collisions: tuple[ScaleCollision, ...] = ()
+    attachment_warnings: tuple[AttachmentWarning, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -161,6 +171,15 @@ class ClosureReadLedger:
 
 
 def render_review(request: RenderRequest) -> RenderedReview:
+    """Transport detector-owned presentation pointers across the use-case boundary."""
+    try:
+        return _render_review(request)
+    except (LayoutError, ThemeTokenError, ScenePaintError) as error:
+        raise RenderFailed(error.diagnostic_id, getattr(error, "detail", None) or error.diagnostic_id,
+                           "presentation", error.path or "/") from error
+
+
+def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
     project, view, layout = (render_closure.project.scheduler_input, render_closure.view.view,
@@ -175,10 +194,12 @@ def render_review(request: RenderRequest) -> RenderedReview:
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
-    projection, scenario_provenance = _project_review(project, view, render_closure, manifests, request.scheduler)
+    projection, scenario_provenance, attachments = _project_review(project, view, render_closure, manifests, request.scheduler)
     try:
         color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
-                                          theme["body"].get("categorySlots"))
+                                          theme["body"].get("categorySlots"),
+                                          color_vision=tuple(theme["body"].get("colorVision", ())),
+                                          observed=_observed_scale_values(view.color_encoding, projection))
     except ColorScaleError as error:
         raise RenderFailed(str(error), str(error), "presentation") from error
     if render_closure.actual_set is not None:
@@ -187,7 +208,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         ledger.snapshot()
 
     environment = render_closure.context.environment
-    asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.theme.revision_token)
+    asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.identity.revision)
     resolution = request.draft_font_resolution
     if resolution is not None and render_closure.context.identity.revision != "draft":
         raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render immutable Context", "presentation")
@@ -195,7 +216,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render this target", "presentation")
     if resolution is not None and resolution.tabular_warnings:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
-    font_metrics = resolution.metrics if resolution is not None else _font_metrics(theme, environment.font_metrics, asset_root)
+    font_metrics = resolution.metrics if resolution is not None else _font_metrics(
+        theme, environment.font_metrics, asset_root, request.asset_resolver)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project)
@@ -204,13 +226,20 @@ def render_review(request: RenderRequest) -> RenderedReview:
     icon_assets = {item.icon_id: item for item in render_closure.icon_assets}
     visual_requests = tuple(_visual_request(visual, projection, index, render_closure)
                             for index, visual in enumerate(render_closure.view.view.visuals))
-    if visual_requests:
+    if visual_requests or icon_assets:
+        # A Theme-only annotationContainer.image binding (#465) selects a
+        # catalog entry no View visual names; icon_assets is non-empty
+        # exactly when the pinned iconCatalogs closure actually supplied
+        # something to read, whichever selected it.
         ledger.icons()
+    actual_observations = render_closure.actual_set.observations_input if render_closure.actual_set else None
+    table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
+                                                locale=environment.locale)
     source_inputs = _source_inputs(project, view, projection, summary,
                                    render_closure.detail_profile.detail if render_closure.detail_profile else None,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
-                                   color_scale=color_scale)
+                                   color_scale=color_scale, table=table_content)
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
     try:
@@ -221,41 +250,40 @@ def render_review(request: RenderRequest) -> RenderedReview:
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
-    try:
-        required_block = None
-        if view.surface == "table-timeline":
-            timeline_requirement = timeline_content_block_requirement(
-                projection=projection,
-                group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
-                metric_values=measured.metric_values,
-                role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
-            )
-            required_block = resolve_content_block_extent(
-                resolved_layout, viewport_inline=viewport["inlineSize"],
-                seed_block=viewport["blockSize"], measurements=measurements,
-                required_blocks={"timeline": timeline_requirement},
-            )
-            viewport["blockSize"] = required_block
-        if request.draft_auto_block:
-            if required_block is None:
-                raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
-                                  detail=f"surface={view.surface}")
-        manifest = solve_layout(
-            resolved_layout, viewport_inline=viewport["inlineSize"],
-            viewport_block=viewport["blockSize"], measurements=measurements,
+    required_block = None
+    if view.surface == "table-timeline":
+        timeline_requirement = timeline_content_block_requirement(
+            projection=projection,
+            group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
+            metric_values=measured.metric_values,
+            role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
+            text_line_block=table_text_line_block(
+                ThemeTokenView(theme), (cell.typography_role for cell in table_content.cells)),
         )
-    except LayoutError as error:
-        raise RenderFailed(error.diagnostic_id, error.detail or error.diagnostic_id,
-                           "presentation", error.path) from error
+        required_block = resolve_content_block_extent(
+            resolved_layout, viewport_inline=viewport["inlineSize"],
+            seed_block=viewport["blockSize"], measurements=measurements,
+            required_blocks={"timeline": timeline_requirement},
+        )
+        viewport["blockSize"] = required_block
+    if request.draft_auto_block:
+        if required_block is None:
+            raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
+                              detail=f"surface={view.surface}")
+    manifest = solve_layout(
+        resolved_layout, viewport_inline=viewport["inlineSize"],
+        viewport_block=viewport["blockSize"], measurements=measurements,
+    )
 
     surface_content = normalize_v05_surface_content(
         projection, project, view,
-        actual_set=render_closure.actual_set.observations_input if render_closure.actual_set else None,
+        actual_set=actual_observations,
         detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
         summary=summary,
         layout_manifest=manifest,
         locale=environment.locale,
         color_scale=color_scale,
+        table=table_content,
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
@@ -284,9 +312,11 @@ def render_review(request: RenderRequest) -> RenderedReview:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
+    collisions = color_scale.collisions if color_scale is not None else ()
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),
-                              resolution.tabular_warnings if resolution is not None else ())
+                              resolution.tabular_warnings if resolution is not None else (),
+                              collisions)
     perceptibility_warnings = (_scene_perceptibility_warnings(scene)
                                if render_closure.context.identity.revision == "draft" else ())
     renderer = request.renderer or renderer_for(
@@ -294,6 +324,7 @@ def render_review(request: RenderRequest) -> RenderedReview:
         environment.renderer_environment(),
         asset_root=asset_root,
         font_files=resolution.font_files if resolution is not None else None,
+        asset_resolver=request.asset_resolver,
     )
     try:
         artifact = renderer.render(surface)
@@ -304,12 +335,14 @@ def render_review(request: RenderRequest) -> RenderedReview:
     if surface.canvas_bounds is None:
         raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
-                          _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings)
+                          _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings,
+                          surface.info_diagnostics, collisions, attachments)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
                       content: Any, viewport: tuple[float, float],
-                      tabular_warnings: tuple[FontTabularWarning, ...] = ()) -> InspectionScene:
+                      tabular_warnings: tuple[FontTabularWarning, ...] = (),
+                      collisions: tuple[ScaleCollision, ...] = ()) -> InspectionScene:
     """Build inspection evidence from completed runtime values without reopening policy."""
     primitive_roles = Counter(item.visual_role for item in surface.primitives)
     capabilities: set[str] = set()
@@ -345,7 +378,9 @@ def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection:
         version("chrona"), tuple(sorted(resources)),
     )
     return InspectionScene(provenance, viewport, tuple(sorted(capabilities)), (surface,), manifest,
-                           surface.diagnostics, tabular_warnings)
+                           (*surface.diagnostics, *(item.scene_diagnostic() for item in surface.info_diagnostics),
+                            *(item.scene_diagnostic() for item in collisions)),
+                           tabular_warnings)
 
 
 def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind: str) -> tuple[FontGlyphWarning, ...]:
@@ -366,6 +401,16 @@ def _warnings_from_findings(findings: tuple[ScenePerceptibilityFinding, ...]) ->
         "W_" + finding.code.removeprefix("E_"), finding.code, finding.scene_path,
         finding.primitive_ids, finding.slot_id, finding.measured_facts, finding.disposition,
     ) for finding in findings if finding.severity == "error")
+
+
+def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:
+    """Source values of the selected primary items, in projection order, for a derived domain."""
+    source = encoding.get("source") if isinstance(encoding, Mapping) else None
+    field = source.get("field") if isinstance(source, Mapping) else None
+    if not isinstance(field, str):
+        return ()
+    return tuple(str(item.fields[field]) for item in projection.items
+                 if item.fields is not None and item.fields.get(field) is not None)
 
 
 def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClosure) -> VisualRequest:
@@ -396,6 +441,9 @@ def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClo
 def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
                     manifests: dict[str, dict[str, Any]], scheduler: Scheduler) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
+    if view.rows.mode is ViewRowMode.LANES:
+        raise RenderFailed("E_REVIEW_LANE_ENGINE_UNAVAILABLE",
+                           "lane row mode is accepted but requires the Layout lane engine", "layout", "/body/rows/mode")
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
@@ -428,12 +476,13 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         scenarios=scenarios,
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
-    ), tuple(provenance)
+    ), tuple(provenance), attachment_warnings(project, result.placements)
 
 
-def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path) -> Any:
+def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path,
+                  asset_resolver: FontAssetResolver | None = None) -> Any:
     try:
-        return resolve_font_metrics_catalog(font_metrics, asset_root=asset_root)
+        return resolve_font_metrics_catalog(font_metrics, asset_root=asset_root, asset_resolver=asset_resolver)
     except FontMetricsError as error:
         raise _font_failure(error) from error
 
@@ -445,7 +494,8 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, detail: ReviewDetailInput | None = None,
-                   annotation_input: SourceInput | None = None, *, color_scale: Any = None) -> dict[str, SourceInput]:
+                   annotation_input: SourceInput | None = None, *, color_scale: Any = None,
+                   table: TableContent | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
@@ -462,7 +512,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
             tuple(row.label for row in rows) or tuple(item.title for item in projection.items),
-            row_count, len(view.table_columns) or 1),
+            row_count, len(view.table_columns) or 1, table=table),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
         "network": SourceInput(

@@ -37,11 +37,13 @@ from chrona.core.identity import content_identity
 
 
 class ClosureError(ValueError):
-    def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None):
+    def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None,
+                 *, declaring_preset_id: str | None = None):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.source_ref = source_ref
         self.detail = detail
+        self.declaring_preset_id = declaring_preset_id
 
 
 def _closure_kind_error(scope: str, expected: str, found: object) -> ClosureError:
@@ -215,7 +217,7 @@ def resolve_draft_render(
     system_fonts: bool = False,
     system_font_resolver: SystemFontResolver | None = None,
     viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
-    locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
+    locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Build a typed, in-memory closure from explicit authoring inputs.
 
@@ -224,7 +226,9 @@ def resolve_draft_render(
     artifact.  Once returned, the normal review use case cannot distinguish it
     from an immutable closure.
     """
-    preset_paths = _draft_preset_paths(preset_path, preset_root) if preset_path is not None else {}
+    preset = _load_draft_resource("presentation-preset", preset_path) if preset_path is not None else None
+    preset_paths = _draft_preset_paths(preset, preset_path, preset_root) if preset is not None and preset_path is not None else {}
+    visual_profile = _preset_visual_profile(preset.contract if preset is not None else None, visual_profile, target_kind)
     paths = (("project", project_path),
              ("view", view_path or preset_paths.get("view")),
              ("theme", theme_path or preset_paths.get("theme")),
@@ -234,7 +238,9 @@ def resolve_draft_render(
         raise ClosureError("E_DRAFT_PRESENTATION_INCOMPLETE")
     optional = (
         ("actual-set", actual_path), ("summary-profile", summary_path),
-        ("review-detail-profile", detail_path),
+        # A preset legend names roles of the preset's own Theme, so it applies
+        # only when that Theme is the one rendered (#479 amendment 2).
+        ("review-detail-profile", detail_path or (preset_paths.get("review-detail-profile") if theme_path is None else None)),
     )
     sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
@@ -245,25 +251,51 @@ def resolve_draft_render(
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths,
-                                                                            _draft_view(resources)),
+                                                                            _draft_view(resources), _draft_theme_refs(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
                                         system_fonts=system_fonts, system_font_resolver=system_font_resolver)
 
 
-def _draft_preset_paths(preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
+_BASELINE_VISUAL_PROFILE = "chrona-output/visual/v0.5-baseline"
+
+
+def _preset_visual_profile(preset: object, requested: str | None, target_kind: str) -> str:
+    """An explicit profile wins; otherwise the preset's preferred profile, else the baseline."""
+    if requested is not None:
+        return requested
+    preferred = preset.preferred_visual_profile if isinstance(preset, PresentationPresetContract) else None
+    if preferred is None:
+        return _BASELINE_VISUAL_PROFILE
+    if preferred != _BASELINE_VISUAL_PROFILE and not preferred.endswith(f"-{target_kind}"):
+        raise ClosureError("E_PRESET_VISUAL_PROFILE_TARGET", "/body/visualProfile/preferred",
+                           f"preset prefers {preferred}, which cannot serve {target_kind}; pass --visual-profile explicitly")
+    return preferred
+
+
+def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
     """Resolve one explicit preset into safe ordinary-resource paths."""
-    preset = _load_draft_resource("presentation-preset", preset_path)
     if not isinstance(preset.contract, PresentationPresetContract):
         raise ClosureError("E_DRAFT_PRESET_SCHEMA")
-    mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile"}
+    mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
+               "detailProfile": "review-detail-profile"}
     paths: dict[str, Path] = {}
     for name, kind in mapping.items():
         declaration = preset.contract.resources.get(name)
+        if declaration is None and kind == "review-detail-profile":
+            continue
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
-        resource = _load_draft_resource(kind, path)
+        try:
+            resource = _load_draft_resource(kind, path)
+        except ClosureError as error:
+            if error.diagnostic_id != "E_RESOURCE_VERSION_UNSUPPORTED":
+                raise
+            # Only an eagerly loaded, declared member of this preset receives
+            # copy provenance. Later explicit overrides do not pass this seam.
+            raise ClosureError(error.diagnostic_id, error.source_ref, error.detail,
+                               declaring_preset_id=preset.id) from error
         if resource.id != declaration["id"]:
             raise ClosureError("E_DRAFT_PRESET_RESOURCE")
         paths[kind] = path
@@ -272,7 +304,7 @@ def _draft_preset_paths(preset_path: Path, preset_root: Path | None = None) -> d
 
 def resolve_guided_draft_render(
     *, workspace_path: Path, viewport: tuple[int, int | None] = DEFAULT_DRAFT_VIEWPORT,
-    locale: str = "en-US", target_kind: str = "svg", visual_profile: str = "chrona-output/visual/v0.5-baseline", typesetter: TypesetterIdentity | None = None,
+    locale: str = "en-US", target_kind: str = "svg", visual_profile: str | None = None, typesetter: TypesetterIdentity | None = None,
 ) -> DraftRender:
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
@@ -283,6 +315,7 @@ def resolve_guided_draft_render(
     preset_resource = _load_draft_resource("presentation-preset", preset_path)
     if not isinstance(preset_resource.contract, PresentationPresetContract):
         raise ClosureError("E_AUTHORING_PRESET_SCHEMA")
+    visual_profile = _preset_visual_profile(preset_resource.contract, visual_profile, target_kind)
     resource_declarations = (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
     resources_by_path = {
         str(declaration["path"]): safe_load(_declared_child(preset_path.parent, str(declaration["path"])).read_bytes())
@@ -292,7 +325,9 @@ def resolve_guided_draft_render(
         raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
     try:
         normalized = normalize_authoring_workspace(workspace_resource.contract, preset_resource.contract, resources_by_path)
-    except (AuthoringError, ContractError) as error:
+    except ContractError as error:
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
+    except AuthoringError as error:
         raise ClosureError(str(error)) from error
     sources = [_normalized_draft_source(kind, source) for kind, source in normalized.draft_sources()]
     catalog_declarations = preset_resource.contract.resources.get("iconCatalogs", ())
@@ -310,7 +345,7 @@ def resolve_guided_draft_render(
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter, provenance=provenance,
                                         icon_assets=_load_draft_icon_assets(catalog_resources, catalog_paths,
-                                                                            _draft_view(resources)))
+                                                                            _draft_view(resources), _draft_theme_refs(resources)))
 
 
 def _declared_child(root: Path, relative: str) -> Path:
@@ -325,6 +360,25 @@ def _draft_view(resources: list[ClosureResource]) -> ViewContract:
     if not isinstance(view, ViewContract):
         raise _closure_kind_error("draft resources", "ViewContract", view)
     return view
+
+
+def _draft_theme_refs(resources: list[ClosureResource]) -> frozenset[str]:
+    """Resolve the draft Theme early enough to select its container-image refs (#465).
+
+    This mirrors the resolution `_draft_render_from_resources` performs
+    again later for the completed closure; both calls are pure and
+    deterministic, so resolving twice costs nothing beyond CPU.
+    """
+    by_kind = {item.kind: item for item in resources}
+    theme, scheme = by_kind.get("theme"), by_kind.get("color-scheme")
+    if theme is None or scheme is None:
+        return frozenset()
+    try:
+        resolved = resolve_theme(theme.contract.theme_input, scheme.contract.scheme_input,
+                                 scheme_content_identity=scheme.content_identity)
+    except ColorSchemeError:
+        return frozenset()  # The real error surfaces later, from the authoritative resolution.
+    return _theme_container_image_references(resolved)
 
 
 def _plain_value(value: Any) -> Any:
@@ -504,7 +558,7 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     except SchemaContractError as error:
         raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA", error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
-        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
 
 
@@ -654,7 +708,8 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         view_contract = resources[1].contract
         if not isinstance(view_contract, ViewContract):
             raise _closure_kind_error("resolved View resource", "ViewContract", view_contract)
-        icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract)
+        icon_assets = _load_icon_assets(context_contract, catalog_resources, reader, view_contract,
+                                        _theme_container_image_references(value))
     else:
         icon_assets = ()
     return RenderClosure(context_contract, tuple(resources), resolved_theme, icon_assets)
@@ -679,14 +734,39 @@ def _safe_icon_address(address: str) -> bool:
                 and all(part not in {"", ".", ".."} for part in path.parts))
 
 
-def _selected_icon_references(view: ViewContract) -> set[str]:
-    selected: set[str] = set()
+def _selected_icon_references(view: ViewContract, extra: frozenset[str] = frozenset()) -> set[str]:
+    selected: set[str] = set(extra)
     for visual in view.view.visuals:
         if visual.ref is not None:
             selected.add(visual.ref)
         if visual.encoding is not None:
             selected.update(str(item) for item in visual.encoding.get("domain", {}).values())
     return selected
+
+
+def _theme_container_image_references(resolved_theme: Mapping[str, Any]) -> frozenset[str]:
+    """Return every icon-catalog reference a Theme binds as container artwork (#465).
+
+    A View's `visuals` grammar never selects these (Specification 64 §7);
+    without this, an entry named only by `annotationContainer.image` would
+    never be closed into `RenderClosure.icon_assets`, and Theme/Layout
+    resolution would fail with a stable ingress error for an entry the
+    pinned Context can actually supply.
+    """
+    body = resolved_theme.get("body")
+    roles = body.get("roles") if isinstance(body, Mapping) else None
+    if not isinstance(roles, Mapping):
+        return frozenset()
+    tokens = ThemeTokenView(resolved_theme)
+    references: set[str] = set()
+    for role in roles:
+        try:
+            container = tokens.annotation_container(str(role))
+        except ThemeTokenError:
+            continue  # Malformed tokens are diagnosed later, when the role is actually used.
+        if container is not None and container.outline == "image" and container.image_ref:
+            references.add(container.image_ref)
+    return frozenset(references)
 
 
 def _selected_icon_entry(catalog: IconCatalogContract, name: str) -> IconEntry:
@@ -715,9 +795,10 @@ def _selected_icon_entry(catalog: IconCatalogContract, name: str) -> IconEntry:
                      str(raw["alternative"]), normalized, source)
 
 
-def _selected_catalog_entries(catalog: IconCatalogContract, view: ViewContract) -> tuple[IconEntry, ...]:
+def _selected_catalog_entries(catalog: IconCatalogContract, view: ViewContract,
+                              theme_refs: frozenset[str] = frozenset()) -> tuple[IconEntry, ...]:
     names: set[str] = set()
-    for reference in _selected_icon_references(view):
+    for reference in _selected_icon_references(view, theme_refs):
         if reference.count(":") != 1:
             continue
         set_name, name = reference.split(":", 1)
@@ -729,7 +810,8 @@ def _selected_catalog_entries(catalog: IconCatalogContract, view: ViewContract) 
 
 
 def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[ClosureResource, ...],
-                      reader: SnapshotReader, view: ViewContract) -> tuple[IconAsset, ...]:
+                      reader: SnapshotReader, view: ViewContract,
+                      theme_refs: frozenset[str] = frozenset()) -> tuple[IconAsset, ...]:
     if not catalog_resources:
         return ()
     assets: list[IconAsset] = []
@@ -741,7 +823,7 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
         if reference is None:
             raise _closure_kind_error(f"icon catalog resource id={catalog_resource.id}", "declared Context icon catalog reference", reference)
         catalog = catalog_resource.contract
-        entries = _selected_catalog_entries(catalog, view)
+        entries = _selected_catalog_entries(catalog, view, theme_refs)
         for entry in entries:
             icon_id = f"{catalog_resource.contract.set_name}:{entry.name}"
             if entry.kind == "vector":
@@ -776,7 +858,8 @@ def _load_icon_assets(context: RenderContextContract, catalog_resources: tuple[C
 
 
 def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
-                            catalog_paths: tuple[Path, ...], view: ViewContract) -> tuple[IconAsset, ...]:
+                            catalog_paths: tuple[Path, ...], view: ViewContract,
+                            theme_refs: frozenset[str] = frozenset()) -> tuple[IconAsset, ...]:
     """Close exactly the explicit local Draft catalog files and their raster bytes."""
     paths_by_identity = {resource.content_identity: path for resource, path in zip(catalog_resources, catalog_paths)}
     assets: list[IconAsset] = []
@@ -786,7 +869,7 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
         catalog = resource.contract
         catalog_path = paths_by_identity[resource.content_identity]
         root = catalog_path.parent.resolve()
-        for entry in _selected_catalog_entries(catalog, view):
+        for entry in _selected_catalog_entries(catalog, view, theme_refs):
             icon_id = f"{catalog.set_name}:{entry.name}"
             if entry.kind == "vector":
                 paths = tuple(NormalizedIconPath(tuple(IconPathCommand(command.kind, command.points)
@@ -827,7 +910,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
         code = "E_" + expected_kind.upper().replace("-", "_") + "_SCHEMA"
         raise ClosureError(code, error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
-        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     return ClosureResource(expected_kind, source.identity.id, source.identity.revision, source.identity.content_identity, contract)
 
 
@@ -849,19 +932,17 @@ def _load_reference_source(reference: dict[str, Any], reader: SnapshotReader, ex
     elif expected_kind == "profile-package":
         actual_id = value.get("packageId") if isinstance(value, dict) else None
     elif expected_kind == "review-detail-profile":
-        if not isinstance(value, dict) or value.get("version") != "chrona/review-detail-profile/v0.1":
-            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/review-detail-profile/v0.1 object; found {value!r}")
+        if not isinstance(value, dict):
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected review-detail-profile object; found {type(value).__name__}")
         actual_id = value.get("id")
     elif expected_kind == "layout-profile":
-        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.9":
-            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/layout-profile/v0.9 object; found {value!r}")
+        if not isinstance(value, dict):
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected layout-profile object; found {type(value).__name__}")
         actual_id = value.get("id")
     else:
         actual_id = value.get("id") if isinstance(value, dict) else None
-        expected_version_prefix = f"chrona/{expected_kind}/v"
-        if (not isinstance(value, dict) or value.get("kind") != expected_kind
-                or not str(value.get("version", "")).startswith(expected_version_prefix)):
-            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind} version prefix={expected_version_prefix}; found {value!r}")
+        if not isinstance(value, dict) or value.get("kind") != expected_kind:
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind}; found kind={value.get('kind') if isinstance(value, dict) else type(value).__name__}")
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
     derived = expected_kind == "theme" and is_derived_theme(value)

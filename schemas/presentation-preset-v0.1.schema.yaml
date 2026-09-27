@@ -31,11 +31,21 @@ properties:
           theme: {description: "Preset Theme resource.", $ref: "#/$defs/resource"}
           colorScheme: {description: "Preset Color Scheme resource.", $ref: "#/$defs/resource"}
           layout: {description: "Preset Layout Profile resource.", $ref: "#/$defs/resource"}
+          detailProfile: {description: "Optional review-detail profile (for example a legend) applied unless an explicit detail profile is given.", $ref: "#/$defs/detailProfileResource"}
           iconCatalogs:
             description: "Optional ordered icon catalogs closed by this preset; no catalog discovery occurs."
             type: array
             uniqueItems: true
             items: {$ref: "#/$defs/iconCatalogResource"}
+      visualProfile:
+        type: object
+        description: "Optional visual-profile preference used when no visual profile is given explicitly."
+        required: [preferred]
+        additionalProperties: false
+        properties:
+          preferred:
+            description: "Exact visual capability profile preferred by this preset; it must serve the selected target."
+            enum: [chrona-output/visual/v0.5-baseline, chrona-output/visual/v0.6-svg, chrona-output/visual/v0.6-png, chrona-output/visual/v0.7-svg, chrona-output/visual/v0.7-png]
       compatibleColorSchemes:
         type: array
         description: "Color Scheme resources compatible with this preset."
@@ -52,6 +62,15 @@ $defs:
       id: {description: "Stable referenced resource identifier.", type: string, minLength: 1}
       kind: {description: "Kind of the referenced presentation resource.", enum: [view, theme, color-scheme, layout-profile]}
       path: {description: "Safe relative path to the referenced resource.", examples: ["views/overview.yaml"], type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+  detailProfileResource:
+    type: object
+    description: "Pinned review-detail profile supplied by the preset."
+    required: [id, kind, path]
+    additionalProperties: false
+    properties:
+      id: {description: "Stable review-detail profile identifier.", type: string, minLength: 1}
+      kind: {description: "The only permitted detail resource kind.", const: review-detail-profile}
+      path: {description: "Safe relative path to the review-detail profile document.", examples: ["detail.yaml"], type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"}
   iconCatalogResource:
     type: object
     description: "Pinned icon catalog resource supplied by the preset."

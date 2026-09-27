@@ -30,6 +30,19 @@ It MUST NOT serialize the parsed YAML back to the copied context path.
 For each declared font asset, the materializer MUST copy the packaged asset bytes and verify
 the authored identity when present. It MUST NOT mutate the parsed context's font metadata.
 
+Copied bytes MAY be exposed to one render through a transient immutable execution
+overlay. The overlay MUST be keyed by the full authored resource reference or asset
+locator identity (including provider identity and resource revision where applicable),
+and MUST verify copied bytes against the authored content identity before use. It is
+resolver state, not a Context field, replacement reference, or canonical resource. The
+overlay's temporary storage MUST be disjoint from canonical revision/address paths so
+two providers with the same address cannot overwrite or satisfy one another. The
+authored provider, address, revision, and identity fields remain unchanged in the
+parsed Context and in its byte-for-byte copy. An overlay miss, mismatched key, or
+identity failure MUST fail closed; it must not select a different local/package asset,
+moving revision, or host default. The overlay lifetime ends with materialization and
+is not persisted as an alias.
+
 ## 2. Derived execution closure
 
 The materializer may emit a separate `closure.yaml` beside its transient render output.
@@ -46,6 +59,8 @@ pin.
 - invalid context or manifest shape: the existing materializer diagnostic;
 - declared font asset unavailable or identity mismatch: a stable materializer closure
   diagnostic.
+- required icon/resource asset unavailable from the verified execution overlay: the
+  existing stable reader/closure missing-resource diagnostic.
 
 Check and `--write` modes share this validation path. `--write` may replace only the
 declared generated SVG after successful closure validation and rendering.

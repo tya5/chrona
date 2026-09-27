@@ -10,6 +10,7 @@ from chrona.presentation.contracts.resources import (
     ResourceContract,
     SchemaContractError,
     SchemaErrorExplanations,
+    UnsupportedResourceVersionError,
     explain_resource_schema_errors,
     parse_contract,
 )
@@ -68,12 +69,22 @@ def collect_presentation_contracts(
     """
     contracts: list[ResourceContract] = []
     diagnostics: list[PresentationDiagnostic] = []
-    schema_reports: list[tuple[PresentationResourceSource, SchemaErrorExplanations | None]] = []
+    schema_reports: list[tuple[PresentationResourceSource, SchemaErrorExplanations | None,
+                               UnsupportedResourceVersionError | None]] = []
     for source in sources:
-        schema_reports.append((source, explain_resource_schema_errors(source.identity, source.value)))
+        try:
+            schema_reports.append((source, explain_resource_schema_errors(source.identity, source.value), None))
+        except UnsupportedResourceVersionError as error:
+            schema_reports.append((source, None, error))
 
-    schema_error_count = sum(report.error_count for _source, report in schema_reports if report is not None)
-    for source, report in schema_reports:
+    schema_error_count = sum(report.error_count for _source, report, _error in schema_reports if report is not None)
+    for source, report, version_error in schema_reports:
+        if version_error is not None:
+            diagnostics.append(PresentationDiagnostic(
+                version_error.diagnostic_id, source.identity.kind, source.identity.id,
+                version_error.source_ref, None, version_error.detail, "version",
+            ))
+            continue
         if report is not None:
             violations = (report.legacy,) if schema_error_count == 1 else report.aggregate
             diagnostics.extend(PresentationDiagnostic(
@@ -94,6 +105,6 @@ def collect_presentation_contracts(
         except ContractError as error:
             diagnostics.append(PresentationDiagnostic(
                 error.diagnostic_id, source.identity.kind, source.identity.id,
-                "/", None, error.detail or error.diagnostic_id, "contract",
+                error.source_ref, None, error.detail or error.diagnostic_id, "contract",
             ))
     return PresentationContractCollection(tuple(contracts), tuple(diagnostics))

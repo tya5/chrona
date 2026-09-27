@@ -58,6 +58,21 @@ locations, or a resource selector.  In particular, an accessibility note is
 evidence narration; it cannot suppress an accessibility diagnostic or request
 a renderer fallback.
 
+Gallery identity is independent from preset identity and from the slide's
+stable corpus address. A gallery may give a corpus slide a human-facing name
+that communicates its role, such as `Editorial Reference`. If its referenced
+resource is migrated in place, the reference design must be preserved under a
+distinct immutable resource ID and path, and the Context must pin the copied
+bytes by `contentIdentity`; an opaque local revision token alone does not
+recover historical bytes from Git. The Context and generated outputs are
+re-materialized with that archived resource provenance, while the prior
+Context and artifacts remain historical evidence at their published commit.
+If a second rendering of the same Project is added for a changed preset, it
+MUST have a different Context, corpus slide ID, and generated artifact
+identity. The reference entry cannot be taken over by the new preset render.
+This rule permits a gallery comparison to preserve a reference design while
+the corresponding named preset evolves.
+
 Every paired set declares exactly one Design Space `dimension` from `content`,
 `composition`, `visual-grammar`, or `appearance`, plus one shared human-readable
 axis. All peers in that set use the same dimension and axis. Output target is

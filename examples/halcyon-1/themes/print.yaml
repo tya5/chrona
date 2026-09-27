@@ -3,6 +3,19 @@ kind: theme
 id: print
 body:
   values:
+    opacity.axis-band:
+      type: number
+      value: 1
+    relation-source-terminal:
+      type: marker
+      value:
+        shape: circle
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
+    dash.as-of:
+      type: dashPattern
+      value: [4, 3]
     editorial:
       type: fontFamily
       value: Noto Sans, sans-serif
@@ -67,6 +80,9 @@ body:
     stroke-width:
       type: number
       value: 1
+    legend-swatch-inline-size:
+      type: number
+      value: 20
     outline:
       type: pattern
       value: {kind: outline}
@@ -172,6 +188,10 @@ body:
       type: number
       value: 0
   roles:
+    axis-rule:
+      strokeWidth: stroke-width
+    legend-swatch:
+      swatchInlineSize: legend-swatch-inline-size
     group-band:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
@@ -192,7 +212,7 @@ body:
     axis-band-decoration:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
-      opacity: opacity.group-band
+      opacity: opacity.axis-band
     text:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -263,7 +283,6 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
-      strokeWidth: stroke-width
     summary:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -297,7 +316,7 @@ body:
     milestoneSymbol:
       symbol: milestone-symbol
     relationSourceTerminal:
-      marker: arrow
+      marker: relation-source-terminal
     relationTargetTerminal:
       marker: arrow
     dependency:
@@ -323,18 +342,17 @@ body:
       strokeWidth: stroke-width
     axis-minor:
       strokeWidth: stroke-width
-    baseline:
-      strokeWidth: stroke-width
     asOf:
       strokeWidth: stroke-width
+      dash: dash.as-of
     as-of:
       strokeWidth: stroke-width
+      dash: dash.as-of
     network-edge:
       strokeWidth: stroke-width
     critical-edge:
       strokeWidth: stroke-width
     variance-behind:
-      strokeWidth: stroke-width
       contrastTreatment: required
     variance-ahead:
       contrastTreatment: deemphasized
@@ -369,35 +387,28 @@ body:
       iconScale: icon-mark-scale
       iconGap: icon-mark-gap
   colorBindings:
+    axis-rule.stroke: text
     background.fill: surface
     text.fill: text
     member-label-inside-planned.fill: insideLabelPlanned
     member-label-inside-actual.fill: insideLabelActual
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
-    heading.fill: text
     subtitle.fill: textMuted
-    axis.fill: textMuted
-    legend.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
-    annotation.stroke: neutral
-    summary.fill: text
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
-    axis-band-decoration.fill: surfaceRaised
+    axis-band-decoration.fill: neutral
     group-band.fill: surfaceRaised
     row-band.fill: surfaceRaised
     group-header-band.fill: surfaceRaised
-    groupHeader.fill: surfaceRaised
-    baseline.stroke: neutral
     metric.fill: text
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
     calendar-exception.fill: warning
     range.fill: warning
-    asOf.stroke: warning
     as-of.stroke: warning
     note-index.fill: accent
     group:bus.fill: category:bus
@@ -424,7 +435,6 @@ body:
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
-    variance-behind.stroke: negative
     dependency.stroke: textMuted
     progress-fill.fill: warning
     progress-fill.stroke: text

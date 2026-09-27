@@ -8,8 +8,9 @@ from typing import Any, Mapping
 import jsonschema
 
 from chrona.presentation.scene.model import (
-    DecorationDisposition, InspectionScene, LinearGradient, PatternGeometry, SceneIconPath,
-    ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, TextLayout,
+    LANE_MEMBER_PURPOSES, PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
+    PatternGeometry, SceneIconPath, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
+    TextLayout, requires_lane_member_provenance,
 )
 from chrona.resources import schema_document
 
@@ -94,7 +95,19 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         if not isinstance(surface, Mapping):
             return False
         slots = {item.get("id") for item in surface.get("slots", ()) if isinstance(item, Mapping)}
-        rows = {item.get("id") for item in surface.get("rows", ()) if isinstance(item, Mapping)}
+        row_items = surface.get("rows", ())
+        rows = {item.get("id") for item in row_items if isinstance(item, Mapping)}
+        lane_rows = {item.get("id") for item in row_items
+                     if isinstance(item, Mapping) and "laneMarkBandBlock" in item}
+        for row_item in row_items:
+            if not isinstance(row_item, Mapping) or "laneMarkBandBlock" not in row_item:
+                continue
+            bounds = row_item.get("bounds")
+            anchor = row_item.get("laneMarkBandBlock")
+            if (not isinstance(bounds, Mapping) or not isinstance(anchor, (int, float))
+                    or anchor < bounds.get("block", math.inf)
+                    or anchor > bounds.get("block", -math.inf) + bounds.get("blockSize", -math.inf)):
+                return False
         columns = {item.get("id") for item in surface.get("columns", ()) if isinstance(item, Mapping)}
         if (None in slots or None in rows or None in columns or len(slots) != len(surface.get("slots", ()))
                 or len(rows) != len(surface.get("rows", ())) or len(columns) != len(surface.get("columns", ()) )):
@@ -104,10 +117,65 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                  if isinstance(item, Mapping)}
         if len(by_id) != len(primitives):
             return False
+        lane_mode = surface.get("laneMode")
+        lane_members = surface.get("laneMembers", ())
+        if lane_mode is None:
+            if lane_members:
+                return False
+        else:
+            if lane_mode != "lanes" or not lane_members:
+                return False
+            if (len(lane_rows) != len(row_items)
+                    or any(not isinstance(item, Mapping) or "laneMarkBandBlock" not in item
+                           for item in row_items)):
+                return False
+            inventory: dict[str, tuple[str, str]] = {}
+            member_keys: set[tuple[str, str]] = set()
+            primary_ids: set[str] = set()
+            member_row_ids: set[str] = set()
+            for member in lane_members:
+                if not isinstance(member, Mapping):
+                    return False
+                row_id, member_id = member.get("rowId"), member.get("memberId")
+                emitted = member.get("emittedPrimitiveIds")
+                primary = member.get("primaryMarkIds")
+                if (row_id not in lane_rows or not isinstance(member_id, str) or not member_id
+                        or not isinstance(emitted, list) or not emitted
+                        or not isinstance(primary, list) or not primary
+                        or not set(primary) <= set(emitted)):
+                    return False
+                key = (row_id, member_id)
+                if key in member_keys or len(set(emitted)) != len(emitted) or len(set(primary)) != len(primary):
+                    return False
+                member_keys.add(key)
+                member_row_ids.add(row_id)
+                for primitive_id in emitted:
+                    if primitive_id in inventory:
+                        return False
+                    inventory[primitive_id] = key
+                primary_ids.update(primary)
+            tagged_inventory = {primitive.get("id"): (primitive.get("laneRowId"), primitive.get("laneMemberId"))
+                                for primitive in primitives if primitive.get("laneRowId") is not None}
+            if inventory != tagged_inventory or any(item not in by_id for item in inventory):
+                return False
+            if member_row_ids != lane_rows:
+                return False
+            if any(by_id[item][1].get("purpose") not in PRIMARY_LANE_MARK_PURPOSES
+                   for item in primary_ids):
+                return False
+            if any((item.get("kind") == "Icon"
+                    or (item.get("purpose") in LANE_MEMBER_PURPOSES
+                        and requires_lane_member_provenance(item.get("kind"), item.get("purpose"))))
+                   and item.get("laneRowId") is None for item in primitives):
+                return False
         for index, primitive in enumerate(primitives):
             if not isinstance(primitive, Mapping):
                 return False
             row, column, purpose = primitive.get("tableRowId"), primitive.get("tableColumnId"), primitive.get("purpose")
+            lane_row, lane_member = primitive.get("laneRowId"), primitive.get("laneMemberId")
+            if ((lane_row is None) != (lane_member is None)
+                    or (lane_row is not None and (lane_row not in lane_rows or not lane_row or not lane_member))):
+                return False
             if primitive.get("slotId") not in slots:
                 return False
             if purpose == "table-cell":
@@ -155,8 +223,9 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
                    "bounds": _bounds(item.bounds), "priority": item.priority,
                    "overflow": item.overflow}) for item in surface.slots
         ],
-        "rows": [{"id": item.row_id, "objectId": item.object_id, "groupId": item.group_id,
-                  "bounds": _bounds(item.bounds)} for item in surface.rows],
+        "rows": [_omit({"id": item.row_id, "objectId": item.object_id, "groupId": item.group_id,
+                        "bounds": _bounds(item.bounds),
+                        "laneMarkBandBlock": item.lane_mark_band_block}) for item in surface.rows],
         "columns": [{"id": item.column_id, "label": item.label, "bounds": _bounds(item.bounds)}
                     for item in surface.columns],
         "groups": [_omit({"id": item.group_id, "headerBounds": _bounds(item.header_bounds)
@@ -179,6 +248,14 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
         result["decorationDispositions"] = [
             {"visualRole": item.visual_role, "disposition": item.disposition}
             for item in surface.decoration_dispositions
+        ]
+    if surface.lane_mode is not None:
+        result["laneMode"] = surface.lane_mode
+        result["laneMembers"] = [
+            {"rowId": item.row_id, "memberId": item.member_id,
+             "emittedPrimitiveIds": list(item.emitted_primitive_ids),
+             "primaryMarkIds": list(item.primary_mark_ids)}
+            for item in surface.lane_members
         ]
     return result
 
@@ -212,6 +289,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "points": [_point(point) for point in item.points] if item.points else None,
         "href": item.href, "linkTitle": item.link_title, "tableRowId": item.table_row_id,
         "tableColumnId": item.table_column_id,
+        "laneRowId": item.lane_row_id, "laneMemberId": item.lane_member_id,
         "markerStart": _marker(item.marker_start) if item.marker_start is not None else None,
         "markerEnd": _marker(item.marker_end) if item.marker_end is not None else None,
         "pattern": _pattern(item.pattern) if item.pattern is not None else None,
@@ -269,8 +347,17 @@ def _paint(value: ScenePaint) -> dict[str, Any]:
                     "dash": list(value.dash), "opacity": value.opacity,
                     "gradient": _gradient(value.gradient) if value.gradient is not None else None,
                     "shadow": _shadow(value.shadow) if value.shadow is not None else None,
-                    "strokeFinish": _finish(value.stroke_finish) if value.stroke_finish is not None else None})
+                    "strokeFinish": _finish(value.stroke_finish) if value.stroke_finish is not None else None,
+                    "image": _image(value.image) if value.image is not None else None})
     return result
+
+
+def _image(value: Any) -> dict[str, Any]:
+    """Serialize identity, viewport, and completed tiles only -- never raw bytes."""
+    return {"assetIdentity": value.asset_identity,
+            "viewport": {"inlineSize": value.viewport[0], "blockSize": value.viewport[1]},
+            "tiles": [{"source": _bounds(tile.source), "destination": _bounds(tile.destination)}
+                      for tile in value.tiles]}
 
 
 def _gradient(value: LinearGradient) -> dict[str, Any]:

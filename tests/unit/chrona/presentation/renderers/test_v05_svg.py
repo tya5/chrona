@@ -8,7 +8,7 @@ import pytest
 
 from chrona.presentation.layout.surface_quality import PathCommand
 from chrona.presentation.renderers.v05_svg import render_v05_svg
-from chrona.presentation.scene.mark_geometry import marker_geometry
+from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.scene.model import DropShadow, LinearGradient, PatternGeometry, PatternStroke, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, SymbolGeometry, TextLayout
 
 

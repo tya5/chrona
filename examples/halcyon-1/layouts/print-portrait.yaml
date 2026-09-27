@@ -11,7 +11,7 @@ root:
   inlineSize: fill
   blockSize: fill
   columnTracks: [{minmax: {min: content, max: {fr: 6}}}, {fr: 4}]
-  rowTracks: [content, {fixed: {token: panel.timeline}}, content]
+  rowTracks: [content, {fixed: {token: panel.timeline}}, content, content]
   gap: {token: spacing.m}
   padding: {token: spacing.xl}
   alignItems: stretch
@@ -70,3 +70,15 @@ root:
       place: {inline: start, block: end, safety: safe}
       priority: preferred
       overflow: ellipsize-with-source
+    - id: legend
+      kind: slot
+      source: legend
+      cell: {column: 1, row: 4, columnSpan: 2}
+      inlineSize: fill
+      blockSize: content
+      place: {inline: start, block: start, safety: safe}
+      priority: preferred
+      overflow: ellipsize-with-source
+      direction: inline
+      gap: {token: spacing.m}
+      itemMinInlineSize: {token: spacing.xl}

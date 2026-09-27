@@ -4,9 +4,11 @@
 **Owns:** local Iconify collection ingestion, normalized monochrome icon
 catalogs, catalog-set closure, label/mark visual selection, completed Icon
 primitives, icon accessibility, and SVG/PNG target capability.
-**Does not own:** Project facts, arbitrary images/artwork, raw SVG at render
-time, concrete colours, Layout coordinates, package acquisition, network
-fetching, target fallback, or PDF rich-paint fidelity.
+**Does not own:** Project facts, arbitrary images/artwork (§7 records the one
+narrow exception: a purpose-built PNG entry reused as Theme-bound container
+artwork), raw SVG at render time, concrete colours, Layout coordinates,
+package acquisition, network fetching, target fallback, or PDF rich-paint
+fidelity.
 
 ## 1. Contract and authority
 
@@ -19,9 +21,10 @@ local Iconify JSON -> normalized catalog -> pinned Context catalog set
 An icon is a visual companion to an existing textual or semantic source. It
 cannot be the only carrier of required meaning. View owns occurrence, catalog
 reference, side, and field-to-icon mapping; Theme owns size ratio, gap ratio,
-and visual paint; Layout owns all sizing, cap-height alignment, measurement,
-wrapping, overflow, and reading order; Scene owns completed primitives; an
-adapter serializes only completed data.
+and visual paint; Layout owns all sizing, path transforms, stroke scaling,
+cap-height alignment, measurement, wrapping, overflow, and reading order;
+Scene projects completed primitives and `ScenePaintResolver` supplies their
+completed paint; an adapter serializes only completed data.
 
 The former v0.1 local-file catalog is superseded. No compatibility alias,
 one-catalog bridge, raw-SVG fallback, or silently downgraded source is retained.
@@ -90,15 +93,18 @@ Every normalized path has exactly one paint mode:
 - `stroke`, with finite positive source-unit width and closed
   `butt|round|square` cap plus `miter|round|bevel` join.
 
-At Layout/Scene completion a uniform viewport scale transforms stroke width to
-target-independent completed geometry. The owning Theme/Colour Scheme supplies
-the resolved paint colour; asset source never supplies a literal colour.
+Layout applies the uniform viewport scale to path coordinates and stroke width
+and returns target-independent completed geometry before Scene construction.
+The owning Theme/Colour Scheme supplies the resolved paint colour through
+`ScenePaintResolver`; asset source never supplies a literal color for catalog
+icons. Scene does not transform paths or scale widths.
 
 The importer rejects `style`, class, transform in SVG body, opacity, literal
 colour, gradient, filter, mask, clip, image, text, `use`, `defs`, URL, external
 reference, script/event/foreign content, unsupported element, non-finite value,
 or any configured depth/path/command/coordinate/tolerance limit. A future
-multicolour logo or image belongs to a separately designed asset family.
+multicolour logo or image belongs to a separately designed asset family; §7
+records the one narrow exception #465 makes to that boundary.
 
 ## 4. Context closure and public authoring
 
@@ -151,11 +157,12 @@ change appearance without selecting asset or occurrence.
 
 ## 6. Scene, accessibility, and targets
 
-`Icon` remains a dedicated Scene primitive. It carries one normalized vector
-path list or one verified PNG payload, complete bounds, complete paint/strokes,
+`Icon` remains a dedicated Scene primitive. It carries one Layout-completed
+vector path list or one verified PNG payload, complete bounds and paint/strokes,
 asset identity, alternative, decorative state, visual order, source reference,
 and binding pointer. It carries no catalog lookup, raw XML, Theme object, font
-metric, text measurement, or coordinate policy.
+metric, text measurement, or coordinate policy. Scene does not derive path
+coordinates or stroke scale.
 
 Decorative visuals beside present text are hidden from the accessibility tree.
 Meaningful visual use requires a non-empty catalog alternative and an equivalent
@@ -168,7 +175,39 @@ that complete SVG through the pinned resvg route. PDF, Typst, and TikZ remain
 rejection-only until independently designed and evidenced. Neither adapter
 selects a fallback, imports a catalog, reopens a path, or decides omission.
 
-## 7. Acceptance and evolution
+## 7. Container artwork exception (#465)
+
+A normalized `chrona/icon-catalog/v0.3` raster PNG entry (§2's "optional
+identity-closed purpose-built PNG entry bytes") MAY additionally serve as
+the backdrop artwork for a Theme `annotationContainer` binding
+(Specification 07, `outline: image`). This is the one narrow exception to
+this specification's "does not own... arbitrary images/artwork" boundary:
+the entry's identity, licence, and closure discipline are unchanged, and
+the same `set:name` reference form is reused, but the *consumer* differs.
+
+- **View still cannot bind a container.** A View's `visuals` grammar
+  resolves the same catalog entry only as an ordinary icon (a companion
+  beside a label or over a mark, with its own alternative text and
+  decorative/meaningful classification). Binding an entry as container
+  artwork happens only through the Theme's `annotationContainer.image`
+  field, naming the same `<set>:<name>` reference; nothing about the entry
+  itself marks it as "container-only" or "icon-only" — the two are
+  independent selections of the same closed asset, one by View, one by
+  Theme, exactly as an ordinary icon reference is independent of any other
+  View field that might name the same entry.
+- **Nine-slice and content insets are Theme facts, not catalog facts.** The
+  entry contributes only its identity, pixel viewport, and PNG payload,
+  exactly as it does for an icon. `sliceInsetsEm` and `contentInsetEm` are
+  declared on the Theme binding (Specification 07), not on the catalog
+  entry, so the same artwork could in principle be bound with different
+  insets by different Themes.
+- **Arbitrary artwork otherwise stays excluded.** This exception widens
+  *use* of an already-admitted PNG entry; it does not widen §2's or §3's
+  ingestion rules. A new PNG entry for container use is imported and
+  licensed exactly as any other purpose-built PNG entry is today — no new
+  import path, catalog resource kind, or Context input is introduced.
+
+## 8. Acceptance and evolution
 
 Release evidence must include real Material Symbols, Lucide, and Tabler import
 fixtures; a packaged Material default; user-owned import; direct and encoded

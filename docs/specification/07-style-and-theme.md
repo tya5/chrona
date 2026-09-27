@@ -158,6 +158,73 @@ A Theme binds visual roles to concrete tokens. Tokens may describe colour, typog
 
 Themes contain no selectors over Project fields. For example, `behind` is chosen by Style; its colour, line treatment, and label treatment are selected by Theme.
 
+A `symbol` token's value is either a built-in shape (`diamond`, `circle`, `square`,
+`chevron`) or a multi-part glyph (`shape: glyph`, with a `viewBox` and an ordered
+`parts` list of SVG path data). Each part paints from the milestone role's own
+resolved colour (`paint: fill` or `paint: stroke`) unless the part declares a fixed
+`color`, in which case that colour is used instead — except that a role whose own
+paint resolves to an outline treatment (`pattern: outline`, typically a baseline
+ghost) draws every part as a stroke of the role's own colour and dash pattern,
+ignoring any part's fixed `color`. This keeps a baseline variant distinguishable
+from its planned/actual variant by shape treatment, not only by colour, even when
+every variant shares one glyph asset. `milestoneSymbol` has two optional sibling
+roles, `milestoneSymbolActual` and `milestoneSymbolBaseline`, each falling back to
+`milestoneSymbol` when unset; a Theme binds a different glyph to one of them only
+when a variant needs a different asset altogether (a ghost sprite for a baseline
+gate), not merely a different treatment of the same asset.
+
+Theme authoring is additionally closed by a role/property applicability
+contract. After base inheritance and Color Scheme bindings are resolved, but
+before Layout or Scene construction, every declared `roles` property and every
+`colorBindings` target MUST have a registered consumer for that authoring role.
+The registry distinguishes Layout typography/geometry, Scene paint, and
+marker/symbol/contrast policy from the Scene visual-role spelling. A property
+with no capable consumer is rejected as `E_THEME_ROLE_PROPERTY_UNSUPPORTED`
+with its exact declaration pointer; an unknown role is not accepted merely
+because its syntax matches the Theme schema. A role's property may be valid
+yet unused by a particular View. A valid decorative treatment unsupported by
+the *selected profile* is governed by Specification 63's omission/fidelity
+contract instead of this load-time error. The complete selected contract and
+resource migration are recorded in the [#478 design](../design/issue-478-declared-treatment-visibility-design-2026-09-26.md).
+
+The [#478 role-admission correction](../design/issue-478-role-admission-rebase-correction-2026-09-27.md)
+applies that contract to the current finite role vocabulary. Applicability of
+an `annotationContainer` binding is checked on its annotation-box role; the
+finite token value and image-catalog asset still follow the existing Theme
+schema, `ThemeTokenView`, and Specification 64 closure rules. This admission
+gate does not reparse the nested token or move Layout geometry into Scene.
+
+The note annotation roles have explicit contrast responsibilities. The
+`annotation-note-text` role is state text and MUST declare
+`contrastTreatment: required`; its Theme/Scheme closure is checked against the
+4.5:1 state-text floor on the resolved Scheme surface, and its completed Scene
+paint is checked against its actual declared host ground. The
+`annotation-note-box` role is a decoration and participates in the 1.10:1
+decoration visibility policy and corpus witness. These classes are registered
+semantic facts, not inferred from the role spelling or paint.
+
+The `annotation-note-box.fill` binding is also the declared representative
+content-area color for the note text. For rectangle, balloon, and image-backed
+containers, Theme/Scheme closure MUST resolve this representative to opaque
+completed paint for contrast/perceptibility use. C4 adds this effective-role
+validation after inheritance and Scheme bindings: fill MUST resolve to an
+opaque color and opacity (if present) MUST equal 1; otherwise closure fails
+with `E_SCHEME_ANNOTATION_NOTE_GROUND` at the offending role property. The
+current contrast ground kernel accepts an opaque flat color (including an
+image-backed container's declared representative color); it does not sample
+artwork pixels. Partial-opacity host composition requires a separate
+renderer-neutral ground contract before it can be supported. The new
+Scene-level same-source note-box requirement and its unsupported-ground
+failure are specified in Specification 08.
+
+For a role name not otherwise registered, the bounded axis-tier measurement
+and legend fallback Rect-paint producer families overlap at Theme load time.
+The admitted properties are the union of those two potential consumers;
+neither producer changes the other's rendering behavior. Known roles retain
+their narrower contracts. See the [#478 overlap correction](../design/issue-478-open-role-family-overlap-correction-2026-09-27.md).
+Direct role declarations and Scheme-inserted colour targets retain their
+respective exact source pointers when applicability fails.
+
 ### 5.3 Inheritance and resolution
 
 Theme composition is deterministic:
@@ -223,3 +290,7 @@ This document does not define:
 The next specification resolves styled semantic objects into a renderer-neutral Scene. Scene may choose a rectangle, path, marker, text run, or group and assign concrete coordinates; it must preserve the object's identity, relationship kind, resolved visual roles, and token references. It must not decide whether something is `behind`, a dependency, or an explanatory arrow.
 
 The resulting Scene can be rendered to SVG or used by an interactive editor, but neither output becomes the source of Chrona semantics.
+
+For the versioned [#466 annotation container treatment](../design/issue-466-candidate-placement-design-2026-09-26.md), an authored Theme v0.11 MAY bind a finite `annotationContainer` token to an annotation box role; Theme v0.12 is the derived inheritance representation. The token declares rectangle or balloon outline and tail dimensions, not a position or search. Layout consumes that resolved treatment before placing an annotation, closes the box and tail geometry together, and passes a completed Path to Scene. Without the binding, a v0.22 resource retains its current rectangle/leader output. A View tail candidate requiring a balloon binding is invalid when the Theme cannot supply it; an adapter MUST NOT fabricate one.
+
+For the versioned [#465 image-backed container treatment](../design/issue-465-image-annotation-container-design-2026-09-27.md), the same `annotationContainer` token additionally MAY declare `outline: image`, naming an existing [Specification 64](64-portable-icon-catalogs.md) §7 icon-catalog raster PNG entry (`<set>:<name>`, the same reference form a View uses for an ordinary icon) plus nine-slice stretch insets and a content inset, both in em. Layout measures the annotation's text into the content inset's box and expands it by that inset to the paint box that candidate search and collision use; the nine-slice tile geometry stretched to that paint box is a Layout/Scene fact, never an adapter one. The role's existing fill/stroke colour bindings are unchanged; for an image outline, the fill binding is the Theme author's declared representative colour for the artwork's content area, consumed by contrast and perceptibility exactly as a rectangle's fill is today. A View cannot select or override this binding. Without it, a Theme renders exactly as before #465.

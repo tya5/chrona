@@ -74,6 +74,19 @@ entries.  All shipped Contexts and generated evidence migrate in the same
 change.  No v0.1/v0.3 compatibility reader, hash-category fallback, or
 partially materializable resource set is retained.
 
+## 5.1 Domain separability (#421)
+
+Scale resolution compares every pair of resolved domain colours with
+CIEDE2000 on sRGB. The comparison is made under normal vision, and under each
+deficiency the Color Scheme claims in `suitability.colorVision`, simulated
+with the Machado, Oliveira and Fernandes (2009) matrices at severity 1.0;
+`none-claimed` adds no simulated vision. A pair below
+`MINIMUM_CATEGORY_DELTA_E = 5.0`, including an exact duplicate, is a
+non-fatal `W_PRESENTATION_SCALE_NOT_SEPARABLE` naming the scale, both values,
+the vision and the difference. It is reported in the CLI and as the Scene
+diagnostic `W_PRESENTATION_SCALE_NOT_SEPARABLE:<scale>:<first>:<second>:<vision>`.
+Rendering continues. Committed evidence carries no such diagnostic.
+
 ## 6. Non-goals
 
 Multiple simultaneous encodings, predicates, ranges, continuous scales,

@@ -314,7 +314,7 @@ def test_public_png_profile_preserves_optional_rich_treatment_in_pixels(tmp_path
     theme_path = tmp_path / "optional-elevated.yaml"
     theme_path.write_text(yaml.safe_dump(theme, sort_keys=False))
 
-    def render(profile: str) -> bytes:
+    def render(profile: str):
         draft = resolve_draft_render(
             project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
             theme_path=theme_path, scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
@@ -326,9 +326,14 @@ def test_public_png_profile_preserves_optional_rich_treatment_in_pixels(tmp_path
             draft.closure, draft.asset_root, ReferenceScheduler(),
             renderer_for({"kind": context.target.kind, "capabilities": list(context.target.capabilities)},
                          context.environment.renderer_environment(), asset_root=draft.asset_root), asset_root=draft.asset_root,
-        )).artifact.content
+        ))
 
-    baseline, rich = render(BASELINE_PROFILE), render(PNG_PROFILE)
+    baseline_result, rich_result = render(BASELINE_PROFILE), render(PNG_PROFILE)
+    baseline, rich = baseline_result.artifact.content, rich_result.artifact.content
+    omissions = [item for item in baseline_result.scene.diagnostics
+                 if item.startswith("I_VISUAL_TREATMENT_OMITTED:")]
+    assert omissions and all(f"paintable={PNG_PROFILE}" in item for item in omissions)
+    assert not any(item.startswith("I_VISUAL_TREATMENT_OMITTED:") for item in rich_result.scene.diagnostics)
     assert baseline.startswith(b"\x89PNG\r\n\x1a\n") and rich.startswith(b"\x89PNG\r\n\x1a\n")
     baseline_pixels = Image.open(BytesIO(baseline)).convert("RGB")
     rich_pixels = Image.open(BytesIO(rich)).convert("RGB")

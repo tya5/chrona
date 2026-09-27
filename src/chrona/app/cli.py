@@ -4,6 +4,7 @@ import argparse
 from hashlib import sha256
 import json
 import sys
+import tempfile
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -16,6 +17,7 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import load_yaml, validate_project
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
+from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
 from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
 from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler, schedule
@@ -29,7 +31,7 @@ from chrona.operational.authoring_commands import cas_write_authoring_aggregate,
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
-from chrona.usecases.preset_library import copy_builtin_preset
+from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id, list_builtin_presets
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 from chrona.presentation.fonts.importer import FontImportError, import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
@@ -83,13 +85,19 @@ def _emit_presentation_rejection(error: PresentationIngressRejected) -> NoReturn
     diagnostics = []
     for item in error.diagnostics:
         code = f"E_{item.resource_kind.upper().replace('-', '_')}_SCHEMA" if item.code == "E_RESOURCE_SCHEMA" else item.code
-        diagnostic = _diagnostic(code, item.message, "closure", item.pointer)
+        message = _version_message(item.message) if code == "E_RESOURCE_VERSION_UNSUPPORTED" else item.message
+        diagnostic = _diagnostic(code, message, "closure", item.pointer)
         if multiple:
             diagnostic |= {"resourceKind": item.resource_kind, "resourceIdentity": item.resource_identity,
                            "phase": item.phase, **({"rule": item.rule} if item.rule is not None else {})}
         diagnostics.append(diagnostic)
     print(json.dumps({"status": "rejected", "diagnostics": diagnostics}, ensure_ascii=False))
     raise SystemExit(1)
+
+
+def _version_message(detail: str) -> str:
+    """Give an unprovenanced stale resource a safe, non-automatic next action."""
+    return detail + "; see the current resource schema and migration notes before re-applying edits"
 
 
 def _emit_font_warnings(rendered: RenderedReview) -> None:
@@ -136,6 +144,31 @@ def _emit_render_warnings(rendered: RenderedReview) -> None:
     _emit_font_warnings(rendered)
     _emit_fit_warnings(rendered)
     _emit_scene_perceptibility_warnings(rendered)
+    for collision in rendered.scale_collisions:
+        print(json.dumps({
+            "code": collision.code, "severity": "warning", "scaleId": collision.scale_id,
+            "values": [collision.first, collision.second], "vision": collision.vision,
+            "deltaE": collision.delta_e,
+            "message": f"{collision.first} and {collision.second} are not separable under {collision.vision} vision",
+        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+    for attached in rendered.attachment_warnings:
+        print(json.dumps({"code": attached.code, "severity": "warning", "sourceRef": attached.object_id,
+                          "host": attached.host_id,
+                          "message": f"{attached.object_id} is dated outside the planned span of {attached.host_id}"},
+                         ensure_ascii=False, sort_keys=True), file=sys.stderr)
+    for info in rendered.info_diagnostics:
+        if isinstance(info, SuppressedPlotLabels):
+            print(json.dumps({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
+                              "count": info.count}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        elif isinstance(info, PaintOmission):
+            message = (f"{info.treatment} on {info.role} was omitted by {info.visual_profile}; "
+                       + (f"use {info.paintable_profile} to paint it"
+                          if info.paintable_profile else f"no {info.target_kind} profile can paint it"))
+            print(json.dumps({"code": info.code, "severity": "info", "role": info.role,
+                              "treatment": info.treatment, "sourceRef": info.source_ref,
+                              "visualProfile": info.visual_profile,
+                              "paintableProfile": info.paintable_profile, "message": message},
+                             ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
@@ -171,9 +204,9 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
 def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"),
                          help="output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)")
-    command.add_argument("--visual-profile", default="chrona-output/visual/v0.5-baseline",
+    command.add_argument("--visual-profile", default=None,
                          choices=("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png", "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png"),
-                         help="exact visual capability profile (default: baseline)")
+                         help="exact visual capability profile (default: the preset's preferred profile, else baseline)")
     command.add_argument("--typesetter-engine", help="required with --format typst or tikz")
     command.add_argument("--typesetter-version", help="required exact engine version with --format typst or tikz")
     command.add_argument("--typesetter-adapter-grammar", help="required adapter grammar with --format typst or tikz")
@@ -250,7 +283,7 @@ def _parser() -> JsonArgumentParser:
     command = sub.add_parser("render", help="render a draft review surface (not reproducible evidence)",
                               description="render a draft review surface (not reproducible evidence)")
     command.add_argument("project", help="Draft Project YAML path")
-    command.add_argument("--preset", help="Presentation preset YAML path; omit it to use bundled chrona-default-draft; explicit resource flags override its members")
+    command.add_argument("--preset", help="Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members")
     command.add_argument("--view", help="View YAML path")
     command.add_argument("--theme", help="Theme YAML path")
     command.add_argument("--scheme", help="Color Scheme YAML path")
@@ -345,11 +378,12 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--example", choices=("halcyon-1",),
                          help="create a full named corpus example instead of the editable minimal starter")
 
-    preset = sub.add_parser("preset", help="copy one builtin presentation preset into editable source")
+    preset = sub.add_parser("preset", help="copy or list a builtin presentation preset")
     preset_sub = preset.add_subparsers(dest="preset_command", required=True, parser_class=JsonArgumentParser)
     command = preset_sub.add_parser("copy", help="copy one named builtin preset")
     command.add_argument("id", help="builtin preset identifier")
     command.add_argument("--output", "-o", required=True, help="empty output directory")
+    preset_sub.add_parser("list", help="list every builtin preset id and its gallery set")
 
 
     command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
@@ -434,6 +468,42 @@ def _run_preset_copy(args: argparse.Namespace) -> None:
     copy_builtin_preset(args.id, Path(args.output))
 
 
+def _run_preset_list(_args: argparse.Namespace) -> None:
+    print(json.dumps({"status": "ok", "presets": list_builtin_presets()}, ensure_ascii=False))
+
+
+def _looks_like_preset_path(value: str) -> bool:
+    """A `--preset` value naming a file always contains a separator or a YAML suffix (#429).
+
+    `library.yaml` ids match `^[a-z][a-z0-9-]*$`, which can never collide with either.
+    """
+    return "/" in value or value.endswith((".yaml", ".yml"))
+
+
+def _resolve_preset_argument(value: str | None) -> tuple[Path | None, tempfile.TemporaryDirectory | None]:
+    """Return `(preset_path, owned_tempdir)` for `--preset`, resolving a builtin id by name (#429).
+
+    A name is resolved through the exact same `copy_builtin_preset` a user's own
+    `chrona preset copy <id>` would run, into a process-local temporary directory,
+    so `render --preset <name>` is byte-identical to `preset copy <name>` followed
+    by `render --preset <path>` by construction rather than by a second code path.
+    The caller owns `owned_tempdir` and must `.cleanup()` it once rendering is done
+    (a plain try/finally, not `@contextmanager`: `CliFailure` is a frozen dataclass,
+    and contextlib's generator-based `__exit__` cannot re-raise a frozen exception
+    through `gen.throw` -- it tries to stamp `__traceback__` on it and fails).
+    """
+    if not value:
+        return None, None
+    if _looks_like_preset_path(value):
+        return Path(value), None
+    tmp = tempfile.TemporaryDirectory(prefix="chrona-preset-")
+    try:
+        return copy_builtin_preset(value, Path(tmp.name) / "preset"), tmp
+    except BaseException:
+        tmp.cleanup()
+        raise
+
+
 def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:
     if format_name and format_name != closure.context.target.kind:
         raise CliFailure("E_RENDER_FORMAT_CONTEXT", "--format must match the Context target", "cli", "/format", 2)
@@ -441,26 +511,44 @@ def _assert_context_format(closure: RenderClosure, format_name: str | None) -> N
 
 def _run_draft_render(args: argparse.Namespace) -> None:
     target_kind = _resolve_output_target(args.output, args.format)
-    default = default_preset_resource() if not args.preset else None
-    closure = resolve_draft_render(
-        project_path=Path(args.project), preset_path=Path(args.preset) if args.preset else Path(str(default)),
-        preset_root=None if args.preset else Path(str(default_preset_root())),
-        view_path=Path(args.view) if args.view else None, theme_path=Path(args.theme) if args.theme else None,
-        scheme_path=Path(args.scheme) if args.scheme else None, layout_path=Path(args.layout) if args.layout else None,
-        actual_path=Path(args.actual) if args.actual else None,
-        summary_path=Path(args.summary) if args.summary else None,
-        detail_path=Path(args.detail) if args.detail else None,
-        icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
-        font_metrics_path=Path(args.font_metrics) if args.font_metrics else None,
-        system_fonts=args.system_fonts,
-        viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=target_kind,
-        visual_profile=args.visual_profile,
-        typesetter=_draft_typesetter_identity(args, target_kind),
-    )
-    args.draft_auto_block = closure.auto_block
-    rendered = _render_review(closure.closure, args, asset_root=closure.asset_root,
-                              draft_font_resolution=closure.font_resolution)
-    _write_render_outputs(rendered, args)
+    preset_path, owned_tempdir = _resolve_preset_argument(args.preset)
+    try:
+        default = default_preset_resource() if preset_path is None else None
+        try:
+            closure = resolve_draft_render(
+                project_path=Path(args.project),
+                preset_path=preset_path if preset_path is not None else Path(str(default)),
+                preset_root=None if preset_path is not None else Path(str(default_preset_root())),
+                view_path=Path(args.view) if args.view else None, theme_path=Path(args.theme) if args.theme else None,
+                scheme_path=Path(args.scheme) if args.scheme else None, layout_path=Path(args.layout) if args.layout else None,
+                actual_path=Path(args.actual) if args.actual else None,
+                summary_path=Path(args.summary) if args.summary else None,
+                detail_path=Path(args.detail) if args.detail else None,
+                icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
+                font_metrics_path=Path(args.font_metrics) if args.font_metrics else None,
+                system_fonts=args.system_fonts,
+                viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=target_kind,
+                visual_profile=args.visual_profile,
+                typesetter=_draft_typesetter_identity(args, target_kind),
+            )
+        except ClosureError as error:
+            preset_id = error.declaring_preset_id
+            if (error.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED" and owned_tempdir is None
+                    and preset_path is not None and preset_id is not None
+                    and preset_id.startswith("chrona-builtin-")
+                    and is_builtin_preset_id(preset_id.removeprefix("chrona-builtin-"))):
+                catalogue_id = preset_id.removeprefix("chrona-builtin-")
+                message = (f"{error.detail}; run chrona preset copy {catalogue_id} --output <new-dir> "
+                           "and re-apply your edits")
+                raise CliFailure(error.diagnostic_id, message, "closure", error.source_ref) from error
+            raise
+        args.draft_auto_block = closure.auto_block
+        rendered = _render_review(closure.closure, args, asset_root=closure.asset_root,
+                                  draft_font_resolution=closure.font_resolution)
+        _write_render_outputs(rendered, args)
+    finally:
+        if owned_tempdir is not None:
+            owned_tempdir.cleanup()
     _emit_render_warnings(rendered)
 
 
@@ -632,7 +720,10 @@ def _run(args: argparse.Namespace) -> None:
         _run_init(args)
         return
     if args.command == "preset":
-        _run_preset_copy(args)
+        if args.preset_command == "list":
+            _run_preset_list(args)
+        else:
+            _run_preset_copy(args)
         return
     if args.command == "render":
         _run_draft_render(args)
@@ -721,6 +812,8 @@ def main() -> None:
         _emit_presentation_rejection(error)
     except (SnapshotReadError, ClosureError) as error:
         message = error.detail if error.detail else str(error)
+        if isinstance(error, ClosureError) and error.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED":
+            message = _version_message(message)
         source_ref = error.source_ref if isinstance(error, ClosureError) else "/"
         _emit_failure(CliFailure(error.diagnostic_id, message, "closure", source_ref))
     except IconImportError as error:
