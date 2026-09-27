@@ -1,68 +1,40 @@
-# Current work plan — closed lane projection (#467, #494)
+# Current work record — data-only lane membership (#467, #494)
 
-**Normative design:** Specs [38](../../specification/38-review-row-composition.md) and [46](../../specification/46-completed-scene-paint.md). Public lane mode stays fail-closed until B2/B3 and activation gates. Lane count follows measured geometry and the chain rule, not a numeric target.
-
-## B2 architecture decision
-
-Layout derives one immutable plan, completed geometry, and visible obstacles.
-Scene projects its primitives and carries lane-only member/obstacle inventories;
-adapters serialize them. The read-only rule audit uses those Scene obstacles
-with Layout's shared collision predicate. No chain-separation exception is
-currently enforced. Scene v0.6 adds optional lane fields without changing
-automatic/explicit bytes. B2 tests reject missing, extra, or untagged
-primitives/obstacles. This preserves Layout geometry ownership and makes the
-Scene audit independent of guessed paint extents. Spec 38 owns the detailed rule.
-Architecture review: Project/View still select intent; Theme still selects
-appearance; Layout alone closes obstacles and clearance; Scene carries and
-validates evidence; adapters only serialize. Deriving obstacles from Scene
-paint was rejected because compound icons and conservative stroke envelopes
-cannot be reconstructed exactly. The optional lane-only v0.6 fields require
-schema/serializer migration, not automatic/explicit output changes.
-The second B2 review found missing plan facts: completed lane-label icon
-emission/obstacles and selected group-header titles. These freeze before
-final placement, not from reloaded assets or blank later-lane cells. Lane
-object-level visual selectors fan out to matching typed occurrences; no match
-or duplicate side fails. Only generated lanes change; no View schema change.
-Specs 38/64 own the details.
-Final-row review found one internal closure gap: preflight must retain the
-mark-row and label-row heights it allocated with. The final row origin uses
-those frozen values, not a second measurement. This changes only Layout's
-plan model. Project/View intent, Theme ownership, Scene projection, adapters,
-and automatic/explicit bytes remain unchanged. Reject nonfinite heights or a
-lane extent inconsistent with them before final composition (Spec 38).
-
-B2 remaining order: (1) close typed visual target fan-out, label-icon
-payload/obstacles and group-title facts in the immutable preflight plan;
-test repeated objects, comparison roles, attached points, vector/raster icons,
-unknown targets and duplicate sides. (2) Project final translated obstacles
-and primitives from that one plan; check 02 and unchanged automatic bytes.
-(3) Run the read-only bidirectional Scene audit and lower-bound report on
-committed lane slides. Each unit gets focused tests and a separate push; the
-audit uses serialized Scene evidence, not Layout-only footprints.
-
-| Publishable slice | Files/owners and migration | Focused acceptance and evidence |
-| --- | --- | --- |
-| **S2b-1 shared frame extraction** | `layout/surface_composer.py`, shared Layout mark-geometry module, `layout/presentation.py`, focused Layout tests. Introduce `MarkBandFrame` and one placement composer; automatic/explicit pass their existing track frames, lanes pass zero-origin mark band. No schema/resource change. | Characterize planned, snapshot, Actual/open Actual, point/glyph/icon, progress, ports and symbols before/after extraction. Exact automatic/explicit Scene/SVG bytes, local-frame bounds/ports and one-translation tests. Publish with guard closed. |
-| **S2b-2 typed closure and validation** | `layout/lane_allocation.py`, `layout/lane_preflight.py`, typed facet/label projection records and tests. Add expected-emission inventory, canonical instance/member/primitive identities, symbol/progress/plain-mark payloads, icon group cardinality and stroke validation, exact attached host resolution, pairwise overlay compatibility. No View schema change. | Missing/duplicate facets, stack-vs-shared comparison, glyph paint order, icon vector/raster payload, progress clip, attached/repeated source, unsupported folded point and unknown required primitive fail closed. Complete local payload and port/footprint checks pass. Publish independently. |
-| **S2b-3 mapper and immutable preflight** | New Layout mapper and `lane_preflight.py`, View/normalized projection adapters only for selected facts, tests. Retain exact candidate/facet/required-label closure, `as_of`, seed frame and Theme/font/scale identities; preflight allocates once. | Planned/comparison/Actual/open/point/progress/icon/labelVisual fixtures, missing-placement diagnostics, same-plan and cutoff mismatch tests. No silent omission; all countable member IDs biject with allocation. Batch public materializers once for S2b-1..3 and compare generated Scene/SVG/diagnostics; automatic bytes unchanged. Publish/review with guard closed. |
-| **B2 one-plan realization** | Layout plan, request/result, `surface_composer.py`, table/group/row solve, Scene model/projection/serialization and v0.6 schema, `usecases/render_review.py`, tests. Freeze allocator row heights; consume the exact plan; translate local closure once through lane mark-band anchor; emit one Scene primitive per expected non-icon facet and one ICON per complete icon group. Populate lane-only member and final-visible-obstacle inventories from that plan; share the neutral collision predicate with the read-only audit. | Reject invalid or mismatched frozen row heights. Direct hidden 02 composition, exact chain, names/deltas/icons, lane table/group extents, seed/final frame and cutoff identity. Scene rejects missing/extra/untagged inventory primitives or obstacles; the Scene audit proves bidirectional pairwise non-redundancy and reports each group's primary-mark lower bound with concrete gap witnesses. Test insertion stability and automatic bytes. Publish with public guard closed. |
-| **B3 and L3c release** | Follow the [rule-based L3 implementation plan](issue-467-494-rule-based-lane-acceptance-implementation-plan-2026-09-27.md). B3 proves route causes/non-crossing. L3c migrates defaults/presets/three committed slides and generated mirrors atomically. | Batch affected public materializers and SVG/Scene visual diffs. CI supplies planned full three-OS pytest/conformance, wheel/smoke and newest-Python materializer evidence. No issue closure until every literal criterion below has direct public evidence and acceptance review. |
-
-If a changed formula, missing semantic role, or Scene-side geometry decision appears, pause implementation, update the living specification and this record, review the whole architecture, and publish them before resuming. For each push: run focused tests, check generated evidence, fetch `origin/main`, inspect the exact diff and ahead/behind state, push serially without force, and verify the remote commit. Inspect a material CI run without busy polling.
+**Status:** design plan. This record supersedes its geometry-first content; Git retains the earlier text. Public `main` at `ec3e339f` accepts `rows.mode: lanes` but keeps rendering guarded. The issue's 2026-09-27 10:58 UTC owner decision is the current acceptance authority. Specs 38/46/50/64 and the v0.27 View schema still contain geometry-first assumptions and must be reconciled before product code changes.
 
 ## Literal #467 acceptance
 
-1. A lane row mode exists. On `02-programme-board` the chain `structure → avionics → bus-test` is on one lane, and the lane count is **justified by the rule, not by a target number**. Both checks read the Scene footprints (marks, comparison marks, names, deltas, icons):
-   - **No redundant lane.** For every pair of lanes in the same group, moving all items of one into the other would make two footprints collide. The only exception is a pair kept apart by the chain rule, and those pairs are listed.
-   - **Lower bound reported.** For each group, report the maximum number of footprints that overlap at one date, next to its lane count, and attribute any difference. The lower bound is reported and explained; it is not a target.
-2. Every packed task and milestone has a visible name on the slide; no `W_LAYOUT_LABEL_SUPPRESSED` for a packed item on any committed slide.
-3. Lane assignment is deterministic, and a test shows that one inserted item does not reorder unrelated lanes.
-4. Deltas remain visible for packed items that have them.
-5. New Views and the packaged presets default to lanes; `automatic` still renders exactly as today.
-6. At least three committed slides use lanes (for example `01`, `02` and `06`), and their evidence is reproducible.
+- [ ] A lane row mode exists with a declared packing policy, `rows.packing`: an ordered subset of `explicit`, `attached`, `chain`, `dates`. The default is `[explicit, attached]`.
+  - `explicit`: items the View or Project assigns to the same lane key share it.
+  - `attached`: a point that `attachesTo` a span sits on its host's lane (#486).
+  - `chain` (opt-in): a finish-to-start successor continues on its predecessor's lane when their date intervals do not overlap.
+  - `dates` (opt-in): remaining items in a group, in date order, take the first lane whose date intervals do not overlap; touching is allowed.
+  - Items no rule places get their own lane.
+- [ ] Membership never depends on rendering: the same Project/View with two Themes differing in font, label length, icons and stroke widths yields identical membership; a data-only Project/View derivation matches the Scene.
+- [ ] Assignment is deterministic and stable: inserting one item does not reorder lanes it does not join.
+- [ ] Labels fit lanes, not vice versa. Every packed name and selected delta uses the #466/#488 model (end, start, stagger or leader); an unplaceable name is suppressed and counted and never adds a lane.
+- [ ] On `02-programme-board`, `packing: [explicit, attached, chain, dates]` keeps `structure → avionics → bus-test` on one lane. Acceptance lists membership per group and proves the data-only derivation.
+- [ ] `automatic` remains byte-identical. Transit-map presets explicitly declare `chain`/`dates`; default packing implies neither.
+- [ ] At least three committed slides use lanes with reproducible evidence.
 
-## Literal #494 acceptance
+## Related #494 gate
 
-1. On `02-programme-board` (lanes), no relation is suppressed for `egress-collision`, and every remaining suppression is listed with a measured cause.
-2. `test_lane_relation_routes_never_cross_a_required_lane_label` still passes on 02, 11 and 12: no route crosses any lane or member label.
-3. Lane count and lane membership on 02 are unchanged, or any change is attributed.
+On lane-mode 02, no relation is suppressed for `egress-collision`; every remaining suppression has a measured cause. Routes on 02, 11 and 12 never cross required lane/member labels. Any 02 membership/count change from prior evidence is attributed. #494 route behavior is downstream of, and cannot choose, #467 membership.
+
+## Design questions and boundaries
+
+1. Define the public lane-key field, scope, duplicate/unknown-key behavior, and explicit grouping when Project and View both contribute; no invented coordinate or Theme input.
+2. Define half-open date intervals, point/touching semantics, source variants, missing dates and deterministic tie-breaking. Resolve precedence/conflicts among ordered `explicit`, `attached`, `chain`, `dates`, including attached points and repeated objects.
+3. Separate a data-only membership result from Layout's later measured row height, mark, label/icon, obstacle and relation placement. Scene carries membership provenance; adapters serialize only. Decide whether existing footprint/facet inventories remain for label and #494 diagnostics, and remove obsolete pairwise non-redundancy acceptance.
+4. Define label suppression/count, delta behavior, lane table cells and group headers after membership. Preserve `automatic` bytes; choose the next View schema version and resource migration. Existing unpushed geometry-first helper and YAML candidate are not release evidence.
+5. Review against Specs 09/24/38/46/50/64, #486 attachment semantics, #466/#488 placement and #494 routing. Record intentional incompatibilities, failure diagnostics and extension points in living specs, not repeated here.
+
+## Design and publication order
+
+- **D1 — membership contract:** resolve questions 1–2 in Spec 38 and the View schema design; publish the normative design and whole-architecture review before code.
+- **D2 — presentation contract:** resolve questions 3–4 with Specs 46/50/64 and #494; publish the design.
+- **I-plan:** update this record with reviewable data-only allocator, placement, route and resource slices; name owned files, tests, public materializers, generated evidence and CI gates. Publish before product code.
+- **Implementation:** retire geometry inputs from membership, then wire the data-only result to Layout/Scene, adapt labels/routes, migrate resources and validate three slides. Keep the lane render guard closed until the end-to-end gate passes. Publish coherent tested units serially.
+- **Acceptance:** compare Scene membership with a Project/View-only oracle, Theme invariance, rendered names/deltas/route evidence, unchanged automatic bytes, batch SVG/Scene diffs and three-OS CI. Record every literal criterion once in the final review; close only after public evidence is complete.
+
+Old geometry-first allocation, preflight and Scene pairwise audit are not accepted merely because they exist on `main`. Reuse their geometry closure only where it serves post-membership placement or route evidence.
