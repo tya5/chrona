@@ -141,7 +141,13 @@ observations and immutable baseline schedules are not rewritten to satisfy
 layout. The third row is an available candidate, not an acceptance prerequisite
 for a particular lane count. The owner-amended 02 gate is at most fourteen
 lanes, with every lane beyond ten attributed to measured mark/required-label
-collision or chain rule. See the [lane-count acceptance correction](../design/issue-467-494-lane-count-acceptance-correction-2026-09-27.md).
+collision or chain rule. The ten-lane reference is the sum of the issue's six
+per-group mark-only estimates, not a global row ordinal. Layout retains
+source-keyed rejected-attempt evidence for every group-local lane opened beyond
+its reference estimate; an unmeasured or unclassified opening cannot satisfy
+the gate. Predecessor preference alone is not a `chain-rule` cause. See the
+[lane-count acceptance correction](../design/issue-467-494-lane-count-acceptance-correction-2026-09-27.md)
+and [cause-evidence amendment](../design/issue-467-494-lane-excess-cause-evidence-amendment-2026-09-27.md).
 
 Required lane names remain obstacles before semantic routing. Routes retain the
 declared quality bounds and may be suppressed when no candidate meets them.
