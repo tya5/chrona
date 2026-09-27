@@ -9,7 +9,7 @@ The public materializer accepts immutable Render Context v0.5 and v0.6. These ar
 
 ## 2. Immutable closure materialization
 
-Materialization is a test/example adapter, not a new runtime authority. It copies every pinned reference into the directory named by that reference's own revision token. For v0.6 `inputs.snapshot`, it copies both the snapshot-ref resource and its nested Project reference, each at their declared revisions. It never replaces a declared revision with a primary revision, copies an embedded schedule payload, or resolves a latest resource.
+Materialization is a test/example adapter, not a new runtime authority. For locally stored references, it copies each pinned resource into the directory named by that reference's own revision token and address. For package or other provider-backed resources that cannot be represented by that local revision store, it may stage verified bytes in a transient, disjoint execution-overlay namespace keyed by the full authored reference or asset-locator identity. That physical staging choice does not change the logical reference: provider identity, address, opaque revision token, and authored content identity remain intact, and the staged bytes must be exactly those resolved through that reference. In either case, materialization never replaces a declared revision with a primary revision, copies an embedded schedule payload, or resolves a latest resource. For v0.6 `inputs.snapshot`, it copies both the snapshot-ref resource and its nested Project reference, each at their declared revisions.
 
 ## 3. Context identities and expected SVG
 
@@ -25,7 +25,7 @@ The three empty M27 documents are recovered only by verifying their exact histor
 
 ## Boundary review
 
-- Context owns immutable references; materializer copies them verbatim into revision namespaces.
+- Context owns immutable references; local resources are copied into their declared revision namespaces, while provider-backed resources may be exposed through a transient identity-keyed overlay without rewriting those references.
 - CLI and closure validate/consume Contexts; they do not generate example authority.
 - Examples own manifests and expected artifacts.
 - CI owns reproducibility enforcement.
