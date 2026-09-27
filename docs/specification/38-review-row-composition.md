@@ -199,6 +199,34 @@ That migration condition is reviewed against the source View and acceptance
 evidence; it is not a universal schema rule for lane Views that make no such
 promise.
 
+### 3.1.1 Default policy and packaged preset migration (#467)
+
+The schema requires each View to declare `rows.mode`; it does not infer a mode
+from omission or reinterpret an existing immutable View. Product authoring
+commands and templates that create a new default View MUST emit
+`rows.mode: lanes` when the lane mode is available. A user may explicitly
+select `automatic` for one-item-per-row review. This is a producer policy,
+not a schema default.
+
+At the #467 L3c migration baseline, every built-in presentation preset View
+MUST use `rows.mode: lanes`: the seven entries in
+`src/chrona/resources/presets/library.yaml` and the separate selector View
+referenced by `src/chrona/resources/presets/default.yaml` (eight Views total).
+Each lane View declares its lane table and required title text; it also
+declares `finishDelta` when the source preset promised visible item deltas.
+Lane mode uses only group/lane summary columns, preserves item identity in
+Layout labels, and cannot silently fall back to `automatic`. Hierarchical
+composition remains outside this lane contract until an ancestry-preserving
+design is accepted. The named `editorial` preset is a lane preset; the
+reference-faithful Editorial appearance remains a separately named gallery
+entry backed by its own pinned corpus Context and is not a preset rendering
+exception.
+
+This adoption list describes the L3c resource migration and does not mean
+future catalogue entries may inherit an implicit mode. Every View remains
+schema-explicit, and each future default preset must be authored and reviewed
+as a lane View or receive a separately approved design correction.
+
 ## 4. Diagnostics and validation
 
 The v0.2 View validator diagnoses empty/duplicate rows, unknown source objects,
