@@ -236,7 +236,13 @@ neighborhood. A declared fallback supplies its finite candidate order after
 the preferred side. `inside` may exempt only its own host mark, not a
 comparison sibling or another item. Every lane ladder terminates in
 suppression: if no legal candidate fits, Layout records the source, increments
-the surface count and emits no name; it never changes lane membership. Omitted
+the surface count and emits no name; it never changes lane membership. An
+attached point's required plot label is a distinct exception: Layout composes
+its title, planned date and available finish delta as one measured request.
+After its bounded fit ladder fails, Layout emits that whole label with a
+`visible-overflow` outcome and warning rather than silently suppressing facts.
+This changes neither lane membership nor Scene's projection-only role.
+Omitted
 `overflow` means `suppress`; explicit `visible-overflow` is invalid for a lane
 name because it contradicts this terminal outcome. These are v0.28 ingress
 rules, not silent overrides. Non-lane label policies do not change.
@@ -253,7 +259,11 @@ identity. A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.
 
-`automatic` retains its per-object row behavior and exact output bytes.
+`automatic` retains its per-object row behavior and exact output bytes, except
+for the already declared attached-point fold; `rows.points: own-row` restores
+an independent automatic row. In lane mode, omitting `attached` from
+`rows.packing` makes the point an independent membership candidate, although
+other declared packing rules may still group it.
 Authored `explicit` rows and their track policy are separate from generated
 lane membership. `rows.laneTable` is required only in lane mode; item-level
 `tableColumns` are invalid there. New default Views declare lane mode

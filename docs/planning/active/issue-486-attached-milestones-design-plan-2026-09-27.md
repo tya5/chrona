@@ -14,17 +14,14 @@
 4. “The milestone's name and date stay visible, and its delta if it has one.”
 5. “One committed example has a long task with at least two intermediate milestones attached. HALCYON-1's `campaign` or `mcs` would serve.”
 
-## Design closure before product code
+## Selected design and whole-architecture review
 
-- Reconcile required attached-point facts with #467's lane-name suppression rule. Decide whether a lane attached-point fact label is a distinct required label, how Layout reserves/places it, and the diagnostic if it cannot fit. Do not introduce Theme-dependent lane membership or move text decisions into Scene.
-- Clarify `points: own-row` for automatic rows and the lane-mode equivalent (omitting `attached` from `packing`); check the literal criterion against View v0.28 schema and document any intended migration.
-- Review the chosen rule against Project scheduling, Review Item identity, View ownership, Layout geometry, Scene projection, adapter output, relation/annotation anchors, and the public materializer corpus. Update the living spec and this record before implementation.
+- An attached point's plot label is **required facts**, not a discretionary lane name: its title, planned date and available finish delta form one measured text request. Layout tries the declared lane placement ladder first; if none fits, it emits the complete label as `visible-overflow` with the existing layout warning, never a suppressed/partial label. Ordinary lane names retain #467's terminal suppression. The visible-overflow outcome is explicit evidence for later local tuning, not permission for Scene to choose text or for lane membership to change with Theme.
+- `rows.points: own-row` controls automatic rows, as View v0.28 already declares. In lane mode, excluding `attached` from `rows.packing` restores independent membership; other declared lane rules may still group that point. This is the lane analogue, not a hidden `points` compatibility mode. Explicit rows remain author-controlled. No schema or Project migration is needed.
+- Project `attachesTo` remains presentation metadata: no schedule edge, changed date, containment or relation semantics. View resolves host membership and item identity; Layout owns measured label geometry and collision outcome; Scene projects completed primitives and lane handoff; SVG serializes them. Relations/annotations use the same placed item anchors. This matches Specs 05/06/08/38 and #467's data-only membership boundary. The only normative correction is the required-facts exception in Spec 38 §3.1. Risk: fallback may visibly overlap in dense lanes; a nonessential aesthetic adjustment is a successor issue, while silent loss is unacceptable for #486.
 
-## Publishable slices and evidence
+## Next phase
 
-1. Publish this current design plan.
-2. Publish the selected visibility/opt-out contract and whole-architecture review here and in the normative Review-row spec; amend the implementation sequence below.
-3. Implement only the missing lane/label behavior and rendered tests. Reuse existing attachment validation and automatic-row code unless tests reveal a defect. Focused tests must cover a host lane, two children, title/date/delta visibility, automatic `own-row`, and lane packing opt-out.
-4. Add two intermediate gates to HALCYON-1 `campaign`, repin immutable Project references, regenerate public Scene/SVG evidence in one batch, and inspect changed SVG plus unexpected diffs. Run focused tests locally; CI supplies the three-OS full suite and newest-Python materializer check. Publish an acceptance review with a row and direct evidence for each criterion; close #486 only after CI and rendered evidence pass.
+Publish the implementation plan after this design and normative correction land.
 
 Local aesthetic tuning that is not needed for these criteria belongs in a successor issue, not this record.
