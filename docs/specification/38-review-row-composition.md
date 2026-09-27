@@ -192,6 +192,14 @@ A selected primary Review row is one atomic lane candidate bundle. Its
 comparison/Actual facets contribute geometry without duplicate names or
 counts; a point attached under #486 stays on its host candidate's lane but
 retains its own required title/date/delta, mark, port and count identity.
+Packed member labels are atomic required bundles: measured title/selected
+delta text and any resolved leading/trailing `labelVisual` icons move together.
+Layout evaluates each finite rung with completed component text/icon geometry,
+exact visible footprints and natural block extent; it selects the whole bundle
+or a new lane, never text without its icon. The selected lane plan carries the
+completed placements to Scene, and both text and icon are phase-one required
+label obstacles and source-keyed Scene footprints. Automatic-row icon
+coordinates MUST NOT be copied into lanes. See the [label-visual correction](../design/issue-467-b1b2-lane-label-visual-correction-2026-09-27.md).
 Semantic relation/annotation ports belong to the completed mark slot, not
 necessarily to an emitted primitive part's unexpanded bounds. A source-keyed
 owning facet carries separate completed `port_host_bounds`; its ports MUST lie
