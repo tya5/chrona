@@ -6,3 +6,7 @@
 # remains fail-closed for lanes. Remove this entry when L3b imports the module
 # into the composer; planned removal: 2026-10-04.
 chrona.presentation.layout.lane_allocation
+#467: Direct Layout preflight kernel is tested independently while public
+# lanes remain fail-closed. Remove when B1b/B2 connects projection closure
+# and render_review to the plan; planned removal: 2026-10-04.
+chrona.presentation.layout.lane_preflight
