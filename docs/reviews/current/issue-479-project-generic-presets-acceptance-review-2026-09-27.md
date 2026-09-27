@@ -13,6 +13,11 @@
 
 ## Literal issue acceptance
 
+### Issue #479
+
+- Source: [Issue #479](https://github.com/tya5/chrona/issues/479)
+- Observed: 2026-09-27
+
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | `grouping.order` accepts a data-derived order, at least by earliest planned start. | met | [`test_groups_order_by_their_earliest_planned_start`](../../../tests/integration/test_project_generic_view.py), View v0.26 schema and Projection implementation; focused and CI checks above. | — |
@@ -22,6 +27,10 @@
 | 5 | A preset can declare a required or preferred visual profile. | met | `elevated-light` declares `visualProfile.preferred: chrona-output/visual/v0.7-svg` in [`library.yaml`](../../../src/chrona/resources/presets/library.yaml); [`test_elevated_light_paints_its_gradient_without_a_flag`](../../../tests/integration/test_project_generic_presets.py) and independent SVG inspection verify the effect. | — |
 | 6 | Names in both the table and the plot is a declared placement. | met | `labels.placement: both` is validated by [`test_labels_both_requires_a_table_title_column`](../../../tests/integration/test_project_generic_view.py); the same file verifies plot placement remains equivalent, and relevant bundle Views declare `both`. | — |
 | 7 | The five catalogue presets use each of these where relevant, and render HALCYON-1 and the starter without project-specific values. | met | The ten-SVG batch and visual review above cover the *five original #470 catalogue presets*. [`test_each_preset_renders_halcyon_and_the_starter`](../../../tests/integration/test_project_generic_presets.py) additionally parameterizes all seven current library entries and renders both projects; the same file scans bundle YAML for example-project owner/entity values and checks relevant legends and `both` declarations. Editorial and Technical print are extra coverage, not a redefinition of this criterion. | — |
+
+## Programme-level criteria (optional)
+
+None beyond the seven literal issue criteria.
 
 ## Architecture and release conclusion
 
