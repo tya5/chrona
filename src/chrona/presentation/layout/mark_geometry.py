@@ -6,6 +6,10 @@ from dataclasses import dataclass
 
 from chrona.presentation.icons.normalizer import IconNormalizationError, parse_path_commands
 from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.presentation import MarkBandFrame
+from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path
+from chrona.presentation.layout.surface_quality import MarkPlacement
 
 
 @dataclass(frozen=True)
@@ -44,6 +48,36 @@ def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float,
         return (SymbolPartPlacement(commands),)
     return tuple(SymbolPartPlacement(part.outline, part.paint, part.color)
                  for part in glyph_parts(value, bounds))
+
+
+def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_ref: str,
+                           bounds: Rect, start_port: tuple[float, float], end_port: tuple[float, float],
+                           shape: str, semantic_id: str, theme_tokens: object, slot_id: str,
+                           paint_order_base: int = 100, end_treatment: str = "closed") -> MarkPlacement:
+    """Complete a mark's outline, role paint order, and symbol in one frame-aware path."""
+    geometry = frame.role_geometries[semantic_id]
+    radius = min(geometry.corner_radius * float(min(bounds.inline_size, bounds.block_size)),
+                 float(min(bounds.inline_size, bounds.block_size)) / 2)
+    commands = (open_span_path(inline=float(bounds.inline), block=float(bounds.block),
+                               inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
+                if shape == "open-span" else
+                rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
+                                     inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
+                if shape == "point" and radius > 0 else ())
+    completed_symbols = ()
+    if shape in {"point", "open-span"}:
+        variant = "baseline" if semantic_id in {"snapshot", "scenario"} else semantic_id
+        token = theme_tokens.variant_symbol(variant)
+        try:
+            completed_symbols = symbol_parts(token, (float(bounds.inline), float(bounds.block),
+                                                       float(bounds.inline_size), float(bounds.block_size)), commands)
+        except ValueError as error:
+            raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE", placement_id) from error
+    return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
+                         mark_shape=shape, corner_radius=radius, path_commands=commands,
+                         slot_id=slot_id, semantic_id=semantic_id,
+                         paint_order=paint_order_base + geometry.paint_order,
+                         end_treatment=end_treatment, symbol_parts=completed_symbols)
 
 
 @dataclass(frozen=True)

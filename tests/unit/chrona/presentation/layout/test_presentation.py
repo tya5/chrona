@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
-from chrona.presentation.layout.presentation import RowPlacement, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
+from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, RowPlacement, TrackPlacement, mark_bounds, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
 from chrona.presentation.layout.text import ellipsize_text
 from chrona.presentation.layout.surface_composer import _centred_cell_baseline, _contains_block_interval
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
@@ -229,6 +229,23 @@ def test_track_placements_accept_mark_extents_at_the_row_boundary() -> None:
 
     assert tracks[0].block == tracks[0].actual_block == 10.0
     assert tracks[0].block_size == 10.0
+
+
+def test_mark_band_frame_preserves_track_formula_and_supports_zero_origin() -> None:
+    roles = {
+        "planned": MarkGeometry(0.5, 0.25, 0, 0.0),
+        "actual": MarkGeometry(0.4, 0.6, 1, 0.0),
+    }
+    track = TrackPlacement("item", 12.0, 99.0, 8.0)
+    scale = object()
+    frame = MarkBandFrame.from_track(track, scale, roles)
+
+    assert frame.inline_scale is scale
+    assert frame.role_bounds("planned") == mark_bounds(track, roles["planned"]) == (14.0, 4.0)
+    assert frame.role_bounds("actual") == (16.8, 3.2)
+    local = MarkBandFrame.zero_origin(scale, 8.0, roles)
+    assert local.role_bounds("planned") == (2.0, 4.0)
+    assert local.role_bounds("actual") == (4.8, 3.2)
 
 
 def test_track_minimum_uses_the_completed_multi_lane_milestone_placement() -> None:

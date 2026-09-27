@@ -15,7 +15,7 @@ from chrona.presentation.layout.label_visual_measurement import (
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
-from chrona.presentation.layout.presentation import MarkGeometry, TrackPlacement, mark_bounds, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
+from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
@@ -37,8 +37,8 @@ from chrona.presentation.model.placement_candidates import candidate_order
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import RouteSearchFailure, place_relation_route, relation_route_quality
-from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
-from chrona.presentation.layout.mark_geometry import symbol_parts
+from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
+from chrona.presentation.layout.mark_geometry import compose_mark_placement, symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
@@ -1250,29 +1250,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     def place_mark(placement_id: str, source_ref: str, bounds: Rect,
                    start_port: tuple[float, float], end_port: tuple[float, float], *, shape: str,
                    semantic_id: str, end_treatment: str = "closed") -> MarkPlacement:
-        geometry = role_geometries[semantic_id]
-        radius = min(geometry.corner_radius * float(min(bounds.inline_size, bounds.block_size)),
-                     float(min(bounds.inline_size, bounds.block_size)) / 2)
-        commands = (open_span_path(inline=float(bounds.inline), block=float(bounds.block),
-                                   inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
-                    if shape == "open-span" else
-                    rounded_diamond_path(inline=float(bounds.inline), block=float(bounds.block),
-                                         inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
-                    if shape == "point" and radius > 0 else ())
-        completed_symbols = ()
-        if shape in {"point", "open-span"}:
-            variant = "baseline" if semantic_id in {"snapshot", "scenario"} else semantic_id
-            token = request.theme_tokens.variant_symbol(variant)
-            try:
-                completed_symbols = symbol_parts(token, (float(bounds.inline), float(bounds.block),
-                                                          float(bounds.inline_size), float(bounds.block_size)), commands)
-            except ValueError as error:
-                raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE", placement_id) from error
-        return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
-                             mark_shape=shape, corner_radius=radius, path_commands=commands,
-                             slot_id=timeline.slot_id, semantic_id=semantic_id,
-                             paint_order=MARK_PAINT_ORDER_BASE + geometry.paint_order,
-                             end_treatment=end_treatment, symbol_parts=completed_symbols)
+        return compose_mark_placement(frame=frame,
+                                      placement_id=placement_id, source_ref=source_ref, bounds=bounds,
+                                      start_port=start_port, end_port=end_port, shape=shape,
+                                      semantic_id=semantic_id, theme_tokens=request.theme_tokens,
+                                      slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
+                                      end_treatment=end_treatment)
     for review_row in review_rows:
         members = sorted(
             enumerate(review_row.items),
@@ -1282,12 +1265,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
             instance_id = layout_id if projection.rows else item.object_id
             track = track_by_id[layout_id]
+            frame = MarkBandFrame.from_track(track, scale, role_geometries)
             source_kind = item.source_kind if projection.rows else "combined"
             planned = item.planned
             planned_semantic = "snapshot" if source_kind in {"snapshot", "scenario"} else "planned"
-            planned_block, planned_size = mark_bounds(track, role_geometries[planned_semantic])
-            actual_block, actual_size = mark_bounds(track, role_geometries["actual"])
-            missing_block, missing_size = mark_bounds(track, role_geometries["missing-actual"])
+            planned_block, planned_size = frame.role_bounds(planned_semantic)
+            actual_block, actual_size = frame.role_bounds("actual")
+            missing_block, missing_size = frame.role_bounds("missing-actual")
             if source_kind != "actual" and item.source_type == "point":
                 x = _coordinate(planned["at"], scale)
                 bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)),
@@ -1391,12 +1375,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 instance_id = _folded_instance_id(folded, item)
                 planned_at = item.planned.get("at")
                 planned_semantic = "snapshot" if item.source_kind in {"snapshot", "scenario"} else "planned"
-                planned_geometry = role_geometries[planned_semantic]
-                planned_block = block + block_size * planned_geometry.offset
-                planned_size = block_size * planned_geometry.height
-                actual_geometry = role_geometries["actual"]
-                actual_block = block + block_size * actual_geometry.offset
-                actual_size = block_size * actual_geometry.height
+                # Folded marks occupy a real group-header band, so make that
+                # band the frame origin while retaining its exact role offsets.
+                frame = MarkBandFrame(scale, block, block_size, role_geometries)
+                planned_block, planned_size = frame.role_bounds(planned_semantic)
+                actual_block, actual_size = frame.role_bounds("actual")
                 if item.source_kind != "actual" and isinstance(planned_at, date):
                     x = _coordinate(planned_at, scale)
                     bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)), Decimal(str(planned_size)), Decimal(str(planned_size)))

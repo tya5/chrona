@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
@@ -46,6 +47,43 @@ class MarkGeometry:
         if self.height <= 0 or self.offset < 0 or self.offset + self.height > 1 or not 0 <= self.corner_radius <= 0.5:
             raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/theme/markGeometry",
                               detail=f"height={self.height}; offset={self.offset}")
+
+
+@dataclass(frozen=True)
+class MarkBandFrame:
+    """One completed mark band in a caller-owned block coordinate frame.
+
+    ``inline_scale`` is retained with the frame so every mark projection uses
+    the same temporal scale as its track allocation.  Automatic and explicit
+    rows use ``from_track``; lane projections use ``zero_origin`` and translate
+    the completed result only after composition.
+    """
+
+    inline_scale: Any
+    block_origin: float
+    block_size: float
+    role_geometries: Mapping[str, MarkGeometry]
+
+    def __post_init__(self) -> None:
+        if (not math.isfinite(self.block_origin) or not math.isfinite(self.block_size)
+                or self.block_size <= 0):
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layout/markBandFrame")
+
+    @classmethod
+    def from_track(cls, track: TrackPlacement, inline_scale: Any,
+                   role_geometries: Mapping[str, MarkGeometry]) -> "MarkBandFrame":
+        return cls(inline_scale, track.block, track.block_size, role_geometries)
+
+    @classmethod
+    def zero_origin(cls, inline_scale: Any, block_size: float,
+                    role_geometries: Mapping[str, MarkGeometry]) -> "MarkBandFrame":
+        return cls(inline_scale, 0.0, block_size, role_geometries)
+
+    def role_bounds(self, role: str) -> tuple[float, float]:
+        """Return the role's block start and extent without changing formula order."""
+        geometry = self.role_geometries[role]
+        return (self.block_origin + self.block_size * geometry.offset,
+                self.block_size * geometry.height)
 
 
 def mark_bounds(track: TrackPlacement, geometry: MarkGeometry) -> tuple[float, float]:
