@@ -29,6 +29,8 @@ Against Specs 09/24/38/46/50/64: schedule and View selection remain upstream of 
 
 **B connection decision and architecture review:** Unit A makes exact membership available before any Theme measurement. View normalization can therefore derive lane-table labels/counts directly from it, replacing the old conservative table envelope and seed-inline preflight with one measured layout solve. Layout treats the membership's lane IDs and member sets as immutable; its only freedom is within-lane mark subtracks, block extent, text/icon placement and routes. An authored same-key collision can grow the lane internally, never split it. The old `allocate_lanes`/`SurfaceLanePlan` membership result is not a compatibility authority and must leave the product path. This keeps Spec 24's table measurement and row-height rules in Layout, Spec 38's semantic row ownership in View, Spec 46's completed paint in Scene, and #494's route obstacles downstream. No Project, Theme, renderer or automatic/explicit contract changes. The one-solve simplification removes a Theme/scale-dependent feedback path rather than adding one.
 
+**B1 label clarification:** `laneTable.label: lane` uses an authored explicit key or `Lane <founding View-item ID>`. `group` uses the group title only on its first lane. This preserves identity under unrelated insertion and never borrows an arbitrary member's title or table facts; Spec 38 is the normative rule. Schema and Project remain unchanged.
+
 ## Implementation and publication units
 
 | Unit | Owners and migration | Acceptance before serial push |

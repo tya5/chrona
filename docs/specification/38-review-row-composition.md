@@ -194,7 +194,12 @@ Mark, comparison, icon and text footprints remain relevant to this later
 placement and to #494 route avoidance. Required visible labels are obstacles
 before routes; a route cannot cross a required lane/member label. The
 lane table shows one group/lane summary and optional member count per
-generated lane, never an arbitrary member's facts. A visible delta table
+generated lane, never an arbitrary member's facts. For `laneTable.label: group`,
+the first lane in a group shows that group's title and later lanes have an
+empty label. For `laneTable.label: lane`, an authored explicit key is
+the label; otherwise it is `Lane ` followed by the stable founding View-item
+ID. A displayed ordinal or a representative member title is not a lane
+identity. A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.
 
