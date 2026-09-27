@@ -20,14 +20,15 @@ of truth; handoff notes and unpushed local work are leads to verify.
    behavior, schema and identity rules, layer connections, failure behavior,
    extension points, and intended incompatibilities. Check the result against
    the whole architecture and adjacent designs, not only the target module.
-   Update the living specification or record an ADR when semantics, ownership,
-   public schemas, or compatibility promises change. Publish the design and
-   review before implementation planning is treated as final.
+   Update the living specification when semantics, ownership, public schemas,
+   or compatibility promises change. Publish the design and review before
+   implementation planning is treated as final.
 4. **Write the implementation plan.** Split work into slices that can each be
    reviewed, tested, and published. For each slice name the affected files or
    owners, schema and resource migrations, generated evidence, focused tests,
    public materializers, acceptance conditions, and publication boundary.
-   Publish this plan before changing product code.
+   Publish this plan before changing product code. Keep it in the same concise
+   issue work record unless a distinct normative specification is needed.
 5. **Implement the approved slices.** Keep domain intent, View, Theme, Layout,
    Scene, and adapter responsibilities in their declared layers. Layout owns
    completed geometry, text measurement, placement, and routes; Scene carries
@@ -50,25 +51,30 @@ of truth; handoff notes and unpushed local work are leads to verify.
    leave reviewer-maintained boards open unless their owner directs otherwise.
 
 If implementation exposes a missing rule, conflicting contract, or layer
-breach, pause that slice. Write a design correction, review it against the
-whole architecture, amend the implementation plan, and publish those documents
+breach, pause that slice. Update the current design, review it against the
+whole architecture, amend the implementation plan, and publish those changes
 before resuming code. Do not hide a design gap behind a local conditional.
 
 ## Documentation: when, where, and what
 
-Write design and review records in English. Use descriptive filenames with an
-issue number, topic, document type, and date (`YYYY-MM-DD`); link predecessor
-and successor documents so a fresh contributor can reconstruct the decision.
+Write design and review records in English. Prefer one concise, living issue
+work record in `docs/planning/active/` for the baseline, design plan, design,
+architecture review, implementation plan, and progress. Update it in place as
+the current decision changes; Git history is sufficient for superseded text.
+Do not create a new plan, correction, amendment, or review file for every
+small slice. Keep normative behavior in the relevant living specification,
+not duplicated across issue records. Use a separate ADR only when an enduring
+cross-cutting decision genuinely needs one. Existing historical files may
+remain, but link one current authority instead of repeating their contents.
 
 | When | Location | Record |
 | --- | --- | --- |
-| Before design | `docs/planning/active/` | `issue-<n>-<topic>-design-plan-<date>.md`: published baseline, literal acceptance, dependencies, questions, slices, and evidence needed. |
-| During design, before code | `docs/design/` | `issue-<n>-<topic>-design-<date>.md`: use cases, contracts, ownership, alternatives, migration, diagnostics, and exact behavior. Use a `-correction-` or `-amendment-` document for later changes; do not silently rewrite history. |
-| At design completion | `docs/reviews/current/` | `issue-<n>-<topic>-architecture-review-<date>.md`: explicit consistency check against specifications, ADRs, related designs, and layer boundaries; decision, risks, and unresolved items. |
-| When changing normative behavior | `docs/specification/` and/or `docs/decisions/` | Update the relevant living specification or add an ADR with the decision and supersession/migration impact. Design notes alone do not replace normative authority. |
-| Before implementation | `docs/planning/active/` | `issue-<n>-<topic>-implementation-plan-<date>.md`: slice order, owned files, tests, generated outputs, acceptance gates, and publication units. Add an implementation amendment after a design correction. |
+| Before design | `docs/planning/active/` | Start or update one issue work record: published baseline, literal acceptance, dependencies, questions, slices, and evidence needed. |
+| During design, before code | Same issue work record | Current use cases, contracts, ownership, migration, diagnostics, exact behavior, and whole-architecture review. Edit superseded decisions in place; Git retains history. |
+| When changing normative behavior | `docs/specification/` (or an ADR only if needed) | Update the relevant living specification and migration impact. The issue record points to it without copying the rule. |
+| Before implementation | Same issue work record | Current slice order, owned files, tests, generated outputs, acceptance gates, and publication units. Update this section after a design correction. |
 | During implementation | Code, `schemas/`, `conformance/`, `tests/`, `examples/`, `tools/` as applicable | Implement only the approved slice. Commit generated resource mirrors and evidence with their source changes, after checking byte identity and unintended diffs. Record a newly discovered design problem in the design/review/plan locations above before proceeding. |
-| At each slice or issue release | `docs/reviews/current/` | Implementation or acceptance review with exact commit, commands, CI run/PR links, artifact diffs, architectural findings, and a row for **every literal issue acceptance criterion** (`met`, `deferred`, or `not met`) with direct evidence. Use `docs/reviews/issue-acceptance-review-template.md` where appropriate. A deferred criterion keeps the issue open unless an explicit successor disposition is approved. |
+| At issue release | `docs/reviews/current/` | One concise acceptance review with exact commit, CI/PR links, artifact diffs, architectural findings, and a row for **every literal issue acceptance criterion** (`met`, `deferred`, or `not met`) with direct evidence. A deferred criterion keeps the issue open unless an explicit successor disposition is approved. Slice evidence may be added to the living issue work record without a new review file. |
 
 Keep active plans under `docs/planning/active/` while they are the working
 record. Do not mistake a document's `Accepted` heading or an old green run for
