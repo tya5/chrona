@@ -9,7 +9,8 @@ import jsonschema
 
 from chrona.presentation.scene.model import (
     LANE_MEMBER_PURPOSES, PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
-    PatternGeometry, SceneIconPath, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
+    PatternGeometry, SceneIconPath, SceneLaneObstacle, SceneLaneRectObstacle,
+    SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
     TextLayout, requires_lane_member_provenance,
 )
 from chrona.resources import schema_document
@@ -120,10 +121,13 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         lane_mode = surface.get("laneMode")
         lane_members = surface.get("laneMembers", ())
         if lane_mode is None:
-            if lane_members:
+            if lane_members or surface.get("laneObstacles") or "laneClearance" in surface:
                 return False
         else:
-            if lane_mode != "lanes" or not lane_members:
+            lane_obstacles = surface.get("laneObstacles", ())
+            lane_clearance = surface.get("laneClearance")
+            if (lane_mode != "lanes" or not lane_members or not lane_obstacles
+                    or not _valid_number(lane_clearance) or lane_clearance < 0):
                 return False
             if (len(lane_rows) != len(row_items)
                     or any(not isinstance(item, Mapping) or "laneMarkBandBlock" not in item
@@ -167,6 +171,41 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                     or (item.get("purpose") in LANE_MEMBER_PURPOSES
                         and requires_lane_member_provenance(item.get("kind"), item.get("purpose"))))
                    and item.get("laneRowId") is None for item in primitives):
+                return False
+            expected_obstacles = set(inventory)
+            obstacle_primitives: set[str] = set()
+            facet_ids: set[str] = set()
+            for obstacle in lane_obstacles:
+                if not isinstance(obstacle, Mapping):
+                    return False
+                primitive_id = obstacle.get("primitiveId")
+                key = (obstacle.get("rowId"), obstacle.get("memberId"))
+                facet_id = obstacle.get("facetId")
+                if (primitive_id not in expected_obstacles or inventory[primitive_id] != key
+                        or not isinstance(facet_id, str) or not facet_id or facet_id in facet_ids):
+                    return False
+                facet_ids.add(facet_id)
+                obstacle_primitives.add(primitive_id)
+                geometry = obstacle.get("geometry")
+                if not isinstance(geometry, Mapping):
+                    return False
+                if geometry.get("kind") == "rect":
+                    left, top = geometry.get("left"), geometry.get("top")
+                    right, bottom = geometry.get("right"), geometry.get("bottom")
+                    if (not all(_valid_number(value) for value in (left, top, right, bottom))
+                            or right <= left or bottom <= top):
+                        return False
+                elif geometry.get("kind") == "stroked-segment":
+                    start, end = geometry.get("start"), geometry.get("end")
+                    stroke_width = geometry.get("strokeWidth")
+                    if (not isinstance(start, list) or len(start) != 2
+                            or not isinstance(end, list) or len(end) != 2
+                            or not all(_valid_number(value) for value in (*start, *end, stroke_width))
+                            or stroke_width < 0 or start == end):
+                        return False
+                else:
+                    return False
+            if obstacle_primitives != expected_obstacles:
                 return False
         for index, primitive in enumerate(primitives):
             if not isinstance(primitive, Mapping):
@@ -257,7 +296,30 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
              "primaryMarkIds": list(item.primary_mark_ids)}
             for item in surface.lane_members
         ]
+        result["laneObstacles"] = [_lane_obstacle(item) for item in surface.lane_obstacles]
+        result["laneClearance"] = surface.lane_clearance
     return result
+
+
+def _lane_obstacle(item: SceneLaneObstacle) -> dict[str, Any]:
+    if isinstance(item.geometry, SceneLaneRectObstacle):
+        geometry: dict[str, Any] = {
+            "kind": "rect", "left": item.geometry.left, "top": item.geometry.top,
+            "right": item.geometry.right, "bottom": item.geometry.bottom,
+        }
+    elif isinstance(item.geometry, SceneLaneSegmentObstacle):
+        geometry = {"kind": "stroked-segment", "start": list(item.geometry.start),
+                    "end": list(item.geometry.end), "strokeWidth": item.geometry.stroke_width}
+    else:
+        raise SceneSerializationError("E_SCENE_SERIALIZATION")
+    return {"facetId": item.facet_id, "primitiveId": item.primitive_id,
+            "rowId": item.row_id, "memberId": item.member_id,
+            "class": item.obstacle_class, "geometry": geometry}
+
+
+def _valid_number(value: Any) -> bool:
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value))
 
 
 def _fit_warning(value: Any) -> dict[str, Any]:

@@ -26,6 +26,8 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                 *, actual_set: Mapping[str, Any] | None = None,
                                 locale: str = "en-US") -> TableContent:
     """Normalize the table once so measurement and composition read the same cells."""
+    if getattr(view.rows.mode, "value", view.rows.mode) == "lanes":
+        return _lane_table_content(projection, project, view)
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation)
                     for column in view.table_columns)
@@ -62,6 +64,49 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
                                    for item in projection.items for column in view.table_columns)
         row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
     return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels)
+
+
+def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> TableContent:
+    """Build exact lane summary cells solely from the immutable membership projection."""
+    lane_table = view.rows.lane_table
+    if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
+        raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
+    columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content")),)
+    if lane_table.count:
+        columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content")),)
+    entities = project.get("entities", {})
+    cells = []
+    levels = []
+    lanes_by_id = {lane.lane_id: lane for lane in projection.lane_membership.lanes}
+    assignments_by_lane: dict[str, list[Any]] = {}
+    for assignment in projection.lane_membership.assignments:
+        assignments_by_lane.setdefault(assignment.lane_id, []).append(assignment)
+    seen_groups: set[str] = set()
+    for row in projection.lane_rows:
+        lane = lanes_by_id.get(row.lane_id)
+        if lane is None:
+            raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
+        if lane_table.label.value == "group":
+            group = entities.get(row.group_id, {}) if isinstance(entities, Mapping) else {}
+            group_label = (str(group.get("title", "")) if isinstance(group, Mapping) else "")
+            if not group_label:
+                group_label = next((item.group_label for item in row.items if item.group_label), row.group_id)
+            label = group_label if row.group_id not in seen_groups else ""
+            seen_groups.add(row.group_id)
+        else:
+            founder = lane.explicit_key
+            if founder is None:
+                founder = next((assignment.item_id for assignment in assignments_by_lane.get(row.lane_id, ())
+                                if assignment.rule == "single"), None)
+            if not founder:
+                raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
+            label = lane.explicit_key or f"Lane {founder}"
+        cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
+        if lane_table.count:
+            member_count = len(lane.member_item_ids)
+            cells.append(TableCellContent(row.lane_id, "Items", str(member_count), "tableCell", "numeric"))
+        levels.append(TableRowLevel((row.lane_id,), bool(row.group_id)))
+    return TableContent(columns, tuple(cells), (), None, tuple(levels))
 
 
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,

@@ -114,276 +114,131 @@ once, the View annotation must add `rowId` and `itemId`; otherwise composition f
 instances render one connector per unambiguous pair in deterministic row/member order;
 no title or nearest-geometry match is permitted.
 
-### 3.1 Collision-aware lanes (#467)
+### 3.1 Data-only generated lanes (#467)
 
-The lane View version adds `rows.mode: lanes` for non-hierarchy table-timeline selection. In lane mode, every packed item's name and selected delta is required text: it is measured and reserved by lane allocation, and placed inside its own lane in Layout's first closure phase, before semantic dependencies (Specification 50 phase contract, #466). In other modes item labels remain optional and follow dependencies.
-View supplies selected items, grouping, ordering and required plot-label intent;
-Layout composes group-local lane membership from measured mark and required
-name/delta footprints. A row is a lane with a stable group/representative
-identity, not a Project object or an authored View row. Source/item identity
-never depends on lane ordinal. A predecessor lane is preferred only when dates
-and measured geometry permit; otherwise deterministic first-fit opens another
-lane. A name cannot be suppressed; no fitting candidate opens a new lane or
-uses a recorded visible-overflow terminal placement. The left table has
-declared group/lane summary and optional count, not one arbitrary member's
-facts. Versioned explicit rows may opt into collision allocation while
-retaining authored row/member IDs and table subject. The exact contract,
-admitted domain and migration are in the [#467 design](../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md)
-and its [lane feasibility and route correction](../design/issue-467-494-lane-feasibility-route-correction-2026-09-27.md).
+`rows.mode: lanes` is a non-hierarchical table-timeline composition. A lane
+contains countable selected Project items; Snapshot, scenario and Actual marks
+are facets of their selected item, not additional lane members. Lane membership
+is a pure function of the scheduled **planned** dates and selected relation
+facts, Project object fields and `attachesTo`, and View selection, grouping,
+ordering and `rows` declarations. It MUST NOT read Theme, font metrics,
+labels, icons, stroke widths, mark bounds, Actual dates, Scene geometry,
+collision obstacles or the output target. The same Project and View therefore
+produce identical membership under every Theme and renderer.
 
-The bounded lane-label ladder may use three stagger rows, with start- and
-end-aligned candidates in stable order at each row. Layout includes every used
-row in the lane's measured block extent and the shared required-row sizing
-path. This is a generic Layout policy and does not add a View coordinate or
-per-project branch. Project schedule corrections for individual acceptance
-cases remain data migrations, not layout policy; historical Actual
-observations and immutable baseline schedules are not rewritten to satisfy
-layout. The third row is an available candidate, not an acceptance prerequisite
-for a particular lane count. No numerical lane-count target is an acceptance
-gate. On completed 02 Scene geometry, every same-group lane pair MUST resist
-merging in both directions through a measured cross-member visible-footprint
-collision, unless an approved enforced chain-separation rule names that pair.
-The current predecessor preference is not such a rule. Per-group primary-mark
-overlap concurrency is reported beside final lane count as an explanatory
-lower bound; full-footprint inline concurrency and concrete collision witnesses
-explain any gap. Scene lane-mode primitives MUST retain typed lane-row and
-countable-member provenance for this audit without adding placement policy to
-Scene. See the [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
-The lane-only Scene surface also carries a closed member inventory: each
-countable member's row/member IDs, exact emitted primitive IDs, and primary
-mark IDs. Layout derives it from the same immutable plan that emitted those
-primitives. Scene validates a bijection between inventory IDs and tagged
-primitives, rejects missing/duplicate IDs or mismatched row/member tags, and
-requires membership-bearing mark, required-text, delta and icon purposes to
-be tagged on a lane surface. A typed lane-mode discriminator distinguishes
-this obligation from automatic/explicit surfaces, whose bytes remain
-unchanged. The inventory is structural completeness evidence, not Scene
-placement policy. The read-only checker MUST fail closed on an incomplete
-inventory rather than guess membership spatially or parse `source_ref`.
-For this read-only Scene audit, each lane Scene row carries the completed
-absolute block coordinate of its shared mark-band top. The checker aligns
-source and target mark-band coordinates in both directions; it MUST NOT infer
-the anchor from the row's full bounds, a glyph part, or semantic port-host
-bounds. Lane primitives carry typed row and countable-member provenance.
-The [Scene anchor correction](../design/issue-467-494-scene-lane-anchor-correction-2026-09-27.md)
-defines the lane-only v0.6 schema fields and checker cases.
+View v0.28 adds `rows.packing`, a duplicate-free subsequence of
+`[explicit, attached, chain, dates]`, defaulting to
+`[explicit, attached]`. The subsequence preserves this order; `chain` and
+`dates` are never implicit. `rows.laneKeys` has optional `field` (a Project
+object `fields` key) and `byObject` (a map of selected object IDs to keys);
+at least one is required when `laneKeys` is present. For an object present
+in both, `byObject` wins. The field is ordinary Project domain data; only the View
+interprets it as presentation membership. Keys are nonempty strings scoped
+to one resolved View group; a key is not a numeric lane index. Unknown
+object IDs in the View map, non-string field values and conflicting explicit
+keys inside one attached host bundle fail before rendering. Without
+`explicit` in `packing`, lane-key declarations have no effect.
 
-Required lane names remain obstacles before semantic routing. Routes retain the
-declared quality bounds and may be suppressed when no candidate meets them.
-Cause-specific evidence for #494 MUST distinguish egress collision from route
-quality rejection and bounded-search failure for each suppressed relation; a
-quality-rejected route is not reported as rendered. The #494 acceptance allows
-non-egress suppressions when every remaining suppression is listed with its
-measured cause.
+If `attached` is selected, a selected point with `attachesTo` and its
+selected span host form one atomic countable bundle for membership. The
+point remains a distinct member with its own name, mark and count, but
+inherits the host's lane; an explicit key on either member applies to the
+bundle. A missing or invalid selected host follows #486's validation policy,
+never a guessed lane. This attachment is presentation-only and creates no
+schedule or dependency edge. If `attached` is not selected, the point is an
+independent item.
 
-Lane membership and required block size are closed by one Layout-owned
-preflight after a finite seed arrangement supplies the table/timeline inline
-bounds and before the content-height solve. This preflight is final-block-
-coordinate-free, not inline-geometry-free: it measures the selected marks,
-comparison/actual/attached-point footprints, required titles and deltas, and
-their finite ladder in the seed inline scale. Its immutable plan is the sole
-authority for lane identity/order, selected rung and natural row extent.
-Content-height resolution and final composition consume that same plan; the
-composer MUST NOT reallocate lanes. The final arrangement MUST preserve the
-plan's lane-driving inline bounds and scale, or lane mode fails with
-`E_LAYOUT_LANE_INLINE_UNSTABLE` before output. This excludes silent coupling
-from a block-dependent aspect-ratio constraint. `automatic` and `explicit`
-retain their existing path and bytes.
+For packing, a span occupies its scheduled planned half-open interval
+`[start, end)`; a point occupies an instant `at`. Two spans with only a
+shared endpoint do not overlap. A point at a span's start overlaps it, while
+a point at its end only touches it; two points at the same instant overlap.
+Only these planned intervals govern `chain` and `dates`. Explicit-key
+bundles may overlap in time: their common lane is authored intent, with
+Layout resolving their internal mark tracks later.
 
-The lane plan's mark geometry is completed in a typed `MarkBandFrame`: its
-inline scale, lane-local mark-band origin (zero for lane candidates), height
-and role offsets are explicit. One Layout mark-geometry composer serves
-automatic/explicit track frames and lane-local frames without changing the
-former formulas or conversion order. Preflight retains exact candidate/facet
-and required-label closure, selected `as_of`, and measurement, Theme, font and
-scale identities. The content-height solve and final composer consume this
-immutable lineage. The final composer checks those identities, then translates
-completed local geometry exactly once through the final mark-band anchor
-carried as `SceneRow.lane_mark_band_block`; it MUST NOT remeasure, reconstruct
-the frame, change a rung or reallocate. A changed cutoff or measurement
-authority fails before Scene emission. See the [S2b closure correction](../design/issue-467-b1b2-s2b-closure-reconciliation-correction-2026-09-27.md).
+The allocator first forms attached bundles and explicit-key lanes. It then
+visits the remaining bundles in stable planned-start, planned-end, object-ID
+and View-item-ID order within each resolved group. For `chain`, a selected
+end-to-start relation may continue the successor on a placed predecessor's
+lane only if the successor interval does not overlap any independent member
+already on that lane. Eligible predecessor ties use relation ID then stable
+predecessor identity. For `dates`, the bundle takes the first compatible
+same-group lane in stable lane-key order; touching is allowed. A rule that
+cannot place a bundle leaves it for the next declared rule; a still-unplaced
+bundle opens its own lane. Existing assignments are never relocated.
+Group order follows the View; lane IDs derive from group plus explicit key
+or stable founding member, never a displayed ordinal. Adding an unrelated
+item cannot reorder existing lane IDs relative to one another.
 
-The lane table's measured width is reserved before membership from the finite
-candidate set: all possible group/representative labels and the maximum
-selected-item count bound the `Lane`/optional `Items` columns. The completed
-plan supplies exact one-per-lane cells and actual lane row count. The measured
-envelope is intentionally conservative; final cells MUST fit it. The timeline
-and table block requirement uses the completed lane count and natural lane
-heights, never the original per-item row count. Group bands include those
-expanded rows and their own headers. See the [L3b preflight correction](../design/issue-467-494-l3b-prelayout-route-evidence-correction-2026-09-27.md).
+The immutable membership result records each generated lane ID, group,
+ordered countable member IDs, rule and source fact that placed each bundle.
+It is computed before Theme measurement and passed unchanged to Layout and
+Scene. View normalization derives the exact lane-table cell **content** and
+count from this result before measurement; no conservative seed-table solve
+or geometry-driven membership preflight is needed. Layout measures and places
+those cells in one solve, then owns final row height, internal mark tracks,
+text/icon bounds, label placement, visible obstacles and routes. If authored
+members overlap on one lane, Layout may add internal mark tracks or grow that
+lane's block extent but cannot create another lane or change its member IDs.
+Within a fixed lane, Layout assigns deterministic first-compatible internal
+mark subtracks from completed visible mark facets, including comparison,
+Actual, glyph strokes and mark icons; only explicitly declared overlays
+within one member or its atomic attached bundle are exempt. Labels are
+placed afterwards and do not select subtracks. A Theme or Actual change may
+alter subtracks and row height, never
+the lane IDs, membership or lane-table counts.
+The internal placement unit is a flattened Review projection instance, not
+the countable membership item. Layout moves all facets of one instance
+together and checks every intersecting facet pair, including pairs inside an
+instance. An exemption names the exact two facet IDs; sharing a member ID or
+attachment host is not by itself an exemption. For an attached point, Layout
+tries the host's subtrack first, but a collision with another attached child
+may put that point on another subtrack of the **same lane**. An overlay grants
+permission to intersect, not a requirement to share a subtrack. Comparison
+instances declared `shared` keep their explicit pairwise overlay relation;
+other comparison/Actual instances do not gain one by common object identity.
+The `combined` primary instance deliberately composes its planned facet
+with its recorded Actual facet (or the missing-Actual marker) in one mark
+band; those exact planned↔Actual/missing-Actual facet pairs are declared
+overlays. This does not exempt either facet from another instance's marks.
+Scene projects completed primitives and serializes the same membership for
+a data-only oracle comparison; adapters do not choose lanes. A Scene
+footprint cannot approve, reject, merge or split a lane. The previous
+pairwise non-redundancy and footprint-concurrency gate is retired.
 
-A selected primary Review row is one atomic lane candidate bundle. Its
-comparison/Actual facets contribute geometry without duplicate names or
-counts; a point attached under #486 stays on its host candidate's lane but
-retains its own required title/date/delta, mark, port and count identity.
-Packed member labels are atomic required bundles: measured title/selected
-delta text and any resolved leading/trailing `labelVisual` icons move together.
-Layout evaluates each finite rung with completed component text/icon geometry,
-exact visible footprints and natural block extent; it selects the whole bundle
-or a new lane, never text without its icon. The selected lane plan carries the
-completed placements to Scene, and both text and icon are phase-one required
-label obstacles and source-keyed Scene footprints. Automatic-row icon
-coordinates MUST NOT be copied into lanes. See the [label-visual correction](../design/issue-467-b1b2-lane-label-visual-correction-2026-09-27.md).
-Semantic relation/annotation ports belong to the completed mark slot, not
-necessarily to an emitted primitive part's unexpanded bounds. A source-keyed
-owning facet carries separate completed `port_host_bounds`; its ports MUST lie
-inside those host bounds, while its primitive commands MUST remain inside
-their exact `primitive_bounds`. The first emitted facet of each semantic mark
-owns its ports in stable part order; siblings do not duplicate them. Host
-bounds are not an added collision footprint and MUST NOT widen primitive
-geometry. See the [S2b port-host correction](../design/issue-467-b1b2-s2b-port-host-bounds-correction-2026-09-27.md).
-Vector icons retain one source-keyed collision facet per completed path, while
-Scene emits one ICON primitive per placed icon. Each path facet carries typed
-shared emission-group identity/asset facts and its own completed path order,
-paint intent and already-scaled stroke treatment; raster icons retain one
-viewport facet and exact payload. B2 validates each group and copies one ICON
-without reloading or retransforming assets. The placed viewport is not an
-extra path footprint. See the [S2b icon emission correction](../design/issue-467-b1b2-s2b-icon-emission-closure-correction-2026-09-27.md).
-Layout admits a bundle only when all member marks and required labels fit;
-it cannot place a child later or flatten its name into the host's text.
-Each accepted member has a closed expected-emission inventory derived from
-selected Review semantics before placement lookup. Required mark variants,
-compound parts, grouped icons, progress and label components must each have
-one completed projection or an explicitly approved intentional-absence reason;
-missing or extra emitted primitives fail before Scene construction. This
-inventory, not source-ID parsing or a post-plan Theme lookup, determines
-projection cardinality. An attached host resolves to one exact projection
-instance; missing or ambiguous hosts fail rather than dropping a child.
-Unattached points are independent candidates. The natural lane frame contains
-one mark level and up to three stagger text rows above it. The whole frame,
-not the mark alone, is centered in the row's padded usable area under `pack`
-and `fill`; role-specific marks never stretch with surplus. Automatic and
-explicit member-index track placement is unchanged. See the
-[candidate-footprint correction](../design/issue-467-l3b-candidate-footprint-correction-2026-09-27.md).
+Every packed item has a candidate name and finish delta when one exists.
+Lane-mode Views MUST declare plot labels containing both `title` and
+`finishDelta`, with `side: auto` and `overflow: suppress`; a table-only, disabled, one-sided, or
+visible-overflow member-label policy is invalid for lanes. This is an
+intentional v0.28 migration constraint, not a silent override of View intent.
+Layout places labels after membership using the common #466/#488 obstacle
+model: end, start, stagger and a short offset leader are deterministic
+candidate phases. The leader is completed geometry owned by Layout, not an
+adapter decoration. If no candidate fits, Layout suppresses the name,
+records its source and increments the suppression count; it never opens a
+lane or silently drops the item. Non-lane label policies do not change.
+Mark, comparison, icon and text footprints remain relevant to this later
+placement and to #494 route avoidance. Required visible labels are obstacles
+before routes; a route cannot cross a required lane/member label. The
+lane table shows one group/lane summary and optional member count per
+generated lane, never an arbitrary member's facts. For `laneTable.label: group`,
+the first lane in a group shows that group's title and later lanes have an
+empty label. For `laneTable.label: lane`, an authored explicit key is
+the label; otherwise it is `Lane ` followed by the stable founding View-item
+ID. A displayed ordinal or a representative member title is not a lane
+identity. A visible delta table
+promise removed during resource migration must be selected in lane-label
+content or explicitly retired.
 
-Within a lane bundle, each `LaneMember` represents one countable selected
-Review item: the root/host or an attached point. Only these item identities
-appear in lane membership, representative/predecessor identity, and optional
-lane-table item counts. A same-object comparison or Actual facet contributes
-geometry and provenance under its countable member; it is not an additional
-lane item, lane-table count, or required name.
-
-Each countable member's Layout mark carries immutable source-keyed facets for
-its emitted primitives. Each facet retains a stable primitive identity, Review
-projection-instance identity (the View row ID plus item ID, or the stable
-projected object instance in automatic mode), facet purpose/source kind, stable
-source reference, semantic role and primitive type, completed Layout geometry,
-the renderer-neutral visible footprint, and stable source ports tied to that
-exact instance where applicable. Thus the same source/object used in two
-explicit rows retains distinct facet and port identity. Compound glyph and icon
-parts retain individual primitive identity in their one semantic member. Every intentional
-within-bundle mark overlay is an explicit facet-identity relation. The
-allocator checks every facet footprint; only those declared mark pairs may
-overlap. This allowance never applies to required labels, other candidates, or
-routes. Completed geometry and its footprint/ports remain associated in one
-immutable value so final composition can realize the exact collided geometry
-without re-deriving the source facet.
-Overlay endpoints must both exist exactly once in the same candidate bundle,
-be purpose/type-compatible, and authorize only that pair rather than a
-transitive group exemption. Shared comparison tracks, compound mark parts,
-declared attached-host parts and progress clipped to its host can qualify;
-stacked comparison tracks remain obstacles. Duplicate, missing or invalid
-facets and undeclared internal overlap fail before allocation. Source object
-ID, View item ID, Review projection instance, countable member ID and emitted
-primitive ID remain distinct through this validation.
-
-For B1b-2 mapping, Layout receives the selected Actual cutoff explicitly from
-the existing normalized `PresentationContract.time.as_of`. Layout does not
-load Actual resources or duplicate this value in `ReviewProjection`. A selected
-open Actual (`openUntil: "asOf"`) with no cutoff fails before allocation with
-`E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE`; it cannot be assigned a guessed end.
-The cutoff used by preflight and final composition must be identical. These
-source-keyed facets and cutoff rules are specified in the
-[B1b-2 facet/count/cutoff design correction](../design/issue-467-b1b2-facet-count-asof-design-correction-2026-09-27.md).
-
-The B1b-2 candidate mapper closes each mark and selected icon to a
-stroke-aware, renderer-neutral visible-extent footprint before allocation.
-It uses the same resolved Theme geometry roles, mark variant, seed scale,
-normalized icon closure, and icon stroke scale as final composition. It does
-not resolve or construct Scene paint. A stroked segment retains its
-unexpanded centerline and carries stroke width once in `ObstacleSegment`; a
-rectangular footprint carries already expanded bounds in `ObstacleRect`.
-Visible stroke extent and collision clearance are separate quantities and
-MUST NOT be applied twice. Multi-part glyphs retain their primitive identity
-and contribute the union of their part footprints. A raster icon reserves
-its placed viewport; a vector icon reserves its transformed control-point
-envelope and per-path stroke extent. A clipped progress fill contributes only
-its visible clipped extent and its own stroke, if any. Missing geometry,
-unsupported commands, or invalid metrics fail before allocation with
-`E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE` or the underlying stable Theme
-diagnostic; an incomplete mark is never silently omitted.
-
-For a stroked rectangle, the visible envelope expands the emitted bounds by
-half its stroke width on each side. For a segment, the obstacle index applies
-half the stroke width from its centerline. For a stroked path represented by
-a control-point envelope, Layout expands that envelope by ten times the
-stroke width on every side. This target-independent conservative bound
-accommodates admitted miter limits up to ten without changing adapter output
-or introducing a Scene paint policy. It is deliberately loose; the completed
-Scene's pairwise non-redundancy audit and required-text/route gates decide
-acceptance, not a numeric lane ceiling. A failed rule check returns to design
-rather than target-specific allocation. `ScenePaint` does not carry a
-miter-limit field, and Layout
-MUST NOT invent paint conversion or a miter-limit override. See the
-[miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md).
-
-Layout also owns the geometry currently constructed after layout in
-`scene/v05_builder.py`: Theme-selected built-in point shapes, Theme glyph
-parts, point legend swatches, and transformed normalized vector icon paths.
-The completed Layout result carries path coordinates, primitive/part identity
-and paint order, and geometry-bearing stroke widths before candidate collision
-checks and Scene construction. It preserves the existing contain-center glyph
-fit, built-in diamond outline override (ignored for glyphs), `paint: none`
-omission, part ordering and IDs, close-point conversion, deterministic float
-arithmetic, vector icon cap/join and scaled stroke width, and point legend
-variant. Scene projects these completed values without deriving or
-transforming path geometry. Theme glyph and icon path paint intents are passed
-to `ScenePaintResolver`; Scene MUST NOT modify the completed `ScenePaint`
-after resolution. Existing automatic/explicit and material-icon SVG outputs
-are byte-characterized across the ownership move before it is accepted.
-
-`automatic` is still the exact per-object row behavior, including its original
-table cells, points policy and output. `rows.points: key-row` is not created by
-lane mode. Hierarchical rows remain `automatic` or authored `explicit` until a
-separate ancestry-preserving lane design exists.
-
-In the lane View contract, `rows.laneTable` is required only when
-`rows.mode: lanes` and is invalid for `automatic` and `explicit`. The existing
-`tableColumns` grammar declares item-subject columns; it has no group/lane
-subject, so lane mode rejects `tableColumns` and uses only its separate finite
-group/lane summary. When a migration removes a visible delta table column, it
-must preserve that promise by including `finishDelta` in lane-label content.
-That migration condition is reviewed against the source View and acceptance
-evidence; it is not a universal schema rule for lane Views that make no such
-promise.
-
-### 3.1.1 Default policy and packaged preset migration (#467)
-
-The schema requires each View to declare `rows.mode`; it does not infer a mode
-from omission or reinterpret an existing immutable View. Product authoring
-commands and templates that create a new default View MUST emit
-`rows.mode: lanes` when the lane mode is available. A user may explicitly
-select `automatic` for one-item-per-row review. This is a producer policy,
-not a schema default.
-
-At the #467 L3c migration baseline, every built-in presentation preset View
-MUST use `rows.mode: lanes`: the seven entries in
-`src/chrona/resources/presets/library.yaml` and the separate selector View
-referenced by `src/chrona/resources/presets/default.yaml` (eight Views total).
-Each lane View declares its lane table and required title text; it also
-declares `finishDelta` when the source preset promised visible item deltas.
-Lane mode uses only group/lane summary columns, preserves item identity in
-Layout labels, and cannot silently fall back to `automatic`. Hierarchical
-composition remains outside this lane contract until an ancestry-preserving
-design is accepted. The named `editorial` preset is a lane preset; the
-reference-faithful Editorial appearance remains a separately named gallery
-entry backed by its own pinned corpus Context and is not a preset rendering
-exception.
-
-This adoption list describes the L3c resource migration and does not mean
-future catalogue entries may inherit an implicit mode. Every View remains
-schema-explicit, and each future default preset must be authored and reviewed
-as a lane View or receive a separately approved design correction.
+`automatic` retains its per-object row behavior and exact output bytes.
+Authored `explicit` rows and their track policy are separate from generated
+lane membership. `rows.laneTable` is required only in lane mode; item-level
+`tableColumns` are invalid there. New default Views declare lane mode
+explicitly, but default packing is only `[explicit, attached]`. A packaged
+View seeking transit-map compression must declare `chain` and/or `dates`.
+Hierarchical lanes and a `points: key-row` policy are not implied by this
+contract. View v0.28 is an intentional schema migration; older View
+resources must be migrated explicitly rather than silently reinterpreted.
 
 ## 4. Diagnostics and validation
 
@@ -391,8 +246,8 @@ The v0.2 View validator diagnoses empty/duplicate rows, unknown source objects,
 unavailable Snapshot/Actual sources, invalid table subjects, `automatic` items,
 `explicit` omission of items, and mixed explicit/automatic selection authority.
 Projection diagnoses an empty resolved row and ambiguous annotation anchoring.
-Layout diagnoses insufficient measured row height or an unplaceable required
-label before Scene/SVG output, subject to the declared visible-overflow policy.
+Layout diagnoses insufficient measured row height. A lane label that cannot
+fit is suppressed with source-keyed count evidence, never a membership change.
 
 ## 5. Boundary review
 
@@ -400,8 +255,9 @@ label before Scene/SVG output, subject to the declared visible-overflow policy.
 |---|---|
 | Project / Schedule | unchanged; items identify existing stable source objects only |
 | Snapshot / Actual | unchanged; each is an explicit Review Item source |
-| View | owns authored explicit row identity/membership and selected item/group intent; generated lane membership is Layout-owned |
-| Layout | owns row/lane assignment, subtrack and label geometry, measured bounds, ports and routes |
+| View | selects items/groups, ordered packing rules and lane-key sources |
+| Review projection | derives generated membership solely from Project dates/relations and View declarations |
+| Layout | owns completed row extent, subtracks, labels/icons, obstacles, ports and routes after membership |
 | Scene | projects completed placement to primitive identity and paint order; no geometric search |
 | Theme / Color Scheme | roles only; no row-membership policy |
 | SVG | serializes completed primitives only |

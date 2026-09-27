@@ -10,6 +10,10 @@ from typing import Any
 
 from chrona.core.hierarchy import HierarchyEntry, normalize_hierarchy
 from chrona.presentation.contracts.resources import ViewInput
+from chrona.presentation.review.lane_membership import (
+    LaneItem, LaneMembership, LanePackingInput, PlannedPoint, PlannedSpan,
+    SelectedFSRelation, derive_lane_membership,
+)
 
 
 _SHARED_TRACK_SOURCE_ORDER = {"snapshot": 0, "scenario": 1, "primary": 2, "actual": 3}
@@ -76,6 +80,15 @@ class ReviewRowProjection:
 
 
 @dataclass(frozen=True)
+class ReviewLaneRowProjection:
+    """One immutable View table/timeline row for a generated lane."""
+
+    lane_id: str
+    group_id: str
+    items: tuple[ReviewItem, ...]
+
+
+@dataclass(frozen=True)
 class FoldedPointProjection:
     """A selected point whose target is a real group header, never a table row."""
 
@@ -132,6 +145,8 @@ class ReviewProjection:
     network: DependencyNetworkProjection | None = None
     driving_relations: frozenset[str] = frozenset()
     folded_points: tuple[FoldedPointProjection, ...] = ()
+    lane_membership: LaneMembership | None = None
+    lane_rows: tuple[ReviewLaneRowProjection, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -230,6 +245,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
+    lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
+    lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
     dates = [v for row in rows for item in row.items for v in item.planned.values()]
     dates += [v for point in folded_points for v in point.item.planned.values()]
     if view.window.mode == "selected-comparison":
@@ -246,7 +263,79 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),
-        frozenset(getattr(analysis, "driving_relations", ()),), folded_points)
+        frozenset(getattr(analysis, "driving_relations", ()),), folded_points,
+        lane_membership, lane_rows)
+
+
+def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMembership
+                       ) -> tuple[ReviewLaneRowProjection, ...]:
+    """Project each countable membership exactly once while retaining its facets."""
+    source_rows: dict[str, ReviewRowProjection] = {}
+    for row in rows:
+        if not row.items:
+            continue
+        member_id = row.items[0].item_id or row.items[0].object_id
+        if member_id in source_rows:
+            raise ValueError("E_REVIEW_LANE_ROW_DUPLICATE_MEMBER")
+        source_rows[member_id] = row
+    assigned = [assignment.item_id for assignment in membership.assignments]
+    if len(assigned) != len(set(assigned)) or set(assigned) != set(source_rows):
+        raise ValueError("E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH")
+    output = []
+    for lane in membership.lanes:
+        members = []
+        for member_id in lane.member_item_ids:
+            row = source_rows.get(member_id)
+            if row is None:
+                raise ValueError("E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH")
+            assignment = membership.assignment_for(member_id)
+            for item in row.items:
+                attached_to = (source_rows.get(assignment.source_id).items[0].object_id
+                               if assignment.rule == "attached" and assignment.source_id in source_rows
+                               else item.attached_to)
+                members.append(replace(item, group_id=assignment.group_id,
+                                       attached_to=attached_to))
+        output.append(ReviewLaneRowProjection(lane.lane_id, lane.group_id, tuple(members)))
+    return tuple(output)
+
+
+def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProjection, ...],
+                             view: ViewInput) -> LaneMembership:
+    """Close View-selected lane membership before any Theme or geometry exists."""
+    primary = {row.items[0].object_id: row.items[0] for row in rows if row.items}
+    lane_keys = view.rows.lane_keys
+    by_object = lane_keys.by_object if lane_keys is not None and lane_keys.by_object is not None else {}
+    if set(by_object) - set(primary):
+        raise ValueError("E_REVIEW_LANE_KEY_TARGET")
+    items: list[LaneItem] = []
+    for row in rows:
+        if not row.items:
+            continue
+        item = row.items[0]
+        planned = (PlannedPoint(item.planned["at"]) if item.source_type == "point" else
+                   PlannedSpan(item.planned["start"], item.planned["end"]))
+        host_id = project["objects"][item.object_id].get("attachesTo")
+        selected_host = primary.get(host_id) if item.source_type == "point" else None
+        if selected_host is not None and selected_host.source_type != "span":
+            selected_host = None
+        attached_host = selected_host.item_id if selected_host is not None else None
+        # An attachment owns row placement independently of WBS or object fields.
+        group_id = selected_host.group_id if selected_host is not None and "attached" in view.rows.packing else item.group_id
+        key = by_object.get(item.object_id)
+        if key is None and lane_keys is not None and lane_keys.field is not None:
+            key = (item.fields or {}).get(lane_keys.field)
+        if key is not None and (not isinstance(key, str) or not key):
+            raise ValueError("E_REVIEW_LANE_KEY")
+        items.append(LaneItem(item.item_id, item.object_id, group_id, planned, key, attached_host))
+    relations = tuple(SelectedFSRelation(str(relation["id"]), str(relation["from"]["object"]),
+                                         str(relation["to"]["object"]))
+                      for relation in project.get("relations", ())
+                      if relation.get("type") == "dependency"
+                      and relation.get("from", {}).get("endpoint") == "end"
+                      and relation.get("to", {}).get("endpoint") == "start"
+                      and relation.get("from", {}).get("object") in primary
+                      and relation.get("to", {}).get("object") in primary)
+    return derive_lane_membership(LanePackingInput(tuple(items), view.rows.packing, relations))
 
 
 def _dependency_network_projection(project: dict[str, Any], selected: list[ReviewItem],
@@ -306,6 +395,9 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
             rollup_presentation=(view.grouping.rollup or "none"
                                  if item.is_rollup else "none"))
             for item in selected)
+        if view.rows.mode == "lanes":
+            # Lane packing decides attachment only when that rule is declared.
+            return rows, ()
         return _fold_automatic_points(rows, view, project)
     available = {item.object_id: item for item in selected}
     output: list[ReviewRowProjection] = []

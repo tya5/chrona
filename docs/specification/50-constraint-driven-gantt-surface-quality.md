@@ -49,6 +49,13 @@ visibility:
 
 `plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice.
 
+Generated lanes are the stricter Spec 38 case: View v0.28 requires plot
+`title` and `finishDelta` content with `side: auto` and `overflow: suppress`. Layout tries
+end/start, then displaced/staggered candidates and a short leader, and
+counts any unplaceable name. This lane-specific policy never changes lane
+membership; the general visible-overflow policy remains available to
+automatic and explicit rows.
+
 Before any row, mark, table cell or note placement, Layout applies the
 measured table-timeline content requirement to the complete Layout Profile
 allocation. A known row-density requirement grows its table/timeline host and
@@ -92,6 +99,10 @@ registered as obstacles before semantic routes. A route body or endpoint
 egress MUST NOT cross any required lane/member label; the named host-mark
 egress exemption does not exempt text. Relation labels anchored to a completed
 path are placed after that path, not misclassified as pre-route item labels.
+Lane membership is already fixed from Project/View data (Spec 38) before this
+placement phase. A label that cannot fit is suppressed with a source-keyed
+count; its absence does not add, merge or split lanes. Only labels actually
+placed become route obstacles.
 
 For a suppressed lane relation, Layout retains one typed result per candidate
 port pair in deterministic order: `egress-collision` with blocker identities,

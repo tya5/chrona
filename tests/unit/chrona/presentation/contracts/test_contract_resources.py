@@ -369,6 +369,31 @@ def test_v027_lane_contract_normalizes_typed_intent_and_fails_closed_before_proj
     assert failure.value.source_ref == "/body/rows/mode"
 
 
+def test_v028_lane_contract_parses_packing_defaults_and_explicit_keys():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value["version"] = "chrona/view/v0.28"
+    body = value["body"]
+    body.pop("tableColumns", None)
+    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group"}}
+    body["visibility"]["labels"] = {
+        "placement": "plot", "content": ["title"],
+        "side": "auto", "overflow": "visible-overflow",
+    }
+    identity = ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64)
+    contract = parse_contract(identity, value)
+    assert contract.view.rows.packing == ("explicit", "attached")
+    assert contract.view.rows.lane_keys is None
+
+    body["rows"]["packing"] = ["explicit", "attached", "chain"]
+    body["rows"]["laneKeys"] = {"field": "lane", "byObject": {"item-1": "alpha"}}
+    contract = parse_contract(identity, value)
+    assert contract.view.rows.packing == ("explicit", "attached", "chain")
+    assert contract.view.rows.lane_keys.field == "lane"
+    assert contract.view.rows.lane_keys.by_object == {"item-1": "alpha"}
+    with pytest.raises(TypeError, match="immutable"):
+        contract.view.rows.lane_keys.by_object["item-2"] = "beta"
+
+
 def test_downstream_presentation_code_has_no_raw_contract_input_escape_hatch():
     source_root = ROOT / "src/chrona"
     source = "\n".join(path.read_text(encoding="utf-8") for path in (

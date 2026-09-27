@@ -1,15 +1,18 @@
 from datetime import date
 from dataclasses import replace
 import inspect
+from pathlib import Path
 import pytest
+import yaml
 
 from chrona.presentation.model.projection import ObservationState, ReviewItem, _observation_state, _roles, build_review_projection, shared_track_member_key
 from chrona.presentation.model.surface_content import table_value
 from chrona.presentation.contracts.resources import (
-    ViewComparison, ViewGrouping, ViewInput, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
+    ViewComparison, ViewGrouping, ViewInput, ViewLaneKeys, ViewOrdering, ViewRow, ViewRowItem, ViewRows, ViewSelection,
     ViewVisibility, ViewWindow, freeze,
 )
 from chrona.scheduling.scheduler import ScheduleAnalysis
+from chrona.scheduling.scheduler import schedule
 
 
 def test_shared_track_member_order_is_one_finite_model_policy():
@@ -150,6 +153,106 @@ def test_automatic_rows_overlay_the_selected_scenario_on_the_shared_track():
     ]
     assert [item.observation_state for item in projection.rows[0].items] == [
         ObservationState.DUE_UNOBSERVED, ObservationState.UNAVAILABLE]
+
+
+def test_lane_projection_keeps_attached_point_unassigned_until_packing():
+    project = {"objects": {
+        "host": {"title": "Host", "fields": {}},
+        "gate": {"title": "Gate", "fields": {}, "attachesTo": "host"},
+    }, "entities": {}}
+    view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()),
+        ViewVisibility(False, "none", "none"), (), (), ViewRows("lanes", ()),
+        None, (), None, None, None)
+    projection = build_review_projection(project, {
+        "host": {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+        "gate": {"at": date(2026, 1, 3)},
+    }, view, None)
+
+    assert {row.row_id: [item.object_id for item in row.items]
+            for row in projection.rows} == {"host": ["host"], "gate": ["gate"]}
+    assert projection.lane_membership is not None
+    assert projection.lane_membership.assignment_for("host").lane_id != projection.lane_membership.assignment_for("gate").lane_id
+
+
+def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry():
+    project = {"objects": {
+        "structure": {"title": "Structure", "fields": {"team": "bus"}},
+        "avionics": {"title": "Avionics", "fields": {"team": "bus"}},
+        "bus-test": {"title": "Bus test", "fields": {"team": "bus"}},
+        "gate": {"title": "Gate", "fields": {"team": "review"}, "attachesTo": "avionics"},
+    }, "entities": {}, "relations": [
+        {"id": "structure-avionics", "type": "dependency", "from": {"object": "structure", "endpoint": "end"},
+         "to": {"object": "avionics", "endpoint": "start"}},
+        {"id": "avionics-bustest", "type": "dependency", "from": {"object": "avionics", "endpoint": "end"},
+         "to": {"object": "bus-test", "endpoint": "start"}},
+    ]}
+    view = ViewInput(None, ViewGrouping("field", "team", (), "ungrouped", None, None, None), None,
+        ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"),
+        (), (), ViewRows("lanes", (), packing=("explicit", "attached", "chain", "dates")),
+        None, (), None, None, None)
+    projection = build_review_projection(project, {
+        "structure": {"start": date(2027, 3, 8), "end": date(2027, 4, 6)},
+        "avionics": {"start": date(2027, 4, 6), "end": date(2027, 4, 27)},
+        "bus-test": {"start": date(2027, 5, 3), "end": date(2027, 5, 17)},
+        "gate": {"at": date(2027, 4, 15)},
+    }, view, None)
+
+    membership = projection.lane_membership
+    assert membership is not None
+    assert len({membership.assignment_for(item).lane_id
+                for item in ("structure", "avionics", "bus-test", "gate")}) == 1
+    assert membership.assignment_for("gate").group_id == "bus"
+    assert membership.assignment_for("gate").rule == "attached"
+    assert membership.assignment_for("bus-test").rule == "chain"
+    assert sum(len(row.items) for row in projection.lane_rows) == 4
+    assert {item.object_id for row in projection.lane_rows for item in row.items} == {
+        "structure", "avionics", "bus-test", "gate",
+    }
+    gate_row = next(row for row in projection.lane_rows if any(item.object_id == "gate" for item in row.items))
+    gate = next(item for item in gate_row.items if item.object_id == "gate")
+    assert (gate_row.group_id, gate.group_id, gate.attached_to) == ("bus", "bus", "avionics")
+
+
+def test_lane_projection_object_key_wins_over_field_and_unknown_target_fails():
+    project = {"objects": {
+        "a": {"title": "A", "fields": {"slot": "field-a"}},
+        "b": {"title": "B", "fields": {"slot": "field-b"}},
+    }, "entities": {}}
+    placements = {
+        "a": {"start": date(2027, 1, 1), "end": date(2027, 1, 5)},
+        "b": {"start": date(2027, 1, 2), "end": date(2027, 1, 6)},
+    }
+    view = ViewInput(None, None, None, ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"),
+        (), (), ViewRows("lanes", (), packing=("explicit",),
+                       lane_keys=ViewLaneKeys("slot", freeze({"a": "shared", "b": "shared"}))),
+        None, (), None, None, None)
+    membership = build_review_projection(project, placements, view, None).lane_membership
+    assert membership is not None
+    assert membership.assignment_for("a").lane_id == membership.assignment_for("b").lane_id
+    bad = replace(view, rows=replace(view.rows, lane_keys=ViewLaneKeys(None, freeze({"absent": "shared"}))))
+    with pytest.raises(ValueError, match="E_REVIEW_LANE_KEY_TARGET"):
+        build_review_projection(project, placements, bad, None)
+
+
+def test_halcyon_02_data_only_lane_oracle_has_named_chain():
+    root = Path(__file__).resolve().parents[5] / "examples/halcyon-1"
+    project = yaml.safe_load((root / "project.yaml").read_text(encoding="utf-8"))
+    view_source = yaml.safe_load((root / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    view_source["body"]["rows"]["mode"] = "lanes"
+    view = typed_view(view_source)
+    view = replace(view, rows=replace(view.rows, packing=("explicit", "attached", "chain", "dates")),
+                   comparison=replace(view.comparison, actual="optional"))
+    result = schedule(project)
+    assert result.ok
+
+    membership = build_review_projection(project, result.placements, view, None).lane_membership
+    assert membership is not None
+    assert len({membership.assignment_for(item).lane_id
+                for item in ("structure", "avionics", "bus-test")}) == 1
+    assert sum(len(lane.member_item_ids) for lane in membership.lanes) == 26
 
 
 def test_automatic_predecessor_policy_folds_a_point_with_one_selected_span_predecessor():

@@ -84,6 +84,13 @@ def _intersects(left: ObstacleGeometry, right: ObstacleGeometry, clearance: floa
                for index in range(4))
 
 
+def obstacles_intersect(left: ObstacleGeometry, right: ObstacleGeometry, clearance: float = 0.0) -> bool:
+    """Apply Layout's canonical visible-obstacle collision predicate read-only."""
+    if not isfinite(clearance) or clearance < 0:
+        raise ValueError("E_LAYOUT_OBSTACLE_INPUT")
+    return _intersects(left, right, clearance)
+
+
 def _segments_intersect(left: ObstacleSegment, right: ObstacleSegment, clearance: float) -> bool:
     radius = left.stroke_width / 2 + right.stroke_width / 2 + clearance
     distance = _segment_distance(left.start, left.end, right.start, right.end)

@@ -1,19 +1,82 @@
+from dataclasses import replace
 from datetime import date
 
 import pytest
 
 from chrona.presentation.model.color_scale import ResolvedColorScale
-from chrona.presentation.model.projection import ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.model.projection import (
+    ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection,
+)
 from chrona.presentation.model.surface_content import SummaryContent, TableCellContent
+from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.table_presentation import BooleanPresencePresentation
-from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content
+from chrona.presentation.review.v05_content import (
+    normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
+)
 from chrona.presentation.contracts.resources import (
     SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
-    ViewRows, ViewVisibility, ViewWindow, freeze,
+    ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
 )
 
 
 EMPTY_SUMMARY = SummaryContent(())
+
+
+def test_lane_table_content_uses_exact_membership_and_no_member_table_subject():
+    host = ReviewItem("host", "Host title", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 3)},
+                      None, None, (), group_id="g", group_label="Group title", item_id="host")
+    point = ReviewItem("gate", "Gate title", "point", {"at": date(2026, 1, 2)}, None, None, (),
+                       group_id="g", group_label="Group title", item_id="gate", attached_to="host")
+    lane_id = 'review-lane:["generated","g","host"]'
+    membership = LaneMembership(
+        (Lane(lane_id, "g", ("host", "gate")),),
+        (LaneAssignment("host", lane_id, "g", "single", "host"),
+         LaneAssignment("gate", lane_id, "g", "attached", "host")),
+    )
+    projection = ReviewProjection(
+        (host, point), (date(2026, 1, 1), date(2026, 1, 3)), (), (),
+        lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection(lane_id, "g", (host, point)),),
+    )
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, True)))
+
+    table = normalize_v05_table_content(projection, {"entities": {"g": {"title": "Entity group"}}}, view)
+
+    assert [column.column_id for column in table.columns] == ["Lane", "Items"]
+    assert [(cell.object_id, cell.column_id, cell.content) for cell in table.cells] == [
+        (lane_id, "Lane", "Lane host"), (lane_id, "Items", "2"),
+    ]
+    assert table.cell_objects == ()
+    assert table.row_levels[0].keys == (lane_id,)
+
+
+def test_lane_table_group_label_repeats_blank_and_authored_lane_key_is_the_lane_label():
+    first = ReviewItem("a", "Private member title A", "span", {}, None, None, (), group_id="g", item_id="a")
+    second = ReviewItem("b", "Private member title B", "span", {}, None, None, (), group_id="g", item_id="b")
+    lanes = (Lane("lane-a", "g", ("a",), "key-a"), Lane("lane-b", "g", ("b",), "key-b"))
+    membership = LaneMembership(lanes, (
+        LaneAssignment("a", "lane-a", "g", "explicit", "key-a"),
+        LaneAssignment("b", "lane-b", "g", "explicit", "key-b"),
+    ))
+    projection = ReviewProjection(
+        (first, second), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+        lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection("lane-a", "g", (first,)),
+                   ReviewLaneRowProjection("lane-b", "g", (second,))),
+    )
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)))
+
+    group_table = normalize_v05_table_content(projection, {"entities": {"g": {"title": "Group"}}}, view)
+    assert [(cell.object_id, cell.column_id, cell.content) for cell in group_table.cells] == [
+        ("lane-a", "Lane", "Group"), ("lane-a", "Items", "1"),
+        ("lane-b", "Lane", ""), ("lane-b", "Items", "1"),
+    ]
+
+    lane_view = replace(view, rows=replace(view.rows, lane_table=ViewLaneTable(ViewLaneLabel.LANE, False)))
+    lane_table = normalize_v05_table_content(projection, {}, lane_view)
+    assert [cell.content for cell in lane_table.cells] == ["key-a", "key-b"]
 
 
 def typed_view(value):

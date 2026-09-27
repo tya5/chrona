@@ -33,7 +33,7 @@ Scene nor SVG receives the enum as a display string or selects an alternative de
 For View v0.2 explicit Review rows, the table has one record per Review row rather than
 per semantic Project object. The row label supplies its title cell and `tableSubject`
 supplies object-derived cells. Timeline marks remain one per ordered Review Item and
-share their row's bounds through Scene-assigned subtracks. This preserves a coherent
+share their row's bounds through Layout-assigned subtracks. This preserves a coherent
 table/timeline alignment without treating a milestone, Snapshot, or Actual as a special
 renderer case.
 

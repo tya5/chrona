@@ -220,30 +220,27 @@ def _schema_version(schema: Mapping[str, Any]) -> str:
     return versions.pop()
 
 
-def _live_derived_theme_version(root: Path, loader: RunLocalYamlLoader | None = None) -> str:
-    """The live derived-Theme (`chrona/theme/v0.12`) contract, a second legal source form
-
-    for a ``theme`` resource (Specification 07 §5.3): a render context's ``theme``
-    reference always declares ``kind: theme``, but the file it addresses may be an
-    ordinary Theme or one that extends a base Theme by inheritance.
-    """
-    loader = loader or RunLocalYamlLoader()
-    inventory = loader.load(root / "schemas/schema-inventory-v0.1.yaml")
-    for entry in inventory.get("schemas", ()):
-        if isinstance(entry, Mapping) and entry.get("state") == "live" and entry.get("kind") == "derived-theme":
-            return _schema_version(loader.load(root / "schemas" / entry["file"]))
-    raise PresentationCoverageError("E_PRESENTATION_COVERAGE_SCHEMA")
-
-
 def _validate_resource_versions(slides: Iterable[Slide], schemas: Mapping[str, Mapping[str, Any]],
                                 root: Path, loader: RunLocalYamlLoader | None = None) -> None:
-    """Reject corpus evidence that is not governed by the selected live contract."""
+    """Accept declared schema transitions without widening the live vocabulary."""
+    loader = loader or RunLocalYamlLoader()
     expected = {kind: _schema_version(schema) for kind, schema in schemas.items()}
-    accepted_theme_versions = {expected["theme"], _live_derived_theme_version(root, loader)}
+    accepted = {kind: {version} for kind, version in expected.items()}
+    inventory = loader.load(root / "schemas/schema-inventory-v0.1.yaml")
+    for entry in inventory.get("schemas", ()):
+        if not isinstance(entry, Mapping) or entry.get("state") not in {"live", "transitioning"}:
+            continue
+        kind = entry.get("kind")
+        target = "theme" if kind == "derived-theme" else kind
+        if target not in accepted:
+            continue
+        filename = entry.get("file")
+        if not isinstance(filename, str):
+            raise PresentationCoverageError("E_PRESENTATION_COVERAGE_SCHEMA")
+        accepted[target].add(_schema_version(loader.load(root / "schemas" / filename)))
     for slide in slides:
         for kind, path, document in slide.resources:
-            accepted = accepted_theme_versions if kind == "theme" else {expected[kind]}
-            if document.get("version") not in accepted:
+            if document.get("version") not in accepted[kind]:
                 raise PresentationCoverageError(
                     f"E_PRESENTATION_COVERAGE_VERSION:{slide.identifier}:{kind}:{path}"
                 )

@@ -135,6 +135,10 @@ digest entry, axis label, and as-of label. Existing mark targets admit one icon
 per declared object/semantic mark. Each target form has a typed selector and
 source-existence validation; a form is not present in the schema until its
 Layout projection exists. This prohibits valid-but-unreachable declarations.
+For generated lanes, an object-targeted plot-label or semantic-mark visual
+applies to every matching selected projection occurrence, with a separate
+placement identity per occurrence. A target matching none, or a duplicate
+side on one occurrence, fails. Automatic and explicit rows are unchanged.
 
 Layout receives resolved visual requests and normalized assets. For a text
 placement it computes each visual's block size as:

@@ -40,7 +40,7 @@ from types import MappingProxyType
 from typing import Mapping, Sequence
 from urllib.parse import quote
 
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import Rect, geometry_sum
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
     ObstacleGeometry,
@@ -77,6 +77,198 @@ class LaneFacetPort:
                 or not all(isinstance(value, (int, float)) and not isinstance(value, bool)
                            and isfinite(value) for value in self.position)):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+
+@dataclass(frozen=True)
+class LanePlainMarkProjection:
+    """Completed plain mark semantics needed by the eventual Scene primitive."""
+
+    shape: str
+    semantic_role: str
+    paint_order: int
+    corner_radius: float
+    end_treatment: str
+
+    def __post_init__(self) -> None:
+        if (self.shape not in {"span", "open-span", "point"}
+                or not self.semantic_role or self.paint_order < 0
+                or not isfinite(self.corner_radius) or self.corner_radius < 0
+                or self.end_treatment not in {"closed", "open"}
+                or (self.shape == "open-span") != (self.end_treatment == "open")):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+
+@dataclass(frozen=True)
+class LaneGlyphPartProjection:
+    """One ordered Theme glyph part with paint intent retained for Scene."""
+
+    part_index: int
+    semantic_role: str
+    paint_order: int
+    paint_mode: str | None
+    paint_color: str | None
+    mark_shape: str
+    corner_radius: float
+    end_treatment: str
+
+    def __post_init__(self) -> None:
+        if (self.part_index < 0 or not self.semantic_role or self.paint_order < 0
+                or self.paint_mode not in {None, "fill", "stroke"}
+                or (self.paint_color is not None and not isinstance(self.paint_color, str))
+                or self.mark_shape not in {"point", "open-span"}
+                or not isfinite(self.corner_radius) or self.corner_radius < 0
+                or self.end_treatment not in {"closed", "open"}
+                or (self.mark_shape == "open-span") != (self.end_treatment == "open")):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+
+@dataclass(frozen=True)
+class LaneProgressProjection:
+    """Completed progress fill and its exact host clip relation."""
+
+    host_placement_id: str
+    host_bounds: Rect
+    clip_bounds: Rect
+    semantic_role: str
+    paint_order: int
+    corner_radius: float
+
+    def __post_init__(self) -> None:
+        if (not self.host_placement_id or not self.semantic_role or self.paint_order < 0
+                or not isfinite(self.corner_radius) or self.corner_radius < 0
+                or not isinstance(self.host_bounds, Rect) or not isinstance(self.clip_bounds, Rect)
+                or self.clip_bounds.inline < self.host_bounds.inline
+                or self.clip_bounds.block < self.host_bounds.block
+                or self.clip_bounds.inline + self.clip_bounds.inline_size
+                > self.host_bounds.inline + self.host_bounds.inline_size
+                or self.clip_bounds.block + self.clip_bounds.block_size
+                > self.host_bounds.block + self.host_bounds.block_size):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+
+@dataclass(frozen=True)
+class LaneLabelVisualProjection:
+    """One fully normalized, completed, source-keyed label icon component."""
+
+    side: str
+    icon_id: str
+    asset_identity: str
+    viewport: tuple[int, int]
+    width: float
+    height: float
+    gap: float
+    measured_bounds: Rect
+    alternative: str
+    decorative: bool
+    source_ref: str
+    visual_capability_source_ref: str
+    placement_id: str
+    paint_order: int
+    slot_id: str
+    normalized_payload: object
+    completed_paths: tuple[object, ...]
+    component_obstacles: tuple[ObstacleGeometry, ...]
+
+    def __post_init__(self) -> None:
+        if (self.side not in {"leading", "trailing"} or not self.icon_id
+                or not self.asset_identity or not isinstance(self.alternative, str)
+                or len(self.viewport) != 2 or any(not isinstance(value, int) or value <= 0 for value in self.viewport)
+                or any(not isfinite(value) or value <= 0 for value in (self.width, self.height))
+                or not isinstance(self.measured_bounds, Rect)
+                or not isfinite(self.gap) or self.gap < 0 or not isinstance(self.decorative, bool)
+                or not self.source_ref or not self.visual_capability_source_ref or not self.placement_id
+                or not isinstance(self.paint_order, int) or isinstance(self.paint_order, bool)
+                or self.paint_order < 0 or not self.slot_id
+                or not isinstance(self.component_obstacles, tuple) or not self.component_obstacles
+                or any(not isinstance(item, (ObstacleRect, ObstacleSegment))
+                       for item in self.component_obstacles)):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        if isinstance(self.normalized_payload, bytes):
+            if not self.normalized_payload or self.completed_paths or len(self.component_obstacles) != 1:
+                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        elif (not hasattr(self.normalized_payload, "viewport")
+              or not hasattr(self.normalized_payload, "paths")
+              or tuple(self.normalized_payload.viewport) != self.viewport
+              or len(self.completed_paths) != len(self.normalized_payload.paths)
+              or len(self.component_obstacles) != len(self.completed_paths)
+              or not self.completed_paths):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+    @property
+    def kind(self) -> str:
+        """Emission kind inferred once from the closed normalized payload."""
+        return "raster" if isinstance(self.normalized_payload, bytes) else "vector"
+
+    @property
+    def raster_payload(self) -> bytes | None:
+        return self.normalized_payload if isinstance(self.normalized_payload, bytes) else None
+
+
+@dataclass(frozen=True)
+class LaneRequiredLabelProjection:
+    """Measured required title/delta run retained through preflight."""
+
+    title: str
+    delta: str | None
+    content: str
+    typography_role: str
+    normalized_content: str
+    font_family: str
+    font_weight: int
+    font_size: float
+    line_height: float
+    letter_spacing: float
+    text_transform: str
+    numeric_spacing: str
+    theme_identity: str
+    font_asset_identity: str
+    scale_identity: str
+    text_width: float
+    delta_width: float | None
+    text_block_size: float
+    text_bounds: Rect
+    text_baseline: tuple[float, float]
+    lines: tuple[str, ...]
+    paint_order: int
+    slot_id: str
+    source_ref: str
+    leading_visuals: tuple[LaneLabelVisualProjection, ...] = ()
+    trailing_visuals: tuple[LaneLabelVisualProjection, ...] = ()
+
+    def __post_init__(self) -> None:
+        if (not self.title or not self.content or not self.typography_role or not self.normalized_content
+                or not self.font_family or self.font_weight < 0
+                or not isfinite(self.font_size) or self.font_size <= 0
+                or not isfinite(self.line_height) or self.line_height <= 0
+                or not isfinite(self.letter_spacing) or self.letter_spacing < 0
+                or self.text_transform not in {"none", "uppercase", "lowercase", "capitalize"}
+                or self.numeric_spacing not in {"proportional", "tabular"}
+                or not self.theme_identity or not self.font_asset_identity or not self.scale_identity
+                or not isfinite(self.text_width) or self.text_width <= 0
+                or (self.delta_width is not None and (not isfinite(self.delta_width) or self.delta_width < 0))
+                or not isfinite(self.text_block_size) or self.text_block_size <= 0
+                or not isinstance(self.text_bounds, Rect)
+                or len(self.text_baseline) != 2
+                or not all(isfinite(value) for value in self.text_baseline)
+                or not self.lines or not isinstance(self.paint_order, int)
+                or isinstance(self.paint_order, bool) or self.paint_order < 0
+                or not self.slot_id or not self.source_ref
+                or any(item.side != "leading" for item in self.leading_visuals)
+                or any(item.side != "trailing" for item in self.trailing_visuals)):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+    @property
+    def required_inline_size(self) -> float:
+        return geometry_sum((self.text_width, *(item.width + item.gap
+                                                for item in (*self.leading_visuals,
+                                                             *self.trailing_visuals))))
+
+    @property
+    def text_obstacle(self) -> ObstacleRect:
+        """Exact local required-text component before selected-rung translation."""
+        return ObstacleRect(float(self.text_bounds.inline), float(self.text_bounds.block),
+                            float(self.text_bounds.inline + self.text_bounds.inline_size),
+                            float(self.text_bounds.block + self.text_bounds.block_size))
 
 
 @dataclass(frozen=True)
@@ -190,6 +382,9 @@ class LaneMarkFacet:
     overlay_with: tuple[str, ...] = ()
     port_host_bounds: tuple[float, float, float, float] | None = None
     icon_projection: LaneIconProjection | None = None
+    plain_mark_projection: LanePlainMarkProjection | None = None
+    glyph_part_projection: LaneGlyphPartProjection | None = None
+    progress_projection: LaneProgressProjection | None = None
 
     def __post_init__(self) -> None:
         identities = (self.facet_id, self.projection_instance_id, self.source_item_id,
@@ -264,6 +459,14 @@ class LaneMarkFacet:
                     raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
         elif self.primitive_type == "Icon":
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        payloads = (self.icon_projection, self.plain_mark_projection,
+                    self.glyph_part_projection, self.progress_projection)
+        if sum(value is not None for value in payloads) > 1:
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        if ((self.plain_mark_projection is not None and self.primitive_type not in {"Rect", "Path"})
+                or (self.glyph_part_projection is not None and self.primitive_type != "Symbol")
+                or (self.progress_projection is not None and self.primitive_type != "Rect")):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
 
 @dataclass(frozen=True)
@@ -327,6 +530,7 @@ class LaneMember:
     mark: LaneMark
     title_width: float
     delta_width: float | None = None
+    required_label: LaneRequiredLabelProjection | None = None
 
     @property
     def label_width(self) -> float:
@@ -369,6 +573,9 @@ class LaneCandidate:
                         or (member.delta_width is not None and
                             (not isfinite(member.delta_width) or member.delta_width < 0))
                         or not isfinite(member.label_width)):
+                    raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+                if (member.required_label is not None
+                        and abs(member.title_width - member.required_label.required_inline_size) > 1e-9):
                     raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
         members = self.members_for_placement
         facets = tuple(facet for member in members for facet in member.mark.facets)

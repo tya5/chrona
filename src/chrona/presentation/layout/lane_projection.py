@@ -186,6 +186,16 @@ def close_lane_projection(
         matches = tuple(candidate for candidate in row_instances[child.row_id]
                         if candidate.object_id == host_object_id and candidate != child
                         and getattr(source_by_instance[candidate], "attached_to", None) is None)
+        row = next(row for row in projection.rows if row.row_id == child.row_id)
+        preferred = tuple(candidate for candidate in matches
+                          if candidate.item_id == row.table_subject_id)
+        if len(preferred) == 1:
+            matches = preferred
+        elif len(matches) > 1:
+            primary = tuple(candidate for candidate in matches
+                            if candidate.source_kind in {"primary", "combined"})
+            if len(primary) == 1:
+                matches = primary
         if len(matches) != 1:
             raise LayoutError("E_LAYOUT_LANE_ATTACHED_HOST_INVALID",
                               f"/projection/rows/{child.row_id}/items/{child.item_id}/attached_to",

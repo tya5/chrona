@@ -46,6 +46,15 @@ def test_presentation_coverage_accepts_a_live_derived_theme_resource():
     _validate_resource_versions((glyph_gates,), live_schemas(root), root)
 
 
+def test_presentation_coverage_accepts_transitioning_view_during_resource_migration():
+    root = _root()
+    slide = next(slide for slide in discover(root) if slide.identifier == "halcyon-1/programme-board")
+    view = next(document for kind, _path, document in slide.resources if kind == "view")
+    assert view["version"] == "chrona/view/v0.27"
+    assert "chrona/view/v0.28" in render(root)
+    _validate_resource_versions((slide,), live_schemas(root), root)
+
+
 def test_presentation_coverage_rejects_non_live_resource_versions():
     root = _root()
     slide = discover(root)[0]

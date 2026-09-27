@@ -12,7 +12,9 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, 
 from chrona.presentation.layout.label_visual_measurement import (
     resolve_label_visual_advances, visual_target_placement_id,
 )
-from chrona.presentation.layout.lane_preflight import SurfaceLanePlan
+from chrona.presentation.layout.lane_preflight import (
+    SurfaceLanePlan, assert_lane_plan_compatible, lane_inline_frame_for_manifest,
+)
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
@@ -671,6 +673,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
+    if request.lane_plan is not None:
+        if request.lane_measurement_identity is None:
+            raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/measuredSources")
+        assert_lane_plan_compatible(
+            request.lane_plan,
+            final_inline_frame=lane_inline_frame_for_manifest(layout_manifest, window=(start, end)),
+            measurement_identity=request.lane_measurement_identity,
+            as_of=request.surface_content.as_of,
+        )
     if ("timeline.row.minBlockSize" not in metric_values
             or "timeline.row.paddingBlock" not in metric_values
             or "timeline.mark.blockSize" not in metric_values):

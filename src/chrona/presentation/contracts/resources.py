@@ -195,6 +195,14 @@ class ViewLaneTable:
 
 
 @dataclass(frozen=True)
+class ViewLaneKeys:
+    """View-selected Project field and object-specific explicit lane keys."""
+
+    field: str | None = None
+    by_object: FrozenDict | None = None
+
+
+@dataclass(frozen=True)
 class ViewRow:
     id: str
     label: str | None
@@ -213,6 +221,8 @@ class ViewRows:
     points: str = "attached"
     track_allocation: ViewTrackAllocation | None = None
     lane_table: ViewLaneTable | None = None
+    packing: tuple[str, ...] = ()
+    lane_keys: ViewLaneKeys | None = None
 
 
 @dataclass(frozen=True)
@@ -597,6 +607,7 @@ _SCHEMAS = {
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
     ("view", "chrona/view/v0.26"): "view-v0.26.schema.yaml",
     ("view", "chrona/view/v0.27"): "view-v0.27.schema.yaml",
+    ("view", "chrona/view/v0.28"): "view-v0.28.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
@@ -736,7 +747,7 @@ def _schema_value(value: Any) -> Any:
     return value
 
 
-def _view_input(body: FrozenDict) -> ViewInput:
+def _view_input(body: FrozenDict, version: str) -> ViewInput:
     rows = body["rows"]
     raw_selection = body.get("selection", FrozenDict())
     raw_include = raw_selection.get("include", FrozenDict())
@@ -800,6 +811,11 @@ def _view_input(body: FrozenDict) -> ViewInput:
             ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
             (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)))
              if "laneTable" in rows else None),
+            (tuple(str(item) for item in rows.get("packing", ("explicit", "attached")))
+             if version == "chrona/view/v0.28" else ()),
+            (ViewLaneKeys(str(rows["laneKeys"]["field"]) if "field" in rows["laneKeys"] else None,
+                          rows["laneKeys"].get("byObject"))
+             if version == "chrona/view/v0.28" and "laneKeys" in rows else None),
         ), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
@@ -900,7 +916,7 @@ def parse_contract(identity: ClosureIdentity, value: Mapping[str, Any]) -> Resou
             raise _closure_kind_error(identity, "extension object list", extensions)
         return ProjectContract(identity, version, frozen, tuple(extensions))
     if identity.kind == "view":
-        return ViewContract(identity, version, _view_input(body))
+        return ViewContract(identity, version, _view_input(body, version))
     if identity.kind == "theme":
         return ThemeContract(identity, version, frozen)
     if identity.kind == "color-scheme":
