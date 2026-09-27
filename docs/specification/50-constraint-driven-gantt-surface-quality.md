@@ -65,6 +65,16 @@ different placement collision; it is not permission to leave notes over a
 known growable table. The completed canvas still contains every emitted
 primitive.
 
+For data-owned lane rows, the requirement includes the full measured internal
+mark-subtrack extent of every fixed lane, not a one-band estimate. Layout may
+use a seed allocation to obtain the inline scale, close each lane's mark
+facets and subtracks once, then feed their block requirement to the final
+profile allocation. The same completed subtrack plan is reused for row and
+mark placement; the final inline frame MUST match the seed frame. This
+preflight neither reassigns lane membership nor searches for a block-height
+fixed point. A capped host may retain a measured overflow diagnostic, but a
+growable host MUST contain the final lane rows and marks.
+
 The timeline as-of label uses this visible-overflow fallback beside its marker
 line. A Layout text placement with `suppressed` disposition is non-drawable:
 Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
