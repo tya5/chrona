@@ -32,14 +32,14 @@ def main() -> None:
     starter = HERE / "starter/default.png"
     halcyon = HERE / "halcyon-1/default.png"
     reference = HERE / "13-gallery-editorial/reference.png"
-    board(halcyon, reference, "13-gallery-editorial", "halcyon-default-vs-13-gallery-editorial.png")
-    board(starter, reference, "13-gallery-editorial — full figure", "init-starter-vs-13-gallery-editorial.png")
+    board(halcyon, reference, "13-gallery-editorial", "halcyon-vs-editorial.png")
+    board(starter, reference, "13-gallery-editorial — full figure", "starter-vs-editorial.png")
     reference_image = Image.open(reference).convert("RGB")
     starter_image = Image.open(starter).convert("RGB")
     top = reference_image.crop((0, 0, reference_image.width, starter_image.height))
-    crop_path = OUT / "13-gallery-editorial-top-900.png"
+    crop_path = OUT / "editorial-top.png"
     top.save(crop_path, optimize=True)
-    board(starter, crop_path, "13-gallery-editorial — top 900 px crop", "init-starter-vs-13-gallery-editorial-top.png")
+    board(starter, crop_path, "13-gallery-editorial — top 900 px crop", "starter-vs-editorial-top.png")
 
 
 if __name__ == "__main__":

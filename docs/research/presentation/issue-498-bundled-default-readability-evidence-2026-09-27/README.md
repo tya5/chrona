@@ -10,18 +10,18 @@ All captures are draft renders, not immutable materializer evidence.
 
 HALCYON-1 full figures, rendered at their natural 1600 × 2140 px size:
 
-![Bundled default vs 13-gallery-editorial](comparison/halcyon-default-vs-13-gallery-editorial.png)
+![Bundled default vs 13-gallery-editorial](comparison/halcyon-vs-editorial.png)
 
 The starter is 1600 × 900 px while the full gallery figure is 1600 × 2140 px;
 the full comparison therefore retains a blank lower-left panel. The following
 same-scale top crop is provided for typography, palette, names, and axis
 comparison (both panels remain at native 1600 × 900 px, with no rescaling):
 
-![Starter vs same-scale top crop of 13-gallery-editorial](comparison/init-starter-vs-13-gallery-editorial-top.png)
+![Starter vs same-scale top crop of 13-gallery-editorial](comparison/starter-vs-editorial-top.png)
 
 The full starter/reference figures are also retained for context:
 
-![Full starter and gallery figures](comparison/init-starter-vs-13-gallery-editorial.png)
+![Full starter and gallery figures](comparison/starter-vs-editorial.png)
 
 Visual inspection at readable scale: row bands are faint but discernible warm
 alternation; navy names are on their own rows and terminate at the bar edge;
