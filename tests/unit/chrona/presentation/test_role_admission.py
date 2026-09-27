@@ -128,7 +128,7 @@ def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():
     scenes = sorted((ROOT / "examples").glob("*/generated/*.scene.json"))
     assert scenes
     for path in scenes:
-        scene = json.loads(path.read_text())
+        scene = json.loads(path.read_text(encoding="utf-8"))
         for surface in scene["surfaces"]:
             for primitive in surface["primitives"]:
                 contract = theme_role_contract(primitive["visualRole"])
