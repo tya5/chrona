@@ -34,6 +34,16 @@ def _validator() -> jsonschema.Draft202012Validator:
     )
 
 
+def _validator_v028() -> jsonschema.Draft202012Validator:
+    schema = yaml.safe_load(schema_resource("view-v0.28.schema.yaml").read_text(encoding="utf-8"))
+    foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
+    return jsonschema.Draft202012Validator(
+        schema, resolver=jsonschema.RefResolver.from_schema(
+            schema, store={foundation["$id"]: foundation, schema["$id"]: schema}
+        )
+    )
+
+
 @pytest.mark.parametrize("path", reachable_view_paths(ROOT))
 def test_declared_public_v03_view_validates(path: Path):
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -110,6 +120,44 @@ def test_v027_lane_rows_require_closed_lane_intent_and_visible_names():
     explicit["body"]["rows"].pop("laneTable")
     explicit["body"]["rows"]["trackAllocation"] = "member-index"
     assert next(_validator().iter_errors(_json_value(explicit)), None) is not None
+
+
+def test_v028_lane_packing_and_lane_keys_are_closed_and_lane_only():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value["version"] = "chrona/view/v0.28"
+    value["body"].pop("tableColumns", None)
+    value["body"]["rows"] = {"mode": "lanes", "laneTable": {"label": "group"}}
+    value["body"]["visibility"]["labels"] = {
+        "placement": "plot", "content": ["title"], "side": "auto", "overflow": "visible-overflow",
+    }
+    validator = _validator_v028()
+    assert next(validator.iter_errors(_json_value(value)), None) is None
+
+    rows = value["body"]["rows"]
+    rows["packing"] = ["explicit", "attached", "dates"]
+    rows["laneKeys"] = {"field": "lane", "byObject": {"obj-1": "primary"}}
+    assert next(validator.iter_errors(_json_value(value)), None) is None
+    rows["packing"] = []
+    assert next(validator.iter_errors(_json_value(value)), None) is None
+
+    invalid = deepcopy(value)
+    invalid["body"]["rows"]["packing"] = ["dates", "chain"]
+    assert next(validator.iter_errors(_json_value(invalid)), None) is not None
+    invalid = deepcopy(value)
+    invalid["body"]["rows"]["packing"] = ["explicit", "explicit"]
+    assert next(validator.iter_errors(_json_value(invalid)), None) is not None
+    invalid = deepcopy(value)
+    invalid["body"]["rows"]["laneKeys"] = {"byObject": {"obj-1": ""}}
+    assert next(validator.iter_errors(_json_value(invalid)), None) is not None
+    invalid = deepcopy(value)
+    invalid["body"]["rows"]["laneKeys"] = {}
+    assert next(validator.iter_errors(_json_value(invalid)), None) is not None
+    for mode in ("automatic", "explicit"):
+        invalid = deepcopy(value)
+        invalid["body"]["rows"] = {"mode": mode, "packing": ["explicit"]}
+        if mode == "explicit":
+            invalid["body"]["rows"]["items"] = [{"id": "r", "depth": 0, "items": [{"id": "i", "source": {"kind": "primary", "object": "obj-1"}}]}]
+        assert next(validator.iter_errors(_json_value(invalid)), None) is not None
 
 
 def test_v018_requires_closed_axis_and_table_header_orientation():
