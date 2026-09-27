@@ -1,4 +1,6 @@
 """Direct tests for the hidden #467 lane preflight contract."""
+from dataclasses import replace
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -8,7 +10,8 @@ from chrona.presentation.layout.lane_allocation import (
 )
 from chrona.presentation.layout.obstacles import ObstacleRect
 from chrona.presentation.layout.lane_preflight import (
-    LaneInlineFrame, LaneMeasurementIdentity, assert_lane_inline_stable, lane_table_measurement_content,
+    LaneInlineFrame, LaneMeasurementIdentity, assert_lane_inline_stable,
+    assert_lane_plan_compatible, lane_table_measurement_content,
     preflight_surface_lanes,
 )
 from chrona.presentation.layout.model import LayoutError
@@ -83,6 +86,42 @@ def test_seed_and_final_lane_inline_frame_must_match_exactly():
     assert_lane_inline_stable(_frame(), _frame())
     with pytest.raises(LayoutError, match="E_LAYOUT_LANE_INLINE_UNSTABLE"):
         assert_lane_inline_stable(_frame(), _frame("99"))
+
+
+def test_plan_retains_exact_candidate_facet_closure_and_selected_cutoff():
+    candidate = _candidate("task", 10, 20)
+    selected_as_of = date(2026, 9, 27)
+    identity = LaneMeasurementIdentity("theme:1", "font:1", "scale:1")
+    plan = preflight_surface_lanes(
+        [candidate], seed_inline_frame=_frame(), measurement_identity=identity,
+        as_of=selected_as_of, group_titles={"systems": "Systems"},
+        candidate_titles={"task": "Task"}, lane_label="group", include_count=False,
+        mark_row_height=10, label_row_height=10,
+    )
+    assert plan.candidates == (candidate,)
+    assert plan.candidates[0].mark.facets == candidate.mark.facets
+    assert plan.as_of == selected_as_of
+    assert_lane_plan_compatible(
+        plan, final_inline_frame=_frame(), measurement_identity=identity, as_of=selected_as_of,
+    )
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_PLAN_INVALID"):
+        assert_lane_plan_compatible(
+            plan, final_inline_frame=_frame(), measurement_identity=identity,
+            as_of=date(2026, 9, 28),
+        )
+
+
+def test_plan_requires_bijection_between_closed_members_and_allocation():
+    candidate = _candidate("task", 10, 20)
+    plan = preflight_surface_lanes(
+        [candidate], seed_inline_frame=_frame(),
+        measurement_identity=LaneMeasurementIdentity("theme:1", "font:1", "scale:1"),
+        group_titles={"systems": "Systems"}, candidate_titles={"task": "Task"},
+        lane_label="group", include_count=False, mark_row_height=10, label_row_height=10,
+    )
+    broken_lane = replace(plan.allocation.lanes[0], members=())
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_PLAN_INVALID"):
+        replace(plan, allocation=replace(plan.allocation, lanes=(broken_lane,)))
 
 
 def test_lane_table_count_includes_attached_item_but_not_comparison_facet():

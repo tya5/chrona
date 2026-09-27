@@ -8,6 +8,7 @@ render pipeline or construct candidates from Project/Actual/Comparison inputs.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 from typing import Mapping, Sequence
 
@@ -63,18 +64,36 @@ class LaneMeasurementIdentity:
 class SurfaceLanePlan:
     """One allocation authority retained unchanged through final realization."""
 
+    candidates: tuple[LaneCandidate, ...]
     allocation: LaneAllocationResult
     table_cells: tuple[LaneTableCell, ...]
     natural_block_requirement: Decimal
     group_block_requirements: tuple[tuple[str, Decimal], ...]
     seed_inline_frame: LaneInlineFrame
     measurement_identity: LaneMeasurementIdentity
+    as_of: date | None
 
     def __post_init__(self) -> None:
+        if (not isinstance(self.candidates, tuple)
+                or any(not isinstance(candidate, LaneCandidate) for candidate in self.candidates)
+                or (self.as_of is not None and not isinstance(self.as_of, date))):
+            raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
         if not self.natural_block_requirement.is_finite() or self.natural_block_requirement < 0:
             raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
         if len(self.table_cells) != len(self.allocation.lanes):
             raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
+        expected_members = tuple(
+            member.member_id
+            for candidate in self.candidates
+            for member in candidate.members_for_placement
+        )
+        allocated_members = tuple(
+            member_id for lane in self.allocation.lanes for member_id in lane.members
+        )
+        if (len(set(expected_members)) != len(expected_members)
+                or len(set(allocated_members)) != len(allocated_members)
+                or set(expected_members) != set(allocated_members)):
+            raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/body/rows/items")
 
 
 def assert_lane_inline_stable(seed: LaneInlineFrame, final: LaneInlineFrame) -> None:
@@ -83,10 +102,21 @@ def assert_lane_inline_stable(seed: LaneInlineFrame, final: LaneInlineFrame) -> 
         raise LayoutError("E_LAYOUT_LANE_INLINE_UNSTABLE", "/layoutManifest")
 
 
+def assert_lane_plan_compatible(
+    plan: SurfaceLanePlan, *, final_inline_frame: LaneInlineFrame,
+    measurement_identity: LaneMeasurementIdentity, as_of: date | None,
+) -> None:
+    """Fail closed when final realization no longer matches its preflight closure."""
+    assert_lane_inline_stable(plan.seed_inline_frame, final_inline_frame)
+    if plan.measurement_identity != measurement_identity or plan.as_of != as_of:
+        raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
+
+
 def preflight_surface_lanes(
     candidates: Sequence[LaneCandidate], *,
     seed_inline_frame: LaneInlineFrame,
     measurement_identity: LaneMeasurementIdentity,
+    as_of: date | None = None,
     group_titles: Mapping[str, str],
     candidate_titles: Mapping[str, str],
     lane_label: str,
@@ -107,7 +137,10 @@ def preflight_surface_lanes(
     if (lane_label not in {"group", "lane"} or not group_header_block_size.is_finite()
             or group_header_block_size < 0):
         raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/body/rows/laneTable/label")
+    candidates = tuple(candidates)
     identifiers = {item.candidate_id for item in candidates}
+    if len(identifiers) != len(candidates):
+        raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/body/rows/items")
     groups = {item.group_key for item in candidates if item.group_key}
     if identifiers != set(candidate_titles) or not groups.issubset(group_titles):
         raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/body/rows/laneTable")
@@ -135,12 +168,14 @@ def preflight_surface_lanes(
     # not completed float geometry (classified by the Layout conformance gate).
     natural = sum(group_requirements.values(), Decimal(0))
     return SurfaceLanePlan(
+        candidates=candidates,
         allocation=allocation,
         table_cells=tuple(cells),
         natural_block_requirement=natural,
         group_block_requirements=tuple(sorted(group_requirements.items())),
         seed_inline_frame=seed_inline_frame,
         measurement_identity=measurement_identity,
+        as_of=as_of,
     )
 
 
