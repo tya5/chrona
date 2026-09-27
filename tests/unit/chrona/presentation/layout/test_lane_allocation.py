@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from chrona.presentation.layout.lane_allocation import (
-    LaneCandidate, LaneMark, allocate_lanes,
+    LaneCandidate, LaneMark, LaneMember, allocate_lanes,
 )
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 
@@ -228,3 +228,45 @@ def test_duplicate_candidate_identity_and_out_of_band_mark_are_rejected() -> Non
 def test_mark_rect_requires_positive_width() -> None:
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_MARK_GEOMETRY"):
         LaneMark(10, 10)
+
+
+def test_atomic_host_attached_point_and_comparison_keep_independent_required_labels() -> None:
+    bundle = LaneCandidate(
+        "host", "g", (0,), LaneMark(0, 20), 40.0,
+        bundle=(
+            LaneMember("host", LaneMark(0, 20), 40.0),
+            LaneMember("host:comparison", LaneMark(0, 20), 50.0,
+                       overlays=("host", "gate")),
+            LaneMember("gate", LaneMark(8, 10), 30.0,
+                       overlays=("host", "host:comparison")),
+        ),
+    )
+    result = allocate_lanes([bundle], mark_row_height=10, label_row_height=10)
+    lane = result.lanes[0]
+    assert lane.members == ("host", "host:comparison", "gate")
+    assert set(lane.placements) == {"host", "host:comparison", "gate"}
+    assert all(not lane.placements[member].visible_overflow for member in lane.members)
+    assert len({lane.placements[member].candidate_id for member in lane.members}) == 3
+
+
+def test_atomic_bundle_uses_one_lane_when_a_child_mark_would_collide_in_prior_lane() -> None:
+    prior = candidate("prior", "g", 8, 10, title_width=2)
+    bundle = LaneCandidate(
+        "host", "g", (1,), LaneMark(0, 20), 5.0,
+        bundle=(LaneMember("host", LaneMark(0, 20), 5.0),
+                    LaneMember("gate", LaneMark(8, 10), 5.0, overlays=("host",))),
+    )
+    result = allocate_lanes([prior, bundle], mark_row_height=10, label_row_height=10)
+    assert result.lane_of("prior").lane_id != result.lane_of("host").lane_id
+    assert result.lane_of("host").lane_id == result.lane_of("gate").lane_id
+
+
+def test_bundle_overlay_exemption_must_be_explicit_and_member_ids_are_globally_unique() -> None:
+    unexempted = LaneCandidate("host", "g", (0,), LaneMark(0, 20), 5.0,
+                               bundle=(LaneMember("host", LaneMark(0, 20), 5.0),
+                                       LaneMember("facet", LaneMark(0, 20), 5.0)))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_BUNDLE_MARK_COLLISION"):
+        allocate_lanes([unexempted], mark_row_height=10, label_row_height=10)
+    duplicate = candidate("host", "g", 30, 40)
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        allocate_lanes([unexempted, duplicate])

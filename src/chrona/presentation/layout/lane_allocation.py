@@ -10,6 +10,11 @@ placement; each lane gets its own index instance because the ladder is
 measured in the lane's local frame (translated to final block coordinates by
 the caller) and lanes never share obstacles with each other.
 
+This is the partial B1b allocator extension only. It accepts an already
+closed atomic bundle and preserves each member's identity and required label;
+it does not map ReviewProjection or resolve marks, typography, or icons from
+render inputs. That projection-to-bundle mapper remains a separate B1b slice.
+
 Ladder (fixed by the #467/#494 feasibility and route correction):
 for each candidate in a candidate lane, try, in order:
 
@@ -29,7 +34,7 @@ never dropped.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import isfinite
 from types import MappingProxyType
 from typing import Mapping, Sequence
@@ -76,6 +81,26 @@ class LaneMark:
 
 
 @dataclass(frozen=True)
+class LaneMember:
+    """One independently identified mark and required label in a bundle.
+
+    ``overlays`` names bundle members whose marks may intentionally occupy
+    the same geometry (for example a comparison facet or attached point).
+    The exemption is local to this bundle and never applies to labels.
+    """
+
+    member_id: str
+    mark: LaneMark
+    title_width: float
+    delta_width: float | None = None
+    overlays: tuple[str, ...] = ()
+
+    @property
+    def label_width(self) -> float:
+        return self.title_width + (0.0 if self.delta_width is None else self.delta_width)
+
+
+@dataclass(frozen=True)
 class LaneCandidate:
     """One selected primary Review Item eligible for group-local lane packing."""
 
@@ -90,6 +115,7 @@ class LaneCandidate:
     finish-to-start predecessors; the caller resolves which relations are
     immediate finish-to-start, not this module."""
     group_order: tuple = ()
+    bundle: tuple[LaneMember, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.candidate_id:
@@ -98,6 +124,24 @@ class LaneCandidate:
                 or (self.delta_width is not None and (not isfinite(self.delta_width) or self.delta_width < 0))
                 or not isfinite(self.label_width)):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        if self.bundle:
+            ids = tuple(member.member_id for member in self.bundle)
+            if (ids[0] != self.candidate_id or len(set(ids)) != len(ids)
+                    or (self.bundle[0].mark, self.bundle[0].title_width, self.bundle[0].delta_width)
+                    != (self.mark, self.title_width, self.delta_width)):
+                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            known = set(ids)
+            for member in self.bundle:
+                if (not member.member_id or not isfinite(member.title_width) or member.title_width <= 0
+                        or (member.delta_width is not None and
+                            (not isfinite(member.delta_width) or member.delta_width < 0))
+                        or not isfinite(member.label_width)
+                        or any(target not in known or target == member.member_id for target in member.overlays)):
+                    raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+    @property
+    def members_for_placement(self) -> tuple[LaneMember, ...]:
+        return self.bundle or (LaneMember(self.candidate_id, self.mark, self.title_width, self.delta_width),)
 
     @property
     def label_width(self) -> float:
@@ -113,6 +157,7 @@ class LanePlacement:
     """One of :data:`LADDER`, or ``"visible-overflow"`` for the terminal case."""
     rect: ObstacleRect
     visible_overflow: bool = False
+    member_placements: Mapping[str, "LanePlacement"] = field(default_factory=lambda: MappingProxyType({}))
 
 
 @dataclass(frozen=True)
@@ -159,53 +204,83 @@ class _Lane:
         self._canvas_right = canvas_right
         self._index = SurfaceObstacleIndex()
 
-    def try_place(self, candidate: LaneCandidate) -> LanePlacement | None:
+    def try_place(self, candidate: LaneCandidate, *, allow_visible_overflow: bool = False) -> LanePlacement | None:
         """Return the first ladder placement that fits, or ``None``."""
-        mark_geometries = self._mark_geometries(candidate)
+        members = candidate.members_for_placement
+        all_mark_geometries = {member.member_id: self._member_mark_geometries(member) for member in members}
+        # Compare every proposed member with already accepted lane content.
+        for member in members:
+            mark_geometries = all_mark_geometries[member.member_id]
+            if any(self._index.collisions(geometry, classes=(_MARK_CLASS, "lane-label-inline"),
+                                          clearance=self._clearance) for geometry in mark_geometries):
+                return None
+        # Marks inside one bundle may overlap only through an explicit pair
+        # exemption. This is the only mark-overlap exception in the kernel.
+        for index, member in enumerate(members):
+            for other in members[index + 1:]:
+                allowed = (other.member_id in member.overlays or member.member_id in other.overlays)
+                if not allowed and any(
+                    _geometries_collide(left, right, self._clearance)
+                    for left in all_mark_geometries[member.member_id]
+                    for right in all_mark_geometries[other.member_id]
+                ):
+                    raise ValueError("E_LAYOUT_LANE_BUNDLE_MARK_COLLISION")
         # A new mark shares its band with any earlier item's already-accepted
         # `end`/`start` label (the same two-way check `try_place` applies to
         # a new `end`/`start` candidate against earlier marks, below): a
         # later mark must not land inside an earlier inline label either.
-        if any(self._index.collisions(geometry, classes=(_MARK_CLASS, "lane-label-inline"),
-                                      clearance=self._clearance) for geometry in mark_geometries):
-            return None
-        own_marks = SurfaceObstacleIndex()
-        for index, geometry in enumerate(mark_geometries):
-            own_marks.add(SurfaceObstacle(f"own:{index}", _MARK_CLASS, self.lane_id, geometry))
-        for level in LADDER:
-            rect = self._candidate_rect(candidate, level)
-            if self._canvas_left is not None and rect.left < self._canvas_left:
-                continue
-            if self._canvas_right is not None and rect.right > self._canvas_right:
-                continue
-            obstacle_class = _LABEL_CLASS_BY_LEVEL[level]
-            # An `end`/`start` candidate shares the mark's own vertical band
-            # (unlike a stagger row, which sits entirely above it), so it
-            # must also clear every OTHER item's mark already accepted in
-            # this lane -- not only same-level labels. Its own mark is
-            # exempt (checked once, above); a stagger row never shares a
-            # band with any mark, so it is unaffected.
-            classes = (obstacle_class, _MARK_CLASS) if level in ("end", "start") else (obstacle_class,)
-            # Own supplemental geometry can extend beyond the planned anchor.
-            # Query it without an exemption; boundary contact remains legal.
-            own_mark_collision = (level in ("end", "start")
-                                  and bool(own_marks.collisions(rect, classes=(_MARK_CLASS,),
-                                                                clearance=self._clearance)))
-            if not own_mark_collision and not self._index.collisions(rect, classes=classes, clearance=self._clearance):
-                return LanePlacement(candidate.candidate_id, level, rect)
-        return None
+        trial = SurfaceObstacleIndex()
+        for existing in self._index.all():
+            trial.add(existing)
+        for member in members:
+            for index, geometry in enumerate(all_mark_geometries[member.member_id]):
+                trial.add(SurfaceObstacle(f"bundle-mark:{member.member_id}:{index}", _MARK_CLASS,
+                                          self.lane_id, geometry, clearance=self._clearance))
+        per_member: dict[str, LanePlacement] = {}
+        for member in members:
+            chosen: LanePlacement | None = None
+            for level in LADDER:
+                rect = self._member_rect(member, level)
+                if ((self._canvas_left is not None and rect.left < self._canvas_left)
+                        or (self._canvas_right is not None and rect.right > self._canvas_right)):
+                    continue
+                classes = tuple(_LABEL_CLASS_BY_LEVEL.values())
+                if level in ("end", "start"):
+                    classes += (_MARK_CLASS,)
+                if not trial.collisions(rect, classes=classes, clearance=self._clearance):
+                    chosen = LanePlacement(member.member_id, level, rect)
+                    break
+            if chosen is None:
+                if not allow_visible_overflow:
+                    return None
+                chosen = LanePlacement(member.member_id, "visible-overflow",
+                                       self.overflow_rect_for_member(member), visible_overflow=True)
+            per_member[member.member_id] = chosen
+            trial.add(SurfaceObstacle(f"bundle-label:{member.member_id}",
+                                      _LABEL_CLASS_BY_LEVEL.get(chosen.level, "lane-label-overflow"),
+                                      self.lane_id, chosen.rect, clearance=self._clearance))
+        root = per_member[candidate.candidate_id]
+        return LanePlacement(candidate.candidate_id, root.level, root.rect, root.visible_overflow,
+                             MappingProxyType(per_member))
 
     def _mark_geometries(self, candidate: LaneCandidate) -> tuple[ObstacleGeometry, ...]:
-        primary = ObstacleRect(candidate.mark.left, 0.0, candidate.mark.right, self._mark_row_height)
-        for geometry in candidate.mark.footprints:
+        return self._member_mark_geometries(LaneMember(candidate.candidate_id, candidate.mark,
+                                                       candidate.title_width, candidate.delta_width))
+
+    def _member_mark_geometries(self, member: LaneMember) -> tuple[ObstacleGeometry, ...]:
+        primary = ObstacleRect(member.mark.left, 0.0, member.mark.right, self._mark_row_height)
+        for geometry in member.mark.footprints:
             _, top, _, bottom = obstacle_envelope(geometry)
             if top < 0.0 or bottom > self._mark_row_height:
                 raise ValueError("E_LAYOUT_LANE_MARK_GEOMETRY")
-        return (primary, *candidate.mark.footprints)
+        return (primary, *member.mark.footprints)
 
     def _candidate_rect(self, candidate: LaneCandidate, level: str) -> ObstacleRect:
-        left, right = candidate.mark.left, candidate.mark.right
-        width = candidate.label_width
+        return self._member_rect(candidate.members_for_placement[0], level)
+
+    def _member_rect(self, member: LaneMember, level: str) -> ObstacleRect:
+        left, right = member.mark.left, member.mark.right
+        width = member.label_width
         if level == "label-row-1":
             top = -self._label_row_height
             return ObstacleRect(left, top, left + width, top + self._label_row_height)
@@ -225,24 +300,33 @@ class _Lane:
         raise ValueError("E_LAYOUT_LANE_LADDER_LEVEL")
 
     def accept(self, candidate: LaneCandidate, placement: LanePlacement) -> None:
-        obstacle_class = _LABEL_CLASS_BY_LEVEL.get(placement.level, "lane-label-overflow")
-        for index, geometry in enumerate(self._mark_geometries(candidate)):
-            self._index.add(SurfaceObstacle(f"{placement.candidate_id}:mark:{index}", _MARK_CLASS,
-                                            self.lane_id, geometry, clearance=self._clearance))
-        self._index.add(SurfaceObstacle(f"{placement.candidate_id}:label", obstacle_class, self.lane_id,
-                                        placement.rect, clearance=self._clearance))
-        self.members.append(candidate.candidate_id)
-        self.placements[candidate.candidate_id] = placement
-        rows = {"label-row-1": 1, "label-row-2": 2,
-                "label-row-3-start": 3, "label-row-3-end": 3}
-        self.label_rows_used = max(self.label_rows_used, rows.get(placement.level, 0))
+        members = candidate.members_for_placement
+        for member in members:
+            for index, geometry in enumerate(self._member_mark_geometries(member)):
+                self._index.add(SurfaceObstacle(f"{member.member_id}:mark:{index}", _MARK_CLASS,
+                                                self.lane_id, geometry, clearance=self._clearance))
+            member_placement = placement.member_placements.get(member.member_id, placement)
+            obstacle_class = _LABEL_CLASS_BY_LEVEL.get(member_placement.level, "lane-label-overflow")
+            rect = (self.overflow_rect_for_member(member) if member_placement.visible_overflow
+                    else self._member_rect(member, member_placement.level))
+            self._index.add(SurfaceObstacle(f"{member.member_id}:label", obstacle_class, self.lane_id,
+                                            rect, clearance=self._clearance))
+            self.members.append(member.member_id)
+            self.placements[member.member_id] = LanePlacement(member.member_id, member_placement.level, rect,
+                                                               member_placement.visible_overflow)
+            rows = {"label-row-1": 1, "label-row-2": 2,
+                    "label-row-3-start": 3, "label-row-3-end": 3}
+            self.label_rows_used = max(self.label_rows_used, rows.get(member_placement.level, 0))
 
     def block_extent(self) -> float:
         return self._mark_row_height + self.label_rows_used * self._label_row_height
 
     def overflow_rect(self, candidate: LaneCandidate) -> ObstacleRect:
-        right = candidate.mark.right
-        return ObstacleRect(right, 0.0, right + candidate.label_width, self._mark_row_height)
+        return self.overflow_rect_for_member(candidate.members_for_placement[0])
+
+    def overflow_rect_for_member(self, member: LaneMember) -> ObstacleRect:
+        right = member.mark.right
+        return ObstacleRect(right, 0.0, right + member.label_width, self._mark_row_height)
 
 
 def allocate_lanes(candidates: Sequence[LaneCandidate], *, mark_row_height: float = 1.0,
@@ -267,7 +351,8 @@ def allocate_lanes(candidates: Sequence[LaneCandidate], *, mark_row_height: floa
             or any(bound is not None and not isfinite(bound) for bound in (canvas_left, canvas_right))
             or (canvas_left is not None and canvas_right is not None and canvas_right <= canvas_left)):
         raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
-    if len({item.candidate_id for item in candidates}) != len(candidates):
+    all_member_ids = [member.member_id for item in candidates for member in item.members_for_placement]
+    if len(set(all_member_ids)) != len(all_member_ids):
         raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
     orders: dict[str, tuple] = {}
     for item in candidates:
@@ -301,19 +386,25 @@ def allocate_lanes(candidates: Sequence[LaneCandidate], *, mark_row_height: floa
             placement = lane.try_place(candidate)
             if placement is not None:
                 lane.accept(candidate, placement)
-                lane_by_candidate[candidate.candidate_id] = lane
+                for member in candidate.members_for_placement:
+                    lane_by_candidate[member.member_id] = lane
                 accepted = True
                 break
         if not accepted:
             lane = open_lane(candidate.group_key, candidate.candidate_id)
-            placement = lane.try_place(candidate)
+            placement = lane.try_place(candidate, allow_visible_overflow=True)
             if placement is None:
                 # Even alone, no label candidate fits: record the terminal
                 # visible-overflow placement rather than dropping the name.
+                member_overflow = {member.member_id: LanePlacement(
+                    member.member_id, "visible-overflow", lane.overflow_rect_for_member(member), True)
+                    for member in candidate.members_for_placement}
                 placement = LanePlacement(candidate.candidate_id, "visible-overflow",
-                                          lane.overflow_rect(candidate), visible_overflow=True)
+                                          lane.overflow_rect(candidate), visible_overflow=True,
+                                          member_placements=MappingProxyType(member_overflow))
             lane.accept(candidate, placement)
-            lane_by_candidate[candidate.candidate_id] = lane
+            for member in candidate.members_for_placement:
+                lane_by_candidate[member.member_id] = lane
 
     return LaneAllocationResult(tuple(
         LaneAssignment(lane.lane_id, lane.group_key, lane.representative_id, tuple(lane.members),
@@ -343,3 +434,9 @@ def _eligible_predecessor_lane(candidate: LaneCandidate, by_id: Mapping[str, Lan
         return None
     eligible.sort(key=lambda item: (item[0], item[1]))
     return eligible[0][2]
+
+
+def _geometries_collide(left: ObstacleGeometry, right: ObstacleGeometry, clearance: float) -> bool:
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("other", _MARK_CLASS, "bundle", right))
+    return bool(index.collisions(left, classes=(_MARK_CLASS,), clearance=clearance))
