@@ -142,8 +142,8 @@ This target-independent bound accommodates admitted miter limits up to ten
 without changing adapter output or adding Scene paint policy. Because
 `ScenePaint` has no miter-limit member, Layout cannot set renderer paint
 policy to make the footprint fit. The bound may increase collisions: the 02
-≤12 feasibility criterion remains a hard gate, and a failure returns to
-design rather than weakening the criterion or introducing target-specific
+≤14 feasibility criterion and attribution of every lane above ten remain hard
+gates, and a failure returns to design rather than weakening either gate or introducing target-specific
 lane allocation. See the [miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md).
 
 Layout returns completed point-symbol and icon path geometry before Scene
