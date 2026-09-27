@@ -232,12 +232,24 @@ counts; a point attached under #486 stays on its host candidate's lane but
 retains its own required title/date/delta, mark, port and count identity.
 Packed member labels are atomic required bundles: measured title/selected
 delta text and any resolved leading/trailing `labelVisual` icons move together.
+In lanes, object-targeted plot-label visuals apply to every selected countable
+occurrence of that object; semantic-mark visuals apply to every selected
+occurrence with the declared mark role. Each gets distinct instance IDs,
+placements and obstacles. No match or a duplicate side on one occurrence
+fails; comparison variants and attached children remain distinct.
 Layout evaluates each finite rung with completed component text/icon geometry,
 exact visible footprints and natural block extent; it selects the whole bundle
 or a new lane, never text without its icon. The selected lane plan carries the
 completed placements to Scene, and both text and icon are phase-one required
 label obstacles and source-keyed Scene footprints. Automatic-row icon
 coordinates MUST NOT be copied into lanes. See the [label-visual correction](../design/issue-467-b1b2-lane-label-visual-correction-2026-09-27.md).
+The immutable plan retains each selected label icon's normalized payload,
+complete vector-path or raster emission facts, local component bounds,
+target source ref, paint order, slot and component obstacle. B2 translates
+these once, without asset reload or path reconstruction. The plan also retains
+each group's title and header block size; final Layout places the header from
+solved row/group bounds under the same Theme/font authority. A later lane's
+blank summary cell is not a group-title source.
 Semantic relation/annotation ports belong to the completed mark slot, not
 necessarily to an emitted primitive part's unexpanded bounds. A source-keyed
 owning facet carries separate completed `port_host_bounds`; its ports MUST lie

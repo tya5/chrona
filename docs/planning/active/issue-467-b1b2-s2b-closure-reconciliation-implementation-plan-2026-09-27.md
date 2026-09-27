@@ -18,6 +18,12 @@ validates evidence; adapters only serialize. Deriving obstacles from Scene
 paint was rejected because compound icons and conservative stroke envelopes
 cannot be reconstructed exactly. The optional lane-only v0.6 fields require
 schema/serializer migration, not automatic/explicit output changes.
+The second B2 review found missing plan facts: completed lane-label icon
+emission/obstacles and selected group-header titles. These freeze before
+final placement, not from reloaded assets or blank later-lane cells. Lane
+object-level visual selectors fan out to matching typed occurrences; no match
+or duplicate side fails. Only generated lanes change; no View schema change.
+Specs 38/64 own the details.
 
 B2 publication order: (1) add the typed lane obstacle carrier, v0.6 schema,
 serializer, and missing/extra/untagged tests; (2) project final translated
