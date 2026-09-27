@@ -283,7 +283,6 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
-      strokeWidth: stroke-width
     summary:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -343,8 +342,6 @@ body:
       strokeWidth: stroke-width
     axis-minor:
       strokeWidth: stroke-width
-    baseline:
-      strokeWidth: stroke-width
     asOf:
       strokeWidth: stroke-width
       dash: dash.as-of
@@ -356,7 +353,6 @@ body:
     critical-edge:
       strokeWidth: stroke-width
     variance-behind:
-      strokeWidth: stroke-width
       contrastTreatment: required
     variance-ahead:
       contrastTreatment: deemphasized
@@ -398,14 +394,9 @@ body:
     member-label-inside-actual.fill: insideLabelActual
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
-    heading.fill: text
     subtitle.fill: textMuted
-    axis.fill: textMuted
-    legend.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
-    annotation.stroke: neutral
-    summary.fill: text
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
@@ -413,14 +404,11 @@ body:
     group-band.fill: surfaceRaised
     row-band.fill: surfaceRaised
     group-header-band.fill: surfaceRaised
-    groupHeader.fill: surfaceRaised
-    baseline.stroke: neutral
     metric.fill: text
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
     calendar-exception.fill: warning
     range.fill: warning
-    asOf.stroke: warning
     as-of.stroke: warning
     note-index.fill: accent
     group:bus.fill: category:bus
@@ -447,7 +435,6 @@ body:
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
-    variance-behind.stroke: negative
     dependency.stroke: textMuted
     progress-fill.fill: warning
     progress-fill.stroke: text

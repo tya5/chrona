@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
+from chrona.presentation.scene.capabilities import theme_role_property_consumer
 from chrona.presentation.scene.paint_analysis import composited_contrast
 
 
@@ -113,6 +114,11 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     colors = resolve_color_scheme(scheme, content_identity=scheme_content_identity)
     values = dict(body.get("values", {}))
     roles = {name: dict(binding) for name, binding in body.get("roles", {}).items() if isinstance(binding, Mapping)}
+    for role, binding in roles.items():
+        for property_name in binding:
+            if theme_role_property_consumer(role, property_name) is None:
+                raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                       f"/body/roles/{role}/{property_name}")
     for target, intent in body["colorBindings"].items():
         if (not isinstance(target, str) or "." not in target or not isinstance(intent, str)
                 or (intent not in _INTENTS and intent not in colors)):
@@ -120,6 +126,8 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         role, property_name = target.rsplit(".", 1)
         if property_name not in {"fill", "stroke", "gradientStart", "gradientEnd", "shadowColor"}:
             raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+        if theme_role_property_consumer(role, property_name) is None:
+            raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/colorBindings/{target}")
         token = f"__scheme.{intent}.{target}"
         color = colors[intent]
         values[token] = {"type": "color", "value": color}

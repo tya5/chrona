@@ -313,7 +313,6 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
-      strokeWidth: stroke-width
     annotation-note-box:
       strokeWidth: stroke-width
       annotationContainer: annotation-container-frame
@@ -385,7 +384,6 @@ body:
     critical-edge:
       strokeWidth: stroke-width
     variance-behind:
-      strokeWidth: stroke-width
       contrastTreatment: required
     variance-ahead:
       contrastTreatment: deemphasized
@@ -393,8 +391,6 @@ body:
       contrastTreatment: required
     missing-actual-cell:
       contrastTreatment: required
-    baseline:
-      strokeWidth: stroke-width
     asOf:
       strokeWidth: stroke-width
       dash: dash.as-of
@@ -441,18 +437,13 @@ body:
     member-label-inside-actual.fill: insideLabelActual
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
-    heading.fill: text
     subtitle.fill: textMuted
-    axis.fill: textMuted
-    legend.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
     note-index.fill: accent
-    annotation.stroke: neutral
     annotation-note-box.fill: surfaceRaised
     annotation-note-box.stroke: neutral
     annotation-note-text.fill: text
-    summary.fill: text
     metric.fill: text
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
@@ -485,15 +476,11 @@ body:
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
-    variance-behind.stroke: negative
     dependency.stroke: textMuted
-    groupHeader.fill: surfaceRaised
-    baseline.stroke: neutral
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
     calendar-exception.fill: warning
     range.fill: warning
-    asOf.stroke: warning
     as-of.stroke: warning
     as-of-label-chip.fill: neutral
     progress-fill.fill: warning

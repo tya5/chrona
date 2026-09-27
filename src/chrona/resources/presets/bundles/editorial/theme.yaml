@@ -285,9 +285,9 @@ body:
       letterSpacing: letter-spacing.wide
       textTransform: text-transform.upper
       numericSpacing: numeric-spacing
+      laneBlockSize: axis-lane-quarter
       iconScale: icon-scale
       iconGap: icon-gap
-      laneBlockSize: axis-lane-quarter
     axisMonth:
       fontFamily: mono
       fontWeight: weight.regular
@@ -296,10 +296,10 @@ body:
       letterSpacing: letter-spacing.wide
       textTransform: text-transform.upper
       numericSpacing: numeric-spacing
-      iconScale: icon-scale
-      iconGap: icon-gap
       laneBlockSize: axis-lane-month
       labelInset: axis-label-inset
+      iconScale: icon-scale
+      iconGap: icon-gap
     axis-label2: {}
     axis-label3: {}
     axis-cell-separator:
@@ -326,7 +326,6 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
-      strokeWidth: stroke-width
     summary:
       fontFamily: sans
       fontWeight: weight.regular
@@ -377,8 +376,6 @@ body:
       strokeWidth: stroke-width
     axis-minor:
       strokeWidth: stroke-width
-    baseline:
-      strokeWidth: stroke-width
     asOf:
       strokeWidth: stroke-width
       dash: dash.as-of
@@ -390,7 +387,6 @@ body:
     critical-edge:
       strokeWidth: stroke-width
     variance-behind:
-      strokeWidth: stroke-width
       contrastTreatment: required
     variance-ahead:
       contrastTreatment: deemphasized
@@ -438,28 +434,20 @@ body:
     axis-rule.stroke: text
     background.fill: surface
     text.fill: text
-    heading.fill: text
     subtitle.fill: textMuted
-    axis.fill: textMuted
-    legend.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
-    annotation.stroke: neutral
-    summary.fill: text
     table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     group-band.fill: surfaceRaised
     row-band.fill: surfaceRaised
     group-header-band.fill: surfaceRaised
-    groupHeader.fill: surfaceRaised
-    baseline.stroke: neutral
     metric.fill: text
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
     calendar-exception.fill: warning
     range.fill: warning
-    asOf.stroke: accent
     as-of.stroke: accent
     note-index.fill: accent
     planned.fill: surface
@@ -488,7 +476,6 @@ body:
     missing-actual.fill: neutral
     missing-actual.stroke: text
     missing-actual-cell.fill: textMuted
-    variance-behind.stroke: negative
     dependency.stroke: textMuted
     progress-fill.fill: accent
     progress-fill.stroke: accent
