@@ -1795,8 +1795,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 row_band = row_band_by_id.get(review_row.row_id)
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
-                                                   "suppress" if lane_mode else
                                                    "visible-overflow" if attached is not None else
+                                                   "suppress" if lane_mode else
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
                                                    wrap, bounds=row_band,
                                                    inside_host_obstacle_id=host_mark_id if mark is not None else None,

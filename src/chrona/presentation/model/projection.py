@@ -65,6 +65,14 @@ class ReviewItem:
     observation_state: ObservationState = ObservationState.UNAVAILABLE
     attached_to: str | None = None
 
+    @property
+    def at_delta(self) -> int | None:
+        """Point Actual minus planned point, in calendar days (Spec 06 §8)."""
+        planned_at = self.planned.get("at")
+        actual_at = self.actual.get("at") if self.actual is not None else None
+        return ((actual_at - planned_at).days
+                if isinstance(planned_at, date) and isinstance(actual_at, date) else None)
+
 
 @dataclass(frozen=True)
 class ReviewRowProjection:
