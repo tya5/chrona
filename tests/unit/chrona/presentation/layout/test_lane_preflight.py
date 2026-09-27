@@ -65,6 +65,23 @@ def test_preflight_freezes_three_row_natural_extent_identity_chain_and_cells():
     assert plan.table_cells[0].count == 3
 
 
+def test_plan_retains_selected_group_title_and_header_size_across_blank_repeat_cells():
+    plan = preflight_surface_lanes(
+        (_candidate("first", 10, 20), _candidate("second", 10, 20)),
+        seed_inline_frame=_frame(),
+        measurement_identity=LaneMeasurementIdentity("theme", "font", "scale"),
+        group_titles={"systems": "Systems"},
+        candidate_titles={"first": "First", "second": "Second"},
+        lane_label="group", include_count=True, mark_row_height=10, label_row_height=10,
+        group_header_block_size=Decimal("5"),
+    )
+
+    assert tuple(cell.label for cell in plan.table_cells) == ("Systems", "")
+    assert plan.selected_group_titles == (("systems", "Systems"),)
+    assert plan.group_header_block_size == Decimal("5")
+    assert dict(plan.selected_group_titles)[plan.allocation.lanes[0].group_key] == "Systems"
+
+
 def test_lane_table_envelope_contains_all_candidate_names_and_count_bound():
     table = lane_table_measurement_content(
         lane_label="lane", include_count=True, group_titles={"systems": "Systems"},

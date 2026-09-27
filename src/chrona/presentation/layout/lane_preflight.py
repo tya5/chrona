@@ -92,6 +92,8 @@ class SurfaceLanePlan:
     seed_inline_frame: LaneInlineFrame
     measurement_identity: LaneMeasurementIdentity
     as_of: date | None
+    selected_group_titles: tuple[tuple[str, str], ...]
+    group_header_block_size: Decimal
 
     def __post_init__(self) -> None:
         if (not isinstance(self.candidates, tuple)
@@ -100,6 +102,17 @@ class SurfaceLanePlan:
             raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
         if not self.natural_block_requirement.is_finite() or self.natural_block_requirement < 0:
             raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
+        if (not isinstance(self.group_header_block_size, Decimal)
+                or not self.group_header_block_size.is_finite() or self.group_header_block_size < 0
+                or not isinstance(self.selected_group_titles, tuple)
+                or any(not isinstance(entry, tuple) or len(entry) != 2
+                       or not isinstance(entry[0], str) or not entry[0]
+                       or not isinstance(entry[1], str)
+                       for entry in self.selected_group_titles)
+                or len({key for key, _ in self.selected_group_titles}) != len(self.selected_group_titles)
+                or {key for key, _ in self.selected_group_titles}
+                != {candidate.group_key for candidate in self.candidates if candidate.group_key}):
+            raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/body/rows/laneTable")
         if len(self.table_cells) != len(self.allocation.lanes):
             raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
         expected_members = tuple(
@@ -196,6 +209,8 @@ def preflight_surface_lanes(
         seed_inline_frame=seed_inline_frame,
         measurement_identity=measurement_identity,
         as_of=as_of,
+        selected_group_titles=tuple((key, group_titles[key]) for key in sorted(groups)),
+        group_header_block_size=group_header_block_size,
     )
 
 

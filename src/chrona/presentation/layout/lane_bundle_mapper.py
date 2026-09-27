@@ -30,6 +30,7 @@ from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, ScalePlacement, ShapePlacement, VisualRequest
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
 from chrona.presentation.model.projection import ReviewProjection
+from chrona.presentation.model.surface_content import RelationPresentationFact
 
 
 @dataclass(frozen=True)
@@ -78,7 +79,7 @@ def map_lane_candidates(
     progress_fill_source: str | None = None,
     mark_visual_requests: Mapping[tuple[LaneProjectionInstance, str], VisualRequest] | None = None,
     view_visual_requests: Sequence[VisualRequest] = (),
-    predecessor_relations: Mapping[str, tuple[tuple[str, str], ...]] | None = None,
+    relation_facts: Sequence[RelationPresentationFact] = (),
 ) -> LaneCandidateMapping:
     """Compose marks in a zero-origin frame and close every candidate payload.
 
@@ -166,7 +167,7 @@ def map_lane_candidates(
     absences = [LaneFacetAbsence(item.instance, item.role, item.reason)
                 for item in closure.intentional_absences]
     absences.extend(progress_absences)
-    predecessor_relations = predecessor_relations or {}
+    candidate_roots: list[tuple[str, str, str, str]] = []
     representative_instances: set[LaneProjectionInstance] = set()
     for row_index, row in enumerate(projection.rows):
         row_roots = roots_by_row.get(row.row_id, ())
@@ -186,7 +187,7 @@ def map_lane_candidates(
                     icon_assets=icon_assets, theme_tokens=theme_tokens,
                     font_metrics=font_metrics, measurement_identity=measurement_identity,
                     include_finish_delta=include_finish_delta,
-                    typography_role=label_typography_role,
+                    typography_role=label_typography_role, slot_id=slot_id,
                 )
                 semantic_facets: list[LaneMarkFacet] = []
                 local_facets_by_instance: dict[LaneProjectionInstance, tuple[LaneMarkFacet, ...]] = {}
@@ -259,15 +260,74 @@ def map_lane_candidates(
                 root_member.member_id, row.group_id,
                 (row_index, row.items.index(root_item), root_member.member_id),
                 root_member.mark, root_member.title_width, root_member.delta_width,
-                predecessors=predecessor_relations.get(root_member.member_id, ()),
                 group_order=(group_rank, row.group_id) if group_rank >= 0 else (),
                 bundle=tuple(members),
             ))
+            candidate_roots.append((root_item.object_id, row.table_subject_id,
+                                    root_instance.item_id, root_instance.source_kind))
+    candidates = _with_relation_predecessors(candidates, candidate_roots, relation_facts)
     if any(instance not in representative_instances for instance in label_visual_requests):
         raise LayoutError("E_LAYOUT_LANE_LABEL_VISUAL_UNAVAILABLE", "/body/visuals")
     if len({candidate.candidate_id for candidate in candidates}) != len(candidates):
         raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
     return LaneCandidateMapping(closure, tuple(candidates), tuple(expected_facets), tuple(absences))
+
+
+def _with_relation_predecessors(
+    candidates: list[LaneCandidate],
+    roots: Sequence[tuple[str, str, str, str]],
+    relation_facts: Sequence[RelationPresentationFact],
+) -> list[LaneCandidate]:
+    """Close same-group end→start relations over unique selected root candidates."""
+    if len(roots) != len(candidates):
+        raise LayoutError("E_LAYOUT_LANE_RELATION_INVALID", "/body/relations")
+    by_object: dict[str, list[tuple[int, str, str, str]]] = {}
+    for index, (object_id, table_subject_id, item_id, source_kind) in enumerate(roots):
+        by_object.setdefault(object_id, []).append((index, table_subject_id, item_id, source_kind))
+    resolved: dict[str, int] = {}
+    for object_id, matches in by_object.items():
+        subjects = [index for index, table_subject_id, item_id, _ in matches
+                    if item_id == table_subject_id]
+        if len(subjects) == 1:
+            resolved[object_id] = subjects[0]
+            continue
+        if len(subjects) > 1:
+            raise LayoutError("E_LAYOUT_LANE_RELATION_AMBIGUOUS", "/body/relations",
+                              detail=f"object={object_id}")
+        primary = [index for index, _, _, source_kind in matches
+                   if source_kind in {"primary", "combined"}]
+        if len(primary) == 1:
+            resolved[object_id] = primary[0]
+        elif len(matches) == 1:
+            resolved[object_id] = matches[0][0]
+        else:
+            raise LayoutError("E_LAYOUT_LANE_RELATION_AMBIGUOUS", "/body/relations",
+                              detail=f"object={object_id}")
+
+    relation_ids: set[str] = set()
+    predecessors: dict[int, list[tuple[str, str]]] = {}
+    for relation in relation_facts:
+        if not isinstance(relation, RelationPresentationFact) or not relation.relation_id:
+            raise LayoutError("E_LAYOUT_LANE_RELATION_INVALID", "/body/relations")
+        if relation.relation_id in relation_ids:
+            raise LayoutError("E_LAYOUT_LANE_RELATION_INVALID", "/body/relations",
+                              detail=f"duplicate relation={relation.relation_id}")
+        relation_ids.add(relation.relation_id)
+        if relation.source_endpoint != "end" or relation.target_endpoint != "start":
+            continue
+        source_index = resolved.get(relation.source_object_id)
+        target_index = resolved.get(relation.target_object_id)
+        if source_index is None or target_index is None:
+            continue
+        if source_index == target_index:
+            raise LayoutError("E_LAYOUT_LANE_RELATION_INVALID", "/body/relations",
+                              detail=f"self relation={relation.relation_id}")
+        source, target = candidates[source_index], candidates[target_index]
+        if not source.group_key or source.group_key != target.group_key:
+            continue
+        predecessors.setdefault(target_index, []).append((relation.relation_id, source.candidate_id))
+    return [replace(candidate, predecessors=tuple(sorted(predecessors.get(index, ()))))
+            for index, candidate in enumerate(candidates)]
 
 
 def preflight_review_lanes(
@@ -283,7 +343,7 @@ def preflight_review_lanes(
     mark_visual_requests: Mapping[tuple[LaneProjectionInstance, str], VisualRequest] | None = None,
     view_visual_requests: Sequence[VisualRequest] = (),
     candidate_titles: Mapping[str, str] | None = None,
-    predecessor_relations: Mapping[str, tuple[tuple[str, str], ...]] | None = None,
+    relation_facts: Sequence[RelationPresentationFact] = (),
     clearance: float = 0.0, canvas_left: float | None = None, canvas_right: float | None = None,
 ) -> tuple[LaneCandidateMapping, SurfaceLanePlan]:
     """Map the exact Review closure, then allocate once into immutable preflight."""
@@ -294,9 +354,11 @@ def preflight_review_lanes(
         include_finish_delta=include_finish_delta, label_typography_role=label_typography_role,
         progress_fill_source=progress_fill_source, mark_visual_requests=mark_visual_requests,
         view_visual_requests=view_visual_requests,
-        predecessor_relations=predecessor_relations,
+        relation_facts=relation_facts,
     )
     group_header = group_header_block_size if group_header_block_size is not None else Decimal(0)
+    if not isinstance(group_header, Decimal):
+        raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/body/rows/laneTable")
     title_map = dict(candidate_titles or {
         candidate.candidate_id: candidate.members_for_placement[0].required_label.title
         for candidate in mapped.candidates
@@ -377,7 +439,8 @@ def _measure_required_label(item: Any, instance: LaneProjectionInstance,
                             visual_requests: tuple[VisualRequest, ...], *, icon_assets: Mapping[str, Any],
                             theme_tokens: Any, font_metrics: Any,
                             measurement_identity: LaneMeasurementIdentity,
-                            include_finish_delta: bool, typography_role: str) -> LaneRequiredLabelProjection:
+                            include_finish_delta: bool, typography_role: str,
+                            slot_id: str) -> LaneRequiredLabelProjection:
     if not item.title:
         raise LayoutError("E_LAYOUT_LANE_LABEL_VISUAL_UNAVAILABLE", f"/projection/items/{instance.item_id}/title")
     delta = f"{item.finish_delta:+d}d" if include_finish_delta and item.finish_delta is not None else None
@@ -394,36 +457,53 @@ def _measure_required_label(item: Any, instance: LaneProjectionInstance,
     leading: list[LaneLabelVisualProjection] = []
     trailing: list[LaneLabelVisualProjection] = []
     treatment = theme_tokens.text_treatment(typography_role)
+    metric = metric_for_role(theme_tokens, typography_role, font_metrics)
+    if measured.visuals and not hasattr(metric, "cap_height_at"):
+        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", measured.visuals[0][0].source_ref)
+    cap_height = float(metric.cap_height_at(float(treatment.font_size))) if measured.visuals else 0.0
     leading_cursor = 0.0
     for visual, icon, width, gap in measured.visuals:
-        if visual.side == "trailing":
-            continue
-        top = (measured.text_block_size - width * icon.viewport[1] / icon.viewport[0]) / 2
+        height = float(treatment.font_size) * float(theme_tokens.icon_ratios(typography_role)[0])
+        inline = (leading_cursor if visual.side == "leading" else
+                  leading_cursor + measured.text_width + measured.trailing_advance - gap - width)
+        baseline = float(treatment.font_size)
+        top = baseline - cap_height + (cap_height - height) / 2
+        bounds = Rect(Decimal(str(inline)), Decimal(str(top)), Decimal(str(width)), Decimal(str(height)))
+        placement_id = f"member-label-visual:{instance.placement_key}:{visual.side}"
+        stroke_scale = width / icon.viewport[0]
+        try:
+            completed_paths = (complete_icon_paths(icon.payload,
+                                                   (inline, top, width, height), stroke_scale)
+                               if icon.kind == "vector" else ())
+        except (TypeError, ValueError) as error:
+            raise LayoutError("E_LAYOUT_LANE_LABEL_VISUAL_UNAVAILABLE", visual.source_ref) from error
+        if icon.kind == "vector" and not completed_paths:
+            raise LayoutError("E_LAYOUT_LANE_LABEL_VISUAL_UNAVAILABLE", visual.source_ref)
+        if icon.kind == "raster":
+            if not isinstance(icon.payload, bytes) or not icon.payload:
+                raise LayoutError("E_LAYOUT_LANE_LABEL_VISUAL_UNAVAILABLE", visual.source_ref)
+            component_obstacles = (_expanded_rect(_bounds(bounds), 0, placement_id),)
+        elif icon.kind == "vector":
+            path_footprints = []
+            for path in completed_paths:
+                commands = _commands(path.commands)
+                points = tuple(point for _, pairs in commands for point in pairs)
+                if not points or (path.paint == "stroke" and (path.stroke_width is None
+                        or not isfinite(path.stroke_width) or path.stroke_width <= 0)):
+                    raise LayoutError("E_LAYOUT_LANE_LABEL_VISUAL_UNAVAILABLE", visual.source_ref)
+                path_footprints.append(_path_footprint(points, path.stroke_width, placement_id))
+            component_obstacles = tuple(path_footprints)
+        else:
+            raise LayoutError("E_LAYOUT_LANE_LABEL_VISUAL_UNAVAILABLE", visual.source_ref)
         value = LaneLabelVisualProjection(
             visual.side, icon.icon_id, icon.content_identity, tuple(icon.viewport),
-            float(width), float(measured.text_block_size), float(gap),
-            Rect(Decimal(str(leading_cursor)), Decimal(str(top)), Decimal(str(width)),
-                 Decimal(str(width * icon.viewport[1] / icon.viewport[0]))),
-            icon.alternative, bool(visual.decorative),
+            float(width), float(height), float(gap), bounds,
+            icon.alternative, bool(visual.decorative), item.object_id, visual.source_ref,
+            placement_id, 300, slot_id, icon.payload, tuple(completed_paths), component_obstacles,
         )
-        leading.append(value)
-        leading_cursor += width + gap
-    trailing_cursor = leading_cursor + measured.text_width
-    for visual, icon, width, gap in measured.visuals:
-        if visual.side != "trailing":
-            continue
-        height = width * icon.viewport[1] / icon.viewport[0]
-        top = (measured.text_block_size - height) / 2
-        value = LaneLabelVisualProjection(
-            visual.side, icon.icon_id, icon.content_identity, tuple(icon.viewport),
-            float(width), float(measured.text_block_size), float(gap),
-            Rect(Decimal(str(trailing_cursor)), Decimal(str(top)), Decimal(str(width)),
-                 Decimal(str(height))),
-            icon.alternative, bool(visual.decorative),
-        )
-        trailing.append(value)
-        trailing_cursor += width + gap
-    metric = metric_for_role(theme_tokens, typography_role, font_metrics)
+        (leading if visual.side == "leading" else trailing).append(value)
+        if visual.side == "leading":
+            leading_cursor += width + gap
     delta_width = (measure_text_width(
         delta, font_size=float(treatment.font_size), font_metrics=metric,
         letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
@@ -437,6 +517,10 @@ def _measure_required_label(item: Any, instance: LaneProjectionInstance,
         measurement_identity.theme_identity, measurement_identity.font_asset_identity,
         measurement_identity.scale_identity, measured.text_width, delta_width,
         measured.text_block_size,
+        Rect(Decimal(str(leading_cursor)), Decimal("0"), Decimal(str(measured.text_width)),
+             Decimal(str(measured.text_block_size))),
+        (leading_cursor, float(treatment.font_size)),
+        (treatment.paint_content(content),), 300, slot_id, f"/projection/items/{instance.item_id}/title",
         tuple(leading), tuple(trailing),
     )
 

@@ -148,7 +148,7 @@ class LaneProgressProjection:
 
 @dataclass(frozen=True)
 class LaneLabelVisualProjection:
-    """One resolved leading/trailing icon measured for a required label."""
+    """One fully normalized, completed, source-keyed label icon component."""
 
     side: str
     icon_id: str
@@ -160,6 +160,14 @@ class LaneLabelVisualProjection:
     measured_bounds: Rect
     alternative: str
     decorative: bool
+    source_ref: str
+    visual_capability_source_ref: str
+    placement_id: str
+    paint_order: int
+    slot_id: str
+    normalized_payload: object
+    completed_paths: tuple[object, ...]
+    component_obstacles: tuple[ObstacleGeometry, ...]
 
     def __post_init__(self) -> None:
         if (self.side not in {"leading", "trailing"} or not self.icon_id
@@ -167,8 +175,33 @@ class LaneLabelVisualProjection:
                 or len(self.viewport) != 2 or any(not isinstance(value, int) or value <= 0 for value in self.viewport)
                 or any(not isfinite(value) or value <= 0 for value in (self.width, self.height))
                 or not isinstance(self.measured_bounds, Rect)
-                or not isfinite(self.gap) or self.gap < 0 or not isinstance(self.decorative, bool)):
+                or not isfinite(self.gap) or self.gap < 0 or not isinstance(self.decorative, bool)
+                or not self.source_ref or not self.visual_capability_source_ref or not self.placement_id
+                or not isinstance(self.paint_order, int) or isinstance(self.paint_order, bool)
+                or self.paint_order < 0 or not self.slot_id
+                or not isinstance(self.component_obstacles, tuple) or not self.component_obstacles
+                or any(not isinstance(item, (ObstacleRect, ObstacleSegment))
+                       for item in self.component_obstacles)):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        if isinstance(self.normalized_payload, bytes):
+            if not self.normalized_payload or self.completed_paths or len(self.component_obstacles) != 1:
+                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        elif (not hasattr(self.normalized_payload, "viewport")
+              or not hasattr(self.normalized_payload, "paths")
+              or tuple(self.normalized_payload.viewport) != self.viewport
+              or len(self.completed_paths) != len(self.normalized_payload.paths)
+              or len(self.component_obstacles) != len(self.completed_paths)
+              or not self.completed_paths):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+    @property
+    def kind(self) -> str:
+        """Emission kind inferred once from the closed normalized payload."""
+        return "raster" if isinstance(self.normalized_payload, bytes) else "vector"
+
+    @property
+    def raster_payload(self) -> bytes | None:
+        return self.normalized_payload if isinstance(self.normalized_payload, bytes) else None
 
 
 @dataclass(frozen=True)
@@ -193,6 +226,12 @@ class LaneRequiredLabelProjection:
     text_width: float
     delta_width: float | None
     text_block_size: float
+    text_bounds: Rect
+    text_baseline: tuple[float, float]
+    lines: tuple[str, ...]
+    paint_order: int
+    slot_id: str
+    source_ref: str
     leading_visuals: tuple[LaneLabelVisualProjection, ...] = ()
     trailing_visuals: tuple[LaneLabelVisualProjection, ...] = ()
 
@@ -208,6 +247,12 @@ class LaneRequiredLabelProjection:
                 or not isfinite(self.text_width) or self.text_width <= 0
                 or (self.delta_width is not None and (not isfinite(self.delta_width) or self.delta_width < 0))
                 or not isfinite(self.text_block_size) or self.text_block_size <= 0
+                or not isinstance(self.text_bounds, Rect)
+                or len(self.text_baseline) != 2
+                or not all(isfinite(value) for value in self.text_baseline)
+                or not self.lines or not isinstance(self.paint_order, int)
+                or isinstance(self.paint_order, bool) or self.paint_order < 0
+                or not self.slot_id or not self.source_ref
                 or any(item.side != "leading" for item in self.leading_visuals)
                 or any(item.side != "trailing" for item in self.trailing_visuals)):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
@@ -217,6 +262,13 @@ class LaneRequiredLabelProjection:
         return geometry_sum((self.text_width, *(item.width + item.gap
                                                 for item in (*self.leading_visuals,
                                                              *self.trailing_visuals))))
+
+    @property
+    def text_obstacle(self) -> ObstacleRect:
+        """Exact local required-text component before selected-rung translation."""
+        return ObstacleRect(float(self.text_bounds.inline), float(self.text_bounds.block),
+                            float(self.text_bounds.inline + self.text_bounds.inline_size),
+                            float(self.text_bounds.block + self.text_bounds.block_size))
 
 
 @dataclass(frozen=True)
