@@ -187,6 +187,16 @@ within one member or its atomic attached bundle are exempt. Labels are
 placed afterwards and do not select subtracks. A Theme or Actual change may
 alter subtracks and row height, never
 the lane IDs, membership or lane-table counts.
+The internal placement unit is a flattened Review projection instance, not
+the countable membership item. Layout moves all facets of one instance
+together and checks every intersecting facet pair, including pairs inside an
+instance. An exemption names the exact two facet IDs; sharing a member ID or
+attachment host is not by itself an exemption. For an attached point, Layout
+tries the host's subtrack first, but a collision with another attached child
+may put that point on another subtrack of the **same lane**. An overlay grants
+permission to intersect, not a requirement to share a subtrack. Comparison
+instances declared `shared` keep their explicit pairwise overlay relation;
+other comparison/Actual instances do not gain one by common object identity.
 Scene projects completed primitives and serializes the same membership for
 a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous
