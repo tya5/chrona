@@ -184,6 +184,38 @@ and `fill`; role-specific marks never stretch with surplus. Automatic and
 explicit member-index track placement is unchanged. See the
 [candidate-footprint correction](../design/issue-467-l3b-candidate-footprint-correction-2026-09-27.md).
 
+Within a lane bundle, each `LaneMember` represents one countable selected
+Review item: the root/host or an attached point. Only these item identities
+appear in lane membership, representative/predecessor identity, and optional
+lane-table item counts. A same-object comparison or Actual facet contributes
+geometry and provenance under its countable member; it is not an additional
+lane item, lane-table count, or required name.
+
+Each countable member's Layout mark carries immutable source-keyed facets for
+its emitted primitives. Each facet retains a stable primitive identity, Review
+projection-instance identity (the View row ID plus item ID, or the stable
+projected object instance in automatic mode), facet purpose/source kind, stable
+source reference, semantic role and primitive type, completed Layout geometry,
+the renderer-neutral visible footprint, and stable source ports tied to that
+exact instance where applicable. Thus the same source/object used in two
+explicit rows retains distinct facet and port identity. Compound glyph and icon
+parts retain individual primitive identity in their one semantic member. Every intentional
+within-bundle mark overlay is an explicit facet-identity relation. The
+allocator checks every facet footprint; only those declared mark pairs may
+overlap. This allowance never applies to required labels, other candidates, or
+routes. Completed geometry and its footprint/ports remain associated in one
+immutable value so final composition can realize the exact collided geometry
+without re-deriving the source facet.
+
+For B1b-2 mapping, Layout receives the selected Actual cutoff explicitly from
+the existing normalized `PresentationContract.time.as_of`. Layout does not
+load Actual resources or duplicate this value in `ReviewProjection`. A selected
+open Actual (`openUntil: "asOf"`) with no cutoff fails before allocation with
+`E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE`; it cannot be assigned a guessed end.
+The cutoff used by preflight and final composition must be identical. These
+source-keyed facets and cutoff rules are specified in the
+[B1b-2 facet/count/cutoff design correction](../design/issue-467-b1b2-facet-count-asof-design-correction-2026-09-27.md).
+
 The B1b-2 candidate mapper closes each mark and selected icon to a
 stroke-aware, renderer-neutral visible-extent footprint before allocation.
 It uses the same resolved Theme geometry roles, mark variant, seed scale,
