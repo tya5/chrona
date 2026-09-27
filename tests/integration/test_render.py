@@ -124,10 +124,15 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count():
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
     assert member_suppressed >= 1  # the variance suppression above is not counted
     assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
-    ordinary = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
-                                            theme_path=example / "themes/briefing.yaml",
-                                            layout_path=example / "layouts/briefing.yaml",
-                                            summary_path=example / "profiles/summary.yaml"))
+    # The L1 HALCYON schedule correction moves the CDR label into the existing
+    # containment policy's suppression path; it must be reported exactly once.
+    halcyon = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
+                                           theme_path=example / "themes/briefing.yaml",
+                                           layout_path=example / "layouts/briefing.yaml",
+                                           summary_path=example / "profiles/summary.yaml"))
+    assert "W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr" in halcyon.scene.diagnostics
+    assert "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1" in halcyon.scene.diagnostics
+    ordinary = render_review(_draft_request())
     assert not ordinary.info_diagnostics
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
 
