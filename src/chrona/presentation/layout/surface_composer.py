@@ -12,6 +12,7 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, 
 from chrona.presentation.layout.label_visual_measurement import (
     resolve_label_visual_advances, visual_target_placement_id,
 )
+from chrona.presentation.layout.lane_preflight import SurfaceLanePlan
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
@@ -391,8 +392,11 @@ def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
 
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
                                        metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
-                                       text_line_block: float = 0.0) -> Decimal:
+                                       text_line_block: float = 0.0,
+                                       lane_plan: SurfaceLanePlan | None = None) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
+    if lane_plan is not None:
+        return lane_plan.natural_block_requirement
     rows = projection.rows or tuple(
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items

@@ -15,6 +15,7 @@ from chrona.presentation.layout.lane_preflight import (
     preflight_surface_lanes,
 )
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.surface_composer import timeline_content_block_requirement
 from chrona.presentation.layout.sources import SourceInput, measure_sources
 
 
@@ -109,6 +110,10 @@ def test_plan_retains_exact_candidate_facet_closure_and_selected_cutoff():
             plan, final_inline_frame=_frame(), measurement_identity=identity,
             as_of=date(2026, 9, 28),
         )
+    assert timeline_content_block_requirement(
+        projection=None, group_presentation="header", metric_values={},
+        lane_plan=plan,
+    ) == plan.natural_block_requirement
 
 
 def test_plan_requires_bijection_between_closed_members_and_allocation():
