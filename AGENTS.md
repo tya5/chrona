@@ -100,6 +100,22 @@ breach, pause that slice. Update the current design, review it against the
 whole architecture, amend the implementation plan, and publish those changes
 before resuming code. Do not hide a design gap behind a local conditional.
 
+**What needs a pre-code publication, and what does not.** Pause and publish
+before code only for a **mechanism decision**:
+- which layer owns a responsibility;
+- a public contract (View, Theme, Layout Profile, Project or Scene schema,
+  diagnostics codes, CLI);
+- a compatibility or migration promise;
+- a change to an issue's literal acceptance.
+
+Details inside an already published design do not pause the slice. Decide
+them in the code and its tests, then record the outcome in the living issue
+work record in the same commit. Such details include candidate order,
+thresholds and parameter values, which invalid combinations a validator
+rejects, internal data structures, and the layering of parts inside one mark.
+If a detail turns out to change a public contract, it becomes a mechanism
+decision.
+
 ## Documentation: when, where, and what
 
 Write design and review records in English. Prefer one concise, living issue
