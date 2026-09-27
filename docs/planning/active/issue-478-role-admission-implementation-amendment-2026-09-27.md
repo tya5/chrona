@@ -11,6 +11,10 @@ Specifications 07, 33 and 39, including the schema-description alignment
 published through `a7375fdd`. I478-1/2 are already accepted; their code and
 public information semantics are not reopened.
 
+**Design correction before code:** the [open-role overlap correction](../../design/issue-478-open-role-family-overlap-correction-2026-09-27.md)
+and [architecture review](../../reviews/current/issue-478-open-role-family-overlap-architecture-review-2026-09-27.md),
+published at `7f76bed9`, supersede the custom-axis paint negative test below.
+
 ## Literal acceptance carried forward
 
 1. Rendering `elevated-light` under the default profile emits a diagnostic that names the dropped treatment and the profile that would paint it.
@@ -30,7 +34,10 @@ projection only if its exact pointer is lost. Tests belong under
 and closure integration tests. The registry must distinguish Theme role,
 Scene role, primitive kind, typography/geometry/paint/policy consumer and
 explicit dynamic family. Test a custom View-named axis typography role with
-allowed measured properties, but reject its Scheme paint target. Test the
+allowed measured properties. Reject a Scheme paint target on known
+measurement-only `axisMonth`/`axisQuarter`; admit a paint target on a novel
+name as a potential legend Rect binding, while proving it does not paint
+an axis label. Test the
 bounded arbitrary legend-only Rect paint family and reject an unknown
 geometry property or a known Text role's stroke even if a legend could name
 that role. This replaces the original plan's unqualified “unknown role”
@@ -40,7 +47,8 @@ actual #426 axis tiers, #464 glyphs,
 #465 image note, #466 annotation/group-header roles and #479 profile roles.
 
 **Focused gate:** every supported property class on capable and incapable
-roles; unknown role; direct `/body/roles/...` and Scheme
+roles; unknown role with a property outside both bounded open-name families;
+direct `/body/roles/...` and Scheme
 `/body/colorBindings/...` pointer; effective derived Theme; Draft and
 immutable closure; rich-profile `planned` shadow admitted, text-only stroke
 and Path gradient rejected; Text/Icon shared-role effects; nested
