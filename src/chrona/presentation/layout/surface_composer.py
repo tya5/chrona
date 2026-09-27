@@ -15,6 +15,8 @@ from chrona.presentation.layout.label_visual_measurement import (
 from chrona.presentation.layout.lane_preflight import (
     SurfaceLanePlan, assert_lane_plan_compatible, lane_inline_frame_for_manifest,
 )
+from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
+from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
@@ -58,6 +60,81 @@ class SurfaceLayoutComposition:
     review_rows: tuple[Any, ...]
     track_placements: tuple[TrackPlacement, ...]
     mark_absences: tuple[MarkFacetAbsence, ...] = ()
+
+
+@dataclass(frozen=True)
+class _LaneLayoutRow:
+    """Layout adapter for one already-fixed View lane, never a member selector."""
+
+    row_id: str
+    group_id: str
+    items: tuple[Any, ...]
+    member_item_ids: tuple[str, ...]
+    label: str = ""
+    table_subject_id: str = ""
+    depth: int = 0
+    rollup_presentation: str = "none"
+
+
+def _review_rows(projection: Any) -> tuple[Any, ...]:
+    lane_membership = getattr(projection, "lane_membership", None)
+    if lane_membership is not None:
+        lane_rows = getattr(projection, "lane_rows", ())
+        if len(lane_rows) != len(lane_membership.lanes):
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
+        if any(len(row.items) != len(row.member_item_ids) for row in lane_rows):
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
+        return tuple(_LaneLayoutRow(row.lane_id, row.group_id, row.items, row.member_item_ids,
+                                    table_subject_id=row.lane_id) for row in lane_rows)
+    return projection.rows or ()
+
+
+def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
+    """Preserve authored side/fallback; auto alone supplies end/start defaults."""
+    ordered = []
+    if preferred and preferred != "auto":
+        ordered.append(preferred)
+    if side != "auto":
+        ordered.append(side)
+    ordered.extend(fallback if fallback else (("end", "start") if side == "auto" else ()))
+    candidates = []
+    for candidate in ordered:
+        if candidate == "suppress":
+            break
+        if candidate not in candidates:
+            candidates.append(candidate)
+    return tuple(candidates)
+
+
+def _place_lane_mark_tracks(*, review_rows: tuple[_LaneLayoutRow, ...],
+                            row_placements: tuple[Any, ...], plan: LaneSubtrackPlan,
+                            mark_block_size: float) -> tuple[TrackPlacement, ...]:
+    """Project typed source-instance subtracks without revisiting membership."""
+    lane_plan = {lane.lane_id: lane for lane in plan.lanes}
+    item_plan = {(item.item_id, item.projection_instance_id.item_id,
+                  item.projection_instance_id.object_id, item.projection_instance_id.source_kind): item
+                 for item in plan.items}
+    if len(review_rows) != len(row_placements) or len(review_rows) != len(lane_plan):
+        raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+    tracks: list[TrackPlacement] = []
+    for review_row, row in zip(review_rows, row_placements, strict=True):
+        lane = lane_plan.get(review_row.row_id)
+        if lane is None or row.row_id != review_row.row_id or row.bounds[3] < lane.block_extent:
+            raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+        origin = row.bounds[1] + (row.bounds[3] - lane.block_extent) / 2
+        for member_id, item in zip(review_row.member_item_ids, review_row.items, strict=True):
+            subtrack = item_plan.get((member_id, item.item_id or item.object_id,
+                                      item.object_id, item.source_kind))
+            if subtrack is None or subtrack.lane_id != lane.lane_id:
+                raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+            block = origin + subtrack.block_offset
+            if block < row.bounds[1] or block + mark_block_size > row.bounds[1] + row.bounds[3]:
+                raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/projection/laneRows")
+            tracks.append(TrackPlacement(f"{review_row.row_id}:{item.item_id or item.object_id}",
+                                         block, block, mark_block_size))
+    if len(tracks) != len(plan.items) or len(item_plan) != len(plan.items):
+        raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+    return tuple(tracks)
 
 
 MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
@@ -399,10 +476,15 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
     """Return the minimum timeline block extent for explicit review rows."""
     if lane_plan is not None:
         return lane_plan.natural_block_requirement
-    rows = projection.rows or tuple(
+    rows = _review_rows(projection) or tuple(
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
     )
+    if getattr(projection, "lane_membership", None) is not None:
+        # The View fixes lane count before measurement. Its full mark-facet
+        # subtrack extent is closed after the inline scale exists; one mark
+        # band per lane is the profile's minimum, not a second membership solve.
+        rows = tuple(replace(row, items=row.items[:1]) for row in rows)
     requirements = required_row_block_extents(
         review_rows=tuple(rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
         row_padding=float(metric_values["timeline.row.paddingBlock"]),
@@ -416,6 +498,47 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
             headers += 1 if row.group_id and group_presentation == "header" else 0
             previous = row.group_id
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
+
+
+def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: LayoutManifest,
+                                surface_content: Any, theme_tokens: Any,
+                                metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
+                                visual_requests: tuple[Any, ...]) -> FixedLanePreflight:
+    """Close fixed-lane mark tracks once, before final profile block allocation."""
+    membership = getattr(projection, "lane_membership", None)
+    if membership is None:
+        raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/projection/laneRows")
+    start, end = projection.window
+    frame = lane_inline_frame_for_manifest(layout_manifest, window=(start, end))
+    timeline = next(item for item in layout_manifest.decisions if item.source == "timeline")
+    scale = ScalePlacement("table-timeline", "primary", start, end,
+                           float(frame.timeline_inline),
+                           float(frame.timeline_inline + frame.timeline_inline_size),
+                           float(frame.timeline_inline), float(frame.temporal_scale))
+    mark_band_size = float(metric_values["timeline.mark.blockSize"])
+    footprints = compose_lane_item_footprints(
+        projection, scale=scale, as_of=surface_content.as_of,
+        theme_tokens=theme_tokens, mark_band_size=mark_band_size,
+        role_geometries=resolve_mark_geometries(theme_tokens), slot_id=timeline.source,
+        icon_assets=icon_assets, visual_requests=visual_requests,
+        progress_fill_source=surface_content.progress_fill_source,
+    )
+    subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size)
+    lane_extent = {lane.lane_id: lane.block_extent for lane in subtracks.lanes}
+    row_padding = float(metric_values["timeline.row.paddingBlock"])
+    line_block = table_text_line_block(
+        theme_tokens, (cell.typography_role for cell in surface_content.table_cells))
+    rows = _review_rows(projection)
+    requirements = tuple(max(float(metric_values["timeline.row.minBlockSize"]),
+                             line_block + row_padding if line_block else 0.0,
+                             lane_extent[row.row_id] + row_padding)
+                         for row in rows)
+    headers = len(tuple(row for index, row in enumerate(rows)
+                        if row.group_id and surface_content.group_presentation == "header"
+                        and (index == 0 or rows[index - 1].group_id != row.group_id)))
+    required = (Decimal(str(geometry_sum(requirements)))
+                + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
+    return FixedLanePreflight(subtracks, frame, required, surface_content.as_of)
 
 
 def progress_fill_bounds(host: Rect, fraction: float, inset_ratio: Decimal = Decimal(0)) -> Rect | None:
@@ -682,6 +805,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             measurement_identity=request.lane_measurement_identity,
             as_of=request.surface_content.as_of,
         )
+    if projection.lane_membership is not None:
+        preflight = request.fixed_lane_preflight
+        if (preflight is None or preflight.as_of != request.surface_content.as_of
+                or preflight.seed_inline_frame != lane_inline_frame_for_manifest(
+                    layout_manifest, window=(start, end))):
+            raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/layoutManifest")
     if ("timeline.row.minBlockSize" not in metric_values
             or "timeline.row.paddingBlock" not in metric_values
             or "timeline.mark.blockSize" not in metric_values):
@@ -713,22 +842,37 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             return table.slot_id
         raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
 
-    review_rows = projection.rows or tuple(
+    review_rows = _review_rows(projection) or tuple(
         type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
                             "table_subject_id": item.object_id, "items": (item,)})()
         for item in projection.items
     )
     timeline_bounds = _bounds(timeline.bounds)
+    scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
+                           timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
+                           timeline_bounds[2] / max(1, (end - start).days))
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
                          if request.surface_content.group_presentation == "header" else 0.0)
     role_geometries = resolve_mark_geometries(request.theme_tokens)
-    requirements = required_row_block_extents(
-        review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
-        row_padding=float(metric_values["timeline.row.paddingBlock"]),
-        mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
-        text_line_block=table_text_line_block(
-            request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells)),
-    )
+    mark_block_size = float(metric_values["timeline.mark.blockSize"])
+    row_padding = float(metric_values["timeline.row.paddingBlock"])
+    text_line_block = table_text_line_block(
+        request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
+    lane_subtracks = None
+    if projection.lane_membership is not None:
+        assert request.fixed_lane_preflight is not None
+        lane_subtracks = request.fixed_lane_preflight.subtracks
+        lane_extent = {item.lane_id: item.block_extent for item in lane_subtracks.lanes}
+        requirements = tuple(max(float(metric_values["timeline.row.minBlockSize"]),
+                                 text_line_block + row_padding if text_line_block else 0.0,
+                                 lane_extent[row.row_id] + row_padding)
+                             for row in review_rows)
+    else:
+        requirements = required_row_block_extents(
+            review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
+            row_padding=row_padding, mark_block_size=mark_block_size,
+            role_geometries=role_geometries, text_line_block=text_line_block,
+        )
     raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
                           distribution=layout_manifest.row_distribution)
@@ -881,9 +1025,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                    source_content=labels[group.group_id], semantic_id="groupHeader",
                                    available_inline_start=float(group.header_bounds.inline),
                                    available_inline_size=float(group.header_bounds.inline_size)))
-    scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
-                           timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
-                           timeline_bounds[2] / max(1, (end - start).days))
     axis = by_source["timeline-axis"]
     shapes: list[ShapePlacement] = []
     axis_tier_outcomes: list[AxisTierOutcome] = []
@@ -1258,8 +1399,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
                                      paint_order=MARK_PAINT_ORDER_BASE))
         as_of_label = (x, contract.time.as_of_label) if contract.time.as_of_label else None
-    tracks = place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
-                               mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries)
+    tracks = (_place_lane_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
+                                      plan=lane_subtracks, mark_block_size=mark_block_size)
+              if lane_subtracks is not None else
+              place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
+                                mark_block_size=mark_block_size, role_geometries=role_geometries))
     track_by_id = {item.instance_id: item for item in tracks}
     marks: list[MarkPlacement] = []
 
@@ -1427,12 +1571,18 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 anchor = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
                     _coordinate(end_at if isinstance(end_at, date) else start_at, scale), track.block,
                     max(1.0, track.block_size), track.block_size)
-                default_ladder = (request.surface_content.label_fallback or (("above", "below", "start", "end") if contract.labels.side == "auto" else (contract.labels.side,)))
+                lane_mode = projection.lane_membership is not None
+                default_ladder = (request.surface_content.label_fallback or
+                                  (("above", "below", "start", "end")
+                                   if contract.labels.side == "auto" else (contract.labels.side,)))
                 intent = getattr(item, "presentation", None) or {}
                 preferred_side = (intent.get("label") or {}).get("side") if isinstance(intent, dict) else None
                 wrap = ((intent.get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid")
-                ladder = ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
-                          if preferred_side else default_ladder)
+                ladder = (_lane_label_candidates(contract.labels.side,
+                                                 request.surface_content.label_fallback, preferred_side)
+                          if lane_mode else
+                          ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
+                           if preferred_side else default_ladder))
                 sides = tuple(side for side in ladder if side != "suppress")
                 # A member label's placement region is its own row band (#488):
                 # every candidate, including the side-neighbourhood search,
@@ -1440,6 +1590,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 row_band = row_band_by_id.get(review_row.row_id)
                 label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
                                                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
+                                                   "suppress" if lane_mode else
                                                    "visible-overflow" if attached is not None else
                                                    "suppress" if "suppress" in ladder else contract.labels.overflow,
                                                    wrap, bounds=row_band,
@@ -1468,7 +1619,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             instance_id = layout_id if projection.rows else item.object_id
             if not projection.rows and item.source_kind != "combined":
                 continue
-            if item.finish_delta is None or "finishDelta" in contract.labels.content:
+            if (item.finish_delta is None or "finishDelta" in contract.labels.content
+                    or projection.lane_membership is not None):
                 continue
             mark = mark_by_id.get(f"actual:{instance_id}") or mark_by_id.get(f"planned:{instance_id}")
             track = track_by_id[layout_id]
@@ -1646,7 +1798,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                              fallback_ladder, candidate.side, "placed",
                                                              candidate.search_count))
 
-    place_requested_labels(tuple(item for item in label_requests if item.rule_host_obstacle_id is not None))
+    def before_relations(item: LabelRequest) -> bool:
+        return (item.rule_host_obstacle_id is not None
+                or (projection.lane_membership is not None and item.semantic_id == "memberLabel"))
+
+    place_requested_labels(tuple(item for item in label_requests if before_relations(item)))
 
     relations: list[RelationPlacement] = []
     visible_route_fallbacks: list[RelationPlacement] = []
@@ -1783,7 +1939,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     # Relation labels are routed facts, not a Scene or adapter policy.  They run
     # after relation paths exist so their anchor is a stable completed segment.
-    place_requested_labels(tuple(item for item in label_requests if item.rule_host_obstacle_id is None))
+    place_requested_labels(tuple(item for item in label_requests if not before_relations(item)))
 
     for placed_relation in relations:
         if placed_relation.suppressed:

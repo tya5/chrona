@@ -8,6 +8,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.lane_preflight import LaneMeasurementIdentity, SurfaceLanePlan
+from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
@@ -393,6 +394,7 @@ class SurfaceLayoutRequest:
     capabilities: dict[str, bool] = field(default_factory=dict)
     icon_assets: dict[str, Any] = field(default_factory=dict)
     visual_requests: tuple[VisualRequest, ...] = ()
+    fixed_lane_preflight: FixedLanePreflight | None = None
     lane_plan: SurfaceLanePlan | None = None
     lane_measurement_identity: LaneMeasurementIdentity | None = None
 

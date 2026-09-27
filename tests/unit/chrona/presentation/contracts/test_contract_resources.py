@@ -361,10 +361,10 @@ def test_v027_lane_contract_normalizes_typed_intent_and_fails_closed_before_proj
     assert contract.view.rows.mode is ViewRowMode.LANES
     assert contract.view.rows.lane_table == ViewLaneTable(ViewLaneLabel.GROUP, True)
 
-    from chrona.usecases.render_review import RenderFailed, _project_review
+    from chrona.usecases.render_review import RenderFailed, _assert_public_lane_guard
 
     with pytest.raises(RenderFailed) as failure:
-        _project_review({}, contract.view, None, {}, None)
+        _assert_public_lane_guard(contract.view)
     assert failure.value.code == "E_REVIEW_LANE_ENGINE_UNAVAILABLE"
     assert failure.value.source_ref == "/body/rows/mode"
 
@@ -375,10 +375,7 @@ def test_v028_lane_contract_parses_packing_defaults_and_explicit_keys():
     body = value["body"]
     body.pop("tableColumns", None)
     body["rows"] = {"mode": "lanes", "laneTable": {"label": "group"}}
-    body["visibility"]["labels"] = {
-        "placement": "plot", "content": ["title"],
-        "side": "auto", "overflow": "visible-overflow",
-    }
+    body["visibility"]["labels"] = {"placement": "plot"}
     identity = ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64)
     contract = parse_contract(identity, value)
     assert contract.view.rows.packing == ("explicit", "attached")
@@ -392,6 +389,40 @@ def test_v028_lane_contract_parses_packing_defaults_and_explicit_keys():
     assert contract.view.rows.lane_keys.by_object == {"item-1": "alpha"}
     with pytest.raises(TypeError, match="immutable"):
         contract.view.rows.lane_keys.by_object["item-2"] = "beta"
+
+
+@pytest.mark.parametrize("labels", [
+    {"placement": "table", "content": ["title"]},
+    {"placement": "plot", "content": ["finishDelta"]},
+    {"placement": "plot", "overflow": "visible-overflow"},
+    False,
+])
+def test_v028_lane_requires_plot_name_and_terminal_suppression(labels):
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value["version"] = "chrona/view/v0.28"
+    body = value["body"]
+    body.pop("tableColumns", None)
+    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group"}}
+    body["visibility"]["labels"] = labels
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        parse_contract(ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64), value)
+
+
+def test_v028_lane_accepts_inside_declared_fallback_and_non_lane_still_requires_side_and_content():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value["version"] = "chrona/view/v0.28"
+    body = value["body"]
+    body.pop("tableColumns", None)
+    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group"}}
+    body["visibility"]["labels"] = {"placement": "plot", "content": ["title"], "side": "inside"}
+    body["visibility"]["fallback"] = {"labels": ["inside", "end", "suppress"]}
+    identity = ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64)
+    assert parse_contract(identity, value).view.visibility.labels["side"] == "inside"
+
+    body["rows"] = {"mode": "automatic"}
+    body["visibility"]["labels"] = {"placement": "plot"}
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        parse_contract(identity, value)
 
 
 def test_downstream_presentation_code_has_no_raw_contract_input_escape_hatch():

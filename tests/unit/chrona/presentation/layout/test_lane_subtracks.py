@@ -1,6 +1,8 @@
 """Fixed lane membership with per-instance, source-keyed mark subtracks."""
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance
@@ -10,6 +12,12 @@ from chrona.presentation.layout.lane_subtracks import (
     assign_lane_subtracks,
 )
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
+from chrona.presentation.layout.presentation import RowPlacement
+from chrona.presentation.layout.surface_composer import (
+    _LaneLayoutRow,
+    _lane_label_candidates,
+    _place_lane_mark_tracks,
+)
 from chrona.presentation.review.lane_membership import (
     Lane,
     LaneAssignment,
@@ -44,6 +52,17 @@ def rect(facet_id: str, left: float, top: float, right: float, bottom: float,
 
 def tracks(result):
     return {item.item_id: item.track_index for item in result.items}
+
+
+@pytest.mark.parametrize(("side", "fallback", "preferred", "expected"), [
+    ("auto", (), None, ("end", "start")),
+    ("inside", ("inside", "end", "suppress"), None, ("inside", "end")),
+    ("above", ("inside", "end", "suppress"), None, ("above", "inside", "end")),
+    ("auto", ("start", "suppress", "end"), None, ("start",)),
+    ("auto", (), "inside", ("inside", "end", "start")),
+])
+def test_lane_label_candidates_preserve_authored_order_and_terminal_suppression(side, fallback, preferred, expected):
+    assert _lane_label_candidates(side, fallback, preferred) == expected
 
 
 def test_explicitly_overlapping_members_keep_membership_and_get_internal_tracks():
@@ -187,3 +206,31 @@ def test_clearance_is_applied_by_canonical_collision_predicate():
 
     assert [item.track_index for item in no_clearance.items] == [0, 0]
     assert [item.track_index for item in with_clearance.items] == [0, 1]
+
+
+def test_composer_translates_each_projection_instance_without_collapsing_member_identity():
+    source = membership(("a", "lane", "g", "explicit", "key"),
+                        ("b", "lane", "g", "explicit", "key"))
+    first = LaneProjectionInstance("source-a", "a", "a", "combined")
+    comparison = LaneProjectionInstance("source-a", "scenario:a", "a", "scenario")
+    second = LaneProjectionInstance("source-b", "b", "b", "combined")
+    plan = assign_lane_subtracks(source, (
+        LaneItemFootprints("a", first, (LaneFacetFootprint("first", ObstacleRect(0, 0, 10, 10), ("comparison",)),)),
+        LaneItemFootprints("a", comparison,
+                           (LaneFacetFootprint("comparison", ObstacleRect(0, 0, 10, 10), ("first",)),)),
+        LaneItemFootprints("b", second, (LaneFacetFootprint("second", ObstacleRect(5, 0, 15, 10)),)),
+    ), mark_band_size=10)
+    items = tuple(SimpleNamespace(item_id=item_id, object_id=object_id, source_kind=source_kind)
+                  for item_id, object_id, source_kind in (("a", "a", "combined"),
+                                                          ("scenario:a", "a", "scenario"),
+                                                          ("b", "b", "combined")))
+    row = _LaneLayoutRow("lane", "g", items, ("a", "a", "b"))
+
+    tracks = _place_lane_mark_tracks(
+        review_rows=(row,), row_placements=(RowPlacement("lane", "g", (0, 20, 100, 30)),),
+        plan=plan, mark_block_size=10,
+    )
+
+    assert [(track.instance_id, track.block) for track in tracks] == [
+        ("lane:a", 25), ("lane:scenario:a", 25), ("lane:b", 35),
+    ]

@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal
 from math import isfinite
 from typing import TypeAlias
 
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance
+from chrona.presentation.layout.lane_preflight import LaneInlineFrame
 from chrona.presentation.layout.obstacles import (
     ObstacleGeometry,
     ObstacleRect,
@@ -92,6 +95,21 @@ class LaneSubtrackPlan:
         if len(matches) != 1:
             raise KeyError(item_id)
         return matches[0]
+
+
+@dataclass(frozen=True)
+class FixedLanePreflight:
+    """One measured Layout closure reused by final host allocation and paint."""
+
+    subtracks: LaneSubtrackPlan
+    seed_inline_frame: LaneInlineFrame
+    natural_block_requirement: Decimal
+    as_of: date | None
+
+    def __post_init__(self) -> None:
+        if (not self.natural_block_requirement.is_finite()
+                or self.natural_block_requirement < 0):
+            raise ValueError("E_LAYOUT_LANE_PREFLIGHT_INVALID")
 
 
 def assign_lane_subtracks(
@@ -209,8 +227,9 @@ def _validate_membership(membership: LaneMembership) -> tuple[dict[str, tuple[st
                 or assignment.lane_id not in lanes or assignment.item_id not in lanes[assignment.lane_id]):
             raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
         assignments[assignment.item_id] = assignment
-    expected = {item_id for member_ids in lanes.values() for item_id in member_ids}
-    if len(expected) != sum(map(len, lanes.values())) or set(assignments) != expected:
+    member_order = tuple(item_id for member_ids in lanes.values() for item_id in member_ids)
+    expected = set(member_order)
+    if len(expected) != len(member_order) or set(assignments) != expected:
         raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
     for lane in membership.lanes:
         if any(assignments[item_id].group_id != lane.group_id for item_id in lane.member_item_ids):
@@ -268,7 +287,7 @@ def _validate_intra_instance_collisions(
             for right in unit.facets[index + 1:]:
                 if (obstacles_intersect(left.footprint, right.footprint, clearance)
                         and frozenset((left.facet_id, right.facet_id)) not in overlay_pairs):
-                    raise ValueError("E_LAYOUT_LANE_SUBTRACK_OVERLAY_MISSING")
+                    raise ValueError(f"E_LAYOUT_LANE_SUBTRACK_OVERLAY_MISSING:{left.facet_id}:{right.facet_id}")
 
 
 def _fits_track(

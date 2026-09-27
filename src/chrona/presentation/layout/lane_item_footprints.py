@@ -101,6 +101,7 @@ def compose_lane_item_footprints(
     icons = _compose_mark_icons(all_marks, bound_marks, icon_assets, theme_tokens)
     progress, _ = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens)
     collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]] = defaultdict(list)
+    facet_purposes: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     for instance in closure.instances:
         item = items[instance]
         for mark in marks_by_instance[instance]:
@@ -115,6 +116,18 @@ def compose_lane_item_footprints(
                 collected[instance].append(LaneFacetFootprint(
                     facet.facet_id, footprint, facet.overlay_with,
                 ))
+                facet_purposes[instance][facet.purpose].append(facet.facet_id)
+
+    # A combined source explicitly paints its Plan and Actual state in one
+    # band. Name only those exact pairs; common object identity is not a
+    # general collision exemption for icons, children or other instances.
+    for instance in closure.instances:
+        if items[instance].source_kind != "combined":
+            continue
+        planned_ids = tuple(facet_purposes[instance].get("planned", ()))
+        observed_ids = tuple(facet_purposes[instance].get("actual", ())) + tuple(
+            facet_purposes[instance].get("missing-actual", ()))
+        _add_intra_instance_overlay_pairs(collected, instance, planned_ids, observed_ids)
     instances_by_member: dict[str, list[LaneProjectionInstance]] = defaultdict(list)
     for instance in closure.instances:
         instances_by_member[owner_for_instance[instance]].append(instance)
@@ -159,3 +172,16 @@ def _add_overlay_pairs(
                        for facet in collected[left]]
     collected[right] = [replace(facet, overlay_with=tuple(dict.fromkeys((*facet.overlay_with, *left_ids))))
                         for facet in collected[right]]
+
+
+def _add_intra_instance_overlay_pairs(
+    collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]],
+    instance: LaneProjectionInstance,
+    left_ids: tuple[str, ...],
+    right_ids: tuple[str, ...],
+) -> None:
+    targets = ({**{facet_id: right_ids for facet_id in left_ids},
+                **{facet_id: left_ids for facet_id in right_ids}})
+    collected[instance] = [replace(facet, overlay_with=tuple(dict.fromkeys(
+        (*facet.overlay_with, *targets.get(facet.facet_id, ())))))
+                           for facet in collected[instance]]

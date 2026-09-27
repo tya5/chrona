@@ -10,10 +10,13 @@ from types import SimpleNamespace
 
 import pytest
 import jsonschema
+import yaml
 
 import chrona.usecases.render_review as render_usecase
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.contracts.resources import ViewLaneLabel, ViewLaneTable, ViewRowMode
+from chrona.presentation.contracts import parse_contract
+from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth, TableContent
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
@@ -40,11 +43,11 @@ def test_font_substitution_warning_only_claims_raster_draw_result():
     assert _font_warnings((substitution,), "svg")[0].drawn is None
 
 
-def test_lane_source_measurement_uses_finite_table_envelope_and_seed_block():
+def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
     items = (SimpleNamespace(title="Long candidate title", group_label="Avionics"),
              SimpleNamespace(title="Short", group_label="Avionics"))
     projection = SimpleNamespace(
-        rows=(SimpleNamespace(row_id="row", group_id="g", label="row", items=items),),
+        lane_rows=(SimpleNamespace(lane_id="lane:g:a", group_id="g", items=items),),
         items=items, window=(date(2026, 1, 1), date(2026, 1, 31)), network=None,
     )
     view = SimpleNamespace(
@@ -52,15 +55,17 @@ def test_lane_source_measurement_uses_finite_table_envelope_and_seed_block():
                              lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)),
         table_columns=(),
     )
+    table = TableContent((TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content")),
+                          TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"))),
+                         (TableCellContent("lane:g:a", "Lane", "Avionics", "tableCell"),
+                          TableCellContent("lane:g:a", "Items", "2", "tableCell", "numeric")), (), None, ())
     sources = render_usecase._source_inputs(
-        {"project": {"title": "test"}}, view, projection, SimpleNamespace(runs=()),
+        {"project": {"title": "test"}}, view, projection, SimpleNamespace(runs=()), table=table,
     )
 
     assert sources["table"].item_count == sources["timeline"].item_count == 1
     assert tuple(column.column_id for column in sources["table"].table.columns) == ("Lane", "Items")
-    assert {cell.content for cell in sources["table"].table.cells} == {
-        "Avionics", "Long candidate title", "Short", "2",
-    }
+    assert [cell.content for cell in sources["table"].table.cells] == ["Avionics", "2"]
 
 
 def test_lane_measurement_identity_uses_effective_theme_and_font_asset():
@@ -92,10 +97,10 @@ ROOT = Path(__file__).resolve().parents[4]
 EXAMPLE = ROOT / "examples/halcyon-1"
 
 
-def _closure(temporary: Path):
+def _closure(temporary: Path, context_name: str = "02-programme-board"):
     snapshot = temporary / "snapshot"
     snapshot.mkdir()
-    reference, _ = _copy_context_closure(EXAMPLE.resolve(), EXAMPLE / "contexts/02-programme-board.yaml", snapshot)
+    reference, _ = _copy_context_closure(EXAMPLE.resolve(), EXAMPLE / f"contexts/{context_name}.yaml", snapshot)
     reader = LocalSnapshotReader(snapshot, reference["store"]["identity"])
     return resolve_render_context(reference, reader), snapshot
 
@@ -114,6 +119,78 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert rendered.scene.provenance.mode == "immutable"
     assert rendered.scene.manifest.visual_role_counts
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
+
+
+@pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])
+def test_hidden_lane_layout_projects_fixed_membership_before_public_activation(context_name):
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary), context_name)
+        value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
+        value["version"] = "chrona/view/v0.28"
+        body = value["body"]
+        body.pop("tableColumns", None)
+        body["rows"] = {"mode": "lanes", "packing": ["explicit", "attached", "chain", "dates"],
+                        "laneTable": {"label": "group", "count": True}}
+        body["visibility"]["labels"] = {"placement": "plot"}
+        contract = parse_contract(closure.view.identity, value)
+        resources = tuple(replace(resource, contract=contract) if resource.kind == "view" else resource
+                          for resource in closure.resources)
+        lane_closure = replace(closure, resources=resources)
+        with pytest.raises(RenderFailed, match="E_REVIEW_LANE_ENGINE_UNAVAILABLE"):
+            render_review(_request(lane_closure, snapshot))
+        rendered = render_usecase._render_review(_request(lane_closure, snapshot))
+
+    assert rendered.surface.primitives
+    assert rendered.scene.surfaces == (rendered.surface,)
+    assert 0 < len(rendered.surface.rows) < 26
+    assert all(row.row_id.startswith("review-lane:") for row in rendered.surface.rows)
+    timeline_slot = next(slot for slot in rendered.surface.slots if slot.source == "timeline")
+    assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
+        timeline_slot.bounds[1] + timeline_slot.bounds[3]
+    )
+    assert any(item.scene_id.startswith("member-label:") for item in rendered.surface.primitives)
+    suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                     for item in rendered.surface.diagnostics)
+    counted = sum(item.count for item in rendered.surface.info_diagnostics
+                  if item.code == "I_LAYOUT_PLOT_LABELS_SUPPRESSED")
+    assert counted == suppressed
+
+
+def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_allocation(monkeypatch):
+    completed = []
+    original = render_usecase.preflight_fixed_lane_layout
+
+    def capture(**kwargs):
+        result = original(**kwargs)
+        completed.append(result)
+        return result
+
+    monkeypatch.setattr(render_usecase, "preflight_fixed_lane_layout", capture)
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
+        value["version"] = "chrona/view/v0.28"
+        body = value["body"]
+        body.pop("tableColumns", None)
+        body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True},
+                        "laneKeys": {"byObject": {"structure": "dense", "eps": "dense"}}}
+        body["visibility"]["labels"] = {"placement": "plot", "content": ["title"], "side": "inside"}
+        body["visibility"]["fallback"] = {"labels": ["inside", "end", "suppress"]}
+        contract = parse_contract(closure.view.identity, value)
+        resources = tuple(replace(resource, contract=contract) if resource.kind == "view" else resource
+                          for resource in closure.resources)
+        rendered = render_usecase._render_review(_request(replace(closure, resources=resources), snapshot))
+
+    lane = next(item for item in rendered.surface.rows if '"dense"' in item.row_id)
+    timeline = next(item for item in rendered.surface.slots if item.source == "timeline")
+    assert len(completed) == 1
+    assert next(item for item in completed[0].subtracks.lanes if item.lane_id == lane.row_id).subtrack_count > 1
+    assert timeline.bounds[3] >= float(completed[0].natural_block_requirement)
+    assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
+        timeline.bounds[1] + timeline.bounds[3]
+    )
+    assert not any(item.startswith(("W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"))
+                   for item in rendered.surface.diagnostics)
 
 
 @pytest.mark.parametrize("error", [

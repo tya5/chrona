@@ -121,6 +121,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     actual_body = _resource_body(actual_set, "ACTUAL_SET")
     columns, cells, table_cell_objects = table.columns, table.cells, table.cell_objects
     visible = view.visibility
+    lane_mode = getattr(view.rows.mode, "value", view.rows.mode) == "lanes"
     group_presentation = view.grouping.presentation if view.grouping and view.grouping.presentation else "band"
     labels = visible.labels
     label_placement = "plot" if labels is True else "none"
@@ -139,9 +140,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         else:
             # ``both`` is ``plot`` plus a table title column the View validator already required.
             label_placement = "plot" if labels["placement"] == "both" else str(labels["placement"])
-            label_content = tuple(str(item) for item in labels["content"])
-            label_side = str(labels["side"])
-            label_overflow = str(labels.get("overflow", "visible-overflow"))
+            label_content = tuple(str(item) for item in labels.get(
+                "content", ("title", "finishDelta") if lane_mode else ()))
+            label_side = str(labels.get("side", "auto"))
+            label_overflow = str(labels.get("overflow", "suppress" if lane_mode else "visible-overflow"))
     if isinstance(visible.fallback, Mapping):
         label_fallback = tuple(str(item) for item in visible.fallback.get("labels", ()))
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
