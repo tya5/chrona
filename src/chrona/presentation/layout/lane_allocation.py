@@ -88,7 +88,8 @@ class LaneMarkFacet:
     emitted primitive/part, all nested under its countable LaneMember.
     ``primitive_bounds`` are the completed, unexpanded bounds consumed by
     downstream projection; ``visible_footprint`` is the separately completed
-    stroke/clearance-aware collision geometry.
+    stroke/clearance-aware collision geometry. Semantic ports attach to the
+    completed mark slot recorded in ``port_host_bounds``, distinct from both.
     """
 
     facet_id: str
@@ -104,6 +105,7 @@ class LaneMarkFacet:
     visible_footprint: ObstacleGeometry
     ports: tuple[LaneFacetPort, ...] = ()
     overlay_with: tuple[str, ...] = ()
+    port_host_bounds: tuple[float, float, float, float] | None = None
 
     def __post_init__(self) -> None:
         identities = (self.facet_id, self.projection_instance_id, self.source_item_id,
@@ -134,7 +136,15 @@ class LaneMarkFacet:
                 or not isinstance(self.overlay_with, tuple)
                 or any(not isinstance(target, str) or not target or target == self.facet_id
                        for target in self.overlay_with)
-                or len(set(self.overlay_with)) != len(self.overlay_with)):
+                or len(set(self.overlay_with)) != len(self.overlay_with)
+                or (self.ports and self.port_host_bounds is None)
+                or (not self.ports and self.port_host_bounds is not None)
+                or (self.port_host_bounds is not None and (
+                    not isinstance(self.port_host_bounds, tuple) or len(self.port_host_bounds) != 4
+                    or not all(isinstance(value, (int, float)) and not isinstance(value, bool)
+                               and isfinite(value) for value in self.port_host_bounds)
+                    or self.port_host_bounds[2] < self.port_host_bounds[0]
+                    or self.port_host_bounds[3] < self.port_host_bounds[1]))):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
         left, top, right, bottom = obstacle_envelope(self.visible_footprint)
         bounds_left, bounds_top, bounds_right, bounds_bottom = self.primitive_bounds
@@ -146,8 +156,9 @@ class LaneMarkFacet:
         if any(not (bounds_left - tolerance <= point[0] <= bounds_right + tolerance
                     and bounds_top - tolerance <= point[1] <= bounds_bottom + tolerance) for point in points):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
-        if any(not (bounds_left - tolerance <= port.position[0] <= bounds_right + tolerance
-                    and bounds_top - tolerance <= port.position[1] <= bounds_bottom + tolerance)
+        host = self.port_host_bounds
+        if any(not (host[0] - tolerance <= port.position[0] <= host[2] + tolerance
+                    and host[1] - tolerance <= port.position[1] <= host[3] + tolerance)
                for port in self.ports):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 

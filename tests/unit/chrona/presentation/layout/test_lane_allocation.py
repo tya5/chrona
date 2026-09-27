@@ -11,6 +11,9 @@ import pytest
 from chrona.presentation.layout.lane_allocation import (
     LaneCandidate, LaneFacetPort, LaneMark, LaneMarkFacet, LaneMember, allocate_lanes,
 )
+from chrona.presentation.layout.mark_geometry import symbol_parts
+from chrona.presentation.layout.surface_quality import MarkPlacement
+from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 
 
@@ -18,7 +21,8 @@ def facet(facet_id: str, footprint, *, projection_instance_id: str = "row:item",
           source_item_id: str = "item", source_ref: str = "project:item",
           source_kind: str = "primary", purpose: str = "planned",
           primitive_id: str | None = None, primitive_type: str | None = None,
-          ports: tuple[LaneFacetPort, ...] = (), overlay_with: tuple[str, ...] = ()) -> LaneMarkFacet:
+          ports: tuple[LaneFacetPort, ...] = (), overlay_with: tuple[str, ...] = (),
+          port_host_bounds: tuple[float, float, float, float] | None = None) -> LaneMarkFacet:
     if isinstance(footprint, ObstacleRect):
         geometry = (("rect", ((footprint.left, footprint.top), (footprint.right, footprint.bottom))),)
         default_type = "Rect"
@@ -33,7 +37,8 @@ def facet(facet_id: str, footprint, *, projection_instance_id: str = "row:item",
                   max(footprint.start[1], footprint.end[1]))
     return LaneMarkFacet(facet_id, projection_instance_id, source_item_id, source_ref,
                          source_kind, purpose, primitive_id or facet_id,
-                         primitive_type or default_type, geometry, bounds, footprint, ports, overlay_with)
+                         primitive_type or default_type, geometry, bounds, footprint, ports, overlay_with,
+                         port_host_bounds if port_host_bounds is not None else (bounds if ports else None))
 
 
 def candidate(candidate_id: str, group_key: str, left: float, right: float, title_width: float = 30.0,
@@ -384,6 +389,7 @@ def test_closed_candidate_requires_facets_and_preserves_unexpanded_primitive_bou
             "primitive:path", "Path", (("move", ((2.0, 5.0),)), ("line", ((8.0, 5.0),))),
             (2.0, 5.0, 8.0, 5.0), ObstacleSegment((2, 5), (8, 5), stroke_width=2),
             ports=(LaneFacetPort("bad-port", "outside", (2.0, 4.5)),),
+            port_host_bounds=(2.0, 5.0, 8.0, 5.0),
         )
 
 
@@ -393,3 +399,58 @@ def test_attached_countable_member_also_requires_its_own_facet() -> None:
         LaneCandidate("root", "g", (0,), root_mark, 1,
                       bundle=(LaneMember("root", root_mark, 1),
                               LaneMember("attached", LaneMark(2, 3), 1)))
+
+
+def test_contain_center_glyph_ports_use_completed_host_bounds_without_widening_primitive() -> None:
+    mark_bounds = Rect(10, 1, 5, 4)
+    slot = (float(mark_bounds.inline), float(mark_bounds.block),
+            float(mark_bounds.inline + mark_bounds.inline_size),
+            float(mark_bounds.block + mark_bounds.block_size))
+    parts = symbol_parts(
+        {"shape": "glyph", "viewBox": [10, 10],
+         "parts": [{"paint": "stroke", "d": "M4 4 L6 4"}]},
+        (slot[0], slot[1], slot[2] - slot[0], slot[3] - slot[1]),
+    )
+    mark = MarkPlacement(
+        "planned:row:item", "task", mark_bounds, (10.0, 3.0), (15.0, 3.0),
+        mark_shape="point", semantic_id="planned", symbol_parts=parts,
+    )
+    path = parts[0].commands
+    assert path[0].points[0] == (12.1, 2.6)
+    assert path[1].points[0] == (12.9, 2.6)
+    primitive_bounds = (12.1, 2.6, 12.9, 2.6)
+    visible_footprint = ObstacleSegment((12.1, 2.6), (12.9, 2.6), stroke_width=1.0)
+    owner = LaneMarkFacet(
+        "row:item:planned:part0", "row:item", "item", "task", "primary", "planned",
+        "planned:row:item:part0", "Symbol",
+        tuple((command.kind, command.points) for command in path), primitive_bounds,
+        visible_footprint,
+        ports=(LaneFacetPort("row:item:start", "start", mark.start_port),
+               LaneFacetPort("row:item:end", "end", mark.end_port)),
+        port_host_bounds=slot,
+    )
+    assert owner.primitive_bounds == primitive_bounds
+    assert owner.visible_footprint == visible_footprint
+    assert owner.port_host_bounds == slot
+    assert tuple(port.position for port in owner.ports) == (mark.start_port, mark.end_port)
+
+
+def test_facet_port_host_bounds_are_required_and_reject_out_of_host_ports() -> None:
+    footprint = ObstacleRect(12, 2, 13, 3)
+    geometry = (("rect", ((12, 2), (13, 3))),)
+    kwargs = dict(
+        facet_id="row:attached:planned", projection_instance_id="row:attached",
+        source_item_id="attached", source_ref="project:attached", source_kind="primary",
+        purpose="planned", primitive_id="planned:row:attached", primitive_type="Rect",
+        completed_geometry=geometry, primitive_bounds=(12, 2, 13, 3),
+        visible_footprint=footprint,
+        ports=(LaneFacetPort("row:attached:at", "at", (12.5, 2.5)),),
+    )
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMarkFacet(**kwargs)
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMarkFacet(**kwargs, port_host_bounds=(10, 1, 12, 3))
+    attached = LaneMarkFacet(**kwargs, port_host_bounds=(12, 2, 13, 3))
+    root = facet("row:root:planned", ObstacleRect(0, 0, 2, 1))
+    assert attached.projection_instance_id == "row:attached"
+    assert attached.source_ref != root.source_ref
