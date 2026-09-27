@@ -13,7 +13,7 @@ from decimal import Decimal
 from typing import Mapping, Sequence
 
 from chrona.presentation.layout.lane_allocation import LaneAllocationResult, LaneCandidate, allocate_lanes
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.model.surface_content import (
     TableCellContent, TableColumnContent, TableColumnWidth, TableContent,
 )
@@ -36,6 +36,26 @@ class LaneInlineFrame:
                 or self.table_inline_size <= 0 or self.timeline_inline_size <= 0
                 or self.temporal_scale <= 0):
             raise LayoutError("E_LAYOUT_LANE_SEED_INVALID", "/layoutManifest")
+
+
+def lane_inline_frame_for_manifest(
+    manifest: LayoutManifest, *, window: tuple[date, date],
+) -> LaneInlineFrame:
+    """Read the exact lane-driving table/timeline inline frame from one solve."""
+    if (not isinstance(manifest, LayoutManifest) or len(window) != 2
+            or any(type(value) is not date for value in window)
+            or window[0] >= window[1]):
+        raise LayoutError("E_LAYOUT_LANE_SEED_INVALID", "/layoutManifest")
+    sources = {name: tuple(item for item in manifest.decisions if item.source == name)
+               for name in ("table", "timeline")}
+    if any(len(items) != 1 for items in sources.values()):
+        raise LayoutError("E_LAYOUT_LANE_SEED_INVALID", "/layoutManifest")
+    table = sources["table"][0].bounds
+    timeline = sources["timeline"][0].bounds
+    # The ordinary ScalePlacement uses the same float inline-size conversion.
+    ratio = float(timeline.inline_size) / max(1, (window[1] - window[0]).days)
+    return LaneInlineFrame(table.inline, table.inline_size,
+                           timeline.inline, timeline.inline_size, Decimal(str(ratio)))
 
 
 @dataclass(frozen=True)

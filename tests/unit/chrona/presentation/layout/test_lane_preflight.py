@@ -11,10 +11,10 @@ from chrona.presentation.layout.lane_allocation import (
 from chrona.presentation.layout.obstacles import ObstacleRect
 from chrona.presentation.layout.lane_preflight import (
     LaneInlineFrame, LaneMeasurementIdentity, assert_lane_inline_stable,
-    assert_lane_plan_compatible, lane_table_measurement_content,
+    assert_lane_plan_compatible, lane_inline_frame_for_manifest, lane_table_measurement_content,
     preflight_surface_lanes,
 )
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Rect
 from chrona.presentation.layout.surface_composer import timeline_content_block_requirement
 from chrona.presentation.layout.sources import SourceInput, measure_sources
 
@@ -87,6 +87,20 @@ def test_seed_and_final_lane_inline_frame_must_match_exactly():
     assert_lane_inline_stable(_frame(), _frame())
     with pytest.raises(LayoutError, match="E_LAYOUT_LANE_INLINE_UNSTABLE"):
         assert_lane_inline_stable(_frame(), _frame("99"))
+
+
+def test_lane_inline_frame_reads_actual_solved_table_and_timeline_bounds():
+    manifest = LayoutManifest(
+        "profile", "sha256:test", "block", "inline",
+        Rect(Decimal(0), Decimal(0), Decimal(200), Decimal(100)),
+        (LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(0), Decimal(30), Decimal(40)), source="table"),
+         LayoutDecision("timeline", "slot", Rect(Decimal(30), Decimal(0), Decimal(100), Decimal(40)), source="timeline")),
+    )
+    frame = lane_inline_frame_for_manifest(manifest, window=(date(2026, 1, 1), date(2026, 1, 11)))
+    assert frame == LaneInlineFrame(Decimal(0), Decimal(30), Decimal(30), Decimal(100), Decimal(10))
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_SEED_INVALID"):
+        lane_inline_frame_for_manifest(replace(manifest, decisions=()),
+                                       window=(date(2026, 1, 1), date(2026, 1, 11)))
 
 
 def test_plan_retains_exact_candidate_facet_closure_and_selected_cutoff():
