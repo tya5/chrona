@@ -237,8 +237,10 @@ the preferred side. `inside` may exempt only its own host mark, not a
 comparison sibling or another item. Every lane ladder terminates in
 suppression: if no legal candidate fits, Layout records the source, increments
 the surface count and emits no name; it never changes lane membership. An
-attached point's required plot label is a distinct exception: Layout composes
-its title, planned date and available finish delta as one measured request.
+attached point's required plot label is a distinct exception: View content
+normalization reads the active composition (`rows` for automatic rows,
+`lane_rows` for generated lanes) and provides its title, planned date and
+available finish delta as one request to Layout. Layout measures that request.
 After its bounded fit ladder fails, Layout emits that whole label with a
 `visible-overflow` outcome and warning rather than silently suppressing facts.
 This changes neither lane membership nor Scene's projection-only role.
