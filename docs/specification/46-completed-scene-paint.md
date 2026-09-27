@@ -159,6 +159,13 @@ asset cap/join. Raster icons reserve the complete placed viewport, without
 alpha-based geometry inference. Theme color/Scheme changes alone cannot
 affect these footprints; changes to geometry-bearing Theme metrics or
 normalized icon assets may.
+In lane mode, per-path vector collision facets carry a typed common icon
+emission group and the exact per-path paint/cap/join/already-scaled stroke
+facts. B2 groups them by completed placement identity and projects one Scene
+ICON with paths in declared order. Raster icon facets retain the exact asset
+identity, viewport and bytes. Neither B2 nor Scene may reload an icon asset,
+retransform paths, or rescale its stroke. See the [S2b icon emission
+correction](../design/issue-467-b1b2-s2b-icon-emission-closure-correction-2026-09-27.md).
 
 The Scene builder receives those completed path values and does not resolve
 Theme symbol variants, construct glyph outlines, transform normalized icon

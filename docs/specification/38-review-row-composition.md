@@ -200,6 +200,13 @@ their exact `primitive_bounds`. The first emitted facet of each semantic mark
 owns its ports in stable part order; siblings do not duplicate them. Host
 bounds are not an added collision footprint and MUST NOT widen primitive
 geometry. See the [S2b port-host correction](../design/issue-467-b1b2-s2b-port-host-bounds-correction-2026-09-27.md).
+Vector icons retain one source-keyed collision facet per completed path, while
+Scene emits one ICON primitive per placed icon. Each path facet carries typed
+shared emission-group identity/asset facts and its own completed path order,
+paint intent and already-scaled stroke treatment; raster icons retain one
+viewport facet and exact payload. B2 validates each group and copies one ICON
+without reloading or retransforming assets. The placed viewport is not an
+extra path footprint. See the [S2b icon emission correction](../design/issue-467-b1b2-s2b-icon-emission-closure-correction-2026-09-27.md).
 Layout admits a bundle only when all member marks and required labels fit;
 it cannot place a child later or flatten its name into the host's text.
 Unattached points are independent candidates. The natural lane frame contains
