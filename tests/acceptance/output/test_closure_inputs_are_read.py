@@ -1,14 +1,13 @@
 """A Render Context input that the render never reads is an authored intent lost.
 
-The check itself lives in ``chrona.app.cli`` behind ``--reject-unused-closure-inputs``;
-these tests exercise it over the shipped examples. `known_unused.yaml` pins the inputs
+The check lives in ``render_review`` and is exposed by the CLI through
+``--reject-unused-closure-inputs``. These tests exercise it with the verified
+materializer overlay over the shipped examples. `known_unused.yaml` pins the inputs
 that are dropped today, on the same rules as the output-property gate: a pinned input
 that is still dropped is reported, one that starts being read fails so its pin goes.
 """
 from __future__ import annotations
 
-import subprocess
-import sys
 import tempfile
 from importlib.util import find_spec
 from pathlib import Path
@@ -17,6 +16,10 @@ import pytest
 import yaml
 
 from tools.materialize_example import _copy_context_closure
+from chrona.presentation.model.closure import resolve_render_context
+from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.usecases.materialize import _OverlayBuilder
+from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 
 ROOT = Path(__file__).resolve().parents[3]
 KNOWN = yaml.safe_load((Path(__file__).parent / "known_unused.yaml").read_text(encoding="utf-8")) or {}
@@ -39,21 +42,25 @@ def test_every_declared_closure_input_is_read(slide, example, context_path):
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"
         snapshot.mkdir()
-        reference, _ = _copy_context_closure(example.resolve(), context_path, snapshot)
-        reference_path = Path(temporary) / "context-ref.yaml"
-        reference_path.write_text(yaml.safe_dump(reference, sort_keys=False))
-        completed = subprocess.run(
-            [sys.executable, "-c", "from chrona.app.cli import main; main()", "render-review",
-             "--context-reference", str(reference_path), "--snapshot-root", str(snapshot),
-             "--store-identity", reference["store"]["identity"], "--reject-unused-closure-inputs",
-             "--output", str(Path(temporary) / "review.svg")],
-            check=False, text=True, capture_output=True)
+        decoded_catalogs = {}
+        overlay_builder = _OverlayBuilder(Path(temporary))
+        reference, _ = _copy_context_closure(example.resolve(), context_path, snapshot,
+                                             decoded_catalogs=decoded_catalogs,
+                                             overlay_builder=overlay_builder)
+        overlay = overlay_builder.finish()
+        closure = resolve_render_context(reference, overlay, decoded_resources=decoded_catalogs)
+        try:
+            render_review(RenderRequest(closure, snapshot, ReferenceScheduler(),
+                                        require_all_inputs_read=True, asset_resolver=overlay))
+            failure = None
+        except RenderFailed as error:
+            failure = error
     expected = KNOWN.get(slide)
-    if not completed.returncode:
+    if failure is None:
         assert expected is None, f"{slide} now reads every input: remove it from known_unused.yaml"
         return
     prefix = "closure inputs loaded but never read: "
-    actual = completed.stdout.split(prefix, 1)[1].split('"', 1)[0].strip().split(", ") if prefix in completed.stdout else None
-    assert actual is not None, completed.stdout.strip() or completed.stderr.strip()
+    actual = failure.message.split(prefix, 1)[1].strip().split(", ") if prefix in failure.message else None
+    assert failure.code == "E_CLOSURE_INPUT_UNUSED" and actual is not None, failure
     assert actual == expected, f"{slide} unused-input fingerprint changed: {actual!r}"
     pytest.xfail(f"{slide} drops {', '.join(actual)}")
