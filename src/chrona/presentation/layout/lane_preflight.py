@@ -131,6 +131,8 @@ def preflight_surface_lanes(
     for group_key in group_requirements:
         if group_key and group_header_block_size:
             group_requirements[group_key] += group_header_block_size
+    # Every operand is Decimal; this is profile/block-requirement arithmetic,
+    # not completed float geometry (classified by the Layout conformance gate).
     natural = sum(group_requirements.values(), Decimal(0))
     return SurfaceLanePlan(
         allocation=allocation,
