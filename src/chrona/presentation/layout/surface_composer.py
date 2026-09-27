@@ -41,7 +41,10 @@ from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoin
 from chrona.presentation.model.placement_candidates import candidate_order
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.relation_terminals import marker_geometry
-from chrona.presentation.layout.routing import RouteSearchFailure, place_relation_route, relation_route_quality
+from chrona.presentation.layout.routing import (
+    RouteSearchFailure, RouteSuppressionEvidence, place_relation_route,
+    relation_route_quality, select_lane_relation_route,
+)
 from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks, symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
@@ -1872,33 +1875,48 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 # Semantic relation variants may share/cross a path; their
                 # routes remain obstacles for later annotations, not peers.
                 route_classes = ("mark", "text", "label-visual")
-                for source_egress, target_egress in port_pairs:
-                    if any(surface_obstacles.egress_collisions(
-                            ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
-                            classes=route_classes, regions=("timeline", "group-header"))
-                           for egress in (source_egress, target_egress) if egress.corridor):
-                        continue
-                    source_port, target_port = source_egress.exposed_port, target_egress.exposed_port
-                    source_obstacle_id = f"port:{source_mark.placement_id if source_mark else scene_id}:{source_egress.side}"
-                    target_obstacle_id = f"port:{target_mark.placement_id if target_mark else scene_id}:{target_egress.side}"
-                    existing_ports = tuple(port_id for port_id in (source_obstacle_id, target_obstacle_id)
-                                           if surface_obstacles.has(port_id))
-                    try:
-                        middle = ((source_port,) if source_port == target_port else place_relation_route(
-                            source_port=source_port, target_port=target_port, obstacles=surface_obstacles,
-                            regions=("timeline", "group-header"), classes=route_classes,
-                            port_ids=existing_ports,
-                            bounds=(timeline_bounds[0], route_top,
-                                    timeline_bounds[0] + timeline_bounds[2], route_bottom)))
-                    except RouteSearchFailure:
-                        continue
-                    candidate_points = combined_connector_points(source_egress, middle, target_egress)
-                    if len(candidate_points) < 2:
-                        continue
-                    if relation_route_quality(candidate_points, max_bends=layout_manifest.relation_max_bends,
-                                              max_detour_ratio=layout_manifest.relation_max_detour_ratio):
-                        selected_pair, points = (source_egress, target_egress), candidate_points
-                        break
+                lane_selection = None
+                if projection.lane_membership is not None:
+                    lane_selection = select_lane_relation_route(
+                        port_pairs, obstacles=surface_obstacles,
+                        bounds=(timeline_bounds[0], route_top,
+                                timeline_bounds[0] + timeline_bounds[2], route_bottom),
+                        source_host_id=source_mark.placement_id if source_mark else None,
+                        target_host_id=target_mark.placement_id if target_mark else None,
+                        relation_scene_id=scene_id,
+                        max_bends=layout_manifest.relation_max_bends,
+                        max_detour_ratio=layout_manifest.relation_max_detour_ratio,
+                        classes=route_classes,
+                    )
+                    selected_pair, points = lane_selection.selected_pair, lane_selection.points
+                else:
+                    for source_egress, target_egress in port_pairs:
+                        if any(surface_obstacles.egress_collisions(
+                                ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+                                classes=route_classes, regions=("timeline", "group-header"))
+                               for egress in (source_egress, target_egress) if egress.corridor):
+                            continue
+                        source_port, target_port = source_egress.exposed_port, target_egress.exposed_port
+                        source_obstacle_id = f"port:{source_mark.placement_id if source_mark else scene_id}:{source_egress.side}"
+                        target_obstacle_id = f"port:{target_mark.placement_id if target_mark else scene_id}:{target_egress.side}"
+                        existing_ports = tuple(port_id for port_id in (source_obstacle_id, target_obstacle_id)
+                                               if surface_obstacles.has(port_id))
+                        try:
+                            middle = ((source_port,) if source_port == target_port else place_relation_route(
+                                source_port=source_port, target_port=target_port, obstacles=surface_obstacles,
+                                regions=("timeline", "group-header"), classes=route_classes,
+                                port_ids=existing_ports,
+                                bounds=(timeline_bounds[0], route_top,
+                                        timeline_bounds[0] + timeline_bounds[2], route_bottom)))
+                        except RouteSearchFailure:
+                            continue
+                        candidate_points = combined_connector_points(source_egress, middle, target_egress)
+                        if len(candidate_points) < 2:
+                            continue
+                        if relation_route_quality(candidate_points, max_bends=layout_manifest.relation_max_bends,
+                                                  max_detour_ratio=layout_manifest.relation_max_detour_ratio):
+                            selected_pair, points = (source_egress, target_egress), candidate_points
+                            break
                 fallback = selected_pair is None
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
@@ -1906,6 +1924,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                            f"{target_id}:{relation.target_endpoint}",
                                                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                        if lane_selection is not None:
+                            diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
                         continue
                     selected_pair = port_pairs[0]
                     first_source, first_target = selected_pair

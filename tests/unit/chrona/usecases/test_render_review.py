@@ -14,6 +14,7 @@ import yaml
 
 import chrona.usecases.render_review as render_usecase
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.contracts.resources import ViewLaneLabel, ViewLaneTable, ViewRowMode
 from chrona.presentation.contracts import parse_contract
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth, TableContent
@@ -154,6 +155,20 @@ def test_hidden_lane_layout_projects_fixed_membership_before_public_activation(c
     counted = sum(item.count for item in rendered.surface.info_diagnostics
                   if item.code == "I_LAYOUT_PLOT_LABELS_SUPPRESSED")
     assert counted == suppressed
+    causes = [json.loads(item.removeprefix("I_LAYOUT_LANE_ROUTE_CAUSE:"))
+              for item in rendered.surface.diagnostics
+              if item.startswith("I_LAYOUT_LANE_ROUTE_CAUSE:")]
+    assert all(cause["primaryCause"] != "egress-collision" for cause in causes)
+    assert len(causes) == sum(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:")
+                              for item in rendered.surface.diagnostics)
+    labels = [ObstacleRect(item.bounds[0], item.bounds[1],
+                           item.bounds[0] + item.bounds[2], item.bounds[1] + item.bounds[3])
+              for item in rendered.surface.primitives
+              if item.kind == "Text" and item.purpose in {"member-label", "finish-delta"}]
+    for relation in (item for item in rendered.surface.primitives if item.purpose == "dependency"):
+        for start, end in zip(relation.points, relation.points[1:]):
+            assert all(not obstacles_intersect(ObstacleSegment(start, end), label)
+                       for label in labels), relation.scene_id
 
 
 def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_allocation(monkeypatch):
