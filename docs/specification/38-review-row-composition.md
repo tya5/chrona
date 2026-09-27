@@ -204,14 +204,15 @@ diagnostic; an incomplete mark is never silently omitted.
 For a stroked rectangle, the visible envelope expands the emitted bounds by
 half its stroke width on each side. For a segment, the obstacle index applies
 half the stroke width from its centerline. For a stroked path represented by
-a control-point envelope, Layout expands that envelope by twice the
-stroke width on every side, covering caps and joins when the effective miter
-limit is at most four. Until every admitted renderer/materializer is verified
-to meet that bound, B1b-2 implementation acceptance is gated; a wider or
-unknown miter extent requires a design/specification correction. `ScenePaint`
-does not currently carry a miter-limit field, and Layout MUST NOT invent a
-paint conversion or miter-limit override. See the
-[stroke-aware footprint correction](../design/issue-467-l3b-b1b-2-stroke-aware-footprint-correction-2026-09-27.md).
+a control-point envelope, Layout expands that envelope by ten times the
+stroke width on every side. This target-independent conservative bound
+accommodates admitted miter limits up to ten without changing adapter output
+or introducing a Scene paint policy. It is deliberately loose; the 02 ≤12
+feasibility criterion remains a hard gate. If the bound fails that
+criterion, return to design rather than weakening it or using target-specific
+lane allocation. `ScenePaint` does not carry a miter-limit field, and Layout
+MUST NOT invent paint conversion or a miter-limit override. See the
+[miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md).
 
 Layout also owns the geometry currently constructed after layout in
 `scene/v05_builder.py`: Theme-selected built-in point shapes, Theme glyph

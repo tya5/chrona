@@ -137,14 +137,14 @@ that segment and rectangle paths do not double-expand or omit it.
 Rectangles expand by half their resolved stroke width on each side. Segment
 geometry carries its stroke width and the obstacle collision machinery
 accounts for its extent. A path represented by a conservative control-point
-envelope expands that envelope by twice its stroke width on every
-side; this bounds butt/round/square caps and bevel/round/miter joins only when
-the effective miter limit is at most four. Because `ScenePaint` has no
-miter-limit member, the existing adapter's effective limit MUST be verified
-for every admitted materializer before this bound is used as acceptance
-evidence. If an output target can exceed it or cannot establish its bound,
-implementation returns to design; Layout cannot set renderer paint policy to
-make the footprint fit.
+envelope expands that envelope by ten times its stroke width on every side.
+This target-independent bound accommodates admitted miter limits up to ten
+without changing adapter output or adding Scene paint policy. Because
+`ScenePaint` has no miter-limit member, Layout cannot set renderer paint
+policy to make the footprint fit. The bound may increase collisions: the 02
+≤12 feasibility criterion remains a hard gate, and a failure returns to
+design rather than weakening the criterion or introducing target-specific
+lane allocation. See the [miter-envelope design amendment](../design/issue-467-l3b-b1b-2-miter-envelope-amendment-2026-09-27.md).
 
 Layout returns completed point-symbol and icon path geometry before Scene
 construction. This includes Theme-selected built-in shape geometry, Theme
