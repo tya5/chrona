@@ -300,9 +300,6 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
-<<<<<<< ours
-=======
-      strokeWidth: stroke-width
     annotation-note-box:
       strokeWidth: stroke-width
       annotationContainer: balloon-container
@@ -314,7 +311,6 @@ body:
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
->>>>>>> theirs
     summary:
       fontFamily: editorial
       fontWeight: weight.regular
