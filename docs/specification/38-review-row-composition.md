@@ -153,6 +153,16 @@ table cells, points policy and output. `rows.points: key-row` is not created by
 lane mode. Hierarchical rows remain `automatic` or authored `explicit` until a
 separate ancestry-preserving lane design exists.
 
+In the lane View contract, `rows.laneTable` is required only when
+`rows.mode: lanes` and is invalid for `automatic` and `explicit`. The existing
+`tableColumns` grammar declares item-subject columns; it has no group/lane
+subject, so lane mode rejects `tableColumns` and uses only its separate finite
+group/lane summary. When a migration removes a visible delta table column, it
+must preserve that promise by including `finishDelta` in lane-label content.
+That migration condition is reviewed against the source View and acceptance
+evidence; it is not a universal schema rule for lane Views that make no such
+promise.
+
 ## 4. Diagnostics and validation
 
 The v0.2 View validator diagnoses empty/duplicate rows, unknown source objects,
