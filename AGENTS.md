@@ -63,6 +63,8 @@ architecture review, implementation plan, and progress. Update it in place as
 the current decision changes; Git history is sufficient for superseded text.
 Keep only the latest actionable rule, decision, status, and evidence; do not
 append chronological status logs or restate the same contract in several files.
+Separate architecture-critical acceptance from local polish; track optional
+local tuning in a successor issue instead of expanding the current work record.
 Do not create a new plan, correction, amendment, or review file for every
 small slice. Keep normative behavior in the relevant living specification,
 not duplicated across issue records. Use a separate ADR only when an enduring
