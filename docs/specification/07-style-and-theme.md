@@ -194,6 +194,29 @@ finite token value and image-catalog asset still follow the existing Theme
 schema, `ThemeTokenView`, and Specification 64 closure rules. This admission
 gate does not reparse the nested token or move Layout geometry into Scene.
 
+The note annotation roles have explicit contrast responsibilities. The
+`annotation-note-text` role is state text and MUST declare
+`contrastTreatment: required`; its Theme/Scheme closure is checked against the
+4.5:1 state-text floor on the resolved Scheme surface, and its completed Scene
+paint is checked against its actual declared host ground. The
+`annotation-note-box` role is a decoration and participates in the 1.10:1
+decoration visibility policy and corpus witness. These classes are registered
+semantic facts, not inferred from the role spelling or paint.
+
+The `annotation-note-box.fill` binding is also the declared representative
+content-area color for the note text. For rectangle, balloon, and image-backed
+containers, Theme/Scheme closure MUST resolve this representative to opaque
+completed paint for contrast/perceptibility use. C4 adds this effective-role
+validation after inheritance and Scheme bindings: fill MUST resolve to an
+opaque color and opacity (if present) MUST equal 1; otherwise closure fails
+with `E_SCHEME_ANNOTATION_NOTE_GROUND` at the offending role property. The
+current contrast ground kernel accepts an opaque flat color (including an
+image-backed container's declared representative color); it does not sample
+artwork pixels. Partial-opacity host composition requires a separate
+renderer-neutral ground contract before it can be supported. The new
+Scene-level same-source note-box requirement and its unsupported-ground
+failure are specified in Specification 08.
+
 For a role name not otherwise registered, the bounded axis-tier measurement
 and legend fallback Rect-paint producer families overlap at Theme load time.
 The admitted properties are the union of those two potential consumers;

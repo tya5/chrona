@@ -316,6 +316,32 @@ serialize completed paint but never re-open Theme/Scheme tokens or calculate a p
 property. A kind/payload mismatch is `E_PRESENTATION_PRIMITIVE_INVALID`, and an
 adapter must not repair it.
 
+### Annotation note contrast ground
+
+The semantic registry classifies `annotation-note-text` as state text and
+`annotation-note-box` as decoration. In the completed paired annotation,
+Layout/Scene paint order places the box before its text. Contrast evaluation
+uses the topmost prior opaque Rect or Symbol containing the text's policy sample
+point as its ground; this is the note box when paired. The box fill is the
+Theme-declared representative content-area color, including when its
+`annotationContainer.outline` is `image`, as defined in Specification 07 and
+the [#465 image-container design](../design/issue-465-image-annotation-container-design-2026-09-27.md).
+Perceptibility consumes the same completed fill. It does not sample the image
+payload, and the image's pixels do not replace the declared representative
+ground. Findings identify the selected ground primitive and color.
+
+For `annotation-note-text`, the generic ground search is not sufficient by
+itself: a prior Rect with no fill is skipped and generic search may then select
+a lower host or canvas. C4 therefore requires a prior `annotation-note-box`
+with the same `sourceRef`, containing the note text's sample point and carrying
+opaque flat fill. Missing pair/fill or non-opaque fill yields
+`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; it cannot fall through to another host
+or the canvas. This pairs the reported ground with the declared content area
+and prevents a plausible but false contrast result. SVG, PNG, and typeset adapters
+serialize the completed box/image/text paints without inspecting pixels,
+selecting a ground, or repairing contrast. Geometry and image tile placement
+remain Layout/Scene facts.
+
 `optional` defaults to false. It is true only for a label or annotation family whose
 applicable Detail rule has `required=false`; generated children of that optional
 annotation box inherit the flag. It is not inferred by an adapter from purpose names.
