@@ -128,7 +128,25 @@ uses a recorded visible-overflow terminal placement. The left table has
 declared group/lane summary and optional count, not one arbitrary member's
 facts. Versioned explicit rows may opt into collision allocation while
 retaining authored row/member IDs and table subject. The exact contract,
-admitted domain and migration are in the [#467 design](../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md).
+admitted domain and migration are in the [#467 design](../design/issue-467-collision-aware-lane-rows-design-2026-09-26.md)
+and its [lane feasibility and route correction](../design/issue-467-494-lane-feasibility-route-correction-2026-09-27.md).
+
+The bounded lane-label ladder may use three stagger rows, with start- and
+end-aligned candidates in stable order at each row. Layout includes every used
+row in the lane's measured block extent and the shared required-row sizing
+path. This is a generic Layout policy and does not add a View coordinate or
+per-project branch. Project schedule corrections for individual acceptance
+cases remain data migrations, not layout policy; historical Actual
+observations and immutable baseline schedules are not rewritten to satisfy
+layout.
+
+Required lane names remain obstacles before semantic routing. Routes retain the
+declared quality bounds and may be suppressed when no candidate meets them.
+Cause-specific evidence for #494 MUST distinguish egress collision from route
+quality rejection and bounded-search failure for each suppressed relation; a
+quality-rejected route is not reported as rendered. The #494 acceptance allows
+non-egress suppressions when every remaining suppression is listed with its
+measured cause.
 
 `automatic` is still the exact per-object row behavior, including its original
 table cells, points policy and output. `rows.points: key-row` is not created by
