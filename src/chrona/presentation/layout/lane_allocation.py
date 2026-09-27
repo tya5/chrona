@@ -43,6 +43,7 @@ from urllib.parse import quote
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
     ObstacleGeometry,
+    ObstacleSegment,
     SurfaceObstacle,
     SurfaceObstacleIndex,
     obstacle_envelope,
@@ -62,38 +63,123 @@ _LABEL_CLASS_BY_LEVEL: Mapping[str, str] = {
 
 
 @dataclass(frozen=True)
+class LaneFacetPort:
+    """One stable source port on a completed primitive facet."""
+
+    port_id: str
+    purpose: str
+    position: tuple[float, float]
+
+    def __post_init__(self) -> None:
+        if (not self.port_id or not self.purpose or not isinstance(self.position, tuple)
+                or len(self.position) != 2
+                or not all(isinstance(value, (int, float)) and not isinstance(value, bool)
+                           and isfinite(value) for value in self.position)):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+
+@dataclass(frozen=True)
+class LaneMarkFacet:
+    """One source-keyed, completed primitive and its collision footprint.
+
+    ``projection_instance_id`` distinguishes repeated source objects in
+    different Review rows; ``source_ref`` separately retains the stable
+    source/object reference. A compound semantic mark has one facet per
+    emitted primitive/part, all nested under its countable LaneMember.
+    """
+
+    facet_id: str
+    projection_instance_id: str
+    source_item_id: str
+    source_ref: str
+    source_kind: str
+    purpose: str
+    primitive_id: str
+    primitive_type: str
+    completed_geometry: tuple[tuple[str, tuple[tuple[float, float], ...]], ...]
+    visible_footprint: ObstacleGeometry
+    ports: tuple[LaneFacetPort, ...] = ()
+    overlay_with: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        identities = (self.facet_id, self.projection_instance_id, self.source_item_id,
+                      self.source_ref, self.source_kind, self.purpose, self.primitive_id,
+                      self.primitive_type)
+        geometry_valid = (
+            isinstance(self.completed_geometry, tuple) and bool(self.completed_geometry)
+            and all(isinstance(command, tuple) and len(command) == 2
+                    and isinstance(command[0], str) and command[0]
+                    and isinstance(command[1], tuple) and bool(command[1])
+                    and all(isinstance(point, tuple) and len(point) == 2
+                            and all(isinstance(value, (int, float)) and not isinstance(value, bool)
+                                    and isfinite(value) for value in point)
+                            for point in command[1])
+                    for command in self.completed_geometry)
+        )
+        if (not all(isinstance(identity, str) and identity for identity in identities)
+                or not geometry_valid
+                or not isinstance(self.visible_footprint, (ObstacleRect, ObstacleSegment))
+                or not isinstance(self.ports, tuple)
+                or any(not isinstance(port, LaneFacetPort) for port in self.ports)
+                or len({port.port_id for port in self.ports}) != len(self.ports)
+                or not isinstance(self.overlay_with, tuple)
+                or any(not isinstance(target, str) or not target or target == self.facet_id
+                       for target in self.overlay_with)
+                or len(set(self.overlay_with)) != len(self.overlay_with)):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        left, top, right, bottom = obstacle_envelope(self.visible_footprint)
+        points = (point for _, command_points in self.completed_geometry for point in command_points)
+        tolerance = 1e-9
+        if any(not (left - tolerance <= point[0] <= right + tolerance
+                    and top - tolerance <= point[1] <= bottom + tolerance) for point in points):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        if any(not (left - tolerance <= port.position[0] <= right + tolerance
+                    and top - tolerance <= port.position[1] <= bottom + tolerance)
+               for port in self.ports):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+
+@dataclass(frozen=True)
 class LaneMark:
-    """One candidate's closed, renderer-neutral mark footprint.
+    """One candidate mark and its immutable source-keyed primitive facets.
 
     ``left``/``right`` are inline (time-axis) coordinates; the mark occupies
-    the full mark-level block band. ``footprints`` include measured actual,
-    baseline, comparison, point-glyph and progress geometry where present;
-    the caller supplies stroke-expanded renderer-neutral bounds or segments.
+    the full mark-level block band. Every additional visual is a
+    :class:`LaneMarkFacet`; visible footprints are derived from those facets
+    so provenance and collision geometry cannot drift apart.
     """
 
     left: float
     right: float
-    footprints: tuple[ObstacleGeometry, ...] = ()
+    facets: tuple[LaneMarkFacet, ...] = ()
 
     def __post_init__(self) -> None:
         if not isfinite(self.left) or not isfinite(self.right) or self.right <= self.left:
             raise ValueError("E_LAYOUT_LANE_MARK_GEOMETRY")
+        if (not isinstance(self.facets, tuple)
+                or any(not isinstance(facet, LaneMarkFacet) for facet in self.facets)
+                or len({facet.facet_id for facet in self.facets}) != len(self.facets)):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+    @property
+    def footprints(self) -> tuple[ObstacleGeometry, ...]:
+        """The collision-only view of facets, derived in their stable order."""
+        return tuple(facet.visible_footprint for facet in self.facets)
 
 
 @dataclass(frozen=True)
 class LaneMember:
     """One independently identified mark and required label in a bundle.
 
-    ``overlays`` names bundle members whose marks may intentionally occupy
-    the same geometry (for example a comparison facet or attached point).
-    The exemption is local to this bundle and never applies to labels.
+    Comparison/Actual visuals are facets on ``mark`` and do not add a member
+    or item count. ``member_id`` is reserved for one countable root or
+    attached Review item; intentional overlays name facet IDs instead.
     """
 
     member_id: str
     mark: LaneMark
     title_width: float
     delta_width: float | None = None
-    overlays: tuple[str, ...] = ()
 
     @property
     def label_width(self) -> float:
@@ -135,9 +221,16 @@ class LaneCandidate:
                 if (not member.member_id or not isfinite(member.title_width) or member.title_width <= 0
                         or (member.delta_width is not None and
                             (not isfinite(member.delta_width) or member.delta_width < 0))
-                        or not isfinite(member.label_width)
-                        or any(target not in known or target == member.member_id for target in member.overlays)):
+                        or not isfinite(member.label_width)):
                     raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        members = self.members_for_placement
+        facets = tuple(facet for member in members for facet in member.mark.facets)
+        facet_ids = {facet.facet_id for facet in facets}
+        port_ids = [port.port_id for facet in facets for port in facet.ports]
+        if len(facet_ids) != len(facets) or any(
+                target not in facet_ids for facet in facets for target in facet.overlay_with
+        ) or len(set(port_ids)) != len(port_ids):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
     @property
     def members_for_placement(self) -> tuple[LaneMember, ...]:
@@ -214,16 +307,16 @@ class _Lane:
             if any(self._index.collisions(geometry, classes=(_MARK_CLASS, "lane-label-inline"),
                                           clearance=self._clearance) for geometry in mark_geometries):
                 return None
-        # Marks inside one bundle may overlap only through an explicit pair
-        # exemption. This is the only mark-overlap exception in the kernel.
-        for index, member in enumerate(members):
-            for other in members[index + 1:]:
-                allowed = (other.member_id in member.overlays or member.member_id in other.overlays)
-                if not allowed and any(
-                    _geometries_collide(left, right, self._clearance)
-                    for left in all_mark_geometries[member.member_id]
-                    for right in all_mark_geometries[other.member_id]
-                ):
+        # All emitted marks are facets. Their candidate interval rectangles
+        # are coarse placement bands and are intentionally excluded here;
+        # exact facet pairs must either fit or name their explicit overlay.
+        facets = tuple(facet for member in members for facet in member.mark.facets)
+        for index, facet in enumerate(facets):
+            for other in facets[index + 1:]:
+                allowed = (other.facet_id in facet.overlay_with
+                           or facet.facet_id in other.overlay_with)
+                if (not allowed and _geometries_collide(
+                        facet.visible_footprint, other.visible_footprint, self._clearance)):
                     raise ValueError("E_LAYOUT_LANE_BUNDLE_MARK_COLLISION")
         # A new mark shares its band with any earlier item's already-accepted
         # `end`/`start` label (the same two-way check `try_place` applies to
@@ -269,11 +362,12 @@ class _Lane:
 
     def _member_mark_geometries(self, member: LaneMember) -> tuple[ObstacleGeometry, ...]:
         primary = ObstacleRect(member.mark.left, 0.0, member.mark.right, self._mark_row_height)
-        for geometry in member.mark.footprints:
+        footprints = member.mark.footprints
+        for geometry in footprints:
             _, top, _, bottom = obstacle_envelope(geometry)
             if top < 0.0 or bottom > self._mark_row_height:
                 raise ValueError("E_LAYOUT_LANE_MARK_GEOMETRY")
-        return (primary, *member.mark.footprints)
+        return (primary, *footprints)
 
     def _candidate_rect(self, candidate: LaneCandidate, level: str) -> ObstacleRect:
         return self._member_rect(candidate.members_for_placement[0], level)
@@ -353,6 +447,14 @@ def allocate_lanes(candidates: Sequence[LaneCandidate], *, mark_row_height: floa
         raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
     all_member_ids = [member.member_id for item in candidates for member in item.members_for_placement]
     if len(set(all_member_ids)) != len(all_member_ids):
+        raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+    all_facet_ids = [facet.facet_id for item in candidates for member in item.members_for_placement
+                     for facet in member.mark.facets]
+    if len(set(all_facet_ids)) != len(all_facet_ids):
+        raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+    all_port_ids = [port.port_id for item in candidates for member in item.members_for_placement
+                    for facet in member.mark.facets for port in facet.ports]
+    if len(set(all_port_ids)) != len(all_port_ids):
         raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
     orders: dict[str, tuple] = {}
     for item in candidates:

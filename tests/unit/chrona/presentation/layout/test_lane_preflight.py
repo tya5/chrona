@@ -3,7 +3,10 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.lane_allocation import LaneCandidate, LaneMark
+from chrona.presentation.layout.lane_allocation import (
+    LaneCandidate, LaneMark, LaneMarkFacet, LaneMember,
+)
+from chrona.presentation.layout.obstacles import ObstacleRect
 from chrona.presentation.layout.lane_preflight import (
     LaneInlineFrame, LaneMeasurementIdentity, assert_lane_inline_stable, lane_table_measurement_content,
     preflight_surface_lanes,
@@ -74,3 +77,36 @@ def test_seed_and_final_lane_inline_frame_must_match_exactly():
     assert_lane_inline_stable(_frame(), _frame())
     with pytest.raises(LayoutError, match="E_LAYOUT_LANE_INLINE_UNSTABLE"):
         assert_lane_inline_stable(_frame(), _frame("99"))
+
+
+def test_lane_table_count_includes_attached_item_but_not_comparison_facet():
+    host_plan = LaneMarkFacet(
+        "host:planned", "row:host", "host", "project:host", "primary", "planned",
+        "planned:row:host", "Rect", (("rect", ((0.0, 0.0), (10.0, 10.0))),),
+        ObstacleRect(0, 0, 10, 10),
+    )
+    host_snapshot = LaneMarkFacet(
+        "host:snapshot", "row:snapshot", "snapshot", "baseline:host", "snapshot", "snapshot",
+        "snapshot:row:snapshot", "Rect", (("rect", ((0.0, 0.0), (10.0, 10.0))),),
+        ObstacleRect(0, 0, 10, 10), overlay_with=("host:planned",),
+    )
+    attached_point = LaneMarkFacet(
+        "gate:planned", "row:gate", "gate", "project:gate", "primary", "planned",
+        "planned:row:gate", "Symbol", (("move", ((5.0, 0.0),)), ("line", ((6.0, 1.0),))),
+        ObstacleRect(5, 0, 6, 1), overlay_with=("host:planned", "host:snapshot"),
+    )
+    host_mark = LaneMark(0, 10, (host_plan, host_snapshot))
+    candidate = LaneCandidate(
+        "host", "systems", (0,), host_mark, 5,
+        bundle=(LaneMember("host", host_mark, 5),
+                LaneMember("gate", LaneMark(5, 6, (attached_point,)), 5)),
+    )
+    plan = preflight_surface_lanes(
+        [candidate], seed_inline_frame=_frame(),
+        measurement_identity=LaneMeasurementIdentity("theme:1", "font:1", "scale:1"),
+        group_titles={"systems": "Systems"}, candidate_titles={"host": "Host"},
+        lane_label="group", include_count=True, mark_row_height=10, label_row_height=1,
+        canvas_left=0, canvas_right=100,
+    )
+    assert plan.allocation.lanes[0].members == ("host", "gate")
+    assert plan.table_cells[0].count == 2

@@ -9,16 +9,33 @@ from __future__ import annotations
 import pytest
 
 from chrona.presentation.layout.lane_allocation import (
-    LaneCandidate, LaneMark, LaneMember, allocate_lanes,
+    LaneCandidate, LaneFacetPort, LaneMark, LaneMarkFacet, LaneMember, allocate_lanes,
 )
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 
 
+def facet(facet_id: str, footprint, *, projection_instance_id: str = "row:item",
+          source_item_id: str = "item", source_ref: str = "project:item",
+          source_kind: str = "primary", purpose: str = "planned",
+          primitive_id: str | None = None, primitive_type: str | None = None,
+          ports: tuple[LaneFacetPort, ...] = (), overlay_with: tuple[str, ...] = ()) -> LaneMarkFacet:
+    if isinstance(footprint, ObstacleRect):
+        geometry = (("rect", ((footprint.left, footprint.top), (footprint.right, footprint.bottom))),)
+        default_type = "Rect"
+    else:
+        assert isinstance(footprint, ObstacleSegment)
+        geometry = (("segment", (footprint.start, footprint.end)),)
+        default_type = "Path"
+    return LaneMarkFacet(facet_id, projection_instance_id, source_item_id, source_ref,
+                         source_kind, purpose, primitive_id or facet_id,
+                         primitive_type or default_type, geometry, footprint, ports, overlay_with)
+
+
 def candidate(candidate_id: str, group_key: str, left: float, right: float, title_width: float = 30.0,
              delta_width: float | None = None, predecessors: tuple[tuple[str, str], ...] = (),
-             order: tuple | None = None, footprints: tuple = (), group_order: tuple = ()) -> LaneCandidate:
+             order: tuple | None = None, facets: tuple[LaneMarkFacet, ...] = (), group_order: tuple = ()) -> LaneCandidate:
     return LaneCandidate(candidate_id, group_key, order or (left, right, candidate_id, candidate_id),
-                         LaneMark(left, right, footprints), title_width, delta_width, predecessors,
+                         LaneMark(left, right, facets), title_width, delta_width, predecessors,
                          group_order)
 
 
@@ -60,9 +77,11 @@ def test_later_mark_cannot_cover_an_earlier_inline_name() -> None:
 def test_point_glyph_and_actual_baseline_collisions_use_the_same_geometry() -> None:
     # A primary mark's supplemental actual/baseline/point geometry is not
     # approximated by its own planned interval.
-    actual = ObstacleRect(25, 0, 30, 10)
-    point = ObstacleSegment((27, 1), (27, 9), stroke_width=2)
-    result = allocate_lanes([candidate("planned", "g", 0, 10, footprints=(actual, point)),
+    actual = ObstacleRect(25, 1, 30, 4)
+    point = ObstacleSegment((32, 1), (32, 9), stroke_width=2)
+    result = allocate_lanes([candidate("planned", "g", 0, 10, facets=(
+                                 facet("planned:actual", actual, purpose="actual"),
+                                 facet("planned:point", point, purpose="snapshot"))),
                              candidate("next", "g", 25, 35)],
                             mark_row_height=10, label_row_height=10)
     assert len(result.lanes) == 2
@@ -220,7 +239,7 @@ def test_duplicate_candidate_identity_and_out_of_band_mark_are_rejected() -> Non
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
         allocate_lanes([item, item])
     outside = candidate("outside", "g", 0, 1,
-                        footprints=(ObstacleRect(2, -1, 3, 1),))
+                        facets=(facet("outside:stroke", ObstacleRect(2, -1, 3, 1)),))
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_MARK_GEOMETRY"):
         allocate_lanes([outside], mark_row_height=10)
 
@@ -230,43 +249,104 @@ def test_mark_rect_requires_positive_width() -> None:
         LaneMark(10, 10)
 
 
-def test_atomic_host_attached_point_and_comparison_keep_independent_required_labels() -> None:
+def test_atomic_host_and_attached_point_count_once_each_with_source_keyed_comparison_facets() -> None:
+    host_mark = LaneMark(0, 20, (
+        facet("host:planned", ObstacleRect(0, 0, 20, 10),
+              projection_instance_id="row:host", source_item_id="host"),
+        facet("host:snapshot", ObstacleRect(0, 0, 20, 10),
+              projection_instance_id="row:snapshot", source_item_id="snapshot-host",
+              source_kind="snapshot", purpose="snapshot", overlay_with=("host:planned",)),
+    ))
+    gate_mark = LaneMark(8, 10, (
+        facet("gate:planned", ObstacleRect(8, 0, 10, 10),
+              projection_instance_id="row:gate", source_item_id="gate",
+              overlay_with=("host:planned", "host:snapshot")),
+    ))
     bundle = LaneCandidate(
-        "host", "g", (0,), LaneMark(0, 20), 40.0,
+        "host", "g", (0,), host_mark, 40.0,
         bundle=(
-            LaneMember("host", LaneMark(0, 20), 40.0),
-            LaneMember("host:comparison", LaneMark(0, 20), 50.0,
-                       overlays=("host", "gate")),
-            LaneMember("gate", LaneMark(8, 10), 30.0,
-                       overlays=("host", "host:comparison")),
+            LaneMember("host", host_mark, 40.0),
+            LaneMember("gate", gate_mark, 30.0),
         ),
     )
     result = allocate_lanes([bundle], mark_row_height=10, label_row_height=10)
     lane = result.lanes[0]
-    assert lane.members == ("host", "host:comparison", "gate")
-    assert set(lane.placements) == {"host", "host:comparison", "gate"}
+    assert lane.members == ("host", "gate")
+    assert set(lane.placements) == {"host", "gate"}
     assert all(not lane.placements[member].visible_overflow for member in lane.members)
-    assert len({lane.placements[member].candidate_id for member in lane.members}) == 3
+    assert len({lane.placements[member].candidate_id for member in lane.members}) == 2
+    assert {facet_value.facet_id for facet_value in host_mark.facets} == {"host:planned", "host:snapshot"}
 
 
 def test_atomic_bundle_uses_one_lane_when_a_child_mark_would_collide_in_prior_lane() -> None:
     prior = candidate("prior", "g", 8, 10, title_width=2)
+    host_mark = LaneMark(0, 20, (facet("host:planned", ObstacleRect(0, 0, 20, 10)),))
+    gate_mark = LaneMark(8, 10, (facet("gate:point", ObstacleRect(8, 0, 10, 10),
+                                       overlay_with=("host:planned",)),))
     bundle = LaneCandidate(
-        "host", "g", (1,), LaneMark(0, 20), 5.0,
-        bundle=(LaneMember("host", LaneMark(0, 20), 5.0),
-                    LaneMember("gate", LaneMark(8, 10), 5.0, overlays=("host",))),
+        "host", "g", (1,), host_mark, 5.0,
+        bundle=(LaneMember("host", host_mark, 5.0), LaneMember("gate", gate_mark, 5.0)),
     )
     result = allocate_lanes([prior, bundle], mark_row_height=10, label_row_height=10)
     assert result.lane_of("prior").lane_id != result.lane_of("host").lane_id
     assert result.lane_of("host").lane_id == result.lane_of("gate").lane_id
 
 
-def test_bundle_overlay_exemption_must_be_explicit_and_member_ids_are_globally_unique() -> None:
-    unexempted = LaneCandidate("host", "g", (0,), LaneMark(0, 20), 5.0,
-                               bundle=(LaneMember("host", LaneMark(0, 20), 5.0),
-                                       LaneMember("facet", LaneMark(0, 20), 5.0)))
+def test_facet_overlay_exemption_must_be_explicit_and_member_ids_are_globally_unique() -> None:
+    host_mark = LaneMark(0, 20, (facet("host:planned", ObstacleRect(0, 0, 20, 10)),))
+    comparison_mark = LaneMark(0, 20, (facet("host:snapshot", ObstacleRect(0, 0, 20, 10),
+                                             source_kind="snapshot", purpose="snapshot"),))
+    unexempted = LaneCandidate("host", "g", (0,), host_mark, 5.0,
+                               bundle=(LaneMember("host", host_mark, 5.0),
+                                       LaneMember("attached", comparison_mark, 5.0)))
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_BUNDLE_MARK_COLLISION"):
         allocate_lanes([unexempted], mark_row_height=10, label_row_height=10)
     duplicate = candidate("host", "g", 30, 40)
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
         allocate_lanes([unexempted, duplicate])
+
+
+def test_facets_keep_repeated_source_instances_and_typed_ports_distinct_and_countable() -> None:
+    first_port = LaneFacetPort("row-a:task:start", "start", (0, 5))
+    second_port = LaneFacetPort("row-b:task:start", "start", (10, 5))
+    first = facet("row-a:task:planned", ObstacleRect(0, 0, 5, 10),
+                  projection_instance_id="row-a:task", source_item_id="task-a",
+                  source_ref="project:task", ports=(first_port,))
+    second = facet("row-b:task:planned", ObstacleRect(10, 0, 15, 10),
+                   projection_instance_id="row-b:task", source_item_id="task-b",
+                   source_ref="project:task", ports=(second_port,))
+    first_mark, second_mark = LaneMark(0, 5, (first,)), LaneMark(10, 15, (second,))
+    assert first_mark.footprints == (first.visible_footprint,)
+    result = allocate_lanes([
+        LaneCandidate("task-a", "g", (0,), first_mark, 1),
+        LaneCandidate("task-b", "g", (1,), second_mark, 1),
+    ], mark_row_height=10, label_row_height=2)
+    lane = result.lanes[0]
+    assert lane.members == ("task-a", "task-b")
+    assert first.source_ref == second.source_ref == "project:task"
+    assert first.projection_instance_id != second.projection_instance_id
+    assert first.ports[0].port_id != second.ports[0].port_id
+
+
+def test_facets_reject_unknown_overlay_duplicate_ports_and_mutable_geometry() -> None:
+    dangling = facet("dangling", ObstacleRect(0, 0, 1, 1), overlay_with=("missing",))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneCandidate("item", "g", (0,), LaneMark(0, 1, (dangling,)), 1)
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMarkFacet("bad", "row:item", "item", "project:item", "primary", "planned", "p",
+                      "Rect", (("rect", ((0, 0), (1, 1))),), ObstacleRect(0, 0, 1, 1),
+                      (LaneFacetPort("same", "start", (0, 0)),
+                       LaneFacetPort("same", "end", (1, 1))))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMarkFacet("bad", "row:item", "item", "project:item", "primary", "planned", "p",
+                      "Rect", (("rect", [[0, 0], [1, 1]]),), ObstacleRect(0, 0, 1, 1))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMarkFacet("bad", "row:item", "item", "project:item", "primary", "planned", "p",
+                      "Rect", (("rect", ((0, 0), (2, 2))),), ObstacleRect(0, 0, 1, 1))
+    first_port = LaneFacetPort("same-port", "start", (0.5, 0.5))
+    second_port = LaneFacetPort("same-port", "start", (2.5, 0.5))
+    first = facet("first", ObstacleRect(0, 0, 1, 1), ports=(first_port,))
+    second = facet("second", ObstacleRect(2, 0, 3, 1), ports=(second_port,))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        allocate_lanes([candidate("first-item", "g", 0, 1, facets=(first,)),
+                        candidate("second-item", "g", 2, 3, facets=(second,))])
