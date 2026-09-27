@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import date
+from decimal import Decimal
 from math import isfinite
 from typing import Any, Mapping, Sequence
 from urllib.parse import quote
@@ -23,7 +24,7 @@ from chrona.presentation.layout.lane_projection import (
 )
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.model import LayoutError, Rect
-from chrona.presentation.layout.obstacles import ObstacleGeometry, ObstacleRect, ObstacleSegment, obstacle_envelope
+from chrona.presentation.layout.obstacles import ObstacleGeometry, ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, ScalePlacement, ShapePlacement, VisualRequest
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
@@ -277,8 +278,6 @@ def preflight_review_lanes(
     clearance: float = 0.0, canvas_left: float | None = None, canvas_right: float | None = None,
 ) -> tuple[LaneCandidateMapping, SurfaceLanePlan]:
     """Map the exact Review closure, then allocate once into immutable preflight."""
-    from decimal import Decimal
-
     mapped = map_lane_candidates(
         projection, frame=frame, as_of=as_of, theme_tokens=theme_tokens, slot_id=slot_id,
         measurement_identity=measurement_identity, font_metrics=font_metrics,
@@ -625,14 +624,6 @@ def _facet(instance: LaneProjectionInstance, item: Any, mark: MarkPlacement | No
         plain_mark_projection=plain, glyph_part_projection=glyph,
         progress_projection=progress,
     )
-
-
-def _source_kind(item: Any, purpose: str) -> str:
-    if purpose == "actual":
-        return "actual"
-    if purpose in {"snapshot", "scenario"}:
-        return purpose
-    return "primary" if item.source_kind == "combined" else item.source_kind
 
 
 def _stroke_width(theme: Any, role: str) -> float | None:
