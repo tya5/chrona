@@ -348,6 +348,75 @@ def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path
         assert "<linearGradient" in svg  # the preset's preferred v0.7-svg profile applies without a flag (#479)
 
 
+@pytest.mark.parametrize(("kind", "filename", "stale_version"), [
+    ("view", "view.yaml", "chrona/view/v0.22"),
+    ("theme", "theme.yaml", "chrona/theme/v0.1"),
+    ("layout-profile", "layout.yaml", "chrona/layout-profile/v0.1"),
+])
+def test_cli_copied_builtin_preset_rejects_unsupported_member_version(
+    tmp_path, monkeypatch, capsys, kind, filename, stale_version,
+):
+    preset_id = "mission-light"
+    preset = tmp_path / "copied-preset"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
+    main()
+
+    member = preset / filename
+    resource = yaml.safe_load(member.read_text(encoding="utf-8"))
+    supported_version = resource["version"]
+    resource["version"] = stale_version
+    member.write_text(yaml.safe_dump(resource, sort_keys=False), encoding="utf-8")
+
+    output = tmp_path / "unsupported-version.svg"
+    project = Path("examples/halcyon-1/project.yaml")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project), "--preset", str(preset / "preset.yaml"), "--output", str(output),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_RESOURCE_VERSION_UNSUPPORTED"
+    assert diagnostic["sourceRef"] == "/version"
+    assert kind in diagnostic["message"]
+    assert "chrona-preset-mission-light" in diagnostic["message"] or "chrona-builtin-mission-light" in diagnostic["message"]
+    assert stale_version in diagnostic["message"]
+    assert supported_version in diagnostic["message"]
+    assert "chrona preset copy mission-light --output" in diagnostic["message"]
+    assert not output.exists()
+
+
+def test_cli_stale_explicit_override_with_current_preset_has_no_copy_remedy(tmp_path, monkeypatch, capsys):
+    preset_id = "mission-light"
+    preset = tmp_path / "copied-preset"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
+    main()
+
+    override = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
+    override["version"] = "chrona/view/v0.22"
+    override_path = tmp_path / "stale-override.yaml"
+    override_path.write_text(yaml.safe_dump(override, sort_keys=False), encoding="utf-8")
+
+    output = tmp_path / "stale-override.svg"
+    project = Path("examples/halcyon-1/project.yaml")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(project), "--preset", str(preset / "preset.yaml"),
+        "--view", str(override_path), "--output", str(output),
+    ])
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    diagnostic = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert diagnostic["code"] == "E_RESOURCE_VERSION_UNSUPPORTED"
+    assert diagnostic["sourceRef"] == "/version"
+    assert "chrona/view/v0.22" in diagnostic["message"]
+    assert "chrona/view/v0.26" in diagnostic["message"]
+    assert "chrona preset copy" not in diagnostic["message"]
+    assert not output.exists()
+
+
 @pytest.mark.parametrize(
     "preset_id",
     [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],

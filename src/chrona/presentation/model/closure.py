@@ -37,11 +37,13 @@ from chrona.core.identity import content_identity
 
 
 class ClosureError(ValueError):
-    def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None):
+    def __init__(self, diagnostic_id: str, source_ref: str = "/", detail: str | None = None,
+                 *, declaring_preset_id: str | None = None):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.source_ref = source_ref
         self.detail = detail
+        self.declaring_preset_id = declaring_preset_id
 
 
 def _closure_kind_error(scope: str, expected: str, found: object) -> ClosureError:
@@ -285,7 +287,15 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
         if not isinstance(declaration, Mapping):
             raise ClosureError("E_DRAFT_PRESET_SCHEMA")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
-        resource = _load_draft_resource(kind, path)
+        try:
+            resource = _load_draft_resource(kind, path)
+        except ClosureError as error:
+            if error.diagnostic_id != "E_RESOURCE_VERSION_UNSUPPORTED":
+                raise
+            # Only an eagerly loaded, declared member of this preset receives
+            # copy provenance. Later explicit overrides do not pass this seam.
+            raise ClosureError(error.diagnostic_id, error.source_ref, error.detail,
+                               declaring_preset_id=preset.id) from error
         if resource.id != declaration["id"]:
             raise ClosureError("E_DRAFT_PRESET_RESOURCE")
         paths[kind] = path
@@ -315,7 +325,9 @@ def resolve_guided_draft_render(
         raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
     try:
         normalized = normalize_authoring_workspace(workspace_resource.contract, preset_resource.contract, resources_by_path)
-    except (AuthoringError, ContractError) as error:
+    except ContractError as error:
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
+    except AuthoringError as error:
         raise ClosureError(str(error)) from error
     sources = [_normalized_draft_source(kind, source) for kind, source in normalized.draft_sources()]
     catalog_declarations = preset_resource.contract.resources.get("iconCatalogs", ())
@@ -546,7 +558,7 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     except SchemaContractError as error:
         raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA", error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
-        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     return ClosureResource(kind, identifier, "draft", identity.content_identity, contract)
 
 
@@ -898,7 +910,7 @@ def _load_reference(reference: dict[str, Any], reader: SnapshotReader, expected_
         code = "E_" + expected_kind.upper().replace("-", "_") + "_SCHEMA"
         raise ClosureError(code, error.source_ref, _schema_detail(error)) from error
     except ContractError as error:
-        raise ClosureError(error.diagnostic_id, detail=error.detail) from error
+        raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     return ClosureResource(expected_kind, source.identity.id, source.identity.revision, source.identity.content_identity, contract)
 
 
@@ -920,19 +932,17 @@ def _load_reference_source(reference: dict[str, Any], reader: SnapshotReader, ex
     elif expected_kind == "profile-package":
         actual_id = value.get("packageId") if isinstance(value, dict) else None
     elif expected_kind == "review-detail-profile":
-        if not isinstance(value, dict) or value.get("version") != "chrona/review-detail-profile/v0.1":
-            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/review-detail-profile/v0.1 object; found {value!r}")
+        if not isinstance(value, dict):
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected review-detail-profile object; found {type(value).__name__}")
         actual_id = value.get("id")
     elif expected_kind == "layout-profile":
-        if not isinstance(value, dict) or value.get("version") != "chrona/layout-profile/v0.9":
-            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected chrona/layout-profile/v0.9 object; found {value!r}")
+        if not isinstance(value, dict):
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected layout-profile object; found {type(value).__name__}")
         actual_id = value.get("id")
     else:
         actual_id = value.get("id") if isinstance(value, dict) else None
-        expected_version_prefix = f"chrona/{expected_kind}/v"
-        if (not isinstance(value, dict) or value.get("kind") != expected_kind
-                or not str(value.get("version", "")).startswith(expected_version_prefix)):
-            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind} version prefix={expected_version_prefix}; found {value!r}")
+        if not isinstance(value, dict) or value.get("kind") != expected_kind:
+            raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind}; found kind={value.get('kind') if isinstance(value, dict) else type(value).__name__}")
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID")
     derived = expected_kind == "theme" and is_derived_theme(value)

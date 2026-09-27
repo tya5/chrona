@@ -31,7 +31,7 @@ from chrona.operational.authoring_commands import cas_write_authoring_aggregate,
 from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
-from chrona.usecases.preset_library import copy_builtin_preset, list_builtin_presets
+from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id, list_builtin_presets
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
 from chrona.presentation.fonts.importer import FontImportError, import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
@@ -85,13 +85,19 @@ def _emit_presentation_rejection(error: PresentationIngressRejected) -> NoReturn
     diagnostics = []
     for item in error.diagnostics:
         code = f"E_{item.resource_kind.upper().replace('-', '_')}_SCHEMA" if item.code == "E_RESOURCE_SCHEMA" else item.code
-        diagnostic = _diagnostic(code, item.message, "closure", item.pointer)
+        message = _version_message(item.message) if code == "E_RESOURCE_VERSION_UNSUPPORTED" else item.message
+        diagnostic = _diagnostic(code, message, "closure", item.pointer)
         if multiple:
             diagnostic |= {"resourceKind": item.resource_kind, "resourceIdentity": item.resource_identity,
                            "phase": item.phase, **({"rule": item.rule} if item.rule is not None else {})}
         diagnostics.append(diagnostic)
     print(json.dumps({"status": "rejected", "diagnostics": diagnostics}, ensure_ascii=False))
     raise SystemExit(1)
+
+
+def _version_message(detail: str) -> str:
+    """Give an unprovenanced stale resource a safe, non-automatic next action."""
+    return detail + "; see the current resource schema and migration notes before re-applying edits"
 
 
 def _emit_font_warnings(rendered: RenderedReview) -> None:
@@ -508,22 +514,34 @@ def _run_draft_render(args: argparse.Namespace) -> None:
     preset_path, owned_tempdir = _resolve_preset_argument(args.preset)
     try:
         default = default_preset_resource() if preset_path is None else None
-        closure = resolve_draft_render(
-            project_path=Path(args.project),
-            preset_path=preset_path if preset_path is not None else Path(str(default)),
-            preset_root=None if preset_path is not None else Path(str(default_preset_root())),
-            view_path=Path(args.view) if args.view else None, theme_path=Path(args.theme) if args.theme else None,
-            scheme_path=Path(args.scheme) if args.scheme else None, layout_path=Path(args.layout) if args.layout else None,
-            actual_path=Path(args.actual) if args.actual else None,
-            summary_path=Path(args.summary) if args.summary else None,
-            detail_path=Path(args.detail) if args.detail else None,
-            icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
-            font_metrics_path=Path(args.font_metrics) if args.font_metrics else None,
-            system_fonts=args.system_fonts,
-            viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=target_kind,
-            visual_profile=args.visual_profile,
-            typesetter=_draft_typesetter_identity(args, target_kind),
-        )
+        try:
+            closure = resolve_draft_render(
+                project_path=Path(args.project),
+                preset_path=preset_path if preset_path is not None else Path(str(default)),
+                preset_root=None if preset_path is not None else Path(str(default_preset_root())),
+                view_path=Path(args.view) if args.view else None, theme_path=Path(args.theme) if args.theme else None,
+                scheme_path=Path(args.scheme) if args.scheme else None, layout_path=Path(args.layout) if args.layout else None,
+                actual_path=Path(args.actual) if args.actual else None,
+                summary_path=Path(args.summary) if args.summary else None,
+                detail_path=Path(args.detail) if args.detail else None,
+                icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
+                font_metrics_path=Path(args.font_metrics) if args.font_metrics else None,
+                system_fonts=args.system_fonts,
+                viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=target_kind,
+                visual_profile=args.visual_profile,
+                typesetter=_draft_typesetter_identity(args, target_kind),
+            )
+        except ClosureError as error:
+            preset_id = error.declaring_preset_id
+            if (error.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED" and owned_tempdir is None
+                    and preset_path is not None and preset_id is not None
+                    and preset_id.startswith("chrona-builtin-")
+                    and is_builtin_preset_id(preset_id.removeprefix("chrona-builtin-"))):
+                catalogue_id = preset_id.removeprefix("chrona-builtin-")
+                message = (f"{error.detail}; run chrona preset copy {catalogue_id} --output <new-dir> "
+                           "and re-apply your edits")
+                raise CliFailure(error.diagnostic_id, message, "closure", error.source_ref) from error
+            raise
         args.draft_auto_block = closure.auto_block
         rendered = _render_review(closure.closure, args, asset_root=closure.asset_root,
                                   draft_font_resolution=closure.font_resolution)
@@ -794,6 +812,8 @@ def main() -> None:
         _emit_presentation_rejection(error)
     except (SnapshotReadError, ClosureError) as error:
         message = error.detail if error.detail else str(error)
+        if isinstance(error, ClosureError) and error.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED":
+            message = _version_message(message)
         source_ref = error.source_ref if isinstance(error, ClosureError) else "/"
         _emit_failure(CliFailure(error.diagnostic_id, message, "closure", source_ref))
     except IconImportError as error:

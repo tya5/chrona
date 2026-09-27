@@ -16,7 +16,7 @@ from chrona.presentation.contracts import (
 from chrona.presentation.contracts.resources import (
     ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,
     ProjectContract, RenderContextContract, ReviewDetailProfileContract, SchemaContractError, SnapshotRefContract,
-    SummaryProfileContract, ViewContract,
+    SummaryProfileContract, UnsupportedResourceVersionError, ViewContract, _SCHEMAS,
 )
 
 
@@ -47,6 +47,74 @@ def test_contract_rejects_schema_invalid_mandatory_resource():
         parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
     assert error.value.violation is not None
     assert (error.value.violation.resource_kind, error.value.violation.resource_identity) == ("theme", "theme")
+
+
+def test_stale_string_version_has_a_typed_resource_local_diagnostic():
+    value = _theme()
+    value["version"] = "chrona/theme/v0.10"
+
+    with pytest.raises(ContractError) as error:
+        parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
+
+    diagnostic = error.value
+    assert isinstance(diagnostic, UnsupportedResourceVersionError)
+    assert diagnostic.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED"
+    assert diagnostic.resource_kind == "theme"
+    assert diagnostic.resource_id == "theme"
+    assert diagnostic.found_version == "chrona/theme/v0.10"
+    assert diagnostic.supported_versions == ("chrona/theme/v0.11",)
+    assert diagnostic.source_ref == "/version"
+
+
+@pytest.mark.parametrize("kind", sorted({kind for kind, _version in _SCHEMAS}))
+def test_unsupported_version_diagnostic_derives_supported_versions_from_schema_registry(kind):
+    supported = tuple(sorted(version for registered_kind, version in _SCHEMAS if registered_kind == kind))
+    value = {"kind": kind, "id": f"{kind}-resource", "version": "chrona/unsupported/v999", "body": {}}
+
+    with pytest.raises(ContractError) as error:
+        parse_contract(
+            ClosureIdentity(kind, value["id"], "r", "sha256:" + "a" * 64), value,
+        )
+
+    assert error.value.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED"
+    assert isinstance(error.value, UnsupportedResourceVersionError)
+    assert error.value.resource_kind == kind
+    assert error.value.resource_id == value["id"]
+    assert error.value.supported_versions == supported
+
+
+@pytest.mark.parametrize("version", ("missing", None, 42, True))
+def test_missing_or_nonstring_version_is_not_reported_as_unsupported_version(version):
+    value = _theme()
+    if version == "missing":
+        value.pop("version")
+    else:
+        value["version"] = version
+
+    with pytest.raises(ContractError) as error:
+        parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
+
+    assert error.value.diagnostic_id == "E_CLOSURE_KIND"
+    assert error.value.diagnostic_id != "E_RESOURCE_VERSION_UNSUPPORTED"
+
+
+def test_presentation_collector_continues_after_unsupported_version_to_report_sibling_schema_errors():
+    view = yaml.safe_load((ROOT / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    theme = _theme()
+    theme["id"] = "stale-theme"
+    theme["version"] = "chrona/theme/v0.10"
+    view["body"]["surface"] = "table-timelinez"
+
+    result = collect_presentation_contracts((_source("theme", theme), _source("view", view)))
+
+    assert [(item.code, item.resource_kind, item.resource_identity, item.pointer) for item in result.diagnostics] == [
+        ("E_RESOURCE_VERSION_UNSUPPORTED", "theme", "stale-theme", "/version"),
+        ("E_RESOURCE_SCHEMA", "view", "controller-z-executive", "/body/surface"),
+    ]
+    assert result.diagnostics[0].phase == "version"
+    assert "chrona/theme/v0.10" in result.diagnostics[0].message
+    assert "chrona/theme/v0.11" in result.diagnostics[0].message
+    assert result.contracts == ()
 
 
 def _source(kind, value):

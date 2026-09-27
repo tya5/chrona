@@ -19,10 +19,28 @@ from chrona.presentation.table_presentation import BooleanPresencePresentation
 class ContractError(ValueError):
     """A decoded resource cannot become a runtime contract."""
 
-    def __init__(self, diagnostic_id: str, detail: str = "") -> None:
+    def __init__(self, diagnostic_id: str, detail: str = "", source_ref: str = "/") -> None:
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.detail = detail
+        self.source_ref = source_ref
+
+
+class UnsupportedResourceVersionError(ContractError):
+    """One declared string version has no contract schema for its known kind."""
+
+    def __init__(self, identity: ClosureIdentity, found_version: str, supported_versions: tuple[str, ...]) -> None:
+        self.resource_kind = identity.kind
+        self.resource_id = identity.id
+        self.found_version = found_version
+        self.supported_versions = supported_versions
+        # Version and identity are unvalidated input at this boundary. Keep the
+        # author-facing message useful without echoing an unbounded scalar.
+        found = found_version if len(found_version) <= 160 else found_version[:157] + "..."
+        identifier = identity.id if len(identity.id) <= 160 else identity.id[:157] + "..."
+        detail = (f"{identity.kind} id={identifier} declares version {found}; "
+                  f"supported: {', '.join(supported_versions)}")
+        super().__init__("E_RESOURCE_VERSION_UNSUPPORTED", detail, "/version")
 
 
 def _closure_kind_error(identity: ClosureIdentity, expected: str, found: object) -> ContractError:
@@ -560,6 +578,17 @@ _SCHEMAS = {
 }
 
 
+def _schema_for_version(identity: ClosureIdentity, version: object) -> str:
+    """Select one registered schema, distinguishing stale strings from bad framing."""
+    supported = tuple(sorted(candidate for kind, candidate in _SCHEMAS if kind == identity.kind))
+    if not supported or not isinstance(version, str):
+        raise _closure_kind_error(identity, "supported resource kind/version", version)
+    schema_name = _SCHEMAS.get((identity.kind, version))
+    if schema_name is None:
+        raise UnsupportedResourceVersionError(identity, version, supported)
+    return schema_name
+
+
 @cache
 def _registry() -> Registry:
     names = ("presentation-resource-v0.1.schema.yaml", "revision-store-resource-ref-v0.1.schema.yaml")
@@ -572,9 +601,7 @@ def _registry() -> Registry:
 
 def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) -> str:
     version = value.get("version")
-    schema_name = _SCHEMAS.get((kind, version)) if isinstance(version, str) else None
-    if schema_name is None:
-        raise _closure_kind_error(identity, "supported resource kind/version", {"kind": kind, "version": version})
+    schema_name = _schema_for_version(identity, version)
     if kind == "icon-catalog":
         body = value.get("body")
         icons = body.get("icons") if isinstance(body, Mapping) else None
@@ -616,9 +643,7 @@ def explain_resource_schema_errors(identity: ClosureIdentity, value: Mapping[str
 def _resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any]) -> tuple[ValidationError, ...]:
     """Evaluate one resource schema without constructing a runtime contract."""
     version = value.get("version")
-    schema_name = _SCHEMAS.get((identity.kind, version)) if isinstance(version, str) else None
-    if schema_name is None:
-        raise _closure_kind_error(identity, "supported resource kind/version", {"kind": identity.kind, "version": version})
+    schema_name = _schema_for_version(identity, version)
     schema = schema_document(schema_name)
     candidate = _icon_catalog_envelope(value) if identity.kind == "icon-catalog" else _schema_value(value)
     return tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))

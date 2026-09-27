@@ -48,6 +48,22 @@ def test_draft_closure_aggregates_every_schema_finding_in_the_known_resource_set
     assert {item.resource_kind for item in error.value.diagnostics} == {"view"}
 
 
+def test_draft_closure_reports_unsupported_view_version_at_version_pointer(tmp_path):
+    root = _root()
+    view = yaml.safe_load((root / "examples/controller-z/views/executive.yaml").read_text(encoding="utf-8"))
+    view["version"] = "chrona/view/v0.22"
+    stale_view = tmp_path / "stale-view.yaml"
+    stale_view.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ClosureError) as error:
+        resolve_draft_render(**(_paths(root) | {"view_path": stale_view}))
+
+    assert (error.value.diagnostic_id, error.value.source_ref) == (
+        "E_RESOURCE_VERSION_UNSUPPORTED", "/version")
+    assert "chrona/view/v0.22" in error.value.detail
+    assert "chrona/view/v0.26" in error.value.detail
+
+
 def test_draft_preset_resolves_the_same_typed_resources_as_explicit_inputs():
     root = _root() / "examples/controller-z"
     preset = root / "executive-light.preset.yaml"
@@ -233,6 +249,16 @@ def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provena
     assert draft.closure.guided_provenance is not None
     assert draft.closure.guided_provenance.normalizer_version == "chrona/authoring-normalizer/v0.1"
     assert draft.closure.context.environment.typesetter == TypesetterIdentity("tectonic", "0.15.0", "chrona-tikz/v0.1")
+
+    resources["view.yaml"]["version"] = "chrona/view/v0.22"
+    (preset_root / "view.yaml").write_text(yaml.safe_dump(resources["view.yaml"], sort_keys=False), encoding="utf-8")
+    with pytest.raises(ClosureError) as error:
+        resolve_guided_draft_render(
+            workspace_path=workspace_path, target_kind="tikz",
+            typesetter=TypesetterIdentity("tectonic", "0.15.0", "chrona-tikz/v0.1"),
+        )
+    assert (error.value.diagnostic_id, error.value.source_ref) == (
+        "E_RESOURCE_VERSION_UNSUPPORTED", "/version")
 
 
 def test_guided_draft_closure_uses_only_preset_declared_icon_catalogs(tmp_path):
