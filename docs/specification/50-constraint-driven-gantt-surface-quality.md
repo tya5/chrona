@@ -113,6 +113,12 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
+For lane mode only, a declared `visible-overflow` direct fallback is permitted
+only if the completed path clears every required placed lane/member label.
+Otherwise Layout suppresses it with the same generic warning and typed
+per-port-pair cause evidence. This safety rule outranks visual overflow but
+never feeds back into lane membership or label placement; non-lane fallback
+behavior is unchanged.
 
 For a suppressed lane relation, Layout retains one typed result per candidate
 port pair in deterministic order: `egress-collision` with blocker identities,
