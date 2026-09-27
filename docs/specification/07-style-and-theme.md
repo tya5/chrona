@@ -193,6 +193,12 @@ an `annotationContainer` binding is checked on its annotation-box role; the
 finite token value and image-catalog asset still follow the existing Theme
 schema, `ThemeTokenView`, and Specification 64 closure rules. This admission
 gate does not reparse the nested token or move Layout geometry into Scene.
+
+For a role name not otherwise registered, the bounded axis-tier measurement
+and legend fallback Rect-paint producer families overlap at Theme load time.
+The admitted properties are the union of those two potential consumers;
+neither producer changes the other's rendering behavior. Known roles retain
+their narrower contracts. See the [#478 overlap correction](../design/issue-478-open-role-family-overlap-correction-2026-09-27.md).
 Direct role declarations and Scheme-inserted colour targets retain their
 respective exact source pointers when applicability fails.
 

@@ -1,5 +1,7 @@
 # Design Amendment — Legend-Only Paint Roles in Theme Admission (#478)
 
+**Further correction:** [open-name overlap with axis typography](issue-478-open-role-family-overlap-correction-2026-09-27.md).
+
 **Amends:** [role-admission rebase](issue-478-role-admission-rebase-correction-2026-09-27.md)
 and the [axis-role amendment](issue-478-axis-typography-role-admission-amendment-2026-09-27.md).
 **Adjacent authority:** [#427 legend dispatch amendment](issue-427-legend-swatches-design-amendment-2026-09-26.md).

@@ -1,5 +1,7 @@
 # Design Amendment — View-Named Axis Typography Roles (#478)
 
+**Further correction:** [open-name overlap with legend paint](issue-478-open-role-family-overlap-correction-2026-09-27.md).
+
 **Amends:** [role-admission rebase](issue-478-role-admission-rebase-correction-2026-09-27.md).
 **Finding:** the #426 View grammar permits any non-empty `typographyRole` on
 an axis band or labels tier. A strictly enumerated Theme role list would
