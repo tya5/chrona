@@ -6,6 +6,7 @@ behavior belongs to L1/L3.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 import pytest
 from decimal import Decimal
 
@@ -322,6 +323,18 @@ def test_facet_overlay_exemption_must_be_explicit_and_member_ids_are_globally_un
         allocate_lanes([unexempted, duplicate])
 
 
+def test_facet_overlay_must_name_the_same_stable_source_object() -> None:
+    host = facet("host", ObstacleRect(0, 0, 10, 10), source_ref="project:host")
+    unrelated = facet("unrelated", ObstacleRect(0, 0, 10, 10),
+                      source_ref="project:other", overlay_with=("host",))
+    host_mark = LaneMark(0, 10, (host,))
+    unrelated_mark = LaneMark(0, 10, (unrelated,))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneCandidate("host", "g", (0,), host_mark, 5.0,
+                      bundle=(LaneMember("host", host_mark, 5.0),
+                              LaneMember("other", unrelated_mark, 5.0)))
+
+
 def test_facets_keep_repeated_source_instances_and_typed_ports_distinct_and_countable() -> None:
     first_port = LaneFacetPort("row-a:task:start", "start", (0, 5))
     second_port = LaneFacetPort("row-b:task:start", "start", (10, 5))
@@ -387,6 +400,8 @@ def test_closed_candidate_requires_facets_and_preserves_unexpanded_primitive_bou
     assert raster.primitive_bounds == (3.0, 2.0, 7.0, 9.0)
     assert raster.visible_footprint == ObstacleRect(2.0, 1.0, 8.0, 10.0)
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        replace(path, primitive_bounds=(1.0, 5.0, 8.0, 5.0))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
         LaneMarkFacet(
             "item:bad-port", "row:item", "item", "project:item", "primary", "planned",
             "primitive:path", "Path", (("move", ((2.0, 5.0),)), ("line", ((8.0, 5.0),))),
@@ -444,6 +459,12 @@ def test_vector_icon_projection_rejects_missing_or_duplicate_path_indices(indice
                    for index, projection in enumerate(projections))
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
         LaneMark(0, 10, facets)
+
+
+def test_icon_projection_rejects_non_icon_primitive_type() -> None:
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        facet("path", ObstacleRect(0, 0, 1, 1), primitive_id="placed-icon",
+              primitive_type="Path", icon_projection=icon_projection(path_index=0))
 
 
 def test_icon_projection_rejects_shared_asset_mismatch_and_preserves_raster_bytes() -> None:

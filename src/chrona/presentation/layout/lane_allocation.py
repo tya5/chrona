@@ -205,6 +205,7 @@ class LaneMarkFacet:
                     for command in self.completed_geometry)
         )
         if (not all(isinstance(identity, str) and identity for identity in identities)
+                or self.primitive_type not in {"Rect", "Path", "Symbol", "Icon", "Raster"}
                 or not geometry_valid
                 or not isinstance(self.primitive_bounds, tuple) or len(self.primitive_bounds) != 4
                 or not all(isinstance(value, (int, float)) and not isinstance(value, bool)
@@ -237,6 +238,18 @@ class LaneMarkFacet:
         tolerance = 1e-9
         if any(not (bounds_left - tolerance <= point[0] <= bounds_right + tolerance
                     and bounds_top - tolerance <= point[1] <= bounds_bottom + tolerance) for point in points):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        # Primitive bounds are the exact unexpanded command envelope. Stroke
+        # growth belongs only to visible_footprint, so accepting a broader
+        # primitive envelope here would let downstream projection invent geometry.
+        all_points = tuple(point for _, command_points in self.completed_geometry
+                           for point in command_points)
+        command_bounds = (min(point[0] for point in all_points),
+                          min(point[1] for point in all_points),
+                          max(point[0] for point in all_points),
+                          max(point[1] for point in all_points))
+        if any(abs(actual - expected) > tolerance
+               for actual, expected in zip(self.primitive_bounds, command_bounds)):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
         host = self.port_host_bounds
         if any(not (host[0] - tolerance <= port.position[0] <= host[2] + tolerance
@@ -288,6 +301,12 @@ class LaneMark:
                 icon_groups.setdefault(facet.icon_projection.placement_id, []).append(facet.icon_projection)
         for members in icon_groups.values():
             first = members[0]
+            if any(facet_value.primitive_type != "Icon"
+                   or facet_value.primitive_id != first.placement_id
+                   for facet_value in self.facets
+                   if facet_value.icon_projection is not None
+                   and facet_value.icon_projection.placement_id == first.placement_id):
+                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
             if any(item.common_metadata != first.common_metadata for item in members[1:]):
                 raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
             if first.kind == "raster":
@@ -362,11 +381,20 @@ class LaneCandidate:
         members = self.members_for_placement
         facets = tuple(facet for member in members for facet in member.mark.facets)
         facet_ids = {facet.facet_id for facet in facets}
+        facets_by_id = {facet.facet_id: facet for facet in facets}
         port_ids = [port.port_id for facet in facets for port in facet.ports]
         if len(facet_ids) != len(facets) or any(
                 target not in facet_ids for facet in facets for target in facet.overlay_with
         ) or len(set(port_ids)) != len(port_ids) or any(not member.mark.facets for member in members):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        # An overlay is an explicit exemption for two facets of the same
+        # stable source object. Their projection/item identities may differ
+        # (for example primary and Snapshot members of one comparison bundle).
+        for facet_value in facets:
+            for target in facet_value.overlay_with:
+                other = facets_by_id[target]
+                if facet_value.source_ref != other.source_ref:
+                    raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
     @property
     def members_for_placement(self) -> tuple[LaneMember, ...]:
