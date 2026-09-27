@@ -71,15 +71,25 @@ def _band_contrasts(scene: dict) -> list[tuple[str, str, float]]:
     return results
 
 
-def _render(tmp_path: Path, monkeypatch, name: str, *extra: str) -> dict:
+def _render_project(tmp_path: Path, monkeypatch, name: str, project: Path,
+                    actual: Path | None = None, *extra: str) -> tuple[dict, Path]:
     scene_path = tmp_path / f"{name}.scene.json"
-    monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(ROOT / "examples/halcyon-1/project.yaml"),
-        "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"), *extra,
+    argv = ["chrona", "render", str(project)]
+    if actual is not None:
+        argv.extend(("--actual", str(actual)))
+    argv.extend((*extra,
         "--output", str(tmp_path / f"{name}.svg"), "--emit-scene", str(scene_path),
-    ])
+    ))
+    monkeypatch.setattr(sys, "argv", argv)
     main()
-    return json.loads(scene_path.read_text(encoding="utf-8"))
+    return json.loads(scene_path.read_text(encoding="utf-8")), tmp_path / f"{name}.svg"
+
+
+def _render(tmp_path: Path, monkeypatch, name: str, *extra: str) -> dict:
+    scene, _ = _render_project(tmp_path, monkeypatch, name,
+                               ROOT / "examples/halcyon-1/project.yaml",
+                               ROOT / "examples/halcyon-1/actual.yaml", *extra)
+    return scene
 
 
 def _copied_preset(tmp_path: Path, monkeypatch, preset_id: str) -> Path:
@@ -172,7 +182,118 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
 
 
-def test_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:
+def test_bundled_default_guides_every_bar_and_names_it_or_reports_suppression(tmp_path, monkeypatch) -> None:
+    scene, svg_path = _render_project(
+        tmp_path, monkeypatch, "bundled-default",
+        ROOT / "examples/halcyon-1/project.yaml",
+        ROOT / "examples/halcyon-1/actual.yaml",
+    )
+    surface = scene["surfaces"][0]
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    svg = svg_path.read_text(encoding="utf-8")
+    bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
+    assert len(rows) == 26
+    assert len([key for key in primitives if key.startswith("planned:")]) == len(rows)
+    assert bands and all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
+                         timeline["inline"] + timeline["inlineSize"] - 0.01
+                         for item in bands.values())
+    # Alternate bands and their shared edges give continuous guidance to all rows.
+    edges = {round(item["bounds"]["block"], 3) for item in bands.values()} | {
+        round(item["bounds"]["block"] + item["bounds"]["blockSize"], 3)
+        for item in bands.values()
+    }
+    assert all(round(bounds["block"], 3) in edges or
+               round(bounds["block"] + bounds["blockSize"], 3) in edges
+               for bounds in rows.values())
+    assert svg.count('id="row-band:') == len(bands)
+
+    suppressed = {diagnostic.split("W_LAYOUT_LABEL_SUPPRESSED:", 1)[1]
+                  for diagnostic in scene["diagnostics"]
+                  if diagnostic.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
+    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
+    assert suppressed.isdisjoint(labels)
+    assert set(labels) | {f"{item}" for item in suppressed} == {
+        f"member-label:{row_id}:{row_id}" for row_id in rows
+    }
+    for key, item in labels.items():
+        _, row_id, object_id = key.split(":", 2)
+        label, row = item["bounds"], rows[row_id]
+        host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
+        assert row["block"] - 0.01 <= label["block"]
+        assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
+        assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
+                label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
+        assert f'id="{key}"' in svg
+    for key in suppressed:
+        assert key not in primitives
+        assert f'id="{key}"' not in svg
+    aggregate = [item for item in scene["diagnostics"]
+                 if item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")]
+    assert len(aggregate) == 1
+    assert aggregate[0].endswith(f"count={len(suppressed)}")
+
+    # Planned dates may change without changing the presentation contract.
+    expected_variances = {
+        f"variance:{object_id}:{object_id}" for object_id in (
+            "mcs", "optics", "structure", "eps", "detector", "avionics",
+            "payload-tvac", "station", "bus-test", "comms-test",
+            "integration", "vibration",
+        )
+    }
+    variances = {key: item for key, item in primitives.items() if key.startswith("variance:")}
+    assert set(variances) == expected_variances
+    assert all(item.get("text", "").endswith("d") for item in variances.values())
+    assert {item["purpose"] for item in variances.values()} == {"finish-delta"}
+    assert {item["visualRole"] for item in variances.values()} == {
+        "variance-ahead", "variance-on-track", "variance-behind",
+    }
+    assert all(key not in labels and f'id="{key}"' in svg for key in expected_variances)
+
+
+def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monkeypatch) -> None:
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-default",
+                                      starter / "project.yaml", starter / "actual.yaml")
+    surface = scene["surfaces"][0]
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
+    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
+    svg = svg_path.read_text(encoding="utf-8")
+    assert len(rows) == 3
+    assert len(bands) == 2
+    assert all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
+               timeline["inline"] + timeline["inlineSize"] - 0.01
+               for item in bands.values())
+    edges = {round(item["bounds"]["block"], 3) for item in bands.values()} | {
+        round(item["bounds"]["block"] + item["bounds"]["blockSize"], 3)
+        for item in bands.values()
+    }
+    assert all(round(bounds["block"], 3) in edges or
+               round(bounds["block"] + bounds["blockSize"], 3) in edges
+               for bounds in rows.values())
+    assert len(labels) == len(rows)
+    for key, item in labels.items():
+        _, row_id, object_id = key.split(":", 2)
+        label, row = item["bounds"], rows[row_id]
+        host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
+        assert row["block"] - 0.01 <= label["block"]
+        assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
+        assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
+                label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
+        assert f'id="{key}"' in svg
+    assert not [key for key in primitives if key.startswith("variance:")]
+    assert not [item for item in scene["diagnostics"]
+                if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")]
+    assert svg.count('id="row-band:') == len(bands)
+
+
+def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:
     """#483 item 2: stripes cross the whole plot; names are declared at the bar end, in the row.
 
     This is a property of the `default-draft` View file itself, not of

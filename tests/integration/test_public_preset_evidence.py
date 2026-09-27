@@ -75,3 +75,56 @@ def test_editorial_library_entry_matches_the_bundle_resources():
         assert member["sourceRoot"] == "presets/bundles/editorial"
         declared = yaml.safe_load((bundle / member["sourcePath"]).read_bytes())
         assert declared["id"] == member["id"]
+
+
+def test_readable_default_resources_are_mirrored_and_selected_without_mutating_editorial():
+    corpus = ROOT / "examples/halcyon-1"
+    default = yaml.safe_load((ROOT / "src/chrona/resources/presets/default.yaml").read_bytes())
+    resources = default["body"]["resources"]
+    assert default["id"] == "chrona-default-draft"
+    bundle = ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default"
+    pairs = {
+        "view.yaml": corpus / "views/editorial-readable-default.yaml",
+        "theme.yaml": corpus / "themes/editorial-readable-default.yaml",
+    }
+    for name, corpus_path in pairs.items():
+        package_bytes = (bundle / name).read_bytes()
+        assert package_bytes == corpus_path.read_bytes(), name
+        declared = yaml.safe_load(package_bytes)
+        assert declared["id"] == resources["view" if name == "view.yaml" else "theme"]["id"]
+        expected_directory = "views" if name == "view.yaml" else "themes"
+        assert resources["view" if name == "view.yaml" else "theme"]["path"] == \
+            f"{expected_directory}/editorial-readable-default.yaml"
+        if name == "view.yaml":
+            labels = declared["body"]["visibility"]["labels"]
+            assert (labels["placement"], labels["content"], labels["side"]) == ("both", ["title"], "end")
+            assert declared["body"]["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
+            assert declared["body"]["backgroundDecoration"]["rows"] == "alternate"
+        else:
+            body = declared["body"]
+            assert body["values"]["opacity.row-band"]["value"] == 0.12
+            assert body["roles"]["row-band"]["opacity"] == "opacity.row-band"
+            assert body["colorBindings"]["row-band.fill"] == "category:default"
+    assert resources["view"] == {
+        "id": "chrona-preset-editorial-readable-default", "kind": "view",
+        "path": "views/editorial-readable-default.yaml",
+    }
+    assert resources["theme"] == {
+        "id": "chrona-builtin-editorial-readable-default", "kind": "theme",
+        "path": "themes/editorial-readable-default.yaml",
+    }
+    assert resources["colorScheme"] == {
+        "id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "schemes/editorial.yaml",
+    }
+    assert resources["layout"]["path"] == "layouts/editorial.yaml"
+    assert resources["detailProfile"]["path"] == "profiles/editorial-detail.yaml"
+    assert default["body"]["compatibleColorSchemes"] == [
+        {"id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "schemes/editorial.yaml"}
+    ]
+    library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
+    editorial = next(item for item in library["entries"] if item["id"] == "editorial")
+    assert editorial["gallerySet"] == "generated-design-directions"
+    assert editorial["members"]["view"]["sourceRoot"] == "presets/bundles/editorial"
+    assert editorial["members"]["view"]["sourcePath"] == "view.yaml"
+    assert editorial["members"]["theme"]["sourceRoot"] == "presets/bundles/editorial"
+    assert editorial["members"]["theme"]["sourcePath"] == "theme.yaml"

@@ -99,6 +99,8 @@ def test_package_owned_runtime_resources_exist():
         "presets/bundles/print-mono/layout.yaml",
         "presets/bundles/print-mono/theme.yaml",
         "presets/bundles/print-mono/view.yaml",
+        "presets/bundles/editorial-readable-default/view.yaml",
+        "presets/bundles/editorial-readable-default/theme.yaml",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 

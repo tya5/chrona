@@ -4,8 +4,8 @@ id: chrona-default-draft
 body:
   package: {version: "1"}
   resources:
-    view: {id: chrona-preset-editorial, kind: view, path: views/editorial.yaml}
-    theme: {id: chrona-builtin-editorial, kind: theme, path: themes/editorial.yaml}
+    view: {id: chrona-preset-editorial-readable-default, kind: view, path: views/editorial-readable-default.yaml}
+    theme: {id: chrona-builtin-editorial-readable-default, kind: theme, path: themes/editorial-readable-default.yaml}
     colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, path: schemes/editorial.yaml}
     layout: {id: chrona-builtin-editorial, kind: layout-profile, path: layouts/editorial.yaml}
     detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, path: profiles/editorial-detail.yaml}
