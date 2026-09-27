@@ -20,9 +20,10 @@ def bind_lane_visual_requests(
 
     Plot-label visuals bind once to each countable per-row occurrence (the
     same representative the lane mapper labels), including attached points.
-    Mark visuals bind to every matching source occurrence and its completed
-    semantic role. Comparison roles share the public ``planned`` selector.
-    The returned keys are typed; serialized placement IDs are never parsed.
+    Mark selectors match semantic roles; their typed request keys use each
+    expected mark's emission purpose, which may differ for comparison marks.
+    Comparison roles share the public ``planned`` selector. Serialized
+    placement IDs are never parsed.
     """
     representatives: dict[str, list[LaneProjectionInstance]] = defaultdict(list)
     for row in projection.rows:
@@ -33,10 +34,6 @@ def bind_lane_visual_requests(
         for object_id, variants in groups.items():
             representative = _representative(variants, row.table_subject_id)
             representatives[object_id].append(representative)
-
-    expected_by_object_role: dict[tuple[str, str], list[LaneProjectionInstance]] = defaultdict(list)
-    for expected in closure.expected_marks:
-        expected_by_object_role[(expected.instance.object_id, expected.role)].append(expected.instance)
 
     label_requests: dict[LaneProjectionInstance, list[VisualRequest]] = defaultdict(list)
     mark_requests: dict[tuple[LaneProjectionInstance, str], VisualRequest] = {}
@@ -59,12 +56,14 @@ def bind_lane_visual_requests(
             roles = _semantic_roles(facet)
             if not object_id or not roles:
                 raise LayoutError("E_LAYOUT_VISUAL_TARGET", request.source_ref)
-            matches = [(instance, role) for role in roles
-                       for instance in expected_by_object_role.get((object_id, role), ())]
+            matches = tuple((expected.instance, expected.purpose)
+                            for expected in closure.expected_marks
+                            if expected.instance.object_id == object_id
+                            and expected.role in roles)
             if not matches:
                 raise LayoutError("E_LAYOUT_VISUAL_TARGET", request.source_ref)
-            for instance, role in matches:
-                key = (instance, role)
+            for instance, purpose in matches:
+                key = (instance, purpose)
                 if key in mark_requests:
                     raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", request.source_ref)
                 mark_requests[key] = request

@@ -40,7 +40,7 @@ def _fixture():
     closure = LaneProjectionClosure(
         (primary_a, snapshot_a, attached_a, primary_b),
         (ExpectedLaneMark(primary_a, "planned", "planned", "planned:a"),
-         ExpectedLaneMark(snapshot_a, "snapshot", "snapshot", "snapshot:a"),
+         ExpectedLaneMark(snapshot_a, "snapshot", "planned", "planned:snapshot:a"),
          ExpectedLaneMark(attached_a, "planned", "planned", "planned:gate"),
          ExpectedLaneMark(primary_b, "planned", "planned", "planned:b")),
         (), ((attached_a, primary_a),),
@@ -67,7 +67,7 @@ def test_semantic_mark_visual_fans_out_to_primary_and_comparison_roles():
         projection, closure, (_visual("mark", {"object": "work", "facet": "planned"}),),
     )
 
-    assert set(marks) == {(primary_a, "planned"), (snapshot_a, "snapshot"),
+    assert set(marks) == {(primary_a, "planned"), (snapshot_a, "planned"),
                           (primary_b, "planned")}
 
 

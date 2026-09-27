@@ -3,7 +3,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from chrona.presentation.layout.lane_bundle_mapper import (
-    _mark_facets, preflight_review_lanes,
+    _mark_facets, map_lane_candidates, preflight_review_lanes,
 )
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance
 from chrona.presentation.layout.lane_preflight import LaneInlineFrame, LaneMeasurementIdentity
@@ -98,6 +98,56 @@ def test_review_projection_closes_candidate_and_preflight_with_measured_title_de
     assert mapped.expected_facets[0].primitive_id == "planned:row-1:work-view"
     assert plan.candidates == mapped.candidates
     assert plan.table_cells[0].count == 1
+
+
+def test_mark_visual_binds_comparison_mark_by_emission_purpose():
+    primary = ReviewItem(
+        "work", "Work", "span",
+        {"start": date(2026, 1, 1), "end": date(2026, 1, 5)},
+        None, None, ("planned",), item_id="current", source_kind="primary",
+    )
+    snapshot = ReviewItem(
+        "work", "Work baseline", "span",
+        {"start": date(2026, 1, 2), "end": date(2026, 1, 6)},
+        None, None, ("planned",), item_id="baseline", source_kind="snapshot",
+    )
+    row = ReviewRowProjection("row-1", "Work", "systems", "current", (primary, snapshot))
+    projection = ReviewProjection(
+        (primary, snapshot), (date(2026, 1, 1), date(2026, 2, 1)), (), (), rows=(row,),
+    )
+    visual = VisualRequest(
+        "mark", (("object", "work"), ("facet", "planned")), ref="mark-icon",
+        source_ref="/body/visuals/0",
+    )
+    icon = SimpleNamespace(
+        icon_id="mark-icon", kind="raster", content_identity="sha256:mark-icon",
+        viewport=(10, 10), payload=b"png", alternative="Mark icon",
+    )
+    scale = ScalePlacement(
+        "timeline", "scale:lane", date(2026, 1, 1), date(2026, 2, 1), 0, 100, 0, 2,
+    )
+    frame = MarkBandFrame.zero_origin(scale, 10, {
+        "planned": MarkGeometry(0.4, 0.1, 0, 0),
+        "snapshot": MarkGeometry(0.4, 0.1, 1, 0),
+        "actual": MarkGeometry(0.4, 0.5, 2, 0),
+        "missing-actual": MarkGeometry(0.4, 0.5, 3, 0),
+    })
+    identity = LaneMeasurementIdentity("sha256:theme", _Metrics.content_identity, "scale:lane")
+
+    mapped = map_lane_candidates(
+        projection, frame=frame, as_of=None, theme_tokens=_LaneTheme(), slot_id="lane-slot",
+        measurement_identity=identity, font_metrics=_Metrics(), label_visual_requests={},
+        icon_assets={"mark-icon": icon}, include_finish_delta=False,
+        label_typography_role="text", view_visual_requests=(visual,),
+    )
+
+    icon_facets = [facet for candidate in mapped.candidates
+                   for member in candidate.members_for_placement
+                   for facet in member.mark.facets if facet.icon_projection is not None]
+    assert {facet.source_item_id for facet in icon_facets} == {"current", "baseline"}
+    assert {facet.primitive_id for facet in icon_facets} == {
+        "visual:planned:row-1:current", "visual:planned:row-1:baseline",
+    }
 
 
 def test_mapper_closes_span_as_source_keyed_plain_facet_with_ports_and_footprint():
