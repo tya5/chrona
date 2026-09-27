@@ -2,6 +2,7 @@
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,7 +16,9 @@ from chrona.presentation.layout.lane_preflight import (
     preflight_surface_lanes,
 )
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Rect
-from chrona.presentation.layout.surface_composer import timeline_content_block_requirement
+from chrona.presentation.layout.surface_composer import compose_surface_layout, timeline_content_block_requirement
+from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
+from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.sources import SourceInput, measure_sources
 
 
@@ -128,6 +131,38 @@ def test_plan_retains_exact_candidate_facet_closure_and_selected_cutoff():
         projection=None, group_presentation="header", metric_values={},
         lane_plan=plan,
     ) == plan.natural_block_requirement
+
+
+def test_final_composer_checks_seed_frame_identity_and_cutoff_before_geometry():
+    identity = LaneMeasurementIdentity("theme:1", "font:1", "scale:1")
+    plan = preflight_surface_lanes(
+        [_candidate("task", 10, 20)], seed_inline_frame=_frame(),
+        measurement_identity=identity, as_of=date(2026, 1, 5),
+        group_titles={"systems": "Systems"}, candidate_titles={"task": "Task"},
+        lane_label="group", include_count=False, mark_row_height=10, label_row_height=10,
+    )
+    window = (date(2026, 1, 1), date(2026, 4, 11))
+    decisions = tuple(LayoutDecision(name, "slot", bounds, source=name) for name, bounds in (
+        ("title", Rect(Decimal(0), Decimal(0), Decimal(130), Decimal(10))),
+        ("table", Rect(Decimal(0), Decimal(10), Decimal(30), Decimal(40))),
+        ("timeline", Rect(Decimal(30), Decimal(10), Decimal(100), Decimal(40))),
+        ("timeline-axis", Rect(Decimal(30), Decimal(50), Decimal(100), Decimal(10))),
+    ))
+    manifest = LayoutManifest("profile", "sha256:test", "block", "inline",
+                              Rect(Decimal(0), Decimal(0), Decimal(130), Decimal(60)), decisions)
+    request = SurfaceLayoutRequest(
+        projection=SimpleNamespace(window=window),
+        layout_manifest=manifest, measured_sources=MeasuredSources({}, {}, {}),
+        surface_content=SimpleNamespace(as_of=date(2026, 1, 6)),
+        lane_plan=plan, lane_measurement_identity=identity,
+    )
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_PLAN_INVALID"):
+        compose_surface_layout(request)
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_INLINE_UNSTABLE"):
+        compose_surface_layout(replace(request, surface_content=SimpleNamespace(as_of=plan.as_of),
+                                       layout_manifest=replace(manifest, decisions=decisions[:2] + (
+                                           replace(decisions[2], bounds=Rect(Decimal(30), Decimal(10), Decimal(99), Decimal(40))),
+                                           decisions[3]))))
 
 
 def test_plan_requires_bijection_between_closed_members_and_allocation():

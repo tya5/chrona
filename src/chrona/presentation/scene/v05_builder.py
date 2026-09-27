@@ -10,6 +10,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
+from chrona.presentation.layout.lane_preflight import LaneMeasurementIdentity, SurfaceLanePlan
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
@@ -52,6 +53,8 @@ class SceneBuildInput:
     viewport: tuple[float, float] = (0.0, 0.0)
     icon_assets: dict[str, Any] | None = None
     visual_requests: tuple[Any, ...] = ()
+    lane_plan: SurfaceLanePlan | None = None
+    lane_measurement_identity: LaneMeasurementIdentity | None = None
 
 
 _REQUIRED_SOURCES = {
@@ -167,7 +170,9 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       visual_profile: VisualProfile | None = None,
                       viewport: tuple[float, float] = (0.0, 0.0),
                       icon_assets: dict[str, Any] | None = None,
-                      visual_requests: tuple[Any, ...] = ()) -> SceneBuildInput:
+                      visual_requests: tuple[Any, ...] = (),
+                      lane_plan: SurfaceLanePlan | None = None,
+                      lane_measurement_identity: LaneMeasurementIdentity | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -187,9 +192,15 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
             raise SceneBuildError("E_PRESENTATION_SURFACE_SLOT_SET", "/layoutManifest/sources")
     if not all(isinstance(name, str) and isinstance(enabled, bool) for name, enabled in capabilities.items()):
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
+    if ((lane_plan is None) != (lane_measurement_identity is None)
+            or (lane_plan is not None and not isinstance(lane_plan, SurfaceLanePlan))
+            or (lane_measurement_identity is not None
+                and not isinstance(lane_measurement_identity, LaneMeasurementIdentity))):
+        raise SceneBuildError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
-                           dict(capabilities), visual_profile, viewport, icon_assets, visual_requests)
+                           dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
+                           lane_plan, lane_measurement_identity)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -222,6 +233,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             font_metrics=value.font_metrics,
             capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
             visual_requests=value.visual_requests,
+            lane_plan=value.lane_plan,
+            lane_measurement_identity=value.lane_measurement_identity,
         ))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
