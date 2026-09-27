@@ -1,23 +1,14 @@
-# Implementation Plan Amendment — S2b closed lane projection (#467, #494)
+# Current work plan — closed lane projection (#467, #494)
 
-**Public design base:** `a02ccc03d8bc5b5b2187402b10f4ca495220b156`. **Authority:** [design plan](issue-467-b1b2-s2b-closure-reconciliation-design-plan-2026-09-27.md), [selected correction](../../design/issue-467-b1b2-s2b-closure-reconciliation-correction-2026-09-27.md), [architecture review](../../reviews/current/issue-467-b1b2-s2b-closure-reconciliation-architecture-review-2026-09-27.md), Specs [38](../../specification/38-review-row-composition.md) and [46](../../specification/46-completed-scene-paint.md). Supersedes S2b/B2 assumptions in the older [facet-count implementation plan](issue-467-b1b2-facet-count-asof-implementation-plan-amendment-2026-09-27.md), not its historical record. Public lane mode stays fail-closed until B2/B3 and activation gates. No fixed 12/14 lane ceiling, above-ten quota or compulsory third label row.
+**Normative design:** Specs [38](../../specification/38-review-row-composition.md) and [46](../../specification/46-completed-scene-paint.md). Public lane mode stays fail-closed until B2/B3 and activation gates. Lane count follows measured geometry and the chain rule, not a numeric target.
 
-## Current B2 design and architecture review (2026-09-27)
+## B2 architecture decision
 
-A read-only Scene audit cannot identify an untagged lane primitive from optional
-primitive tags alone: automatic/explicit primitives are legitimately untagged.
-The selected correction is a lane-only `SceneSurface` mode discriminator plus
-typed member inventory (row/member IDs, emitted primitive IDs, primary-mark
-IDs). B2 derives it from the immutable Layout plan. Scene validates exact
-inventory↔tagged-primitive correspondence and rejects untagged lane-bearing
-purposes. The checker then reads the closed Scene, not Layout-only data. This
-keeps Project/View semantics upstream, geometry in Layout, structural identity
-in Scene, and adapters as serializers. Optional fields extend Scene v0.6 only
-for lane surfaces; automatic/explicit bytes stay unchanged. No new View syntax
-or Theme policy is needed. This resolves the completeness gap without spatial
-or `source_ref` inference. [Spec 38](../../specification/38-review-row-composition.md)
-is the normative authority; B2 tests must prove missing/extra/untagged member
-primitives fail before the #467 Scene rule audit.
+Layout derives one immutable plan and completed geometry. Scene projects its
+primitives and checks a lane-only member inventory against their tags; adapters
+serialize it. The read-only rule audit uses the closed Scene. Scene v0.6 adds
+optional lane fields without changing automatic/explicit bytes. B2 tests reject
+missing, extra, or untagged member primitives. Spec 38 owns the detailed rule.
 
 | Publishable slice | Files/owners and migration | Focused acceptance and evidence |
 | --- | --- | --- |
@@ -34,7 +25,6 @@ If any extraction reveals a changed formula, unexpected output, missing semantic
 1. A lane row mode exists. On `02-programme-board` the chain `structure → avionics → bus-test` is on one lane, and the lane count is **justified by the rule, not by a target number**. Both checks read the Scene footprints (marks, comparison marks, names, deltas, icons):
    - **No redundant lane.** For every pair of lanes in the same group, moving all items of one into the other would make two footprints collide. The only exception is a pair kept apart by the chain rule, and those pairs are listed.
    - **Lower bound reported.** For each group, report the maximum number of footprints that overlap at one date, next to its lane count, and attribute any difference. The lower bound is reported and explained; it is not a target.
-   *(Amended 2026-09-27 twice: "at most 12" and then "at most 14" were arbitrary numbers and are withdrawn; see the comments.)*
 2. Every packed task and milestone has a visible name on the slide; no `W_LAYOUT_LABEL_SUPPRESSED` for a packed item on any committed slide.
 3. Lane assignment is deterministic, and a test shows that one inserted item does not reorder unrelated lanes.
 4. Deltas remain visible for packed items that have them.
