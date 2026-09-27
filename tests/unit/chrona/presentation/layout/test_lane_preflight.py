@@ -15,6 +15,7 @@ from chrona.presentation.layout.lane_preflight import (
     assert_lane_plan_compatible, lane_inline_frame_for_manifest, lane_table_measurement_content,
     preflight_surface_lanes,
 )
+from chrona.presentation.layout.lane_seed import lane_seed_mark_band_frame
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Rect
 from chrona.presentation.layout.surface_composer import compose_surface_layout, timeline_content_block_requirement
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -104,6 +105,29 @@ def test_lane_inline_frame_reads_actual_solved_table_and_timeline_bounds():
     with pytest.raises(LayoutError, match="E_LAYOUT_LANE_SEED_INVALID"):
         lane_inline_frame_for_manifest(replace(manifest, decisions=()),
                                        window=(date(2026, 1, 1), date(2026, 1, 11)))
+
+
+def test_seed_mark_band_uses_the_manifest_scale_and_zero_origin():
+    manifest = LayoutManifest(
+        "profile", "sha256:test", "block", "inline",
+        Rect(Decimal(0), Decimal(0), Decimal(200), Decimal(100)),
+        (LayoutDecision("table", "slot", Rect(Decimal(0), Decimal(0), Decimal(30), Decimal(40)), source="table"),
+         LayoutDecision("timeline", "slot", Rect(Decimal(30), Decimal(0), Decimal(100), Decimal(40)), source="timeline")),
+    )
+
+    class Theme:
+        def mark_geometry(self, _role):
+            return Decimal("0.5"), Decimal("0.25"), 100, Decimal(0)
+
+    inline, band = lane_seed_mark_band_frame(
+        manifest, window=(date(2026, 1, 1), date(2026, 1, 11)),
+        metric_values={"timeline.mark.blockSize": Decimal("12")}, theme_tokens=Theme(),
+    )
+    assert inline.temporal_scale == Decimal(10)
+    assert band.inline_scale.range_start == 30
+    assert band.inline_scale.range_end == 130
+    assert band.inline_scale.unit_ratio == 10
+    assert band.block_origin == 0 and band.block_size == 12
 
 
 def test_plan_retains_exact_candidate_facet_closure_and_selected_cutoff():
