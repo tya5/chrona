@@ -131,7 +131,7 @@ def test_committed_example_has_two_intermediate_gates_with_visible_lane_facts(tm
         assert host["start"] < point["schedule"]["at"] < host["end"]
 
     preset = tmp_path / "preset"
-    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(preset)])
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "editorial", "--output", str(preset)])
     main()
     scene = tmp_path / "scene.json"
     svg = tmp_path / "attached.svg"
@@ -150,5 +150,11 @@ def test_committed_example_has_two_intermediate_gates_with_visible_lane_facts(tm
                      if item["sourceRef"] == gate and item["id"].startswith("member-label:"))
         assert label in visible_text
         assert project["objects"][gate]["title"] in label
-    assert "Readiness review · 30 Sep · +1d" in visible_text
+    readiness_label = next(item for item in surface["primitives"]
+                           if item["sourceRef"] == "readiness" and item["id"].startswith("member-label:"))
+    readiness_actual = next(item for item in surface["primitives"]
+                            if item["sourceRef"] == "readiness" and item["id"].startswith("actual:"))
+    assert (readiness_label["bounds"]["inline"] + readiness_label["bounds"]["inlineSize"]
+            < readiness_actual["bounds"]["inline"])
+    assert "Readiness review · 30 Sep · +8d" in visible_text
     assert "Range clearance · 12 Oct" in visible_text
