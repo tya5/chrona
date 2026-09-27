@@ -1,6 +1,8 @@
 # Current work record — data-only lane membership (#467, #494)
 
-**Status:** design and implementation plan complete; implementation pending. This record supersedes its geometry-first content; Git retains the earlier text. Public `main` accepts `rows.mode: lanes` but keeps rendering guarded. The issue's 2026-09-27 10:58 UTC owner decision is the current acceptance authority. The next View contract will be v0.28; older v0.27 resources are migrated explicitly.
+**Status:** B1 published; B2 design reopened by the owner's 2026-09-27 12:20 UTC lane-label correction and a measured row-height gap. This record supersedes its geometry-first content; Git retains the earlier text. Public `main` accepts `rows.mode: lanes` but keeps rendering guarded. View v0.28 resources are migrated explicitly.
+
+**B2 design-plan correction (before further product code):** Preserve the published data-only membership and exact-facet internal track design. Reconcile the author's declared label `side`/`fallback`, including `inside`, with the lane requirement that a name is visible in the plot or suppressed and counted; decide the `auto`/`finishDelta` defaults and the contradictory `visible-overflow` spelling explicitly. Check this against Specs 24/33/38/46/50 and the existing #466/#488 candidate search, then publish the normative correction and architecture review. Separately, prove that the pre-layout timeline host budget covers the final measured internal subtracks even when an explicit key groups overlapping marks; document the one-composition allocation boundary before changing Layout. Acceptance evidence: schema/normalization cases for `inside` and omissions, hidden 02/11/12 renders, a dense same-key height regression, unchanged automatic/explicit bytes, and #494 route-label clearance. Only then amend the B2 implementation plan and resume code.
 
 ## Literal #467 acceptance
 
