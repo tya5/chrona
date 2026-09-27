@@ -4,13 +4,16 @@ from __future__ import annotations
 import tempfile
 import json
 from dataclasses import replace
+from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import jsonschema
 
 import chrona.usecases.render_review as render_usecase
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.contracts.resources import ViewLaneLabel, ViewLaneTable, ViewRowMode
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
@@ -32,6 +35,29 @@ def test_font_substitution_warning_only_claims_raster_draw_result():
     assert _font_warnings((substitution,), "png")[0].drawn is False
     assert _font_warnings((substitution,), "pdf")[0].drawn is False
     assert _font_warnings((substitution,), "svg")[0].drawn is None
+
+
+def test_lane_source_measurement_uses_finite_table_envelope_and_seed_block():
+    items = (SimpleNamespace(title="Long candidate title", group_label="Avionics"),
+             SimpleNamespace(title="Short", group_label="Avionics"))
+    projection = SimpleNamespace(
+        rows=(SimpleNamespace(row_id="row", group_id="g", label="row", items=items),),
+        items=items, window=(date(2026, 1, 1), date(2026, 1, 31)), network=None,
+    )
+    view = SimpleNamespace(
+        rows=SimpleNamespace(mode=ViewRowMode.LANES,
+                             lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)),
+        table_columns=(),
+    )
+    sources = render_usecase._source_inputs(
+        {"project": {"title": "test"}}, view, projection, SimpleNamespace(runs=()),
+    )
+
+    assert sources["table"].item_count == sources["timeline"].item_count == 1
+    assert tuple(column.column_id for column in sources["table"].table.columns) == ("Lane", "Items")
+    assert {cell.content for cell in sources["table"].table.cells} == {
+        "Avionics", "Long candidate title", "Short", "2",
+    }
 
 
 def test_scene_error_findings_become_draft_warnings_without_information_duplication():

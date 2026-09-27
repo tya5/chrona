@@ -20,6 +20,7 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.lane_preflight import lane_table_measurement_content
 from chrona.presentation.layout.presentation import table_text_line_block
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
@@ -499,6 +500,23 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     """Declare what each slot will hold, for measurement before layout."""
     rows = projection.rows or ()
     row_count = len(rows) or len(projection.items)
+    if view.rows.mode is ViewRowMode.LANES:
+        lane_table = view.rows.lane_table
+        if lane_table is None:
+            raise LayoutError("E_LAYOUT_LANE_TABLE_ENVELOPE", "/body/rows/laneTable")
+        group_titles = {row.group_id: next((item.group_label for item in row.items
+                                            if item.group_label), row.group_id)
+                        for row in rows if row.group_id}
+        candidate_titles = {f"{row.row_id}:{index}": item.title
+                            for row in rows for index, item in enumerate(row.items)}
+        table = lane_table_measurement_content(
+            lane_label=lane_table.label.value, include_count=lane_table.count,
+            group_titles=group_titles, candidate_titles=candidate_titles,
+            selected_item_count=sum(len(row.items) for row in rows),
+        )
+        # Membership is unknown until the seed inline solve. The finite table
+        # envelope sizes columns; the immutable lane plan later owns block size.
+        row_count = 1
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
