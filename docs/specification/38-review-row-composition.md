@@ -171,6 +171,19 @@ and table block requirement uses the completed lane count and natural lane
 heights, never the original per-item row count. Group bands include those
 expanded rows and their own headers. See the [L3b preflight correction](../design/issue-467-494-l3b-prelayout-route-evidence-correction-2026-09-27.md).
 
+A selected primary Review row is one atomic lane candidate bundle. Its
+comparison/Actual facets contribute geometry without duplicate names or
+counts; a point attached under #486 stays on its host candidate's lane but
+retains its own required title/date/delta, mark, port and count identity.
+Layout admits a bundle only when all member marks and required labels fit;
+it cannot place a child later or flatten its name into the host's text.
+Unattached points are independent candidates. The natural lane frame contains
+one mark level and up to three stagger text rows above it. The whole frame,
+not the mark alone, is centered in the row's padded usable area under `pack`
+and `fill`; role-specific marks never stretch with surplus. Automatic and
+explicit member-index track placement is unchanged. See the
+[candidate-footprint correction](../design/issue-467-l3b-candidate-footprint-correction-2026-09-27.md).
+
 `automatic` is still the exact per-object row behavior, including its original
 table cells, points policy and output. `rows.points: key-row` is not created by
 lane mode. Hierarchical rows remain `automatic` or authored `explicit` until a
