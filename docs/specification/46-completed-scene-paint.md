@@ -166,6 +166,13 @@ ICON with paths in declared order. Raster icon facets retain the exact asset
 identity, viewport and bytes. Neither B2 nor Scene may reload an icon asset,
 retransform paths, or rescale its stroke. See the [S2b icon emission
 correction](../design/issue-467-b1b2-s2b-icon-emission-closure-correction-2026-09-27.md).
+The expected-emission inventory fixes icon cardinality before allocation:
+vector path indices are unique, contiguous and complete against one declared
+path count, all common group metadata agree, and exactly one Scene ICON is
+emitted per completed icon placement. Stroke paths require a finite completed
+width; commands and bounds must agree with the completed viewport/footprint.
+An absent or extra path/ICON is a closed-plan failure, not a reason to reload
+or infer icon data at projection time. See the [S2b closure correction](../design/issue-467-b1b2-s2b-closure-reconciliation-correction-2026-09-27.md).
 
 The Scene builder receives those completed path values and does not resolve
 Theme symbol variants, construct glyph outlines, transform normalized icon

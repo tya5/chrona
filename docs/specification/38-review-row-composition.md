@@ -179,6 +179,19 @@ plan's lane-driving inline bounds and scale, or lane mode fails with
 from a block-dependent aspect-ratio constraint. `automatic` and `explicit`
 retain their existing path and bytes.
 
+The lane plan's mark geometry is completed in a typed `MarkBandFrame`: its
+inline scale, lane-local mark-band origin (zero for lane candidates), height
+and role offsets are explicit. One Layout mark-geometry composer serves
+automatic/explicit track frames and lane-local frames without changing the
+former formulas or conversion order. Preflight retains exact candidate/facet
+and required-label closure, selected `as_of`, and measurement, Theme, font and
+scale identities. The content-height solve and final composer consume this
+immutable lineage. The final composer checks those identities, then translates
+completed local geometry exactly once through the final mark-band anchor
+carried as `SceneRow.lane_mark_band_block`; it MUST NOT remeasure, reconstruct
+the frame, change a rung or reallocate. A changed cutoff or measurement
+authority fails before Scene emission. See the [S2b closure correction](../design/issue-467-b1b2-s2b-closure-reconciliation-correction-2026-09-27.md).
+
 The lane table's measured width is reserved before membership from the finite
 candidate set: all possible group/representative labels and the maximum
 selected-item count bound the `Lane`/optional `Items` columns. The completed
@@ -217,6 +230,14 @@ without reloading or retransforming assets. The placed viewport is not an
 extra path footprint. See the [S2b icon emission correction](../design/issue-467-b1b2-s2b-icon-emission-closure-correction-2026-09-27.md).
 Layout admits a bundle only when all member marks and required labels fit;
 it cannot place a child later or flatten its name into the host's text.
+Each accepted member has a closed expected-emission inventory derived from
+selected Review semantics before placement lookup. Required mark variants,
+compound parts, grouped icons, progress and label components must each have
+one completed projection or an explicitly approved intentional-absence reason;
+missing or extra emitted primitives fail before Scene construction. This
+inventory, not source-ID parsing or a post-plan Theme lookup, determines
+projection cardinality. An attached host resolves to one exact projection
+instance; missing or ambiguous hosts fail rather than dropping a child.
 Unattached points are independent candidates. The natural lane frame contains
 one mark level and up to three stagger text rows above it. The whole frame,
 not the mark alone, is centered in the row's padded usable area under `pack`
@@ -246,6 +267,14 @@ overlap. This allowance never applies to required labels, other candidates, or
 routes. Completed geometry and its footprint/ports remain associated in one
 immutable value so final composition can realize the exact collided geometry
 without re-deriving the source facet.
+Overlay endpoints must both exist exactly once in the same candidate bundle,
+be purpose/type-compatible, and authorize only that pair rather than a
+transitive group exemption. Shared comparison tracks, compound mark parts,
+declared attached-host parts and progress clipped to its host can qualify;
+stacked comparison tracks remain obstacles. Duplicate, missing or invalid
+facets and undeclared internal overlap fail before allocation. Source object
+ID, View item ID, Review projection instance, countable member ID and emitted
+primitive ID remain distinct through this validation.
 
 For B1b-2 mapping, Layout receives the selected Actual cutoff explicitly from
 the existing normalized `PresentationContract.time.as_of`. Layout does not
